@@ -7,7 +7,7 @@ export default defineTask({
     console.log('Running DB seed task...')
     const spells = [
       {
-        name: 'Aid',
+        name: 'Aide',
         level: 2,
         castingTime: '1 action',
         range: 9,
@@ -19,7 +19,7 @@ export default defineTask({
         `,
       },
       {
-        name: 'Light',
+        name: 'Lumière',
         level: 0,
         castingTime: '1 action',
         range: 1.5,

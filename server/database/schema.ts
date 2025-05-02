@@ -11,7 +11,7 @@ export const spells = sqliteTable('spells', {
   duration: text('duration').notNull(),
   description: text('description'),
 
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(CURRENT_TIMESTAMP)`).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }),
-  deletedAt: integer('deleted_at', { mode: 'timestamp' }),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: text('updated_at'),
+  deletedAt: text('deleted_at'),
 })
