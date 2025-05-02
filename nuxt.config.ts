@@ -15,6 +15,14 @@ export default defineNuxtConfig({
   ],
 
   hub: {
+    workers: true,
     database: true,
+  },
+
+  // to seed database
+  nitro: {
+    experimental: {
+      tasks: true,
+    },
   },
 })
