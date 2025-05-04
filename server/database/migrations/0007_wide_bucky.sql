@@ -1,0 +1,1 @@
+ALTER TABLE `spells` ADD `concentration` integer;

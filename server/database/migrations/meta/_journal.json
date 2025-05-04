@@ -15,6 +15,48 @@
       "when": 1746226362895,
       "tag": "0001_sudden_polaris",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1746227246278,
+      "tag": "0002_acoustic_maverick",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1746311427284,
+      "tag": "0003_breezy_kat_farrell",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1746362527461,
+      "tag": "0004_sturdy_marvex",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1746364964486,
+      "tag": "0005_petite_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1746388121504,
+      "tag": "0006_striped_gambit",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1746394604245,
+      "tag": "0007_wide_bucky",
+      "breakpoints": true
     }
   ]
 }

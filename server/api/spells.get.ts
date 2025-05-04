@@ -1,3 +1,10 @@
 export default defineEventHandler(async () => {
-  return await useDrizzle().select().from(tables.spells).all()
+  return await useDrizzle()
+    .query
+    .spells
+    .findMany({
+      with: {
+        school: true,
+      },
+    })
 })
