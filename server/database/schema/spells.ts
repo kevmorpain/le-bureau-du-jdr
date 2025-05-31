@@ -21,7 +21,7 @@ const spells = sqliteTable('spells', {
   material: text('material'),
   ritual: integer('ritual', { mode: 'boolean' }).default(false).notNull(),
   duration: text('duration').notNull(),
-  concentration: integer('concentration', { mode: 'boolean' }),
+  concentration: integer('concentration', { mode: 'boolean' }).default(false).notNull(),
   description: text('description'),
 
   schoolId: integer('school_id').references(() => magicSchools.id).notNull(),
