@@ -1,12 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  future: {
-    compatibilityVersion: 4,
-  },
-  compatibilityDate: '2024-11-01',
-  devtools: { enabled: true },
-  pages: true,
-  css: ['~/assets/css/main.css'],
 
   modules: [
     '@nuxt/eslint',
@@ -16,15 +9,28 @@ export default defineNuxtConfig({
     '@nuxthub/core'
   ],
 
-  hub: {
-    workers: true,
-    database: true,
+  pages: true,
+  devtools: { enabled: true },
+  app: {
+    head: {
+      title: 'Le Bureau du JDR',
+    },
   },
+  css: ['~/assets/css/main.css'],
+  future: {
+    compatibilityVersion: 4,
+  },
+  compatibilityDate: '2024-11-01',
 
   // to seed database
   nitro: {
     experimental: {
       tasks: true,
     },
+  },
+
+  hub: {
+    workers: true,
+    database: true,
   },
 })
