@@ -35,6 +35,26 @@ export default defineNuxtConfig({
     database: true,
   },
 
+  fonts: {
+    experimental: {
+      disableLocalFallbacks: true,
+    },
+    families: [
+      {
+        name: 'Inknut Antiqua',
+        provider: 'local',
+        weights: ['400'],
+        styles: ['normal'],
+      },
+      {
+        name: 'Playfair',
+        provider: 'local',
+        weights: ['400'],
+        styles: ['normal', 'italic'],
+      },
+    ],
+  },
+
   pwa: {
     /* PWA options */
   },
