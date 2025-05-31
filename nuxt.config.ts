@@ -11,6 +11,14 @@ export default defineNuxtConfig({
   ],
 
   pages: true,
+
+  components: [
+    {
+      path: '~/components/icons',
+      pathPrefix: false,
+    },
+  ],
+
   devtools: { enabled: true },
   app: {
     head: {
