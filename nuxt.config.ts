@@ -6,7 +6,8 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/test-utils',
     '@nuxt/ui',
-    '@nuxthub/core'
+    '@nuxthub/core',
+    '@vite-pwa/nuxt',
   ],
 
   pages: true,
@@ -32,5 +33,9 @@ export default defineNuxtConfig({
   hub: {
     workers: true,
     database: true,
+  },
+
+  pwa: {
+    /* PWA options */
   },
 })
