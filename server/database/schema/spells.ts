@@ -8,6 +8,17 @@ export enum SpellComponent {
   Material = 'M',
 }
 
+export enum AbilityScore {
+  Strength = 'str',
+  Dexterity = 'dex',
+  Constitution = 'con',
+  Intelligence = 'int',
+  Wisdom = 'wis',
+  Charisma = 'cha',
+}
+
+type DcSuccessEffect = string // e.g., "half", "none"
+
 const spells = sqliteTable('spells', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
@@ -25,6 +36,9 @@ const spells = sqliteTable('spells', {
   description: text('description'),
 
   schoolId: integer('school_id').references(() => magicSchools.id).notNull(),
+
+  dc: text('dc', { mode: 'json' })
+    .$type<{ ability: AbilityScore, success?: DcSuccessEffect }>(),
 
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at'),
