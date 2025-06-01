@@ -64,12 +64,29 @@ export default defineNuxtConfig({
   },
 
   pwa: {
+    strategies: 'generateSW',
+    registerType: 'autoUpdate',
     includeAssets: ['favicon.ico'],
     manifest: {
       name: 'Le Bureau du JDR',
       short_name: 'Bureau JDR',
       description: 'Le Bureau du JDR est un site dédié aux jeux de rôle, proposant des ressources, des outils et des informations pour les joueurs et les maîtres de jeu.',
       theme_color: '#6D597A',
+      icons: [
+        {
+          src: '/img/icons/android-chrome-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+          src: '/img/icons/android-chrome-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ],
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
     },
   },
 })
