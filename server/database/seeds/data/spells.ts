@@ -1,0 +1,59 @@
+import { AbilityScore, DamageType, SpellComponent } from '../../schema/spells'
+
+export const spells: InsertSpell[] = [
+  {
+    name: 'Assistance',
+    level: 0,
+    castingTime: '1 action',
+    range: 1.5,
+    components: [SpellComponent.Vocal, SpellComponent.Somatic],
+    duration: '1 minute',
+    concentration: true,
+    description: 'Vous touchez une créature consentante. Une fois avant la fin du sort, la cible peut lancer un d4 et ajouter le résultat du dé à un jet de caractéristique de son choix. Elle peut lancer le dé avant ou après avoir effectué son jet de caractéristique. Le sort prend alors fin.',
+    schoolId: 3,
+  },
+  {
+    name: 'Flamme sacrée',
+    level: 0,
+    castingTime: '1 action',
+    range: 18,
+    components: [SpellComponent.Vocal, SpellComponent.Somatic],
+    duration: 'Instantanée',
+    description: 'Un rayonnement semblable à des flammes descend sur une créature que vous pouvez voir dans la portée du sort. La cible doit réussir un jet de sauvegarde de Dextérité ou subir 1d8 dégâts radiants. La cible ne gagne aucun bénéfice d\'abri pour ce jet de sauvegarde.\nLes dégâts du sort augmentent de 1d8 lorsque vous atteignez le niveau 5 (2d8), le niveau 11 (3d8), et le niveau 17 (4d8).',
+    schoolId: 5,
+    dc: {
+      ability: AbilityScore.Dexterity,
+    },
+    damage: {
+      damage_type: DamageType.Radiant,
+      damage_at_character_level: {
+        1: '1d8',
+        5: '2d8',
+        11: '3d8',
+        17: '4d8',
+      },
+    },
+  },
+  {
+    name: 'Lumière',
+    level: 0,
+    castingTime: '1 action',
+    range: 1.5,
+    components: [SpellComponent.Vocal, SpellComponent.Somatic, SpellComponent.Material],
+    material: 'une luciole ou de la mousse phosphorescente',
+    duration: '1 heure',
+    description: 'Vous touchez un objet qui ne dépasse pas 3 mètres dans toutes les dimensions. Jusqu\'à la fin du sort, l\'objet émet une lumière vive dans un rayon de 6 mètres et une lumière faible sur 6 mètres supplémentaires. La lumière est de la couleur que vous voulez. Couvrir complètement l\'objet avec quelque chose d\'opaque bloque la lumière. Le sort se termine si vous le lancez de nouveau ou si vous le dissipez par une action.\nSi vous ciblez un objet tenu ou porté par une créature hostile, cette créature doit réussir un jet de sauvegarde de Dextérité pour éviter le sort.',
+    schoolId: 5,
+  },
+  {
+    name: 'Aide',
+    level: 2,
+    castingTime: '1 action',
+    range: 9,
+    components: [SpellComponent.Vocal, SpellComponent.Somatic, SpellComponent.Material],
+    material: 'un petit bout de vêtement blanc',
+    duration: '8 heures',
+    description: 'Votre sort emplit vos alliés de robustesse et de résolution. Choisissez jusqu\'à trois créatures à portée. Le maximum de points de vie et les points de vie actuels de chaque cible augmentent de 5 pour la durée du sort.\nAux niveaux supérieurs. Lorsque vous lancez ce sort en utilisant un emplacement de sort de niveau 3 ou supérieur, les points de vie de chaque cible augmentent de 5 pour chaque niveau d\'emplacement au-delà du niveau 2.',
+    schoolId: 1,
+  },
+]

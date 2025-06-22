@@ -47,6 +47,7 @@ type TModelWithRelations<TTableName extends keyof TSchema> = InferSelectModel<
 }
 
 export type AbilityScore = typeof schema.abilityScores.$inferSelect
+export type DamageType = typeof schema.damageTypes.$inferSelect
 export type MagicSchool = typeof schema.magicSchools.$inferSelect
 export type Spell = TModelWithRelations<'spells'>
 export type InsertSpell = typeof schema.spells.$inferInsert

@@ -17,7 +17,27 @@ export enum AbilityScore {
   Charisma = 'cha',
 }
 
+export enum DamageType {
+  Acid = 'acid',
+  Bludgeoning = 'bludgeoning',
+  Cold = 'cold',
+  Fire = 'fire',
+  Force = 'force',
+  Lightning = 'lightning',
+  Necrotic = 'necrotic',
+  Piercing = 'piercing',
+  Poison = 'poison',
+  Psychic = 'psychic',
+  Radiant = 'radiant',
+  Slashing = 'slashing',
+  Thunder = 'thunder',
+}
+
 type DcSuccessEffect = string // e.g., "half", "none"
+
+type SlotLevel = string // e.g., "1", "2", "3", etc.
+type CharacterLevel = string // e.g., "1", "2", "3", etc.
+type Die = string // e.g., "1d6", "2d8"
 
 const spells = sqliteTable('spells', {
   id: integer().primaryKey().notNull(),
@@ -39,6 +59,15 @@ const spells = sqliteTable('spells', {
 
   dc: text('dc', { mode: 'json' })
     .$type<{ ability: AbilityScore, success?: DcSuccessEffect }>(),
+
+  damage: text('damage', { mode: 'json' })
+    .$type<{
+      damage_type: DamageType
+      damage_at_character_level: Record<CharacterLevel, Die>
+    } | {
+      damage_type: DamageType
+      damage_at_slot_level: Record<SlotLevel, Die>
+    }>(),
 
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at'),

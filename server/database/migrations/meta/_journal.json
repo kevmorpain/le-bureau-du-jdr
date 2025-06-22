@@ -71,6 +71,20 @@
       "when": 1748618115599,
       "tag": "0009_lovely_liz_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1749935640155,
+      "tag": "0010_blushing_shinko_yamashiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1750417872274,
+      "tag": "0011_uneven_matthew_murdock",
+      "breakpoints": true
     }
   ]
 }

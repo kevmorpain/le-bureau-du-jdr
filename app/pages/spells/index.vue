@@ -104,6 +104,10 @@
           <p class="whitespace-pre-line leading-5">
             {{ spell.description }}
           </p>
+
+          <p v-if="spell.damage">
+            {{ spell.damage }}
+          </p>
         </div>
       </UCard>
     </li>
