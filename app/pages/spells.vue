@@ -1,9 +1,16 @@
 <template>
   <UContainer>
-    <UNavigationMenu
-      :items="items"
-      class="w-full justify-center"
-    />
+    <div class="flex items-center justify-between flex-wrap">
+      <UNavigationMenu
+        :items="items"
+        class="justify-center"
+      />
+
+      <CharacterSheetDrawer
+        v-model:open="isCharacterSheetDrawerOpen"
+        class="ml-auto"
+      />
+    </div>
 
     <NuxtPage />
   </UContainer>
@@ -32,4 +39,6 @@ const items = ref<NavigationMenuItem[]>([
     exact: true,
   },
 ])
+
+const isCharacterSheetDrawerOpen = ref<boolean>(false)
 </script>
