@@ -125,10 +125,10 @@ const toggleSpell = (spell: Spell): void => {
 
 const formatRange = (range: number): string => {
   if (range === 0) {
-    return 'Contact'
+    return 'Personnelle'
   }
   if (range === 1.5) {
-    return 'Personnelle'
+    return 'Contact'
   }
 
   return new Intl.NumberFormat('fr-FR', { style: 'unit', unit: 'meter' }).format(range)

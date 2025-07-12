@@ -11,4 +11,6 @@
 
 <script lang="ts" setup>
 const { spellBook } = useSpellbook()
+
+provide('isSpellbook', true)
 </script>

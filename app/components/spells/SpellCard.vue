@@ -95,13 +95,18 @@
       decorative
     />
 
-    <div>
-      <p class="whitespace-pre-line leading-5">
-        {{ spell.description }}
-      </p>
+    <div class="space-y-2">
+      <HealSection
+        v-if="spell.heal"
+        :spell
+      />
 
       <p v-if="spell.damage">
         {{ spell.damage }}
+      </p>
+
+      <p class="whitespace-pre-line leading-5">
+        {{ spell.description }}
       </p>
     </div>
   </UCard>
@@ -118,10 +123,10 @@ defineProps<{
 
 const formatRange = (range: number): string => {
   if (range === 0) {
-    return 'Contact'
+    return 'Personnelle'
   }
   if (range === 1.5) {
-    return 'Personnelle'
+    return 'Contact'
   }
 
   return new Intl.NumberFormat('fr-FR', { style: 'unit', unit: 'meter' }).format(range)

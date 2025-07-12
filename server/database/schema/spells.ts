@@ -69,6 +69,17 @@ const spells = sqliteTable('spells', {
       damage_at_slot_level: Record<SlotLevel, Die>
     }>(),
 
+  heal: text('heal', { mode: 'json' })
+    .$type<{
+      heal_type: 'hit_points' | 'temporary_hit_points'
+      heal_at_character_level: Record<CharacterLevel, Die>
+      isSpellcastingModifierAdded?: boolean
+    } | {
+      heal_type: 'hit_points' | 'temporary_hit_points'
+      heal_at_slot_level: Record<SlotLevel, Die>
+      isSpellcastingModifierAdded?: boolean
+    }>(),
+
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at'),
   deletedAt: text('deleted_at'),

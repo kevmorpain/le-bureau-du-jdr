@@ -1,0 +1,14 @@
+{
+  "ability_scores": {
+    "str": "Force",
+    "dex": "Dextérité",
+    "con": "Constitution",
+    "int": "Intelligence",
+    "wis": "Sagesse",
+    "cha": "Charisme"
+  },
+  "heal_types": {
+    "hit_points": "points de vie récupérés",
+    "temporary_hit_points": "points de vie temporaires"
+  }
+}

@@ -1,14 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 
-  modules: [
-    '@nuxt/eslint',
-    '@nuxt/image',
-    '@nuxt/test-utils',
-    '@nuxt/ui',
-    '@nuxthub/core',
-    '@vite-pwa/nuxt',
-  ],
+  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxthub/core', '@vite-pwa/nuxt', '@nuxtjs/i18n'],
 
   pages: true,
 
@@ -60,6 +53,13 @@ export default defineNuxtConfig({
         weights: ['400'],
         styles: ['normal', 'italic'],
       },
+    ],
+  },
+
+  i18n: {
+    defaultLocale: 'fr',
+    locales: [
+      { code: 'fr', name: 'Français', file: 'fr.json' },
     ],
   },
 

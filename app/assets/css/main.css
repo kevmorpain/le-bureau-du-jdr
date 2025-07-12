@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+@import "./palette";
+
 @theme {
   --font-inknut-antiqua: 'Inknut Antiqua', serif;
   --font-playfair: 'Playfair', serif;

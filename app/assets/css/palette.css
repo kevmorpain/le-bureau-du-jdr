@@ -1,0 +1,16 @@
+@theme {
+  --color-heal: #00CCFF;
+  --color-acid: #E9E935;
+  --color-bludgeoning: #B4B2B0;
+  --color-cold: #00CCFF;
+  --color-fire: #FF9900;
+  --color-force: #FF0000;
+  --color-lightning: #3366FF;
+  --color-necrotic: #339966;
+  --color-piercing: #B4B2B0;
+  --color-poison: #99CC00;
+  --color-psychic: #FF99CC;
+  --color-radiant: #FFCC00;
+  --color-slashing: #B4B2B0;
+  --color-thunder: #CC99FF;
+}
