@@ -16,6 +16,8 @@ export const useCharacterSheet = () => {
     return acc
   }, {}))
 
+  const characterLevel = useStorage<number>('characterLevel', 1)
+
   const proficiencyBonus = useStorage<number>('proficiencyBonus', 2)
 
   const spellcastingAbility = useStorage<string | null>('spellcastingAbility', null)
@@ -40,6 +42,7 @@ export const useCharacterSheet = () => {
   return {
     abilityScores,
     abilityModifiers,
+    characterLevel,
     proficiencyBonus,
     spellcastingAbility,
     spellcastingModifier,

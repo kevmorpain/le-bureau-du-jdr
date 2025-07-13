@@ -64,9 +64,11 @@ const spells = sqliteTable('spells', {
     .$type<{
       damage_type: DamageType
       damage_at_character_level: Record<CharacterLevel, Die>
+      isSpellcastingModifierAdded?: boolean
     } | {
       damage_type: DamageType
       damage_at_slot_level: Record<SlotLevel, Die>
+      isSpellcastingModifierAdded?: boolean
     }>(),
 
   heal: text('heal', { mode: 'json' })

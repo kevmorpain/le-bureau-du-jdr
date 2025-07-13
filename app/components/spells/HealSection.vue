@@ -29,7 +29,9 @@ const { t } = useI18n()
 const isSpellbook = inject<boolean>('isSpellbook', false)
 const { spellcastingModifier } = useCharacterSheet()
 
-const defaultDie = computed<string>(() => ('heal_at_character_level' in props.spell.heal! ? props.spell.heal!.heal_at_character_level : props.spell.heal!.heal_at_slot_level)![1]!)
+const slotLevel = ref<number>(props.spell.level)
+
+const defaultDie = computed<string>(() => ('heal_at_character_level' in props.spell.heal! ? props.spell.heal!.heal_at_character_level : props.spell.heal!.heal_at_slot_level)![slotLevel.value]!)
 
 const hasModifier = computed<boolean | undefined>(() => props.spell.heal!.isSpellcastingModifierAdded)
 
@@ -41,8 +43,14 @@ const dieText = computed<string>(() => {
       text += ` + ${spellcastingModifier.value}`
     }
     else {
-      text += ` + mod ${t(`heal_types.${props.spell.heal!.heal_type}`)}`
+      text += ' + mod'
     }
+  }
+
+  if (!isSpellbook) {
+    const count = isNumeric(defaultDie.value) ? Number(defaultDie.value) : 0
+
+    text += ` ${t(`heal_types.${props.spell.heal!.heal_type}`, count)}`
   }
 
   return text
@@ -51,23 +59,10 @@ const dieText = computed<string>(() => {
 const defaultDieText = computed<string>(() => {
   const { count, die } = parseDie(defaultDie.value)
 
-  const min = count
-  const max = count * die
   const modifier = hasModifier.value && spellcastingModifier.value ? spellcastingModifier.value : 0
+  const min = count + modifier
+  const max = count * die + modifier
 
-  return `${min + modifier}~${max + modifier} ${t(`heal_types.${props.spell.heal!.heal_type}`)}`
+  return `${min}${min !== max ? `~${max}` : ''} ${t(`heal_types.${props.spell.heal!.heal_type}`, Math.max(min, max))}`
 })
-
-function parseDie(value: string): { count: number, die: number } {
-  // Expects value like "2d8", "1d6", etc.
-  const match = value.match(/^(\d+)d(\d+)$/)
-  if (!match) {
-    return { count: 0, die: 0 }
-  }
-
-  return {
-    count: parseInt(match[1]!, 10),
-    die: parseInt(match[2]!, 10),
-  }
-}
 </script>

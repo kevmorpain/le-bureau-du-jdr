@@ -101,9 +101,7 @@
         :spell
       />
 
-      <p v-if="spell.damage">
-        {{ spell.damage }}
-      </p>
+      <DamageSection v-if="spell.damage" :spell />
 
       <p class="whitespace-pre-line leading-5">
         {{ spell.description }}

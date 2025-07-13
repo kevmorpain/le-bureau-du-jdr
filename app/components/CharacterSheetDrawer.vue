@@ -63,6 +63,16 @@
 
       <div class="space-y-4 md:space-y-0">
         <div class="md:flex gap-x-4 space-y-4">
+          <UFormField label="Niveau de personnage">
+            <UInput
+              v-model="characterLevel"
+              type="number"
+              min="1"
+              max="20"
+              class="w-14"
+            />
+          </UFormField>
+
           <UFormField label="Bonus de maîtrise">
             <UInput
               v-model="proficiencyBonus"
@@ -109,6 +119,7 @@ const open = defineModel<boolean>('open', {
 const {
   abilityScores,
   abilityModifiers,
+  characterLevel,
   proficiencyBonus,
   spellcastingAbility,
   spellSaveDC,
