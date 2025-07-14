@@ -39,6 +39,18 @@ export const useCharacterSheet = () => {
     return proficiencyBonus.value + abilityModifiers.value[spellcastingAbility.value]!
   })
 
+  const spellSlots = useStorage<Record<number, { max: number, current: number }>>('spellSlots', {
+    1: { max: 0, current: 0 },
+    2: { max: 0, current: 0 },
+    3: { max: 0, current: 0 },
+    4: { max: 0, current: 0 },
+    5: { max: 0, current: 0 },
+    6: { max: 0, current: 0 },
+    7: { max: 0, current: 0 },
+    8: { max: 0, current: 0 },
+    9: { max: 0, current: 0 },
+  })
+
   return {
     abilityScores,
     abilityModifiers,
@@ -46,7 +58,8 @@ export const useCharacterSheet = () => {
     proficiencyBonus,
     spellcastingAbility,
     spellcastingModifier,
-    spellSaveDC,
     spellAttackModifier,
+    spellSaveDC,
+    spellSlots,
   }
 }
