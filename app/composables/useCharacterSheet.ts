@@ -51,9 +51,20 @@ export const useCharacterSheet = () => {
     9: { max: 0, current: 0 },
   })
 
+  const availableSpellSlots = computed(() => {
+    return Object.entries(spellSlots.value).reduce<number[]>((acc, [level, slots]) => {
+      if (slots.max > 0 && slots.current < slots.max) {
+        acc.push(Number(level))
+      }
+
+      return acc
+    }, [])
+  })
+
   return {
     abilityScores,
     abilityModifiers,
+    availableSpellSlots,
     characterLevel,
     proficiencyBonus,
     spellcastingAbility,

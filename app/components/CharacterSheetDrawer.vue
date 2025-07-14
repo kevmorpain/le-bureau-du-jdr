@@ -138,7 +138,7 @@
                   :class="{
                     'bg-primary': n <= spellSlots[level]!.current,
                   }"
-                  @click="spellSlots[level]!.current = n"
+                  @click="setCurrentSpellSlot(level, n)"
                 />
               </ul>
 
@@ -187,6 +187,14 @@ const decrementMaxSpellSlot = (level: number) => {
     if (spellSlots.value[level]!.current > spellSlots.value[level]!.max) {
       spellSlots.value[level]!.current = spellSlots.value[level]!.max
     }
+  }
+}
+
+const setCurrentSpellSlot = (level: number, n: number) => {
+  if (n === spellSlots.value[level]!.current) {
+    spellSlots.value[level]!.current--
+  } else if (n <= spellSlots.value[level]!.max) {
+    spellSlots.value[level]!.current = n
   }
 }
 </script>
