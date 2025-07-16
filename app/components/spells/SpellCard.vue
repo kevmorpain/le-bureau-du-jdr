@@ -35,7 +35,7 @@
         </li>
         <li v-if="spell.dc">
           <ShieldIcon class="flex-none size-6 mx-auto" />
-          JdS de {{ spell.dc.ability }}
+          JdS de {{ $t(`ability_scores.${spell.dc.ability}`) }}
         </li>
         <li
           v-if="spell.ritual"

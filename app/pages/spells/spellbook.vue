@@ -39,7 +39,7 @@ const filteredSpellBook = computed(() => {
   if (!areSpellsFiltered.value) return spellBook.value
 
   return spellBook.value.filter((spell) => {
-    return availableSpellSlots.value.includes(spell.level) || spell.level === 0
+    return spell.level === 0 || availableSpellSlots.value.includes(spell.level)
   })
 })
 </script>

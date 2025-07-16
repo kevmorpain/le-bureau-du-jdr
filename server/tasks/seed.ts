@@ -13,7 +13,7 @@ export default defineTask({
       seed.damageTypes(),
       seed.magicSchools(),
     ])
-    await seed.spells() // needs magicSchools to be seeded first
+    await seed.spells()
 
     return { result: 'success' }
   },

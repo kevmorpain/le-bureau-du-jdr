@@ -6,3 +6,8 @@ export default createConfigForNuxt({
     stylistic: true,
   },
 })
+  .append({
+    rules: {
+      '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: true }],
+    },
+  })
