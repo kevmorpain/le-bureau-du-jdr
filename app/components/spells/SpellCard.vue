@@ -14,7 +14,7 @@
             <span class="absolute -top-1">{{ spell.level }}</span>
           </p>
 
-          <p>{{ spell.school?.name }}</p>
+          <p>{{ $t(`schools.${spell.school!.name}`) }}</p>
         </div>
       </div>
     </template>
@@ -101,7 +101,10 @@
         :spell
       />
 
-      <DamageSection v-if="spell.damage" :spell />
+      <DamageSection
+        v-if="spell.damage"
+        :spell
+      />
 
       <p class="whitespace-pre-line leading-5">
         {{ spell.description }}

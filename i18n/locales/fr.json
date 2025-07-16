@@ -25,5 +25,15 @@
     "psychic": "psychique | psychiques",
     "radiant": "radiant | radiants",
     "slashing": "tranchant | tranchants"
+  },
+  "schools": {
+    "Abjuration": "Abjuration",
+    "Conjuration": "Conjuration",
+    "Divination": "Divination",
+    "Enchantment": "Enchantement",
+    "Evocation": "Évocation",
+    "Illusion": "Illusion",
+    "Necromancy": "Nécromancie",
+    "Transmutation": "Transmutation"
   }
 }

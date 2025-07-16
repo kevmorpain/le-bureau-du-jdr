@@ -37,7 +37,7 @@
               </li>
               <li v-if="spell.dc">
                 <ShieldIcon class="flex-none size-6 mx-auto" />
-                JdS de {{ spell.dc.ability }}
+                JdS de {{ $t(`ability_scores.${spell.dc.ability}`) }}
               </li>
               <li
                 v-if="spell.ritual"
@@ -87,7 +87,7 @@
           </div>
 
           <div class="area-school text-right justify-end flex items-center gap-x-2">
-            <p>{{ spell.school?.name }}</p>
+            <p>{{ $t(`schools.${spell.school!.name}`) }}</p>
 
             <p class="bg-pink-950 text-white rounded-full size-8 flex items-center justify-center text-2xl font-inknut-antiqua relative">
               <span class="absolute -top-1">{{ spell.level }}</span>
@@ -117,8 +117,7 @@ const isSelected = (spell: Spell): boolean => {
 const toggleSpell = (spell: Spell): void => {
   if (isSelected(spell)) {
     spellBook.value = spellBook.value.filter(s => s.id !== spell.id)
-  }
-  else {
+  } else {
     spellBook.value.push(spell)
   }
 }
@@ -127,6 +126,7 @@ const formatRange = (range: number): string => {
   if (range === 0) {
     return 'Personnelle'
   }
+
   if (range === 1.5) {
     return 'Contact'
   }
