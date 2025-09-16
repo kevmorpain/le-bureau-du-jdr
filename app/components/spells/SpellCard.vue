@@ -38,7 +38,7 @@
           JdS de {{ $t(`ability_scores.${spell.dc.ability}`) }}
         </li>
         <li
-          v-if="spell.ritual"
+          v-if="spell.concentration"
         >
           <UTooltip
             :delay-duration="0"
@@ -70,7 +70,7 @@
         </li>
 
         <li
-          v-if="spell.concentration"
+          v-if="spell.ritual"
         >
           <UTooltip
             :delay-duration="0"
