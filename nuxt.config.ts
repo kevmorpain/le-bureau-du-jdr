@@ -19,10 +19,8 @@ export default defineNuxtConfig({
     },
   },
   css: ['~/assets/css/main.css'],
-  future: {
-    compatibilityVersion: 4,
-  },
-  compatibilityDate: '2024-11-01',
+
+  compatibilityDate: '2025-10-15',
 
   // to seed database
   nitro: {
