@@ -37,5 +37,25 @@
     "Transmutation": "Transmutation"
   },
   "ritual": "Rituel",
-  "concentration": "Concentration"
+  "concentration": "Concentration",
+  "new_spell": {
+    "title": "Nouveau sort",
+    "name": "Nom",
+    "level": "Niveau",
+    "magic_school": "École de magie",
+    "casting_time": "Temps d'incantation",
+    "range": "Portée (en mètres)",
+    "components": "Composantes",
+    "components_options": {
+      "Vocal": "V (verbale)",
+      "Somatic": "S (somatique)",
+      "Material": "M (matérielle)"
+    },
+    "material": "Matériel",
+    "duration": "Durée",
+    "ritual": "Rituel",
+    "concentration": "Concentration",
+    "description": "Description",
+    "submit": "Créer le sort"
+  }
 }

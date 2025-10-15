@@ -4,11 +4,11 @@
     :state="spell"
     @submit="handleFormSubmit"
   >
-    <UFormField label="Name">
+    <UFormField :label="$t('new_spell.name')">
       <UInput v-model="spell.name" />
     </UFormField>
 
-    <UFormField label="Level">
+    <UFormField :label="$t('new_spell.level')">
       <UInputNumber
         v-model="spell.level"
         :min="0"
@@ -16,7 +16,7 @@
       />
     </UFormField>
 
-    <UFormField label="Magic School">
+    <UFormField :label="$t('new_spell.magic_school')">
       <USelect
         v-model="spell.schoolId"
         class="w-48"
@@ -25,18 +25,18 @@
       />
     </UFormField>
 
-    <UFormField label="Casting time">
+    <UFormField :label="$t('new_spell.casting_time')">
       <UInput v-model="spell.castingTime" />
     </UFormField>
 
-    <UFormField label="Range">
+    <UFormField :label="$t('new_spell.range')">
       <UInput
         v-model="spell.range"
         type="number"
       />
     </UFormField>
 
-    <UFormField label="Composants">
+    <UFormField :label="$t('new_spell.components')">
       <USelect
         v-model="spell.components"
         class="w-48"
@@ -48,31 +48,31 @@
 
     <UFormField
       v-if="spell.components?.includes(SpellComponent.Material)"
-      label="Material"
+      :label="$t('new_spell.material')"
     >
       <UTextarea v-model="spell.material" />
     </UFormField>
 
-    <UFormField label="Duration">
+    <UFormField :label="$t('new_spell.duration')">
       <UInput v-model="spell.duration" />
     </UFormField>
 
     <UCheckbox
       v-model="spell.ritual"
-      label="Ritual"
+      :label="$t('new_spell.ritual')"
     />
 
     <UCheckbox
       v-model="spell.concentration"
-      label="Concentration"
+      :label="$t('new_spell.concentration')"
     />
 
-    <UFormField label="Description">
+    <UFormField :label="$t('new_spell.description')">
       <UTextarea v-model="spell.description" />
     </UFormField>
 
     <UButton type="submit">
-      Submit
+      {{ $t('new_spell.submit') }}
     </UButton>
   </UForm>
 </template>
@@ -81,11 +81,13 @@
 import type { InsertSpell, MagicSchool } from '~~/server/utils/drizzle'
 import { SpellComponent } from '~~/server/database/schema/spells'
 
+const { t } = useI18n()
+
 const componentItems = computed<{
   label: string
   id: SpellComponent
 }[]>(() => Object.entries(SpellComponent).map(([label, id]) => ({
-  label,
+  label: t(`new_spell.components_options.${label}`),
   id,
 })))
 
@@ -96,7 +98,7 @@ const magicSchoolsItems = computed<{
   id: number
 }[]>(() => {
   return magicSchools.value?.map(school => ({
-    label: school.name,
+    label: t(`schools.${school.name}`),
     id: school.id,
   })) ?? []
 })
