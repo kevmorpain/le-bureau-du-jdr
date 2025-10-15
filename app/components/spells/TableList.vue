@@ -46,7 +46,7 @@
                   :delay-duration="0"
                   :content="{ side: 'top' }"
                   arrow
-                  text="Concentration"
+                  :text="$t('concentration')"
                 >
                   <ConcentrationIcon class="flex-none size-6 mx-auto" />
                 </UTooltip>
@@ -78,7 +78,7 @@
                   :delay-duration="0"
                   :content="{ side: 'top' }"
                   arrow
-                  text="Ritual"
+                  :text="$t('ritual')"
                 >
                   <MagicSquareIcon class="flex-none size-6 mx-auto" />
                 </UTooltip>

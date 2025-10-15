@@ -35,5 +35,7 @@
     "Illusion": "Illusion",
     "Necromancy": "Nécromancie",
     "Transmutation": "Transmutation"
-  }
+  },
+  "ritual": "Rituel",
+  "concentration": "Concentration"
 }
