@@ -1,19 +1,28 @@
 <template>
-  <UContainer>
-    <div class="flex items-center justify-between flex-wrap">
-      <UNavigationMenu
-        :items="items"
-        class="justify-center"
-      />
+  <UHeader>
+    <template #left>
+      <Logo class="w-auto h-10 shrink-0" />
+    </template>
 
+    <UNavigationMenu
+      :items="items"
+      class="justify-center"
+    />
+
+    <template #right>
       <CharacterSheetDrawer
-        v-model:open="isCharacterSheetDrawerOpen"
         class="ml-auto"
       />
-    </div>
+    </template>
+  </UHeader>
 
-    <NuxtPage />
-  </UContainer>
+  <UMain>
+    <UPage>
+      <UContainer>
+        <NuxtPage />
+      </UContainer>
+    </UPage>
+  </UMain>
 </template>
 
 <script setup lang="ts">
@@ -39,6 +48,4 @@ const items = ref<NavigationMenuItem[]>([
     exact: true,
   },
 ])
-
-const isCharacterSheetDrawerOpen = ref<boolean>(false)
 </script>

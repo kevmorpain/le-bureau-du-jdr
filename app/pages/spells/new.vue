@@ -1,80 +1,96 @@
 <template>
-  <UForm
-    class="space-y-4 w-full max-w-2xl"
-    :state="spell"
-    @submit="handleFormSubmit"
-  >
-    <UFormField :label="$t('new_spell.name')">
-      <UInput v-model="spell.name" />
-    </UFormField>
+  <UPageHeader :title="$t('new_spell.title')" />
 
-    <UFormField :label="$t('new_spell.level')">
-      <UInputNumber
-        v-model="spell.level"
-        :min="0"
-        :max="9"
-      />
-    </UFormField>
-
-    <UFormField :label="$t('new_spell.magic_school')">
-      <USelect
-        v-model="spell.schoolId"
-        class="w-48"
-        :items="magicSchoolsItems"
-        value-key="id"
-      />
-    </UFormField>
-
-    <UFormField :label="$t('new_spell.casting_time')">
-      <UInput v-model="spell.castingTime" />
-    </UFormField>
-
-    <UFormField :label="$t('new_spell.range')">
-      <UInput
-        v-model="spell.range"
-        type="number"
-      />
-    </UFormField>
-
-    <UFormField :label="$t('new_spell.components')">
-      <USelect
-        v-model="spell.components"
-        class="w-48"
-        :items="componentItems"
-        value-key="id"
-        multiple
-      />
-    </UFormField>
-
-    <UFormField
-      v-if="spell.components?.includes(SpellComponent.Material)"
-      :label="$t('new_spell.material')"
+  <UPageBody>
+    <UForm
+      class="space-y-4 w-full max-w-2xl mx-auto"
+      :state="spell"
+      @submit="handleFormSubmit"
     >
-      <UTextarea v-model="spell.material" />
-    </UFormField>
+      <UFormField :label="$t('new_spell.name')">
+        <UInput v-model="spell.name" />
+      </UFormField>
 
-    <UFormField :label="$t('new_spell.duration')">
-      <UInput v-model="spell.duration" />
-    </UFormField>
+      <div class="grid grid-cols-2 items-center space-x-4">
+        <UFormField :label="$t('new_spell.magic_school')">
+          <USelect
+            v-model="spell.schoolId"
+            :items="magicSchoolsItems"
+            value-key="id"
+          />
+        </UFormField>
 
-    <UCheckbox
-      v-model="spell.ritual"
-      :label="$t('new_spell.ritual')"
-    />
+        <UFormField :label="$t('new_spell.level')">
+          <UInputNumber
+            v-model="spell.level"
+            :min="0"
+            :max="9"
+          />
+        </UFormField>
+      </div>
 
-    <UCheckbox
-      v-model="spell.concentration"
-      :label="$t('new_spell.concentration')"
-    />
+      <div class="grid grid-cols-2 items-center space-x-4">
+        <UFormField :label="$t('new_spell.casting_time')">
+          <UInput v-model="spell.castingTime" />
+        </UFormField>
 
-    <UFormField :label="$t('new_spell.description')">
-      <UTextarea v-model="spell.description" />
-    </UFormField>
+        <UFormField :label="$t('new_spell.range')">
+          <UInput
+            v-model="spell.range"
+            type="number"
+          />
+        </UFormField>
+      </div>
 
-    <UButton type="submit">
-      {{ $t('new_spell.submit') }}
-    </UButton>
-  </UForm>
+      <div class="grid grid-cols-2 items-center space-x-4">
+        <UFormField :label="$t('new_spell.components')">
+          <USelect
+            v-model="spell.components"
+            :items="componentItems"
+            value-key="id"
+            multiple
+          />
+        </UFormField>
+
+        <UFormField :label="$t('new_spell.duration')">
+          <UInput v-model="spell.duration" />
+        </UFormField>
+      </div>
+
+      <UFormField
+        v-if="spell.components?.includes(SpellComponent.Material)"
+        :label="$t('new_spell.material')"
+      >
+        <UTextarea
+          v-model="spell.material"
+          :rows="1"
+        />
+      </UFormField>
+
+      <UCheckbox
+        v-model="spell.ritual"
+        :label="$t('new_spell.ritual')"
+      />
+
+      <UCheckbox
+        v-model="spell.concentration"
+        :label="$t('new_spell.concentration')"
+      />
+
+      <UFormField :label="$t('new_spell.description')">
+        <UTextarea
+          v-model="spell.description"
+          :rows="10"
+        />
+      </UFormField>
+
+      <div class="text-center">
+        <UButton type="submit">
+          {{ $t('new_spell.submit') }}
+        </UButton>
+      </div>
+    </UForm>
+  </UPageBody>
 </template>
 
 <script lang="ts" setup>
@@ -117,10 +133,29 @@ const spell = ref<InsertSpell>({
   schoolId: 1,
 })
 
+const toaster = useToast()
+
 const handleFormSubmit = async () => {
-  await $fetch<InsertSpell>('/api/spells', {
-    method: 'POST',
-    body: spell.value,
-  })
+  try {
+    if (!spell.value.name) {
+      throw new Error('Spell name is required.')
+    }
+
+    await $fetch<InsertSpell>('/api/spells', {
+      method: 'POST',
+      body: spell.value,
+    })
+
+    toaster.add({
+      title: $t('toasts.insert_spell.success'),
+      color: 'success',
+    })
+  } catch (error) {
+    toaster.add({
+      title: $t('toasts.insert_spell.error'),
+      description: error instanceof Error ? error.message : String(error),
+      color: 'error',
+    })
+  }
 }
 </script>

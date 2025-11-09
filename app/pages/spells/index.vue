@@ -1,19 +1,21 @@
 <template>
-  <div class="space-y-4">
-    <UTabs
-      v-model="selectedList"
-      class="w-min ml-auto"
-      :items="listItems"
-      :content="false"
-    />
-
-    <div v-if="data">
-      <Component
-        :is="selectedComponent"
-        :spells="data"
+  <UPageBody>
+    <div class="space-y-4">
+      <UTabs
+        v-model="selectedList"
+        class="w-min ml-auto"
+        :items="listItems"
+        :content="false"
       />
+
+      <div v-if="data">
+        <Component
+          :is="selectedComponent"
+          :spells="data"
+        />
+      </div>
     </div>
-  </div>
+  </UPageBody>
 </template>
 
 <script setup lang="ts">

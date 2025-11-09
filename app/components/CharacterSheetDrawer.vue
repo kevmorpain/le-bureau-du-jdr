@@ -156,9 +156,7 @@
 </template>
 
 <script lang="ts" setup>
-const open = defineModel<boolean>('open', {
-  required: true,
-})
+const open = ref<boolean>(false)
 
 const {
   abilityScores,

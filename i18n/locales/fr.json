@@ -39,7 +39,7 @@
   "ritual": "Rituel",
   "concentration": "Concentration",
   "new_spell": {
-    "title": "Nouveau sort",
+    "title": "Ajouter un sort",
     "name": "Nom",
     "level": "Niveau",
     "magic_school": "École de magie",
@@ -56,6 +56,13 @@
     "ritual": "Rituel",
     "concentration": "Concentration",
     "description": "Description",
-    "submit": "Créer le sort"
+    "submit": "Ajouter le sort"
+  },
+
+  "toasts": {
+    "insert_spell": {
+      "success": "Le sort a été ajouté avec succès.",
+      "error": "Une erreur est survenue lors de l'ajout du sort."
+    }
   }
 }

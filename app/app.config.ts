@@ -6,5 +6,29 @@ export default defineAppConfig({
       neutral: 'zinc',
       warning: 'orange',
     },
+
+    input: {
+      slots: {
+        root: 'w-full',
+      },
+    },
+
+    inputNumber: {
+      slots: {
+        root: 'w-full',
+      },
+    },
+
+    textarea: {
+      slots: {
+        root: 'w-full',
+      },
+    },
+
+    select: {
+      slots: {
+        base: 'w-full',
+      },
+    },
   },
 })

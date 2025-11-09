@@ -9,5 +9,6 @@ export default createConfigForNuxt({
   .append({
     rules: {
       '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: true }],
+      'vue/no-multiple-template-root': ['off'],
     },
   })
