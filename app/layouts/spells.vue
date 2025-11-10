@@ -8,7 +8,6 @@
 
     <UNavigationMenu
       :items="items"
-      class="justify-center"
     />
 
     <template #right>

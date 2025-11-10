@@ -1,4 +1,15 @@
 {
+  "home": {
+    "hero": {
+      "title": "Gère ton {highlight} comme un vrai MJ",
+      "title_highlight": "JDR",
+      "description": "Tous les outils (presque) pour gérer ta campagne de jeu de rôle. Création de personnages, gestion des sorts, feuilles de personnages, et bien plus encore !",
+      "links": [
+        "Accéder aux sorts"
+      ]
+    }
+  },
+
   "ability_scores": {
     "str": "Force",
     "dex": "Dextérité",
