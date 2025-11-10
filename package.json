@@ -21,6 +21,7 @@
     "drizzle-orm": "^0.44.7",
     "eslint": "^9.39.1",
     "nuxt": "^4.2.0",
+    "nuxt-zod-i18n": "^1.12.1",
     "typescript": "^5.9.3",
     "vue": "^3.5.23",
     "vue-router": "^4.6.3"
