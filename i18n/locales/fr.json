@@ -73,7 +73,25 @@
   "toasts": {
     "insert_spell": {
       "success": "Le sort a été ajouté avec succès.",
-      "error": "Une erreur est survenue lors de l'ajout du sort."
+      "error": "Une erreur est survenue lors de l'ajout du sort.",
+      "422": "Les données fournies sont invalides. Veuillez vérifier le formulaire et réessayer."
+    }
+  },
+
+  "zodI18n": {
+    "errors": {
+      "too_small": {
+        "string": {
+          "inclusive": "Doit contenir au moins {minimum} caractère | Doit contenir au moins {minimum} caractères"
+        },
+        "number": {
+          "inclusive": "Doit être supérieur à {minimum}"
+        },
+        "array": {
+          "inclusive": "Doit contenir au moins {minimum} élément | Doit contenir au moins {minimum} éléments"
+        }
+      },
+      "missing_material_component": "Matériel : est requis lorsque la composante matérielle est sélectionnée."
     }
   }
 }

@@ -1,9 +1,14 @@
-import type { InsertSpell } from '../utils/drizzle'
+export default defineEventHandler(async (event) => {
+  const result = await readValidatedBody(event, spellSchema.safeParse)
 
-export default eventHandler(async (event) => {
-  const spell = await readBody<InsertSpell>(event)
+  if (!result.success) {
+    throw createError({
+      statusCode: 422,
+      data: result.error,
+    })
+  }
 
-  const response = await useDrizzle().insert(tables.spells).values(spell).returning().get()
+  const response = await useDrizzle().insert(tables.spells).values(result.data).returning().get()
 
   return response
 })

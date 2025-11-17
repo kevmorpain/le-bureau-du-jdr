@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 
-  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxthub/core', '@vite-pwa/nuxt', '@nuxtjs/i18n', 'nuxt-zod-i18n'],
+  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxthub/core', '@vite-pwa/nuxt', 'nuxt-zod-i18n', '@nuxtjs/i18n'],
 
   pages: true,
 
@@ -69,7 +69,7 @@ export default defineNuxtConfig({
       name: 'Le Bureau du JDR',
       short_name: 'Bureau JDR',
       description: 'Le Bureau du JDR est un site dédié aux jeux de rôle, proposant des ressources, des outils et des informations pour les joueurs et les maîtres de jeu.',
-      theme_color: '#6D597A',
+      theme_color: '#FFB900',
       icons: [
         {
           src: '/img/icons/android-chrome-192x192.png',
@@ -85,6 +85,12 @@ export default defineNuxtConfig({
     },
     workbox: {
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+    },
+  },
+
+  zodI18n: {
+    localeCodesMapping: {
+      'fr-FR': 'fr',
     },
   },
 })

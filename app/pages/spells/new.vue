@@ -96,6 +96,8 @@
 <script lang="ts" setup>
 import type { InsertSpell, MagicSchool } from '~~/server/utils/drizzle'
 import { SpellComponent } from '~~/server/database/schema/spells'
+import { FetchError } from 'ofetch'
+import type { core } from 'zod/v4'
 
 const { t } = useI18n()
 
@@ -137,10 +139,6 @@ const toaster = useToast()
 
 const handleFormSubmit = async () => {
   try {
-    if (!spell.value.name) {
-      throw new Error('Spell name is required.')
-    }
-
     await $fetch<InsertSpell>('/api/spells', {
       method: 'POST',
       body: spell.value,
@@ -151,11 +149,26 @@ const handleFormSubmit = async () => {
       color: 'success',
     })
   } catch (error) {
-    toaster.add({
-      title: $t('toasts.insert_spell.error'),
-      description: error instanceof Error ? error.message : String(error),
-      color: 'error',
-    })
+    if (error instanceof FetchError) {
+      console.log(error.data)
+      const issues = (error.data.data.issues) as core.$ZodIssue[]
+
+      issues.forEach((issue) => {
+        console.log(issue.message, issue.path.map(p => toSnakeCase(String(p))).join('.'))
+      })
+
+      toaster.add({
+        title: $t('toasts.insert_spell.error'),
+        description: t('toasts.insert_spell.422'),
+        color: 'error',
+      })
+    } else {
+      toaster.add({
+        title: $t('toasts.insert_spell.error'),
+        description: error instanceof Error ? error.message : String(error),
+        color: 'error',
+      })
+    }
   }
 }
 </script>
