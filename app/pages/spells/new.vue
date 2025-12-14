@@ -77,6 +77,76 @@
         :label="$t('new_spell.concentration')"
       />
 
+      <div class="flex items-center gap-x-2">
+        <p>{{ $t('new_spell.dc.label') }}</p>
+
+        <UButton
+          type="button"
+          color="neutral"
+          variant="soft"
+          :icon="isDcVisible ? 'heroicons:minus' : 'heroicons:plus'"
+          class="rounded-full"
+          size="xs"
+          @click="isDcVisible ? clearDc() : initDc()"
+        />
+      </div>
+
+      <div
+        v-if="isDcVisible"
+        class="grid grid-cols-2 items-center space-x-4 bg-muted p-4 rounded-md"
+      >
+        <UFormField :label="$t('new_spell.dc.ability_score_label')">
+          <USelect
+            v-model="spell.dc!.ability"
+            :items="abilityScores"
+            value-key="id"
+          />
+        </UFormField>
+
+        <UFormField :label="$t('new_spell.dc.success_effect_label')">
+          <USelect
+            v-model="spell.dc!.success"
+            :items="successEffectOptions"
+            value-key="id"
+          />
+        </UFormField>
+      </div>
+
+      <div class="flex items-center gap-x-2">
+        <p>{{ $t('new_spell.damage.label') }}</p>
+
+        <UButton
+          type="button"
+          color="neutral"
+          variant="soft"
+          :icon="isDamageCollapsibleVisible ? 'heroicons:minus' : 'heroicons:plus'"
+          class="rounded-full"
+          size="xs"
+          @click="isDamageCollapsibleVisible ? clearDamage() : initDamage()"
+        />
+      </div>
+
+      <div
+        v-if="isDamageCollapsibleVisible"
+        class="grid grid-cols-2 items-center space-x-4 bg-muted p-4 rounded-md"
+      >
+        <UFormField :label="$t('new_spell.damage.type_label')">
+          <USelect
+            v-model="spell.damage!.damage_type"
+            :items="damageTypesOptions"
+            value-key="id"
+          />
+        </UFormField>
+
+        <UFormField :label="$t('new_spell.damage.which_level_label')">
+          <USelect
+            v-model="damageLevelKind"
+            :items="successEffectOptions"
+            value-key="id"
+          />
+        </UFormField>
+      </div>
+
       <UFormField :label="$t('new_spell.description')">
         <UTextarea
           v-model="spell.description"
@@ -95,11 +165,11 @@
 
 <script lang="ts" setup>
 import type { InsertSpell, MagicSchool } from '~~/server/utils/drizzle'
-import { SpellComponent } from '~~/server/database/schema/spells'
+import { AbilityScore, DamageType, SpellComponent } from '~~/server/database/schema/spells'
 import { FetchError } from 'ofetch'
 import type { core } from 'zod/v4'
 
-const { t } = useI18n()
+const { rt, t, tm } = useI18n()
 
 const componentItems = computed<{
   label: string
@@ -121,6 +191,30 @@ const magicSchoolsItems = computed<{
   })) ?? []
 })
 
+const abilityScores = computed<{
+  label: string
+  id: AbilityScore
+}[]>(() => Object.entries(tm('ability_scores')).map(([value, label]) => ({
+  label: rt(label),
+  id: value as AbilityScore,
+})))
+
+const successEffectOptions = computed<{
+  label: string
+  id: string
+}[]>(() => Object.entries(tm('new_spell.dc.success_effect_options')).map(([value, label]) => ({
+  label: rt(label),
+  id: value,
+})))
+
+const damageTypesOptions = computed<{
+  label: string
+  id: string
+}[]>(() => Object.entries(tm('damage_types')).map(([value, label]) => ({
+  label: rt(label).charAt(0).toUpperCase() + rt(label).slice(1),
+  id: value,
+})))
+
 const spell = ref<InsertSpell>({
   name: '',
   level: 0,
@@ -133,7 +227,42 @@ const spell = ref<InsertSpell>({
   concentration: false,
   description: '',
   schoolId: 1,
+  dc: null,
+  damage: null,
+  heal: null,
 })
+
+const isDcVisible = ref(false)
+
+const initDc = () => {
+  isDcVisible.value = true
+  spell.value.dc = {
+    ability: AbilityScore.Strength,
+    success: undefined,
+  }
+}
+
+const clearDc = () => {
+  isDcVisible.value = false
+  spell.value.dc = null
+}
+
+const isDamageCollapsibleVisible = ref(false)
+const damageLevelKinds = ['character_level', 'slot_level'] as const
+const damageLevelKind = ref<typeof damageLevelKinds[number]>(damageLevelKinds[0])
+
+const initDamage = () => {
+  isDamageCollapsibleVisible.value = true
+  spell.value.damage = {
+    damage_type: DamageType.Acid,
+    damage_at_character_level: {},
+  }
+}
+
+const clearDamage = () => {
+  isDamageCollapsibleVisible.value = false
+  spell.value.damage = null
+}
 
 const toaster = useToast()
 

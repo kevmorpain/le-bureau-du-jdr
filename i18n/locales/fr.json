@@ -66,6 +66,21 @@
     "duration": "Durée",
     "ritual": "Rituel",
     "concentration": "Concentration",
+    "dc": {
+      "label": "Jet de sauvegarde",
+      "ability_score_label": "Caractéristique",
+      "success_effect_label": "Effet en cas de réussite",
+      "success_effect_options": {
+        "none": "Aucun effet",
+        "half_damage": "Moitié des dégâts",
+        "other": "Autre"
+      }
+    },
+    "damage": {
+      "label": "Dégâts",
+      "type_label": "Type de dégâts",
+      "damage_level_kind_label": "Niveau des dégâts"
+    },
     "description": "Description",
     "submit": "Ajouter le sort"
   },
