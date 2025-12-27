@@ -9,6 +9,13 @@
     <UNavigationMenu
       :items="items"
     />
+
+    <template #body>
+      <UNavigationMenu
+        :items
+        orientation="vertical"
+      />
+    </template>
   </UHeader>
 
   <UMain>

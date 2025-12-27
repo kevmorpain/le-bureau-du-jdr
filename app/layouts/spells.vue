@@ -7,8 +7,15 @@
     </template>
 
     <UNavigationMenu
-      :items="items"
+      :items
     />
+
+    <template #body>
+      <UNavigationMenu
+        :items
+        orientation="vertical"
+      />
+    </template>
 
     <template #right>
       <CharacterSheetDrawer
