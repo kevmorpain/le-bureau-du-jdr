@@ -1,4 +1,4 @@
-import * as seed from '../database/seeds'
+import * as seed from '../db/seeds'
 
 export default defineTask({
   meta: {

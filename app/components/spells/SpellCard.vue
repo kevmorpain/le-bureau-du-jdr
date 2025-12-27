@@ -116,7 +116,7 @@
 <script lang="ts" setup>
 import type { Component } from 'vue'
 import { CauldronIcon, HandGestureIcon, VoiceActivateIcon } from '#components'
-import { SpellComponent } from '~~/server/database/schema/spells'
+import { SpellComponent } from '~~/server/db/schema/spells'
 
 defineProps<{
   spell: Spell

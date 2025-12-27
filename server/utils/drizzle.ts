@@ -4,14 +4,15 @@ import type {
   Many,
   InferSelectModel,
 } from 'drizzle-orm'
-import * as schema from '../database/schema'
+import * as schema from '../db/schema'
+import { db } from 'hub:db'
 
 export { sql, eq, and, or } from 'drizzle-orm'
 
 export const tables = schema
 
 export function useDrizzle() {
-  return drizzle(hubDatabase(), { schema })
+  return drizzle(db, { schema })
 }
 
 type Schema = typeof schema

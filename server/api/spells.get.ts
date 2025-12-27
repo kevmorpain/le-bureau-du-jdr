@@ -1,5 +1,7 @@
+import { db } from 'hub:db'
+
 export default defineEventHandler(async () => {
-  return await useDrizzle()
+  return await db
     .query
     .spells
     .findMany({

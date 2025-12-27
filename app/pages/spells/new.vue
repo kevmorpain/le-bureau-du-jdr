@@ -165,7 +165,7 @@
 
 <script lang="ts" setup>
 import type { InsertSpell, MagicSchool } from '~~/server/utils/drizzle'
-import { AbilityScore, DamageType, SpellComponent } from '~~/server/database/schema/spells'
+import { AbilityScore, DamageType, SpellComponent } from '~~/server/db/schema/spells'
 import { FetchError } from 'ofetch'
 import type { core } from 'zod/v4'
 

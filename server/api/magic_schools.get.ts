@@ -1,7 +1,8 @@
-import magicSchools from '../database/schema/magic_schools'
+import { db } from 'hub:db'
+import magicSchools from '../db/schema/magic_schools'
 
 export default defineEventHandler(async () => {
-  return await useDrizzle()
+  return await db
     .select()
     .from(magicSchools)
 })

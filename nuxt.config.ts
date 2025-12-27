@@ -20,18 +20,22 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
 
-  compatibilityDate: '2025-10-15',
+  compatibilityDate: '2025-12-27',
 
   // to seed database
   nitro: {
     experimental: {
       tasks: true,
     },
+    preset: 'cloudflare_module',
+    cloudflare: {
+      deployConfig: true,
+      nodeCompat: true,
+    },
   },
 
   hub: {
-    workers: true,
-    database: true,
+    db: 'sqlite',
   },
 
   fonts: {

@@ -1,3 +1,5 @@
+import { db } from 'hub:db'
+
 export default defineEventHandler(async (event) => {
   const result = await readValidatedBody(event, spellSchema.safeParse)
 
@@ -8,7 +10,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const response = await useDrizzle().insert(tables.spells).values(result.data).returning().get()
+  const response = await db.insert(tables.spells).values(result.data).returning().get()
 
   return response
 })

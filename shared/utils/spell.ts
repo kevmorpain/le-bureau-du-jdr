@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SpellComponent } from '~~/server/database/schema/spells'
+import { SpellComponent } from '~~/server/db/schema/spells'
 
 export const spellSchema = z.object({
   name: z.string().min(1).max(100),
