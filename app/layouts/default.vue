@@ -32,6 +32,11 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 const items = ref<NavigationMenuItem[]>([
   {
+    label: 'Personnage',
+    icon: 'heroicons-outline:identification',
+    to: '/character',
+  },
+  {
     label: 'Sorts',
     icon: 'heroicons-outline:book-open',
     to: '/spells',

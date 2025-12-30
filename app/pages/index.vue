@@ -30,18 +30,20 @@
 </template>
 
 <script lang="ts" setup>
-const links = ref([
+import type { ButtonProps } from '@nuxt/ui'
+
+const links = ref<ButtonProps[]>([
+  {
+    label: $t('home.hero.links.1'),
+    to: '/character',
+    icon: 'heroicons-outline:identification',
+  },
   {
     label: $t('home.hero.links.0'),
     to: '/spells',
+    color: 'neutral',
+    variant: 'subtle',
     icon: 'heroicons-outline:book-open',
   },
-  // {
-  //   label: 'Learn more',
-  //   to: '/docs/getting-started/theme/design-system',
-  //   color: 'neutral',
-  //   variant: 'subtle',
-  //   trailingIcon: 'i-lucide-arrow-right',
-  // },
 ])
 </script>

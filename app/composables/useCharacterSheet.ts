@@ -1,6 +1,17 @@
 import { useStorage } from '@vueuse/core'
 
 export const useCharacterSheet = () => {
+  const name = useStorage<string>('characterName', 'Nom du personnage')
+
+  const mainClass = useStorage<string>('characterClass', 'Classe')
+  const multiClass = useStorage<string[]>('characterMultiClass', [])
+
+  const species = useStorage<string>('characterSpecies', 'Espèce')
+
+  const background = useStorage<string>('characterBackground', 'Historique')
+
+  const alignment = useStorage<string>('characterAlignment', 'Alignement')
+
   const abilityScores = useStorage<Record<string, number>>('abilityScores', {
     str: 10,
     dex: 10,
@@ -18,7 +29,13 @@ export const useCharacterSheet = () => {
 
   const characterLevel = useStorage<number>('characterLevel', 1)
 
-  const proficiencyBonus = useStorage<number>('proficiencyBonus', 2)
+  const proficiencyBonus = computed<number>(() => {
+    return Math.floor((characterLevel.value - 1) / 4) + 2
+  })
+
+  const armorClass = useStorage<number>('armorClass', 10)
+
+  const speed = useStorage<number>('characterSpeed', 9)
 
   const spellcastingAbility = useStorage<string | null>('spellcastingAbility', null)
 
@@ -61,6 +78,11 @@ export const useCharacterSheet = () => {
     }, [])
   })
 
+  const formatModifier = (modifier: number | null): string => {
+    if (modifier === null) return '-'
+    return modifier >= 0 ? `+${modifier}` : `${modifier}`
+  }
+
   return {
     abilityScores,
     abilityModifiers,
@@ -72,5 +94,13 @@ export const useCharacterSheet = () => {
     spellAttackModifier,
     spellSaveDC,
     spellSlots,
+    name,
+    mainClass,
+    species,
+    background,
+    alignment,
+    armorClass,
+    speed,
+    formatModifier,
   }
 }
