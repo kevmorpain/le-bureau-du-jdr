@@ -12,7 +12,7 @@ export { sql, eq, and, or } from 'drizzle-orm'
 export const tables = schema
 
 export function useDrizzle() {
-  return drizzle(db, { schema })
+  return drizzle(db, { schema, casing: 'snake_case' })
 }
 
 type Schema = typeof schema
@@ -52,3 +52,6 @@ export type DamageType = typeof schema.damageTypes.$inferSelect
 export type MagicSchool = typeof schema.magicSchools.$inferSelect
 export type Spell = TModelWithRelations<'spells'>
 export type InsertSpell = typeof schema.spells.$inferInsert
+export type CharacterSpecies = typeof schema.characterSpecies.$inferSelect
+export type CharacterSheet = TModelWithRelations<'characterSheets'>
+export type InsertCharacterSheet = typeof schema.characterSheets.$inferInsert

@@ -1,13 +1,10 @@
 <template>
-  <div>
+  <div v-if="characterSheet">
     <div class="md:flex gap-x-4 space-y-4">
-      <UFormField label="Nom du personnage">
-        <UInput
-          v-model="name"
-          placeholder="Entrez le nom de votre personnage"
-          class="w-48"
-        />
-      </UFormField>
+      <div>
+        <p>Nom du personnage</p>
+        <p>{{ characterSheet.name }}</p>
+      </div>
     </div>
 
     <div class="md:flex gap-x-4 space-y-4">
@@ -29,13 +26,10 @@
         />
       </UFormField>
 
-      <UFormField label="Espèce">
-        <UInput
-          v-model="species"
-          placeholder="Entrez l'espèce de votre personnage"
-          class="w-32"
-        />
-      </UFormField>
+      <div class="w-32">
+        <p>Espèce</p>
+        <p>{{ species?.name }}</p>
+      </div>
     </div>
 
     <div class="md:flex gap-x-4 space-y-4">
@@ -48,10 +42,12 @@
       </UFormField>
 
       <UFormField label="Alignement">
-        <UInput
-          v-model="alignment"
-          placeholder="Entrez l'alignement de votre personnage"
+        <USelect
+          v-model="characterSheet.alignment"
+          :items="alignmentItems"
+          placeholder="Choisissez l'alignement de votre personnage"
           class="w-32"
+          value-key="value"
         />
       </UFormField>
     </div>
@@ -84,7 +80,7 @@
             class="w-14"
           />
 
-          <p>{{ formatModifier(abilityModifiers[key]) }}</p>
+          <p>{{ formatModifier(abilityModifiers[key]!) }}</p>
         </li>
       </ul>
 
@@ -103,14 +99,10 @@
           />
         </UFormField>
 
-        <UFormField label="Vitesse">
-          <UInput
-            v-model="speed"
-            type="number"
-            min="0"
-            class="w-14"
-          />
-        </UFormField>
+        <div>
+          <p>Vitesse</p>
+          <p>{{ speed }} m</p>
+        </div>
       </div>
     </div>
 
@@ -185,6 +177,19 @@
 </template>
 
 <script lang="ts" setup>
+const route = useRoute()
+const id = computed(() => route.params.id as string)
+
+const { data: characterSheetData } = await useFetch<CharacterSheet>('/api/character_sheets', {
+  query: { id },
+})
+
+if (!characterSheetData.value) {
+  throw new Error('Character sheet not found')
+}
+
+const characterSheet = ref(characterSheetData.value)
+
 const {
   abilityScores,
   abilityModifiers,
@@ -194,20 +199,25 @@ const {
   spellAttackModifier,
   spellSaveDC,
   spellSlots,
-  name,
   mainClass,
   species,
   background,
-  alignment,
   armorClass,
   speed,
   formatModifier,
-} = useCharacterSheet()
+} = useCharacterSheet(characterSheet)
 
 const { tm, rt } = useI18n()
 
 const spellcastingAbilityOptions = computed<{ label: string, value: string }[]>(() => {
   return Object.entries(tm('ability_scores')).map(([value, label]) => ({
+    label: rt(label),
+    value,
+  }))
+})
+
+const alignmentItems = computed<{ label: string, value: string }[]>(() => {
+  return Object.entries(tm('alignments')).map(([value, label]) => ({
     label: rt(label),
     value,
   }))
@@ -228,6 +238,34 @@ const setCurrentSpellSlot = (level: number, n: number) => {
     spellSlots.value[level]!.current--
   } else if (n <= spellSlots.value[level]!.max) {
     spellSlots.value[level]!.current = n
+  }
+}
+
+watch(() => characterSheet.value?.alignment, (newAlignment, prevAlignment) => {
+  if (newAlignment && newAlignment !== prevAlignment) {
+    handleSaveAlignment()
+  }
+})
+
+const toaster = useToast()
+
+const handleSaveAlignment = async () => {
+  try {
+    if (!characterSheet.value) return
+
+    await $fetch(`/api/character_sheets/${id.value}/alignment`, {
+      method: 'PUT',
+      body: {
+        alignment: characterSheet.value.alignment,
+      },
+    })
+
+    toaster.add({
+      title: 'Fiche de personnage sauvegardée',
+      color: 'success',
+    })
+  } catch (error) {
+    console.error('Error saving character sheet:', error)
   }
 }
 </script>

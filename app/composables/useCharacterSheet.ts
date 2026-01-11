@@ -1,16 +1,23 @@
 import { useStorage } from '@vueuse/core'
+import type { CharacterSheet } from '~~/server/utils/drizzle'
 
-export const useCharacterSheet = () => {
-  const name = useStorage<string>('characterName', 'Nom du personnage')
+export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
+  const { data: characterSpecies } = useFetch<CharacterSpecies[]>('/api/character_species')
 
   const mainClass = useStorage<string>('characterClass', 'Classe')
-  const multiClass = useStorage<string[]>('characterMultiClass', [])
+  // const multiClass = useStorage<string[]>('characterMultiClass', [])
 
-  const species = useStorage<string>('characterSpecies', 'Espèce')
+  const characterSpeciesItems = computed<{ label: string, value: number }[]>(() => {
+    return characterSpecies.value?.map(species => ({
+      label: species.name,
+      value: species.id,
+    })) ?? []
+  })
+
+  const species = computed(() => characterSheet.value.species)
+  const speed = computed<number>(() => species.value?.speed ?? 0)
 
   const background = useStorage<string>('characterBackground', 'Historique')
-
-  const alignment = useStorage<string>('characterAlignment', 'Alignement')
 
   const abilityScores = useStorage<Record<string, number>>('abilityScores', {
     str: 10,
@@ -34,8 +41,6 @@ export const useCharacterSheet = () => {
   })
 
   const armorClass = useStorage<number>('armorClass', 10)
-
-  const speed = useStorage<number>('characterSpeed', 9)
 
   const spellcastingAbility = useStorage<string | null>('spellcastingAbility', null)
 
@@ -94,13 +99,12 @@ export const useCharacterSheet = () => {
     spellAttackModifier,
     spellSaveDC,
     spellSlots,
-    name,
     mainClass,
     species,
     background,
-    alignment,
     armorClass,
     speed,
     formatModifier,
+    characterSpeciesItems,
   }
 }

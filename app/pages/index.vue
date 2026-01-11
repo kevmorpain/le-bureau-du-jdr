@@ -35,7 +35,7 @@ import type { ButtonProps } from '@nuxt/ui'
 const links = ref<ButtonProps[]>([
   {
     label: $t('home.hero.links.1'),
-    to: '/character',
+    to: '/character/1',
     icon: 'heroicons-outline:identification',
   },
   {

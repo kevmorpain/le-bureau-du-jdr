@@ -1,0 +1,1 @@
+ALTER TABLE `character_sheets` RENAME COLUMN "alignement" TO "alignment";

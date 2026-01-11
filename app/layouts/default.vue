@@ -34,7 +34,7 @@ const items = ref<NavigationMenuItem[]>([
   {
     label: 'Personnage',
     icon: 'heroicons-outline:identification',
-    to: '/character',
+    to: '/character/1',
   },
   {
     label: 'Sorts',

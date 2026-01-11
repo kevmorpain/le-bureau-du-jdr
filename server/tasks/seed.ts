@@ -12,8 +12,10 @@ export default defineTask({
       seed.abilityScores(),
       seed.damageTypes(),
       seed.magicSchools(),
+      seed.characterSpecies(),
     ])
     await seed.spells()
+    await seed.characterSheets()
 
     return { result: 'success' }
   },

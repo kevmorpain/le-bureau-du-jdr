@@ -19,6 +19,19 @@
     "wis": "Sagesse",
     "cha": "Charisme"
   },
+  
+  "alignments": {
+    "LG": "Loyal Bon",
+    "NG": "Neutre Bon",
+    "CG": "Chaotique Bon",
+    "LN": "Loyal Neutre",
+    "TN": "Neutre",
+    "CN": "Chaotique Neutre",
+    "LE": "Loyal Mauvais",
+    "NE": "Neutre Mauvais",
+    "CE": "Chaotique Mauvais"
+  },
+
   "heal_types": {
     "hit_points": "point de vie récupéré | points de vie récupérés",
     "temporary_hit_points": "point de vie temporaire | points de vie temporaires"

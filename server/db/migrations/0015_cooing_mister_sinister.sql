@@ -1,0 +1,1 @@
+ALTER TABLE `character_sheets` ADD `alignement` text DEFAULT 'TN' NOT NULL;

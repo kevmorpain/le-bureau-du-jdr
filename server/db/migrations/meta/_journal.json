@@ -92,6 +92,34 @@
       "when": 1752280151924,
       "tag": "0012_wealthy_vengeance",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1767114088329,
+      "tag": "0013_sticky_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1767137041458,
+      "tag": "0014_flimsy_grandmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1767191996204,
+      "tag": "0015_cooing_mister_sinister",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1767196299835,
+      "tag": "0016_bumpy_medusa",
+      "breakpoints": true
     }
   ]
 }
