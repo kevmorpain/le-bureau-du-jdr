@@ -180,9 +180,7 @@
 const route = useRoute()
 const id = computed(() => route.params.id as string)
 
-const { data: characterSheetData } = await useFetch<CharacterSheet>('/api/character_sheets', {
-  query: { id },
-})
+const { data: characterSheetData } = await useFetch<CharacterSheet>(() => `/api/character_sheets/${id.value}`)
 
 if (!characterSheetData.value) {
   throw new Error('Character sheet not found')

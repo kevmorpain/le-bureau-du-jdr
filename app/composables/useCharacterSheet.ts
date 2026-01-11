@@ -2,17 +2,8 @@ import { useStorage } from '@vueuse/core'
 import type { CharacterSheet } from '~~/server/utils/drizzle'
 
 export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
-  const { data: characterSpecies } = useFetch<CharacterSpecies[]>('/api/character_species')
-
   const mainClass = useStorage<string>('characterClass', 'Classe')
   // const multiClass = useStorage<string[]>('characterMultiClass', [])
-
-  const characterSpeciesItems = computed<{ label: string, value: number }[]>(() => {
-    return characterSpecies.value?.map(species => ({
-      label: species.name,
-      value: species.id,
-    })) ?? []
-  })
 
   const species = computed(() => characterSheet.value.species)
   const speed = computed<number>(() => species.value?.speed ?? 0)
@@ -105,6 +96,5 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     armorClass,
     speed,
     formatModifier,
-    characterSpeciesItems,
   }
 }

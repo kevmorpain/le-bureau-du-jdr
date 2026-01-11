@@ -99,10 +99,26 @@
     "submit": "Ajouter le sort"
   },
 
+  "new_character_sheet": {
+    "title": "Créer un personnage",
+    "name": "Nom du personnage",
+    "species": "Espèce",
+    "class": "Classe",
+    "background": "Historique",
+    "alignment": "Alignement",
+    "ability_scores": "Caractéristiques",
+    "submit": "Créer le personnage"
+  },
+
   "toasts": {
     "insert_spell": {
       "success": "Le sort a été ajouté avec succès.",
       "error": "Une erreur est survenue lors de l'ajout du sort.",
+      "422": "Les données fournies sont invalides. Veuillez vérifier le formulaire et réessayer."
+    },
+    "insert_character_sheet": {
+      "success": "Le personnage a été créé avec succès.",
+      "error": "Une erreur est survenue lors de la création du personnage.",
       "422": "Les données fournies sont invalides. Veuillez vérifier le formulaire et réessayer."
     }
   },

@@ -1,17 +1,10 @@
-import { db, schema } from 'hub:db'
+import { db } from 'hub:db'
 
-export default defineEventHandler(async (event) => {
-  const { id } = getQuery(event)
-
-  if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'ID parameter is required' })
-  }
-
+export default defineEventHandler(async () => {
   return await db
     .query
     .characterSheets
-    .findFirst({
-      where: eq(schema.characterSheets.id, Number(id)),
+    .findMany({
       with: {
         species: true,
       },
