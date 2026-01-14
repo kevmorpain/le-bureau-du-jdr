@@ -13,6 +13,7 @@ export default defineTask({
       seed.damageTypes(),
       seed.magicSchools(),
       seed.characterSpecies(),
+      seed.classes(),
     ])
     await seed.spells()
     await seed.characterSheets()

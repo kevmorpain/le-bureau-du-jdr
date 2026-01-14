@@ -1,6 +1,8 @@
 export { default as abilityScores } from './ability_scores'
+export { default as characterClasses, characterClassRelations } from './character_classes'
 export { default as characterSheets, characterSheetRelations } from './character_sheets'
 export { default as characterSpecies } from './character_species'
+export { default as classes } from './classes'
 export { default as damageTypes } from './damage_types'
 export { default as magicSchools } from './magic_schools'
 export { default as spells, spellsRelations } from './spells'

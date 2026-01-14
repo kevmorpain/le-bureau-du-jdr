@@ -55,3 +55,6 @@ export type InsertSpell = typeof schema.spells.$inferInsert
 export type CharacterSpecies = typeof schema.characterSpecies.$inferSelect
 export type CharacterSheet = TModelWithRelations<'characterSheets'>
 export type InsertCharacterSheet = typeof schema.characterSheets.$inferInsert
+export type CharacterClass = TModelWithRelations<'characterClasses'>
+export type InsertCharacterClass = typeof schema.characterClasses.$inferInsert
+export type Class = typeof schema.classes.$inferSelect
