@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
       where: eq(schema.characterSheets.id, Number(id)),
       with: {
         species: true,
+        classes: true,
       },
     })
 })

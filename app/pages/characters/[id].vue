@@ -132,10 +132,11 @@
 
     <div class="col-span-2">
       <p>Emplacements de sort</p>
-      <ul class="flex flex-wrap justify-between gap-4 text-center">
+      <ul class="space-y-4">
         <li
           v-for="level in 9"
           :key="level"
+          class="flex items-center gap-x-2"
         >
           <p>{{ level }}</p>
 
@@ -239,10 +240,10 @@ const setCurrentSpellSlot = (level: number, n: number) => {
   }
 }
 
-watch(() => characterSheet.value?.alignment, (newAlignment, prevAlignment) => {
-  if (newAlignment && newAlignment !== prevAlignment) {
-    handleSaveAlignment()
-  }
+watch(characterSheet, () => {
+  handleSaveAlignment()
+}, {
+  deep: true,
 })
 
 const toaster = useToast()
@@ -251,11 +252,9 @@ const handleSaveAlignment = async () => {
   try {
     if (!characterSheet.value) return
 
-    await $fetch(`/api/character_sheets/${id.value}/alignment`, {
+    await $fetch(`/api/character_sheets/${id.value}`, {
       method: 'PUT',
-      body: {
-        alignment: characterSheet.value.alignment,
-      },
+      body: characterSheet.value,
     })
 
     toaster.add({
