@@ -7,7 +7,9 @@ export default defineEventHandler(async () => {
     .findMany({
       with: {
         species: true,
-        classes: true,
+        classes: {
+          with: { class: true },
+        },
       },
     })
 })

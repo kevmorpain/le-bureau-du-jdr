@@ -19,7 +19,7 @@
     </UPageHeader>
 
     <UPageBody>
-      <div class="md:flex gap-x-4 space-y-4">
+      <div class="md:flex gap-x-4">
         <UFormField label="Historique">
           <UInput
             v-model="background"
@@ -201,7 +201,7 @@ const characterSheetTitle = computed<string>(() => characterSheet.value?.name ??
 const characterSheetDescription = computed<string>(() => {
   const characterClassesText = [mainClass.value, ...multiClass.value].filter(Boolean).map(cls => `${cls.name} ${cls.level}`).join(', ')
 
-  const characterSpecies = species.value?.name ?? 'd`une espèce inconnue'
+  const characterSpecies = species.value?.name ?? 'd\'une espèce inconnue'
 
   return [characterClassesText, characterSpecies].join(' ')
 })

@@ -27,17 +27,7 @@
         :key="character.id"
         :to="`/characters/${character.id}`"
       >
-        <UCard variant="soft">
-          <template #header>
-            <h3 class="text-lg font-semibold">
-              {{ character.name }}
-            </h3>
-          </template>
-
-          <p>
-            {{ character.species?.name || '-' }}
-          </p>
-        </UCard>
+        <CharacterCard :character />
       </NuxtLink>
     </UPageGrid>
   </UPageBody>

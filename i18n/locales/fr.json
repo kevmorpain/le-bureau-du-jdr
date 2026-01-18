@@ -106,6 +106,13 @@
     "class": "Classe",
     "background": "Historique",
     "alignment": "Alignement",
+    "classes": "Classes",
+    "no_classes": "Aucune classe sélectionnée",
+    "level": "Niveau : {level}",
+    "set_main": "Définir comme classe principale",
+    "main_class": "Classe principale",
+    "remove": "Supprimer",
+    "add_class": "Ajouter une classe",
     "ability_scores": "Caractéristiques",
     "submit": "Créer le personnage"
   },
@@ -128,7 +135,8 @@
       "success": "Le personnage a été créé avec succès.",
       "error": "Une erreur est survenue lors de la création du personnage.",
       "422": "Les données fournies sont invalides. Veuillez vérifier le formulaire et réessayer."
-    }
+    },
+    "class_already_added": "Cette classe est déjà ajoutée"
   },
 
   "zodI18n": {
