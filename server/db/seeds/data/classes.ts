@@ -19,8 +19,8 @@ const monk = new DnDClass('Moine', '1d8')
 const paladin = new DnDClass('Paladin', '1d10')
 const ranger = new DnDClass('Rôdeur', '1d10')
 const rogue = new DnDClass('Roublard', '1d8')
-const sorcerer = new DnDClass('Sorcier', '1d6')
-const warlock = new DnDClass('Ensorceleur', '1d8')
+const sorcerer = new DnDClass('Ensorceleur', '1d6')
+const warlock = new DnDClass('Occultiste', '1d8')
 const wizard = new DnDClass('Magicien', '1d6')
 
 export const classesData: DnDClass[] = [

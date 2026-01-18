@@ -41,8 +41,7 @@ const dieText = computed<string>(() => {
   if (hasModifier.value) {
     if (isSpellbook) {
       text += ` + ${spellcastingModifier.value}`
-    }
-    else {
+    } else {
       text += ' + mod'
     }
   }

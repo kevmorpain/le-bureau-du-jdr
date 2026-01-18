@@ -1,10 +1,6 @@
 import { useStorage } from '@vueuse/core'
-import type { CharacterSheet } from '~~/server/utils/drizzle'
 
 export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
-  const mainClass = useStorage<string>('characterClass', 'Classe')
-  // const multiClass = useStorage<string[]>('characterMultiClass', [])
-
   const species = computed(() => characterSheet.value.species)
   const speed = computed<number>(() => species.value?.speed ?? 0)
 
@@ -25,7 +21,19 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     return acc
   }, {}))
 
-  const characterLevel = useStorage<number>('characterLevel', 1)
+  const characterClasses = computed(() => characterSheet.value.classes?.map((cls) => {
+    const { class: classInfo, ...rest } = cls
+
+    return {
+      ...rest,
+      ...classInfo,
+    }
+  }) || [])
+
+  const characterLevel = computed<number>(() => characterClasses.value.reduce<number>((acc, cls) => acc + cls.level, 0))
+
+  const mainClass = computed(() => characterClasses.value.find(cls => cls.isMain)!)
+  const multiClass = computed(() => characterClasses.value.filter(cls => !cls.isMain))
 
   const proficiencyBonus = computed<number>(() => {
     return Math.floor((characterLevel.value - 1) / 4) + 2
@@ -84,13 +92,14 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     abilityModifiers,
     availableSpellSlots,
     characterLevel,
+    mainClass,
+    multiClass,
     proficiencyBonus,
     spellcastingAbility,
     spellcastingModifier,
     spellAttackModifier,
     spellSaveDC,
     spellSlots,
-    mainClass,
     species,
     background,
     armorClass,
