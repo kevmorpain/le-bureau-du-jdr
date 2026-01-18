@@ -1,5 +1,5 @@
 import { db, schema } from 'hub:db'
-import { sql } from 'drizzle-orm'
+import { sql, eq, and, notInArray } from 'drizzle-orm'
 
 interface ClassUpdate {
   classId: number
@@ -44,6 +44,17 @@ export default defineEventHandler(async (event) => {
           isMain: sql`excluded.is_main`,
         },
       })
+
+    // Delete character classes that are not in the input
+    const inputClassIds = classes.map(cls => cls.classId)
+    await db
+      .delete(schema.characterClasses)
+      .where(
+        and(
+          eq(schema.characterClasses.characterSheetId, characterSheetId),
+          notInArray(schema.characterClasses.classId, inputClassIds),
+        ),
+      )
   }
 
   return result
