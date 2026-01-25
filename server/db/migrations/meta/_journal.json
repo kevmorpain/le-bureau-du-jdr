@@ -127,6 +127,41 @@
       "when": 1768175509301,
       "tag": "0017_opposite_mongoose",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1768861414891,
+      "tag": "0018_lame_doctor_octopus",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1768864576106,
+      "tag": "0019_equal_mole_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1769277451779,
+      "tag": "0020_moaning_bruce_banner",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1769299939266,
+      "tag": "0021_legal_wither",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1769300451421,
+      "tag": "0022_greedy_zarda",
+      "breakpoints": true
     }
   ]
 }

@@ -4,23 +4,6 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
   const species = computed(() => characterSheet.value.species)
   const speed = computed<number>(() => species.value?.speed ?? 0)
 
-  const background = useStorage<string>('characterBackground', 'Historique')
-
-  const abilityScores = useStorage<Record<string, number>>('abilityScores', {
-    str: 10,
-    dex: 10,
-    con: 10,
-    int: 10,
-    wis: 10,
-    cha: 10,
-  })
-
-  const abilityModifiers = computed<Record<string, number>>(() => Object.entries(abilityScores.value!).reduce<Record<string, number>>((acc, [key, score]) => {
-    acc[key] = Math.floor((score - 10) / 2)
-
-    return acc
-  }, {}))
-
   const characterClasses = computed(() => characterSheet.value.classes?.map((cls) => {
     const { class: classInfo, ...rest } = cls
 
@@ -34,6 +17,40 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
 
   const mainClass = computed(() => characterClasses.value.find(cls => cls.isMain)!)
   const multiClass = computed(() => characterClasses.value.filter(cls => !cls.isMain))
+
+  const hitDice = computed(() =>
+    Object.entries(
+      characterClasses.value.reduce<Record<string, number>>((acc, cls) => {
+        acc[cls.hitDice!] = (acc[cls.hitDice!] ?? 0) + cls.level
+        return acc
+      }, {}),
+    ).map(([hitDie, count]) => ({ hitDie: hitDie.slice(1), count })),
+  )
+
+  const characterAbilityScores = computed(() => characterSheet.value.baseAbilityScores?.reduce<Record<string, number>>((acc, abs) => {
+    acc[abs.abilityId] = abs.value
+
+    return acc
+  }, {}) || {})
+
+  const getAbilityScore = (abilityId: string): number => {
+    return characterAbilityScores.value[abilityId] || 10
+  }
+
+  const abilityScoreOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha']
+
+  // TODO: should be total with all bonuses
+  const abilityScores = computed<Record<string, number>>(() => abilityScoreOrder.reduce<Record<string, number>>((acc, abilityId) => {
+    acc[abilityId] = getAbilityScore(abilityId)
+
+    return acc
+  }, {}))
+
+  const abilityModifiers = computed<Record<string, number>>(() => Object.entries(abilityScores.value!).reduce<Record<string, number>>((acc, [key, score]) => {
+    acc[key] = Math.floor((score - 10) / 2)
+
+    return acc
+  }, {}))
 
   const proficiencyBonus = computed<number>(() => {
     return Math.floor((characterLevel.value - 1) / 4) + 2
@@ -92,6 +109,7 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     abilityModifiers,
     availableSpellSlots,
     characterLevel,
+    hitDice,
     mainClass,
     multiClass,
     proficiencyBonus,
@@ -101,7 +119,6 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     spellSaveDC,
     spellSlots,
     species,
-    background,
     armorClass,
     speed,
     formatModifier,

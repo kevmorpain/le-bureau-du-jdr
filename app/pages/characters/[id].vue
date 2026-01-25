@@ -20,9 +20,48 @@
 
     <UPageBody>
       <div class="md:flex gap-x-4">
+        <div>
+          <p>Dés de vie</p>
+          <ul class="md:flex gap-x-2">
+            <li
+              v-for="{ hitDie, count } in hitDice"
+              :key="hitDie"
+            >
+              {{ count }}{{ hitDie }}
+            </li>
+          </ul>
+        </div>
+
+        <UFormField label="PV">
+          <UInput
+            v-model="characterSheet.currentHp"
+            type="number"
+            min="0"
+            class="w-14"
+          />
+        </UFormField>
+        <UFormField label="PV max">
+          <UInput
+            v-model="characterSheet.maxHp"
+            type="number"
+            min="0"
+            class="w-14"
+          />
+        </UFormField>
+        <UFormField label="PV temporaire">
+          <UInput
+            v-model="characterSheet.temporaryHp"
+            type="number"
+            min="0"
+            class="w-14"
+          />
+        </UFormField>
+      </div>
+
+      <div class="md:flex gap-x-4">
         <UFormField label="Historique">
           <UInput
-            v-model="background"
+            v-model="characterSheet.background"
             placeholder="Entrez l'historique de votre personnage"
             class="w-32"
           />
@@ -181,6 +220,7 @@ const {
   abilityScores,
   abilityModifiers,
   characterLevel,
+  hitDice,
   mainClass,
   multiClass,
   proficiencyBonus,
@@ -189,7 +229,6 @@ const {
   spellSaveDC,
   spellSlots,
   species,
-  background,
   armorClass,
   speed,
   formatModifier,

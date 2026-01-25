@@ -58,3 +58,5 @@ export type InsertCharacterSheet = typeof schema.characterSheets.$inferInsert
 export type CharacterClass = TModelWithRelations<'characterClasses'>
 export type InsertCharacterClass = typeof schema.characterClasses.$inferInsert
 export type ClassItem = typeof schema.classes.$inferSelect
+export type CharacterAbilityScore = TModelWithRelations<'characterAbilityScores'>
+export type InsertCharacterAbilityScore = typeof schema.characterAbilityScores.$inferInsert

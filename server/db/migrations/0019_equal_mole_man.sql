@@ -1,0 +1,1 @@
+ALTER TABLE `character_sheets` ADD `background` text DEFAULT '' NOT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE `character_sheets` ADD `current_hit_die` text;

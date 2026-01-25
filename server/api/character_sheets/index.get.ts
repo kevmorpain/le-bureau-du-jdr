@@ -10,6 +10,7 @@ export default defineEventHandler(async () => {
         classes: {
           with: { class: true },
         },
+        baseAbilityScores: true,
       },
     })
 })

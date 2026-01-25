@@ -1,4 +1,5 @@
 export { default as abilityScores } from './ability_scores'
+export { default as characterAbilityScores, characterAbilityScoreRelations } from './character_ability_scores'
 export { default as characterClasses, characterClassRelations } from './character_classes'
 export { default as characterSheets, characterSheetRelations } from './character_sheets'
 export { default as characterSpecies } from './character_species'
