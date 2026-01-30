@@ -1,5 +1,6 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { sql } from 'drizzle-orm'
+import { relations } from 'drizzle-orm'
+import speciesTraits from './species_traits'
 
 export enum CreatureSize {
   Tiny = 'T',
@@ -10,20 +11,15 @@ export enum CreatureSize {
   Gargantuan = 'G',
 }
 
-export type Trait = {
-  name: string
-  description: string
-  effects?: unknown
-}
-
 const characterSpecies = sqliteTable('character_species', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
   size: text('size').$type<CreatureSize>().notNull(),
   speed: integer('speed').notNull(),
-  traits: text('traits', { mode: 'json' }).$type<Trait[]>()
-    .default(sql`(json_array())`)
-    .notNull(),
 })
+
+export const characterSpeciesRelations = relations(characterSpecies, ({ many }) => ({
+  speciesTraits: many(speciesTraits),
+}))
 
 export default characterSpecies

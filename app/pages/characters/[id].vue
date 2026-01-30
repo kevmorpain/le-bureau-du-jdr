@@ -59,23 +59,15 @@
       </div>
 
       <div class="md:flex gap-x-4">
-        <UFormField label="Historique">
-          <UInput
-            v-model="characterSheet.background"
-            placeholder="Entrez l'historique de votre personnage"
-            class="w-32"
-          />
-        </UFormField>
+        <div>
+          <p>Historique</p>
+          <p>{{ characterSheet.background }}</p>
+        </div>
 
-        <UFormField label="Alignement">
-          <USelect
-            v-model="characterSheet.alignment"
-            :items="alignmentItems"
-            placeholder="Choisissez l'alignement de votre personnage"
-            class="w-32"
-            value-key="value"
-          />
-        </UFormField>
+        <div>
+          <p>Alignement</p>
+          <p>{{ $t(`alignments.${characterSheet.alignment}`) }}</p>
+        </div>
       </div>
 
       <div class="md:flex gap-x-12 space-y-4">
@@ -99,12 +91,9 @@
               />
             </p>
 
-            <UInput
-              v-model="abilityScores[key]"
-              :name="key"
-              type="number"
-              class="w-14"
-            />
+            <p class="border border-muted rounded-md py-1">
+              {{ abilityScores[key] }}
+            </p>
 
             <p>{{ formatModifier(abilityModifiers[key]!) }}</p>
           </li>
@@ -228,6 +217,7 @@ const {
   spellAttackModifier,
   spellSaveDC,
   spellSlots,
+  speciesTraits,
   species,
   armorClass,
   speed,
@@ -247,13 +237,6 @@ const characterSheetDescription = computed<string>(() => {
 
 const spellcastingAbilityOptions = computed<{ label: string, value: string }[]>(() => {
   return Object.entries(tm('ability_scores')).map(([value, label]) => ({
-    label: rt(label),
-    value,
-  }))
-})
-
-const alignmentItems = computed<{ label: string, value: string }[]>(() => {
-  return Object.entries(tm('alignments')).map(([value, label]) => ({
     label: rt(label),
     value,
   }))

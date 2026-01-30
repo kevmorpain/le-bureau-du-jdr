@@ -39,9 +39,28 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
 
   const abilityScoreOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha']
 
+  const speciesTraits = computed(() => species.value?.speciesTraits?.flatMap(st => st.trait) || [])
+
+  const speciesAbilityScoreBonuses = computed(() => {
+    const bonuses: Record<string, number> = {}
+
+    speciesTraits.value.forEach((trait) => {
+      if (trait?.traitEffects) {
+        trait.traitEffects.forEach((te) => {
+          const effect = te.effect
+          if (effect?.type === 'ability_increase' && effect.value?.ability && effect.value.amount) {
+            bonuses[effect.value.ability] = (bonuses[effect.value.ability] || 0) + (effect.value.amount || 0)
+          }
+        })
+      }
+    })
+
+    return bonuses
+  })
+
   // TODO: should be total with all bonuses
   const abilityScores = computed<Record<string, number>>(() => abilityScoreOrder.reduce<Record<string, number>>((acc, abilityId) => {
-    acc[abilityId] = getAbilityScore(abilityId)
+    acc[abilityId] = getAbilityScore(abilityId) + (speciesAbilityScoreBonuses.value[abilityId] || 0)
 
     return acc
   }, {}))
@@ -120,6 +139,7 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     spellSlots,
     species,
     armorClass,
+    speciesTraits,
     speed,
     formatModifier,
   }

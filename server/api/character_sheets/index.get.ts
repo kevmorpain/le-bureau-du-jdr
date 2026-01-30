@@ -6,7 +6,23 @@ export default defineEventHandler(async () => {
     .characterSheets
     .findMany({
       with: {
-        species: true,
+        species: {
+          with: {
+            speciesTraits: {
+              with: {
+                trait: {
+                  with: {
+                    traitEffects: {
+                      with: {
+                        effect: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         classes: {
           with: { class: true },
         },

@@ -1,5 +1,5 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { relations, sql } from 'drizzle-orm'
+import { relations } from 'drizzle-orm'
 import characterSpecies from './character_species'
 import characterClasses from './character_classes'
 import characterAbilityScores from './character_ability_scores'

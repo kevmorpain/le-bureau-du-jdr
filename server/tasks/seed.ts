@@ -8,15 +8,15 @@ export default defineTask({
   async run() {
     console.log('Running DB seed task...')
 
-    // await Promise.all([
-    //   seed.abilityScores(),
-    //   seed.damageTypes(),
-    //   seed.magicSchools(),
-    //   seed.characterSpecies(),
-    //   seed.classes(),
-    // ])
+    await Promise.all([
+      // seed.abilityScores(),
+      // seed.damageTypes(),
+      // seed.magicSchools(),
+      seed.characterSpecies(),
+      // seed.classes(),
+    ])
     // await seed.spells()
-    await seed.characterSheets()
+    // await seed.characterSheets()
 
     return { result: 'success' }
   },

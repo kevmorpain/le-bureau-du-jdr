@@ -13,7 +13,23 @@ export default defineEventHandler(async (event) => {
     .findFirst({
       where: eq(schema.characterSheets.id, Number(id)),
       with: {
-        species: true,
+        species: {
+          with: {
+            speciesTraits: {
+              with: {
+                trait: {
+                  with: {
+                    traitEffects: {
+                      with: {
+                        effect: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         classes: {
           with: {
             class: true,
