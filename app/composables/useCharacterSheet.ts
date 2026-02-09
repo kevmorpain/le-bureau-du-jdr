@@ -39,19 +39,36 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
 
   const abilityScoreOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha']
 
-  const speciesTraits = computed(() => species.value?.speciesTraits?.flatMap(st => st.trait) || [])
+  const speciesTraits = computed(() => species.value?.speciesTraits?.flatMap(st => st.trait!) || [])
 
-  const speciesAbilityScoreBonuses = computed(() => {
-    const bonuses: Record<string, number> = {}
+  const speciesEffects = computed(() => {
+    const effects: Effect[] = []
 
     speciesTraits.value.forEach((trait) => {
       if (trait?.traitEffects) {
         trait.traitEffects.forEach((te) => {
-          const effect = te.effect
-          if (effect?.type === 'ability_increase' && effect.value?.ability && effect.value.amount) {
-            bonuses[effect.value.ability] = (bonuses[effect.value.ability] || 0) + (effect.value.amount || 0)
+          if (te.effect) {
+            effects.push(te.effect)
           }
         })
+      }
+    })
+
+    return effects
+  })
+
+  const speciesAbilityScoreBonuses = computed(() => {
+    const bonuses: Record<string, number> = {}
+
+    speciesEffects.value.forEach((effect) => {
+      if (effect.type === 'ability_increase') {
+        const value = effect.value as { ability: string, amount: number }
+
+        if (bonuses[value.ability]) {
+          bonuses[value.ability]! += value.amount
+        } else {
+          bonuses[value.ability] = value.amount
+        }
       }
     })
 
@@ -76,6 +93,10 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
   })
 
   const armorClass = useStorage<number>('armorClass', 10)
+
+  const initiativeBonus = computed<number>(() => {
+    return abilityModifiers.value.dex || 0
+  })
 
   const spellcastingAbility = useStorage<string | null>('spellcastingAbility', null)
 
@@ -123,12 +144,16 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     return modifier >= 0 ? `+${modifier}` : `${modifier}`
   }
 
+  const deathSavingThrows = ref<{ success: number, failure: number }>({ success: 0, failure: 0 })
+
   return {
     abilityScores,
     abilityModifiers,
     availableSpellSlots,
     characterLevel,
+    deathSavingThrows,
     hitDice,
+    initiativeBonus,
     mainClass,
     multiClass,
     proficiencyBonus,
@@ -139,6 +164,8 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     spellSlots,
     species,
     armorClass,
+    speciesEffects,
+    speciesAbilityScoreBonuses,
     speciesTraits,
     speed,
     formatModifier,

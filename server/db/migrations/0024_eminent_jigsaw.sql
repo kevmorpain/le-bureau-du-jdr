@@ -1,0 +1,1 @@
+ALTER TABLE `character_sheets` ADD `inspiration` integer DEFAULT false NOT NULL;

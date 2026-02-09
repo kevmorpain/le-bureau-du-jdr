@@ -33,6 +33,7 @@ const characterSheets = sqliteTable('character_sheets', {
   temporaryHp: integer('temporary_hp').default(0).notNull(),
   background: text().default('').notNull(),
   currentHitDie: text('current_hit_die', { mode: 'json' }).$type<CurrentHitDie[]>(),
+  inspiration: integer({ mode: 'boolean' }).default(false).notNull(),
 })
 
 export const characterSheetRelations = relations(characterSheets, ({ many, one }) => ({

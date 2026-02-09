@@ -19,6 +19,37 @@
     "wis": "Sagesse",
     "cha": "Charisme"
   },
+
+  "skills": {
+    "str": {
+      "athletics": "Athlétisme"
+    },
+    "dex": {
+      "acrobatics": "Acrobaties",
+      "sleight_of_hand": "Escamotage",
+      "stealth": "Discrétion"
+    },
+    "int": {
+      "arcana": "Arcane",
+      "history": "Histoire",
+      "investigation": "Investigation",
+      "nature": "Nature",
+      "religion": "Religion"
+    },
+    "wis": {
+      "animal_handling": "Dressage",
+      "insight": "Intuition",
+      "medicine": "Médecine",
+      "perception": "Perception",
+      "survival": "Survie"
+    },
+    "cha": {
+      "deception": "Tromperie",
+      "intimidation": "Intimidation",
+      "performance": "Représentation",
+      "persuasion": "Persuasion"
+    }
+  },
   
   "alignments": {
     "LG": "Loyal Bon",

@@ -169,6 +169,13 @@
       "when": 1769385784528,
       "tag": "0023_glossy_the_anarchist",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1770507924486,
+      "tag": "0024_eminent_jigsaw",
+      "breakpoints": true
     }
   ]
 }

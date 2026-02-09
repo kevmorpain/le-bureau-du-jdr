@@ -15,7 +15,7 @@ export default defineAppConfig({
 
     inputNumber: {
       slots: {
-        root: 'w-full',
+        base: 'field-sizing-content',
       },
     },
 

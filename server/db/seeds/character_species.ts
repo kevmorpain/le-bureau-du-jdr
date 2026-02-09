@@ -1,5 +1,5 @@
 import { db, schema } from 'hub:db'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { characterSpecies } from './data/character_species'
 
 export default async function seed() {
@@ -33,12 +33,15 @@ export default async function seed() {
         // Process effects if they exist
         if (effects && effects.length > 0) {
           for (const effect of effects) {
-            // Check if effect already exists
+            // Check if effect already exists (both type AND value must match)
             const existingEffect = await db
               .select()
               .from(schema.effects)
               .where(
-                eq(schema.effects.type, effect.type),
+                and(
+                  eq(schema.effects.type, effect.type),
+                  eq(schema.effects.value, JSON.stringify(effect.value)),
+                ),
               )
               .limit(1)
               .get()
