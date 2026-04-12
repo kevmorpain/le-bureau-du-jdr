@@ -204,6 +204,13 @@
       "when": 1776003899268,
       "tag": "0028_superb_sharon_carter",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1776005819452,
+      "tag": "0029_striped_masque",
+      "breakpoints": true
     }
   ]
 }

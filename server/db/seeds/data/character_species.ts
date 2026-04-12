@@ -44,7 +44,7 @@ const highElf = {
       effects: [
         {
           type: 'skill_proficiency',
-          value: 'perception',
+          value: { skill: 'perception' },
         },
       ],
     },
@@ -55,7 +55,8 @@ const highElf = {
         {
           type: 'advantage',
           value: {
-            ability: 'saving_throws',
+            rollType: 'saving_throw',
+            ability: 'all',
             condition: 'charmed',
           },
         },
@@ -204,7 +205,8 @@ const hillDwarf = {
         {
           type: 'advantage',
           value: {
-            ability: 'saving_throws',
+            rollType: 'saving_throw',
+            ability: 'all',
             condition: 'poison',
           },
         },
@@ -345,7 +347,8 @@ const lightfootHalfling = {
         {
           type: 'advantage',
           value: {
-            ability: 'saving_throws',
+            rollType: 'saving_throw',
+            ability: 'all',
             condition: 'frightened',
           },
         },
@@ -549,7 +552,7 @@ const dragonborn = {
       effects: [
         {
           type: 'damage_resistance',
-          value: 'draconic_ancestry',
+          value: { damageType: 'draconic_ancestry' },
         },
       ],
     },
@@ -615,7 +618,7 @@ const rockGnome = {
         {
           type: 'advantage',
           value: {
-            type: 'saving_throw',
+            rollType: 'saving_throw',
             ability: 'int',
             condition: 'magic',
           },
@@ -623,7 +626,7 @@ const rockGnome = {
         {
           type: 'advantage',
           value: {
-            type: 'saving_throw',
+            rollType: 'saving_throw',
             ability: 'wis',
             condition: 'magic',
           },
@@ -631,7 +634,7 @@ const rockGnome = {
         {
           type: 'advantage',
           value: {
-            type: 'saving_throw',
+            rollType: 'saving_throw',
             ability: 'cha',
             condition: 'magic',
           },
@@ -743,7 +746,8 @@ const halfElf = {
         {
           type: 'advantage',
           value: {
-            ability: 'saving_throws',
+            rollType: 'saving_throw',
+            ability: 'all',
             condition: 'charmed',
           },
         },
@@ -836,9 +840,7 @@ const halfOrc = {
       effects: [
         {
           type: 'skill_proficiency',
-          value: {
-            ability: 'intimidation',
-          },
+          value: { skill: 'intimidation' },
         },
       ],
     },

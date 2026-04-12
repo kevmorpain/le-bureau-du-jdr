@@ -48,7 +48,7 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
       if (trait?.traitEffects) {
         trait.traitEffects.forEach((te) => {
           if (te.effect) {
-            effects.push(te.effect)
+            effects.push(te.effect as Effect)
           }
         })
       }
@@ -62,12 +62,12 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
 
     speciesEffects.value.forEach((effect) => {
       if (effect.type === 'ability_increase') {
-        const value = effect.value as { ability: string, amount: number }
+        const { ability, amount } = effect.value
 
-        if (bonuses[value.ability]) {
-          bonuses[value.ability]! += value.amount
+        if (bonuses[ability]) {
+          bonuses[ability]! += amount
         } else {
-          bonuses[value.ability] = value.amount
+          bonuses[ability] = amount
         }
       }
     })

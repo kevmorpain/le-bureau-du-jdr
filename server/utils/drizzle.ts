@@ -60,7 +60,8 @@ export type InsertCharacterClass = typeof schema.characterClasses.$inferInsert
 export type ClassItem = typeof schema.classes.$inferSelect
 export type CharacterAbilityScore = TModelWithRelations<'characterAbilityScores'>
 export type InsertCharacterAbilityScore = typeof schema.characterAbilityScores.$inferInsert
-export type Effect = typeof schema.effects.$inferSelect
+export type EffectRow = typeof schema.effects.$inferSelect
+export type { Effect } from '../db/schema/effects'
 export type Trait = TModelWithRelations<'traits'>
 export type TraitEffect = TModelWithRelations<'traitEffects'>
 export type SpeciesTrait = TModelWithRelations<'speciesTraits'>
