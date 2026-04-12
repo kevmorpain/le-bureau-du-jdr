@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import characterSpecies from './character_species'
 import characterClasses from './character_classes'
@@ -38,7 +38,9 @@ const characterSheets = sqliteTable('character_sheets', {
   inspiration: integer({ mode: 'boolean' }).default(false).notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
-})
+}, table => [
+  index('idx_character_sheets_species').on(table.speciesId),
+])
 
 export const characterSheetRelations = relations(characterSheets, ({ many, one }) => ({
   species: one(characterSpecies, {

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { index, sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { relations, sql } from 'drizzle-orm'
 import magicSchools from './magic_schools'
 
@@ -85,7 +85,9 @@ const spells = sqliteTable('spells', {
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at'),
   deletedAt: text('deleted_at'),
-})
+}, table => [
+  index('idx_spells_school').on(table.schoolId),
+])
 
 export const spellsRelations = relations(spells, ({ one }) => ({
   school: one(magicSchools, {
