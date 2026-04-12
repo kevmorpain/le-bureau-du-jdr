@@ -7,6 +7,8 @@ const traits = sqliteTable('traits', {
   id: integer().primaryKey().notNull(),
   name: text().notNull(),
   description: text(),
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at'),
 })
 
 export const traitsRelations = relations(traits, ({ many }) => ({

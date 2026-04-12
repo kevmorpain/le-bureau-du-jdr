@@ -16,6 +16,8 @@ const characterSpecies = sqliteTable('character_species', {
   name: text('name').notNull(),
   size: text('size').$type<CreatureSize>().notNull(),
   speed: integer('speed').notNull(),
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at'),
 })
 
 export const characterSpeciesRelations = relations(characterSpecies, ({ many }) => ({

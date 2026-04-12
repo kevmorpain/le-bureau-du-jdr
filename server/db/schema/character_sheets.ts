@@ -34,6 +34,8 @@ const characterSheets = sqliteTable('character_sheets', {
   background: text().default('').notNull(),
   currentHitDie: text('current_hit_die', { mode: 'json' }).$type<CurrentHitDie[]>(),
   inspiration: integer({ mode: 'boolean' }).default(false).notNull(),
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at'),
 })
 
 export const characterSheetRelations = relations(characterSheets, ({ many, one }) => ({

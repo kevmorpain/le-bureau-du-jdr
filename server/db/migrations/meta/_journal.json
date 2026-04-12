@@ -176,6 +176,13 @@
       "when": 1770507924486,
       "tag": "0024_eminent_jigsaw",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1776003096932,
+      "tag": "0025_slim_multiple_man",
+      "breakpoints": true
     }
   ]
 }

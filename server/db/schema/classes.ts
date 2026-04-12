@@ -6,6 +6,8 @@ const classes = sqliteTable('classes', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
   hitDice: text('hit_dice').$type<Die>().notNull(),
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at'),
 })
 
 export default classes
