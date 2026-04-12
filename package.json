@@ -8,7 +8,7 @@
     "preview": "npm run build && wrangler dev",
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "npm run build && wrangler d1 migrations apply DB --remote && wrangler deploy",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:unit": "vitest --project unit",
