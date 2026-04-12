@@ -1,26 +1,10 @@
 [
-  {
-    "name": "Abjuration"
-  },
-  {
-    "name": "Conjuration"
-  },
-  {
-    "name": "Divination"
-  },
-  {
-    "name": "Enchantment"
-  },
-  {
-    "name": "Evocation"
-  },
-  {
-    "name": "Illusion"
-  },
-  {
-    "name": "Necromancy"
-  },
-  {
-    "name": "Transmutation"
-  }
+  { "id": 1, "name": "Abjuration" },
+  { "id": 2, "name": "Conjuration" },
+  { "id": 3, "name": "Divination" },
+  { "id": 4, "name": "Enchantment" },
+  { "id": 5, "name": "Evocation" },
+  { "id": 6, "name": "Illusion" },
+  { "id": 7, "name": "Necromancy" },
+  { "id": 8, "name": "Transmutation" }
 ]
