@@ -1,8 +1,5 @@
-import { db } from 'hub:db'
-import magicSchools from '../db/schema/magic_schools'
+import { db, schema } from 'hub:db'
 
 export default defineEventHandler(async () => {
-  return await db
-    .select()
-    .from(magicSchools)
+  return await db.select().from(schema.magicSchools)
 })
