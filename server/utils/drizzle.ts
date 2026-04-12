@@ -68,3 +68,5 @@ export type CharacterSpell = typeof schema.characterSpells.$inferSelect
 export type InsertCharacterSpell = typeof schema.characterSpells.$inferInsert
 export type CharacterSpellSlot = typeof schema.characterSpellSlots.$inferSelect
 export type InsertCharacterSpellSlot = typeof schema.characterSpellSlots.$inferInsert
+export type CharacterSkill = typeof schema.characterSkills.$inferSelect
+export type InsertCharacterSkill = typeof schema.characterSkills.$inferInsert
