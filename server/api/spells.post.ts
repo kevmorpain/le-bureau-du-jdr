@@ -12,5 +12,6 @@ export default defineEventHandler(async (event) => {
 
   const response = await db.insert(tables.spells).values(result.data).returning().get()
 
+  setResponseStatus(event, 201)
   return response
 })

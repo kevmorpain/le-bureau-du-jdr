@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'ID parameter is required' })
   }
 
-  return await db
+  const characterSheet = await db
     .query
     .characterSheets
     .findFirst({
@@ -38,4 +38,10 @@ export default defineEventHandler(async (event) => {
         baseAbilityScores: true,
       },
     })
+
+  if (!characterSheet) {
+    throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
+  }
+
+  return characterSheet
 })
