@@ -64,3 +64,7 @@ export type Effect = typeof schema.effects.$inferSelect
 export type Trait = TModelWithRelations<'traits'>
 export type TraitEffect = TModelWithRelations<'traitEffects'>
 export type SpeciesTrait = TModelWithRelations<'speciesTraits'>
+export type CharacterSpell = typeof schema.characterSpells.$inferSelect
+export type InsertCharacterSpell = typeof schema.characterSpells.$inferInsert
+export type CharacterSpellSlot = typeof schema.characterSpellSlots.$inferSelect
+export type InsertCharacterSpellSlot = typeof schema.characterSpellSlots.$inferInsert

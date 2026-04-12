@@ -3,6 +3,8 @@ import { relations } from 'drizzle-orm'
 import characterSpecies from './character_species'
 import characterClasses from './character_classes'
 import characterAbilityScores from './character_ability_scores'
+import characterSpells from './character_spells'
+import characterSpellSlots from './character_spell_slots'
 
 export enum Alignment {
   LawfulGood = 'LG',
@@ -45,6 +47,8 @@ export const characterSheetRelations = relations(characterSheets, ({ many, one }
   }),
   classes: many(characterClasses),
   baseAbilityScores: many(characterAbilityScores),
+  spells: many(characterSpells),
+  spellSlots: many(characterSpellSlots),
 }))
 
 export default characterSheets

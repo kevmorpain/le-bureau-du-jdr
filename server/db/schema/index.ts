@@ -11,3 +11,5 @@ export { default as speciesTraits, speciesTraitsRelations } from './species_trai
 export { default as traits, traitsRelations } from './traits'
 export { default as effects } from './effects'
 export { default as traitEffects, traitEffectsRelations } from './trait_effects'
+export { default as characterSpells, characterSpellsRelations } from './character_spells'
+export { default as characterSpellSlots, characterSpellSlotsRelations } from './character_spell_slots'
