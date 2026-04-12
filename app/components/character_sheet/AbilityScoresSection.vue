@@ -14,9 +14,23 @@
           {{ formatModifier(abilityModifiers[key]!) }}
         </p>
 
-        <p class="border rounded-r-md py-0.5 px-1 text-sm min-w-10 bg-default -ml-2 text-center">
-          {{ abilityScores[key] }}
-        </p>
+        <UPopover
+          :content="{
+            side: 'top',
+          }"
+        >
+          <p class="border rounded-r-md py-0.5 px-1 text-sm min-w-10 bg-default -ml-2 text-center">
+            {{ abilityScores[key]!.total }}
+          </p>
+
+          <template #content>
+            <ul class="p-1.5 divide-y divide-default">
+              <li>Base: {{ abilityScores[key]!.base }}</li>
+              <li>Species Bonus: {{ abilityScores[key]!.speciesBonus }}</li>
+              <li>Total: {{ abilityScores[key]!.total }}</li>
+            </ul>
+          </template>
+        </UPopover>
       </div>
 
       <USeparator />
@@ -47,13 +61,11 @@
 </template>
 
 <script lang="ts" setup>
-const props = defineProps<{
-  characterSheet: CharacterSheet
-}>()
+const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
 const {
   abilityScores,
   abilityModifiers,
   formatModifier,
-} = useCharacterSheet(toRef(props, 'characterSheet'))
+} = useCharacterSheet(characterSheet)
 </script>

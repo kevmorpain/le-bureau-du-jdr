@@ -57,7 +57,7 @@
       </div>
 
       <div class="lg:flex gap-x-12 space-y-4">
-        <AbilityScoresSection :character-sheet />
+        <AbilityScoresSection v-model:character-sheet="characterSheet" />
 
         <div class="md:flex gap-x-4 space-y-4">
           <ProficiencyBonusSection :character-sheet />

@@ -76,14 +76,20 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
   })
 
   // TODO: should be total with all bonuses
-  const abilityScores = computed<Record<string, number>>(() => abilityScoreOrder.reduce<Record<string, number>>((acc, abilityId) => {
-    acc[abilityId] = getAbilityScore(abilityId) + (speciesAbilityScoreBonuses.value[abilityId] || 0)
+  const abilityScores = computed<Record<string, { base: number, speciesBonus: number, total: number }>>(() => abilityScoreOrder.reduce<Record<string, { base: number, speciesBonus: number, total: number }>>((acc, abilityId) => {
+    const base = getAbilityScore(abilityId)
+    const speciesBonus = speciesAbilityScoreBonuses.value[abilityId] || 0
+    acc[abilityId] = {
+      base,
+      speciesBonus,
+      total: base + speciesBonus,
+    }
 
     return acc
   }, {}))
 
-  const abilityModifiers = computed<Record<string, number>>(() => Object.entries(abilityScores.value!).reduce<Record<string, number>>((acc, [key, score]) => {
-    acc[key] = Math.floor((score - 10) / 2)
+  const abilityModifiers = computed<Record<string, number>>(() => Object.entries(abilityScores.value!).reduce<Record<string, number>>((acc, [key, abilityScore]) => {
+    acc[key] = Math.floor((abilityScore.total - 10) / 2)
 
     return acc
   }, {}))
