@@ -52,6 +52,8 @@
 
           <SpeedSection :character-sheet />
 
+          <PassivePerceptionSection :character-sheet />
+
           <InspirationSection v-model:character-sheet="characterSheet" />
         </div>
       </div>

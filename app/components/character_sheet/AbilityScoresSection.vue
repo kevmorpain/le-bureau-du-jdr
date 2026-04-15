@@ -26,7 +26,7 @@
           <template #content>
             <ul class="p-1.5 divide-y divide-default">
               <li>Base: {{ abilityScores[key]!.base }}</li>
-              <li>Species Bonus: {{ abilityScores[key]!.speciesBonus }}</li>
+              <li>Bonus espèce: {{ abilityScores[key]!.speciesBonus }}</li>
               <li>Total: {{ abilityScores[key]!.total }}</li>
             </ul>
           </template>
@@ -36,23 +36,23 @@
       <USeparator />
 
       <div class="flex items-center gap-2">
-        <UCheckbox />
-        <span class="px-1">{{ formatModifier(abilityModifiers[key]!) }}</span>
-        <span class="flex-1">Jet de sauvegarde</span>
+        <ProficiencyIndicator :level="savingThrows[key]!.proficiency" />
+        <span class="w-6 text-right text-sm">{{ formatModifier(savingThrows[key]!.modifier) }}</span>
+        <span class="flex-1 text-sm">Jet de sauvegarde</span>
       </div>
 
-      <template v-if="Object.keys($tm(`skills.${key}`)).length > 0">
+      <template v-if="abilitySkillKeys[key]!.length > 0">
         <USeparator />
 
-        <ul>
+        <ul class="space-y-1">
           <li
-            v-for="(skill, skillKey) in $tm(`skills.${key}`)"
+            v-for="skillKey in abilitySkillKeys[key]"
             :key="skillKey"
             class="flex items-center gap-2"
           >
-            <UCheckbox />
-            <span class="px-1">{{ formatModifier(abilityModifiers[key]!) }}</span>
-            <span class="flex-1">{{ $rt(skill) }}</span>
+            <ProficiencyIndicator :level="getEffectiveProficiency(skillKey)" />
+            <span class="w-6 text-right text-sm">{{ formatModifier(getSkillModifier(key, skillKey)) }}</span>
+            <span class="flex-1 text-sm">{{ $t(`skills.${key}.${skillKey}`) }}</span>
           </li>
         </ul>
       </template>
@@ -66,6 +66,10 @@ const characterSheet = defineModel<CharacterSheet>('characterSheet', { required:
 const {
   abilityScores,
   abilityModifiers,
+  abilitySkillKeys,
   formatModifier,
+  getEffectiveProficiency,
+  getSkillModifier,
+  savingThrows,
 } = useCharacterSheet(characterSheet)
 </script>

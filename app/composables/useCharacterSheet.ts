@@ -145,6 +145,48 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     }, [])
   })
 
+  const abilitySkillKeys: Record<string, string[]> = {
+    str: ['athletics'],
+    dex: ['acrobatics', 'sleight_of_hand', 'stealth'],
+    con: [],
+    int: ['arcana', 'history', 'investigation', 'nature', 'religion'],
+    wis: ['animal_handling', 'insight', 'medicine', 'perception', 'survival'],
+    cha: ['deception', 'intimidation', 'performance', 'persuasion'],
+  }
+
+  type ProficiencyLevel = 'none' | 'proficient' | 'expert'
+
+  const getEffectiveProficiency = (skillKey: string): ProficiencyLevel => {
+    const entries = characterSheet.value.skills?.filter(s => s.skillKey === skillKey) || []
+    if (entries.some(s => s.proficiencyLevel === 'expert')) return 'expert'
+    if (entries.some(s => s.proficiencyLevel === 'proficient')) return 'proficient'
+    return 'none'
+  }
+
+  const getSkillModifier = (abilityId: string, skillKey: string): number => {
+    const base = abilityModifiers.value[abilityId] ?? 0
+    const proficiency = getEffectiveProficiency(skillKey)
+    if (proficiency === 'expert') return base + proficiencyBonus.value * 2
+    if (proficiency === 'proficient') return base + proficiencyBonus.value
+    return base
+  }
+
+  const savingThrows = computed(() =>
+    Object.fromEntries(
+      Object.keys(abilityModifiers.value).map((abilityId) => {
+        const saveKey = `${abilityId}_save`
+        const proficiency = getEffectiveProficiency(saveKey)
+        const base = abilityModifiers.value[abilityId] ?? 0
+        const modifier = proficiency !== 'none' ? base + proficiencyBonus.value : base
+        return [abilityId, { modifier, proficiency }]
+      }),
+    ),
+  )
+
+  const passivePerception = computed(() => {
+    return 10 + getSkillModifier('wis', 'perception')
+  })
+
   const formatModifier = (modifier: number | null): string => {
     if (modifier === null) return '-'
     return modifier >= 0 ? `+${modifier}` : `${modifier}`
@@ -155,14 +197,19 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
   return {
     abilityScores,
     abilityModifiers,
+    abilitySkillKeys,
     availableSpellSlots,
     characterLevel,
     deathSavingThrows,
+    getEffectiveProficiency,
+    getSkillModifier,
     hitDice,
     initiativeBonus,
     mainClass,
     multiClass,
+    passivePerception,
     proficiencyBonus,
+    savingThrows,
     spellcastingAbility,
     spellcastingModifier,
     spellAttackModifier,

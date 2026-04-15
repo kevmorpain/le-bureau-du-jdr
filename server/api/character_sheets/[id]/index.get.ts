@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
           },
         },
         baseAbilityScores: true,
+        skills: true,
       },
     })
 
