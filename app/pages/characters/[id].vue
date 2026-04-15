@@ -82,7 +82,7 @@ const id = computed(() => route.params.id as string)
 const { data: characterSheetData } = await useFetch<CharacterSheet>(() => `/api/character_sheets/${id.value}`)
 
 if (!characterSheetData.value) {
-  throw new Error('Character sheet not found')
+  throw createError({ statusCode: 404, statusMessage: 'Fiche de personnage introuvable' })
 }
 
 const characterSheet = ref(characterSheetData.value)
