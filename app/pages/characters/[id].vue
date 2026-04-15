@@ -87,18 +87,21 @@ if (!characterSheetData.value) {
 
 const characterSheet = ref(characterSheetData.value)
 
+const toaster = useToast()
+
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
+
 watch(characterSheet, () => {
-  updateCharacterSheet()
+  if (saveTimeout) clearTimeout(saveTimeout)
+  saveTimeout = setTimeout(updateCharacterSheet, 1000)
 }, {
   deep: true,
 })
 
-const toaster = useToast()
-
 const updateCharacterSheet = async () => {
-  try {
-    if (!characterSheet.value) return
+  if (!characterSheet.value) return
 
+  try {
     await $fetch(`/api/character_sheets/${id.value}`, {
       method: 'PUT',
       body: characterSheet.value,
@@ -110,6 +113,11 @@ const updateCharacterSheet = async () => {
     })
   } catch (error) {
     console.error('Error saving character sheet:', error)
+    toaster.add({
+      title: 'Erreur lors de la sauvegarde',
+      description: 'La fiche de personnage n\'a pas pu être sauvegardée.',
+      color: 'error',
+    })
   }
 }
 </script>
