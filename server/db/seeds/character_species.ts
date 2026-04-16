@@ -20,25 +20,25 @@ export default async function seed() {
     for (const trait of traits) {
       const { effects, ...traitData } = trait
 
-      // Skip if this trait is already linked to this species (idempotency on re-run)
-      const existingTrait = await db
-        .select({ id: schema.traits.id })
-        .from(schema.traits)
-        .innerJoin(schema.speciesTraits, eq(schema.speciesTraits.traitId, schema.traits.id))
+      // Skip if this feature is already linked to this species (idempotency on re-run)
+      const existingFeature = await db
+        .select({ id: schema.features.id })
+        .from(schema.features)
+        .innerJoin(schema.speciesFeatures, eq(schema.speciesFeatures.featureId, schema.features.id))
         .where(
           and(
-            eq(schema.speciesTraits.speciesId, insertedSpecies.id),
-            eq(schema.traits.name, traitData.name),
+            eq(schema.speciesFeatures.speciesId, insertedSpecies.id),
+            eq(schema.features.name, traitData.name),
           ),
         )
         .limit(1)
         .get()
 
-      if (existingTrait) continue
+      if (existingFeature) continue
 
-      const insertedTrait = await db
-        .insert(schema.traits)
-        .values(traitData)
+      const insertedFeature = await db
+        .insert(schema.features)
+        .values({ ...traitData, featureType: 'species_trait' })
         .returning()
         .get()
 
@@ -63,14 +63,14 @@ export default async function seed() {
           .then(r => r.id)
 
         await db
-          .insert(schema.traitEffects)
-          .values({ traitId: insertedTrait.id, effectId })
+          .insert(schema.featureEffects)
+          .values({ featureId: insertedFeature.id, effectId })
           .onConflictDoNothing()
       }
 
       await db
-        .insert(schema.speciesTraits)
-        .values({ speciesId: insertedSpecies.id, traitId: insertedTrait.id })
+        .insert(schema.speciesFeatures)
+        .values({ speciesId: insertedSpecies.id, featureId: insertedFeature.id })
         .onConflictDoNothing()
     }
   }
