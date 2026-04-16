@@ -211,6 +211,13 @@
       "when": 1776005819452,
       "tag": "0029_striped_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1776298639478,
+      "tag": "0030_complex_firelord",
+      "breakpoints": true
     }
   ]
 }
