@@ -6,6 +6,7 @@ import characterAbilityScores from './character_ability_scores'
 import characterSpells from './character_spells'
 import characterSpellSlots from './character_spell_slots'
 import characterSkills from './character_skills'
+import characterFeatures from './character_features'
 
 export enum Alignment {
   LawfulGood = 'LG',
@@ -53,6 +54,7 @@ export const characterSheetRelations = relations(characterSheets, ({ many, one }
   spells: many(characterSpells),
   spellSlots: many(characterSpellSlots),
   skills: many(characterSkills),
+  features: many(characterFeatures),
 }))
 
 export default characterSheets
