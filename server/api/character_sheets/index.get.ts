@@ -8,11 +8,11 @@ export default defineEventHandler(async () => {
       with: {
         species: {
           with: {
-            speciesTraits: {
+            speciesFeatures: {
               with: {
-                trait: {
+                feature: {
                   with: {
-                    traitEffects: {
+                    featureEffects: {
                       with: {
                         effect: true,
                       },

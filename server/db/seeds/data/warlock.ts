@@ -1,4 +1,4 @@
-import { fixed, lookup, variable, add, mul, max } from '../../../shared/utils/formula'
+import { fixed, lookup, variable, add, mul, max } from '~~/shared/utils/formula'
 
 // ─── Pact Magic slot tables (PHB 5e) ──────────────────────────────────────────
 // Index = class_level - 1 (levels 1–20)
