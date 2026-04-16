@@ -1,4 +1,6 @@
 import { useStorage } from '@vueuse/core'
+import { evaluate } from '~~/shared/utils/formula'
+import type { FormulaContext } from '~~/shared/utils/formula'
 
 export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
   const species = computed(() => characterSheet.value.species)
@@ -39,16 +41,16 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
 
   const abilityScoreOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha']
 
-  const speciesTraits = computed(() => species.value?.speciesTraits?.flatMap(st => st.trait!) || [])
+  const speciesTraits = computed(() => species.value?.speciesFeatures?.flatMap(sf => sf.feature!) || [])
 
   const speciesEffects = computed(() => {
     const effects: Effect[] = []
 
-    speciesTraits.value.forEach((trait) => {
-      if (trait?.traitEffects) {
-        trait.traitEffects.forEach((te) => {
-          if (te.effect) {
-            effects.push(te.effect as Effect)
+    speciesTraits.value.forEach((feature) => {
+      if (feature?.featureEffects) {
+        feature.featureEffects.forEach((fe) => {
+          if (fe.effect) {
+            effects.push(fe.effect as Effect)
           }
         })
       }
@@ -187,6 +189,33 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     return 10 + getSkillModifier('wis', 'perception')
   })
 
+  const formulaContext = computed<FormulaContext>(() => ({
+    level: characterLevel.value,
+    class_level: mainClass.value?.level ?? characterLevel.value,
+    prof_bonus: proficiencyBonus.value,
+    str_mod: abilityModifiers.value.str ?? 0,
+    dex_mod: abilityModifiers.value.dex ?? 0,
+    con_mod: abilityModifiers.value.con ?? 0,
+    int_mod: abilityModifiers.value.int ?? 0,
+    wis_mod: abilityModifiers.value.wis ?? 0,
+    cha_mod: abilityModifiers.value.cha ?? 0,
+  }))
+
+  const resolvedFeatures = computed(() =>
+    (characterSheet.value.features ?? []).map((cf) => {
+      const feature = cf.feature!
+      const maxUses = feature.maxUsesFormula
+        ? evaluate(feature.maxUsesFormula, formulaContext.value)
+        : null
+      return {
+        ...feature,
+        currentUses: cf.currentUses,
+        maxUses,
+        effects: feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? [],
+      }
+    }),
+  )
+
   const formatModifier = (modifier: number | null): string => {
     if (modifier === null) return '-'
     return modifier >= 0 ? `+${modifier}` : `${modifier}`
@@ -221,6 +250,7 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     speciesAbilityScoreBonuses,
     speciesTraits,
     speed,
+    resolvedFeatures,
     formatModifier,
   }
 }

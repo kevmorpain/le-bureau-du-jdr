@@ -13,15 +13,15 @@
           <p>{{ trait.description }}</p>
 
           <ul
-            v-if="trait.traitEffects && trait.traitEffects.length > 0"
+            v-if="trait.featureEffects && trait.featureEffects.length > 0"
             class="mt-2 space-y-1"
           >
             <li
-              v-for="(te, index) in trait.traitEffects"
+              v-for="(fe, index) in trait.featureEffects"
               :key="index"
               class="text-sm text-muted"
             >
-              - {{ te.effect?.type }}: {{ te.effect?.value }}
+              - {{ fe.effect?.type }}: {{ fe.effect?.value }}
             </li>
           </ul>
         </template>

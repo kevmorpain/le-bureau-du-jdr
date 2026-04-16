@@ -24,12 +24,16 @@
         <UButton
           icon="i-game-icons:forest-camp"
           variant="outline"
+          :loading="isResting"
+          @click="shortRest()"
         >
           Repos court
         </UButton>
         <UButton
           icon="i-game-icons:night-sleep"
           variant="outline"
+          :loading="isResting"
+          @click="longRest()"
         >
           Repos long
         </UButton>
@@ -70,6 +74,8 @@
         <SpeciesTraitsSection :character-sheet />
       </div>
 
+      <ClassFeaturesSection :character-sheet />
+
       <SpellcastingSection :character-sheet />
 
       <SpellListSection :character-sheet />
@@ -90,6 +96,7 @@ if (!characterSheetData.value) {
 const characterSheet = ref(characterSheetData.value)
 
 const toaster = useToast()
+const { shortRest, longRest, isResting } = useRest(characterSheet)
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
 

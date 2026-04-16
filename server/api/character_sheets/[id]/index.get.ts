@@ -15,15 +15,28 @@ export default defineEventHandler(async (event) => {
       with: {
         species: {
           with: {
-            speciesTraits: {
+            speciesFeatures: {
               with: {
-                trait: {
+                feature: {
                   with: {
-                    traitEffects: {
+                    featureEffects: {
                       with: {
                         effect: true,
                       },
                     },
+                  },
+                },
+              },
+            },
+          },
+        },
+        features: {
+          with: {
+            feature: {
+              with: {
+                featureEffects: {
+                  with: {
+                    effect: true,
                   },
                 },
               },
