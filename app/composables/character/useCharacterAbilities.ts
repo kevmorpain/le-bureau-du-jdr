@@ -13,6 +13,10 @@ export const abilitySkillKeys: Record<string, string[]> = {
   cha: ['deception', 'intimidation', 'performance', 'persuasion'],
 }
 
+export type ProficiencyLevel = 'none' | 'proficient' | 'expert'
+
+const proficiencyPriority: Record<ProficiencyLevel, number> = { none: 0, proficient: 1, expert: 2 }
+
 // ─── Composable ──────────────────────────────────────────────────────────────
 
 export const useCharacterAbilities = (
@@ -38,15 +42,12 @@ export const useCharacterAbilities = (
 
   const speciesAbilityScoreBonuses = computed(() => {
     const bonuses: Record<string, number> = {}
-    const effects = deps?.speciesEffects.value ?? []
-
-    effects.forEach((effect) => {
+    for (const effect of deps?.speciesEffects.value ?? []) {
       if (effect.type === 'ability_increase') {
         const { ability, amount } = effect.value
         bonuses[ability] = (bonuses[ability] ?? 0) + amount
       }
-    })
-
+    }
     return bonuses
   })
 
@@ -71,14 +72,21 @@ export const useCharacterAbilities = (
 
   // ─── Skills & saving throws ───────────────────────────────────────────────
 
-  type ProficiencyLevel = 'none' | 'proficient' | 'expert'
+  // Pre-computed Map to avoid O(n) filtering on every getEffectiveProficiency call
+  const skillProficiencies = computed(() => {
+    const map = new Map<string, ProficiencyLevel>()
+    for (const s of characterSheet?.value?.skills ?? []) {
+      const level = s.proficiencyLevel as ProficiencyLevel
+      const current = map.get(s.skillKey)
+      if (!current || proficiencyPriority[level] > proficiencyPriority[current]) {
+        map.set(s.skillKey, level)
+      }
+    }
+    return map
+  })
 
-  const getEffectiveProficiency = (skillKey: string): ProficiencyLevel => {
-    const entries = characterSheet?.value?.skills?.filter(s => s.skillKey === skillKey) || []
-    if (entries.some(s => s.proficiencyLevel === 'expert')) return 'expert'
-    if (entries.some(s => s.proficiencyLevel === 'proficient')) return 'proficient'
-    return 'none'
-  }
+  const getEffectiveProficiency = (skillKey: string): ProficiencyLevel =>
+    skillProficiencies.value.get(skillKey) ?? 'none'
 
   const getSkillModifier = (abilityId: string, skillKey: string): number => {
     const base = abilityModifiers.value[abilityId] ?? 0

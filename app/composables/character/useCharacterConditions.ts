@@ -12,8 +12,8 @@ export const binaryConditions = allConditions.filter(c => c !== 'exhaustion')
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type DefenseLevel = 'immunity' | 'resistance' | 'vulnerability'
-export type DefenseEntry = { key: string, label: string, level: DefenseLevel, temporary?: boolean }
-export type SaveStatus = { disadvantage: boolean, autoFail: boolean, reasons: string[] }
+type DefenseEntry = { key: string, label: string, level: DefenseLevel, temporary?: boolean }
+type SaveStatus = { disadvantage: boolean, autoFail: boolean, reasons: string[] }
 
 const defenseLevelPriority: Record<DefenseLevel, number> = {
   vulnerability: 0,
@@ -31,10 +31,7 @@ export const useCharacterConditions = (
     abilityModifiers: ComputedRef<Record<string, number>>
   },
 ) => {
-  const storageKey = (suffix: string) => {
-    const id = characterSheet?.value?.id
-    return id ? `char:${id}:${suffix}` : suffix
-  }
+  const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
 
   // ─── Active conditions & exhaustion ───────────────────────────────────────
 
@@ -192,7 +189,6 @@ export const useCharacterConditions = (
     toggleCondition,
     exhaustionLevel,
     exhaustionTooltip,
-    binaryConditions,
     hasDraconicAncestry,
     dragonbornAncestry,
     defenseEntries,

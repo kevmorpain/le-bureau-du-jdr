@@ -3,7 +3,7 @@ import type { FormulaContext } from '~~/shared/utils/formula'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
-import { useCharacterConditions } from './character/useCharacterConditions'
+import { useCharacterConditions, binaryConditions } from './character/useCharacterConditions'
 import { useCharacterSpellcasting } from './character/useCharacterSpellcasting'
 
 export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
@@ -101,11 +101,11 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     passivePerception: abilities.passivePerception,
     initiativeBonus: abilities.initiativeBonus,
     // Conditions & états
+    binaryConditions,
     activeConditions: conditions.activeConditions,
     toggleCondition: conditions.toggleCondition,
     exhaustionLevel: conditions.exhaustionLevel,
     exhaustionTooltip: conditions.exhaustionTooltip,
-    binaryConditions: conditions.binaryConditions,
     hasDraconicAncestry: conditions.hasDraconicAncestry,
     dragonbornAncestry: conditions.dragonbornAncestry,
     defenseEntries: conditions.defenseEntries,

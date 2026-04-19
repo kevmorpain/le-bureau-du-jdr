@@ -7,31 +7,31 @@ export const useCharacterSpellcasting = (
     abilityModifiers: ComputedRef<Record<string, number>>
   },
 ) => {
-  const storageKey = (suffix: string) => {
-    const id = characterSheet?.value?.id
-    return id ? `char:${id}:${suffix}` : suffix
-  }
+  const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
 
   const spellcastingAbility = useStorage<string | null>(storageKey('spellcastingAbility'), null)
 
+  // Shared base for DC and attack modifier computations
+  const spellBaseStats = computed(() => {
+    if (!spellcastingAbility.value) return null
+    return {
+      prof: deps?.proficiencyBonus.value ?? 2,
+      mod: deps?.abilityModifiers.value[spellcastingAbility.value] ?? 0,
+    }
+  })
+
   const spellcastingModifier = computed<number | null>(() => {
     if (!spellcastingAbility.value) return null
-    return (deps?.abilityModifiers.value[spellcastingAbility.value]) ?? null
+    return deps?.abilityModifiers.value[spellcastingAbility.value] ?? null
   })
 
-  const spellSaveDC = computed<number | null>(() => {
-    if (!spellcastingAbility.value) return null
-    const prof = deps?.proficiencyBonus.value ?? 2
-    const mod = deps?.abilityModifiers.value[spellcastingAbility.value] ?? 0
-    return 8 + prof + mod
-  })
+  const spellSaveDC = computed<number | null>(() =>
+    spellBaseStats.value ? 8 + spellBaseStats.value.prof + spellBaseStats.value.mod : null,
+  )
 
-  const spellAttackModifier = computed<number | null>(() => {
-    if (!spellcastingAbility.value) return null
-    const prof = deps?.proficiencyBonus.value ?? 2
-    const mod = deps?.abilityModifiers.value[spellcastingAbility.value] ?? 0
-    return prof + mod
-  })
+  const spellAttackModifier = computed<number | null>(() =>
+    spellBaseStats.value ? spellBaseStats.value.prof + spellBaseStats.value.mod : null,
+  )
 
   const spellSlots = useStorage<Record<number, { max: number, current: number }>>(storageKey('spellSlots'), {
     1: { max: 0, current: 0 },

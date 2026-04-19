@@ -2,10 +2,7 @@ import { useStorage } from '@vueuse/core'
 import type { Effect } from '~~/server/db/schema/effects'
 
 export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
-  const storageKey = (suffix: string) => {
-    const id = characterSheet?.value?.id
-    return id ? `char:${id}:${suffix}` : suffix
-  }
+  const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
 
   // ─── Species ──────────────────────────────────────────────────────────────
 
