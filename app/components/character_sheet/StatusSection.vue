@@ -152,7 +152,7 @@
 
 <script lang="ts" setup>
 import { conditionLabels } from '~~/shared/utils/labels'
-import { dragonbornAncestryLabels } from '~~/shared/utils/draconic_ancestry'
+import { dragonbornAncestryLabels, allDragonbornAncestries } from '~~/shared/utils/draconic_ancestry'
 import { conditionTooltipLines } from '~~/shared/utils/condition-effects'
 
 const props = defineProps<{
@@ -168,7 +168,6 @@ const {
   binaryConditions,
   hasDraconicAncestry,
   dragonbornAncestry,
-  allDragonbornAncestries,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 
 const defenseIcon: Record<string, string> = {

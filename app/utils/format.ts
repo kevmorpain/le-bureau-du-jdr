@@ -1,3 +1,8 @@
+export const formatModifier = (modifier: number | null): string => {
+  if (modifier === null) return '-'
+  return modifier >= 0 ? `+${modifier}` : `${modifier}`
+}
+
 export const toSnakeCase = (str: string): string => {
   // Source - https://stackoverflow.com/a
   // Posted by ZPiDER

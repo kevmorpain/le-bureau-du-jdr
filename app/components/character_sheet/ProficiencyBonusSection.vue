@@ -13,7 +13,6 @@ const props = defineProps<{
 }>()
 
 const {
-  formatModifier,
   proficiencyBonus,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 </script>

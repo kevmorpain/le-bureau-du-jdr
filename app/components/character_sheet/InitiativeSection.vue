@@ -20,7 +20,6 @@ const props = defineProps<{
 }>()
 
 const {
-  formatModifier,
   initiativeBonus,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 </script>

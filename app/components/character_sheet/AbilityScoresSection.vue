@@ -79,7 +79,6 @@ const {
   abilityScores,
   abilityModifiers,
   abilitySkillKeys,
-  formatModifier,
   getEffectiveProficiency,
   getSkillModifier,
   savingThrows,

@@ -33,7 +33,6 @@ const {
   spellcastingAbility,
   spellSaveDC,
   spellAttackModifier,
-  formatModifier,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 
 const { tm, rt } = useI18n()
