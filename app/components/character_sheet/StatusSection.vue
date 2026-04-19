@@ -17,9 +17,13 @@
         >
           <UIcon
             :name="defenseIcon[entry.level]"
-            :class="entry.level === 'vulnerability' ? 'text-red-400 size-4' : 'text-blue-400 size-4'"
+            :class="entry.level === 'vulnerability' ? 'text-red-400 size-4' : entry.temporary ? 'text-rose-400 size-4' : 'text-blue-400 size-4'"
           />
-          {{ entry.label }}
+          <span :class="entry.temporary ? 'text-rose-400' : ''">{{ entry.label }}</span>
+          <ConditionWarning
+            v-if="entry.temporary"
+            :lines="['Résistance temporaire (état actif).']"
+          />
         </li>
       </ul>
       <p
@@ -89,26 +93,31 @@
         v-if="activeConditions.length"
         class="flex flex-wrap gap-1"
       >
-        <UBadge
+        <UTooltip
           v-for="condition in activeConditions"
           :key="condition"
-          color="primary"
-          variant="subtle"
-          size="md"
+          :text="conditionTooltipLines[condition].join('\n')"
+          :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
         >
-          {{ conditionLabels[condition] }}
-          <template #trailing>
-            <button
-              class="flex items-center hover:opacity-70 transition-opacity"
-              @click="toggleCondition(condition)"
-            >
-              <UIcon
-                name="i-heroicons:x-mark-16-solid"
-                class="size-3"
-              />
-            </button>
-          </template>
-        </UBadge>
+          <UBadge
+            color="primary"
+            variant="subtle"
+            size="md"
+          >
+            {{ conditionLabels[condition] }}
+            <template #trailing>
+              <button
+                class="flex items-center hover:opacity-70 transition-opacity"
+                @click="toggleCondition(condition)"
+              >
+                <UIcon
+                  name="i-heroicons:x-mark-16-solid"
+                  class="size-3"
+                />
+              </button>
+            </template>
+          </UBadge>
+        </UTooltip>
       </div>
       <p
         v-else
@@ -122,14 +131,20 @@
         <span class="text-xs text-muted">
           Épuisement
         </span>
-        <UInputNumber
-          v-model="exhaustionLevel"
-          :min="0"
-          :max="6"
-          size="xs"
-          class="ml-auto w-24"
-          color="primary"
-        />
+        <UTooltip
+          class="ml-auto"
+          :text="exhaustionTooltip || undefined"
+          :ui="{ text: 'whitespace-pre-line', content: 'h-auto' }"
+        >
+          <UInputNumber
+            v-model="exhaustionLevel"
+            :min="0"
+            :max="6"
+            size="xs"
+            class="w-24"
+            color="primary"
+          />
+        </UTooltip>
       </div>
     </div>
   </div>
@@ -138,6 +153,7 @@
 <script lang="ts" setup>
 import { conditionLabels } from '~~/shared/utils/labels'
 import { dragonbornAncestryLabels } from '~~/shared/utils/draconic_ancestry'
+import { conditionTooltipLines } from '~~/shared/utils/condition-effects'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
@@ -148,6 +164,7 @@ const {
   activeConditions,
   toggleCondition,
   exhaustionLevel,
+  exhaustionTooltip,
   binaryConditions,
   hasDraconicAncestry,
   dragonbornAncestry,

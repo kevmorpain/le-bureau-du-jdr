@@ -39,10 +39,22 @@
         <ProficiencyIndicator :level="savingThrows[key]!.proficiency" />
         <span class="w-6 text-right text-sm">{{ formatModifier(savingThrows[key]!.modifier) }}</span>
         <span class="flex-1 text-sm">Jet de sauvegarde</span>
+        <ConditionWarning
+          v-if="saveStatuses[key]?.autoFail || saveStatuses[key]?.disadvantage"
+          :lines="saveStatuses[key]!.reasons"
+        />
       </div>
 
       <template v-if="abilitySkillKeys[key]!.length > 0">
         <USeparator />
+
+        <div
+          v-if="skillDisadvantageReasons.length"
+          class="flex items-center gap-1"
+        >
+          <ConditionWarning :lines="skillDisadvantageReasons" />
+          <span class="text-xs text-rose-400">Désavantage aux jets de carac.</span>
+        </div>
 
         <ul class="space-y-1">
           <li
@@ -71,5 +83,7 @@ const {
   getEffectiveProficiency,
   getSkillModifier,
   savingThrows,
+  saveStatuses,
+  skillDisadvantageReasons,
 } = useCharacterSheet(characterSheet)
 </script>

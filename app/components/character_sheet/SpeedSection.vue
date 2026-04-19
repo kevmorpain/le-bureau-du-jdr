@@ -9,7 +9,8 @@
         name="i-game-icons:run"
         class="size-4 mr-1"
       />
-      {{ $n(speed) }} m
+      <span :class="speedModifiers.length ? 'text-rose-400 font-semibold' : ''">{{ $n(effectiveSpeed) }} m</span>
+      <ConditionWarning :lines="speedModifiers" />
     </p>
   </div>
 </template>
@@ -21,5 +22,7 @@ const props = defineProps<{
 
 const {
   speed,
+  effectiveSpeed,
+  speedModifiers,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 </script>

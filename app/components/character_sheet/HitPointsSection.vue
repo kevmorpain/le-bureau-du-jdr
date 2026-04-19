@@ -19,6 +19,12 @@
           variant="none"
         />
       </div>
+      <UTooltip
+        v-if="effectiveMaxHp !== characterSheet.maxHp"
+        text="Épuisement niv. 4 : PV max ÷ 2"
+      >
+        <span class="text-rose-400 text-sm font-semibold">(→ {{ effectiveMaxHp }})</span>
+      </UTooltip>
       +
       <UInputNumber
         v-model="characterSheet.temporaryHp"
@@ -53,4 +59,6 @@
 
 <script lang="ts" setup>
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
+
+const { effectiveMaxHp } = useCharacterSheet(characterSheet)
 </script>
