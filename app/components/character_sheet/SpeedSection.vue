@@ -12,6 +12,9 @@
       <span :class="speedModifiers.length ? 'text-rose-400 font-semibold' : ''">{{ $n(effectiveSpeed) }} m</span>
       <ConditionWarning :lines="speedModifiers" />
     </p>
+    <p class="text-xs text-muted">
+      {{ speedInSquares }} case{{ speedInSquares > 1 ? 's' : '' }}
+    </p>
   </div>
 </template>
 
@@ -25,4 +28,6 @@ const {
   effectiveSpeed,
   speedModifiers,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
+
+const speedInSquares = computed(() => effectiveSpeed.value / 1.5)
 </script>

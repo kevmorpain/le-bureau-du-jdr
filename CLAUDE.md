@@ -21,7 +21,7 @@ ESLint runs automatically via Nuxt's ESLint module — no separate lint command 
 
 ## Architecture
 
-**Le Bureau du JDR** is a D&D 5e character sheet and spell database app. Full-stack Nuxt 4 app deployed to Cloudflare Workers via NuxtHub.
+**Le Bureau du JDR** is a D&D 5e (2014) character sheet and spell database app. Full-stack Nuxt 4 app deployed to Cloudflare Workers via NuxtHub.
 
 **Stack:** Nuxt 4 + Nitro (server) + Vue 3 + TypeScript + Drizzle ORM + SQLite (NuxtHub D1) + Nuxt UI
 
