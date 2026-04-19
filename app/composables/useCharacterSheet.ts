@@ -1,6 +1,10 @@
 import { useStorage } from '@vueuse/core'
 import { evaluate } from '~~/shared/utils/formula'
 import type { FormulaContext } from '~~/shared/utils/formula'
+import type { Effect, DamageTypeKey, ConditionKey } from '~~/server/db/schema/effects'
+import { damageTypeLabels, conditionLabels, allConditions } from '~~/shared/utils/labels'
+import { dragonbornAncestryDamageType, allDragonbornAncestries } from '~~/shared/utils/draconic_ancestry'
+import type { DragonbornAncestry } from '~~/shared/utils/draconic_ancestry'
 
 export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
   const species = computed(() => characterSheet.value.species)
@@ -216,6 +220,94 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     }),
   )
 
+  // ─── Effects aggregation ────────────────────────────────────────────────────
+
+  const classFeatureEffects = computed<Effect[]>(() =>
+    resolvedFeatures.value.flatMap(f => f.effects as Effect[]),
+  )
+
+  const allEffects = computed<Effect[]>(() => [
+    ...speciesEffects.value,
+    ...classFeatureEffects.value,
+  ])
+
+  // ─── Draconic ancestry ──────────────────────────────────────────────────────
+
+  const hasDraconicAncestry = computed(() =>
+    allEffects.value.some(e => e.type === 'choice' && e.value === 'draconic_ancestry'),
+  )
+
+  const dragonbornAncestry = useStorage<DragonbornAncestry | null>('dragonbornAncestry', null)
+
+  const resolveDamageType = (key: DamageTypeKey): DamageTypeKey => {
+    if (key !== 'draconic_ancestry') return key
+    return dragonbornAncestry.value
+      ? dragonbornAncestryDamageType[dragonbornAncestry.value]
+      : 'draconic_ancestry'
+  }
+
+  // ─── Defense entries ────────────────────────────────────────────────────────
+
+  type DefenseLevel = 'immunity' | 'resistance' | 'vulnerability'
+  type DefenseEntry = { key: string, label: string, level: DefenseLevel }
+
+  const defenseLevelPriority: Record<DefenseLevel, number> = {
+    vulnerability: 0,
+    resistance: 1,
+    immunity: 2,
+  }
+
+  const defenseEntries = computed((): DefenseEntry[] => {
+    const map = new Map<string, DefenseEntry>()
+
+    const add = (key: string, label: string, level: DefenseLevel) => {
+      const existing = map.get(key)
+      if (!existing || defenseLevelPriority[level] > defenseLevelPriority[existing.level]) {
+        map.set(key, { key, label, level })
+      }
+    }
+
+    for (const effect of allEffects.value) {
+      if (effect.type === 'damage_immunity') {
+        const dt = resolveDamageType(effect.value.damageType)
+        add(`dmg:${dt}`, damageTypeLabels[dt], 'immunity')
+      }
+      else if (effect.type === 'damage_resistance') {
+        const dt = resolveDamageType(effect.value.damageType)
+        add(`dmg:${dt}`, damageTypeLabels[dt], 'resistance')
+      }
+      else if (effect.type === 'vulnerability') {
+        const dt = resolveDamageType(effect.value.damageType)
+        add(`dmg:${dt}`, damageTypeLabels[dt], 'vulnerability')
+      }
+      else if (effect.type === 'condition_immunity') {
+        const cond = effect.value.condition
+        add(`cond:${cond}`, conditionLabels[cond], 'immunity')
+      }
+      else if (effect.type === 'advantage' && effect.value.rollType === 'saving_throw') {
+        const cond = effect.value.condition
+        const label = `${cond in conditionLabels ? conditionLabels[cond as ConditionKey] : cond} (JdS)`
+        // Distinct key so it coexists with damage resistance on the same condition
+        add(`jds:${cond}`, label, 'resistance')
+      }
+    }
+
+    return Array.from(map.values())
+  })
+
+  // ─── Active conditions ──────────────────────────────────────────────────────
+
+  const activeConditions = useStorage<ConditionKey[]>('activeConditions', [])
+
+  const toggleCondition = (condition: ConditionKey) => {
+    const idx = activeConditions.value.indexOf(condition)
+    if (idx === -1) activeConditions.value.push(condition)
+    else activeConditions.value.splice(idx, 1)
+  }
+
+  const exhaustionLevel = useStorage<number>('exhaustionLevel', 0)
+  const binaryConditions = allConditions.filter(c => c !== 'exhaustion')
+
   const formatModifier = (modifier: number | null): string => {
     if (modifier === null) return '-'
     return modifier >= 0 ? `+${modifier}` : `${modifier}`
@@ -251,6 +343,16 @@ export const useCharacterSheet = (characterSheet: Ref<CharacterSheet>) => {
     speciesTraits,
     speed,
     resolvedFeatures,
+    allEffects,
+    defenseEntries,
+    activeConditions,
+    toggleCondition,
+    exhaustionLevel,
+    binaryConditions,
+    hasDraconicAncestry,
+    dragonbornAncestry,
+    allDragonbornAncestries,
+    allConditions,
     formatModifier,
   }
 }

@@ -9,6 +9,11 @@ export type DamageTypeKey
     | 'necrotic' | 'piercing' | 'poison' | 'psychic' | 'radiant' | 'slashing' | 'thunder'
     | 'draconic_ancestry' // dynamic — resolved by the character's ancestry choice
 
+export type ConditionKey
+  = | 'blinded' | 'charmed' | 'deafened' | 'exhaustion' | 'frightened' | 'grappled'
+    | 'incapacitated' | 'invisible' | 'paralyzed' | 'petrified' | 'poisoned'
+    | 'prone' | 'restrained' | 'stunned' | 'unconscious'
+
 // ─── Action sub-types ──────────────────────────────────────────────────────
 
 type BreathWeaponAction = {
@@ -43,7 +48,8 @@ export type Effect
     | { type: 'darkvision', value: { range: number } }
     | { type: 'equipment_penalty', value: { penalty: string, armor_type: string, modifier: string, override: boolean } }
     | { type: 'extra_damage', value: { trigger: string, attackType: string, extraDie: number } }
-    | { type: 'immunity', value: string }
+    | { type: 'damage_immunity', value: { damageType: DamageTypeKey } }
+    | { type: 'condition_immunity', value: { condition: ConditionKey } }
     | { type: 'language_proficiency', value: string }
     | { type: 'language_proficiency_choice', value: { count: number } }
     | { type: 'other', value: Record<string, unknown> }
