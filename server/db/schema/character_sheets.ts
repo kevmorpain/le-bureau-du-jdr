@@ -38,6 +38,8 @@ const characterSheets = sqliteTable('character_sheets', {
   background: text().default('').notNull(),
   currentHitDie: text('current_hit_die', { mode: 'json' }).$type<CurrentHitDie[]>(),
   inspiration: integer({ mode: 'boolean' }).default(false).notNull(),
+  exhaustionLevel: integer('exhaustion_level').default(0).notNull(),
+  dragonbornAncestry: text('dragonborn_ancestry'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 }, table => [

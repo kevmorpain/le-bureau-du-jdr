@@ -43,7 +43,10 @@ export const useCharacterConditions = (
     else activeConditions.value.splice(idx, 1)
   }
 
-  const exhaustionLevel = useStorage<number>(storageKey('exhaustionLevel'), 0)
+  const exhaustionLevel = computed({
+    get: () => characterSheet?.value?.exhaustionLevel ?? 0,
+    set: (v: number) => { if (characterSheet?.value) characterSheet.value.exhaustionLevel = v },
+  })
 
   const exhaustionTooltip = computed(() =>
     exhaustionImpactLines.slice(0, exhaustionLevel.value).join('\n'),
@@ -51,7 +54,10 @@ export const useCharacterConditions = (
 
   // ─── Draconic ancestry ────────────────────────────────────────────────────
 
-  const dragonbornAncestry = useStorage<DragonbornAncestry | null>(storageKey('dragonbornAncestry'), null)
+  const dragonbornAncestry = computed({
+    get: () => (characterSheet?.value?.dragonbornAncestry as DragonbornAncestry | null) ?? null,
+    set: (v: DragonbornAncestry | null) => { if (characterSheet?.value) characterSheet.value.dragonbornAncestry = v },
+  })
 
   const hasDraconicAncestry = computed(() =>
     (deps?.allEffects.value ?? []).some(e => e.type === 'choice' && e.value === 'draconic_ancestry'),

@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
             class: true,
           },
         },
+        spellSlots: true,
         baseAbilityScores: true,
         skills: true,
       },

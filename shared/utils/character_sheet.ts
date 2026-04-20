@@ -4,6 +4,7 @@ const classInputSchema = z.object({
   classId: z.number().int().positive(),
   level: z.number().int().min(1).max(20),
   isMain: z.boolean(),
+  spellcastingAbility: z.string().nullable().optional(),
 })
 
 export const createCharacterSheetSchema = z.object({
@@ -16,4 +17,6 @@ export const updateCharacterSheetSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   speciesId: z.number().int().positive().nullable().optional(),
   classes: z.array(classInputSchema).optional(),
+  exhaustionLevel: z.number().int().min(0).max(6).optional(),
+  dragonbornAncestry: z.string().nullable().optional(),
 })

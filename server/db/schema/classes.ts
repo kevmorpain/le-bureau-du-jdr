@@ -6,6 +6,7 @@ const classes = sqliteTable('classes', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
   hitDice: text('hit_dice').$type<Die>().notNull(),
+  spellcastingAbility: text('spellcasting_ability'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 })

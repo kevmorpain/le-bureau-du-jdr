@@ -33,12 +33,14 @@ export default defineEventHandler(async (event) => {
             classId: cls.classId,
             level: cls.level,
             isMain: cls.isMain,
+            spellcastingAbility: cls.spellcastingAbility ?? null,
           })))
           .onConflictDoUpdate({
             target: [schema.characterClasses.characterSheetId, schema.characterClasses.classId],
             set: {
               level: sql`excluded.level`,
               isMain: sql`excluded.is_main`,
+              spellcastingAbility: sql`excluded.spellcasting_ability`,
             },
           })
 
