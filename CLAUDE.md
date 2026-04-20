@@ -53,9 +53,13 @@ Tables: `character_sheets`, `character_species`, `character_classes`, `character
 
 ### State management
 
-- Persistent data: SQLite via NuxtHub
-- UI state (armor class, spell slots, death saves): `useStorage()` (localStorage)
-- Derived values (ability modifiers, proficiency bonus, spell save DC) are computed properties in composables — not stored
+- Persistent data: SQLite via NuxtHub — see `docs/persistence.md` for the full matrix and sync patterns
+- Encounter state (active conditions, death saves, armor class): `useStorage()` (localStorage)
+- Derived values (ability modifiers, proficiency bonus, spell save DC): computed properties — never stored
+
+### Composables
+
+`useCharacterSheet` is a thin coordinator over 4 layered sub-composables. See `docs/architecture.md` for the layer diagram, dependency injection pattern, and where to add new content.
 
 ### Deployment
 
