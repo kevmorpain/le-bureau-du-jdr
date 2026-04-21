@@ -232,6 +232,13 @@
       "when": 1776715275998,
       "tag": "0032_special_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1776807950506,
+      "tag": "0033_lyrical_spacker_dave",
+      "breakpoints": true
     }
   ]
 }

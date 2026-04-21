@@ -19,4 +19,9 @@ export const updateCharacterSheetSchema = z.object({
   classes: z.array(classInputSchema).optional(),
   exhaustionLevel: z.number().int().min(0).max(6).optional(),
   dragonbornAncestry: z.string().nullable().optional(),
+  pp: z.number().int().min(0).optional(),
+  po: z.number().int().min(0).optional(),
+  pe: z.number().int().min(0).optional(),
+  pa: z.number().int().min(0).optional(),
+  pc: z.number().int().min(0).optional(),
 })

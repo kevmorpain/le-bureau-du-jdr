@@ -42,6 +42,11 @@ const characterSheets = sqliteTable('character_sheets', {
   inspiration: integer({ mode: 'boolean' }).default(false).notNull(),
   exhaustionLevel: integer('exhaustion_level').default(0).notNull(),
   dragonbornAncestry: text('dragonborn_ancestry'),
+  pp: integer('pp').default(0).notNull(),
+  po: integer('po').default(0).notNull(),
+  pe: integer('pe').default(0).notNull(),
+  pa: integer('pa').default(0).notNull(),
+  pc: integer('pc').default(0).notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 }, table => [

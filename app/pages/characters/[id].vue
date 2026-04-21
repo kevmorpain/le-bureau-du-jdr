@@ -74,6 +74,8 @@
 
       <InventorySection :character-sheet />
 
+      <CurrencySection v-model:character-sheet="characterSheet" />
+
       <div>
         <SpeciesTraitsSection :character-sheet />
       </div>
