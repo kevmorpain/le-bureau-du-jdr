@@ -65,6 +65,10 @@
             <ProficiencyIndicator :level="getEffectiveProficiency(skillKey)" />
             <span class="w-6 text-right text-sm">{{ formatModifier(getSkillModifier(key, skillKey)) }}</span>
             <span class="flex-1 text-sm">{{ $t(`skills.${key}.${skillKey}`) }}</span>
+            <ConditionWarning
+              v-if="skillKey === 'stealth' && armorStealthDisadvantage"
+              :lines="['Armure : désavantage en Discrétion']"
+            />
           </li>
         </ul>
       </template>
@@ -84,5 +88,6 @@ const {
   savingThrows,
   saveStatuses,
   skillDisadvantageReasons,
+  armorStealthDisadvantage,
 } = useCharacterSheet(characterSheet)
 </script>

@@ -1,25 +1,35 @@
 <template>
   <div
     v-if="spellcastingAbility"
-    class="md:flex gap-x-4 space-y-4"
+    class="space-y-2"
   >
-    <UFormField label="Caractéristique d'incantation">
-      <USelect
-        v-model="spellcastingAbility"
-        :items="spellcastingAbilityOptions"
-        placeholder="Sélectionnez une caractéristique"
-        class="min-w-32"
-      />
-    </UFormField>
+    <UAlert
+      v-if="armorSpellcastingWarning"
+      :title="armorSpellcastingWarning"
+      color="error"
+      variant="soft"
+      icon="i-heroicons:no-symbol"
+    />
 
-    <div>
-      <p>DD de sauvegarde des sorts</p>
-      <p>{{ spellSaveDC }}</p>
-    </div>
+    <div class="md:flex gap-x-4 space-y-4">
+      <UFormField label="Caractéristique d'incantation">
+        <USelect
+          v-model="spellcastingAbility"
+          :items="spellcastingAbilityOptions"
+          placeholder="Sélectionnez une caractéristique"
+          class="min-w-32"
+        />
+      </UFormField>
 
-    <div>
-      <p>Bonus d'attaque avec un sort</p>
-      <p>{{ formatModifier(spellAttackModifier) }}</p>
+      <div>
+        <p>DD de sauvegarde des sorts</p>
+        <p>{{ spellSaveDC }}</p>
+      </div>
+
+      <div>
+        <p>Bonus d'attaque avec un sort</p>
+        <p>{{ formatModifier(spellAttackModifier) }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -33,6 +43,7 @@ const {
   spellcastingAbility,
   spellSaveDC,
   spellAttackModifier,
+  armorSpellcastingWarning,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 
 const { tm, rt } = useI18n()

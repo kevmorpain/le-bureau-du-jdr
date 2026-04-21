@@ -18,11 +18,12 @@ export default defineTask({
     ])
 
     // Étape 2 : features de classe (nécessite classes)
-    await seed.warlock()
+    // await seed.warlock()
 
     // Étape 3 : fiches de personnage (nécessite warlock pour les character_features)
     // await seed.spells()
-    await seed.characterSheets()
+    // await seed.characterSheets()
+    await seed.items()
 
     return { result: 'success' }
   },

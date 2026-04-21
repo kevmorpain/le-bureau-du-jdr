@@ -70,11 +70,17 @@
         </div>
       </div>
 
+      <CombatSection :character-sheet />
+
+      <InventorySection :character-sheet />
+
       <div>
         <SpeciesTraitsSection :character-sheet />
       </div>
 
       <ClassFeaturesSection :character-sheet />
+
+      <ProficienciesSection :character-sheet />
 
       <SpellcastingSection :character-sheet />
 
