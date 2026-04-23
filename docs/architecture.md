@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-`useCharacterSheet` est un **coordinateur** qui orchestre 4 sous-composables en couches. Chaque couche dépend des précédentes — ne jamais inverser ce sens.
+`useCharacterSheet` est un **coordinateur** qui orchestre des sous-composables en couches. Chaque couche dépend des précédentes — ne jamais inverser ce sens.
 
 ```
 useCharacterClasses        → espèce, classes, level, proficiencyBonus, speciesEffects
@@ -10,8 +10,12 @@ useCharacterClasses        → espèce, classes, level, proficiencyBonus, specie
 useCharacterAbilities      → scores, modificateurs, compétences, jets de sauvegarde
   ↓ (formulaContext construit ici pour éviter les dépendances circulaires)
 useCharacterConditions     → états, épuisement, défenses, vitesse, PV max
-useCharacterSpellcasting   → caractéristique d'incantation, DD, emplacements
+useCharacterSpellcasting   → caractéristique d'incantation, DD, emplacements de sort
+useCharacterSpells         → liste des sorts du personnage, filtres, actions (fetch séparé)
+useCharacterInventory      → inventaire, équipement, maîtrises, effets magiques (fetch séparé)
 ```
+
+`useCharacterSpells` et `useCharacterInventory` sont des domaines **indépendants** : ils ont leur propre `useFetch` et ne dépendent pas des couches précédentes (sauf `spellSlots` passé en `deps` à `useCharacterSpells`). Ils sont instanciés dans le coordinateur pour exposer leurs actions via l'API publique de `useCharacterSheet`.
 
 ### Pourquoi `formulaContext` est dans le coordinateur
 
@@ -29,8 +33,10 @@ De même, `resolvedFeatures`, `classFeatureEffects` et `allEffects` sont constru
 | Scores / modificateurs / compétences | `useCharacterAbilities` |
 | Conditions, épuisement, défenses, vitesse | `useCharacterConditions` |
 | Incantation, emplacements de sorts | `useCharacterSpellcasting` |
+| Sorts du personnage (liste, fetch, actions) | `useCharacterSpells` |
+| Inventaire, équipement, maîtrises | `useCharacterInventory` |
 | Logique qui dépend de plusieurs couches | `useCharacterSheet` (coordinateur) |
-| Nouveau domaine indépendant | Nouveau `app/composables/character/useCharacter<Domain>.ts` |
+| Nouveau domaine indépendant avec fetch propre | Nouveau `app/composables/character/useCharacter<Domain>.ts` |
 
 ### Règles
 
