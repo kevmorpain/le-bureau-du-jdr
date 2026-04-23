@@ -122,17 +122,7 @@ const toggleSpell = (spell: Spell): void => {
   }
 }
 
-const formatRange = (range: number): string => {
-  if (range === 0) {
-    return 'Personnelle'
-  }
 
-  if (range === 1.5) {
-    return 'Contact'
-  }
-
-  return new Intl.NumberFormat('fr-FR', { style: 'unit', unit: 'meter' }).format(range)
-}
 
 const getComponent = (component: SpellComponent): Component => {
   switch (component) {

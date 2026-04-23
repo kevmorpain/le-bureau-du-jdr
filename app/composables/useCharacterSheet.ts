@@ -5,6 +5,7 @@ import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
 import { useCharacterConditions, binaryConditions } from './character/useCharacterConditions'
 import { useCharacterSpellcasting } from './character/useCharacterSpellcasting'
+import { useCharacterSpells } from './character/useCharacterSpells'
 import { useCharacterInventory } from './character/useCharacterInventory'
 
 export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
@@ -65,6 +66,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const spellcasting = useCharacterSpellcasting(characterSheet, {
     proficiencyBonus: classes.proficiencyBonus,
     abilityModifiers: abilities.abilityModifiers,
+  })
+
+  const spells = useCharacterSpells(characterSheet, {
+    spellSlots: spellcasting.spellSlots,
   })
 
   // ─── Couche 5 : inventaire, équipement, combat ───────────────────────────
@@ -171,6 +176,17 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     spellSaveDC: spellcasting.spellSaveDC,
     spellSlots: spellcasting.spellSlots,
     availableSpellSlots: spellcasting.availableSpellSlots,
+    // ─── Sorts du personnage ──────────────────────────────────────────────────
+    characterSpells: spells.characterSpells,
+    spellsByLevel: spells.spellsByLevel,
+    showPreparedOnly: spells.showPreparedOnly,
+    showAvailableOnly: spells.showAvailableOnly,
+    isSpellAvailable: spells.isSpellAvailable,
+    togglePrepared: spells.togglePrepared,
+    addSpell: spells.addSpell,
+    removeSpell: spells.removeSpell,
+    castSpell: spells.castSpell,
+    refreshSpells: spells.refreshSpells,
     // Inventaire & combat
     inventory: inventoryLayer.inventory,
     proficiencyOverrides: inventoryLayer.proficiencyOverrides,

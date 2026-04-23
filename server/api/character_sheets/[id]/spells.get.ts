@@ -12,6 +12,6 @@ export default defineEventHandler(async (event) => {
     .characterSpells
     .findMany({
       where: eq(schema.characterSpells.characterSheetId, Number(id)),
-      with: { spell: true },
+      with: { spell: { with: { school: true } } },
     })
 })

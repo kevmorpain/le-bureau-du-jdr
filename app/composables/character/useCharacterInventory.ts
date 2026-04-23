@@ -64,7 +64,7 @@ export const useCharacterInventory = (
   // ─── Data fetching ────────────────────────────────────────────────────────
 
   const { data: inventoryData, refresh: refreshInventory } = useFetch<InventoryEntry[]>(
-    () => `/api/character_sheets/${characterId.value}/inventory`,
+    () => characterId.value !== undefined ? `/api/character_sheets/${characterId.value}/inventory` : null,
     {
       watch: [characterId],
       default: () => [],
@@ -77,7 +77,7 @@ export const useCharacterInventory = (
     value: string
     action: 'grant' | 'revoke'
   }>>(
-    () => `/api/character_sheets/${characterId.value}/proficiency-overrides`,
+    () => characterId.value !== undefined ? `/api/character_sheets/${characterId.value}/proficiency-overrides` : null,
     {
       watch: [characterId],
       default: () => [],

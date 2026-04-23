@@ -84,9 +84,7 @@
 
       <ProficienciesSection :character-sheet />
 
-      <SpellcastingSection :character-sheet />
-
-      <SpellListSection :character-sheet />
+      <MagicSection :character-sheet />
     </UPageBody>
   </div>
 </template>

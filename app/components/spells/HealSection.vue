@@ -27,7 +27,8 @@ const props = defineProps<{
 const { t } = useI18n()
 
 const isSpellbook = inject<boolean>('isSpellbook', false)
-const { spellcastingModifier } = useCharacterSheet()
+const spellContext = inject<SpellContext | null>('spellContext', null)
+const { spellcastingModifier } = spellContext ?? useCharacterSheet()
 
 const slotLevel = ref<number>(props.spell.level)
 
@@ -40,7 +41,7 @@ const dieText = computed<string>(() => {
 
   if (hasModifier.value) {
     if (isSpellbook) {
-      text += ` + ${spellcastingModifier.value}`
+      text += ` ${formatModifier(spellcastingModifier.value ?? 0)}`
     } else {
       text += ' + mod'
     }

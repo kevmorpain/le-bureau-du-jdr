@@ -40,7 +40,7 @@
           <UCollapsible>
             <div class="flex items-center gap-2">
               <!-- Équiper toggle -->
-              <UToggle
+              <USwitch
                 :model-value="entry.equipped"
                 size="xs"
                 :aria-label="entry.equipped ? 'Déséquiper' : 'Équiper'"
@@ -158,7 +158,7 @@
         >
           <div class="flex items-center gap-2">
             <!-- Équiper toggle -->
-            <UToggle
+            <USwitch
               :model-value="entry.equipped"
               size="xs"
               :aria-label="entry.equipped ? 'Déséquiper' : 'Équiper'"
