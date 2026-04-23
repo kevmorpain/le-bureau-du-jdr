@@ -59,7 +59,11 @@ Tables: `character_sheets`, `character_species`, `character_classes`, `character
 
 ### Composables
 
-`useCharacterSheet` is a thin coordinator over 4 layered sub-composables. See `docs/architecture.md` for the layer diagram, dependency injection pattern, and where to add new content.
+`useCharacterSheet` is a thin coordinator over layered sub-composables (`useCharacterClasses`, `useCharacterAbilities`, `useCharacterConditions`, `useCharacterSpellcasting`, `useCharacterSpells`, `useCharacterInventory`). See `docs/architecture.md` for the layer diagram, dependency injection pattern, and where to add new content.
+
+### Character sheet
+
+See `docs/character-sheet.md` for the full breakdown of each section: what it displays, where data comes from, which API endpoints it uses, and what's not yet implemented.
 
 ### Deployment
 
