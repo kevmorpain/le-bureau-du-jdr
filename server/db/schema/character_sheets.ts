@@ -9,6 +9,7 @@ import characterSkills from './character_skills'
 import characterFeatures from './character_features'
 import characterInventory from './character_inventory'
 import characterProficiencyOverrides from './character_proficiency_overrides'
+import backgrounds from './backgrounds'
 
 export enum Alignment {
   LawfulGood = 'LG',
@@ -37,7 +38,11 @@ const characterSheets = sqliteTable('character_sheets', {
   maxHp: integer('max_hp').default(0).notNull(),
   currentHp: integer('current_hp').default(0).notNull(),
   temporaryHp: integer('temporary_hp').default(0).notNull(),
-  background: text().default('').notNull(),
+  backgroundId: integer('background_id').references(() => backgrounds.id),
+  personalityTraits: text('personality_traits').default('').notNull(),
+  ideals: text().default('').notNull(),
+  bonds: text().default('').notNull(),
+  flaws: text().default('').notNull(),
   currentHitDie: text('current_hit_die', { mode: 'json' }).$type<CurrentHitDie[]>(),
   inspiration: integer({ mode: 'boolean' }).default(false).notNull(),
   exhaustionLevel: integer('exhaustion_level').default(0).notNull(),
@@ -57,6 +62,10 @@ export const characterSheetRelations = relations(characterSheets, ({ many, one }
   species: one(characterSpecies, {
     fields: [characterSheets.speciesId],
     references: [characterSpecies.id],
+  }),
+  background: one(backgrounds, {
+    fields: [characterSheets.backgroundId],
+    references: [backgrounds.id],
   }),
   classes: many(characterClasses),
   baseAbilityScores: many(characterAbilityScores),

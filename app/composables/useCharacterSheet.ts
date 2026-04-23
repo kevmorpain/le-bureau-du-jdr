@@ -7,6 +7,7 @@ import { useCharacterConditions, binaryConditions } from './character/useCharact
 import { useCharacterSpellcasting } from './character/useCharacterSpellcasting'
 import { useCharacterSpells } from './character/useCharacterSpells'
 import { useCharacterInventory } from './character/useCharacterInventory'
+import { useCharacterBackground } from './character/useCharacterBackground'
 
 export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   // ─── Couche 1 : classes, espèce ───────────────────────────────────────────
@@ -119,6 +120,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     return [...new Set([...fromEffects, ...grants])].filter(p => !revokes.has(p))
   })
 
+  // ─── Historique & description ─────────────────────────────────────────────
+
+  const background = useCharacterBackground(characterSheet)
+
   // ─── Couche 3 : conditions, états, défenses ───────────────────────────────
 
   const conditions = useCharacterConditions(characterSheet, {
@@ -210,5 +215,14 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     addProficiencyOverride: inventoryLayer.addProficiencyOverride,
     removeProficiencyOverride: inventoryLayer.removeProficiencyOverride,
     refreshInventory: inventoryLayer.refreshInventory,
+    // Historique & description
+    backgrounds: background.backgrounds,
+    selectedBackground: background.selectedBackground,
+    setBackground: background.setBackground,
+    createCustomBackground: background.createCustomBackground,
+    personalityTraits: background.personalityTraits,
+    ideals: background.ideals,
+    bonds: background.bonds,
+    flaws: background.flaws,
   }
 }

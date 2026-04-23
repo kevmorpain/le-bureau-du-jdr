@@ -84,6 +84,8 @@
 
       <ProficienciesSection :character-sheet />
 
+      <BackgroundSection v-model:character-sheet="characterSheet" />
+
       <MagicSection :character-sheet />
     </UPageBody>
   </div>

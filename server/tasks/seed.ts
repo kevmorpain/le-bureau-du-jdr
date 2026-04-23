@@ -24,6 +24,7 @@ export default defineTask({
     // await _seed.spells()
     // await _seed.characterSheets()
     // await _seed.items()
+    await _seed.backgrounds()
 
     return { result: 'success' }
   },
