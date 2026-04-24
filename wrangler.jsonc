@@ -20,7 +20,8 @@
   ],
   "kv_namespaces": [
     {
-      "binding": "KV"
+      "binding": "KV",
+      "id": "c00d70edde834c9998ef99d0db30d9e8"
     }
   ]
 }
