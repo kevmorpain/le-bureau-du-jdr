@@ -4,16 +4,25 @@ import type { Effect } from '../schema/effects'
 import { characterSpecies } from './data/character_species'
 
 export default async function seed() {
+  let speciesInserted = 0
+  let speciesSkipped = 0
+  let featuresInserted = 0
+
   for (const species of characterSpecies) {
     const { traits, ...speciesData } = species
 
-    const insertedSpecies = await db.query.characterSpecies.findFirst({
+    const existingSpecies = await db.query.characterSpecies.findFirst({
       where: eq(schema.characterSpecies.name, speciesData.name),
-    }) ?? await db
+    })
+
+    const insertedSpecies = existingSpecies ?? await db
       .insert(schema.characterSpecies)
       .values(speciesData)
       .returning()
       .get()
+
+    if (existingSpecies) speciesSkipped++
+    else speciesInserted++
 
     if (!traits?.length) continue
 
@@ -35,6 +44,8 @@ export default async function seed() {
         .get()
 
       if (existingFeature) continue
+
+      featuresInserted++
 
       const insertedFeature = await db
         .insert(schema.features)
@@ -74,4 +85,6 @@ export default async function seed() {
         .onConflictDoNothing()
     }
   }
+
+  return { species: { inserted: speciesInserted, skipped: speciesSkipped }, featuresInserted }
 }

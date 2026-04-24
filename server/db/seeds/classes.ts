@@ -1,19 +1,32 @@
 import { db, schema } from 'hub:db'
-import { sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { classesData } from './data/classes'
 
 export default async function seed() {
+  let inserted = 0
+  let updated = 0
+  let skipped = 0
+
   for (const cls of classesData) {
-    await db.run(
-      sql`UPDATE classes SET spellcasting_ability = ${cls.spellcastingAbility}, hit_dice = ${cls.hitDice} WHERE name = ${cls.name}`,
-    )
-  }
-  // Insère uniquement les classes absentes
-  const existing = await db.select({ name: schema.classes.name }).from(schema.classes)
-  const existingNames = new Set(existing.map(r => r.name))
-  for (const cls of classesData) {
-    if (!existingNames.has(cls.name)) {
+    const existing = await db
+      .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, spellcastingAbility: schema.classes.spellcastingAbility })
+      .from(schema.classes)
+      .where(eq(schema.classes.name, cls.name))
+      .get()
+
+    if (!existing) {
       await db.insert(schema.classes).values(cls)
+      inserted++
+    } else if (existing.hitDice !== cls.hitDice || existing.spellcastingAbility !== cls.spellcastingAbility) {
+      await db
+        .update(schema.classes)
+        .set({ hitDice: cls.hitDice, spellcastingAbility: cls.spellcastingAbility })
+        .where(eq(schema.classes.id, existing.id))
+      updated++
+    } else {
+      skipped++
     }
   }
+
+  return { inserted, updated, skipped }
 }

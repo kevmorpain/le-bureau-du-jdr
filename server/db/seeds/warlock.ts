@@ -4,14 +4,16 @@ import type { Effect } from '../schema/effects'
 import { warlockFeatures, grandAncienFeatures, warlockSubclassName, warlockClassName } from './data/warlock'
 
 export default async function seed() {
-  // Find the Occultiste class
+  let featuresInserted = 0
+  let subclassesInserted = 0
+
   const warlockClass = await db.query.classes.findFirst({
     where: eq(schema.classes.name, warlockClassName),
   })
 
   if (!warlockClass) {
     console.warn(`[warlock seed] Classe "${warlockClassName}" introuvable — skip`)
-    return
+    return { featuresInserted, subclassesInserted }
   }
 
   // Upsert the Grand Ancien subclass
@@ -22,13 +24,13 @@ export default async function seed() {
     ),
   })
 
+  if (!existingSubclass) subclassesInserted++
   const grandAncien = existingSubclass ?? await db
     .insert(schema.subclasses)
     .values({ classId: warlockClass.id, name: warlockSubclassName })
     .returning()
     .get()
 
-  // Seed base class features
   for (const featureData of warlockFeatures) {
     const { effects, meta: _meta, ...data } = featureData as typeof featureData & { meta?: unknown }
 
@@ -49,10 +51,10 @@ export default async function seed() {
       .returning()
       .get()
 
+    if (!existing) featuresInserted++
     await seedEffects(feature.id, (effects ?? []) as Effect[])
   }
 
-  // Seed Grand Ancien subclass features
   for (const featureData of grandAncienFeatures) {
     const { effects, ...data } = featureData
 
@@ -73,8 +75,11 @@ export default async function seed() {
       .returning()
       .get()
 
+    if (!existing) featuresInserted++
     await seedEffects(feature.id, (effects ?? []) as Effect[])
   }
+
+  return { featuresInserted, subclassesInserted }
 }
 
 async function seedEffects(featureId: number, effects: Effect[]) {

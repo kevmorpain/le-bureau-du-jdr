@@ -4,66 +4,87 @@ Les seeds peuplent la DB avec les données de référence (classes, espèces, so
 
 ## Comment lancer un seed
 
-Les seeds s'exécutent via une **Nitro task** définie dans `server/tasks/seed.ts`. Deux façons de la déclencher en développement :
+Les seeds s'exécutent via une **Nitro task** définie dans `server/tasks/seed.ts`.
 
-1. **NuxtHub DevTools** → onglet "Tasks" → `db:seed`
-2. **HTTP** (dev server lancé) : `POST http://localhost:3000/_nitro/tasks/db:seed`
+### En développement
 
-La task est organisée en étapes ordonnées (les données de référence avant les fiches personnage) et toutes les seeds sont commentées par défaut. Décommenter uniquement ce dont on a besoin avant de lancer.
+Utiliser le skill `/seed-dev` (nécessite que `npm run dev` tourne dans un terminal séparé), ou directement :
 
-> ⚠️ En production, les seeds s'exécutent de la même façon via NuxtHub (onglet Database → Tasks). Ne jamais lancer une seed destructive en prod sans vérifier d'abord.
+```bash
+curl -X POST http://localhost:3000/_nitro/tasks/seed
+```
+
+### En production (D1 Cloudflare)
+
+Utiliser le skill `/seed-prod`, ou manuellement :
+
+```bash
+npm run build
+wrangler dev --remote
+# dans un autre terminal :
+curl -X POST http://localhost:8787/_nitro/tasks/seed
+```
+
+> ⚠️ `wrangler dev --remote` pointe sur la vraie base de prod. Ne pas lancer sans s'assurer que les seeds sont idempotentes.
 
 ---
 
 ## État des seeds
 
+Toutes les seeds de référence sont idempotentes — elles peuvent être relancées sans risque de doublon.
+
 | Seed | Fichier | Safe à relancer ? | Notes |
 |---|---|---|---|
-| `abilityScores` | `ability_scores.ts` | ❌ | INSERT simple, échouera si déjà présent |
-| `damageTypes` | `damage_types.ts` | ❌ | INSERT simple |
-| `magicSchools` | `magic_schools.ts` | ❌ | INSERT simple |
-| `characterSpecies` | `character_species.ts` | ❌ | INSERT simple |
-| `classes` | `classes.ts` | ✅ | UPDATE par nom + INSERT si absent |
-| `warlock` | `warlock.ts` | ❓ | À vérifier |
-| `spells` | `spells.ts` | ❌ | INSERT simple |
-| `characterSheets` | `character_sheets.ts` | ❌ | INSERT simple |
-| `items` | `items.ts` | ❓ | À vérifier |
+| `abilityScores` | `ability_scores.ts` | ✅ | `onConflictDoNothing` |
+| `damageTypes` | `damage_types.ts` | ✅ | `onConflictDoNothing` |
+| `magicSchools` | `magic_schools.ts` | ✅ | `onConflictDoNothing` |
+| `characterSpecies` | `character_species.ts` | ✅ | Vérification par nom |
+| `classes` | `classes.ts` | ✅ | Select + update/insert |
+| `backgrounds` | `backgrounds.ts` | ✅ | |
+| `warlock` | `warlock.ts` | ✅ | Vérification par nom |
+| `spells` | `spells.ts` | ✅ | `onConflictDoNothing` |
+| `items` | `items.ts` | ✅ | `onConflictDoNothing` |
+| `characterSheets` | `character_sheets.ts` | ✅ | Vérification par nom — **dev uniquement** |
 
-Les seeds "INSERT simple" échoueront silencieusement ou en erreur si les données existent déjà. Pour les relancer, il faut soit vider la table, soit les réécrire avec un upsert.
+### Séparation prod / dev
+
+La task `db:seed` exécute uniquement les seeds de référence. `characterSheets` est commentée dans la task — elle crée des personnages de test qui n'ont pas leur place en prod.
 
 ---
 
-## Problème connu : `db.run(sql\`...\`)` dans les Nitro tasks
+## Ordre d'exécution
 
-La seed `classes` utilise `db.run(sql`...`)` pour faire des UPDATE — mais cette syntaxe **ne fonctionne pas** dans le contexte des Nitro tasks avec `hub:db`. Les updates sont silencieusement ignorés.
-
-**Contournement local :** accéder directement à la DB SQLite avec Node.js :
-
-```bash
-node -e "
-const { DatabaseSync } = require('node:sqlite');
-const db = new DatabaseSync('.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite');
-db.prepare('UPDATE classes SET spellcasting_ability = ? WHERE name = ?').run('wis', 'Clerc');
-// etc.
-"
+```
+Étape 1 (parallèle) : abilityScores, damageTypes, magicSchools, characterSpecies, classes, backgrounds
+Étape 2             : warlock (nécessite classes)
+Étape 3 (parallèle) : spells, items
 ```
 
-Le fichier `.sqlite` est dans `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/`. Le hash change si la DB est recréée.
+---
 
-**Fix à faire :** réécrire la seed `classes` pour utiliser `db.update()` Drizzle à la place de `db.run(sql`...`)`.
+## Pattern : seed par classe
+
+Les features de classe et sous-classes suivent un pattern commun (voir `warlock.ts`) :
+
+1. Retrouver la classe par nom
+2. Upsert les sous-classes
+3. Insérer les features de classe (idempotent par `classId + name`)
+4. Insérer les features de sous-classe (idempotent par `subclassId + name`)
+5. Lier les effets via `feature_effects` (`onConflictDoNothing`)
+
+Les données brutes vivent dans `server/db/seeds/data/[classe].ts`.
 
 ---
 
 ## Données de référence : fichiers `data/`
 
-Les données brutes vivent dans `server/db/seeds/data/` :
-
 | Fichier | Contenu |
 |---|---|
-| `classes.ts` | 12 classes D&D 5e avec `spellcastingAbility` par défaut |
+| `classes.ts` | 12 classes D&D 5e avec `spellcastingAbility` et `hitDice` |
 | `character_species.ts` | Espèces jouables avec leurs aptitudes et effets |
 | `spells.ts` | Sorts avec composantes, dégâts/soins, DC, concentration, rituel |
 | `items.ts` | Objets (armes, armures, équipement, outils) |
+| `warlock.ts` | Features Occultiste + sous-classes (Grand Ancien, Fiélon…) |
 
 Ces fichiers font autorité sur les valeurs de référence — en cas de divergence avec la DB, la DB a tort.
 

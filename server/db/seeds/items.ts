@@ -2,8 +2,10 @@ import { db, schema } from 'hub:db'
 import { itemsData } from './data/items'
 
 export default async function seed() {
+  let inserted = 0
+
   for (const item of itemsData) {
-    await db
+    const row = await db
       .insert(schema.items)
       .values({
         id: item.id,
@@ -14,5 +16,10 @@ export default async function seed() {
         isCustom: false,
       })
       .onConflictDoNothing()
+      .returning()
+      .get()
+    if (row) inserted++
   }
+
+  return { inserted, skipped: itemsData.length - inserted }
 }

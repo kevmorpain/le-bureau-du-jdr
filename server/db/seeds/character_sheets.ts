@@ -4,6 +4,11 @@ import { characterSheets } from './data/character_sheets'
 
 export default async function seed() {
   for (const { classes, abilityScores, skills, className, subclassName, classLevel, ...sheetData } of characterSheets) {
+    const existing = await db.query.characterSheets.findFirst({
+      where: eq(schema.characterSheets.name, sheetData.name),
+    })
+    if (existing) continue
+
     const character = await db
       .insert(schema.characterSheets)
       .values(sheetData)

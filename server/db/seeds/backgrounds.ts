@@ -3,12 +3,18 @@ import { eq } from 'drizzle-orm'
 import { backgroundsData } from './data/backgrounds'
 
 export default async function seed() {
+  let inserted = 0
+  let skipped = 0
+
   for (const bg of backgroundsData) {
     const existing = await db.query.backgrounds.findFirst({
       where: eq(schema.backgrounds.name, bg.name),
     })
 
-    if (existing) continue
+    if (existing) {
+      skipped++
+      continue
+    }
 
     await db.insert(schema.backgrounds).values({
       name: bg.name,
@@ -20,5 +26,8 @@ export default async function seed() {
       featureDescription: bg.featureDescription,
       characterSheetId: null,
     })
+    inserted++
   }
+
+  return { inserted, skipped }
 }
