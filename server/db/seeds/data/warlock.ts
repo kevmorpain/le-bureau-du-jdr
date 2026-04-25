@@ -1,4 +1,6 @@
 import { fixed, lookup, variable, add, mul, max } from '~~/shared/utils/formula'
+import type { SubclassDef } from '../lib/seedClass'
+import type { Effect } from '../../schema/effects'
 
 // ─── Pact Magic slot tables (PHB 5e) ──────────────────────────────────────────
 // Index = class_level - 1 (levels 1–20)
@@ -130,9 +132,6 @@ Niveaux 9-10 : Domination de monstre, Contacter un autre plan`,
 
 export const warlockSubclassName = 'Grand Ancien'
 export const warlockClassName = 'Occultiste'
-
-import type { SubclassDef } from '../lib/seedClass'
-import type { Effect } from '../../schema/effects'
 
 export const warlockSubclasses: SubclassDef[] = [
   {

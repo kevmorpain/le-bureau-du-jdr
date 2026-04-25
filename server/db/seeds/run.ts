@@ -33,11 +33,9 @@ export async function runSeeds() {
     settle(_seed.warlock()),
   ])
 
-  // Étape 3 : données de jeu (parallèle)
-  const [spells, items] = await Promise.all([
-    settle(_seed.spells()),
-    settle(_seed.items()),
-  ])
+  // Étape 3 : données de jeu (séquentiel — spells fait ~165 requêtes D1, parallélisme cause des locks)
+  const spells = await settle(_seed.spells())
+  const items = await settle(_seed.items())
 
   // Données de test uniquement — ne pas lancer en prod
   // await _seed.characterSheets()
