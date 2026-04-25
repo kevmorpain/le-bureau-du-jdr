@@ -1,6 +1,7 @@
 import { index, sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { relations, sql } from 'drizzle-orm'
 import magicSchools from './magic_schools'
+import spellClasses from './spell_classes'
 
 export enum SpellComponent {
   Vocal = 'V',
@@ -89,11 +90,12 @@ const spells = sqliteTable('spells', {
   index('idx_spells_school').on(table.schoolId),
 ])
 
-export const spellsRelations = relations(spells, ({ one }) => ({
+export const spellsRelations = relations(spells, ({ one, many }) => ({
   school: one(magicSchools, {
     fields: [spells.schoolId],
     references: [magicSchools.id],
   }),
+  spellClasses: many(spellClasses),
 }))
 
 export default spells
