@@ -7,6 +7,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'ID parameter is required' })
   }
 
+  const sheet = await db.query.characterSheets.findFirst({
+    where: eq(schema.characterSheets.id, Number(id)),
+    columns: { id: true },
+  })
+  if (!sheet) throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
+
   return await db
     .select()
     .from(schema.characterSkills)

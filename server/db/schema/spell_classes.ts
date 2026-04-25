@@ -1,4 +1,4 @@
-import { integer, primaryKey, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { index, integer, primaryKey, sqliteTable } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import spells from './spells'
 import classes from './classes'
@@ -9,7 +9,10 @@ const spellClasses = sqliteTable(
     spellId: integer('spell_id').notNull().references(() => spells.id, { onDelete: 'cascade' }),
     classId: integer('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
   },
-  table => [primaryKey({ columns: [table.spellId, table.classId] })],
+  table => [
+    primaryKey({ columns: [table.spellId, table.classId] }),
+    index('spell_classes_class_id_idx').on(table.classId),
+  ],
 )
 
 export const spellClassesRelations = relations(spellClasses, ({ one }) => ({

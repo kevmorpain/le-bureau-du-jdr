@@ -11,22 +11,26 @@ export default defineEventHandler(async (event) => {
   const { classes, ...characterSheetData } = result.data
 
   try {
-    const sheet = await db
-      .insert(schema.characterSheets)
-      .values(characterSheetData as InsertCharacterSheet)
-      .returning()
-      .get()
+    const sheet = await db.transaction(async (tx) => {
+      const inserted = await tx
+        .insert(schema.characterSheets)
+        .values(characterSheetData as InsertCharacterSheet)
+        .returning()
+        .get()
 
-    if (classes?.length) {
-      await db
-        .insert(schema.characterClasses)
-        .values(classes.map(cls => ({
-          characterSheetId: sheet.id,
-          classId: cls.classId,
-          level: cls.level,
-          isMain: cls.isMain,
-        })))
-    }
+      if (classes?.length) {
+        await tx
+          .insert(schema.characterClasses)
+          .values(classes.map(cls => ({
+            characterSheetId: inserted.id,
+            classId: cls.classId,
+            level: cls.level,
+            isMain: cls.isMain,
+          })))
+      }
+
+      return inserted
+    })
 
     setResponseStatus(event, 201)
     return sheet

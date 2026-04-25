@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create inventory entry' })
   }
 
+  setResponseStatus(event, 201)
   return await db.query.characterInventory.findFirst({
     where: eq(schema.characterInventory.id, entry.id),
     with: { item: true },
