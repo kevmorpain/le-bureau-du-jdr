@@ -18,44 +18,40 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const updated = await db.transaction(async (tx) => {
-      const sheets = await tx
-        .update(schema.characterSheets)
-        .set({ ...updates, updatedAt: new Date().toISOString() })
-        .where(eq(schema.characterSheets.id, characterSheetId))
-        .returning()
+    const updated = await db
+      .update(schema.characterSheets)
+      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .where(eq(schema.characterSheets.id, characterSheetId))
+      .returning()
 
-      if (classes?.length) {
-        await tx
-          .insert(schema.characterClasses)
-          .values(classes.map(cls => ({
-            characterSheetId,
-            classId: cls.classId,
-            level: cls.level,
-            isMain: cls.isMain,
-            spellcastingAbility: cls.spellcastingAbility ?? null,
-          })))
-          .onConflictDoUpdate({
-            target: [schema.characterClasses.characterSheetId, schema.characterClasses.classId],
-            set: {
-              level: sql`excluded.level`,
-              isMain: sql`excluded.is_main`,
-              spellcastingAbility: sql`excluded.spellcasting_ability`,
-            },
-          })
+    if (classes?.length) {
+      await db
+        .insert(schema.characterClasses)
+        .values(classes.map(cls => ({
+          characterSheetId,
+          classId: cls.classId,
+          level: cls.level,
+          isMain: cls.isMain,
+          spellcastingAbility: cls.spellcastingAbility ?? null,
+        })))
+        .onConflictDoUpdate({
+          target: [schema.characterClasses.characterSheetId, schema.characterClasses.classId],
+          set: {
+            level: sql`excluded.level`,
+            isMain: sql`excluded.is_main`,
+            spellcastingAbility: sql`excluded.spellcasting_ability`,
+          },
+        })
 
-        await tx
-          .delete(schema.characterClasses)
-          .where(
-            and(
-              eq(schema.characterClasses.characterSheetId, characterSheetId),
-              notInArray(schema.characterClasses.classId, classes.map(cls => cls.classId)),
-            ),
-          )
-      }
-
-      return sheets
-    })
+      await db
+        .delete(schema.characterClasses)
+        .where(
+          and(
+            eq(schema.characterClasses.characterSheetId, characterSheetId),
+            notInArray(schema.characterClasses.classId, classes.map(cls => cls.classId)),
+          ),
+        )
+    }
 
     return updated
   } catch (e) {
