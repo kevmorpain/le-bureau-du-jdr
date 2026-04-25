@@ -59,8 +59,11 @@ export default defineEventHandler(async (event) => {
 
     return updated
   } catch (e) {
+    const cause = e instanceof Error ? (e.cause as Error | undefined) : undefined
     const message = e instanceof Error ? e.message : ''
-    if (message.includes('FOREIGN KEY')) {
+    const causeMessage = cause?.message ?? ''
+    console.error('[PUT character_sheet] DB error:', message, '| cause:', causeMessage)
+    if (message.includes('FOREIGN KEY') || causeMessage.includes('FOREIGN KEY')) {
       throw createError({ statusCode: 400, statusMessage: 'Invalid speciesId or classId' })
     }
     throw createError({ statusCode: 500, statusMessage: 'Database error' })

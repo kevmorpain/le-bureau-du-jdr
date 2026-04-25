@@ -38,7 +38,7 @@
                   min="0"
                   class="w-14"
                   :model-value="characterClass.level"
-                  @update:model-value="(value) => characterClass.level = value"
+                  @update:model-value="(value) => characterClass.level = Number(value)"
                 />
               </UFormField>
 
