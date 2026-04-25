@@ -997,13 +997,251 @@ const tiefling = {
   ],
 }
 
+const woodElf = {
+  name: 'Elfe des bois',
+  size: CreatureSize.Medium,
+  speed: 10.5,
+  traits: [
+    {
+      name: 'Augmentation de caractéristique',
+      description: `Votre valeur de Dextérité augmente de 2 et votre valeur de Sagesse augmente de 1.`,
+      effects: [
+        { type: 'ability_increase', value: { ability: 'dex', amount: 2 } },
+        { type: 'ability_increase', value: { ability: 'wis', amount: 1 } },
+      ],
+    },
+    {
+      name: 'Vitesse',
+      description: `Votre vitesse de base au sol est de 10,50 m.`,
+      effects: [{ type: 'walking_speed', value: 10.5 }],
+    },
+    {
+      name: 'Vision dans le noir',
+      description: `Habitué aux forêts vespérales et au ciel nocturne, vous disposez d'une vision supérieure dans l'obscurité et la pénombre. Dans un rayon de 18 m, vous voyez en conditions de lumière faible comme si la lumière était vive, et dans les ténèbres comme sous une lumière faible. Vous ne discernez pas les couleurs dans les ténèbres, mais percevez des nuances de gris.`,
+      effects: [{ type: 'darkvision', value: { range: 18 } }],
+    },
+    {
+      name: 'Sens aiguisés',
+      description: `Vous avez la maîtrise de la compétence Perception.`,
+      effects: [{ type: 'skill_proficiency', value: { skill: 'perception' } }],
+    },
+    {
+      name: 'Ascendance féérique',
+      description: `Vous êtes avantagé aux jets de sauvegarde contre l'état charmé, et la magie ne peut pas vous endormir.`,
+      effects: [
+        { type: 'advantage', value: { rollType: 'saving_throw', ability: 'all', condition: 'charmed' } },
+      ],
+    },
+    {
+      name: 'Entraînement martial elfique',
+      description: `Vous avez la maîtrise de l'épée longue, de l'épée courte, de l'arc court et de l'arc long.`,
+      effects: [
+        { type: 'weapon_proficiency', value: 'longsword' },
+        { type: 'weapon_proficiency', value: 'shortsword' },
+        { type: 'weapon_proficiency', value: 'shortbow' },
+        { type: 'weapon_proficiency', value: 'longbow' },
+      ],
+    },
+    {
+      name: 'Pas furtifs de la forêt',
+      description: `Vous pouvez essayer de vous cacher même lorsque vous n'êtes légèrement obscurci que par du feuillage, une forte pluie, de la neige qui tombe, de la brume ou d'autres phénomènes naturels.`,
+      effects: [],
+    },
+    {
+      name: 'Transe',
+      description: `Les elfes n'ont pas besoin de dormir. Ils méditent profondément pendant 4 heures par jour, en restant semi-conscients. Après une telle période de repos, vous bénéficiez des mêmes avantages qu'un humain qui a dormi 8 heures.`,
+      effects: [],
+    },
+    {
+      name: 'Langue supplémentaire',
+      description: `Vous pouvez parler, lire et écrire en Commun et en Elfique.`,
+      effects: [],
+    },
+  ],
+}
+
+const mountainDwarf = {
+  name: 'Nain des montagnes',
+  size: CreatureSize.Medium,
+  speed: 7.5,
+  traits: [
+    {
+      name: 'Augmentation de caractéristique',
+      description: `Votre valeur de Force augmente de 2 et votre valeur de Constitution augmente de 2.`,
+      effects: [
+        { type: 'ability_increase', value: { ability: 'str', amount: 2 } },
+        { type: 'ability_increase', value: { ability: 'con', amount: 2 } },
+      ],
+    },
+    {
+      name: 'Vitesse',
+      description: `Votre vitesse de base au sol est de 7,50 m. Votre vitesse n'est pas réduite par le port d'une armure lourde.`,
+      effects: [
+        { type: 'walking_speed', value: 7.5 },
+        { type: 'equipment_penalty', value: { penalty: 'speed', armor_type: 'heavy', modifier: 'none', override: true } },
+      ],
+    },
+    {
+      name: 'Vision dans le noir',
+      description: `Habitué à vivre sous terre, vous disposez d'une vision supérieure dans l'obscurité et la pénombre. Dans un rayon de 18 m, vous voyez en conditions de lumière faible comme si la lumière était vive, et dans les ténèbres comme sous une lumière faible. Vous ne discernez pas les couleurs dans les ténèbres, mais percevez des nuances de gris.`,
+      effects: [{ type: 'darkvision', value: { range: 18 } }],
+    },
+    {
+      name: 'Résistance naine',
+      description: `Vous êtes avantagé aux jets de sauvegarde contre le poison et bénéficiez de la résistance aux dégâts de poison.`,
+      effects: [
+        { type: 'advantage', value: { rollType: 'saving_throw', ability: 'all', condition: 'poison' } },
+        { type: 'damage_resistance', value: { damageType: 'poison' } },
+      ],
+    },
+    {
+      name: 'Formation aux armes naines',
+      description: `Vous avez la maîtrise des hachettes, des haches de bataille, des marteaux légers et des marteaux de guerre.`,
+      effects: [
+        { type: 'weapon_proficiency', value: 'handaxe' },
+        { type: 'weapon_proficiency', value: 'battleaxe' },
+        { type: 'weapon_proficiency', value: 'light hammer' },
+        { type: 'weapon_proficiency', value: 'warhammer' },
+      ],
+    },
+    {
+      name: 'Maîtrise des armures naines',
+      description: `Vous avez la maîtrise des armures légères et intermédiaires.`,
+      effects: [
+        { type: 'proficiency', value: 'light_armor' },
+        { type: 'proficiency', value: 'medium_armor' },
+      ],
+    },
+    {
+      name: 'Robustesse naine',
+      description: `Votre maximum de points de vie augmente de 1, et il augmente encore de 1 chaque fois que vous gagnez un niveau.`,
+      effects: [],
+    },
+    {
+      name: 'Connaissance de la pierre',
+      description: `Chaque fois que vous faites un test d'Intelligence (Histoire) lié à l'origine d'un travail en pierre, vous êtes considéré comme ayant la maîtrise de la compétence Histoire et vous ajoutez le double de votre bonus de maîtrise à votre test, au lieu de votre bonus de maîtrise normal.`,
+      effects: [],
+    },
+    {
+      name: 'Langue supplémentaire',
+      description: `Vous pouvez parler, lire et écrire en Commun et en Nain.`,
+      effects: [],
+    },
+  ],
+}
+
+const stoutHalfling = {
+  name: 'Halfelin robuste',
+  size: CreatureSize.Small,
+  speed: 7.5,
+  traits: [
+    {
+      name: 'Augmentation de caractéristique',
+      description: `Votre valeur de Dextérité augmente de 2 et votre valeur de Constitution augmente de 1.`,
+      effects: [
+        { type: 'ability_increase', value: { ability: 'dex', amount: 2 } },
+        { type: 'ability_increase', value: { ability: 'con', amount: 1 } },
+      ],
+    },
+    {
+      name: 'Vitesse',
+      description: `Votre vitesse de base au sol est de 7,50 m.`,
+      effects: [{ type: 'walking_speed', value: 7.5 }],
+    },
+    {
+      name: 'Chance',
+      description: `Lorsque vous obtenez un 1 sur un jet d'attaque, un test de caractéristique ou un jet de sauvegarde, vous pouvez relancer le dé et devez utiliser le nouveau résultat.`,
+      effects: [{ type: 'reroll', value: { rollType: 'd20', trigger: 1 } }],
+    },
+    {
+      name: 'Bravoure',
+      description: `Vous êtes avantagé aux jets de sauvegarde contre la condition effrayé.`,
+      effects: [
+        { type: 'advantage', value: { rollType: 'saving_throw', ability: 'all', condition: 'frightened' } },
+      ],
+    },
+    {
+      name: 'Agilité halfeline',
+      description: `Vous pouvez vous déplacer à travers l'espace de toute créature d'une taille supérieure à la vôtre.`,
+      effects: [],
+    },
+    {
+      name: 'Résistance robuste',
+      description: `Vous êtes avantagé aux jets de sauvegarde contre le poison et bénéficiez de la résistance aux dégâts de poison.`,
+      effects: [
+        { type: 'advantage', value: { rollType: 'saving_throw', ability: 'all', condition: 'poison' } },
+        { type: 'damage_resistance', value: { damageType: 'poison' } },
+      ],
+    },
+    {
+      name: 'Langue supplémentaire',
+      description: `Vous pouvez parler, lire et écrire en Commun et en Halfelin.`,
+      effects: [],
+    },
+  ],
+}
+
+const forestGnome = {
+  name: 'Gnome des forêts',
+  size: CreatureSize.Small,
+  speed: 7.5,
+  traits: [
+    {
+      name: 'Augmentation de caractéristique',
+      description: `Votre valeur d'Intelligence augmente de 2 et votre valeur de Dextérité augmente de 1.`,
+      effects: [
+        { type: 'ability_increase', value: { ability: 'int', amount: 2 } },
+        { type: 'ability_increase', value: { ability: 'dex', amount: 1 } },
+      ],
+    },
+    {
+      name: 'Vitesse',
+      description: `Votre vitesse de base au sol est de 7,50 m.`,
+      effects: [{ type: 'walking_speed', value: 7.5 }],
+    },
+    {
+      name: 'Vision dans le noir',
+      description: `Habitué à la vie dans des souterrains et des forêts denses, vous disposez d'une vision supérieure dans l'obscurité et la pénombre. Dans un rayon de 18 m, vous voyez en conditions de lumière faible comme si la lumière était vive, et dans les ténèbres comme sous une lumière faible. Vous ne discernez pas les couleurs dans les ténèbres, mais percevez des nuances de gris.`,
+      effects: [{ type: 'darkvision', value: { range: 18 } }],
+    },
+    {
+      name: 'Magie innée des gnomes',
+      description: `Vous connaissez le sort mineur Illusion mineure. L'Intelligence est votre caractéristique d'incantation pour ce sort.`,
+      effects: [],
+    },
+    {
+      name: 'Communication avec les bêtes',
+      description: `Vous pouvez communiquer de façon rudimentaire avec les bêtes. Elles peuvent comprendre le sens de vos mots, même si vous n'avez aucun moyen particulier de comprendre ce qu'elles vous répondent. Vous avez l'avantage aux tests de Charisme effectués pour influencer leur comportement.`,
+      effects: [],
+    },
+    {
+      name: 'Ruse gnome',
+      description: `Vous avez l'avantage à tous les jets de sauvegarde d'Intelligence, de Sagesse et de Charisme contre la magie.`,
+      effects: [
+        { type: 'advantage', value: { rollType: 'saving_throw', ability: 'int', condition: 'magic' } },
+        { type: 'advantage', value: { rollType: 'saving_throw', ability: 'wis', condition: 'magic' } },
+        { type: 'advantage', value: { rollType: 'saving_throw', ability: 'cha', condition: 'magic' } },
+      ],
+    },
+    {
+      name: 'Langue supplémentaire',
+      description: `Vous pouvez parler, lire et écrire en Commun et en Gnome.`,
+      effects: [],
+    },
+  ],
+}
+
 export const characterSpecies = [
   highElf,
+  woodElf,
   hillDwarf,
+  mountainDwarf,
   lightfootHalfling,
+  stoutHalfling,
   human,
   dragonborn,
   rockGnome,
+  forestGnome,
   halfElf,
   halfOrc,
   tiefling,
