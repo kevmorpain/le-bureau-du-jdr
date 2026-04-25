@@ -131,6 +131,144 @@ Niveaux 9-10 : Domination de monstre, Contacter un autre plan`,
 export const warlockSubclassName = 'Grand Ancien'
 export const warlockClassName = 'Occultiste'
 
+import type { SubclassDef } from '../lib/seedClass'
+import type { Effect } from '../../schema/effects'
+
+export const warlockSubclasses: SubclassDef[] = [
+  {
+    name: 'Grand Ancien',
+    description: `Votre patron est un être d'une puissance et d'une intelligence insondables, qui réside dans les recoins les plus lointains du multivers. Les motivations de cet être sont incompréhensibles pour les mortels.`,
+    features: grandAncienFeatures.map(f => ({
+      ...f,
+      effects: (f.effects ?? []) as Effect[],
+    })),
+  },
+  {
+    name: 'Le Fiélon',
+    description: `Vous avez conclu un pacte avec un fiélon des plans inférieurs, un être dont les objectifs sont maléfiques, même si vous vous efforcez de l'opposer à ses fins.`,
+    features: [
+      {
+        name: 'Liste de sorts étendus',
+        description: `Le Fiélon vous permet d'apprendre certains sorts supplémentaires :
+
+Niveaux 1-2 : Injonction, Mains brûlantes
+Niveaux 3-4 : Cécité/Surdité, Rayon ardent
+Niveaux 5-6 : Boule de feu, Nuage nauséabond
+Niveaux 7-8 : Bouclier de feu, Mur de feu
+Niveaux 9-10 : Colonne de flamme, Sanctification`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 1,
+        actionType: null,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Bénédiction du sombre maître',
+        description: `À partir du niveau 1, lorsque vous réduisez une créature hostile à 0 point de vie, vous gagnez un nombre de points de vie temporaires égal à votre modificateur de Charisme + votre niveau d'occultiste (minimum 1).`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 1,
+        actionType: null,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Chance du ténébreux',
+        description: `À partir du niveau 6, quand vous effectuez un jet de caractéristique ou un jet de sauvegarde, vous pouvez utiliser cette aptitude pour ajouter un d10 à votre jet (après avoir vu le résultat mais avant tout effet). Utilisable une fois par repos court ou long.`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 6,
+        actionType: null,
+        rechargeType: 'short_rest' as const,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Résistance fiélonne',
+        description: `À partir du niveau 10, après un repos court ou long, choisissez un type de dégâts : vous y êtes résistant jusqu'au prochain repos. Les dégâts d'armes magiques ou en argent ignorent cette résistance.`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 10,
+        actionType: null,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Traversée des enfers',
+        description: `À partir du niveau 14, en action, touchez une créature et envoyez-la dans les Enfers. La cible doit réussir un jet de sauvegarde de Charisme ou être téléportée dans un plan infernal. Elle revient au début de votre prochain tour, subissant 10d10 dégâts psychiques. Utilisable une fois par repos long.`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 14,
+        actionType: 'action' as const,
+        rechargeType: 'long_rest' as const,
+        maxUsesFormula: null,
+        effects: [],
+      },
+    ],
+  },
+  {
+    name: 'L\'Archifée',
+    description: `Votre patron est un seigneur ou une dame des fées, une créature de légende dont le pouvoir rivalise avec celui des dieux.`,
+    features: [
+      {
+        name: 'Liste de sorts étendus',
+        description: `L'Archifée vous permet d'apprendre certains sorts supplémentaires :
+
+Niveaux 1-2 : Lueurs féeriques, Sommeil
+Niveaux 3-4 : Apaisement des émotions, Force fantasmagorique
+Niveaux 5-6 : Clignotement, Croissance végétale
+Niveaux 7-8 : Domination de bête, Invisibilité supérieure
+Niveaux 9-10 : Apparence trompeuse, Domination de personne`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 1,
+        actionType: null,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Présence féerique',
+        description: `À partir du niveau 1, en action, toute créature dans un cube de 3 mètres prenant origine à partir de vous doit réussir un jet de sauvegarde de Sagesse ou être charmée ou effrayée (votre choix) jusqu'à la fin de votre prochain tour. Utilisable une fois par repos court ou long.`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 1,
+        actionType: 'action' as const,
+        rechargeType: 'short_rest' as const,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Pas illusoire',
+        description: `À partir du niveau 6, quand vous subissez des dégâts, réaction pour devenir invisible et vous téléporter jusqu'à 18 mètres vers un espace inoccupé visible. Vous restez invisible jusqu'au début de votre prochain tour ou jusqu'à ce que vous attaquiez ou lanciez un sort. Utilisable une fois par repos court ou long.`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 6,
+        actionType: 'reaction' as const,
+        rechargeType: 'short_rest' as const,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Protection contre les charmes',
+        description: `À partir du niveau 10, vous êtes immunisé à la condition charmé. Quand une créature tente de vous charmer, réaction pour retourner l'effet : elle doit réussir un jet de sauvegarde de Sagesse ou être charmée par vous pendant 1 minute.`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 10,
+        actionType: 'reaction' as const,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Forme sombre',
+        description: `À partir du niveau 14, en action, vous prenez une forme terrifiante pendant 1 minute (concentration). Action bonus à chaque tour pour charmer ou effrayer une créature à 18 mètres (jet de sauvegarde de Sagesse). Celles déjà charmées ou effrayées subissent 8d6 dégâts psychiques en cas d'échec. Utilisable une fois par repos long.`,
+        featureType: 'subclass_feature' as const,
+        levelRequired: 14,
+        actionType: 'action' as const,
+        rechargeType: 'long_rest' as const,
+        maxUsesFormula: null,
+        effects: [],
+      },
+    ],
+  },
+]
+
 // Helper: build the context for formula evaluation at a given class level
 export const buildFormulaContext = (classLevel: number, totalLevel: number, abilityMods: Record<string, number>, profBonus: number) => ({
   level: totalLevel,
