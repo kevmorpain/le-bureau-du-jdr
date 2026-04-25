@@ -4,28 +4,17 @@ Les seeds peuplent la DB avec les données de référence (classes, espèces, so
 
 ## Comment lancer un seed
 
-Les seeds s'exécutent via une **Nitro task** définie dans `server/tasks/seed.ts`.
+Les seeds s'exécutent via l'endpoint `POST /api/admin/seed`, protégé par le header `x-seed-secret`.
 
 ### En développement
 
-Utiliser le skill `/seed-dev` (nécessite que `npm run dev` tourne dans un terminal séparé), ou directement :
-
-```bash
-curl -X POST http://localhost:3000/_nitro/tasks/seed
-```
+Utiliser le skill `/seed-dev` (nécessite que `npm run dev` tourne dans un terminal séparé).
 
 ### En production (D1 Cloudflare)
 
-Utiliser le skill `/seed-prod`, ou manuellement :
+Utiliser le skill `/seed-prod`. Le code doit être déployé au préalable (attendre que le CI ait tourné).
 
-```bash
-npm run build
-wrangler dev --remote
-# dans un autre terminal :
-curl -X POST http://localhost:8787/_nitro/tasks/seed
-```
-
-> ⚠️ `wrangler dev --remote` pointe sur la vraie base de prod. Ne pas lancer sans s'assurer que les seeds sont idempotentes.
+> ⚠️ Les seeds sont idempotentes mais relancer en prod consomme du quota D1. À réserver aux nouvelles données.
 
 ---
 
@@ -33,22 +22,22 @@ curl -X POST http://localhost:8787/_nitro/tasks/seed
 
 Toutes les seeds de référence sont idempotentes — elles peuvent être relancées sans risque de doublon.
 
-| Seed | Fichier | Safe à relancer ? | Notes |
+| Seed | Fichier | Idempotence | Notes |
 |---|---|---|---|
-| `abilityScores` | `ability_scores.ts` | ✅ | `onConflictDoNothing` |
-| `damageTypes` | `damage_types.ts` | ✅ | `onConflictDoNothing` |
-| `magicSchools` | `magic_schools.ts` | ✅ | `onConflictDoNothing` |
-| `characterSpecies` | `character_species.ts` | ✅ | Vérification par nom |
-| `classes` | `classes.ts` | ✅ | Select + update/insert |
-| `backgrounds` | `backgrounds.ts` | ✅ | |
-| `warlock` | `warlock.ts` | ✅ | Vérification par nom |
-| `spells` | `spells.ts` | ✅ | `onConflictDoNothing` |
-| `items` | `items.ts` | ✅ | `onConflictDoNothing` |
-| `characterSheets` | `character_sheets.ts` | ✅ | Vérification par nom — **dev uniquement** |
+| `abilityScores` | `ability_scores.ts` | `onConflictDoNothing` | |
+| `damageTypes` | `damage_types.ts` | `onConflictDoNothing` | |
+| `magicSchools` | `magic_schools.ts` | `onConflictDoNothing` | |
+| `characterSpecies` | `character_species.ts` | Vérification par nom | 13 entrées (9 espèces + 4 sous-espèces) |
+| `classes` | `classes.ts` | Select + update/insert | |
+| `backgrounds` | `backgrounds.ts` | `upsertByName` | |
+| `barbare` … `warlock` | `[classe].ts` | Vérification par (classId, nom) | 12 classes, features + sous-classes |
+| `spells` | `spells.ts` | `upsertByName` + `onConflictDoNothing` pour liens | Insère aussi les associations `spell_classes` |
+| `items` | `items.ts` | `onConflictDoNothing` | |
+| `characterSheets` | `character_sheets.ts` | Vérification par nom | **Dev uniquement** — commenté dans `run.ts` |
 
 ### Séparation prod / dev
 
-La task `db:seed` exécute uniquement les seeds de référence. `characterSheets` est commentée dans la task — elle crée des personnages de test qui n'ont pas leur place en prod.
+`characterSheets` est commentée dans `run.ts` — elle crée des personnages de test qui n'ont pas leur place en prod.
 
 ---
 
@@ -56,23 +45,65 @@ La task `db:seed` exécute uniquement les seeds de référence. `characterSheets
 
 ```
 Étape 1 (parallèle) : abilityScores, damageTypes, magicSchools, characterSpecies, classes, backgrounds
-Étape 2             : warlock (nécessite classes)
-Étape 3 (parallèle) : spells, items
+Étape 2 (parallèle) : barbare, barde, clerc, druide, guerrier, magicien,
+                       moine, paladin, rôdeur, roublard, ensorceleur, warlock
+Étape 3 (séquentiel): spells → items
 ```
+
+L'étape 3 est séquentielle : `spells` génère ~165 requêtes D1 (sorts + liens `spell_classes`), ce qui provoque des locks D1 si `items` tourne en même temps.
 
 ---
 
-## Pattern : seed par classe
+## Pattern : helper `seedClass`
 
-Les features de classe et sous-classes suivent un pattern commun (voir `warlock.ts`) :
+Toutes les classes utilisent le helper `server/db/seeds/lib/seedClass.ts`. Un seed de classe se résume à :
 
-1. Retrouver la classe par nom
-2. Upsert les sous-classes
-3. Insérer les features de classe (idempotent par `classId + name`)
+```ts
+import { seedClass } from './lib/seedClass'
+import { barbareName, barbareFeatures, barbareSubclasses } from './data/barbare'
+
+export default async function seed() {
+  return seedClass(barbareName, barbareFeatures, barbareSubclasses)
+}
+```
+
+Le helper gère :
+1. Retrouver la classe par nom (skip avec warning si absente)
+2. Insérer les features de classe (idempotent par `classId + name`)
+3. Upsert les sous-classes (idempotent par `classId + name`)
 4. Insérer les features de sous-classe (idempotent par `subclassId + name`)
 5. Lier les effets via `feature_effects` (`onConflictDoNothing`)
 
-Les données brutes vivent dans `server/db/seeds/data/[classe].ts`.
+Retourne `{ featuresInserted, subclassesInserted }`.
+
+### Ajouter une nouvelle classe
+
+1. Créer `server/db/seeds/data/[classe].ts` avec `[classe]Name`, `[classe]Features`, `[classe]Subclasses`
+2. Créer `server/db/seeds/[classe].ts` (3 lignes, voir pattern ci-dessus)
+3. Exporter depuis `server/db/seeds/index.ts`
+4. Ajouter l'appel dans l'étape 2 de `server/db/seeds/run.ts`
+
+---
+
+## Pattern : helper `upsertByName`
+
+Pour les seeds simples (check-by-name + insert) : `server/db/seeds/lib/upsertByName.ts`.
+
+Utilisé par `backgrounds.ts` et `spells.ts`.
+
+---
+
+## Sorts et associations classe
+
+Les sorts vivent dans `server/db/seeds/data/spells.ts`. Les associations sorts↔classes sont dans `server/db/seeds/data/spell_class_mappings.ts` — un fichier dédié pour ne pas surcharger le data file.
+
+Ajouter un sort à une classe :
+```ts
+// spell_class_mappings.ts
+{ spellName: 'Nouveau sort', classNames: ['Magicien', 'Barde'] },
+```
+
+Le seed insère automatiquement les liens `spell_classes` (table de jointure `spellId × classId`) en même temps que les sorts.
 
 ---
 
@@ -80,11 +111,12 @@ Les données brutes vivent dans `server/db/seeds/data/[classe].ts`.
 
 | Fichier | Contenu |
 |---|---|
-| `classes.ts` | 12 classes D&D 5e avec `spellcastingAbility` et `hitDice` |
-| `character_species.ts` | Espèces jouables avec leurs aptitudes et effets |
-| `spells.ts` | Sorts avec composantes, dégâts/soins, DC, concentration, rituel |
+| `classes.ts` | 12 classes D&D 5e |
+| `character_species.ts` | 13 espèces/sous-espèces avec traits et effets |
+| `[classe].ts` | Features + sous-classes par classe (12 fichiers) |
+| `spells.ts` | 43 sorts avec composantes, dégâts/soins, DC, concentration, rituel |
+| `spell_class_mappings.ts` | Associations sorts↔classes |
 | `items.ts` | Objets (armes, armures, équipement, outils) |
-| `warlock.ts` | Features Occultiste + sous-classes (Grand Ancien, Fiélon…) |
 
 Ces fichiers font autorité sur les valeurs de référence — en cas de divergence avec la DB, la DB a tort.
 
