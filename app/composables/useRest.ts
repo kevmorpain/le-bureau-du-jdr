@@ -10,14 +10,12 @@ export const useRest = (characterSheet: Ref<CharacterSheet>) => {
         body: { type: 'short', hitDiceSpent },
       })
 
-      // Recharge short_rest features optimistically
       characterSheet.value.features?.forEach((cf) => {
         if (cf.feature?.rechargeType === 'short_rest') {
           cf.currentUses = 0
         }
       })
 
-      // Apply healing
       if (hitDiceSpent.length > 0) {
         const totalHeal = hitDiceSpent.reduce((sum, d) => sum + d.healAmount, 0)
         characterSheet.value.currentHp = Math.min(
@@ -44,15 +42,34 @@ export const useRest = (characterSheet: Ref<CharacterSheet>) => {
         body: { type: 'long' },
       })
 
-      // Recharge all features with a recharge type
       characterSheet.value.features?.forEach((cf) => {
-        if (cf.feature?.rechargeType) {
+        if (cf.feature?.rechargeType === 'short_rest' || cf.feature?.rechargeType === 'long_rest') {
           cf.currentUses = 0
         }
       })
 
-      // Restore HP
       characterSheet.value.currentHp = characterSheet.value.maxHp
+
+      // Reset spell slots (watchEffect dans useCharacterSpellcasting se re-déclenche)
+      characterSheet.value.spellSlots?.forEach((slot) => { slot.used = 0 })
+
+      // Récupère la moitié des dés de vie (arrondi au supérieur) — règle D&D 5e 2014
+      try {
+        const hitDicePool: Record<string, number> = {}
+        for (const cls of characterSheet.value.classes ?? []) {
+          const die = (cls.class as { hitDie?: string } | undefined)?.hitDie
+          if (die) hitDicePool[die] = (hitDicePool[die] ?? 0) + cls.level
+        }
+        const storageKey = `cs-hit-dice-${characterSheet.value.id}`
+        const stored = localStorage.getItem(storageKey)
+        const usedDice: Record<string, number> = stored ? JSON.parse(stored) : {}
+        for (const [die, total] of Object.entries(hitDicePool)) {
+          const recovery = Math.ceil(total / 2)
+          usedDice[die] = Math.max(0, (usedDice[die] ?? 0) - recovery)
+        }
+        localStorage.setItem(storageKey, JSON.stringify(usedDice))
+      }
+      catch { /* localStorage non disponible */ }
 
       toaster.add({ title: 'Repos long terminé — PV restaurés', color: 'success' })
     }
@@ -64,5 +81,29 @@ export const useRest = (characterSheet: Ref<CharacterSheet>) => {
     }
   }
 
-  return { shortRest, longRest, isResting }
+  const dawn = async () => {
+    isResting.value = true
+    try {
+      await $fetch(`/api/character_sheets/${characterSheet.value.id}/rest`, {
+        method: 'POST',
+        body: { type: 'dawn' },
+      })
+
+      characterSheet.value.features?.forEach((cf) => {
+        if (cf.feature?.rechargeType === 'dawn') {
+          cf.currentUses = 0
+        }
+      })
+
+      toaster.add({ title: 'Nouvelle aube — aptitudes rechargées', color: 'success' })
+    }
+    catch {
+      toaster.add({ title: 'Erreur lors de l\'aube', color: 'error' })
+    }
+    finally {
+      isResting.value = false
+    }
+  }
+
+  return { shortRest, longRest, dawn, isResting }
 }

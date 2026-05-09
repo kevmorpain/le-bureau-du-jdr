@@ -9,7 +9,8 @@ import characterFeatures from './character_features'
 
 export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
-export type RechargeType = 'short_rest' | 'long_rest' | 'dawn'
+export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
+export type RechargeType = typeof RECHARGE_TYPES[number]
 
 const features = sqliteTable(
   'features',

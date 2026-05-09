@@ -10,6 +10,7 @@
       :roll
       @short-rest="shortRest()"
       @long-rest="longRest()"
+      @dawn="dawn()"
       @toggle-combat="toggleCombat"
     />
 
@@ -134,7 +135,7 @@ if (!characterSheetData.value) {
 const characterSheet = ref(characterSheetData.value)
 
 const toaster = useToast()
-const { shortRest, longRest, isResting } = useRest(characterSheet)
+const { shortRest, longRest, dawn, isResting } = useRest(characterSheet)
 const { roll } = useDiceRoller()
 
 const { resolvedFeatures, characterSpells, initiativeBonus, spellSlots } = useCharacterSheet(characterSheet)

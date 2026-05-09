@@ -1,8 +1,10 @@
 import { db, schema } from 'hub:db'
 import { z } from 'zod'
+import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
+import type { RechargeType } from '~~/server/db/schema/features'
 
 const restSchema = z.object({
-  type: z.enum(['short', 'long']),
+  type: z.enum(REST_TYPES),
   hitDiceSpent: z.array(z.object({
     die: z.string(), // e.g. 'd8'
     count: z.number().int().min(0),
@@ -31,12 +33,10 @@ export default defineEventHandler(async (event) => {
 
   // ── Recharge features ──────────────────────────────────────────────────────
 
-  const rechargingFeatures = characterSheet.features.filter((cf) => {
-    const rechargeType = cf.feature?.rechargeType
-    if (!rechargeType) return false
-    if (type === 'long') return true // long rest recharges everything
-    return rechargeType === 'short_rest'
-  })
+  const rechargingTypes = REST_RECHARGE_MAP[type]
+  const rechargingFeatures = characterSheet.features.filter(
+    cf => cf.feature?.rechargeType && rechargingTypes.includes(cf.feature.rechargeType as RechargeType),
+  )
 
   if (rechargingFeatures.length > 0) {
     await Promise.all(rechargingFeatures.map(cf =>
@@ -52,13 +52,19 @@ export default defineEventHandler(async (event) => {
     ))
   }
 
-  // ── Long rest: restore HP to max ───────────────────────────────────────────
+  // ── Long rest: restore HP to max + reset spell slots ──────────────────────
 
   if (type === 'long') {
-    await db
-      .update(schema.characterSheets)
-      .set({ currentHp: characterSheet.maxHp })
-      .where(eq(schema.characterSheets.id, characterSheetId))
+    await Promise.all([
+      db
+        .update(schema.characterSheets)
+        .set({ currentHp: characterSheet.maxHp })
+        .where(eq(schema.characterSheets.id, characterSheetId)),
+      db
+        .update(schema.characterSpellSlots)
+        .set({ used: 0 })
+        .where(eq(schema.characterSpellSlots.characterSheetId, characterSheetId)),
+    ])
   }
 
   // ── Short rest: apply hit dice healing ────────────────────────────────────
