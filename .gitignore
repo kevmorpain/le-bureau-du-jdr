@@ -20,6 +20,9 @@ logs
 
 .wrangler/
 
+# Claude
+.claude/settings.local.json
+
 # Local env files
 .env
 .env.*
