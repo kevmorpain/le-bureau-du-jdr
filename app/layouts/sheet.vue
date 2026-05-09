@@ -1,0 +1,43 @@
+<template>
+  <UHeader>
+    <template #left>
+      <NuxtLink to="/">
+        <Logo class="w-auto h-10 shrink-0" />
+      </NuxtLink>
+    </template>
+
+    <UNavigationMenu
+      :items="items"
+    />
+
+    <template #body>
+      <UNavigationMenu
+        :items
+        orientation="vertical"
+      />
+    </template>
+  </UHeader>
+
+  <UMain>
+    <UPage>
+      <NuxtPage />
+    </UPage>
+  </UMain>
+</template>
+
+<script lang="ts" setup>
+import type { NavigationMenuItem } from '@nuxt/ui'
+
+const items = ref<NavigationMenuItem[]>([
+  {
+    label: 'Personnages',
+    icon: 'heroicons-outline:identification',
+    to: '/characters',
+  },
+  {
+    label: 'Sorts',
+    icon: 'heroicons-outline:book-open',
+    to: '/spells',
+  },
+])
+</script>

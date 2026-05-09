@@ -1,97 +1,127 @@
 <template>
-  <div v-if="characterSheet">
-    <UPageHeader>
-      <template #title>
-        <CharacterNameSection :character-sheet />
-      </template>
+  <div
+    v-if="characterSheet"
+    class="min-h-screen bg-default"
+  >
+    <DashboardHeaderSection
+      :character-sheet
+      :is-resting
+      :combat-mode
+      :roll
+      @short-rest="shortRest()"
+      @long-rest="longRest()"
+      @toggle-combat="toggleCombat"
+    />
 
-      <template #description>
-        <div class="lg:flex lg:justify-between lg:items-center gap-x-4 space-y-2 lg:space-y-0">
-          <div>
-            <ClassesSection :character-sheet />
-            <LevelSection :character-sheet />
-          </div>
+    <div class="dashboard-grid">
+      <!-- ── Colonne gauche : Attributs + Maîtrises ── -->
+      <div class="flex flex-col gap-3">
+        <AbilityScoresSection
+          v-model:character-sheet="characterSheet"
+          :roll="roll"
+        />
+        <ProficienciesSection :character-sheet="characterSheet" />
+      </div>
 
-          <div class="flex items-start gap-1.5">
-            <HitDiceSection :character-sheet />
-
-            <DeathSavingThrowSection :character-sheet />
-          </div>
-        </div>
-      </template>
-
-      <template #links>
-        <UButton
-          icon="i-game-icons:forest-camp"
-          variant="outline"
-          :loading="isResting"
-          @click="shortRest()"
+      <!-- ── Colonne centrale : Sections collapsibles ── -->
+      <div class="flex flex-col gap-3 min-w-0">
+        <CollapsibleSection
+          title="Statistiques"
+          storage-key="quick-stats"
         >
-          Repos court
-        </UButton>
-        <UButton
-          icon="i-game-icons:night-sleep"
-          variant="outline"
-          :loading="isResting"
-          @click="longRest()"
+          <QuickStatsSection
+            v-model:character-sheet="characterSheet"
+            :roll="roll"
+          />
+        </CollapsibleSection>
+
+        <template v-if="combatMode">
+          <CollapsibleSection
+            title="Tour actif"
+            storage-key="combat-mode"
+          >
+            <CombatModeSection
+              :character-sheet="characterSheet"
+              :roll="roll"
+            />
+          </CollapsibleSection>
+          <CollapsibleSection
+            title="Combat"
+            storage-key="combat"
+          >
+            <CombatSection
+              :character-sheet="characterSheet"
+              :roll="roll"
+            />
+          </CollapsibleSection>
+        </template>
+
+        <CollapsibleSection
+          title="Capacités de classe"
+          :badge="availableFeaturesCount"
+          storage-key="features"
         >
-          Repos long
-        </UButton>
-        <UButton icon="i-heroicons:pencil">
-          Modifier
-        </UButton>
-      </template>
-    </UPageHeader>
+          <ClassFeaturesSection :character-sheet="characterSheet" />
+        </CollapsibleSection>
 
-    <UPageBody>
-      <div class="lg:flex justify-between gap-4 space-y-4">
-        <div class="flex gap-x-4">
-          <ArmorClassSection :character-sheet />
-          <HitPointsSection v-model:character-sheet="characterSheet" />
-          <StatusSection :character-sheet />
-        </div>
+        <CollapsibleSection
+          title="Sorts"
+          :badge="preparedSpellsCount"
+          storage-key="spells"
+        >
+          <MagicSection :character-sheet="characterSheet" />
+        </CollapsibleSection>
 
-        <div class="flex gap-x-4">
-          <InitiativeSection :character-sheet />
+        <CollapsibleSection
+          title="Inventaire"
+          storage-key="inventory"
+        >
+          <InventorySection v-model:character-sheet="characterSheet" />
+        </CollapsibleSection>
 
-          <SpeedSection :character-sheet />
-
-          <PassivePerceptionSection :character-sheet />
-
-          <InspirationSection v-model:character-sheet="characterSheet" />
-        </div>
+        <CollapsibleSection
+          title="Espèce & Historique"
+          storage-key="background"
+        >
+          <div class="space-y-4">
+            <SpeciesTraitsSection :character-sheet="characterSheet" />
+            <BackgroundSection v-model:character-sheet="characterSheet" />
+          </div>
+        </CollapsibleSection>
       </div>
 
-      <div class="lg:flex gap-x-12 space-y-4">
-        <AbilityScoresSection v-model:character-sheet="characterSheet" />
-
-        <div class="md:flex gap-x-4 space-y-4">
-          <ProficiencyBonusSection :character-sheet />
-        </div>
+      <!-- ── Colonne droite : Widgets compacts ── -->
+      <div class="flex flex-col gap-3">
+        <HitPointsSection
+          v-model:character-sheet="characterSheet"
+          :roll="roll"
+        />
+        <DeathSavingThrowSection
+          :character-sheet="characterSheet"
+          :roll="roll"
+          @recover="(hp) => (characterSheet.currentHp = hp)"
+        />
+        <HitDiceSection
+          :character-sheet="characterSheet"
+          :roll="roll"
+        />
+        <DefensesSection :character-sheet="characterSheet" />
+        <StatusSection :character-sheet="characterSheet" />
+        <SpellSlotsSection :character-sheet="characterSheet" />
+        <ConcentrationSection :character-sheet="characterSheet" />
+        <QuickNotesSection />
       </div>
+    </div>
 
-      <CombatSection :character-sheet />
-
-      <InventorySection :character-sheet />
-
-      <CurrencySection v-model:character-sheet="characterSheet" />
-
-      <div>
-        <SpeciesTraitsSection :character-sheet />
-      </div>
-
-      <ClassFeaturesSection :character-sheet />
-
-      <ProficienciesSection :character-sheet />
-
-      <BackgroundSection v-model:character-sheet="characterSheet" />
-
-      <MagicSection :character-sheet />
-    </UPageBody>
+    <DiceRollerSection />
   </div>
 </template>
 
 <script lang="ts" setup>
+definePageMeta({
+  layout: 'sheet',
+})
+
 const route = useRoute()
 const id = computed(() => route.params.id as string)
 
@@ -105,36 +135,64 @@ const characterSheet = ref(characterSheetData.value)
 
 const toaster = useToast()
 const { shortRest, longRest, isResting } = useRest(characterSheet)
+const { roll } = useDiceRoller()
 
+const { resolvedFeatures, characterSpells, initiativeBonus, spellSlots } = useCharacterSheet(characterSheet)
+provide('spellSlots', spellSlots)
+
+// ── Mode combat ──────────────────────────────────────────────────────────────
+const combatMode = ref(false)
+
+const toggleCombat = () => {
+  combatMode.value = !combatMode.value
+  if (combatMode.value) {
+    roll('Initiative', initiativeBonus.value)
+  }
+}
+
+// ── Badges pour les sections collapsibles ────────────────────────────────────
+const availableFeaturesCount = computed(() =>
+  resolvedFeatures.value.filter(f => f.maxUses !== null && f.currentUses < (f.maxUses ?? 0)).length || null,
+)
+
+const preparedSpellsCount = computed(() =>
+  characterSpells.value.filter(s => s.prepared).length || null,
+)
+
+// ── Auto-save avec debounce ──────────────────────────────────────────────────
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
 
 watch(characterSheet, () => {
   if (saveTimeout) clearTimeout(saveTimeout)
   saveTimeout = setTimeout(updateCharacterSheet, 1000)
-}, {
-  deep: true,
-})
+}, { deep: true })
 
 const updateCharacterSheet = async () => {
   if (!characterSheet.value) return
-
   try {
     await $fetch(`/api/character_sheets/${id.value}`, {
       method: 'PUT',
       body: characterSheet.value,
     })
-
-    toaster.add({
-      title: 'Fiche de personnage sauvegardée',
-      color: 'success',
-    })
-  } catch (error) {
-    console.error('Error saving character sheet:', error)
-    toaster.add({
-      title: 'Erreur lors de la sauvegarde',
-      description: 'La fiche de personnage n\'a pas pu être sauvegardée.',
-      color: 'error',
-    })
+    toaster.add({ title: 'Fiche sauvegardée', color: 'success' })
+  } catch {
+    toaster.add({ title: 'Erreur lors de la sauvegarde', color: 'error' })
   }
 }
 </script>
+
+<style scoped>
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr 240px;
+  gap: 12px;
+  padding: 16px 20px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 200px 1fr 200px;
+  }
+}
+</style>

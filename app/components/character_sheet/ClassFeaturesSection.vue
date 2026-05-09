@@ -9,10 +9,9 @@
         <UCollapsible>
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
-              <UIcon
-                v-if="feature.actionType"
-                :name="actionTypeIcon(feature.actionType)"
-                class="size-4 flex-shrink-0 text-muted"
+              <ActionTypeIcon
+                v-if="feature.actionType && isValidActionType(feature.actionType)"
+                :type="(feature.actionType as 'action' | 'bonus_action' | 'reaction' | 'free')"
               />
               <h3 class="font-semibold truncate">
                 {{ feature.name }}
@@ -21,17 +20,17 @@
 
             <div
               v-if="feature.maxUses !== null"
-              class="flex items-center gap-1 flex-shrink-0"
+              class="flex items-center gap-1 shrink-0"
             >
               <button
                 v-for="i in feature.maxUses"
                 :key="i"
                 class="size-4 rounded-full border-2 transition-colors"
                 :class="i <= feature.currentUses
-                  ? 'bg-primary border-primary'
+                  ? 'bg-primary/60 border-primary hover:bg-primary/80'
                   : 'bg-transparent border-muted'"
                 :aria-label="i <= feature.currentUses ? 'Utilisation dépensée' : 'Utilisation disponible'"
-                @click="toggleUse(feature.id, feature.currentUses, feature.maxUses!, i)"
+                @click.stop="toggleUse(feature.id, feature.currentUses, feature.maxUses!, i)"
               />
               <UBadge
                 v-if="feature.rechargeType"
@@ -63,15 +62,8 @@ const { resolvedFeatures } = useCharacterSheet(toRef(props, 'characterSheet'))
 
 const toaster = useToast()
 
-const actionTypeIcon = (actionType: string) => {
-  const icons: Record<string, string> = {
-    action: 'i-heroicons:bolt',
-    bonus_action: 'i-heroicons:plus-circle',
-    reaction: 'i-heroicons:arrow-uturn-left',
-    free: 'i-heroicons:star',
-  }
-  return icons[actionType] ?? 'i-heroicons:bolt'
-}
+const validActionTypes = new Set(['action', 'bonus_action', 'reaction', 'free'])
+const isValidActionType = (t: string) => validActionTypes.has(t)
 
 const rechargeLabel = (rechargeType: string) => {
   const labels: Record<string, string> = {
@@ -94,8 +86,7 @@ const toggleUse = async (featureId: number, currentUses: number, maxUses: number
     // Optimistically update in place via the parent's character sheet reactive ref
     const cf = props.characterSheet.features?.find(f => f.featureId === featureId)
     if (cf) cf.currentUses = newUses
-  }
-  catch {
+  } catch {
     toaster.add({ title: 'Erreur lors de la mise à jour', color: 'error' })
   }
 }

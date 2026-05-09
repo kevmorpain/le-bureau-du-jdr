@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-4">
+  <div class="rounded-xl border border-default bg-default p-3 space-y-4">
     <h2 class="font-semibold text-sm text-muted uppercase tracking-wide">
       Maîtrises
     </h2>

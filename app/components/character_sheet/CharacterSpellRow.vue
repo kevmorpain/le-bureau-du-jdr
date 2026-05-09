@@ -1,7 +1,6 @@
 <template>
   <div
     class="flex items-center gap-x-3 gap-y-1 py-1.5 px-2 rounded-md cursor-pointer group flex-wrap hover:bg-elevated/50 transition-colors"
-    :class="{ 'opacity-40': !isAvailable }"
     @click="$emit('click')"
   >
     <!-- Warning somatique -->
@@ -128,7 +127,6 @@ import { SpellComponent } from '~~/server/db/schema/spells'
 const props = defineProps<{
   spell: Spell
   isPrepared: boolean
-  isAvailable: boolean
   hasSomaticWarning: boolean
   characterLevel: number
   spellcastingModifier: number | null

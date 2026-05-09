@@ -51,20 +51,35 @@
             </td>
 
             <td class="p-2 text-center">
-              <span class="font-mono font-semibold">{{ formatModifier(weapon.attackBonus) }}</span>
+              <button
+                class="font-mono font-semibold text-primary hover:underline cursor-pointer"
+                @click="roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus)"
+              >
+                {{ formatModifier(weapon.attackBonus) }}
+              </button>
             </td>
 
             <td class="p-2 text-center">
               <div class="font-mono">
-                <span>{{ weapon.damageDice }}</span>
-                <span v-if="weapon.damageBonus !== 0">{{ formatModifier(weapon.damageBonus) }}</span>
+                <button
+                  class="hover:text-primary cursor-pointer transition-colors"
+                  @click="rollDamage(weapon)"
+                >
+                  <span>{{ weapon.damageDice }}</span>
+                  <span v-if="weapon.damageBonus !== 0">{{ formatModifier(weapon.damageBonus) }}</span>
+                </button>
                 <span class="text-sm text-muted ml-1">{{ damageTypeLabel(weapon.damageType) }}</span>
               </div>
               <div
                 v-if="weapon.versatileDamage"
                 class="text-sm text-muted"
               >
-                <span class="font-mono">{{ weapon.versatileDamage }}{{ weapon.damageBonus !== 0 ? formatModifier(weapon.damageBonus) : '' }}</span>
+                <button
+                  class="font-mono hover:text-primary cursor-pointer transition-colors"
+                  @click="rollVersatile(weapon)"
+                >
+                  {{ weapon.versatileDamage }}{{ weapon.damageBonus !== 0 ? formatModifier(weapon.damageBonus) : '' }}
+                </button>
                 <span class="ml-1">(deux mains)</span>
               </div>
             </td>
@@ -91,6 +106,7 @@ import { weaponPropertyLabels } from '~~/shared/utils/item'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
+  roll?: (label: string, modifier: number, sides?: number, count?: number) => number
 }>()
 
 const { equippedWeaponStats } = useCharacterSheet(toRef(props, 'characterSheet'))
@@ -112,4 +128,22 @@ const damageTypeLabels: Record<string, string> = {
 }
 
 const damageTypeLabel = (type: string) => damageTypeLabels[type] ?? type
+
+type WeaponStat = typeof equippedWeaponStats.value[number]
+
+const parseDice = (dice: string): { count: number, sides: number } => {
+  const [c, s] = dice.split('d').map(Number)
+  return { count: c || 1, sides: s || 6 }
+}
+
+const rollDamage = (weapon: WeaponStat) => {
+  const { count, sides } = parseDice(weapon.damageDice)
+  props.roll?.(`Dégâts — ${weapon.name}`, weapon.damageBonus, sides, count)
+}
+
+const rollVersatile = (weapon: WeaponStat) => {
+  if (!weapon.versatileDamage) return
+  const { count, sides } = parseDice(weapon.versatileDamage)
+  props.roll?.(`Dégâts (2 mains) — ${weapon.name}`, weapon.damageBonus, sides, count)
+}
 </script>

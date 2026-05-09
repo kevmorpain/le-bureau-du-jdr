@@ -10,47 +10,89 @@
     />
 
     <!-- Stats d'incantation -->
-    <div class="md:flex gap-x-4 space-y-4 md:space-y-0 items-end">
-      <UFormField label="Caractéristique d'incantation">
-        <USelect
-          v-model="spellcastingAbility"
-          :items="spellcastingAbilityOptions"
-          placeholder="Aucune"
-          class="min-w-32"
-        />
-      </UFormField>
-
-      <template v-if="spellcastingAbility">
-        <div>
-          <p class="text-sm text-muted">
-            DD de sauvegarde des sorts
-          </p>
-          <p class="font-semibold">
-            {{ spellSaveDC ?? '—' }}
-          </p>
-        </div>
-
-        <div>
-          <p class="text-sm text-muted">
-            Bonus d'attaque avec un sort
-          </p>
-          <p class="font-semibold">
-            {{ spellAttackModifier !== null ? formatModifier(spellAttackModifier) : '—' }}
-          </p>
-        </div>
-      </template>
+    <div
+      v-if="spellcastingAbility"
+      class="flex gap-x-6"
+    >
+      <div>
+        <p class="text-sm text-muted">
+          Caractéristique
+        </p>
+        <p class="font-semibold uppercase">
+          {{ spellcastingAbility }}
+        </p>
+      </div>
+      <div>
+        <p class="text-sm text-muted">
+          DD de sauvegarde
+        </p>
+        <p class="font-semibold">
+          {{ spellSaveDC ?? '—' }}
+        </p>
+      </div>
+      <div>
+        <p class="text-sm text-muted">
+          Bonus d'attaque
+        </p>
+        <p class="font-semibold">
+          {{ spellAttackModifier !== null ? formatModifier(spellAttackModifier) : '—' }}
+        </p>
+      </div>
     </div>
 
     <!-- Filtres + bouton ajouter -->
-    <div class="flex items-center gap-3 flex-wrap">
+    <div class="flex flex-wrap items-center gap-2">
       <USwitch
         v-model="showPreparedOnly"
-        label="Préparés seulement"
+        label="Préparés"
+        size="sm"
       />
-      <USwitch
-        v-model="showAvailableOnly"
-        label="Disponibles seulement"
-      />
+
+      <!-- Filtre type d'action -->
+      <div class="flex gap-1">
+        <button
+          v-for="f in actionTypeFilters"
+          :key="f.value"
+          class="px-2 py-0.5 text-xs rounded-full border transition-colors"
+          :class="activeActionFilter === f.value
+            ? 'border-primary bg-primary/15 text-primary'
+            : 'border-default text-muted hover:border-muted'"
+          @click="activeActionFilter = activeActionFilter === f.value ? null : f.value"
+        >
+          {{ f.label }}
+        </button>
+      </div>
+
+      <!-- Filtre composantes -->
+      <div class="flex gap-1">
+        <button
+          v-for="c in ['V', 'S', 'M']"
+          :key="c"
+          class="px-2 py-0.5 text-xs rounded-full border transition-colors"
+          :class="activeComponentFilters.includes(c)
+            ? 'border-primary bg-primary/15 text-primary'
+            : 'border-default text-muted hover:border-muted'"
+          @click="activeComponentFilters.includes(c) ? activeComponentFilters.splice(activeComponentFilters.indexOf(c), 1) : activeComponentFilters.push(c)"
+        >
+          {{ c }}
+        </button>
+      </div>
+
+      <!-- Filtre niveau -->
+      <div class="flex gap-1">
+        <button
+          v-for="lvl in availableLevels"
+          :key="lvl"
+          class="px-2 py-0.5 text-xs rounded-full border transition-colors"
+          :class="activeLevelFilters.includes(lvl)
+            ? 'border-primary bg-primary/15 text-primary'
+            : 'border-default text-muted hover:border-muted'"
+          @click="activeLevelFilters.includes(lvl) ? activeLevelFilters.splice(activeLevelFilters.indexOf(lvl), 1) : activeLevelFilters.push(lvl)"
+        >
+          {{ lvl === 0 ? 'Tour' : `N${lvl}` }}
+        </button>
+      </div>
+
       <UButton
         class="ml-auto"
         icon="i-heroicons:plus"
@@ -68,12 +110,19 @@
       class="space-y-4"
     >
       <div
-        v-for="group in spellsByLevel"
+        v-for="group in filteredByLevel(spellsByLevel)"
         :key="group.level"
         class="space-y-1"
       >
         <!-- En-tête de niveau avec emplacements -->
-        <div class="flex items-center gap-3 border-b border-default pb-1">
+        <div
+          class="flex items-center gap-3 border-b border-default pb-1 cursor-pointer select-none"
+          @click="toggleLevelCollapse(group.level)"
+        >
+          <UIcon
+            :name="collapsedLevels.has(group.level) ? 'i-heroicons:chevron-right-16-solid' : 'i-heroicons:chevron-down-16-solid'"
+            class="size-3.5 text-muted shrink-0"
+          />
           <span class="font-semibold text-sm">
             {{ group.level === 0 ? 'Tours de magie' : `Niveau ${group.level}` }}
           </span>
@@ -81,38 +130,63 @@
           <!-- Bulles d'emplacements (niveaux ≥ 1 seulement) -->
           <div
             v-if="group.level > 0 && spellSlots[group.level]"
-            class="flex items-center gap-1"
+            class="flex items-center gap-1.5"
+            @click.stop
           >
+            <button
+              v-if="spellSlots[group.level]!.max > 0"
+              class="size-4 flex items-center justify-center rounded text-muted hover:text-default hover:bg-elevated transition-colors text-xs leading-none"
+              @click="adjustSlotMax(group.level, -1)"
+            >
+              −
+            </button>
             <button
               v-for="n in spellSlots[group.level]!.max"
               :key="n"
-              class="border size-3.5 rounded-full transition-colors hover:bg-primary/50"
-              :class="n <= spellSlots[group.level]!.current ? 'bg-primary' : 'bg-transparent'"
+              class="border-2 size-3.5 rounded-full transition-colors"
+              :class="n <= spellSlots[group.level]!.max - spellSlots[group.level]!.current ? 'bg-primary/60 border-primary hover:bg-primary/80' : 'bg-transparent border-muted hover:border-primary/50'"
               @click="toggleSlot(group.level, n)"
             />
-            <span
-              v-if="spellSlots[group.level]!.max === 0"
-              class="text-xs text-muted italic"
+            <button
+              class="size-4 flex items-center justify-center rounded text-muted hover:text-default hover:bg-elevated transition-colors text-xs leading-none"
+              @click="adjustSlotMax(group.level, 1)"
             >
-              aucun emplacement
-            </span>
+              +
+            </button>
           </div>
         </div>
 
         <!-- Sorts du groupe -->
-        <CharacterSpellRow
-          v-for="cs in group.spells"
-          :key="cs.spellId"
-          :spell="cs.spell"
-          :is-prepared="cs.isPrepared"
-          :is-available="isSpellAvailable(cs.spell)"
-          :has-somatic-warning="isIncapacitated && cs.spell.components.includes(SpellComponent.Somatic)"
-          :character-level="characterLevel"
-          :spellcasting-modifier="spellcastingModifier"
-          @click="openSpellDetail(cs)"
-          @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
-          @remove="removeSpell(cs.spellId)"
-        />
+        <template v-if="!collapsedLevels.has(group.level)">
+          <div
+            v-for="cs in filteredSpells(group.spells)"
+            :key="cs.spellId"
+            class="flex items-center gap-1"
+          >
+            <CharacterSpellRow
+              class="flex-1 min-w-0"
+              :spell="cs.spell"
+              :is-prepared="cs.isPrepared"
+              :has-somatic-warning="isIncapacitated && cs.spell.components.includes(SpellComponent.Somatic)"
+              :character-level="characterLevel"
+              :spellcasting-modifier="spellcastingModifier"
+              @click="openSpellDetail(cs)"
+              @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
+              @remove="removeSpell(cs.spellId)"
+            />
+            <!-- Bouton Lancer inline -->
+            <UButton
+              v-if="cs.spell.level > 0 && cs.isPrepared"
+              size="xs"
+              variant="soft"
+              icon="i-game-icons:magic-swirl"
+              class="shrink-0"
+              @click.stop="openCastModalFor(cs)"
+            >
+              Lancer
+            </UButton>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -170,7 +244,7 @@
     <!-- Slideover ajout de sort -->
     <AddSpellSlideover
       v-model:open="showAddSpell"
-      :already-added-ids="alreadyAddedIds"
+      :already-added-ids
       @add="addSpell"
     />
   </div>
@@ -186,33 +260,80 @@ const props = defineProps<{
 
 const characterSheetRef = toRef(props, 'characterSheet')
 
-const { t } = useI18n()
-
 provide('isSpellbook', true)
+
+const spellSlots = inject<Ref<Record<number, { max: number, current: number }>>>('spellSlots')!
 
 const {
   spellcastingAbility,
   spellcastingModifier,
   spellAttackModifier,
   spellSaveDC,
-  spellSlots,
   armorSpellcastingWarning,
   characterLevel,
   activeConditions,
+  toggleCondition,
   characterSpells,
   spellsByLevel,
   showPreparedOnly,
-  showAvailableOnly,
-  isSpellAvailable,
   togglePrepared,
   addSpell,
   removeSpell,
-  castSpell,
 } = useCharacterSheet(characterSheetRef)
+
+const castSpell = (slotLevel: number) => {
+  const slot = spellSlots.value[slotLevel]
+  if (slot && slot.current > 0) slot.current--
+}
 
 const isIncapacitated = computed(() => activeConditions.value.includes('incapacitated'))
 
 provide<SpellContext>('spellContext', { characterLevel, spellcastingModifier })
+
+// ─── Filtres supplémentaires ─────────────────────────────────────────────────
+
+const activeActionFilter = ref<string | null>(null)
+const activeComponentFilters = ref<string[]>([])
+const activeLevelFilters = ref<number[]>([])
+const collapsedLevels = ref(new Set<number>())
+
+const availableLevels = computed(() =>
+  spellsByLevel.value.map(g => g.level),
+)
+
+const filteredByLevel = (groups: typeof spellsByLevel.value) =>
+  activeLevelFilters.value.length
+    ? groups.filter(g => activeLevelFilters.value.includes(g.level))
+    : groups
+
+const toggleLevelCollapse = (level: number) => {
+  const s = new Set(collapsedLevels.value)
+  if (s.has(level)) s.delete(level)
+  else s.add(level)
+  collapsedLevels.value = s
+}
+
+const actionTypeFilters = [
+  { value: 'action', label: 'Action' },
+  { value: 'bonus', label: 'Bonus' },
+  { value: 'reaction', label: 'Réaction' },
+]
+
+const filteredSpells = (spells: typeof spellsByLevel.value[number]['spells']) => {
+  return spells.filter((cs) => {
+    if (activeActionFilter.value) {
+      const ct = cs.spell.castingTime?.toLowerCase() ?? ''
+      if ((activeActionFilter.value === 'action' && !ct.includes('action')) || ct.includes('bonus')) return false
+      if (activeActionFilter.value === 'bonus' && !ct.includes('bonus')) return false
+      if (activeActionFilter.value === 'reaction' && !ct.includes('réaction') && !ct.includes('reaction')) return false
+    }
+    if (activeComponentFilters.value.length) {
+      if (!activeComponentFilters.value.every(f => cs.spell.components.includes(f as SpellComponent)))
+        return false
+    }
+    return true
+  })
+}
 
 // ─── Slideover détail ────────────────────────────────────────────────────────
 
@@ -233,8 +354,27 @@ const openCastModal = () => {
   showCastModal.value = true
 }
 
+// Ouverture directe depuis le bouton inline
+const openCastModalFor = (cs: CharacterSpellWithSpell) => {
+  selectedSpell.value = cs
+  showCastModal.value = true
+}
+
 const handleCast = (slotLevel: number) => {
   castSpell(slotLevel)
+  // Activer la concentration si le sort la requiert
+  if (selectedSpell.value?.spell.concentration) {
+    if (!activeConditions.value.includes('concentrating' as never)) {
+      toggleCondition('concentrating' as never)
+    }
+    try {
+      localStorage.setItem('cs-concentration-spell', selectedSpell.value.spell.name)
+    } catch { /* localStorage non disponible */ }
+    useToast().add({
+      title: `Concentration active — ${selectedSpell.value.spell.name}`,
+      color: 'info',
+    })
+  }
 }
 
 // ─── Emplacements (toggle manuel) ────────────────────────────────────────────
@@ -242,8 +382,18 @@ const handleCast = (slotLevel: number) => {
 const toggleSlot = (level: number, n: number) => {
   const slot = spellSlots.value[level]
   if (!slot) return
-  if (n === slot.current) slot.current--
-  else if (n <= slot.max) slot.current = n
+  const used = slot.max - slot.current
+  if (n <= used) slot.current = slot.max - (n - 1) // plein → libérer jusqu'à n
+  else slot.current = slot.max - n // vide → utiliser jusqu'à n
+}
+
+const adjustSlotMax = (level: number, delta: number) => {
+  const slot = spellSlots.value[level]
+  if (!slot) return
+  const newMax = Math.max(0, Math.min(9, slot.max + delta))
+  slot.max = newMax
+  if (delta > 0) slot.current = slot.current + 1 // nouveau slot = disponible
+  else slot.current = Math.min(slot.current, newMax)
 }
 
 // ─── Ajout de sort ───────────────────────────────────────────────────────────
@@ -253,11 +403,4 @@ const showAddSpell = ref(false)
 const alreadyAddedIds = computed(() =>
   new Set((characterSpells.value ?? []).map(cs => cs.spellId)),
 )
-
-// ─── Spellcasting ability options ────────────────────────────────────────────
-
-const spellcastingAbilityOptions = ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(key => ({
-  label: t(`ability_scores.${key}`),
-  value: key,
-}))
 </script>

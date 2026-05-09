@@ -278,6 +278,12 @@
           </p>
         </li>
       </ul>
+
+      <!-- Monnaie intégrée dans l'onglet équipement -->
+      <USeparator class="my-3" />
+      <CurrencySection
+        v-model:character-sheet="characterSheetModel"
+      />
     </template>
 
     <!-- ── Outils ───────────────────────────────────────────────────────── -->
@@ -339,9 +345,7 @@ import type { WeaponProperties, ArmorProperties, ToolProperties } from '~~/serve
 import type { Effect } from '~~/server/db/schema/effects'
 import { toolTypeLabels } from '~~/shared/utils/item'
 
-const props = defineProps<{
-  characterSheet: CharacterSheet
-}>()
+const characterSheetModel = defineModel<CharacterSheet>('characterSheet', { required: true })
 
 const {
   inventory,
@@ -352,7 +356,7 @@ const {
   removeItem,
   updateInventoryEntry,
   toggleEquipped,
-} = useCharacterSheet(toRef(props, 'characterSheet'))
+} = useCharacterSheet(characterSheetModel)
 
 const slideoverOpen = ref(false)
 

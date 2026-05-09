@@ -26,7 +26,8 @@ export const useCharacterSpells = (
 
   const isSpellAvailable = (spell: Spell): boolean => {
     if (spell.level === 0) return true
-    return (deps?.spellSlots.value[spell.level]?.current ?? 0) > 0
+    const slots = deps?.spellSlots.value ?? {}
+    return Object.entries(slots).some(([lvl, s]) => Number(lvl) >= spell.level && s.current > 0)
   }
 
   // ─── Computed: grouped by level ───────────────────────────────────────────
@@ -65,8 +66,7 @@ export const useCharacterSpells = (
         method: 'PUT',
         body: [{ spellId, isKnown: true, isPrepared }],
       })
-    }
-    catch {
+    } catch {
       characterSpells.value = characterSpells.value.map(cs =>
         cs.spellId === spellId ? { ...cs, isPrepared: !isPrepared } : cs,
       )
