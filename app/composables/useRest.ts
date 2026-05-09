@@ -54,22 +54,22 @@ export const useRest = (characterSheet: Ref<CharacterSheet>) => {
       characterSheet.value.spellSlots?.forEach((slot) => { slot.used = 0 })
 
       // Récupère la moitié des dés de vie (arrondi au supérieur) — règle D&D 5e 2014
-      try {
-        const hitDicePool: Record<string, number> = {}
-        for (const cls of characterSheet.value.classes ?? []) {
-          const die = (cls.class as { hitDie?: string } | undefined)?.hitDie
-          if (die) hitDicePool[die] = (hitDicePool[die] ?? 0) + cls.level
-        }
-        const storageKey = `cs-hit-dice-${characterSheet.value.id}`
-        const stored = localStorage.getItem(storageKey)
-        const usedDice: Record<string, number> = stored ? JSON.parse(stored) : {}
-        for (const [die, total] of Object.entries(hitDicePool)) {
-          const recovery = Math.ceil(total / 2)
-          usedDice[die] = Math.max(0, (usedDice[die] ?? 0) - recovery)
-        }
-        localStorage.setItem(storageKey, JSON.stringify(usedDice))
+      const hitDiceMax: Record<string, number> = {}
+      for (const cls of characterSheet.value.classes ?? []) {
+        const die = (cls.class as { hitDice?: string } | undefined)?.hitDice?.slice(1)
+        if (die) hitDiceMax[die] = (hitDiceMax[die] ?? 0) + cls.level
       }
-      catch { /* localStorage non disponible */ }
+
+      const current = characterSheet.value.currentHitDie
+        ?? Object.entries(hitDiceMax).map(([die, count]) => ({ die, count }))
+
+      characterSheet.value.currentHitDie = current.map(entry => ({
+        die: entry.die,
+        count: Math.min(
+          hitDiceMax[entry.die] ?? entry.count,
+          entry.count + Math.ceil((hitDiceMax[entry.die] ?? 0) / 2),
+        ),
+      }))
 
       toaster.add({ title: 'Repos long terminé — PV restaurés', color: 'success' })
     }

@@ -24,7 +24,10 @@ export default defineEventHandler(async (event) => {
 
   const characterSheet = await db.query.characterSheets.findFirst({
     where: eq(schema.characterSheets.id, characterSheetId),
-    with: { features: { with: { feature: true } } },
+    with: {
+      features: { with: { feature: true } },
+      classes: { with: { class: true } },
+    },
   })
 
   if (!characterSheet) {
@@ -52,13 +55,30 @@ export default defineEventHandler(async (event) => {
     ))
   }
 
-  // ── Long rest: restore HP to max + reset spell slots ──────────────────────
+  // ── Long rest: restore HP, reset spell slots, recover hit dice ───────────
 
   if (type === 'long') {
+    const hitDiceMax: Record<string, number> = {}
+    for (const cls of characterSheet.classes ?? []) {
+      const die = (cls.class as { hitDice?: string } | undefined)?.hitDice?.slice(1)
+      if (die) hitDiceMax[die] = (hitDiceMax[die] ?? 0) + cls.level
+    }
+
+    const currentHitDie = characterSheet.currentHitDie
+      ?? Object.entries(hitDiceMax).map(([die, count]) => ({ die, count }))
+
+    const newHitDie = currentHitDie.map(entry => ({
+      die: entry.die,
+      count: Math.min(
+        hitDiceMax[entry.die] ?? entry.count,
+        entry.count + Math.ceil((hitDiceMax[entry.die] ?? 0) / 2),
+      ),
+    }))
+
     await Promise.all([
       db
         .update(schema.characterSheets)
-        .set({ currentHp: characterSheet.maxHp })
+        .set({ currentHp: characterSheet.maxHp, currentHitDie: newHitDie })
         .where(eq(schema.characterSheets.id, characterSheetId)),
       db
         .update(schema.characterSpellSlots)
