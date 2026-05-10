@@ -9,7 +9,12 @@ import characterFeatures from './character_features'
 
 export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
-export type RechargeType = 'short_rest' | 'long_rest' | 'dawn'
+export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
+export type RechargeType = typeof RECHARGE_TYPES[number]
+
+export interface FeatureMeta {
+  slotLevelFormula?: Formula
+}
 
 const features = sqliteTable(
   'features',
@@ -25,6 +30,7 @@ const features = sqliteTable(
     actionType: text('action_type').$type<ActionType>(),
     maxUsesFormula: text('max_uses_formula', { mode: 'json' }).$type<Formula>(),
     rechargeType: text('recharge_type').$type<RechargeType>(),
+    meta: text('meta', { mode: 'json' }).$type<FeatureMeta>(),
     createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
     updatedAt: text('updated_at'),
   },

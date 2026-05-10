@@ -1,9 +1,17 @@
 export type CharacterSpellWithSpell = CharacterSpell & { spell: Spell }
 
+type SlotState = { max: number, current: number }
+type SlotsByType = {
+  spellcasting: Record<number, SlotState>
+  pact_magic: Record<number, SlotState>
+}
+
+export type SlotType = 'spellcasting' | 'pact_magic'
+
 export const useCharacterSpells = (
   characterSheet?: Ref<CharacterSheet>,
   deps?: {
-    spellSlots: Ref<Record<number, { max: number, current: number }>>
+    spellSlots: Ref<SlotsByType>
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
@@ -26,8 +34,13 @@ export const useCharacterSpells = (
 
   const isSpellAvailable = (spell: Spell): boolean => {
     if (spell.level === 0) return true
-    const slots = deps?.spellSlots.value ?? {}
-    return Object.entries(slots).some(([lvl, s]) => Number(lvl) >= spell.level && s.current > 0)
+    const slots = deps?.spellSlots.value
+    if (!slots) return false
+    const allEntries = [
+      ...Object.entries(slots.spellcasting),
+      ...Object.entries(slots.pact_magic),
+    ]
+    return allEntries.some(([lvl, s]) => Number(lvl) >= spell.level && s.current > 0)
   }
 
   // ─── Computed: grouped by level ───────────────────────────────────────────
@@ -92,8 +105,8 @@ export const useCharacterSpells = (
     }
   }
 
-  const castSpell = (slotLevel: number) => {
-    const slot = deps?.spellSlots.value[slotLevel]
+  const castSpell = (slotLevel: number, slotType: SlotType = 'spellcasting') => {
+    const slot = deps?.spellSlots.value[slotType][slotLevel]
     if (slot && slot.current > 0) {
       slot.current--
     }

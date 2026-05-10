@@ -10,6 +10,7 @@ import characterFeatures from './character_features'
 import characterInventory from './character_inventory'
 import characterProficiencyOverrides from './character_proficiency_overrides'
 import backgrounds from './backgrounds'
+import spells from './spells'
 
 export enum Alignment {
   LawfulGood = 'LG',
@@ -52,6 +53,7 @@ const characterSheets = sqliteTable('character_sheets', {
   pe: integer('pe').default(0).notNull(),
   pa: integer('pa').default(0).notNull(),
   pc: integer('pc').default(0).notNull(),
+  concentratingSpellId: integer('concentrating_spell_id').references(() => spells.id, { onDelete: 'set null' }),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 }, table => [

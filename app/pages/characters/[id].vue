@@ -10,6 +10,7 @@
       :roll
       @short-rest="shortRest()"
       @long-rest="longRest()"
+      @dawn="dawn()"
       @toggle-combat="toggleCombat"
     />
 
@@ -45,15 +46,6 @@
               :roll="roll"
             />
           </CollapsibleSection>
-          <CollapsibleSection
-            title="Combat"
-            storage-key="combat"
-          >
-            <CombatSection
-              :character-sheet="characterSheet"
-              :roll="roll"
-            />
-          </CollapsibleSection>
         </template>
 
         <CollapsibleSection
@@ -76,7 +68,10 @@
           title="Inventaire"
           storage-key="inventory"
         >
-          <InventorySection v-model:character-sheet="characterSheet" />
+          <InventorySection
+            v-model:character-sheet="characterSheet"
+            :roll="roll"
+          />
         </CollapsibleSection>
 
         <CollapsibleSection
@@ -134,11 +129,12 @@ if (!characterSheetData.value) {
 const characterSheet = ref(characterSheetData.value)
 
 const toaster = useToast()
-const { shortRest, longRest, isResting } = useRest(characterSheet)
 const { roll } = useDiceRoller()
 
 const { resolvedFeatures, characterSpells, initiativeBonus, spellSlots } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)
+
+const { shortRest, longRest, dawn, isResting } = useRest(characterSheet, spellSlots)
 
 // ── Mode combat ──────────────────────────────────────────────────────────────
 const combatMode = ref(false)

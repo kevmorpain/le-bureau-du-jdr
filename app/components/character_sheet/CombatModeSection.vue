@@ -77,26 +77,61 @@
       <div
         v-for="weapon in equippedWeaponStats"
         :key="weapon.entryId"
-        class="flex items-center gap-2 p-2 rounded-lg border border-default"
+        class="p-2 rounded-lg border border-default"
       >
-        <ActionTypeIcon type="action" />
-        <span class="flex-1 text-sm font-medium">{{ weapon.name }}</span>
-        <div class="flex gap-1">
-          <UButton
-            size="xs"
-            variant="soft"
-            @click="roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus)"
+        <div class="flex items-center gap-2 flex-wrap">
+          <ActionTypeIcon type="action" />
+          <UTooltip
+            v-if="weapon.properties.length"
+            :text="weapon.properties.map(p => weaponPropertyLabels[p] ?? p).join(', ')"
           >
-            Atq {{ formatModifier(weapon.attackBonus) }}
-          </UButton>
-          <UButton
-            size="xs"
-            variant="ghost"
-            color="neutral"
-            @click="rollDamage(weapon)"
+            <span class="flex-1 text-sm font-medium cursor-help">{{ weapon.name }}</span>
+          </UTooltip>
+          <span
+            v-else
+            class="flex-1 text-sm font-medium"
+          >{{ weapon.name }}</span>
+          <UTooltip
+            v-if="weapon.warnings.length"
+            :text="weapon.warnings.join('\n')"
+            :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
           >
-            Dgt {{ weapon.damageDice }}
-          </UButton>
+            <UIcon
+              name="i-heroicons:exclamation-triangle"
+              class="size-4 text-rose-400"
+            />
+          </UTooltip>
+          <div class="flex gap-1 flex-wrap">
+            <UButton
+              size="sm"
+              variant="soft"
+              color="primary"
+              @click="roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus)"
+            >
+              Attaque {{ formatModifier(weapon.attackBonus) }}
+            </UButton>
+            <UButton
+              size="sm"
+              variant="soft"
+              color="neutral"
+              @click="rollDamage(weapon)"
+            >
+              Dégâts {{ weapon.damageDice }}{{ weapon.damageBonus !== 0 ? formatModifier(weapon.damageBonus) : '' }} {{ damageTypeLabels[weapon.damageType] ?? weapon.damageType }}
+            </UButton>
+            <UTooltip
+              v-if="weapon.isLight"
+              text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
+            >
+              <UButton
+                size="sm"
+                variant="soft"
+                color="neutral"
+                @click="rollOffhand(weapon)"
+              >
+                Main secondaire {{ weapon.damageDice }}{{ weapon.damageBonusOffhand !== 0 ? formatModifier(weapon.damageBonusOffhand) : '' }} {{ damageTypeLabels[weapon.damageType] ?? weapon.damageType }}
+              </UButton>
+            </UTooltip>
+          </div>
         </div>
       </div>
 
@@ -147,10 +182,18 @@
 </template>
 
 <script lang="ts" setup>
+import { weaponPropertyLabels } from '~~/shared/utils/item'
+
 const props = defineProps<{
   characterSheet: CharacterSheet
   roll?: (label: string, modifier: number, sides?: number, count?: number) => number
 }>()
+
+const damageTypeLabels: Record<string, string> = {
+  acid: 'acide', bludgeoning: 'contondant', cold: 'froid', fire: 'feu', force: 'force',
+  lightning: 'foudre', necrotic: 'nécrotique', piercing: 'perçant', poison: 'poison',
+  psychic: 'psychique', radiant: 'radiant', slashing: 'tranchant', thunder: 'tonnerre',
+}
 
 const csRef = toRef(props, 'characterSheet')
 const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells } = useCharacterSheet(csRef)
@@ -206,6 +249,12 @@ const parseDice = (dice: string) => {
 
 const rollDamage = (weapon: WeaponStat) => {
   const { count, sides } = parseDice(weapon.damageDice)
-  props.roll?.(`Dégâts — ${weapon.name}`, weapon.damageBonus, sides, count)
+  const label = weapon.usingTwoHanded ? `Dégâts (2 mains) — ${weapon.name}` : `Dégâts — ${weapon.name}`
+  props.roll?.(label, weapon.damageBonus, sides, count)
+}
+
+const rollOffhand = (weapon: WeaponStat) => {
+  const { count, sides } = parseDice(weapon.damageDice)
+  props.roll?.(`Dégâts main sec. — ${weapon.name}`, weapon.damageBonusOffhand, sides, count)
 }
 </script>

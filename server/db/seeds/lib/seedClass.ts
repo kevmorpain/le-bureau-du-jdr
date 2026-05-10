@@ -1,7 +1,7 @@
 import { db, schema } from 'hub:db'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
-import type { FeatureType, ActionType, RechargeType } from '../../schema/features'
+import type { FeatureType, ActionType, RechargeType, FeatureMeta } from '../../schema/features'
 import type { Formula } from '~~/shared/utils/formula'
 
 export type FeatureDef = {
@@ -13,7 +13,7 @@ export type FeatureDef = {
   rechargeType?: RechargeType | null
   maxUsesFormula?: Formula | null
   effects?: Effect[]
-  meta?: unknown
+  meta?: FeatureMeta
 }
 
 export type SubclassDef = {
@@ -37,16 +37,31 @@ export async function seedClass(
   }
 
   for (const featureDef of baseFeatures) {
-    const { effects = [], meta: _meta, ...data } = featureDef
+    const { effects = [], meta, ...data } = featureDef
     const existing = await db.query.features.findFirst({
       where: and(eq(schema.features.classId, cls.id), eq(schema.features.name, data.name)),
     })
-    const feature = existing ?? await db
-      .insert(schema.features)
-      .values({ ...data, classId: cls.id, maxUsesFormula: data.maxUsesFormula ?? null })
-      .returning()
-      .get()
-    if (!existing) featuresInserted++
+    let feature
+    if (existing) {
+      feature = existing
+      // Resync meta on existing features when seed defines it
+      if (meta !== undefined && meta !== null && JSON.stringify(existing.meta) !== JSON.stringify(meta)) {
+        await db.run(sql`UPDATE features SET meta = ${JSON.stringify(meta)} WHERE id = ${existing.id}`)
+      }
+    }
+    else {
+      feature = await db
+        .insert(schema.features)
+        .values({
+          ...data,
+          classId: cls.id,
+          maxUsesFormula: data.maxUsesFormula ?? null,
+          meta: meta ?? null,
+        })
+        .returning()
+        .get()
+      featuresInserted++
+    }
     await _seedEffects(feature.id, effects as Effect[])
   }
 
@@ -62,16 +77,30 @@ export async function seedClass(
     if (!existingSubclass) subclassesInserted++
 
     for (const featureDef of subclassDef.features) {
-      const { effects = [], meta: _meta, ...data } = featureDef
+      const { effects = [], meta, ...data } = featureDef
       const existing = await db.query.features.findFirst({
         where: and(eq(schema.features.subclassId, subclass.id), eq(schema.features.name, data.name)),
       })
-      const feature = existing ?? await db
-        .insert(schema.features)
-        .values({ ...data, subclassId: subclass.id, maxUsesFormula: data.maxUsesFormula ?? null })
-        .returning()
-        .get()
-      if (!existing) featuresInserted++
+      let feature
+      if (existing) {
+        feature = existing
+        if (meta !== undefined && meta !== null && JSON.stringify(existing.meta) !== JSON.stringify(meta)) {
+          await db.run(sql`UPDATE features SET meta = ${JSON.stringify(meta)} WHERE id = ${existing.id}`)
+        }
+      }
+      else {
+        feature = await db
+          .insert(schema.features)
+          .values({
+            ...data,
+            subclassId: subclass.id,
+            maxUsesFormula: data.maxUsesFormula ?? null,
+            meta: meta ?? null,
+          })
+          .returning()
+          .get()
+        featuresInserted++
+      }
       await _seedEffects(feature.id, effects as Effect[])
     }
   }

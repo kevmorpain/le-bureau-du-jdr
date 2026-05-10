@@ -57,6 +57,15 @@
           Repos long
         </UButton>
         <UButton
+          icon="i-game-icons:sunrise"
+          variant="ghost"
+          size="sm"
+          :loading="isResting"
+          @click="$emit('dawn')"
+        >
+          Aube
+        </UButton>
+        <UButton
           icon="i-game-icons:crossed-swords"
           size="sm"
           :variant="combatMode ? 'solid' : 'outline'"
@@ -83,6 +92,7 @@ const props = defineProps<{
 defineEmits<{
   shortRest: []
   longRest: []
+  dawn: []
   toggleCombat: []
 }>()
 

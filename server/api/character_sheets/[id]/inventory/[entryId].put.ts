@@ -1,4 +1,5 @@
-import { db, schema } from 'hub:db'
+import { db } from 'hub:db'
+import * as schema from '~~/server/db/schema'
 import { updateInventoryEntrySchema } from '~~/shared/utils/item'
 
 export default defineEventHandler(async (event) => {
@@ -16,6 +17,7 @@ export default defineEventHandler(async (event) => {
   if (body.magicBonus !== undefined) updateValues.magicBonus = body.magicBonus
   if (body.magicEffects !== undefined) updateValues.magicEffects = body.magicEffects
   if (body.notes !== undefined) updateValues.notes = body.notes
+  if (body.usingTwoHanded !== undefined) updateValues.usingTwoHanded = body.usingTwoHanded
 
   if (Object.keys(updateValues).length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'No fields to update' })

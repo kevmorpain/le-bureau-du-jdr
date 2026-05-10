@@ -67,6 +67,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const spellcasting = useCharacterSpellcasting(characterSheet, {
     proficiencyBonus: classes.proficiencyBonus,
     abilityModifiers: abilities.abilityModifiers,
+    resolvedFeatures,
+    formulaContext,
   })
 
   const spells = useCharacterSpells(characterSheet, {
@@ -132,6 +134,14 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     abilityModifiers: abilities.abilityModifiers,
   })
 
+  // ─── Sort en concentration (résolu via characterSpells) ──────────────────
+
+  const concentratingSpell = computed(() => {
+    const id = conditions.concentratingSpellId.value
+    if (id === null) return null
+    return spells.characterSpells.value?.find(cs => cs.spellId === id)?.spell ?? null
+  })
+
   // ─── API publique ─────────────────────────────────────────────────────────
 
   return {
@@ -164,6 +174,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     binaryConditions,
     activeConditions: conditions.activeConditions,
     toggleCondition: conditions.toggleCondition,
+    concentratingSpellId: conditions.concentratingSpellId,
+    isConcentrating: conditions.isConcentrating,
+    setConcentration: conditions.setConcentration,
+    concentratingSpell,
     exhaustionLevel: conditions.exhaustionLevel,
     exhaustionTooltip: conditions.exhaustionTooltip,
     hasDraconicAncestry: conditions.hasDraconicAncestry,
@@ -179,6 +193,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     spellcastingModifier: spellcasting.spellcastingModifier,
     spellAttackModifier: spellcasting.spellAttackModifier,
     spellSaveDC: spellcasting.spellSaveDC,
+    spellcastingStats: spellcasting.spellcastingStats,
+    pactMagicStats: spellcasting.pactMagicStats,
+    pactMagicAbility: spellcasting.pactMagicAbility,
     spellSlots: spellcasting.spellSlots,
     availableSpellSlots: spellcasting.availableSpellSlots,
     // ─── Sorts du personnage ──────────────────────────────────────────────────
@@ -212,6 +229,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     removeItem: inventoryLayer.removeItem,
     updateInventoryEntry: inventoryLayer.updateEntry,
     toggleEquipped: inventoryLayer.toggleEquipped,
+    setUsingTwoHanded: inventoryLayer.setUsingTwoHanded,
     addProficiencyOverride: inventoryLayer.addProficiencyOverride,
     removeProficiencyOverride: inventoryLayer.removeProficiencyOverride,
     refreshInventory: inventoryLayer.refreshInventory,

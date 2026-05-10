@@ -1,0 +1,1 @@
+ALTER TABLE `character_inventory` ADD `using_two_handed` integer DEFAULT false NOT NULL;

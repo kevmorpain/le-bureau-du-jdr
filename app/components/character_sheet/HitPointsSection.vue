@@ -224,7 +224,7 @@ const props = defineProps<{
   roll?: (label: string, modifier: number, sides?: number, count?: number) => number
 }>()
 
-const { effectiveMaxHp, defenseEntries, activeConditions, toggleCondition, savingThrows } = useCharacterSheet(characterSheet)
+const { effectiveMaxHp, defenseEntries, isConcentrating, concentratingSpell, setConcentration, savingThrows } = useCharacterSheet(characterSheet)
 
 // ── HP bar ───────────────────────────────────────────────────────────────────
 const hpPercent = computed(() => {
@@ -286,13 +286,7 @@ const showConcentrationCheck = ref(false)
 const concentrationDamage = ref(0)
 const concentrationDC = ref(10)
 
-const concentrationSpellName = computed(() => {
-  try {
-    return localStorage.getItem('cs-concentration-spell') ?? ''
-  } catch {
-    return ''
-  }
-})
+const concentrationSpellName = computed(() => concentratingSpell.value?.name ?? '')
 
 const conSaveMod = computed(() => savingThrows.value.con?.modifier ?? 0)
 
@@ -308,17 +302,14 @@ const concentrationSuccess = () => {
 }
 
 const concentrationFail = () => {
-  toggleCondition('concentrating' as never)
-  showConcentrationCheck.value = false
   const spellName = concentrationSpellName.value
+  setConcentration(null)
+  showConcentrationCheck.value = false
   useToast().add({
     title: 'Concentration perdue',
     description: spellName ? `Vous n'êtes plus concentré sur ${spellName}.` : undefined,
     color: 'error',
   })
-  try {
-    localStorage.removeItem('cs-concentration-spell')
-  } catch { /* localStorage non disponible */ }
 }
 
 // ── Commit action soins / dégâts ─────────────────────────────────────────────
@@ -353,7 +344,7 @@ const commit = () => {
     showFlash(`−${final} PV${suffix}`)
 
     // Vérification concentration si concentré
-    if (activeConditions.value.includes('concentrating' as never) && final > 0) {
+    if (isConcentrating.value && final > 0) {
       concentrationDamage.value = final
       concentrationDC.value = Math.max(10, Math.floor(final / 2))
       showConcentrationCheck.value = true
