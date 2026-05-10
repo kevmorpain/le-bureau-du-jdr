@@ -11,7 +11,7 @@
 
     <!-- Stats d'incantation -->
     <div
-      v-if="spellcastingAbility"
+      v-if="spellcastingStats"
       class="flex gap-x-6"
     >
       <div>
@@ -19,7 +19,7 @@
           Caractéristique
         </p>
         <p class="font-semibold uppercase">
-          {{ spellcastingAbility }}
+          {{ spellcastingStats.ability }}
         </p>
       </div>
       <div>
@@ -27,7 +27,7 @@
           DD de sauvegarde
         </p>
         <p class="font-semibold">
-          {{ spellSaveDC ?? '—' }}
+          {{ spellcastingStats.dc }}
         </p>
       </div>
       <div>
@@ -35,7 +35,41 @@
           Bonus d'attaque
         </p>
         <p class="font-semibold">
-          {{ spellAttackModifier !== null ? formatModifier(spellAttackModifier) : '—' }}
+          {{ formatModifier(spellcastingStats.attackBonus) }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Stats de Magie du Pacte -->
+    <div
+      v-if="pactMagicStats"
+      class="flex gap-x-6 rounded-lg border border-violet-500/30 bg-violet-500/5 p-2"
+    >
+      <div class="flex items-center pr-2">
+        <UBadge color="violet" variant="subtle" size="xs">Pacte</UBadge>
+      </div>
+      <div>
+        <p class="text-sm text-muted">
+          Caractéristique
+        </p>
+        <p class="font-semibold uppercase">
+          {{ pactMagicStats.ability }}
+        </p>
+      </div>
+      <div>
+        <p class="text-sm text-muted">
+          DD de sauvegarde
+        </p>
+        <p class="font-semibold">
+          {{ pactMagicStats.dc }}
+        </p>
+      </div>
+      <div>
+        <p class="text-sm text-muted">
+          Bonus d'attaque
+        </p>
+        <p class="font-semibold">
+          {{ formatModifier(pactMagicStats.attackBonus) }}
         </p>
       </div>
     </div>
@@ -129,30 +163,47 @@
 
           <!-- Bulles d'emplacements (niveaux ≥ 1 seulement) -->
           <div
-            v-if="group.level > 0 && spellSlots[group.level]"
-            class="flex items-center gap-1.5"
+            v-if="group.level > 0"
+            class="flex items-center gap-1.5 flex-wrap"
             @click.stop
           >
-            <button
-              v-if="spellSlots[group.level]!.max > 0"
-              class="size-4 flex items-center justify-center rounded text-muted hover:text-default hover:bg-elevated transition-colors text-xs leading-none"
-              @click="adjustSlotMax(group.level, -1)"
-            >
-              −
-            </button>
-            <button
-              v-for="n in spellSlots[group.level]!.max"
-              :key="n"
-              class="border-2 size-3.5 rounded-full transition-colors"
-              :class="n <= spellSlots[group.level]!.max - spellSlots[group.level]!.current ? 'bg-primary/60 border-primary hover:bg-primary/80' : 'bg-transparent border-muted hover:border-primary/50'"
-              @click="toggleSlot(group.level, n)"
-            />
-            <button
-              class="size-4 flex items-center justify-center rounded text-muted hover:text-default hover:bg-elevated transition-colors text-xs leading-none"
-              @click="adjustSlotMax(group.level, 1)"
-            >
-              +
-            </button>
+            <!-- Spellcasting -->
+            <template v-if="spellSlots.spellcasting[group.level]">
+              <button
+                v-if="spellSlots.spellcasting[group.level]!.max > 0"
+                class="size-4 flex items-center justify-center rounded text-muted hover:text-default hover:bg-elevated transition-colors text-xs leading-none"
+                @click="adjustSlotMax(group.level, 'spellcasting', -1)"
+              >
+                −
+              </button>
+              <button
+                v-for="n in spellSlots.spellcasting[group.level]!.max"
+                :key="`sc-${n}`"
+                class="border-2 size-3.5 rounded-full transition-colors"
+                :class="n <= spellSlots.spellcasting[group.level]!.max - spellSlots.spellcasting[group.level]!.current ? 'bg-primary/60 border-primary hover:bg-primary/80' : 'bg-transparent border-muted hover:border-primary/50'"
+                @click="toggleSlot(group.level, 'spellcasting', n)"
+              />
+              <button
+                class="size-4 flex items-center justify-center rounded text-muted hover:text-default hover:bg-elevated transition-colors text-xs leading-none"
+                @click="adjustSlotMax(group.level, 'spellcasting', 1)"
+              >
+                +
+              </button>
+            </template>
+
+            <!-- Pact Magic -->
+            <template v-if="spellSlots.pact_magic[group.level] && spellSlots.pact_magic[group.level]!.max > 0">
+              <UBadge color="violet" variant="subtle" size="xs" class="ml-2">
+                Pacte
+              </UBadge>
+              <button
+                v-for="n in spellSlots.pact_magic[group.level]!.max"
+                :key="`pm-${n}`"
+                class="border-2 size-3.5 rounded-full transition-colors"
+                :class="n <= spellSlots.pact_magic[group.level]!.max - spellSlots.pact_magic[group.level]!.current ? 'bg-violet-500/60 border-violet-500 hover:bg-violet-500/80' : 'bg-transparent border-violet-400/40 hover:border-violet-400'"
+                @click="toggleSlot(group.level, 'pact_magic', n)"
+              />
+            </template>
           </div>
         </div>
 
@@ -262,13 +313,19 @@ const characterSheetRef = toRef(props, 'characterSheet')
 
 provide('isSpellbook', true)
 
-const spellSlots = inject<Ref<Record<number, { max: number, current: number }>>>('spellSlots')!
+type SlotState = { max: number, current: number }
+type SlotsByType = {
+  spellcasting: Record<number, SlotState>
+  pact_magic: Record<number, SlotState>
+}
+type SlotType = 'spellcasting' | 'pact_magic'
+
+const spellSlots = inject<Ref<SlotsByType>>('spellSlots')!
 
 const {
-  spellcastingAbility,
   spellcastingModifier,
-  spellAttackModifier,
-  spellSaveDC,
+  spellcastingStats,
+  pactMagicStats,
   armorSpellcastingWarning,
   characterLevel,
   activeConditions,
@@ -281,8 +338,8 @@ const {
   removeSpell,
 } = useCharacterSheet(characterSheetRef)
 
-const castSpell = (slotLevel: number) => {
-  const slot = spellSlots.value[slotLevel]
+const castSpell = (slotLevel: number, slotType: SlotType) => {
+  const slot = spellSlots.value[slotType][slotLevel]
   if (slot && slot.current > 0) slot.current--
 }
 
@@ -360,8 +417,8 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
   showCastModal.value = true
 }
 
-const handleCast = (slotLevel: number) => {
-  castSpell(slotLevel)
+const handleCast = (slotLevel: number, slotType: SlotType) => {
+  castSpell(slotLevel, slotType)
   // Activer la concentration si le sort la requiert
   if (selectedSpell.value?.spell.concentration) {
     if (!activeConditions.value.includes('concentrating' as never)) {
@@ -379,16 +436,16 @@ const handleCast = (slotLevel: number) => {
 
 // ─── Emplacements (toggle manuel) ────────────────────────────────────────────
 
-const toggleSlot = (level: number, n: number) => {
-  const slot = spellSlots.value[level]
+const toggleSlot = (level: number, slotType: SlotType, n: number) => {
+  const slot = spellSlots.value[slotType][level]
   if (!slot) return
   const used = slot.max - slot.current
   if (n <= used) slot.current = slot.max - (n - 1) // plein → libérer jusqu'à n
   else slot.current = slot.max - n // vide → utiliser jusqu'à n
 }
 
-const adjustSlotMax = (level: number, delta: number) => {
-  const slot = spellSlots.value[level]
+const adjustSlotMax = (level: number, slotType: SlotType, delta: number) => {
+  const slot = spellSlots.value[slotType][level]
   if (!slot) return
   const newMax = Math.max(0, Math.min(9, slot.max + delta))
   slot.max = newMax

@@ -10,23 +10,33 @@
 
         <div class="space-y-4">
           <p class="text-muted text-sm">
-            Choisissez le niveau d'emplacement à utiliser :
+            Choisissez l'emplacement à utiliser :
           </p>
 
           <ul class="space-y-2">
             <li
-              v-for="level in availableSlotLevels"
-              :key="level"
+              v-for="opt in availableSlots"
+              :key="`${opt.slotType}-${opt.level}`"
             >
               <UButton
                 block
-                :variant="selectedLevel === level ? 'solid' : 'outline'"
-                @click="selectedLevel = level"
+                :variant="isSelected(opt) ? 'solid' : 'outline'"
+                @click="selected = opt"
               >
                 <span class="flex items-center justify-between w-full">
-                  <span>Niveau {{ level }}</span>
+                  <span class="flex items-center gap-2">
+                    <span>Niveau {{ opt.level }}</span>
+                    <UBadge
+                      v-if="opt.slotType === 'pact_magic'"
+                      color="violet"
+                      variant="subtle"
+                      size="xs"
+                    >
+                      Pacte
+                    </UBadge>
+                  </span>
                   <span class="text-muted text-sm">
-                    {{ spellSlots[level]?.current }}/{{ spellSlots[level]?.max }} restant{{ spellSlots[level]?.current !== 1 ? 's' : '' }}
+                    {{ opt.slot.current }}/{{ opt.slot.max }} restant{{ opt.slot.current !== 1 ? 's' : '' }}
                   </span>
                 </span>
               </UButton>
@@ -34,7 +44,7 @@
           </ul>
 
           <p
-            v-if="availableSlotLevels.length === 0"
+            v-if="availableSlots.length === 0"
             class="text-muted text-sm text-center py-4"
           >
             Aucun emplacement disponible pour ce sort.
@@ -50,7 +60,7 @@
               Annuler
             </UButton>
             <UButton
-              :disabled="selectedLevel === null || availableSlotLevels.length === 0"
+              :disabled="!selected"
               @click="confirm"
             >
               Lancer
@@ -63,35 +73,61 @@
 </template>
 
 <script lang="ts" setup>
+type SlotState = { max: number, current: number }
+type SlotsByType = {
+  spellcasting: Record<number, SlotState>
+  pact_magic: Record<number, SlotState>
+}
+type SlotType = 'spellcasting' | 'pact_magic'
+
+type SlotOption = {
+  level: number
+  slotType: SlotType
+  slot: SlotState
+}
+
 const props = defineProps<{
   spell: Spell
-  spellSlots: Record<number, { max: number, current: number }>
+  spellSlots: SlotsByType
 }>()
 
 const emit = defineEmits<{
-  cast: [slotLevel: number]
+  cast: [slotLevel: number, slotType: SlotType]
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
 
-const selectedLevel = ref<number | null>(null)
+const selected = ref<SlotOption | null>(null)
 
-const availableSlotLevels = computed(() => {
-  return Object.entries(props.spellSlots)
-    .filter(([level, slot]) => Number(level) >= props.spell.level && slot.current > 0)
-    .map(([level]) => Number(level))
-    .sort((a, b) => a - b)
+const availableSlots = computed<SlotOption[]>(() => {
+  const result: SlotOption[] = []
+  for (const [level, slot] of Object.entries(props.spellSlots.spellcasting)) {
+    if (Number(level) >= props.spell.level && slot.current > 0) {
+      result.push({ level: Number(level), slotType: 'spellcasting', slot })
+    }
+  }
+  for (const [level, slot] of Object.entries(props.spellSlots.pact_magic)) {
+    if (Number(level) >= props.spell.level && slot.current > 0) {
+      result.push({ level: Number(level), slotType: 'pact_magic', slot })
+    }
+  }
+  // Sort by level asc, spellcasting first at same level
+  result.sort((a, b) => a.level - b.level || (a.slotType === 'spellcasting' ? -1 : 1))
+  return result
 })
+
+const isSelected = (opt: SlotOption) =>
+  selected.value?.level === opt.level && selected.value?.slotType === opt.slotType
 
 watch(open, (val) => {
   if (val) {
-    selectedLevel.value = availableSlotLevels.value[0] ?? null
+    selected.value = availableSlots.value[0] ?? null
   }
 })
 
 const confirm = () => {
-  if (selectedLevel.value === null) return
-  emit('cast', selectedLevel.value)
+  if (!selected.value) return
+  emit('cast', selected.value.level, selected.value.slotType)
   open.value = false
 }
 </script>

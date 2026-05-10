@@ -135,11 +135,12 @@ if (!characterSheetData.value) {
 const characterSheet = ref(characterSheetData.value)
 
 const toaster = useToast()
-const { shortRest, longRest, dawn, isResting } = useRest(characterSheet)
 const { roll } = useDiceRoller()
 
 const { resolvedFeatures, characterSpells, initiativeBonus, spellSlots } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)
+
+const { shortRest, longRest, dawn, isResting } = useRest(characterSheet, spellSlots)
 
 // ── Mode combat ──────────────────────────────────────────────────────────────
 const combatMode = ref(false)

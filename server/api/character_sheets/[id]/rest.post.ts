@@ -55,6 +55,18 @@ export default defineEventHandler(async (event) => {
     ))
   }
 
+  // ── Short rest: reset pact_magic spell slots ──────────────────────────────
+
+  if (type === 'short') {
+    await db
+      .update(schema.characterSpellSlots)
+      .set({ used: 0 })
+      .where(and(
+        eq(schema.characterSpellSlots.characterSheetId, characterSheetId),
+        eq(schema.characterSpellSlots.slotType, 'pact_magic'),
+      ))
+  }
+
   // ── Long rest: restore HP, reset spell slots, recover hit dice ───────────
 
   if (type === 'long') {

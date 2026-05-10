@@ -1,4 +1,20 @@
-export const useRest = (characterSheet: Ref<CharacterSheet>) => {
+type SlotState = { max: number, current: number }
+type SlotsByType = {
+  spellcasting: Record<number, SlotState>
+  pact_magic: Record<number, SlotState>
+}
+
+const refillSlots = (slots: Record<number, SlotState>) => {
+  for (const lvl in slots) {
+    const s = slots[lvl]!
+    if (s.max > 0) s.current = s.max
+  }
+}
+
+export const useRest = (
+  characterSheet: Ref<CharacterSheet>,
+  spellSlots?: Ref<SlotsByType>,
+) => {
   const toaster = useToast()
   const isResting = ref(false)
 
@@ -15,6 +31,12 @@ export const useRest = (characterSheet: Ref<CharacterSheet>) => {
           cf.currentUses = 0
         }
       })
+
+      // Reset pact_magic spell slots (local + persisté côté DB par le serveur)
+      if (spellSlots?.value) refillSlots(spellSlots.value.pact_magic)
+      characterSheet.value.spellSlots
+        ?.filter(s => s.slotType === 'pact_magic')
+        .forEach((s) => { s.used = 0 })
 
       if (hitDiceSpent.length > 0) {
         const totalHeal = hitDiceSpent.reduce((sum, d) => sum + d.healAmount, 0)
@@ -50,7 +72,11 @@ export const useRest = (characterSheet: Ref<CharacterSheet>) => {
 
       characterSheet.value.currentHp = characterSheet.value.maxHp
 
-      // Reset spell slots (watchEffect dans useCharacterSpellcasting se re-déclenche)
+      // Reset spell slots (local + DB)
+      if (spellSlots?.value) {
+        refillSlots(spellSlots.value.spellcasting)
+        refillSlots(spellSlots.value.pact_magic)
+      }
       characterSheet.value.spellSlots?.forEach((slot) => { slot.used = 0 })
 
       // Récupère la moitié des dés de vie (arrondi au supérieur) — règle D&D 5e 2014

@@ -67,6 +67,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const spellcasting = useCharacterSpellcasting(characterSheet, {
     proficiencyBonus: classes.proficiencyBonus,
     abilityModifiers: abilities.abilityModifiers,
+    resolvedFeatures,
+    formulaContext,
   })
 
   const spells = useCharacterSpells(characterSheet, {
@@ -179,6 +181,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     spellcastingModifier: spellcasting.spellcastingModifier,
     spellAttackModifier: spellcasting.spellAttackModifier,
     spellSaveDC: spellcasting.spellSaveDC,
+    spellcastingStats: spellcasting.spellcastingStats,
+    pactMagicStats: spellcasting.pactMagicStats,
+    pactMagicAbility: spellcasting.pactMagicAbility,
     spellSlots: spellcasting.spellSlots,
     availableSpellSlots: spellcasting.availableSpellSlots,
     // ─── Sorts du personnage ──────────────────────────────────────────────────
