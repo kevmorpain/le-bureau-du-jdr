@@ -35,12 +35,39 @@ export const useCharacterConditions = (
 
   // ─── Active conditions & exhaustion ───────────────────────────────────────
 
-  const activeConditions = useStorage<ConditionKey[]>(storageKey('activeConditions'), [])
+  const storedActiveConditions = useStorage<ConditionKey[]>(storageKey('activeConditions'), [])
+
+  // Concentration is persisted via DB (concentratingSpellId). The 'concentrating'
+  // condition is derived; we never store it in localStorage.
+  const concentratingSpellId = computed<number | null>({
+    get: () => characterSheet?.value?.concentratingSpellId ?? null,
+    set: (v) => {
+      if (characterSheet?.value) characterSheet.value.concentratingSpellId = v
+    },
+  })
+
+  const isConcentrating = computed(() => concentratingSpellId.value !== null)
+
+  const setConcentration = (spellId: number | null) => {
+    concentratingSpellId.value = spellId
+  }
+
+  // Clean up legacy 'concentrating' entries from localStorage
+  if (import.meta.client) {
+    onMounted(() => {
+      const idx = storedActiveConditions.value.indexOf('concentrating' as ConditionKey)
+      if (idx !== -1) storedActiveConditions.value.splice(idx, 1)
+    })
+  }
+
+  // activeConditions ne contient plus 'concentrating' — la concentration a sa
+  // propre UI (ConcentrationSection) et ses propres helpers (isConcentrating).
+  const activeConditions = storedActiveConditions
 
   const toggleCondition = (condition: ConditionKey) => {
-    const idx = activeConditions.value.indexOf(condition)
-    if (idx === -1) activeConditions.value.push(condition)
-    else activeConditions.value.splice(idx, 1)
+    const idx = storedActiveConditions.value.indexOf(condition)
+    if (idx === -1) storedActiveConditions.value.push(condition)
+    else storedActiveConditions.value.splice(idx, 1)
   }
 
   const exhaustionLevel = computed({
@@ -193,6 +220,9 @@ export const useCharacterConditions = (
   return {
     activeConditions,
     toggleCondition,
+    concentratingSpellId,
+    isConcentrating,
+    setConcentration,
     exhaustionLevel,
     exhaustionTooltip,
     hasDraconicAncestry,

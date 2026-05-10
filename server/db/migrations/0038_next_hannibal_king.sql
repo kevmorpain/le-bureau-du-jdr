@@ -1,0 +1,1 @@
+ALTER TABLE `character_sheets` ADD `concentrating_spell_id` integer REFERENCES spells(id);

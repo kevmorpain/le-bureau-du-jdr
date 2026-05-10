@@ -329,7 +329,7 @@ const {
   armorSpellcastingWarning,
   characterLevel,
   activeConditions,
-  toggleCondition,
+  setConcentration,
   characterSpells,
   spellsByLevel,
   showPreparedOnly,
@@ -421,12 +421,7 @@ const handleCast = (slotLevel: number, slotType: SlotType) => {
   castSpell(slotLevel, slotType)
   // Activer la concentration si le sort la requiert
   if (selectedSpell.value?.spell.concentration) {
-    if (!activeConditions.value.includes('concentrating' as never)) {
-      toggleCondition('concentrating' as never)
-    }
-    try {
-      localStorage.setItem('cs-concentration-spell', selectedSpell.value.spell.name)
-    } catch { /* localStorage non disponible */ }
+    setConcentration(selectedSpell.value.spellId)
     useToast().add({
       title: `Concentration active — ${selectedSpell.value.spell.name}`,
       color: 'info',

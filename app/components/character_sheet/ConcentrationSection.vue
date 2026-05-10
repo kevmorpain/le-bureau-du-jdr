@@ -9,18 +9,15 @@
         size="xs"
         variant="ghost"
         color="neutral"
-        @click="stopConcentration"
+        @click="setConcentration(null)"
       >
         Rompre
       </UButton>
     </div>
 
-    <UInput
-      v-model="spellName"
-      placeholder="Nom du sort…"
-      size="sm"
-      @update:model-value="saveSpellName"
-    />
+    <p class="text-sm font-medium">
+      {{ concentratingSpell?.name ?? 'Sort inconnu' }}
+    </p>
 
     <p class="text-xs text-muted leading-relaxed">
       JS Constitution requis si vous prenez des dégâts (DD = max entre 10 et ½ dégâts).
@@ -33,29 +30,5 @@ const props = defineProps<{
   characterSheet: CharacterSheet
 }>()
 
-const { activeConditions, toggleCondition } = useCharacterSheet(toRef(props, 'characterSheet'))
-
-const isConcentrating = computed(() => activeConditions.value.includes('concentrating' as never))
-
-const spellName = ref('')
-
-onMounted(() => {
-  try {
-    spellName.value = localStorage.getItem('cs-concentration-spell') ?? ''
-  } catch { /* localStorage non disponible */ }
-})
-
-const saveSpellName = (val: string) => {
-  try {
-    localStorage.setItem('cs-concentration-spell', val)
-  } catch { /* localStorage non disponible */ }
-}
-
-const stopConcentration = () => {
-  toggleCondition('concentrating' as never)
-  spellName.value = ''
-  try {
-    localStorage.removeItem('cs-concentration-spell')
-  } catch { /* localStorage non disponible */ }
-}
+const { isConcentrating, concentratingSpell, setConcentration } = useCharacterSheet(toRef(props, 'characterSheet'))
 </script>

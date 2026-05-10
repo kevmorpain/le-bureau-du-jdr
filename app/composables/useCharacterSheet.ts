@@ -134,6 +134,14 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     abilityModifiers: abilities.abilityModifiers,
   })
 
+  // ─── Sort en concentration (résolu via characterSpells) ──────────────────
+
+  const concentratingSpell = computed(() => {
+    const id = conditions.concentratingSpellId.value
+    if (id === null) return null
+    return spells.characterSpells.value?.find(cs => cs.spellId === id)?.spell ?? null
+  })
+
   // ─── API publique ─────────────────────────────────────────────────────────
 
   return {
@@ -166,6 +174,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     binaryConditions,
     activeConditions: conditions.activeConditions,
     toggleCondition: conditions.toggleCondition,
+    concentratingSpellId: conditions.concentratingSpellId,
+    isConcentrating: conditions.isConcentrating,
+    setConcentration: conditions.setConcentration,
+    concentratingSpell,
     exhaustionLevel: conditions.exhaustionLevel,
     exhaustionTooltip: conditions.exhaustionTooltip,
     hasDraconicAncestry: conditions.hasDraconicAncestry,

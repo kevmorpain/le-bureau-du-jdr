@@ -267,6 +267,13 @@
       "when": 1778406288445,
       "tag": "0037_woozy_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "6",
+      "when": 1778412625693,
+      "tag": "0038_next_hannibal_king",
+      "breakpoints": true
     }
   ]
 }
