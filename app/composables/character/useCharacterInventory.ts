@@ -25,6 +25,7 @@ export interface InventoryEntry {
   magicBonus: number
   magicEffects: Effect[] | null
   notes: string | null
+  usingTwoHanded: boolean
   item: InventoryItem | null
 }
 
@@ -34,9 +35,15 @@ export interface WeaponStats {
   attackBonus: number
   damageDice: string
   damageBonus: number
+  damageBonusOffhand: number  // dégâts main secondaire (pas de mod sauf si négatif)
   damageType: string
   properties: string[]
   versatileDamage?: string
+  isVersatile: boolean
+  isLight: boolean
+  usingTwoHanded: boolean
+  warnings: string[]
+  rangeText: string | null
   magicBonus: number
   isProficient: boolean
 }
@@ -252,13 +259,22 @@ export const useCharacterInventory = (
 
   // ─── Weapon combat stats ──────────────────────────────────────────────────
 
+  const speciesSize = computed(() => characterSheet?.value?.species?.size ?? null)
+
   const equippedWeaponStats = computed<WeaponStats[]>(() =>
     equippedWeapons.value
       .filter(e => e.item)
       .map((entry) => {
         const item = entry.item!
         const props = item.properties as WeaponProperties
-        const isFinesse = props.weapon_properties.includes('finesse')
+        const propList = props.weapon_properties
+        const isFinesse = propList.includes('finesse')
+        const isLight = propList.includes('light')
+        const isHeavy = propList.includes('heavy')
+        const isTwoHanded = propList.includes('two_handed')
+        const isLoading = propList.includes('loading')
+        const isVersatile = propList.includes('versatile')
+        const isThrown = propList.includes('thrown')
         const isRanged = props.weapon_category.endsWith('ranged')
         const strMod = deps?.abilityModifiers.value.str ?? 0
         const dexMod = deps?.abilityModifiers.value.dex ?? 0
@@ -271,16 +287,45 @@ export const useCharacterInventory = (
 
         const attackBonus = abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0)
         const damageBonus = abilityMod + (entry.magicBonus ?? 0)
+        // Dégâts main secondaire : pas de modificateur sauf s'il est négatif (règle PHB)
+        const offhandMod = abilityMod < 0 ? abilityMod : 0
+        const damageBonusOffhand = offhandMod + (entry.magicBonus ?? 0)
+
+        const damageDice = isVersatile && entry.usingTwoHanded
+          ? props.versatile_damage ?? props.damage_dice
+          : props.damage_dice
+
+        const warnings: string[] = []
+        if (isHeavy && (speciesSize.value === 'P' || speciesSize.value === 'TP')) {
+          warnings.push('Désavantage : arme lourde + Petite taille')
+        }
+        if (isTwoHanded && equippedShield.value) {
+          warnings.push('Impossible d\'utiliser cette arme avec un bouclier équipé')
+        }
+        if (isLoading) {
+          warnings.push('Une attaque par action quel que soit le nombre d\'attaques disponibles')
+        }
+
+        let rangeText: string | null = null
+        if (props.range && (isRanged || isThrown)) {
+          rangeText = `${props.range.normal} m / ${props.range.long} m`
+        }
 
         return {
           entryId: entry.id,
           name: item.name,
           attackBonus,
-          damageDice: props.damage_dice,
+          damageDice,
           damageBonus,
+          damageBonusOffhand,
           damageType: props.damage_type,
-          properties: props.weapon_properties,
+          properties: propList,
           versatileDamage: props.versatile_damage,
+          isVersatile,
+          isLight,
+          usingTwoHanded: entry.usingTwoHanded ?? false,
+          warnings,
+          rangeText,
           magicBonus: entry.magicBonus ?? 0,
           isProficient: proficient,
         }
@@ -322,6 +367,7 @@ export const useCharacterInventory = (
     magicBonus?: number
     magicEffects?: Effect[]
     notes?: string
+    usingTwoHanded?: boolean
   }) => {
     if (!characterId.value) return
 
@@ -337,6 +383,12 @@ export const useCharacterInventory = (
     const entry = inventory.value.find(e => e.id === entryId)
     if (!entry) return
     return updateEntry(entryId, { equipped: !entry.equipped })
+  }
+
+  const setUsingTwoHanded = async (entryId: number, value: boolean) => {
+    const entry = inventory.value.find(e => e.id === entryId)
+    if (entry) entry.usingTwoHanded = value
+    await updateEntry(entryId, { usingTwoHanded: value })
   }
 
   const addProficiencyOverride = async (proficiencyType: 'weapon' | 'armor' | 'language' | 'tool', value: string, action: 'grant' | 'revoke') => {
@@ -382,6 +434,7 @@ export const useCharacterInventory = (
     removeItem,
     updateEntry,
     toggleEquipped,
+    setUsingTwoHanded,
     addProficiencyOverride,
     removeProficiencyOverride,
     refreshInventory,

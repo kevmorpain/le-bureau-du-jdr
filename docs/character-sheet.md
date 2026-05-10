@@ -14,7 +14,7 @@ La page utilise un **dashboard 3 colonnes** (`dashboard-grid`) :
 |---|---|---|
 | `AbilityScoresSection` | `QuickStatsSection` | `HitPointsSection` |
 | `ProficienciesSection` | `CombatModeSection` *(combat only)* | `DeathSavingThrowSection` |
-| | `CombatSection` *(combat only)* | `HitDiceSection` |
+| | | `HitDiceSection` |
 | | `ClassFeaturesSection` | `DefensesSection` |
 | | `MagicSection` | `StatusSection` |
 | | `InventorySection` | `SpellSlotsSection` |
@@ -36,7 +36,7 @@ Barre sticky sous la nav principale. Affiche :
 - **Repos court** / **Repos long** → `useRest` → `POST /api/character_sheets/{id}/rest`
   - Repos court : recharge les aptitudes `rechargeType: 'short_rest'`
   - Repos long : recharge tout + restaure les PV max + recharge les emplacements de sort
-- **Mode Combat** : toggle local `combatMode`. À l'activation, lance automatiquement l'initiative. Affiche/masque `CombatModeSection` et `CombatSection`.
+- **Mode Combat** : toggle local `combatMode`. À l'activation, lance automatiquement l'initiative. Affiche/masque `CombatModeSection`.
 
 ---
 
@@ -85,15 +85,7 @@ Section de gestion du tour de combat :
 
 État local (non persisté), remis à zéro via "Nouveau tour".
 
-### Combat (`CombatSection`) *(affiché uniquement si `combatMode` actif)*
-
-Liste les armes équipées avec bonus d'attaque et dés de dégâts calculés depuis :
-- Propriétés de l'arme (`items.properties`)
-- Modificateur STR ou DEX selon le type d'arme
-- Bonus de maîtrise si `isWeaponProficient`
-- Bonus magique (`character_inventory.magicBonus`)
-
-**Source :** `character_inventory` (fetch séparé via `useCharacterInventory`).
+> Les stats détaillées des armes (attaque, dégâts, propriétés, warnings, toggle "à 2 mains" pour versatile, bouton main secondaire pour les armes légères) sont affichées dans `InventorySection` (onglet Armes). `CombatModeSection` reprend les boutons d'action en compact pour le tour en cours.
 
 ### Capacités de classe (`ClassFeaturesSection`)
 

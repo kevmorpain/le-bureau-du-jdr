@@ -46,15 +46,6 @@
               :roll="roll"
             />
           </CollapsibleSection>
-          <CollapsibleSection
-            title="Combat"
-            storage-key="combat"
-          >
-            <CombatSection
-              :character-sheet="characterSheet"
-              :roll="roll"
-            />
-          </CollapsibleSection>
         </template>
 
         <CollapsibleSection
@@ -77,7 +68,10 @@
           title="Inventaire"
           storage-key="inventory"
         >
-          <InventorySection v-model:character-sheet="characterSheet" />
+          <InventorySection
+            v-model:character-sheet="characterSheet"
+            :roll="roll"
+          />
         </CollapsibleSection>
 
         <CollapsibleSection

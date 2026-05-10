@@ -83,6 +83,7 @@ export const updateInventoryEntrySchema = z.object({
   magicBonus: z.number().int().min(0).max(3).optional(),
   magicEffects: z.array(z.any()).optional(),
   notes: z.string().max(500).optional(),
+  usingTwoHanded: z.boolean().optional(),
 })
 
 // ─── Proficiency override schemas ─────────────────────────────────────────────
@@ -112,6 +113,20 @@ export const weaponPropertyLabels: Record<string, string> = {
   loading: 'chargement',
   ammunition: 'munitions',
   versatile: 'polyvalente',
+  special: 'spéciale',
+}
+
+export const weaponPropertyTooltips: Record<string, string> = {
+  finesse: 'Utilise STR ou DEX au choix pour les jets d\'attaque et de dégâts.',
+  light: 'Peut servir au combat à deux armes (action bonus avec une autre arme légère).',
+  heavy: 'Désavantage aux jets d\'attaque pour les créatures de Petite taille.',
+  two_handed: 'Doit être tenue à deux mains pour attaquer (incompatible avec un bouclier).',
+  thrown: 'Peut être lancée pour effectuer une attaque à distance.',
+  reach: 'Allonge la portée d\'attaque de 1,50 m supplémentaires.',
+  loading: 'Une seule attaque par action, action bonus ou réaction, quel que soit le nombre d\'attaques disponibles.',
+  ammunition: 'Nécessite des munitions ; sortir une munition fait partie de l\'attaque.',
+  versatile: 'Peut être tenue à une ou deux mains, avec un dé de dégâts différent.',
+  special: 'Règle spéciale — voir la description de l\'arme.',
 }
 
 export const armorTypeLabels: Record<string, string> = {
