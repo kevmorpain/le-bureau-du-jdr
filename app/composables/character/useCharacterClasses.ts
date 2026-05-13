@@ -21,8 +21,17 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
 
   const characterClasses = computed(() =>
     characterSheet?.value?.classes?.map((cls) => {
-      const { class: classInfo, ...rest } = cls
-      return { ...rest, ...classInfo }
+      const { class: classInfo, subclass, ...rest } = cls
+      const effectiveSpellcastingAbility = subclass?.spellcastingAbility
+        ?? classInfo?.spellcastingAbility
+        ?? null
+      return {
+        ...rest,
+        ...classInfo,
+        class: classInfo,
+        subclass,
+        effectiveSpellcastingAbility,
+      }
     }) || [],
   )
 

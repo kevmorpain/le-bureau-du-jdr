@@ -22,6 +22,13 @@ type SpellStats = {
   attackBonus: number
 }
 
+type SpellcasterClass = {
+  classId: number
+  className: string
+  ability: string  // 'str' | 'dex' | ... — la stat effective (subclass override > class default)
+  fromSubclass: boolean
+}
+
 const emptyLevels = (): Record<number, SlotState> => ({
   1: { max: 0, current: 0 },
   2: { max: 0, current: 0 },
@@ -41,26 +48,50 @@ export const useCharacterSpellcasting = (
     abilityModifiers: ComputedRef<Record<string, number>>
     resolvedFeatures?: ComputedRef<ResolvedFeature[]>
     formulaContext?: ComputedRef<FormulaContext>
+    selectedCasterClassId?: Ref<number | null>
   },
 ) => {
-  // ─── Spellcasting ability (mainClass) ──────────────────────────────────────
+  // ─── Liste des classes spellcasters du perso ─────────────────────────────
 
-  const spellcastingAbility = computed<string | null>({
-    get: () => {
-      const classes = characterSheet?.value?.classes ?? []
-      const mainClass = classes.find(c => c.isMain) ?? classes[0]
-      if (!mainClass) return null
-      return mainClass.spellcastingAbility
-        ?? (mainClass.class as { spellcastingAbility?: string | null } | undefined)?.spellcastingAbility
-        ?? null
-    },
-    set: (v: string | null) => {
-      if (!characterSheet?.value) return
-      const classes = characterSheet.value.classes ?? []
-      const mainClass = classes.find(c => c.isMain) ?? classes[0]
-      if (mainClass) mainClass.spellcastingAbility = v
-    },
+  const spellcasterClasses = computed<SpellcasterClass[]>(() => {
+    const classes = characterSheet?.value?.classes ?? []
+    return classes
+      .map((cc) => {
+        const cls = cc.class as { name?: string, spellcastingAbility?: string | null } | undefined
+        const subclass = cc.subclass as { spellcastingAbility?: string | null } | undefined
+        const ability = subclass?.spellcastingAbility ?? cls?.spellcastingAbility ?? null
+        if (!ability) return null
+        return {
+          classId: cc.classId,
+          className: cls?.name ?? '',
+          ability,
+          fromSubclass: !!subclass?.spellcastingAbility,
+        } satisfies SpellcasterClass
+      })
+      .filter((c): c is SpellcasterClass => c !== null)
   })
+
+  // ─── Classe lanceuse active (selected) ──────────────────────────────────
+
+  const activeCasterClass = computed<SpellcasterClass | null>(() => {
+    const list = spellcasterClasses.value
+    if (list.length === 0) return null
+    const selectedId = deps?.selectedCasterClassId?.value ?? null
+    if (selectedId !== null) {
+      const found = list.find(c => c.classId === selectedId)
+      if (found) return found
+    }
+    // Fallback : main class spellcaster sinon premier de la liste
+    const classes = characterSheet?.value?.classes ?? []
+    const mainClass = classes.find(c => c.isMain)
+    if (mainClass) {
+      const mainSpellcaster = list.find(c => c.classId === mainClass.classId)
+      if (mainSpellcaster) return mainSpellcaster
+    }
+    return list[0] ?? null
+  })
+
+  const spellcastingAbility = computed<string | null>(() => activeCasterClass.value?.ability ?? null)
 
   // ─── Pact Magic detection ──────────────────────────────────────────────────
 
@@ -77,9 +108,9 @@ export const useCharacterSpellcasting = (
     if (!feat) return null
     const charClass = characterSheet?.value?.classes?.find(cc => cc.classId === feat.classId)
     if (!charClass) return null
-    return charClass.spellcastingAbility
-      ?? (charClass.class as { spellcastingAbility?: string | null } | undefined)?.spellcastingAbility
-      ?? null
+    const cls = charClass.class as { spellcastingAbility?: string | null } | undefined
+    const subclass = charClass.subclass as { spellcastingAbility?: string | null } | undefined
+    return subclass?.spellcastingAbility ?? cls?.spellcastingAbility ?? null
   })
 
   // ─── Stats helpers ─────────────────────────────────────────────────────────
@@ -99,7 +130,7 @@ export const useCharacterSpellcasting = (
   const spellcastingStats = computed(() => computeStats(spellcastingAbility.value))
   const pactMagicStats = computed(() => computeStats(pactMagicAbility.value))
 
-  // Compat backward (utilisés ailleurs dans l'app pour les stats spellcasting principales)
+  // Compat backward (utilisés ailleurs dans l'app pour les stats spellcasting actives)
   const spellcastingModifier = computed<number | null>(() => spellcastingStats.value?.modifier ?? null)
   const spellSaveDC = computed<number | null>(() => spellcastingStats.value?.dc ?? null)
   const spellAttackModifier = computed<number | null>(() => spellcastingStats.value?.attackBonus ?? null)
@@ -201,5 +232,7 @@ export const useCharacterSpellcasting = (
     pactMagicAbility,
     spellSlots,
     availableSpellSlots,
+    spellcasterClasses,
+    activeCasterClass,
   }
 }

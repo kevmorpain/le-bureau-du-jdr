@@ -4,7 +4,7 @@
     class="min-h-screen bg-default"
   >
     <DashboardHeaderSection
-      :character-sheet
+      v-model:character-sheet="characterSheet"
       :is-resting
       :combat-mode
       :roll

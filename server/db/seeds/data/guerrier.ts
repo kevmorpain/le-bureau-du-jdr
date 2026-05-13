@@ -132,6 +132,7 @@ export const guerrierSubclasses: SubclassDef[] = [
   {
     name: 'Chevalier mystique',
     description: `Le Chevalier mystique combine la maîtrise martiale avec un apprentissage minutieux de la magie, utilisant des techniques similaires à celles des magiciens.`,
+    spellcastingAbility: 'int',
     features: [
       {
         name: 'Lanceur de sorts',

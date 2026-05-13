@@ -1,3 +1,4 @@
+import { useStorage } from '@vueuse/core'
 import { evaluate } from '~~/shared/utils/formula'
 import type { FormulaContext } from '~~/shared/utils/formula'
 import type { Effect } from '~~/server/db/schema/effects'
@@ -64,11 +65,21 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   // ─── Couche 4 : incantation ───────────────────────────────────────────────
   // (avant conditions pour passer spellcastingAbility à l'inventaire)
 
+  // Classe lanceuse active (persistance localStorage par perso)
+  const selectedCasterClassId = useStorage<number | null>(
+    characterStorageKey(characterSheet?.value?.id, 'selectedCasterClassId'),
+    null,
+  )
+  const setSelectedCaster = (classId: number | null) => {
+    selectedCasterClassId.value = classId
+  }
+
   const spellcasting = useCharacterSpellcasting(characterSheet, {
     proficiencyBonus: classes.proficiencyBonus,
     abilityModifiers: abilities.abilityModifiers,
     resolvedFeatures,
     formulaContext,
+    selectedCasterClassId,
   })
 
   const spells = useCharacterSpells(characterSheet, {
@@ -196,6 +207,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     spellcastingStats: spellcasting.spellcastingStats,
     pactMagicStats: spellcasting.pactMagicStats,
     pactMagicAbility: spellcasting.pactMagicAbility,
+    spellcasterClasses: spellcasting.spellcasterClasses,
+    activeCasterClass: spellcasting.activeCasterClass,
+    selectedCasterClassId,
+    setSelectedCaster,
     spellSlots: spellcasting.spellSlots,
     availableSpellSlots: spellcasting.availableSpellSlots,
     // ─── Sorts du personnage ──────────────────────────────────────────────────

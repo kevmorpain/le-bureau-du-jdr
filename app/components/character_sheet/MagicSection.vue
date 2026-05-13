@@ -9,6 +9,21 @@
       icon="i-heroicons:no-symbol"
     />
 
+    <!-- Sélecteur de classe lanceuse (multiclasse) -->
+    <div
+      v-if="spellcasterClasses.length > 1"
+      class="flex items-center gap-2"
+    >
+      <span class="text-sm text-muted">Lance comme :</span>
+      <USelect
+        :items="casterClassItems"
+        value-key="value"
+        :model-value="selectedCasterClassId ?? activeCasterClass?.classId ?? null"
+        size="sm"
+        @update:model-value="(v: number | null) => setSelectedCaster(v)"
+      />
+    </div>
+
     <!-- Stats d'incantation -->
     <div
       v-if="spellcastingStats"
@@ -289,6 +304,8 @@
       v-model:open="showCastModal"
       :spell="selectedSpell.spell"
       :spell-slots="spellSlots"
+      :caster-choices="spellcasterClasses"
+      :initial-caster-class-id="selectedCasterClassId ?? activeCasterClass?.classId ?? null"
       @cast="handleCast"
     />
 
@@ -326,6 +343,10 @@ const {
   spellcastingModifier,
   spellcastingStats,
   pactMagicStats,
+  spellcasterClasses,
+  activeCasterClass,
+  selectedCasterClassId,
+  setSelectedCaster,
   armorSpellcastingWarning,
   characterLevel,
   activeConditions,
@@ -337,6 +358,17 @@ const {
   addSpell,
   removeSpell,
 } = useCharacterSheet(characterSheetRef)
+
+const abilityShortLabels: Record<string, string> = {
+  str: 'FOR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'SAG', cha: 'CHA',
+}
+
+const casterClassItems = computed(() =>
+  spellcasterClasses.value.map(c => ({
+    label: `${c.className} (${abilityShortLabels[c.ability] ?? c.ability.toUpperCase()})`,
+    value: c.classId,
+  })),
+)
 
 const castSpell = (slotLevel: number, slotType: SlotType) => {
   const slot = spellSlots.value[slotType][slotLevel]
@@ -417,8 +449,10 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
   showCastModal.value = true
 }
 
-const handleCast = (slotLevel: number, slotType: SlotType) => {
+const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number | null) => {
   castSpell(slotLevel, slotType)
+  // Mémorise la classe lanceuse choisie (les stats spellcasting suivent)
+  if (casterClassId !== null) setSelectedCaster(casterClassId)
   // Activer la concentration si le sort la requiert
   if (selectedSpell.value?.spell.concentration) {
     setConcentration(selectedSpell.value.spellId)

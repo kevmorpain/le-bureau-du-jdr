@@ -7,6 +7,7 @@ const subclasses = sqliteTable('subclasses', {
   classId: integer('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
+  spellcastingAbility: text('spellcasting_ability'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 })

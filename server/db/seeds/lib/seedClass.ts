@@ -19,6 +19,7 @@ export type FeatureDef = {
 export type SubclassDef = {
   name: string
   description?: string | null
+  spellcastingAbility?: string | null
   features: FeatureDef[]
 }
 
@@ -69,12 +70,28 @@ export async function seedClass(
     const existingSubclass = await db.query.subclasses.findFirst({
       where: and(eq(schema.subclasses.classId, cls.id), eq(schema.subclasses.name, subclassDef.name)),
     })
-    const subclass = existingSubclass ?? await db
-      .insert(schema.subclasses)
-      .values({ classId: cls.id, name: subclassDef.name, description: subclassDef.description ?? null })
-      .returning()
-      .get()
-    if (!existingSubclass) subclassesInserted++
+    let subclass
+    if (existingSubclass) {
+      subclass = existingSubclass
+      // Resync spellcastingAbility on existing subclasses when seed defines it
+      const seedAbility = subclassDef.spellcastingAbility ?? null
+      if (seedAbility !== null && existingSubclass.spellcastingAbility !== seedAbility) {
+        await db.run(sql`UPDATE subclasses SET spellcasting_ability = ${seedAbility} WHERE id = ${existingSubclass.id}`)
+      }
+    }
+    else {
+      subclass = await db
+        .insert(schema.subclasses)
+        .values({
+          classId: cls.id,
+          name: subclassDef.name,
+          description: subclassDef.description ?? null,
+          spellcastingAbility: subclassDef.spellcastingAbility ?? null,
+        })
+        .returning()
+        .get()
+      subclassesInserted++
+    }
 
     for (const featureDef of subclassDef.features) {
       const { effects = [], meta, ...data } = featureDef

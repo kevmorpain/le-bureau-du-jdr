@@ -9,8 +9,10 @@
           </h1>
           <span class="text-sm text-muted">Niv. {{ characterLevel }}</span>
         </div>
-        <p class="text-xs text-muted/70 mt-0.5">
-          {{ characterDescription }}
+        <p class="text-xs text-muted/70 mt-0.5 flex items-center gap-1 flex-wrap">
+          <span>{{ characterDescriptionPrefix }}</span>
+          <span v-if="classesText">{{ classesText }}</span>
+          <EditClassesSection v-model:character-sheet="characterSheet" />
         </p>
       </div>
 
@@ -82,8 +84,9 @@
 <script lang="ts" setup>
 import { conditionLabels } from '~~/shared/utils/labels'
 
-const props = defineProps<{
-  characterSheet: CharacterSheet
+const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
+
+defineProps<{
   isResting: boolean
   combatMode: boolean
   roll: (label: string, modifier: number, sides?: number, count?: number) => number
@@ -96,7 +99,6 @@ defineEmits<{
   toggleCombat: []
 }>()
 
-const csRef = toRef(props, 'characterSheet')
 const {
   characterLevel,
   activeConditions,
@@ -105,15 +107,19 @@ const {
   multiClass,
   species,
   selectedBackground,
-} = useCharacterSheet(csRef)
+} = useCharacterSheet(characterSheet)
 
-const characterDescription = computed(() => {
-  const classesText = [mainClass.value, ...multiClass.value]
+const classesText = computed(() =>
+  [mainClass.value, ...multiClass.value]
     .filter(Boolean)
     .map(cls => `${cls!.name} ${cls!.level}`)
-    .join(', ')
+    .join(', '),
+)
+
+const characterDescriptionPrefix = computed(() => {
   const speciesName = species.value?.name ?? ''
   const backgroundName = selectedBackground.value?.name ?? ''
-  return [speciesName, backgroundName, classesText].filter(Boolean).join(' · ')
+  const parts = [speciesName, backgroundName].filter(Boolean).join(' · ')
+  return parts ? `${parts} · ` : ''
 })
 </script>

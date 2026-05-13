@@ -239,6 +239,7 @@ export const roublardSubclasses: SubclassDef[] = [
   {
     name: 'Filou arcanique',
     description: `Certains roublards améliorent leurs talents en maîtrisant un peu de magie, combinant adresse et furtivité avec la capacité de lancer des sorts d'enchantement et d'illusion.`,
+    spellcastingAbility: 'int',
     features: [
       {
         name: 'Lanceur de sorts',

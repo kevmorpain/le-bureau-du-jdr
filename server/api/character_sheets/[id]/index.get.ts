@@ -1,4 +1,6 @@
 import { db, schema } from 'hub:db'
+import * as srcSchema from '~~/server/db/schema'
+import { inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -58,5 +60,32 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
   }
 
-  return characterSheet
+  // Charge subclasses séparément (le schéma cached de hub:db n'a pas la relation subclass)
+  // + enrichit chaque classe avec subclassId + subclass via SQL raw
+  const classesWithSubclass = await db
+    .select()
+    .from(srcSchema.characterClasses)
+    .where(eq(srcSchema.characterClasses.characterSheetId, Number(id)))
+  const subclassIds = classesWithSubclass
+    .map(c => c.subclassId)
+    .filter((v): v is number => v !== null && v !== undefined)
+  const subclasses = subclassIds.length
+    ? await db
+        .select()
+        .from(srcSchema.subclasses)
+        .where(inArray(srcSchema.subclasses.id, subclassIds))
+    : []
+  const subclassById = new Map(subclasses.map(s => [s.id, s]))
+  const subclassIdByClassId = new Map(classesWithSubclass.map(c => [c.classId, c.subclassId]))
+
+  const enrichedClasses = characterSheet.classes.map((cc) => {
+    const subclassId = subclassIdByClassId.get(cc.classId) ?? null
+    return {
+      ...cc,
+      subclassId,
+      subclass: subclassId !== null ? (subclassById.get(subclassId) ?? null) : null,
+    }
+  })
+
+  return { ...characterSheet, classes: enrichedClasses }
 })

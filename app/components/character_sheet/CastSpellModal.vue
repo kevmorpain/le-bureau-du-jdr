@@ -9,6 +9,27 @@
         </template>
 
         <div class="space-y-4">
+          <!-- Classe lanceuse (multiclasse spellcaster) -->
+          <div
+            v-if="casterChoices.length > 1 && selected?.slotType === 'spellcasting'"
+            class="space-y-2"
+          >
+            <p class="text-muted text-sm">
+              Lancer en tant que :
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <UButton
+                v-for="c in casterChoices"
+                :key="c.classId"
+                size="sm"
+                :variant="selectedCasterId === c.classId ? 'solid' : 'outline'"
+                @click="selectedCasterId = c.classId"
+              >
+                {{ c.className }} ({{ abilityShortLabels[c.ability] ?? c.ability.toUpperCase() }})
+              </UButton>
+            </div>
+          </div>
+
           <p class="text-muted text-sm">
             Choisissez l'emplacement à utiliser :
           </p>
@@ -86,18 +107,33 @@ type SlotOption = {
   slot: SlotState
 }
 
+type CasterChoice = {
+  classId: number
+  className: string
+  ability: string
+}
+
 const props = defineProps<{
   spell: Spell
   spellSlots: SlotsByType
+  casterChoices?: CasterChoice[]
+  initialCasterClassId?: number | null
 }>()
 
 const emit = defineEmits<{
-  cast: [slotLevel: number, slotType: SlotType]
+  cast: [slotLevel: number, slotType: SlotType, casterClassId: number | null]
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
 
 const selected = ref<SlotOption | null>(null)
+const selectedCasterId = ref<number | null>(null)
+
+const casterChoices = computed<CasterChoice[]>(() => props.casterChoices ?? [])
+
+const abilityShortLabels: Record<string, string> = {
+  str: 'FOR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'SAG', cha: 'CHA',
+}
 
 const availableSlots = computed<SlotOption[]>(() => {
   const result: SlotOption[] = []
@@ -111,7 +147,6 @@ const availableSlots = computed<SlotOption[]>(() => {
       result.push({ level: Number(level), slotType: 'pact_magic', slot })
     }
   }
-  // Sort by level asc, spellcasting first at same level
   result.sort((a, b) => a.level - b.level || (a.slotType === 'spellcasting' ? -1 : 1))
   return result
 })
@@ -122,12 +157,15 @@ const isSelected = (opt: SlotOption) =>
 watch(open, (val) => {
   if (val) {
     selected.value = availableSlots.value[0] ?? null
+    selectedCasterId.value = props.initialCasterClassId ?? casterChoices.value[0]?.classId ?? null
   }
 })
 
 const confirm = () => {
   if (!selected.value) return
-  emit('cast', selected.value.level, selected.value.slotType)
+  // Pour pact_magic, la classe lanceuse est toujours le Warlock (déterminé en amont) → on renvoie null
+  const casterId = selected.value.slotType === 'pact_magic' ? null : selectedCasterId.value
+  emit('cast', selected.value.level, selected.value.slotType, casterId)
   open.value = false
 }
 </script>

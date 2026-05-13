@@ -4,7 +4,7 @@ const classInputSchema = z.object({
   classId: z.number().int().positive(),
   level: z.number().int().min(1).max(20),
   isMain: z.boolean(),
-  spellcastingAbility: z.string().nullable().optional(),
+  subclassId: z.number().int().positive().nullable().optional(),
 })
 
 export const createCharacterSheetSchema = z.object({
@@ -28,4 +28,5 @@ export const updateCharacterSheetSchema = z.object({
   ideals: z.string().max(1000).optional(),
   bonds: z.string().max(1000).optional(),
   flaws: z.string().max(1000).optional(),
+  concentratingSpellId: z.number().int().positive().nullable().optional(),
 })

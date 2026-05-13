@@ -1,4 +1,5 @@
-import { db, schema } from 'hub:db'
+import { db } from 'hub:db'
+import * as schema from '~~/server/db/schema'
 import { createCharacterSheetSchema } from '~~/shared/utils/character_sheet'
 
 export default defineEventHandler(async (event) => {
@@ -26,6 +27,7 @@ export default defineEventHandler(async (event) => {
             classId: cls.classId,
             level: cls.level,
             isMain: cls.isMain,
+            subclassId: cls.subclassId ?? null,
           })))
       }
 
