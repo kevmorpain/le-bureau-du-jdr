@@ -65,6 +65,8 @@ Tables: `character_sheets`, `character_species`, `character_classes`, `character
 
 See `docs/character-sheet.md` for the full breakdown of each section: what it displays, where data comes from, which API endpoints it uses, and what's not yet implemented.
 
+See `docs/context.md` for accumulated development context: dashboard v2 architecture, UI conventions (dots, spellSlots provide/inject), key bug fixes, and decisions made across sessions.
+
 ### Deployment
 
 GitHub Actions auto-deploys: feature branches → preview, `main` → production (NuxtHub). Local deploy: `npm run deploy` uses Wrangler.
