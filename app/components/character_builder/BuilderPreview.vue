@@ -11,7 +11,7 @@
         <span class="text-amber-400">{{ completedCount }}/{{ activeSteps.length }}</span>
       </div>
       <UProgress
-        :value="completedCount"
+        :model-value="completedCount"
         :max="activeSteps.length"
         color="warning"
         size="xs"
