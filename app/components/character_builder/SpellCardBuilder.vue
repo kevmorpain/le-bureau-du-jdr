@@ -33,7 +33,7 @@
           <ShieldIcon class="size-4 text-blue-400" />
         </UTooltip>
         <!-- Composantes -->
-        <UTooltip v-for="comp in (spell.components ?? [])" :key="comp" :text="comp" :delay-duration="0">
+        <UTooltip v-for="comp in (spell.components ?? [])" :key="comp" :text="componentLabel(comp)" :delay-duration="0">
           <VoiceActivateIcon v-if="comp === 'V'" class="size-4 text-muted" />
           <HandGestureIcon v-else-if="comp === 'S'" class="size-4 text-muted" />
           <CauldronIcon v-else-if="comp === 'M'" class="size-4 text-muted" />
@@ -90,6 +90,16 @@
 
 <script lang="ts" setup>
 const { t } = useI18n()
+
+const COMPONENT_KEYS: Record<string, string> = {
+  'V': 'new_spell.components_options.Vocal',
+  'S': 'new_spell.components_options.Somatic',
+  'M': 'new_spell.components_options.Material',
+}
+
+function componentLabel(comp: string): string {
+  return COMPONENT_KEYS[comp] ? t(COMPONENT_KEYS[comp]) : comp
+}
 
 const SCHOOL_COLORS: Record<string, string> = {
   'Abjuration': '#60a5fa',
