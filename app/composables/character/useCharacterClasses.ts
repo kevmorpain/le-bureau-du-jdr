@@ -48,7 +48,7 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
         acc[cls.hitDice!] = (acc[cls.hitDice!] ?? 0) + cls.level
         return acc
       }, {}),
-    ).map(([hitDie, count]) => ({ hitDie: hitDie.slice(1), count })),
+    ).map(([hitDie, count]) => ({ hitDie: hitDie.split('d')[1] ?? hitDie, count })),
   )
 
   const proficiencyBonus = computed<number>(() => Math.floor((characterLevel.value - 1) / 4) + 2)
