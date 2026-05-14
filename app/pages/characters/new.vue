@@ -93,8 +93,8 @@ async function handleSubmit() {
       body: payload,
     })
 
-    resetBuilder()
     await router.push(`/characters/${result.id}`)
+    resetBuilder()
   }
   catch (e) {
     console.error('Erreur création personnage', e)
