@@ -2,7 +2,7 @@
   <BuilderShell @finish="handleFinish">
     <!-- Étape 1 — Race -->
     <div v-if="currentStepId === 'race'">
-      <StepPlaceholder step-id="race" label="Race" icon="🧬" description="Choisissez la race de votre personnage : bonus de caractéristiques, traits raciaux, vitesse et langues." />
+      <StepRace />
     </div>
 
     <!-- Étape 2 — Classe -->
