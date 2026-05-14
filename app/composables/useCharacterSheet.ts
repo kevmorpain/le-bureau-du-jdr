@@ -102,6 +102,36 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     resolvedFeatures.value.flatMap(f => f.effects as Effect[]),
   )
 
+  // ─── Liste unifiée des capacités (espèce + classe + sous-classe) ──────────
+
+  const allCharacterFeatures = computed(() => {
+    const ccs = classes.characterClasses.value
+    const speciesName = classes.species.value?.name ?? 'Espèce'
+
+    const speciesItems = classes.speciesTraits.value.map(f => ({
+      ...f,
+      currentUses: 0,
+      maxUses: null as number | null,
+      effects: (f.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[],
+      origin: { kind: 'species' as const, label: speciesName },
+    }))
+
+    const classItems = resolvedFeatures.value.map((f) => {
+      let label = ''
+      let kind: 'class' | 'subclass' = 'class'
+      if (f.featureType === 'class_feature') {
+        label = ccs.find(c => c.classId === f.classId)?.class?.name ?? ''
+      }
+      else if (f.featureType === 'subclass_feature') {
+        kind = 'subclass'
+        label = ccs.find(c => c.subclass?.id === f.subclassId)?.subclass?.name ?? ''
+      }
+      return { ...f, origin: { kind, label } }
+    })
+
+    return [...speciesItems, ...classItems]
+  })
+
   // Effets de base (espèce + features de classe) — sans les objets magiques
   const baseAllEffects = computed<Effect[]>(() => [
     ...classes.speciesEffects.value,
@@ -216,6 +246,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     deathSavingThrows: classes.deathSavingThrows,
     // Features & effets
     resolvedFeatures,
+    allCharacterFeatures,
     allEffects,
     // Caractéristiques
     abilityScores: abilities.abilityScores,

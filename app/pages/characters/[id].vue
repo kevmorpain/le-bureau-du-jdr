@@ -49,11 +49,11 @@
         </template>
 
         <CollapsibleSection
-          title="Capacités de classe"
+          title="Capacités"
           :badge="availableFeaturesCount"
           storage-key="features"
         >
-          <ClassFeaturesSection :character-sheet="characterSheet" />
+          <FeaturesSection :character-sheet="characterSheet" />
         </CollapsibleSection>
 
         <CollapsibleSection
@@ -75,13 +75,10 @@
         </CollapsibleSection>
 
         <CollapsibleSection
-          title="Espèce & Historique"
+          title="Historique"
           storage-key="background"
         >
-          <div class="space-y-4">
-            <SpeciesTraitsSection :character-sheet="characterSheet" />
-            <BackgroundSection v-model:character-sheet="characterSheet" />
-          </div>
+          <BackgroundSection v-model:character-sheet="characterSheet" />
         </CollapsibleSection>
       </div>
 
@@ -131,7 +128,7 @@ const characterSheet = ref(characterSheetData.value)
 const toaster = useToast()
 const { roll } = useDiceRoller()
 
-const { resolvedFeatures, characterSpells, initiativeBonus, spellSlots } = useCharacterSheet(characterSheet)
+const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)
 
 const { shortRest, longRest, dawn, isResting } = useRest(characterSheet, spellSlots)
@@ -148,7 +145,7 @@ const toggleCombat = () => {
 
 // ── Badges pour les sections collapsibles ────────────────────────────────────
 const availableFeaturesCount = computed(() =>
-  resolvedFeatures.value.filter(f => f.maxUses !== null && f.currentUses < (f.maxUses ?? 0)).length || null,
+  allCharacterFeatures.value.filter(f => f.maxUses !== null && f.currentUses < (f.maxUses ?? 0)).length || null,
 )
 
 const preparedSpellsCount = computed(() =>
