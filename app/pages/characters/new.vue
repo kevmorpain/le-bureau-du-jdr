@@ -1,31 +1,29 @@
 <template>
-  <BuilderShell @finish="handleFinish">
-    <!-- Étape 1 — Race -->
+  <!-- Écran de résumé final -->
+  <BuilderSummary
+    v-if="showSummary"
+    :submitting="submitting"
+    @back="showSummary = false"
+    @submit="handleSubmit"
+  />
+
+  <!-- Wizard en 6 étapes -->
+  <BuilderShell v-else @finish="showSummary = true">
     <div v-if="currentStepId === 'race'">
       <StepRace />
     </div>
-
-    <!-- Étape 2 — Classe -->
     <div v-else-if="currentStepId === 'class'">
       <StepClass />
     </div>
-
-    <!-- Étape 3 — Caractéristiques -->
     <div v-else-if="currentStepId === 'abilities'">
       <StepAbilities />
     </div>
-
-    <!-- Étape 4 — Sorts -->
     <div v-else-if="currentStepId === 'spells'">
       <StepSpells />
     </div>
-
-    <!-- Étape 5 — Description -->
     <div v-else-if="currentStepId === 'description'">
       <StepDescription />
     </div>
-
-    <!-- Étape 6 — Équipement -->
     <div v-else-if="currentStepId === 'equipment'">
       <StepEquipment />
     </div>
@@ -36,12 +34,14 @@
 definePageMeta({ layout: 'blank' })
 
 const { currentStepId } = useCharacterBuilder()
-
 const router = useRouter()
 
-async function handleFinish() {
-  // TODO : soumettre le personnage via POST /api/character_sheets
-  // et rediriger vers la fiche créée
+const showSummary = ref(false)
+const submitting = ref(false)
+
+async function handleSubmit() {
+  // La soumission POST sera implémentée dans l'étape suivante
+  submitting.value = true
   await router.push('/characters')
 }
 </script>
