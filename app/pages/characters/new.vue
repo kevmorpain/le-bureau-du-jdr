@@ -7,7 +7,7 @@
 
     <!-- Étape 2 — Classe -->
     <div v-else-if="currentStepId === 'class'">
-      <StepPlaceholder step-id="class" label="Classe" icon="⚔️" description="Choisissez votre classe, votre niveau, vos compétences et votre sous-classe." />
+      <StepClass />
     </div>
 
     <!-- Étape 3 — Caractéristiques -->
