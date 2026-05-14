@@ -106,13 +106,17 @@
 
     <!-- Sorts -->
     <div
-      v-if="state.selectedCantrips.length + state.selectedSpells.length > 0"
+      v-if="selectedSpellNames.length > 0"
       class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
     >
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-1.5">Sorts</p>
-      <p class="text-xs text-muted">
-        {{ state.selectedCantrips.length + state.selectedSpells.length }} sort(s) sélectionné(s)
-      </p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Sorts</p>
+      <div class="flex flex-wrap gap-1">
+        <span
+          v-for="name in selectedSpellNames"
+          :key="name"
+          class="text-xs px-1.5 py-0.5 rounded-full bg-(--ui-bg) border border-(--ui-border) text-muted"
+        >{{ name }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -171,6 +175,15 @@ const allSkills = computed(() => [
     ...(backgroundData.value?.skillProficiencies ?? []),
   ]),
 ])
+
+const spellNamesById = useState<Record<number, string>>('builder-spell-names', () => ({}))
+const selectedSpellNames = computed(() => {
+  const map = spellNamesById.value
+  return [
+    ...state.value.selectedCantrips.map(id => map[id]).filter(Boolean),
+    ...state.value.selectedSpells.map(id => map[id]).filter(Boolean),
+  ]
+})
 
 function modColor(score: number | null | undefined): string {
   if (score == null) return 'text-muted'

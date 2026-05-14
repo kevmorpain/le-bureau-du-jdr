@@ -94,6 +94,8 @@
   },
   "ritual": "Rituel",
   "concentration": "Concentration",
+  "sort": "sort | sorts",
+  "emplacement": "emplacement | emplacements",
   "new_spell": {
     "title": "Ajouter un sort",
     "name": "Nom",
