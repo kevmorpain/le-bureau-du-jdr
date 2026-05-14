@@ -102,17 +102,18 @@
       </div>
 
       <!-- Filtres -->
-      <div class="flex flex-wrap gap-2 mb-4">
+      <div class="flex flex-wrap items-center gap-2 mb-4">
         <input
           v-model="filterText"
           type="text"
-          placeholder="Rechercher un sort…"
-          class="flex-1 min-w-40 px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/60 focus:outline-none"
+          placeholder="Rechercher…"
+          class="w-36 px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/60 focus:outline-none"
         >
         <USelect
           v-model="filterSchool"
           :items="schoolOptions"
           size="sm"
+          class="w-40"
         />
         <button
           type="button"
