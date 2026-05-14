@@ -27,7 +27,7 @@
 
     <!-- Étape 6 — Équipement -->
     <div v-else-if="currentStepId === 'equipment'">
-      <StepPlaceholder step-id="equipment" label="Équipement" icon="🎒" description="Choisissez l'équipement de départ de votre classe et de votre historique." />
+      <StepEquipment />
     </div>
   </BuilderShell>
 </template>
