@@ -20,23 +20,21 @@ export default defineEventHandler(async (event) => {
   const { improvements } = result.data
 
   try {
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(schema.characterAbilityScoreImprovements)
-        .where(eq(schema.characterAbilityScoreImprovements.characterSheetId, characterSheetId))
+    await db
+      .delete(schema.characterAbilityScoreImprovements)
+      .where(eq(schema.characterAbilityScoreImprovements.characterSheetId, characterSheetId))
 
-      if (improvements.length) {
-        await tx
-          .insert(schema.characterAbilityScoreImprovements)
-          .values(improvements.map(asi => ({
-            characterSheetId,
-            classId: asi.classId,
-            classLevel: asi.classLevel,
-            ability: asi.ability,
-            amount: asi.amount,
-          })))
-      }
-    })
+    if (improvements.length) {
+      await db
+        .insert(schema.characterAbilityScoreImprovements)
+        .values(improvements.map(asi => ({
+          characterSheetId,
+          classId: asi.classId,
+          classLevel: asi.classLevel,
+          ability: asi.ability,
+          amount: asi.amount,
+        })))
+    }
 
     return { success: true }
   } catch (e) {

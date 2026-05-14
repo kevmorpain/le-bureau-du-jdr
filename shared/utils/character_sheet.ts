@@ -15,8 +15,13 @@ export const createCharacterSheetSchema = z.object({
 
 export const updateCharacterSheetSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  speciesId: z.number().int().positive().nullable().optional(),
+  speciesId: z.number().int().positive().optional(),
   classes: z.array(classInputSchema).optional(),
+  alignment: z.enum(['LG', 'NG', 'CG', 'LN', 'TN', 'CN', 'LE', 'NE', 'CE']).optional(),
+  maxHp: z.number().int().min(0).optional(),
+  currentHp: z.number().int().min(0).optional(),
+  temporaryHp: z.number().int().min(0).optional(),
+  inspiration: z.boolean().optional(),
   exhaustionLevel: z.number().int().min(0).max(6).optional(),
   dragonbornAncestry: z.string().nullable().optional(),
   pp: z.number().int().min(0).optional(),

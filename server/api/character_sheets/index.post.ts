@@ -12,30 +12,26 @@ export default defineEventHandler(async (event) => {
   const { classes, ...characterSheetData } = result.data
 
   try {
-    const sheet = await db.transaction(async (tx) => {
-      const inserted = await tx
-        .insert(schema.characterSheets)
-        .values(characterSheetData as InsertCharacterSheet)
-        .returning()
-        .get()
+    const inserted = await db
+      .insert(schema.characterSheets)
+      .values(characterSheetData as InsertCharacterSheet)
+      .returning()
+      .get()
 
-      if (classes?.length) {
-        await tx
-          .insert(schema.characterClasses)
-          .values(classes.map(cls => ({
-            characterSheetId: inserted.id,
-            classId: cls.classId,
-            level: cls.level,
-            isMain: cls.isMain,
-            subclassId: cls.subclassId ?? null,
-          })))
-      }
-
-      return inserted
-    })
+    if (classes?.length) {
+      await db
+        .insert(schema.characterClasses)
+        .values(classes.map(cls => ({
+          characterSheetId: inserted.id,
+          classId: cls.classId,
+          level: cls.level,
+          isMain: cls.isMain,
+          subclassId: cls.subclassId ?? null,
+        })))
+    }
 
     setResponseStatus(event, 201)
-    return sheet
+    return inserted
   } catch (e) {
     const cause = e instanceof Error ? (e.cause as Error | undefined) : undefined
     const message = e instanceof Error ? e.message : ''
