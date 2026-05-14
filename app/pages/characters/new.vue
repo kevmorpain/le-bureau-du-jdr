@@ -17,7 +17,7 @@
 
     <!-- Étape 4 — Sorts -->
     <div v-else-if="currentStepId === 'spells'">
-      <StepPlaceholder step-id="spells" label="Sorts" icon="✨" description="Choisissez vos sorts mineurs et sorts connus de départ." />
+      <StepSpells />
     </div>
 
     <!-- Étape 5 — Description -->
