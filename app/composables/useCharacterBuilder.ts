@@ -225,8 +225,7 @@ export function useCharacterBuilder() {
   const hpMax = computed(() => {
     if (!classData.value) return null
     const con = finalAbilities.value.con
-    if (con == null) return null
-    const conMod = abilityMod(con)
+    const conMod = con != null ? abilityMod(con) : 0
     const { hitDie } = classData.value
     const s = state.value
 
