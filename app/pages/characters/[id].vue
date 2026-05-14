@@ -149,7 +149,7 @@ const availableFeaturesCount = computed(() =>
 )
 
 const preparedSpellsCount = computed(() =>
-  characterSpells.value.filter(s => s.prepared).length || null,
+  (characterSpells.value ?? []).filter(s => s.prepared).length || null,
 )
 
 // ── Auto-save avec debounce ──────────────────────────────────────────────────
