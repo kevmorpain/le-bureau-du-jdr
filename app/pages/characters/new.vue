@@ -22,7 +22,7 @@
 
     <!-- Étape 5 — Description -->
     <div v-else-if="currentStepId === 'description'">
-      <StepPlaceholder step-id="description" label="Description" icon="📜" description="Donnez un nom, un historique, un alignement et des traits de personnalité à votre personnage." />
+      <StepDescription />
     </div>
 
     <!-- Étape 6 — Équipement -->
