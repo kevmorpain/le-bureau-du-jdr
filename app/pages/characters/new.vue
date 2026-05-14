@@ -12,7 +12,7 @@
 
     <!-- Étape 3 — Caractéristiques -->
     <div v-else-if="currentStepId === 'abilities'">
-      <StepPlaceholder step-id="abilities" label="Caractéristiques" icon="💪" description="Définissez vos 6 caractéristiques via tableau standard, achat de points ou jet de dés." />
+      <StepAbilities />
     </div>
 
     <!-- Étape 4 — Sorts -->
