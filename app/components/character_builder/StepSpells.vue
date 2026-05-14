@@ -107,7 +107,7 @@
           v-model="filterText"
           type="text"
           placeholder="Rechercher…"
-          class="w-36 px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/60 focus:outline-none"
+          class="w-52 px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/60 focus:outline-none"
         >
         <USelect
           v-model="filterSchool"
