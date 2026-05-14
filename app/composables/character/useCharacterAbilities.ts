@@ -23,6 +23,8 @@ export const useCharacterAbilities = (
   characterSheet?: Ref<CharacterSheet>,
   deps?: {
     speciesEffects: ComputedRef<Effect[]>
+    featureEffects: ComputedRef<Effect[]>
+    asiEffects: ComputedRef<Effect[]>
     proficiencyBonus: ComputedRef<number>
   },
 ) => {
@@ -38,30 +40,43 @@ export const useCharacterAbilities = (
   const getAbilityScore = (abilityId: string): number =>
     characterAbilityScores.value[abilityId] || 10
 
-  // ─── Species bonuses ──────────────────────────────────────────────────────
+  // ─── Ability bonuses par source ───────────────────────────────────────────
 
-  const speciesAbilityScoreBonuses = computed(() => {
-    const bonuses: Record<string, number> = {}
-    for (const effect of deps?.speciesEffects.value ?? []) {
-      if (effect.type === 'ability_increase') {
-        const { ability, amount } = effect.value
-        bonuses[ability] = (bonuses[ability] ?? 0) + amount
+  const sumAbilityIncreases = (effects: Effect[] | undefined): Record<string, number> => {
+    const out: Record<string, number> = {}
+    for (const e of effects ?? []) {
+      if (e.type === 'ability_increase') {
+        out[e.value.ability] = (out[e.value.ability] ?? 0) + e.value.amount
       }
     }
-    return bonuses
-  })
+    return out
+  }
+
+  const speciesBonuses = computed(() => sumAbilityIncreases(deps?.speciesEffects.value))
+  const featureBonuses = computed(() => sumAbilityIncreases(deps?.featureEffects.value))
+  const asiBonuses = computed(() => sumAbilityIncreases(deps?.asiEffects.value))
 
   // ─── Computed scores & modifiers ──────────────────────────────────────────
 
-  // TODO: should be total with all bonuses
-  const abilityScores = computed<Record<string, { base: number, speciesBonus: number, total: number }>>(() =>
-    abilityScoreOrder.reduce<Record<string, { base: number, speciesBonus: number, total: number }>>((acc, abilityId) => {
+  type AbilityScore = { base: number, species: number, feature: number, asi: number, bonus: number, total: number }
+
+  const abilityScores = computed<Record<string, AbilityScore>>(() =>
+    abilityScoreOrder.reduce<Record<string, AbilityScore>>((acc, abilityId) => {
       const base = getAbilityScore(abilityId)
-      const speciesBonus = speciesAbilityScoreBonuses.value[abilityId] || 0
-      acc[abilityId] = { base, speciesBonus, total: base + speciesBonus }
+      const species = speciesBonuses.value[abilityId] ?? 0
+      const feature = featureBonuses.value[abilityId] ?? 0
+      const asi = asiBonuses.value[abilityId] ?? 0
+      const bonus = species + feature + asi
+      acc[abilityId] = { base, species, feature, asi, bonus, total: base + bonus }
       return acc
     }, {}),
   )
+
+  const abilityScoreBonuses = computed(() => {
+    const out: Record<string, number> = {}
+    for (const id of abilityScoreOrder) out[id] = abilityScores.value[id]!.bonus
+    return out
+  })
 
   const abilityModifiers = computed<Record<string, number>>(() =>
     Object.entries(abilityScores.value).reduce<Record<string, number>>((acc, [key, abilityScore]) => {
@@ -118,7 +133,7 @@ export const useCharacterAbilities = (
     abilityScores,
     abilityModifiers,
     abilitySkillKeys,
-    speciesAbilityScoreBonuses,
+    abilityScoreBonuses,
     getEffectiveProficiency,
     getSkillModifier,
     savingThrows,

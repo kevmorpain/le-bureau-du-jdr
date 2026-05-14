@@ -90,7 +90,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
     name: 'Aura de protection',

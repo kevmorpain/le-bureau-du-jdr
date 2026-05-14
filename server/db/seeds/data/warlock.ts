@@ -63,7 +63,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie du Pacte se rechargen
     maxUsesFormula: null,
     actionType: null,
     rechargeType: null,
-    effects: [],
+    effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
     name: 'Mysticisme sombre',

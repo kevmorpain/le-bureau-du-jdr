@@ -288,6 +288,13 @@
       "when": 1778420000000,
       "tag": "0040_subclass_spellcasting",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1778421000000,
+      "tag": "0041_ability_score_improvements",
+      "breakpoints": true
     }
   ]
 }

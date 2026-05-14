@@ -30,3 +30,12 @@ export const updateCharacterSheetSchema = z.object({
   flaws: z.string().max(1000).optional(),
   concentratingSpellId: z.number().int().positive().nullable().optional(),
 })
+
+export const setASISchema = z.object({
+  improvements: z.array(z.object({
+    classId: z.number().int().positive(),
+    classLevel: z.number().int().min(1).max(20),
+    ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']),
+    amount: z.number().int().min(1).max(2),
+  })),
+})

@@ -54,7 +54,7 @@ En forme de bête : vos statistiques sont remplacées par celles de la bête (ma
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
     name: 'Jeunesse éternelle',

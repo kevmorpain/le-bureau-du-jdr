@@ -41,6 +41,7 @@ type RevivalAction = {
 export type Effect
   = | { type: 'ability_increase', value: { ability: AbilityScoreKey, amount: number } }
     | { type: 'ability_increase_choice', value: { count: number, amount: number } }
+    | { type: 'asi_or_feat', value: Record<string, never> }
     | { type: 'action', value: BreathWeaponAction | RevivalAction }
     | { type: 'advantage', value: { rollType: 'check' | 'saving_throw', ability: AbilityScoreKey | 'all', condition: string } }
     | { type: 'choice', value: string }

@@ -68,7 +68,7 @@ Vous devez terminer un repos court ou long pour pouvoir l'utiliser Ã  nouveau. Ã
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'asi_or_feat', value: {} }],
   },
 ]
 

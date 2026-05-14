@@ -40,7 +40,7 @@ Vous pouvez lancer un sort comme rituel s'il a l'étiquette rituel et est dans v
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
     name: 'Maîtrise des sorts',

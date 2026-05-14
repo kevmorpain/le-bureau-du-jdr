@@ -59,7 +59,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
     name: 'Esquive instinctive',

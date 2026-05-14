@@ -1,6 +1,7 @@
 export { default as abilityScores } from './ability_scores'
 export { default as backgrounds, backgroundRelations } from './backgrounds'
 export { default as characterAbilityScores, characterAbilityScoreRelations } from './character_ability_scores'
+export { default as characterAbilityScoreImprovements, characterAbilityScoreImprovementsRelations } from './character_ability_score_improvements'
 export { default as characterClasses, characterClassRelations } from './character_classes'
 export { default as characterFeatures, characterFeaturesRelations } from './character_features'
 export { default as characterSheets, characterSheetRelations } from './character_sheets'

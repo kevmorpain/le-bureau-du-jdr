@@ -134,7 +134,10 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [
+      { type: 'ability_increase', value: { ability: 'str', amount: 4 } },
+      { type: 'ability_increase', value: { ability: 'con', amount: 4 } },
+    ],
   },
   {
     name: 'Amélioration de caractéristique',
@@ -144,7 +147,7 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'asi_or_feat', value: {} }],
   },
 ]
 

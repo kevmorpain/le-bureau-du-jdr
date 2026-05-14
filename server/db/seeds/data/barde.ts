@@ -118,7 +118,7 @@ Vous apprenez deux sorts supplémentaires de n'importe quelle classe au niveau 1
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'asi_or_feat', value: {} }],
   },
 ]
 

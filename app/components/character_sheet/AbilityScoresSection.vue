@@ -28,12 +28,28 @@
                     {{ score.base }}
                   </td>
                 </tr>
-                <tr v-if="score.speciesBonus">
+                <tr v-if="score.species">
                   <td class="text-muted pr-4 py-0.5">
                     Espèce
                   </td>
                   <td class="text-right font-mono">
-                    +{{ score.speciesBonus }}
+                    +{{ score.species }}
+                  </td>
+                </tr>
+                <tr v-if="score.feature">
+                  <td class="text-muted pr-4 py-0.5">
+                    Classe
+                  </td>
+                  <td class="text-right font-mono">
+                    +{{ score.feature }}
+                  </td>
+                </tr>
+                <tr v-if="score.asi">
+                  <td class="text-muted pr-4 py-0.5">
+                    ASI
+                  </td>
+                  <td class="text-right font-mono">
+                    +{{ score.asi }}
                   </td>
                 </tr>
                 <tr class="border-t border-default">

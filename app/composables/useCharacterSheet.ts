@@ -15,15 +15,61 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   const classes = useCharacterClasses(characterSheet)
 
+  // ─── Features brutes (sans formule, pour filtrage par niveau) ──────────────
+  // On extrait les métadonnées (featureType, classId, subclassId, levelRequired, effects)
+  // pour pouvoir filtrer les effets ASI avant useCharacterAbilities, sans dépendre
+  // de formulaContext (qui dépend de abilities).
+
+  const rawFeatures = computed(() =>
+    (characterSheet?.value?.features ?? []).map((cf) => {
+      const feature = cf.feature!
+      return {
+        id: feature.id,
+        name: feature.name,
+        featureType: feature.featureType,
+        classId: feature.classId,
+        subclassId: feature.subclassId,
+        levelRequired: feature.levelRequired,
+        effects: (feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[],
+      }
+    }),
+  )
+
+  const unlockedFeatureEffects = computed<Effect[]>(() => {
+    const ccs = classes.characterClasses.value
+    return rawFeatures.value.flatMap((f) => {
+      if (f.featureType === 'species_trait') return f.effects
+      const lvlReq = f.levelRequired ?? 1
+      const owner = f.featureType === 'class_feature'
+        ? ccs.find(c => c.classId === f.classId)
+        : ccs.find(c => c.subclass?.id === f.subclassId)
+      return owner && owner.level >= lvlReq ? f.effects : []
+    })
+  })
+
+  const asiEffects = computed<Effect[]>(() => {
+    const ccs = classes.characterClasses.value
+    return (characterSheet?.value?.abilityScoreImprovements ?? [])
+      .filter((asi) => {
+        const c = ccs.find(cc => cc.classId === asi.classId)
+        return c && c.level >= asi.classLevel
+      })
+      .map(asi => ({
+        type: 'ability_increase' as const,
+        value: { ability: asi.ability, amount: asi.amount },
+      }))
+  })
+
   // ─── Couche 2 : scores de caractéristiques ────────────────────────────────
 
   const abilities = useCharacterAbilities(characterSheet, {
     speciesEffects: classes.speciesEffects,
+    featureEffects: unlockedFeatureEffects,
+    asiEffects,
     proficiencyBonus: classes.proficiencyBonus,
   })
 
-  // ─── Contexte de formule + features (besoin des deux couches précédentes) ─
-  //     Vit ici pour éviter une dépendance circulaire entre classes et abilities
+  // ─── Contexte de formule + features résolues (besoin des deux couches précédentes) ─
 
   const formulaContext = computed<FormulaContext>(() => ({
     level: classes.characterLevel.value,
@@ -175,7 +221,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     abilityScores: abilities.abilityScores,
     abilityModifiers: abilities.abilityModifiers,
     abilitySkillKeys: abilities.abilitySkillKeys,
-    speciesAbilityScoreBonuses: abilities.speciesAbilityScoreBonuses,
+    abilityScoreBonuses: abilities.abilityScoreBonuses,
     getEffectiveProficiency: abilities.getEffectiveProficiency,
     getSkillModifier: abilities.getSkillModifier,
     savingThrows: abilities.savingThrows,

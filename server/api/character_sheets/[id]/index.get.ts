@@ -87,5 +87,11 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  return { ...characterSheet, classes: enrichedClasses }
+  // Charge ASI séparément (le schéma cached de hub:db n'a pas la relation)
+  const abilityScoreImprovements = await db
+    .select()
+    .from(srcSchema.characterAbilityScoreImprovements)
+    .where(eq(srcSchema.characterAbilityScoreImprovements.characterSheetId, Number(id)))
+
+  return { ...characterSheet, classes: enrichedClasses, abilityScoreImprovements }
 })
