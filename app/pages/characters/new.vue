@@ -88,7 +88,7 @@ async function handleSubmit() {
       inventoryItemNames: state.value.equipment,
     }
 
-    const result = await $fetch<{ id: number }>('/api/character_sheets/builder', {
+    const result = await $fetch<{ id: number }>('/api/character_sheets', {
       method: 'POST',
       body: payload,
     })
