@@ -65,6 +65,20 @@ async function handleSubmit() {
     // Compétences de background depuis les données frontend
     const backgroundSkills = bgData?.skillProficiencies ?? []
 
+    // Extraire les pièces ("15 po", "5 pa"…) de l'équipement
+    const CURRENCY_RE = /^(\d+)\s*(pp|po|pe|pa|pc)$/i
+    const CURRENCY_FIELDS: Record<string, string> = { pp: 'pp', po: 'po', pe: 'pe', pa: 'pa', pc: 'pc' }
+    const currency: Record<string, number> = {}
+    const itemNames = state.value.equipment.filter((name) => {
+      const m = name.match(CURRENCY_RE)
+      if (m) {
+        const field = CURRENCY_FIELDS[m[2].toLowerCase()]
+        if (field) currency[field] = (currency[field] ?? 0) + parseInt(m[1])
+        return false
+      }
+      return true
+    })
+
     const payload = {
       name: state.value.name,
       alignment: state.value.alignment ?? undefined,
@@ -80,12 +94,13 @@ async function handleSubmit() {
       bonds: state.value.bonds,
       flaws: state.value.flaws,
       abilityScores: Object.fromEntries(
-        Object.entries(finalAbilities.value).filter(([, v]) => v != null),
+        Object.entries(state.value.abilities).filter(([, v]) => v != null),
       ) as Record<string, number>,
       classSkills: state.value.skills,
       backgroundSkills,
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],
-      inventoryItemNames: state.value.equipment,
+      inventoryItemNames: itemNames,
+      ...currency,
     }
 
     const result = await $fetch<{ id: number }>('/api/character_sheets', {

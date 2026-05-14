@@ -459,4 +459,36 @@ export const magicienSubclasses: SubclassDef[] = [
       },
     ],
   },
+  {
+    name: 'École de Conjuration',
+    description: `Les conjurateurs maîtrisent la magie de la création et du transport. Ils invoquent des créatures et déplacent des objets ou des personnes.`,
+    features: [
+      {
+        name: 'Étudiant en conjuration',
+        description: `Au niveau 2, copier un sort de conjuration dans votre grimoire coûte moitié moins d'or et de temps.`,
+        featureType: 'subclass_feature',
+        levelRequired: 2,
+        actionType: null,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+    ],
+  },
+  {
+    name: 'École d\'Enchantement',
+    description: `Les enchanteurs façonnent la magie qui captive et manipule. Ils peuvent dominer les esprits et influencer les émotions.`,
+    features: [
+      {
+        name: 'Étudiant en enchantement',
+        description: `Au niveau 2, copier un sort d'enchantement dans votre grimoire coûte moitié moins d'or et de temps.`,
+        featureType: 'subclass_feature',
+        levelRequired: 2,
+        actionType: null,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+    ],
+  },
 ]

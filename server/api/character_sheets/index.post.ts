@@ -36,6 +36,12 @@ const builderSchema = z.object({
   spellIds: z.array(z.number().int()),
   // Équipement
   inventoryItemNames: z.array(z.string()),
+  // Monnaie
+  pp: z.number().int().min(0).optional(),
+  po: z.number().int().min(0).optional(),
+  pe: z.number().int().min(0).optional(),
+  pa: z.number().int().min(0).optional(),
+  pc: z.number().int().min(0).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -113,6 +119,11 @@ export default defineEventHandler(async (event) => {
       ideals: d.ideals ?? '',
       bonds: d.bonds ?? '',
       flaws: d.flaws ?? '',
+      pp: d.pp ?? 0,
+      po: d.po ?? 0,
+      pe: d.pe ?? 0,
+      pa: d.pa ?? 0,
+      pc: d.pc ?? 0,
     })
     .returning()
     .get()

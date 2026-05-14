@@ -791,7 +791,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'int', type: 'full' },
     subclassLevel: 2,
     subclassLabel: 'Tradition arcanique',
-    subclasses: ['École d\'abjuration', 'École de divination', 'École d\'enchantement', 'École d\'évocation', 'École d\'illusion', 'École de nécromancie', 'École de transmutation', 'École de conjuration'],
+    subclasses: ['École d\'Abjuration', 'École de Conjuration', 'École de Divination', 'École d\'Enchantement', 'École d\'Évocation', 'École d\'Illusion', 'École de Nécromancie', 'École de Transmutation'],
     features: [
       { name: 'Incantation (INT)', description: 'Grimoire : 6 sorts niv.1 + 2 tours de magie. Prépare niv+mod INT sorts/jour. 2 emplacements niv.1.' },
       { name: 'Restauration arcanique', description: 'Repos court : récupérez emplacements (total ≤ ½ niveau arrondi sup, pas niv.6+). 1×/jour.' },
