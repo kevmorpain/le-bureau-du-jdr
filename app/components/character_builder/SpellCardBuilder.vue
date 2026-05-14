@@ -65,21 +65,21 @@
       <p v-if="spell.material" class="text-xs text-muted italic">{{ spell.material }}</p>
 
       <!-- Dégâts -->
-      <div v-if="damageDisplay" class="text-xs">
-        <span class="text-red-400 font-semibold">{{ damageDisplay.die }}</span>
-        <span v-if="spellcastingMod && spell.damage!.isSpellcastingModifierAdded" class="text-muted">
+      <div v-if="damageDisplay" class="text-xs font-semibold" :class="`text-${spell.damage!.damage_type}`">
+        {{ damageDisplay.die }}
+        <span v-if="spellcastingMod != null && spell.damage!.isSpellcastingModifierAdded">
           {{ spellcastingMod >= 0 ? ` +${spellcastingMod}` : ` ${spellcastingMod}` }}
         </span>
-        <span class="text-muted ml-1">{{ damageDisplay.type }}</span>
+        <span class="text-muted font-normal ml-1">{{ damageDisplay.type }}</span>
       </div>
 
       <!-- Soins -->
-      <div v-if="healDisplay" class="text-xs">
-        <span class="text-emerald-400 font-semibold">{{ healDisplay.die }}</span>
-        <span v-if="spellcastingMod && spell.heal!.isSpellcastingModifierAdded" class="text-muted">
+      <div v-if="healDisplay" class="text-xs font-semibold text-heal">
+        {{ healDisplay.die }}
+        <span v-if="spellcastingMod != null && spell.heal!.isSpellcastingModifierAdded">
           {{ spellcastingMod >= 0 ? ` +${spellcastingMod}` : ` ${spellcastingMod}` }}
         </span>
-        <span class="text-muted ml-1">{{ healDisplay.type }}</span>
+        <span class="text-muted font-normal ml-1">{{ healDisplay.type }}</span>
       </div>
 
       <!-- Description -->
