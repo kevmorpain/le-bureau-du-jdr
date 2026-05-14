@@ -117,22 +117,24 @@
         />
         <button
           type="button"
-          class="px-3 py-1.5 rounded-lg border text-xs transition-colors cursor-pointer"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-colors cursor-pointer"
           :class="filterConc
             ? 'border-amber-500 bg-amber-500/10 text-amber-400'
             : 'border-(--ui-border) text-muted hover:border-amber-500/40'"
           @click="filterConc = !filterConc"
         >
+          <ConcentrationIcon class="size-3.5" />
           Concentration
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 rounded-lg border text-xs transition-colors cursor-pointer"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-colors cursor-pointer"
           :class="filterRitual
             ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
             : 'border-(--ui-border) text-muted hover:border-amber-500/40'"
           @click="filterRitual = !filterRitual"
         >
+          <MagicSquareIcon class="size-3.5" />
           Rituel
         </button>
       </div>
