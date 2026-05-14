@@ -109,15 +109,11 @@
           placeholder="Rechercher un sort…"
           class="flex-1 min-w-40 px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/60 focus:outline-none"
         >
-        <select
+        <USelect
           v-model="filterSchool"
-          class="px-2 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) focus:border-amber-500/60 focus:outline-none cursor-pointer"
-        >
-          <option value="">Toutes les écoles</option>
-          <option v-for="school in availableSchools" :key="school.name" :value="school.name">
-            {{ $t(`schools.${school.name}`, school.name) }}
-          </option>
-        </select>
+          :items="schoolOptions"
+          size="sm"
+        />
         <button
           type="button"
           class="px-3 py-1.5 rounded-lg border text-xs transition-colors cursor-pointer"
@@ -279,17 +275,19 @@ const filteredSpellsByLevel = computed(() => {
   return result
 })
 
-// Écoles disponibles pour le filtre
-const availableSchools = computed(() => {
+const { t } = useI18n()
+
+// Options pour USelect école
+const schoolOptions = computed(() => {
   const seen = new Set<string>()
-  const result: { name: string }[] = []
-  for (const s of allSpells.value ?? []) {
+  const options: { label: string, value: string }[] = [{ label: 'Toutes les écoles', value: '' }]
+  for (const s of (allSpells.value ?? []).sort((a, b) => (a.school?.name ?? '').localeCompare(b.school?.name ?? ''))) {
     if (s.school?.name && !seen.has(s.school.name)) {
       seen.add(s.school.name)
-      result.push({ name: s.school.name })
+      options.push({ label: t(`schools.${s.school.name}`, s.school.name), value: s.school.name })
     }
   }
-  return result.sort((a, b) => a.name.localeCompare(b.name))
+  return options
 })
 
 const isPrepared = computed(() => ['cleric', 'druid', 'paladin', 'ranger', 'wizard'].includes(state.value.classId ?? ''))
