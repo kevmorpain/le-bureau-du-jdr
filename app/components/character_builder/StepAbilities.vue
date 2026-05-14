@@ -29,15 +29,15 @@
     <template v-if="state.abilityMethod !== 'pointbuy'">
       <div class="text-xs font-bold uppercase tracking-wider text-muted mb-3">
         <template v-if="state.abilityMethod === 'roll' && !state.rolledSets">
-          Cliquez « Lancer » pour générer vos scores
+          Cliquez « Lancer » pour générer vos scores, ou saisissez-les manuellement
         </template>
         <template v-else>
           Cliquez un score, puis une caractéristique pour l'assigner
         </template>
       </div>
 
-      <!-- Bouton lancer + total -->
-      <div v-if="state.abilityMethod === 'roll'" class="flex items-center gap-3 mb-4">
+      <!-- Bouton lancer + total + toggle manuel -->
+      <div v-if="state.abilityMethod === 'roll'" class="flex items-center gap-3 mb-4 flex-wrap">
         <button
           type="button"
           class="px-4 py-2 rounded-lg border border-amber-500 bg-amber-500/15 text-amber-400 text-sm font-bold cursor-pointer hover:bg-amber-500/25 transition-colors"
@@ -45,13 +45,46 @@
         >
           🎲 Lancer les dés
         </button>
-        <span v-if="state.rolledSets" class="text-xs text-muted">
+        <button
+          type="button"
+          class="px-3 py-2 rounded-lg border text-xs transition-colors cursor-pointer"
+          :class="manualMode
+            ? 'border-amber-500/60 bg-amber-500/8 text-amber-400'
+            : 'border-(--ui-border) text-muted hover:border-amber-500/40'"
+          @click="manualMode = !manualMode"
+        >
+          ✏️ Saisie manuelle
+        </button>
+        <span v-if="state.rolledSets && !manualMode" class="text-xs text-muted">
           Total : {{ rolledTotal }}
         </span>
       </div>
 
-      <!-- Scores disponibles -->
-      <div v-if="scores.length" class="flex gap-2 flex-wrap mb-5">
+      <!-- Saisie manuelle : 6 inputs -->
+      <div v-if="state.abilityMethod === 'roll' && manualMode" class="flex gap-2 flex-wrap mb-4">
+        <div v-for="(_, idx) in 6" :key="idx" class="flex flex-col items-center gap-1">
+          <span class="text-xs text-muted">{{ idx + 1 }}</span>
+          <input
+            type="number"
+            min="3"
+            max="18"
+            :value="manualInputs[idx]"
+            class="w-12 h-12 rounded-xl border border-(--ui-border) bg-(--ui-bg) text-center text-lg font-black font-mono text-(--ui-text) focus:border-amber-500 focus:outline-none"
+            @input="setManualInput(idx, ($event.target as HTMLInputElement).value)"
+          >
+        </div>
+        <button
+          v-if="manualInputs.every(v => v !== null)"
+          type="button"
+          class="self-end px-3 py-2 rounded-lg border border-amber-500 bg-amber-500/10 text-amber-400 text-xs font-semibold cursor-pointer"
+          @click="applyManual"
+        >
+          Valider
+        </button>
+      </div>
+
+      <!-- Scores disponibles (pool) -->
+      <div v-if="scores.length && !manualMode" class="flex gap-2 flex-wrap mb-5">
         <button
           v-for="(sc, idx) in scores"
           :key="idx"
@@ -103,7 +136,7 @@
       >
         <div class="flex justify-between items-baseline mb-1">
           <span class="text-xs font-bold uppercase tracking-wider text-muted">{{ ABILITY_SHORT[ab] }}</span>
-          <span v-if="(raceBonuses[ab] ?? 0) !== 0 && baseScore(ab) != null" class="text-xs text-amber-400">+{{ raceBonuses[ab] }} racial</span>
+          <span v-if="(raceBonuses[ab] ?? 0) !== 0" class="text-xs text-amber-400">+{{ raceBonuses[ab] }} racial</span>
         </div>
 
         <div class="flex items-baseline gap-1.5 mb-0.5">
@@ -128,16 +161,17 @@
         <div v-if="state.abilityMethod === 'pointbuy'" class="flex items-center gap-2 mt-2">
           <button
             type="button"
-            class="w-6 h-6 rounded border border-(--ui-border) text-muted text-sm leading-none cursor-pointer hover:border-amber-500/40 transition-colors"
+            class="w-6 h-6 rounded border border-(--ui-border) text-muted text-sm leading-none cursor-pointer hover:border-amber-500/40 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            :disabled="(state.pbScores[ab] ?? 8) <= 8"
             @click.stop="pbChange(ab, -1)"
           >−</button>
           <span class="text-xs font-mono text-amber-400 w-4 text-center">{{ state.pbScores[ab] }}</span>
           <button
             type="button"
-            class="w-6 h-6 rounded border border-(--ui-border) text-muted text-sm leading-none cursor-pointer hover:border-amber-500/40 transition-colors"
+            class="w-6 h-6 rounded border border-(--ui-border) text-muted text-sm leading-none cursor-pointer hover:border-amber-500/40 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            :disabled="(state.pbScores[ab] ?? 8) >= 15 || pbRemaining <= 0"
             @click.stop="pbChange(ab, +1)"
           >+</button>
-          <span class="text-xs text-muted/60">coût {{ POINT_BUY_COSTS[state.pbScores[ab]] ?? 0 }}</span>
         </div>
       </div>
     </div>
@@ -159,13 +193,13 @@ import {
   STANDARD_ARRAY,
   POINT_BUY_BUDGET,
   POINT_BUY_COSTS,
+  ABILITIES,
   type AbilityKey,
 } from '~/data/character-builder'
 
 const {
   state,
   raceBonuses,
-  ABILITIES,
   ABILITY_SHORT,
   abilityMod,
   formatMod,
@@ -177,10 +211,10 @@ const TABS = [
   { id: 'roll', label: '🎲 Jet de dés' },
 ] as const
 
-// Index du score sélectionné dans le pool (null = aucun)
 const selected = ref<number | null>(null)
+const manualMode = ref(false)
+const manualInputs = ref<(number | null)[]>(Array(6).fill(null))
 
-// Pool de scores selon la méthode
 const scores = computed<number[]>(() => {
   if (state.value.abilityMethod === 'standard') return STANDARD_ARRAY
   if (state.value.abilityMethod === 'roll') return state.value.rolledSets?.map(r => r.total) ?? []
@@ -191,7 +225,6 @@ const rolledTotal = computed(() =>
   state.value.rolledSets?.reduce((s, r) => s + r.total, 0) ?? 0,
 )
 
-// Index des scores déjà utilisés
 const assignedIdxs = computed(() => new Set(Object.values(state.value.abilityAssigns)))
 
 function isUsed(idx: number) {
@@ -200,7 +233,6 @@ function isUsed(idx: number) {
 
 const isTarget = computed(() => selected.value !== null && state.value.abilityMethod !== 'pointbuy')
 
-// Score de base avant racial (null si non assigné)
 function baseScore(ab: AbilityKey): number | null {
   if (state.value.abilityMethod === 'pointbuy') return state.value.pbScores[ab] ?? null
   const idx = state.value.abilityAssigns[ab]
@@ -216,7 +248,6 @@ function finalScore(ab: AbilityKey): number | null {
 
 const allDone = computed(() => ABILITIES.every(ab => finalScore(ab) !== null))
 
-// Synchronise state.abilities depuis la méthode active
 function syncAbilities() {
   const abilities: Partial<Record<AbilityKey, number | null>> = {}
   for (const ab of ABILITIES) {
@@ -235,19 +266,23 @@ function switchMethod(m: 'standard' | 'pointbuy' | 'roll') {
   state.value.abilityMethod = m
   state.value.abilityAssigns = {}
   selected.value = null
+  manualMode.value = false
+  manualInputs.value = Array(6).fill(null)
+  if (m === 'pointbuy') {
+    // Démarrer à 8 (coût 0) pour avoir 27/27 points disponibles
+    state.value.pbScores = { str: 8, dex: 8, con: 8, int: 8, wis: 8, cha: 8 }
+  }
   syncAbilities()
 }
 
 function clickAbility(ab: AbilityKey) {
   if (selected.value === null) {
-    // Désassigner
     const newAssigns = { ...state.value.abilityAssigns }
     delete newAssigns[ab]
     state.value.abilityAssigns = newAssigns
   }
   else {
     const newAssigns = { ...state.value.abilityAssigns }
-    // Libérer l'ancienne carac. qui avait ce score
     for (const k of ABILITIES) {
       if (newAssigns[k] === selected.value) delete newAssigns[k]
     }
@@ -259,13 +294,12 @@ function clickAbility(ab: AbilityKey) {
 }
 
 function pbChange(ab: AbilityKey, delta: number) {
-  const cur = state.value.pbScores[ab] ?? 10
+  const cur = state.value.pbScores[ab] ?? 8
   const next = cur + delta
   if (next < 8 || next > 15) return
-  const spent = Object.entries(state.value.pbScores).reduce((s, [k, v]) => {
-    return s + (POINT_BUY_COSTS[v] ?? 0) - (k === ab ? (POINT_BUY_COSTS[cur] ?? 0) : 0)
-  }, 0)
-  if (delta > 0 && spent + (POINT_BUY_COSTS[next] ?? 0) > POINT_BUY_BUDGET) return
+  const currentCost = POINT_BUY_COSTS[cur] ?? 0
+  const nextCost = POINT_BUY_COSTS[next] ?? 0
+  if (delta > 0 && pbRemaining.value < (nextCost - currentCost)) return
   state.value.pbScores = { ...state.value.pbScores, [ab]: next }
   syncAbilities()
 }
@@ -283,6 +317,24 @@ function rollAll() {
   state.value.rolledSets = sets
   state.value.abilityAssigns = {}
   selected.value = null
+  manualMode.value = false
+  syncAbilities()
+}
+
+function setManualInput(idx: number, value: string) {
+  const n = parseInt(value)
+  manualInputs.value[idx] = (!isNaN(n) && n >= 3 && n <= 18) ? n : null
+}
+
+function applyManual() {
+  const sets = manualInputs.value.map(total => ({
+    dice: [],
+    total: total ?? 10,
+  }))
+  state.value.rolledSets = sets
+  state.value.abilityAssigns = {}
+  selected.value = null
+  manualMode.value = false
   syncAbilities()
 }
 </script>
