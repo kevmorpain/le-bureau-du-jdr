@@ -220,7 +220,7 @@ const {
 
 const activeTab = ref<'cantrips' | 'spells'>('cantrips')
 const filterText = ref('')
-const filterSchool = ref('')
+const filterSchool = ref<string | null>(null)
 const filterConc = ref(false)
 const filterRitual = ref(false)
 
@@ -257,7 +257,7 @@ const spellsByLevel = computed(() => {
 function applyFilters(list: any[]) {
   return list.filter((s) => {
     if (filterText.value && !s.name.toLowerCase().includes(filterText.value.toLowerCase())) return false
-    if (filterSchool.value && s.school?.name !== filterSchool.value) return false
+    if (filterSchool.value != null && s.school?.name !== filterSchool.value) return false
     if (filterConc.value && !s.concentration) return false
     if (filterRitual.value && !s.ritual) return false
     return true
@@ -280,7 +280,7 @@ const { t } = useI18n()
 // Options pour USelect école
 const schoolOptions = computed(() => {
   const seen = new Set<string>()
-  const options: { label: string, value: string }[] = [{ label: 'Toutes les écoles', value: '' }]
+  const options: { label: string, value: string | null }[] = [{ label: 'Toutes les écoles', value: null }]
   for (const s of (allSpells.value ?? []).sort((a, b) => (a.school?.name ?? '').localeCompare(b.school?.name ?? ''))) {
     if (s.school?.name && !seen.has(s.school.name)) {
       seen.add(s.school.name)
