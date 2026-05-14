@@ -203,6 +203,87 @@
         </div>
       </template>
 
+      <!-- Points de vie -->
+      <USeparator class="my-6" />
+      <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
+        <div class="flex items-center gap-3 mb-3">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted flex-1">Points de vie</p>
+          <span class="font-black font-mono text-xl text-amber-400">{{ hpMax ?? '—' }}</span>
+          <span class="text-xs text-muted">PV max</span>
+        </div>
+
+        <!-- Sélecteur de mode -->
+        <div class="flex gap-2 mb-4">
+          <button
+            v-for="m in HP_MODES"
+            :key="m.id"
+            type="button"
+            class="px-3 py-1.5 rounded-md border text-xs font-semibold transition-all cursor-pointer"
+            :class="state.hpMode === m.id
+              ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+              : 'border-(--ui-border) bg-transparent text-muted hover:border-amber-500/40'"
+            @click="switchHpMode(m.id)"
+          >
+            {{ m.label }}
+          </button>
+        </div>
+
+        <!-- Mode Moyenne -->
+        <p v-if="state.hpMode === 'average'" class="text-xs text-muted">
+          Niveau 1 : {{ classData.hitDie }} (maximum). Niveaux suivants : {{ Math.ceil(classData.hitDie / 2) + 1 }} par niveau.
+        </p>
+
+        <!-- Mode Jet de dés -->
+        <template v-if="state.hpMode === 'roll'">
+          <div v-if="state.level === 1" class="text-xs text-muted">
+            Niveau 1 : toujours le maximum ({{ classData.hitDie }}).
+          </div>
+          <template v-else>
+            <p class="text-xs text-muted mb-3">
+              Niveau 1 : {{ classData.hitDie }} (max). Lancez 1d{{ classData.hitDie }} pour chaque niveau suivant.
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <div
+                v-for="i in state.level - 1"
+                :key="i"
+                class="flex flex-col items-center gap-1"
+              >
+                <span class="text-xs text-muted">Niv.{{ i + 1 }}</span>
+                <div class="flex items-center gap-1">
+                  <input
+                    type="number"
+                    :min="1"
+                    :max="classData.hitDie"
+                    :value="state.hpRolled?.[i - 1] ?? ''"
+                    class="w-12 h-10 rounded-lg border border-(--ui-border) bg-(--ui-bg) text-center text-sm font-bold font-mono text-(--ui-text) focus:border-amber-500 focus:outline-none"
+                    @change="setRolledHp(i - 1, ($event.target as HTMLInputElement).valueAsNumber)"
+                  >
+                </div>
+              </div>
+              <button
+                type="button"
+                class="self-end px-3 py-2 rounded-lg border border-amber-500 bg-amber-500/10 text-amber-400 text-xs font-semibold cursor-pointer hover:bg-amber-500/20 transition-colors"
+                @click="rollAllHp"
+              >
+                🎲 Tout lancer
+              </button>
+            </div>
+          </template>
+        </template>
+
+        <!-- Mode Manuel -->
+        <div v-if="state.hpMode === 'manual'" class="flex items-center gap-3">
+          <input
+            type="number"
+            :min="1"
+            :value="state.hpManual ?? hpAverage"
+            class="w-20 h-10 rounded-lg border border-(--ui-border) bg-(--ui-bg) text-center text-lg font-bold font-mono text-(--ui-text) focus:border-amber-500 focus:outline-none"
+            @change="state.hpManual = ($event.target as HTMLInputElement).valueAsNumber || null"
+          >
+          <span class="text-xs text-muted">Saisissez votre total de PV max</span>
+        </div>
+      </div>
+
     </template>
   </div>
 </template>
@@ -217,6 +298,7 @@ import {
 const {
   state,
   classData,
+  hpMax,
   profBonus,
   CLASSES,
   SKILLS,
@@ -241,11 +323,50 @@ const milestonesUpToLevel = computed(() => {
     .sort(([a], [b]) => parseInt(a) - parseInt(b))
 })
 
+const HP_MODES = [
+  { id: 'average', label: 'Moyenne' },
+  { id: 'roll', label: 'Jet de dés' },
+  { id: 'manual', label: 'Manuel' },
+] as const
+
+const hpAverage = computed(() => {
+  if (!classData.value) return 0
+  const hitDie = classData.value.hitDie
+  return hitDie + (state.value.level - 1) * (Math.ceil(hitDie / 2) + 1)
+})
+
+function switchHpMode(mode: 'average' | 'roll' | 'manual') {
+  state.value.hpMode = mode
+  if (mode === 'manual' && state.value.hpManual == null) {
+    state.value.hpManual = hpAverage.value
+  }
+  if (mode !== 'roll') state.value.hpRolled = null
+}
+
+function setRolledHp(idx: number, value: number) {
+  const hitDie = classData.value?.hitDie ?? 8
+  const clamped = Math.max(1, Math.min(hitDie, value || 1))
+  const arr = [...(state.value.hpRolled ?? Array(state.value.level - 1).fill(null))]
+  arr[idx] = clamped
+  state.value.hpRolled = arr
+}
+
+function rollAllHp() {
+  const hitDie = classData.value?.hitDie ?? 8
+  state.value.hpRolled = Array.from(
+    { length: state.value.level - 1 },
+    () => Math.floor(Math.random() * hitDie) + 1,
+  )
+}
+
 function selectClass(id: string) {
   state.value.classId = id
   state.value.subclass = null
   state.value.skills = []
   state.value.fightingStyle = null
+  state.value.hpMode = 'average'
+  state.value.hpRolled = null
+  state.value.hpManual = null
 }
 
 function toggleSkill(key: string) {

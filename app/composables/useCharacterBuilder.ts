@@ -37,6 +37,9 @@ export interface BuilderState {
   skills: string[]
   level: number
   fightingStyle: string | null
+  hpMode: 'average' | 'roll' | 'manual'
+  hpRolled: number[] | null   // jets pour niveaux 2+ (longueur = level - 1)
+  hpManual: number | null
 
   // Étape 3 — Caractéristiques
   abilityMethod: 'standard' | 'pointbuy' | 'roll'
@@ -76,6 +79,9 @@ const INIT_STATE: BuilderState = {
   skills: [],
   level: 1,
   fightingStyle: null,
+  hpMode: 'average',
+  hpRolled: null,
+  hpManual: null,
   abilityMethod: 'standard',
   abilities: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
   abilityAssigns: {},
@@ -220,7 +226,18 @@ export function useCharacterBuilder() {
     if (!classData.value) return null
     const con = finalAbilities.value.con
     if (con == null) return null
-    return hpAtLevel(classData.value.hitDie, level.value, abilityMod(con))
+    const conMod = abilityMod(con)
+    const { hitDie } = classData.value
+    const s = state.value
+
+    if (s.hpMode === 'manual' && s.hpManual != null) return s.hpManual
+
+    if (s.hpMode === 'roll' && s.hpRolled != null) {
+      const rolled = s.hpRolled.slice(0, level.value - 1)
+      return hitDie + conMod + rolled.reduce((sum, v) => sum + v + conMod, 0)
+    }
+
+    return hpAtLevel(hitDie, level.value, conMod)
   })
 
   const baseAC = computed(() => {
