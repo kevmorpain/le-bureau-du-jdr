@@ -19,6 +19,54 @@ npm run db:generate  # Generate Drizzle migrations
 
 ESLint runs automatically via Nuxt's ESLint module — no separate lint command needed.
 
+### Running `nuxt dev` from a Claude session
+
+The dev server takes ~15–25 s to boot and **must** run in the background. Reliable recipe (from a WSL Ubuntu shell):
+
+```bash
+# 1. Kill any existing instance
+wsl -d Ubuntu -- bash -c "pkill -f 'nuxt dev'"
+
+# 2. Launch in background, logs to /tmp/nuxt-dev.log
+wsl -d Ubuntu -- bash -c "cd <worktree-or-repo-path> && nohup npm run dev > /tmp/nuxt-dev.log 2>&1 & disown"
+
+# 3. Wait for readiness with the Monitor tool (NOT chained sleeps — they're blocked):
+wsl -d Ubuntu -- bash -ic "until grep -qE '(Local:|listening|ready|Error|migration)' /tmp/nuxt-dev.log; do sleep 3; done; tail -40 /tmp/nuxt-dev.log"
+```
+
+Gotchas:
+- `bash -ic` (interactive) **breaks** `$(…)` command substitutions in some cases (e.g. `SECRET=$(grep … | cut …)` returns empty). Use `bash -c` for scripts that read variables that way.
+- The server runs in whatever directory you `cd` to. To test a worktree, start it from the worktree path, not `/home/kmorpain/le-bureau-du-jdr` (main checkout).
+- Migration auto-application logs `[nuxt:hub] ✔ Database migration .data/db/migrations/00XX_…sql applied` — handy readiness signal after a schema change.
+
+### Drizzle migrations: `db:generate` fails non-interactively
+
+`drizzle-kit generate` prompts for TTY when it detects ambiguous column conflicts (drop/rename). In a non-interactive shell → `Interactive prompts require a TTY terminal`.
+
+Workaround: write the SQL by hand.
+1. Create `server/db/migrations/0XXX_<name>.sql` with the DDL.
+2. Append to `server/db/migrations/meta/_journal.json`:
+   ```json
+   { "idx": <next>, "version": "6", "when": <timestamp_ms>, "tag": "0XXX_<name>", "breakpoints": true }
+   ```
+3. Restart `nuxt dev` — NuxtHub applies the migration automatically.
+
+No need to write the matching snapshot `.json` by hand; the next successful `db:generate` will regenerate it.
+
+### NuxtHub `hub:db` schema cache
+
+The `hub:db` module exposes a schema cached at startup that may **not** reflect recently added tables/columns (ESM cache of `node_modules/@nuxthub/db/schema.mjs`). Symptoms:
+- `drizzle.set()` silently drops new fields → empty SQL → error.
+- New relations → `Cannot read properties of undefined (reading 'referencedTable')`.
+
+Fix: import the schema from source for anything new.
+```ts
+import { db } from 'hub:db'                       // db is fine
+import * as schema from '~~/server/db/schema'     // fresh schema
+```
+
+For new relations, avoid `db.query.X.findFirst({ with: { newRelation: true } })` — instead run a separate `db.select().from(srcSchema.newTable).where(...)` and merge in JS.
+
 ## Architecture
 
 **Le Bureau du JDR** is a D&D 5e (2014) character sheet and spell database app. Full-stack Nuxt 4 app deployed to Cloudflare Workers via NuxtHub.
