@@ -50,6 +50,21 @@ const {
 const router = useRouter()
 const showSummary = ref(false)
 const submitting = ref(false)
+const toast = useToast()
+
+const FIELD_LABELS: Record<string, string> = {
+  name: 'Nom du personnage',
+  maxHp: 'Points de vie',
+  className: 'Classe',
+  abilityScores: 'Caractéristiques',
+  classSkills: 'Compétences de classe',
+  backgroundSkills: 'Compétences d\'historique',
+  spellIds: 'Sorts',
+  inventoryItemNames: 'Équipement',
+  alignment: 'Alignement',
+  speciesDbName: 'Race',
+  backgroundDbName: 'Historique',
+}
 
 async function handleSubmit() {
   if (!classData.value || !hpMax.value) return
@@ -103,8 +118,6 @@ async function handleSubmit() {
       ...currency,
     }
 
-    console.log('[builder] payload envoyé :', JSON.stringify(payload, null, 2))
-
     const result = await $fetch<{ id: number }>('/api/character_sheets', {
       method: 'POST',
       body: payload,
@@ -114,9 +127,24 @@ async function handleSubmit() {
     resetBuilder()
   }
   catch (e: any) {
-    const data = e?.data ?? e?.cause?.data
-    console.error('[builder] Erreur 422 — détails Zod :', JSON.stringify(data?.issues ?? data, null, 2))
-    console.error('[builder] Erreur complète :', e)
+    const issues = e?.data?.issues ?? e?.cause?.data?.issues
+    if (issues?.length) {
+      const fields = [...new Set(issues.map((i: any) => FIELD_LABELS[i.path?.[0]] ?? i.path?.[0] ?? 'Champ inconnu'))]
+      toast.add({
+        title: 'Impossible de créer le personnage',
+        description: `Champ(s) manquant(s) ou invalide(s) : ${fields.join(', ')}`,
+        color: 'error',
+        duration: 6000,
+      })
+    }
+    else {
+      toast.add({
+        title: 'Erreur lors de la création',
+        description: 'Une erreur inattendue s\'est produite.',
+        color: 'error',
+      })
+    }
+    console.error('[builder] Erreur création :', e)
     submitting.value = false
   }
 }
