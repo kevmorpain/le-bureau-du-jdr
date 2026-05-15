@@ -103,6 +103,8 @@ async function handleSubmit() {
       ...currency,
     }
 
+    console.log('[builder] payload envoyé :', JSON.stringify(payload, null, 2))
+
     const result = await $fetch<{ id: number }>('/api/character_sheets', {
       method: 'POST',
       body: payload,
@@ -111,8 +113,10 @@ async function handleSubmit() {
     await router.push(`/characters/${result.id}`)
     resetBuilder()
   }
-  catch (e) {
-    console.error('Erreur création personnage', e)
+  catch (e: any) {
+    const data = e?.data ?? e?.cause?.data
+    console.error('[builder] Erreur 422 — détails Zod :', JSON.stringify(data?.issues ?? data, null, 2))
+    console.error('[builder] Erreur complète :', e)
     submitting.value = false
   }
 }
