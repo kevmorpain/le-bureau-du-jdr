@@ -8,6 +8,13 @@
             {{ characterSheet.name ?? 'Personnage sans nom' }}
           </h1>
           <span class="text-sm text-muted">Niv. {{ characterLevel }}</span>
+          <UButton
+            variant="ghost"
+            size="xs"
+            color="neutral"
+            icon="i-heroicons:chevron-double-up"
+            :to="`/characters/${characterSheet.id}/level-up`"
+          />
         </div>
         <p class="text-xs text-muted/70 mt-0.5 flex items-center gap-1 flex-wrap">
           <span>{{ characterDescriptionPrefix }}</span>
