@@ -19,7 +19,6 @@
         <p class="text-xs text-muted/70 mt-0.5 flex items-center gap-1 flex-wrap">
           <span>{{ characterDescriptionPrefix }}</span>
           <span v-if="classesText">{{ classesText }}</span>
-          <EditClassesSection v-model:character-sheet="characterSheet" />
         </p>
       </div>
 

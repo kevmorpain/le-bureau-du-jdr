@@ -1,9 +1,6 @@
 <template>
   <div>
-    <p>
-      {{ characterSheetDescription }}
-      <EditClassesSection v-model:character-sheet="characterSheet" />
-    </p>
+    <p>{{ characterSheetDescription }}</p>
   </div>
 </template>
 
