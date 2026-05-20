@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-import { RACES, BACKGROUNDS } from '~/data/character-builder'
+import { RACES, BACKGROUNDS, ARMOR_PROF_KEYS, WEAPON_PROF_KEYS } from '~/data/character-builder'
 
 definePageMeta({ layout: 'blank' })
 
@@ -71,14 +71,21 @@ async function handleSubmit() {
   submitting.value = true
 
   try {
-    // Résolution du nom de l'espèce (sous-race prioritaire)
-    const speciesDbName = subraceData.value?.dbName ?? raceData.value?.dbName ?? null
+    const isVariantHuman = state.value.raceId === 'human' && state.value.isVariantHuman
 
-    // Résolution du nom du background
+    // Résolution du nom de l'espèce — Humain variant : pas de lien espèce pour éviter le cumul +1 universel
+    const speciesDbName = isVariantHuman
+      ? null
+      : (subraceData.value?.dbName ?? raceData.value?.dbName ?? null)
+
+    // Résolution du background
     const bgData = BACKGROUNDS.find(b => b.id === state.value.backgroundId)
+    const isCustomBg = bgData?.id === 'custom'
 
-    // Compétences de background depuis les données frontend
-    const backgroundSkills = bgData?.skillProficiencies ?? []
+    // Compétences de background (custom ou prédéfini)
+    const backgroundSkills = isCustomBg
+      ? state.value.customBackgroundSkills
+      : bgData?.skillProficiencies ?? []
 
     // Extraire les pièces ("15 po", "5 pa"…) de l'équipement
     const CURRENCY_RE = /^(\d+)\s*(pp|po|pe|pa|pc)$/i
@@ -103,16 +110,43 @@ async function handleSubmit() {
       subclassName: state.value.subclass ?? null,
       level: state.value.level,
       speciesDbName: speciesDbName ?? null,
-      backgroundDbName: bgData?.dbName ?? null,
+      backgroundDbName: isCustomBg ? null : (bgData?.dbName ?? null),
+      customBackgroundName: isCustomBg ? state.value.customBackgroundName : null,
       personality: state.value.personality,
       ideals: state.value.ideals,
       bonds: state.value.bonds,
       flaws: state.value.flaws,
-      abilityScores: Object.fromEntries(
-        Object.entries(state.value.abilities).filter(([, v]) => v != null),
-      ) as Record<string, number>,
+      abilityScores: (() => {
+        const scores: Record<string, number> = Object.fromEntries(
+          Object.entries(state.value.abilities).filter(([, v]) => v != null),
+        ) as Record<string, number>
+        // Half-Elf : ajouter les +1/+1 choisis (le +2 CHA vient des effets d'espèce)
+        if (state.value.raceId === 'half-elf') {
+          for (const ab of state.value.halfElfBonuses)
+            scores[ab] = (scores[ab] ?? 0) + 1
+        }
+        // Humain variant : ajouter les +1/+1 choisis (pas de lien espèce → pas de double cumul)
+        if (isVariantHuman) {
+          for (const ab of state.value.variantHumanBonuses)
+            scores[ab] = (scores[ab] ?? 0) + 1
+        }
+        return scores
+      })(),
       classSkills: state.value.skills,
-      backgroundSkills,
+      classSavingThrows: classData.value.savingThrows,
+      armorProficiencyKeys: [...new Set(classData.value.armorProficiencies.map(p => ARMOR_PROF_KEYS[p] ?? p))],
+      weaponProficiencyKeys: [...new Set(classData.value.weaponProficiencies.map(p => WEAPON_PROF_KEYS[p] ?? p))],
+      backgroundSkills: [
+        ...backgroundSkills,
+        // Compétence bonus Humain variant
+        ...(isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : []),
+      ],
+      selectedLanguages: [
+        ...state.value.selectedLanguages,
+        // Humain variant : 'Commun' n'est plus apporté par les effets d'espèce (lien espèce absent)
+        ...(isVariantHuman ? ['Commun'] : []),
+      ],
+      toolProficiencyChoices: Object.values(state.value.selectedToolProficiencies).filter(Boolean),
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],
       inventoryItemNames: itemNames,
       ...currency,

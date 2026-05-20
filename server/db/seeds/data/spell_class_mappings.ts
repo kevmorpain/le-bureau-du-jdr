@@ -5,7 +5,7 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   // ─── Sorts mineurs ────────────────────────────────────────────────────────────
   { spellName: 'Assistance', classNames: ['Clerc', 'Druide', 'Magicien'] },
   { spellName: 'Flamme sacrée', classNames: ['Clerc'] },
-  { spellName: 'Glas', classNames: ['Clerc'] },
+  { spellName: 'Glas', classNames: ['Clerc', 'Occultiste'] },
   { spellName: 'Lumière', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien'] },
   { spellName: 'Trait de feu', classNames: ['Ensorceleur', 'Magicien'] },
   { spellName: 'Rayon affaiblissant', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
@@ -28,8 +28,8 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Gibet démoniaque', classNames: ['Occultiste'] },
   { spellName: 'Compréhension des langues', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Armure d\'Agathys', classNames: ['Occultiste'] },
-  { spellName: 'Alarme', classNames: ['Magicien', 'Rôdeur'] },
-  { spellName: 'Détection du poison et des maladies', classNames: ['Clerc', 'Druide', 'Paladin', 'Rôdeur'] },
+  { spellName: 'Alarme', classNames: ['Magicien', 'Occultiste', 'Rôdeur'] },
+  { spellName: 'Détection du poison et des maladies', classNames: ['Clerc', 'Druide', 'Occultiste', 'Paladin', 'Rôdeur'] },
 
   // ─── Niveau 2 ─────────────────────────────────────────────────────────────────
   { spellName: 'Augure', classNames: ['Clerc'] },
@@ -53,7 +53,37 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
 
   // ─── Niveau 4 ─────────────────────────────────────────────────────────────────
   { spellName: 'Tentacules noirs', classNames: ['Magicien', 'Occultiste'] },
+  { spellName: 'Charme-monstre', classNames: ['Barde', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Flétrissement', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
   // ─── Niveau 5 ─────────────────────────────────────────────────────────────────
   { spellName: 'Contact avec le plan astral', classNames: ['Clerc', 'Magicien', 'Occultiste'] },
+  { spellName: 'Perturbations synaptiques', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+
+  // ─── Niveau 6 ─────────────────────────────────────────────────────────────────
+  { spellName: 'Prison mentale', classNames: ['Magicien', 'Occultiste'] },
+
+  // ─── Sorts d'Ambroise ─────────────────────────────────────────────────────────
+
+  // Sorts mineurs
+  { spellName: 'Décharge occulte', classNames: ['Occultiste'] },
+  { spellName: 'Lame aux flammes vertes', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Piqûre mentale', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Bouffée de poison', classNames: ['Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Contrôle des flammes', classNames: ['Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Lame retentissante', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+
+  // Niveau 1
+  { spellName: 'Tentacules de Hadar', classNames: ['Occultiste'] },
+  { spellName: 'Armure de mage', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
+
+  // Niveau 2
+  { spellName: 'Foulée brumeuse', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Force fantasmagorique', classNames: ['Barde', 'Magicien', 'Occultiste'] },
+
+  // Niveau 3
+  { spellName: 'Voracité de Hadar', classNames: ['Occultiste'] },
+  { spellName: 'Ennemis à foison', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Délivrance des malédictions', classNames: ['Clerc', 'Magicien', 'Occultiste', 'Paladin'] },
+  { spellName: 'Motif hypnotique', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 ]

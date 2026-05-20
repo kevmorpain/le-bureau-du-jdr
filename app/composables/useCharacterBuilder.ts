@@ -8,6 +8,8 @@ import {
   ABILITY_SHORT,
   SKILLS,
   FIGHTING_STYLES,
+  LANGUAGES,
+  TOOL_CHOICE_MAP,
   abilityMod,
   formatMod,
   profBonusAtLevel,
@@ -61,8 +63,19 @@ export interface BuilderState {
   bonds: string
   flaws: string
 
+  // Langues choisies
+  selectedLanguages: string[]
+
+  // Maîtrises d'outils à choix (background)
+  selectedToolProficiencies: Record<string, string>
+
+  // Étape 5 — Background personnalisé
+  customBackgroundName: string
+  customBackgroundSkills: string[]
+
   // Étape 6 — Équipement
   equipChoices: (string | null)[]
+  equipSubChoices: Record<number, string | null>
   equipment: string[]
 }
 
@@ -96,7 +109,12 @@ const INIT_STATE: BuilderState = {
   ideals: '',
   bonds: '',
   flaws: '',
+  selectedLanguages: [],
+  selectedToolProficiencies: {},
+  customBackgroundName: '',
+  customBackgroundSkills: [],
   equipChoices: [],
+  equipSubChoices: {},
   equipment: [],
 }
 
@@ -267,6 +285,21 @@ export function useCharacterBuilder() {
     if (!spellcastingInfo.value) return 0
     return maxSpellLevelAtLevel(spellcastingInfo.value.type, level.value)
   })
+  // Nombre de langues à choisir (race + sous-race + background)
+  const languageChoiceCount = computed(() => {
+    let count = 0
+    const countChoices = (langs: string[]) => {
+      for (const l of langs) {
+        const m = l.match(/\+(\d+)\s+au choix/i)
+        if (m) count += parseInt(m[1])
+      }
+    }
+    countChoices(raceData.value?.languages ?? [])
+    countChoices(subraceData.value?.languages ?? [])
+    count += backgroundData.value?.languages ?? 0
+    return count
+  })
+
   const cantripsNeeded = computed(() => {
     if (!classData.value?.id) return 0
     return CANTRIPS_KNOWN[classData.value.id]?.[level.value - 1] ?? 0
@@ -321,7 +354,12 @@ export function useCharacterBuilder() {
         return cantripsDone && spellsDone
       }
       case 'description': {
-        return s.name.trim().length >= 1 && !!s.backgroundId && !!s.alignment
+        if (!s.name.trim() || !s.backgroundId || !s.alignment) return false
+        if (s.backgroundId === 'custom') {
+          if (!s.customBackgroundName.trim()) return false
+          if (s.customBackgroundSkills.length < 2) return false
+        }
+        return true
       }
       case 'equipment': {
         return s.equipment.length > 0
@@ -420,6 +458,9 @@ export function useCharacterBuilder() {
     spellSlots,
     maxSpellLevel,
     cantripsNeeded,
+    languageChoiceCount,
+    LANGUAGES,
+    TOOL_CHOICE_MAP,
     // Navigation
     activeSteps,
     currentStepId,

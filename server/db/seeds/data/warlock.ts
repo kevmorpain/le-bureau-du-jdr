@@ -22,10 +22,8 @@ Emplacements de sorts : vos emplacements de sorts de Magie du Pacte se rechargen
     featureType: 'class_feature' as const,
     levelRequired: 1,
     rechargeType: 'short_rest' as const,
-    // maxUsesFormula represents the number of pact magic slots (slot level is a separate concern)
     maxUsesFormula: pactMagicSlotCount,
     actionType: null,
-    // Store slot level in effects for display purposes
     effects: [],
     meta: { slotLevelFormula: pactMagicSlotLevel },
   },
@@ -66,13 +64,93 @@ Emplacements de sorts : vos emplacements de sorts de Magie du Pacte se rechargen
     effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
-    name: 'Mysticisme sombre',
-    description: `À partir du niveau 2, quand vous lancez un sort d'occultiste, vous pouvez le lancer en secret si vous êtes capable de parler et d'utiliser des composantes somatiques. Les créatures qui ne vous voient pas lancer le sort ne peuvent pas déterminer que vous lancez un sort.`,
+    name: 'Amélioration de caractéristique',
+    description: `Quand vous atteignez le niveau 8 (et à nouveau aux niveaux 12, 16 et 19), vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
     featureType: 'class_feature' as const,
-    levelRequired: 2,
+    levelRequired: 8,
     maxUsesFormula: null,
     actionType: null,
     rechargeType: null,
+    effects: [{ type: 'asi_or_feat', value: {} }],
+  },
+  {
+    name: 'Arcane mystérieux (6e niveau)',
+    description: `À partir du niveau 11, votre patron vous octroie un secret magique appelé arcane mystérieux. Choisissez un sort de 6e niveau de la liste de sorts d'occultiste. Vous pouvez lancer ce sort une fois sans dépenser d'emplacement de sort. Vous devez terminer un repos long avant de pouvoir le lancer à nouveau de cette façon.`,
+    featureType: 'class_feature' as const,
+    levelRequired: 11,
+    maxUsesFormula: fixed(1),
+    actionType: null,
+    rechargeType: 'long_rest' as const,
+    effects: [],
+  },
+  {
+    name: 'Amélioration de caractéristique',
+    description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
+    featureType: 'class_feature' as const,
+    levelRequired: 12,
+    maxUsesFormula: null,
+    actionType: null,
+    rechargeType: null,
+    effects: [{ type: 'asi_or_feat', value: {} }],
+  },
+  {
+    name: 'Arcane mystérieux (7e niveau)',
+    description: `Au niveau 13, votre patron vous octroie un second arcane mystérieux. Choisissez un sort de 7e niveau de la liste de sorts d'occultiste. Vous pouvez lancer ce sort une fois sans dépenser d'emplacement de sort. Vous devez terminer un repos long avant de pouvoir le lancer à nouveau de cette façon.`,
+    featureType: 'class_feature' as const,
+    levelRequired: 13,
+    maxUsesFormula: fixed(1),
+    actionType: null,
+    rechargeType: 'long_rest' as const,
+    effects: [],
+  },
+  {
+    name: 'Arcane mystérieux (8e niveau)',
+    description: `Au niveau 15, votre patron vous octroie un troisième arcane mystérieux. Choisissez un sort de 8e niveau de la liste de sorts d'occultiste. Vous pouvez lancer ce sort une fois sans dépenser d'emplacement de sort. Vous devez terminer un repos long avant de pouvoir le lancer à nouveau de cette façon.`,
+    featureType: 'class_feature' as const,
+    levelRequired: 15,
+    maxUsesFormula: fixed(1),
+    actionType: null,
+    rechargeType: 'long_rest' as const,
+    effects: [],
+  },
+  {
+    name: 'Amélioration de caractéristique',
+    description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
+    featureType: 'class_feature' as const,
+    levelRequired: 16,
+    maxUsesFormula: null,
+    actionType: null,
+    rechargeType: null,
+    effects: [{ type: 'asi_or_feat', value: {} }],
+  },
+  {
+    name: 'Arcane mystérieux (9e niveau)',
+    description: `Au niveau 17, votre patron vous octroie un quatrième arcane mystérieux. Choisissez un sort de 9e niveau de la liste de sorts d'occultiste. Vous pouvez lancer ce sort une fois sans dépenser d'emplacement de sort. Vous devez terminer un repos long avant de pouvoir le lancer à nouveau de cette façon.`,
+    featureType: 'class_feature' as const,
+    levelRequired: 17,
+    maxUsesFormula: fixed(1),
+    actionType: null,
+    rechargeType: 'long_rest' as const,
+    effects: [],
+  },
+  {
+    name: 'Amélioration de caractéristique',
+    description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
+    featureType: 'class_feature' as const,
+    levelRequired: 19,
+    maxUsesFormula: null,
+    actionType: null,
+    rechargeType: null,
+    effects: [{ type: 'asi_or_feat', value: {} }],
+  },
+  {
+    name: 'Maîtrise éldritique',
+    description: `Au niveau 20, vous pouvez puiser dans votre réserve intérieure de pouvoir mystique tout en suppliant votre patron de vous restituer vos emplacements de sorts dépensés. Vous pouvez passer 1 minute à supplier votre patron pour récupérer tous vos emplacements de sorts de Magie du Pacte dépensés. Vous devez terminer un repos long avant de pouvoir utiliser cette aptitude à nouveau.`,
+    featureType: 'class_feature' as const,
+    levelRequired: 20,
+    maxUsesFormula: fixed(1),
+    actionType: null,
+    rechargeType: 'long_rest' as const,
     effects: [],
   },
 ]
@@ -84,11 +162,11 @@ export const grandAncienFeatures = [
     name: 'Sorts étendus',
     description: `Le Grand Ancien vous permet d'apprendre certains sorts supplémentaires lorsque vous atteignez certains niveaux d'occultiste. Ces sorts comptent pour vous comme des sorts d'occultiste mais n'entrent pas dans le nombre de sorts d'occultiste que vous connaissez.
 
-Niveaux 1-2 : Sommeil, Charme-personne
+Niveaux 1-2 : Murmures dissonants, Rire hideux de Tascha
 Niveaux 3-4 : Détection des pensées, Fantasme
-Niveaux 5-6 : Communication avec les morts, Vol
-Niveaux 7-8 : Invisibilité suprême, Terrain hallucinatoire
-Niveaux 9-10 : Domination de monstre, Contacter un autre plan`,
+Niveaux 5-6 : Clairvoyance, Envoi de message
+Niveaux 7-8 : Tentacules noirs, Domination de bête
+Niveaux 9-10 : Domination de monstre, Vision lucide`,
     featureType: 'subclass_feature' as const,
     levelRequired: 1,
     maxUsesFormula: null,
@@ -97,8 +175,8 @@ Niveaux 9-10 : Domination de monstre, Contacter un autre plan`,
     effects: [],
   },
   {
-    name: 'Contact du Grand Ancien',
-    description: `À partir du niveau 1, vous pouvez communiquer par télépathie avec n'importe quelle créature que vous voyez dans un rayon de 18 mètres. Vous n'avez pas besoin de partager une langue avec la créature, mais elle doit être capable de comprendre au moins une langue. Une créature peut choisir de bloquer cette communication télépathique.`,
+    name: 'Éveil mental',
+    description: `À partir du niveau 1, vous pouvez communiquer par télépathie avec n'importe quelle créature que vous voyez dans un rayon de 9 mètres. Vous n'avez pas besoin de partager une langue avec la créature pour qu'elle comprenne vos paroles télépathiques, mais elle doit être capable de comprendre au moins une langue.`,
     featureType: 'subclass_feature' as const,
     levelRequired: 1,
     maxUsesFormula: null,
@@ -107,18 +185,18 @@ Niveaux 9-10 : Domination de monstre, Contacter un autre plan`,
     effects: [],
   },
   {
-    name: 'Bouclier psychique',
-    description: `À partir du niveau 6, vous pouvez protéger vous-même ou un allié des dégâts d'une attaque. Quand vous ou une créature dans un rayon de 18 mètres de vous que vous pouvez voir est ciblée par une attaque, vous pouvez utiliser votre réaction pour imposer un désavantage au jet d'attaque. Si l'attaque rate, vous avez l'avantage sur le prochain jet d'attaque contre l'attaquant, à condition de l'effectuer avant la fin de votre prochain tour.`,
+    name: 'Garde entropique',
+    description: `À partir du niveau 6, vous apprenez à vous prémunir magiquement contre les attaques et à transformer un coup raté ennemi en chance pour vous. Quand une créature effectue un jet d'attaque contre vous, vous pouvez utiliser votre réaction pour imposer un désavantage à ce jet. Si l'attaque vous rate, votre prochain jet d'attaque contre cette créature est effectué avec avantage, à condition de l'effectuer avant la fin de votre prochain tour. Utilisable une fois par repos court ou long.`,
     featureType: 'subclass_feature' as const,
     levelRequired: 6,
     maxUsesFormula: fixed(1),
     actionType: 'reaction' as const,
-    rechargeType: 'long_rest' as const,
+    rechargeType: 'short_rest' as const,
     effects: [],
   },
   {
     name: 'Voile de la pensée',
-    description: `À partir du niveau 10, votre esprit ne peut pas être lu à moins que vous ne le permettiez. Vous bénéficiez de la résistance aux dégâts psychiques, et chaque fois qu'une créature vous inflige des dégâts psychiques, elle subit le même montant de dégâts psychiques.`,
+    description: `À partir du niveau 10, vos pensées ne peuvent pas être lues par télépathie ou tout autre moyen, sauf si vous le permettez. De plus, vous bénéficiez de la résistance aux dégâts psychiques, et chaque fois qu'une créature vous inflige des dégâts psychiques, elle subit le même montant de dégâts psychiques.`,
     featureType: 'subclass_feature' as const,
     levelRequired: 10,
     maxUsesFormula: null,
@@ -127,6 +205,16 @@ Niveaux 9-10 : Domination de monstre, Contacter un autre plan`,
     effects: [
       { type: 'damage_resistance', value: { damageType: 'psychic' } },
     ],
+  },
+  {
+    name: 'Création de thrall',
+    description: `Au niveau 14, vous obtenez la capacité d'infecter l'esprit d'un humanoïde avec la magie étrangère de votre patron. Vous pouvez utiliser votre action pour toucher un humanoïde neutralisé. Cette créature est alors charmée par vous jusqu'à ce qu'un sort de délivrance des malédictions soit lancé sur elle, que la condition charmé soit supprimée, ou que vous utilisiez cette aptitude à nouveau. Vous pouvez communiquer par télépathie avec la créature charmée tant que vous vous trouvez tous les deux sur le même plan d'existence.`,
+    featureType: 'subclass_feature' as const,
+    levelRequired: 14,
+    maxUsesFormula: null,
+    actionType: 'action' as const,
+    rechargeType: null,
+    effects: [],
   },
 ]
 
@@ -215,7 +303,7 @@ Niveaux 9-10 : Colonne de flamme, Sanctification`,
 Niveaux 1-2 : Lueurs féeriques, Sommeil
 Niveaux 3-4 : Apaisement des émotions, Force fantasmagorique
 Niveaux 5-6 : Clignotement, Croissance végétale
-Niveaux 7-8 : Domination de bête, Invisibilité supérieure
+Niveaux 7-8 : Domination de bête, Invisibilité suprême
 Niveaux 9-10 : Apparence trompeuse, Domination de personne`,
         featureType: 'subclass_feature' as const,
         levelRequired: 1,

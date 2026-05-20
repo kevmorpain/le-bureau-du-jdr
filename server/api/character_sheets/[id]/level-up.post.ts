@@ -1,6 +1,6 @@
 import { db } from 'hub:db'
 import * as schema from '~~/server/db/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 const levelUpSchema = z.object({
@@ -106,7 +106,7 @@ export default defineEventHandler(async (event) => {
       .from(schema.subclasses)
       .where(and(
         eq(schema.subclasses.classId, cls.id),
-        eq(schema.subclasses.name, d.subclassName),
+        sql`lower(${schema.subclasses.name}) = lower(${d.subclassName})`,
       ))
       .limit(1)
     subclassId = sub?.id ?? null
@@ -150,6 +150,40 @@ export default defineEventHandler(async (event) => {
         subclassId: subclassId !== null ? sql`excluded.subclass_id` : schema.characterClasses.subclassId,
       },
     })
+
+  // ── 5b. Features de classe / sous-classe débloquées ──────────────────────
+
+  const newClassFeatures = await db
+    .select({ id: schema.features.id })
+    .from(schema.features)
+    .where(
+      and(
+        eq(schema.features.classId, cls.id),
+        eq(schema.features.featureType, 'class_feature'),
+        eq(schema.features.levelRequired, newLevel),
+      ),
+    )
+
+  const newSubclassFeatures = subclassId
+    ? await db
+        .select({ id: schema.features.id })
+        .from(schema.features)
+        .where(
+          and(
+            eq(schema.features.subclassId, subclassId),
+            eq(schema.features.featureType, 'subclass_feature'),
+            lte(schema.features.levelRequired, newLevel),
+          ),
+        )
+    : []
+
+  const newFeatureIds = [...newClassFeatures, ...newSubclassFeatures].map(f => f.id)
+  if (newFeatureIds.length) {
+    await db
+      .insert(schema.characterFeatures)
+      .values(newFeatureIds.map(featureId => ({ characterSheetId, featureId, currentUses: 0 })))
+      .onConflictDoNothing()
+  }
 
   // ── 6. Update character_sheets (maxHp + currentHitDie) ───────────────────
 

@@ -10,6 +10,57 @@ export type SpellcastingType = 'full' | 'half' | 'pact'
 
 export const ABILITIES: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha']
 
+// Langues D&D 5e disponibles pour les choix de langue
+export const LANGUAGES = [
+  'Abyssal', 'Céleste', 'Commun', 'Commun des profondeurs', 'Draconique',
+  'Druidique', 'Elfique', 'Géant', 'Gnome', 'Gobelin', 'Halfelin',
+  'Infernal', 'Nain', 'Orque', 'Primordial', 'Sylvain',
+] as const
+
+// Options génériques d'équipement → liste d'items spécifiques disponibles en DB
+export const GENERIC_ITEM_OPTIONS: Record<string, string[]> = {
+  'Arme courante': ['Gourdin', 'Dague', 'Grande massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Faucille', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
+  'Arme courante de corps à corps': ['Gourdin', 'Dague', 'Grande massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Faucille', 'Lance'],
+  'Arme courante à distance': ['Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
+  'Arme courante au choix': ['Gourdin', 'Dague', 'Grande massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Faucille', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
+  'Arme de guerre': ["Hache d'armes", "Fléau d'armes", 'Glaive', 'Grande hache', 'Épée à deux mains', 'Hallebarde', 'Épée longue', 'Morgenstern', 'Fauchard', 'Épieu de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre', 'Arbalète à main', 'Arbalète lourde', 'Arc long'],
+  'Arme de guerre de corps à corps': ["Hache d'armes", "Fléau d'armes", 'Glaive', 'Grande hache', 'Épée à deux mains', 'Hallebarde', 'Épée longue', 'Morgenstern', 'Fauchard', 'Épieu de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre'],
+  'Arme de guerre au choix': ["Hache d'armes", "Fléau d'armes", 'Glaive', 'Grande hache', 'Épée à deux mains', 'Hallebarde', 'Épée longue', 'Morgenstern', 'Fauchard', 'Épieu de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre', 'Arbalète à main', 'Arbalète lourde', 'Arc long'],
+  'Instrument de musique au choix': ['Cornemuse', 'Cor', 'Flûte', 'Luth', 'Lyre', 'Tambour', 'Viole'],
+  'Outil d\'artisan au choix': ['Outils de forgeron', 'Outils de charpentier', 'Outils de cordonnier', 'Outils de cuisinier', 'Outils de graveur', 'Outils de joaillier', 'Outils de maçon', 'Outils de peintre', 'Outils de potier', 'Outils de tanneur', 'Outils de tisserand', 'Outils de tonnelier', 'Outils de verrier'],
+  'Jeux au choix': ['Jeu de dés', "Jeu de cartes du Destin", "Jeu d'échecs de dragon"],
+  'Un jeu au choix': ['Jeu de dés', "Jeu de cartes du Destin", "Jeu d'échecs de dragon"],
+}
+
+// Maîtrises d'outils avec choix : strings exacts utilisés dans BackgroundData.toolProficiencies → liste d'options
+export const TOOL_CHOICE_MAP: Record<string, string[]> = {
+  'Un jeu au choix': GENERIC_ITEM_OPTIONS['Un jeu au choix']!,
+  'Outil d\'artisan au choix': GENERIC_ITEM_OPTIONS["Outil d'artisan au choix"]!,
+  'Instrument de musique au choix': GENERIC_ITEM_OPTIONS['Instrument de musique au choix']!,
+}
+
+// Mapping French display → machine-readable keys (used for character_proficiency_overrides)
+export const ARMOR_PROF_KEYS: Record<string, string> = {
+  'Armures légères': 'light',
+  'Armures légères (non-métalliques)': 'light',
+  'Armures intermédiaires': 'medium',
+  'Toutes les armures': 'all_armor',
+  'Boucliers': 'shield',
+  'Boucliers (non-métalliques)': 'shield',
+}
+
+export const WEAPON_PROF_KEYS: Record<string, string> = {
+  'Armes courantes': 'simple_weapons',
+  'Armes de guerre': 'martial_weapons',
+  'Arbalète de poing': 'hand_crossbow',
+  'Arbalète légère': 'light_crossbow',
+  'Épée longue': 'longsword',
+  'Rapière': 'rapier',
+  'Épée courte': 'shortsword',
+  'Arc long': 'longbow',
+  'Arc court': 'shortbow',
+}
+
 export const ABILITY_LABELS: Record<AbilityKey, string> = {
   str: 'Force',
   dex: 'Dextérité',
@@ -479,7 +530,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Voie primitive',
-    subclasses: ['Voie du berserker', 'Voie des guerriers totem', 'Voie du fanatique zélateur', 'Voie de la magie ancestrale'],
+    subclasses: ['Voie du Berserker', 'Voie du Totem guerrier', 'Voie du fanatique zélateur', 'Voie de la magie ancestrale'],
     features: [
       { name: 'Rage', description: 'Action bonus : entrez en rage — +2 dégâts FOR, résistance contondant/perçant/tranchant, avantage JS FOR. 2 utilisations / repos long.' },
       { name: 'Défense sans armure', description: 'CA = 10 + mod DEX + mod CON quand vous ne portez pas d\'armure.' },
@@ -507,7 +558,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'cha', type: 'full' },
     subclassLevel: 3,
     subclassLabel: 'Collège bardique',
-    subclasses: ['Collège du savoir', 'Collège de la vaillance', 'Collège de l\'éloquence', 'Collège des esprits'],
+    subclasses: ['Collège du Savoir', 'Collège de Bravoure', 'Collège de l\'éloquence', 'Collège des esprits'],
     features: [
       { name: 'Incantation (CHA)', description: 'Lanceur de sorts complet. Connaît 4 sorts + 2 tours de magie au niv.1. 2 emplacements niv.1.' },
       { name: 'Inspiration bardique (d6)', description: 'Action bonus : accordez un d6 à un allié pour l\'ajouter à un jet d\'attaque, de compétence ou de sauvegarde.' },
@@ -536,7 +587,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'wis', type: 'full' },
     subclassLevel: 1,
     subclassLabel: 'Domaine divin',
-    subclasses: ['Domaine de la vie', 'Domaine de la lumière', 'Domaine du savoir', 'Domaine de la nature', 'Domaine de la tromperie', 'Domaine de la tempête', 'Domaine de la guerre'],
+    subclasses: ['Domaine Vie', 'Domaine Lumière', 'Domaine Connaissance', 'Domaine Nature', 'Domaine Tromperie', 'Domaine Tempête', 'Domaine Guerre'],
     features: [
       { name: 'Incantation (SAG)', description: 'Lanceur complet. Prépare niv+mod SAG sorts/jour. Sorts de domaine toujours préparés.' },
       { name: 'Renvoi des morts-vivants', description: 'Action : morts-vivants visibles dans 9m — JS SAG ou renvoyés pendant 1 minute.' },
@@ -622,7 +673,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Tradition monastique',
-    subclasses: ['Voie de la main ouverte', 'Voie de l\'ombre', 'Voie des quatre éléments', 'Voie du soleil âme'],
+    subclasses: ['Voie de la Paume Ouverte', 'Voie de l\'Ombre', 'Voie des Quatre Éléments', 'Voie du soleil âme'],
     features: [
       { name: 'Arts martiaux', description: 'Attaques à mains nues/armes de moine avec DEX ou FOR, dégâts 1d4 (niv.1). Attaque bonus à mains nues après attaque d\'arme de moine.' },
       { name: 'Défense sans armure', description: 'CA = 10 + mod DEX + mod SAG sans armure ni bouclier.' },
@@ -650,7 +701,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'cha', type: 'half', startsAtLevel: 2 },
     subclassLevel: 3,
     subclassLabel: 'Serment sacré',
-    subclasses: ['Serment de dévotion', 'Serment des anciens', 'Serment de vengeance', 'Serment des conquérants'],
+    subclasses: ['Serment de Dévotion', 'Serment des Anciens', 'Serment de Vengeance', 'Serment des conquérants'],
     features: [
       { name: 'Sens divin', description: 'Action : détectez fiélons, célestes et morts-vivants dans 18m. 1+mod CHA utilisations / repos long.' },
       { name: 'Imposition des mains', description: 'Réservoir = niveau×5 PV. Soignez par portions ou neutralisez maladies/poisons (5 PV).' },
@@ -706,7 +757,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Archétype de roublard',
-    subclasses: ['Escroc', 'Assassin', 'Vole-magie', 'Âme de lame'],
+    subclasses: ['Escroc', 'Assassin', 'Filou arcanique', 'Âme de lame'],
     features: [
       { name: 'Expertise', description: 'Doublez le bonus de maîtrise pour 2 compétences (parmi maîtrisées). Outils de voleur inclus.' },
       { name: 'Attaque sournoise (1d6)', description: '+1d6 dégâts si avantage OU allié adjacent sans désavantage. Armes de finesse ou à distance.' },
@@ -854,7 +905,7 @@ export interface BackgroundSuggestions {
 
 export interface BackgroundData {
   id: string
-  dbName: string
+  dbName: string | null
   name: string
   description: string
   skillProficiencies: string[]
@@ -923,7 +974,7 @@ export const BACKGROUNDS: BackgroundData[] = [
   },
   {
     id: 'entertainer',
-    dbName: 'Artiste',
+    dbName: 'Saltimbanque',
     name: 'Artiste',
     description: 'Artiste de scène vivant pour les applaudissements et la gloire.',
     skillProficiencies: ['acrobatics', 'performance'],
@@ -1013,7 +1064,7 @@ export const BACKGROUNDS: BackgroundData[] = [
   },
   {
     id: 'outlander',
-    dbName: 'Hors-la-loi',
+    dbName: 'Étranger',
     name: 'Hors-la-loi',
     description: 'Grandi dans les terres reculées, loin de la civilisation.',
     skillProficiencies: ['athletics', 'survival'],
@@ -1085,7 +1136,7 @@ export const BACKGROUNDS: BackgroundData[] = [
   },
   {
     id: 'urchin',
-    dbName: 'Gamin des rues',
+    dbName: 'Enfant des rues',
     name: 'Gamin des rues',
     description: 'Survivant des rues formé à la débrouillardise depuis l\'enfance.',
     skillProficiencies: ['sleightOfHand', 'stealth'],
@@ -1100,6 +1151,19 @@ export const BACKGROUNDS: BackgroundData[] = [
       bonds: ['Ma fratrie de la rue est ma vraie famille.', 'Je dois beaucoup à un mentor qui m\'a appris à survivre.'],
       flaws: ['L\'or me glisse entre les doigts.', 'Je ne fais confiance à personne de riche ou de puissant.'],
     },
+  },
+  {
+    id: 'custom',
+    dbName: null,
+    name: 'Personnalisé',
+    description: 'Créez un historique sur mesure adapté à l\'histoire de votre personnage.',
+    skillProficiencies: [],
+    toolProficiencies: [],
+    languages: 0,
+    equipment: [],
+    featureName: '',
+    featureDescription: '',
+    suggestions: { personality: [], ideals: [], bonds: [], flaws: [] },
   },
 ]
 
@@ -1208,16 +1272,16 @@ export const BACKGROUND_DB_NAMES: Record<string, string> = {
   'acolyte': 'Acolyte',
   'charlatan': 'Charlatan',
   'criminal': 'Criminel',
-  'entertainer': 'Artiste',
+  'entertainer': 'Saltimbanque',
   'folk-hero': 'Héros du peuple',
   'guild-artisan': 'Artisan de guilde',
   'hermit': 'Ermite',
   'noble': 'Noble',
-  'outlander': 'Hors-la-loi',
+  'outlander': 'Étranger',
   'sage': 'Sage',
   'sailor': 'Marin',
   'soldier': 'Soldat',
-  'urchin': 'Gamin des rues',
+  'urchin': 'Enfant des rues',
 }
 
 export const CLASS_DB_NAMES: Record<string, string> = {

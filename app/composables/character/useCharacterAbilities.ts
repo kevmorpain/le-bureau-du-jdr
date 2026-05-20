@@ -97,6 +97,16 @@ export const useCharacterAbilities = (
         map.set(s.skillKey, level)
       }
     }
+    // Skill proficiencies granted by species or feature effects (e.g. half-orc Menaçant → Intimidation)
+    const effectSources = [...(deps?.speciesEffects.value ?? []), ...(deps?.featureEffects.value ?? [])]
+    for (const e of effectSources) {
+      if (e.type === 'skill_proficiency') {
+        const skill = (e.value as { skill: string }).skill
+        if (!map.has(skill) || proficiencyPriority['proficient'] > proficiencyPriority[map.get(skill)!]) {
+          map.set(skill, 'proficient')
+        }
+      }
+    }
     return map
   })
 

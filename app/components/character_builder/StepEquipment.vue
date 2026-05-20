@@ -26,7 +26,7 @@
             <!-- Choix entre options -->
             <template v-if="grp.choice && grp.options">
               <p class="text-xs text-muted mb-2">Choisissez une option</p>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-2 mb-2">
                 <button
                   v-for="opt in grp.options"
                   :key="opt"
@@ -40,6 +40,25 @@
                   {{ opt }}
                 </button>
               </div>
+
+              <!-- Sous-sélecteur si l'option choisie est générique -->
+              <template v-if="choices[i] && genericOptions(choices[i]!)">
+                <p class="text-xs text-muted/70 mb-2 mt-1">Choisissez un item spécifique :</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="item in genericOptions(choices[i]!)"
+                    :key="item"
+                    type="button"
+                    class="px-2.5 py-1 rounded-lg border text-xs transition-colors cursor-pointer"
+                    :class="subChoices[i] === item
+                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400 font-medium'
+                      : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-emerald-500/40'"
+                    @click="setSubChoice(i, item)"
+                  >
+                    {{ item }}
+                  </button>
+                </div>
+              </template>
             </template>
 
             <!-- Équipement automatique -->
@@ -59,6 +78,7 @@
             <span class="text-amber-400/60 text-xs">·</span>
             <span class="text-sm text-muted">{{ item }}</span>
           </div>
+          <div v-if="!backgroundData.equipment.length" class="text-xs text-muted/60 italic">Aucun équipement d'historique.</div>
         </div>
       </div>
 
@@ -83,6 +103,8 @@
 </template>
 
 <script lang="ts" setup>
+import { GENERIC_ITEM_OPTIONS } from '~/data/character-builder'
+
 const {
   state,
   classData,
@@ -91,18 +113,33 @@ const {
 
 // Choix locaux (index → option choisie ou null)
 const choices = ref<(string | null)[]>([])
+// Sous-choix pour les options génériques (index → item spécifique)
+const subChoices = ref<Record<number, string | null>>({})
+
+// Retourne la liste d'items spécifiques si l'option est générique, sinon null
+function genericOptions(opt: string): string[] | null {
+  return GENERIC_ITEM_OPTIONS[opt] ?? null
+}
 
 // Initialiser les choix quand la classe change
 watch(classData, (cls) => {
-  if (!cls) { choices.value = []; return }
+  if (!cls) { choices.value = []; subChoices.value = {}; return }
   choices.value = cls.equipment.map((grp, i) =>
     grp.choice ? (state.value.equipChoices[i] ?? grp.options?.[0] ?? null) : null,
   )
+  subChoices.value = { ...(state.value.equipSubChoices ?? {}) }
   syncEquipment()
 }, { immediate: true })
 
 function setChoice(i: number, opt: string) {
   choices.value[i] = opt
+  // Reset sub-choice si l'option change
+  subChoices.value[i] = null
+  syncEquipment()
+}
+
+function setSubChoice(i: number, item: string) {
+  subChoices.value[i] = item
   syncEquipment()
 }
 
@@ -114,7 +151,11 @@ function syncEquipment() {
   cls.equipment.forEach((grp, i) => {
     if (grp.choice) {
       const chosen = choices.value[i]
-      if (chosen) items.push(chosen)
+      if (chosen) {
+        // Utiliser le sous-choix si disponible, sinon l'option générique
+        const sub = subChoices.value[i]
+        items.push(sub ?? chosen)
+      }
     }
     else {
       grp.items?.forEach(it => items.push(it))
@@ -123,6 +164,7 @@ function syncEquipment() {
   backgroundData.value?.equipment.forEach(it => items.push(it))
 
   state.value.equipChoices = [...choices.value]
+  state.value.equipSubChoices = { ...subChoices.value }
   state.value.equipment = items
 }
 
