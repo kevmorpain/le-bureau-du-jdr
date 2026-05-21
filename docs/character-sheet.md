@@ -1,6 +1,6 @@
 # Fiche de personnage — sections et données
 
-Page : `app/pages/characters/[id].vue`
+Page : `app/pages/characters/[id]/index.vue`
 
 La fiche charge le personnage via `GET /api/character_sheets/{id}` (include toutes les relations Drizzle sauf les sorts). Un deep watch avec debounce 1 s persiste les changements via `PUT /api/character_sheets/{id}`. Les sections qui font leurs propres fetches (inventaire, sorts) ont leurs propres composables.
 

@@ -82,8 +82,8 @@ Vue pages/components → composables (useFetch) → Nitro server routes → Driz
 ### Key directories
 
 - `app/pages/` — file-based routing (Nuxt 4 app dir structure)
-- `app/components/` — domain-organized components (`character_sheet/`, `characters/`, `spells/`, `icons/`)
-- `app/composables/` — `useCharacterSheet`, `useSpellFilters`, `useSpellbook`
+- `app/components/` — domain-organized components (`character_sheet/`, `character_builder/`, `level_up/`, `characters/`, `spells/`, `wizard/`, `icons/`)
+- `app/composables/` — `useCharacterSheet`, `useCharacterBuilder`, `useLevelUp`, `useSpellFilters`, `useSpellbook`
 - `server/api/` — Nitro route handlers using `defineEventHandler`
 - `server/db/schema/` — Drizzle ORM schema (source of truth for all types)
 - `server/db/seeds/` — Seed data for initial population
@@ -111,7 +111,15 @@ Tables: `character_sheets`, `character_species`, `character_classes`, `character
 
 ### Character sheet
 
-See `docs/character-sheet.md` for the full breakdown of each section: what it displays, where data comes from, which API endpoints it uses, and what's not yet implemented.
+`app/pages/characters/[id]/index.vue` — See `docs/character-sheet.md` for the full breakdown of each section: what it displays, where data comes from, which API endpoints it uses, and what's not yet implemented.
+
+### Character creation
+
+`app/pages/characters/new.vue` — 6-step wizard. See `docs/character-builder.md` for the steps (Race → Classe → Carac. → Sorts → Description → Équipement), the `BuilderState` shape, UI conventions, and the POST endpoint.
+
+### Level-up
+
+`app/pages/characters/[id]/level-up.vue` — Wizard conditionnel (2 à 6 étapes selon la classe et le niveau). See `docs/level-up.md` for the `LevelUpState` shape, which steps are active and when, the validation rules by step, and what the POST endpoint does.
 
 See `docs/context.md` for accumulated development context: dashboard v2 architecture, UI conventions (dots, spellSlots provide/inject), key bug fixes, and decisions made across sessions.
 

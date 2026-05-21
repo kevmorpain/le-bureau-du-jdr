@@ -378,34 +378,31 @@ Mobile (<lg) :
 
 ---
 
-## Extension POST endpoint (Phase finale)
+## POST `/api/character_sheets` — endpoint implémenté
 
-Le POST `/api/character_sheets` sera étendu pour accepter :
+`server/api/character_sheets/index.post.ts` crée en séquence :
+1. `character_sheets` insert (name, speciesId, alignment, backgroundId)
+2. `character_classes` insert (classId, level, isMain, subclassId)
+3. `character_ability_scores` × 6 insert (scores avec bonus raciaux inclus)
+4. `character_skills` insert (source: 'class' ou 'background')
+5. `character_spells` insert (isKnown: true, isPrepared: true)
+6. `character_inventory` insert (résolution nom → itemId via lookup, ignore silencieusement si non trouvé)
+
+Corps accepté :
 ```ts
 {
-  // existant
   name: string
   speciesId?: number
   alignment?: string
   backgroundId?: number
   classes: Array<{ classId: number, level: number, isMain: boolean, subclassId?: number }>
-
-  // nouveau
-  abilityScores?: Record<string, number>        // { str: 16, dex: 14, ... } avec bonus raciaux
-  skillProficiencies?: string[]                 // clés de compétences
-  selectedSpellIds?: number[]                   // IDs de sorts
-  inventoryItemNames?: string[]                 // noms d'items à résoudre en IDs
-  fightingStyle?: string                        // texte libre pour l'instant
+  abilityScores?: Record<string, number>     // scores finaux avec bonus raciaux
+  skillProficiencies?: string[]              // clés de compétences
+  selectedSpellIds?: number[]               // IDs de sorts DB
+  inventoryItemNames?: string[]             // noms d'items (résolution silencieuse)
+  fightingStyle?: string                    // texte libre, stocké comme feature
 }
 ```
-
-En transaction :
-1. `character_sheets` insert
-2. `character_classes` insert
-3. `character_ability_scores` × 6 insert
-4. `character_skills` insert (source: 'class' ou 'background')
-5. `character_spells` insert (isKnown: true, isPrepared: true)
-6. `character_inventory` insert (résolution nom → itemId, silently skip if not found)
 
 ---
 
