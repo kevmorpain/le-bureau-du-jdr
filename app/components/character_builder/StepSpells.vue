@@ -50,7 +50,58 @@
         </div>
       </div>
 
-      <!-- Onglets -->
+      <!-- Sorts du Pacte de la Chaîne (en premier, avant les onglets) -->
+      <div v-if="needsPactBoon && state.pactBoon === 'chain'" class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
+          <span class="text-[10px] text-violet-400 bg-violet-500/15 px-2 py-1 rounded-md font-semibold">Auto-ajouté</span>
+        </div>
+        <div v-if="familiarSpell">
+          <SpellCardBuilder
+            :spell="familiarSpell"
+            :selected="true"
+            :character-level="state.level"
+            :spellcasting-mod="spellcastingMod"
+            @click="() => {}"
+          />
+        </div>
+        <div v-else class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic">
+          Sort "Appel de familier" introuvable — relancez les seeds.
+        </div>
+      </div>
+
+      <!-- Sorts du Pacte du Tome (en premier, avant les onglets) -->
+      <div v-if="needsPactBoon && state.pactBoon === 'tome'" class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte du Tome</p>
+          <span
+            class="text-xs font-semibold"
+            :class="state.selectedPactBoonCantripIds.length >= 3 ? 'text-green-400' : 'text-amber-400'"
+          >{{ state.selectedPactBoonCantripIds.length }}/3</span>
+        </div>
+        <p class="text-xs text-muted mb-3">Choisissez 3 sorts mineurs de n'importe quelle classe.</p>
+        <div v-if="pactCantripsPending" class="text-sm text-muted py-4 text-center">Chargement…</div>
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <UTooltip
+            v-for="spell in filteredPactCantrips"
+            :key="spell.id"
+            :text="isRegularCantrip(spell.id) && !state.selectedPactBoonCantripIds.includes(spell.id) ? 'Déjà dans vos sorts mineurs classiques' : ''"
+          >
+            <div :class="isRegularCantrip(spell.id) && !state.selectedPactBoonCantripIds.includes(spell.id) ? 'opacity-50' : ''">
+              <SpellCardBuilder
+                :spell="spell"
+                :selected="state.selectedPactBoonCantripIds.includes(spell.id)"
+                :character-level="state.level"
+                :spellcasting-mod="spellcastingMod"
+                @click="togglePactBoonCantrip(spell.id)"
+              />
+            </div>
+          </UTooltip>
+        </div>
+        <p v-if="!pactCantripsPending && filteredPactCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
+      </div>
+
+      <!-- Onglets (sorts classiques de la classe) -->
       <div class="flex gap-2 mb-4">
         <button
           v-if="cantripsNeeded > 0"
@@ -152,15 +203,21 @@
           >{{ state.selectedCantrips.length }}/{{ cantripsNeeded }}</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          <SpellCardBuilder
+          <UTooltip
             v-for="spell in filteredCantrips"
             :key="spell.id"
-            :spell="spell"
-            :selected="state.selectedCantrips.includes(spell.id)"
-            :character-level="state.level"
-            :spellcasting-mod="spellcastingMod"
-            @click="toggleCantrip(spell.id)"
-          />
+            :text="state.selectedPactBoonCantripIds.includes(spell.id) && !state.selectedCantrips.includes(spell.id) ? 'Déjà dans vos sorts du Pacte du Tome' : ''"
+          >
+            <div :class="state.selectedPactBoonCantripIds.includes(spell.id) && !state.selectedCantrips.includes(spell.id) ? 'opacity-50' : ''">
+              <SpellCardBuilder
+                :spell="spell"
+                :selected="state.selectedCantrips.includes(spell.id)"
+                :character-level="state.level"
+                :spellcasting-mod="spellcastingMod"
+                @click="toggleCantrip(spell.id)"
+              />
+            </div>
+          </UTooltip>
         </div>
         <div v-if="!filteredCantrips.length" class="text-sm text-muted italic py-4">Aucun sort mineur correspondant.</div>
       </template>
@@ -217,6 +274,7 @@ const {
   spellSlots,
   maxSpellLevel,
   cantripsNeeded,
+  needsPactBoon,
   ABILITY_SHORT,
   abilityMod,
 } = useCharacterBuilder()
@@ -233,14 +291,46 @@ const { data: allSpells, pending } = useFetch('/api/spells', {
   immediate: true,
 })
 
-// Partager les noms de sorts pour BuilderPreview
+// Partager les noms de sorts pour BuilderPreview (toutes les sources)
 const spellNamesById = useState<Record<number, string>>('builder-spell-names', () => ({}))
-watch(allSpells, (spells) => {
-  if (!spells) return
-  const map: Record<number, string> = {}
+
+function mergeSpellNames(spells: any[] | null) {
+  if (!spells?.length) return
+  const map = { ...spellNamesById.value }
   for (const s of spells) map[s.id] = s.name
   spellNamesById.value = map
-}, { immediate: true })
+}
+
+watch(allSpells, mergeSpellNames, { immediate: true })
+
+// Sorts du Pacte du Tome — tous les cantrips toutes classes
+const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
+  immediate: true,
+})
+const pactCantrips = computed(() =>
+  ((allCantripsData.value ?? []) as any[]).filter((s: any) => s.level === 0),
+)
+const filteredPactCantrips = computed(() =>
+  filterText.value
+    ? pactCantrips.value.filter((s: any) => s.name.toLowerCase().includes(filterText.value.toLowerCase()))
+    : pactCantrips.value,
+)
+watch(allCantripsData, mergeSpellNames, { immediate: true })
+
+// Cantrips déjà choisis dans la liste classique (pour grisage dans le Tome picker)
+function isRegularCantrip(id: number): boolean {
+  return state.value.selectedCantrips.includes(id)
+}
+
+// Sort Appel de familier (pour Pacte de la Chaîne)
+const { data: magicianSpells } = useFetch('/api/spells', {
+  query: { className: 'Magicien' },
+  immediate: true,
+})
+const familiarSpell = computed(() =>
+  ((magicianSpells.value ?? []) as any[]).find((s: any) => s.name === 'Appel de familier') ?? null,
+)
+watch(magicianSpells, mergeSpellNames, { immediate: true })
 
 const cantrips = computed(() => (allSpells.value ?? []).filter((s: any) => s.level === 0))
 
@@ -349,6 +439,13 @@ function toggleCantrip(id: number) {
   const idx = list.indexOf(id)
   if (idx >= 0) list.splice(idx, 1)
   else if (list.length < cantripsNeeded.value) list.push(id)
+}
+
+function togglePactBoonCantrip(id: number) {
+  const list = state.value.selectedPactBoonCantripIds
+  const idx = list.indexOf(id)
+  if (idx >= 0) list.splice(idx, 1)
+  else if (list.length < 3) list.push(id)
 }
 
 function toggleSpell(id: number) {

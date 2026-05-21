@@ -98,6 +98,39 @@
           </span>
         </div>
       </div>
+
+      <!-- Arme de Pacte (Occultiste — Pacte de la Lame) -->
+      <div v-if="needsPactBoon && state.pactBoon === 'blade'" class="mt-6">
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+          🌑 Arme de Pacte (facultatif)
+        </p>
+        <p class="text-xs text-muted mb-3">Désignez une arme de corps-à-corps comme arme de pacte.</p>
+        <div class="flex flex-col gap-1.5">
+          <button
+            type="button"
+            class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
+            :class="state.pactWeaponItemName === null
+              ? 'border-violet-500/60 bg-violet-500/10 text-violet-400 font-semibold'
+              : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-violet-500/40'"
+            @click="state.pactWeaponItemName = null"
+          >
+            Choisir plus tard
+          </button>
+          <button
+            v-for="item in meleEquipmentItems"
+            :key="item"
+            type="button"
+            class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
+            :class="state.pactWeaponItemName === item
+              ? 'border-violet-500/60 bg-violet-500/10 text-violet-400 font-semibold'
+              : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-violet-500/40'"
+            @click="state.pactWeaponItemName = item"
+          >
+            {{ item }}
+          </button>
+          <p v-if="!meleEquipmentItems.length" class="text-xs text-muted italic px-2">Aucune arme dans l'équipement sélectionné — ajoutez-en une ou choisissez plus tard.</p>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -109,7 +142,30 @@ const {
   state,
   classData,
   backgroundData,
+  needsPactBoon,
 } = useCharacterBuilder()
+
+// Armes de corps-à-corps parmi l'équipement sélectionné (pour Pacte de la Lame)
+// Fetch les items connus comme armes de mêlée depuis l'API items (approximation : noms contenant épée, hache, etc.)
+const { data: allItems } = useFetch('/api/items', {
+  query: { type: 'weapon' },
+  immediate: computed(() => needsPactBoon.value && state.value.pactBoon === 'blade'),
+})
+
+const meleeItemNames = computed(() => {
+  const items = (allItems.value ?? []) as any[]
+  return new Set(items
+    .filter((it: any) => {
+      const cat = it.properties?.weapon_category
+      return cat === 'simple_melee' || cat === 'martial_melee'
+    })
+    .map((it: any) => it.name as string),
+  )
+})
+
+const meleEquipmentItems = computed(() =>
+  state.value.equipment.filter(name => meleeItemNames.value.has(name)),
+)
 
 // Choix locaux (index → option choisie ou null)
 const choices = ref<(string | null)[]>([])

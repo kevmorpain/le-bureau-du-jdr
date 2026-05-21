@@ -208,8 +208,15 @@ function skillBonus(sk: { ability: string }) {
   return abilityMod(score) + profBonus.value
 }
 
-const selectedSpellNames = computed(() => [
-  ...state.value.selectedCantrips.map(id => spellNamesById.value[id]).filter(Boolean),
-  ...state.value.selectedSpells.map(id => spellNamesById.value[id]).filter(Boolean),
-])
+const selectedSpellNames = computed(() => {
+  const map = spellNamesById.value
+  const s = state.value
+  const names: string[] = [
+    ...s.selectedCantrips.map(id => map[id]).filter(Boolean) as string[],
+    ...s.selectedSpells.map(id => map[id]).filter(Boolean) as string[],
+    ...s.selectedPactBoonCantripIds.map(id => map[id]).filter(Boolean) as string[],
+  ]
+  if (s.pactBoon === 'chain') names.push('Appel de familier')
+  return names
+})
 </script>

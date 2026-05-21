@@ -81,6 +81,9 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Foulée brumeuse', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Force fantasmagorique', classNames: ['Barde', 'Magicien', 'Occultiste'] },
 
+  // Niveau 1 (Pacte de la Chaîne — apprendre via aptitude, pas liste Occultiste)
+  { spellName: 'Appel de familier', classNames: ['Magicien'] },
+
   // Niveau 3
   { spellName: 'Voracité de Hadar', classNames: ['Occultiste'] },
   { spellName: 'Ennemis à foison', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },

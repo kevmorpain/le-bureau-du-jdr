@@ -86,6 +86,57 @@
       </template>
     </div>
 
+    <!-- Sorts du Pacte de la Chaîne -->
+    <div v-if="state.pactBoon === 'chain'" class="mb-6">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
+        <span class="text-[10px] text-violet-400 bg-violet-500/15 px-2 py-1 rounded-md font-semibold">Auto-ajouté</span>
+      </div>
+      <div v-if="familiarSpell">
+        <SpellCardBuilder
+          :spell="familiarSpell"
+          :selected="true"
+          :character-level="state.toLevel"
+          :spellcasting-mod="spellcastingMod"
+          @click="() => {}"
+        />
+      </div>
+      <div v-else class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic">
+        Sort "Appel de familier" introuvable — relancez les seeds.
+      </div>
+    </div>
+
+    <!-- Sorts du Pacte du Tome -->
+    <div v-if="state.pactBoon === 'tome'" class="mb-6">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte du Tome</p>
+        <span
+          class="text-xs font-semibold"
+          :class="state.pactBoonCantripIds.length >= 3 ? 'text-green-400' : 'text-amber-400'"
+        >{{ state.pactBoonCantripIds.length }}/3</span>
+      </div>
+      <p class="text-xs text-muted mb-3">Choisissez 3 sorts mineurs de n'importe quelle classe.</p>
+      <div v-if="pactCantripsPending" class="text-sm text-muted py-4 text-center">Chargement…</div>
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+        <UTooltip
+          v-for="spell in filteredPactCantrips"
+          :key="spell.id"
+          :text="state.newCantripIds.includes(spell.id) && !state.pactBoonCantripIds.includes(spell.id) ? 'Déjà dans vos nouveaux sorts mineurs' : ''"
+        >
+          <div :class="state.newCantripIds.includes(spell.id) && !state.pactBoonCantripIds.includes(spell.id) ? 'opacity-50' : ''">
+            <SpellCardBuilder
+              :spell="spell"
+              :selected="state.pactBoonCantripIds.includes(spell.id)"
+              :character-level="state.toLevel"
+              :spellcasting-mod="spellcastingMod"
+              @click="togglePactBoonCantrip(spell.id)"
+            />
+          </div>
+        </UTooltip>
+      </div>
+      <p v-if="!pactCantripsPending && filteredPactCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
+    </div>
+
     <!-- Filtres partagés (cantrips + sorts) -->
     <div v-if="cantripsToLearn > 0 || spellsToLearn > 0" class="flex flex-wrap items-center gap-2 mb-4">
       <input
@@ -128,15 +179,21 @@
       </div>
       <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-        <SpellCardBuilder
+        <UTooltip
           v-for="spell in filteredCantrips"
           :key="spell.id"
-          :spell="spell"
-          :selected="state.newCantripIds.includes(spell.id)"
-          :character-level="state.toLevel"
-          :spellcasting-mod="spellcastingMod"
-          @click="toggleCantrip(spell.id)"
-        />
+          :text="state.pactBoonCantripIds.includes(spell.id) && !state.newCantripIds.includes(spell.id) ? 'Déjà dans vos sorts du Pacte du Tome' : ''"
+        >
+          <div :class="state.pactBoonCantripIds.includes(spell.id) && !state.newCantripIds.includes(spell.id) ? 'opacity-50' : ''">
+            <SpellCardBuilder
+              :spell="spell"
+              :selected="state.newCantripIds.includes(spell.id)"
+              :character-level="state.toLevel"
+              :spellcasting-mod="spellcastingMod"
+              @click="toggleCantrip(spell.id)"
+            />
+          </div>
+        </UTooltip>
       </div>
       <p v-if="!pending && filteredCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
     </div>
@@ -281,6 +338,31 @@ const { data: allSpells, pending } = useFetch('/api/spells', {
   immediate: true,
 })
 
+// Sorts du Pacte du Tome — tous les cantrips toutes classes
+const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
+  immediate: true,
+})
+
+const pactCantrips = computed(() =>
+  ((allCantripsData.value ?? []) as any[]).filter((s: any) => s.level === 0),
+)
+
+const filteredPactCantrips = computed(() =>
+  filterText.value
+    ? pactCantrips.value.filter((s: any) => s.name.toLowerCase().includes(filterText.value.toLowerCase()))
+    : pactCantrips.value,
+)
+
+// Sort Appel de familier (pour affichage Pacte de la Chaîne)
+const { data: magicianSpells } = useFetch('/api/spells', {
+  query: { className: 'Magicien' },
+  immediate: true,
+})
+
+const familiarSpell = computed(() =>
+  ((magicianSpells.value ?? []) as any[]).find((s: any) => s.name === 'Appel de familier') ?? null,
+)
+
 // Populate spell names map for the summary screen
 watch(allSpells, (spells) => {
   if (!spells) return
@@ -347,6 +429,12 @@ function toggleCantrip(id: number) {
   const idx = state.value.newCantripIds.indexOf(id)
   if (idx >= 0) state.value.newCantripIds.splice(idx, 1)
   else if (state.value.newCantripIds.length < cantripsToLearn.value) state.value.newCantripIds.push(id)
+}
+
+function togglePactBoonCantrip(id: number) {
+  const idx = state.value.pactBoonCantripIds.indexOf(id)
+  if (idx >= 0) state.value.pactBoonCantripIds.splice(idx, 1)
+  else if (state.value.pactBoonCantripIds.length < 3) state.value.pactBoonCantripIds.push(id)
 }
 
 function toggleSpell(id: number) {

@@ -115,6 +115,9 @@ export interface LevelUpState {
   newSkills: string[]
   newCantripIds: number[]
   newSpellIds: number[]
+  pactBoon: 'chain' | 'blade' | 'tome' | null
+  pactWeaponInventoryId: number | null
+  pactBoonCantripIds: number[]
 }
 
 const INIT_STATE: LevelUpState = {
@@ -136,6 +139,9 @@ const INIT_STATE: LevelUpState = {
   newSkills: [],
   newCantripIds: [],
   newSpellIds: [],
+  pactBoon: null,
+  pactWeaponInventoryId: null,
+  pactBoonCantripIds: [],
 }
 
 export interface LUStep {
@@ -256,6 +262,15 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     if (val != null) state.value.hpGained = val
   })
 
+  // ── Pact Boon availability (Warlock level 3) ──────────────────────────────
+
+  const needsPactBoon = computed(() => {
+    if (state.value.pickedClassId !== 'warlock') return false
+    if (state.value.toLevel !== 3) return false
+    const existingPactBoon = (pickedCharClass.value as any)?.pactBoon ?? null
+    return !existingPactBoon
+  })
+
   // ── Subclass availability ─────────────────────────────────────────────────
 
   const isSubclassLevel = computed(() => {
@@ -334,6 +349,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         if (isSubclassLevel.value && !s.newSubclassId) return false
         if (needsFightingStyle.value && !s.fightingStyle) return false
         if (needsExpertise.value && s.expertiseSkills.length < 2) return false
+        if (needsPactBoon.value && !s.pactBoon) return false
         return true
       }
 
@@ -352,7 +368,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       }
 
       case 'spells':
-        return true  // optional: don't block on spell selection
+        if (s.pactBoon === 'tome' && s.pactBoonCantripIds.length < 3) return false
+        return true
 
       default:
         return false
@@ -371,7 +388,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         ? `${cls.name}${s.isMulticlass ? ' (nouveau)' : ` niv.${s.toLevel}`}`
         : null,
       hp: s.hpGained != null ? `+${s.hpGained} PV` : null,
-      features: s.newSubclassName ?? (s.fightingStyle ? `Style: ${s.fightingStyle}` : null),
+      features: s.newSubclassName ?? (s.pactBoon ? ({ chain: 'Pacte de la Chaîne', blade: 'Pacte de la Lame', tome: 'Pacte du Tome' })[s.pactBoon] : null) ?? (s.fightingStyle ? `Style: ${s.fightingStyle}` : null),
       asi: s.asiChoice === 'feat'
         ? (LU_FEATS.find(f => f.id === s.featId)?.name ?? null)
         : (Object.values(s.asiBonuses).some(v => v > 0) ? '+2 carac.' : null),
@@ -425,6 +442,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         newSkills: s.newSkills,
         newCantripIds: s.newCantripIds,
         newSpellIds: s.newSpellIds,
+        pactBoon: s.pactBoon,
+        pactWeaponInventoryId: s.pactWeaponInventoryId,
+        pactBoonCantripIds: s.pactBoonCantripIds,
       },
     })
   }
@@ -453,6 +473,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     needsExpertise,
     needsMulticlassSkills,
     hasSpellcasting,
+    needsPactBoon,
     // Navigation
     activeSteps,
     currentStepId,

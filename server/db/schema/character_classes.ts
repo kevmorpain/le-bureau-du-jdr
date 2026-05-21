@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import characterSheets from './character_sheets'
 import classes from './classes'
 import subclasses from './subclasses'
@@ -12,6 +12,7 @@ const characterClasses = sqliteTable(
     level: integer('level').default(1).notNull(),
     isMain: integer('is_main', { mode: 'boolean' }).default(false).notNull(),
     subclassId: integer('subclass_id').references(() => subclasses.id, { onDelete: 'set null' }),
+    pactBoon: text('pact_boon').$type<'chain' | 'blade' | 'tome'>(),
   },
   table => [
     primaryKey({ columns: [table.characterSheetId, table.classId] }),

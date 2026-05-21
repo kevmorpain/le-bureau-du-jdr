@@ -82,6 +82,17 @@
       </li>
     </ul>
 
+    <!-- Badge source (Pacte) -->
+    <UTooltip
+      v-if="source"
+      :text="source === 'pact_chain' ? 'Sort octroyé par le Pacte de la Chaîne' : 'Sort mineur du Pacte du Tome'"
+      :delay-duration="0"
+    >
+      <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/30 whitespace-nowrap">
+        {{ source === 'pact_chain' ? 'Pacte · Chaîne' : 'Pacte · Tome' }}
+      </span>
+    </UTooltip>
+
     <!-- Dégâts / Soins calculés -->
     <span
       v-if="damageText"
@@ -130,6 +141,7 @@ const props = defineProps<{
   hasSomaticWarning: boolean
   characterLevel: number
   spellcastingModifier: number | null
+  source?: 'pact_chain' | 'pact_tome' | null
 }>()
 
 const emit = defineEmits<{

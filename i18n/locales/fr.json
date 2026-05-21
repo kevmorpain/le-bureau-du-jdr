@@ -80,7 +80,8 @@
     "poison": "poison | poisons",
     "psychic": "psychique | psychiques",
     "radiant": "radiant | radiants",
-    "slashing": "tranchant | tranchants"
+    "slashing": "tranchant | tranchants",
+    "thunder": "tonnerre | tonnerres"
   },
   "schools": {
     "Abjuration": "Abjuration",

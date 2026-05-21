@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import characterSheets from './character_sheets'
 import spells from './spells'
@@ -10,6 +10,7 @@ const characterSpells = sqliteTable(
     spellId: integer('spell_id').notNull().references(() => spells.id, { onDelete: 'cascade' }),
     isKnown: integer('is_known', { mode: 'boolean' }).default(false).notNull(),
     isPrepared: integer('is_prepared', { mode: 'boolean' }).default(false).notNull(),
+    source: text('source').$type<'pact_chain' | 'pact_tome'>(),
   },
   table => [
     primaryKey({ columns: [table.characterSheetId, table.spellId] }),

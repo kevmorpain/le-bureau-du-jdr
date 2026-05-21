@@ -45,6 +45,7 @@ const {
   finalAbilities,
   hpMax,
   resetBuilder,
+  needsPactBoon,
 } = useCharacterBuilder()
 
 const router = useRouter()
@@ -148,6 +149,9 @@ async function handleSubmit() {
       ],
       toolProficiencyChoices: Object.values(state.value.selectedToolProficiencies).filter(Boolean),
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],
+      pactBoon: needsPactBoon.value ? state.value.pactBoon : null,
+      pactWeaponItemName: needsPactBoon.value && state.value.pactBoon === 'blade' ? state.value.pactWeaponItemName : null,
+      pactBoonCantripIds: needsPactBoon.value && state.value.pactBoon === 'tome' ? state.value.selectedPactBoonCantripIds : [],
       inventoryItemNames: itemNames,
       ...currency,
     }

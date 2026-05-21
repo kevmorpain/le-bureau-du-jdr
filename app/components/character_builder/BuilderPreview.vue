@@ -179,10 +179,14 @@ const allSkills = computed(() => [
 const spellNamesById = useState<Record<number, string>>('builder-spell-names', () => ({}))
 const selectedSpellNames = computed(() => {
   const map = spellNamesById.value
-  return [
-    ...state.value.selectedCantrips.map(id => map[id]).filter(Boolean),
-    ...state.value.selectedSpells.map(id => map[id]).filter(Boolean),
+  const s = state.value
+  const names: string[] = [
+    ...s.selectedCantrips.map(id => map[id]).filter(Boolean) as string[],
+    ...s.selectedSpells.map(id => map[id]).filter(Boolean) as string[],
+    ...s.selectedPactBoonCantripIds.map(id => map[id]).filter(Boolean) as string[],
   ]
+  if (s.pactBoon === 'chain') names.push('Appel de familier')
+  return names
 })
 
 function modColor(score: number | null | undefined): string {

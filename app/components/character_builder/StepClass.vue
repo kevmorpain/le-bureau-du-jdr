@@ -203,6 +203,31 @@
         </div>
       </template>
 
+      <!-- Faveur du Pacte (Occultiste niveau ≥ 3) -->
+      <template v-if="needsPactBoon">
+        <USeparator class="my-6" />
+        <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
+          <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-3">
+            🌑 Don du Pacte — niveau 3
+          </p>
+          <div class="flex flex-col gap-2">
+            <button
+              v-for="option in PACT_BOON_OPTIONS"
+              :key="option.id"
+              type="button"
+              class="text-left px-3 py-2.5 rounded-xl border text-xs font-medium transition-colors cursor-pointer"
+              :class="state.pactBoon === option.id
+                ? 'border-violet-500 bg-violet-500/10 text-violet-400'
+                : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-violet-500/40'"
+              @click="state.pactBoon = option.id"
+            >
+              <div class="font-semibold">{{ option.name }}</div>
+              <div class="text-muted font-normal mt-0.5 leading-snug">{{ option.hint }}</div>
+            </button>
+          </div>
+        </div>
+      </template>
+
       <!-- Points de vie -->
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -295,11 +320,18 @@ import {
   type AbilityKey,
 } from '~/data/character-builder'
 
+const PACT_BOON_OPTIONS = [
+  { id: 'chain' as const, name: 'Pacte de la Chaîne', hint: 'Apprend Appel de familier. Peut convoquer un familier spécial.' },
+  { id: 'blade' as const, name: 'Pacte de la Lame', hint: 'Crée une arme magique à volonté. Vous choisirez une arme à l\'étape Équipement.' },
+  { id: 'tome' as const, name: 'Pacte du Tome', hint: 'Livre des Ombres : 3 sorts mineurs de n\'importe quelle classe. Vous les choisirez à l\'étape Sorts.' },
+]
+
 const {
   state,
   classData,
   hpMax,
   profBonus,
+  needsPactBoon,
   CLASSES,
   SKILLS,
   ABILITY_SHORT,

@@ -1,6 +1,6 @@
 import { db, schema } from 'hub:db'
 import * as srcSchema from '~~/server/db/schema'
-import { inArray } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -93,5 +93,12 @@ export default defineEventHandler(async (event) => {
     .from(srcSchema.characterAbilityScoreImprovements)
     .where(eq(srcSchema.characterAbilityScoreImprovements.characterSheetId, Number(id)))
 
-  return { ...characterSheet, classes: enrichedClasses, abilityScoreImprovements }
+  // Charge l'inventaire avec les items (utilisé notamment pour le Pacte de la Lame)
+  const inventoryWithItems = await db
+    .select({ inventory: srcSchema.characterInventory, item: srcSchema.items })
+    .from(srcSchema.characterInventory)
+    .innerJoin(srcSchema.items, eq(srcSchema.characterInventory.itemId, srcSchema.items.id))
+    .where(eq(srcSchema.characterInventory.characterSheetId, Number(id)))
+
+  return { ...characterSheet, classes: enrichedClasses, abilityScoreImprovements, inventory: inventoryWithItems }
 })

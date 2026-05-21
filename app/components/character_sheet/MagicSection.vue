@@ -236,6 +236,7 @@
               :has-somatic-warning="isIncapacitated && cs.spell.components.includes(SpellComponent.Somatic)"
               :character-level="characterLevel"
               :spellcasting-modifier="spellcastingModifier"
+              :source="cs.source"
               @click="openSpellDetail(cs)"
               @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
               @remove="removeSpell(cs.spellId)"

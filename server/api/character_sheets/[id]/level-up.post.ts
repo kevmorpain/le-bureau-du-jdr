@@ -1,5 +1,6 @@
 import { db } from 'hub:db'
 import * as schema from '~~/server/db/schema'
+import * as srcSchema from '~~/server/db/schema'
 import { eq, and, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -16,6 +17,9 @@ const levelUpSchema = z.object({
   newSkills: z.array(z.string()).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
+  pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
+  pactWeaponInventoryId: z.number().int().nullable().optional(),
+  pactBoonCantripIds: z.array(z.number().int()).optional(),
 })
 
 // ─── Spell slot tables (D&D 5e 2014) ─────────────────────────────────────────
@@ -142,12 +146,14 @@ export default defineEventHandler(async (event) => {
       level: newLevel,
       isMain: existingClass?.isMain ?? (currentClasses.length === 0),
       subclassId: subclassId ?? existingClass?.subclassId ?? null,
-    })
+      pactBoon: d.pactBoon ?? null,
+    } as any)
     .onConflictDoUpdate({
       target: [schema.characterClasses.characterSheetId, schema.characterClasses.classId],
       set: {
         level: sql`excluded.level`,
         subclassId: subclassId !== null ? sql`excluded.subclass_id` : schema.characterClasses.subclassId,
+        pactBoon: d.pactBoon != null ? sql`excluded.pact_boon` : (schema.characterClasses as any).pactBoon,
       },
     })
 
@@ -244,6 +250,47 @@ export default defineEventHandler(async (event) => {
         isPrepared: false,
       })))
       .onConflictDoNothing()
+  }
+
+  // ── 8b. Faveur du Pacte effects ───────────────────────────────────────────
+
+  if (d.pactBoon === 'chain') {
+    const [familiarSpell] = await db
+      .select({ id: schema.spells.id })
+      .from(schema.spells)
+      .where(eq(schema.spells.name, 'Appel de familier'))
+      .limit(1)
+    if (familiarSpell) {
+      await db
+        .insert(schema.characterSpells)
+        .values({ characterSheetId, spellId: familiarSpell.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
+        .onConflictDoNothing()
+    }
+  }
+  else if (d.pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
+    await db
+      .insert(schema.characterSpells)
+      .values(d.pactBoonCantripIds.map(spellId => ({
+        characterSheetId,
+        spellId,
+        isKnown: true,
+        isPrepared: false,
+        source: 'pact_tome' as const,
+      })))
+      .onConflictDoNothing()
+  }
+  else if (d.pactBoon === 'blade' && d.pactWeaponInventoryId) {
+    await db.batch([
+      db.update(srcSchema.characterInventory)
+        .set({ isPactWeapon: false })
+        .where(eq(srcSchema.characterInventory.characterSheetId, characterSheetId)),
+      db.update(srcSchema.characterInventory)
+        .set({ isPactWeapon: true })
+        .where(and(
+          eq(srcSchema.characterInventory.id, d.pactWeaponInventoryId),
+          eq(srcSchema.characterInventory.characterSheetId, characterSheetId),
+        )),
+    ])
   }
 
   // ── 9. New skills (multiclass proficiencies) ──────────────────────────────

@@ -1,5 +1,6 @@
 import { db } from 'hub:db'
 import * as schema from '~~/server/db/schema'
+import * as srcSchema from '~~/server/db/schema'
 import { and, eq, inArray, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -90,6 +91,10 @@ const builderSchema = z.object({
   pe: z.number().int().min(0).optional(),
   pa: z.number().int().min(0).optional(),
   pc: z.number().int().min(0).optional(),
+  // Faveur du Pacte (Occultiste niveau ≥ 3)
+  pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
+  pactWeaponItemName: z.string().nullable().optional(),
+  pactBoonCantripIds: z.array(z.number().int()).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -219,7 +224,8 @@ export default defineEventHandler(async (event) => {
     level: d.level,
     isMain: true,
     subclassId,
-  })
+    pactBoon: d.pactBoon ?? null,
+  } as any)
 
   // Features de classe et sous-classe
   const classFeatureRows = await db
@@ -305,6 +311,50 @@ export default defineEventHandler(async (event) => {
     await db.insert(schema.characterInventory).values(
       itemIds.map(itemId => ({ characterSheetId: sheetId, itemId, quantity: 1 })),
     )
+  }
+
+  // Faveur du Pacte effects
+  if (d.pactBoon === 'chain') {
+    const [familiarSpell] = await db
+      .select({ id: schema.spells.id })
+      .from(schema.spells)
+      .where(eq(schema.spells.name, 'Appel de familier'))
+      .limit(1)
+    if (familiarSpell) {
+      await db
+        .insert(schema.characterSpells)
+        .values({ characterSheetId: sheetId, spellId: familiarSpell.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
+        .onConflictDoNothing()
+    }
+  }
+  else if (d.pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
+    await db
+      .insert(schema.characterSpells)
+      .values(d.pactBoonCantripIds.map(spellId => ({
+        characterSheetId: sheetId,
+        spellId,
+        isKnown: true,
+        isPrepared: false,
+        source: 'pact_tome' as const,
+      })))
+      .onConflictDoNothing()
+  }
+  else if (d.pactBoon === 'blade' && d.pactWeaponItemName && itemIds.length) {
+    const [inv] = await db
+      .select({ invId: srcSchema.characterInventory.id })
+      .from(srcSchema.characterInventory)
+      .innerJoin(srcSchema.items, eq(srcSchema.characterInventory.itemId, srcSchema.items.id))
+      .where(and(
+        eq(srcSchema.characterInventory.characterSheetId, sheetId),
+        eq(srcSchema.items.name, d.pactWeaponItemName),
+      ))
+      .limit(1)
+    if (inv) {
+      await db
+        .update(srcSchema.characterInventory)
+        .set({ isPactWeapon: true })
+        .where(eq(srcSchema.characterInventory.id, inv.invId))
+    }
   }
 
   setResponseStatus(event, 201)

@@ -16,6 +16,7 @@ const characterInventory = sqliteTable(
     magicEffects: text('magic_effects', { mode: 'json' }).$type<Effect[]>(),
     notes: text('notes'),
     usingTwoHanded: integer('using_two_handed', { mode: 'boolean' }).default(false).notNull(),
+    isPactWeapon: integer('is_pact_weapon', { mode: 'boolean' }).default(false).notNull(),
   },
   table => [
     index('idx_character_inventory_sheet').on(table.characterSheetId),

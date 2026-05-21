@@ -77,6 +77,11 @@ export interface BuilderState {
   equipChoices: (string | null)[]
   equipSubChoices: Record<number, string | null>
   equipment: string[]
+
+  // Faveur de Pacte (Occultiste niveau ≥ 3)
+  pactBoon: 'chain' | 'blade' | 'tome' | null
+  pactWeaponItemName: string | null
+  selectedPactBoonCantripIds: number[]
 }
 
 const INIT_STATE: BuilderState = {
@@ -116,6 +121,9 @@ const INIT_STATE: BuilderState = {
   equipChoices: [],
   equipSubChoices: {},
   equipment: [],
+  pactBoon: null,
+  pactWeaponItemName: null,
+  selectedPactBoonCantripIds: [],
 }
 
 // ─── Étapes ───────────────────────────────────────────────────────────────────
@@ -170,6 +178,10 @@ export function useCharacterBuilder() {
   })
   const classData = computed(() => CLASSES.find(c => c.id === state.value.classId) ?? null)
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
+
+  const needsPactBoon = computed(() =>
+    state.value.classId === 'warlock' && state.value.level >= 3,
+  )
   const alignmentData = computed(() => ALIGNMENTS.find(a => a.id === state.value.alignment) ?? null)
 
   // Bonus raciaux fusionnés (race + sous-race + cas spéciaux)
@@ -337,6 +349,7 @@ export function useCharacterBuilder() {
         if (s.skills.length < cls.skillChoices.count) return false
         const fightingStyleOptions = FIGHTING_STYLES[s.classId]
         if (fightingStyleOptions && !s.fightingStyle) return false
+        if (needsPactBoon.value && !s.pactBoon) return false
         return true
       }
       case 'abilities': {
@@ -351,6 +364,7 @@ export function useCharacterBuilder() {
         if (preparedCasters.includes(s.classId ?? '')) return cantripsDone
         const spellsNeeded = SPELLS_KNOWN[s.classId ?? '']?.[level.value - 1] ?? 0
         const spellsDone = spellsNeeded === 0 || s.selectedSpells.length >= spellsNeeded
+        if (needsPactBoon.value && s.pactBoon === 'tome' && s.selectedPactBoonCantripIds.length < 3) return false
         return cantripsDone && spellsDone
       }
       case 'description': {
@@ -488,5 +502,7 @@ export function useCharacterBuilder() {
     abilityMod,
     formatMod,
     profBonusAtLevel,
+    // Pacte
+    needsPactBoon,
   }
 }

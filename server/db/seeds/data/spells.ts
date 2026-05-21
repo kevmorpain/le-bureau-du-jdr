@@ -884,6 +884,18 @@ export const spells: InsertSpell[] = [
     },
   },
   {
+    name: 'Appel de familier',
+    level: 1,
+    castingTime: '1 heure',
+    range: 3,
+    components: [SpellComponent.Vocal, SpellComponent.Somatic, SpellComponent.Material],
+    material: 'charbon, encens et herbes aromatiques d\'une valeur de 10 po, consumés par les flammes',
+    ritual: true,
+    duration: 'Instantanée',
+    description: 'Vous gagnez les services d\'un familier, un esprit qui prend la forme d\'un animal de votre choix : crapaud, rat, corbeau, chat, faucon, lézard, pieuvre ou vipère. Apparu dans un espace inoccupé à portée, il possède les statistiques de l\'animal choisi bien qu\'il s\'agisse d\'une créature céleste, féérique ou fiélonne (votre choix). Il agit indépendamment de vous mais obéit à vos ordres. Il ne peut pas attaquer. S\'il tombe à 0 PV, il disparaît et renaît quand vous relancez ce sort. Vous ne pouvez avoir qu\'un seul familier à la fois.',
+    schoolId: 2,
+  },
+  {
     name: 'Contact avec le plan astral',
     level: 5,
     castingTime: '1 minute',
