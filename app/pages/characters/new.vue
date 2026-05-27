@@ -152,6 +152,7 @@ async function handleSubmit() {
       pactBoon: needsPactBoon.value ? state.value.pactBoon : null,
       pactWeaponItemName: needsPactBoon.value && state.value.pactBoon === 'blade' ? state.value.pactWeaponItemName : null,
       pactBoonCantripIds: needsPactBoon.value && state.value.pactBoon === 'tome' ? state.value.selectedPactBoonCantripIds : [],
+      invocationIds: state.value.invocationIds,
       inventoryItemNames: itemNames,
       ...currency,
     }

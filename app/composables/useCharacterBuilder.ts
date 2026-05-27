@@ -82,7 +82,14 @@ export interface BuilderState {
   pactBoon: 'chain' | 'blade' | 'tome' | null
   pactWeaponItemName: string | null
   selectedPactBoonCantripIds: number[]
+
+  // Manifestations occultes (Occultiste niveau ≥ 2)
+  invocationIds: number[]
 }
+
+// Invocations connues par niveau d'occultiste (PHB 2014)
+// Index = warlockLevel - 1
+export const WARLOCK_INVOCATIONS_KNOWN = [0, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8]
 
 const INIT_STATE: BuilderState = {
   raceId: null,
@@ -124,6 +131,7 @@ const INIT_STATE: BuilderState = {
   pactBoon: null,
   pactWeaponItemName: null,
   selectedPactBoonCantripIds: [],
+  invocationIds: [],
 }
 
 // ─── Étapes ───────────────────────────────────────────────────────────────────
@@ -182,6 +190,13 @@ export function useCharacterBuilder() {
   const needsPactBoon = computed(() =>
     state.value.classId === 'warlock' && state.value.level >= 3,
   )
+
+  const invocationsExpected = computed(() => {
+    if (state.value.classId !== 'warlock') return 0
+    return WARLOCK_INVOCATIONS_KNOWN[state.value.level - 1] ?? 0
+  })
+
+  const needsInvocations = computed(() => invocationsExpected.value > 0)
   const alignmentData = computed(() => ALIGNMENTS.find(a => a.id === state.value.alignment) ?? null)
 
   // Bonus raciaux fusionnés (race + sous-race + cas spéciaux)
@@ -350,6 +365,7 @@ export function useCharacterBuilder() {
         const fightingStyleOptions = FIGHTING_STYLES[s.classId]
         if (fightingStyleOptions && !s.fightingStyle) return false
         if (needsPactBoon.value && !s.pactBoon) return false
+        if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
         return true
       }
       case 'abilities': {
@@ -504,5 +520,8 @@ export function useCharacterBuilder() {
     profBonusAtLevel,
     // Pacte
     needsPactBoon,
+    // Invocations
+    needsInvocations,
+    invocationsExpected,
   }
 }

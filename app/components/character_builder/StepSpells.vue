@@ -26,7 +26,7 @@
           class="px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-center"
         >
           <div class="font-mono font-bold text-sm text-amber-400">{{ stat.value }}</div>
-          <div class="text-xs text-muted/60 uppercase tracking-wider mt-0.5" style="font-size:9px">{{ stat.label }}</div>
+          <div class="text-xs text-muted/60 uppercase tracking-wider mt-0.5" style="font-size:12px">{{ stat.label }}</div>
         </div>
       </div>
 
@@ -54,7 +54,7 @@
       <div v-if="needsPactBoon && state.pactBoon === 'chain'" class="mb-6">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
-          <span class="text-[10px] text-violet-400 bg-violet-500/15 px-2 py-1 rounded-md font-semibold">Auto-ajouté</span>
+          <UBadge color="violet" variant="subtle" size="md">Auto-ajouté</UBadge>
         </div>
         <div v-if="familiarSpell">
           <SpellCardBuilder

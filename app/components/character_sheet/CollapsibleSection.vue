@@ -9,7 +9,7 @@
         {{ title }}
         <span
           v-if="badge != null && badge > 0"
-          class="ml-2 text-[10px] bg-muted text-inverted rounded-full px-1.5 py-0.5 font-bold"
+          class="ml-2 text-xs bg-muted text-inverted rounded-full px-1.5 py-0.5 font-bold"
         >{{ badge }}</span>
       </span>
       <UIcon

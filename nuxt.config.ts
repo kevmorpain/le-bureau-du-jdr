@@ -3,6 +3,17 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxthub/core', '@vite-pwa/nuxt', 'nuxt-zod-i18n', '@nuxtjs/i18n'],
 
+  ui: {
+    theme: {
+      colors: [
+        'primary', 'secondary', 'success', 'info', 'warning', 'error', 'neutral',
+        // Couleurs par classe — alias vers une palette Tailwind dans app.config.ts
+        'barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk',
+        'paladin', 'ranger', 'rogue', 'sorcerer', 'warlock', 'wizard',
+      ],
+    },
+  },
+
   pages: true,
 
   components: [

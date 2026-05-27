@@ -3,6 +3,7 @@ import * as schema from '~~/server/db/schema'
 import * as srcSchema from '~~/server/db/schema'
 import { and, eq, inArray, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { applyInvocationChanges } from '~~/server/utils/invocations'
 
 // Alignement builder (lowercase) → DB (uppercase)
 const ALIGNMENT_MAP: Record<string, string> = {
@@ -95,6 +96,8 @@ const builderSchema = z.object({
   pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
   pactWeaponItemName: z.string().nullable().optional(),
   pactBoonCantripIds: z.array(z.number().int()).optional(),
+  // Manifestations occultes (Occultiste niveau ≥ 2)
+  invocationIds: z.array(z.number().int().positive()).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -355,6 +358,11 @@ export default defineEventHandler(async (event) => {
         .set({ isPactWeapon: true })
         .where(eq(srcSchema.characterInventory.id, inv.invId))
     }
+  }
+
+  // Manifestations occultes (Occultiste)
+  if (d.invocationIds && d.invocationIds.length) {
+    await applyInvocationChanges(sheetId, d.invocationIds, null)
   }
 
   setResponseStatus(event, 201)

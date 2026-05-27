@@ -309,6 +309,13 @@
       "when": 1747872001000,
       "tag": "0043_character_spell_source",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "6",
+      "when": 1747872002000,
+      "tag": "0044_eldritch_invocations",
+      "breakpoints": true
     }
   ]
 }

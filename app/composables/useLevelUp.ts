@@ -118,7 +118,13 @@ export interface LevelUpState {
   pactBoon: 'chain' | 'blade' | 'tome' | null
   pactWeaponInventoryId: number | null
   pactBoonCantripIds: number[]
+  newInvocationIds: number[]
+  replacedInvocationId: number | null
 }
+
+// Invocations connues par niveau d'occultiste (PHB 2014)
+// Index = warlockLevel - 1
+export const WARLOCK_INVOCATIONS_KNOWN_LU = [0, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8]
 
 const INIT_STATE: LevelUpState = {
   pickedClassId: null,
@@ -142,6 +148,8 @@ const INIT_STATE: LevelUpState = {
   pactBoon: null,
   pactWeaponInventoryId: null,
   pactBoonCantripIds: [],
+  newInvocationIds: [],
+  replacedInvocationId: null,
 }
 
 export interface LUStep {
@@ -185,6 +193,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         isMain: cc.isMain,
         dbSubclassId: (cc as any).subclassId ?? null,
         subclassName: (cc as any).subclass?.name ?? null,
+        pactBoon: (cc as any).pactBoon ?? null,
         hitDie: cls?.hitDie ?? 8,
         color: cls?.color ?? '#a1a1aa',
         emoji: cls?.emoji ?? '⚔️',
@@ -271,6 +280,46 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return !existingPactBoon
   })
 
+  // ── Manifestations occultes (Warlock niveaux 2/5/7/9/12/15/18) ─────────────
+
+  const invocationsAtToLevel = computed(() => {
+    if (state.value.pickedClassId !== 'warlock') return 0
+    return WARLOCK_INVOCATIONS_KNOWN_LU[state.value.toLevel - 1] ?? 0
+  })
+  const invocationsAtFromLevel = computed(() => {
+    if (state.value.pickedClassId !== 'warlock') return 0
+    return WARLOCK_INVOCATIONS_KNOWN_LU[state.value.fromLevel - 1] ?? 0
+  })
+  const newInvocationsCount = computed(() =>
+    Math.max(0, invocationsAtToLevel.value - invocationsAtFromLevel.value),
+  )
+
+  const needsInvocations = computed(() => newInvocationsCount.value > 0)
+  const canReplaceInvocation = computed(() =>
+    state.value.pickedClassId === 'warlock'
+    && !state.value.isMulticlass
+    && invocationsAtFromLevel.value > 0,
+  )
+
+  // Current invocation IDs known by the character (warlock features with featureType=eldritch_invocation)
+  const knownInvocationIds = computed<number[]>(() => {
+    const features = (charSheet.value as any)?.features ?? []
+    return features
+      .filter((f: any) => f.feature?.featureType === 'eldritch_invocation')
+      .map((f: any) => f.feature.id)
+  })
+
+  // Effective pact boon (for filtering invocations) — existing on charClass OR being picked this level-up
+  const effectivePactBoon = computed<'chain' | 'blade' | 'tome' | null>(() => {
+    return ((pickedCharClass.value as any)?.pactBoon ?? null) ?? state.value.pactBoon
+  })
+
+  // Known spell names (for prereq Décharge occulte etc.)
+  const knownSpellNames = computed<string[]>(() => {
+    const spells = (charSheet.value?.spells ?? []) as any[]
+    return spells.map(s => s.spell?.name ?? '').filter(Boolean)
+  })
+
   // ── Subclass availability ─────────────────────────────────────────────────
 
   const isSubclassLevel = computed(() => {
@@ -350,6 +399,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         if (needsFightingStyle.value && !s.fightingStyle) return false
         if (needsExpertise.value && s.expertiseSkills.length < 2) return false
         if (needsPactBoon.value && !s.pactBoon) return false
+        const expectedInvocations = newInvocationsCount.value + (s.replacedInvocationId ? 1 : 0)
+        if (expectedInvocations > 0 && s.newInvocationIds.length < expectedInvocations) return false
         return true
       }
 
@@ -445,6 +496,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         pactBoon: s.pactBoon,
         pactWeaponInventoryId: s.pactWeaponInventoryId,
         pactBoonCantripIds: s.pactBoonCantripIds,
+        newInvocationIds: s.newInvocationIds,
+        replacedInvocationId: s.replacedInvocationId,
       },
     })
   }
@@ -474,6 +527,12 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     needsMulticlassSkills,
     hasSpellcasting,
     needsPactBoon,
+    needsInvocations,
+    canReplaceInvocation,
+    newInvocationsCount,
+    knownInvocationIds,
+    effectivePactBoon,
+    knownSpellNames,
     // Navigation
     activeSteps,
     currentStepId,

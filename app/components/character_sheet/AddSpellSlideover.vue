@@ -46,7 +46,7 @@
             >
               <div class="flex items-center gap-2 min-w-0">
                 <UBadge
-                  size="xs"
+                  size="md"
                   variant="soft"
                 >
                   {{ spell.level === 0 ? 'Tour' : `Niv ${spell.level}` }}

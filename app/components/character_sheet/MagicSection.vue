@@ -61,7 +61,7 @@
       class="flex gap-x-6 rounded-lg border border-violet-500/30 bg-violet-500/5 p-2"
     >
       <div class="flex items-center pr-2">
-        <UBadge color="violet" variant="subtle" size="xs">Pacte</UBadge>
+        <UBadge color="violet" variant="subtle" size="md">Pacte</UBadge>
       </div>
       <div>
         <p class="text-sm text-muted">
@@ -208,7 +208,7 @@
 
             <!-- Pact Magic -->
             <template v-if="spellSlots.pact_magic[group.level] && spellSlots.pact_magic[group.level]!.max > 0">
-              <UBadge color="violet" variant="subtle" size="xs" class="ml-2">
+              <UBadge color="violet" variant="subtle" size="md" class="ml-2">
                 Pacte
               </UBadge>
               <button
@@ -237,18 +237,23 @@
               :character-level="characterLevel"
               :spellcasting-modifier="spellcastingModifier"
               :source="cs.source"
+              :eldritch-blast-agonizing="eldritchBlastMods.agonizing"
+              :eldritch-blast-repelling="eldritchBlastMods.repelling"
+              :eldritch-blast-range-extended="eldritchBlastMods.rangeExtended"
+              :eldritch-blast-source-names="eldritchBlastMods.sourceNames"
+              :charisma-modifier="charismaModifier"
               @click="openSpellDetail(cs)"
               @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
               @remove="removeSpell(cs.spellId)"
             />
             <!-- Bouton Lancer inline -->
             <UButton
-              v-if="cs.spell.level > 0 && cs.isPrepared"
+              v-if="cs.spell.level === 0 || cs.isPrepared"
               size="xs"
               variant="soft"
               icon="i-game-icons:magic-swirl"
               class="shrink-0"
-              @click.stop="openCastModalFor(cs)"
+              @click.stop="cs.spell.level === 0 ? castCantripDirect(cs) : openCastModalFor(cs)"
             >
               Lancer
             </UButton>
@@ -289,10 +294,9 @@
               v-else
               block
               icon="i-game-icons:magic-swirl"
-              variant="outline"
-              disabled
+              @click="castCantripFromSlideover"
             >
-              Sort de tour (aucun emplacement requis)
+              Lancer (aucun emplacement requis)
             </UButton>
           </div>
         </div>
@@ -378,8 +382,6 @@ const castSpell = (slotLevel: number, slotType: SlotType) => {
 
 const isIncapacitated = computed(() => activeConditions.value.includes('incapacitated'))
 
-provide<SpellContext>('spellContext', { characterLevel, spellcastingModifier })
-
 // ─── Filtres supplémentaires ─────────────────────────────────────────────────
 
 const activeActionFilter = ref<string | null>(null)
@@ -450,6 +452,85 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
   showCastModal.value = true
 }
 
+// ─── Jets de dés au lancement de sort ──────────────────────────────────────
+const { roll } = useDiceRoller()
+
+// Parse "1d10" → { count: 1, sides: 10 }
+function parseSpellDie(die: string): { count: number, sides: number } | null {
+  const m = die.match(/^(\d+)d(\d+)$/)
+  if (!m) return null
+  return { count: Number(m[1]), sides: Number(m[2]) }
+}
+
+// Récupère le die à infliger pour le niveau actuel
+function getSpellDieAt(damageMap: Record<string, string>, atLevel: number): string | undefined {
+  const levels = Object.keys(damageMap).map(Number).filter(n => n <= atLevel)
+  if (!levels.length) return undefined
+  return damageMap[String(Math.max(...levels))]
+}
+
+// Lance les dés de dégâts ou de soin du sort, si présents
+function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
+  const spell = cs.spell
+
+  if (spell.damage) {
+    const dmg = spell.damage
+    const die = 'damage_at_character_level' in dmg
+      ? getSpellDieAt(dmg.damage_at_character_level, characterLevel.value)
+      : getSpellDieAt((dmg as any).damage_at_slot_level, castAtLevel)
+    if (!die) return
+    const parsed = parseSpellDie(die)
+    if (!parsed) return
+
+    let bonus = 0
+    if (dmg.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
+      bonus += spellcastingModifier.value
+    }
+    // Coup éldritique agonisant : +CHA mod par rayon de Décharge occulte
+    if (spell.name === 'Décharge occulte' && eldritchBlastMods.value.agonizing) {
+      bonus += charismaModifier.value * parsed.count
+    }
+    const label = `${spell.name} · dégâts ${dmg.damage_type}`
+    roll(label, bonus, parsed.sides, parsed.count)
+    return
+  }
+
+  if (spell.heal) {
+    const heal = spell.heal
+    const die = 'heal_at_character_level' in heal
+      ? getSpellDieAt(heal.heal_at_character_level, characterLevel.value)
+      : getSpellDieAt((heal as any).heal_at_slot_level, castAtLevel)
+    if (!die) return
+    const parsed = parseSpellDie(die)
+    if (!parsed) return
+
+    let bonus = 0
+    if (heal.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
+      bonus += spellcastingModifier.value
+    }
+    roll(`${spell.name} · soin`, bonus, parsed.sides, parsed.count)
+  }
+}
+
+// Lancer un cantrip directement (pas d'emplacement à consommer)
+const castCantripDirect = (cs: CharacterSpellWithSpell) => {
+  if (cs.spell.concentration) {
+    setConcentration(cs.spellId)
+    useToast().add({
+      title: `Concentration active — ${cs.spell.name}`,
+      color: 'info',
+    })
+  }
+  // Cantrips utilisent damage_at_character_level — on lance les dés
+  rollSpellEffect(cs, cs.spell.level || 0)
+}
+
+const castCantripFromSlideover = () => {
+  if (!selectedSpell.value) return
+  showSpellDetail.value = false
+  castCantripDirect(selectedSpell.value)
+}
+
 const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number | null) => {
   castSpell(slotLevel, slotType)
   // Mémorise la classe lanceuse choisie (les stats spellcasting suivent)
@@ -461,6 +542,10 @@ const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number
       title: `Concentration active — ${selectedSpell.value.spell.name}`,
       color: 'info',
     })
+  }
+  // Lancer les dés du sort
+  if (selectedSpell.value) {
+    rollSpellEffect(selectedSpell.value, slotLevel)
   }
 }
 
@@ -490,4 +575,46 @@ const showAddSpell = ref(false)
 const alreadyAddedIds = computed(() =>
   new Set((characterSpells.value ?? []).map(cs => cs.spellId)),
 )
+
+// ─── Modifications de Décharge occulte (Manifestations occultes) ─────────────
+
+const charismaModifier = computed<number>(() => {
+  const scores = (characterSheetRef.value as any)?.baseAbilityScores ?? []
+  const cha = scores.find((s: any) => s.abilityId === 'cha')?.value ?? 10
+  const improvements = (characterSheetRef.value as any)?.abilityScoreImprovements ?? []
+  const bonus = improvements
+    .filter((i: any) => i.ability === 'cha')
+    .reduce((sum: number, i: any) => sum + i.amount, 0)
+  return Math.floor(((cha + bonus) - 10) / 2)
+})
+
+const eldritchBlastMods = computed(() => {
+  const features = (characterSheetRef.value as any)?.features ?? []
+  const sourceNames: string[] = []
+  let agonizing = false, repelling = false, rangeExtended = false
+  for (const cf of features) {
+    const f = cf.feature
+    if (!f || f.featureType !== 'eldritch_invocation') continue
+    for (const fe of (f.featureEffects ?? [])) {
+      const eff = fe.effect
+      if (!eff || eff.type !== 'eldritch_blast_modifier') continue
+      const kind = eff.value?.kind
+      if (kind === 'agonizing') { agonizing = true; sourceNames.push(f.name) }
+      else if (kind === 'repelling') { repelling = true; sourceNames.push(f.name) }
+      else if (kind === 'range_extended') { rangeExtended = true; sourceNames.push(f.name) }
+    }
+  }
+  return { agonizing, repelling, rangeExtended, sourceNames: [...new Set(sourceNames)] }
+})
+
+// Doit être après les déclarations de eldritchBlastMods et charismaModifier
+provide<SpellContext>('spellContext', {
+  characterLevel,
+  spellcastingModifier,
+  eldritchBlastAgonizing: computed(() => eldritchBlastMods.value.agonizing),
+  eldritchBlastRepelling: computed(() => eldritchBlastMods.value.repelling),
+  eldritchBlastRangeExtended: computed(() => eldritchBlastMods.value.rangeExtended),
+  eldritchBlastSourceNames: computed(() => eldritchBlastMods.value.sourceNames),
+  charismaModifier,
+})
 </script>

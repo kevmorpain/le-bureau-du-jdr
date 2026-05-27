@@ -18,7 +18,7 @@
         >
           {{ cc.className }}
           <span class="font-mono">{{ cc.level }}</span>
-          <span v-if="cc.subclassName" class="ml-1 opacity-70 text-[10px]">· {{ cc.subclassName }}</span>
+          <span v-if="cc.subclassName" class="ml-1 opacity-70 text-xs">· {{ cc.subclassName }}</span>
         </span>
       </div>
       <span class="text-xs text-muted shrink-0">
@@ -29,7 +29,7 @@
     </div>
 
     <!-- Continuer une classe -->
-    <div class="text-[10px] font-bold tracking-[0.12em] uppercase text-amber-400 mb-2">
+    <div class="text-xs font-bold tracking-[0.12em] uppercase text-amber-400 mb-2">
       ① Continuer une classe existante
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-7">
@@ -53,9 +53,7 @@
               niv. {{ cc.level }} → {{ cc.level + 1 }}
             </div>
           </div>
-          <span class="text-[10px] px-2 py-0.5 rounded-md font-mono" :style="{ background: `${cc.color}18`, border: `1px solid ${cc.color}40`, color: cc.color }">
-            d{{ cc.hitDie }}
-          </span>
+          <UBadge :color="cc.classId" variant="subtle" size="md">d{{ cc.hitDie }}</UBadge>
         </div>
 
         <!-- Features at next level -->
@@ -69,28 +67,16 @@
 
         <!-- Badges -->
         <div class="flex flex-wrap gap-1.5 mt-2.5">
-          <span
-            v-if="isSubclassDue(cc)"
-            class="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 font-semibold"
-          >⚡ Sous-classe</span>
-          <span
-            v-if="isAsiDue(cc.classId, cc.level + 1)"
-            class="text-[10px] px-2 py-0.5 rounded-md bg-violet-500/10 border border-violet-500/30 text-violet-400 font-semibold"
-          >✦ ASI / Don</span>
-          <span
-            v-if="isFightingStyleDue(cc.classId, cc.level + 1)"
-            class="text-[10px] px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/30 text-red-400 font-semibold"
-          >⚔ Style de combat</span>
-          <span
-            v-if="isExpertiseDue(cc.classId, cc.level + 1)"
-            class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold"
-          >★ Expertise</span>
+          <UBadge v-if="isSubclassDue(cc)" color="warning" variant="subtle" size="md">⚡ Sous-classe</UBadge>
+          <UBadge v-if="isAsiDue(cc.classId, cc.level + 1)" color="violet" variant="subtle" size="md">✦ ASI / Don</UBadge>
+          <UBadge v-if="isFightingStyleDue(cc.classId, cc.level + 1)" color="error" variant="subtle" size="md">⚔ Style de combat</UBadge>
+          <UBadge v-if="isExpertiseDue(cc.classId, cc.level + 1)" color="success" variant="subtle" size="md">★ Expertise</UBadge>
         </div>
       </button>
     </div>
 
     <!-- Multiclassage -->
-    <div class="text-[10px] font-bold tracking-[0.12em] uppercase text-amber-400 mb-2">
+    <div class="text-xs font-bold tracking-[0.12em] uppercase text-amber-400 mb-2">
       ② Nouvelle classe (multi-classage)
     </div>
 
@@ -114,22 +100,20 @@
           <span class="text-xl">{{ cls.emoji }}</span>
           <div class="flex-1 min-w-0">
             <div class="font-bold text-sm text-(--ui-text)">{{ cls.name }}</div>
-            <div class="text-[10px] font-mono" :style="{ color: cls.color }">d{{ cls.hitDie }}</div>
+            <div class="text-xs font-mono" :style="{ color: cls.color }">d{{ cls.hitDie }}</div>
           </div>
         </div>
 
         <!-- Badge sous-classe au niv.1 -->
         <div v-if="cls.subclassLevel === 1" class="mb-1.5">
-          <span class="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 font-semibold">
-            ⚡ Sous-classe dès le niv.1
-          </span>
+          <UBadge color="warning" variant="subtle" size="md">⚡ Sous-classe dès le niv.1</UBadge>
         </div>
 
         <!-- Prereqs -->
         <div v-if="getPrereqs(cls.id)" class="flex flex-wrap gap-1">
           <template v-for="(req, idx) in getPrereqs(cls.id)" :key="idx">
             <span
-              class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold"
+              class="text-xs px-1.5 py-0.5 rounded font-mono font-bold"
               :class="req.ok ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'"
             >
               {{ req.label }}

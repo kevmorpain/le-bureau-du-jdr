@@ -3,6 +3,7 @@ import * as schema from '~~/server/db/schema'
 import * as srcSchema from '~~/server/db/schema'
 import { eq, and, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { applyInvocationChanges } from '~~/server/utils/invocations'
 
 const levelUpSchema = z.object({
   classDbName: z.string(),             // e.g. 'Guerrier'
@@ -20,6 +21,8 @@ const levelUpSchema = z.object({
   pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
   pactWeaponInventoryId: z.number().int().nullable().optional(),
   pactBoonCantripIds: z.array(z.number().int()).optional(),
+  newInvocationIds: z.array(z.number().int().positive()).optional(),
+  replacedInvocationId: z.number().int().positive().nullable().optional(),
 })
 
 // ─── Spell slot tables (D&D 5e 2014) ─────────────────────────────────────────
@@ -293,6 +296,16 @@ export default defineEventHandler(async (event) => {
     ])
   }
 
+  // ── 8c. Manifestations occultes ─────────────────────────────────────────────
+
+  if (d.replacedInvocationId || (d.newInvocationIds && d.newInvocationIds.length)) {
+    await applyInvocationChanges(
+      characterSheetId,
+      d.newInvocationIds ?? [],
+      d.replacedInvocationId ?? null,
+    )
+  }
+
   // ── 9. New skills (multiclass proficiencies) ──────────────────────────────
 
   if (d.newSkills?.length) {
@@ -382,19 +395,48 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // ── Pact Magic (Occultiste) ────────────────────────────────────────────────
+  // Particularité : tous les emplacements de pacte sont du même niveau, et ce
+  // niveau augmente avec le niveau d'occultiste (1→3 = pact slots niv. 2, etc.).
+  // Il faut donc supprimer les anciens emplacements de pacte aux autres niveaux
+  // avant d'upsert le nouveau niveau, sinon ils s'accumulent.
+  let newPactLevel: number | null = null
   if (pactSlots) {
     for (let i = 0; i < 9; i++) {
       const total = pactSlots[i] ?? 0
       if (total > 0) {
-        const existing = slotsByKey.get(`${i + 1}:pact_magic`)
+        newPactLevel = i + 1
+        // Préserve le "used" depuis n'importe quel ancien slot de pacte
+        // (le joueur a peut-être dépensé des emplacements avant la montée de niveau)
+        const previousPactUsed = existingSlots
+          .filter(s => s.slotType === 'pact_magic')
+          .reduce((max, s) => Math.max(max, s.used), 0)
         slotsToUpsert.push({
           characterSheetId,
-          slotLevel: i + 1,
+          slotLevel: newPactLevel,
           slotType: 'pact_magic',
           total,
-          used: Math.min(existing?.used ?? 0, total),
+          used: Math.min(previousPactUsed, total),
         })
+        break // tous les pact slots sont du même niveau, on s'arrête
       }
+    }
+  }
+
+  // Supprimer les anciens pact_magic slots qui ne sont plus pertinents
+  // (différent niveau, ou plus du tout d'emplacement de pacte si on perd la classe)
+  const pactSlotsToDelete = existingSlots.filter(s =>
+    s.slotType === 'pact_magic' && s.slotLevel !== newPactLevel,
+  )
+  if (pactSlotsToDelete.length) {
+    for (const s of pactSlotsToDelete) {
+      await db
+        .delete(schema.characterSpellSlots)
+        .where(and(
+          eq(schema.characterSpellSlots.characterSheetId, characterSheetId),
+          eq(schema.characterSpellSlots.slotLevel, s.slotLevel),
+          eq(schema.characterSpellSlots.slotType, 'pact_magic'),
+        ))
     }
   }
 

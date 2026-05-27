@@ -34,7 +34,7 @@
       <div class="relative">
         <!-- Badge symétrique -->
         <div
-          class="text-[11px] font-bold tracking-[0.25em] uppercase mb-2"
+          class="text-xs font-bold tracking-[0.25em] uppercase mb-2"
           :style="{ color: pickedClass.color }"
         >
           {{ state.isMulticlass ? '✦ MULTI-CLASSAGE ✦' : '▲ NIVEAU SUPÉRIEUR ▲' }}
@@ -78,24 +78,24 @@
           border: '1px solid var(--ui-border)',
         }"
       >
-        <div class="text-[10px] font-bold tracking-[0.18em] uppercase text-muted mb-3">AVANT</div>
+        <div class="text-xs font-bold tracking-[0.18em] uppercase text-muted mb-3">AVANT</div>
         <!-- PV + Maîtrise -->
         <div class="grid grid-cols-2 gap-2 mb-3">
           <div class="px-2 py-2 rounded-lg bg-(--ui-bg) text-center">
-            <div class="text-[9px] text-muted mb-0.5">PV MAX</div>
+            <div class="text-xs text-muted mb-0.5">PV MAX</div>
             <div class="font-mono font-black text-xl text-muted">{{ currentHpMax }}</div>
           </div>
           <div class="px-2 py-2 rounded-lg bg-(--ui-bg) text-center">
-            <div class="text-[9px] text-muted mb-0.5">MAÎTRISE</div>
+            <div class="text-xs text-muted mb-0.5">MAÎTRISE</div>
             <div class="font-mono font-black text-xl text-muted">+{{ oldProfBonus }}</div>
           </div>
         </div>
         <!-- 6 caractéristiques -->
         <div class="grid grid-cols-6 gap-1">
           <div v-for="ab in ABILITIES" :key="ab" class="rounded-md bg-(--ui-bg) py-1 text-center">
-            <div class="text-[8px] text-muted uppercase">{{ ABILITY_SHORT[ab] }}</div>
+            <div class="text-xs text-muted uppercase">{{ ABILITY_SHORT[ab] }}</div>
             <div class="font-mono text-sm font-black text-muted">{{ oldAbilities[ab] ?? 10 }}</div>
-            <div class="text-[9px] font-mono text-muted/60">{{ formatMod(abilityMod(oldAbilities[ab] ?? 10)) }}</div>
+            <div class="text-xs font-mono text-muted/60">{{ formatMod(abilityMod(oldAbilities[ab] ?? 10)) }}</div>
           </div>
         </div>
       </div>
@@ -113,30 +113,30 @@
         }"
       >
         <div
-          class="text-[10px] font-bold tracking-[0.18em] uppercase mb-3"
+          class="text-xs font-bold tracking-[0.18em] uppercase mb-3"
           :style="{ color: pickedClass.color }"
         >APRÈS</div>
         <!-- PV + Maîtrise -->
         <div class="grid grid-cols-2 gap-2 mb-3">
           <div class="px-2 py-2 rounded-lg bg-(--ui-bg) text-center">
-            <div class="text-[9px] text-muted mb-0.5">PV MAX</div>
+            <div class="text-xs text-muted mb-0.5">PV MAX</div>
             <div class="font-mono font-black text-xl text-(--ui-text)">{{ currentHpMax + (state.hpGained ?? 0) }}</div>
           </div>
           <div class="px-2 py-2 rounded-lg bg-(--ui-bg) text-center">
-            <div class="text-[9px] text-muted mb-0.5">MAÎTRISE</div>
+            <div class="text-xs text-muted mb-0.5">MAÎTRISE</div>
             <div class="font-mono font-black text-xl text-(--ui-text)">+{{ newProfBonus }}</div>
           </div>
         </div>
         <!-- 6 caractéristiques -->
         <div class="grid grid-cols-6 gap-1">
           <div v-for="ab in ABILITIES" :key="ab" class="rounded-md bg-(--ui-bg) py-1 text-center">
-            <div class="text-[8px] text-muted uppercase">{{ ABILITY_SHORT[ab] }}</div>
+            <div class="text-xs text-muted uppercase">{{ ABILITY_SHORT[ab] }}</div>
             <div
               class="font-mono text-sm font-black"
               :class="(state.asiBonuses[ab] ?? 0) > 0 ? 'text-amber-400' : 'text-(--ui-text)'"
             >{{ newAbilities[ab] ?? 10 }}</div>
             <div
-              class="text-[9px] font-mono"
+              class="text-xs font-mono"
               :class="abilityMod(newAbilities[ab] ?? 10) >= 0 ? 'text-amber-400' : 'text-red-400'"
               :style="(state.asiBonuses[ab] ?? 0) > 0 ? {} : { color: pickedClass?.color, opacity: 0.8 }"
             >{{ formatMod(abilityMod(newAbilities[ab] ?? 10)) }}</div>
@@ -147,7 +147,7 @@
 
     <!-- Acquis ce niveau -->
     <div v-if="gains.length" class="mb-7">
-      <div class="text-[10px] font-bold tracking-[0.15em] uppercase text-muted mb-3">✦ Acquis ce niveau</div>
+      <div class="text-xs font-bold tracking-[0.15em] uppercase text-muted mb-3">✦ Acquis ce niveau</div>
       <div class="flex flex-col gap-2">
         <div
           v-for="g in gains"
@@ -230,6 +230,16 @@ const submitting = ref(false)
 
 // Spell names shared from StepSpells via useState
 const spellNamesById = useState<Record<number, string>>('level-up-spell-names', () => ({}))
+
+// Invocation names (pour affichage du récap)
+const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  default: () => [],
+})
+const invocationNamesById = computed(() => {
+  const map: Record<number, string> = {}
+  for (const inv of allInvocations.value ?? []) map[inv.id] = inv.name
+  return map
+})
 
 const currentHpMax = computed(() => charSheet?.value?.maxHp ?? 0)
 const oldProfBonus = computed(() => profBonusAtLevel(totalLevel.value))
@@ -315,6 +325,31 @@ const gains = computed(() => {
   if (s.newSpellIds.length) {
     const names = s.newSpellIds.map(id => spellNamesById.value[id]).filter(Boolean).join(', ')
     list.push({ label: `${s.newSpellIds.length} nouveau(x) sort(s)`, detail: names })
+  }
+
+  // Pact Boon (Warlock niveau 3)
+  if (s.pactBoon) {
+    list.push({
+      label: `Faveur du Pacte : ${({ chain: 'Chaîne', blade: 'Lame', tome: 'Tome' } as const)[s.pactBoon]}`,
+      detail: '',
+    })
+  }
+
+  // Invocations gagnées / remplacées
+  if (s.newInvocationIds.length || s.replacedInvocationId) {
+    const newNames = s.newInvocationIds.map(id => invocationNamesById.value[id]).filter(Boolean)
+    const replacedName = s.replacedInvocationId ? invocationNamesById.value[s.replacedInvocationId] : null
+    if (replacedName && newNames.length) {
+      // Si remplacement actif, distinguer la dernière comme remplacement (par convention picker)
+      const learned = newNames.slice(0, -1)
+      const replacement = newNames[newNames.length - 1]
+      if (learned.length) {
+        list.push({ label: `${learned.length} nouvelle(s) manifestation(s)`, detail: learned.join(', ') })
+      }
+      list.push({ label: `Remplacement : ${replacedName} → ${replacement}`, detail: '' })
+    } else if (newNames.length) {
+      list.push({ label: `${newNames.length} nouvelle(s) manifestation(s)`, detail: newNames.join(', ') })
+    }
   }
 
   // Multiclass skills

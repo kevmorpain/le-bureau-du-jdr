@@ -174,9 +174,64 @@
       </template>
     </div>
 
+    <!-- Manifestations occultes -->
+    <div v-if="needsInvocations || canReplaceInvocation" class="mb-6 space-y-5">
+
+      <!-- Bloc : remplacement d'une invocation existante (optionnel) -->
+      <div v-if="canReplaceInvocation">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">
+            🔁 Remplacer une manifestation existante (optionnel)
+          </p>
+          <button
+            v-if="state.replacedInvocationId !== null"
+            type="button"
+            class="text-xs text-muted hover:text-amber-400 underline"
+            @click="state.replacedInvocationId = null"
+          >
+            Annuler
+          </button>
+        </div>
+        <p class="text-xs text-muted mb-2">
+          Vous pouvez retirer l'une de vos manifestations actuelles pour la remplacer par une nouvelle ci-dessous.
+        </p>
+        <div v-if="!knownInvocationDetails.length" class="px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic">
+          Vous ne connaissez encore aucune manifestation.
+        </div>
+        <div v-else class="flex flex-wrap gap-2">
+          <button
+            v-for="inv in knownInvocationDetails"
+            :key="inv.id"
+            type="button"
+            class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
+            :class="state.replacedInvocationId === inv.id
+              ? 'border-amber-500/60 bg-amber-500/10 text-amber-400 font-semibold line-through'
+              : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-amber-500/40 cursor-pointer'"
+            @click="state.replacedInvocationId = state.replacedInvocationId === inv.id ? null : inv.id"
+          >
+            {{ inv.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Picker — affiché si gain de niveau OU remplacement actif -->
+      <div v-if="needsInvocations || state.replacedInvocationId !== null">
+        <InvocationPicker
+          v-model="state.newInvocationIds"
+          :max-count="totalPickCount"
+          :current-level="state.toLevel"
+          :pact-boon="effectivePactBoon"
+          :known-spell-names="knownSpellNames"
+          :known-invocation-ids="knownInvocationIds"
+          :excluded-invocation-ids="excludedInvocationIds"
+          :picker-label="pickerLabel"
+        />
+      </div>
+    </div>
+
     <!-- No choices required -->
     <div
-      v-if="!isSubclassLevel && !needsFightingStyle && !needsExpertise && !needsPactBoon"
+      v-if="!isSubclassLevel && !needsFightingStyle && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation"
       class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted"
     >
       Aucun choix requis à cette étape. Cliquez sur Suivant pour continuer.
@@ -203,6 +258,12 @@ const {
   needsFightingStyle,
   needsExpertise,
   needsPactBoon,
+  needsInvocations,
+  canReplaceInvocation,
+  newInvocationsCount,
+  knownInvocationIds,
+  effectivePactBoon,
+  knownSpellNames,
   proficientSkills,
   CLASSES,
   SKILLS,
@@ -212,6 +273,42 @@ const {
   formatMod,
   totalLevel,
 } = useLevelUp(charSheet)
+
+// Détails des invocations connues pour le bloc « Remplacer »
+const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  default: () => [],
+})
+const knownInvocationDetails = computed(() => {
+  const known = new Set(knownInvocationIds.value)
+  return (allInvocations.value ?? []).filter(inv => known.has(inv.id))
+})
+
+// Slots du picker : new picks + 1 si on remplace
+const totalPickCount = computed(() =>
+  newInvocationsCount.value + (state.value.replacedInvocationId ? 1 : 0),
+)
+
+// Cacher de la liste les invocations déjà connues, sauf celle qu'on remplace
+const excludedInvocationIds = computed(() =>
+  knownInvocationIds.value.filter(id => id !== state.value.replacedInvocationId),
+)
+
+const pickerLabel = computed(() => {
+  if (state.value.replacedInvocationId !== null && newInvocationsCount.value === 0) {
+    return '🌑 Choisissez la manifestation de remplacement'
+  }
+  if (state.value.replacedInvocationId !== null) {
+    return `🌑 Nouvelles manifestations occultes — choisissez ${totalPickCount.value} (${newInvocationsCount.value} gain + 1 remplacement)`
+  }
+  return `🌑 Nouvelles manifestations occultes — choisissez ${newInvocationsCount.value}`
+})
+
+// Si l'utilisateur annule le remplacement, retirer le pick "extra" du tableau
+watch(() => state.value.replacedInvocationId, (newVal) => {
+  if (newVal === null && state.value.newInvocationIds.length > newInvocationsCount.value) {
+    state.value.newInvocationIds = state.value.newInvocationIds.slice(0, newInvocationsCount.value)
+  }
+})
 
 // Melee weapons from inventory (for Pacte de la Lame)
 const meleeWeapons = computed(() => {

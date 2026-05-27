@@ -36,7 +36,7 @@
         @click="toggle(sk.key)"
       >
         <span>{{ sk.label }}</span>
-        <span v-if="alreadyProficient(sk.key)" class="ml-1 text-[10px] text-muted/50">(déjà maîtrisé)</span>
+        <span v-if="alreadyProficient(sk.key)" class="ml-1 text-xs text-muted/50">(déjà maîtrisé)</span>
       </button>
     </div>
   </div>

@@ -32,7 +32,7 @@
           :key="condition"
           color="primary"
           variant="subtle"
-          size="sm"
+          size="md"
           class="cursor-pointer"
           @click="toggleCondition(condition)"
         >

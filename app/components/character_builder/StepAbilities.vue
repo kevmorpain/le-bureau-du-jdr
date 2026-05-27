@@ -101,7 +101,7 @@
           <span
             v-if="state.abilityMethod === 'roll' && state.rolledSets"
             class="absolute bottom-0.5 left-0 right-0 text-center text-muted/60"
-            style="font-size: 8px"
+            style="font-size:12px"
           >
             {{ state.rolledSets[idx].dice.slice(0, 3).join('+') }}
           </span>

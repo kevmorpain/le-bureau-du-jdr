@@ -45,14 +45,8 @@
             </li>
           </ul>
           <div class="flex flex-wrap gap-1.5">
-            <span
-              v-if="race.darkvision"
-              class="text-xs px-2 py-0.5 rounded-full border"
-              style="background: rgba(96,165,250,0.15); border-color: rgba(96,165,250,0.3); color: #60a5fa"
-            >Vision {{ race.darkvision }}m</span>
-            <span class="text-xs px-2 py-0.5 rounded-full border border-(--ui-border) bg-(--ui-bg) text-muted">
-              {{ race.size }} · {{ race.speed }}m
-            </span>
+            <UBadge v-if="race.darkvision" color="info" variant="subtle" size="md">Vision {{ race.darkvision }}m</UBadge>
+            <UBadge color="neutral" variant="subtle" size="md">{{ race.size }} · {{ race.speed }}m</UBadge>
             <UBadge v-for="lang in race.languages" :key="lang" color="amber" variant="subtle" size="md">{{ lang }}</UBadge>
           </div>
         </div>

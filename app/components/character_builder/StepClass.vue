@@ -26,11 +26,8 @@
           <div class="flex-1 min-w-0">
             <div class="font-bold text-(--ui-text) text-sm">{{ cls.name }}</div>
             <div class="flex gap-1.5 mt-1 flex-wrap">
-              <span
-                class="text-xs px-1.5 py-0.5 rounded-full border"
-                :style="`background: ${cls.color}18; border-color: ${cls.color}40; color: ${cls.color}`"
-              >{{ cls.role }}</span>
-              <span class="text-xs px-1.5 py-0.5 rounded-full border border-(--ui-border) bg-(--ui-bg) text-muted">d{{ cls.hitDie }}</span>
+              <UBadge :color="cls.id" variant="subtle" size="md">{{ cls.role }}</UBadge>
+              <UBadge :color="cls.id" variant="subtle" size="md">d{{ cls.hitDie }}</UBadge>
             </div>
           </div>
         </div>
@@ -228,6 +225,21 @@
         </div>
       </template>
 
+      <!-- Manifestations occultes (Occultiste niveau ≥ 2) -->
+      <template v-if="needsInvocations">
+        <USeparator class="my-6" />
+        <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
+          <InvocationPicker
+            v-model="state.invocationIds"
+            :max-count="invocationsExpected"
+            :current-level="state.level"
+            :pact-boon="state.pactBoon"
+            :known-spell-names="knownSpellNames"
+            :known-invocation-ids="state.invocationIds"
+          />
+        </div>
+      </template>
+
       <!-- Points de vie -->
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -332,10 +344,23 @@ const {
   hpMax,
   profBonus,
   needsPactBoon,
+  needsInvocations,
+  invocationsExpected,
   CLASSES,
   SKILLS,
   ABILITY_SHORT,
 } = useCharacterBuilder()
+
+// Sorts connus du perso pour la résolution des prérequis (Décharge occulte etc.)
+const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells')
+const knownSpellNames = computed(() => {
+  const ids = new Set<number>([
+    ...state.value.selectedCantrips,
+    ...state.value.selectedSpells,
+    ...state.value.selectedPactBoonCantripIds,
+  ])
+  return (allSpells.value ?? []).filter(s => ids.has(s.id)).map(s => s.name)
+})
 
 const fightingStyleOptions = computed(() =>
   state.value.classId ? FIGHTING_STYLES[state.value.classId] ?? null : null,

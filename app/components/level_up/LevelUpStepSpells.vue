@@ -18,7 +18,7 @@
         class="px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-center"
       >
         <div class="font-mono font-bold text-sm text-amber-400">{{ stat.value }}</div>
-        <div class="text-muted uppercase tracking-wider mt-0.5" style="font-size:9px">{{ stat.label }}</div>
+        <div class="text-muted uppercase tracking-wider mt-0.5" style="font-size:12px">{{ stat.label }}</div>
       </div>
     </div>
 
@@ -27,7 +27,7 @@
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Emplacements de sorts</p>
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-2 mb-2.5">
-          <span class="text-[10px] text-muted w-10 shrink-0">Avant</span>
+          <span class="text-xs text-muted w-10 shrink-0">Avant</span>
           <div class="flex gap-3 flex-1 flex-wrap">
             <template v-for="(count, i) in oldSlots" :key="i">
               <div v-if="count > 0" class="flex items-center gap-1">
@@ -41,7 +41,7 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-[10px] text-amber-400 w-10 shrink-0 font-semibold">Après</span>
+          <span class="text-xs text-amber-400 w-10 shrink-0 font-semibold">Après</span>
           <div class="flex gap-3 flex-1 flex-wrap">
             <template v-for="(count, i) in newSlots" :key="i">
               <div v-if="count > 0" class="flex items-center gap-1">
@@ -59,7 +59,7 @@
                       : 'border-amber-500/60'"
                   />
                 </div>
-                <span v-if="(oldSlots[i] ?? 0) < count" class="text-[9px] text-amber-400 font-semibold">
+                <span v-if="(oldSlots[i] ?? 0) < count" class="text-xs text-amber-400 font-semibold">
                   +{{ count - (oldSlots[i] ?? 0) }}
                 </span>
               </div>
@@ -90,7 +90,7 @@
     <div v-if="state.pactBoon === 'chain'" class="mb-6">
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
-        <span class="text-[10px] text-violet-400 bg-violet-500/15 px-2 py-1 rounded-md font-semibold">Auto-ajouté</span>
+        <UBadge color="violet" variant="subtle" size="md">Auto-ajouté</UBadge>
       </div>
       <div v-if="familiarSpell">
         <SpellCardBuilder
@@ -182,12 +182,12 @@
         <UTooltip
           v-for="spell in filteredCantrips"
           :key="spell.id"
-          :text="state.pactBoonCantripIds.includes(spell.id) && !state.newCantripIds.includes(spell.id) ? 'Déjà dans vos sorts du Pacte du Tome' : ''"
+          :text="cantripDisabledReason(spell.id)"
         >
-          <div :class="state.pactBoonCantripIds.includes(spell.id) && !state.newCantripIds.includes(spell.id) ? 'opacity-50' : ''">
+          <div :class="isCantripDisabled(spell.id) ? 'opacity-50 pointer-events-none' : ''">
             <SpellCardBuilder
               :spell="spell"
-              :selected="state.newCantripIds.includes(spell.id)"
+              :selected="state.newCantripIds.includes(spell.id) || currentSpellIds.includes(spell.id)"
               :character-level="state.toLevel"
               :spellcasting-mod="spellcastingMod"
               @click="toggleCantrip(spell.id)"
@@ -225,15 +225,21 @@
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            <SpellCardBuilder
+            <UTooltip
               v-for="spell in list"
               :key="spell.id"
-              :spell="spell"
-              :selected="state.newSpellIds.includes(spell.id)"
-              :character-level="state.toLevel"
-              :spellcasting-mod="spellcastingMod"
-              @click="toggleSpell(spell.id)"
-            />
+              :text="currentSpellIds.includes(spell.id) ? 'Vous connaissez déjà ce sort' : ''"
+            >
+              <div :class="currentSpellIds.includes(spell.id) ? 'opacity-50 pointer-events-none' : ''">
+                <SpellCardBuilder
+                  :spell="spell"
+                  :selected="state.newSpellIds.includes(spell.id) || currentSpellIds.includes(spell.id)"
+                  :character-level="state.toLevel"
+                  :spellcasting-mod="spellcastingMod"
+                  @click="toggleSpell(spell.id)"
+                />
+              </div>
+            </UTooltip>
           </div>
         </div>
         <p v-if="Object.keys(filteredSpellsByLevel).length === 0" class="text-sm text-muted italic py-3">Aucun sort correspondant.</p>
@@ -425,7 +431,19 @@ const filteredSpellsByLevel = computed(() => {
   return result
 })
 
+function isCantripDisabled(id: number): boolean {
+  if (currentSpellIds.value.includes(id)) return true
+  if (state.value.pactBoonCantripIds.includes(id) && !state.value.newCantripIds.includes(id)) return true
+  return false
+}
+function cantripDisabledReason(id: number): string {
+  if (currentSpellIds.value.includes(id)) return 'Vous connaissez déjà ce sort mineur'
+  if (state.value.pactBoonCantripIds.includes(id) && !state.value.newCantripIds.includes(id)) return 'Déjà dans vos sorts du Pacte du Tome'
+  return ''
+}
+
 function toggleCantrip(id: number) {
+  if (currentSpellIds.value.includes(id)) return
   const idx = state.value.newCantripIds.indexOf(id)
   if (idx >= 0) state.value.newCantripIds.splice(idx, 1)
   else if (state.value.newCantripIds.length < cantripsToLearn.value) state.value.newCantripIds.push(id)

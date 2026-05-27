@@ -39,6 +39,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     const ccs = classes.characterClasses.value
     return rawFeatures.value.flatMap((f) => {
       if (f.featureType === 'species_trait') return f.effects
+      // Manifestations occultes : sélectionnées par le joueur, effets toujours actifs
+      if (f.featureType === 'eldritch_invocation') return f.effects
       const lvlReq = f.levelRequired ?? 1
       const owner = f.featureType === 'class_feature'
         ? ccs.find(c => c.classId === f.classId)
@@ -125,6 +127,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       else if (f.featureType === 'subclass_feature') {
         kind = 'subclass'
         label = ccs.find(c => c.subclass?.id === f.subclassId)?.subclass?.name ?? ''
+      }
+      else if (f.featureType === 'eldritch_invocation') {
+        // Affichées dans la section features de classe avec un label dédié
+        label = 'Manifestation'
       }
       return { ...f, origin: { kind, label } }
     })

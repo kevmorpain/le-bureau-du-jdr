@@ -17,7 +17,7 @@
             :key="skill"
             variant="soft"
             color="primary"
-            size="xs"
+            size="md"
           >
             {{ getSkillLabel(skill) }}
           </UBadge>

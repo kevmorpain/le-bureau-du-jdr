@@ -46,8 +46,8 @@
           :class="(state.asiBonuses[ab] ?? 0) > 0 ? 'border-amber-500/40 bg-amber-500/6' : 'border-(--ui-border) bg-(--ui-bg-elevated)'"
         >
           <div class="flex items-center justify-between mb-1">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-muted">{{ ABILITY_SHORT[ab] }}</span>
-            <span class="text-[10px] text-muted">{{ ABILITY_LABELS[ab] }}</span>
+            <span class="text-xs font-bold uppercase tracking-widest text-muted">{{ ABILITY_SHORT[ab] }}</span>
+            <span class="text-xs text-muted">{{ ABILITY_LABELS[ab] }}</span>
           </div>
 
           <div class="flex items-baseline gap-2 mb-2">
@@ -82,7 +82,7 @@
               @click="adjust(ab, +1)"
             >+</button>
           </div>
-          <div v-if="baseScore(ab) + (state.asiBonuses[ab] ?? 0) >= 20" class="text-[10px] text-red-400 text-center mt-1">max 20</div>
+          <div v-if="baseScore(ab) + (state.asiBonuses[ab] ?? 0) >= 20" class="text-xs text-red-400 text-center mt-1">max 20</div>
         </div>
       </div>
     </div>

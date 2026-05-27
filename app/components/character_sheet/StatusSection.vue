@@ -49,7 +49,7 @@
         <UBadge
           color="primary"
           variant="subtle"
-          size="sm"
+          size="md"
         >
           {{ conditionLabels[condition] }}
           <template #trailing>

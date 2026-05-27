@@ -129,7 +129,7 @@
       <span class="font-mono font-bold text-(--ui-text)">{{ currentHpMax }}</span>
       <span class="text-muted">→</span>
       <span class="font-mono font-bold text-green-400">{{ currentHpMax + state.hpGained }}</span>
-      <UBadge color="success" variant="soft" size="sm">+{{ state.hpGained }}</UBadge>
+      <UBadge color="success" variant="soft" size="md">+{{ state.hpGained }}</UBadge>
     </div>
   </div>
 </template>

@@ -195,7 +195,7 @@
                 <UBadge
                   :label="weaponPropertyLabels[prop] ?? prop"
                   variant="soft"
-                  size="sm"
+                  size="md"
                 />
               </UTooltip>
               <span
@@ -294,7 +294,7 @@
                 label="Discrétion"
                 variant="soft"
                 color="warning"
-                size="sm"
+                size="md"
               />
             </UTooltip>
 

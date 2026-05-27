@@ -4,7 +4,7 @@
     class="relative text-center py-2 px-2.5 min-w-14 rounded-lg border border-default bg-default transition-colors"
   >
     <slot />
-    <p class="text-[9px] text-muted uppercase tracking-[0.07em] mt-0.5">
+    <p class="text-xs text-muted uppercase tracking-[0.07em] mt-0.5">
       {{ label }}
     </p>
   </component>

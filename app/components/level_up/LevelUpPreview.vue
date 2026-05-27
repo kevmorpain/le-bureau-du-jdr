@@ -24,7 +24,7 @@
           <p class="font-bold text-sm text-(--ui-text) truncate">
             {{ charSheet?.name ?? '—' }}
           </p>
-          <p class="text-[10px] text-muted">
+          <p class="text-xs text-muted">
             {{ state.isMulticlass ? '✦ Multi-classage' : state.pickedClassId ? '▲ Niveau supérieur' : '' }}
           </p>
         </div>
@@ -35,7 +35,7 @@
         <span
           v-for="cc in newClassesList"
           :key="cc.classId"
-          class="text-[11px] px-2 py-0.5 rounded-lg font-semibold"
+          class="text-xs px-2 py-0.5 rounded-lg font-semibold"
           :style="{
             background: `${cc.color}${cc.changed ? '28' : '14'}`,
             border: `1px solid ${cc.color}${cc.changed ? '60' : '30'}`,
@@ -45,27 +45,27 @@
         >
           {{ cc.className }}
           <span class="font-mono">{{ cc.level }}</span>
-          <span v-if="cc.changed" class="ml-1 text-[9px]">▲</span>
+          <span v-if="cc.changed" class="ml-1 text-xs">▲</span>
         </span>
       </div>
 
-      <div class="mt-2 text-[10px] text-muted">
+      <div class="mt-2 text-xs text-muted">
         Niveau total {{ totalLevel }} →
-        <span class="text-amber-400 font-bold font-mono text-[11px]">{{ totalLevel + 1 }}</span>
+        <span class="text-amber-400 font-bold font-mono text-xs">{{ totalLevel + 1 }}</span>
       </div>
     </div>
 
     <!-- Stat changes -->
     <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-muted mb-2">Changements</p>
-      <div class="flex flex-col gap-1.5 text-[11px]">
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Changements</p>
+      <div class="flex flex-col gap-1.5 text-xs">
         <!-- HP -->
         <div class="flex items-center gap-1">
           <span class="text-muted w-12 shrink-0">PV max</span>
           <span class="font-mono text-(--ui-text)">{{ currentHpMax }}</span>
           <span class="text-muted">→</span>
           <span class="font-mono font-bold text-green-400">{{ currentHpMax + (state.hpGained ?? 0) }}</span>
-          <span v-if="state.hpGained" class="text-green-400 text-[10px]">+{{ state.hpGained }}</span>
+          <span v-if="state.hpGained" class="text-green-400 text-xs">+{{ state.hpGained }}</span>
         </div>
         <!-- Proficiency -->
         <div v-if="profBonusChanged" class="flex items-center gap-1">
@@ -105,7 +105,7 @@
 
     <!-- Abilities snapshot -->
     <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-muted mb-2">Caractéristiques</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Caractéristiques</p>
       <div class="grid grid-cols-3 gap-1">
         <div
           v-for="ab in ABILITIES"
@@ -116,7 +116,7 @@
           <p class="font-bold font-mono text-sm leading-none" :class="(state.asiBonuses[ab] ?? 0) > 0 ? 'text-amber-400' : 'text-(--ui-text)'">
             {{ (finalAbilities[ab] ?? 10) + (state.asiBonuses[ab] ?? 0) }}
           </p>
-          <p class="text-[9px] text-muted mt-0.5 uppercase tracking-wide">{{ ABILITY_SHORT[ab] }}</p>
+          <p class="text-xs text-muted mt-0.5 uppercase tracking-wide">{{ ABILITY_SHORT[ab] }}</p>
         </div>
       </div>
     </div>

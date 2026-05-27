@@ -31,7 +31,7 @@
 
       <div class="flex-1 min-w-0">
         <div
-          class="text-[11px] font-bold tracking-[0.18em] uppercase mb-1"
+          class="text-xs font-bold tracking-[0.18em] uppercase mb-1"
           :style="{ color: classData.color }"
         >
           {{ isMulticlass ? '✦ Multi-classage' : '▲ Niveau supérieur' }}

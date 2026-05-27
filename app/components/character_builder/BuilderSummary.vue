@@ -37,7 +37,7 @@
           class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 text-center"
         >
           <div class="font-black font-mono text-2xl text-(--ui-text)">{{ stat.value }}</div>
-          <div class="text-xs text-muted uppercase tracking-wider mt-1" style="font-size:9px">{{ stat.label }}</div>
+          <div class="text-xs text-muted uppercase tracking-wider mt-1" style="font-size:12px">{{ stat.label }}</div>
         </div>
       </div>
 
@@ -53,7 +53,7 @@
             class="text-xs font-mono mt-0.5 leading-none"
             :class="finalAbilities[ab] != null && abilityMod(finalAbilities[ab]!) >= 0 ? 'text-amber-400' : 'text-red-400'"
           >{{ finalAbilities[ab] != null ? formatMod(abilityMod(finalAbilities[ab]!)) : '' }}</div>
-          <div class="text-muted mt-1 leading-none" style="font-size: 9px">{{ ABILITY_SHORT[ab] }}</div>
+          <div class="text-muted mt-1 leading-none" style="font-size:12px">{{ ABILITY_SHORT[ab] }}</div>
         </div>
       </div>
 
@@ -97,11 +97,40 @@
           Sorts <span class="text-amber-400 ml-1">{{ selectedSpellNames.length }}</span>
         </p>
         <div class="flex flex-wrap gap-1">
-          <span
+          <UBadge
             v-for="name in selectedSpellNames"
             :key="name"
-            class="text-xs px-2 py-0.5 rounded-full border border-(--ui-border) bg-(--ui-bg) text-muted"
-          >{{ name }}</span>
+            color="neutral"
+            variant="subtle"
+            size="md"
+          >{{ name }}</UBadge>
+        </div>
+      </div>
+
+      <!-- Faveur du Pacte -->
+      <div v-if="state.pactBoon" class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6">
+        <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">
+          Faveur du Pacte
+        </p>
+        <div class="text-sm text-(--ui-text)">{{ pactBoonLabel }}</div>
+        <div v-if="state.pactBoon === 'blade' && state.pactWeaponItemName" class="text-xs text-muted mt-1">
+          Arme liée : {{ state.pactWeaponItemName }}
+        </div>
+      </div>
+
+      <!-- Manifestations occultes -->
+      <div v-if="selectedInvocationNames.length" class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6">
+        <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">
+          Manifestations occultes <span class="ml-1">{{ selectedInvocationNames.length }}</span>
+        </p>
+        <div class="flex flex-wrap gap-1">
+          <UBadge
+            v-for="name in selectedInvocationNames"
+            :key="name"
+            color="violet"
+            variant="subtle"
+            size="md"
+          >{{ name }}</UBadge>
         </div>
       </div>
 
@@ -111,11 +140,13 @@
           Équipement <span class="text-amber-400 ml-1">{{ state.equipment.length }} objets</span>
         </p>
         <div class="flex flex-wrap gap-1">
-          <span
+          <UBadge
             v-for="(item, i) in state.equipment"
             :key="i"
-            class="text-xs px-2 py-0.5 rounded-full border border-(--ui-border) bg-(--ui-bg) text-muted"
-          >{{ item }}</span>
+            color="neutral"
+            variant="subtle"
+            size="md"
+          >{{ item }}</UBadge>
         </div>
       </div>
 
@@ -218,5 +249,24 @@ const selectedSpellNames = computed(() => {
   ]
   if (s.pactBoon === 'chain') names.push('Appel de familier')
   return names
+})
+
+const PACT_BOON_LABELS: Record<string, string> = {
+  chain: 'Pacte de la Chaîne',
+  blade: 'Pacte de la Lame',
+  tome: 'Pacte du Tome',
+}
+const pactBoonLabel = computed(() =>
+  state.value.pactBoon ? PACT_BOON_LABELS[state.value.pactBoon] : '',
+)
+
+// Charger les noms d'invocations pour affichage
+const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  default: () => [],
+  immediate: true,
+})
+const selectedInvocationNames = computed(() => {
+  const map = new Map((allInvocations.value ?? []).map(i => [i.id, i.name]))
+  return state.value.invocationIds.map(id => map.get(id)).filter(Boolean) as string[]
 })
 </script>

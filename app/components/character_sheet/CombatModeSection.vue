@@ -171,7 +171,7 @@
             :key="spell.id"
             variant="soft"
             color="info"
-            size="sm"
+            size="md"
           >
             {{ spell.spell?.name ?? spell.id }}
           </UBadge>

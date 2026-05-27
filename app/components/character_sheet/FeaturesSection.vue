@@ -31,9 +31,9 @@
               <UBadge
                 v-if="feature.origin.label"
                 :label="feature.origin.label"
-                :color="originColor(feature.origin.kind)"
+                :color="originColor(feature.origin.kind, feature.origin.label)"
                 variant="soft"
-                size="xs"
+                size="md"
                 class="shrink-0"
               />
             </div>
@@ -67,7 +67,7 @@
                   v-if="feature.rechargeType"
                   :label="rechargeLabel(feature.rechargeType)"
                   variant="soft"
-                  size="xs"
+                  size="md"
                   class="ml-1"
                 />
               </div>
@@ -160,7 +160,8 @@ const visibleFeatures = computed(() =>
     : allCharacterFeatures.value.filter(f => f.origin.label === selectedOrigin.value),
 )
 
-const originColor = (kind: 'species' | 'class' | 'subclass') => {
+const originColor = (kind: 'species' | 'class' | 'subclass', label?: string) => {
+  if (label === 'Manifestation') return 'violet' as const
   if (kind === 'species') return 'success' as const
   if (kind === 'subclass') return 'info' as const
   return 'primary' as const

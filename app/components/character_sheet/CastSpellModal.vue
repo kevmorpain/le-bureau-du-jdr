@@ -51,7 +51,7 @@
                       v-if="opt.slotType === 'pact_magic'"
                       color="violet"
                       variant="subtle"
-                      size="xs"
+                      size="md"
                     >
                       Pacte
                     </UBadge>

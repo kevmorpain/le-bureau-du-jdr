@@ -53,6 +53,11 @@ export default defineEventHandler(async (event) => {
         spellSlots: true,
         baseAbilityScores: true,
         skills: true,
+        spells: {
+          with: {
+            spell: true,
+          },
+        },
       },
     })
 
@@ -77,6 +82,7 @@ export default defineEventHandler(async (event) => {
     : []
   const subclassById = new Map(subclasses.map(s => [s.id, s]))
   const subclassIdByClassId = new Map(classesWithSubclass.map(c => [c.classId, c.subclassId]))
+  const pactBoonByClassId = new Map(classesWithSubclass.map(c => [c.classId, (c as any).pactBoon ?? null]))
 
   const enrichedClasses = characterSheet.classes.map((cc) => {
     const subclassId = subclassIdByClassId.get(cc.classId) ?? null
@@ -84,6 +90,7 @@ export default defineEventHandler(async (event) => {
       ...cc,
       subclassId,
       subclass: subclassId !== null ? (subclassById.get(subclassId) ?? null) : null,
+      pactBoon: pactBoonByClassId.get(cc.classId) ?? null,
     }
   })
 

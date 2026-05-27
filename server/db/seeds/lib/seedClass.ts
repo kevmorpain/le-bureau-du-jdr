@@ -1,7 +1,7 @@
 import { db, schema } from 'hub:db'
 import { eq, and, sql } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
-import type { FeatureType, ActionType, RechargeType, FeatureMeta } from '../../schema/features'
+import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequisite } from '../../schema/features'
 import type { Formula } from '~~/shared/utils/formula'
 
 export type FeatureDef = {
@@ -14,6 +14,7 @@ export type FeatureDef = {
   maxUsesFormula?: Formula | null
   effects?: Effect[]
   meta?: FeatureMeta
+  prerequisites?: FeaturePrerequisite | null
 }
 
 export type SubclassDef = {
@@ -38,7 +39,7 @@ export async function seedClass(
   }
 
   for (const featureDef of baseFeatures) {
-    const { effects = [], meta, ...data } = featureDef
+    const { effects = [], meta, prerequisites, ...data } = featureDef
     const existing = await db.query.features.findFirst({
       where: and(eq(schema.features.classId, cls.id), eq(schema.features.name, data.name)),
     })
@@ -49,6 +50,10 @@ export async function seedClass(
       if (meta !== undefined && meta !== null && JSON.stringify(existing.meta) !== JSON.stringify(meta)) {
         await db.run(sql`UPDATE features SET meta = ${JSON.stringify(meta)} WHERE id = ${existing.id}`)
       }
+      // Resync prerequisites on existing features when seed defines it
+      if (prerequisites !== undefined && JSON.stringify(existing.prerequisites) !== JSON.stringify(prerequisites)) {
+        await db.run(sql`UPDATE features SET prerequisites = ${prerequisites ? JSON.stringify(prerequisites) : null} WHERE id = ${existing.id}`)
+      }
     }
     else {
       feature = await db
@@ -58,6 +63,7 @@ export async function seedClass(
           classId: cls.id,
           maxUsesFormula: data.maxUsesFormula ?? null,
           meta: meta ?? null,
+          prerequisites: prerequisites ?? null,
         })
         .returning()
         .get()

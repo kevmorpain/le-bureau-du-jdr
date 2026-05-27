@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="defaultDie">
     <p
       v-if="isSpellbook"
       class="text-2xl"
@@ -32,11 +32,15 @@ const { spellcastingModifier } = spellContext ?? useCharacterSheet()
 
 const slotLevel = ref<number>(props.spell.level)
 
-const defaultDie = computed<string>(() => ('heal_at_character_level' in props.spell.heal! ? props.spell.heal!.heal_at_character_level : props.spell.heal!.heal_at_slot_level)![slotLevel.value]!)
+const defaultDie = computed<string | undefined>(() => {
+  const map = 'heal_at_character_level' in props.spell.heal! ? props.spell.heal!.heal_at_character_level : props.spell.heal!.heal_at_slot_level
+  return map?.[slotLevel.value]
+})
 
 const hasModifier = computed<boolean | undefined>(() => props.spell.heal!.isSpellcastingModifierAdded)
 
 const dieText = computed<string>(() => {
+  if (!defaultDie.value) return ''
   let text = defaultDie.value
 
   if (hasModifier.value) {
@@ -57,6 +61,7 @@ const dieText = computed<string>(() => {
 })
 
 const defaultDieText = computed<string>(() => {
+  if (!defaultDie.value) return ''
   const { count, die } = parseDie(defaultDie.value)
 
   const modifier = hasModifier.value && spellcastingModifier.value ? spellcastingModifier.value : 0

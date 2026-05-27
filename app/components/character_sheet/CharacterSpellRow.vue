@@ -27,7 +27,7 @@
 
       <li class="flex items-center gap-1">
         <TargetIcon class="size-3.5 flex-none" />
-        {{ formatRange(spell.range) }}
+        {{ displayedRange }}
       </li>
 
       <li class="flex items-center gap-1">
@@ -82,14 +82,25 @@
       </li>
     </ul>
 
-    <!-- Badge source (Pacte) -->
+    <!-- Badge source (Pacte / Manifestation) -->
     <UTooltip
       v-if="source"
-      :text="source === 'pact_chain' ? 'Sort octroyé par le Pacte de la Chaîne' : 'Sort mineur du Pacte du Tome'"
+      :text="sourceTooltip"
       :delay-duration="0"
     >
-      <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/30 whitespace-nowrap">
-        {{ source === 'pact_chain' ? 'Pacte · Chaîne' : 'Pacte · Tome' }}
+      <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/30 whitespace-nowrap">
+        {{ sourceLabel }}
+      </span>
+    </UTooltip>
+
+    <!-- Badge modifications Décharge occulte (Manifestations) -->
+    <UTooltip
+      v-if="eldritchBlastModifierLabel"
+      :text="eldritchBlastModifierTooltip"
+      :delay-duration="0"
+    >
+      <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/30 whitespace-nowrap">
+        📿 {{ eldritchBlastModifierLabel }}
       </span>
     </UTooltip>
 
@@ -141,7 +152,13 @@ const props = defineProps<{
   hasSomaticWarning: boolean
   characterLevel: number
   spellcastingModifier: number | null
-  source?: 'pact_chain' | 'pact_tome' | null
+  source?: 'pact_chain' | 'pact_tome' | 'invocation' | null
+  // Modifications de Décharge occulte (passées par MagicSection)
+  eldritchBlastAgonizing?: boolean
+  eldritchBlastRepelling?: boolean
+  eldritchBlastRangeExtended?: boolean
+  eldritchBlastSourceNames?: string[]
+  charismaModifier?: number
 }>()
 
 const emit = defineEmits<{
@@ -170,6 +187,22 @@ const getClosestDie = (record: Record<string, string>, atLevel: number): string 
   return level !== undefined ? record[String(level)] : undefined
 }
 
+// Nombre de rayons de Décharge occulte au niveau du perso (5e PHB)
+const eldritchBlastRayCount = computed(() => {
+  const lvl = props.characterLevel
+  if (lvl >= 17) return 4
+  if (lvl >= 11) return 3
+  if (lvl >= 5) return 2
+  return 1
+})
+
+const isEldritchBlast = computed(() => props.spell.name === 'Décharge occulte')
+
+const displayedRange = computed(() => {
+  if (isEldritchBlast.value && props.eldritchBlastRangeExtended) return '90 m'
+  return formatRange(props.spell.range)
+})
+
 const damageText = computed<string | null>(() => {
   if (!props.spell.damage) return null
   const dmg = props.spell.damage
@@ -183,12 +216,54 @@ const damageText = computed<string | null>(() => {
 
   if (!die) return null
 
-  const mod = dmg.isSpellcastingModifierAdded && props.spellcastingModifier !== null
-    ? ` ${formatModifier(props.spellcastingModifier)}`
-    : ''
+  let bonus = 0
+  if (dmg.isSpellcastingModifierAdded && props.spellcastingModifier !== null) {
+    bonus += props.spellcastingModifier
+  }
+  // Coup éldritique agonisant : +CHA mod par rayon de Décharge occulte
+  if (isEldritchBlast.value && props.eldritchBlastAgonizing && props.charismaModifier != null) {
+    bonus += props.charismaModifier * eldritchBlastRayCount.value
+  }
+  const mod = bonus !== 0 ? ` ${formatModifier(bonus)}` : ''
   const type = t(`damage_types.${dmg.damage_type}`, 1)
 
   return `${die}${mod} ${type}`
+})
+
+const sourceLabel = computed(() => {
+  if (props.source === 'pact_chain') return 'Pacte · Chaîne'
+  if (props.source === 'pact_tome') return 'Pacte · Tome'
+  if (props.source === 'invocation') return 'Manifestation'
+  return ''
+})
+
+const sourceTooltip = computed(() => {
+  if (props.source === 'pact_chain') return 'Sort octroyé par le Pacte de la Chaîne'
+  if (props.source === 'pact_tome') return 'Sort mineur du Pacte du Tome'
+  if (props.source === 'invocation') return 'Sort octroyé par une manifestation occulte'
+  return ''
+})
+
+const activeEldritchBlastModifiers = computed(() => {
+  if (!isEldritchBlast.value) return []
+  const list: string[] = []
+  if (props.eldritchBlastAgonizing) list.push('Coup agonisant')
+  if (props.eldritchBlastRepelling) list.push('Repousse 3 m')
+  if (props.eldritchBlastRangeExtended) list.push('Portée 90 m')
+  return list
+})
+
+const eldritchBlastModifierLabel = computed(() => {
+  if (!activeEldritchBlastModifiers.value.length) return ''
+  return activeEldritchBlastModifiers.value.length === 1
+    ? activeEldritchBlastModifiers.value[0]
+    : `${activeEldritchBlastModifiers.value.length} modifs`
+})
+
+const eldritchBlastModifierTooltip = computed(() => {
+  const mods = activeEldritchBlastModifiers.value.join(' · ')
+  const sources = (props.eldritchBlastSourceNames ?? []).join(', ')
+  return sources ? `${mods} (via ${sources})` : mods
 })
 
 const healText = computed<string | null>(() => {

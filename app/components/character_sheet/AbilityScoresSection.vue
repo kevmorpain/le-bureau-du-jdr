@@ -113,7 +113,7 @@
 
       <!-- ── Contenu ── -->
       <div class="flex-1 min-w-0 space-y-0.5">
-        <p class="text-[9px] font-bold text-muted uppercase tracking-wider mb-1">
+        <p class="text-xs font-bold text-muted uppercase tracking-wider mb-1">
           {{ $t(`ability_scores.${key}`) }}
         </p>
 
@@ -152,7 +152,7 @@
             class="flex items-center gap-1 mt-0.5"
           >
             <ConditionWarning :lines="skillDisadvantageReasons" />
-            <span class="text-[10px] text-rose-400">Désavantage</span>
+            <span class="text-xs text-rose-400">Désavantage</span>
           </div>
 
           <div
