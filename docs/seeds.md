@@ -30,7 +30,7 @@ Toutes les seeds de référence sont idempotentes — elles peuvent être relanc
 | `characterSpecies` | `character_species.ts` | Vérification par nom | 13 entrées (9 espèces + 4 sous-espèces) |
 | `classes` | `classes.ts` | Select + update/insert | |
 | `backgrounds` | `backgrounds.ts` | `upsertByName` | |
-| `barbare` … `warlock` | `[classe].ts` | Vérification par (classId, nom) | 12 classes, features + sous-classes |
+| `barbare` … `warlock` | `[classe].ts` | Vérification par (classId, nom) | 12 classes, features + sous-classes. `warlock.ts` insère aussi le catalogue de manifestations occultes (`warlock_invocations.ts`, 33 entrées avec `featureType: 'eldritch_invocation'`) |
 | `spells` | `spells.ts` | `upsertByName` + `onConflictDoNothing` pour liens | Insère aussi les associations `spell_classes` |
 | `items` | `items.ts` | `onConflictDoNothing` | |
 | `characterSheets` | `character_sheets.ts` | Vérification par nom | **Dev uniquement** — commenté dans `run.ts` |
@@ -114,7 +114,8 @@ Le seed insère automatiquement les liens `spell_classes` (table de jointure `sp
 | `classes.ts` | 12 classes D&D 5e |
 | `character_species.ts` | 13 espèces/sous-espèces avec traits et effets |
 | `[classe].ts` | Features + sous-classes par classe (12 fichiers) |
-| `spells.ts` | 43 sorts avec composantes, dégâts/soins, DC, concentration, rituel |
+| `warlock_invocations.ts` | 33 manifestations occultes (PHB 2014 + TCoE) avec prérequis et effets (`spell_grant`, `eldritch_blast_modifier`, `pact_weapon_modifier`, `sight_modifier`, `skill_proficiency`, `advantage`…) |
+| `spells.ts` | ~62 sorts avec composantes, dégâts/soins, DC, concentration, rituel |
 | `spell_class_mappings.ts` | Associations sorts↔classes |
 | `items.ts` | Objets (armes, armures, équipement, outils) |
 

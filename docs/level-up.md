@@ -36,6 +36,8 @@ interface LevelUpState {
   pactBoon: 'chain' | 'blade' | 'tome' | null  // Faveur du Pacte (Occultiste niv.3)
   pactWeaponInventoryId: number | null          // ID inventaire si pactBoon='blade'
   pactBoonCantripIds: number[]                  // 3 sorts mineurs si pactBoon='tome'
+  newInvocationIds: number[]                    // Manifestations occultes apprises ce level-up
+  replacedInvocationId: number | null           // (Optionnel) ID d'une manifestation à remplacer
 
   // ASI / Don (step asi)
   asiChoice: 'asi' | 'feat' | null
@@ -99,6 +101,8 @@ Toutes les étapes sont dans `ALL_LU_STEPS` mais certaines sont filtrées selon 
 | `needsFightingStyle` (Guerrier niv.1/10, Paladin niv.2, Rôdeur niv.2) | Cartes radio des styles de combat |
 | `needsExpertise` (Roublard niv.1/6, Barde niv.3/10) | Picker de 2 compétences parmi les compétences maîtrisées |
 | `needsPactBoon` (Occultiste niv.3, sans boon existant) | Cartes radio Pacte de la Chaîne / Lame / Tome |
+| `needsInvocations` (Occultiste gagne ≥1 invocation au level-up : niv.2/5/7/9/12/15/18) | `InvocationPicker` filtré par niveau / pacte / sorts connus |
+| `canReplaceInvocation` (à chaque level-up d'occultiste mono-classe ayant ≥1 invocation) | Liste des invocations connues, sélection optionnelle pour remplacement |
 
 Si aucune condition → affiche un résumé des aptitudes débloquées (liste informative).
 
@@ -107,9 +111,12 @@ Si aucune condition → affiche un résumé des aptitudes débloquées (liste in
 - `needsFightingStyle` → `fightingStyle !== null`
 - `needsExpertise` → `expertiseSkills.length >= 2`
 - `needsPactBoon` → `pactBoon !== null`
+- Manifestations → `newInvocationIds.length === (newInvocationsCount + (replacedInvocationId ? 1 : 0))`
 - Sinon → toujours valide
 
 **Cas Pacte du Tome :** SI `pactBoon === 'tome'` → l'étape "Magie" devient requise pour choisir 3 sorts mineurs de n'importe quelle classe
+
+**Cas remplacement de manifestation** : SI `replacedInvocationId !== null`, le picker s'agrandit d'un slot (`totalPickCount = newCount + 1`), masque les invocations déjà connues sauf celle à remplacer, et la dernière invocation choisie est traitée comme remplacement côté serveur. Côté composable `useLevelUp` : `effectivePactBoon = pickedCharClass.pactBoon ?? state.pactBoon`, `knownInvocationIds` extrait depuis `charSheet.features.feature.featureType === 'eldritch_invocation'`, `knownSpellNames` depuis `charSheet.spells.spell.name` (le GET inclut maintenant `spells` + `pactBoon` sur classes).
 
 ---
 
@@ -218,6 +225,8 @@ Corps :
   pactBoon?: 'chain' | 'blade' | 'tome' | null
   pactWeaponInventoryId?: number | null
   pactBoonCantripIds?: number[]
+  newInvocationIds?: number[]
+  replacedInvocationId?: number | null
 }
 ```
 
@@ -231,9 +240,10 @@ Corps :
 7. Insérer les ASI dans `character_ability_score_improvements`
 8. Insérer les nouveaux sorts (`isKnown: true, isPrepared: false`)
 9. Gérer les effets du Pact Boon (chain → Appel de familier, tome → sorts mineurs, blade → isPactWeapon)
-10. Insérer les nouvelles compétences de multiclassage
-11. Upserter les compétences en expertise (`proficiencyLevel: 'expert'`)
-12. Recalculer et upserter les emplacements de sort (formule multiclasse combinée : full=niveau, half=⌊niveau/2⌋ si ≥2, pact=séparé)
+10. **Manifestations occultes** : `applyInvocationChanges` (cf. `server/utils/invocations.ts`) — si `replacedInvocationId`, DELETE le `character_features` correspondant + purge des `character_spells` source='invocation' liés aux `spell_grant` de cette invocation. Puis INSERT des `newInvocationIds` dans `character_features`, et matérialisation des `spell_grant` en `character_spells` avec `source: 'invocation'` (idempotent via `onConflictDoNothing`).
+11. Insérer les nouvelles compétences de multiclassage
+12. Upserter les compétences en expertise (`proficiencyLevel: 'expert'`)
+13. Recalculer les emplacements de sort (full=niveau, half=⌊niveau/2⌋ si ≥2, pact=séparé) — **particularité Pact Magic** : tous les emplacements occultistes sont du même niveau, et ce niveau change avec le niveau d'occultiste (niv. 3 → slots niv. 2, niv. 5 → niv. 3, etc.). Le handler DELETE explicitement les anciens `pact_magic` slots aux autres niveaux avant l'upsert, avec préservation du compteur `used` du précédent niveau.
 
 **Retour :** `{ success: true, newLevel, hpGained }`
 

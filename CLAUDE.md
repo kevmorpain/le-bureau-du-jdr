@@ -69,9 +69,9 @@ For new relations, avoid `db.query.X.findFirst({ with: { newRelation: true } })`
 
 ## Architecture
 
-**Le Bureau du JDR** is a D&D 5e (2014) character sheet and spell database app. Full-stack Nuxt 4 app deployed to Cloudflare Workers via NuxtHub.
+**Le Bureau du JDR** is a D&D 5e (2014) character sheet and spell database app. Full-stack Nuxt 4 app deployed to Cloudflare Workers (Wrangler), with NuxtHub modules providing the D1/KV bindings during local dev.
 
-**Stack:** Nuxt 4 + Nitro (server) + Vue 3 + TypeScript + Drizzle ORM + SQLite (NuxtHub D1) + Nuxt UI
+**Stack:** Nuxt 4 + Nitro (cloudflare_module preset) + Vue 3 + TypeScript + Drizzle ORM + Cloudflare D1 (SQLite) + Nuxt UI
 
 ### Data flow
 
@@ -125,7 +125,9 @@ See `docs/context.md` for accumulated development context: dashboard v2 architec
 
 ### Deployment
 
-GitHub Actions auto-deploys: feature branches → preview, `main` → production (NuxtHub). Local deploy: `npm run deploy` uses Wrangler.
+Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, KV binding `KV`). Deployment is **manual** via `npm run deploy` (which runs `nuxt build` then `wrangler deploy` under the hood). There's no GitHub Actions workflow set up — `.github/workflows/` is empty.
+
+NuxtHub's role is limited to dev: the `@nuxthub/core` module wires up the local D1 emulation and the `hub:db` schema cache (see gotchas below). The deployed worker uses the native Cloudflare D1 binding directly via Drizzle.
 
 ### Testing
 

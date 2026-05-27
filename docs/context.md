@@ -79,5 +79,14 @@ data.value = data.value.map(item =>
 
 - **PUT** (pas PATCH) pour l'auto-save fiche — PATCH n'apporte rien avec des sous-tableaux
 - Auto-save : debounce 500ms + PUT `/api/character_sheets/:id`
-- `character_spell_slots.slotType` : `'spellcasting' | 'pact_magic'` pour supporter la Magie de Pacte occultiste
+- `character_spell_slots.slotType` : `'spellcasting' | 'pact_magic'` pour supporter la Magie de Pacte occultiste. **Particularité Pact Magic** : tous les emplacements de pacte sont toujours du même niveau, et ce niveau augmente avec le niveau d'occultiste (1→1, 3→2, 5→3, 7→4, 9+→5). Le handler `level-up.post.ts` DELETE explicitement les anciens `pact_magic` slots aux autres niveaux avant l'upsert, sinon ils s'accumulent.
 - `defenseEntries` dans `useCharacterConditions` — clés `dmg:*` et `cond:*` et `jds:*`
+
+## Manifestations occultes (Eldritch Invocations)
+
+- Modélisées comme `features` avec `featureType: 'eldritch_invocation'` (et non une table dédiée), liées à la classe Occultiste via `classId`. Catalogue de 33 entrées (PHB 2014 + TCoE).
+- Colonne `features.prerequisites` (JSON) : `{ requiredPactBoon?, requiredSpellName?, requiredInvocationName? }`.
+- `character_spells.source` étendu avec `'invocation'` — les `spell_grant` des invocations sont matérialisés en `character_spells` à l'apprentissage, supprimés au remplacement.
+- Persistance partagée : [server/utils/invocations.ts](../server/utils/invocations.ts) (`applyInvocationChanges`) utilisé par création + level-up.
+- 3 nouveaux types d'effets : `eldritch_blast_modifier` (agonizing/repelling/range_extended), `pact_weapon_modifier` (extra_attack/lifedrinker), `sight_modifier` (magical_darkness_120/invisible_in_dim_light/true_sight_disguise/read_all_writing).
+- UI : composant partagé [InvocationPicker.vue](../app/components/warlock/InvocationPicker.vue) utilisé dans `StepClass.vue` (création) et `LevelUpStepFeatures.vue` (level-up, avec flow de remplacement).

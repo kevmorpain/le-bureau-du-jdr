@@ -76,6 +76,14 @@ interface BuilderState {
   // Étape 6 — Équipement
   equipChoices: (string | null)[]  // choix par groupe d'équipement de classe
   equipment: string[]              // liste finale des noms d'items
+
+  // Faveur de Pacte (Occultiste niv. ≥ 3) — sections inline dans StepClass
+  pactBoon: 'chain' | 'blade' | 'tome' | null
+  pactWeaponItemName: string | null            // nom item si pactBoon='blade'
+  selectedPactBoonCantripIds: number[]         // 3 cantrips si pactBoon='tome'
+
+  // Manifestations occultes (Occultiste niv. ≥ 2)
+  invocationIds: number[]
 }
 ```
 
@@ -146,19 +154,23 @@ raceId !== null
 
 **UI** :
 - Grille 3×4 de cartes classes (emoji, nom, rôle, dé de vie, jets de sauvegarde)
-- Chaque classe a une couleur propre (voir `CLASSES`)
+- Chaque classe a une couleur propre (voir `CLASSES`) — exposée comme couleur Nuxt UI nommée (`barbarian`, `bard`…) via `nuxt.config.ts` + `app.config.ts`, utilisable dans `<UBadge :color="cls.id">`
 - Après sélection de classe, afficher en dessous :
   1. **Sélecteur de niveau** (1–20, grille de boutons 4×5) avec jalons surlignés
   2. **Capacités de classe** (liste des features de départ)
   3. **Compétences** (X au choix parmi N) : toggle buttons
   4. **Style de combat** si applicable (Guerrier/Paladin/Rôdeur) : cartes radio
   5. **Sous-classe** si niveau atteint : cartes radio
+  6. **Faveur du Pacte** (Occultiste niveau ≥ 3) : cartes radio Chaîne / Lame / Tome → `state.pactBoon`
+  7. **Manifestations occultes** (Occultiste niveau ≥ 2) : `InvocationPicker` partagé avec le level-up, max = `WARLOCK_INVOCATIONS_KNOWN[level - 1]` (2 au niv.2, 3 au niv.5, etc.), filtre par pacte + sorts connus → `state.invocationIds`
 
 **Validation step** :
 ```ts
 classId !== null
 && skills.length === CLASSES.find(c => c.id === classId)?.skillChoices.count
 && (!hasFightingStyle || fightingStyle !== null)
+&& (!needsPactBoon || pactBoon !== null)
+&& (!needsInvocations || invocationIds.length === invocationsExpected)
 ```
 
 **Sidebar** : affiche `${className} niv.${level}`
