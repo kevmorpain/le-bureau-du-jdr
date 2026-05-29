@@ -20,7 +20,7 @@ export const characterSheets = [
     ],
     // Features liées dynamiquement par le seed (nécessite que warlock seed ait été exécuté)
     className: 'Occultiste',
-    subclassName: 'Grand Ancien',
+    subclassName: 'Le Grand Ancien',
     classLevel: 10,
   },
 ]

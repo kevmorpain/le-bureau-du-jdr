@@ -85,7 +85,51 @@ export interface BuilderState {
 
   // Manifestations occultes (Occultiste niveau ≥ 2)
   invocationIds: number[]
+
+  // Choix par palier d'ASI (niveau de classe) : carac ('asi') ou don ('feat').
+  // Format : { 4: 'asi', 8: 'feat', 12: 'asi', ... }
+  asiChoice: Record<number, 'asi' | 'feat'>
+
+  // Bonus ASI répartis par palier d'ASI (uniquement quand asiChoice[lvl] === 'asi').
+  // À chaque palier, le joueur dispose de 2 points à répartir (+2 sur une carac
+  // OU +1+1 sur deux).
+  // Format : { 4: { str: 2 }, 8: { dex: 1, con: 1 }, ... }
+  asiBonuses: Record<number, Partial<Record<AbilityKey, number>>>
+
+  // Don choisi par palier (uniquement quand asiChoice[lvl] === 'feat').
+  // Format : { 8: 'alert', ... }. Note : la persistance des dons côté backend
+  // est encore un TODO (cf. level-up.post.ts qui accepte featId sans le stocker).
+  asiFeats: Record<number, string>
+
+  // Arcanum mystique (Occultiste niv 11/13/15/17). Sort de niv 6/7/8/9
+  // lançable 1× par repos long sans dépenser d'emplacement.
+  arcaneMysteriumSpellId: number | null
+
+  // Livre des secrets anciens (manifestation TCoE/Tome). 2 sorts rituels niv 1
+  // inscrits dans le Livre des Ombres.
+  bookOfAncientSecretsSpellIds: number[]
+  // Flag positionné par StepSpells via watchEffect : true tant que la
+  // manifestation est dans `invocationIds` → la validation step Sorts exige 2 rituels.
+  bookOfAncientSecretsRequired: boolean
 }
+
+// Niveaux d'occultiste où l'Arcanum mystique débloque un nouveau slot (PHB 2014).
+export const ARCANUM_SPELL_LEVEL_BY_LEVEL: Record<number, number> = {
+  11: 6,
+  13: 7,
+  15: 8,
+  17: 9,
+}
+
+// Nom canonique de la manifestation qui débloque la sélection de sorts rituels.
+export const BOOK_OF_ANCIENT_SECRETS_NAME = 'Livre des secrets anciens'
+
+// Niveaux d'ASI par classe (PHB 2014). Défaut [4,8,12,16,19] pour la majorité.
+export const ASI_LEVELS_BY_CLASS: Record<string, number[]> = {
+  fighter: [4, 6, 8, 12, 14, 16, 19],
+  rogue: [4, 8, 10, 12, 16, 19],
+}
+const DEFAULT_ASI_LEVELS = [4, 8, 12, 16, 19]
 
 // Invocations connues par niveau d'occultiste (PHB 2014)
 // Index = warlockLevel - 1
@@ -132,6 +176,12 @@ const INIT_STATE: BuilderState = {
   pactWeaponItemName: null,
   selectedPactBoonCantripIds: [],
   invocationIds: [],
+  asiChoice: {},
+  asiBonuses: {},
+  asiFeats: {},
+  arcaneMysteriumSpellId: null,
+  bookOfAncientSecretsSpellIds: [],
+  bookOfAncientSecretsRequired: false,
 }
 
 // ─── Étapes ───────────────────────────────────────────────────────────────────
@@ -146,6 +196,7 @@ const ALL_STEPS: BuilderStep[] = [
   { id: 'race', label: 'Race', icon: 'i-game-icons:dragon-head' },
   { id: 'class', label: 'Classe', icon: 'i-game-icons:sword' },
   { id: 'abilities', label: 'Carac.', icon: 'i-game-icons:muscle-up' },
+  { id: 'asi', label: 'Bonus carac.', icon: 'i-heroicons:arrow-trending-up' },
   { id: 'spells', label: 'Sorts', icon: 'i-game-icons:spell-book' },
   { id: 'description', label: 'Description', icon: 'i-heroicons:document-text' },
   { id: 'equipment', label: 'Équipement', icon: 'i-game-icons:backpack' },
@@ -244,13 +295,15 @@ export function useCharacterBuilder() {
     return bonuses
   })
 
-  // Scores finaux (base + racial)
+  // Scores finaux (base + racial + ASI). PHB plafonne les ASI à 20.
   const finalAbilities = computed<Partial<Record<AbilityKey, number>>>(() => {
     const result: Partial<Record<AbilityKey, number>> = {}
     for (const ab of ABILITIES) {
       const base = state.value.abilities[ab]
       if (base != null) {
-        result[ab] = base + (raceBonuses.value[ab] ?? 0)
+        const baseWithRace = base + (raceBonuses.value[ab] ?? 0)
+        const asi = asiBonusByAbility.value[ab] ?? 0
+        result[ab] = Math.min(20, baseWithRace + asi)
       }
     }
     return result
@@ -332,12 +385,54 @@ export function useCharacterBuilder() {
     return CANTRIPS_KNOWN[classData.value.id]?.[level.value - 1] ?? 0
   })
 
+  // ─── Arcanum mystique (Occultiste niv 11/13/15/17) ────────────────────────
+
+  const arcaneMysteriumSpellLevel = computed<number | null>(() => {
+    if (state.value.classId !== 'warlock') return null
+    return ARCANUM_SPELL_LEVEL_BY_LEVEL[state.value.level] ?? null
+  })
+  const needsArcaneMysterium = computed(() => arcaneMysteriumSpellLevel.value !== null)
+
+  // ─── Livre des secrets anciens (manifestation) ────────────────────────────
+  // L'ID de la manifestation est résolu côté composant via /api/invocations
+  // (cf. StepSpells). On expose juste l'aide pour interroger l'état.
+  const picksBookOfAncientSecrets = (allInvocationsByName: Record<string, number>) => {
+    const id = allInvocationsByName[BOOK_OF_ANCIENT_SECRETS_NAME]
+    if (!id) return false
+    return state.value.invocationIds.includes(id)
+  }
+
+  // ─── ASI (paliers de bonus de caractéristique) ────────────────────────────────
+
+  // Niveaux d'ASI atteints par ce personnage (selon classe + niveau choisi).
+  const asiLevelsForCharacter = computed<number[]>(() => {
+    const clsId = state.value.classId
+    if (!clsId) return []
+    const levels = ASI_LEVELS_BY_CLASS[clsId] ?? DEFAULT_ASI_LEVELS
+    return levels.filter(l => l <= state.value.level)
+  })
+
+  const needsAsi = computed(() => asiLevelsForCharacter.value.length > 0)
+
+  // Total des points ASI attribués à une carac, toutes ASI levels confondues.
+  const asiBonusByAbility = computed<Partial<Record<AbilityKey, number>>>(() => {
+    const sum: Partial<Record<AbilityKey, number>> = {}
+    for (const lvl of asiLevelsForCharacter.value) {
+      const bonuses = state.value.asiBonuses[lvl] ?? {}
+      for (const [ab, amount] of Object.entries(bonuses) as [AbilityKey, number][]) {
+        sum[ab] = (sum[ab] ?? 0) + amount
+      }
+    }
+    return sum
+  })
+
   // ─── Étapes actives ───────────────────────────────────────────────────────────
 
   const activeSteps = computed<BuilderStep[]>(() => {
     return ALL_STEPS.filter(s => {
-      if (s.id !== 'spells') return true
-      return !!classData.value?.spellcasting
+      if (s.id === 'spells') return !!classData.value?.spellcasting
+      if (s.id === 'asi') return needsAsi.value
+      return true
     })
   })
 
@@ -371,10 +466,33 @@ export function useCharacterBuilder() {
       case 'abilities': {
         return ABILITIES.every(ab => s.abilities[ab] != null)
       }
+      case 'asi': {
+        // Chaque palier exige un choix ASI/Don complet.
+        for (const lvl of asiLevelsForCharacter.value) {
+          const choice = s.asiChoice[lvl]
+          if (!choice) return false
+          if (choice === 'asi') {
+            const bonuses = s.asiBonuses[lvl] ?? {}
+            const total = Object.values(bonuses).reduce((sum, v) => sum + (v ?? 0), 0)
+            if (total !== 2) return false
+            // Garde-fou : pas plus de +2 sur une seule carac à chaque ASI.
+            if (Object.values(bonuses).some(v => (v ?? 0) > 2)) return false
+          }
+          else if (choice === 'feat') {
+            if (!s.asiFeats[lvl]) return false
+          }
+        }
+        return true
+      }
       case 'spells': {
         const cls = classData.value
         if (!cls?.spellcasting) return true
         const cantripsDone = cantripsNeeded.value === 0 || s.selectedCantrips.length >= cantripsNeeded.value
+        // Arcanum mystique : 1 sort obligatoire au palier déclencheur
+        if (needsArcaneMysterium.value && s.arcaneMysteriumSpellId == null) return false
+        // Livre des secrets anciens : 2 sorts rituels obligatoires si l'invocation est choisie.
+        // (Flag positionné par le composant via watchEffect — cf. StepSpells.)
+        if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
         // Pour les sorts : si classe préparée, pas de validation stricte
         const preparedCasters = ['cleric', 'druid', 'paladin', 'ranger', 'wizard']
         if (preparedCasters.includes(s.classId ?? '')) return cantripsDone
@@ -440,10 +558,18 @@ export function useCharacterBuilder() {
     const cantripCount = s.selectedCantrips.length
     const spellCount = s.selectedSpells.length
 
+    // ASI summary : nb de paliers complétés / total
+    const asiCompleted = asiLevelsForCharacter.value.filter((lvl) => {
+      const bonuses = s.asiBonuses[lvl] ?? {}
+      return Object.values(bonuses).reduce((sum, v) => sum + (v ?? 0), 0) === 2
+    }).length
+    const asiTotal = asiLevelsForCharacter.value.length
+
     return {
       race: raceName ?? null,
       class: className ? `${className} niv.${s.level}` : null,
       abilities: abilitiesDone === 6 ? 'Assignées ✓' : `${abilitiesDone}/6 assignées`,
+      asi: asiTotal === 0 ? null : `${asiCompleted}/${asiTotal} palier(s)`,
       spells: cantripCount + spellCount > 0 ? `${cantripCount + spellCount} sorts` : null,
       description: s.name.trim() || null,
       equipment: s.equipment.length > 0 ? `${s.equipment.length} objets` : null,
@@ -523,5 +649,13 @@ export function useCharacterBuilder() {
     // Invocations
     needsInvocations,
     invocationsExpected,
+    // ASI
+    needsAsi,
+    asiLevelsForCharacter,
+    asiBonusByAbility,
+    // Arcanum / Livre des secrets
+    needsArcaneMysterium,
+    arcaneMysteriumSpellLevel,
+    picksBookOfAncientSecrets,
   }
 }

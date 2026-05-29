@@ -14,15 +14,50 @@ export default async function seed() {
   )
 
   let inserted = 0
+  let updated = 0
   let skipped = 0
   let classLinksInserted = 0
 
   for (const spell of spells) {
     const existing = await db.query.spells.findFirst({ where: eq(schema.spells.name, spell.name) })
 
-    const spellId = existing
-      ? (skipped++, existing.id)
-      : await db.insert(schema.spells).values(spell).returning().get().then(r => (inserted++, r.id))
+    let spellId: number
+    if (existing) {
+      // Resync des champs « contenu » (JSON et descriptifs) — les seeds restent
+      // la source de vérité pour les définitions de sorts.
+      const next = {
+        damage: (spell as any).damage ?? null,
+        heal: (spell as any).heal ?? null,
+        multiAttack: (spell as any).multiAttack ?? null,
+        dc: (spell as any).dc ?? null,
+        description: spell.description ?? null,
+        ritual: spell.ritual ?? false,
+        concentration: spell.concentration ?? false,
+      }
+      const changed
+        = JSON.stringify(existing.damage) !== JSON.stringify(next.damage)
+        || JSON.stringify(existing.heal) !== JSON.stringify(next.heal)
+        || JSON.stringify(existing.multiAttack) !== JSON.stringify(next.multiAttack)
+        || JSON.stringify(existing.dc) !== JSON.stringify(next.dc)
+        || existing.description !== next.description
+        || existing.ritual !== next.ritual
+        || existing.concentration !== next.concentration
+
+      if (changed) {
+        await db
+          .update(schema.spells)
+          .set(next)
+          .where(eq(schema.spells.id, existing.id))
+        updated++
+      }
+      else {
+        skipped++
+      }
+      spellId = existing.id
+    }
+    else {
+      spellId = await db.insert(schema.spells).values(spell).returning().get().then(r => (inserted++, r.id))
+    }
 
     for (const className of classesBySpellName[spell.name] ?? []) {
       const classId = classIdByName[className]
@@ -35,5 +70,5 @@ export default async function seed() {
     }
   }
 
-  return { inserted, skipped, classLinksInserted }
+  return { inserted, updated, skipped, classLinksInserted }
 }

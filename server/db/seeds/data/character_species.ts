@@ -72,19 +72,19 @@ const highElf = {
       effects: [
         {
           type: 'weapon_proficiency',
-          value: 'longsword',
+          value: 'Épée longue',
         },
         {
           type: 'weapon_proficiency',
-          value: 'shortsword',
+          value: 'Épée courte',
         },
         {
           type: 'weapon_proficiency',
-          value: 'shortbow',
+          value: 'Arc court',
         },
         {
           type: 'weapon_proficiency',
-          value: 'longbow',
+          value: 'Arc long',
         },
       ],
     },
@@ -224,19 +224,19 @@ const hillDwarf = {
       effects: [
         {
           type: 'weapon_proficiency',
-          value: 'battleaxe',
+          value: 'Hache d\'armes',
         },
         {
           type: 'weapon_proficiency',
-          value: 'handaxe',
+          value: 'Hachette',
         },
         {
           type: 'weapon_proficiency',
-          value: 'light_hammer',
+          value: 'Marteau léger',
         },
         {
           type: 'weapon_proficiency',
-          value: 'warhammer',
+          value: 'Marteau de guerre',
         },
       ],
     },
@@ -1036,10 +1036,10 @@ const woodElf = {
       name: 'Entraînement martial elfique',
       description: `Vous avez la maîtrise de l'épée longue, de l'épée courte, de l'arc court et de l'arc long.`,
       effects: [
-        { type: 'weapon_proficiency', value: 'longsword' },
-        { type: 'weapon_proficiency', value: 'shortsword' },
-        { type: 'weapon_proficiency', value: 'shortbow' },
-        { type: 'weapon_proficiency', value: 'longbow' },
+        { type: 'weapon_proficiency', value: 'Épée longue' },
+        { type: 'weapon_proficiency', value: 'Épée courte' },
+        { type: 'weapon_proficiency', value: 'Arc court' },
+        { type: 'weapon_proficiency', value: 'Arc long' },
       ],
     },
     {
@@ -1098,10 +1098,10 @@ const mountainDwarf = {
       name: 'Formation aux armes naines',
       description: `Vous avez la maîtrise des hachettes, des haches de bataille, des marteaux légers et des marteaux de guerre.`,
       effects: [
-        { type: 'weapon_proficiency', value: 'handaxe' },
-        { type: 'weapon_proficiency', value: 'battleaxe' },
-        { type: 'weapon_proficiency', value: 'light hammer' },
-        { type: 'weapon_proficiency', value: 'warhammer' },
+        { type: 'weapon_proficiency', value: 'Hachette' },
+        { type: 'weapon_proficiency', value: 'Hache d\'armes' },
+        { type: 'weapon_proficiency', value: 'Marteau léger' },
+        { type: 'weapon_proficiency', value: 'Marteau de guerre' },
       ],
     },
     {

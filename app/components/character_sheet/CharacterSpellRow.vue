@@ -152,7 +152,16 @@ const props = defineProps<{
   hasSomaticWarning: boolean
   characterLevel: number
   spellcastingModifier: number | null
-  source?: 'pact_chain' | 'pact_tome' | 'invocation' | null
+  source?:
+    | 'pact_chain'
+    | 'pact_tome'
+    | 'invocation'
+    | 'arcanum_6'
+    | 'arcanum_7'
+    | 'arcanum_8'
+    | 'arcanum_9'
+    | 'book_of_ancient_secrets'
+    | null
   // Modifications de Décharge occulte (passées par MagicSection)
   eldritchBlastAgonizing?: boolean
   eldritchBlastRepelling?: boolean
@@ -230,10 +239,19 @@ const damageText = computed<string | null>(() => {
   return `${die}${mod} ${type}`
 })
 
+const ARCANUM_SOURCES = ['arcanum_6', 'arcanum_7', 'arcanum_8', 'arcanum_9'] as const
+type ArcanumSource = typeof ARCANUM_SOURCES[number]
+
+const arcanumLevel = (s: ArcanumSource) => Number(s.split('_')[1])
+
 const sourceLabel = computed(() => {
   if (props.source === 'pact_chain') return 'Pacte · Chaîne'
   if (props.source === 'pact_tome') return 'Pacte · Tome'
   if (props.source === 'invocation') return 'Manifestation'
+  if (props.source === 'book_of_ancient_secrets') return 'Livre des Ombres'
+  if (props.source && (ARCANUM_SOURCES as readonly string[]).includes(props.source)) {
+    return `Arcanum (niv. ${arcanumLevel(props.source as ArcanumSource)}) — 1/repos long`
+  }
   return ''
 })
 
@@ -241,6 +259,13 @@ const sourceTooltip = computed(() => {
   if (props.source === 'pact_chain') return 'Sort octroyé par le Pacte de la Chaîne'
   if (props.source === 'pact_tome') return 'Sort mineur du Pacte du Tome'
   if (props.source === 'invocation') return 'Sort octroyé par une manifestation occulte'
+  if (props.source === 'book_of_ancient_secrets') {
+    return 'Sort rituel inscrit dans votre Livre des Ombres (lançable uniquement en tant que rituel).'
+  }
+  if (props.source && (ARCANUM_SOURCES as readonly string[]).includes(props.source)) {
+    const lvl = arcanumLevel(props.source as ArcanumSource)
+    return `Arcane Mystérieux (niv. ${lvl}) — peut être lancé 1 fois par repos long sans dépenser d'emplacement de sort.`
+  }
   return ''
 })
 

@@ -40,8 +40,18 @@ export async function seedClass(
 
   for (const featureDef of baseFeatures) {
     const { effects = [], meta, prerequisites, ...data } = featureDef
+    // Important : on inclut `levelRequired` dans la clef d'unicité, sinon
+    // les features récurrentes au même nom (ex. « Amélioration de caractéristique »
+    // gagnée à 4/8/12/16/19) sont fusionnées en une seule ligne en base et seul
+    // le niveau de la première définition est lié au personnage au level-up.
     const existing = await db.query.features.findFirst({
-      where: and(eq(schema.features.classId, cls.id), eq(schema.features.name, data.name)),
+      where: and(
+        eq(schema.features.classId, cls.id),
+        eq(schema.features.name, data.name),
+        data.levelRequired != null
+          ? eq(schema.features.levelRequired, data.levelRequired)
+          : sql`${schema.features.levelRequired} IS NULL`,
+      ),
     })
     let feature
     if (existing) {
@@ -101,8 +111,15 @@ export async function seedClass(
 
     for (const featureDef of subclassDef.features) {
       const { effects = [], meta, ...data } = featureDef
+      // Idem : scoper par niveau pour éviter la fusion des features homonymes.
       const existing = await db.query.features.findFirst({
-        where: and(eq(schema.features.subclassId, subclass.id), eq(schema.features.name, data.name)),
+        where: and(
+          eq(schema.features.subclassId, subclass.id),
+          eq(schema.features.name, data.name),
+          data.levelRequired != null
+            ? eq(schema.features.levelRequired, data.levelRequired)
+            : sql`${schema.features.levelRequired} IS NULL`,
+        ),
       })
       let feature
       if (existing) {

@@ -14,6 +14,12 @@ export type RechargeType = typeof RECHARGE_TYPES[number]
 
 export interface FeatureMeta {
   slotLevelFormula?: Formula
+  /**
+   * Marque une feature dont `maxUsesFormula` est purement informatif
+   * (ex. nombre d'invocations connues) et ne doit pas afficher de compteur
+   * d'utilisations sur la fiche de personnage.
+   */
+  hideCounter?: boolean
 }
 
 export interface FeaturePrerequisite {

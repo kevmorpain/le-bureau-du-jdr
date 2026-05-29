@@ -50,7 +50,7 @@
               </UButton>
 
               <div
-                v-if="feature.maxUses !== null"
+                v-if="feature.maxUses !== null && !hasHiddenCounter(feature)"
                 class="flex items-center gap-1"
               >
                 <button
@@ -178,6 +178,17 @@ const asiModal = reactive({
 
 const isASIFeature = (feature: { effects?: unknown[] }) =>
   (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'asi_or_feat') ?? false
+
+/**
+ * Certaines features utilisent `maxUsesFormula` à des fins purement informatives :
+ * - Magie du Pacte : c'est le nombre d'emplacements de sort, gérés dans la section
+ *   « Emplacements de sorts » (la feature porte un `meta.slotLevelFormula`).
+ * - Invocations occultes : c'est le nombre d'invocations connues, marqué via
+ *   `meta.hideCounter` dans le seed.
+ * Pour ces cas, on cache le compteur d'utilisations.
+ */
+const hasHiddenCounter = (feature: { meta?: { slotLevelFormula?: unknown, hideCounter?: boolean } | null }) =>
+  Boolean(feature.meta?.slotLevelFormula) || Boolean(feature.meta?.hideCounter)
 
 const abilityShortLabels: Record<string, string> = {
   str: 'FOR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'SAG', cha: 'CHA',

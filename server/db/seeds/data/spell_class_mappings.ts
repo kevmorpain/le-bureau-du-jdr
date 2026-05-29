@@ -25,7 +25,7 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Rayon traçant', classNames: ['Clerc'] },
   { spellName: 'Bénédiction', classNames: ['Clerc', 'Paladin'] },
   { spellName: 'Blessure', classNames: ['Clerc'] },
-  { spellName: 'Gibet démoniaque', classNames: ['Occultiste'] },
+  { spellName: 'Maléfice', classNames: ['Occultiste'] },
   { spellName: 'Compréhension des langues', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Armure d\'Agathys', classNames: ['Occultiste'] },
   { spellName: 'Alarme', classNames: ['Magicien', 'Occultiste', 'Rôdeur'] },
@@ -57,11 +57,23 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Flétrissement', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
   // ─── Niveau 5 ─────────────────────────────────────────────────────────────────
-  { spellName: 'Contact avec le plan astral', classNames: ['Clerc', 'Magicien', 'Occultiste'] },
+  { spellName: 'Contact avec un autre plan', classNames: ['Clerc', 'Magicien', 'Occultiste'] },
   { spellName: 'Perturbations synaptiques', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
   // ─── Niveau 6 ─────────────────────────────────────────────────────────────────
   { spellName: 'Prison mentale', classNames: ['Magicien', 'Occultiste'] },
+  { spellName: 'Cercle de mort', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Conjuration de fée', classNames: ['Druide', 'Occultiste'] },
+  { spellName: 'Création de mort-vivant', classNames: ['Clerc', 'Magicien', 'Occultiste'] },
+  { spellName: 'Désintégration', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Mauvais œil', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Vision lucide', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+
+  // ─── Niveau 7 ─────────────────────────────────────────────────────────────────
+  { spellName: 'Cage de force', classNames: ['Barde', 'Magicien', 'Occultiste'] },
+  { spellName: 'Doigt de mort', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Forme éthérée', classNames: ['Barde', 'Clerc', 'Magicien', 'Occultiste', 'Ensorceleur'] },
+  { spellName: 'Voyage planaire', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
   // ─── Sorts d'Ambroise ─────────────────────────────────────────────────────────
 
@@ -83,6 +95,9 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
 
   // Niveau 1 (Pacte de la Chaîne — apprendre via aptitude, pas liste Occultiste)
   { spellName: 'Appel de familier', classNames: ['Magicien'] },
+
+  // Niveau 4 — Compulsion (référencé par manifestation Murmures ensorcelants)
+  { spellName: 'Compulsion', classNames: ['Barde', 'Occultiste'] },
 
   // Niveau 3
   { spellName: 'Voracité de Hadar', classNames: ['Occultiste'] },

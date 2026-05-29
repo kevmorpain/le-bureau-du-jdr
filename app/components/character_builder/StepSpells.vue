@@ -50,6 +50,70 @@
         </div>
       </div>
 
+      <!-- Arcanum mystique (Occultiste niv 11/13/15/17) -->
+      <div v-if="needsArcaneMysterium" class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">
+            ✨ Arcanum mystique (niv.&nbsp;{{ arcaneMysteriumSpellLevel }})
+          </p>
+          <span
+            class="text-xs font-semibold"
+            :class="state.arcaneMysteriumSpellId !== null ? 'text-green-400' : 'text-amber-400'"
+          >{{ state.arcaneMysteriumSpellId !== null ? '1/1' : '0/1' }}</span>
+        </div>
+        <p class="text-xs text-muted mb-3">
+          Choisissez un sort de niveau {{ arcaneMysteriumSpellLevel }} dans la liste de sorts d'occultiste.
+          Vous pourrez le lancer une fois par repos long sans dépenser d'emplacement.
+        </p>
+        <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
+        <div v-else-if="!arcanumSpellsCandidates.length" class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400">
+          Aucun sort de niveau {{ arcaneMysteriumSpellLevel }} dans la liste d'occultiste — relancez les seeds.
+        </div>
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <SpellCardBuilder
+            v-for="spell in arcanumSpellsCandidates"
+            :key="spell.id"
+            :spell="spell"
+            :selected="state.arcaneMysteriumSpellId === spell.id"
+            :character-level="state.level"
+            :spellcasting-mod="spellcastingMod"
+            @click="toggleArcanumSpell(spell.id)"
+          />
+        </div>
+      </div>
+
+      <!-- Livre des secrets anciens (manifestation TCoE Tome) -->
+      <div v-if="showBookOfAncientSecrets" class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">
+            📜 Livre des secrets anciens — sorts rituels
+          </p>
+          <span
+            class="text-xs font-semibold"
+            :class="state.bookOfAncientSecretsSpellIds.length >= 2 ? 'text-green-400' : 'text-amber-400'"
+          >{{ state.bookOfAncientSecretsSpellIds.length }}/2</span>
+        </div>
+        <p class="text-xs text-muted mb-3">
+          Choisissez 2 sorts <strong>rituels</strong> de niveau 1 dans la liste de n'importe quelle classe.
+          Ils seront inscrits dans votre Livre des Ombres et lançables uniquement en tant que rituel.
+        </p>
+        <div v-if="ritualsPending" class="text-sm text-muted py-4 text-center">Chargement…</div>
+        <div v-else-if="!ritualSpellsLvl1.length" class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400">
+          Aucun sort rituel de niveau 1 dans la base — relancez les seeds.
+        </div>
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <SpellCardBuilder
+            v-for="spell in ritualSpellsLvl1"
+            :key="spell.id"
+            :spell="spell"
+            :selected="state.bookOfAncientSecretsSpellIds.includes(spell.id)"
+            :character-level="state.level"
+            :spellcasting-mod="spellcastingMod"
+            @click="toggleRitualSpell(spell.id)"
+          />
+        </div>
+      </div>
+
       <!-- Sorts du Pacte de la Chaîne (en premier, avant les onglets) -->
       <div v-if="needsPactBoon && state.pactBoon === 'chain'" class="mb-6">
         <div class="flex items-center justify-between mb-2">
@@ -277,6 +341,9 @@ const {
   needsPactBoon,
   ABILITY_SHORT,
   abilityMod,
+  needsArcaneMysterium,
+  arcaneMysteriumSpellLevel,
+  picksBookOfAncientSecrets,
 } = useCharacterBuilder()
 
 const activeTab = ref<'cantrips' | 'spells'>('cantrips')
@@ -453,5 +520,60 @@ function toggleSpell(id: number) {
   const idx = list.indexOf(id)
   if (idx >= 0) list.splice(idx, 1)
   else if (list.length < spellsNeeded.value) list.push(id)
+}
+
+// ─── Arcanum mystique ──────────────────────────────────────────────────────
+
+const arcanumSpellsCandidates = computed(() => {
+  const lvl = arcaneMysteriumSpellLevel.value
+  if (!lvl) return [] as any[]
+  return ((allSpells.value ?? []) as any[]).filter(s => s.level === lvl)
+})
+
+function toggleArcanumSpell(id: number) {
+  if (state.value.arcaneMysteriumSpellId === id) {
+    state.value.arcaneMysteriumSpellId = null
+  }
+  else {
+    state.value.arcaneMysteriumSpellId = id
+  }
+}
+
+// ─── Livre des secrets anciens : sorts rituels niv 1 toutes classes ───────
+
+const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('/api/spells', {
+  immediate: true,
+})
+
+// Map des invocations pour détecter si « Livre des secrets anciens » est dans
+// les invocations sélectionnées.
+const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  default: () => [],
+})
+const invocationsByName = computed<Record<string, number>>(() => {
+  const out: Record<string, number> = {}
+  for (const inv of (allInvocationsData.value ?? [])) out[inv.name] = inv.id
+  return out
+})
+
+const showBookOfAncientSecrets = computed(() =>
+  picksBookOfAncientSecrets(invocationsByName.value),
+)
+
+// Synchronise le flag de validation tant que la manifestation est cochée.
+watchEffect(() => {
+  state.value.bookOfAncientSecretsRequired = showBookOfAncientSecrets.value
+})
+
+const ritualSpellsLvl1 = computed(() =>
+  ((allRitualSpellsData.value ?? []) as any[])
+    .filter(s => s.level === 1 && s.ritual === true),
+)
+
+function toggleRitualSpell(id: number) {
+  const list = state.value.bookOfAncientSecretsSpellIds
+  const idx = list.indexOf(id)
+  if (idx >= 0) list.splice(idx, 1)
+  else if (list.length < 2) list.push(id)
 }
 </script>

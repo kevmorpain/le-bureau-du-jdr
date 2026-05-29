@@ -18,6 +18,9 @@
     <div v-else-if="currentStepId === 'abilities'">
       <StepAbilities />
     </div>
+    <div v-else-if="currentStepId === 'asi'">
+      <StepAsi />
+    </div>
     <div v-else-if="currentStepId === 'spells'">
       <StepSpells />
     </div>
@@ -46,7 +49,17 @@ const {
   hpMax,
   resetBuilder,
   needsPactBoon,
+  asiLevelsForCharacter,
 } = useCharacterBuilder()
+
+// Résolveurs name → dbId (fetch unique des entités DB nécessaires)
+const {
+  resolveClassId,
+  resolveSubclassId,
+  resolveSpeciesId,
+  resolveBackgroundId,
+  resolveItemIds,
+} = useBuilderEntities()
 
 const router = useRouter()
 const showSummary = ref(false)
@@ -56,15 +69,15 @@ const toast = useToast()
 const FIELD_LABELS: Record<string, string> = {
   name: 'Nom du personnage',
   maxHp: 'Points de vie',
-  className: 'Classe',
+  classId: 'Classe',
   abilityScores: 'Caractéristiques',
   classSkills: 'Compétences de classe',
   backgroundSkills: 'Compétences d\'historique',
   spellIds: 'Sorts',
-  inventoryItemNames: 'Équipement',
+  inventoryItemIds: 'Équipement',
   alignment: 'Alignement',
-  speciesDbName: 'Race',
-  backgroundDbName: 'Historique',
+  speciesId: 'Race',
+  backgroundId: 'Historique',
 }
 
 async function handleSubmit() {
@@ -102,16 +115,44 @@ async function handleSubmit() {
       return true
     })
 
+    // ── Résolution name → dbId au moment du submit ─────────────────────────
+    const classId = resolveClassId(classData.value.dbName)
+    if (!classId) {
+      toast.add({
+        title: 'Classe introuvable en base',
+        description: `Aucune classe "${classData.value.dbName}" en DB — vérifier le seed.`,
+        color: 'error',
+      })
+      submitting.value = false
+      return
+    }
+    const subclassId = resolveSubclassId(classData.value.dbName, state.value.subclass ?? null)
+    if (state.value.subclass && !subclassId) {
+      toast.add({
+        title: 'Sous-classe introuvable',
+        description: `"${state.value.subclass}" n'existe pas pour ${classData.value.dbName} — vérifier le seed.`,
+        color: 'error',
+      })
+      submitting.value = false
+      return
+    }
+    const speciesId = resolveSpeciesId(speciesDbName)
+    const backgroundId = isCustomBg ? null : resolveBackgroundId(bgData?.dbName ?? null)
+    const { ids: inventoryItemIds, unresolved: inventoryItemNamesUnresolved } = resolveItemIds(itemNames)
+    const pactWeaponItemId = needsPactBoon.value && state.value.pactBoon === 'blade' && state.value.pactWeaponItemName
+      ? resolveItemIds([state.value.pactWeaponItemName]).ids[0] ?? null
+      : null
+
     const payload = {
       name: state.value.name,
       alignment: state.value.alignment ?? undefined,
       dragonbornAncestry: state.value.dragonAncestry ?? null,
       maxHp: hpMax.value,
-      className: classData.value.dbName,
-      subclassName: state.value.subclass ?? null,
+      classId,
+      subclassId,
       level: state.value.level,
-      speciesDbName: speciesDbName ?? null,
-      backgroundDbName: isCustomBg ? null : (bgData?.dbName ?? null),
+      speciesId,
+      backgroundId,
       customBackgroundName: isCustomBg ? state.value.customBackgroundName : null,
       personality: state.value.personality,
       ideals: state.value.ideals,
@@ -150,10 +191,37 @@ async function handleSubmit() {
       toolProficiencyChoices: Object.values(state.value.selectedToolProficiencies).filter(Boolean),
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],
       pactBoon: needsPactBoon.value ? state.value.pactBoon : null,
-      pactWeaponItemName: needsPactBoon.value && state.value.pactBoon === 'blade' ? state.value.pactWeaponItemName : null,
+      pactWeaponItemId,
       pactBoonCantripIds: needsPactBoon.value && state.value.pactBoon === 'tome' ? state.value.selectedPactBoonCantripIds : [],
       invocationIds: state.value.invocationIds,
-      inventoryItemNames: itemNames,
+      inventoryItemIds,
+      inventoryItemNamesUnresolved,
+      // Bonus ASI aplatis : { classLevel, ability, amount } prêt à insérer
+      // dans character_ability_score_improvements côté serveur. Ne sont envoyés
+      // que pour les paliers où le joueur a choisi 'asi' (pas 'feat').
+      asiBonuses: asiLevelsForCharacter.value
+        .filter(lvl => state.value.asiChoice[lvl] === 'asi')
+        .flatMap(lvl =>
+          Object.entries(state.value.asiBonuses[lvl] ?? {})
+            .filter(([, amount]) => (amount ?? 0) > 0)
+            .map(([ability, amount]) => ({
+              classLevel: lvl,
+              ability: ability as string,
+              amount: amount as number,
+            })),
+        ),
+      // Dons choisis par palier (asiChoice === 'feat'). NOTE : la persistance
+      // backend des dons n'est pas encore branchée (cf. level-up.post.ts qui
+      // ignore aussi `featId`). Envoyé pour documenter le contrat.
+      asiFeats: asiLevelsForCharacter.value
+        .filter(lvl => state.value.asiChoice[lvl] === 'feat')
+        .map(lvl => ({
+          classLevel: lvl,
+          featId: state.value.asiFeats[lvl],
+        })),
+      // Arcanum mystique (Occultiste niv 11/13/15/17) + Livre des secrets anciens
+      arcaneMysteriumSpellId: state.value.arcaneMysteriumSpellId,
+      bookOfAncientSecretsSpellIds: state.value.bookOfAncientSecretsSpellIds,
       ...currency,
     }
 

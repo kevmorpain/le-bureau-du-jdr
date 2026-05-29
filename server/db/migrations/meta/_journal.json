@@ -316,6 +316,55 @@
       "when": 1747872002000,
       "tag": "0044_eldritch_invocations",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1747872003000,
+      "tag": "0045_spell_multi_attack",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "6",
+      "when": 1747872004000,
+      "tag": "0046_warlock_phb_naming",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1747872005000,
+      "tag": "0047_warlock_spells_naming",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1747872006000,
+      "tag": "0048_remove_mysticisme_sombre",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1747872007000,
+      "tag": "0049_remove_warlock_ghost_features",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1747872008000,
+      "tag": "0050_weapon_proficiency_fr",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "6",
+      "when": 1747872009000,
+      "tag": "0051_warlock_subclass_naming",
+      "breakpoints": true
     }
   ]
 }

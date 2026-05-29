@@ -120,7 +120,28 @@ export interface LevelUpState {
   pactBoonCantripIds: number[]
   newInvocationIds: number[]
   replacedInvocationId: number | null
+  // Sort choisi pour l'Arcane Mystérieux (niveau 11/13/15/17). Le niveau du sort
+  // dépend du niveau d'occultiste atteint (cf. ARCANUM_SPELL_LEVEL_BY_LEVEL).
+  arcaneMysteriumSpellId: number | null
+  // Sorts rituels niv. 1 choisis quand on prend la manifestation
+  // « Livre des secrets anciens » (2 sorts au choix de toute classe).
+  bookOfAncientSecretsSpellIds: number[]
+  // Flag positionné par le composant Magie quand l'invocation « Livre des anciens
+  // secrets » est dans les choix de cette montée de niveau. Sert à valider le
+  // step (2 sorts rituels obligatoires).
+  bookOfAncientSecretsRequired: boolean
 }
+
+// Quel niveau de sort accorde l'Arcane Mystérieux à chaque palier (PHB 2014).
+export const ARCANUM_SPELL_LEVEL_BY_LEVEL: Record<number, number> = {
+  11: 6,
+  13: 7,
+  15: 8,
+  17: 9,
+}
+
+// Nom canonique de l'invocation qui débloque la sélection de sorts rituels.
+export const BOOK_OF_ANCIENT_SECRETS_NAME = 'Livre des secrets anciens'
 
 // Invocations connues par niveau d'occultiste (PHB 2014)
 // Index = warlockLevel - 1
@@ -150,6 +171,9 @@ const INIT_STATE: LevelUpState = {
   pactBoonCantripIds: [],
   newInvocationIds: [],
   replacedInvocationId: null,
+  arcaneMysteriumSpellId: null,
+  bookOfAncientSecretsSpellIds: [],
+  bookOfAncientSecretsRequired: false,
 }
 
 export interface LUStep {
@@ -320,6 +344,25 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return spells.map(s => s.spell?.name ?? '').filter(Boolean)
   })
 
+  // ── Arcane Mystérieux (Occultiste niveaux 11 / 13 / 15 / 17) ───────────────
+
+  const arcaneMysteriumSpellLevel = computed<number | null>(() => {
+    if (state.value.pickedClassId !== 'warlock') return null
+    return ARCANUM_SPELL_LEVEL_BY_LEVEL[state.value.toLevel] ?? null
+  })
+  const needsArcaneMysterium = computed(() => arcaneMysteriumSpellLevel.value !== null)
+
+  // ── Livre des anciens secrets — sorts rituels (manifestation TCoE) ─────────
+
+  // L'ID de l'invocation est résolu côté UI via /api/invocations (cf. composant Magie).
+  // Le composable expose juste l'aide pour savoir « est-ce que cette manifestation
+  // figure dans les invocations nouvellement choisies ? »
+  const picksBookOfAncientSecrets = (allInvocationsByName: Record<string, number>) => {
+    const id = allInvocationsByName[BOOK_OF_ANCIENT_SECRETS_NAME]
+    if (!id) return false
+    return state.value.newInvocationIds.includes(id)
+  }
+
   // ── Subclass availability ─────────────────────────────────────────────────
 
   const isSubclassLevel = computed(() => {
@@ -420,6 +463,10 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
       case 'spells':
         if (s.pactBoon === 'tome' && s.pactBoonCantripIds.length < 3) return false
+        // L'Arcane Mystérieux exige un sort du niveau correspondant.
+        if (needsArcaneMysterium.value && s.arcaneMysteriumSpellId === null) return false
+        // Livre des anciens secrets : 2 sorts rituels niv. 1 obligatoires.
+        if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
         return true
 
       default:
@@ -478,13 +525,30 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     if (!id || !pickedClass.value) return
 
     const s = state.value
+    const { resolveClassId } = useBuilderEntities()
+
+    // Résolution dbName → classId. Pour les classes existantes du perso, on
+    // peut prendre le dbClassId directement depuis charClasses ; pour un
+    // multiclasse, il faut résoudre via /api/classes.
+    const existingDbClassId = charClasses.value.find(c => c.classId === s.pickedClassId)?.dbClassId
+    const classId = existingDbClassId ?? resolveClassId(pickedClass.value.dbName)
+    if (!classId) {
+      toast.add({
+        title: 'Classe introuvable en base',
+        description: `Aucune classe "${pickedClass.value.dbName}" en DB.`,
+        color: 'error',
+      })
+      return
+    }
+
     await $fetch(`/api/character_sheets/${id}/level-up`, {
       method: 'POST',
       body: {
-        classDbName: pickedClass.value.dbName,
+        classId,
         isMulticlass: s.isMulticlass,
         hpGained: s.hpGained,
-        subclassName: s.newSubclassName,
+        // Au niveau de pick de sous-classe, on a déjà l'ID via les radios.
+        subclassId: s.newSubclassId,
         fightingStyle: s.fightingStyle,
         expertiseSkills: s.expertiseSkills,
         asiChoice: s.asiChoice,
@@ -498,6 +562,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         pactBoonCantripIds: s.pactBoonCantripIds,
         newInvocationIds: s.newInvocationIds,
         replacedInvocationId: s.replacedInvocationId,
+        arcaneMysteriumSpellId: s.arcaneMysteriumSpellId,
+        bookOfAncientSecretsSpellIds: s.bookOfAncientSecretsSpellIds,
       },
     })
   }
@@ -533,6 +599,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     knownInvocationIds,
     effectivePactBoon,
     knownSpellNames,
+    needsArcaneMysterium,
+    arcaneMysteriumSpellLevel,
+    picksBookOfAncientSecrets,
     // Navigation
     activeSteps,
     currentStepId,

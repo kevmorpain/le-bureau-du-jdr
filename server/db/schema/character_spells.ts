@@ -10,7 +10,16 @@ const characterSpells = sqliteTable(
     spellId: integer('spell_id').notNull().references(() => spells.id, { onDelete: 'cascade' }),
     isKnown: integer('is_known', { mode: 'boolean' }).default(false).notNull(),
     isPrepared: integer('is_prepared', { mode: 'boolean' }).default(false).notNull(),
-    source: text('source').$type<'pact_chain' | 'pact_tome' | 'invocation'>(),
+    source: text('source').$type<
+      | 'pact_chain'
+      | 'pact_tome'
+      | 'invocation'
+      | 'arcanum_6'
+      | 'arcanum_7'
+      | 'arcanum_8'
+      | 'arcanum_9'
+      | 'book_of_ancient_secrets'
+    >(),
   },
   table => [
     primaryKey({ columns: [table.characterSheetId, table.spellId] }),

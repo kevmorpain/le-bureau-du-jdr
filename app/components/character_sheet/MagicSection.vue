@@ -248,12 +248,18 @@
             />
             <!-- Bouton Lancer inline -->
             <UButton
-              v-if="cs.spell.level === 0 || cs.isPrepared"
+              v-if="cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs)"
               size="xs"
               variant="soft"
               icon="i-game-icons:magic-swirl"
               class="shrink-0"
-              @click.stop="cs.spell.level === 0 ? castCantripDirect(cs) : openCastModalFor(cs)"
+              @click.stop="
+                cs.spell.level === 0
+                  ? castCantripDirect(cs)
+                  : isArcanumSpell(cs)
+                    ? castArcanumSpell(cs)
+                    : openCastModalFor(cs)
+              "
             >
               Lancer
             </UButton>
@@ -283,7 +289,15 @@
 
           <div class="flex gap-2">
             <UButton
-              v-if="selectedSpell.spell.level > 0"
+              v-if="isArcanumSpell(selectedSpell)"
+              block
+              icon="i-game-icons:magic-swirl"
+              @click="castArcanumFromSlideover"
+            >
+              Lancer (Arcane Mystérieux — 1/repos long)
+            </UButton>
+            <UButton
+              v-else-if="selectedSpell.spell.level > 0"
               block
               icon="i-game-icons:magic-swirl"
               @click="openCastModal"
@@ -455,11 +469,15 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
 // ─── Jets de dés au lancement de sort ──────────────────────────────────────
 const { roll } = useDiceRoller()
 
-// Parse "1d10" → { count: 1, sides: 10 }
-function parseSpellDie(die: string): { count: number, sides: number } | null {
-  const m = die.match(/^(\d+)d(\d+)$/)
+// Parse "1d10" ou "10d6+40" → { count, sides, flat }
+function parseSpellDie(die: string): { count: number, sides: number, flat: number } | null {
+  const m = die.match(/^(\d+)d(\d+)(?:\+(\d+))?$/)
   if (!m) return null
-  return { count: Number(m[1]), sides: Number(m[2]) }
+  return {
+    count: Number(m[1]),
+    sides: Number(m[2]),
+    flat: m[3] ? Number(m[3]) : 0,
+  }
 }
 
 // Récupère le die à infliger pour le niveau actuel
@@ -467,6 +485,28 @@ function getSpellDieAt(damageMap: Record<string, string>, atLevel: number): stri
   const levels = Object.keys(damageMap).map(Number).filter(n => n <= atLevel)
   if (!levels.length) return undefined
   return damageMap[String(Math.max(...levels))]
+}
+
+// Résout le nombre d'attaques pour un sort multi-cible au niveau donné.
+// Renvoie null si le sort n'est pas multi-attaque.
+function resolveAttackCount(
+  spell: Spell,
+  castAtLevel: number,
+  charLevel: number,
+): { count: number, label: string } | null {
+  const ma = (spell as any).multiAttack as
+    | { label?: string, count_at_character_level?: Record<string, number>, count_at_slot_level?: Record<string, number> }
+    | null
+    | undefined
+  if (!ma) return null
+  const map = ma.count_at_character_level ?? ma.count_at_slot_level
+  if (!map) return null
+  const ref = ma.count_at_character_level ? charLevel : castAtLevel
+  const levels = Object.keys(map).map(Number).filter(n => n <= ref)
+  if (!levels.length) return null
+  const count = map[String(Math.max(...levels))] ?? 1
+  if (count <= 1) return null
+  return { count, label: ma.label ?? 'Attaque' }
 }
 
 // Lance les dés de dégâts ou de soin du sort, si présents
@@ -482,13 +522,31 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
     const parsed = parseSpellDie(die)
     if (!parsed) return
 
-    let bonus = 0
+    // ─── Sorts multi-attaques (Décharge occulte, Rayon ardent, Trait magique…)
+    // Convention : les dés déclarés (NdM+K) représentent le TOTAL pour toutes
+    // les attaques. Per-attaque = (N/count)d(M) + (K/count). Les modificateurs
+    // (CHA via Coup agonisant, spellcasting mod) sont appliqués PAR attaque.
+    const multi = resolveAttackCount(spell, castAtLevel, characterLevel.value)
+    if (multi) {
+      const diePerAttack = Math.max(1, Math.floor(parsed.count / multi.count))
+      const flatPerAttack = Math.floor(parsed.flat / multi.count)
+      let perAttackBonus = flatPerAttack
+      if (dmg.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
+        perAttackBonus += spellcastingModifier.value
+      }
+      // Coup éldritique agonisant — appliqué par rayon de Décharge occulte
+      if (spell.name === 'Décharge occulte' && eldritchBlastMods.value.agonizing) {
+        perAttackBonus += charismaModifier.value
+      }
+      for (let r = 1; r <= multi.count; r++) {
+        roll(`${spell.name} · ${multi.label} ${r}`, perAttackBonus, parsed.sides, diePerAttack)
+      }
+      return
+    }
+
+    let bonus = parsed.flat
     if (dmg.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
       bonus += spellcastingModifier.value
-    }
-    // Coup éldritique agonisant : +CHA mod par rayon de Décharge occulte
-    if (spell.name === 'Décharge occulte' && eldritchBlastMods.value.agonizing) {
-      bonus += charismaModifier.value * parsed.count
     }
     const label = `${spell.name} · dégâts ${dmg.damage_type}`
     roll(label, bonus, parsed.sides, parsed.count)
@@ -504,13 +562,83 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
     const parsed = parseSpellDie(die)
     if (!parsed) return
 
-    let bonus = 0
+    let bonus = parsed.flat
     if (heal.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
       bonus += spellcastingModifier.value
     }
     roll(`${spell.name} · soin`, bonus, parsed.sides, parsed.count)
   }
 }
+
+// ─── Cast Arcane Mystérieux (sans emplacement, 1×/repos long) ──────────────
+
+const ARCANUM_FEATURE_NAME_BY_LEVEL: Record<number, string> = {
+  6: 'Arcanum mystique (niveau 6)',
+  7: 'Arcanum mystique (niveau 7)',
+  8: 'Arcanum mystique (niveau 8)',
+  9: 'Arcanum mystique (niveau 9)',
+}
+
+function arcanumLevelFromSource(source: string | null | undefined): number | null {
+  if (!source?.startsWith('arcanum_')) return null
+  const lvl = Number(source.split('_')[1])
+  return Number.isFinite(lvl) ? lvl : null
+}
+
+async function castArcanumSpell(cs: CharacterSpellWithSpell) {
+  const lvl = arcanumLevelFromSource(cs.source)
+  if (!lvl) return
+
+  // Cherche la feature Arcane mystérieux (Xe niveau) sur la fiche
+  const wantedName = ARCANUM_FEATURE_NAME_BY_LEVEL[lvl]
+  const charFeatures = (characterSheetRef.value as any)?.features ?? []
+  const cf = charFeatures.find((f: any) => f.feature?.name === wantedName)
+
+  if (!cf) {
+    useToast().add({
+      title: `Feature ${wantedName} introuvable sur la fiche`,
+      color: 'error',
+    })
+    return
+  }
+
+  const currentUses = cf.currentUses ?? 0
+  const maxUses = 1
+  if (currentUses >= maxUses) {
+    useToast().add({
+      title: 'Arcane Mystérieux déjà utilisé — récupéré au prochain repos long.',
+      color: 'warning',
+    })
+    return
+  }
+
+  // Décrémente le compteur côté serveur
+  try {
+    await $fetch(`/api/character_sheets/${props.characterSheet.id}/features`, {
+      method: 'PUT',
+      body: [{ featureId: cf.featureId, currentUses: currentUses + 1 }],
+    })
+    cf.currentUses = currentUses + 1
+  }
+  catch {
+    useToast().add({ title: 'Erreur lors de la mise à jour de la feature', color: 'error' })
+    return
+  }
+
+  // Concentration éventuelle
+  if (cs.spell.concentration) {
+    setConcentration(cs.spellId)
+    useToast().add({
+      title: `Concentration active — ${cs.spell.name}`,
+      color: 'info',
+    })
+  }
+
+  // Jets de dés au niveau du sort (l'Arcanum est toujours lancé au niveau de base)
+  rollSpellEffect(cs, cs.spell.level || lvl)
+}
+
+const isArcanumSpell = (cs: CharacterSpellWithSpell) => arcanumLevelFromSource(cs.source) !== null
 
 // Lancer un cantrip directement (pas d'emplacement à consommer)
 const castCantripDirect = (cs: CharacterSpellWithSpell) => {
@@ -529,6 +657,12 @@ const castCantripFromSlideover = () => {
   if (!selectedSpell.value) return
   showSpellDetail.value = false
   castCantripDirect(selectedSpell.value)
+}
+
+const castArcanumFromSlideover = () => {
+  if (!selectedSpell.value) return
+  showSpellDetail.value = false
+  castArcanumSpell(selectedSpell.value)
 }
 
 const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number | null) => {

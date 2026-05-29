@@ -6,10 +6,10 @@ import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 
 const levelUpSchema = z.object({
-  classDbName: z.string(),             // e.g. 'Guerrier'
+  classId: z.number().int().positive(),
   isMulticlass: z.boolean(),
   hpGained: z.number().int().min(1),
-  subclassName: z.string().nullable().optional(),
+  subclassId: z.number().int().positive().nullable().optional(),
   fightingStyle: z.string().nullable().optional(),
   expertiseSkills: z.array(z.string()).optional(),
   asiChoice: z.enum(['asi', 'feat']).nullable().optional(),
@@ -23,7 +23,19 @@ const levelUpSchema = z.object({
   pactBoonCantripIds: z.array(z.number().int()).optional(),
   newInvocationIds: z.array(z.number().int().positive()).optional(),
   replacedInvocationId: z.number().int().positive().nullable().optional(),
+  // Arcane Mystérieux — sort de niv 6/7/8/9 choisi aux paliers d'occultiste 11/13/15/17.
+  arcaneMysteriumSpellId: z.number().int().positive().nullable().optional(),
+  // Livre des anciens secrets — 2 sorts rituels niv. 1 quand l'invocation est choisie.
+  bookOfAncientSecretsSpellIds: z.array(z.number().int().positive()).max(2).optional(),
 })
+
+// Mapping niveau d'occultiste → niveau de sort de l'Arcane Mystérieux + source DB
+const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcanum_8' | 'arcanum_9'> = {
+  11: 'arcanum_6',
+  13: 'arcanum_7',
+  15: 'arcanum_8',
+  17: 'arcanum_9',
+}
 
 // ─── Spell slot tables (D&D 5e 2014) ─────────────────────────────────────────
 
@@ -94,30 +106,19 @@ export default defineEventHandler(async (event) => {
 
   const d = result.data
 
-  // ── 1. Resolve class by DB name ────────────────────────────────────────────
+  // ── 1. Charge la classe (besoin du hitDice + name pour le caster lookup) ───
 
   const [cls] = await db
     .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, name: schema.classes.name })
     .from(schema.classes)
-    .where(eq(schema.classes.name, d.classDbName))
+    .where(eq(schema.classes.id, d.classId))
     .limit(1)
 
-  if (!cls) throw createError({ statusCode: 404, statusMessage: `Class not found: ${d.classDbName}` })
+  if (!cls) throw createError({ statusCode: 404, statusMessage: `Class not found (id=${d.classId})` })
 
-  // ── 2. Resolve subclass if needed ──────────────────────────────────────────
+  // ── 2. ID de sous-classe (résolu côté client) ─────────────────────────────
 
-  let subclassId: number | null = null
-  if (d.subclassName) {
-    const [sub] = await db
-      .select({ id: schema.subclasses.id })
-      .from(schema.subclasses)
-      .where(and(
-        eq(schema.subclasses.classId, cls.id),
-        sql`lower(${schema.subclasses.name}) = lower(${d.subclassName})`,
-      ))
-      .limit(1)
-    subclassId = sub?.id ?? null
-  }
+  const subclassId: number | null = d.subclassId ?? null
 
   // ── 3. Load current class data ────────────────────────────────────────────
 
@@ -173,15 +174,23 @@ export default defineEventHandler(async (event) => {
       ),
     )
 
-  const newSubclassFeatures = subclassId
+  // Sous-classe effective :
+  //  - quand on pick la sous-classe dans cette montée de niveau (subclassId non nul),
+  //    on lie toutes les features ≤ newLevel pour rattraper d'éventuels paliers manqués ;
+  //  - sinon (sous-classe déjà attachée au perso), on lie uniquement les features
+  //    débloquées au nouveau niveau atteint.
+  const effectiveSubclassId = subclassId ?? existingClass?.subclassId ?? null
+  const newSubclassFeatures = effectiveSubclassId
     ? await db
         .select({ id: schema.features.id })
         .from(schema.features)
         .where(
           and(
-            eq(schema.features.subclassId, subclassId),
+            eq(schema.features.subclassId, effectiveSubclassId),
             eq(schema.features.featureType, 'subclass_feature'),
-            lte(schema.features.levelRequired, newLevel),
+            subclassId !== null
+              ? lte(schema.features.levelRequired, newLevel)
+              : eq(schema.features.levelRequired, newLevel),
           ),
         )
     : []
@@ -304,6 +313,50 @@ export default defineEventHandler(async (event) => {
       d.newInvocationIds ?? [],
       d.replacedInvocationId ?? null,
     )
+  }
+
+  // ── 8d. Arcane Mystérieux ──────────────────────────────────────────────────
+  // Le sort choisi est inscrit dans characterSpells avec une source `arcanum_*`
+  // (utilisée pour afficher un badge sur la fiche). Le compteur 1×/repos long
+  // est porté par la feature elle-même (Arcane mystérieux 6e/7e/8e/9e) via
+  // `maxUsesFormula` + `rechargeType=long_rest` déjà seedés.
+
+  if (d.arcaneMysteriumSpellId != null) {
+    const source = ARCANUM_LEVEL_TO_SOURCE[newLevel]
+    if (source) {
+      // Si un sort d'Arcanum à ce niveau était déjà choisi, on l'écrase.
+      await db
+        .delete(srcSchema.characterSpells)
+        .where(and(
+          eq(srcSchema.characterSpells.characterSheetId, characterSheetId),
+          eq(srcSchema.characterSpells.source, source),
+        ))
+      await db
+        .insert(srcSchema.characterSpells)
+        .values({
+          characterSheetId,
+          spellId: d.arcaneMysteriumSpellId,
+          isKnown: true,
+          isPrepared: false,
+          source,
+        } as any)
+        .onConflictDoNothing()
+    }
+  }
+
+  // ── 8e. Livre des anciens secrets — sorts rituels ──────────────────────────
+
+  if (d.bookOfAncientSecretsSpellIds && d.bookOfAncientSecretsSpellIds.length) {
+    await db
+      .insert(srcSchema.characterSpells)
+      .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({
+        characterSheetId,
+        spellId,
+        isKnown: true,
+        isPrepared: false,
+        source: 'book_of_ancient_secrets' as const,
+      })))
+      .onConflictDoNothing()
   }
 
   // ── 9. New skills (multiclass proficiencies) ──────────────────────────────

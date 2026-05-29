@@ -1,7 +1,7 @@
 import { db } from 'hub:db'
 import * as schema from '~~/server/db/schema'
 import * as srcSchema from '~~/server/db/schema'
-import { and, eq, inArray, lte, sql } from 'drizzle-orm'
+import { and, eq, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 
@@ -59,12 +59,12 @@ const builderSchema = z.object({
   alignment: z.string().optional(),
   dragonbornAncestry: z.string().nullable().optional(),
   maxHp: z.number().int().positive(),
-  // Résolution par nom
-  className: z.string(),
-  subclassName: z.string().nullable().optional(),
+  // Liens vers entités DB (résolus côté client via useBuilderEntities)
+  classId: z.number().int().positive(),
+  subclassId: z.number().int().positive().nullable().optional(),
   level: z.number().int().min(1).max(20),
-  speciesDbName: z.string().nullable().optional(),
-  backgroundDbName: z.string().nullable().optional(),
+  speciesId: z.number().int().positive().nullable().optional(),
+  backgroundId: z.number().int().positive().nullable().optional(),
   customBackgroundName: z.string().nullable().optional(),
   // Traits
   personality: z.string().optional(),
@@ -84,8 +84,10 @@ const builderSchema = z.object({
   selectedLanguages: z.array(z.string()).optional().default([]),
   // Sorts
   spellIds: z.array(z.number().int()),
-  // Équipement
-  inventoryItemNames: z.array(z.string()),
+  // Équipement — IDs résolus côté client ; les items inconnus sont retombés en texte
+  // libre pour ne pas perdre l'info (currency, items custom, etc.).
+  inventoryItemIds: z.array(z.number().int().positive()).optional().default([]),
+  inventoryItemNamesUnresolved: z.array(z.string()).optional().default([]),
   // Monnaie
   pp: z.number().int().min(0).optional(),
   po: z.number().int().min(0).optional(),
@@ -94,11 +96,41 @@ const builderSchema = z.object({
   pc: z.number().int().min(0).optional(),
   // Faveur du Pacte (Occultiste niveau ≥ 3)
   pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
-  pactWeaponItemName: z.string().nullable().optional(),
+  pactWeaponItemId: z.number().int().positive().nullable().optional(),
   pactBoonCantripIds: z.array(z.number().int()).optional(),
   // Manifestations occultes (Occultiste niveau ≥ 2)
   invocationIds: z.array(z.number().int().positive()).optional(),
+  // Bonus ASI répartis (paliers 4/8/12/… selon classe). Chaque palier doit
+  // totaliser 2 points ; on accepte tel quel sans re-vérifier (le builder valide).
+  asiBonuses: z
+    .array(z.object({
+      classLevel: z.number().int().min(1).max(20),
+      ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']),
+      amount: z.number().int().min(1).max(2),
+    }))
+    .optional()
+    .default([]),
+  // Dons choisis par palier (TODO : pas encore persisté côté DB).
+  asiFeats: z
+    .array(z.object({
+      classLevel: z.number().int().min(1).max(20),
+      featId: z.string(),
+    }))
+    .optional()
+    .default([]),
+  // Arcanum mystique (Occultiste niv 11/13/15/17) — sort de niv 6/7/8/9 choisi
+  arcaneMysteriumSpellId: z.number().int().positive().nullable().optional(),
+  // Livre des secrets anciens — 2 sorts rituels niv 1 quand la manifestation est choisie
+  bookOfAncientSecretsSpellIds: z.array(z.number().int().positive()).max(2).optional(),
 })
+
+// Mapping niveau d'occultiste → source DB pour les sorts d'Arcanum mystique
+const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcanum_8' | 'arcanum_9'> = {
+  11: 'arcanum_6',
+  13: 'arcanum_7',
+  15: 'arcanum_8',
+  17: 'arcanum_9',
+}
 
 export default defineEventHandler(async (event) => {
   const result = await readValidatedBody(event, builderSchema.safeParse)
@@ -108,41 +140,26 @@ export default defineEventHandler(async (event) => {
 
   const d = result.data
 
-  // ── Résolutions par nom ──────────────────────────────────────────────────────
+  // ── Récupération des entités déjà résolues côté client ────────────────────
+  // Tout est passé en IDs : on récupère uniquement les rows nécessaires pour
+  // les champs dérivés (hitDice de la classe, maîtrises héritées du background).
 
   const [cls] = await db
     .select({ id: schema.classes.id, name: schema.classes.name, hitDice: schema.classes.hitDice })
     .from(schema.classes)
-    .where(eq(schema.classes.name, d.className))
+    .where(eq(schema.classes.id, d.classId))
     .limit(1)
 
-  if (!cls) throw createError({ statusCode: 400, statusMessage: `Classe introuvable: ${d.className}` })
+  if (!cls) throw createError({ statusCode: 400, statusMessage: `Classe introuvable (id=${d.classId})` })
 
-  let subclassId: number | null = null
-  if (d.subclassName) {
-    const [sub] = await db
-      .select({ id: schema.subclasses.id })
-      .from(schema.subclasses)
-      .where(sql`lower(${schema.subclasses.name}) = lower(${d.subclassName})`)
-      .limit(1)
-    subclassId = sub?.id ?? null
-  }
+  const subclassId: number | null = d.subclassId ?? null
+  const speciesId: number | null = d.speciesId ?? null
 
-  let speciesId: number | null = null
-  if (d.speciesDbName) {
-    const [sp] = await db
-      .select({ id: schema.characterSpecies.id })
-      .from(schema.characterSpecies)
-      .where(eq(schema.characterSpecies.name, d.speciesDbName))
-      .limit(1)
-    speciesId = sp?.id ?? null
-  }
-
-  // Background (preset) — résolution + récupération des maîtrises
-  let backgroundId: number | null = null
+  // Background — on charge les maîtrises héritées (tools/langues) du preset
+  let backgroundId: number | null = d.backgroundId ?? null
   let bgToolProfs: string[] = []
   let bgLangProfs: string[] = []
-  if (d.backgroundDbName) {
+  if (backgroundId) {
     const [bg] = await db
       .select({
         id: schema.backgrounds.id,
@@ -151,26 +168,29 @@ export default defineEventHandler(async (event) => {
       })
       .from(schema.backgrounds)
       .where(and(
-        eq(schema.backgrounds.name, d.backgroundDbName),
+        eq(schema.backgrounds.id, backgroundId),
         sql`${schema.backgrounds.characterSheetId} IS NULL`,
       ))
       .limit(1)
-    backgroundId = bg?.id ?? null
-    // Exclure les entrées "choix" — elles sont gérées par selectedLanguages / UI
-    const isChoice = (s: string) => s.toLowerCase().includes('choix') || s.includes('×')
-    bgToolProfs = (bg?.toolProficiencies ?? []).filter(p => !isChoice(p))
-    bgLangProfs = (bg?.languageProficiencies ?? []).filter(p => !isChoice(p))
+    if (!bg) {
+      // Garde-fou : le client a envoyé un id qui ne correspond à aucun preset.
+      // On ignore plutôt que de planter, mais on log côté serveur pour repérer.
+      console.warn(`[character_sheets POST] backgroundId=${backgroundId} non trouvé en DB (ignoré)`)
+      backgroundId = null
+    }
+    else {
+      const isChoice = (s: string) => s.toLowerCase().includes('choix') || s.includes('×')
+      bgToolProfs = (bg.toolProficiencies ?? []).filter(p => !isChoice(p))
+      bgLangProfs = (bg.languageProficiencies ?? []).filter(p => !isChoice(p))
+    }
   }
 
-  // Résolution noms items → IDs (silencieux si non trouvé)
-  let itemIds: number[] = []
-  if (d.inventoryItemNames.length) {
-    const rows = await db
-      .select({ id: schema.items.id, name: schema.items.name })
-      .from(schema.items)
-      .where(inArray(schema.items.name, d.inventoryItemNames))
-    const nameToId = Object.fromEntries(rows.map(r => [r.name, r.id]))
-    itemIds = d.inventoryItemNames.map(n => nameToId[n]).filter((id): id is number => id != null)
+  const itemIds: number[] = d.inventoryItemIds ?? []
+  // Note : si tu veux logger les items que le client n'a pas pu résoudre,
+  // ils sont dans d.inventoryItemNamesUnresolved. On les ignore silencieusement
+  // côté DB (rien à insérer) mais le client peut afficher un warning.
+  if (d.inventoryItemNamesUnresolved?.length) {
+    console.warn('[character_sheets POST] items non résolus côté client :', d.inventoryItemNamesUnresolved)
   }
 
   // ── Hit die ───────────────────────────────────────────────────────────────────
@@ -258,6 +278,27 @@ export default defineEventHandler(async (event) => {
     )
   }
 
+  // Bonus ASI (Ability Score Improvements). On insère les rows tels quels —
+  // c'est ce que `useCharacterSheet` lit pour calculer les scores finaux.
+  if (d.asiBonuses?.length) {
+    await db.insert(schema.characterAbilityScoreImprovements).values(
+      d.asiBonuses.map(b => ({
+        characterSheetId: sheetId,
+        classId: cls.id,
+        classLevel: b.classLevel,
+        ability: b.ability as any,
+        amount: b.amount,
+      })),
+    )
+  }
+
+  // TODO : persister les dons choisis (asiFeats). Aucune table dédiée pour
+  // l'instant (`character_feats` n'existe pas), même limitation côté level-up.
+  // On log pour ne pas perdre l'info silencieusement côté builder.
+  if (d.asiFeats?.length) {
+    console.warn('[character_sheets POST] dons reçus mais non persistés (TODO) :', d.asiFeats)
+  }
+
   // Caractéristiques
   const abilityEntries = Object.entries(d.abilityScores)
   if (abilityEntries.length) {
@@ -342,14 +383,13 @@ export default defineEventHandler(async (event) => {
       })))
       .onConflictDoNothing()
   }
-  else if (d.pactBoon === 'blade' && d.pactWeaponItemName && itemIds.length) {
+  else if (d.pactBoon === 'blade' && d.pactWeaponItemId && itemIds.length) {
     const [inv] = await db
       .select({ invId: srcSchema.characterInventory.id })
       .from(srcSchema.characterInventory)
-      .innerJoin(srcSchema.items, eq(srcSchema.characterInventory.itemId, srcSchema.items.id))
       .where(and(
         eq(srcSchema.characterInventory.characterSheetId, sheetId),
-        eq(srcSchema.items.name, d.pactWeaponItemName),
+        eq(srcSchema.characterInventory.itemId, d.pactWeaponItemId),
       ))
       .limit(1)
     if (inv) {
@@ -363,6 +403,37 @@ export default defineEventHandler(async (event) => {
   // Manifestations occultes (Occultiste)
   if (d.invocationIds && d.invocationIds.length) {
     await applyInvocationChanges(sheetId, d.invocationIds, null)
+  }
+
+  // Arcanum mystique (Occultiste niv 11/13/15/17) — sort 1×/repos long
+  if (d.arcaneMysteriumSpellId != null) {
+    const source = ARCANUM_LEVEL_TO_SOURCE[d.level]
+    if (source) {
+      await db
+        .insert(srcSchema.characterSpells)
+        .values({
+          characterSheetId: sheetId,
+          spellId: d.arcaneMysteriumSpellId,
+          isKnown: true,
+          isPrepared: false,
+          source,
+        } as any)
+        .onConflictDoNothing()
+    }
+  }
+
+  // Livre des secrets anciens (manifestation Tome) — 2 sorts rituels niv 1
+  if (d.bookOfAncientSecretsSpellIds && d.bookOfAncientSecretsSpellIds.length) {
+    await db
+      .insert(srcSchema.characterSpells)
+      .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({
+        characterSheetId: sheetId,
+        spellId,
+        isKnown: true,
+        isPrepared: false,
+        source: 'book_of_ancient_secrets' as const,
+      })))
+      .onConflictDoNothing()
   }
 
   setResponseStatus(event, 201)

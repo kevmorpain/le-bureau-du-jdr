@@ -14,7 +14,7 @@ const cha = 'cha' as const
 export const warlockInvocations: InvocationDef[] = [
   // ─── Niveau 1 (pas de prérequis de niveau) ───────────────────────────────────
   {
-    name: 'Armure des ombres',
+    name: 'Armure d\'ombres',
     description: 'Vous pouvez lancer Armure de mage sur vous-même à volonté, sans dépenser d\'emplacement de sort ni de composantes matérielles.',
     levelRequired: 1,
     prerequisites: null,
@@ -23,7 +23,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Bouche-à-oreille bestiale',
+    name: 'Langage animal',
     description: 'Vous pouvez lancer Communication avec les animaux à volonté, sans dépenser d\'emplacement de sort.',
     levelRequired: 1,
     prerequisites: null,
@@ -32,7 +32,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Influence enjôleuse',
+    name: 'Présence captivante',
     description: 'Vous obtenez la maîtrise des compétences Tromperie et Persuasion.',
     levelRequired: 1,
     prerequisites: null,
@@ -42,7 +42,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Vue éldritique',
+    name: 'Vision occulte',
     description: 'Vous pouvez lancer Détection de la magie à volonté, sans dépenser d\'emplacement de sort.',
     levelRequired: 1,
     prerequisites: null,
@@ -51,7 +51,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Lance éldritique',
+    name: 'Lance occulte',
     description: 'Quand vous lancez Décharge occulte, sa portée passe à 90 mètres.',
     levelRequired: 1,
     prerequisites: { requiredSpellName: 'Décharge occulte' },
@@ -60,7 +60,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Yeux du gardien des runes',
+    name: 'Oeil du gardien des runes',
     description: 'Vous pouvez lire toutes les écritures, quelle que soit la langue.',
     levelRequired: 1,
     prerequisites: null,
@@ -78,7 +78,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Masque aux mille visages',
+    name: 'Mille visages',
     description: 'Vous pouvez lancer Déguisement à volonté, sans dépenser d\'emplacement de sort.',
     levelRequired: 1,
     prerequisites: null,
@@ -87,7 +87,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Visions trompeuses',
+    name: 'Visions embrumées',
     description: 'Vous pouvez lancer Image silencieuse à volonté, sans dépenser d\'emplacement de sort.',
     levelRequired: 1,
     prerequisites: null,
@@ -96,7 +96,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Voleur de cinq destins',
+    name: 'Voleur des cinq destinées',
     description: 'Vous pouvez lancer Châtiment une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
     levelRequired: 1,
     prerequisites: null,
@@ -105,7 +105,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Coup éldritique agonisant',
+    name: 'Décharge déchirante',
     description: 'Quand vous lancez Décharge occulte, vous ajoutez votre modificateur de Charisme aux dégâts qu\'il inflige à chaque coup au but.',
     levelRequired: 1,
     prerequisites: { requiredSpellName: 'Décharge occulte' },
@@ -114,7 +114,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Décharge repoussante',
+    name: 'Décharge répulsive',
     description: 'Quand vous touchez une créature avec Décharge occulte, vous pouvez la pousser de 3 mètres en ligne droite à l\'opposé de vous.',
     levelRequired: 1,
     prerequisites: { requiredSpellName: 'Décharge occulte' },
@@ -123,7 +123,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Vue du Diable',
+    name: 'Vision du diable',
     description: 'Vous voyez normalement dans la pénombre et l\'obscurité, magique ou non, jusqu\'à une distance de 36 mètres.',
     levelRequired: 1,
     prerequisites: null,
@@ -141,7 +141,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Voix du maître des chaînes',
+    name: 'Voix du maître des Chaînes',
     description: 'Vous pouvez communiquer télépathiquement avec votre familier et percevoir ce qu\'il perçoit tant que vous êtes sur le même plan d\'existence. De plus, pendant que vous percevez par ses sens, vous pouvez aussi parler par sa bouche, si la créature est capable de parler.',
     levelRequired: 1,
     prerequisites: { requiredPactBoon: 'chain' },
@@ -170,6 +170,51 @@ export const warlockInvocations: InvocationDef[] = [
   },
   // ─── Niveau 5 ────────────────────────────────────────────────────────────────
   {
+    name: 'Aspect de la Lune',
+    description: 'Vous n\'avez plus besoin de dormir et ne pouvez pas être forcé à dormir par aucun moyen. Pour bénéficier d\'un repos long, vous pouvez passer ces 8 heures à exécuter des activités peu fatigantes, comme lire votre Livre des Ombres et monter la garde.',
+    levelRequired: 5,
+    prerequisites: { requiredPactBoon: 'tome' },
+    effects: [
+      { type: 'other', value: { kind: 'aspect_of_the_moon' } },
+    ],
+  },
+  {
+    name: 'Manteau de mouches',
+    description: 'En action bonus, vous pouvez vous envelopper d\'un essaim de mouches spectrales jusqu\'au début de votre prochain tour. Le manteau dégage une odeur écœurante. Pendant la durée, vous avez l\'avantage aux tests de Charisme (Intimidation) mais le désavantage à tous les autres tests de Charisme. Toute créature autre que vous qui commence son tour à 1,50 mètre ou moins de vous subit des dégâts de poison égaux à votre modificateur de Charisme (minimum 0). Une fois utilisée, vous ne pouvez plus l\'utiliser avant la fin d\'un repos court ou long.',
+    levelRequired: 5,
+    prerequisites: null,
+    effects: [
+      { type: 'other', value: { kind: 'cloak_of_flies' } },
+    ],
+  },
+  {
+    name: 'Tombeau de Levistus',
+    description: 'En réaction, lorsque vous subissez des dégâts, vous pouvez vous entourer d\'un tombeau de glace, qui fond à la fin de votre prochain tour. Vous gagnez 10 points de vie temporaires. Si des dégâts vous restent après ce gain, ils continuent à s\'appliquer normalement. Tant que les PV temporaires durent, vous êtes entravé et avez la vulnérabilité aux dégâts de feu. Une fois utilisée, vous ne pouvez plus l\'utiliser avant la fin d\'un repos court ou long.',
+    levelRequired: 5,
+    prerequisites: null,
+    effects: [
+      { type: 'other', value: { kind: 'tomb_of_levistus' } },
+    ],
+  },
+  {
+    name: 'Étreinte de Hadar',
+    description: 'Quand vous touchez une créature avec Décharge occulte, vous pouvez la déplacer en ligne droite vers vous de 3 mètres. La cible doit être de taille G ou plus petite, et au-delà de 1,50 m de vous.',
+    levelRequired: 5,
+    prerequisites: { requiredSpellName: 'Décharge occulte' },
+    effects: [
+      { type: 'other', value: { kind: 'eldritch_blast_grasp_of_hadar' } },
+    ],
+  },
+  {
+    name: 'Lance de léthargie',
+    description: 'Quand vous touchez une créature avec Décharge occulte, vous pouvez réduire sa vitesse de 3 mètres jusqu\'à la fin de votre prochain tour.',
+    levelRequired: 5,
+    prerequisites: { requiredSpellName: 'Décharge occulte' },
+    effects: [
+      { type: 'other', value: { kind: 'eldritch_blast_lance_of_lethargy' } },
+    ],
+  },
+  {
     name: 'Lame assoiffée',
     description: 'Vous pouvez attaquer deux fois, et non plus une seule, lorsque vous effectuez l\'action Attaquer à votre tour avec votre arme de pacte.',
     levelRequired: 5,
@@ -179,7 +224,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Au gré des ombres',
+    name: 'Maître des ombres',
     description: 'Vous pouvez utiliser une action pour devenir invisible tant que vous restez dans la pénombre ou l\'obscurité. Vous ne perdez pas cette invisibilité en attaquant ou lançant un sort.',
     levelRequired: 5,
     prerequisites: null,
@@ -188,7 +233,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Embourber l\'esprit',
+    name: 'Lenteur de l\'esprit',
     description: 'Vous pouvez lancer Lenteur une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
     levelRequired: 5,
     prerequisites: null,
@@ -197,7 +242,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Signe de mauvais augure',
+    name: 'Sombre présage',
     description: 'Vous pouvez lancer Mauvais sort une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
     levelRequired: 5,
     prerequisites: null,
@@ -207,16 +252,16 @@ export const warlockInvocations: InvocationDef[] = [
   },
   // ─── Niveau 7 ────────────────────────────────────────────────────────────────
   {
-    name: 'Murmures destructeurs',
-    description: 'Vous pouvez lancer Rire hideux de Tasha une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
+    name: 'Murmures ensorcelants',
+    description: 'Vous pouvez lancer Compulsion une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
     levelRequired: 7,
     prerequisites: null,
     effects: [
-      { type: 'spell_grant', value: { level: 1, spellcastingAbility: cha, spellName: 'Rire hideux de Tasha', countPerLongRest: 1 } },
+      { type: 'spell_grant', value: { level: 4, spellcastingAbility: cha, spellName: 'Compulsion', countPerLongRest: 1 } },
     ],
   },
   {
-    name: 'Verbe redouté',
+    name: 'Mot d\'effroi',
     description: 'Vous pouvez lancer Confusion une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
     levelRequired: 7,
     prerequisites: null,
@@ -233,9 +278,27 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'spell_grant', value: { level: 4, spellcastingAbility: cha, spellName: 'Métamorphose', countPerLongRest: 1 } },
     ],
   },
+  {
+    name: 'Regard fantomatique',
+    description: 'En action, vous gagnez la vision aveugle jusqu\'à 9 mètres pour 1 minute. Pendant cette durée, vous voyez à travers les objets solides comme s\'ils étaient transparents. Une fois utilisée, vous ne pouvez plus l\'utiliser avant la fin d\'un repos court ou long.',
+    levelRequired: 7,
+    prerequisites: null,
+    effects: [
+      { type: 'other', value: { kind: 'ghostly_gaze' } },
+    ],
+  },
+  {
+    name: 'Investiture du maître des chaînes',
+    description: 'Quand vous lancez Appel de familier, votre familier gagne plusieurs bénéfices : il gagne un bonus à ses jets d\'attaque, sauvegardes et tests égal à votre bonus de maîtrise, ses attaques sont magiques pour vaincre les résistances. Quand il subit des dégâts, vous pouvez utiliser votre réaction pour leur donner la résistance jusqu\'à la fin de votre prochain tour. Tant que vous êtes sur le même plan d\'existence, vous pouvez communiquer télépathiquement avec lui.',
+    levelRequired: 7,
+    prerequisites: { requiredPactBoon: 'chain' },
+    effects: [
+      { type: 'other', value: { kind: 'investment_of_the_chain_master' } },
+    ],
+  },
   // ─── Niveau 9 ────────────────────────────────────────────────────────────────
   {
-    name: 'Pas ascendant',
+    name: 'Pas aérien',
     description: 'Vous pouvez lancer Lévitation sur vous-même à volonté, sans dépenser d\'emplacement de sort ni de composantes matérielles.',
     levelRequired: 9,
     prerequisites: null,
@@ -253,7 +316,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Saut surnaturel',
+    name: 'Saut d\'Outremonde',
     description: 'Vous pouvez lancer Saut sur vous-même à volonté, sans dépenser d\'emplacement de sort ni de composantes matérielles.',
     levelRequired: 9,
     prerequisites: null,
@@ -262,7 +325,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Murmures d\'outre-tombe',
+    name: 'Murmures de la tombe',
     description: 'Vous pouvez lancer Communication avec les morts à volonté, sans dépenser d\'emplacement de sort.',
     levelRequired: 9,
     prerequisites: null,
@@ -282,7 +345,7 @@ export const warlockInvocations: InvocationDef[] = [
   },
   // ─── Niveau 15 ───────────────────────────────────────────────────────────────
   {
-    name: 'Chaînes de Carceri',
+    name: 'Chaînes des Carcères',
     description: 'Vous pouvez lancer Immobilisation de monstre à volonté sans dépenser d\'emplacement de sort, mais uniquement sur des créatures célestes, élémentaires ou fiélonnes. Vous ne pouvez pas relancer ce sort sur la même cible avant la fin d\'un repos long.',
     levelRequired: 15,
     prerequisites: { requiredPactBoon: 'chain' },
@@ -291,7 +354,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Maître des formes multiples',
+    name: 'Maître des formes',
     description: 'Vous pouvez lancer Modification d\'apparence à volonté, sans dépenser d\'emplacement de sort.',
     levelRequired: 15,
     prerequisites: null,
@@ -300,7 +363,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Visions de mondes lointains',
+    name: 'Royaumes lointains',
     description: 'Vous pouvez lancer Œil d\'arcane à volonté, sans dépenser d\'emplacement de sort.',
     levelRequired: 15,
     prerequisites: null,
@@ -309,7 +372,7 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Vue de sorcière',
+    name: 'Vision de sorcier',
     description: 'Vous voyez la vraie forme de toute créature déguisée, métamorphosée ou transformée, dans un rayon de 9 mètres et tant qu\'elle se trouve dans votre champ de vision.',
     levelRequired: 15,
     prerequisites: null,

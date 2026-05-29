@@ -83,6 +83,27 @@ const spells = sqliteTable('spells', {
       isSpellcastingModifierAdded?: boolean
     }>(),
 
+  /**
+   * Pour les sorts à plusieurs attaques indépendantes (Décharge occulte, Rayon
+   * ardent, Trait magique…). Chaque "attaque" est un jet d'attaque distinct
+   * (ou auto-touche pour Trait magique) ; on roule N jets séparés.
+   *
+   * Convention : les dés (count×Md+K) déclarés dans `damage_at_*` représentent
+   * le TOTAL pour toutes les attaques. Per-attaque = (count/N)d(M) + (K/N).
+   * Les modificateurs (CHA via Coup éldritique agonisant, spellcasting mod,
+   * etc.) sont appliqués PAR attaque.
+   *
+   * - `count_at_character_level` : pour les tours de magie (cantrip) — clé = niveau du perso.
+   * - `count_at_slot_level` : pour les sorts à emplacement — clé = niveau d'emplacement utilisé.
+   * - `label` : nom singulier pour chaque jet ("Rayon", "Dard", "Trait"…). Défaut = "Attaque".
+   */
+  multiAttack: text('multi_attack', { mode: 'json' })
+    .$type<{
+      label?: string
+      count_at_character_level?: Record<CharacterLevel, number>
+      count_at_slot_level?: Record<SlotLevel, number>
+    }>(),
+
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at'),
   deletedAt: text('deleted_at'),
