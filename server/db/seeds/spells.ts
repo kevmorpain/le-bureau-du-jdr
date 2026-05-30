@@ -13,13 +13,25 @@ export default async function seed() {
     spellClassMappings.map(m => [m.spellName, m.classNames]),
   )
 
+  // Pré-chargement : on récupère tous les sorts et tous les liens sort↔classe
+  // existants en 2 requêtes, plutôt qu'un findFirst par sort (73) + un insert
+  // par lien (223) à chaque run. Sans ça, le seed explose la limite de requêtes
+  // D1 par invocation Worker (cf. server/db/seeds/run.ts, mode ?only=).
+  const existingSpells = await db.select().from(schema.spells)
+  const spellByName = new Map(existingSpells.map(s => [s.name, s]))
+
+  const existingLinks = await db
+    .select({ spellId: schema.spellClasses.spellId, classId: schema.spellClasses.classId })
+    .from(schema.spellClasses)
+  const linkSet = new Set(existingLinks.map(l => `${l.spellId}:${l.classId}`))
+
   let inserted = 0
   let updated = 0
   let skipped = 0
   let classLinksInserted = 0
 
   for (const spell of spells) {
-    const existing = await db.query.spells.findFirst({ where: eq(schema.spells.name, spell.name) })
+    const existing = spellByName.get(spell.name)
 
     let spellId: number
     if (existing) {
@@ -65,7 +77,11 @@ export default async function seed() {
         console.warn(`[spells seed] Classe "${className}" introuvable pour le sort "${spell.name}"`)
         continue
       }
+      // N'insère que les liens réellement absents (idempotent et léger en re-run).
+      const key = `${spellId}:${classId}`
+      if (linkSet.has(key)) continue
       await db.insert(schema.spellClasses).values({ spellId, classId }).onConflictDoNothing()
+      linkSet.add(key)
       classLinksInserted++
     }
   }

@@ -2,10 +2,16 @@ import { db, schema } from 'hub:db'
 import { itemsData } from './data/items'
 
 export default async function seed() {
+  // Pré-charge les ids existants (1 requête) pour ne tenter l'insert que des
+  // items manquants — évite 89 INSERT à chaque run (limite de requêtes D1).
+  const existing = await db.select({ id: schema.items.id }).from(schema.items)
+  const existingIds = new Set(existing.map(i => i.id))
+
   let inserted = 0
 
   for (const item of itemsData) {
-    const row = await db
+    if (existingIds.has(item.id)) continue
+    await db
       .insert(schema.items)
       .values({
         id: item.id,
@@ -16,9 +22,7 @@ export default async function seed() {
         isCustom: false,
       })
       .onConflictDoNothing()
-      .returning()
-      .get()
-    if (row) inserted++
+    inserted++
   }
 
   return { inserted, skipped: itemsData.length - inserted }
