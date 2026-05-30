@@ -139,10 +139,15 @@ async function refreshSheet() {
 const toaster = useToast()
 const { roll } = useDiceRoller()
 
-const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots } = useCharacterSheet(characterSheet)
+const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, refreshInventory } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)
 
-const { shortRest, longRest, dawn, isResting } = useRest(characterSheet, spellSlots)
+// Le repos recharge aussi les charges d'objets (recharge complète, côté serveur).
+// L'inventaire est un useFetch séparé → on le rafraîchit après chaque repos.
+const { shortRest: _shortRest, longRest: _longRest, dawn: _dawn, isResting } = useRest(characterSheet, spellSlots)
+const shortRest = async (...args: Parameters<typeof _shortRest>) => { await _shortRest(...args); await refreshInventory() }
+const longRest = async () => { await _longRest(); await refreshInventory() }
+const dawn = async () => { await _dawn(); await refreshInventory() }
 
 // ── Mode combat ──────────────────────────────────────────────────────────────
 const combatMode = ref(false)

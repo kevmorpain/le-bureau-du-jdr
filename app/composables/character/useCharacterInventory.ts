@@ -17,6 +17,11 @@ export interface InventoryItem {
   // appliqués quand l'item est équipé. Pour un objet différent, créer un nouvel
   // item custom (item_effects sont fixes une fois définis).
   effects: Effect[]
+  // Charges : maxUses null = objet sans charge. rechargeDice null = recharge
+  // complète ; sinon expression de dés (recharge partielle).
+  maxUses: number | null
+  rechargeType: 'short_rest' | 'long_rest' | 'dawn' | null
+  rechargeDice: string | null
   isCustom: boolean
 }
 
@@ -27,6 +32,7 @@ export interface InventoryEntry {
   quantity: number
   equipped: boolean
   magicBonus: number
+  currentUses: number
   notes: string | null
   usingTwoHanded: boolean
   item: InventoryItem | null
@@ -370,6 +376,7 @@ export const useCharacterInventory = (
     quantity?: number
     equipped?: boolean
     magicBonus?: number
+    currentUses?: number
     notes?: string
     usingTwoHanded?: boolean
   }) => {

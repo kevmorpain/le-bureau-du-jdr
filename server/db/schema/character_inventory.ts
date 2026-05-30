@@ -12,6 +12,9 @@ const characterInventory = sqliteTable(
     quantity: integer('quantity').default(1).notNull(),
     equipped: integer('equipped', { mode: 'boolean' }).default(false).notNull(),
     magicBonus: integer('magic_bonus').default(0).notNull(),
+    // Charges dépensées sur cette instance d'objet (0 = pleines charges).
+    // L'objet définit le max via items.maxUses ; l'état est par instance.
+    currentUses: integer('current_uses').default(0).notNull(),
     notes: text('notes'),
     usingTwoHanded: integer('using_two_handed', { mode: 'boolean' }).default(false).notNull(),
     isPactWeapon: integer('is_pact_weapon', { mode: 'boolean' }).default(false).notNull(),

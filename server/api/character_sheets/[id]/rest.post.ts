@@ -1,4 +1,6 @@
 import { db, schema } from 'hub:db'
+import * as srcSchema from '~~/server/db/schema'
+import { inArray, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
 import type { RechargeType } from '~~/server/db/schema/features'
@@ -53,6 +55,28 @@ export default defineEventHandler(async (event) => {
           ),
         ),
     ))
+  }
+
+  // ── Recharge objets à charges (recharge COMPLÈTE uniquement) ──────────────
+  // Les objets à recharge partielle (recharge_dice non null) ne sont pas
+  // rechargés ici : le joueur lance les dés via le bouton « Recharger » de
+  // l'inventaire (jet auto ou saisie manuelle IRL). On utilise srcSchema car
+  // les colonnes max_uses/recharge_type/recharge_dice sont récentes (hub:db
+  // ne les connaît pas dans son schéma caché).
+  const invToRecharge = await db
+    .select({ invId: srcSchema.characterInventory.id })
+    .from(srcSchema.characterInventory)
+    .innerJoin(srcSchema.items, eq(srcSchema.characterInventory.itemId, srcSchema.items.id))
+    .where(and(
+      eq(srcSchema.characterInventory.characterSheetId, characterSheetId),
+      inArray(srcSchema.items.rechargeType, rechargingTypes as string[]),
+      isNull(srcSchema.items.rechargeDice),
+    ))
+  if (invToRecharge.length > 0) {
+    await db
+      .update(srcSchema.characterInventory)
+      .set({ currentUses: 0 })
+      .where(inArray(srcSchema.characterInventory.id, invToRecharge.map(r => r.invId)))
   }
 
   // ── Short rest: reset pact_magic spell slots ──────────────────────────────

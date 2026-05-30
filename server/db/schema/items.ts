@@ -52,6 +52,9 @@ export type ItemType = 'weapon' | 'armor' | 'equipment' | 'tool'
 
 export type ItemProperties = WeaponProperties | ArmorProperties | EquipmentProperties | ToolProperties
 
+// Type de recharge des charges (aligné sur les features).
+export type ItemRechargeType = 'short_rest' | 'long_rest' | 'dawn'
+
 // ─── Drizzle table ────────────────────────────────────────────────────────────
 
 const items = sqliteTable('items', {
@@ -60,6 +63,14 @@ const items = sqliteTable('items', {
   itemType: text('item_type').$type<ItemType>().notNull(),
   properties: text('properties', { mode: 'json' }).$type<ItemProperties>().notNull(),
   description: text('description'),
+  // ─── Charges (objets à utilisations limitées) ───────────────────────────
+  // maxUses : nombre de charges max (null = objet sans charge).
+  // rechargeType : quand l'objet récupère ses charges.
+  // rechargeDice : null = recharge complète ; sinon expression de dés ("1d6+4")
+  //   = recharge partielle (montant à ajouter, plafonné à maxUses).
+  maxUses: integer('max_uses'),
+  rechargeType: text('recharge_type').$type<ItemRechargeType>(),
+  rechargeDice: text('recharge_dice'),
   isCustom: integer('is_custom', { mode: 'boolean' }).default(false).notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').$onUpdateFn(() => new Date().toISOString()),

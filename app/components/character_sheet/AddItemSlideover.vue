@@ -227,6 +227,49 @@
               </UFormField>
             </template>
 
+            <!-- Charges (utilisations limitées + recharge) -->
+            <div class="rounded-lg ring ring-default p-3 space-y-3">
+              <p class="text-sm font-medium">Charges</p>
+              <div class="grid grid-cols-2 gap-3">
+                <UFormField label="Charges max" help="Vide = objet sans charge">
+                  <UInput
+                    v-model.number="createForm.maxUses"
+                    type="number"
+                    :min="1"
+                    :max="99"
+                    placeholder="ex: 7"
+                    size="sm"
+                  />
+                </UFormField>
+                <UFormField v-if="createForm.maxUses" label="Recharge">
+                  <USelect
+                    v-model="createForm.rechargeType"
+                    :items="rechargeTypeOptions"
+                    size="sm"
+                  />
+                </UFormField>
+              </div>
+              <div
+                v-if="createForm.maxUses && createForm.rechargeType !== 'none'"
+                class="grid grid-cols-2 gap-3"
+              >
+                <UFormField label="Quantité rechargée">
+                  <USelect
+                    v-model="createForm.rechargeMode"
+                    :items="rechargeModeOptions"
+                    size="sm"
+                  />
+                </UFormField>
+                <UFormField v-if="createForm.rechargeMode === 'dice'" label="Dés de recharge">
+                  <UInput
+                    v-model="createForm.rechargeDice"
+                    placeholder="ex: 1d6+4"
+                    size="sm"
+                  />
+                </UFormField>
+              </div>
+            </div>
+
             <!-- Effets magiques (tous types) : appliqués automatiquement
                  quand l'objet est équipé. -->
             <div class="rounded-lg ring ring-default p-3">
@@ -411,7 +454,23 @@ const createForm = ref({
     stealth_disadvantage: false,
   },
   effects: [] as Effect[],
+  maxUses: null as number | null,
+  rechargeType: 'none' as 'none' | 'short_rest' | 'long_rest' | 'dawn',
+  rechargeMode: 'full' as 'full' | 'dice',
+  rechargeDice: '1d6+4',
 })
+
+const rechargeTypeOptions = [
+  { label: 'Aucune', value: 'none' },
+  { label: 'Repos court', value: 'short_rest' },
+  { label: 'Repos long', value: 'long_rest' },
+  { label: 'À l\'aube', value: 'dawn' },
+]
+
+const rechargeModeOptions = [
+  { label: 'Complète', value: 'full' },
+  { label: 'Dés (partielle)', value: 'dice' },
+]
 
 const typeCreateOptions = [
   { label: 'Arme', value: 'weapon' },
@@ -514,6 +573,12 @@ const submit = async () => {
         properties = { category: resolvedCategory.value }
       }
 
+      // Charges : seulement si maxUses renseigné. rechargeDice uniquement en
+      // mode « dés » (recharge partielle) ; sinon null = recharge complète.
+      const hasCharges = !!form.maxUses
+      const rechargeType = hasCharges && form.rechargeType !== 'none' ? form.rechargeType : null
+      const rechargeDice = rechargeType && form.rechargeMode === 'dice' ? form.rechargeDice.trim() : null
+
       let created: ItemResult
       try {
         created = await $fetch<ItemResult>('/api/items', {
@@ -524,6 +589,9 @@ const submit = async () => {
             properties,
             description: form.description || undefined,
             effects: form.effects,
+            maxUses: hasCharges ? form.maxUses : null,
+            rechargeType,
+            rechargeDice,
           },
         })
       } catch {
@@ -564,6 +632,10 @@ const resetForm = () => {
     weaponProps: { damage_dice: '1d6', damage_type: 'slashing', weapon_category: 'simple_melee', weapon_properties: [] },
     armorProps: { armor_type: 'light', base_ac: 11, dex_limit: null, stealth_disadvantage: false },
     effects: [],
+    maxUses: null,
+    rechargeType: 'none',
+    rechargeMode: 'full',
+    rechargeDice: '1d6+4',
   }
 }
 </script>

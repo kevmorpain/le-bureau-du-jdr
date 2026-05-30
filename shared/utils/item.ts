@@ -59,6 +59,8 @@ const itemPropertiesSchema = z.discriminatedUnion('__type', [
   z.union([weaponPropertiesSchema, armorPropertiesSchema, equipmentPropertiesSchema, toolPropertiesSchema]),
 )
 
+export const itemRechargeTypeSchema = z.enum(['short_rest', 'long_rest', 'dawn'])
+
 export const createItemSchema = z.object({
   name: z.string().min(1).max(100),
   itemType: itemTypeSchema,
@@ -67,6 +69,11 @@ export const createItemSchema = z.object({
   // Limite généreuse (la colonne DB est un text) : les descriptions d'objets
   // magiques peuvent être longues (entrées de sourcebook).
   description: z.string().max(5000).nullable().optional(),
+  // Charges (objets à utilisations limitées).
+  maxUses: z.number().int().min(1).max(99).nullable().optional(),
+  rechargeType: itemRechargeTypeSchema.nullable().optional(),
+  // null = recharge complète ; sinon expression de dés "XdY±Z" (recharge partielle).
+  rechargeDice: z.string().regex(/^\d+d\d+([+-]\d+)?$/).nullable().optional(),
 })
 
 // ─── Inventory entry schemas ───────────────────────────────────────────────────
@@ -83,6 +90,7 @@ export const updateInventoryEntrySchema = z.object({
   quantity: z.number().int().min(1).optional(),
   equipped: z.boolean().optional(),
   magicBonus: z.number().int().min(0).max(3).optional(),
+  currentUses: z.number().int().min(0).optional(),
   notes: z.string().max(500).optional(),
   usingTwoHanded: z.boolean().optional(),
 })

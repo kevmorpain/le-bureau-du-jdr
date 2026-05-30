@@ -242,6 +242,13 @@
                 {{ warning }}
               </li>
             </ul>
+
+            <!-- Charges (armes à utilisations limitées) -->
+            <ItemCharges
+              :entry="entry"
+              :roll="roll"
+              @update:current-uses="(v: number) => updateInventoryEntry(entry.id, { currentUses: v })"
+            />
           </div>
         </li>
       </ul>
@@ -337,6 +344,14 @@
           >
             {{ armorClass.detail }}
           </div>
+
+          <!-- Charges -->
+          <ItemCharges
+            class="mt-1.5"
+            :entry="entry"
+            :roll="roll"
+            @update:current-uses="(v: number) => updateInventoryEntry(entry.id, { currentUses: v })"
+          />
         </li>
       </ul>
     </template>
@@ -423,6 +438,14 @@
               />
             </li>
           </ul>
+
+          <!-- Charges -->
+          <ItemCharges
+            class="mt-1.5"
+            :entry="entry"
+            :roll="roll"
+            @update:current-uses="(v: number) => updateInventoryEntry(entry.id, { currentUses: v })"
+          />
         </li>
       </ul>
 
@@ -508,6 +531,14 @@
               />
             </li>
           </ul>
+
+          <!-- Charges -->
+          <ItemCharges
+            class="mt-1.5"
+            :entry="entry"
+            :roll="roll"
+            @update:current-uses="(v: number) => updateInventoryEntry(entry.id, { currentUses: v })"
+          />
         </li>
       </ul>
     </template>

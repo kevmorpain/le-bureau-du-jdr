@@ -26,8 +26,11 @@ export default defineEventHandler(async (event) => {
       itemType: body.itemType,
       properties: body.properties as typeof schema.items.$inferInsert['properties'],
       description: body.description ?? null,
+      maxUses: body.maxUses ?? null,
+      rechargeType: body.rechargeType ?? null,
+      rechargeDice: body.rechargeDice ?? null,
       isCustom: true,
-    })
+    } as typeof schema.items.$inferInsert)
     .returning()
     .get()
 

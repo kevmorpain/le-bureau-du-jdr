@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
   if (body.quantity !== undefined) updateValues.quantity = body.quantity
   if (body.equipped !== undefined) updateValues.equipped = body.equipped
   if (body.magicBonus !== undefined) updateValues.magicBonus = body.magicBonus
+  if (body.currentUses !== undefined) updateValues.currentUses = body.currentUses
   if (body.notes !== undefined) updateValues.notes = body.notes
   if (body.usingTwoHanded !== undefined) updateValues.usingTwoHanded = body.usingTwoHanded
 
