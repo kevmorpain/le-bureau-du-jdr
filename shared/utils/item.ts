@@ -63,7 +63,10 @@ export const createItemSchema = z.object({
   name: z.string().min(1).max(100),
   itemType: itemTypeSchema,
   properties: itemPropertiesSchema,
-  description: z.string().max(1000).nullable().optional(),
+  // nullable/optional : le front envoie null/undefined quand le champ est vide.
+  // Limite généreuse (la colonne DB est un text) : les descriptions d'objets
+  // magiques peuvent être longues (entrées de sourcebook).
+  description: z.string().max(5000).nullable().optional(),
 })
 
 // ─── Inventory entry schemas ───────────────────────────────────────────────────
