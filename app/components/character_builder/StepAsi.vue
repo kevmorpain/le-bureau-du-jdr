@@ -8,6 +8,7 @@
       </p>
     </header>
 
+
     <!-- Un bloc par palier d'ASI atteint -->
     <section
       v-for="lvl in asiLevelsForCharacter"
@@ -118,11 +119,11 @@
       <!-- Bloc Don -->
       <div v-else-if="state.asiChoice[lvl] === 'feat'" class="space-y-3">
         <p class="text-xs text-muted">
-          Sélection de base — consultez votre MJ pour la liste complète.
+          Liste complète des dons. Effets mécaniques appliqués automatiquement quand disponibles.
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <button
-            v-for="feat in LU_FEATS"
+            v-for="feat in feats"
             :key="feat.id"
             type="button"
             class="text-left px-4 py-3 rounded-xl border transition-all"
@@ -134,8 +135,32 @@
             <div class="font-semibold text-sm" :class="state.asiFeats[lvl] === feat.id ? 'text-amber-400' : 'text-(--ui-text)'">
               {{ feat.name }}
             </div>
-            <div class="text-xs text-muted mt-0.5 leading-snug">{{ feat.desc }}</div>
+            <div class="text-xs text-muted mt-0.5 leading-snug">{{ feat.description }}</div>
           </button>
+        </div>
+
+        <!-- Choix de caractéristique (si le don sélectionné en demande un) -->
+        <div
+          v-if="state.asiFeats[lvl] != null && featNeedsAbility(state.asiFeats[lvl])"
+          class="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-2"
+        >
+          <p class="text-sm font-semibold text-(--ui-text)">
+            Caractéristique à augmenter (+1)
+          </p>
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            <button
+              v-for="ab in allowedAbilities(state.asiFeats[lvl])"
+              :key="ab"
+              type="button"
+              class="py-2 rounded-lg border text-sm font-semibold transition-colors"
+              :class="abilityFor(state.asiFeats[lvl]) === ab
+                ? 'border-amber-500/60 bg-amber-500/10 text-amber-400'
+                : 'border-(--ui-border) text-muted hover:border-(--ui-border-strong)'"
+              @click="setAbility(state.asiFeats[lvl]!, ab)"
+            >
+              {{ ABILITY_SHORT[ab] }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -159,7 +184,6 @@
 </template>
 
 <script lang="ts" setup>
-import { LU_FEATS } from '~/composables/useLevelUp'
 import { ABILITIES, ABILITY_SHORT, ABILITY_LABELS, type AbilityKey } from '~/data/character-builder'
 
 const {
@@ -169,7 +193,23 @@ const {
   raceBonuses,
   abilityMod,
   formatMod,
+  featNeedsAbility,
 } = useCharacterBuilder()
+
+const { feats, getById: getFeatById } = useFeats()
+
+// Caractéristiques autorisées par le don choisi à ce palier (sous-ensemble du PHB).
+const allowedAbilities = (featureId: number | undefined): AbilityKey[] =>
+  featAllowedAbilities(getFeatById(featureId)?.effects) as AbilityKey[]
+
+const abilityFor = (featureId: number) => state.value.featChoices[featureId]?.ability ?? null
+
+function setAbility(featureId: number, ability: AbilityKey) {
+  state.value.featChoices = {
+    ...state.value.featChoices,
+    [featureId]: { ability },
+  }
+}
 
 function baseScore(ab: AbilityKey): number {
   const base = state.value.abilities[ab]
@@ -246,7 +286,7 @@ function isPalierComplete(lvl: number): boolean {
 function palierSummary(lvl: number): string {
   const choice = state.value.asiChoice[lvl]
   if (choice === 'feat') {
-    const feat = LU_FEATS.find(f => f.id === state.value.asiFeats[lvl])
+    const feat = getFeatById(state.value.asiFeats[lvl])
     return feat?.name ?? 'Don à choisir'
   }
   if (choice === 'asi') {

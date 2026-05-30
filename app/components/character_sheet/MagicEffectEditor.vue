@@ -139,6 +139,41 @@
           />
         </UFormField>
       </div>
+
+      <!-- spell_save_dc_bonus, spell_attack_bonus, initiative_bonus, hp_per_level -->
+      <div
+        v-else-if="['spell_save_dc_bonus', 'spell_attack_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
+      >
+        <UFormField label="Bonus">
+          <UInput
+            v-model.number="(effect.value as { amount: number }).amount"
+            type="number"
+            :min="-10"
+            :max="10"
+            size="sm"
+          />
+        </UFormField>
+      </div>
+
+      <!-- passive_skill_bonus -->
+      <div v-else-if="effect.type === 'passive_skill_bonus'" class="grid grid-cols-2 gap-2">
+        <UFormField label="Compétence">
+          <USelect
+            v-model="(effect.value as { skill: string }).skill"
+            :items="passiveSkillOptions"
+            size="sm"
+          />
+        </UFormField>
+        <UFormField label="Bonus">
+          <UInput
+            v-model.number="(effect.value as { skill: string, amount: number }).amount"
+            type="number"
+            :min="1"
+            :max="20"
+            size="sm"
+          />
+        </UFormField>
+      </div>
     </div>
   </div>
 </template>
@@ -163,11 +198,18 @@ const localEffects = ref<Array<{ type: string, value: unknown }>>(
   (props.modelValue ?? []).map(e => ({ type: e.type, value: e.value })),
 )
 
+// Garde anti-boucle : l'émission met à jour modelValue, ce qui re-déclenche le
+// watch sur modelValue. Sans ce flag, ça part en « Maximum recursive updates ».
+let syncing = false
+
 watch(localEffects, (val) => {
-  emit('update:modelValue', val as Effect[])
+  syncing = true
+  emit('update:modelValue', val.map(e => ({ type: e.type, value: e.value })) as Effect[])
+  nextTick(() => { syncing = false })
 }, { deep: true })
 
 watch(() => props.modelValue, (val) => {
+  if (syncing) return
   localEffects.value = (val ?? []).map(e => ({ type: e.type, value: e.value }))
 })
 
@@ -181,6 +223,16 @@ const effectTypeOptions = [
   { label: 'Vision dans le noir', value: 'darkvision' },
   { label: 'Maîtrise d\'arme', value: 'weapon_proficiency' },
   { label: 'Maîtrise (armure/outil)', value: 'proficiency' },
+  { label: 'Bonus DD de sort', value: 'spell_save_dc_bonus' },
+  { label: 'Bonus jet d\'attaque de sort', value: 'spell_attack_bonus' },
+  { label: 'Bonus à l\'initiative', value: 'initiative_bonus' },
+  { label: 'PV par niveau', value: 'hp_per_level' },
+  { label: 'Bonus à une compétence passive', value: 'passive_skill_bonus' },
+]
+
+const passiveSkillOptions = [
+  { label: 'Perception passive', value: 'perception' },
+  { label: 'Investigation passive', value: 'investigation' },
 ]
 
 const damageTypeOptions = [
@@ -219,6 +271,11 @@ const defaultValueForType = (type: string): unknown => {
     case 'darkvision': return { range: 18 }
     case 'weapon_proficiency': return 'simple_weapons'
     case 'proficiency': return 'light'
+    case 'spell_save_dc_bonus':
+    case 'spell_attack_bonus':
+    case 'initiative_bonus':
+    case 'hp_per_level': return { amount: 1 }
+    case 'passive_skill_bonus': return { skill: 'perception', amount: 5 }
     default: return {}
   }
 }

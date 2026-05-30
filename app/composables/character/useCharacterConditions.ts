@@ -29,6 +29,9 @@ export const useCharacterConditions = (
     allEffects: ComputedRef<Effect[]>
     speed: ComputedRef<number>
     abilityModifiers: ComputedRef<Record<string, number>>
+    // Bonus rétroactif aux PV max (don Robuste : +2 PV par niveau).
+    // Ajouté au maxHp DB pour le calcul d'épuisement.
+    maxHpBonus?: ComputedRef<number>
   },
 ) => {
   const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
@@ -172,7 +175,7 @@ export const useCharacterConditions = (
   // ─── HP impact ────────────────────────────────────────────────────────────
 
   const effectiveMaxHp = computed(() => {
-    const maxHp = characterSheet?.value?.maxHp ?? 0
+    const maxHp = (characterSheet?.value?.maxHp ?? 0) + (deps?.maxHpBonus?.value ?? 0)
     return exhaustionLevel.value >= 4 ? Math.floor(maxHp / 2) : maxHp
   })
 

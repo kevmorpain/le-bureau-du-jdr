@@ -13,6 +13,10 @@ export interface InventoryItem {
   itemType: 'weapon' | 'armor' | 'equipment' | 'tool'
   properties: WeaponProperties | ArmorProperties | { category: string } | ToolProperties
   description: string | null
+  // Effets magiques baked-in sur l'item (jointure item_effects). Toujours
+  // appliqués quand l'item est équipé. Pour un objet différent, créer un nouvel
+  // item custom (item_effects sont fixes une fois définis).
+  effects: Effect[]
   isCustom: boolean
 }
 
@@ -23,7 +27,6 @@ export interface InventoryEntry {
   quantity: number
   equipped: boolean
   magicBonus: number
-  magicEffects: Effect[] | null
   notes: string | null
   usingTwoHanded: boolean
   item: InventoryItem | null
@@ -117,11 +120,14 @@ export const useCharacterInventory = (
   )
 
   // ─── Magic item effects → merged into allEffects upstream ─────────────────
+  // Les effets sont stockés sur l'item lui-même (table item_effects, exposée
+  // via item.effects). Pas d'override par-instance : pour personnaliser,
+  // créer un nouvel item custom.
 
   const inventoryEffects = computed<Effect[]>(() =>
     inventory.value
-      .filter(e => e.equipped && e.magicEffects?.length)
-      .flatMap(e => e.magicEffects as Effect[]),
+      .filter(e => e.equipped)
+      .flatMap(e => e.item?.effects ?? []),
   )
 
   // ─── Proficiencies ────────────────────────────────────────────────────────
@@ -338,7 +344,6 @@ export const useCharacterInventory = (
     quantity?: number
     equipped?: boolean
     magicBonus?: number
-    magicEffects?: Effect[]
     notes?: string
   } = {}) => {
     if (!characterId.value) return
@@ -365,7 +370,6 @@ export const useCharacterInventory = (
     quantity?: number
     equipped?: boolean
     magicBonus?: number
-    magicEffects?: Effect[]
     notes?: string
     usingTwoHanded?: boolean
   }) => {

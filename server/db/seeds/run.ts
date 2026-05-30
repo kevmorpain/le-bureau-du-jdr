@@ -36,6 +36,7 @@ export async function runSeeds() {
   // Étape 3 : données de jeu (séquentiel — spells fait ~165 requêtes D1, parallélisme cause des locks)
   const spells = await settle(_seed.spells())
   const items = await settle(_seed.items())
+  const feats = await settle(_seed.feats())
 
   // Données de test uniquement — ne pas lancer en prod
   // await _seed.characterSheets()
@@ -43,7 +44,7 @@ export async function runSeeds() {
   const summary = {
     abilityScores, damageTypes, magicSchools, characterSpecies, classes, backgrounds,
     barbare, barde, clerc, druide, guerrier, magicien, moine, paladin, rodeur, roublard, ensorceleur, warlock,
-    spells, items,
+    spells, items, feats,
   }
   const errors = Object.entries(summary)
     .filter(([, v]) => v && typeof v === 'object' && 'error' in v)

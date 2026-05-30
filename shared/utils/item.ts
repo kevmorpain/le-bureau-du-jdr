@@ -63,7 +63,7 @@ export const createItemSchema = z.object({
   name: z.string().min(1).max(100),
   itemType: itemTypeSchema,
   properties: itemPropertiesSchema,
-  description: z.string().max(1000).optional(),
+  description: z.string().max(1000).nullable().optional(),
 })
 
 // ─── Inventory entry schemas ───────────────────────────────────────────────────
@@ -73,7 +73,6 @@ export const createInventoryEntrySchema = z.object({
   quantity: z.number().int().min(1).default(1),
   equipped: z.boolean().default(false),
   magicBonus: z.number().int().min(0).max(3).default(0),
-  magicEffects: z.array(z.any()).optional(),
   notes: z.string().max(500).optional(),
 })
 
@@ -81,7 +80,6 @@ export const updateInventoryEntrySchema = z.object({
   quantity: z.number().int().min(1).optional(),
   equipped: z.boolean().optional(),
   magicBonus: z.number().int().min(0).max(3).optional(),
-  magicEffects: z.array(z.any()).optional(),
   notes: z.string().max(500).optional(),
   usingTwoHanded: z.boolean().optional(),
 })

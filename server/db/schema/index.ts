@@ -20,5 +20,6 @@ export { default as characterSpells, characterSpellsRelations } from './characte
 export { default as characterSpellSlots, characterSpellSlotsRelations } from './character_spell_slots'
 export { default as characterSkills, characterSkillsRelations } from './character_skills'
 export { default as items, itemsRelations } from './items'
+export { default as itemEffects, itemEffectsRelations } from './item_effects'
 export { default as characterInventory, characterInventoryRelations } from './character_inventory'
 export { default as characterProficiencyOverrides, characterProficiencyOverridesRelations } from './character_proficiency_overrides'

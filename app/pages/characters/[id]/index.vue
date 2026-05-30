@@ -53,7 +53,7 @@
           :badge="availableFeaturesCount"
           storage-key="features"
         >
-          <FeaturesSection :character-sheet="characterSheet" />
+          <FeaturesSection :character-sheet="characterSheet" @refresh="refreshSheet" />
         </CollapsibleSection>
 
         <CollapsibleSection
@@ -117,13 +117,24 @@ definePageMeta({
 const route = useRoute()
 const id = computed(() => route.params.id as string)
 
-const { data: characterSheetData } = await useFetch<CharacterSheet>(() => `/api/character_sheets/${id.value}`)
+const { data: characterSheetData, refresh: refreshSheetData } = await useFetch<CharacterSheet>(() => `/api/character_sheets/${id.value}`)
 
 if (!characterSheetData.value) {
   throw createError({ statusCode: 404, statusMessage: 'Fiche de personnage introuvable' })
 }
 
 const characterSheet = ref(characterSheetData.value)
+
+async function refreshSheet() {
+  await refreshSheetData()
+  if (characterSheetData.value) {
+    // Évite que le watch deep redéclenche un save vers le serveur (boucle).
+    pauseAutoSave.value = true
+    characterSheet.value = characterSheetData.value
+    await nextTick()
+    pauseAutoSave.value = false
+  }
+}
 
 const toaster = useToast()
 const { roll } = useDiceRoller()
@@ -154,8 +165,10 @@ const preparedSpellsCount = computed(() =>
 
 // ── Auto-save avec debounce ──────────────────────────────────────────────────
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
+const pauseAutoSave = ref(false)
 
 watch(characterSheet, () => {
+  if (pauseAutoSave.value) return
   if (saveTimeout) clearTimeout(saveTimeout)
   saveTimeout = setTimeout(updateCharacterSheet, 1000)
 }, { deep: true })

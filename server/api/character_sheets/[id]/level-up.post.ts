@@ -14,7 +14,10 @@ const levelUpSchema = z.object({
   expertiseSkills: z.array(z.string()).optional(),
   asiChoice: z.enum(['asi', 'feat']).nullable().optional(),
   asiBonuses: z.record(z.string(), z.number().int().min(0).max(2)).nullable().optional(),
-  featId: z.string().nullable().optional(),
+  // featureId = features.id du don pris à ce palier (résolu côté client via /api/feats)
+  featureId: z.number().int().positive().nullable().optional(),
+  // Choix de caractéristique +1 du don (Observateur/Résilient…) le cas échéant.
+  featChoices: z.object({ ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']).optional() }).nullable().optional(),
   newSkills: z.array(z.string()).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
@@ -247,6 +250,21 @@ export default defineEventHandler(async (event) => {
     if (improvements.length) {
       await db.insert(schema.characterAbilityScoreImprovements).values(improvements)
     }
+  }
+
+  // Don choisi au palier d'ASI (source='asi'). Persisté dans character_features.
+  if (d.asiChoice === 'feat' && d.featureId) {
+    await db
+      .insert(srcSchema.characterFeatures)
+      .values({
+        characterSheetId,
+        featureId: d.featureId,
+        currentUses: 0,
+        source: 'asi',
+        classLevel: newLevel,
+        choices: d.featChoices ?? null,
+      } as any)
+      .onConflictDoNothing()
   }
 
   // ── 8. New spells ─────────────────────────────────────────────────────────

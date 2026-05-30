@@ -135,9 +135,47 @@ export const useCharacterAbilities = (
     ),
   )
 
-  const passivePerception = computed(() => 10 + getSkillModifier('wis', 'perception'))
+  // ─── Bonus issus des dons / effets ───────────────────────────────────────
 
-  const initiativeBonus = computed<number>(() => abilityModifiers.value.dex || 0)
+  const sumPassiveBonus = (skill: 'perception' | 'investigation'): number => {
+    let total = 0
+    for (const e of deps?.featureEffects.value ?? []) {
+      if (e.type === 'passive_skill_bonus' && (e.value as { skill: string }).skill === skill) {
+        total += (e.value as { amount: number }).amount
+      }
+    }
+    return total
+  }
+
+  const initiativeFlatBonus = computed<number>(() => {
+    let total = 0
+    for (const e of deps?.featureEffects.value ?? []) {
+      if (e.type === 'initiative_bonus') total += (e.value as { amount: number }).amount
+    }
+    return total
+  })
+
+  // Bonus rétroactif aux PV max (don Robuste : +2 PV par niveau de personnage).
+  // Indépendant des autres calculs de PV — n'est pas persisté dans character_sheets.maxHp.
+  const hpBonusFromFeats = computed<number>(() => {
+    let perLevel = 0
+    for (const e of deps?.featureEffects.value ?? []) {
+      if (e.type === 'hp_per_level') perLevel += (e.value as { amount: number }).amount
+    }
+    if (perLevel === 0) return 0
+    const totalLevel = (characterSheet?.value?.classes ?? []).reduce((s, cc) => s + cc.level, 0)
+    return perLevel * totalLevel
+  })
+
+  const passivePerception = computed(() =>
+    10 + getSkillModifier('wis', 'perception') + sumPassiveBonus('perception'),
+  )
+
+  const passiveInvestigation = computed(() =>
+    10 + getSkillModifier('int', 'investigation') + sumPassiveBonus('investigation'),
+  )
+
+  const initiativeBonus = computed<number>(() => (abilityModifiers.value.dex || 0) + initiativeFlatBonus.value)
 
   return {
     abilityScores,
@@ -148,6 +186,8 @@ export const useCharacterAbilities = (
     getSkillModifier,
     savingThrows,
     passivePerception,
+    passiveInvestigation,
     initiativeBonus,
+    hpBonusFromFeats,
   }
 }

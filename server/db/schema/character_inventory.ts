@@ -1,6 +1,5 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
-import type { Effect } from './effects'
 import characterSheets from './character_sheets'
 import items from './items'
 
@@ -13,7 +12,6 @@ const characterInventory = sqliteTable(
     quantity: integer('quantity').default(1).notNull(),
     equipped: integer('equipped', { mode: 'boolean' }).default(false).notNull(),
     magicBonus: integer('magic_bonus').default(0).notNull(),
-    magicEffects: text('magic_effects', { mode: 'json' }).$type<Effect[]>(),
     notes: text('notes'),
     usingTwoHanded: integer('using_two_handed', { mode: 'boolean' }).default(false).notNull(),
     isPactWeapon: integer('is_pact_weapon', { mode: 'boolean' }).default(false).notNull(),

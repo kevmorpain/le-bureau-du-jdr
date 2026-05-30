@@ -7,7 +7,7 @@ import featureEffects from './feature_effects'
 import speciesFeatures from './species_features'
 import characterFeatures from './character_features'
 
-export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'eldritch_invocation'
+export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'eldritch_invocation' | 'feat'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
 export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
 export type RechargeType = typeof RECHARGE_TYPES[number]

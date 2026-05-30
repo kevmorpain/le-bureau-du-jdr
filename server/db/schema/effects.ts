@@ -40,7 +40,7 @@ type RevivalAction = {
 
 export type Effect
   = | { type: 'ability_increase', value: { ability: AbilityScoreKey, amount: number } }
-    | { type: 'ability_increase_choice', value: { count: number, amount: number } }
+    | { type: 'ability_increase_choice', value: { count: number, amount: number, abilities?: AbilityScoreKey[] } }
     | { type: 'asi_or_feat', value: Record<string, never> }
     | { type: 'action', value: BreathWeaponAction | RevivalAction }
     | { type: 'advantage', value: { rollType: 'check' | 'saving_throw', ability: AbilityScoreKey | 'all', condition: string } }
@@ -69,6 +69,13 @@ export type Effect
     | { type: 'eldritch_blast_modifier', value: { kind: 'agonizing' | 'repelling' | 'range_extended' } }
     | { type: 'pact_weapon_modifier', value: { kind: 'extra_attack' | 'lifedrinker' } }
     | { type: 'sight_modifier', value: { kind: 'magical_darkness_120' | 'invisible_in_dim_light' | 'true_sight_disguise' | 'read_all_writing' } }
+    | { type: 'spell_save_dc_bonus', value: { amount: number } }
+    | { type: 'spell_attack_bonus', value: { amount: number } }
+    // Dons — bonus fixes appliqués automatiquement par useCharacterSheet.
+    | { type: 'initiative_bonus', value: { amount: number } }
+    | { type: 'hp_per_level', value: { amount: number } }
+    // Bonus aux scores passifs (Observateur : +5 Perception passive + Investigation passive).
+    | { type: 'passive_skill_bonus', value: { skill: 'perception' | 'investigation', amount: number } }
 
 export type EffectType = Effect['type']
 export type EffectValue = Effect['value']

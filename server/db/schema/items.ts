@@ -2,6 +2,7 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { DamageTypeKey } from './effects'
 import characterInventory from './character_inventory'
+import itemEffects from './item_effects'
 
 // ─── Weapon sub-types ─────────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ const items = sqliteTable('items', {
 
 export const itemsRelations = relations(items, ({ many }) => ({
   inventoryEntries: many(characterInventory),
+  itemEffects: many(itemEffects),
 }))
 
 export default items

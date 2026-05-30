@@ -1,6 +1,7 @@
 import { evaluate } from '~~/shared/utils/formula'
 import type { FormulaContext, Formula } from '~~/shared/utils/formula'
 import type { FeatureMeta } from '~~/server/db/schema/features'
+import type { Effect } from '~~/server/db/schema/effects'
 
 type SlotState = { max: number, current: number }
 type SlotsByType = {
@@ -49,6 +50,11 @@ export const useCharacterSpellcasting = (
     resolvedFeatures?: ComputedRef<ResolvedFeature[]>
     formulaContext?: ComputedRef<FormulaContext>
     selectedCasterClassId?: Ref<number | null>
+    // Optionnel : tous les effets actifs (features + objets équipés). Sert à
+    // appliquer spell_save_dc_bonus / spell_attack_bonus issus d'objets magiques.
+    // Lazy (peut être créée après ce composable dans useCharacterSheet — Vue
+    // résout la dépendance au moment de l'accès).
+    allEffects?: ComputedRef<Effect[]>
   },
 ) => {
   // ─── Liste des classes spellcasters du perso ─────────────────────────────
@@ -115,6 +121,18 @@ export const useCharacterSpellcasting = (
 
   // ─── Stats helpers ─────────────────────────────────────────────────────────
 
+  // Bonus issus des objets magiques équipés / features (additifs).
+  const spellDcBonus = computed<number>(() =>
+    (deps?.allEffects?.value ?? [])
+      .filter(e => e.type === 'spell_save_dc_bonus')
+      .reduce((sum, e) => sum + ((e.value as { amount: number }).amount ?? 0), 0),
+  )
+  const spellAtkBonus = computed<number>(() =>
+    (deps?.allEffects?.value ?? [])
+      .filter(e => e.type === 'spell_attack_bonus')
+      .reduce((sum, e) => sum + ((e.value as { amount: number }).amount ?? 0), 0),
+  )
+
   const computeStats = (ability: string | null): SpellStats | null => {
     if (!ability) return null
     const prof = deps?.proficiencyBonus.value ?? 2
@@ -122,8 +140,8 @@ export const useCharacterSpellcasting = (
     return {
       ability,
       modifier: mod,
-      dc: 8 + prof + mod,
-      attackBonus: prof + mod,
+      dc: 8 + prof + mod + spellDcBonus.value,
+      attackBonus: prof + mod + spellAtkBonus.value,
     }
   }
 

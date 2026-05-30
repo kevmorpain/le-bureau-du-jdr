@@ -201,7 +201,6 @@
 </template>
 
 <script lang="ts" setup>
-import { LU_FEATS } from '~/composables/useLevelUp'
 import type { AbilityKey } from '~/data/character-builder'
 
 defineEmits<{ back: [] }>()
@@ -225,6 +224,8 @@ const {
   toast,
   CLASSES,
 } = useLevelUp(charSheet)
+
+const { getById: getFeatById } = useFeats()
 
 const submitting = ref(false)
 
@@ -301,8 +302,9 @@ const gains = computed(() => {
   }
 
   // Feat
-  if (s.asiChoice === 'feat' && s.featId) {
-    list.push({ label: 'Don acquis', detail: LU_FEATS.find(f => f.id === s.featId)?.name ?? s.featId })
+  if (s.asiChoice === 'feat' && s.featureId) {
+    const feat = getFeatById(s.featureId)
+    list.push({ label: 'Don acquis', detail: feat?.name ?? `Don #${s.featureId}` })
   }
 
   // Class features

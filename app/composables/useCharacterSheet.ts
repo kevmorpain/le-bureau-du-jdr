@@ -30,10 +30,29 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         classId: feature.classId,
         subclassId: feature.subclassId,
         levelRequired: feature.levelRequired,
+        // Choix résolus du don (ex : caractéristique +1). Présent uniquement sur
+        // les character_features de type 'feat'.
+        choices: (cf as any).choices as { ability?: string } | null ?? null,
         effects: (feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[],
       }
     }),
   )
+
+  // Résout les effets « à choix » d'un don en fonction des choix enregistrés.
+  // `ability_increase_choice` → `ability_increase` quand la carac est choisie ;
+  // tant qu'aucun choix n'est fait, l'effet n'accorde aucun bonus.
+  const resolveFeatEffects = (effects: Effect[], choices: { ability?: string } | null): Effect[] =>
+    effects.flatMap((e) => {
+      if (e.type === 'ability_increase_choice') {
+        const ability = choices?.ability
+        if (!ability) return []
+        return [{
+          type: 'ability_increase' as const,
+          value: { ability: ability as any, amount: e.value.amount },
+        }]
+      }
+      return [e]
+    })
 
   const unlockedFeatureEffects = computed<Effect[]>(() => {
     const ccs = classes.characterClasses.value
@@ -41,6 +60,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       if (f.featureType === 'species_trait') return f.effects
       // Manifestations occultes : sélectionnées par le joueur, effets toujours actifs
       if (f.featureType === 'eldritch_invocation') return f.effects
+      // Dons : effets toujours actifs, avec résolution des choix (carac +1…)
+      if (f.featureType === 'feat') return resolveFeatEffects(f.effects, f.choices)
       const lvlReq = f.levelRequired ?? 1
       const owner = f.featureType === 'class_feature'
         ? ccs.find(c => c.classId === f.classId)
@@ -95,6 +116,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         ...feature,
         currentUses: cf.currentUses,
         maxUses,
+        source: (cf as any).source as string | null ?? null,
+        classLevel: (cf as any).classLevel as number | null ?? null,
+        choices: (cf as any).choices as { ability?: string } | null ?? null,
         effects: feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? [],
       }
     }),
@@ -132,6 +156,13 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         // Affichées dans la section features de classe avec un label dédié
         label = 'Manifestation'
       }
+      else if (f.featureType === 'feat') {
+        // Les dons sont rendus dans leur propre section (CharacterFeats.vue),
+        // mais on les expose tout de même dans allCharacterFeatures pour les
+        // composants qui itèrent globalement (badges, recherche).
+        kind = 'class'
+        label = 'Don'
+      }
       return { ...f, origin: { kind, label } }
     })
 
@@ -142,6 +173,17 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const baseAllEffects = computed<Effect[]>(() => [
     ...classes.speciesEffects.value,
     ...classFeatureEffects.value,
+  ])
+
+  // Forward-declaration : la couche spellcasting a besoin de connaître TOUS
+  // les effets actifs (y compris ceux des objets magiques) pour appliquer
+  // les bonus spell_save_dc_bonus / spell_attack_bonus. Comme inventoryLayer
+  // est créée après spellcasting (qui lui fournit spellcastingAbility),
+  // on passe une ref qu'on remplit après création de inventoryLayer.
+  const inventoryEffectsRef = shallowRef<ComputedRef<Effect[]> | null>(null)
+  const allEffectsForSpellcasting = computed<Effect[]>(() => [
+    ...baseAllEffects.value,
+    ...(inventoryEffectsRef.value?.value ?? []),
   ])
 
   // ─── Couche 4 : incantation ───────────────────────────────────────────────
@@ -162,6 +204,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     resolvedFeatures,
     formulaContext,
     selectedCasterClassId,
+    allEffects: allEffectsForSpellcasting,
   })
 
   const spells = useCharacterSpells(characterSheet, {
@@ -177,11 +220,12 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     spellcastingAbility: spellcasting.spellcastingAbility,
   })
 
-  // allEffects complets (base + effets des objets magiques équipés)
-  const allEffects = computed<Effect[]>(() => [
-    ...baseAllEffects.value,
-    ...inventoryLayer.inventoryEffects.value,
-  ])
+  // Une fois inventoryLayer disponible, on alimente la ref que la couche
+  // spellcasting lit pour calculer DD/atk avec les bonus d'objets magiques.
+  inventoryEffectsRef.value = inventoryLayer.inventoryEffects
+
+  // allEffects complets (base + effets des objets magiques équipés) — alias public
+  const allEffects = allEffectsForSpellcasting
 
   // ─── Maîtrises de langues et outils ──────────────────────────────────────
   // Calculées ici car elles dépendent de allEffects (tous les effets) et des overrides,
@@ -225,6 +269,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     allEffects,
     speed: classes.speed,
     abilityModifiers: abilities.abilityModifiers,
+    maxHpBonus: abilities.hpBonusFromFeats,
   })
 
   // ─── Sort en concentration (résolu via characterSpells) ──────────────────
@@ -263,7 +308,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     getSkillModifier: abilities.getSkillModifier,
     savingThrows: abilities.savingThrows,
     passivePerception: abilities.passivePerception,
+    passiveInvestigation: abilities.passiveInvestigation,
     initiativeBonus: abilities.initiativeBonus,
+    hpBonusFromFeats: abilities.hpBonusFromFeats,
     // Conditions & états
     binaryConditions,
     activeConditions: conditions.activeConditions,

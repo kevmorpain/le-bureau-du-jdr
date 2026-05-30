@@ -18,7 +18,6 @@ export default defineEventHandler(async (event) => {
       quantity: body.quantity,
       equipped: body.equipped,
       magicBonus: body.magicBonus,
-      magicEffects: body.magicEffects ?? null,
       notes: body.notes ?? null,
     })
     .returning()

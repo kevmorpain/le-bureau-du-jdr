@@ -149,7 +149,7 @@
                   </div>
 
                   <div
-                    v-if="entry.magicBonus > 0 || (entry.magicEffects && entry.magicEffects.length > 0)"
+                    v-if="entry.magicBonus > 0 || (entry.item?.effects && entry.item.effects.length > 0)"
                     class="flex items-center gap-1"
                   >
                     <UBadge
@@ -160,15 +160,25 @@
                   </div>
                 </div>
 
-                <UFormField
-                  v-if="entry.magicEffects && entry.magicEffects.length > 0"
-                  label="Effets magiques"
+                <!-- Effets magiques baked-in sur l'item (lecture seule — pour
+                     modifier, dupliquer en créant un nouvel objet magique). -->
+                <div
+                  v-if="entry.item?.effects && entry.item.effects.length > 0"
+                  class="rounded-lg bg-elevated/30 p-2 text-xs space-y-1"
                 >
-                  <MagicEffectEditor
-                    :model-value="entry.magicEffects"
-                    @update:model-value="(v: Effect[]) => updateInventoryEntry(entry.id, { magicEffects: v })"
-                  />
-                </UFormField>
+                  <p class="font-medium text-muted uppercase tracking-wide text-[10px]">
+                    Effets magiques
+                  </p>
+                  <ul class="space-y-0.5">
+                    <li
+                      v-for="(eff, idx) in entry.item.effects"
+                      :key="idx"
+                      class="font-mono text-xs text-muted"
+                    >
+                      {{ eff.type }} : {{ JSON.stringify(eff.value) }}
+                    </li>
+                  </ul>
+                </div>
 
                 <UInput
                   :model-value="entry.notes ?? ''"
@@ -349,7 +359,29 @@
           class="rounded-lg bg-default ring ring-default p-2"
         >
           <div class="flex items-center gap-2">
+            <!-- Équiper toggle (seulement pour l'équipement magique : applique ses effets) -->
+            <div
+              v-if="hasMagicEffects(entry)"
+              @click.stop
+            >
+              <USwitch
+                :model-value="entry.equipped"
+                size="sm"
+                :aria-label="entry.equipped ? 'Déséquiper' : 'Équiper'"
+                @update:model-value="toggleEquipped(entry.id)"
+              />
+            </div>
+
             <span class="flex-1 font-medium text-sm">{{ entry.item?.name }}</span>
+
+            <UBadge
+              v-if="hasMagicEffects(entry) && entry.equipped"
+              label="Effets actifs"
+              color="primary"
+              variant="soft"
+              size="md"
+              class="shrink-0"
+            />
 
             <UInput
               :model-value="entry.quantity"
@@ -374,6 +406,23 @@
           >
             {{ entry.item.description }}
           </p>
+          <!-- Effets magiques de l'objet -->
+          <ul
+            v-if="hasMagicEffects(entry)"
+            class="mt-1.5 flex flex-wrap gap-1"
+          >
+            <li
+              v-for="(eff, idx) in entry.item!.effects"
+              :key="idx"
+            >
+              <UBadge
+                :label="magicEffectLabel(eff)"
+                :color="entry.equipped ? 'primary' : 'neutral'"
+                variant="soft"
+                size="md"
+              />
+            </li>
+          </ul>
         </li>
       </ul>
 
@@ -402,7 +451,28 @@
           class="rounded-lg bg-default ring ring-default p-2"
         >
           <div class="flex items-center gap-2">
+            <!-- Équiper toggle (seulement pour les outils magiques) -->
+            <div
+              v-if="hasMagicEffects(entry)"
+              @click.stop
+            >
+              <USwitch
+                :model-value="entry.equipped"
+                size="sm"
+                :aria-label="entry.equipped ? 'Déséquiper' : 'Équiper'"
+                @update:model-value="toggleEquipped(entry.id)"
+              />
+            </div>
+
             <span class="flex-1 font-medium text-sm">{{ entry.item?.name }}</span>
+            <UBadge
+              v-if="hasMagicEffects(entry) && entry.equipped"
+              label="Effets actifs"
+              color="primary"
+              variant="soft"
+              size="md"
+              class="shrink-0"
+            />
             <UBadge
               v-if="entry.item"
               :label="toolCategoryLabel(entry.item)"
@@ -422,6 +492,22 @@
           >
             {{ entry.item.description }}
           </p>
+          <ul
+            v-if="hasMagicEffects(entry)"
+            class="mt-1.5 flex flex-wrap gap-1"
+          >
+            <li
+              v-for="(eff, idx) in entry.item!.effects"
+              :key="idx"
+            >
+              <UBadge
+                :label="magicEffectLabel(eff)"
+                :color="entry.equipped ? 'primary' : 'neutral'"
+                variant="soft"
+                size="md"
+              />
+            </li>
+          </ul>
         </li>
       </ul>
     </template>
@@ -461,6 +547,33 @@ const {
   toggleEquipped,
   setUsingTwoHanded,
 } = useCharacterSheet(characterSheetModel)
+
+// ─── Objets magiques (effets via item_effects) ──────────────────────────────
+
+const hasMagicEffects = (entry: InventoryEntry): boolean =>
+  (entry.item?.effects?.length ?? 0) > 0
+
+// Libellé FR court d'un effet magique, pour les badges d'inventaire.
+const magicEffectLabel = (effect: Effect): string => {
+  const v = effect.value as any
+  switch (effect.type) {
+    case 'spell_save_dc_bonus': return `+${v.amount} DD des sorts`
+    case 'spell_attack_bonus': return `+${v.amount} attaque des sorts`
+    case 'initiative_bonus': return `+${v.amount} initiative`
+    case 'hp_per_level': return `+${v.amount} PV/niveau`
+    case 'passive_skill_bonus': {
+      const skill = v.skill === 'investigation' ? 'Investigation' : 'Perception'
+      return `+${v.amount} ${skill} passive`
+    }
+    case 'walking_speed': return `+${v} m de vitesse`
+    case 'darkvision': return `Vision dans le noir ${v.range} m`
+    case 'ability_increase': return `+${v.amount} ${v.ability?.toUpperCase()}`
+    case 'damage_resistance': return `Résistance ${damageTypeLabels[v.damageType] ?? v.damageType}`
+    case 'damage_immunity': return `Immunité ${damageTypeLabels[v.damageType] ?? v.damageType}`
+    case 'vulnerability': return `Vulnérabilité ${damageTypeLabels[v.damageType] ?? v.damageType}`
+    default: return effect.type
+  }
+}
 
 // Map d'accès rapide aux stats par entryId
 const weaponStatsByEntry = computed(() => {

@@ -97,9 +97,17 @@ export interface BuilderState {
   asiBonuses: Record<number, Partial<Record<AbilityKey, number>>>
 
   // Don choisi par palier (uniquement quand asiChoice[lvl] === 'feat').
-  // Format : { 8: 'alert', ... }. Note : la persistance des dons côté backend
-  // est encore un TODO (cf. level-up.post.ts qui accepte featId sans le stocker).
-  asiFeats: Record<number, string>
+  // Valeur = features.id du don (résolu via useFeats). Persisté via
+  // character_features avec source='asi'.
+  asiFeats: Record<number, number>
+
+  // Don bonus hors-palier (homebrew MJ). Choisi via le step dédié 'feats'.
+  // Valeur = features.id du don. Persisté via character_features avec source='bonus'.
+  bonusFeatureId: number | null
+
+  // Choix résolus des dons (ex : caractéristique +1 d'Observateur), indexés par
+  // features.id du don. Vaut pour le don bonus ET les dons d'ASI.
+  featChoices: Record<number, { ability?: AbilityKey }>
 
   // Arcanum mystique (Occultiste niv 11/13/15/17). Sort de niv 6/7/8/9
   // lançable 1× par repos long sans dépenser d'emplacement.
@@ -179,6 +187,8 @@ const INIT_STATE: BuilderState = {
   asiChoice: {},
   asiBonuses: {},
   asiFeats: {},
+  bonusFeatureId: null,
+  featChoices: {},
   arcaneMysteriumSpellId: null,
   bookOfAncientSecretsSpellIds: [],
   bookOfAncientSecretsRequired: false,
@@ -197,6 +207,8 @@ const ALL_STEPS: BuilderStep[] = [
   { id: 'class', label: 'Classe', icon: 'i-game-icons:sword' },
   { id: 'abilities', label: 'Carac.', icon: 'i-game-icons:muscle-up' },
   { id: 'asi', label: 'Bonus carac.', icon: 'i-heroicons:arrow-trending-up' },
+  // Step dédié au don bonus (homebrew MJ). Toujours actif, optionnel.
+  { id: 'feats', label: 'Don bonus', icon: 'i-heroicons:sparkles' },
   { id: 'spells', label: 'Sorts', icon: 'i-game-icons:spell-book' },
   { id: 'description', label: 'Description', icon: 'i-heroicons:document-text' },
   { id: 'equipment', label: 'Équipement', icon: 'i-game-icons:backpack' },
@@ -211,7 +223,9 @@ export function useCharacterBuilder() {
     if (import.meta.client) {
       try {
         const saved = localStorage.getItem(LS_KEY)
-        if (saved) return JSON.parse(saved) as BuilderState
+        // Merge avec INIT_STATE pour que les nouveaux champs (ex : featChoices)
+        // ne soient pas undefined sur un état sauvegardé par une version antérieure.
+        if (saved) return { ...INIT_STATE, ...(JSON.parse(saved) as BuilderState) }
       }
       catch {}
     }
@@ -226,6 +240,24 @@ export function useCharacterBuilder() {
       }
       catch {}
     }, { deep: true })
+  }
+
+  // ─── Dons (liste + helpers pour les choix) ────────────────────────────────────
+
+  const { feats, getById: getFeatById } = useFeats()
+
+  // Un don requiert-il un choix de caractéristique (ability_increase_choice) ?
+  const featNeedsAbility = (featureId: number | null | undefined): boolean => {
+    if (featureId == null) return false
+    const feat = getFeatById(featureId)
+    return (feat?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice')
+  }
+
+  // Le choix de caractéristique d'un don est-il complet (ou non requis) ?
+  const featChoiceComplete = (featureId: number | null | undefined): boolean => {
+    if (featureId == null) return true
+    if (!featNeedsAbility(featureId)) return true
+    return !!state.value.featChoices[featureId]?.ability
   }
 
   // ─── Données dérivées ────────────────────────────────────────────────────────
@@ -479,9 +511,17 @@ export function useCharacterBuilder() {
             if (Object.values(bonuses).some(v => (v ?? 0) > 2)) return false
           }
           else if (choice === 'feat') {
-            if (!s.asiFeats[lvl]) return false
+            if (s.asiFeats[lvl] == null) return false
+            // Si le don exige un choix de caractéristique, il doit être fait.
+            if (!featChoiceComplete(s.asiFeats[lvl])) return false
           }
         }
+        return true
+      }
+      case 'feats': {
+        // Le don bonus est optionnel ; mais s'il est choisi et qu'il demande
+        // un choix de caractéristique, celui-ci est obligatoire.
+        if (s.bonusFeatureId != null && !featChoiceComplete(s.bonusFeatureId)) return false
         return true
       }
       case 'spells': {
@@ -570,6 +610,7 @@ export function useCharacterBuilder() {
       class: className ? `${className} niv.${s.level}` : null,
       abilities: abilitiesDone === 6 ? 'Assignées ✓' : `${abilitiesDone}/6 assignées`,
       asi: asiTotal === 0 ? null : `${asiCompleted}/${asiTotal} palier(s)`,
+      feats: s.bonusFeatureId != null ? 'don bonus' : null,
       spells: cantripCount + spellCount > 0 ? `${cantripCount + spellCount} sorts` : null,
       description: s.name.trim() || null,
       equipment: s.equipment.length > 0 ? `${s.equipment.length} objets` : null,
@@ -653,6 +694,11 @@ export function useCharacterBuilder() {
     needsAsi,
     asiLevelsForCharacter,
     asiBonusByAbility,
+    // Dons
+    feats,
+    getFeatById,
+    featNeedsAbility,
+    featChoiceComplete,
     // Arcanum / Livre des secrets
     needsArcaneMysterium,
     arcaneMysteriumSpellLevel,

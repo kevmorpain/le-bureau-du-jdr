@@ -189,13 +189,25 @@
             </template>
 
             <template v-if="createForm.itemType === 'equipment'">
-              <UFormField label="Catégorie">
-                <USelect
-                  v-model="createForm.category"
-                  :items="equipmentCategoryOptions"
-                  size="sm"
-                />
-              </UFormField>
+              <div class="grid grid-cols-2 gap-3">
+                <UFormField label="Catégorie">
+                  <USelect
+                    v-model="createForm.category"
+                    :items="equipmentCategoryOptions"
+                    size="sm"
+                  />
+                </UFormField>
+                <UFormField
+                  v-if="createForm.category === '__other__'"
+                  label="Catégorie (libre)"
+                >
+                  <UInput
+                    v-model="createForm.categoryOther"
+                    placeholder="ex: Focus magique"
+                    size="sm"
+                  />
+                </UFormField>
+              </div>
             </template>
 
             <template v-if="createForm.itemType === 'tool'">
@@ -214,6 +226,12 @@
                 />
               </UFormField>
             </template>
+
+            <!-- Effets magiques (tous types) : appliqués automatiquement
+                 quand l'objet est équipé. -->
+            <div class="rounded-lg ring ring-default p-3">
+              <MagicEffectEditor v-model="createForm.effects" />
+            </div>
           </div>
         </template>
       </div>
@@ -241,6 +259,7 @@
 
 <script lang="ts" setup>
 import { weaponCategoryLabels, armorTypeLabels, toolTypeLabels } from '~~/shared/utils/item'
+import type { Effect } from '~~/server/db/schema/effects'
 
 interface ItemResult {
   id: number
@@ -377,6 +396,7 @@ const createForm = ref({
   description: '',
   quantity: 1,
   category: 'Aventure',
+  categoryOther: '',
   toolType: 'other' as 'artisan' | 'gaming' | 'musical' | 'other',
   weaponProps: {
     damage_dice: '1d6',
@@ -390,6 +410,7 @@ const createForm = ref({
     dex_limit: null as number | null,
     stealth_disadvantage: false,
   },
+  effects: [] as Effect[],
 })
 
 const typeCreateOptions = [
@@ -439,8 +460,18 @@ const equipmentCategoryOptions = [
   { label: 'Survie', value: 'Survie' },
   { label: 'Équipement de camp', value: 'Équipement de camp' },
   { label: 'Vêtements', value: 'Vêtements' },
+  { label: 'Focus magique', value: 'Focus magique' },
+  { label: 'Bijou', value: 'Bijou' },
   { label: 'Divers', value: 'Divers' },
+  { label: 'Autre…', value: '__other__' },
 ]
+
+// Catégorie effective (résout l'option « Autre… » en texte libre).
+const resolvedCategory = computed(() =>
+  createForm.value.category === '__other__'
+    ? (createForm.value.categoryOther.trim() || 'Divers')
+    : createForm.value.category,
+)
 
 const toolTypeOptions = [
   { label: 'Outils d\'artisan', value: 'artisan' },
@@ -480,7 +511,7 @@ const submit = async () => {
       } else if (form.itemType === 'tool') {
         properties = { tool_type: form.toolType, category: form.category }
       } else {
-        properties = { category: form.category }
+        properties = { category: resolvedCategory.value }
       }
 
       let created: ItemResult
@@ -492,6 +523,7 @@ const submit = async () => {
             itemType: form.itemType,
             properties,
             description: form.description || undefined,
+            effects: form.effects,
           },
         })
       } catch {
@@ -527,9 +559,11 @@ const resetForm = () => {
     description: '',
     quantity: 1,
     category: 'Aventure',
+    categoryOther: '',
     toolType: 'other',
     weaponProps: { damage_dice: '1d6', damage_type: 'slashing', weapon_category: 'simple_melee', weapon_properties: [] },
     armorProps: { armor_type: 'light', base_ac: 11, dex_limit: null, stealth_disadvantage: false },
+    effects: [],
   }
 }
 </script>

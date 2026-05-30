@@ -21,6 +21,9 @@
     <div v-else-if="currentStepId === 'asi'">
       <StepAsi />
     </div>
+    <div v-else-if="currentStepId === 'feats'">
+      <StepFeats />
+    </div>
     <div v-else-if="currentStepId === 'spells'">
       <StepSpells />
     </div>
@@ -210,15 +213,22 @@ async function handleSubmit() {
               amount: amount as number,
             })),
         ),
-      // Dons choisis par palier (asiChoice === 'feat'). NOTE : la persistance
-      // backend des dons n'est pas encore branchée (cf. level-up.post.ts qui
-      // ignore aussi `featId`). Envoyé pour documenter le contrat.
+      // Dons choisis par palier (asiChoice === 'feat'). featureId résolu via
+      // useFeats côté composant. Persistés dans character_features (source='asi').
       asiFeats: asiLevelsForCharacter.value
         .filter(lvl => state.value.asiChoice[lvl] === 'feat')
         .map(lvl => ({
           classLevel: lvl,
-          featId: state.value.asiFeats[lvl],
-        })),
+          featureId: state.value.asiFeats[lvl],
+          choices: state.value.featChoices[state.value.asiFeats[lvl]] ?? null,
+        }))
+        .filter(f => f.featureId != null),
+      // Don bonus hors-palier (homebrew MJ). Persisté dans character_features
+      // avec source='bonus'.
+      bonusFeatureId: state.value.bonusFeatureId,
+      bonusFeatChoices: state.value.bonusFeatureId != null
+        ? (state.value.featChoices[state.value.bonusFeatureId] ?? null)
+        : null,
       // Arcanum mystique (Occultiste niv 11/13/15/17) + Livre des secrets anciens
       arcaneMysteriumSpellId: state.value.arcaneMysteriumSpellId,
       bookOfAncientSecretsSpellIds: state.value.bookOfAncientSecretsSpellIds,

@@ -110,14 +110,19 @@ const builderSchema = z.object({
     }))
     .optional()
     .default([]),
-  // Dons choisis par palier (TODO : pas encore persisté côté DB).
+  // Dons choisis par palier d'ASI (source='asi'). featureId = features.id du don.
   asiFeats: z
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
-      featId: z.string(),
+      featureId: z.number().int().positive(),
+      choices: z.object({ ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']).optional() }).nullable().optional(),
     }))
     .optional()
     .default([]),
+  // Don bonus hors-palier (homebrew MJ — typiquement attribué au niveau 1).
+  // Persisté dans character_features avec source='bonus' et class_level=null.
+  bonusFeatureId: z.number().int().positive().nullable().optional(),
+  bonusFeatChoices: z.object({ ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']).optional() }).nullable().optional(),
   // Arcanum mystique (Occultiste niv 11/13/15/17) — sort de niv 6/7/8/9 choisi
   arcaneMysteriumSpellId: z.number().int().positive().nullable().optional(),
   // Livre des secrets anciens — 2 sorts rituels niv 1 quand la manifestation est choisie
@@ -292,11 +297,30 @@ export default defineEventHandler(async (event) => {
     )
   }
 
-  // TODO : persister les dons choisis (asiFeats). Aucune table dédiée pour
-  // l'instant (`character_feats` n'existe pas), même limitation côté level-up.
-  // On log pour ne pas perdre l'info silencieusement côté builder.
-  if (d.asiFeats?.length) {
-    console.warn('[character_sheets POST] dons reçus mais non persistés (TODO) :', d.asiFeats)
+  // Persistance des dons : asiFeats (source='asi') + bonusFeatureId (source='bonus').
+  // Tout passe par character_features (feature_type='feat' côté DB).
+  const featRows = [
+    ...(d.asiFeats ?? []).map(f => ({
+      characterSheetId: sheetId,
+      featureId: f.featureId,
+      currentUses: 0,
+      source: 'asi' as const,
+      classLevel: f.classLevel,
+      choices: f.choices ?? null,
+    })),
+    ...(d.bonusFeatureId
+      ? [{
+          characterSheetId: sheetId,
+          featureId: d.bonusFeatureId,
+          currentUses: 0,
+          source: 'bonus' as const,
+          classLevel: null as number | null,
+          choices: d.bonusFeatChoices ?? null,
+        }]
+      : []),
+  ]
+  if (featRows.length) {
+    await db.insert(srcSchema.characterFeatures).values(featRows as any).onConflictDoNothing()
   }
 
   // Caractéristiques

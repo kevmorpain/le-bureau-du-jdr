@@ -85,9 +85,9 @@
           <span class="text-amber-400">{{ state.fightingStyle }}</span>
         </div>
         <!-- Feat -->
-        <div v-if="state.asiChoice === 'feat' && state.featId">
+        <div v-if="state.asiChoice === 'feat' && state.featureId">
           <span class="text-muted">Don : </span>
-          <span class="text-amber-400">{{ LU_FEATS.find(f => f.id === state.featId)?.name }}</span>
+          <span class="text-amber-400">{{ getFeatById(state.featureId)?.name ?? 'Don' }}</span>
         </div>
         <!-- ASI bonuses -->
         <div
@@ -124,7 +124,6 @@
 </template>
 
 <script lang="ts" setup>
-import { LU_FEATS } from '~/composables/useLevelUp'
 import type { AbilityKey } from '~/data/character-builder'
 
 defineProps<{ mobile?: boolean }>()
@@ -142,6 +141,8 @@ const {
   ABILITY_SHORT,
   profBonusAtLevel,
 } = useLevelUp(charSheet)
+
+const { getById: getFeatById } = useFeats()
 
 const completedCount = computed(() =>
   activeSteps.value.filter(s => isStepComplete.value(s.id)).length,

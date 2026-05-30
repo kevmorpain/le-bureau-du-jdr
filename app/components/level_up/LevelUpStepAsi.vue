@@ -90,23 +90,47 @@
     <!-- Feat grid -->
     <div v-else-if="state.asiChoice === 'feat'">
       <p class="text-xs text-muted mb-4">
-        Sélection de base — consultez votre MJ pour la liste complète.
+        Liste complète des dons du PHB. Effets mécaniques appliqués automatiquement quand disponibles.
       </p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <button
-          v-for="feat in LU_FEATS"
+          v-for="feat in feats"
           :key="feat.id"
           class="text-left px-4 py-3 rounded-xl border transition-all"
-          :class="state.featId === feat.id
+          :class="state.featureId === feat.id
             ? 'border-amber-500/60 bg-amber-500/10'
             : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-(--ui-border-strong)'"
-          @click="state.featId = feat.id"
+          @click="pickFeat(feat.id)"
         >
-          <div class="font-semibold text-sm" :class="state.featId === feat.id ? 'text-amber-400' : 'text-(--ui-text)'">
+          <div class="font-semibold text-sm" :class="state.featureId === feat.id ? 'text-amber-400' : 'text-(--ui-text)'">
             {{ feat.name }}
           </div>
-          <div class="text-xs text-muted mt-0.5 leading-snug">{{ feat.desc }}</div>
+          <div class="text-xs text-muted mt-0.5 leading-snug">{{ feat.description }}</div>
         </button>
+      </div>
+
+      <!-- Choix de caractéristique (si le don sélectionné en demande un) -->
+      <div
+        v-if="state.featureId != null && featNeedsAbility(state.featureId)"
+        class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-2"
+      >
+        <p class="text-sm font-semibold text-(--ui-text)">
+          Caractéristique à augmenter (+1)
+        </p>
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <button
+            v-for="ab in allowedAbilities(state.featureId)"
+            :key="ab"
+            type="button"
+            class="py-2 rounded-lg border text-sm font-semibold transition-colors"
+            :class="state.featAbility === ab
+              ? 'border-amber-500/60 bg-amber-500/10 text-amber-400'
+              : 'border-(--ui-border) text-muted hover:border-(--ui-border-strong)'"
+            @click="state.featAbility = ab"
+          >
+            {{ ABILITY_SHORT[ab] }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -121,19 +145,32 @@
 </template>
 
 <script lang="ts" setup>
-import { LU_FEATS, type AbilityBonuses } from '~/composables/useLevelUp'
+import type { AbilityBonuses } from '~/composables/useLevelUp'
 import type { AbilityKey } from '~/data/character-builder'
 
 const {
   state,
   pickedClass,
   finalAbilities,
+  featNeedsAbility,
   ABILITIES,
   ABILITY_SHORT,
   ABILITY_LABELS,
   abilityMod,
   formatMod,
 } = useLevelUp(inject('charSheet') as any)
+
+const { feats, getById: getFeatById } = useFeats()
+
+// Caractéristiques autorisées par le don choisi (sous-ensemble du PHB).
+const allowedAbilities = (featureId: number | null): AbilityKey[] =>
+  featAllowedAbilities(getFeatById(featureId)?.effects) as AbilityKey[]
+
+// Reset le choix de caractéristique quand on change de don.
+function pickFeat(featureId: number) {
+  state.value.featureId = featureId
+  state.value.featAbility = null
+}
 
 const remaining = computed(() =>
   2 - Object.values(state.value.asiBonuses).reduce((a, b) => a + b, 0),

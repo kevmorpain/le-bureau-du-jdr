@@ -1,16 +1,28 @@
 <template>
   <div class="space-y-2">
-    <URadioGroup
-      v-if="originOptions.length > 2"
-      v-model="selectedOrigin"
-      :items="originOptions"
-      value-key="value"
-      orientation="horizontal"
-      variant="table"
-      indicator="hidden"
-      size="xs"
-      class="mb-2"
-    />
+    <div class="flex items-center justify-between gap-2">
+      <URadioGroup
+        v-if="originOptions.length > 2"
+        v-model="selectedOrigin"
+        :items="originOptions"
+        value-key="value"
+        orientation="horizontal"
+        variant="table"
+        indicator="hidden"
+        size="xs"
+        class="flex-1 min-w-0"
+      />
+      <div v-else class="flex-1" />
+      <UButton
+        icon="i-heroicons:plus"
+        size="xs"
+        variant="ghost"
+        class="shrink-0"
+        @click="addFeatOpen = true"
+      >
+        Ajouter un don
+      </UButton>
+    </div>
 
     <ul class="space-y-1">
       <li
@@ -36,6 +48,15 @@
                 size="md"
                 class="shrink-0"
               />
+              <!-- Avertissement si un choix de caractéristique reste à faire -->
+              <UBadge
+                v-if="isFeat(feature) && needsAbility(feature) && !feature.choices?.ability"
+                label="Choix requis"
+                color="warning"
+                variant="soft"
+                size="md"
+                class="shrink-0"
+              />
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
@@ -48,6 +69,16 @@
               >
                 Choisir
               </UButton>
+
+              <UButton
+                v-if="isFeat(feature)"
+                icon="i-heroicons:trash"
+                size="xs"
+                variant="ghost"
+                color="error"
+                :aria-label="`Retirer ${feature.name}`"
+                @click.stop="removeFeat(feature.id)"
+              />
 
               <div
                 v-if="feature.maxUses !== null && !hasHiddenCounter(feature)"
@@ -78,6 +109,32 @@
             <p class="text-sm text-muted mt-2 whitespace-pre-line">
               {{ feature.description }}
             </p>
+
+            <!-- Choix de caractéristique +1 (dons type Observateur/Résilient…) -->
+            <div
+              v-if="isFeat(feature) && needsAbility(feature)"
+              class="mt-3 space-y-1.5"
+            >
+              <p class="text-xs font-semibold uppercase tracking-wider text-muted">
+                Caractéristique augmentée (+1)
+              </p>
+              <div class="grid grid-cols-6 gap-1.5">
+                <button
+                  v-for="ab in allowedAbilityOptions(feature)"
+                  :key="ab.value"
+                  type="button"
+                  class="py-1.5 rounded-lg ring text-xs font-semibold transition-colors"
+                  :class="feature.choices?.ability === ab.value
+                    ? 'ring-primary bg-primary/10 text-primary'
+                    : 'ring-default text-muted hover:bg-elevated'"
+                  @click="setAbilityChoice(feature.id, ab.value)"
+                >
+                  {{ ab.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- ASI de classe (Amélioration de caractéristique) -->
             <div
               v-if="isASIFeature(feature)"
               class="mt-3 space-y-1"
@@ -120,20 +177,42 @@
       :all-improvements="characterSheet.abilityScoreImprovements ?? []"
       @saved="onASISaved"
     />
+
+    <AddFeatSlideover
+      v-model:open="addFeatOpen"
+      :character-sheet-id="characterSheet.id"
+      :owned-feature-ids="ownedFeatIds"
+      @added="emit('refresh')"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { Effect } from '~~/server/db/schema/effects'
 
+type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
+
 const props = defineProps<{
   characterSheet: CharacterSheet
+}>()
+
+const emit = defineEmits<{
+  refresh: []
 }>()
 
 const characterSheetRef = toRef(props, 'characterSheet')
 const { allCharacterFeatures } = useCharacterSheet(characterSheetRef)
 
 const toaster = useToast()
+
+const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [
+  { label: 'FOR', value: 'str' },
+  { label: 'DEX', value: 'dex' },
+  { label: 'CON', value: 'con' },
+  { label: 'INT', value: 'int' },
+  { label: 'SAG', value: 'wis' },
+  { label: 'CHA', value: 'cha' },
+]
 
 // ── Filtre par origine ─────────────────────────────────────────────────────
 
@@ -161,10 +240,54 @@ const visibleFeatures = computed(() =>
 )
 
 const originColor = (kind: 'species' | 'class' | 'subclass', label?: string) => {
+  if (label === 'Don') return 'warning' as const
   if (label === 'Manifestation') return 'violet' as const
   if (kind === 'species') return 'success' as const
   if (kind === 'subclass') return 'info' as const
   return 'primary' as const
+}
+
+// ── Dons ────────────────────────────────────────────────────────────────────
+
+const addFeatOpen = ref(false)
+
+const ownedFeatIds = computed(() =>
+  allCharacterFeatures.value.filter(f => (f as any).featureType === 'feat').map(f => f.id),
+)
+
+const isFeat = (feature: { featureType?: string }) => feature.featureType === 'feat'
+
+const needsAbility = (feature: { effects?: unknown[] }) =>
+  (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'ability_increase_choice') ?? false
+
+// Caractéristiques réellement proposées par le don (FOR/DEX, INT/SAG, ou les 6).
+const allowedAbilityOptions = (feature: { effects?: unknown[] }) => {
+  const allowed = featAllowedAbilities(feature.effects as Effect[] | undefined)
+  return ABILITY_OPTIONS.filter(o => allowed.includes(o.value))
+}
+
+const setAbilityChoice = async (featureId: number, ability: AbilityKey) => {
+  try {
+    await $fetch(`/api/character_sheets/${props.characterSheet.id}/feats`, {
+      method: 'POST',
+      body: { featureId, source: 'bonus', choices: { ability } },
+    })
+    emit('refresh')
+  } catch {
+    toaster.add({ title: 'Erreur lors de la mise à jour du don', color: 'error' })
+  }
+}
+
+const removeFeat = async (featureId: number) => {
+  try {
+    await $fetch(`/api/character_sheets/${props.characterSheet.id}/feats/${featureId}`, {
+      method: 'DELETE',
+    })
+    emit('refresh')
+    toaster.add({ title: 'Don retiré', color: 'success' })
+  } catch {
+    toaster.add({ title: 'Erreur lors du retrait du don', color: 'error' })
+  }
 }
 
 // ── ASI modal state ────────────────────────────────────────────────────────

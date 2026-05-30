@@ -77,20 +77,9 @@ export const LU_MULTICLASS_PROFICIENCIES: Record<string, string[]> = {
   wizard: [],
 }
 
-export const LU_FEATS = [
-  { id: 'alert', name: 'Alerte', desc: '+5 init., ne peut être surpris quand conscient.' },
-  { id: 'athlete', name: 'Athlète', desc: '+1 FOR ou DEX. Se lever ne coûte que 1,5 m.' },
-  { id: 'great-weapon', name: 'Maître d\'armes de guerre', desc: 'Critique → attaque bonus avec la même arme.' },
-  { id: 'lucky', name: 'Chanceux', desc: '3 points de chance / repos long. Relancer un d20.' },
-  { id: 'mage-slayer', name: 'Tueur de mages', desc: 'Réaction : attaque quand un mage à 1,5m lance un sort.' },
-  { id: 'mobile', name: 'Mobile', desc: '+3 m de vitesse. Pas de désavantage difficile après course.' },
-  { id: 'resilient', name: 'Résilient', desc: '+1 à une caractéristique. Maîtrise du JS correspondant.' },
-  { id: 'sentinel', name: 'Sentinelle', desc: 'Coup d\'opportunisme → vitesse 0.' },
-  { id: 'sharpshooter', name: 'Tireur d\'élite', desc: 'Ignore le couvert ¾. −5 atk / +10 dégâts.' },
-  { id: 'tough', name: 'Robuste', desc: '+2 PV par niveau (rétroactif).' },
-  { id: 'war-caster', name: 'Mage de guerre', desc: 'Avantage aux JS de concentration.' },
-  { id: 'magic-init', name: 'Initié à la magie', desc: '2 tours de magie + 1 sort niv. 1 (1×/repos long).' },
-]
+// La liste des dons est désormais servie par /api/feats (cf. useFeats). On
+// expose seulement le type ici pour les consommateurs qui n'ont pas besoin de
+// la liste complète.
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -111,7 +100,10 @@ export interface LevelUpState {
   expertiseSkills: string[]
   asiChoice: 'asi' | 'feat' | null
   asiBonuses: AbilityBonuses
-  featId: string | null
+  // Don choisi quand asiChoice='feat'. Référence directe à features.id du don.
+  featureId: number | null
+  // Choix de caractéristique +1 du don (Observateur/Résilient…) le cas échéant.
+  featAbility: AbilityKey | null
   newSkills: string[]
   newCantripIds: number[]
   newSpellIds: number[]
@@ -162,7 +154,8 @@ const INIT_STATE: LevelUpState = {
   expertiseSkills: [],
   asiChoice: null,
   asiBonuses: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
-  featId: null,
+  featureId: null,
+  featAbility: null,
   newSkills: [],
   newCantripIds: [],
   newSpellIds: [],
@@ -202,6 +195,14 @@ export type CharacterSheetWithASI = CharacterSheet & {
 export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const state = useState<LevelUpState>('level-up-state', () => ({ ...INIT_STATE }))
   const toast = useToast()
+
+  // Dons : la liste vient de /api/feats (useFeats). Sert à savoir si le don
+  // choisi exige un choix de caractéristique (ability_increase_choice).
+  const { getById: getFeatById } = useFeats()
+  const featNeedsAbility = (featureId: number | null): boolean => {
+    if (featureId == null) return false
+    return (getFeatById(featureId)?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice')
+  }
 
   // ── Derived character data ─────────────────────────────────────────────────
 
@@ -448,7 +449,12 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       }
 
       case 'asi': {
-        if (s.asiChoice === 'feat') return !!s.featId
+        if (s.asiChoice === 'feat') {
+          if (s.featureId == null) return false
+          // Si le don exige un choix de caractéristique, il doit être fait.
+          if (featNeedsAbility(s.featureId) && !s.featAbility) return false
+          return true
+        }
         if (s.asiChoice !== 'asi') return false
         const total = Object.values(s.asiBonuses).reduce((a, b) => a + b, 0)
         return total === 2
@@ -487,8 +493,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         : null,
       hp: s.hpGained != null ? `+${s.hpGained} PV` : null,
       features: s.newSubclassName ?? (s.pactBoon ? ({ chain: 'Pacte de la Chaîne', blade: 'Pacte de la Lame', tome: 'Pacte du Tome' })[s.pactBoon] : null) ?? (s.fightingStyle ? `Style: ${s.fightingStyle}` : null),
+      // Affichage du nom du don dans le résumé — résolu via useFeats côté UI.
       asi: s.asiChoice === 'feat'
-        ? (LU_FEATS.find(f => f.id === s.featId)?.name ?? null)
+        ? (s.featureId != null ? 'don' : null)
         : (Object.values(s.asiBonuses).some(v => v > 0) ? '+2 carac.' : null),
       skills: s.newSkills.length > 0 ? `${s.newSkills.length} compétence(s)` : null,
       spells: (s.newCantripIds.length + s.newSpellIds.length) > 0
@@ -553,7 +560,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         expertiseSkills: s.expertiseSkills,
         asiChoice: s.asiChoice,
         asiBonuses: s.asiChoice === 'asi' ? s.asiBonuses : null,
-        featId: s.asiChoice === 'feat' ? s.featId : null,
+        featureId: s.asiChoice === 'feat' ? s.featureId : null,
+        featChoices: s.asiChoice === 'feat' && s.featAbility ? { ability: s.featAbility } : null,
         newSkills: s.newSkills,
         newCantripIds: s.newCantripIds,
         newSpellIds: s.newSpellIds,
@@ -617,6 +625,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     goPrev,
     resetWizard,
     submit,
+    featNeedsAbility,
     // Re-exports for step components
     CLASSES,
     ABILITIES,
