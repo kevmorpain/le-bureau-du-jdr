@@ -12,6 +12,7 @@ export type Background = {
 
 export const useCharacterBackground = (characterSheet?: Ref<CharacterSheet>) => {
   const characterId = computed(() => characterSheet?.value?.id)
+  const { offlineMutate } = useOfflineMutation(() => characterId.value ?? 0)
 
   // ─── Fetch ────────────────────────────────────────────────────────────────
 
@@ -32,13 +33,18 @@ export const useCharacterBackground = (characterSheet?: Ref<CharacterSheet>) => 
 
   async function setBackground(backgroundId: number | null) {
     if (!characterId.value) return
-    await $fetch(`/api/character_sheets/${characterId.value}/background`, {
-      method: 'PUT',
-      body: { backgroundId },
-    })
+    // Optimiste d'abord (l'auto-save de la fiche reflétera aussi backgroundId).
     if (characterSheet?.value) {
       characterSheet.value = { ...characterSheet.value, backgroundId }
     }
+    // Le serveur resync aussi les compétences du background ; la réconciliation post-sync les récupère.
+    await offlineMutate({
+      endpoint: `/api/character_sheets/${characterId.value}/background`,
+      method: 'PUT',
+      body: { backgroundId },
+      dedupeKey: 'background',
+      label: 'Historique',
+    })
   }
 
   async function createCustomBackground(data: Omit<Background, 'id' | 'characterSheetId'>) {

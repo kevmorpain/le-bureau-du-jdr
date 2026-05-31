@@ -100,6 +100,53 @@ export default defineNuxtConfig({
     },
     workbox: {
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      // Pas de navigateFallback précaché : l'app est en SSR sans prerender, il n'existe pas
+      // d'index.html statique. Les navigations sont gérées en runtime (NetworkFirst) ci-dessous.
+      navigateFallbackDenylist: [/^\/api\//],
+      runtimeCaching: [
+        {
+          // Documents (navigations SSR) : une page visitée en ligne se recharge hors-ligne.
+          urlPattern: ({ request, url }) =>
+            request.mode === 'navigate' && !url.pathname.startsWith('/api/'),
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'pages',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          // Fiches de perso + sous-ressources : frais en ligne, dernière version connue hors-ligne.
+          urlPattern: ({ url }) => url.pathname.startsWith('/api/character_sheets'),
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-character',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          // Données de référence (rarement modifiées) : rapide hors-ligne, revalidé en arrière-plan.
+          urlPattern: ({ url }) =>
+            /^\/api\/(spells|items|backgrounds|classes|magic_schools|invocations|character_species|feats)/.test(url.pathname),
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'api-reference',
+            expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+      ],
+    },
+    // SW désactivé en dev par défaut (sinon il met en cache et sert du contenu obsolète pendant
+    // le développement). Pour tester l'offline en local : `PWA_DEV=true npm run dev`.
+    // La prod génère toujours le service worker (devOptions ne concerne que le dev).
+    devOptions: {
+      enabled: process.env.PWA_DEV === 'true',
+      type: 'module',
+      suppressWarnings: true,
     },
   },
 

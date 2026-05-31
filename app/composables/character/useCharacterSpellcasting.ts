@@ -160,6 +160,8 @@ export const useCharacterSpellcasting = (
     pact_magic: emptyLevels(),
   })
 
+  const { offlineMutate } = useOfflineMutation(() => characterSheet?.value?.id ?? 0)
+
   // Initialisation depuis DB + auto-gen Pact Magic
   watchEffect(() => {
     const dbSlots = characterSheet?.value?.spellSlots ?? []
@@ -192,40 +194,57 @@ export const useCharacterSpellcasting = (
       }
     }
 
+    // Reload hors-ligne : si des modifs sont en attente, repartir du snapshot local
+    // (le cache ne contient que l'état serveur d'avant les dépenses de slots).
+    const id = characterSheet?.value?.id
+    if (import.meta.client && id && hasPending(id)) {
+      const snap = readSnapshot<SlotsByType>(id, 'slots')
+      if (snap) {
+        spellSlots.value = snap
+        return
+      }
+    }
+
     spellSlots.value = next
   })
 
-  // Synchronisation vers DB (debounce 500ms)
+  // Synchronisation vers DB (debounce 500ms), via la file hors-ligne
   let syncTimeout: ReturnType<typeof setTimeout> | null = null
+  const normalizeSlots = (
+    arr: Array<{ slotLevel: number, slotType: string, total: number, used: number }>,
+  ): string =>
+    JSON.stringify([...arr].sort((a, b) => a.slotType.localeCompare(b.slotType) || a.slotLevel - b.slotLevel))
+
   watch(spellSlots, () => {
-    if (!characterSheet?.value?.id) return
+    const id = characterSheet?.value?.id
+    if (!id) return
+    // Snapshot immédiat pour survivre à un reload hors-ligne.
+    if (import.meta.client) writeSnapshot(id, spellSlots.value, 'slots')
     if (syncTimeout) clearTimeout(syncTimeout)
-    syncTimeout = setTimeout(async () => {
+    syncTimeout = setTimeout(() => {
       const payload: Array<{ slotLevel: number, slotType: string, total: number, used: number }> = []
       for (const [level, slot] of Object.entries(spellSlots.value.spellcasting)) {
         if (slot.max > 0) {
-          payload.push({
-            slotLevel: Number(level),
-            slotType: 'spellcasting',
-            total: slot.max,
-            used: slot.max - slot.current,
-          })
+          payload.push({ slotLevel: Number(level), slotType: 'spellcasting', total: slot.max, used: slot.max - slot.current })
         }
       }
       for (const [level, slot] of Object.entries(spellSlots.value.pact_magic)) {
         if (slot.max > 0) {
-          payload.push({
-            slotLevel: Number(level),
-            slotType: 'pact_magic',
-            total: slot.max,
-            used: slot.max - slot.current,
-          })
+          payload.push({ slotLevel: Number(level), slotType: 'pact_magic', total: slot.max, used: slot.max - slot.current })
         }
       }
-      await $fetch(`/api/character_sheets/${characterSheet!.value!.id}/spell-slots`, {
+      // Évite une écriture inutile (et une op en file hors-ligne) si rien n'a changé vs serveur.
+      const serverPayload = (characterSheet?.value?.spellSlots ?? []).map(s => ({
+        slotLevel: s.slotLevel, slotType: s.slotType, total: s.total, used: s.used,
+      }))
+      if (normalizeSlots(payload) === normalizeSlots(serverPayload)) return
+      void offlineMutate({
+        endpoint: `/api/character_sheets/${id}/spell-slots`,
         method: 'PUT',
         body: payload,
-      })
+        dedupeKey: 'spell-slots',
+        label: 'Slots de sorts',
+      }).catch(() => {})
     }, 500)
   }, { deep: true })
 

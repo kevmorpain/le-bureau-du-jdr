@@ -76,6 +76,8 @@ export const useCharacterInventory = (
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
+  const { offlineMutate } = useOfflineMutation(() => characterId.value ?? 0)
+  const { refreshPendingCount } = useOfflineSync()
 
   // ─── Data fetching ────────────────────────────────────────────────────────
 
@@ -346,30 +348,67 @@ export const useCharacterInventory = (
 
   // ─── Mutations ────────────────────────────────────────────────────────────
 
+  // Toutes les mutations sont optimistes (mise à jour locale immédiate) puis routées via la
+  // file hors-ligne. On supprime les `refresh()` qui échouaient hors-ligne ; la réconciliation
+  // post-synchro (signal `lastSynced` → re-fetch dans la page) récupère l'état serveur canonique.
+
   const addItem = async (itemId: number, options: {
     quantity?: number
     equipped?: boolean
     magicBonus?: number
     notes?: string
+    // Détails de l'objet pour l'affichage optimiste hors-ligne (l'appelant les a déjà).
+    item?: InventoryItem
   } = {}) => {
     if (!characterId.value) return
+    const { item: optimisticItem, quantity = 1, equipped = false, magicBonus = 0, notes } = options
 
-    await $fetch(`/api/character_sheets/${characterId.value}/inventory`, {
+    // Insertion optimiste avec id temporaire négatif (pas de collision avec les ids serveur).
+    const tempId = -Date.now()
+    inventoryData.value = [...(inventoryData.value ?? []), {
+      id: tempId,
+      characterSheetId: characterId.value,
+      itemId,
+      quantity,
+      equipped,
+      magicBonus,
+      currentUses: 0,
+      notes: notes ?? null,
+      usingTwoHanded: false,
+      item: optimisticItem ?? null,
+    }]
+
+    await offlineMutate({
+      endpoint: `/api/character_sheets/${characterId.value}/inventory`,
       method: 'POST',
-      body: { itemId, quantity: 1, equipped: false, magicBonus: 0, ...options },
+      body: { itemId, quantity, equipped, magicBonus, ...(notes !== undefined ? { notes } : {}) },
+      // dedupeKey unique par ajout : permet d'annuler l'ajout si l'objet est retiré avant synchro.
+      dedupeKey: `inv-new:${tempId}`,
+      label: 'Objet ajouté',
+      onServerResponse: (res) => {
+        inventoryData.value = (inventoryData.value ?? []).map(e => e.id === tempId ? (res as InventoryEntry) : e)
+      },
     })
-
-    await refreshInventory()
   }
 
   const removeItem = async (entryId: number) => {
     if (!characterId.value) return
+    inventoryData.value = (inventoryData.value ?? []).filter(e => e.id !== entryId)
 
-    await $fetch(`/api/character_sheets/${characterId.value}/inventory/${entryId}`, {
+    // Objet ajouté hors-ligne puis retiré avant toute synchro : on annule l'ajout en file
+    // (sinon il réapparaîtrait à la reconnexion).
+    if (entryId < 0) {
+      writeQueue(characterId.value, readQueue(characterId.value).filter(o => o.dedupeKey !== `inv-new:${entryId}`))
+      refreshPendingCount()
+      return
+    }
+
+    await offlineMutate({
+      endpoint: `/api/character_sheets/${characterId.value}/inventory/${entryId}`,
       method: 'DELETE',
+      dedupeKey: `inv:${entryId}`,
+      label: 'Objet retiré',
     })
-
-    await refreshInventory()
   }
 
   const updateEntry = async (entryId: number, updates: {
@@ -381,13 +420,21 @@ export const useCharacterInventory = (
     usingTwoHanded?: boolean
   }) => {
     if (!characterId.value) return
+    inventoryData.value = (inventoryData.value ?? []).map(e =>
+      e.id === entryId ? { ...e, ...updates } : e,
+    )
 
-    await $fetch(`/api/character_sheets/${characterId.value}/inventory/${entryId}`, {
+    // Entrée pas encore synchronisée (id temporaire) : la modif part avec le POST au refresh.
+    if (entryId < 0) return
+
+    await offlineMutate({
+      endpoint: `/api/character_sheets/${characterId.value}/inventory/${entryId}`,
       method: 'PUT',
       body: updates,
+      // La ligne est keyée par id : la dernière action (update/delete) sur l'entrée gagne.
+      dedupeKey: `inv:${entryId}`,
+      label: 'Inventaire',
     })
-
-    await refreshInventory()
   }
 
   const toggleEquipped = (entryId: number) => {
@@ -397,31 +444,40 @@ export const useCharacterInventory = (
   }
 
   const setUsingTwoHanded = async (entryId: number, value: boolean) => {
-    const entry = inventory.value.find(e => e.id === entryId)
-    if (entry) entry.usingTwoHanded = value
     await updateEntry(entryId, { usingTwoHanded: value })
   }
 
   const addProficiencyOverride = async (proficiencyType: 'weapon' | 'armor' | 'language' | 'tool', value: string, action: 'grant' | 'revoke') => {
     if (!characterId.value) return
+    if (proficiencyType === 'weapon' || proficiencyType === 'armor') {
+      proficiencyOverridesData.value = [
+        ...(proficiencyOverridesData.value ?? []).filter(o => !(o.proficiencyType === proficiencyType && o.value === value)),
+        { characterSheetId: characterId.value, proficiencyType, value, action },
+      ]
+    }
 
-    await $fetch(`/api/character_sheets/${characterId.value}/proficiency-overrides`, {
+    await offlineMutate({
+      endpoint: `/api/character_sheets/${characterId.value}/proficiency-overrides`,
       method: 'PUT',
       body: { proficiencyType, value, action },
+      dedupeKey: `prof:${proficiencyType}:${value}`,
+      label: 'Maîtrises',
     })
-
-    await refreshProficiencyOverrides()
   }
 
   const removeProficiencyOverride = async (proficiencyType: 'weapon' | 'armor' | 'language' | 'tool', value: string) => {
     if (!characterId.value) return
+    proficiencyOverridesData.value = (proficiencyOverridesData.value ?? []).filter(
+      o => !(o.proficiencyType === proficiencyType && o.value === value),
+    )
 
-    await $fetch(`/api/character_sheets/${characterId.value}/proficiency-overrides`, {
+    await offlineMutate({
+      endpoint: `/api/character_sheets/${characterId.value}/proficiency-overrides`,
       method: 'DELETE',
       body: { proficiencyType, value },
+      dedupeKey: `prof:${proficiencyType}:${value}`,
+      label: 'Maîtrises',
     })
-
-    await refreshProficiencyOverrides()
   }
 
   return {

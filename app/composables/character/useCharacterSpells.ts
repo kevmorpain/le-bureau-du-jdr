@@ -15,6 +15,7 @@ export const useCharacterSpells = (
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
+  const { offlineMutate } = useOfflineMutation(() => characterId.value ?? 0)
 
   // ─── Fetch ────────────────────────────────────────────────────────────────
 
@@ -75,11 +76,16 @@ export const useCharacterSpells = (
     )
 
     try {
-      await $fetch(`/api/character_sheets/${characterId.value}/spells`, {
+      // dedupeKey par sort : la dernière action sur un sort gagne (la ligne est upsert par spellId).
+      await offlineMutate({
+        endpoint: `/api/character_sheets/${characterId.value}/spells`,
         method: 'PUT',
         body: [{ spellId, isKnown: true, isPrepared }],
+        dedupeKey: `spell:${spellId}`,
+        label: 'Sorts préparés',
       })
     } catch {
+      // Erreur serveur réelle uniquement (hors-ligne est mis en file sans throw) → rollback.
       characterSpells.value = characterSpells.value.map(cs =>
         cs.spellId === spellId ? { ...cs, isPrepared: !isPrepared } : cs,
       )
@@ -87,22 +93,31 @@ export const useCharacterSpells = (
   }
 
   const addSpell = async (spellId: number) => {
-    await $fetch(`/api/character_sheets/${characterId.value}/spells`, {
+    // Pas d'objet Spell complet ici pour un insert optimiste → en ligne on refresh, hors-ligne
+    // le sort apparaît à la réconciliation post-synchro (le slideover n'émet que l'id).
+    const outcome = await offlineMutate({
+      endpoint: `/api/character_sheets/${characterId.value}/spells`,
       method: 'PUT',
       body: [{ spellId, isKnown: true, isPrepared: false }],
+      dedupeKey: `spell:${spellId}`,
+      label: 'Sort ajouté',
     })
-    await refreshSpells()
+    if (outcome === 'sent') await refreshSpells()
   }
 
   const removeSpell = async (spellId: number) => {
-    await $fetch(`/api/character_sheets/${characterId.value}/spells`, {
-      method: 'DELETE',
-      body: { spellId },
-    })
+    // Suppression optimiste immédiate.
     if (characterSpells.value) {
       const idx = characterSpells.value.findIndex(cs => cs.spellId === spellId)
       if (idx !== -1) characterSpells.value.splice(idx, 1)
     }
+    await offlineMutate({
+      endpoint: `/api/character_sheets/${characterId.value}/spells`,
+      method: 'DELETE',
+      body: { spellId },
+      dedupeKey: `spell:${spellId}`,
+      label: 'Sort retiré',
+    })
   }
 
   const castSpell = (slotLevel: number, slotType: SlotType = 'spellcasting') => {

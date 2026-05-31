@@ -172,6 +172,13 @@
       </div>
     </div>
 
+    <p
+      v-if="!online"
+      class="text-center text-sm text-warning mb-2"
+    >
+      ⚠ La montée de niveau nécessite une connexion.
+    </p>
+
     <!-- Boutons -->
     <div class="flex gap-3 justify-center">
       <button
@@ -190,7 +197,7 @@
           border: 'none',
           boxShadow: submitting ? 'none' : '0 0 28px rgba(245,158,11,0.5)',
         }"
-        :disabled="submitting"
+        :disabled="submitting || !online"
         @click="handleSubmit"
       >
         {{ submitting ? '✓ Niveau monté !' : '✦ Valider la montée de niveau' }}
@@ -207,6 +214,7 @@ defineEmits<{ back: [] }>()
 
 const charSheet = inject('charSheet') as any
 const router = useRouter()
+const online = useOnline()
 
 const {
   state,
@@ -368,6 +376,10 @@ const gains = computed(() => {
 })
 
 async function handleSubmit() {
+  if (!online.value) {
+    toast.add({ title: 'Montée de niveau indisponible hors-ligne', description: 'Reconnecte-toi pour valider.', color: 'warning' })
+    return
+  }
   submitting.value = true
   try {
     await submit()

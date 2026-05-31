@@ -46,6 +46,9 @@
 
       <!-- Actions -->
       <div class="flex items-center gap-2 ml-auto flex-wrap">
+        <ClientOnly>
+          <SyncStatus />
+        </ClientOnly>
         <UButton
           icon="i-game-icons:forest-camp"
           variant="outline"

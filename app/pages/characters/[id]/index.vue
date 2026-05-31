@@ -106,6 +106,13 @@
     </div>
 
     <DiceRollerSection />
+
+    <ClientOnly>
+      <SyncConflictModal
+        :character-sheet-id="charId"
+        @resolved="reconcileAfterConflict"
+      />
+    </ClientOnly>
   </div>
 </template>
 
@@ -116,6 +123,9 @@ definePageMeta({
 
 const route = useRoute()
 const id = computed(() => route.params.id as string)
+const charId = computed(() => Number(id.value))
+// Créé avant le `await` pour conserver le contexte de composable (scope d'effet).
+const { offlineMutate } = useOfflineMutation(charId)
 
 const { data: characterSheetData, refresh: refreshSheetData } = await useFetch<CharacterSheet>(() => `/api/character_sheets/${id.value}`)
 
@@ -125,12 +135,22 @@ if (!characterSheetData.value) {
 
 const characterSheet = ref(characterSheetData.value)
 
+// Reload hors-ligne : si des modifs sont en attente pour ce perso, repartir de l'état local
+// optimiste (le cache ne contient que l'état serveur d'avant les modifs).
+if (import.meta.client && hasPending(charId.value)) {
+  const snap = readSnapshot<CharacterSheet>(charId.value)
+  if (snap) characterSheet.value = snap
+}
+// Version de référence (dernier état serveur connu) pour le garde-fou anti-écrasement.
+setBaseVersion(charId.value, characterSheetData.value.updatedAt)
+
 async function refreshSheet() {
   await refreshSheetData()
   if (characterSheetData.value) {
     // Évite que le watch deep redéclenche un save vers le serveur (boucle).
     pauseAutoSave.value = true
     characterSheet.value = characterSheetData.value
+    setBaseVersion(charId.value, characterSheetData.value.updatedAt)
     await nextTick()
     pauseAutoSave.value = false
   }
@@ -139,8 +159,26 @@ async function refreshSheet() {
 const toaster = useToast()
 const { roll } = useDiceRoller()
 
-const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, refreshInventory } = useCharacterSheet(characterSheet)
+const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, refreshInventory, refreshSpells } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)
+
+// Réconciliation : quand la file de synchro d'un perso vient d'être vidée, on re-fetch pour
+// récupérer l'état serveur canonique (vrais ids des objets ajoutés, recalcul du repos…).
+const { lastSynced } = useOfflineSync()
+watch(lastSynced, (s) => {
+  if (!s || s.characterId !== charId.value) return
+  if (hasPending(charId.value)) return // de nouvelles modifs sont déjà en file → on attend
+  refreshSheet()
+  refreshInventory()
+  refreshSpells()
+})
+
+// Après résolution d'un conflit (garder local / recharger serveur), on resynchronise l'affichage.
+function reconcileAfterConflict() {
+  refreshSheet()
+  refreshInventory()
+  refreshSpells()
+}
 
 // Le repos recharge aussi les charges d'objets (recharge complète, côté serveur).
 // L'inventaire est un useFetch séparé → on le rafraîchit après chaque repos.
@@ -174,6 +212,8 @@ const pauseAutoSave = ref(false)
 
 watch(characterSheet, () => {
   if (pauseAutoSave.value) return
+  // Snapshot local immédiat pour survivre à un reload hors-ligne.
+  if (import.meta.client) writeSnapshot(charId.value, characterSheet.value)
   if (saveTimeout) clearTimeout(saveTimeout)
   saveTimeout = setTimeout(updateCharacterSheet, 1000)
 }, { deep: true })
@@ -181,11 +221,15 @@ watch(characterSheet, () => {
 const updateCharacterSheet = async () => {
   if (!characterSheet.value) return
   try {
-    await $fetch(`/api/character_sheets/${id.value}`, {
+    const outcome = await offlineMutate({
+      endpoint: `/api/character_sheets/${id.value}`,
       method: 'PUT',
       body: characterSheet.value,
+      dedupeKey: 'sheet',
+      label: 'Fiche',
     })
-    toaster.add({ title: 'Fiche sauvegardée', color: 'success' })
+    // Hors-ligne : mis en file silencieusement (l'indicateur de synchro l'affiche).
+    if (outcome === 'sent') toaster.add({ title: 'Fiche sauvegardée', color: 'success' })
   } catch {
     toaster.add({ title: 'Erreur lors de la sauvegarde', color: 'error' })
   }

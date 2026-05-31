@@ -1,4 +1,14 @@
 <template>
+  <UAlert
+    v-if="!online"
+    color="warning"
+    variant="subtle"
+    icon="i-heroicons:signal-slash"
+    title="Hors-ligne"
+    description="La création de personnage nécessite une connexion."
+    class="m-3"
+  />
+
   <!-- Écran de résumé final -->
   <BuilderSummary
     v-if="showSummary"
@@ -65,6 +75,7 @@ const {
 } = useBuilderEntities()
 
 const router = useRouter()
+const online = useOnline()
 const showSummary = ref(false)
 const submitting = ref(false)
 const toast = useToast()
@@ -85,6 +96,10 @@ const FIELD_LABELS: Record<string, string> = {
 
 async function handleSubmit() {
   if (!classData.value || !hpMax.value) return
+  if (!online.value) {
+    toast.add({ title: 'Création indisponible hors-ligne', description: 'Reconnecte-toi pour créer le personnage.', color: 'warning' })
+    return
+  }
   submitting.value = true
 
   try {

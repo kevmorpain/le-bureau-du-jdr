@@ -17,13 +17,16 @@ export const useRest = (
 ) => {
   const toaster = useToast()
   const isResting = ref(false)
+  const { offlineMutate } = useOfflineMutation(() => characterSheet.value.id)
 
   const shortRest = async (hitDiceSpent: { die: string, count: number, healAmount: number }[] = []) => {
     isResting.value = true
     try {
-      await $fetch(`/api/character_sheets/${characterSheet.value.id}/rest`, {
+      await offlineMutate({
+        endpoint: `/api/character_sheets/${characterSheet.value.id}/rest`,
         method: 'POST',
         body: { type: 'short', hitDiceSpent },
+        label: 'Repos court',
       })
 
       characterSheet.value.features?.forEach((cf) => {
@@ -59,9 +62,11 @@ export const useRest = (
   const longRest = async () => {
     isResting.value = true
     try {
-      await $fetch(`/api/character_sheets/${characterSheet.value.id}/rest`, {
+      await offlineMutate({
+        endpoint: `/api/character_sheets/${characterSheet.value.id}/rest`,
         method: 'POST',
         body: { type: 'long' },
+        label: 'Repos long',
       })
 
       characterSheet.value.features?.forEach((cf) => {
@@ -110,9 +115,11 @@ export const useRest = (
   const dawn = async () => {
     isResting.value = true
     try {
-      await $fetch(`/api/character_sheets/${characterSheet.value.id}/rest`, {
+      await offlineMutate({
+        endpoint: `/api/character_sheets/${characterSheet.value.id}/rest`,
         method: 'POST',
         body: { type: 'dawn' },
+        label: 'Aube',
       })
 
       characterSheet.value.features?.forEach((cf) => {
