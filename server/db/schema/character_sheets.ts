@@ -12,6 +12,7 @@ import characterInventory from './character_inventory'
 import characterProficiencyOverrides from './character_proficiency_overrides'
 import backgrounds from './backgrounds'
 import spells from './spells'
+import users from './users'
 
 export enum Alignment {
   LawfulGood = 'LG',
@@ -34,6 +35,9 @@ interface CurrentHitDie {
 
 const characterSheets = sqliteTable('character_sheets', {
   id: integer().primaryKey().notNull(),
+  // Propriétaire de la fiche. Nullable pour permettre la migration des fiches
+  // existantes (backfill manuel) ; toute nouvelle fiche pose toujours l'owner.
+  ownerId: integer('owner_id').references(() => users.id),
   name: text('name').notNull(),
   speciesId: integer('species_id').references(() => characterSpecies.id).notNull(),
   alignment: text().$type<Alignment>().default(Alignment.TrueNeutral).notNull(),
@@ -59,9 +63,14 @@ const characterSheets = sqliteTable('character_sheets', {
   updatedAt: text('updated_at'),
 }, table => [
   index('idx_character_sheets_species').on(table.speciesId),
+  index('idx_character_sheets_owner').on(table.ownerId),
 ])
 
 export const characterSheetRelations = relations(characterSheets, ({ many, one }) => ({
+  owner: one(users, {
+    fields: [characterSheets.ownerId],
+    references: [users.id],
+  }),
   species: one(characterSpecies, {
     fields: [characterSheets.speciesId],
     references: [characterSpecies.id],

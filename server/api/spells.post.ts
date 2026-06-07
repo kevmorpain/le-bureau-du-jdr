@@ -1,6 +1,8 @@
 import { db } from 'hub:db'
 
 export default defineEventHandler(async (event) => {
+  await requireUserSession(event)
+
   const result = await readValidatedBody(event, spellSchema.safeParse)
 
   if (!result.success) {

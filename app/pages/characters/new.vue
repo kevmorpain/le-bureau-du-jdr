@@ -47,6 +47,7 @@
 </template>
 
 <script lang="ts" setup>
+import { useOnline } from '@vueuse/core'
 import { RACES, BACKGROUNDS, ARMOR_PROF_KEYS, WEAPON_PROF_KEYS } from '~/data/character-builder'
 
 definePageMeta({ layout: 'blank' })

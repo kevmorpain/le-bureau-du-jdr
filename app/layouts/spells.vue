@@ -18,9 +18,10 @@
     </template>
 
     <template #right>
-      <CharacterSheetDrawer
-        class="ml-auto"
-      />
+      <div class="flex items-center gap-2 ml-auto">
+        <CharacterSheetDrawer />
+        <AppUserMenu />
+      </div>
     </template>
   </UHeader>
 

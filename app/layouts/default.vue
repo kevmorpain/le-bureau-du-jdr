@@ -16,6 +16,10 @@
         orientation="vertical"
       />
     </template>
+
+    <template #right>
+      <AppUserMenu />
+    </template>
   </UHeader>
 
   <UMain>

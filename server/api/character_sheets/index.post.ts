@@ -138,6 +138,8 @@ const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcan
 }
 
 export default defineEventHandler(async (event) => {
+  const { user } = await requireUserSession(event)
+
   const result = await readValidatedBody(event, builderSchema.safeParse)
   if (!result.success) {
     throw createError({ statusCode: 422, data: result.error })
@@ -209,6 +211,7 @@ export default defineEventHandler(async (event) => {
   const sheet = await db
     .insert(schema.characterSheets)
     .values({
+      ownerId: user.id,
       name: d.name,
       speciesId: speciesId ?? undefined,
       backgroundId: backgroundId ?? undefined,

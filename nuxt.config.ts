@@ -1,7 +1,17 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 
-  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxthub/core', '@vite-pwa/nuxt', 'nuxt-zod-i18n', '@nuxtjs/i18n'],
+  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxthub/core', '@vite-pwa/nuxt', 'nuxt-zod-i18n', '@nuxtjs/i18n', 'nuxt-auth-utils'],
+
+  // Session scellée (nuxt-auth-utils). maxAge long pour survivre au mode hors-ligne :
+  // la file de synchro rejoue les mutations tant que le cookie est valide.
+  // Secrets attendus en env : NUXT_SESSION_PASSWORD (≥32 car.),
+  // NUXT_OAUTH_DISCORD_CLIENT_ID/SECRET, NUXT_OAUTH_GOOGLE_CLIENT_ID/SECRET.
+  runtimeConfig: {
+    session: {
+      maxAge: 60 * 60 * 24 * 30, // 30 jours
+    },
+  },
 
   ui: {
     theme: {

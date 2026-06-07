@@ -17,6 +17,8 @@ const createCustomItemSchema = createItemSchema.extend({
 })
 
 export default defineEventHandler(async (event) => {
+  await requireUserSession(event)
+
   const body = await readValidatedBody(event, createCustomItemSchema.parse)
 
   const item = await db
