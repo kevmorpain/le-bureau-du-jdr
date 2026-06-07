@@ -248,13 +248,15 @@ export const useCharacterSpellcasting = (
     }, 500)
   }, { deep: true })
 
+  // Niveaux où il reste au moins un emplacement castable (current = restants,
+  // décrémenté par castSpell). Cohérent avec isSpellAvailable (current > 0).
   const availableSpellSlots = computed(() => {
     const set = new Set<number>()
     for (const [level, slot] of Object.entries(spellSlots.value.spellcasting)) {
-      if (slot.max > 0 && slot.current < slot.max) set.add(Number(level))
+      if (slot.current > 0) set.add(Number(level))
     }
     for (const [level, slot] of Object.entries(spellSlots.value.pact_magic)) {
-      if (slot.max > 0 && slot.current < slot.max) set.add(Number(level))
+      if (slot.current > 0) set.add(Number(level))
     }
     return [...set].sort((a, b) => a - b)
   })

@@ -36,7 +36,7 @@ const { t } = useI18n()
 
 const isSpellbook = inject<boolean>('isSpellbook', false)
 const spellContext = inject<SpellContext | null>('spellContext', null)
-const { characterLevel, spellcastingModifier } = spellContext ?? useCharacterSheet()
+const { characterLevel, spellcastingModifier } = spellContext ?? useSpellLens()
 const eldritchBlastAgonizing = spellContext?.eldritchBlastAgonizing
 const charismaModifier = spellContext?.charismaModifier
 

@@ -28,7 +28,7 @@ const { t } = useI18n()
 
 const isSpellbook = inject<boolean>('isSpellbook', false)
 const spellContext = inject<SpellContext | null>('spellContext', null)
-const { spellcastingModifier } = spellContext ?? useCharacterSheet()
+const { spellcastingModifier } = spellContext ?? useSpellLens()
 
 const slotLevel = ref<number>(props.spell.level)
 

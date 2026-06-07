@@ -33,7 +33,7 @@
 provide('isSpellbook', true)
 
 const { spellBook } = useSpellbook()
-const { availableSpellSlots } = useCharacterSheet()
+const { availableSpellSlots } = useSpellLens()
 
 const areSpellsFiltered = ref(false)
 
