@@ -56,7 +56,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 12, 16 et 19), vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
     featureType: 'class_feature' as const,
     levelRequired: 4,
@@ -66,7 +66,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 8 (et à nouveau aux niveaux 12, 16 et 19), vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
     featureType: 'class_feature' as const,
     levelRequired: 8,
@@ -86,7 +86,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
     featureType: 'class_feature' as const,
     levelRequired: 12,
@@ -116,7 +116,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
     featureType: 'class_feature' as const,
     levelRequired: 16,
@@ -136,7 +136,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
     featureType: 'class_feature' as const,
     levelRequired: 19,

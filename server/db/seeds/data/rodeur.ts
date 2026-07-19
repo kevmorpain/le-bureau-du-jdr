@@ -18,10 +18,10 @@ Vous choisissez un ennemi favori supplémentaire aux niveaux 6 et 14.`,
     effects: [],
   },
   {
-    name: 'Explorateur né',
+    name: 'Explorateur-né',
     description: `Au niveau 1, choisissez un terrain favori : arctique, désert, forêt, littoral, marais, montagne, plaine ou Outreterre.
 
-En voyageant 1 heure ou plus dans votre terrain favori : terrain difficile ne ralentit pas le groupe, impossibilité de se perdre sauf par magie, vous restez alerte aux dangers même en faisant autre chose, déplacement furtif à rythme normal si seul, nourriture trouvée doublée, pistage révèle nombre exact et taille des créatures.
+En voyageant 1 heure ou plus dans votre terrain favori : le terrain difficile ne ralentit pas le groupe, impossibilité de se perdre sauf par magie, vous restez alerte aux dangers même en faisant autre chose, déplacement furtif à rythme normal si seul, nourriture trouvée doublée, pistage révèle nombre exact et taille des créatures.
 
 Vous choisissez des terrains favoris supplémentaires aux niveaux 6 et 10.`,
     featureType: 'class_feature',
@@ -67,7 +67,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Sagesse.`,
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 4 (puis les niveaux 8, 12, 16 et 19), vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou deux de 1. Maximum 20.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -87,8 +87,8 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Sagesse.`,
     effects: [],
   },
   {
-    name: 'Cachette des terres',
-    description: `Au niveau 8, en passant au moins 1 minute à vous camoufler avec des matériaux naturels, vous gagnez +10 aux jets de Discrétion pour vous cacher parmi la végétation, les rochers, la neige ou autres éléments naturels.`,
+    name: 'Foulée tellurique',
+    description: `À partir du niveau 8, les terrains difficiles non magiques ne vous coûtent pas de déplacement supplémentaire. Vous pouvez traverser les plantes non magiques sans être ralenti ni subir de dégâts. Vous avez aussi l'avantage aux jets de sauvegarde contre les plantes créées ou manipulées magiquement (comme le sort Enchevêtrement).`,
     featureType: 'class_feature',
     levelRequired: 8,
     actionType: null,
@@ -97,18 +97,8 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Sagesse.`,
     effects: [],
   },
   {
-    name: 'Déplacement des terres',
-    description: `À partir du niveau 8, les terrains difficiles non magiques ne vous coûtent pas de déplacement supplémentaire. Vous pouvez traverser les plantes non magiques sans être ralenti ni subir de dégâts. Avantage aux jets de sauvegarde contre les plantes créées magiquement (ex : Enchevêtrement).`,
-    featureType: 'class_feature',
-    levelRequired: 8,
-    actionType: null,
-    rechargeType: null,
-    maxUsesFormula: null,
-    effects: [],
-  },
-  {
-    name: 'Détection des failles',
-    description: `Au niveau 10, vous avez l'avantage aux tests passifs de Perception, et vous ne pouvez pas être surpris. Vous pouvez détecter les portes secrètes dans un rayon de 9 mètres en passant à côté d'elles.`,
+    name: 'Camouflage naturel',
+    description: `Au niveau 10, vous pouvez passer 1 minute à vous camoufler avec des matériaux naturels (végétation, terre meuble, neige, etc.). Une fois camouflé, vous pouvez tenter de vous cacher en restant simplement immobile et pressé contre une surface naturelle solide qui vous dépasse d'au moins autant que votre hauteur et largeur.`,
     featureType: 'class_feature',
     levelRequired: 10,
     actionType: null,
@@ -127,10 +117,20 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Sagesse.`,
     effects: [],
   },
   {
-    name: 'Sens cachés',
-    description: `Au niveau 18, vous pouvez détecter l'emplacement de toute créature invisible dans un rayon de 9 mètres. Vous n'avez pas de désavantage aux jets d'attaque contre des créatures que vous avez ainsi détectées.`,
+    name: 'Sens sauvages',
+    description: `Au niveau 18, vous pouvez détecter l'emplacement de toute créature dans un rayon de 9 mètres, même invisible ou dans le noir. Vous n'avez pas de désavantage aux jets d'attaque contre une créature que vous ne voyez pas si elle se trouve dans ce rayon.`,
     featureType: 'class_feature',
     levelRequired: 18,
+    actionType: null,
+    rechargeType: null,
+    maxUsesFormula: null,
+    effects: [],
+  },
+  {
+    name: 'Tueur implacable',
+    description: `Au niveau 20, vous devenez un chasseur hors pair. Une fois à chacun de vos tours, vous pouvez ajouter votre modificateur de Sagesse au jet d'attaque ou au jet de dégâts d'une attaque que vous effectuez contre l'un de vos ennemis jurés.`,
+    featureType: 'class_feature',
+    levelRequired: 20,
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
@@ -176,7 +176,7 @@ export const rodeurSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Attaque multiple',
+        name: 'Attaques multiples',
         description: `Au niveau 11, choisissez l'une de ces capacités :
 
 **Volée :** Action pour attaquer à distance toutes les créatures de votre choix visibles dans votre portée, si elles sont dans un rayon de 3 m d'un point choisi (jet d'attaque distinct par cible).
@@ -212,7 +212,7 @@ export const rodeurSubclasses: SubclassDef[] = [
     description: `Le Maître des bêtes incarne une amitié entre le monde civilisé et les étendues sauvages. Uni à un compagnon animal, le rôdeur forge une liaison profonde avec cette bête.`,
     features: [
       {
-        name: 'Compagnon animal',
+        name: 'Compagnon du rôdeur',
         description: `Au niveau 3, après 8 heures passées en forêt, vous appelez une bête avec un FP ≤ 1/4 et de taille Moyenne ou petite comme compagnon. Elle obéit à vos ordres et agit à votre initiative.
 
 Ajoutez votre bonus de maîtrise à ses jets d'attaque, dégâts et jets de sauvegarde. Son bonus de CA = votre bonus de maîtrise. Ses PV max = max(PV normaux, 4 × votre niveau de rôdeur).
@@ -236,7 +236,7 @@ Si votre compagnon meurt, vous pouvez en appeler un autre après 8 heures.`,
         effects: [],
       },
       {
-        name: 'Attaque bestiale',
+        name: 'Fureur bestiale',
         description: `Au niveau 11, quand vous ordonnez à votre compagnon d'attaquer, il peut effectuer deux attaques, ou utiliser sa capacité Attaques multiples s'il en possède une.`,
         featureType: 'subclass_feature',
         levelRequired: 11,

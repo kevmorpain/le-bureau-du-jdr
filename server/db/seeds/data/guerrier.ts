@@ -21,7 +21,7 @@ export const guerrierFeatures: FeatureDef[] = [
     effects: [],
   },
   {
-    name: 'Second Souffle',
+    name: 'Second souffle',
     description: `Durant votre tour, vous pouvez utiliser une action bonus pour regagner 1d10 + votre niveau de guerrier points de vie. Utilisable une fois par repos court ou long.`,
     featureType: 'class_feature',
     levelRequired: 1,
@@ -31,7 +31,7 @@ export const guerrierFeatures: FeatureDef[] = [
     effects: [],
   },
   {
-    name: 'Regain d\'action',
+    name: 'Fougue',
     description: `À partir du niveau 2, lors de votre tour, vous pouvez effectuer une action supplémentaire. Utilisable une fois par repos court ou long (deux fois à partir du niveau 17, mais une seule fois par tour).`,
     featureType: 'class_feature',
     levelRequired: 2,
@@ -41,7 +41,7 @@ export const guerrierFeatures: FeatureDef[] = [
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 6, 8, 12, 14, 16 et 19), vous pouvez augmenter une valeur de caractéristique de 2, ou deux de 1. Maximum 20.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -61,7 +61,7 @@ export const guerrierFeatures: FeatureDef[] = [
     effects: [],
   },
   {
-    name: 'Indomptable',
+    name: 'Inflexible',
     description: `À partir du niveau 9, vous pouvez relancer un jet de sauvegarde raté (vous devez utiliser le nouveau résultat). Utilisable une fois par repos long (deux fois au niveau 13, trois fois au niveau 17).`,
     featureType: 'class_feature',
     levelRequired: 9,
@@ -88,7 +88,7 @@ export const guerrierSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Athlète remarquable',
+        name: 'Athlète accompli',
         description: `À partir du niveau 7, ajoutez la moitié de votre bonus de maîtrise (arrondi au supérieur) à tout test de Force, Dextérité ou Constitution n'utilisant pas déjà votre bonus de maîtrise. De plus, votre saut en longueur avec élan augmente de votre modificateur de Force × 30 cm.`,
         featureType: 'subclass_feature',
         levelRequired: 7,
@@ -130,12 +130,12 @@ export const guerrierSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Chevalier mystique',
+    name: 'Chevalier occulte',
     description: `Le Chevalier mystique combine la maîtrise martiale avec un apprentissage minutieux de la magie, utilisant des techniques similaires à celles des magiciens.`,
     spellcastingAbility: 'int',
     features: [
       {
-        name: 'Lanceur de sorts',
+        name: 'Incantation',
         description: `Au niveau 3, vous apprenez deux sorts mineurs de magicien de votre choix et trois sorts de magicien de niveau 1 (dont deux d'abjuration ou d'évocation).
 
 L'Intelligence est votre caractéristique d'incantation.
@@ -149,7 +149,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Lien d\'arme',
+        name: 'Lien avec une arme',
         description: `Au niveau 3, après un rituel de 1 heure, vous créez un lien magique avec une arme. Vous ne pouvez pas être désarmé de cette arme (sauf si incapable d'agir). Vous pouvez l'invoquer dans votre main par une action bonus. Maximum 2 armes liées.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -159,7 +159,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Guerre magique',
+        name: 'Magie de guerre',
         description: `À partir du niveau 7, quand vous utilisez votre action pour lancer un sort mineur, vous pouvez effectuer une attaque avec une arme en tant qu'action bonus.`,
         featureType: 'subclass_feature',
         levelRequired: 7,
@@ -169,7 +169,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Élixir de vie',
+        name: 'Frappe occulte',
         description: `Au niveau 10, quand vous touchez une cible avec une attaque, vous pouvez dépenser un emplacement de sort pour l'obliger à réussir un jet de sauvegarde de Constitution (DD = 8 + bonus de maîtrise + modificateur d'Intelligence) ou avoir le désavantage aux jets d'attaque et de caractéristique jusqu'à la fin de votre prochain tour.`,
         featureType: 'subclass_feature',
         levelRequired: 10,
@@ -180,7 +180,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
       },
       {
         name: 'Charge arcanique',
-        description: `Au niveau 15, quand vous utilisez votre Regain d'action, vous pouvez vous téléporter jusqu'à 9 mètres vers un espace inoccupé visible, avant ou après l'action supplémentaire.`,
+        description: `Au niveau 15, quand vous utilisez votre Fougue, vous pouvez vous téléporter jusqu'à 9 mètres vers un espace inoccupé visible, avant ou après l'action supplémentaire.`,
         featureType: 'subclass_feature',
         levelRequired: 15,
         actionType: null,
@@ -189,7 +189,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Maîtrise mystique',
+        name: 'Magie de guerre améliorée',
         description: `Au niveau 18, quand vous utilisez votre action pour lancer un sort, vous pouvez effectuer une attaque avec une arme en tant qu'action bonus.`,
         featureType: 'subclass_feature',
         levelRequired: 18,
@@ -201,22 +201,12 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
     ],
   },
   {
-    name: 'Maître de combat',
-    description: `Le Maître de combat emploie des techniques transmises de génération en génération. Pour lui, le combat est une étude académique.`,
+    name: 'Maître de guerre',
+    description: `Le Maître de guerre emploie des techniques martiales transmises de génération en génération. Pour lui, le combat est une étude académique, parfois même un art.`,
     features: [
       {
-        name: 'Manœuvres de combat',
-        description: `Au niveau 3, vous apprenez trois manœuvres de combat. Vous en apprenez deux supplémentaires aux niveaux 7, 10 et 15. Exemples : Attaque déstabilisante, Attaque précise, Attaque désarmante, Attaque repoussante, Diversion, Feinte, Fente, Parade, Provocation, Riposte, Balayage. Chaque manœuvre dépense un dé de supériorité.`,
-        featureType: 'subclass_feature',
-        levelRequired: 3,
-        actionType: null,
-        rechargeType: null,
-        maxUsesFormula: null,
-        effects: [],
-      },
-      {
-        name: 'Dés de supériorité',
-        description: `Au niveau 3, vous avez quatre d8 de supériorité. Vous les regagnez après un repos court ou long. Un d8 supplémentaire aux niveaux 7 et 15. Ils deviennent des d10 au niveau 10, puis des d12 au niveau 18.`,
+        name: 'Supériorité martiale',
+        description: `Au niveau 3, vous apprenez des manœuvres alimentées par des dés de supériorité. Vous connaissez trois manœuvres de votre choix (comme Attaque désarmante, Riposte, Feinte, Balayage…) et en apprenez deux de plus aux niveaux 7, 10 et 15. Vous disposez de quatre dés de supériorité (d8), récupérés après un repos court ou long ; vous en gagnez un cinquième au niveau 7 et un sixième au niveau 15. La plupart des manœuvres accompagnent une attaque et laissent souvent à la cible un jet de sauvegarde (DD = 8 + votre bonus de maîtrise + votre modificateur de Force ou de Dextérité).`,
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: null,
@@ -225,7 +215,17 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Connais ton ennemi',
+        name: 'Disciple martial',
+        description: `Au niveau 3, votre étude de la guerre vous octroie la maîtrise d'un type d'outils d'artisan de votre choix.`,
+        featureType: 'subclass_feature',
+        levelRequired: 3,
+        actionType: null,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Observation de l\'ennemi',
         description: `À partir du niveau 7, après 1 minute d'observation d'une créature en dehors d'un combat, vous pouvez connaître une information parmi : Force, Dextérité, Constitution, CA, PV actuels, niveaux de classe ou niveaux de guerrier. Le MD vous dit si c'est supérieur, inférieur ou égal à vous.`,
         featureType: 'subclass_feature',
         levelRequired: 7,
@@ -235,8 +235,18 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Versatilité martiale',
-        description: `Au niveau 15, si vous avez dépensé tous vos dés de supériorité, vous en regagnez un quand vous lancez l'initiative.`,
+        name: 'Supériorité martiale améliorée',
+        description: `Au niveau 10, vos dés de supériorité deviennent des d10.`,
+        featureType: 'subclass_feature',
+        levelRequired: 10,
+        actionType: null,
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Implacable',
+        description: `Au niveau 15, quand vous lancez l'initiative et qu'il ne vous reste aucun dé de supériorité, vous en récupérez un.`,
         featureType: 'subclass_feature',
         levelRequired: 15,
         actionType: null,
@@ -245,8 +255,8 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Implacable',
-        description: `À partir du niveau 18, quand vous lancez l'initiative sans dé de supériorité restant, vous en regagnez un.`,
+        name: 'Supériorité martiale améliorée',
+        description: `Au niveau 18, vos dés de supériorité deviennent des d12.`,
         featureType: 'subclass_feature',
         levelRequired: 18,
         actionType: null,

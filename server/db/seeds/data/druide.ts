@@ -31,7 +31,7 @@ Vous pouvez lancer un sort de druide comme rituel s'il a l'étiquette rituel et 
     effects: [],
   },
   {
-    name: 'Forme Sauvage',
+    name: 'Forme sauvage',
     description: `À partir du niveau 2, vous pouvez utiliser votre action pour prendre la forme d'une bête que vous avez déjà vue. Deux utilisations par repos court ou long.
 
 FP max et restrictions : 1/4 (sans vol ni nage) au niveau 2, 1/2 (sans vol) au niveau 4, 1 au niveau 8.
@@ -47,7 +47,7 @@ En forme de bête : vos statistiques sont remplacées par celles de la bête (ma
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 12, 16 et 19), vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Maximum 20.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -94,7 +94,7 @@ export const druideSubclasses: SubclassDef[] = [
     description: `Le Cercle de la terre est composé de mystiques et de sages qui perpétuent d'anciennes connaissances et rites au travers d'une vaste tradition orale. Ils se réunissent dans des cercles sacrés d'arbres ou de pierres levées.`,
     features: [
       {
-        name: 'Magie de terre naturelle',
+        name: 'Sort mineur supplémentaire',
         description: `Quand vous choisissez ce cercle au niveau 2, vous apprenez un sort mineur de druide supplémentaire de votre choix. Il ne compte pas dans votre nombre de sorts mineurs connus.`,
         featureType: 'subclass_feature',
         levelRequired: 2,
@@ -114,7 +114,7 @@ export const druideSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Magie de cercle',
+        name: 'Sorts de cercle',
         description: `Votre connexion à la terre vous permet d'apprendre des sorts supplémentaires selon votre terrain favori (toujours préparés, ne comptent pas dans votre limite) :
 
 Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Croissance végétale, Mur d'épines (niv 5), Localisation de créature, Passage par les arbres (niv 7), Communion avec la nature, Infestation d'insectes (niv 9).`,
@@ -126,7 +126,7 @@ Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Crois
         effects: [],
       },
       {
-        name: 'Pas de la terre',
+        name: 'Foulée tellurique',
         description: `À partir du niveau 6, les terrains difficiles non magiques ne vous coûtent pas de déplacement supplémentaire. Vous pouvez traverser des plantes non magiques épineuses sans être ralenti ni subir de dégâts. Avantage aux jets de sauvegarde contre les plantes créées ou manipulées magiquement.`,
         featureType: 'subclass_feature',
         levelRequired: 6,
@@ -136,7 +136,7 @@ Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Crois
         effects: [],
       },
       {
-        name: 'Sanctuaire naturel',
+        name: 'Protégé de dame Nature',
         description: `Au niveau 10, vous êtes immunisé aux sorts de charme et d'effroi des élémentaires et des fées, ainsi qu'à leurs poisons et maladies.`,
         featureType: 'subclass_feature',
         levelRequired: 10,
@@ -162,7 +162,7 @@ Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Crois
     description: `Les druides du Cercle de la lune sont les gardiens vigilants des étendues sauvages. Ils ont un lien très étroit avec les formes animales et vivent parfois plus longtemps en forme de bête qu'en forme humaine.`,
     features: [
       {
-        name: 'Combat en forme sauvage',
+        name: 'Forme sauvage de combat',
         description: `Quand vous choisissez ce cercle au niveau 2, vous pouvez utiliser votre action bonus pour vous transformer (au lieu d'une action). De plus, en forme de bête, vous pouvez dépenser un emplacement de sort pour récupérer 1d8 PV par niveau d'emplacement.`,
         featureType: 'subclass_feature',
         levelRequired: 2,
@@ -172,7 +172,7 @@ Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Crois
         effects: [],
       },
       {
-        name: 'Formes de la lune',
+        name: 'Formes du cercle',
         description: `À partir du niveau 2, vous pouvez vous transformer en bêtes avec un FP aussi élevé que 1. À partir du niveau 6, le FP max est égal à 1/3 de votre niveau de druide.`,
         featureType: 'subclass_feature',
         levelRequired: 2,
@@ -182,7 +182,7 @@ Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Crois
         effects: [],
       },
       {
-        name: 'Forme de bête primitive',
+        name: 'Frappe primitive',
         description: `À partir du niveau 6, vos attaques en forme de bête comptent comme magiques pour surmonter les résistances et immunités aux attaques non magiques.`,
         featureType: 'subclass_feature',
         levelRequired: 6,
@@ -192,7 +192,7 @@ Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Crois
         effects: [],
       },
       {
-        name: 'Forme élémentaire',
+        name: 'Forme sauvage élémentaire',
         description: `Au niveau 10, en dépensant deux utilisations de Forme sauvage, vous pouvez vous transformer en élémentaire de l'air, de la terre, du feu ou de l'eau. Vos PV ne sont pas limités par votre niveau pour cette forme. Durée : moitié de votre niveau de druide en heures.`,
         featureType: 'subclass_feature',
         levelRequired: 10,
@@ -202,7 +202,7 @@ Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Crois
         effects: [],
       },
       {
-        name: 'Druide millénaire',
+        name: 'Mille formes',
         description: `Au niveau 14, vous pouvez lancer Modifier son apparence à volonté, sans dépenser d'emplacement de sorts.`,
         featureType: 'subclass_feature',
         levelRequired: 14,

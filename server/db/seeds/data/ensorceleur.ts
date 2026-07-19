@@ -4,7 +4,7 @@ export const ensorceleurName = 'Ensorceleur'
 
 export const ensorceleurFeatures: FeatureDef[] = [
   {
-    name: 'Lanceur de sorts',
+    name: 'Incantation',
     description: `Un événement dans votre passé vous a laissé une marque indélébile, en vous insufflant la magie des arcanes.
 
 Vous connaissez quatre sorts mineurs de votre choix dans la liste d'ensorceleur, et deux sorts de niveau 1.
@@ -20,7 +20,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     effects: [],
   },
   {
-    name: 'Source de sorcellerie',
+    name: 'Source de magie',
     description: `À partir du niveau 2, vous exploitez une source profonde de magie représentée par des points de sorcellerie. Vous commencez avec 2 points, et en gagnez davantage avec les niveaux. Vous les regagnez après un repos long.
 
 **Créer des emplacements de sorts (action bonus) :** Convertissez des points en emplacements. Coût : niv 1 = 2, niv 2 = 3, niv 3 = 5, niv 4 = 6, niv 5 = 7 points.
@@ -53,7 +53,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 12, 16 et 19), vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 grâce à cette capacité.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -63,7 +63,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
-    name: 'Restauration de la source',
+    name: 'Restauration ensorcelée',
     description: `Au niveau 20, vous rechargez votre source de magie plus rapidement. Vous regagnez 4 points de sorcellerie dépensés chaque fois que vous terminez un repos court.`,
     featureType: 'class_feature',
     levelRequired: 20,
@@ -92,7 +92,7 @@ Types et dégâts associés : Airain/Or/Rouge (feu), Argent/Blanc (froid), Bleu/
         effects: [],
       },
       {
-        name: 'Résilience draconique',
+        name: 'Résistance draconique',
         description: `Au niveau 1, votre maximum de points de vie augmente de 1 par niveau d'ensorceleur. De plus, sans armure, votre CA est égale à 13 + votre modificateur de Dextérité.`,
         featureType: 'subclass_feature',
         levelRequired: 1,
@@ -134,12 +134,12 @@ Types et dégâts associés : Airain/Or/Rouge (feu), Argent/Blanc (froid), Bleu/
     ],
   },
   {
-    name: 'Âme sauvage',
+    name: 'Magie sauvage',
     description: `Votre magie innée provient du chaos de la magie sauvage. Imprévisible et irrépressible, cette magie chaotique fait partie de votre vie.`,
     features: [
       {
-        name: 'Magie sauvage',
-        description: `À partir du niveau 1, chaque fois que vous lancez un sort d'ensorceleur de niveau 1 ou plus, le MD peut vous demander de lancer un d20. Sur un 1, lancez un d100 sur la table de Poussée de magie sauvage pour un effet magique aléatoire.`,
+        name: 'Pic de magie sauvage',
+        description: `À partir du niveau 1, votre lien avec le chaos peut provoquer des effets imprévisibles. Chaque fois que vous lancez un sort d'ensorceleur de niveau 1 ou supérieur, le MD peut vous demander de lancer un d20. Sur un 1, lancez sur la table de Pic de magie sauvage pour déclencher un effet magique aléatoire.`,
         featureType: 'subclass_feature',
         levelRequired: 1,
         actionType: null,
@@ -148,38 +148,38 @@ Types et dégâts associés : Airain/Or/Rouge (feu), Argent/Blanc (froid), Bleu/
         effects: [],
       },
       {
-        name: 'Vague du destin',
-        description: `À partir du niveau 1, immédiatement avant de lancer un dé pour un jet d'attaque, de caractéristique ou de sauvegarde, vous pouvez utiliser votre réaction pour bénéficier de l'avantage au jet. Cela peut déclencher une poussée de magie sauvage. Utilisable une fois par repos long.`,
+        name: 'Marée du chaos',
+        description: `À partir du niveau 1, vous pouvez puiser dans le chaos pour gagner un avantage à un jet d'attaque, un test de caractéristique ou un jet de sauvegarde de votre choix. Une fois cette faculté utilisée, vous devez terminer un repos long avant de pouvoir vous en resservir — sauf si le MD vous fait lancer sur la table de Pic de magie sauvage, ce qui la recharge immédiatement.`,
         featureType: 'subclass_feature',
         levelRequired: 1,
-        actionType: 'reaction',
+        actionType: null,
         rechargeType: 'long_rest',
         maxUsesFormula: null,
         effects: [],
       },
       {
-        name: 'Surpuissance chaotique',
-        description: `Au niveau 6, vous pouvez utiliser votre Vague du destin immédiatement après avoir lancé un sort de niveau 1 ou plus, sans dépenser votre réaction — mais cela déclenche automatiquement une poussée de magie sauvage. Vous pouvez aussi dépenser 2 points de sorcellerie pour ajouter ou soustraire 1d4 à tout jet d'une créature visible.`,
+        name: 'Chance forcée',
+        description: `À partir du niveau 6, lorsqu'une autre créature que vous effectue un jet d'attaque, un test de caractéristique ou un jet de sauvegarde, vous pouvez utiliser votre réaction et dépenser 2 points de sorcellerie pour lancer 1d4 et l'appliquer comme bonus ou malus au jet. Vous pouvez le faire après le jet de dé, mais avant que le MD n'en annonce le résultat.`,
         featureType: 'subclass_feature',
         levelRequired: 6,
+        actionType: 'reaction',
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Chaos contrôlé',
+        description: `À partir du niveau 14, vous gagnez un certain contrôle sur les vagues de magie chaotique. Chaque fois que vous lancez sur la table de Pic de magie sauvage, vous pouvez lancer le dé deux fois et choisir lequel des deux résultats s'applique.`,
+        featureType: 'subclass_feature',
+        levelRequired: 14,
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
       },
       {
-        name: 'Chance de l\'âme sauvage',
-        description: `Au niveau 14, quand vous effectuez un jet de sauvegarde, vous pouvez utiliser votre réaction pour lancer 1d4 supplémentaire et ajouter le résultat. Peut être utilisé après avoir vu le résultat initial. Utilisable une fois par repos long.`,
-        featureType: 'subclass_feature',
-        levelRequired: 14,
-        actionType: 'reaction',
-        rechargeType: 'long_rest',
-        maxUsesFormula: null,
-        effects: [],
-      },
-      {
-        name: 'Accès incontrôlé',
-        description: `Au niveau 18, chaque sort d'ensorceleur de niveau 1 ou plus déclenche automatiquement une Poussée de magie sauvage. Vous pouvez lancer deux fois le d100 et choisir l'effet.`,
+        name: 'Bombardement de sort',
+        description: `À partir du niveau 18, vos sorts débordent d'énergie. Lorsque vous lancez les dés de dégâts d'un sort et qu'au moins un dé affiche son résultat maximal, vous choisissez l'un de ces dés, vous le relancez et vous ajoutez le nouveau résultat aux dégâts. Vous ne pouvez utiliser cette faculté qu'une fois par tour.`,
         featureType: 'subclass_feature',
         levelRequired: 18,
         actionType: null,

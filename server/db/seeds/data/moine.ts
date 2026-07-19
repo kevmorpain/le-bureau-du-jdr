@@ -29,7 +29,7 @@ Vous gagnez les avantages suivants quand vous êtes à mains nues ou que vous ne
     effects: [],
   },
   {
-    name: 'Points de ki',
+    name: 'Ki',
     description: `Au niveau 2, votre entraînement vous permet d'exploiter une réserve mystique d'énergie intérieure représentée par des points de ki. Vous regagnez tous vos points de ki dépensés après un repos court ou long (30 minutes de méditation minimum).
 
 DD de sauvegarde de ki = 8 + votre bonus de maîtrise + votre modificateur de Sagesse.
@@ -57,7 +57,7 @@ Au niveau 9, vous pouvez vous déplacer sur les surfaces verticales et les liqui
     effects: [],
   },
   {
-    name: 'Déviation des projectiles',
+    name: 'Parade de projectiles',
     description: `À partir du niveau 3, vous pouvez utiliser votre réaction pour dévier ou attraper le projectile quand vous êtes touché par une attaque avec une arme à distance. Les dégâts sont réduits de 1d10 + votre modificateur de Dextérité + votre niveau de moine.
 
 Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépenser 1 point de ki pour le renvoyer avec une attaque à distance (portée 6/18 mètres, maîtrise incluse).`,
@@ -69,7 +69,7 @@ Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépe
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 4 (puis les niveaux 8, 12, 16 et 19), vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou bien augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 grâce à cette capacité.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -77,6 +77,16 @@ Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépe
     rechargeType: null,
     maxUsesFormula: null,
     effects: [{ type: 'asi_or_feat', value: {} }],
+  },
+  {
+    name: 'Chute ralentie',
+    description: `À partir du niveau 4, vous pouvez utiliser votre réaction quand vous tombez pour réduire les dégâts de chute que vous subissez d'un montant égal à cinq fois votre niveau de moine.`,
+    featureType: 'class_feature',
+    levelRequired: 4,
+    actionType: 'reaction',
+    rechargeType: null,
+    maxUsesFormula: null,
+    effects: [],
   },
   {
     name: 'Attaque supplémentaire',
@@ -99,7 +109,17 @@ Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépe
     effects: [],
   },
   {
-    name: 'Réflexes du moine',
+    name: 'Frappes de ki',
+    description: `À partir du niveau 6, vos attaques à mains nues comptent comme magiques pour surmonter la résistance et l'immunité aux attaques et aux dégâts non magiques.`,
+    featureType: 'class_feature',
+    levelRequired: 6,
+    actionType: null,
+    rechargeType: null,
+    maxUsesFormula: null,
+    effects: [],
+  },
+  {
+    name: 'Esquive totale',
     description: `À partir du niveau 7, quand vous êtes soumis à un effet qui vous permet d'effectuer un jet de sauvegarde de Dextérité pour ne subir que la moitié des dégâts, vous ne subissez aucun dégât si vous réussissez, et seulement la moitié si vous échouez.`,
     featureType: 'class_feature',
     levelRequired: 7,
@@ -109,7 +129,7 @@ Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépe
     effects: [],
   },
   {
-    name: 'Immobilisation du corps',
+    name: 'Sérénité',
     description: `À partir du niveau 7, vous pouvez utiliser votre action pour mettre fin à un effet qui vous affecte et qui vous charme ou vous effraie.`,
     featureType: 'class_feature',
     levelRequired: 7,
@@ -119,7 +139,7 @@ Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépe
     effects: [],
   },
   {
-    name: 'Corps de diamant',
+    name: 'Pureté physique',
     description: `Au niveau 10, votre maîtrise du ki vous rend immunisé aux maladies et aux poisons.`,
     featureType: 'class_feature',
     levelRequired: 10,
@@ -129,7 +149,27 @@ Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépe
     effects: [],
   },
   {
-    name: 'Déplacement sans âge',
+    name: 'Langue du soleil et de la lune',
+    description: `À partir du niveau 13, vous apprenez à toucher le ki d'autres esprits pour comprendre toutes les langues parlées. De plus, toute créature capable de comprendre une langue peut comprendre ce que vous dites.`,
+    featureType: 'class_feature',
+    levelRequired: 13,
+    actionType: null,
+    rechargeType: null,
+    maxUsesFormula: null,
+    effects: [],
+  },
+  {
+    name: 'Âme de diamant',
+    description: `À partir du niveau 14, votre maîtrise du ki vous confère la maîtrise de tous les jets de sauvegarde. De plus, quand vous ratez un jet de sauvegarde, vous pouvez dépenser 1 point de ki pour le relancer et devez utiliser le nouveau résultat.`,
+    featureType: 'class_feature',
+    levelRequired: 14,
+    actionType: null,
+    rechargeType: null,
+    maxUsesFormula: null,
+    effects: [],
+  },
+  {
+    name: 'Jeunesse éternelle',
     description: `Au niveau 15, votre ki vous sustente de sorte que vous n'avez plus besoin de nourriture ni d'eau, et les effets du vieillissement ne peuvent plus vous toucher. Vous ne pouvez plus être vieilli par magie.`,
     featureType: 'class_feature',
     levelRequired: 15,
@@ -139,7 +179,7 @@ Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépe
     effects: [],
   },
   {
-    name: 'Vide parfait',
+    name: 'Désertion de l\'âme',
     description: `Au niveau 18, vous maîtrisez deux façons de projeter votre ki :
 
 **Vide immaculé (4 ki) :** En utilisant votre action, vous devenez invisible pendant 1 minute et gagnez la résistance à tous les dégâts sauf contondants, tranchants et perforants.
@@ -166,11 +206,11 @@ Vous pouvez également dépenser 8 points de ki pour lancer le sort projection a
 
 export const moineSubclasses: SubclassDef[] = [
   {
-    name: 'Voie de la Paume Ouverte',
-    description: `Les moines de la Voie de la Paume Ouverte sont les maîtres ultimes de l'art du combat à mains nues. Ils apprennent des techniques pour repousser ou renverser leurs adversaires et atteindre un état de perfection physique et spirituelle.`,
+    name: 'Voie de la paume',
+    description: `Les moines de la Voie de la paume sont les maîtres ultimes de l'art du combat à mains nues. Ils apprennent des techniques pour repousser ou renverser leurs adversaires et atteindre un état de perfection physique et spirituelle.`,
     features: [
       {
-        name: 'Technique de la paume ouverte',
+        name: 'Technique de la paume',
         description: `À partir du niveau 3, vous pouvez manipuler le ki de votre ennemi quand vous utilisez votre Déluge de coups. Chaque fois que vous touchez une créature avec un des coups du Déluge de coups, vous pouvez lui imposer un des effets suivants :
 - Elle doit réussir un jet de sauvegarde de Dextérité ou tomber à terre.
 - Elle doit réussir un jet de sauvegarde de Force ou être repoussée à 4,5 mètres de vous.
@@ -183,7 +223,7 @@ export const moineSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Corps et âme',
+        name: 'Plénitude physique',
         description: `Au niveau 6, vous pouvez vous soigner vous-même. En utilisant votre action, vous regagnez un nombre de points de vie égal à trois fois votre niveau de moine. Vous devez terminer un repos long pour pouvoir utiliser à nouveau cette capacité.`,
         featureType: 'subclass_feature',
         levelRequired: 6,
@@ -193,7 +233,7 @@ export const moineSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Frappe spectrale',
+        name: 'Tranquillité',
         description: `Au niveau 11, quand vous terminez un repos long, vous gagnez l'effet du sort sanctuaire jusqu'au début de votre prochain repos long. Le DD du jet de sauvegarde est égal à 8 + votre modificateur de Sagesse + votre bonus de maîtrise.`,
         featureType: 'subclass_feature',
         levelRequired: 11,
@@ -203,7 +243,7 @@ export const moineSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Paume tremblante',
+        name: 'Paume frémissante',
         description: `Au niveau 17, quand vous touchez une créature avec une attaque à mains nues, vous pouvez dépenser 3 points de ki pour déclencher des vibrations létales qui durent un nombre de jours égal à votre niveau de moine. Vous pouvez utiliser votre action à tout moment pour les déclencher : la cible doit réussir un jet de sauvegarde de Constitution ou tomber à 0 PV, ou subir 10d10 dégâts nécrotiques en cas de succès.`,
         featureType: 'subclass_feature',
         levelRequired: 17,
@@ -215,11 +255,11 @@ export const moineSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Voie de l\'Ombre',
-    description: `Les moines de la Voie de l'Ombre valorisent la discrétion et le mystère. Ils servent d'espions et d'assassins, parfois organisés en guildes de voleurs.`,
+    name: 'Voie de l\'ombre',
+    description: `Les moines de la Voie de l'ombre valorisent la discrétion et le mystère. Ils servent d'espions et d'assassins, parfois organisés en guildes de voleurs.`,
     features: [
       {
-        name: 'Sorts de l\'ombre',
+        name: 'Arts des ombres',
         description: `À partir du niveau 3, vous pouvez utiliser votre ki pour dupliquer les effets de certains sorts. En utilisant votre action, vous pouvez dépenser 2 points de ki pour lancer ténèbres, vision dans le noir, passe-sans-trace ou silence, sans composantes matérielles. Vous obtenez également le sort mineur illusion mineure si vous ne le connaissez pas déjà.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -229,7 +269,7 @@ export const moineSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Ombres furtives',
+        name: 'Foulée d\'ombre',
         description: `Au niveau 6, lorsque vous êtes dans une zone de lumière faible ou de ténèbres, vous pouvez utiliser votre action bonus pour vous téléporter dans un espace inoccupé que vous pouvez voir et qui est également dans une zone de lumière faible ou de ténèbres. Vous avez l'avantage au premier jet d'attaque au corps à corps que vous faites avant la fin de ce tour.`,
         featureType: 'subclass_feature',
         levelRequired: 6,
@@ -239,7 +279,7 @@ export const moineSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Manteau de l\'ombre',
+        name: 'Linceul d\'ombre',
         description: `Au niveau 11, dans une zone de lumière faible ou de ténèbres, vous pouvez utiliser votre action pour devenir invisible jusqu'à ce que vous fassiez une attaque, lanciez un sort, ou vous retrouviez dans une zone de lumière vive.`,
         featureType: 'subclass_feature',
         levelRequired: 11,
@@ -249,7 +289,7 @@ export const moineSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Assassin silencieux',
+        name: 'Opportuniste',
         description: `Au niveau 17, quand une créature dans votre portée est touchée par une attaque portée par quelqu'un d'autre que vous, vous pouvez utiliser votre réaction pour effectuer une attaque au corps à corps contre cette créature.`,
         featureType: 'subclass_feature',
         levelRequired: 17,
@@ -261,7 +301,7 @@ export const moineSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Voie des Quatre Éléments',
+    name: 'Voie des quatre éléments',
     description: `Vous suivez une tradition monastique qui vous permet de vous harmoniser avec les quatre éléments. Ces moines canalisent le ki pour reproduire des effets magiques élémentaires.`,
     features: [
       {

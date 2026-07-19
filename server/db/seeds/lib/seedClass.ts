@@ -41,7 +41,7 @@ export async function seedClass(
   for (const featureDef of baseFeatures) {
     const { effects = [], meta, prerequisites, ...data } = featureDef
     // Important : on inclut `levelRequired` dans la clef d'unicité, sinon
-    // les features récurrentes au même nom (ex. « Amélioration de caractéristique »
+    // les features récurrentes au même nom (ex. « Amélioration de caractéristiques »
     // gagnée à 4/8/12/16/19) sont fusionnées en une seule ligne en base et seul
     // le niveau de la première définition est lié au personnage au level-up.
     const existing = await db.query.features.findFirst({
@@ -56,6 +56,10 @@ export async function seedClass(
     let feature
     if (existing) {
       feature = existing
+      // Resync le contenu mutable (description + mécaniques) sur les features
+      // existantes : le seed est la source de vérité du contenu, donc un seed
+      // corrigé doit pouvoir mettre à jour une base déjà peuplée.
+      await _resyncFeatureContent(existing, data)
       // Resync meta on existing features when seed defines it
       if (meta !== undefined && meta !== null && JSON.stringify(existing.meta) !== JSON.stringify(meta)) {
         await db.run(sql`UPDATE features SET meta = ${JSON.stringify(meta)} WHERE id = ${existing.id}`)
@@ -89,6 +93,11 @@ export async function seedClass(
     let subclass
     if (existingSubclass) {
       subclass = existingSubclass
+      // Resync la description sur les sous-classes existantes (source de vérité = seed)
+      const seedDesc = subclassDef.description ?? null
+      if (existingSubclass.description !== seedDesc) {
+        await db.run(sql`UPDATE subclasses SET description = ${seedDesc} WHERE id = ${existingSubclass.id}`)
+      }
       // Resync spellcastingAbility on existing subclasses when seed defines it
       const seedAbility = subclassDef.spellcastingAbility ?? null
       if (seedAbility !== null && existingSubclass.spellcastingAbility !== seedAbility) {
@@ -124,6 +133,7 @@ export async function seedClass(
       let feature
       if (existing) {
         feature = existing
+        await _resyncFeatureContent(existing, data)
         if (meta !== undefined && meta !== null && JSON.stringify(existing.meta) !== JSON.stringify(meta)) {
           await db.run(sql`UPDATE features SET meta = ${JSON.stringify(meta)} WHERE id = ${existing.id}`)
         }
@@ -146,6 +156,43 @@ export async function seedClass(
   }
 
   return { featuresInserted, subclassesInserted }
+}
+
+/**
+ * Met à jour le contenu mutable d'une feature existante pour qu'il colle au seed
+ * (description + mécaniques : type d'action, recharge, formule d'utilisations).
+ * Le nom et le niveau servent de clef d'identité (gérés en amont via migration),
+ * ils ne sont donc pas touchés ici. N'écrit qu'en cas de différence.
+ */
+async function _resyncFeatureContent(
+  existing: {
+    id: number
+    description: string | null
+    actionType: ActionType | null
+    rechargeType: RechargeType | null
+    maxUsesFormula: Formula | null
+  },
+  data: {
+    description?: string | null
+    actionType?: ActionType | null
+    rechargeType?: RechargeType | null
+    maxUsesFormula?: Formula | null
+  },
+) {
+  const desc = data.description ?? null
+  const action = data.actionType ?? null
+  const recharge = data.rechargeType ?? null
+  const maxUses = data.maxUsesFormula ?? null
+  const maxUsesJson = maxUses != null ? JSON.stringify(maxUses) : null
+  const existingMaxUsesJson = existing.maxUsesFormula != null ? JSON.stringify(existing.maxUsesFormula) : null
+  if (
+    existing.description !== desc
+    || existing.actionType !== action
+    || existing.rechargeType !== recharge
+    || existingMaxUsesJson !== maxUsesJson
+  ) {
+    await db.run(sql`UPDATE features SET description = ${desc}, action_type = ${action}, recharge_type = ${recharge}, max_uses_formula = ${maxUsesJson}, updated_at = ${new Date().toISOString()} WHERE id = ${existing.id}`)
+  }
 }
 
 async function _seedEffects(featureId: number, effects: Effect[]) {

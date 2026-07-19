@@ -530,7 +530,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Voie primitive',
-    subclasses: ['Voie du Berserker', 'Voie du Totem guerrier', 'Voie du fanatique zélateur', 'Voie de la magie ancestrale'],
+    subclasses: ['Voie du berserker', 'Voie du guerrier totem'],
     features: [
       { name: 'Rage', description: 'Action bonus : entrez en rage — +2 dégâts FOR, résistance contondant/perçant/tranchant, avantage JS FOR. 2 utilisations / repos long.' },
       { name: 'Défense sans armure', description: 'CA = 10 + mod DEX + mod CON quand vous ne portez pas d\'armure.' },
@@ -540,7 +540,7 @@ export const CLASSES: ClassData[] = [
       { choice: true, options: ['Paquetage d\'exploration', 'Paquetage du voyageur'] },
       { choice: false, items: ['4 javelines'] },
     ],
-    levelMilestones: { 2: 'Témérité', 3: 'Voie primitive', 4: 'ASI', 5: 'Attaque supplémentaire', 7: 'Instinct sauvage', 9: 'Critique brutal' },
+    levelMilestones: { 2: 'Attaque téméraire', 3: 'Voie primitive', 4: 'ASI', 5: 'Attaque supplémentaire', 7: 'Instinct sauvage', 9: 'Critique brutal' },
   },
   {
     id: 'bard',
@@ -558,7 +558,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'cha', type: 'full' },
     subclassLevel: 3,
     subclassLabel: 'Collège bardique',
-    subclasses: ['Collège du Savoir', 'Collège de Bravoure', 'Collège de l\'éloquence', 'Collège des esprits'],
+    subclasses: ['Collège du savoir', 'Collège de la vaillance'],
     features: [
       { name: 'Incantation (CHA)', description: 'Lanceur de sorts complet. Connaît 4 sorts + 2 tours de magie au niv.1. 2 emplacements niv.1.' },
       { name: 'Inspiration bardique (d6)', description: 'Action bonus : accordez un d6 à un allié pour l\'ajouter à un jet d\'attaque, de compétence ou de sauvegarde.' },
@@ -587,7 +587,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'wis', type: 'full' },
     subclassLevel: 1,
     subclassLabel: 'Domaine divin',
-    subclasses: ['Domaine Vie', 'Domaine Lumière', 'Domaine Connaissance', 'Domaine Nature', 'Domaine Tromperie', 'Domaine Tempête', 'Domaine Guerre'],
+    subclasses: ['Domaine de la vie', 'Domaine de la lumière', 'Domaine du savoir', 'Domaine de la nature', 'Domaine de la duperie', 'Domaine de la tempête', 'Domaine de la guerre'],
     features: [
       { name: 'Incantation (SAG)', description: 'Lanceur complet. Prépare niv+mod SAG sorts/jour. Sorts de domaine toujours préparés.' },
       { name: 'Renvoi des morts-vivants', description: 'Action : morts-vivants visibles dans 9m — JS SAG ou renvoyés pendant 1 minute.' },
@@ -616,7 +616,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'wis', type: 'full' },
     subclassLevel: 2,
     subclassLabel: 'Cercle druidique',
-    subclasses: ['Cercle de la terre', 'Cercle de la lune', 'Cercle des rêves', 'Cercle du berger'],
+    subclasses: ['Cercle de la terre', 'Cercle de la lune'],
     features: [
       { name: 'Incantation (SAG)', description: 'Lanceur complet. Prépare ses sorts chaque jour. Parle le Druidique, langue secrète.' },
       { name: 'Forme sauvage (niv.2)', description: 'À partir du niv.2 : transformation en animal. 2 utilisations / repos court.' },
@@ -644,7 +644,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Archétype martial',
-    subclasses: ['Champion', 'Maître de bataille', 'Chevalier éldritique', 'Tirailleur'],
+    subclasses: ['Champion', 'Maître de guerre', 'Chevalier occulte'],
     features: [
       { name: 'Style de combat', description: 'Archerie (+2 attaque à distance), Combat à 2 armes, Défense (+1 CA), Duel (+2 dégâts), Grande arme (relancer 1 ou 2), Protection (réaction).' },
       { name: 'Second souffle', description: 'Action bonus : récupérez 1d10 + niveau PV. 1 utilisation / repos court.' },
@@ -673,7 +673,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Tradition monastique',
-    subclasses: ['Voie de la Paume Ouverte', 'Voie de l\'Ombre', 'Voie des Quatre Éléments', 'Voie du soleil âme'],
+    subclasses: ['Voie de la paume', 'Voie de l\'ombre', 'Voie des quatre éléments'],
     features: [
       { name: 'Arts martiaux', description: 'Attaques à mains nues/armes de moine avec DEX ou FOR, dégâts 1d4 (niv.1). Attaque bonus à mains nues après attaque d\'arme de moine.' },
       { name: 'Défense sans armure', description: 'CA = 10 + mod DEX + mod SAG sans armure ni bouclier.' },
@@ -683,7 +683,7 @@ export const CLASSES: ClassData[] = [
       { choice: true, options: ['Paquetage du donjon', 'Paquetage d\'explorateur'] },
       { choice: false, items: ['10 fléchettes'] },
     ],
-    levelMilestones: { 2: 'Ki + Déplacement sans armure', 3: 'Tradition monastique', 4: 'ASI + Ralentissement de la chute', 5: 'Attaque supplémentaire + Frappe étourdissante' },
+    levelMilestones: { 2: 'Ki + Déplacement sans armure', 3: 'Tradition monastique', 4: 'ASI + Chute ralentie', 5: 'Attaque supplémentaire + Frappe étourdissante' },
   },
   {
     id: 'paladin',
@@ -701,7 +701,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'cha', type: 'half', startsAtLevel: 2 },
     subclassLevel: 3,
     subclassLabel: 'Serment sacré',
-    subclasses: ['Serment de Dévotion', 'Serment des Anciens', 'Serment de Vengeance', 'Serment des conquérants'],
+    subclasses: ['Serment de dévotion', 'Serment des anciens', 'Serment de vengeance'],
     features: [
       { name: 'Sens divin', description: 'Action : détectez fiélons, célestes et morts-vivants dans 18m. 1+mod CHA utilisations / repos long.' },
       { name: 'Imposition des mains', description: 'Réservoir = niveau×5 PV. Soignez par portions ou neutralisez maladies/poisons (5 PV).' },
@@ -729,7 +729,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'wis', type: 'half', startsAtLevel: 2 },
     subclassLevel: 3,
     subclassLabel: 'Archétype de rôdeur',
-    subclasses: ['Chasseur', 'Maître des bêtes', 'Pisteur', 'Rôdeur de l\'horizon'],
+    subclasses: ['Chasseur', 'Maître des bêtes'],
     features: [
       { name: 'Ennemi juré', description: 'Choisissez un type d\'ennemi. Avantage aux vérifications pour le traquer et rappeler des infos à son sujet.' },
       { name: 'Explorateur-né', description: 'Choisissez un terrain. Nombreux avantages pour voyager et survivre dans ce milieu.' },
@@ -739,7 +739,7 @@ export const CLASSES: ClassData[] = [
       { choice: true, options: ['2 épées courtes', '2 armes courantes de corps à corps'] },
       { choice: false, items: ['Arc long', '20 flèches', 'Paquetage d\'explorateur'] },
     ],
-    levelMilestones: { 2: 'Style de combat + Incantation', 3: 'Archétype de rôdeur + Conscience primitive', 4: 'ASI', 5: 'Attaque supplémentaire' },
+    levelMilestones: { 2: 'Style de combat + Incantation', 3: 'Archétype de rôdeur + Vigilance primitive', 4: 'ASI', 5: 'Attaque supplémentaire' },
   },
   {
     id: 'rogue',
@@ -757,7 +757,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Archétype de roublard',
-    subclasses: ['Escroc', 'Assassin', 'Filou arcanique', 'Âme de lame'],
+    subclasses: ['Voleur', 'Assassin', 'Escroc arcanique'],
     features: [
       { name: 'Expertise', description: 'Doublez le bonus de maîtrise pour 2 compétences (parmi maîtrisées). Outils de voleur inclus.' },
       { name: 'Attaque sournoise (1d6)', description: '+1d6 dégâts si avantage OU allié adjacent sans désavantage. Armes de finesse ou à distance.' },
@@ -785,10 +785,10 @@ export const CLASSES: ClassData[] = [
     skillChoices: { count: 2, from: ['arcana', 'deception', 'insight', 'intimidation', 'persuasion', 'religion'] },
     spellcasting: { ability: 'cha', type: 'full' },
     subclassLevel: 1,
-    subclassLabel: 'Origine sorcière',
-    subclasses: ['Lignée draconique', 'Magie sauvage', 'Âme divine', 'Tempête de l\'ombre'],
+    subclassLabel: 'Origine magique',
+    subclasses: ['Lignée draconique', 'Magie sauvage'],
     features: [
-      { name: 'Origine sorcière', description: 'Votre magie innée vient d\'une source précise qui confère des pouvoirs dès le niveau 1.' },
+      { name: 'Origine magique', description: 'Votre magie innée vient d\'une source précise qui confère des pouvoirs dès le niveau 1.' },
       { name: 'Incantation (CHA)', description: 'Lanceur complet. Connaît un nombre limité de sorts (4 au niv.1). 2 emplacements niv.1.' },
     ],
     equipment: [
@@ -814,7 +814,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'cha', type: 'pact' },
     subclassLevel: 1,
     subclassLabel: 'Patron d\'Outremonde',
-    subclasses: ['Le Fiélon', 'Le Grand Ancien', 'L\'Archifée', 'La Céleste', 'Le Hexblade'],
+    subclasses: ['Le Fiélon', 'Le Grand Ancien', 'L\'Archifée'],
     features: [
       { name: 'Patron d\'Outremonde', description: 'Choisissez votre patron : il vous accorde des capacités supplémentaires et des sorts étendus.' },
       { name: 'Magie de pacte', description: '1 emplacement / repos court au niv.1. L\'emplacement récupère au repos court !' },
@@ -857,7 +857,7 @@ export const CLASSES: ClassData[] = [
     spellcasting: { ability: 'int', type: 'full' },
     subclassLevel: 2,
     subclassLabel: 'Tradition arcanique',
-    subclasses: ['École d\'Abjuration', 'École de Conjuration', 'École de Divination', 'École d\'Enchantement', 'École d\'Évocation', 'École d\'Illusion', 'École de Nécromancie', 'École de Transmutation'],
+    subclasses: ['École d\'abjuration', 'École d\'invocation', 'École de divination', 'École d\'enchantement', 'École d\'évocation', 'École d\'illusion', 'École de nécromancie', 'École de transmutation'],
     features: [
       { name: 'Incantation (INT)', description: 'Grimoire : 6 sorts niv.1 + 2 tours de magie. Prépare niv+mod INT sorts/jour. 2 emplacements niv.1.' },
       { name: 'Restauration arcanique', description: 'Repos court : récupérez emplacements (total ≤ ½ niveau arrondi sup, pas niv.6+). 1×/jour.' },

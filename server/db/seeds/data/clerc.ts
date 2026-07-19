@@ -4,7 +4,7 @@ export const clercName = 'Clerc'
 
 export const clercFeatures: FeatureDef[] = [
   {
-    name: 'Lanceur de sorts',
+    name: 'Incantation',
     description: `La Sagesse est votre caractéristique d'incantation pour vos sorts de clerc. Vous préparez vos sorts : nombre égal à votre modificateur de Sagesse + votre niveau de clerc (minimum 1).
 
 DD de sauvegarde = 8 + bonus de maîtrise + modificateur de Sagesse.
@@ -19,7 +19,7 @@ Vous pouvez lancer un sort de clerc comme rituel s'il a l'étiquette rituel et e
     effects: [],
   },
   {
-    name: 'Channeling divin',
+    name: 'Conduit divin',
     description: `Au niveau 2, vous gagnez la possibilité de canaliser l'énergie divine directement depuis votre divinité. Vous commencez avec deux effets : Renvoi des morts-vivants et un effet déterminé par votre domaine.
 
 Vous devez terminer un repos court ou long pour pouvoir l'utiliser à nouveau. À partir du niveau 6, vous pouvez l'utiliser deux fois, et trois fois au niveau 18.`,
@@ -61,7 +61,7 @@ Vous devez terminer un repos court ou long pour pouvoir l'utiliser à nouveau. �
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 12, 16 et 19), vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou deux de 1. Maximum 20.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -74,7 +74,7 @@ Vous devez terminer un repos court ou long pour pouvoir l'utiliser à nouveau. �
 
 export const clercSubclasses: SubclassDef[] = [
   {
-    name: 'Domaine Vie',
+    name: 'Domaine de la vie',
     description: `Le domaine de la Vie se concentre sur l'énergie vibrante et positive qui sous-tend toute vie. Ces clercs soignent les malades, prennent soin des nécessiteux et chassent les forces de la mort.`,
     features: [
       {
@@ -150,7 +150,7 @@ export const clercSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Domaine Lumière',
+    name: 'Domaine de la lumière',
     description: `Les dieux de la lumière favorisent les idéaux nés d'un brasier ardent. Ce domaine vise à chasser les ténèbres et faire le bien dans le monde.`,
     features: [
       {
@@ -226,7 +226,7 @@ export const clercSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Domaine Guerre',
+    name: 'Domaine de la guerre',
     description: `Les dieux de la guerre recouvrent les divinités de la guerre et de l'honneur, ceux qui font la promotion du courage dans la bataille, et les vils dieux de la destruction.`,
     features: [
       {
@@ -302,7 +302,7 @@ export const clercSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Domaine Tempête',
+    name: 'Domaine de la tempête',
     description: `Les dieux de la tempête commandent les orages, les inondations et les tsunamis. Certains sont belliqueux et capricieux, d'autres sont des protecteurs de marins.`,
     features: [
       {
@@ -378,7 +378,7 @@ export const clercSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Domaine Nature',
+    name: 'Domaine de la nature',
     description: `Les dieux de la nature sont autant de facettes que la nature elle-même. Ils associent leurs clercs aux cycles de vie et aux forces naturelles.`,
     features: [
       {
@@ -454,7 +454,7 @@ export const clercSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Domaine Tromperie',
+    name: 'Domaine de la duperie',
     description: `Les dieux de la tromperie sont des artisans de la discorde. Ils sont les patrons des voleurs, des escrocs, des joueurs et des assassins.`,
     features: [
       {
@@ -520,7 +520,7 @@ export const clercSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Domaine Connaissance',
+    name: 'Domaine du savoir',
     description: `Les dieux du savoir apprécient l'apprentissage et la compréhension au-dessus de toute autre chose. Ces clercs accumulent des connaissances et conseillent ceux qui les cherchent.`,
     features: [
       {

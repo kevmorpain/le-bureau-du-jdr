@@ -305,7 +305,7 @@ const gains = computed(() => {
       .filter(([, v]) => v > 0)
       .map(([ab, v]) => `${ABILITY_SHORT[ab]} +${v}`)
     if (bonuses.length) {
-      list.push({ label: 'Amélioration de caractéristique', detail: bonuses.join(' · ') })
+      list.push({ label: 'Amélioration de caractéristiques', detail: bonuses.join(' · ') })
     }
   }
 

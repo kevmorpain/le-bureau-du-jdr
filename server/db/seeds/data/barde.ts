@@ -4,7 +4,7 @@ export const bardeName = 'Barde'
 
 export const bardeFeatures: FeatureDef[] = [
   {
-    name: 'Lanceur de sorts',
+    name: 'Incantation',
     description: `Vous avez appris à défaire la magie de la réalité elle-même et à la façonner selon vos désirs. Le Charisme est votre caractéristique d'incantation pour vos sorts de barde.
 
 DD de sauvegarde des sorts = 8 + votre bonus de maîtrise + votre modificateur de Charisme.
@@ -101,7 +101,7 @@ Vous apprenez deux sorts supplémentaires de n'importe quelle classe au niveau 1
     effects: [],
   },
   {
-    name: 'Maîtrise bardique',
+    name: 'Inspiration supérieure',
     description: `Au niveau 20, lorsque vous lancez le dé d'initiative et qu'il ne vous reste pas d'utilisations d'Inspiration bardique, vous en récupérez une utilisation.`,
     featureType: 'class_feature',
     levelRequired: 20,
@@ -111,7 +111,7 @@ Vous apprenez deux sorts supplémentaires de n'importe quelle classe au niveau 1
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Lorsque vous atteignez le niveau 4, et encore aux niveaux 8, 12, 16 et 19, vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 grâce à cette capacité.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -124,11 +124,11 @@ Vous apprenez deux sorts supplémentaires de n'importe quelle classe au niveau 1
 
 export const bardeSubclasses: SubclassDef[] = [
   {
-    name: 'Collège du Savoir',
+    name: 'Collège du savoir',
     description: `Les bardes du Collège du Savoir connaissent quelque chose sur la plupart des choses, accumulant des bribes de connaissance de sources aussi diverses que des écrits anciens et des anecdotes. Ils utilisent leurs talents pour captiver le public.`,
     features: [
       {
-        name: 'Compétences supplémentaires',
+        name: 'Maîtrises supplémentaires',
         description: `Lorsque vous rejoignez le Collège du Savoir au niveau 3, vous gagnez la maîtrise de trois compétences de votre choix.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -138,7 +138,7 @@ export const bardeSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Mots acérés',
+        name: 'Mots cinglants',
         description: `Toujours au niveau 3, vous apprenez à utiliser votre esprit pour semer le trouble dans la concentration de vos ennemis. Lorsqu'une créature que vous pouvez voir dans un rayon de 18 mètres autour de vous effectue un jet d'attaque, de caractéristique ou de dégâts, vous pouvez utiliser votre réaction pour dépenser l'une de vos utilisations d'Inspiration bardique et soustraire le nombre obtenu au jet de la créature. Vous pouvez choisir d'utiliser cette capacité après que la créature a lancé son dé, mais avant que le MJ ne détermine si le résultat est une réussite ou un échec. La créature est immunisée si elle ne peut pas vous entendre ou si elle est immunisée contre le charme.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -158,7 +158,7 @@ export const bardeSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Gloire inégalée',
+        name: 'Compétence hors-pair',
         description: `À partir du niveau 14, lorsque vous effectuez un jet de caractéristique, vous pouvez dépenser une utilisation d'Inspiration bardique. Lancez un dé d'Inspiration bardique et ajoutez le résultat à votre jet. Vous pouvez choisir de le faire après avoir lancé le dé mais avant que le MJ vous dise si vous réussissez ou échouez.`,
         featureType: 'subclass_feature',
         levelRequired: 14,
@@ -170,7 +170,7 @@ export const bardeSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Collège de Bravoure',
+    name: 'Collège de la vaillance',
     description: `Les bardes du Collège de Bravoure sont des conteurs d'épopées légendaires de victoires contre des ennemis terrifiants. Ils s'inspirent de l'héroïsme pour insuffler le courage à leur public, et rejoignent souvent les rangs des combattants pour faire de nouveaux récits de première main.`,
     features: [
       {
@@ -184,7 +184,7 @@ export const bardeSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Inspiration de combat',
+        name: 'Inspiration martiale',
         description: `Toujours au niveau 3, vous apprenez à inspirer les autres dans le feu de l'action. Une créature qui reçoit un dé d'Inspiration bardique de vous peut lancer ce dé et ajouter le nombre obtenu au jet de dégâts d'une arme qu'elle vient d'effectuer. Par ailleurs, si une créature est attaquée, elle peut utiliser sa réaction pour lancer le dé d'Inspiration bardique et ajouter le nombre obtenu à sa CA contre cette attaque.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -204,7 +204,7 @@ export const bardeSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Sorts de bataille',
+        name: 'Magie de combat',
         description: `Au niveau 14, vous avez maîtrisé l'art de tisser la magie dans vos attaques. Lorsque vous utilisez votre action pour lancer un sort de barde, vous pouvez effectuer une attaque avec une arme par une action bonus.`,
         featureType: 'subclass_feature',
         levelRequired: 14,

@@ -30,8 +30,8 @@ Les dégâts augmentent avec le niveau : 1d6 (niv 1), 2d6 (niv 3), 3d6 (niv 5), 
     effects: [],
   },
   {
-    name: 'Argot des voleurs',
-    description: `Au cours de votre formation, vous avez appris l'argot des voleurs, un mélange secret de dialecte, de jargon et de codes qui vous permet de dissimuler des messages dans des conversations apparemment anodines. Seule une autre créature qui connaît l'argot des voleurs comprend ces messages.
+    name: 'Jargon des voleurs',
+    description: `Au cours de votre formation, vous avez appris le jargon des voleurs, un mélange secret de dialecte, de jargon et de codes qui vous permet de dissimuler des messages dans des conversations apparemment anodines. Seule une autre créature qui connaît le jargon des voleurs comprend ces messages.
 
 En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés pour transmettre des messages courts et simples (zone dangereuse, guilde active, proies faciles, refuge sûr, etc.).`,
     featureType: 'class_feature',
@@ -52,7 +52,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 10, 12, 16 et 19), vous pouvez augmenter la valeur d'une caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 grâce à cette capacité.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -82,7 +82,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     effects: [],
   },
   {
-    name: 'Fiabilité',
+    name: 'Savoir-faire',
     description: `À partir du niveau 11, chaque fois que vous effectuez un jet de caractéristique avec lequel vous ajoutez votre bonus de maîtrise, vous pouvez traiter un résultat de 9 ou moins au dé comme un 10.`,
     featureType: 'class_feature',
     levelRequired: 11,
@@ -92,7 +92,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     effects: [],
   },
   {
-    name: 'Sens aveugle',
+    name: 'Perception aveugle',
     description: `À partir du niveau 14, si vous êtes capable d'entendre, vous pouvez percevoir l'emplacement de toute créature cachée ou invisible dans un rayon de 3 mètres ou moins autour de vous.`,
     featureType: 'class_feature',
     levelRequired: 14,
@@ -102,8 +102,8 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     effects: [],
   },
   {
-    name: 'Glisseur d\'esprit',
-    description: `À partir du niveau 15, votre esprit ne peut pas être lu contre votre volonté. Vous bénéficiez de la maîtrise des jets de sauvegarde de Sagesse.`,
+    name: 'Esprit fuyant',
+    description: `À partir du niveau 15, vous avez acquis une plus grande force mentale. Vous bénéficiez de la maîtrise des jets de sauvegarde de Sagesse.`,
     featureType: 'class_feature',
     levelRequired: 15,
     actionType: null,
@@ -121,11 +121,21 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     maxUsesFormula: null,
     effects: [],
   },
+  {
+    name: 'Coup de chance',
+    description: `Au niveau 20, vous avez une aptitude surnaturelle à réussir quand vous en avez le plus besoin. Si votre jet d'attaque rate une cible à portée, vous pouvez le transformer en réussite. Ou, si vous ratez un test de caractéristique, vous pouvez traiter le d20 comme si vous aviez obtenu un 20. Une fois cette faculté utilisée, vous devez terminer un repos court ou long avant de pouvoir vous en resservir.`,
+    featureType: 'class_feature',
+    levelRequired: 20,
+    actionType: null,
+    rechargeType: 'short_rest',
+    maxUsesFormula: null,
+    effects: [],
+  },
 ]
 
 export const roublardSubclasses: SubclassDef[] = [
   {
-    name: 'Escroc',
+    name: 'Voleur',
     description: `Vous perfectionnez vos compétences dans l'art subtil du larcin. Cambrioleurs, pickpockets et autres criminels suivent cet archétype — ou tout roublard qui se voit comme un professionnel accompli.`,
     features: [
       {
@@ -139,8 +149,8 @@ export const roublardSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Furtivité de la ville',
-        description: `À partir du niveau 3, vous maîtrisez l'art de vous fondre dans la foule. Quand vous tentez de vous cacher, vous pouvez utiliser les passants comme couverture, même si vous n'êtes pas physiquement camouflé. Vous obtenez également une vitesse d'escalade égale à votre vitesse normale.`,
+        name: 'Monte-en-l\'air',
+        description: `À partir du niveau 3, grimper ne vous coûte plus de déplacement supplémentaire. De plus, quand vous effectuez un saut en longueur avec élan, la distance franchie augmente d'un nombre de mètres égal à votre modificateur de Dextérité.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: null,
@@ -149,7 +159,7 @@ export const roublardSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Ambidextrie',
+        name: 'Discrétion suprême',
         description: `Au niveau 9, vous avez l'avantage à vos jets de Dextérité (Discrétion) si vous vous déplacez de moins de la moitié de votre vitesse lors de ce même tour.`,
         featureType: 'subclass_feature',
         levelRequired: 9,
@@ -185,7 +195,7 @@ export const roublardSubclasses: SubclassDef[] = [
     description: `Vous focalisez vos aptitudes sur le lugubre art du meurtre. Tueurs à gages, espions et chasseurs de primes suivent cet archétype. La dissimulation, les poisons et le déguisement vous aident à éliminer vos cibles avec efficacité.`,
     features: [
       {
-        name: 'Compétences supplémentaires',
+        name: 'Maîtrises supplémentaires',
         description: `Quand vous choisissez cet archétype au niveau 3, vous gagnez la maîtrise du kit de déguisement et du kit d'empoisonneur.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -195,7 +205,7 @@ export const roublardSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Infiltrateur',
+        name: 'Assassinat',
         description: `À partir du niveau 3, vous êtes mortel dans des situations où votre ennemi n'est pas conscient de votre présence. Vous avez l'avantage à vos jets d'attaque contre toute créature qui n'a pas encore joué son tour lors du combat. De plus, toute attaque que vous portez contre une créature surprise est un coup critique.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -205,8 +215,8 @@ export const roublardSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Imposteur',
-        description: `Au niveau 9, vous gagnez la capacité d'imiter le discours, l'écriture et le comportement d'une autre personne de manière presque parfaite. Vous devez passer au moins 3 heures à étudier ces trois éléments. Vous avez l'avantage sur les jets de Charisme (Tromperie) pour faire passer votre déguisement.`,
+        name: 'Expert en infiltration',
+        description: `À partir du niveau 9, vous pouvez vous forger une fausse identité crédible en y consacrant sept jours et 25 po (historique, occupation, relations). Tant que vous ne trahissez pas vous-même votre personnage, une enquête ordinaire ne permet pas de percer votre identité factice.`,
         featureType: 'subclass_feature',
         levelRequired: 9,
         actionType: null,
@@ -215,8 +225,8 @@ export const roublardSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Frappe de la mort',
-        description: `À partir du niveau 13, quand vous attaquez et touchez une créature surprise, elle doit réussir un jet de sauvegarde de Constitution (DD 8 + votre modificateur de Dextérité + votre bonus de maîtrise), sans quoi elle subit deux fois les dégâts normaux de l'attaque.`,
+        name: 'Imposteur',
+        description: `Au niveau 13, vous gagnez la capacité d'imiter le discours, l'écriture et le comportement d'une autre personne de manière presque parfaite. Vous devez passer au moins 3 heures à étudier ces trois éléments. Vous avez l'avantage aux jets de Charisme (Tromperie) pour faire passer votre imitation.`,
         featureType: 'subclass_feature',
         levelRequired: 13,
         actionType: null,
@@ -225,8 +235,8 @@ export const roublardSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'À la vitesse de la mort',
-        description: `Au niveau 17, quand vous attaquez une créature surprise au premier round du combat, si vous la touchez, elle doit réussir un jet de sauvegarde de Constitution (DD 8 + votre modificateur de Dextérité + votre bonus de maîtrise), sans quoi ses points de vie tombent à 0.`,
+        name: 'Frappe meurtrière',
+        description: `À partir du niveau 17, quand vous attaquez et touchez une créature surprise, elle doit réussir un jet de sauvegarde de Constitution (DD 8 + votre modificateur de Dextérité + votre bonus de maîtrise), sans quoi elle subit deux fois les dégâts normaux de l'attaque.`,
         featureType: 'subclass_feature',
         levelRequired: 17,
         actionType: null,
@@ -237,12 +247,12 @@ export const roublardSubclasses: SubclassDef[] = [
     ],
   },
   {
-    name: 'Filou arcanique',
+    name: 'Escroc arcanique',
     description: `Certains roublards améliorent leurs talents en maîtrisant un peu de magie, combinant adresse et furtivité avec la capacité de lancer des sorts d'enchantement et d'illusion.`,
     spellcastingAbility: 'int',
     features: [
       {
-        name: 'Lanceur de sorts',
+        name: 'Incantation',
         description: `Au niveau 3, vous gagnez la capacité de lancer des sorts. L'Intelligence est votre caractéristique d'incantation.
 
 Vous connaissez trois sorts mineurs : main de mage et deux autres de la liste du magicien.
@@ -257,7 +267,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Prestidigitateur',
+        name: 'Escamotage et main de mage',
         description: `Au niveau 3, la main créée par votre sort de main de mage est invisible. Vous pouvez utiliser l'action bonus accordée par votre Ruse pour contrôler la main et effectuer des tâches supplémentaires : fouiller la poche d'une autre créature, récupérer un objet dans son conteneur, ou utiliser vos outils de voleur à distance.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -267,28 +277,28 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         effects: [],
       },
       {
-        name: 'Voleur de main magique',
-        description: `À partir du niveau 9, quand vous êtes caché d'une créature, vous pouvez utiliser votre main de mage pour fouiller ses poches ou récupérer des objets sans vous révéler.`,
+        name: 'Embuscade magique',
+        description: `À partir du niveau 9, si vous êtes caché d'une créature au moment où vous lui lancez un sort, elle a le désavantage à tous les jets de sauvegarde contre ce sort au cours de ce tour.`,
         featureType: 'subclass_feature',
         levelRequired: 9,
-        actionType: 'bonus_action',
-        rechargeType: null,
-        maxUsesFormula: null,
-        effects: [],
-      },
-      {
-        name: 'Ambuscade magique',
-        description: `À partir du niveau 13, si vous êtes caché d'une créature quand vous lui lancez un sort, elle a le désavantage à tous les jets de sauvegarde contre ce sort au cours de ce tour.`,
-        featureType: 'subclass_feature',
-        levelRequired: 13,
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
       },
       {
-        name: 'Cambrioleur polyvalent',
-        description: `À partir du niveau 17, quand une créature vous lance un sort, vous pouvez utiliser votre réaction pour tenter de le nier. La créature doit réussir un jet de sauvegarde avec son modificateur d'incantation contre votre DD de sort. En cas d'échec, le sort n'a aucun effet sur vous et vous pouvez le lancer depuis un emplacement disponible pendant 8 heures. Utilisable une fois par repos long.`,
+        name: 'Escroc polyvalent',
+        description: `À partir du niveau 13, tant que vous maintenez votre sort main de mage, vous pouvez utiliser l'action bonus de votre Ruse pour distraire une créature située à 1,50 mètre de la main spectrale : vous avez alors l'avantage à vos jets d'attaque contre cette créature jusqu'à la fin de ce tour.`,
+        featureType: 'subclass_feature',
+        levelRequired: 13,
+        actionType: 'bonus_action',
+        rechargeType: null,
+        maxUsesFormula: null,
+        effects: [],
+      },
+      {
+        name: 'Voleur de sort',
+        description: `À partir du niveau 17, quand une créature vous lance un sort, vous pouvez utiliser votre réaction pour tenter de le dérober. La créature effectue un jet de sauvegarde avec son modificateur d'incantation contre votre DD de sort ; en cas d'échec, le sort n'a aucun effet sur vous et vous pouvez le lancer vous-même dans les 8 heures avec un emplacement disponible. Utilisable une fois par repos long.`,
         featureType: 'subclass_feature',
         levelRequired: 17,
         actionType: 'reaction',

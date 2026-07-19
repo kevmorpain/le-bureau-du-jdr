@@ -4,7 +4,7 @@
       <UCard>
         <template #header>
           <p class="font-semibold text-lg">
-            Amélioration de caractéristique — {{ className }}
+            Amélioration de caractéristiques — {{ className }}
           </p>
         </template>
 

@@ -5,7 +5,7 @@
       :from-level="state.fromLevel"
       :to-level="state.toLevel"
       :is-multiclass="state.isMulticlass"
-      subtitle="Amélioration de caractéristique ou don"
+      subtitle="Amélioration de caractéristiques ou don"
     />
 
     <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Carac. / Don</h2>

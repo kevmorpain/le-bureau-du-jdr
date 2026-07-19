@@ -134,7 +134,7 @@
               </div>
             </div>
 
-            <!-- ASI de classe (Amélioration de caractéristique) -->
+            <!-- ASI de classe (Amélioration de caractéristiques) -->
             <div
               v-if="isASIFeature(feature)"
               class="mt-3 space-y-1"

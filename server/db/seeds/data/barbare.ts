@@ -31,7 +31,7 @@ La rage se termine si vous êtes inconscient ou si votre tour se termine et que 
     effects: [],
   },
   {
-    name: 'Témérité',
+    name: 'Attaque téméraire',
     description: `À partir du niveau 2, vous pouvez mettre de côté toute préoccupation pour votre défense afin d'attaquer avec une férocité désespérée. Lors de votre premier tour de chaque combat, vous pouvez décider d'attaquer avec témérité. Cela vous donne l'avantage sur vos jets d'attaque de corps à corps avec les armes de Force pour ce tour, mais les jets d'attaque contre vous ont l'avantage jusqu'à votre prochain tour.`,
     featureType: 'class_feature',
     levelRequired: 2,
@@ -73,7 +73,7 @@ Vous avez l'avantage aux jets de sauvegarde de Dextérité contre les effets que
     effects: [],
   },
   {
-    name: 'Instinct animal',
+    name: 'Instinct sauvage',
     description: `À partir du niveau 7, vos instincts sont si aiguisés que vous avez l'avantage aux jets d'initiative.
 
 De plus, si vous êtes surpris au début du combat et que vous n'êtes pas incapable d'agir, vous pouvez agir normalement pendant votre premier tour, à condition d'entrer en rage avant de faire quoi que ce soit d'autre lors de ce tour.`,
@@ -85,7 +85,7 @@ De plus, si vous êtes surpris au début du combat et que vous n'êtes pas incap
     effects: [],
   },
   {
-    name: 'Attaque brute',
+    name: 'Critique brutal',
     description: `À partir du niveau 9, vous pouvez dépasser les limites normales de votre corps lors de combats brutaux. Lorsque vous effectuez un coup critique avec une attaque de corps à corps lors d'une rage, vous pouvez lancer un des dés de dégâts de l'attaque une fois de plus et l'ajouter aux dégâts supplémentaires du coup critique. Au niveau 13, ce bonus passe à deux dés supplémentaires, et au niveau 17, à trois dés supplémentaires.`,
     featureType: 'class_feature',
     levelRequired: 9,
@@ -107,7 +107,7 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
     effects: [],
   },
   {
-    name: 'Résistance brutale',
+    name: 'Rage persistante',
     description: `À partir du niveau 15, votre rage est si féroce qu'elle ne peut être brisée que par votre propre volonté ou par l'inconscience. Votre rage ne se termine prématurément que si vous êtes inconscient ou si vous choisissez d'y mettre fin.`,
     featureType: 'class_feature',
     levelRequired: 15,
@@ -117,7 +117,7 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
     effects: [],
   },
   {
-    name: 'Persistance',
+    name: 'Puissance indomptable',
     description: `À partir du niveau 18, la puissance de votre rage est pratiquement sans limite. Si votre total pour un jet de caractéristique de Force est inférieur à votre valeur de Force, vous pouvez utiliser cette valeur à la place.`,
     featureType: 'class_feature',
     levelRequired: 18,
@@ -127,7 +127,7 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
     effects: [],
   },
   {
-    name: 'Force indétrônable',
+    name: 'Champion primitif',
     description: `Au niveau 20, vous incarnez la puissance de la nature sauvage. Vos valeurs de Force et de Constitution augmentent de 4. Votre maximum pour ces caractéristiques est désormais de 24. De plus, le nombre de rages par repos long devient illimité.`,
     featureType: 'class_feature',
     levelRequired: 20,
@@ -140,7 +140,7 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
     ],
   },
   {
-    name: 'Amélioration de caractéristique',
+    name: 'Amélioration de caractéristiques',
     description: `Lorsque vous atteignez le niveau 4, et encore aux niveaux 8, 12, 16 et 19, vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Comme d'habitude, vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 grâce à cette capacité.`,
     featureType: 'class_feature',
     levelRequired: 4,
@@ -153,7 +153,7 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
 
 export const barbareSubclasses: SubclassDef[] = [
   {
-    name: 'Voie du Berserker',
+    name: 'Voie du berserker',
     description: `Pour certains barbares, la rage est un moyen vers une fin — et cette fin est la violence. La Voie du Berserker est un chemin de furie débridée, implacable dans sa destruction.`,
     features: [
       {
@@ -167,7 +167,7 @@ export const barbareSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Rage insensée',
+        name: 'Rage aveugle',
         description: `À partir du niveau 6, vous ne pouvez pas être charmé ou effrayé pendant votre rage. Si vous êtes charmé ou effrayé lorsque vous entrez en rage, l'effet est suspendu pendant la durée de la rage.`,
         featureType: 'subclass_feature',
         levelRequired: 6,
@@ -191,7 +191,7 @@ Si la créature réussit son jet de sauvegarde, vous ne pouvez plus utiliser cet
         effects: [],
       },
       {
-        name: 'Vengeance',
+        name: 'Représailles',
         description: `À partir du niveau 14, quand vous subissez des dégâts d'une créature qui se trouve dans un rayon de 1,50 mètre autour de vous, vous pouvez utiliser votre réaction pour effectuer une attaque de corps à corps contre cette créature.`,
         featureType: 'subclass_feature',
         levelRequired: 14,
@@ -203,11 +203,11 @@ Si la créature réussit son jet de sauvegarde, vous ne pouvez plus utiliser cet
     ],
   },
   {
-    name: 'Voie du Totem guerrier',
+    name: 'Voie du guerrier totem',
     description: `La Voie du Guerrier Totem est un chemin spirituel qui honore la connexion entre un barbare et la nature. À votre entrée dans cette voie, vous vous engagez envers un animal totem, le guide de votre esprit et votre symbole de puissance.`,
     features: [
       {
-        name: 'Chercheur de totem',
+        name: 'Quêteur spirituel',
         description: `Au niveau 3, vous pouvez lancer les sorts Communication avec les animaux et Sens animal sous forme de rituels. Lorsque vous utilisez Sens animal, vous voyez et entendez à travers un animal naturel ordinaire (non magique) de votre choix qui est à portée.`,
         featureType: 'subclass_feature',
         levelRequired: 3,
@@ -231,7 +231,7 @@ Si la créature réussit son jet de sauvegarde, vous ne pouvez plus utiliser cet
         effects: [],
       },
       {
-        name: 'Aspect du totem',
+        name: 'Aspect de la bête',
         description: `Au niveau 6, vous obtenez un avantage magique qui correspond à votre animal totem. Votre esprit totem peut être différent de celui choisi au niveau 3 :
 
 - **Aigle** : Vous avez la vision de l'aigle. En faible luminosité, vous ne subissez pas le désavantage aux jets de Perception basés sur la vue.
@@ -245,7 +245,7 @@ Si la créature réussit son jet de sauvegarde, vous ne pouvez plus utiliser cet
         effects: [],
       },
       {
-        name: 'Marcheur de l\'esprit',
+        name: 'Marcheur spirituel',
         description: `Au niveau 10, vous pouvez lancer le sort Communion avec la nature sous forme de rituel. Lorsque vous le faites, une version spirituelle de l'un des animaux que vous avez choisis pour Esprit totem ou Aspect du totem apparaît pour vous transmettre les informations que vous cherchez.`,
         featureType: 'subclass_feature',
         levelRequired: 10,
@@ -255,7 +255,7 @@ Si la créature réussit son jet de sauvegarde, vous ne pouvez plus utiliser cet
         effects: [],
       },
       {
-        name: 'Attaque du totem',
+        name: 'Lien totémique',
         description: `Au niveau 14, vous obtenez un avantage magique plus puissant. Votre esprit totem peut être différent de ceux choisis précédemment :
 
 - **Aigle** : Pendant la rage, vous avez une vitesse de vol égale à votre vitesse de déplacement. Vous tombez à la fin de votre tour si rien ne vous maintient en l'air.
