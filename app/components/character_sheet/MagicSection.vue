@@ -513,43 +513,49 @@ function resolveAttackCount(
 function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
   const spell = cs.spell
 
-  if (spell.damage) {
-    const dmg = spell.damage
-    const die = 'damage_at_character_level' in dmg
-      ? getSpellDieAt(dmg.damage_at_character_level, characterLevel.value)
-      : getSpellDieAt((dmg as any).damage_at_slot_level, castAtLevel)
-    if (!die) return
-    const parsed = parseSpellDie(die)
-    if (!parsed) return
+  // Un sort peut cumuler plusieurs types de dégâts (ex. Voracité de Hadar :
+  // froid + acide). On jette chaque composante séparément.
+  const damages = spell.damages ?? []
+  if (damages.length) {
+    for (const dmg of damages) {
+      const die = 'damage_at_character_level' in dmg
+        ? getSpellDieAt(dmg.damage_at_character_level, characterLevel.value)
+        : getSpellDieAt((dmg as any).damage_at_slot_level, castAtLevel)
+      if (!die) continue
+      const parsed = parseSpellDie(die)
+      if (!parsed) continue
 
-    // ─── Sorts multi-attaques (Décharge occulte, Rayon ardent, Trait magique…)
-    // Convention : les dés déclarés (NdM+K) représentent le TOTAL pour toutes
-    // les attaques. Per-attaque = (N/count)d(M) + (K/count). Les modificateurs
-    // (CHA via Coup agonisant, spellcasting mod) sont appliqués PAR attaque.
-    const multi = resolveAttackCount(spell, castAtLevel, characterLevel.value)
-    if (multi) {
-      const diePerAttack = Math.max(1, Math.floor(parsed.count / multi.count))
-      const flatPerAttack = Math.floor(parsed.flat / multi.count)
-      let perAttackBonus = flatPerAttack
+      // ─── Sorts multi-attaques (Décharge occulte, Rayon ardent, Trait magique…)
+      // Convention : les dés déclarés (NdM+K) représentent le TOTAL pour toutes
+      // les attaques. Per-attaque = (N/count)d(M) + (K/count). Les modificateurs
+      // (CHA via Coup agonisant, spellcasting mod) sont appliqués PAR attaque.
+      const multi = resolveAttackCount(spell, castAtLevel, characterLevel.value)
+      if (multi) {
+        const diePerAttack = Math.max(1, Math.floor(parsed.count / multi.count))
+        const flatPerAttack = Math.floor(parsed.flat / multi.count)
+        let perAttackBonus = flatPerAttack
+        if (dmg.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
+          perAttackBonus += spellcastingModifier.value
+        }
+        // Coup éldritique agonisant — appliqué par rayon de Décharge occulte
+        if (spell.name === 'Décharge occulte' && eldritchBlastMods.value.agonizing) {
+          perAttackBonus += charismaModifier.value
+        }
+        for (let r = 1; r <= multi.count; r++) {
+          roll(`${spell.name} · ${multi.label} ${r}`, perAttackBonus, parsed.sides, diePerAttack)
+        }
+        continue
+      }
+
+      let bonus = parsed.flat
       if (dmg.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
-        perAttackBonus += spellcastingModifier.value
+        bonus += spellcastingModifier.value
       }
-      // Coup éldritique agonisant — appliqué par rayon de Décharge occulte
-      if (spell.name === 'Décharge occulte' && eldritchBlastMods.value.agonizing) {
-        perAttackBonus += charismaModifier.value
-      }
-      for (let r = 1; r <= multi.count; r++) {
-        roll(`${spell.name} · ${multi.label} ${r}`, perAttackBonus, parsed.sides, diePerAttack)
-      }
-      return
+      const label = dmg.label
+        ? `${spell.name} · ${dmg.label} (${dmg.damage_type})`
+        : `${spell.name} · dégâts ${dmg.damage_type}`
+      roll(label, bonus, parsed.sides, parsed.count)
     }
-
-    let bonus = parsed.flat
-    if (dmg.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
-      bonus += spellcastingModifier.value
-    }
-    const label = `${spell.name} · dégâts ${dmg.damage_type}`
-    roll(label, bonus, parsed.sides, parsed.count)
     return
   }
 

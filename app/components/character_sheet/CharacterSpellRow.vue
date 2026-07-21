@@ -106,11 +106,19 @@
 
     <!-- Dégâts / Soins calculés -->
     <span
-      v-if="damageText"
+      v-if="damageParts.length"
       class="text-xs font-mono"
-      :class="`text-${spell.damage!.damage_type}`"
     >
-      {{ damageText }}
+      <template
+        v-for="(part, i) in damageParts"
+        :key="i"
+      >
+        <span
+          v-if="i > 0"
+          class="text-muted"
+        > + </span>
+        <span :class="`text-${part.damageType}`">{{ part.text }}</span>
+      </template>
     </span>
     <span
       v-else-if="healText"
@@ -212,31 +220,38 @@ const displayedRange = computed(() => {
   return formatRange(props.spell.range)
 })
 
-const damageText = computed<string | null>(() => {
-  if (!props.spell.damage) return null
-  const dmg = props.spell.damage
+// Une part de dégâts par entrée, avec son propre type pour la coloriser
+// individuellement (ex. Voracité de Hadar : « 2d6 froid » en bleu + « 2d6 acide » en vert).
+const damageParts = computed<{ text: string, damageType: string }[]>(() => {
+  const damages = props.spell.damages
+  if (!damages || !damages.length) return []
 
-  let die: string | undefined
-  if ('damage_at_character_level' in dmg) {
-    die = getClosestDie(dmg.damage_at_character_level, props.characterLevel)
-  } else {
-    die = getClosestDie(dmg.damage_at_slot_level, props.spell.level || 1)
+  const parts: { text: string, damageType: string }[] = []
+  for (const dmg of damages) {
+    let die: string | undefined
+    if ('damage_at_character_level' in dmg) {
+      die = getClosestDie(dmg.damage_at_character_level, props.characterLevel)
+    } else {
+      die = getClosestDie(dmg.damage_at_slot_level, props.spell.level || 1)
+    }
+
+    if (!die) continue
+
+    let bonus = 0
+    if (dmg.isSpellcastingModifierAdded && props.spellcastingModifier !== null) {
+      bonus += props.spellcastingModifier
+    }
+    // Coup éldritique agonisant : +CHA mod par rayon de Décharge occulte
+    if (isEldritchBlast.value && props.eldritchBlastAgonizing && props.charismaModifier != null) {
+      bonus += props.charismaModifier * eldritchBlastRayCount.value
+    }
+    const mod = bonus !== 0 ? ` ${formatModifier(bonus)}` : ''
+    const type = t(`damage_types.${dmg.damage_type}`, 1)
+
+    parts.push({ text: `${die}${mod} ${type}`, damageType: dmg.damage_type })
   }
 
-  if (!die) return null
-
-  let bonus = 0
-  if (dmg.isSpellcastingModifierAdded && props.spellcastingModifier !== null) {
-    bonus += props.spellcastingModifier
-  }
-  // Coup éldritique agonisant : +CHA mod par rayon de Décharge occulte
-  if (isEldritchBlast.value && props.eldritchBlastAgonizing && props.charismaModifier != null) {
-    bonus += props.charismaModifier * eldritchBlastRayCount.value
-  }
-  const mod = bonus !== 0 ? ` ${formatModifier(bonus)}` : ''
-  const type = t(`damage_types.${dmg.damage_type}`, 1)
-
-  return `${die}${mod} ${type}`
+  return parts
 })
 
 const ARCANUM_SOURCES = ['arcanum_6', 'arcanum_7', 'arcanum_8', 'arcanum_9'] as const

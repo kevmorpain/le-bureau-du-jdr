@@ -64,13 +64,19 @@
       <!-- Matériau si composante M -->
       <p v-if="spell.material" class="text-xs text-muted italic">{{ spell.material }}</p>
 
-      <!-- Dégâts -->
-      <div v-if="damageDisplay" class="text-xs font-semibold" :class="`text-${spell.damage!.damage_type}`">
-        {{ damageDisplay.die }}
-        <span v-if="spellcastingMod != null && spell.damage!.isSpellcastingModifierAdded">
+      <!-- Dégâts (une ligne par type de dégâts) -->
+      <div
+        v-for="(dmg, i) in damageDisplays"
+        :key="i"
+        class="text-xs font-semibold"
+        :class="`text-${dmg.color}`"
+      >
+        <span v-if="dmg.label" class="text-muted font-normal">{{ dmg.label }} : </span>
+        {{ dmg.die }}
+        <span v-if="spellcastingMod != null && dmg.addsMod">
           {{ spellcastingMod >= 0 ? ` +${spellcastingMod}` : ` ${spellcastingMod}` }}
         </span>
-        <span class="text-muted font-normal ml-1">{{ damageDisplay.type }}</span>
+        <span class="text-muted font-normal ml-1">{{ dmg.type }}</span>
       </div>
 
       <!-- Soins -->
@@ -126,12 +132,13 @@ const props = defineProps<{
     ritual: boolean
     description: string | null
     dc: { ability: string, success?: string } | null
-    damage: {
+    damages: Array<{
       damage_type: string
+      label?: string
       isSpellcastingModifierAdded?: boolean
       damage_at_character_level?: Record<string, string>
       damage_at_slot_level?: Record<string, string>
-    } | null
+    }> | null
     heal: {
       heal_type: string
       isSpellcastingModifierAdded?: boolean
@@ -170,16 +177,26 @@ function closestLevelDie(table: Record<string, string>, level: number): string |
   return best !== undefined ? table[String(best)] ?? null : null
 }
 
-const damageDisplay = computed(() => {
-  const d = props.spell.damage
-  if (!d) return null
-  const die = d.damage_at_character_level
-    ? closestLevelDie(d.damage_at_character_level, props.characterLevel ?? 1)
-    : d.damage_at_slot_level
-      ? closestLevelDie(d.damage_at_slot_level, props.spell.level || 1)
-      : null
-  if (!die) return null
-  return { die, type: t(`damage_types.${d.damage_type}`, 2) }
+const damageDisplays = computed(() => {
+  const damages = props.spell.damages
+  if (!damages || !damages.length) return []
+  const result: { die: string, type: string, label?: string, color: string, addsMod: boolean }[] = []
+  for (const d of damages) {
+    const die = d.damage_at_character_level
+      ? closestLevelDie(d.damage_at_character_level, props.characterLevel ?? 1)
+      : d.damage_at_slot_level
+        ? closestLevelDie(d.damage_at_slot_level, props.spell.level || 1)
+        : null
+    if (!die) continue
+    result.push({
+      die,
+      type: t(`damage_types.${d.damage_type}`, 2),
+      label: d.label,
+      color: d.damage_type,
+      addsMod: !!d.isSpellcastingModifierAdded,
+    })
+  }
+  return result
 })
 
 const healDisplay = computed(() => {

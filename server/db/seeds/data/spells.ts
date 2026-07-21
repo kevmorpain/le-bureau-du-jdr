@@ -24,7 +24,7 @@ export const spells: InsertSpell[] = [
     dc: {
       ability: AbilityScore.Dexterity,
     },
-    damage: {
+    damages: [{
       damage_type: DamageType.Radiant,
       damage_at_character_level: {
         1: '1d8',
@@ -32,7 +32,7 @@ export const spells: InsertSpell[] = [
         11: '3d8',
         17: '4d8',
       },
-    },
+    }],
   },
   {
     name: 'Glas',
@@ -47,7 +47,7 @@ export const spells: InsertSpell[] = [
       ability: AbilityScore.Wisdom,
       success: 'none',
     },
-    damage: {
+    damages: [{
       damage_type: DamageType.Necrotic,
       damage_at_character_level: {
         1: '1d8',
@@ -55,7 +55,7 @@ export const spells: InsertSpell[] = [
         11: '3d8',
         17: '4d8',
       },
-    },
+    }],
   },
   {
     name: 'Lumière',
@@ -212,7 +212,7 @@ export const spells: InsertSpell[] = [
     schoolId: 1,
   },
   {
-    name: 'Rayon traçant',
+    name: 'Éclair traçant',
     level: 1,
     castingTime: '1 action',
     range: 36,
@@ -220,7 +220,7 @@ export const spells: InsertSpell[] = [
     duration: '1 round',
     description: 'Un éclair silencieux fonce sur une créature de votre choix dans la portée du sort. Faites une attaque à distance avec un sort contre la cible. Si elle réussit, la cible subit 4d6 dégâts radiants et le prochain jet d\'attaque effectué contre cette cible avant la fin du votre prochain tour bénéficie d\'un avantage grâce à la lumière faible mystique qui illumine alors la cible.\nAux niveaux supérieurs. Lorsque vous lancez ce sort en utilisant un emplacement de sort de niveau 2 ou supérieur, les dégâts infligés augmentent de 1d6 pour chaque niveau d\'emplacement au-delà du niveau 1.',
     schoolId: 5,
-    damage: {
+    damages: [{
       damage_type: DamageType.Radiant,
       damage_at_slot_level: {
         1: '4d6',
@@ -233,7 +233,7 @@ export const spells: InsertSpell[] = [
         8: '11d6',
         9: '12d6',
       },
-    },
+    }],
   },
   {
     name: 'Bénédiction',
@@ -256,7 +256,7 @@ export const spells: InsertSpell[] = [
     duration: 'Instantanée',
     description: 'Faites une attaque au corps à corps avec un sort contre une créature que vous pouvez toucher. En cas de réussite, la cible prend 3d10 dégâts nécrotiques.\nAux niveaux supérieurs. Lorsque vous lancez ce sort en utilisant un emplacement de sort de niveau 2 ou supérieur, les dégâts augmentent de 1d10 chaque niveau d\'emplacement au-delà du niveau 1.',
     schoolId: 7,
-    damage: {
+    damages: [{
       damage_type: DamageType.Necrotic,
       damage_at_slot_level: {
         1: '3d10',
@@ -269,7 +269,7 @@ export const spells: InsertSpell[] = [
         8: '10d10',
         9: '11d10',
       },
-    },
+    }],
   },
   {
     name: 'Augure',
@@ -304,23 +304,19 @@ export const spells: InsertSpell[] = [
     duration: '1 minute',
     description: 'Vous créez une arme spectrale qui flotte dans l\'air, dans la portée et pour la durée du sort ou jusqu\'à ce que vous incantiez ce sort à nouveau. Lorsque vous lancez ce sort, vous pouvez faire une attaque au corps à corps avec un sort contre une créature à 1,50 mètre ou moins de l\'arme. Une attaque réussie inflige des dégâts de force équivalents à 1d8 + le modificateur de votre caractéristique d\'incantation.\nEn tant qu\'action bonus lors de votre tour, vous pouvez déplacer l\'arme jusqu\'à 6 mètres et réitérer l\'attaque contre une créature à 1,50 mètre ou moins de l\'arme.\nL\'arme peut prendre la forme de votre choix. Les clercs d\'une divinité associée à une arme particulière (tel que Saint-Cuthbert connu pour sa masse d\'armes ou Thor pour son marteau) peuvent faire en sorte que l\'effet du sort prenne la forme de l\'arme en question.\nAux niveaux supérieurs. Lorsque vous lancez ce sort en utilisant un emplacement de sort de niveau 3 ou supérieur, les dégâts infligés augmentent de 1d8 pour chaque niveau d\'emplacement pair supérieur au niveau 2.',
     schoolId: 5,
-    damage: {
+    damages: [{
       damage_type: DamageType.Force,
       damage_at_slot_level: {
         2: '1d8',
-        3: '2d8',
-        4: '3d8',
-        5: '4d8',
-        6: '5d8',
-        7: '6d8',
-        8: '7d8',
-        9: '8d8',
+        4: '2d8',
+        6: '3d8',
+        8: '4d8',
       },
       isSpellcastingModifierAdded: true,
-    },
+    }],
   },
   {
-    name: 'Cécité / Surdité',
+    name: 'Cécité/Surdité',
     level: 2,
     castingTime: '1 action',
     range: 9,
@@ -409,7 +405,7 @@ export const spells: InsertSpell[] = [
     schoolId: 1,
   },
   {
-    name: 'Détection des pièges',
+    name: 'Sens des pièges',
     level: 2,
     castingTime: '1 action',
     range: 36,
@@ -473,25 +469,21 @@ export const spells: InsertSpell[] = [
     concentration: false,
     description: 'Vous projetez une lueur de feu condensée sur une créature ou un objet à portée. Effectuez un jet d\'attaque de sort à distance. En cas de réussite, la cible subit 1d10 dégâts de feu. Un objet inflammable touché par ce sort s\'enflamme s\'il n\'est pas porté ni transporté.\nLes dégâts augmentent de 1d10 lorsque vous atteignez le niveau 5 (2d10), le niveau 11 (3d10), et le niveau 17 (4d10).',
     schoolId: 5,
-    damage: {
+    damages: [{
       damage_type: DamageType.Fire,
       damage_at_character_level: { '1': '1d10', '5': '2d10', '11': '3d10', '17': '4d10' },
-    },
+    }],
   },
   {
     name: 'Rayon affaiblissant',
-    level: 0,
+    level: 2,
     castingTime: '1 action',
     range: 18,
     components: [SpellComponent.Vocal, SpellComponent.Somatic],
-    duration: 'Instantanée',
-    concentration: false,
-    description: 'Un rayon de lumière noire et nauséabonde fuse de votre doigt. Effectuez un jet d\'attaque de sort à distance contre la créature. En cas de réussite, la cible subit 1d8 dégâts nécrotiques et jusqu\'au début de votre prochain tour, elle a le désavantage aux jets d\'attaque de Force.\nLes dégâts augmentent de 1d8 lorsque vous atteignez le niveau 5 (2d8), le niveau 11 (3d8), et le niveau 17 (4d8).',
+    duration: 'Concentration, jusqu\'à 1 minute',
+    concentration: true,
+    description: 'Un rayon d\'énergie noire et débilitante jaillit de votre doigt vers une créature à portée. Effectuez une attaque de sort à distance. En cas de réussite, la cible n\'inflige plus que la moitié des dégâts lorsqu\'elle attaque avec une arme utilisant la Force, et ce jusqu\'à la fin du sort. À la fin de chacun de ses tours, la cible peut effectuer un jet de sauvegarde de Constitution ; en cas de réussite, le sort prend fin.',
     schoolId: 7,
-    damage: {
-      damage_type: DamageType.Necrotic,
-      damage_at_character_level: { '1': '1d8', '5': '2d8', '11': '3d8', '17': '4d8' },
-    },
   },
   {
     name: 'Contact glacial',
@@ -503,10 +495,10 @@ export const spells: InsertSpell[] = [
     concentration: false,
     description: 'Vous créez une main fantomatique et squelettique dans l\'espace d\'une créature à portée. Effectuez un jet d\'attaque de sort à distance. En cas de réussite, la cible subit 1d8 dégâts nécrotiques et ne peut pas récupérer de points de vie jusqu\'au début de votre prochain tour. Jusqu\'à ce moment-là, la main s\'accroche à la cible.\nSi vous touchez un mort-vivant, il a également le désavantage aux jets d\'attaque contre vous jusqu\'à la fin de votre prochain tour.\nLes dégâts augmentent de 1d8 lorsque vous atteignez le niveau 5 (2d8), le niveau 11 (3d8), et le niveau 17 (4d8).',
     schoolId: 7,
-    damage: {
+    damages: [{
       damage_type: DamageType.Necrotic,
       damage_at_character_level: { '1': '1d8', '5': '2d8', '11': '3d8', '17': '4d8' },
-    },
+    }],
   },
   {
     name: 'Prestidigitation',
@@ -531,10 +523,10 @@ export const spells: InsertSpell[] = [
     concentration: true,
     description: 'Vous imprégniez d\'une maudite énergie surnaturelle une créature que vous pouvez voir à portée. Jusqu\'à la fin du sort, vous infligez 1d6 dégâts nécrotiques supplémentaires à la cible à chaque fois que vous la touchez avec une attaque. De plus, choisissez l\'une des caractéristiques de la cible au moment où vous lancez le sort. La cible a le désavantage aux jets de caractéristique effectués avec la caractéristique choisie.\nSi la cible tombe à 0 point de vie avant que ce sort ne prenne fin, vous pouvez utiliser une action bonus lors de votre tour suivant pour maudire une nouvelle créature.\nUne dissipation de la magie peut mettre un terme à ce sort avant son expiration. Si vous lancez ce sort une nouvelle fois, la malédiction active prend fin prématurément.',
     schoolId: 4,
-    damage: {
+    damages: [{
       damage_type: DamageType.Necrotic,
-      damage_at_slot_level: { '1': '1d6', '3': '2d6', '5': '3d6', '7': '4d6' },
-    },
+      damage_at_slot_level: { '1': '1d6' },
+    }],
   },
   {
     name: 'Compréhension des langues',
@@ -560,10 +552,10 @@ export const spells: InsertSpell[] = [
     concentration: false,
     description: 'Une force magique et protectrice vous entoure, se manifestant par un revêtement de givre spectral couvrant vous et vos vêtements. Vous gagnez 5 points de vie temporaires pour la durée du sort. Si une créature vous touche avec une attaque de corps à corps alors que vous avez ces points de vie temporaires, la créature subit 5 dégâts de froid.\nLorsque vous lancez ce sort en utilisant un emplacement de sort de niveau 2 ou supérieur, les points de vie temporaires et les dégâts de froid augmentent tous les deux de 5 pour chaque niveau d\'emplacement supérieur au niveau 1.',
     schoolId: 1,
-    damage: {
+    damages: [{
       damage_type: DamageType.Cold,
       damage_at_slot_level: { '1': '5', '2': '10', '3': '15', '4': '20', '5': '25' },
-    },
+    }],
   },
   {
     name: 'Pattes d\'araignée',
@@ -575,17 +567,6 @@ export const spells: InsertSpell[] = [
     duration: 'Concentration, jusqu\'à 1 heure',
     concentration: true,
     description: 'Jusqu\'à la fin du sort, vous pouvez vous déplacer sur les surfaces verticales et au plafond, les mains libres. Vous avez aussi une vitesse d\'escalade égale à votre vitesse de déplacement.',
-    schoolId: 8,
-  },
-  {
-    name: 'Porte-objet',
-    level: 2,
-    castingTime: '1 action',
-    range: 18,
-    components: [SpellComponent.Vocal, SpellComponent.Somatic],
-    duration: '1 heure',
-    concentration: false,
-    description: 'Un objet que vous voyez à portée est animé pour une durée limitée. Choisissez un objet n\'étant pas porté ni transporté et pouvant tenir dans un cube de 90 centimètres de côté. La cible s\'anime et gagne une intelligence rudimentaire et la capacité à se déplacer et agir. Elle adopte les statistiques du bloc de statistiques de porte-objet du MJ pendant la durée du sort. Lorsque le sort se termine, l\'objet-être reprend sa forme d\'objet inerte, et tous les points de vie restants disparaissent.\nSi vous concentrez le sort sur cette durée maximale, l\'objet est temporairement détruit (il disparaît) et reparaît au début de votre tour suivant à l\'emplacement où il a été détruit.',
     schoolId: 8,
   },
   {
@@ -617,7 +598,7 @@ export const spells: InsertSpell[] = [
     schoolId: 8,
   },
   {
-    name: 'Tentacules noirs',
+    name: 'Tentacules noirs d\'Evard',
     level: 4,
     castingTime: '1 action',
     range: 27,
@@ -630,10 +611,10 @@ export const spells: InsertSpell[] = [
       ability: AbilityScore.Dexterity,
       success: 'none',
     },
-    damage: {
+    damages: [{
       damage_type: DamageType.Bludgeoning,
       damage_at_slot_level: { '4': '3d6' },
-    },
+    }],
   },
   // ─── Sorts d'Ambroise (Occultiste) ───────────────────────────────────────────
 
@@ -646,10 +627,10 @@ export const spells: InsertSpell[] = [
     duration: 'Instantanée',
     description: 'Un rayon de lumière crépitante jaillit vers une créature à portée. Effectuez une attaque de sort à distance contre la cible. Si l\'attaque touche, la cible subit 1d10 dégâts de force.\nLe sort crée plus de rayons quand vous montez en niveaux : deux rayons au niveau 5, trois rayons au niveau 11 et quatre rayons au niveau 17. Vous pouvez viser la même créature ou des créatures différentes avec ces rayons. Effectuez un jet d\'attaque séparé pour chaque rayon.',
     schoolId: 5,
-    damage: {
+    damages: [{
       damage_type: DamageType.Force,
       damage_at_character_level: { 1: '1d10', 5: '2d10', 11: '3d10', 17: '4d10' },
-    },
+    }],
     multiAttack: {
       label: 'Rayon',
       count_at_character_level: { 1: 1, 5: 2, 11: 3, 17: 4 },
@@ -665,10 +646,10 @@ export const spells: InsertSpell[] = [
     duration: 'Instantanée',
     description: 'Dans le cadre de l\'action utilisée pour lancer ce sort, vous devez effectuer une attaque avec une arme de corps à corps contre une créature à portée, sinon le sort échoue. Si l\'attaque touche, l\'arme inflige ses dégâts normaux, et une flamme verte jaillit vers une seconde créature de votre choix à 1,50 m de la première. Cette seconde créature subit des dégâts de feu égaux à votre modificateur d\'incantation.\nÀ partir du niveau 5, l\'attaque inflige 1d8 dégâts de feu supplémentaires à la cible initiale, et les dégâts à la seconde créature passent à 1d8 + votre modificateur d\'incantation.',
     schoolId: 5,
-    damage: {
+    damages: [{
       damage_type: DamageType.Fire,
       damage_at_character_level: { 5: '1d8', 11: '2d8', 17: '3d8' },
-    },
+    }],
   },
   {
     name: 'Piqûre mentale',
@@ -680,10 +661,10 @@ export const spells: InsertSpell[] = [
     description: 'Vous lancez une piqûre d\'énergie psychique déstabilisante sur une créature que vous pouvez voir à portée. La cible doit réussir un jet de sauvegarde d\'Intelligence ou subir 1d6 dégâts psychiques et soustraire 1d4 de son prochain jet de sauvegarde avant la fin de votre prochain tour.\nLes dégâts augmentent de 1d6 quand vous atteignez le niveau 5 (2d6), le niveau 11 (3d6) et le niveau 17 (4d6).',
     schoolId: 4,
     dc: { ability: AbilityScore.Intelligence, success: 'none' },
-    damage: {
+    damages: [{
       damage_type: DamageType.Psychic,
       damage_at_character_level: { 1: '1d6', 5: '2d6', 11: '3d6', 17: '4d6' },
-    },
+    }],
   },
   {
     name: 'Bouffée de poison',
@@ -695,10 +676,10 @@ export const spells: InsertSpell[] = [
     description: 'Vous étendez la main vers une créature que vous pouvez voir à portée et projetez une bouffée de gaz nauséabond. La créature doit réussir un jet de sauvegarde de Constitution ou subir 1d12 dégâts de poison.\nLes dégâts augmentent de 1d12 quand vous atteignez le niveau 5 (2d12), le niveau 11 (3d12) et le niveau 17 (4d12).',
     schoolId: 2,
     dc: { ability: AbilityScore.Constitution, success: 'none' },
-    damage: {
+    damages: [{
       damage_type: DamageType.Poison,
       damage_at_character_level: { 1: '1d12', 5: '2d12', 11: '3d12', 17: '4d12' },
-    },
+    }],
   },
   {
     name: 'Contrôle des flammes',
@@ -720,10 +701,10 @@ export const spells: InsertSpell[] = [
     duration: '1 round',
     description: 'Dans le cadre de l\'action utilisée pour lancer ce sort, vous effectuez une attaque avec une arme de corps à corps contre une créature à portée. Si l\'attaque touche, la cible subit les dégâts normaux de l\'arme et est entourée d\'une énergie tonique jusqu\'au début de votre prochain tour. Si la cible se déplace volontairement d\'au moins 1,50 m, elle subit 1d8 dégâts de tonnerre.\nAu niveau 5 : les dégâts au mouvement passent à 2d8. Au niveau 11 : l\'attaque inflige aussi 1d8 dégâts de tonnerre, les dégâts au mouvement passent à 3d8. Au niveau 17 : dégâts initiaux 2d8, dégâts au mouvement 4d8.',
     schoolId: 5,
-    damage: {
+    damages: [{
       damage_type: DamageType.Thunder,
       damage_at_character_level: { 1: '1d8', 5: '2d8', 11: '3d8', 17: '4d8' },
-    },
+    }],
   },
   {
     name: 'Tentacules de Hadar',
@@ -735,10 +716,10 @@ export const spells: InsertSpell[] = [
     description: 'Vous invoquez la puissance de Hadar et des tentacules de ténèbres obscures émanent de vous. Chaque créature dans un rayon de 3 mètres autour de vous doit effectuer un jet de sauvegarde de Force. En cas d\'échec, elle subit 2d6 dégâts nécrotiques et ne peut pas prendre de réaction jusqu\'à son prochain tour. En cas de réussite, elle subit la moitié des dégâts et n\'est pas entravée.\nAux niveaux supérieurs : les dégâts augmentent de 1d6 pour chaque niveau d\'emplacement au-delà du 1er.',
     schoolId: 2,
     dc: { ability: AbilityScore.Strength },
-    damage: {
+    damages: [{
       damage_type: DamageType.Necrotic,
       damage_at_slot_level: { '1': '2d6', '2': '3d6', '3': '4d6', '4': '5d6', '5': '6d6' },
-    },
+    }],
   },
   {
     name: 'Armure de mage',
@@ -773,10 +754,10 @@ export const spells: InsertSpell[] = [
     description: 'Vous façonnez une illusion dans l\'esprit d\'une créature que vous pouvez voir à portée. La cible doit effectuer un jet de sauvegarde d\'Intelligence. En cas d\'échec, vous créez un objet, une créature ou un phénomène fantasmagorique de taille G ou plus petite, perceptible uniquement par elle.\nTant qu\'elle est affectée, la cible traite le fantasme comme réel. Elle peut utiliser son action pour examiner l\'illusion (Intelligence/Investigation contre votre DD). En cas de réussite, le sort prend fin. Si le fantasme est dangereux, la cible subit 1d6 dégâts psychiques à chaque tour passé dans son espace.',
     schoolId: 6,
     dc: { ability: AbilityScore.Intelligence, success: 'none' },
-    damage: {
+    damages: [{
       damage_type: DamageType.Psychic,
       damage_at_slot_level: { '2': '1d6' },
-    },
+    }],
   },
   {
     name: 'Voracité de Hadar',
@@ -787,13 +768,21 @@ export const spells: InsertSpell[] = [
     material: 'un tentacule de poulpe mariné ou une goutte de bile',
     duration: 'Concentration, jusqu\'à 1 minute',
     concentration: true,
-    description: 'Vous ouvrez un portail vers l\'obscurité entre les étoiles. Une sphère de ténèbres de 6 mètres de rayon apparaît centrée sur un point à portée. La zone est de ténèbres absolues : nulle lumière, magique ou non, ne peut l\'illuminer.\nLes créatures qui entrent dans la zone pour la première fois à un tour ou qui commencent leur tour là-dedans doivent réussir un jet de sauvegarde de Dextérité ou subir 2d6 dégâts de froid. Une créature qui finit son tour dans la zone subit 2d6 dégâts d\'acide.',
+    description: 'Vous ouvrez un portail vers l\'obscurité glacée qui règne entre les étoiles. Une sphère de ténèbres absolues de 6 mètres de rayon apparaît, centrée sur un point à portée : aucune lumière, magique ou non, ne peut l\'illuminer, et la zone devient un terrain difficile empli de murmures affamés.\nUne créature qui commence son tour dans la zone subit 2d6 dégâts de froid, sans jet de sauvegarde. Une créature qui termine son tour dans la zone doit réussir un jet de sauvegarde de Dextérité, sous peine de subir 2d6 dégâts d\'acide alors que des tentacules faméliques la lacèrent.',
     schoolId: 2,
     dc: { ability: AbilityScore.Dexterity },
-    damage: {
-      damage_type: DamageType.Cold,
-      damage_at_slot_level: { '3': '2d6' },
-    },
+    damages: [
+      {
+        damage_type: DamageType.Cold,
+        label: 'Début de tour dans la zone',
+        damage_at_slot_level: { '3': '2d6' },
+      },
+      {
+        damage_type: DamageType.Acid,
+        label: 'Fin de tour (JdS Dextérité)',
+        damage_at_slot_level: { '3': '2d6' },
+      },
+    ],
   },
   {
     name: 'Ennemis à foison',
@@ -851,10 +840,10 @@ export const spells: InsertSpell[] = [
     description: 'L\'énergie nécromantique envahit une créature à portée, lui suçant vie et humidité. La cible effectue un jet de sauvegarde de Constitution. En cas d\'échec, elle subit 8d8 dégâts nécrotiques ; en cas de réussite, la moitié. Sans effet sur les morts-vivants ou les artificiels.\nSi vous ciblez une plante ou une créature végétale, elle effectue son jet avec désavantage et le sort inflige le maximum de dégâts.\nAux niveaux supérieurs : les dégâts augmentent de 1d8 pour chaque niveau au-delà du 4e.',
     schoolId: 7,
     dc: { ability: AbilityScore.Constitution },
-    damage: {
+    damages: [{
       damage_type: DamageType.Necrotic,
       damage_at_slot_level: { '4': '8d8', '5': '9d8', '6': '10d8', '7': '11d8', '8': '12d8', '9': '13d8' },
-    },
+    }],
   },
   {
     name: 'Perturbations synaptiques',
@@ -866,10 +855,10 @@ export const spells: InsertSpell[] = [
     description: 'Vous provoquez une explosion psychique depuis un point à portée. Chaque créature dans une sphère de 6 mètres de rayon centrée sur ce point doit effectuer un jet de sauvegarde d\'Intelligence. En cas d\'échec, elle subit 8d6 dégâts psychiques et est étourdissante jusqu\'à la fin de son prochain tour : elle doit soustraire 1d6 de chaque jet d\'attaque, test de caractéristique et jet de sauvegarde de Constitution pour maintenir la concentration sur un sort.',
     schoolId: 4,
     dc: { ability: AbilityScore.Intelligence, success: 'none' },
-    damage: {
+    damages: [{
       damage_type: DamageType.Psychic,
       damage_at_slot_level: { '5': '8d6' },
-    },
+    }],
   },
   {
     name: 'Prison mentale',
@@ -882,10 +871,10 @@ export const spells: InsertSpell[] = [
     description: 'Vous créez une prison d\'illusion dans l\'esprit d\'une créature que vous pouvez voir à portée. La cible effectue un jet de sauvegarde d\'Intelligence. En cas d\'échec, elle est entravée pour la durée et perçoit un espace dangereux autour d\'elle. Si elle se déplace ou effectue une action ou une réaction, elle subit 5d10 dégâts psychiques. Si le sort prend fin ou si elle réussit son jet initial, elle subit 5d10 dégâts psychiques.',
     schoolId: 6,
     dc: { ability: AbilityScore.Intelligence, success: 'none' },
-    damage: {
+    damages: [{
       damage_type: DamageType.Psychic,
       damage_at_slot_level: { '6': '5d10' },
-    },
+    }],
   },
   {
     name: 'Appel de familier',
@@ -905,8 +894,9 @@ export const spells: InsertSpell[] = [
     castingTime: '1 minute',
     range: 0,
     components: [SpellComponent.Vocal],
-    duration: 'Concentration, jusqu\'à 1 minute',
-    concentration: true,
+    ritual: true,
+    duration: '1 minute',
+    concentration: false,
     description: 'Vous placez votre conscience en contact avec un demi-dieu, l\'esprit d\'un sage décédé, ou quelque autre entité mystérieuse depuis un autre plan d\'existence. Le contact avec cette intellect aux pouvoirs extraplanaires est épuisant, voire mortel, et peut vous rendre fou. Vous posez à l\'entité jusqu\'à cinq questions. Vous devez poser chaque question avant que le sort ne prenne fin. Le MD détermine la réponse à chaque question et peut répondre par une courte phrase, vous décrire une vision ou affirmer qu\'il ne sait pas. Dans ce dernier cas, il n\'y a pas d\'effet négatif. Si la communication s\'interrompt prématurément, vous avez un taux d\'échec de 1 sur un d6 pour chaque tentative de contact suivante.',
     schoolId: 3,
   },
@@ -923,13 +913,13 @@ export const spells: InsertSpell[] = [
     description: 'Une sphère d\'énergie négative déferle en une sphère de 18 mètres de rayon centrée sur un point à portée. Chaque créature dans la zone doit effectuer un jet de sauvegarde de Constitution. En cas d\'échec, elle subit 8d6 dégâts nécrotiques ; en cas de réussite, la moitié.\nAux niveaux supérieurs : les dégâts augmentent de 2d6 par niveau d\'emplacement au-delà du 6e.',
     schoolId: 7,
     dc: { ability: AbilityScore.Constitution },
-    damage: {
+    damages: [{
       damage_type: DamageType.Necrotic,
       damage_at_slot_level: { '6': '8d6', '7': '10d6', '8': '12d6', '9': '14d6' },
-    },
+    }],
   },
   {
-    name: 'Conjuration de fée',
+    name: 'Invocation de fée',
     level: 6,
     castingTime: '1 action',
     range: 27,
@@ -961,13 +951,13 @@ export const spells: InsertSpell[] = [
     description: 'Un fin rayon vert jaillit de votre doigt vers une cible à portée : créature, objet non magique de taille humanoïde ou inférieure, ou création magique de force (mur de force, etc.).\nUne créature ciblée doit effectuer un jet de sauvegarde de Dextérité. En cas d\'échec, elle subit 10d6 + 40 dégâts de force. Si ses PV tombent à 0, elle est désintégrée — il ne reste que de la poussière. Seul un souhait peut la ramener.\nUn objet ou une création magique est entièrement désintégré.\nAux niveaux supérieurs : 3d6 dégâts supplémentaires par niveau au-delà du 6e.',
     schoolId: 8,
     dc: { ability: AbilityScore.Dexterity },
-    damage: {
+    damages: [{
       damage_type: DamageType.Force,
       damage_at_slot_level: { '6': '10d6+40', '7': '13d6+40', '8': '16d6+40', '9': '19d6+40' },
-    },
+    }],
   },
   {
-    name: 'Mauvais œil',
+    name: 'Mauvais oeil',
     level: 6,
     castingTime: '1 action',
     range: 0,
@@ -979,7 +969,7 @@ export const spells: InsertSpell[] = [
     dc: { ability: AbilityScore.Wisdom, success: 'none' },
   },
   {
-    name: 'Vision lucide',
+    name: 'Vision suprême',
     level: 6,
     castingTime: '1 action',
     range: 1.5,
@@ -1013,10 +1003,10 @@ export const spells: InsertSpell[] = [
     description: 'Vous envoyez une énergie négative en parcourant le corps d\'une créature à portée, lui infligeant souffrance déchirante. La cible effectue un jet de sauvegarde de Constitution. Échec : 7d8 + 30 dégâts nécrotiques. Réussite : la moitié.\nUn humanoïde tué par ce sort se relève au début de votre prochain tour en tant que zombie sous votre contrôle permanent. Il suit vos ordres verbaux.',
     schoolId: 7,
     dc: { ability: AbilityScore.Constitution },
-    damage: {
+    damages: [{
       damage_type: DamageType.Necrotic,
       damage_at_slot_level: { '7': '7d8+30' },
-    },
+    }],
   },
   {
     name: 'Forme éthérée',
@@ -1029,7 +1019,7 @@ export const spells: InsertSpell[] = [
     schoolId: 8,
   },
   {
-    name: 'Voyage planaire',
+    name: 'Changement de plan',
     level: 7,
     castingTime: '1 action',
     range: 1.5,

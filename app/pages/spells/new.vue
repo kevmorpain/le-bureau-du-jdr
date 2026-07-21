@@ -132,7 +132,7 @@
       >
         <UFormField :label="$t('new_spell.damage.type_label')">
           <USelect
-            v-model="spell.damage!.damage_type"
+            v-model="spell.damages![0].damage_type"
             :items="damageTypesOptions"
             value-key="id"
           />
@@ -228,7 +228,7 @@ const spell = ref<InsertSpell>({
   description: '',
   schoolId: 1,
   dc: null,
-  damage: null,
+  damages: null,
   heal: null,
 })
 
@@ -253,15 +253,15 @@ const damageLevelKind = ref<typeof damageLevelKinds[number]>(damageLevelKinds[0]
 
 const initDamage = () => {
   isDamageCollapsibleVisible.value = true
-  spell.value.damage = {
+  spell.value.damages = [{
     damage_type: DamageType.Acid,
     damage_at_character_level: {},
-  }
+  }]
 }
 
 const clearDamage = () => {
   isDamageCollapsibleVisible.value = false
-  spell.value.damage = null
+  spell.value.damages = null
 }
 
 const toaster = useToast()

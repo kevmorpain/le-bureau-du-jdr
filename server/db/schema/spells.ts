@@ -40,6 +40,24 @@ type SlotLevel = string // e.g., "1", "2", "3", etc.
 type CharacterLevel = string // e.g., "1", "2", "3", etc.
 type Die = string // e.g., "1d6", "2d8"
 
+/**
+ * Une composante de dégâts d'un sort. Un sort peut en cumuler plusieurs (types
+ * différents et/ou déclencheurs différents), par ex. Voracité de Hadar
+ * (froid à l'entrée + acide en fin de tour). Chaque entrée porte son propre type
+ * et sa propre progression de dés.
+ *
+ * `label` (optionnel) désambiguïse une entrée quand le sort en a plusieurs
+ * (ex. « à l'entrée », « en fin de tour », « cible secondaire »).
+ */
+export type DamageEntry = {
+  damage_type: DamageType
+  label?: string
+  isSpellcastingModifierAdded?: boolean
+} & (
+  | { damage_at_character_level: Record<CharacterLevel, Die> }
+  | { damage_at_slot_level: Record<SlotLevel, Die> }
+)
+
 const spells = sqliteTable('spells', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
@@ -61,16 +79,8 @@ const spells = sqliteTable('spells', {
   dc: text('dc', { mode: 'json' })
     .$type<{ ability: AbilityScore, success?: DcSuccessEffect }>(),
 
-  damage: text('damage', { mode: 'json' })
-    .$type<{
-      damage_type: DamageType
-      damage_at_character_level: Record<CharacterLevel, Die>
-      isSpellcastingModifierAdded?: boolean
-    } | {
-      damage_type: DamageType
-      damage_at_slot_level: Record<SlotLevel, Die>
-      isSpellcastingModifierAdded?: boolean
-    }>(),
+  damages: text('damages', { mode: 'json' })
+    .$type<DamageEntry[]>(),
 
   heal: text('heal', { mode: 'json' })
     .$type<{

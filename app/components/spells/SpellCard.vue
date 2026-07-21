@@ -102,7 +102,7 @@
       />
 
       <DamageSection
-        v-if="spell.damage"
+        v-if="spell.damages?.length"
         :spell
       />
 

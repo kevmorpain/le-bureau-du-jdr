@@ -1,23 +1,35 @@
 <template>
-  <div v-if="defaultDie">
-    <p
-      v-if="isSpellbook"
-      class="text-2xl"
+  <div v-if="lines.length">
+    <div
+      v-for="line in lines"
+      :key="line.key"
     >
-      {{ defaultDieText }}
-    </p>
+      <p
+        v-if="line.label"
+        class="text-xs text-muted"
+      >
+        {{ line.label }}
+      </p>
 
-    <p
-      :class="[
-        `text-${spell.damage!.damage_type}`,
-        {
-          'text-2xl': !isSpellbook,
-          'text-lg': isSpellbook,
-        },
-      ]"
-    >
-      {{ dieText }}
-    </p>
+      <p
+        v-if="isSpellbook"
+        class="text-2xl"
+      >
+        {{ line.rangeText }}
+      </p>
+
+      <p
+        :class="[
+          `text-${line.damageType}`,
+          {
+            'text-2xl': !isSpellbook,
+            'text-lg': isSpellbook,
+          },
+        ]"
+      >
+        {{ line.dieText }}
+      </p>
+    </div>
   </div>
   <p
     v-else
@@ -31,6 +43,8 @@
 const props = defineProps<{
   spell: Spell
 }>()
+
+type DamageEntry = NonNullable<Spell['damages']>[number]
 
 const { t } = useI18n()
 
@@ -59,66 +73,74 @@ const eldritchBlastBonus = computed<number>(() => {
 })
 
 const slotLevel = ref<number>(props.spell.level)
-const closestCharacterLevelDamage = computed<string | undefined>(() => {
-  if (!('damage_at_character_level' in props.spell.damage!)) return undefined
 
-  const list = props.spell.damage!.damage_at_character_level
-  const level = closestLevel(Object.keys(list).map(Number), characterLevel.value)
-
-  return level !== undefined ? list[String(level)] : undefined
-})
-
-const closestSlotLevelDamage = computed<string | undefined>(() => {
-  if (!('damage_at_slot_level' in props.spell.damage!)) return undefined
-
-  const list = props.spell.damage!.damage_at_slot_level
+const dieForEntry = (entry: DamageEntry): string | undefined => {
+  if ('damage_at_character_level' in entry) {
+    const list = entry.damage_at_character_level
+    const level = closestLevel(Object.keys(list).map(Number), characterLevel.value)
+    return level !== undefined ? list[String(level)] : undefined
+  }
+  const list = entry.damage_at_slot_level
   const level = closestLevel(Object.keys(list).map(Number), slotLevel.value)
-
   return level !== undefined ? list[String(level)] : undefined
-})
+}
 
-const defaultDie = computed<string | undefined>(() => closestCharacterLevelDamage.value ?? closestSlotLevelDamage.value)
+// Bonus global (modificateur d'incantation + bonus manifestation) pour une entrée.
+const bonusForEntry = (entry: DamageEntry): number => {
+  let bonus = 0
+  if (entry.isSpellcastingModifierAdded && spellcastingModifier.value !== null) bonus += spellcastingModifier.value ?? 0
+  bonus += eldritchBlastBonus.value // = 0 pour tout sort autre que Décharge occulte
+  return bonus
+}
 
-const hasModifier = computed<boolean | undefined>(() => props.spell.damage!.isSpellcastingModifierAdded)
+type Line = { key: string, label?: string, damageType: string, dieText: string, rangeText: string }
 
-const dieText = computed<string>(() => {
-  if (!defaultDie.value) return ''
-  let text = defaultDie.value
+const lines = computed<Line[]>(() => {
+  const damages = props.spell.damages ?? []
+  const result: Line[] = []
 
-  // Bonus global (modificateur d'incantation + bonus manifestation)
-  let totalBonus = 0
-  if (hasModifier.value && spellcastingModifier.value !== null) totalBonus += spellcastingModifier.value ?? 0
-  totalBonus += eldritchBlastBonus.value
+  for (const [i, entry] of damages.entries()) {
+    const die = dieForEntry(entry)
+    if (!die) continue
 
-  if (totalBonus !== 0) {
+    const bonus = bonusForEntry(entry)
+
+    // Texte principal (die + éventuel modificateur + type de dégâts)
+    let dieText = die
+    if (bonus !== 0) {
+      if (isSpellbook) {
+        dieText += ` ${formatModifier(bonus)}`
+      }
+      else if (entry.isSpellcastingModifierAdded && eldritchBlastBonus.value === 0) {
+        dieText += ' + mod'
+      }
+      else {
+        dieText += ` ${formatModifier(bonus)}`
+      }
+    }
+    if (!isSpellbook) {
+      const count = isNumeric(die) ? Number(die) : 0
+      dieText += ` ${t(`damage_types.${entry.damage_type}`, count)}`
+    }
+
+    // Fourchette min~max (mode grimoire)
+    let rangeText = ''
     if (isSpellbook) {
-      text += ` ${formatModifier(totalBonus)}`
+      const { count, die: faces } = parseDie(die)
+      const min = count + bonus
+      const max = count * faces + bonus
+      rangeText = `${min}${min !== max ? `~${max}` : ''} ${t(`damage_types.${entry.damage_type}`, Math.max(min, max))}`
     }
-    else if (hasModifier.value && eldritchBlastBonus.value === 0) {
-      text += ' + mod'
-    }
-    else {
-      text += ` ${formatModifier(totalBonus)}`
-    }
+
+    result.push({
+      key: `${entry.damage_type}-${i}`,
+      label: entry.label,
+      damageType: entry.damage_type,
+      dieText,
+      rangeText,
+    })
   }
 
-  if (!isSpellbook) {
-    const count = isNumeric(defaultDie.value) ? Number(defaultDie.value) : 0
-
-    text += ` ${t(`damage_types.${props.spell.damage!.damage_type}`, count)}`
-  }
-
-  return text
-})
-
-const defaultDieText = computed<string>(() => {
-  if (!defaultDie.value) return ''
-  const { count, die } = parseDie(defaultDie.value)
-
-  const modifier = (hasModifier.value && spellcastingModifier.value ? spellcastingModifier.value : 0) + eldritchBlastBonus.value
-  const min = count + modifier
-  const max = count * die + modifier
-
-  return `${min}${min !== max ? `~${max}` : ''} ${t(`damage_types.${props.spell.damage!.damage_type}`, Math.max(min, max))}`
+  return result
 })
 </script>

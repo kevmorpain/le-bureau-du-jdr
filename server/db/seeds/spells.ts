@@ -1,5 +1,9 @@
 import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
+// Schéma importé depuis la source (pas hub:db) : la table `spells` a évolué
+// (colonne `damage` → `damages[]`) et le cache ESM de hub:db peut être périmé,
+// ce qui ferait silencieusement tomber les nouveaux champs (cf. docs/CLAUDE.md).
+import * as srcSchema from '~~/server/db/schema'
 import { spells } from './data/spells'
 import { spellClassMappings } from './data/spell_class_mappings'
 
@@ -17,7 +21,7 @@ export default async function seed() {
   // existants en 2 requêtes, plutôt qu'un findFirst par sort (73) + un insert
   // par lien (223) à chaque run. Sans ça, le seed explose la limite de requêtes
   // D1 par invocation Worker (cf. server/db/seeds/run.ts, mode ?only=).
-  const existingSpells = await db.select().from(schema.spells)
+  const existingSpells = await db.select().from(srcSchema.spells)
   const spellByName = new Map(existingSpells.map(s => [s.name, s]))
 
   const existingLinks = await db
@@ -35,10 +39,18 @@ export default async function seed() {
 
     let spellId: number
     if (existing) {
-      // Resync des champs « contenu » (JSON et descriptifs) — les seeds restent
-      // la source de vérité pour les définitions de sorts.
+      // Resync « source de vérité » : les seeds pilotent la définition complète
+      // des sorts (hors le nom, dont les renommages passent par migration pour
+      // éviter les doublons). On resynchronise donc tous les champs de contenu.
       const next = {
-        damage: (spell as any).damage ?? null,
+        level: spell.level,
+        schoolId: spell.schoolId,
+        castingTime: spell.castingTime,
+        range: spell.range,
+        duration: spell.duration,
+        components: spell.components ?? [],
+        material: spell.material ?? null,
+        damages: (spell as any).damages ?? null,
         heal: (spell as any).heal ?? null,
         multiAttack: (spell as any).multiAttack ?? null,
         dc: (spell as any).dc ?? null,
@@ -47,7 +59,14 @@ export default async function seed() {
         concentration: spell.concentration ?? false,
       }
       const changed
-        = JSON.stringify(existing.damage) !== JSON.stringify(next.damage)
+        = existing.level !== next.level
+        || existing.schoolId !== next.schoolId
+        || existing.castingTime !== next.castingTime
+        || existing.range !== next.range
+        || existing.duration !== next.duration
+        || JSON.stringify(existing.components) !== JSON.stringify(next.components)
+        || existing.material !== next.material
+        || JSON.stringify(existing.damages) !== JSON.stringify(next.damages)
         || JSON.stringify(existing.heal) !== JSON.stringify(next.heal)
         || JSON.stringify(existing.multiAttack) !== JSON.stringify(next.multiAttack)
         || JSON.stringify(existing.dc) !== JSON.stringify(next.dc)
@@ -57,9 +76,9 @@ export default async function seed() {
 
       if (changed) {
         await db
-          .update(schema.spells)
+          .update(srcSchema.spells)
           .set(next)
-          .where(eq(schema.spells.id, existing.id))
+          .where(eq(srcSchema.spells.id, existing.id))
         updated++
       }
       else {
@@ -68,7 +87,7 @@ export default async function seed() {
       spellId = existing.id
     }
     else {
-      spellId = await db.insert(schema.spells).values(spell).returning().get().then(r => (inserted++, r.id))
+      spellId = await db.insert(srcSchema.spells).values(spell).returning().get().then(r => (inserted++, r.id))
     }
 
     for (const className of classesBySpellName[spell.name] ?? []) {

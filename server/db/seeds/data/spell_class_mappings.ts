@@ -8,7 +8,7 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Glas', classNames: ['Clerc', 'Occultiste'] },
   { spellName: 'Lumière', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien'] },
   { spellName: 'Trait de feu', classNames: ['Ensorceleur', 'Magicien'] },
-  { spellName: 'Rayon affaiblissant', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Rayon affaiblissant', classNames: ['Magicien', 'Occultiste'] },
   { spellName: 'Contact glacial', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Prestidigitation', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
@@ -22,7 +22,7 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Détection de la magie', classNames: ['Barde', 'Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Paladin', 'Rôdeur'] },
   { spellName: 'Détection du mal et du bien', classNames: ['Clerc', 'Paladin'] },
   { spellName: 'Protection contre le mal et le bien', classNames: ['Barde', 'Clerc', 'Magicien', 'Paladin'] },
-  { spellName: 'Rayon traçant', classNames: ['Clerc'] },
+  { spellName: 'Éclair traçant', classNames: ['Clerc'] },
   { spellName: 'Bénédiction', classNames: ['Clerc', 'Paladin'] },
   { spellName: 'Blessure', classNames: ['Clerc'] },
   { spellName: 'Maléfice', classNames: ['Occultiste'] },
@@ -35,24 +35,23 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Augure', classNames: ['Clerc'] },
   { spellName: 'Suggestion', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Arme spirituelle', classNames: ['Clerc'] },
-  { spellName: 'Cécité / Surdité', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Cécité/Surdité', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Immobilisation de personne', classNames: ['Barde', 'Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste', 'Paladin'] },
   { spellName: 'Lien de protection', classNames: ['Clerc'] },
   { spellName: 'Localisation d\'objet', classNames: ['Barde', 'Clerc', 'Druide', 'Paladin'] },
   { spellName: 'Prière de guérison', classNames: ['Clerc'] },
   { spellName: 'Protection contre le poison', classNames: ['Clerc', 'Druide', 'Paladin', 'Rôdeur'] },
   { spellName: 'Restauration partielle', classNames: ['Barde', 'Clerc', 'Druide', 'Paladin', 'Rôdeur'] },
-  { spellName: 'Détection des pièges', classNames: ['Clerc', 'Druide', 'Rôdeur'] },
+  { spellName: 'Sens des pièges', classNames: ['Clerc', 'Druide', 'Rôdeur'] },
   { spellName: 'Zone de vérité', classNames: ['Clerc', 'Paladin'] },
   { spellName: 'Pattes d\'araignée', classNames: ['Druide', 'Ensorceleur', 'Magicien', 'Occultiste', 'Rôdeur'] },
-  { spellName: 'Porte-objet', classNames: ['Magicien', 'Occultiste'] },
 
   // ─── Niveau 3 ─────────────────────────────────────────────────────────────────
   { spellName: 'Peur', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Vol', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
 
   // ─── Niveau 4 ─────────────────────────────────────────────────────────────────
-  { spellName: 'Tentacules noirs', classNames: ['Magicien', 'Occultiste'] },
+  { spellName: 'Tentacules noirs d\'Evard', classNames: ['Magicien', 'Occultiste'] },
   { spellName: 'Charme-monstre', classNames: ['Barde', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Flétrissement', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
@@ -63,17 +62,17 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   // ─── Niveau 6 ─────────────────────────────────────────────────────────────────
   { spellName: 'Prison mentale', classNames: ['Magicien', 'Occultiste'] },
   { spellName: 'Cercle de mort', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
-  { spellName: 'Conjuration de fée', classNames: ['Druide', 'Occultiste'] },
+  { spellName: 'Invocation de fée', classNames: ['Druide', 'Occultiste'] },
   { spellName: 'Création de mort-vivant', classNames: ['Clerc', 'Magicien', 'Occultiste'] },
   { spellName: 'Désintégration', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
-  { spellName: 'Mauvais œil', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
-  { spellName: 'Vision lucide', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Mauvais oeil', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Vision suprême', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
   // ─── Niveau 7 ─────────────────────────────────────────────────────────────────
   { spellName: 'Cage de force', classNames: ['Barde', 'Magicien', 'Occultiste'] },
   { spellName: 'Doigt de mort', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Forme éthérée', classNames: ['Barde', 'Clerc', 'Magicien', 'Occultiste', 'Ensorceleur'] },
-  { spellName: 'Voyage planaire', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Changement de plan', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
   // ─── Sorts d'Ambroise ─────────────────────────────────────────────────────────
 

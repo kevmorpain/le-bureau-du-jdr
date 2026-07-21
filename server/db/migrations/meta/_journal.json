@@ -498,6 +498,20 @@
       "when": 1747872028000,
       "tag": "0070_gnome_des_roches_rename",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "6",
+      "when": 1747872029000,
+      "tag": "0071_spells_phb_naming",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "6",
+      "when": 1747872030000,
+      "tag": "0072_spells_damages_array",
+      "breakpoints": true
     }
   ]
 }
