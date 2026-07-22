@@ -8,7 +8,7 @@
         icon="i-heroicons:plus"
         size="xs"
         variant="ghost"
-        @click="slideoverOpen = true"
+        @click="openAdd"
       >
         Ajouter
       </UButton>
@@ -115,6 +115,17 @@
                 />
               </UTooltip>
 
+              <!-- Édition (objets custom uniquement) -->
+              <UButton
+                v-if="entry.item?.isCustom"
+                icon="i-heroicons:pencil-square"
+                size="sm"
+                variant="ghost"
+                color="neutral"
+                class="shrink-0"
+                @click.stop="openEdit(entry)"
+              />
+
               <!-- Delete -->
               <UButton
                 icon="i-heroicons:trash"
@@ -130,7 +141,7 @@
               <div class="mt-2 space-y-2 text-sm">
                 <p
                   v-if="entry.item?.description"
-                  class="text-muted text-sm"
+                  class="text-muted text-sm whitespace-pre-line"
                 >
                   {{ entry.item.description }}
                 </p>
@@ -326,6 +337,17 @@
               />
             </UTooltip>
 
+            <!-- Édition (objets custom uniquement) -->
+            <UButton
+              v-if="entry.item?.isCustom"
+              icon="i-heroicons:pencil-square"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              class="shrink-0"
+              @click.stop="openEdit(entry)"
+            />
+
             <!-- Delete -->
             <UButton
               icon="i-heroicons:trash"
@@ -408,6 +430,14 @@
             />
 
             <UButton
+              v-if="entry.item?.isCustom"
+              icon="i-heroicons:pencil-square"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              @click.stop="openEdit(entry)"
+            />
+            <UButton
               icon="i-heroicons:trash"
               size="xs"
               variant="ghost"
@@ -417,7 +447,7 @@
           </div>
           <p
             v-if="entry.item?.description"
-            class="text-sm text-muted mt-1"
+            class="text-sm text-muted mt-1 whitespace-pre-line"
           >
             {{ entry.item.description }}
           </p>
@@ -502,6 +532,14 @@
               variant="soft"
             />
             <UButton
+              v-if="entry.item?.isCustom"
+              icon="i-heroicons:pencil-square"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              @click.stop="openEdit(entry)"
+            />
+            <UButton
               icon="i-heroicons:trash"
               size="xs"
               variant="ghost"
@@ -511,7 +549,7 @@
           </div>
           <p
             v-if="entry.item?.description"
-            class="text-sm text-muted mt-1"
+            class="text-sm text-muted mt-1 whitespace-pre-line"
           >
             {{ entry.item.description }}
           </p>
@@ -544,10 +582,11 @@
     </template>
   </div>
 
-  <!-- Slideover d'ajout -->
+  <!-- Slideover d'ajout / d'édition -->
   <AddItemSlideover
     v-model:open="slideoverOpen"
     :character-sheet="characterSheet"
+    :edit-item="editingItem"
   />
 </template>
 
@@ -640,6 +679,25 @@ const rollOffhand = (entryId: number) => {
 }
 
 const slideoverOpen = ref(false)
+
+// Objet en cours d'édition (null = mode ajout). Seuls les objets custom sont éditables.
+const editingItem = ref<InventoryItem | null>(null)
+
+const openAdd = () => {
+  editingItem.value = null
+  slideoverOpen.value = true
+}
+
+const openEdit = (entry: InventoryEntry) => {
+  if (!entry.item?.isCustom) return
+  editingItem.value = entry.item
+  slideoverOpen.value = true
+}
+
+// Réinitialise la cible d'édition quand le slideover se ferme.
+watch(slideoverOpen, (isOpen) => {
+  if (!isOpen) editingItem.value = null
+})
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 

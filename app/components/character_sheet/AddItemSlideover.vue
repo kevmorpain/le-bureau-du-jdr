@@ -1,19 +1,20 @@
 <template>
   <USlideover
     v-model:open="open"
-    title="Ajouter un objet"
+    :title="isEdit ? 'Modifier l\'objet' : 'Ajouter un objet'"
     :ui="{ body: 'overflow-y-auto' }"
   >
     <template #body>
       <div class="space-y-4 p-4">
-        <!-- Tabs : Chercher / Créer -->
+        <!-- Tabs : Chercher / Créer (masqués en édition) -->
         <UTabs
+          v-if="!isEdit"
           v-model="activeTab"
           :items="tabItems"
         />
 
         <!-- ── Onglet Chercher ───────────────────────────────────────── -->
-        <template v-if="activeTab === 'search'">
+        <template v-if="!isEdit && activeTab === 'search'">
           <div class="space-y-3">
             <!-- Filtres -->
             <div class="flex gap-2">
@@ -126,8 +127,8 @@
           </div>
         </template>
 
-        <!-- ── Onglet Créer ──────────────────────────────────────────── -->
-        <template v-if="activeTab === 'create'">
+        <!-- ── Onglet Créer / Éditer ─────────────────────────────────── -->
+        <template v-if="isEdit || activeTab === 'create'">
           <div class="space-y-3">
             <div class="grid grid-cols-2 gap-3">
               <UFormField label="Nom" class="col-span-2">
@@ -142,7 +143,10 @@
                   :items="typeCreateOptions"
                 />
               </UFormField>
-              <UFormField label="Quantité">
+              <UFormField
+                v-if="!isEdit"
+                label="Quantité"
+              >
                 <UInput
                   v-model.number="createForm.quantity"
                   type="number"
@@ -293,7 +297,7 @@
           :loading="isSubmitting"
           @click="submit"
         >
-          Ajouter
+          {{ isEdit ? 'Enregistrer' : 'Ajouter' }}
         </UButton>
       </div>
     </template>
@@ -303,6 +307,7 @@
 <script lang="ts" setup>
 import { weaponCategoryLabels, armorTypeLabels, toolTypeLabels } from '~~/shared/utils/item'
 import type { Effect } from '~~/server/db/schema/effects'
+import type { InventoryItem } from '~/composables/character/useCharacterInventory'
 
 interface ItemResult {
   id: number
@@ -321,15 +326,20 @@ interface SelectedEntry {
 
 const props = defineProps<{
   characterSheet: CharacterSheet
+  // Si fourni, le slideover passe en mode édition de cet objet (custom
+  // uniquement) au lieu de l'ajout d'un nouvel objet.
+  editItem?: InventoryItem | null
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
+
+const isEdit = computed(() => !!props.editItem)
 
 const emit = defineEmits<{
   added: []
 }>()
 
-const { addItem } = useCharacterSheet(toRef(props, 'characterSheet'))
+const { addItem, refreshInventory } = useCharacterSheet(toRef(props, 'characterSheet'))
 const toast = useToast()
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
@@ -544,15 +554,59 @@ const toolTypeOptions = [
 const isSubmitting = ref(false)
 
 const canSubmit = computed(() => {
+  if (isEdit.value) return createForm.value.name.trim().length > 0
   if (activeTab.value === 'search') return selectedEntries.value.length > 0
   if (activeTab.value === 'create') return createForm.value.name.trim().length > 0
   return false
 })
 
+// Construit le corps de requête item (partagé création POST / édition PUT).
+const buildItemBody = () => {
+  const form = createForm.value
+  let properties: Record<string, unknown>
+  if (form.itemType === 'weapon') {
+    properties = { ...form.weaponProps }
+  } else if (form.itemType === 'armor') {
+    properties = { ...form.armorProps }
+  } else if (form.itemType === 'tool') {
+    properties = { tool_type: form.toolType, category: form.category }
+  } else {
+    properties = { category: resolvedCategory.value }
+  }
+
+  // Charges : seulement si maxUses renseigné. rechargeDice uniquement en mode
+  // « dés » (recharge partielle) ; sinon null = recharge complète.
+  const hasCharges = !!form.maxUses
+  const rechargeType = hasCharges && form.rechargeType !== 'none' ? form.rechargeType : null
+  const rechargeDice = rechargeType && form.rechargeMode === 'dice' ? form.rechargeDice.trim() : null
+
+  return {
+    name: form.name,
+    itemType: form.itemType,
+    properties,
+    description: form.description || undefined,
+    effects: form.effects,
+    maxUses: hasCharges ? form.maxUses : null,
+    rechargeType,
+    rechargeDice,
+  }
+}
+
 const submit = async () => {
   isSubmitting.value = true
   try {
-    if (activeTab.value === 'search') {
+    if (isEdit.value && props.editItem) {
+      // Édition : met à jour l'objet du catalogue (PUT), pas l'entrée d'inventaire.
+      try {
+        await $fetch(`/api/items/${props.editItem.id}`, { method: 'PUT', body: buildItemBody() })
+      } catch {
+        toast.add({ title: 'Erreur lors de la modification de l\'objet', color: 'error' })
+        return
+      }
+      // L'item a changé (nom / description / effets) mais pas l'entrée : on
+      // refetch pour refléter les nouvelles données dans la liste (online-only).
+      await refreshInventory()
+    } else if (activeTab.value === 'search') {
       for (const entry of selectedEntries.value) {
         await addItem(entry.item.id, {
           quantity: entry.quantity,
@@ -561,46 +615,16 @@ const submit = async () => {
         })
       }
     } else if (activeTab.value === 'create') {
-      const form = createForm.value
-      let properties: Record<string, unknown>
-      if (form.itemType === 'weapon') {
-        properties = { ...form.weaponProps }
-      } else if (form.itemType === 'armor') {
-        properties = { ...form.armorProps }
-      } else if (form.itemType === 'tool') {
-        properties = { tool_type: form.toolType, category: form.category }
-      } else {
-        properties = { category: resolvedCategory.value }
-      }
-
-      // Charges : seulement si maxUses renseigné. rechargeDice uniquement en
-      // mode « dés » (recharge partielle) ; sinon null = recharge complète.
-      const hasCharges = !!form.maxUses
-      const rechargeType = hasCharges && form.rechargeType !== 'none' ? form.rechargeType : null
-      const rechargeDice = rechargeType && form.rechargeMode === 'dice' ? form.rechargeDice.trim() : null
-
       let created: ItemResult
       try {
-        created = await $fetch<ItemResult>('/api/items', {
-          method: 'POST',
-          body: {
-            name: form.name,
-            itemType: form.itemType,
-            properties,
-            description: form.description || undefined,
-            effects: form.effects,
-            maxUses: hasCharges ? form.maxUses : null,
-            rechargeType,
-            rechargeDice,
-          },
-        })
+        created = await $fetch<ItemResult>('/api/items', { method: 'POST', body: buildItemBody() })
       } catch {
         toast.add({ title: 'Erreur lors de la création de l\'objet', color: 'error' })
         return
       }
 
       try {
-        await addItem(created.id, { quantity: form.quantity })
+        await addItem(created.id, { quantity: createForm.value.quantity })
       } catch {
         toast.add({ title: 'Erreur lors de l\'ajout à l\'inventaire', color: 'error' })
         return
@@ -638,4 +662,52 @@ const resetForm = () => {
     rechargeDice: '1d6+4',
   }
 }
+
+// Pré-remplit le formulaire depuis un objet existant (mode édition).
+const prefillFromItem = (item: InventoryItem) => {
+  const p = item.properties as Record<string, any>
+  const knownCategory = item.itemType === 'equipment'
+    && equipmentCategoryOptions.some(o => o.value === p.category)
+
+  createForm.value = {
+    name: item.name,
+    itemType: item.itemType,
+    description: item.description ?? '',
+    quantity: 1,
+    category: item.itemType === 'equipment'
+      ? (knownCategory ? p.category : '__other__')
+      : (item.itemType === 'tool' ? (p.category ?? '') : 'Aventure'),
+    categoryOther: item.itemType === 'equipment' && !knownCategory ? (p.category ?? '') : '',
+    toolType: item.itemType === 'tool' ? (p.tool_type ?? 'other') : 'other',
+    weaponProps: item.itemType === 'weapon'
+      ? {
+          damage_dice: p.damage_dice ?? '1d6',
+          damage_type: p.damage_type ?? 'slashing',
+          weapon_category: p.weapon_category ?? 'simple_melee',
+          weapon_properties: p.weapon_properties ?? [],
+        }
+      : { damage_dice: '1d6', damage_type: 'slashing', weapon_category: 'simple_melee', weapon_properties: [] },
+    armorProps: item.itemType === 'armor'
+      ? {
+          armor_type: p.armor_type ?? 'light',
+          base_ac: p.base_ac ?? 11,
+          dex_limit: p.dex_limit ?? null,
+          stealth_disadvantage: p.stealth_disadvantage ?? false,
+        }
+      : { armor_type: 'light', base_ac: 11, dex_limit: null, stealth_disadvantage: false },
+    // Clone profond des effets : évite de muter l'objet du cache d'inventaire si
+    // l'édition est annulée.
+    effects: item.effects ? JSON.parse(JSON.stringify(item.effects)) as Effect[] : [],
+    maxUses: item.maxUses ?? null,
+    rechargeType: item.rechargeType ?? 'none',
+    rechargeMode: item.rechargeDice ? 'dice' : 'full',
+    rechargeDice: item.rechargeDice ?? '1d6+4',
+  }
+}
+
+// À l'ouverture en mode édition : pré-remplir. À la fermeture : réinitialiser.
+watch(open, (isOpen) => {
+  if (isOpen && props.editItem) prefillFromItem(props.editItem)
+  else if (!isOpen) resetForm()
+})
 </script>
