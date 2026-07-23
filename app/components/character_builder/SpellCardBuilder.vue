@@ -167,6 +167,7 @@ const rangeDisplay = computed(() => {
   if (r == null) return ''
   if (r === 0) return 'contact'
   if (r === -1) return 'personnelle'
+  if (r >= 100000) return 'illimitée'
   return `${r} m`
 })
 
