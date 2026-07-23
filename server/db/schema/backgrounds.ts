@@ -4,6 +4,9 @@ import { relations } from 'drizzle-orm'
 const backgrounds = sqliteTable('backgrounds', {
   id: integer().primaryKey().notNull(),
   name: text().notNull(),
+  // '5' (D&D 2014) ou '5.5' (D&D 2024). En 5.5 l'historique porte aussi le
+  // triplet de carac. et le don d'origine (colonnes ajoutées dans un lot ultérieur).
+  ruleset: text('ruleset').$type<'5' | '5.5'>().default('5').notNull(),
   description: text().default('').notNull(),
   skillProficiencies: text('skill_proficiencies', { mode: 'json' }).$type<string[]>().default([]).notNull(),
   toolProficiencies: text('tool_proficiencies', { mode: 'json' }).$type<string[]>().default([]).notNull(),

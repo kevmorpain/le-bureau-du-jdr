@@ -14,6 +14,9 @@ export enum CreatureSize {
 const characterSpecies = sqliteTable('character_species', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
+  // '5' (D&D 2014) ou '5.5' (D&D 2024) — permet à deux espèces homonymes
+  // (ex. « Elfe » 2014 vs 2024) de coexister comme deux lignes distinctes.
+  ruleset: text('ruleset').$type<'5' | '5.5'>().default('5').notNull(),
   size: text('size').$type<CreatureSize>().notNull(),
   speed: integer('speed').notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),

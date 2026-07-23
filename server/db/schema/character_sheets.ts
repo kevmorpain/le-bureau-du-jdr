@@ -39,6 +39,9 @@ const characterSheets = sqliteTable('character_sheets', {
   // existantes (backfill manuel) ; toute nouvelle fiche pose toujours l'owner.
   ownerId: integer('owner_id').references(() => users.id),
   name: text('name').notNull(),
+  // Version de règles figée à la création : '5' (D&D 2014) ou '5.5' (D&D 2024).
+  // Toutes les fiches existantes sont backfillées en '5' (cf. migration 0073).
+  ruleset: text('ruleset').$type<'5' | '5.5'>().default('5').notNull(),
   speciesId: integer('species_id').references(() => characterSpecies.id).notNull(),
   alignment: text().$type<Alignment>().default(Alignment.TrueNeutral).notNull(),
   maxHp: integer('max_hp').default(0).notNull(),
