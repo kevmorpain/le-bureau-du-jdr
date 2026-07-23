@@ -1,10 +1,14 @@
 import type { Effect } from '~~/server/db/schema/effects'
+import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 
 export interface Feat {
   id: number
   name: string
   description: string | null
   effects: Effect[]
+  // Prérequis PHB 2014 (carac min, maîtrise d'armure, lanceur de sorts) —
+  // exposés par /api/feats pour affichage/validation ultérieure.
+  prerequisites?: FeaturePrerequisite | null
 }
 
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'

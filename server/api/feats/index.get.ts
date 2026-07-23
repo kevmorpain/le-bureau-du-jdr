@@ -10,6 +10,7 @@ export default defineEventHandler(async () => {
       id: schema.features.id,
       name: schema.features.name,
       description: schema.features.description,
+      prerequisites: schema.features.prerequisites,
     })
     .from(schema.features)
     .where(eq(schema.features.featureType, 'feat'))

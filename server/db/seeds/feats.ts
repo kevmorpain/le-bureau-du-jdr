@@ -16,14 +16,21 @@ export default async function seed() {
       ),
     })
 
+    const prerequisites = feat.prerequisites ?? null
+
     let feature
     if (existing) {
       feature = existing
-      // Resync description si elle a changé entre deux versions du seed.
-      if (existing.description !== feat.description) {
+      // Resync description + prérequis s'ils ont changé entre deux versions du seed.
+      const patch: Record<string, unknown> = {}
+      if (existing.description !== feat.description) patch.description = feat.description
+      if (JSON.stringify(existing.prerequisites ?? null) !== JSON.stringify(prerequisites)) {
+        patch.prerequisites = prerequisites
+      }
+      if (Object.keys(patch).length > 0) {
         await db
           .update(schema.features)
-          .set({ description: feat.description })
+          .set(patch as any)
           .where(eq(schema.features.id, existing.id))
       }
     }
@@ -41,7 +48,7 @@ export default async function seed() {
           rechargeType: null,
           maxUsesFormula: null,
           meta: null,
-          prerequisites: null,
+          prerequisites,
         } as any)
         .returning()
         .get()

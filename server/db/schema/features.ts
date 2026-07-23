@@ -1,6 +1,7 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { Formula } from '~~/shared/utils/formula'
+import type { AbilityScoreKey } from './effects'
 import classes from './classes'
 import subclasses from './subclasses'
 import featureEffects from './feature_effects'
@@ -26,6 +27,15 @@ export interface FeaturePrerequisite {
   requiredPactBoon?: 'chain' | 'blade' | 'tome'
   requiredSpellName?: string
   requiredInvocationName?: string
+  // ─── Dons (PHB 2014) — prérequis de sélection ────────────────────────────
+  // Au moins une des caractéristiques listées doit atteindre `score`
+  // (ex. Lutteur → For 13 ; Magie rituelle → Int ou Sag 13).
+  minAbilityScore?: { abilities: AbilityScoreKey[], score: number }
+  // Maîtrise d'armure requise (ex. Protection lourde exige la maîtrise des
+  // armures intermédiaires ; Maître des armures lourdes exige les lourdes).
+  requiredArmorProficiency?: 'light' | 'medium' | 'heavy'
+  // Capacité à lancer au moins un sort (Adepte élémentaire, Mage offensif…).
+  requiresSpellcasting?: boolean
 }
 
 const features = sqliteTable(
