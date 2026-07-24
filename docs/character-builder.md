@@ -395,7 +395,7 @@ Mobile (<lg) :
 `server/api/character_sheets/index.post.ts` crée en séquence :
 1. `character_sheets` insert (name, speciesId, alignment, backgroundId)
 2. `character_classes` insert (classId, level, isMain, subclassId)
-3. `character_ability_scores` × 6 insert (scores avec bonus raciaux inclus)
+3. `character_ability_scores` × 6 insert (scores de **base** — les bonus d'espèce sont dérivés sur la fiche via les `effects`, PAS stockés ici ; voir `docs/architecture-audit.md` §2. Seuls les bonus de *choix* demi-elfe / humain variant sont cuits dans la base.)
 4. `character_skills` insert (source: 'class' ou 'background')
 5. `character_spells` insert (isKnown: true, isPrepared: true)
 6. `character_inventory` insert (résolution nom → itemId via lookup, ignore silencieusement si non trouvé)
@@ -408,7 +408,7 @@ Corps accepté :
   alignment?: string
   backgroundId?: number
   classes: Array<{ classId: number, level: number, isMain: boolean, subclassId?: number }>
-  abilityScores?: Record<string, number>     // scores finaux avec bonus raciaux
+  abilityScores?: Record<string, number>     // scores de BASE (bonus d'espèce dérivés via effects, pas ici)
   skillProficiencies?: string[]              // clés de compétences
   selectedSpellIds?: number[]               // IDs de sorts DB
   inventoryItemNames?: string[]             // noms d'items (résolution silencieuse)
