@@ -37,6 +37,7 @@
   "devDependencies": {
     "@vue/test-utils": "^2.4.6",
     "drizzle-kit": "^0.31.8",
+    "happy-dom": "^20.11.1",
     "vitest": "^4.1.4",
     "wrangler": "^4.61.1"
   }
