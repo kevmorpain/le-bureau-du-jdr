@@ -1,0 +1,40 @@
+name: Tests
+
+# Joue la suite Vitest (projets `unit` + `nuxt`) sur les push vers main et sur
+# chaque pull request. Indépendant du déploiement Cloudflare Workers Builds
+# (configuré côté Cloudflare, qui build/déploie/migre sur push de la branche par défaut).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Annule un run précédent encore en cours sur la même réf (économise des minutes CI).
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Vitest (unit + nuxt)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # nuxt-auth-utils peut exiger un mot de passe de session au boot. Valeur factice
+      # pour le CI (≥ 32 car.) — aucun secret réel : les tests ne touchent ni prod ni données.
+      NUXT_SESSION_PASSWORD: ci_only_dummy_session_password_do_not_use
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Node 22 (LTS) → npm 10.x, aligné sur le CI Cloudflare (npm ci en 10.9.2).
+          node-version: 22
+          cache: npm
+
+      # `npm ci` déclenche le postinstall `nuxt prepare` (génère .nuxt requis par le projet nuxt).
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npx vitest run
