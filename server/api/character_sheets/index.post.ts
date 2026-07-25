@@ -4,6 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import { and, eq, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
+import { abilityEnum } from '~~/shared/rules/abilities'
 
 // Alignement builder (lowercase) → DB (uppercase)
 const ALIGNMENT_MAP: Record<string, string> = {
@@ -105,7 +106,7 @@ const builderSchema = z.object({
   asiBonuses: z
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
-      ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']),
+      ability: abilityEnum,
       amount: z.number().int().min(1).max(2),
     }))
     .optional()
@@ -115,14 +116,14 @@ const builderSchema = z.object({
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
       featureId: z.number().int().positive(),
-      choices: z.object({ ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']).optional() }).nullable().optional(),
+      choices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
     }))
     .optional()
     .default([]),
   // Don bonus hors-palier (homebrew MJ — typiquement attribué au niveau 1).
   // Persisté dans character_features avec source='bonus' et class_level=null.
   bonusFeatureId: z.number().int().positive().nullable().optional(),
-  bonusFeatChoices: z.object({ ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']).optional() }).nullable().optional(),
+  bonusFeatChoices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
   // Arcanum mystique (Occultiste niv 11/13/15/17) — sort de niv 6/7/8/9 choisi
   arcaneMysteriumSpellId: z.number().int().positive().nullable().optional(),
   // Livre des secrets anciens — 2 sorts rituels niv 1 quand la manifestation est choisie

@@ -1,4 +1,5 @@
 export { default as abilityScores } from './ability_scores'
+export { default as skills } from './skills'
 export { default as backgrounds, backgroundRelations } from './backgrounds'
 export { default as characterAbilityScores, characterAbilityScoreRelations } from './character_ability_scores'
 export { default as characterAbilityScoreImprovements, characterAbilityScoreImprovementsRelations } from './character_ability_score_improvements'

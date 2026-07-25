@@ -1,5 +1,6 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
+import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 
 export interface Feat {
   id: number
@@ -11,8 +12,8 @@ export interface Feat {
   prerequisites?: FeaturePrerequisite | null
 }
 
-export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
-const ALL_ABILITIES: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha']
+export type { AbilityKey }
+const ALL_ABILITIES: AbilityKey[] = [...ABILITY_KEYS]
 
 // Caractéristiques autorisées par un don à choix de carac. La liste vient de
 // l'effet `ability_increase_choice.value.abilities` (ex : Observateur → INT/SAG,

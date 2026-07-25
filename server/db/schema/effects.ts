@@ -1,8 +1,11 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import type { AbilityKey } from '~~/shared/rules/abilities'
 
 // ─── Shared primitive types ────────────────────────────────────────────────
 
-export type AbilityScoreKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
+// Alias vers la source canonique (cf. shared/rules/abilities.ts, decisions.md D6) —
+// plus d'union de caractéristiques recopiée à la main (architecture-audit.md §6).
+export type AbilityScoreKey = AbilityKey
 
 export type DamageTypeKey
   = | 'acid' | 'bludgeoning' | 'cold' | 'fire' | 'force' | 'lightning'

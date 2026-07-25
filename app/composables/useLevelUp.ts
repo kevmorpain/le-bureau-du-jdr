@@ -39,8 +39,8 @@ export const LU_EXPERTISE_LEVELS: Record<string, number[]> = {
 // Skills available for multiclass proficiency choices (null = any skill)
 export const LU_MULTICLASS_SKILL_POOL: Record<string, string[] | null> = {
   bard: null,
-  ranger: ['animalHandling', 'athletics', 'insight', 'investigation', 'nature', 'perception', 'stealth', 'survival'],
-  rogue: ['acrobatics', 'athletics', 'deception', 'insight', 'intimidation', 'investigation', 'perception', 'performance', 'persuasion', 'sleightOfHand', 'stealth'],
+  ranger: ['animal_handling', 'athletics', 'insight', 'investigation', 'nature', 'perception', 'stealth', 'survival'],
+  rogue: ['acrobatics', 'athletics', 'deception', 'insight', 'intimidation', 'investigation', 'perception', 'performance', 'persuasion', 'sleight_of_hand', 'stealth'],
 }
 
 export const LU_MULTICLASS_SKILL_COUNT: Record<string, number> = {

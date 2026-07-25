@@ -4,6 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import { eq, and, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
+import { abilityEnum } from '~~/shared/rules/abilities'
 
 const levelUpSchema = z.object({
   classId: z.number().int().positive(),
@@ -17,7 +18,7 @@ const levelUpSchema = z.object({
   // featureId = features.id du don pris à ce palier (résolu côté client via /api/feats)
   featureId: z.number().int().positive().nullable().optional(),
   // Choix de caractéristique +1 du don (Observateur/Résilient…) le cas échéant.
-  featChoices: z.object({ ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']).optional() }).nullable().optional(),
+  featChoices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
   newSkills: z.array(z.string()).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),

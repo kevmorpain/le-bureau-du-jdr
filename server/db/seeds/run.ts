@@ -10,6 +10,7 @@ function settle<T>(promise: Promise<T>): Promise<T | { error: string }> {
 // jamais atteints. En ciblant un seul seed, on reste largement sous la limite.
 const SEED_REGISTRY: Record<string, () => Promise<unknown>> = {
   abilityScores: _seed.abilityScores,
+  skills: _seed.skills,
   damageTypes: _seed.damageTypes,
   magicSchools: _seed.magicSchools,
   characterSpecies: _seed.characterSpecies,
@@ -67,8 +68,9 @@ export async function runSeeds(only?: string[]) {
   // ── Seed complet ────────────────────────────────────────────────────────
 
   // Étape 1 : données de base (parallèle)
-  const [abilityScores, damageTypes, magicSchools, characterSpecies, classes, backgrounds] = await Promise.all([
+  const [abilityScores, skills, damageTypes, magicSchools, characterSpecies, classes, backgrounds] = await Promise.all([
     settle(_seed.abilityScores()),
+    settle(_seed.skills()),
     settle(_seed.damageTypes()),
     settle(_seed.magicSchools()),
     settle(_seed.characterSpecies()),
@@ -101,7 +103,7 @@ export async function runSeeds(only?: string[]) {
   // await _seed.characterSheets()
 
   const summary = {
-    abilityScores, damageTypes, magicSchools, characterSpecies, classes, backgrounds,
+    abilityScores, skills, damageTypes, magicSchools, characterSpecies, classes, backgrounds,
     barbare, barde, clerc, druide, guerrier, magicien, moine, paladin, rodeur, roublard, ensorceleur, warlock,
     spells, items, feats,
   }

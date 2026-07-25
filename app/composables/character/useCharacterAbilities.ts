@@ -1,17 +1,13 @@
 import type { Effect } from '~~/server/db/schema/effects'
+import { ABILITY_SKILLS } from '~~/shared/rules/skills'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
 const abilityScoreOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 
-export const abilitySkillKeys: Record<string, string[]> = {
-  str: ['athletics'],
-  dex: ['acrobatics', 'sleight_of_hand', 'stealth'],
-  con: [],
-  int: ['arcana', 'history', 'investigation', 'nature', 'religion'],
-  wis: ['animal_handling', 'insight', 'medicine', 'perception', 'survival'],
-  cha: ['deception', 'intimidation', 'performance', 'persuasion'],
-}
+// Dérivé de la const canonique `shared/rules/skills.ts` (cf. decisions.md D6) — la
+// casse snake_case fait désormais foi de bout en bout (fini `sleightOfHand`).
+export const abilitySkillKeys: Record<string, string[]> = ABILITY_SKILLS
 
 export type ProficiencyLevel = 'none' | 'proficient' | 'expert'
 

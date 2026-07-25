@@ -3,12 +3,16 @@
 // les traits, bonus de carac., descriptions détaillées, etc.
 // Voir docs/character-builder.md pour le contexte complet.
 
-export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
+import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
+
+// Ré-export depuis la source canonique (cf. shared/rules/abilities.ts, decisions.md D6) —
+// les consommateurs continuent d'importer `AbilityKey` / `ABILITIES` d'ici.
+export type { AbilityKey }
 export type SpellcastingType = 'full' | 'half' | 'pact'
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
-export const ABILITIES: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha']
+export const ABILITIES: AbilityKey[] = [...ABILITY_KEYS]
 
 // Langues D&D 5e disponibles pour les choix de langue
 export const LANGUAGES = [
@@ -96,7 +100,7 @@ export interface SkillDef {
 
 export const SKILLS: SkillDef[] = [
   { key: 'acrobatics', label: 'Acrobaties', ability: 'dex' },
-  { key: 'animalHandling', label: 'Dressage', ability: 'wis' },
+  { key: 'animal_handling', label: 'Dressage', ability: 'wis' },
   { key: 'arcana', label: 'Arcanes', ability: 'int' },
   { key: 'athletics', label: 'Athlétisme', ability: 'str' },
   { key: 'deception', label: 'Tromperie', ability: 'cha' },
@@ -110,7 +114,7 @@ export const SKILLS: SkillDef[] = [
   { key: 'performance', label: 'Représentation', ability: 'cha' },
   { key: 'persuasion', label: 'Persuasion', ability: 'cha' },
   { key: 'religion', label: 'Religion', ability: 'int' },
-  { key: 'sleightOfHand', label: 'Escamotage', ability: 'dex' },
+  { key: 'sleight_of_hand', label: 'Escamotage', ability: 'dex' },
   { key: 'stealth', label: 'Discrétion', ability: 'dex' },
   { key: 'survival', label: 'Survie', ability: 'wis' },
 ]
@@ -527,7 +531,7 @@ export const CLASSES: ClassData[] = [
     savingThrows: ['str', 'con'],
     armorProficiencies: ['Armures légères', 'Armures intermédiaires', 'Boucliers'],
     weaponProficiencies: ['Armes courantes', 'Armes de guerre'],
-    skillChoices: { count: 2, from: ['animalHandling', 'athletics', 'intimidation', 'nature', 'perception', 'survival'] },
+    skillChoices: { count: 2, from: ['animal_handling', 'athletics', 'intimidation', 'nature', 'perception', 'survival'] },
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Voie primitive',
@@ -613,7 +617,7 @@ export const CLASSES: ClassData[] = [
     savingThrows: ['int', 'wis'],
     armorProficiencies: ['Armures légères', 'Armures intermédiaires', 'Boucliers (non-métalliques)'],
     weaponProficiencies: ['Gourdin', 'Dague', 'Fléchette', 'Javeline', 'Masse', 'Bâton', 'Cimeterre', 'Fronde', 'Lance'],
-    skillChoices: { count: 2, from: ['arcana', 'animalHandling', 'insight', 'medicine', 'nature', 'perception', 'religion', 'survival'] },
+    skillChoices: { count: 2, from: ['arcana', 'animal_handling', 'insight', 'medicine', 'nature', 'perception', 'religion', 'survival'] },
     spellcasting: { ability: 'wis', type: 'full' },
     subclassLevel: 2,
     subclassLabel: 'Cercle druidique',
@@ -641,7 +645,7 @@ export const CLASSES: ClassData[] = [
     savingThrows: ['str', 'con'],
     armorProficiencies: ['Toutes les armures', 'Boucliers'],
     weaponProficiencies: ['Armes courantes', 'Armes de guerre'],
-    skillChoices: { count: 2, from: ['acrobatics', 'animalHandling', 'athletics', 'history', 'insight', 'intimidation', 'perception', 'survival'] },
+    skillChoices: { count: 2, from: ['acrobatics', 'animal_handling', 'athletics', 'history', 'insight', 'intimidation', 'perception', 'survival'] },
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Archétype martial',
@@ -726,7 +730,7 @@ export const CLASSES: ClassData[] = [
     savingThrows: ['str', 'dex'],
     armorProficiencies: ['Armures légères', 'Armures intermédiaires', 'Boucliers'],
     weaponProficiencies: ['Armes courantes', 'Armes de guerre'],
-    skillChoices: { count: 3, from: ['animalHandling', 'athletics', 'insight', 'investigation', 'nature', 'perception', 'stealth', 'survival'] },
+    skillChoices: { count: 3, from: ['animal_handling', 'athletics', 'insight', 'investigation', 'nature', 'perception', 'stealth', 'survival'] },
     spellcasting: { ability: 'wis', type: 'half', startsAtLevel: 2 },
     subclassLevel: 3,
     subclassLabel: 'Archétype de rôdeur',
@@ -754,7 +758,7 @@ export const CLASSES: ClassData[] = [
     savingThrows: ['dex', 'int'],
     armorProficiencies: ['Armures légères'],
     weaponProficiencies: ['Armes courantes', 'Arbalète de poing', 'Épée longue', 'Rapière', 'Épée courte'],
-    skillChoices: { count: 4, from: ['acrobatics', 'athletics', 'deception', 'insight', 'intimidation', 'investigation', 'perception', 'performance', 'persuasion', 'sleightOfHand', 'stealth'] },
+    skillChoices: { count: 4, from: ['acrobatics', 'athletics', 'deception', 'insight', 'intimidation', 'investigation', 'perception', 'performance', 'persuasion', 'sleight_of_hand', 'stealth'] },
     spellcasting: null,
     subclassLevel: 3,
     subclassLabel: 'Archétype de roublard',
@@ -957,7 +961,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     dbName: 'Charlatan',
     name: 'Charlatan',
     description: 'Escroc habile, maître du mensonge et des fausses identités.',
-    skillProficiencies: ['deception', 'sleightOfHand'],
+    skillProficiencies: ['deception', 'sleight_of_hand'],
     toolProficiencies: ['Kit de déguisement', 'Kit de contrefaçon'],
     languages: 0,
     equipment: ['Vêtements fins', 'Kit de déguisement', 'Kit de contrefaçon', '15 po'],
@@ -1011,7 +1015,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     dbName: 'Héros du peuple',
     name: 'Héros du peuple',
     description: 'Personnage ordinaire appelé à quelque chose de plus grand.',
-    skillProficiencies: ['animalHandling', 'survival'],
+    skillProficiencies: ['animal_handling', 'survival'],
     toolProficiencies: ['Outil d\'artisan au choix', 'Véhicule terrestre'],
     languages: 0,
     equipment: ['Outil d\'artisan', 'Pelle', 'Pot de fer', 'Vêtements communs', '10 po'],
@@ -1155,7 +1159,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     dbName: 'Enfant des rues',
     name: 'Enfant des rues',
     description: 'Survivant des rues formé à la débrouillardise depuis l\'enfance.',
-    skillProficiencies: ['sleightOfHand', 'stealth'],
+    skillProficiencies: ['sleight_of_hand', 'stealth'],
     toolProficiencies: ['Kit de déguisement', 'Outils de voleur'],
     languages: 0,
     equipment: ['Petit couteau', 'Carte de la ville', 'Jeton de bonne chance', 'Vêtements communs', '10 po'],
