@@ -547,6 +547,13 @@
       "when": 1747872035000,
       "tag": "0077_skills",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "6",
+      "when": 1747872036000,
+      "tag": "0078_items_stale_proficiency_names",
+      "breakpoints": true
     }
   ]
 }
