@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { abilityEnum } from '~~/shared/rules/abilities'
 
 const classInputSchema = z.object({
   classId: z.number().int().positive(),
@@ -40,7 +41,7 @@ export const setASISchema = z.object({
   improvements: z.array(z.object({
     classId: z.number().int().positive(),
     classLevel: z.number().int().min(1).max(20),
-    ability: z.enum(['str', 'dex', 'con', 'int', 'wis', 'cha']),
+    ability: abilityEnum,
     amount: z.number().int().min(1).max(2),
   })),
 })

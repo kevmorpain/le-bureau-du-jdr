@@ -3,8 +3,7 @@ import * as schema from '~~/server/db/schema'
 import * as srcSchema from '~~/server/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
-
-const ABILITY_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
+import { abilityEnum } from '~~/shared/rules/abilities'
 
 // Attache un don (feature feature_type='feat') au personnage.
 // source: 'asi' (don pris à un palier 4/8/12...) ou 'bonus' (homebrew MJ).
@@ -13,7 +12,7 @@ const schemaBody = z.object({
   source: z.enum(['asi', 'bonus']).default('bonus'),
   classLevel: z.number().int().min(1).max(20).nullable().optional(),
   // Choix résolus du don (ex : caractéristique +1). Optionnel.
-  choices: z.object({ ability: z.enum(ABILITY_KEYS).optional() }).nullable().optional(),
+  choices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
 })
 
 export default defineEventHandler(async (event) => {
