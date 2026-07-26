@@ -21,8 +21,9 @@ export interface FeatSeed {
 // Modélisation des effets :
 // - `ability_increase` (carac fixe) : appliqué automatiquement par
 //   useCharacterAbilities (ex. Comédien → Charisme).
-// - `ability_increase_choice` (carac au choix) : résolu par le choix du joueur
-//   à la sélection du don (ex. Athlète → For/Dex).
+// - `ability_increase_choice` / `saving_throw_proficiency_choice` (carac au choix) :
+//   résolus par le choix du joueur à la sélection du don (ex. Athlète → For/Dex ;
+//   Résilient → +1 ET maîtrise du JS de la même carac), cf. `resolveFeatEffects`.
 // - `proficiency` / `weapon_proficiency` / `language_proficiency_choice` /
 //   `passive_skill_bonus` / `initiative_bonus` / `hp_per_level` : consommés par
 //   la fiche (maîtrises, scores passifs, initiative, PV).
@@ -341,7 +342,9 @@ export const featsData: FeatSeed[] = [
     description: 'Choisissez une caractéristique : +1 dans celle-ci (max 20) et vous gagnez la maîtrise des jets de sauvegarde correspondants.',
     effects: [
       { type: 'ability_increase_choice', value: { count: 1, amount: 1 } },
-      { type: 'other', value: { kind: 'resilient_saving_throw_proficiency_choice' } },
+      // La maîtrise de JS suit la caractéristique choisie pour le +1 : résolue en
+      // `saving_throw_proficiency` par useCharacterSheet (plus de trappe `other`).
+      { type: 'saving_throw_proficiency_choice', value: { count: 1, from: 'all' } },
     ],
   },
   {

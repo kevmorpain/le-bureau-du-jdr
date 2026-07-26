@@ -1,9 +1,11 @@
 import type { Effect } from '~~/server/db/schema/effects'
+import { ABILITY_KEYS, savingThrowKey } from '~~/shared/rules/abilities'
 import { ABILITY_SKILLS } from '~~/shared/rules/skills'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
-const abilityScoreOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
+// Ordre canonique des caractéristiques (cf. shared/rules/abilities.ts, D6).
+const abilityScoreOrder = ABILITY_KEYS
 
 // Dérivé de la const canonique `shared/rules/skills.ts` (cf. decisions.md D6) — la
 // casse snake_case fait désormais foi de bout en bout (fini `sleightOfHand`).
@@ -93,14 +95,19 @@ export const useCharacterAbilities = (
         map.set(s.skillKey, level)
       }
     }
-    // Skill proficiencies granted by species or feature effects (e.g. half-orc Menaçant → Intimidation)
+    // Maîtrises accordées par les effets d'espèce ou de feature :
+    //  - `skill_proficiency` → compétence (ex. Demi-orc Menaçant → Intimidation) ;
+    //  - `saving_throw_proficiency` → jet de sauvegarde (ex. don Résilient), projeté
+    //    sur la même map via la convention `<carac>_save` qu'utilisent déjà
+    //    `character_skills` et `savingThrows` — les deux sources cohabitent.
     const effectSources = [...(deps?.speciesEffects.value ?? []), ...(deps?.featureEffects.value ?? [])]
     for (const e of effectSources) {
-      if (e.type === 'skill_proficiency') {
-        const skill = (e.value as { skill: string }).skill
-        if (!map.has(skill) || proficiencyPriority['proficient'] > proficiencyPriority[map.get(skill)!]) {
-          map.set(skill, 'proficient')
-        }
+      let key: string | null = null
+      if (e.type === 'skill_proficiency') key = e.value.skill
+      else if (e.type === 'saving_throw_proficiency') key = savingThrowKey(e.value.ability)
+      if (key === null) continue
+      if (!map.has(key) || proficiencyPriority['proficient'] > proficiencyPriority[map.get(key)!]) {
+        map.set(key, 'proficient')
       }
     }
     return map
@@ -120,8 +127,8 @@ export const useCharacterAbilities = (
 
   const savingThrows = computed(() =>
     Object.fromEntries(
-      Object.keys(abilityModifiers.value).map((abilityId) => {
-        const saveKey = `${abilityId}_save`
+      abilityScoreOrder.map((abilityId) => {
+        const saveKey = savingThrowKey(abilityId)
         const proficiency = getEffectiveProficiency(saveKey)
         const base = abilityModifiers.value[abilityId] ?? 0
         const prof = deps?.proficiencyBonus.value ?? 2

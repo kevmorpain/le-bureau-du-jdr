@@ -233,6 +233,39 @@ describe('useCharacterAbilities — dérivation par canal', () => {
     expect(getSkillModifier('cha', 'intimidation')).toBe(5) // 2 + 3
   })
 
+  it('un effet saving_throw_proficiency (don Résilient résolu) accorde la maîtrise du JS', () => {
+    const f: AbilitiesFixture = {
+      ...blankFixture,
+      baseAbilityScores: [{ abilityId: 'con', value: 14 }], // mod +2
+      featureEffects: [{ type: 'saving_throw_proficiency', value: { ability: 'con' } }],
+      proficiencyBonus: 3,
+    }
+    const { savingThrows, getEffectiveProficiency } = mountAbilities(f)
+
+    expect(savingThrows.value.con).toEqual({ modifier: 5, proficiency: 'proficient' }) // 2 + 3
+    expect(getEffectiveProficiency('con_save')).toBe('proficient')
+    // Ciblé : les autres JS restent nus et la maîtrise ne déborde pas sur les compétences.
+    expect(savingThrows.value.wis).toEqual({ modifier: 0, proficiency: 'none' })
+    expect(getEffectiveProficiency('athletics')).toBe('none')
+  })
+
+  it('les JS d\'effet cohabitent avec ceux stockés en `<carac>_save` (JS de classe)', () => {
+    const f: AbilitiesFixture = {
+      ...blankFixture,
+      baseAbilityScores: [
+        { abilityId: 'wis', value: 16 }, // mod +3
+        { abilityId: 'con', value: 12 }, // mod +1
+      ],
+      skills: [{ skillKey: 'wis_save', proficiencyLevel: 'proficient' }], // classe (character_skills)
+      featureEffects: [{ type: 'saving_throw_proficiency', value: { ability: 'con' } }], // don
+      proficiencyBonus: 4,
+    }
+    const { savingThrows } = mountAbilities(f)
+
+    expect(savingThrows.value.wis).toEqual({ modifier: 7, proficiency: 'proficient' }) // 3 + 4
+    expect(savingThrows.value.con).toEqual({ modifier: 5, proficiency: 'proficient' }) // 1 + 4
+  })
+
   it('priorité de maîtrise : expert > proficient, et un effet ne dégrade pas une expertise', () => {
     const f: AbilitiesFixture = {
       ...blankFixture,
