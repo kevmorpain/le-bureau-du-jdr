@@ -19,17 +19,17 @@ export const LANGUAGES = [
 
 // Options génériques d'équipement → liste d'items spécifiques disponibles en DB
 export const GENERIC_ITEM_OPTIONS: Record<string, string[]> = {
-  'Arme courante': ['Gourdin', 'Dague', 'Grande massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Faucille', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
-  'Arme courante de corps à corps': ['Gourdin', 'Dague', 'Grande massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Faucille', 'Lance'],
+  'Arme courante': ['Gourdin', 'Dague', 'Massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Serpe', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
+  'Arme courante de corps à corps': ['Gourdin', 'Dague', 'Massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Serpe', 'Lance'],
   'Arme courante à distance': ['Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
-  'Arme courante au choix': ['Gourdin', 'Dague', 'Grande massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Faucille', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
-  'Arme de guerre': ["Hache d'armes", "Fléau d'armes", 'Glaive', 'Grande hache', 'Épée à deux mains', 'Hallebarde', 'Épée longue', 'Morgenstern', 'Fauchard', 'Épieu de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre', 'Arbalète à main', 'Arbalète lourde', 'Arc long'],
-  'Arme de guerre de corps à corps': ["Hache d'armes", "Fléau d'armes", 'Glaive', 'Grande hache', 'Épée à deux mains', 'Hallebarde', 'Épée longue', 'Morgenstern', 'Fauchard', 'Épieu de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre'],
-  'Arme de guerre au choix': ["Hache d'armes", "Fléau d'armes", 'Glaive', 'Grande hache', 'Épée à deux mains', 'Hallebarde', 'Épée longue', 'Morgenstern', 'Fauchard', 'Épieu de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre', 'Arbalète à main', 'Arbalète lourde', 'Arc long'],
-  'Instrument de musique au choix': ['Cornemuse', 'Cor', 'Flûte', 'Luth', 'Lyre', 'Tambour', 'Viole'],
-  'Outil d\'artisan au choix': ['Outils de forgeron', 'Outils de charpentier', 'Outils de cordonnier', 'Outils de cuisinier', 'Outils de graveur', 'Outils de joaillier', 'Outils de maçon', 'Outils de peintre', 'Outils de potier', 'Outils de tanneur', 'Outils de tisserand', 'Outils de tonnelier', 'Outils de verrier'],
-  'Jeux au choix': ['Jeu de dés', "Jeu de cartes du Destin", "Jeu d'échecs de dragon"],
-  'Un jeu au choix': ['Jeu de dés', "Jeu de cartes du Destin", "Jeu d'échecs de dragon"],
+  'Arme courante au choix': ['Gourdin', 'Dague', 'Massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Serpe', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
+  'Arme de guerre': ["Hache d'armes", "Fléau d'armes", 'Coutille', 'Hache à deux mains', 'Épée à deux mains', 'Hallebarde', "Lance d'arçon", 'Maillet', 'Pique', 'Épée longue', 'Morgenstern', 'Pic de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre', 'Arbalète de poing', 'Arbalète lourde', 'Arc long', 'Filet', 'Sarbacane'],
+  'Arme de guerre de corps à corps': ["Hache d'armes", "Fléau d'armes", 'Coutille', 'Hache à deux mains', 'Épée à deux mains', 'Hallebarde', "Lance d'arçon", 'Maillet', 'Pique', 'Épée longue', 'Morgenstern', 'Pic de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre'],
+  'Arme de guerre au choix': ["Hache d'armes", "Fléau d'armes", 'Coutille', 'Hache à deux mains', 'Épée à deux mains', 'Hallebarde', "Lance d'arçon", 'Maillet', 'Pique', 'Épée longue', 'Morgenstern', 'Pic de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre', 'Arbalète de poing', 'Arbalète lourde', 'Arc long', 'Filet', 'Sarbacane'],
+  'Instrument de musique au choix': ['Cornemuse', 'Cor', 'Flûte', 'Luth', 'Lyre', 'Tambour', 'Viole', 'Chalemie', 'Flûte de pan', 'Tympanon'],
+  'Outil d\'artisan au choix': ['Outils de forgeron', 'Outils de charpentier', 'Outils de cordonnier', 'Ustensiles de cuisinier', 'Outils de bijoutier', 'Outils de maçon', 'Matériel de peintre', 'Outils de potier', 'Outils de tanneur', 'Outils de tisserand', 'Outils de souffleur de verre', "Matériel d'alchimiste", 'Matériel de brasseur', 'Matériel de calligraphe', 'Outils de cartographe', 'Outils de bricoleur', 'Outils de menuisier'],
+  'Jeux au choix': ['Jeu de dés', 'Jeu de cartes', "Jeu d'échecs draconiques", 'Jeu des Dragons'],
+  'Un jeu au choix': ['Jeu de dés', 'Jeu de cartes', "Jeu d'échecs draconiques", 'Jeu des Dragons'],
 }
 
 // Maîtrises d'outils avec choix : strings exacts utilisés dans BackgroundData.toolProficiencies → liste d'options
@@ -537,7 +537,7 @@ export const CLASSES: ClassData[] = [
       { name: 'Défense sans armure', description: 'CA = 10 + mod DEX + mod CON quand vous ne portez pas d\'armure.' },
     ],
     equipment: [
-      { choice: true, options: ['Grande hache', '2 hachettes'] },
+      { choice: true, options: ['Hache à deux mains', '2 hachettes'] },
       { choice: true, options: ['Paquetage d\'exploration', 'Paquetage du voyageur'] },
       { choice: false, items: ['4 javelines'] },
     ],
@@ -1048,9 +1048,9 @@ export const BACKGROUNDS: BackgroundData[] = [
     name: 'Ermite',
     description: 'Reclus solitaire ayant découvert une vérité lors de sa retraite.',
     skillProficiencies: ['medicine', 'religion'],
-    toolProficiencies: ['Matériel d\'herboriste'],
+    toolProficiencies: ['Kit d\'herboriste'],
     languages: 1,
-    equipment: ['Étui à parchemins avec notes', 'Couverture d\'hiver', 'Matériel d\'herboriste', '5 po'],
+    equipment: ['Étui à parchemins avec notes', 'Couverture d\'hiver', 'Kit d\'herboriste', '5 po'],
     featureName: 'Découverte',
     featureDescription: 'Vous avez fait une découverte unique lors de votre réclusion — connaissance, lieu ou vérité cachée.',
     suggestions: {
