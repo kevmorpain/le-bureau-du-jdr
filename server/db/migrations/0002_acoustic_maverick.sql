@@ -15,7 +15,7 @@ CREATE TABLE `__new_spells` (
 	`deleted_at` text
 );
 --> statement-breakpoint
-INSERT INTO `__new_spells`("id", "name", "level", "casting_time", "range", "components", "material", "ritual", "duration", "description", "created_at", "updated_at", "deleted_at") SELECT "id", "name", "level", "casting_time", "range", "components", "material", "ritual", "duration", "description", "created_at", "updated_at", "deleted_at" FROM `spells`;--> statement-breakpoint
+INSERT INTO `__new_spells`("id", "name", "level", "casting_time", "range", "components", "material", "ritual", "duration", "description", "created_at", "updated_at", "deleted_at") SELECT "id", "name", "level", "casting_time", "range", coalesce("components", '[]'), NULL, false, "duration", "description", "created_at", "updated_at", "deleted_at" FROM `spells`;--> statement-breakpoint
 DROP TABLE `spells`;--> statement-breakpoint
 ALTER TABLE `__new_spells` RENAME TO `spells`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;
