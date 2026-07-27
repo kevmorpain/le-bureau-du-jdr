@@ -94,6 +94,8 @@ export default defineNuxtConfig({
       name: 'Le Bureau du JDR',
       short_name: 'Bureau JDR',
       description: 'Le Bureau du JDR est un site dédié aux jeux de rôle, proposant des ressources, des outils et des informations pour les joueurs et les maîtres de jeu.',
+      // Sans ça, vite-pwa retombe sur son défaut `en` alors que l'app est en français.
+      lang: 'fr',
       theme_color: '#FFB900',
       icons: [
         {
