@@ -1,0 +1,9 @@
+# Révisions ignorées par git blame : changements de forme uniquement,
+# jamais de changement de comportement.
+#
+# GitHub honore ce fichier automatiquement dans la vue « blame ».
+# En local, à activer une fois par clone :
+#     git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# chore: normalise les fins de ligne en LF (.gitattributes)
+6bedc233eb56af8afd410f7da06ac00748f5132b
