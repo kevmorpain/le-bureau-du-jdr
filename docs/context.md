@@ -90,3 +90,27 @@ data.value = data.value.map(item =>
 - Persistance partagée : [server/utils/invocations.ts](../server/utils/invocations.ts) (`applyInvocationChanges`) utilisé par création + level-up.
 - 3 nouveaux types d'effets : `eldritch_blast_modifier` (agonizing/repelling/range_extended), `pact_weapon_modifier` (extra_attack/lifedrinker), `sight_modifier` (magical_darkness_120/invisible_in_dim_light/true_sight_disguise/read_all_writing).
 - UI : composant partagé [InvocationPicker.vue](../app/components/warlock/InvocationPicker.vue) utilisé dans `StepClass.vue` (création) et `LevelUpStepFeatures.vue` (level-up, avec flow de remplacement).
+
+---
+
+## PWA — reprise après changement d'application
+
+**Symptôme** : sur tablette, en PWA installée, passer sur Chrome/Discord puis revenir au Bureau du JDR ramène à l'accueil au lieu de la fiche consultée.
+
+**Cause** : ce n'est pas un bug de routing. Une PWA en mode standalone est un processus ordinaire ; quand la mémoire manque, l'OS le tue en arrière-plan. Au retour, il n'y a plus de page à réveiller : le système relance l'app **à froid** sur le `start_url` du manifeste, c'est-à-dire `/`. Aucune API web ne permet d'empêcher cette éviction (`start_url` est statique, la Page Lifecycle API notifie mais ne retient rien).
+
+**Correctif** : mémoriser la dernière route et y revenir soi-même.
+
+| Fichier | Rôle |
+|---|---|
+| [app/utils/lastRoute.ts](../app/utils/lastRoute.ts) | Logique pure + accès localStorage (clé `bjdr:last-route`), TTL 24 h |
+| [app/plugins/last-route.client.ts](../app/plugins/last-route.client.ts) | `router.afterEach` + `visibilitychange` → écrit la route |
+| [app/middleware/restore-route.global.ts](../app/middleware/restore-route.global.ts) | Au démarrage à froid sur `/`, redirige vers la route mémorisée |
+
+Garde-fous :
+- **PWA installée uniquement** (`display-mode: standalone` / `navigator.standalone`) — dans un onglet, le navigateur restaure déjà la page, et on éviterait de polluer la mémoire partagée entre les deux contextes (même origine).
+- **Premier rendu uniquement** (`useNuxtApp().isHydrating`) — un clic sur le logo ne doit jamais être détourné.
+- **Aller à l'accueil efface la mémoire** (`routeMemoryAction('/') === 'clear'`), sinon le démarrage suivant ramènerait sur la fiche qu'on venait de quitter. `/login` et `/auth/*` sont transitoires : ni écrits, ni effaçants.
+- Cible restreinte aux chemins internes (`//host` rejeté) et périmée au-delà de 24 h.
+
+L'ordre alphabétique des middlewares globaux place `auth.global.ts` avant `restore-route.global.ts` : une route restaurée qui exige une session repasse par la garde d'auth.
