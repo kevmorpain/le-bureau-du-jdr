@@ -1,7 +1,7 @@
 import { useStorage } from '@vueuse/core'
 import { evaluate } from '~~/shared/utils/formula'
 import type { FormulaContext } from '~~/shared/utils/formula'
-import type { Effect } from '~~/server/db/schema/effects'
+import type { AbilityScoreKey, Effect } from '~~/server/db/schema/effects'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
 import { useCharacterConditions, binaryConditions } from './character/useCharacterConditions'
@@ -9,6 +9,41 @@ import { useCharacterSpellcasting } from './character/useCharacterSpellcasting'
 import { useCharacterSpells } from './character/useCharacterSpells'
 import { useCharacterInventory } from './character/useCharacterInventory'
 import { useCharacterBackground } from './character/useCharacterBackground'
+
+/**
+ * Résout les effets « à choix » d'un don en fonction des choix enregistrés
+ * (`character_features.choices`). Fonction pure — exportée pour être testée
+ * directement (cf. decisions.md D12) ; elle rejoindra `shared/rules/` avec le
+ * reste du moteur de résolution (rules-engine.md §5).
+ *
+ * - `ability_increase_choice` → `ability_increase` ;
+ * - `saving_throw_proficiency_choice` → `saving_throw_proficiency` (don Résilient :
+ *   la maîtrise de JS suit la caractéristique choisie pour le +1).
+ *
+ * Tant qu'aucun choix n'est enregistré, l'effet n'accorde rien. `choices` ne porte
+ * qu'un `ability` → seul `count: 1` est représentable aujourd'hui ; le cas général
+ * viendra avec `character_choices` (rules-engine.md §4).
+ */
+export const resolveFeatEffects = (effects: Effect[], choices: { ability?: string } | null): Effect[] =>
+  effects.flatMap((e) => {
+    if (e.type === 'ability_increase_choice') {
+      const ability = choices?.ability
+      if (!ability) return []
+      return [{
+        type: 'ability_increase' as const,
+        value: { ability: ability as AbilityScoreKey, amount: e.value.amount },
+      }]
+    }
+    if (e.type === 'saving_throw_proficiency_choice') {
+      const ability = choices?.ability
+      if (!ability || e.value.count !== 1) return []
+      return [{
+        type: 'saving_throw_proficiency' as const,
+        value: { ability: ability as AbilityScoreKey },
+      }]
+    }
+    return [e]
+  })
 
 export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   // ─── Couche 1 : classes, espèce ───────────────────────────────────────────
@@ -37,22 +72,6 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       }
     }),
   )
-
-  // Résout les effets « à choix » d'un don en fonction des choix enregistrés.
-  // `ability_increase_choice` → `ability_increase` quand la carac est choisie ;
-  // tant qu'aucun choix n'est fait, l'effet n'accorde aucun bonus.
-  const resolveFeatEffects = (effects: Effect[], choices: { ability?: string } | null): Effect[] =>
-    effects.flatMap((e) => {
-      if (e.type === 'ability_increase_choice') {
-        const ability = choices?.ability
-        if (!ability) return []
-        return [{
-          type: 'ability_increase' as const,
-          value: { ability: ability as any, amount: e.value.amount },
-        }]
-      }
-      return [e]
-    })
 
   const unlockedFeatureEffects = computed<Effect[]>(() => {
     const ccs = classes.characterClasses.value

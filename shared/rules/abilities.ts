@@ -21,3 +21,14 @@ export type AbilityKey = (typeof ABILITY_KEYS)[number]
 
 /** Validateur Zod dérivé — à utiliser au lieu de `z.enum(['str', …])`. */
 export const abilityEnum = z.enum(ABILITY_KEYS)
+
+/** Clé de maîtrise d'un jet de sauvegarde (`'con_save'`, `'wis_save'`…). */
+export type SavingThrowKey = `${AbilityKey}_save`
+
+/**
+ * Les jets de sauvegarde partagent la table des maîtrises de compétences
+ * (`character_skills.skill_key`) sous la convention `<carac>_save`. Cette fonction
+ * en porte la formulation, pour que l'effet `saving_throw_proficiency` et les JS
+ * de classe stockés à la création se projettent sur la MÊME clé.
+ */
+export const savingThrowKey = (ability: AbilityKey): SavingThrowKey => `${ability}_save`

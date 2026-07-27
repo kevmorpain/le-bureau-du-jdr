@@ -4,7 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import { and, eq, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
-import { abilityEnum } from '~~/shared/rules/abilities'
+import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
 
 // Alignement builder (lowercase) → DB (uppercase)
 const ALIGNMENT_MAP: Record<string, string> = {
@@ -76,7 +76,9 @@ const builderSchema = z.object({
   abilityScores: z.record(z.string(), z.number().int()),
   // Compétences & maîtrises de classe
   classSkills: z.array(z.string()),
-  classSavingThrows: z.array(z.string()),
+  // Zod dérivé de la source canonique (D6) : les JS de classe sont des clés de
+  // caractéristique, transformées en `<carac>_save` à l'insertion (savingThrowKey).
+  classSavingThrows: z.array(abilityEnum),
   armorProficiencyKeys: z.array(z.string()).optional().default([]),
   weaponProficiencyKeys: z.array(z.string()).optional().default([]),
   toolProficiencyChoices: z.array(z.string()).optional().default([]),
@@ -338,7 +340,7 @@ export default defineEventHandler(async (event) => {
   // Compétences + JDS de classe
   const skillRows = [
     ...d.classSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
-    ...d.classSavingThrows.map(key => ({ characterSheetId: sheetId, skillKey: `${key}_save`, proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
+    ...d.classSavingThrows.map(key => ({ characterSheetId: sheetId, skillKey: savingThrowKey(key), proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
     ...d.backgroundSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'background' as const, isOverride: false })),
   ]
   if (skillRows.length) {
