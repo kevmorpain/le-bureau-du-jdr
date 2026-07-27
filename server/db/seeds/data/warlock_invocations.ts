@@ -11,6 +11,9 @@ export type InvocationDef = {
 
 const cha = 'cha' as const
 
+// Noms et prérequis alignés sur AideDD (PHB 2014 pour les 32 manifestations de
+// base ; les entrées XGtE/TCoE conservées sont signalées par un commentaire).
+// `levelRequired: 1` = aucun prérequis de niveau d'occultiste.
 export const warlockInvocations: InvocationDef[] = [
   // ─── Niveau 1 (pas de prérequis de niveau) ───────────────────────────────────
   {
@@ -70,11 +73,11 @@ export const warlockInvocations: InvocationDef[] = [
   },
   {
     name: 'Vigueur fiélonne',
-    description: 'Vous pouvez lancer Fausse vie sur vous-même à volonté en tant que sort de niveau 1, sans dépenser d\'emplacement de sort ni de composantes matérielles.',
+    description: 'Vous pouvez lancer Simulacre de vie sur vous-même à volonté en tant que sort de niveau 1, sans dépenser d\'emplacement de sort ni de composantes matérielles.',
     levelRequired: 1,
     prerequisites: null,
     effects: [
-      { type: 'spell_grant', value: { level: 1, spellcastingAbility: cha, spellName: 'Fausse vie', countPerLongRest: 0 } },
+      { type: 'spell_grant', value: { level: 1, spellcastingAbility: cha, spellName: 'Simulacre de vie', countPerLongRest: 0 } },
     ],
   },
   {
@@ -96,12 +99,21 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Voleur des cinq destinées',
-    description: 'Vous pouvez lancer Châtiment une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
+    name: 'Perception transférée',
+    description: 'Par une action, vous touchez un humanoïde consentant et percevez ce qu\'il perçoit jusqu\'à la fin de votre prochain tour. Tant qu\'il reste sur votre plan d\'existence, vous pouvez dépenser une action à chacun de vos tours pour prolonger la connexion d\'autant. Pendant ce temps, vous bénéficiez de ses sens particuliers, mais vous êtes aveugle et sourd à ce qui vous entoure.',
     levelRequired: 1,
     prerequisites: null,
     effects: [
-      { type: 'spell_grant', value: { level: 1, spellcastingAbility: cha, spellName: 'Châtiment', countPerLongRest: 1 } },
+      { type: 'other', value: { kind: 'gaze_of_two_minds' } },
+    ],
+  },
+  {
+    name: 'Voleur des cinq destinées',
+    description: 'Vous pouvez lancer Fléau une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
+    levelRequired: 1,
+    prerequisites: null,
+    effects: [
+      { type: 'spell_grant', value: { level: 1, spellcastingAbility: cha, spellName: 'Fléau', countPerLongRest: 1 } },
     ],
   },
   {
@@ -124,7 +136,7 @@ export const warlockInvocations: InvocationDef[] = [
   },
   {
     name: 'Vision du diable',
-    description: 'Vous voyez normalement dans la pénombre et l\'obscurité, magique ou non, jusqu\'à une distance de 36 mètres.',
+    description: 'Vous voyez normalement dans les ténèbres, magiques ou non, jusqu\'à une distance de 36 mètres.',
     levelRequired: 1,
     prerequisites: null,
     effects: [
@@ -149,9 +161,9 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'other', value: { kind: 'voice_of_chain_master' } },
     ],
   },
-  // TCoE niveau 1
+  // Hors PHB — niveau 1
   {
-    name: 'Esprit occulte',
+    name: 'Esprit occulte', // TCoE
     description: 'Vous avez l\'avantage aux jets de sauvegarde de Constitution effectués pour maintenir votre concentration sur un sort.',
     levelRequired: 1,
     prerequisites: null,
@@ -160,60 +172,42 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
   {
-    name: 'Don des protecteurs',
-    description: 'Quand une créature visible dont le nom est inscrit dans votre Livre des Ombres tombe à 0 point de vie à 9 mètres ou moins de vous et n\'est pas tuée sur le coup, elle tombe à 1 point de vie à la place. Une fois utilisée, vous ne pouvez plus utiliser cette manifestation avant la fin de votre prochain repos long. Le nombre de noms inscrits dans le Livre est limité à votre modificateur de Charisme (minimum 1).',
-    levelRequired: 1,
-    prerequisites: { requiredPactBoon: 'tome' },
-    effects: [
-      { type: 'other', value: { kind: 'gift_of_protectors' } },
-    ],
-  },
-  // ─── Niveau 5 ────────────────────────────────────────────────────────────────
-  {
-    name: 'Aspect de la Lune',
+    name: 'Aspect de la lune', // XGtE
     description: 'Vous n\'avez plus besoin de dormir et ne pouvez pas être forcé à dormir par aucun moyen. Pour bénéficier d\'un repos long, vous pouvez passer ces 8 heures à exécuter des activités peu fatigantes, comme lire votre Livre des Ombres et monter la garde.',
-    levelRequired: 5,
+    levelRequired: 1,
     prerequisites: { requiredPactBoon: 'tome' },
     effects: [
       { type: 'other', value: { kind: 'aspect_of_the_moon' } },
     ],
   },
   {
-    name: 'Manteau de mouches',
-    description: 'En action bonus, vous pouvez vous envelopper d\'un essaim de mouches spectrales jusqu\'au début de votre prochain tour. Le manteau dégage une odeur écœurante. Pendant la durée, vous avez l\'avantage aux tests de Charisme (Intimidation) mais le désavantage à tous les autres tests de Charisme. Toute créature autre que vous qui commence son tour à 1,50 mètre ou moins de vous subit des dégâts de poison égaux à votre modificateur de Charisme (minimum 0). Une fois utilisée, vous ne pouvez plus l\'utiliser avant la fin d\'un repos court ou long.',
-    levelRequired: 5,
-    prerequisites: null,
-    effects: [
-      { type: 'other', value: { kind: 'cloak_of_flies' } },
-    ],
-  },
-  {
-    name: 'Tombeau de Levistus',
-    description: 'En réaction, lorsque vous subissez des dégâts, vous pouvez vous entourer d\'un tombeau de glace, qui fond à la fin de votre prochain tour. Vous gagnez 10 points de vie temporaires. Si des dégâts vous restent après ce gain, ils continuent à s\'appliquer normalement. Tant que les PV temporaires durent, vous êtes entravé et avez la vulnérabilité aux dégâts de feu. Une fois utilisée, vous ne pouvez plus l\'utiliser avant la fin d\'un repos court ou long.',
-    levelRequired: 5,
-    prerequisites: null,
-    effects: [
-      { type: 'other', value: { kind: 'tomb_of_levistus' } },
-    ],
-  },
-  {
-    name: 'Étreinte de Hadar',
-    description: 'Quand vous touchez une créature avec Décharge occulte, vous pouvez la déplacer en ligne droite vers vous de 3 mètres. La cible doit être de taille G ou plus petite, et au-delà de 1,50 m de vous.',
-    levelRequired: 5,
+    name: 'Étreinte de Hadar', // XGtE
+    description: 'Une fois à chacun de vos tours, quand vous touchez une créature avec Décharge occulte, vous pouvez la déplacer de 3 mètres en ligne droite dans votre direction.',
+    levelRequired: 1,
     prerequisites: { requiredSpellName: 'Décharge occulte' },
     effects: [
       { type: 'other', value: { kind: 'eldritch_blast_grasp_of_hadar' } },
     ],
   },
   {
-    name: 'Lance de léthargie',
-    description: 'Quand vous touchez une créature avec Décharge occulte, vous pouvez réduire sa vitesse de 3 mètres jusqu\'à la fin de votre prochain tour.',
-    levelRequired: 5,
+    name: 'Lance de léthargie', // XGtE
+    description: 'Une fois à chacun de vos tours, quand vous touchez une créature avec Décharge occulte, vous pouvez réduire sa vitesse de 3 mètres jusqu\'à la fin de votre prochain tour.',
+    levelRequired: 1,
     prerequisites: { requiredSpellName: 'Décharge occulte' },
     effects: [
       { type: 'other', value: { kind: 'eldritch_blast_lance_of_lethargy' } },
     ],
   },
+  {
+    name: 'Engagement du maître des Chaînes', // TCoE
+    description: 'Quand vous lancez Appel de familier, votre familier gagne une vitesse de vol et de nage, ses attaques comptent comme magiques pour vaincre les résistances, et il peut effectuer l\'action Attaquer lorsque vous renoncez à l\'une des vôtres. Quand il subit des dégâts, vous pouvez utiliser votre réaction pour lui accorder la résistance à ces dégâts.',
+    levelRequired: 1,
+    prerequisites: { requiredPactBoon: 'chain' },
+    effects: [
+      { type: 'other', value: { kind: 'investment_of_the_chain_master' } },
+    ],
+  },
+  // ─── Niveau 5 ────────────────────────────────────────────────────────────────
   {
     name: 'Lame assoiffée',
     description: 'Vous pouvez attaquer deux fois, et non plus une seule, lorsque vous effectuez l\'action Attaquer à votre tour avec votre arme de pacte.',
@@ -225,7 +219,7 @@ export const warlockInvocations: InvocationDef[] = [
   },
   {
     name: 'Maître des ombres',
-    description: 'Vous pouvez utiliser une action pour devenir invisible tant que vous restez dans la pénombre ou l\'obscurité. Vous ne perdez pas cette invisibilité en attaquant ou lançant un sort.',
+    description: 'Quand vous vous trouvez dans une zone de pénombre ou d\'obscurité, vous pouvez utiliser une action pour devenir invisible. L\'invisibilité prend fin dès que vous vous déplacez ou que vous effectuez une action ou une réaction.',
     levelRequired: 5,
     prerequisites: null,
     effects: [
@@ -243,11 +237,30 @@ export const warlockInvocations: InvocationDef[] = [
   },
   {
     name: 'Sombre présage',
-    description: 'Vous pouvez lancer Mauvais sort une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
+    description: 'Vous pouvez lancer Malédiction une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
     levelRequired: 5,
     prerequisites: null,
     effects: [
-      { type: 'spell_grant', value: { level: 3, spellcastingAbility: cha, spellName: 'Mauvais sort', countPerLongRest: 1 } },
+      { type: 'spell_grant', value: { level: 3, spellcastingAbility: cha, spellName: 'Malédiction', countPerLongRest: 1 } },
+    ],
+  },
+  // Hors PHB — niveau 5
+  {
+    name: 'Voile de mouches', // XGtE
+    description: 'Par une action bonus, vous vous entourez d\'une aura magique évoquant un essaim de mouches bourdonnantes, qui s\'étend sur 1,50 mètre autour de vous et que tout abri total bloque. Elle dure jusqu\'à ce que vous soyez incapable d\'agir ou que vous y mettiez fin par une action bonus. Elle vous donne l\'avantage aux tests de Charisme (Intimidation) et le désavantage à vos autres tests de Charisme. Toute créature qui commence son tour dans l\'aura subit des dégâts de poison égaux à votre modificateur de Charisme (minimum 0). Une fois utilisée, vous devez terminer un repos court ou long avant de la réutiliser.',
+    levelRequired: 5,
+    prerequisites: null,
+    effects: [
+      { type: 'other', value: { kind: 'cloak_of_flies' } },
+    ],
+  },
+  {
+    name: 'Tombe de Levistus', // XGtE
+    description: 'Par une réaction, quand vous subissez des dégâts, vous pouvez vous enfermer dans un bloc de glace qui fond à la fin de votre prochain tour. Vous gagnez 10 points de vie temporaires par niveau d\'occultiste, puis vous encaissez les dégâts qui ont déclenché la réaction. Immédiatement après, vous gagnez la vulnérabilité aux dégâts de feu, votre vitesse tombe à 0 et vous êtes incapable d\'agir. Ces effets, ainsi que les points de vie temporaires restants, prennent fin quand la glace fond. Une fois utilisée, vous devez terminer un repos court ou long avant de la réutiliser.',
+    levelRequired: 5,
+    prerequisites: null,
+    effects: [
+      { type: 'other', value: { kind: 'tomb_of_levistus' } },
     ],
   },
   // ─── Niveau 7 ────────────────────────────────────────────────────────────────
@@ -278,22 +291,14 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'spell_grant', value: { level: 4, spellcastingAbility: cha, spellName: 'Métamorphose', countPerLongRest: 1 } },
     ],
   },
+  // Hors PHB — niveau 7
   {
-    name: 'Regard fantomatique',
-    description: 'En action, vous gagnez la vision aveugle jusqu\'à 9 mètres pour 1 minute. Pendant cette durée, vous voyez à travers les objets solides comme s\'ils étaient transparents. Une fois utilisée, vous ne pouvez plus l\'utiliser avant la fin d\'un repos court ou long.',
+    name: 'Regard fantomatique', // XGtE
+    description: 'Par une action, vous pouvez voir à travers les objets solides jusqu\'à 9 mètres ; sur cette distance, vous disposez également de la vision dans le noir si vous ne l\'aviez pas déjà. Cette vue dure 1 minute ou jusqu\'à ce que votre concentration prenne fin, comme pour un sort. Une fois utilisée, vous devez terminer un repos court ou long avant de la réutiliser.',
     levelRequired: 7,
     prerequisites: null,
     effects: [
       { type: 'other', value: { kind: 'ghostly_gaze' } },
-    ],
-  },
-  {
-    name: 'Investiture du maître des chaînes',
-    description: 'Quand vous lancez Appel de familier, votre familier gagne plusieurs bénéfices : il gagne un bonus à ses jets d\'attaque, sauvegardes et tests égal à votre bonus de maîtrise, ses attaques sont magiques pour vaincre les résistances. Quand il subit des dégâts, vous pouvez utiliser votre réaction pour leur donner la résistance jusqu\'à la fin de votre prochain tour. Tant que vous êtes sur le même plan d\'existence, vous pouvez communiquer télépathiquement avec lui.',
-    levelRequired: 7,
-    prerequisites: { requiredPactBoon: 'chain' },
-    effects: [
-      { type: 'other', value: { kind: 'investment_of_the_chain_master' } },
     ],
   },
   // ─── Niveau 9 ────────────────────────────────────────────────────────────────
@@ -308,11 +313,11 @@ export const warlockInvocations: InvocationDef[] = [
   },
   {
     name: 'Sbires du chaos',
-    description: 'Vous pouvez lancer Conjuration d\'élémentaire une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
+    description: 'Vous pouvez lancer Invocation d\'élémentaire une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
     levelRequired: 9,
     prerequisites: null,
     effects: [
-      { type: 'spell_grant', value: { level: 5, spellcastingAbility: cha, spellName: 'Conjuration d\'élémentaire', countPerLongRest: 1 } },
+      { type: 'spell_grant', value: { level: 5, spellcastingAbility: cha, spellName: 'Invocation d\'élémentaire', countPerLongRest: 1 } },
     ],
   },
   {
@@ -333,10 +338,20 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'spell_grant', value: { level: 3, spellcastingAbility: cha, spellName: 'Communication avec les morts', countPerLongRest: 0 } },
     ],
   },
+  // Hors PHB — niveau 9
+  {
+    name: 'Don des protecteurs', // TCoE
+    description: 'Quand une créature visible dont le nom est inscrit dans votre Livre des Ombres tombe à 0 point de vie à 9 mètres ou moins de vous et n\'est pas tuée sur le coup, elle tombe à 1 point de vie à la place. Une fois utilisée, vous ne pouvez plus utiliser cette manifestation avant la fin de votre prochain repos long. Le nombre de noms inscrits dans le Livre est limité à votre modificateur de Charisme (minimum 1).',
+    levelRequired: 9,
+    prerequisites: { requiredPactBoon: 'tome' },
+    effects: [
+      { type: 'other', value: { kind: 'gift_of_protectors' } },
+    ],
+  },
   // ─── Niveau 12 ───────────────────────────────────────────────────────────────
   {
     name: 'Buveuse de vie',
-    description: 'Quand vous touchez une créature avec votre arme de pacte, la créature subit 1d6 dégâts nécrotiques supplémentaires, plus des dégâts nécrotiques supplémentaires égaux à votre modificateur de Charisme.',
+    description: 'Quand vous touchez une créature avec votre arme de pacte, elle subit des dégâts nécrotiques supplémentaires égaux à votre modificateur de Charisme (minimum 1).',
     levelRequired: 12,
     prerequisites: { requiredPactBoon: 'blade' },
     effects: [
@@ -364,16 +379,16 @@ export const warlockInvocations: InvocationDef[] = [
   },
   {
     name: 'Royaumes lointains',
-    description: 'Vous pouvez lancer Œil d\'arcane à volonté, sans dépenser d\'emplacement de sort.',
+    description: 'Vous pouvez lancer Oeil magique à volonté, sans dépenser d\'emplacement de sort.',
     levelRequired: 15,
     prerequisites: null,
     effects: [
-      { type: 'spell_grant', value: { level: 4, spellcastingAbility: cha, spellName: 'Œil d\'arcane', countPerLongRest: 0 } },
+      { type: 'spell_grant', value: { level: 4, spellcastingAbility: cha, spellName: 'Oeil magique', countPerLongRest: 0 } },
     ],
   },
   {
     name: 'Vision de sorcier',
-    description: 'Vous voyez la vraie forme de toute créature déguisée, métamorphosée ou transformée, dans un rayon de 9 mètres et tant qu\'elle se trouve dans votre champ de vision.',
+    description: 'Vous discernez la forme véritable de tout métamorphe et de toute créature dissimulée par une magie d\'illusion ou de transmutation, si elle se trouve dans un rayon de 9 mètres et dans votre ligne de mire.',
     levelRequired: 15,
     prerequisites: null,
     effects: [

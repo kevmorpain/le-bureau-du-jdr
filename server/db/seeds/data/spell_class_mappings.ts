@@ -123,4 +123,21 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Protection contre une énergie', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Rôdeur'] },
   { spellName: 'Retour à la vie', classNames: ['Clerc', 'Paladin'] },
   { spellName: 'Transfert de vie', classNames: ['Clerc', 'Magicien'] },
+
+  // ─── Sorts octroyés par les manifestations occultes (listes de classe AideDD) ──
+  // L'occultiste ne les a pas tous sur sa liste : il y accède via l'invocation.
+  { spellName: 'Communication avec les animaux', classNames: ['Barde', 'Druide', 'Rôdeur'] },
+  { spellName: 'Simulacre de vie', classNames: ['Ensorceleur', 'Magicien'] },
+  { spellName: 'Déguisement', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
+  { spellName: 'Image silencieuse', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
+  { spellName: 'Fléau', classNames: ['Barde', 'Clerc'] },
+  { spellName: 'Saut', classNames: ['Druide', 'Ensorceleur', 'Magicien', 'Rôdeur'] },
+  { spellName: 'Lévitation', classNames: ['Ensorceleur', 'Magicien'] },
+  { spellName: 'Modification d\'apparence', classNames: ['Ensorceleur', 'Magicien'] },
+  { spellName: 'Lenteur', classNames: ['Ensorceleur', 'Magicien'] },
+  { spellName: 'Confusion', classNames: ['Barde', 'Druide', 'Ensorceleur', 'Magicien'] },
+  { spellName: 'Métamorphose', classNames: ['Barde', 'Druide', 'Ensorceleur', 'Magicien'] },
+  { spellName: 'Oeil magique', classNames: ['Magicien'] },
+  { spellName: 'Immobilisation de monstre', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Invocation d\'élémentaire', classNames: ['Druide', 'Magicien'] },
 ]
