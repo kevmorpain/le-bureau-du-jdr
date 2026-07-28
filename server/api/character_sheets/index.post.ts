@@ -5,6 +5,7 @@ import { and, eq, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
+import type { CasterType } from '~~/shared/rules/spellcasting'
 
 // Alignement builder (lowercase) → DB (uppercase)
 const ALIGNMENT_MAP: Record<string, string> = {
@@ -36,13 +37,7 @@ const HALF_SLOTS: number[][] = [
 const PACT_LEVEL = [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5]
 const PACT_COUNT = [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]
 
-const CASTER_TYPE: Record<string, 'full' | 'half' | 'pact' | 'none'> = {
-  'Barde': 'full', 'Clerc': 'full', 'Druide': 'full', 'Ensorceleur': 'full', 'Magicien': 'full',
-  'Paladin': 'half', 'Rôdeur': 'half',
-  'Occultiste': 'pact',
-}
-
-function slotsForLevel(type: 'full' | 'half' | 'pact', level: number): number[] {
+function slotsForLevel(type: CasterType, level: number): number[] {
   const idx = Math.max(0, Math.min(19, level - 1))
   if (type === 'full') return [...FULL_SLOTS[idx]!]
   if (type === 'half') return [...HALF_SLOTS[idx]!]
@@ -155,7 +150,13 @@ export default defineEventHandler(async (event) => {
   // les champs dérivés (hitDice de la classe, maîtrises héritées du background).
 
   const [cls] = await db
-    .select({ id: schema.classes.id, name: schema.classes.name, hitDice: schema.classes.hitDice })
+    .select({
+      id: schema.classes.id,
+      hitDice: schema.classes.hitDice,
+      // Fait d'identité porté par la table (cf. rules-engine.md §3) — remplace la
+      // table `CASTER_TYPE` qui indexait par nom de classe.
+      spellcastingType: schema.classes.spellcastingType,
+    })
     .from(schema.classes)
     .where(eq(schema.classes.id, d.classId))
     .limit(1)
@@ -361,7 +362,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Emplacements de sorts
-  const casterType = CASTER_TYPE[cls.name] ?? 'none'
+  const casterType = cls.spellcastingType
   if (casterType !== 'none') {
     const slots = slotsForLevel(casterType, d.level)
     const slotType = casterType === 'pact' ? 'pact_magic' : 'spellcasting'
