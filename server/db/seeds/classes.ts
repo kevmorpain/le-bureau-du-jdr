@@ -1,8 +1,9 @@
 import { db } from 'hub:db'
-// Colonnes neuves (subclass_level, spellcasting_type) → schéma importé de la source :
-// le cache de `hub:db` peut être périmé au démarrage et `drizzle.set()` laisserait
-// alors tomber les nouveaux champs en silence (cf. CLAUDE.md « hub:db schema cache »).
-import * as srcSchema from '~~/server/db/schema'
+// Colonnes neuves (subclass_level, spellcasting_type) → schéma importé de la source
+// et non de `hub:db`, dont le cache peut être périmé au démarrage : `drizzle.set()`
+// laisserait alors tomber les nouveaux champs en silence (cf. CLAUDE.md « hub:db
+// schema cache »). Seul `db` vient encore de `hub:db`.
+import * as schema from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { classesData } from './data/classes'
 
@@ -14,18 +15,18 @@ export default async function seed() {
   for (const cls of classesData) {
     const existing = await db
       .select({
-        id: srcSchema.classes.id,
-        hitDice: srcSchema.classes.hitDice,
-        spellcastingAbility: srcSchema.classes.spellcastingAbility,
-        subclassLevel: srcSchema.classes.subclassLevel,
-        spellcastingType: srcSchema.classes.spellcastingType,
+        id: schema.classes.id,
+        hitDice: schema.classes.hitDice,
+        spellcastingAbility: schema.classes.spellcastingAbility,
+        subclassLevel: schema.classes.subclassLevel,
+        spellcastingType: schema.classes.spellcastingType,
       })
-      .from(srcSchema.classes)
-      .where(eq(srcSchema.classes.name, cls.name))
+      .from(schema.classes)
+      .where(eq(schema.classes.name, cls.name))
       .get()
 
     if (!existing) {
-      await db.insert(srcSchema.classes).values(cls)
+      await db.insert(schema.classes).values(cls)
       inserted++
     } else if (
       existing.hitDice !== cls.hitDice
@@ -34,14 +35,14 @@ export default async function seed() {
       || existing.spellcastingType !== cls.spellcastingType
     ) {
       await db
-        .update(srcSchema.classes)
+        .update(schema.classes)
         .set({
           hitDice: cls.hitDice,
           spellcastingAbility: cls.spellcastingAbility,
           subclassLevel: cls.subclassLevel,
           spellcastingType: cls.spellcastingType,
         })
-        .where(eq(srcSchema.classes.id, existing.id))
+        .where(eq(schema.classes.id, existing.id))
       updated++
     } else {
       skipped++
