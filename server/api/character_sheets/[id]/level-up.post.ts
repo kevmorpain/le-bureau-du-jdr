@@ -5,6 +5,7 @@ import { eq, and, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { abilityEnum } from '~~/shared/rules/abilities'
+import type { CasterType, SpellcastingType } from '~~/shared/rules/spellcasting'
 
 const levelUpSchema = z.object({
   classId: z.number().int().positive(),
@@ -64,14 +65,7 @@ const HALF_SLOTS: number[][] = [
 const PACT_LEVEL = [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5]
 const PACT_COUNT = [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]
 
-// Caster type by DB class name
-const CASTER_TYPE: Record<string, 'full' | 'half' | 'pact' | 'none'> = {
-  'Barde': 'full', 'Clerc': 'full', 'Druide': 'full', 'Ensorceleur': 'full', 'Magicien': 'full',
-  'Paladin': 'half', 'Rôdeur': 'half',
-  'Occultiste': 'pact',
-}
-
-function slotsForLevel(type: 'full' | 'half' | 'pact', level: number): number[] {
+function slotsForLevel(type: CasterType, level: number): number[] {
   const idx = Math.max(0, Math.min(19, level - 1))
   if (type === 'full') return [...FULL_SLOTS[idx]!]
   if (type === 'half') return [...HALF_SLOTS[idx]!]
@@ -82,12 +76,14 @@ function slotsForLevel(type: 'full' | 'half' | 'pact', level: number): number[] 
   return row
 }
 
-function combinedSpellSlots(classes: Array<{ dbName: string, level: number }>) {
+// Emplacements combinés du multiclassage (PHB 2014 p.164) : le type d'incantation
+// vient de la table `classes` (fait d'identité, cf. rules-engine.md §3) et non plus
+// d'une table `CASTER_TYPE` indexée par nom de classe.
+function combinedSpellSlots(classes: Array<{ casterType: SpellcastingType, level: number }>) {
   let combined = 0
   let pactLvl = 0
   let hasPact = false
-  for (const { dbName, level } of classes) {
-    const t = CASTER_TYPE[dbName]
+  for (const { casterType: t, level } of classes) {
     if (t === 'full') combined += level
     else if (t === 'half' && level >= 2) combined += Math.floor(level / 2)
     else if (t === 'pact') { hasPact = true; pactLvl += level }
@@ -110,10 +106,10 @@ export default defineEventHandler(async (event) => {
 
   const d = result.data
 
-  // ── 1. Charge la classe (besoin du hitDice + name pour le caster lookup) ───
+  // ── 1. Charge la classe (besoin du hitDice pour les PV) ───────────────────
 
   const [cls] = await db
-    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, name: schema.classes.name })
+    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice })
     .from(schema.classes)
     .where(eq(schema.classes.id, d.classId))
     .limit(1)
@@ -425,17 +421,17 @@ export default defineEventHandler(async (event) => {
     .map(c => ({ classId: c.classId, level: c.level }))
   newClassesList.push({ classId: cls.id, level: newLevel })
 
-  // Resolve DB names for each class
+  // Résout le type d'incantation de chaque classe du personnage
   const classIds = newClassesList.map(c => c.classId)
   const classRows = await db
-    .select({ id: schema.classes.id, name: schema.classes.name })
+    .select({ id: schema.classes.id, spellcastingType: schema.classes.spellcastingType })
     .from(schema.classes)
     .where(sql`${schema.classes.id} IN (${sql.join(classIds.map(i => sql`${i}`), sql`, `)})`)
 
-  const classNameById = new Map(classRows.map(c => [c.id, c.name]))
+  const casterTypeById = new Map(classRows.map(c => [c.id, c.spellcastingType]))
 
   const classesForSlots = newClassesList.map(c => ({
-    dbName: classNameById.get(c.classId) ?? '',
+    casterType: casterTypeById.get(c.classId) ?? 'none',
     level: c.level,
   }))
 

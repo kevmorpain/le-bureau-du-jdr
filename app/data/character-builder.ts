@@ -4,11 +4,15 @@
 // Voir docs/character-builder.md pour le contexte complet.
 
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
+import type { CasterType } from '~~/shared/rules/spellcasting'
 
 // Ré-export depuis la source canonique (cf. shared/rules/abilities.ts, decisions.md D6) —
 // les consommateurs continuent d'importer `AbilityKey` / `ABILITIES` d'ici.
 export type { AbilityKey }
-export type SpellcastingType = 'full' | 'half' | 'pact'
+// L'ensemble fermé des types d'incantation vit dans `shared/rules/spellcasting.ts` et
+// sa valeur par classe dans `classes.spellcasting_type` ; ici on ne manipule que les
+// trois progressions qui ont une table d'emplacements (`CasterType`, `'none'` exclu).
+export type { CasterType }
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
@@ -480,7 +484,7 @@ export interface SkillChoices {
 
 export interface SpellcastingInfo {
   ability: AbilityKey
-  type: SpellcastingType
+  type: CasterType
   startsAtLevel?: number              // Paladin/Rôdeur commencent niveau 2
 }
 
@@ -1208,7 +1212,7 @@ export const HALF_CASTER_SLOTS: number[][] = [
 export const PACT_SLOT_LEVEL = [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5]
 export const PACT_SLOT_COUNT = [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]
 
-export function spellSlotsAtLevel(type: SpellcastingType, level: number): number[] {
+export function spellSlotsAtLevel(type: CasterType, level: number): number[] {
   const idx = Math.max(0, Math.min(19, level - 1))
   if (type === 'full') return FULL_CASTER_SLOTS[idx]!
   if (type === 'half') return HALF_CASTER_SLOTS[idx]!
@@ -1222,7 +1226,7 @@ export function spellSlotsAtLevel(type: SpellcastingType, level: number): number
   return [0,0,0,0,0,0,0,0,0]
 }
 
-export function maxSpellLevelAtLevel(type: SpellcastingType, level: number): number {
+export function maxSpellLevelAtLevel(type: CasterType, level: number): number {
   const slots = spellSlotsAtLevel(type, level)
   for (let i = 8; i >= 0; i--) {
     if ((slots[i] ?? 0) > 0) return i + 1

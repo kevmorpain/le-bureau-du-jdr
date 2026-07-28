@@ -423,7 +423,7 @@ Corps accepté :
 | Table | Colonnes manquantes |
 |---|---|
 | `character_species` | parentId, abilityBonuses, traits, darkvision — compensé par `app/data/` |
-| `classes` | savingThrows, skillChoiceCount, skillChoiceOptions, armorProf, weaponProf, role, spellcastingType — compensé par `app/data/` |
+| `classes` | savingThrows, skillChoiceCount, skillChoiceOptions, armorProf, weaponProf, role — compensé par `app/data/`. `subclass_level` et `spellcasting_type` sont **en base** depuis la migration 0080 ; le builder garde sa copie jusqu'au recâblage front (roadmap `dnd-5.5.md` §3, point 6), sous garde-fou `test/nuxt/classesIdentityFront.test.ts` |
 | `backgrounds` | equipment JSON, suggestions personnalité/idéaux/liens/défauts — compensé par `app/data/` |
 | `character_sheets` | fightingStyle — stocker comme feature à la création ou ignorer V1 |
 | `character_species` | Drow (Elfe Noir) absent de la DB — mapping vers null ou 'Elfe des bois' |
