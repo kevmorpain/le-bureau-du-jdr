@@ -1,6 +1,7 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { Formula } from '~~/shared/utils/formula'
+import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { AbilityScoreKey } from './effects'
 import classes from './classes'
 import subclasses from './subclasses'
@@ -49,6 +50,11 @@ const features = sqliteTable(
     classId: integer('class_id').references(() => classes.id, { onDelete: 'set null' }),
     subclassId: integer('subclass_id').references(() => subclasses.id, { onDelete: 'set null' }),
     levelRequired: integer('level_required'),
+    // Groupe de features-options auquel cette feature appartient en tant qu'OPTION
+    // (cf. shared/rules/featureTags.ts). Nullable : la plupart des features n'en sont
+    // pas une. Indexé pour résoudre `optionSource:{feature_group}` (progression, 4c)
+    // par `WHERE tag = <group>`. Backfillé pour les invocations par la migration 0081.
+    tag: text('tag').$type<FeatureTag>(),
     actionType: text('action_type').$type<ActionType>(),
     maxUsesFormula: text('max_uses_formula', { mode: 'json' }).$type<Formula>(),
     rechargeType: text('recharge_type').$type<RechargeType>(),
@@ -60,6 +66,7 @@ const features = sqliteTable(
   table => [
     index('features_class_id_idx').on(table.classId),
     index('features_subclass_id_idx').on(table.subclassId),
+    index('features_tag_idx').on(table.tag),
   ],
 )
 

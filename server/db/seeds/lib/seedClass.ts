@@ -2,6 +2,7 @@ import { db, schema } from 'hub:db'
 import { eq, and, sql } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
 import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequisite } from '../../schema/features'
+import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { Formula } from '~~/shared/utils/formula'
 
 export type FeatureDef = {
@@ -15,6 +16,11 @@ export type FeatureDef = {
   effects?: Effect[]
   meta?: FeatureMeta
   prerequisites?: FeaturePrerequisite | null
+  // Groupe de features-options auquel cette feature appartient (cf.
+  // shared/rules/featureTags.ts). Renseigné pour les invocations ; les autres
+  // groupes suivront au lot 4c. La migration 0081 fait le même backfill côté
+  // bases déjà déployées.
+  tag?: FeatureTag | null
 }
 
 export type SubclassDef = {
@@ -39,7 +45,7 @@ export async function seedClass(
   }
 
   for (const featureDef of baseFeatures) {
-    const { effects = [], meta, prerequisites, ...data } = featureDef
+    const { effects = [], meta, prerequisites, tag, ...data } = featureDef
     // Important : on inclut `levelRequired` dans la clef d'unicité, sinon
     // les features récurrentes au même nom (ex. « Amélioration de caractéristiques »
     // gagnée à 4/8/12/16/19) sont fusionnées en une seule ligne en base et seul
@@ -83,6 +89,7 @@ export async function seedClass(
         .get()
       featuresInserted++
     }
+    await _syncFeatureTag(feature.id, tag)
     await _seedEffects(feature.id, effects as Effect[])
   }
 
@@ -119,7 +126,7 @@ export async function seedClass(
     }
 
     for (const featureDef of subclassDef.features) {
-      const { effects = [], meta, ...data } = featureDef
+      const { effects = [], meta, tag, ...data } = featureDef
       // Idem : scoper par niveau pour éviter la fusion des features homonymes.
       const existing = await db.query.features.findFirst({
         where: and(
@@ -151,11 +158,24 @@ export async function seedClass(
           .get()
         featuresInserted++
       }
+      await _syncFeatureTag(feature.id, tag)
       await _seedEffects(feature.id, effects as Effect[])
     }
   }
 
   return { featuresInserted, subclassesInserted }
+}
+
+/**
+ * Écrit le `tag` (feature_group) d'une feature. `undefined` = le seed ne se prononce
+ * pas (on laisse le tag existant). Écriture par `sql` brut — comme meta/prerequisites
+ * ci-dessus — pour être robuste au cache de schéma de `hub:db`, potentiellement
+ * périmé après l'ajout de la colonne (cf. CLAUDE.md « hub:db schema cache » et le
+ * précédent des colonnes d'identité de `classes` au lot 4a).
+ */
+async function _syncFeatureTag(featureId: number, tag: FeatureTag | null | undefined) {
+  if (tag === undefined) return
+  await db.run(sql`UPDATE features SET tag = ${tag ?? null} WHERE id = ${featureId}`)
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { Effect } from '../../schema/effects'
 import type { FeaturePrerequisite } from '../../schema/features'
+import type { FeatureDef } from '../lib/seedClass'
 
 export type InvocationDef = {
   name: string
@@ -396,3 +397,24 @@ export const warlockInvocations: InvocationDef[] = [
     ],
   },
 ]
+
+/**
+ * Les invocations, projetées en `FeatureDef` pour le seed : `feature_type =
+ * 'eldritch_invocation'` et `tag = 'invocation'` (cf. shared/rules/featureTags.ts).
+ * C'est ce tag qui, sur base neuve, fait des invocations les features-options du
+ * groupe `invocation` — le même résultat que le backfill de la migration 0081 sur
+ * les bases déjà déployées. Données pures (imports de types seulement), donc
+ * importable par les tests unitaires (cf. test/unit/featureTags.test.ts).
+ */
+export const warlockInvocationFeatures: FeatureDef[] = warlockInvocations.map(inv => ({
+  name: inv.name,
+  description: inv.description,
+  featureType: 'eldritch_invocation',
+  tag: 'invocation',
+  levelRequired: inv.levelRequired,
+  actionType: null,
+  rechargeType: null,
+  maxUsesFormula: null,
+  effects: inv.effects,
+  prerequisites: inv.prerequisites,
+}))
