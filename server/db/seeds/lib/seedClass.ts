@@ -1,9 +1,26 @@
 import { db, schema } from 'hub:db'
+// `progression` est une table NEUVE (lot 4c) : on l'écrit via le schéma SOURCE
+// (`srcSchema`) et non le cache de `hub:db`, qui peut l'ignorer au démarrage — même
+// motif que le seed `classes` du lot 4a pour ses colonnes neuves (cf. CLAUDE.md).
+import * as srcSchema from '../../schema'
 import { eq, and, sql } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
 import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequisite } from '../../schema/features'
 import type { FeatureTag } from '~~/shared/rules/featureTags'
+import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
+
+/**
+ * Point de choix porté par une feature (owner = featureId, cf. decisions.md D4). Écrit
+ * sur la table `progression` par `_syncProgression`. Renseigné pour l'Occultiste au lot
+ * 4c ; les autres classes suivront. Cf. rules-engine.md §4.
+ */
+export type ProgressionDef = {
+  kind: ChoiceKind
+  count: Formula
+  optionSource: OptionSource
+  replaceable?: boolean
+}
 
 export type FeatureDef = {
   name: string
@@ -21,6 +38,9 @@ export type FeatureDef = {
   // groupes suivront au lot 4c. La migration 0081 fait le même backfill côté
   // bases déjà déployées.
   tag?: FeatureTag | null
+  // Point de choix dont cette feature est PROPRIÉTAIRE (owner, D4). Persisté sur la
+  // table `progression`. La migration 0082 crée les mêmes lignes côté bases déployées.
+  progression?: ProgressionDef | null
 }
 
 export type SubclassDef = {
@@ -45,7 +65,7 @@ export async function seedClass(
   }
 
   for (const featureDef of baseFeatures) {
-    const { effects = [], meta, prerequisites, tag, ...data } = featureDef
+    const { effects = [], meta, prerequisites, tag, progression: progressionDef, ...data } = featureDef
     // Important : on inclut `levelRequired` dans la clef d'unicité, sinon
     // les features récurrentes au même nom (ex. « Amélioration de caractéristiques »
     // gagnée à 4/8/12/16/19) sont fusionnées en une seule ligne en base et seul
@@ -90,6 +110,7 @@ export async function seedClass(
       featuresInserted++
     }
     await _syncFeatureTag(feature.id, tag)
+    await _syncProgression(feature.id, progressionDef)
     await _seedEffects(feature.id, effects as Effect[])
   }
 
@@ -126,7 +147,7 @@ export async function seedClass(
     }
 
     for (const featureDef of subclassDef.features) {
-      const { effects = [], meta, tag, ...data } = featureDef
+      const { effects = [], meta, tag, progression: progressionDef, ...data } = featureDef
       // Idem : scoper par niveau pour éviter la fusion des features homonymes.
       const existing = await db.query.features.findFirst({
         where: and(
@@ -159,6 +180,7 @@ export async function seedClass(
         featuresInserted++
       }
       await _syncFeatureTag(feature.id, tag)
+      await _syncProgression(feature.id, progressionDef)
       await _seedEffects(feature.id, effects as Effect[])
     }
   }
@@ -176,6 +198,33 @@ export async function seedClass(
 async function _syncFeatureTag(featureId: number, tag: FeatureTag | null | undefined) {
   if (tag === undefined) return
   await db.run(sql`UPDATE features SET tag = ${tag ?? null} WHERE id = ${featureId}`)
+}
+
+/**
+ * Écrit le point de choix (`progression`) dont la feature est propriétaire (D4).
+ * `undefined`/`null` = pas de progression → no-op. Écrit via `srcSchema.progression`
+ * (table NEUVE, cf. import en tête) plutôt que le cache `hub:db`. Idempotent : une
+ * feature porte au plus une progression par `kind` ; on met à jour si elle existe déjà.
+ */
+async function _syncProgression(featureId: number, prog: ProgressionDef | null | undefined) {
+  if (!prog) return
+  const existing = await db
+    .select({ id: srcSchema.progression.id })
+    .from(srcSchema.progression)
+    .where(and(eq(srcSchema.progression.featureId, featureId), eq(srcSchema.progression.kind, prog.kind)))
+    .limit(1)
+    .get()
+  const values = {
+    count: prog.count,
+    optionSource: prog.optionSource,
+    replaceable: prog.replaceable ?? false,
+  }
+  if (existing) {
+    await db.update(srcSchema.progression).set(values).where(eq(srcSchema.progression.id, existing.id))
+  }
+  else {
+    await db.insert(srcSchema.progression).values({ featureId, kind: prog.kind, ...values })
+  }
 }
 
 /**

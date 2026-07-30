@@ -4,6 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import { and, eq, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
+import { isPassiveGrant } from '~~/server/utils/features'
 import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
 import type { CasterType } from '~~/shared/rules/spellcasting'
 
@@ -270,6 +271,7 @@ export default defineEventHandler(async (event) => {
       eq(schema.features.classId, cls.id),
       eq(schema.features.featureType, 'class_feature'),
       lte(schema.features.levelRequired, d.level),
+      isPassiveGrant(), // pas les options d'un groupe de choix (tag) — cf. server/utils/features.ts
     ))
 
   const subclassFeatureRows = subclassId
@@ -280,6 +282,7 @@ export default defineEventHandler(async (event) => {
           eq(schema.features.subclassId, subclassId),
           eq(schema.features.featureType, 'subclass_feature'),
           lte(schema.features.levelRequired, d.level),
+          isPassiveGrant(),
         ))
     : []
 
