@@ -1,5 +1,6 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
+import type { MasteryProperty } from '~~/shared/rules/masteryProperties'
 import type { DamageTypeKey } from './effects'
 import characterInventory from './character_inventory'
 import itemEffects from './item_effects'
@@ -63,6 +64,10 @@ const items = sqliteTable('items', {
   itemType: text('item_type').$type<ItemType>().notNull(),
   properties: text('properties', { mode: 'json' }).$type<ItemProperties>().notNull(),
   description: text('description'),
+  // Maîtrise d'armes 2024 (« weapon mastery ») — au plus une par arme. Nullable :
+  // absente en 2014, et le contenu 5.5 (quelle arme porte quelle maîtrise) est seedé
+  // en Phase 2. Ensemble fermé canonique : shared/rules/masteryProperties.ts.
+  masteryProperty: text('mastery_property').$type<MasteryProperty>(),
   // ─── Charges (objets à utilisations limitées) ───────────────────────────
   // maxUses : nombre de charges max (null = objet sans charge).
   // rechargeType : quand l'objet récupère ses charges.
