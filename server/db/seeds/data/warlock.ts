@@ -1,6 +1,7 @@
 import { fixed, lookup, variable, add, mul, max } from '~~/shared/utils/formula'
 import type { SubclassDef } from '../lib/seedClass'
 import type { Effect } from '../../schema/effects'
+import { INVOCATIONS_KNOWN, warlockPactBoonFeatures } from './warlock_progression'
 
 // ─── Pact Magic slot tables (PHB 5e) ──────────────────────────────────────────
 // Index = class_level - 1 (levels 1–20)
@@ -8,8 +9,8 @@ import type { Effect } from '../../schema/effects'
 const pactMagicSlotCount = lookup([1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4])
 const pactMagicSlotLevel = lookup([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])
 
-// Invocations known by class level
-const invocationsKnown = lookup([0, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8])
+// Nombre d'invocations connues par niveau : source unique dans data/warlock_progression.ts
+// (INVOCATIONS_KNOWN), partagée avec le `count` de la progression `invocations`.
 
 // ─── Warlock base class features ──────────────────────────────────────────────
 
@@ -32,7 +33,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     description: `À force d'étudier des textes occultes interdits, vous avez débloqué des manifestations occultes, des fragments de savoir interdit qui vous imprègnent d'une aptitude magique permanente. Vous gagnez deux manifestations occultes de votre choix. Vos options sont détaillées à la fin de la description de cette classe. Quand vous gagnez un niveau d'occultiste, vous pouvez remplacer une manifestation que vous connaissez par une autre que vous pouvez apprendre à ce niveau.`,
     featureType: 'class_feature' as const,
     levelRequired: 2,
-    maxUsesFormula: invocationsKnown,
+    maxUsesFormula: INVOCATIONS_KNOWN,
     actionType: null,
     rechargeType: null,
     effects: [],
@@ -155,6 +156,10 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     rechargeType: 'long_rest' as const,
     effects: [],
   },
+  // Les 3 faveurs de pacte comme features-OPTIONS taguées `pact_boon` (cf.
+  // data/warlock_progression.ts). Elles sont énumérées par la progression `pact_boon`
+  // portée par « Faveur de pacte » ; leur `tag` les exclut de la matérialisation passive.
+  ...warlockPactBoonFeatures,
 ]
 
 // ─── Grand Ancien subclass features ───────────────────────────────────────────

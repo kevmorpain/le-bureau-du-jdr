@@ -4,6 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import { eq, and, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
+import { isPassiveGrant } from '~~/server/utils/features'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import type { CasterType, SpellcastingType } from '~~/shared/rules/spellcasting'
 
@@ -171,6 +172,7 @@ export default defineEventHandler(async (event) => {
         eq(schema.features.classId, cls.id),
         eq(schema.features.featureType, 'class_feature'),
         eq(schema.features.levelRequired, newLevel),
+        isPassiveGrant(), // pas les options d'un groupe de choix (tag) — cf. server/utils/features.ts
       ),
     )
 
@@ -191,6 +193,7 @@ export default defineEventHandler(async (event) => {
             subclassId !== null
               ? lte(schema.features.levelRequired, newLevel)
               : eq(schema.features.levelRequired, newLevel),
+            isPassiveGrant(),
           ),
         )
     : []
