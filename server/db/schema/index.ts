@@ -14,6 +14,7 @@ export { default as featureEffects, featureEffectsRelations } from './feature_ef
 export { default as features, featuresRelations } from './features'
 export { default as magicSchools } from './magic_schools'
 export { default as speciesFeatures, speciesFeaturesRelations } from './species_features'
+export { default as backgroundFeatures } from './background_features'
 export { default as spells, spellsRelations } from './spells'
 export { default as spellClasses, spellClassesRelations } from './spell_classes'
 export { default as subclasses, subclassesRelations } from './subclasses'
