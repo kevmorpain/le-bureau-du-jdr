@@ -61,7 +61,24 @@ Bouleversement central : **les bonus de caractéristiques passent de l'espèce v
 4. **Schéma (sans `ruleset`)** : colonnes d'identité `classes` + `progression` +
    `character_choices` + `features.tag` + alignement `backgrounds` + `items.mastery_property`
    + table `skills` (détails : `rules-engine.md` §6).
-5. **API** : `/api/catalog/*` (consolidé, caché) + `db.batch()` + dérivation/validation serveur.
+5. **API + résolution** — découpé en sous-lots (cf. `rules-engine.md` §5/§7) :
+   - **5a** ✅ — `resolve()` pur (volet choix) dans `shared/rules/resolve.ts` :
+     `resolveChoices(projection, catalog)`, fonction pure serveur+client ([D10](./decisions.md#d10)). *(PR #10, mergé.)*
+   - **5b** — **substrat d'autorité** : loader `server/utils/catalog.ts` (`buildCatalog`) +
+     **filtrage d'éligibilité** des options (prérequis + `levelRequired` propre à l'option,
+     gating sous-classe) dans `resolve.ts`, testés contre les vraies données Occultiste.
+     Ferme la boucle seed↔migration↔loader↔resolve.
+   - **5c** — `db.batch()` (atomicité D1) sur create/level-up/rest — robustesse **indépendante**
+     ([D14](./decisions.md#d14) ; jamais `db.transaction()`).
+   - **5d** — **dérivation + validation serveur** via `resolve()` (sous-classe∈classe,
+     compétences∈autorisé, sort/invocation légal) ; consolide au passage les tables de slots/PV
+     dupliquées en double côté serveur (`architecture-audit.md` §7).
+   - **⏸️ 5e (REPORTÉ, adjacent au point 6)** — **consolidation `/api/catalog/*` + cache edge**
+     (KV/`routeRules`). Priorité 🟢/🔵 (perf/surface, `rules-engine.md` §7 items 7 & 9), **au
+     service du front** (son seul consommateur = point 6), pas du chemin critique d'autorité. Les
+     endpoints catalogue épars (`classes.get`, `character_species.get`, `feats/index.get`,
+     `invocations/index.get`, `backgrounds/index.get`, subclasses…) restent en place jusque-là.
+     **À ne pas oublier avant/avec le point 6.**
 6. **Front** : builder **et** level-up lisent le catalogue via l'API ;
    `app/data/character-builder.ts` réduit au flavor ; rendu générique des `progression`.
 
