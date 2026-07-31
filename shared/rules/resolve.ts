@@ -24,6 +24,22 @@ import type { AbilityKey } from './abilities'
  *    enum/feats), pré-résolues sans l'état du perso ;
  *  - la PROJECTION porte ce qui dépend du perso — dont `proficient_skills`, résolu ici même
  *    (non cachable, cf. §5).
+ *
+ * ⚠️ LIMITES CONNUES (hors périmètre 5a — bornes de contrat à traiter aux lots suivants) :
+ *  1. **Éligibilité par option** : les `options` sont l'appartenance BRUTE au groupe. Le
+ *     filtrage par prérequis (`FeaturePrerequisite` : requiredPactBoon / requiredSpellName /
+ *     requiredInvocationName / minAbilityScore / requiredArmorProficiency / requiresSpellcasting)
+ *     ET par `levelRequired` PROPRE à l'option n'est PAS fait ici. C'est de l'éligibilité
+ *     dépendante de l'état du perso (comme `proficient_skills`) qu'assure aujourd'hui le front
+ *     (InvocationPicker.vue / useLevelUp). À porter dans la projection + un filtre au **lot 5b**
+ *     (les options du catalogue devront charrier leurs prérequis), sinon régression vs l'UI.
+ *  2. **Owner = sous-classe** : `CatalogProgression` ne porte que `ownerClassId`. Un point de
+ *     choix possédé par une SOUS-CLASSE (gating = posséder la sous-classe) n'est pas exprimable ;
+ *     ajouter `ownerSubclassId` au **lot 5b** quand un tel choix sera catalogué. No-op aujourd'hui
+ *     (l'Occultiste ne pose que des choix au niveau classe).
+ *  3. **Choix composites** : le modèle « choisir N dans une liste » ne couvre pas les choix à
+ *     `payload` (triade de caractéristiques d'un historique 5.5 `ability_scores`, branche
+ *     `asi_or_feat`). Extension de contrat le jour où ces `kind` seront seedés (Phase 2).
  */
 
 /**
