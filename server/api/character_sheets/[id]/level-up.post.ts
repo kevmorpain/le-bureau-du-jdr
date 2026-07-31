@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { abilityEnum } from '~~/shared/rules/abilities'
-import type { CasterType, SpellcastingType } from '~~/shared/rules/spellcasting'
+import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 
 const levelUpSchema = z.object({
   classId: z.number().int().positive(),
@@ -41,57 +41,6 @@ const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcan
   13: 'arcanum_7',
   15: 'arcanum_8',
   17: 'arcanum_9',
-}
-
-// ─── Spell slot tables (D&D 5e 2014) ─────────────────────────────────────────
-
-const FULL_SLOTS: number[][] = [
-  [2,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],
-  [4,3,0,0,0,0,0,0,0],[4,3,2,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],
-  [4,3,3,1,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],[4,3,3,3,1,0,0,0,0],
-  [4,3,3,3,2,0,0,0,0],[4,3,3,3,2,1,0,0,0],[4,3,3,3,2,1,0,0,0],
-  [4,3,3,3,2,1,1,0,0],[4,3,3,3,2,1,1,0,0],[4,3,3,3,2,1,1,1,0],
-  [4,3,3,3,2,1,1,1,0],[4,3,3,3,2,1,1,1,1],[4,3,3,3,3,1,1,1,1],
-  [4,3,3,3,3,2,1,1,1],[4,3,3,3,3,2,2,1,1],
-]
-const HALF_SLOTS: number[][] = [
-  [0,0,0,0,0,0,0,0,0],[2,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],
-  [3,0,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],
-  [4,3,0,0,0,0,0,0,0],[4,3,0,0,0,0,0,0,0],[4,3,2,0,0,0,0,0,0],
-  [4,3,2,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],
-  [4,3,3,1,0,0,0,0,0],[4,3,3,1,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],
-  [4,3,3,2,0,0,0,0,0],[4,3,3,3,1,0,0,0,0],[4,3,3,3,1,0,0,0,0],
-  [4,3,3,3,2,0,0,0,0],[4,3,3,3,2,0,0,0,0],
-]
-const PACT_LEVEL = [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5]
-const PACT_COUNT = [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]
-
-function slotsForLevel(type: CasterType, level: number): number[] {
-  const idx = Math.max(0, Math.min(19, level - 1))
-  if (type === 'full') return [...FULL_SLOTS[idx]!]
-  if (type === 'half') return [...HALF_SLOTS[idx]!]
-  // pact
-  const row = [0,0,0,0,0,0,0,0,0]
-  const sl = PACT_LEVEL[idx]!
-  row[sl - 1] = PACT_COUNT[idx]!
-  return row
-}
-
-// Emplacements combinés du multiclassage (PHB 2014 p.164) : le type d'incantation
-// vient de la table `classes` (fait d'identité, cf. rules-engine.md §3) et non plus
-// d'une table `CASTER_TYPE` indexée par nom de classe.
-function combinedSpellSlots(classes: Array<{ casterType: SpellcastingType, level: number }>) {
-  let combined = 0
-  let pactLvl = 0
-  let hasPact = false
-  for (const { casterType: t, level } of classes) {
-    if (t === 'full') combined += level
-    else if (t === 'half' && level >= 2) combined += Math.floor(level / 2)
-    else if (t === 'pact') { hasPact = true; pactLvl += level }
-  }
-  const reg = combined > 0 ? slotsForLevel('full', Math.max(1, Math.min(20, combined))) : null
-  const pact = hasPact ? slotsForLevel('pact', Math.max(1, Math.min(20, pactLvl))) : null
-  return { regular: reg, pact }
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
