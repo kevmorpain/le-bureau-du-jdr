@@ -2,6 +2,7 @@ import { evaluate, type Formula, type FormulaContext } from '../utils/formula'
 import type { ChoiceKind, OptionSource } from './choices'
 import type { SkillKey } from './skills'
 import type { AbilityKey } from './abilities'
+import type { FeaturePrerequisite } from '../../server/db/schema/features'
 
 /**
  * `resolve()` — volet CHOIX (cf. rules-engine.md §5, decisions.md D8/D10).
@@ -10,8 +11,8 @@ import type { AbilityKey } from './abilities'
  * par le client (UX, point 6). Elle prend une PROJECTION du personnage et le CATALOGUE
  * (statique, cachable au edge — construit côté serveur au lot 5b) et rend, pour chaque
  * point de choix applicable au niveau courant : combien de picks sont dus, et parmi quelles
- * options. La couche « valeurs dérivées » (emplacements de sorts, PV) viendra au lot 5d ;
- * ce module se limite aux choix (« choix dus » + « options résolues »).
+ * options ÉLIGIBLES. La couche « valeurs dérivées » (emplacements de sorts, PV) viendra au
+ * lot 5d ; ce module se limite aux choix (« choix dus » + « options résolues »).
  *
  * ⚠️ Contrat de testabilité (cf. instructions du chantier) : ce module doit être importable
  * par le projet vitest `unit` (environnement node, SANS alias `~~`). Il n'importe donc AUCUNE
@@ -21,25 +22,17 @@ import type { AbilityKey } from './abilities'
  *
  * Les deux couches de rules-engine.md §5 se retrouvent dans les entrées :
  *  - le CATALOGUE porte les options des sources cachables (feature_group/subclasses/spells/
- *    enum/feats), pré-résolues sans l'état du perso ;
- *  - la PROJECTION porte ce qui dépend du perso — dont `proficient_skills`, résolu ici même
- *    (non cachable, cf. §5).
+ *    enum/feats), pré-résolues sans l'état du perso, chacune avec ses prérequis ;
+ *  - la PROJECTION porte ce qui dépend du perso — dont `proficient_skills` ET l'ÉLIGIBILITÉ
+ *    des options (résolus ici même, non cachables, cf. §5).
  *
- * ⚠️ LIMITES CONNUES (hors périmètre 5a — bornes de contrat à traiter aux lots suivants) :
- *  1. **Éligibilité par option** : les `options` sont l'appartenance BRUTE au groupe. Le
- *     filtrage par prérequis (`FeaturePrerequisite` : requiredPactBoon / requiredSpellName /
- *     requiredInvocationName / minAbilityScore / requiredArmorProficiency / requiresSpellcasting)
- *     ET par `levelRequired` PROPRE à l'option n'est PAS fait ici. C'est de l'éligibilité
- *     dépendante de l'état du perso (comme `proficient_skills`) qu'assure aujourd'hui le front
- *     (InvocationPicker.vue / useLevelUp). À porter dans la projection + un filtre au **lot 5b**
- *     (les options du catalogue devront charrier leurs prérequis), sinon régression vs l'UI.
- *  2. **Owner = sous-classe** : `CatalogProgression` ne porte que `ownerClassId`. Un point de
- *     choix possédé par une SOUS-CLASSE (gating = posséder la sous-classe) n'est pas exprimable ;
- *     ajouter `ownerSubclassId` au **lot 5b** quand un tel choix sera catalogué. No-op aujourd'hui
- *     (l'Occultiste ne pose que des choix au niveau classe).
- *  3. **Choix composites** : le modèle « choisir N dans une liste » ne couvre pas les choix à
- *     `payload` (triade de caractéristiques d'un historique 5.5 `ability_scores`, branche
- *     `asi_or_feat`). Extension de contrat le jour où ces `kind` seront seedés (Phase 2).
+ * ✅ Éligibilité par option & owner sous-classe : TRAITÉS au lot 5b — `resolveChoices` filtre
+ * les options via `isOptionEligible` (prérequis + `levelRequired` propre à l'option, dépendant
+ * de l'état du perso), et le gating prend en compte `ownerSubclassId`.
+ *
+ * ⚠️ LIMITE RESTANTE : les **choix composites** à `payload` (triade de caractéristiques d'un
+ * historique 5.5 `ability_scores`, branche `asi_or_feat`) ne sont pas couverts par le modèle
+ * « choisir N dans une liste » ; extension de contrat quand ces `kind` seront seedés (Phase 2).
  */
 
 /**
@@ -52,12 +45,22 @@ export interface ResolvedOption {
   subclassId?: number // subclasses
   spellId?: number // spells
   value?: string // enum / skills / languages / tools (valeur typée sans table)
+  /**
+   * Prérequis de SÉLECTION de l'option (invocations, dons). Porté par le catalogue (lot 5b) et
+   * consommé par {@link isOptionEligible}. `null`/absent = pas de prérequis.
+   */
+  prerequisites?: FeaturePrerequisite | null
+  /**
+   * Niveau MINIMAL (dans la classe propriétaire) requis pour choisir cette option — ex. une
+   * invocation « niv. 5+ ». Comparé au niveau de la classe propriétaire, pas au niveau total.
+   */
+  levelRequired?: number
 }
 
 /**
- * Un point de choix du CATALOGUE, déjà rattaché à sa classe propriétaire et — pour les
- * sources cachables — à son ensemble d'options pré-résolu. Produit par le loader (lot 5b) ;
- * en test, fourni par une fixture.
+ * Un point de choix du CATALOGUE, déjà rattaché à sa classe (ou sous-classe) propriétaire et —
+ * pour les sources cachables — à son ensemble d'options pré-résolu. Produit par le loader
+ * (lot 5b) ; en test, fourni par une fixture.
  */
 export interface CatalogProgression {
   progressionId: number
@@ -65,6 +68,12 @@ export interface CatalogProgression {
   ownerFeatureId?: number
   /** Classe qui possède le point de choix : c'est SON niveau qui pilote le gating et le `count`. */
   ownerClassId: number
+  /**
+   * Si le point de choix est possédé par une SOUS-CLASSE (feature de sous-classe), son id : le
+   * gating exige alors de POSSÉDER cette sous-classe en plus du niveau de classe requis.
+   * Absent pour un choix possédé au niveau de la classe (cas de l'Occultiste).
+   */
+  ownerSubclassId?: number
   /** Niveau (dans la classe propriétaire) auquel le point de choix se débloque. */
   ownerLevelRequired: number
   kind: ChoiceKind
@@ -89,6 +98,8 @@ export interface Catalog {
 export interface CharacterProjection {
   /** Niveau du perso dans chaque classe (id → niveau). En multiclasse, plusieurs entrées. */
   classLevels: Record<number, number>
+  /** Sous-classes possédées — gating des points de choix possédés par une sous-classe. */
+  subclassIds?: number[]
   /** Compétences dont le perso a déjà la maîtrise — sert à `optionSource:{proficient_skills}`. */
   proficientSkills?: SkillKey[]
   /** Picks déjà enregistrés (`character_choices`) — sert à calculer `made`/`remaining`. */
@@ -98,17 +109,31 @@ export interface CharacterProjection {
    * les `count` usuels (`fixed`, `lookup`) n'en ont pas besoin.
    */
   abilityModifiers?: Partial<Record<AbilityKey, number>>
+  // ─── État d'ÉLIGIBILITÉ des options (cf. isOptionEligible / rules-engine.md §5) ───────────
+  /** Faveur de pacte choisie (prérequis d'invocation `requiredPactBoon`). */
+  pactBoon?: 'chain' | 'blade' | 'tome' | null
+  /** Noms des sorts connus (prérequis d'invocation `requiredSpellName`). */
+  knownSpellNames?: string[]
+  /** Noms des invocations connues (prérequis d'invocation `requiredInvocationName`). */
+  knownInvocationNames?: string[]
+  /** Scores de caractéristique finaux (prérequis de don `minAbilityScore`). */
+  abilityScores?: Partial<Record<AbilityKey, number>>
+  /** Catégories de maîtrise d'armure (prérequis de don `requiredArmorProficiency`). */
+  armorProficiencies?: Array<'light' | 'medium' | 'heavy'>
+  /** Le perso lance-t-il au moins un sort ? (prérequis de don `requiresSpellcasting`). */
+  hasSpellcasting?: boolean
 }
 
 /**
  * Un point de choix résolu pour un personnage donné : combien il doit choisir (`count`),
  * combien il a déjà choisi (`made`), combien il reste (`remaining`), et parmi quelles
- * `options`. Un choix est DÛ quand `remaining > 0` (cf. {@link dueChoices}).
+ * `options` ÉLIGIBLES. Un choix est DÛ quand `remaining > 0` (cf. {@link dueChoices}).
  */
 export interface ResolvedChoice {
   progressionId: number
   ownerFeatureId?: number
   ownerClassId: number
+  ownerSubclassId?: number
   ownerLevelRequired: number
   kind: ChoiceKind
   /** Niveau de la classe PROPRIÉTAIRE ayant servi au `count` (≠ niveau total en multiclasse). */
@@ -127,9 +152,37 @@ function proficiencyBonus(totalLevel: number): number {
 }
 
 /**
+ * Une option est-elle SÉLECTIONNABLE par ce personnage ? Filtre d'éligibilité PUR
+ * (rules-engine.md §5) : dépend de l'état du perso (pacte, sorts/invocations connus,
+ * caractéristiques, maîtrises), donc NON cachable — il vit ici, pas dans le catalogue.
+ * Calqué sur `InvocationPicker.vue` `isSelectable()` (invocations) et étendu aux prérequis de
+ * dons (`minAbilityScore` / `requiredArmorProficiency` / `requiresSpellcasting`).
+ *
+ * `ownerClassLevel` = niveau de la classe propriétaire, pour comparer le `levelRequired` propre
+ * à l'option (une invocation « niv. 5+ » = niveau d'occultiste 5, pas le niveau total).
+ */
+export function isOptionEligible(option: ResolvedOption, ownerClassLevel: number, projection: CharacterProjection): boolean {
+  if (option.levelRequired != null && option.levelRequired > ownerClassLevel) return false
+  const pre = option.prerequisites
+  if (!pre) return true
+  if (pre.requiredPactBoon && pre.requiredPactBoon !== (projection.pactBoon ?? null)) return false
+  if (pre.requiredSpellName && !(projection.knownSpellNames ?? []).includes(pre.requiredSpellName)) return false
+  if (pre.requiredInvocationName && !(projection.knownInvocationNames ?? []).includes(pre.requiredInvocationName)) return false
+  if (pre.minAbilityScore) {
+    const scores = projection.abilityScores ?? {}
+    const meets = pre.minAbilityScore.abilities.some(a => (scores[a] ?? 0) >= pre.minAbilityScore!.score)
+    if (!meets) return false
+  }
+  if (pre.requiredArmorProficiency && !(projection.armorProficiencies ?? []).includes(pre.requiredArmorProficiency)) return false
+  if (pre.requiresSpellcasting && !projection.hasSpellcasting) return false
+  return true
+}
+
+/**
  * Résout, pour un personnage, l'ensemble des points de choix du catalogue qui lui sont
- * APPLICABLES (classe propriétaire présente et de niveau suffisant, `count > 0`). Chaque
- * entrée porte `remaining` (choix restant à faire) et ses `options`.
+ * APPLICABLES (classe — et sous-classe — propriétaire présente et de niveau suffisant,
+ * `count > 0`). Chaque entrée porte `remaining` (choix restant à faire) et ses `options`
+ * ÉLIGIBLES (filtrées par {@link isOptionEligible}).
  *
  * ⚠️ Multiclasse : le `count` d'un point de choix est évalué avec le niveau de la classe
  * PROPRIÉTAIRE (`ownerClassId`), pas le niveau total ni celui de la classe principale
@@ -143,13 +196,16 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
   const mods = projection.abilityModifiers ?? {}
   const picks = projection.picks ?? []
   const proficientSkills = projection.proficientSkills ?? []
+  const subclassIds = projection.subclassIds ?? []
 
   const choices: ResolvedChoice[] = []
 
   for (const p of catalog.progressions) {
     const classLevel = classLevels[p.ownerClassId] ?? 0
-    // Gating : le perso doit posséder la classe propriétaire à un niveau suffisant.
+    // Gating : le perso doit posséder la classe propriétaire à un niveau suffisant…
     if (classLevel < p.ownerLevelRequired) continue
+    // …et, si le point de choix est possédé par une sous-classe, posséder cette sous-classe.
+    if (p.ownerSubclassId != null && !subclassIds.includes(p.ownerSubclassId)) continue
 
     const ctx: FormulaContext = {
       level: totalLevel,
@@ -170,14 +226,17 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
     const made = picks.filter(x => x.progressionId === p.progressionId).length
     const remaining = Math.max(0, count - made)
 
-    const options = p.optionSource.type === 'proficient_skills'
+    const rawOptions = p.optionSource.type === 'proficient_skills'
       ? proficientSkills.map(skill => ({ value: skill }))
       : (p.options ?? [])
+    // Ne garder que les options que le perso peut réellement choisir (prérequis + niveau).
+    const options = rawOptions.filter(o => isOptionEligible(o, classLevel, projection))
 
     choices.push({
       progressionId: p.progressionId,
       ownerFeatureId: p.ownerFeatureId,
       ownerClassId: p.ownerClassId,
+      ownerSubclassId: p.ownerSubclassId,
       ownerLevelRequired: p.ownerLevelRequired,
       kind: p.kind,
       classLevel,
