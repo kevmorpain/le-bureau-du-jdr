@@ -6,46 +6,13 @@ import { z } from 'zod'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
-import type { CasterType } from '~~/shared/rules/spellcasting'
+import { slotsForLevel } from '~~/shared/rules/spellSlots'
 
 // Alignement builder (lowercase) → DB (uppercase)
 const ALIGNMENT_MAP: Record<string, string> = {
   lg: 'LG', ng: 'NG', cg: 'CG',
   ln: 'LN', n: 'TN', cn: 'CN',
   le: 'LE', ne: 'NE', ce: 'CE',
-}
-
-// ─── Spell slot tables (D&D 5e 2014) ─────────────────────────────────────────
-
-const FULL_SLOTS: number[][] = [
-  [2,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],
-  [4,3,0,0,0,0,0,0,0],[4,3,2,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],
-  [4,3,3,1,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],[4,3,3,3,1,0,0,0,0],
-  [4,3,3,3,2,0,0,0,0],[4,3,3,3,2,1,0,0,0],[4,3,3,3,2,1,0,0,0],
-  [4,3,3,3,2,1,1,0,0],[4,3,3,3,2,1,1,0,0],[4,3,3,3,2,1,1,1,0],
-  [4,3,3,3,2,1,1,1,0],[4,3,3,3,2,1,1,1,1],[4,3,3,3,3,1,1,1,1],
-  [4,3,3,3,3,2,1,1,1],[4,3,3,3,3,2,2,1,1],
-]
-const HALF_SLOTS: number[][] = [
-  [0,0,0,0,0,0,0,0,0],[2,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],
-  [3,0,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],
-  [4,3,0,0,0,0,0,0,0],[4,3,0,0,0,0,0,0,0],[4,3,2,0,0,0,0,0,0],
-  [4,3,2,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],
-  [4,3,3,1,0,0,0,0,0],[4,3,3,1,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],
-  [4,3,3,2,0,0,0,0,0],[4,3,3,3,1,0,0,0,0],[4,3,3,3,1,0,0,0,0],
-  [4,3,3,3,2,0,0,0,0],[4,3,3,3,2,0,0,0,0],
-]
-const PACT_LEVEL = [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5]
-const PACT_COUNT = [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]
-
-function slotsForLevel(type: CasterType, level: number): number[] {
-  const idx = Math.max(0, Math.min(19, level - 1))
-  if (type === 'full') return [...FULL_SLOTS[idx]!]
-  if (type === 'half') return [...HALF_SLOTS[idx]!]
-  const row = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-  const sl = PACT_LEVEL[idx]!
-  row[sl - 1] = PACT_COUNT[idx]!
-  return row
 }
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
