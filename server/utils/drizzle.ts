@@ -13,12 +13,15 @@ export const tables = schema
 
 /**
  * @deprecated ⚠️ NE PAS UTILISER — casse à l'appel : `this.client.prepare is not a function`.
- * `drizzle-orm/d1` attend un binding D1 BRUT, or le `db` de `hub:db` est DÉJÀ une instance drizzle
- * (les handlers font `db.select()` dessus) → ceci re-wrappe une instance drizzle comme un client
- * brut. Symptôme observé en dev via un endpoint qui l'appelait ; le mécanisme (double-wrap) vaut
- * aussi en prod. Le helper est resté « contourné » (rules-engine.md §7) : personne ne l'appelle.
- * Pour accéder à la base : `import { db } from 'hub:db'` directement (au besoin `db as any` pour un
- * util à `db` injecté, cf. server/utils/catalog.ts, catalogSources.ts, characterCreate.ts…).
+ * `@nuxthub/db` (que ré-exporte `hub:db`) construit DÉJÀ `db = drizzle(binding, …)` de `drizzle-orm/d1`
+ * (cf. node_modules/@nuxthub/db/db.mjs) : le `db` exporté est une instance `DrizzleD1Database`, PAS le
+ * binding brut. `useDrizzle()` la re-wrappe (`drizzle(db)`) → la session D1 appelle `this.client.prepare`
+ * sur une instance drizzle qui n'a pas `.prepare()` → crash. C'est le même `db.mjs` en dev ET en prod
+ * (seul le `binding` sous-jacent change) → cassé dans les deux, indépendamment de l'édition. Le helper
+ * est resté « contourné » (rules-engine.md §7) : personne ne l'appelle. Pour accéder à la base :
+ * `import { db } from 'hub:db'` directement (au besoin `db as any` pour un util à `db` injecté, cf.
+ * server/utils/catalog.ts, catalogSources.ts, characterCreate.ts…). Un `useDrizzle()` CORRECT devrait
+ * wrapper le BINDING brut (`globalThis.DB`), pas le `db` déjà-drizzle de `hub:db`.
  */
 export function useDrizzle() {
   return drizzle(db, { schema, casing: 'snake_case' })
