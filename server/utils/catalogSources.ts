@@ -9,12 +9,13 @@ import type { FeaturePrerequisite } from '~~/server/db/schema/features'
  * cachable que consomment le builder et la fiche : classes (+ sous-classes), espèces, dons,
  * invocations, historiques. Ils encapsulent en un seul endroit les requêtes aujourd'hui
  * éparpillées dans les endpoints `server/api/{classes,character_species,feats,invocations,
- * backgrounds}` (rules-engine.md §7 #3 : « encapsuler l'accès données, `useDrizzle()` partout »).
+ * backgrounds}` (rules-engine.md §7 #3 : « encapsuler l'accès données hub:db dans un module »).
  *
- * Le `db` est INJECTÉ (D1 via `useDrizzle()` en prod, drizzle-sur-libsql en test) exactement
- * comme {@link buildCatalog} (`server/utils/catalog.ts`) — ce qui les rend testables sans HTTP
- * ni auth (patron du point 5). Les endpoints `/api/catalog/*` ET les endpoints legacy délèguent
- * ici : une seule source, shape garantie identique.
+ * Le `db` est INJECTÉ : en prod le `db` de `hub:db` (⚠️ PAS `useDrizzle()`, qui casse à l'appel —
+ * cf. server/utils/drizzle.ts), en test une instance drizzle-sur-libsql — exactement comme
+ * {@link buildCatalog} (`server/utils/catalog.ts`). Cela les rend testables sans HTTP ni auth
+ * (patron du point 5) ; les endpoints `/api/catalog/*` ET legacy délèguent ici : source unique,
+ * shape garantie identique.
  *
  * Lecture via `srcSchema` (schéma source, frais) plutôt que le cache `hub:db` — voir CLAUDE.md.
  */

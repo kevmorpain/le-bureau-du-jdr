@@ -11,6 +11,15 @@ export { sql, eq, and, or } from 'drizzle-orm'
 
 export const tables = schema
 
+/**
+ * @deprecated ⚠️ NE PAS UTILISER — casse à l'appel : `this.client.prepare is not a function`.
+ * `drizzle-orm/d1` attend un binding D1 BRUT, or le `db` de `hub:db` est DÉJÀ une instance drizzle
+ * (les handlers font `db.select()` dessus) → ceci re-wrappe une instance drizzle comme un client
+ * brut. Symptôme observé en dev via un endpoint qui l'appelait ; le mécanisme (double-wrap) vaut
+ * aussi en prod. Le helper est resté « contourné » (rules-engine.md §7) : personne ne l'appelle.
+ * Pour accéder à la base : `import { db } from 'hub:db'` directement (au besoin `db as any` pour un
+ * util à `db` injecté, cf. server/utils/catalog.ts, catalogSources.ts, characterCreate.ts…).
+ */
 export function useDrizzle() {
   return drizzle(db, { schema, casing: 'snake_case' })
 }

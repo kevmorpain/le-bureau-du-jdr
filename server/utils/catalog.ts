@@ -19,7 +19,8 @@ import type { FeaturePrerequisite } from '~~/server/db/schema/features'
  *
  * ⚠️ Tables NEUVES sans `relations()` (progression) → lecture via `srcSchema` + `.select().from()`
  * explicites, jamais `db.query.X.with:{…}` (cf. CLAUDE.md « hub:db schema cache »). Le `db` est
- * INJECTÉ (D1 en prod via `useDrizzle()`, libsql en mémoire en test) pour la testabilité.
+ * INJECTÉ — le `db` de `hub:db` en prod (⚠️ PAS `useDrizzle()`, cassé, cf. server/utils/drizzle.ts),
+ * libsql en mémoire en test — pour la testabilité.
  */
 
 // Instance drizzle SQLite, quel que soit le driver (D1 en prod, libsql en test). Les génériques
