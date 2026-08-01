@@ -1,8 +1,7 @@
 import { db } from 'hub:db'
 import { loadClasses } from '~~/server/utils/catalogSources'
 
-// Legacy — conservé pour le front actuel (repoint = lot 6b). Délègue au loader partagé du
-// catalogue (`server/utils/catalogSources.ts`) : source unique, sortie identique à `/api/catalog/classes`.
+/** Catalogue : classes + sous-classes imbriquées (statique, cachable). Cf. lot 6a. */
 export default defineEventHandler(async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return await loadClasses(db as any)

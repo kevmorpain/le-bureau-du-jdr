@@ -1,8 +1,7 @@
 import { db } from 'hub:db'
 import { loadInvocations } from '~~/server/utils/catalogSources'
 
-// Legacy — conservé pour le front actuel (repoint = lot 6b). Délègue au loader partagé du
-// catalogue : source unique, sortie identique à `/api/catalog/invocations`.
+/** Catalogue : toutes les invocations occultes avec effets. Statique, cachable. Cf. lot 6a. */
 export default defineEventHandler(async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return await loadInvocations(db as any)

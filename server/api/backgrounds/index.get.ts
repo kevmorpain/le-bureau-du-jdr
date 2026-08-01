@@ -1,19 +1,13 @@
-import { db, schema } from 'hub:db'
-import { isNull, or, eq } from 'drizzle-orm'
+import { db } from 'hub:db'
+import { loadBackgrounds } from '~~/server/utils/catalogSources'
 
+// Legacy — conservé pour le front actuel (repoint = lot 6b). Délègue au loader partagé du
+// catalogue. La variante per-fiche (`?characterSheetId=`) ajoute les historiques homebrew de la
+// fiche (non cachable) ; sans paramètre, la sortie est identique à `/api/catalog/backgrounds`.
 export default defineEventHandler(async (event) => {
   const { characterSheetId } = getQuery(event)
-  const charId = characterSheetId ? Number(characterSheetId) : null
+  const charId = characterSheetId ? Number(characterSheetId) : undefined
 
-  const rows = await db
-    .select()
-    .from(schema.backgrounds)
-    .where(
-      charId
-        ? or(isNull(schema.backgrounds.characterSheetId), eq(schema.backgrounds.characterSheetId, charId))
-        : isNull(schema.backgrounds.characterSheetId),
-    )
-    .orderBy(schema.backgrounds.name)
-
-  return rows
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return await loadBackgrounds(db as any, charId)
 })
