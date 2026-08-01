@@ -1,139 +1,30 @@
-import { db, schema } from 'hub:db'
-import * as srcSchema from '~~/server/db/schema'
-import { inArray, isNull } from 'drizzle-orm'
-import { z } from 'zod'
-import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
-import type { RechargeType } from '~~/server/db/schema/features'
+import { db } from 'hub:db'
+import { characterRest, restSchema } from '~~/server/utils/characterRest'
+import { CharacterValidationError } from '~~/server/utils/characterCreate'
 
-const restSchema = z.object({
-  type: z.enum(REST_TYPES),
-  hitDiceSpent: z.array(z.object({
-    die: z.string(), // e.g. 'd8'
-    count: z.number().int().min(0),
-    healAmount: z.number().int().min(0),
-  })).optional().default([]),
-})
-
+/**
+ * Handler MINCE : auth (via middleware d'authz) + validation de forme (Zod) + délégation à
+ * `characterRest` (server/utils/characterRest.ts), qui applique le repos atomiquement en
+ * `db.batch()`. Logique extraite dans un util à `db` injecté → testable contre libsql
+ * (cf. test/nuxt/characterRest.test.ts).
+ */
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
   const characterSheetId = Number(id)
-
   if (!id) {
     throw createError({ statusCode: 400, statusMessage: 'ID parameter is required' })
   }
 
-  const { type, hitDiceSpent } = await readValidatedBody(event, restSchema.parse)
+  const input = await readValidatedBody(event, restSchema.parse)
 
-  const characterSheet = await db.query.characterSheets.findFirst({
-    where: eq(schema.characterSheets.id, characterSheetId),
-    with: {
-      features: { with: { feature: true } },
-      classes: { with: { class: true } },
-    },
-  })
-
-  if (!characterSheet) {
-    throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await characterRest(db as any, characterSheetId, input)
   }
-
-  // ── Recharge features ──────────────────────────────────────────────────────
-
-  const rechargingTypes = REST_RECHARGE_MAP[type]
-  const rechargingFeatures = characterSheet.features.filter(
-    cf => cf.feature?.rechargeType && rechargingTypes.includes(cf.feature.rechargeType as RechargeType),
-  )
-
-  if (rechargingFeatures.length > 0) {
-    await Promise.all(rechargingFeatures.map(cf =>
-      db
-        .update(schema.characterFeatures)
-        .set({ currentUses: 0 })
-        .where(
-          and(
-            eq(schema.characterFeatures.characterSheetId, characterSheetId),
-            eq(schema.characterFeatures.featureId, cf.featureId),
-          ),
-        ),
-    ))
-  }
-
-  // ── Recharge objets à charges (recharge COMPLÈTE uniquement) ──────────────
-  // Les objets à recharge partielle (recharge_dice non null) ne sont pas
-  // rechargés ici : le joueur lance les dés via le bouton « Recharger » de
-  // l'inventaire (jet auto ou saisie manuelle IRL). On utilise srcSchema car
-  // les colonnes max_uses/recharge_type/recharge_dice sont récentes (hub:db
-  // ne les connaît pas dans son schéma caché).
-  const invToRecharge = await db
-    .select({ invId: srcSchema.characterInventory.id })
-    .from(srcSchema.characterInventory)
-    .innerJoin(srcSchema.items, eq(srcSchema.characterInventory.itemId, srcSchema.items.id))
-    .where(and(
-      eq(srcSchema.characterInventory.characterSheetId, characterSheetId),
-      inArray(srcSchema.items.rechargeType, rechargingTypes as string[]),
-      isNull(srcSchema.items.rechargeDice),
-    ))
-  if (invToRecharge.length > 0) {
-    await db
-      .update(srcSchema.characterInventory)
-      .set({ currentUses: 0 })
-      .where(inArray(srcSchema.characterInventory.id, invToRecharge.map(r => r.invId)))
-  }
-
-  // ── Short rest: reset pact_magic spell slots ──────────────────────────────
-
-  if (type === 'short') {
-    await db
-      .update(schema.characterSpellSlots)
-      .set({ used: 0 })
-      .where(and(
-        eq(schema.characterSpellSlots.characterSheetId, characterSheetId),
-        eq(schema.characterSpellSlots.slotType, 'pact_magic'),
-      ))
-  }
-
-  // ── Long rest: restore HP, reset spell slots, recover hit dice ───────────
-
-  if (type === 'long') {
-    const hitDiceMax: Record<string, number> = {}
-    for (const cls of characterSheet.classes ?? []) {
-      const die = (cls.class as { hitDice?: string } | undefined)?.hitDice?.slice(1)
-      if (die) hitDiceMax[die] = (hitDiceMax[die] ?? 0) + cls.level
+  catch (e) {
+    if (e instanceof CharacterValidationError) {
+      throw createError({ statusCode: 422, statusMessage: e.message })
     }
-
-    const currentHitDie = characterSheet.currentHitDie
-      ?? Object.entries(hitDiceMax).map(([die, count]) => ({ die, count }))
-
-    const newHitDie = currentHitDie.map(entry => ({
-      die: entry.die,
-      count: Math.min(
-        hitDiceMax[entry.die] ?? entry.count,
-        entry.count + Math.ceil((hitDiceMax[entry.die] ?? 0) / 2),
-      ),
-    }))
-
-    await Promise.all([
-      db
-        .update(schema.characterSheets)
-        .set({ currentHp: characterSheet.maxHp, currentHitDie: newHitDie })
-        .where(eq(schema.characterSheets.id, characterSheetId)),
-      db
-        .update(schema.characterSpellSlots)
-        .set({ used: 0 })
-        .where(eq(schema.characterSpellSlots.characterSheetId, characterSheetId)),
-    ])
+    throw e
   }
-
-  // ── Short rest: apply hit dice healing ────────────────────────────────────
-
-  if (hitDiceSpent.length > 0) {
-    const totalHeal = hitDiceSpent.reduce((sum, d) => sum + d.healAmount, 0)
-    const newHp = Math.min(characterSheet.currentHp + totalHeal, characterSheet.maxHp)
-
-    await db
-      .update(schema.characterSheets)
-      .set({ currentHp: newHp })
-      .where(eq(schema.characterSheets.id, characterSheetId))
-  }
-
-  return { success: true, restType: type }
 })
