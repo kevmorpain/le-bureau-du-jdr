@@ -1,8 +1,7 @@
 import { db } from 'hub:db'
 import { loadSubclasses } from '~~/server/utils/catalogSources'
 
-// Legacy — conservé pour le front actuel (repoint = lot 6b). Délègue au loader partagé du
-// catalogue : source unique, sortie identique à `/api/catalog/classes/[name]/subclasses`.
+/** Catalogue : sous-classes d'une classe (par nom en base). Statique, cachable. Cf. lot 6a. */
 export default defineEventHandler(async (event) => {
   const { name } = getRouterParams(event)
   if (!name) throw createError({ statusCode: 400, statusMessage: 'Class name required' })

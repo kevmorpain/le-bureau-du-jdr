@@ -43,6 +43,16 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-12-27',
 
+  // Cache edge du catalogue (lot 6a). Le catalogue est STATIQUE (un seul `ruleset` en Phase 1 ;
+  // le discriminant = Phase 2) et ne change qu'à un (re)seed → TTL long + `swr` (sert la version
+  // en cache immédiatement puis revalide en arrière-plan). `cache` wrappe les handlers en cached
+  // handler ET émet le `Cache-Control` (navigateur + CDN) ; aucun binding requis (on n'active pas
+  // le cache durable NuxtHub, provisionné par `nuxthub deploy`, alors qu'ici le déploiement passe
+  // par Wrangler/CF Builds). La clé de cache par défaut inclut l'URL → `?classIds` varie bien.
+  routeRules: {
+    '/api/catalog/**': { cache: { maxAge: 60 * 60, staleMaxAge: 60 * 60 * 24, swr: true } },
+  },
+
   // to seed database
   nitro: {
     experimental: {
@@ -142,7 +152,7 @@ export default defineNuxtConfig({
         {
           // Données de référence (rarement modifiées) : rapide hors-ligne, revalidé en arrière-plan.
           urlPattern: ({ url }) =>
-            /^\/api\/(spells|items|backgrounds|classes|magic_schools|invocations|character_species|feats)/.test(url.pathname),
+            /^\/api\/(catalog|spells|items|backgrounds|classes|magic_schools|invocations|character_species|feats)/.test(url.pathname),
           handler: 'StaleWhileRevalidate',
           options: {
             cacheName: 'api-reference',
