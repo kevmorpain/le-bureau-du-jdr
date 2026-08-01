@@ -1,14 +1,21 @@
-import { db } from 'hub:db'
-import * as srcSchema from '~~/server/db/schema'
 import { and, eq, inArray } from 'drizzle-orm'
+import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
+import * as srcSchema from '~~/server/db/schema'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Db = BaseSQLiteDatabase<'async', any, any>
 
 // Applique l'ajout / remplacement d'invocations occultes pour un personnage.
 // - newInvocationIds : invocations à apprendre
 // - replacedInvocationId : invocation existante à retirer (avec ses spell_grants)
 //
-// ⚠️ D1 (Cloudflare) ne supporte pas BEGIN TRANSACTION en SQL brut — on enchaîne
-//    des statements séquentiels avec onConflictDoNothing pour l'idempotence.
+// `db` est INJECTÉ (D1 en prod, libsql en test) — seul le level-up appelle cette fonction
+// (la création a inliné sa propre matérialisation au lot 5d volet 2).
+//
+// ⚠️ D1 (Cloudflare) ne supporte pas BEGIN TRANSACTION en SQL brut — on enchaîne des
+//    statements séquentiels avec onConflictDoNothing pour l'idempotence.
 export async function applyInvocationChanges(
+  db: Db,
   characterSheetId: number,
   newInvocationIds: number[],
   replacedInvocationId: number | null,
@@ -25,7 +32,7 @@ export async function applyInvocationChanges(
       ))
 
     const spellNamesToRemove = grantedSpellNames
-      .map(r => (r.value as any)?.spellName)
+      .map(r => (r.value as { spellName?: string } | null)?.spellName)
       .filter((n): n is string => typeof n === 'string')
 
     if (spellNamesToRemove.length) {
@@ -79,7 +86,7 @@ export async function applyInvocationChanges(
     ))
 
   const spellNames = grantRows
-    .map(r => (r.value as any)?.spellName)
+    .map(r => (r.value as { spellName?: string } | null)?.spellName)
     .filter((n): n is string => typeof n === 'string')
 
   if (!spellNames.length) return
