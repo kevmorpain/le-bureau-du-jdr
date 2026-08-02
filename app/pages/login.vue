@@ -30,10 +30,7 @@ definePageMeta({ layout: 'blank' })
 const route = useRoute()
 const hasError = computed(() => route.query.error === 'oauth')
 
-// Destination voulue avant d'être renvoyé ici par la garde d'auth
-// (`/login?redirect=…`). On la valide (anti open-redirect) puis on la persiste
-// dans un cookie : le paramètre de query ne survit pas à l'aller-retour OAuth,
-// contrairement au cookie. Les callbacks serveur le relisent (server/routes/auth/*).
+// Persisté en cookie car le `?redirect=` ne survit pas à l'aller-retour OAuth (relu par les callbacks serveur).
 const redirectTarget = computed(() => sanitizeRedirect(route.query.redirect))
 
 const redirectCookie = useCookie(POST_LOGIN_REDIRECT_COOKIE, {

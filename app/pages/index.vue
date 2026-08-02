@@ -34,12 +34,6 @@ import type { ButtonProps } from '@nuxt/ui'
 
 const { loggedIn } = useUserSession()
 
-// CTA honnêtes et contextuels (la home reste un point d'entrée, elle n'affiche
-// pas les persos). `loggedIn` est lu côté serveur (cookie scellé) → rendu SSR,
-// pas de « pop » après hydratation.
-// - connecté → « Mes personnages » d'abord (le cas le plus courant au retour) ;
-// - anonyme → « Créer un personnage ». Un anonyme qui clique passe naturellement
-//   par /login (garde d'auth) puis revient sur /characters/new.
 const links = computed<ButtonProps[]>(() => {
   if (loggedIn.value) {
     return [

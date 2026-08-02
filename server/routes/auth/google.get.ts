@@ -16,7 +16,6 @@ export default defineOAuthGoogleEventHandler({
     })
     // On ne stocke pas le token du provider : la session est autonome (meilleur offline).
     await setUserSession(event, { user: sessionUser, loggedInAt: Date.now() })
-    // Retour à la destination voulue avant login (cookie posé par /login), sinon défaut.
     const redirectTo = sanitizeRedirect(getCookie(event, POST_LOGIN_REDIRECT_COOKIE))
     deleteCookie(event, POST_LOGIN_REDIRECT_COOKIE, { path: '/' })
     return sendRedirect(event, redirectTo)
