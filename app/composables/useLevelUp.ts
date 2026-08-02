@@ -113,7 +113,7 @@ export interface LevelUpState {
   newInvocationIds: number[]
   replacedInvocationId: number | null
   // Sort choisi pour l'Arcane Mystérieux (niveau 11/13/15/17). Le niveau du sort
-  // dépend du niveau d'occultiste atteint (cf. ARCANUM_SPELL_LEVEL_BY_LEVEL).
+  // dépend du niveau d'occultiste atteint (cf. arcaneMysteriumSpellLevel, dérivé du catalogue).
   arcaneMysteriumSpellId: number | null
   // Sorts rituels niv. 1 choisis quand on prend la manifestation
   // « Livre des secrets anciens » (2 sorts au choix de toute classe).
@@ -124,20 +124,8 @@ export interface LevelUpState {
   bookOfAncientSecretsRequired: boolean
 }
 
-// Quel niveau de sort accorde l'Arcane Mystérieux à chaque palier (PHB 2014).
-export const ARCANUM_SPELL_LEVEL_BY_LEVEL: Record<number, number> = {
-  11: 6,
-  13: 7,
-  15: 8,
-  17: 9,
-}
-
 // Nom canonique de l'invocation qui débloque la sélection de sorts rituels.
 export const BOOK_OF_ANCIENT_SECRETS_NAME = 'Livre des secrets anciens'
-
-// Invocations connues par niveau d'occultiste (PHB 2014)
-// Index = warlockLevel - 1
-export const WARLOCK_INVOCATIONS_KNOWN_LU = [0, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8]
 
 const INIT_STATE: LevelUpState = {
   pickedClassId: null,
@@ -296,25 +284,35 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     if (val != null) state.value.hpGained = val
   })
 
+  // ── Choix de progression lus dans le CATALOGUE (/api/catalog, lot 6a) ──────
+  // resolveChoices résout localement les points de choix de la classe montée, aux niveaux
+  // d'ARRIVÉE et de DÉPART (le delta pilote le nombre de nouvelles invocations). Aujourd'hui
+  // seul l'Occultiste est seedé → pacte / invocations / arcanums ; style de combat, expertise
+  // et sous-classe restent pilotés par app/data (contenu Phase 2). Équivalence vs les anciennes
+  // tables verrouillée par test/unit/warlockCatalogEquivalence.test.ts.
+  const { choicesForClassLevel } = useCatalog()
+  const { resolveClassId } = useBuilderEntities()
+  const luClassDbId = computed(() =>
+    charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId
+    ?? resolveClassId(pickedClass.value?.dbName),
+  )
+  const choicesAtToLevel = computed(() => choicesForClassLevel(luClassDbId.value, state.value.toLevel))
+  const choicesAtFromLevel = computed(() => choicesForClassLevel(luClassDbId.value, state.value.fromLevel))
+
   // ── Pact Boon availability (Warlock level 3) ──────────────────────────────
 
   const needsPactBoon = computed(() => {
-    if (state.value.pickedClassId !== 'warlock') return false
-    if (state.value.toLevel !== 3) return false
     const existingPactBoon = (pickedCharClass.value as any)?.pactBoon ?? null
-    return !existingPactBoon
+    if (existingPactBoon) return false
+    // Le pacte se débloque À un niveau précis (owner niv.3) : `ownerLevelRequired === toLevel`
+    // reproduit l'ancien « toLevel === 3 » sans coder le niveau en dur.
+    return choicesAtToLevel.value.some(c => c.kind === 'pact_boon' && c.ownerLevelRequired === state.value.toLevel)
   })
 
   // ── Manifestations occultes (Warlock niveaux 2/5/7/9/12/15/18) ─────────────
 
-  const invocationsAtToLevel = computed(() => {
-    if (state.value.pickedClassId !== 'warlock') return 0
-    return WARLOCK_INVOCATIONS_KNOWN_LU[state.value.toLevel - 1] ?? 0
-  })
-  const invocationsAtFromLevel = computed(() => {
-    if (state.value.pickedClassId !== 'warlock') return 0
-    return WARLOCK_INVOCATIONS_KNOWN_LU[state.value.fromLevel - 1] ?? 0
-  })
+  const invocationsAtToLevel = computed(() => choicesAtToLevel.value.find(c => c.kind === 'invocations')?.count ?? 0)
+  const invocationsAtFromLevel = computed(() => choicesAtFromLevel.value.find(c => c.kind === 'invocations')?.count ?? 0)
   const newInvocationsCount = computed(() =>
     Math.max(0, invocationsAtToLevel.value - invocationsAtFromLevel.value),
   )
@@ -348,8 +346,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   // ── Arcane Mystérieux (Occultiste niveaux 11 / 13 / 15 / 17) ───────────────
 
   const arcaneMysteriumSpellLevel = computed<number | null>(() => {
-    if (state.value.pickedClassId !== 'warlock') return null
-    return ARCANUM_SPELL_LEVEL_BY_LEVEL[state.value.toLevel] ?? null
+    const c = choicesAtToLevel.value.find(ch => ch.kind === 'spell' && ch.ownerLevelRequired === state.value.toLevel)
+    return c && c.optionSource.type === 'spells' ? c.optionSource.maxLevel ?? null : null
   })
   const needsArcaneMysterium = computed(() => arcaneMysteriumSpellLevel.value !== null)
 
@@ -532,7 +530,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     if (!id || !pickedClass.value) return
 
     const s = state.value
-    const { resolveClassId } = useBuilderEntities()
 
     // Résolution dbName → classId. Pour les classes existantes du perso, on
     // peut prendre le dbClassId directement depuis charClasses ; pour un

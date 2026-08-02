@@ -121,14 +121,6 @@ export interface BuilderState {
   bookOfAncientSecretsRequired: boolean
 }
 
-// Niveaux d'occultiste où l'Arcanum mystique débloque un nouveau slot (PHB 2014).
-export const ARCANUM_SPELL_LEVEL_BY_LEVEL: Record<number, number> = {
-  11: 6,
-  13: 7,
-  15: 8,
-  17: 9,
-}
-
 // Nom canonique de la manifestation qui débloque la sélection de sorts rituels.
 export const BOOK_OF_ANCIENT_SECRETS_NAME = 'Livre des secrets anciens'
 
@@ -138,10 +130,6 @@ export const ASI_LEVELS_BY_CLASS: Record<string, number[]> = {
   rogue: [4, 8, 10, 12, 16, 19],
 }
 const DEFAULT_ASI_LEVELS = [4, 8, 12, 16, 19]
-
-// Invocations connues par niveau d'occultiste (PHB 2014)
-// Index = warlockLevel - 1
-export const WARLOCK_INVOCATIONS_KNOWN = [0, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8]
 
 const INIT_STATE: BuilderState = {
   raceId: null,
@@ -245,6 +233,8 @@ export function useCharacterBuilder() {
   // ─── Dons (liste + helpers pour les choix) ────────────────────────────────────
 
   const { feats, getById: getFeatById } = useFeats()
+  const { choicesForClassLevel } = useCatalog()
+  const { resolveClassId } = useBuilderEntities()
 
   // Un don requiert-il un choix de caractéristique (ability_increase_choice) ?
   const featNeedsAbility = (featureId: number | null | undefined): boolean => {
@@ -270,14 +260,20 @@ export function useCharacterBuilder() {
   const classData = computed(() => CLASSES.find(c => c.id === state.value.classId) ?? null)
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
 
-  const needsPactBoon = computed(() =>
-    state.value.classId === 'warlock' && state.value.level >= 3,
+  // Points de choix (progression) de la classe courante, lus dans le CATALOGUE (/api/catalog,
+  // lot 6a) et résolus localement par resolveChoices (rules-engine §5). Aujourd'hui seul
+  // l'Occultiste est seedé → pacte / invocations / arcanums ; les autres classes (style de
+  // combat, expertise, sous-classe) restent pilotées par app/data (contenu Phase 2). Équivalence
+  // vs les anciennes tables verrouillée par test/unit/warlockCatalogEquivalence.test.ts.
+  const catalogChoices = computed(() =>
+    choicesForClassLevel(resolveClassId(classData.value?.dbName), state.value.level),
   )
 
-  const invocationsExpected = computed(() => {
-    if (state.value.classId !== 'warlock') return 0
-    return WARLOCK_INVOCATIONS_KNOWN[state.value.level - 1] ?? 0
-  })
+  const needsPactBoon = computed(() => catalogChoices.value.some(c => c.kind === 'pact_boon'))
+
+  const invocationsExpected = computed(() =>
+    catalogChoices.value.find(c => c.kind === 'invocations')?.count ?? 0,
+  )
 
   const needsInvocations = computed(() => invocationsExpected.value > 0)
   const alignmentData = computed(() => ALIGNMENTS.find(a => a.id === state.value.alignment) ?? null)
@@ -420,8 +416,8 @@ export function useCharacterBuilder() {
   // ─── Arcanum mystique (Occultiste niv 11/13/15/17) ────────────────────────
 
   const arcaneMysteriumSpellLevel = computed<number | null>(() => {
-    if (state.value.classId !== 'warlock') return null
-    return ARCANUM_SPELL_LEVEL_BY_LEVEL[state.value.level] ?? null
+    const c = catalogChoices.value.find(ch => ch.kind === 'spell' && ch.ownerLevelRequired === state.value.level)
+    return c && c.optionSource.type === 'spells' ? c.optionSource.maxLevel ?? null : null
   })
   const needsArcaneMysterium = computed(() => arcaneMysteriumSpellLevel.value !== null)
 

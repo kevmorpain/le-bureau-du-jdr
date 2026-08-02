@@ -208,6 +208,7 @@
 </template>
 
 <script lang="ts" setup>
+import { useOnline } from '@vueuse/core'
 import type { AbilityKey } from '~/data/character-builder'
 
 defineEmits<{ back: [] }>()
