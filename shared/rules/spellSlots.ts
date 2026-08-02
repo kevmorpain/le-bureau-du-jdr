@@ -51,6 +51,17 @@ export function slotsForLevel(type: CasterType, level: number): number[] {
   return row
 }
 
+/** Niveau de sort MAXIMAL accessible (1→9) pour une classe seule à un niveau donné ; 0 si aucun. */
+export function maxSpellLevelForLevel(type: CasterType, level: number): number {
+  const slots = slotsForLevel(type, level)
+  for (let i = 8; i >= 0; i--) {
+    if ((slots[i] ?? 0) > 0) {
+      return i + 1
+    }
+  }
+  return 0
+}
+
 /**
  * Emplacements combinés du multiclassage (PHB 2014 p.164) : les niveaux de lanceur complet, la
  * moitié des niveaux de demi-lanceur (à partir du niveau 2 dans cette classe), agrégés, donnent
