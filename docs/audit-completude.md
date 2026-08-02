@@ -64,6 +64,18 @@ Lancer un sort ne jetait que **dégâts / soins** ; **aucun jet d20 + bonus d'at
 les sorts à jet pour toucher (dégâts **sans `dc`**) : `rollSpellAttack` jette `d20 + bonus d'attaque
 de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Décharge occulte).
 
+### B6 — Aperçu des emplacements au level-up = mono-classe · front (affichage) — OUVERT
+- **Symptôme** : au level-up, l'aperçu « avant → après » des emplacements de sorts est faux pour un
+  personnage à **deux classes lanceuses** (ex. Magicien/Clerc) : il ne reflète que la classe montée,
+  pas le total combiné du multiclassage.
+- **Racine** : `app/components/level_up/LevelUpStepSpells.vue` (l.355-363) calcule `oldSlots`/`newSlots`
+  via `spellSlotsAtLevel(casterType, fromLevel/toLevel)` — la table d'**une seule** classe. La **fiche**,
+  elle, est correcte : le serveur stocke le total combiné via `combinedSpellSlots` (`shared/rules/spellSlots.ts`,
+  depuis le lot 5d).
+- **Fix** : brancher l'aperçu sur `combinedSpellSlots` en tenant compte des **autres** classes lanceuses
+  du personnage (pas seulement celle qu'on monte).
+- Découvert : audit du lot 6c (2026-08-02). **NON régressé** (préservé à l'identique).
+
 ## Suspects à vérifier (audit non encore fait)
 - Level-up en **multiclasse** (flux de choix, résolution d'IDs de classe).
 - Invocations **échangeables** (`replaceable`) au level-up.
