@@ -58,11 +58,11 @@ test **fonctionnel** les révèle.
 - **Fix** : utiliser le mod canonique (`abilityModifiers.cha`). **✅ RÉSOLU.**
 - Découvert : vérif visuelle 6b (2026-08-02, utilisateur).
 
-### Note (design, hors parcours) — pas de jet d20 « pour toucher » pour les sorts
-Lancer un sort (`MagicSection.rollSpellEffect`) ne jette que **dégâts / soins** ; **aucun jet
-d20 + bonus d'attaque** n'existe pour les attaques de sort (le « Bonus d'attaque » de l'en-tête est
-un affichage). Manque de *feature* plus large que la classe « complétude de parcours » — à trancher
-à part.
+### B5 — pas de jet d20 « pour toucher » pour les sorts d'attaque · front (feature) — ✅ RÉSOLU
+Lancer un sort ne jetait que **dégâts / soins** ; **aucun jet d20 + bonus d'attaque** n'existait
+(le « Bonus d'attaque » de l'en-tête n'était qu'un affichage). Ajout d'un bouton **Attaque** pour
+les sorts à jet pour toucher (dégâts **sans `dc`**) : `rollSpellAttack` jette `d20 + bonus d'attaque
+de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Décharge occulte).
 
 ## Suspects à vérifier (audit non encore fait)
 - Level-up en **multiclasse** (flux de choix, résolution d'IDs de classe).

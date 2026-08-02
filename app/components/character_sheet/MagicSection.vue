@@ -246,7 +246,19 @@
               @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
               @remove="removeSpell(cs.spellId)"
             />
-            <!-- Bouton Lancer inline -->
+            <!-- Bouton Attaque (sorts à jet pour toucher) -->
+            <UButton
+              v-if="isAttackSpell(cs) && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
+              size="xs"
+              variant="soft"
+              color="warning"
+              icon="i-heroicons:bolt"
+              class="shrink-0"
+              @click.stop="rollSpellAttack(cs)"
+            >
+              Attaque
+            </UButton>
+            <!-- Bouton Lancer inline (dégâts / soins) -->
             <UButton
               v-if="cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs)"
               size="xs"
@@ -574,6 +586,22 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
       bonus += spellcastingModifier.value
     }
     roll(`${spell.name} · soin`, bonus, parsed.sides, parsed.count)
+  }
+}
+
+// Sort à ATTAQUE = inflige des dégâts SANS jet de sauvegarde (Décharge occulte, Trait de feu…) :
+// il demande un jet pour toucher (d20 + bonus d'attaque de sort), séparé du jet de dégâts.
+const isAttackSpell = (cs: CharacterSpellWithSpell): boolean =>
+  (cs.spell.damages?.length ?? 0) > 0 && !cs.spell.dc
+
+// Jet pour toucher : un d20 + bonus d'attaque PAR attaque (un par rayon pour les multi-attaques).
+function rollSpellAttack(cs: CharacterSpellWithSpell) {
+  const atk = spellcastingStats.value?.attackBonus
+  if (atk == null) return
+  const castLevel = cs.spell.level || characterLevel.value
+  const n = resolveAttackCount(cs.spell, castLevel, characterLevel.value)?.count ?? 1
+  for (let r = 1; r <= n; r++) {
+    roll(n > 1 ? `${cs.spell.name} · attaque ${r}` : `${cs.spell.name} · attaque`, atk, 20, 1)
   }
 }
 
