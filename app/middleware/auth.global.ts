@@ -4,6 +4,8 @@ export default defineNuxtRouteMiddleware((to) => {
   const { loggedIn } = useUserSession()
 
   if (requiresAuth(to.path) && !loggedIn.value) {
-    return navigateTo('/login')
+    // On mémorise la destination voulue pour y revenir après connexion
+    // (cf. app/pages/login.vue + callbacks OAuth).
+    return navigateTo({ path: '/login', query: { redirect: to.fullPath } })
   }
 })

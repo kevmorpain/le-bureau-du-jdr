@@ -23,11 +23,27 @@
 
 <script setup lang="ts">
 import type { ButtonProps } from '@nuxt/ui'
+import { sanitizeRedirect, POST_LOGIN_REDIRECT_COOKIE } from '~~/shared/utils/redirect'
 
 definePageMeta({ layout: 'blank' })
 
 const route = useRoute()
 const hasError = computed(() => route.query.error === 'oauth')
+
+// Destination voulue avant d'être renvoyé ici par la garde d'auth
+// (`/login?redirect=…`). On la valide (anti open-redirect) puis on la persiste
+// dans un cookie : le paramètre de query ne survit pas à l'aller-retour OAuth,
+// contrairement au cookie. Les callbacks serveur le relisent (server/routes/auth/*).
+const redirectTarget = computed(() => sanitizeRedirect(route.query.redirect))
+
+const redirectCookie = useCookie(POST_LOGIN_REDIRECT_COOKIE, {
+  path: '/',
+  sameSite: 'lax',
+  maxAge: 60 * 10, // 10 min : le temps du flux OAuth.
+})
+watchEffect(() => {
+  redirectCookie.value = route.query.redirect ? redirectTarget.value : undefined
+})
 
 // OAuth-only : les providers sont de simples boutons-liens vers les routes
 // serveur (server/routes/auth/*). Pas de `fields` → UAuthForm n'affiche ni
@@ -40,6 +56,6 @@ const providers: ButtonProps[] = [
 // Un utilisateur déjà connecté n'a rien à faire ici.
 const { loggedIn } = useUserSession()
 watchEffect(() => {
-  if (loggedIn.value) navigateTo('/characters')
+  if (loggedIn.value) navigateTo(redirectTarget.value)
 })
 </script>

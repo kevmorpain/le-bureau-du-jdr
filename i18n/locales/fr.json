@@ -4,10 +4,17 @@
       "title": "Gère ton {highlight} comme un vrai MJ",
       "title_highlight": "JDR",
       "description": "Tous les outils (presque) pour gérer ta campagne de jeu de rôle. Création de personnages, gestion des sorts, feuilles de personnages, et bien plus encore !",
-      "links": [
-        "Accéder aux sorts",
-        "Créer un personnage"
-      ]
+      "cta": {
+        "create": "Créer un personnage",
+        "my_characters": "Mes personnages",
+        "new_character": "Nouveau personnage",
+        "spells": "Découvrir les sorts"
+      }
+    },
+    "recent": {
+      "title": "Reprendre",
+      "description": "Retrouve tes personnages et continue là où tu t'es arrêté.",
+      "see_all": "Voir tous mes personnages"
     }
   },
 
