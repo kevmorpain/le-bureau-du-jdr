@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { slotsForLevel, combinedSpellSlots } from '../../shared/rules/spellSlots'
+import { slotsForLevel, combinedSpellSlots, maxSpellLevelForLevel } from '../../shared/rules/spellSlots'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Contrat d'équivalence des tables d'emplacements (D12) — la source unique de
@@ -46,6 +46,22 @@ describe('slotsForLevel — magie de pacte (Occultiste)', () => {
   })
   it('niveau 17 : 4 emplacements de niveau 5', () => {
     expect(slotsForLevel('pact', 17)).toEqual([0, 0, 0, 0, 4, 0, 0, 0, 0])
+  })
+})
+
+describe('maxSpellLevelForLevel', () => {
+  it('lanceur complet : niv.1 → 1, niv.5 → 3, niv.20 → 9', () => {
+    expect(maxSpellLevelForLevel('full', 1)).toBe(1)
+    expect(maxSpellLevelForLevel('full', 5)).toBe(3)
+    expect(maxSpellLevelForLevel('full', 20)).toBe(9)
+  })
+  it('demi-lanceur : niv.1 → 0, niv.5 → 2', () => {
+    expect(maxSpellLevelForLevel('half', 1)).toBe(0)
+    expect(maxSpellLevelForLevel('half', 5)).toBe(2)
+  })
+  it('magie de pacte : niv.3 → 2, niv.11 → 5', () => {
+    expect(maxSpellLevelForLevel('pact', 3)).toBe(2)
+    expect(maxSpellLevelForLevel('pact', 11)).toBe(5)
   })
 })
 

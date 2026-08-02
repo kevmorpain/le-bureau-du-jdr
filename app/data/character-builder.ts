@@ -1193,46 +1193,13 @@ export const BACKGROUNDS: BackgroundData[] = [
 
 // ─── Calculs de sorts ─────────────────────────────────────────────────────────
 
-export const FULL_CASTER_SLOTS: number[][] = [
-  [2,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],[4,3,0,0,0,0,0,0,0],
-  [4,3,2,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],[4,3,3,1,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],
-  [4,3,3,3,1,0,0,0,0],[4,3,3,3,2,0,0,0,0],[4,3,3,3,2,1,0,0,0],[4,3,3,3,2,1,0,0,0],
-  [4,3,3,3,2,1,1,0,0],[4,3,3,3,2,1,1,0,0],[4,3,3,3,2,1,1,1,0],[4,3,3,3,2,1,1,1,0],
-  [4,3,3,3,2,1,1,1,1],[4,3,3,3,3,1,1,1,1],[4,3,3,3,3,2,1,1,1],[4,3,3,3,3,2,2,1,1],
-]
-
-export const HALF_CASTER_SLOTS: number[][] = [
-  [0,0,0,0,0,0,0,0,0],[2,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],[3,0,0,0,0,0,0,0,0],
-  [4,2,0,0,0,0,0,0,0],[4,2,0,0,0,0,0,0,0],[4,3,0,0,0,0,0,0,0],[4,3,0,0,0,0,0,0,0],
-  [4,3,2,0,0,0,0,0,0],[4,3,2,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],[4,3,3,0,0,0,0,0,0],
-  [4,3,3,1,0,0,0,0,0],[4,3,3,1,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],[4,3,3,2,0,0,0,0,0],
-  [4,3,3,3,1,0,0,0,0],[4,3,3,3,1,0,0,0,0],[4,3,3,3,2,0,0,0,0],[4,3,3,3,2,0,0,0,0],
-]
-
-export const PACT_SLOT_LEVEL = [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5]
-export const PACT_SLOT_COUNT = [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]
-
-export function spellSlotsAtLevel(type: CasterType, level: number): number[] {
-  const idx = Math.max(0, Math.min(19, level - 1))
-  if (type === 'full') return FULL_CASTER_SLOTS[idx]!
-  if (type === 'half') return HALF_CASTER_SLOTS[idx]!
-  if (type === 'pact') {
-    const slotLvl = PACT_SLOT_LEVEL[idx]!
-    const count = PACT_SLOT_COUNT[idx]!
-    const row = [0,0,0,0,0,0,0,0,0]
-    row[slotLvl - 1] = count
-    return row
-  }
-  return [0,0,0,0,0,0,0,0,0]
-}
-
-export function maxSpellLevelAtLevel(type: CasterType, level: number): number {
-  const slots = spellSlotsAtLevel(type, level)
-  for (let i = 8; i >= 0; i--) {
-    if ((slots[i] ?? 0) > 0) return i + 1
-  }
-  return 0
-}
+// Emplacements de sorts : SOURCE UNIQUE dans shared/rules/spellSlots.ts (dédup point 6c). Ré-exports
+// sous les noms historiques pour ne pas toucher les importateurs (useCharacterBuilder, useLevelUp,
+// LevelUpStepSpells).
+export {
+  slotsForLevel as spellSlotsAtLevel,
+  maxSpellLevelForLevel as maxSpellLevelAtLevel,
+} from '~~/shared/rules/spellSlots'
 
 export const CANTRIPS_KNOWN: Partial<Record<string, number[]>> = {
   bard:     [2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4],
