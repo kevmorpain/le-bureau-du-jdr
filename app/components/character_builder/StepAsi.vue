@@ -78,17 +78,17 @@
             </div>
 
             <div class="flex items-baseline gap-2 mb-2">
-              <span class="font-mono text-xs text-muted">{{ baseScore(ab) }}</span>
+              <span class="font-mono text-xs text-muted">{{ scoreBeforeTier(lvl, ab) }}</span>
               <span class="text-muted text-sm">→</span>
               <span
                 class="font-mono text-2xl font-black leading-none"
                 :class="getBonus(lvl, ab) > 0 ? 'text-amber-400' : 'text-(--ui-text)'"
-              >{{ Math.min(20, baseScore(ab) + getBonus(lvl, ab)) }}</span>
+              >{{ Math.min(20, scoreBeforeTier(lvl, ab) + getBonus(lvl, ab)) }}</span>
               <span v-if="getBonus(lvl, ab) > 0" class="text-xs text-amber-400 font-mono">+{{ getBonus(lvl, ab) }}</span>
             </div>
 
             <div class="text-xs text-muted mb-3">
-              mod {{ formatMod(abilityMod(Math.min(20, baseScore(ab) + getBonus(lvl, ab)))) }}
+              mod {{ formatMod(abilityMod(Math.min(20, scoreBeforeTier(lvl, ab) + getBonus(lvl, ab)))) }}
             </div>
 
             <div class="flex gap-2">
@@ -215,6 +215,15 @@ function baseScore(ab: AbilityKey): number {
   const base = state.value.abilities[ab]
   if (base == null) return 10
   return base + (raceBonuses.value[ab] ?? 0)
+}
+
+// « Avant » d'un palier = base + ASI des paliers PRÉCÉDENTS (niveau < lvl), pour un affichage
+// cumulatif (sinon chaque palier réaffichait la base de création).
+function scoreBeforeTier(lvl: number, ab: AbilityKey): number {
+  const prior = Object.entries(state.value.asiBonuses)
+    .filter(([l]) => Number(l) < lvl)
+    .reduce((sum, [, bonuses]) => sum + (bonuses[ab] ?? 0), 0)
+  return Math.min(20, baseScore(ab) + prior)
 }
 
 function getBonus(lvl: number, ab: AbilityKey): number {

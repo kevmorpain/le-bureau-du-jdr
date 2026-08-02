@@ -46,7 +46,23 @@ test **fonctionnel** les révèle.
   bon** ; seul l'**affichage intermédiaire** par palier est trompeur.
 - **Fix** : « avant » d'un palier = base + somme des ASI des paliers **précédents** (paliers triés
   par niveau).
-- Découvert : signalé par l'utilisateur (2026-08-02).
+- Découvert : signalé par l'utilisateur (2026-08-02). **✅ RÉSOLU** — `scoreBeforeTier()`.
+
+### B3 — Coup agonisant : mod de CHA recalculé sans le bonus d'espèce · front (calcul)
+- **Symptôme** : Décharge occulte avec Coup agonisant applique **+CHA de base+ASI** aux dégâts, en
+  omettant le bonus d'**espèce**. Ex. niv. 12, CHA 20 (via espèce +2) : to-hit **+9** et DD **17**
+  (corrects, mod +5) mais dégâts par rayon **+4** au lieu de +5.
+- **Racine** : `app/components/character_sheet/MagicSection.vue` `charismaModifier` (l.721) reconstruit
+  le mod à la main = `floor((baseAbilityScores.cha + Σ ASI − 10) / 2)` → **omet les bonus d'espèce et
+  d'effets**. Le to-hit/DD, eux, utilisent le mod **canonique** `abilityModifiers['cha']`.
+- **Fix** : utiliser le mod canonique (`abilityModifiers.cha`). **✅ RÉSOLU.**
+- Découvert : vérif visuelle 6b (2026-08-02, utilisateur).
+
+### Note (design, hors parcours) — pas de jet d20 « pour toucher » pour les sorts
+Lancer un sort (`MagicSection.rollSpellEffect`) ne jette que **dégâts / soins** ; **aucun jet
+d20 + bonus d'attaque** n'existe pour les attaques de sort (le « Bonus d'attaque » de l'en-tête est
+un affichage). Manque de *feature* plus large que la classe « complétude de parcours » — à trancher
+à part.
 
 ## Suspects à vérifier (audit non encore fait)
 - Level-up en **multiclasse** (flux de choix, résolution d'IDs de classe).

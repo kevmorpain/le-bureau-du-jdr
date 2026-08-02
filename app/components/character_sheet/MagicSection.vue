@@ -359,6 +359,7 @@ type SlotType = 'spellcasting' | 'pact_magic'
 const spellSlots = inject<Ref<SlotsByType>>('spellSlots')!
 
 const {
+  abilityModifiers,
   spellcastingModifier,
   spellcastingStats,
   pactMagicStats,
@@ -718,15 +719,9 @@ const alreadyAddedIds = computed(() =>
 
 // ─── Modifications de Décharge occulte (Manifestations occultes) ─────────────
 
-const charismaModifier = computed<number>(() => {
-  const scores = (characterSheetRef.value as any)?.baseAbilityScores ?? []
-  const cha = scores.find((s: any) => s.abilityId === 'cha')?.value ?? 10
-  const improvements = (characterSheetRef.value as any)?.abilityScoreImprovements ?? []
-  const bonus = improvements
-    .filter((i: any) => i.ability === 'cha')
-    .reduce((sum: number, i: any) => sum + i.amount, 0)
-  return Math.floor(((cha + bonus) - 10) / 2)
-})
+// Mod canonique de CHA (total : espèce + ASI + effets). NE PAS le recalculer à la main depuis
+// baseAbilityScores + ASI — ça omettait le bonus d'espèce (Coup agonisant sous-évalué).
+const charismaModifier = computed<number>(() => abilityModifiers.value.cha ?? 0)
 
 const eldritchBlastMods = computed(() => {
   const features = (characterSheetRef.value as any)?.features ?? []
