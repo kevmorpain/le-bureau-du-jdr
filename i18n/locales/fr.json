@@ -10,11 +10,6 @@
         "new_character": "Nouveau personnage",
         "spells": "Découvrir les sorts"
       }
-    },
-    "recent": {
-      "title": "Reprendre",
-      "description": "Retrouve tes personnages et continue là où tu t'es arrêté.",
-      "see_all": "Voir tous mes personnages"
     }
   },
 
