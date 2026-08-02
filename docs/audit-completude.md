@@ -44,9 +44,9 @@ test **fonctionnel** les révèle.
   `abilities[ab] + raceBonuses[ab]` (base de création), utilisé comme « avant » de **chaque**
   palier. Le cap à 20 (`finalAfterAsi`, l.232) est, lui, cumulatif-correct → **le score final est
   bon** ; seul l'**affichage intermédiaire** par palier est trompeur.
-- **Fix** : « avant » d'un palier = base + somme des ASI des paliers **précédents** (paliers triés
-  par niveau).
-- Découvert : signalé par l'utilisateur (2026-08-02). **✅ RÉSOLU** — `scoreBeforeTier()`.
+- **Fix** : chaque palier affiche le **total final** — `base (+ASI des autres paliers) +ce palier → total`
+  — la contribution du palier courant restant distincte (`otherAsiBonus()` + `finalAfterAsi()`).
+- Découvert : signalé par l'utilisateur (2026-08-02). **✅ RÉSOLU**.
 
 ### B3 — Coup agonisant : mod de CHA recalculé sans le bonus d'espèce · front (calcul)
 - **Symptôme** : Décharge occulte avec Coup agonisant applique **+CHA de base+ASI** aux dégâts, en
