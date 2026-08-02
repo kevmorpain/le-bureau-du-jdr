@@ -246,19 +246,8 @@
               @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
               @remove="removeSpell(cs.spellId)"
             />
-            <!-- Bouton Attaque (sorts à jet pour toucher) -->
-            <UButton
-              v-if="isAttackSpell(cs) && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
-              size="xs"
-              variant="soft"
-              color="warning"
-              icon="i-heroicons:bolt"
-              class="shrink-0"
-              @click.stop="rollSpellAttack(cs)"
-            >
-              Attaque
-            </UButton>
-            <!-- Bouton Lancer inline (dégâts / soins) -->
+            <!-- Bouton Lancer : consomme l'emplacement et fait le jet pour toucher (sorts
+                 d'attaque) ou le jet d'effet (dégâts/soin des autres sorts) -->
             <UButton
               v-if="cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs)"
               size="xs"
@@ -274,6 +263,18 @@
               "
             >
               Lancer
+            </UButton>
+            <!-- Bouton Dégâts (sorts d'attaque) : jet de dégâts, sans reconsommer d'emplacement -->
+            <UButton
+              v-if="isAttackSpell(cs) && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
+              size="xs"
+              variant="soft"
+              color="warning"
+              icon="i-game-icons:blood"
+              class="shrink-0"
+              @click.stop="rollSpellEffect(cs, cs.spell.level || 0)"
+            >
+              Dégâts
             </UButton>
           </div>
         </template>
@@ -669,8 +670,9 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
     })
   }
 
-  // Jets de dés au niveau du sort (l'Arcanum est toujours lancé au niveau de base)
-  rollSpellEffect(cs, cs.spell.level || lvl)
+  // Sort d'attaque → jet pour toucher ; sinon effet direct (Arcanum lancé au niveau de base).
+  if (isAttackSpell(cs)) rollSpellAttack(cs)
+  else rollSpellEffect(cs, cs.spell.level || lvl)
 }
 
 const isArcanumSpell = (cs: CharacterSpellWithSpell) => arcanumLevelFromSource(cs.source) !== null
@@ -684,8 +686,9 @@ const castCantripDirect = (cs: CharacterSpellWithSpell) => {
       color: 'info',
     })
   }
-  // Cantrips utilisent damage_at_character_level — on lance les dés
-  rollSpellEffect(cs, cs.spell.level || 0)
+  // Sort d'attaque → jet pour toucher (les dégâts suivent via le bouton Dégâts) ; sinon effet direct.
+  if (isAttackSpell(cs)) rollSpellAttack(cs)
+  else rollSpellEffect(cs, cs.spell.level || 0)
 }
 
 const castCantripFromSlideover = () => {
@@ -712,9 +715,10 @@ const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number
       color: 'info',
     })
   }
-  // Lancer les dés du sort
+  // Sort d'attaque → jet pour toucher ; sinon effet direct.
   if (selectedSpell.value) {
-    rollSpellEffect(selectedSpell.value, slotLevel)
+    if (isAttackSpell(selectedSpell.value)) rollSpellAttack(selectedSpell.value)
+    else rollSpellEffect(selectedSpell.value, slotLevel)
   }
 }
 
