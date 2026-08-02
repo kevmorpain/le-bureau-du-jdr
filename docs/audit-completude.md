@@ -44,9 +44,25 @@ test **fonctionnel** les révèle.
   `abilities[ab] + raceBonuses[ab]` (base de création), utilisé comme « avant » de **chaque**
   palier. Le cap à 20 (`finalAfterAsi`, l.232) est, lui, cumulatif-correct → **le score final est
   bon** ; seul l'**affichage intermédiaire** par palier est trompeur.
-- **Fix** : « avant » d'un palier = base + somme des ASI des paliers **précédents** (paliers triés
-  par niveau).
-- Découvert : signalé par l'utilisateur (2026-08-02).
+- **Fix** : chaque palier affiche le **total final** — `base (+ASI des autres paliers) +ce palier → total`
+  — la contribution du palier courant restant distincte (`otherAsiBonus()` + `finalAfterAsi()`).
+- Découvert : signalé par l'utilisateur (2026-08-02). **✅ RÉSOLU**.
+
+### B3 — Coup agonisant : mod de CHA recalculé sans le bonus d'espèce · front (calcul)
+- **Symptôme** : Décharge occulte avec Coup agonisant applique **+CHA de base+ASI** aux dégâts, en
+  omettant le bonus d'**espèce**. Ex. niv. 12, CHA 20 (via espèce +2) : to-hit **+9** et DD **17**
+  (corrects, mod +5) mais dégâts par rayon **+4** au lieu de +5.
+- **Racine** : `app/components/character_sheet/MagicSection.vue` `charismaModifier` (l.721) reconstruit
+  le mod à la main = `floor((baseAbilityScores.cha + Σ ASI − 10) / 2)` → **omet les bonus d'espèce et
+  d'effets**. Le to-hit/DD, eux, utilisent le mod **canonique** `abilityModifiers['cha']`.
+- **Fix** : utiliser le mod canonique (`abilityModifiers.cha`). **✅ RÉSOLU.**
+- Découvert : vérif visuelle 6b (2026-08-02, utilisateur).
+
+### B5 — pas de jet d20 « pour toucher » pour les sorts d'attaque · front (feature) — ✅ RÉSOLU
+Lancer un sort ne jetait que **dégâts / soins** ; **aucun jet d20 + bonus d'attaque** n'existait
+(le « Bonus d'attaque » de l'en-tête n'était qu'un affichage). Ajout d'un bouton **Attaque** pour
+les sorts à jet pour toucher (dégâts **sans `dc`**) : `rollSpellAttack` jette `d20 + bonus d'attaque
+de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Décharge occulte).
 
 ## Suspects à vérifier (audit non encore fait)
 - Level-up en **multiclasse** (flux de choix, résolution d'IDs de classe).

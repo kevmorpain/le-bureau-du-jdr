@@ -246,7 +246,8 @@
               @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
               @remove="removeSpell(cs.spellId)"
             />
-            <!-- Bouton Lancer inline -->
+            <!-- Bouton Lancer : consomme l'emplacement et fait le jet pour toucher (sorts
+                 d'attaque) ou le jet d'effet (dégâts/soin des autres sorts) -->
             <UButton
               v-if="cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs)"
               size="xs"
@@ -262,6 +263,18 @@
               "
             >
               Lancer
+            </UButton>
+            <!-- Bouton Dégâts (sorts d'attaque) : jet de dégâts, sans reconsommer d'emplacement -->
+            <UButton
+              v-if="isAttackSpell(cs) && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
+              size="xs"
+              variant="soft"
+              color="warning"
+              icon="i-game-icons:blood"
+              class="shrink-0"
+              @click.stop="rollSpellEffect(cs, cs.spell.level || 0)"
+            >
+              Dégâts
             </UButton>
           </div>
         </template>
@@ -359,6 +372,7 @@ type SlotType = 'spellcasting' | 'pact_magic'
 const spellSlots = inject<Ref<SlotsByType>>('spellSlots')!
 
 const {
+  abilityModifiers,
   spellcastingModifier,
   spellcastingStats,
   pactMagicStats,
@@ -576,6 +590,22 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
   }
 }
 
+// Sort à ATTAQUE = inflige des dégâts SANS jet de sauvegarde (Décharge occulte, Trait de feu…) :
+// il demande un jet pour toucher (d20 + bonus d'attaque de sort), séparé du jet de dégâts.
+const isAttackSpell = (cs: CharacterSpellWithSpell): boolean =>
+  (cs.spell.damages?.length ?? 0) > 0 && !cs.spell.dc
+
+// Jet pour toucher : un d20 + bonus d'attaque PAR attaque (un par rayon pour les multi-attaques).
+function rollSpellAttack(cs: CharacterSpellWithSpell) {
+  const atk = spellcastingStats.value?.attackBonus
+  if (atk == null) return
+  const castLevel = cs.spell.level || characterLevel.value
+  const n = resolveAttackCount(cs.spell, castLevel, characterLevel.value)?.count ?? 1
+  for (let r = 1; r <= n; r++) {
+    roll(n > 1 ? `${cs.spell.name} · attaque ${r}` : `${cs.spell.name} · attaque`, atk, 20, 1)
+  }
+}
+
 // ─── Cast Arcane Mystérieux (sans emplacement, 1×/repos long) ──────────────
 
 const ARCANUM_FEATURE_NAME_BY_LEVEL: Record<number, string> = {
@@ -640,8 +670,9 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
     })
   }
 
-  // Jets de dés au niveau du sort (l'Arcanum est toujours lancé au niveau de base)
-  rollSpellEffect(cs, cs.spell.level || lvl)
+  // Sort d'attaque → jet pour toucher ; sinon effet direct (Arcanum lancé au niveau de base).
+  if (isAttackSpell(cs)) rollSpellAttack(cs)
+  else rollSpellEffect(cs, cs.spell.level || lvl)
 }
 
 const isArcanumSpell = (cs: CharacterSpellWithSpell) => arcanumLevelFromSource(cs.source) !== null
@@ -655,8 +686,9 @@ const castCantripDirect = (cs: CharacterSpellWithSpell) => {
       color: 'info',
     })
   }
-  // Cantrips utilisent damage_at_character_level — on lance les dés
-  rollSpellEffect(cs, cs.spell.level || 0)
+  // Sort d'attaque → jet pour toucher (les dégâts suivent via le bouton Dégâts) ; sinon effet direct.
+  if (isAttackSpell(cs)) rollSpellAttack(cs)
+  else rollSpellEffect(cs, cs.spell.level || 0)
 }
 
 const castCantripFromSlideover = () => {
@@ -683,9 +715,10 @@ const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number
       color: 'info',
     })
   }
-  // Lancer les dés du sort
+  // Sort d'attaque → jet pour toucher ; sinon effet direct.
   if (selectedSpell.value) {
-    rollSpellEffect(selectedSpell.value, slotLevel)
+    if (isAttackSpell(selectedSpell.value)) rollSpellAttack(selectedSpell.value)
+    else rollSpellEffect(selectedSpell.value, slotLevel)
   }
 }
 
@@ -718,15 +751,9 @@ const alreadyAddedIds = computed(() =>
 
 // ─── Modifications de Décharge occulte (Manifestations occultes) ─────────────
 
-const charismaModifier = computed<number>(() => {
-  const scores = (characterSheetRef.value as any)?.baseAbilityScores ?? []
-  const cha = scores.find((s: any) => s.abilityId === 'cha')?.value ?? 10
-  const improvements = (characterSheetRef.value as any)?.abilityScoreImprovements ?? []
-  const bonus = improvements
-    .filter((i: any) => i.ability === 'cha')
-    .reduce((sum: number, i: any) => sum + i.amount, 0)
-  return Math.floor(((cha + bonus) - 10) / 2)
-})
+// Mod canonique de CHA (total : espèce + ASI + effets). NE PAS le recalculer à la main depuis
+// baseAbilityScores + ASI — ça omettait le bonus d'espèce (Coup agonisant sous-évalué).
+const charismaModifier = computed<number>(() => abilityModifiers.value.cha ?? 0)
 
 const eldritchBlastMods = computed(() => {
   const features = (characterSheetRef.value as any)?.features ?? []
