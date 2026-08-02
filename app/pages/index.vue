@@ -32,18 +32,39 @@
 <script lang="ts" setup>
 import type { ButtonProps } from '@nuxt/ui'
 
-const links = ref<ButtonProps[]>([
-  {
-    label: $t('home.hero.links.1'),
-    to: '/characters',
-    icon: 'heroicons-outline:identification',
-  },
-  {
-    label: $t('home.hero.links.0'),
-    to: '/spells',
-    color: 'neutral',
-    variant: 'subtle',
-    icon: 'heroicons-outline:book-open',
-  },
-])
+const { loggedIn } = useUserSession()
+
+const links = computed<ButtonProps[]>(() => {
+  if (loggedIn.value) {
+    return [
+      {
+        label: $t('home.hero.cta.my_characters'),
+        to: '/characters',
+        icon: 'heroicons-outline:identification',
+      },
+      {
+        label: $t('home.hero.cta.new_character'),
+        to: '/characters/new',
+        color: 'neutral',
+        variant: 'subtle',
+        icon: 'heroicons-outline:plus-circle',
+      },
+    ]
+  }
+
+  return [
+    {
+      label: $t('home.hero.cta.create'),
+      to: '/characters/new',
+      icon: 'heroicons-outline:plus-circle',
+    },
+    {
+      label: $t('home.hero.cta.spells'),
+      to: '/spells',
+      color: 'neutral',
+      variant: 'subtle',
+      icon: 'heroicons-outline:book-open',
+    },
+  ]
+})
 </script>

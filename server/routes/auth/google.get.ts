@@ -1,3 +1,5 @@
+import { sanitizeRedirect, POST_LOGIN_REDIRECT_COOKIE } from '~~/shared/utils/redirect'
+
 // OAuth Google. Le chemin de la route (`/auth/google`) détermine l'URI de
 // redirection à enregistrer côté Google Cloud Console.
 export default defineOAuthGoogleEventHandler({
@@ -14,7 +16,9 @@ export default defineOAuthGoogleEventHandler({
     })
     // On ne stocke pas le token du provider : la session est autonome (meilleur offline).
     await setUserSession(event, { user: sessionUser, loggedInAt: Date.now() })
-    return sendRedirect(event, '/characters')
+    const redirectTo = sanitizeRedirect(getCookie(event, POST_LOGIN_REDIRECT_COOKIE))
+    deleteCookie(event, POST_LOGIN_REDIRECT_COOKIE, { path: '/' })
+    return sendRedirect(event, redirectTo)
   },
   onError(event, error) {
     console.error('[auth/google] OAuth error:', error)

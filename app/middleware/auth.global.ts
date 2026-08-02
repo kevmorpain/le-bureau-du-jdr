@@ -4,6 +4,6 @@ export default defineNuxtRouteMiddleware((to) => {
   const { loggedIn } = useUserSession()
 
   if (requiresAuth(to.path) && !loggedIn.value) {
-    return navigateTo('/login')
+    return navigateTo({ path: '/login', query: { redirect: to.fullPath } })
   }
 })

@@ -1,3 +1,5 @@
+import { sanitizeRedirect, POST_LOGIN_REDIRECT_COOKIE } from '~~/shared/utils/redirect'
+
 // OAuth Discord. Le chemin de la route (`/auth/discord`) détermine l'URI de
 // redirection à enregistrer côté Discord Developer Portal.
 export default defineOAuthDiscordEventHandler({
@@ -16,7 +18,9 @@ export default defineOAuthDiscordEventHandler({
     })
     // On ne stocke pas le token du provider : la session est autonome (meilleur offline).
     await setUserSession(event, { user: sessionUser, loggedInAt: Date.now() })
-    return sendRedirect(event, '/characters')
+    const redirectTo = sanitizeRedirect(getCookie(event, POST_LOGIN_REDIRECT_COOKIE))
+    deleteCookie(event, POST_LOGIN_REDIRECT_COOKIE, { path: '/' })
+    return sendRedirect(event, redirectTo)
   },
   onError(event, error) {
     console.error('[auth/discord] OAuth error:', error)
