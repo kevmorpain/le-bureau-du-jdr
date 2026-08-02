@@ -52,6 +52,11 @@ Bouleversement central : **les bonus de caractéristiques passent de l'espèce v
 > fondation. On le pose donc juste avant d'introduire le contenu 5.5. (Un prototype de
 > migration `ruleset` avait été fait puis retiré pour repartir sur une base propre.)
 
+> **Bugs de complétude 2014 (hors iso-comportement)** : les correctifs de *parcours* découverts
+> en cours de route (arcanums non cumulatifs, base d'ASI par palier…) sont tracés à part dans
+> [`audit-completude.md`](./audit-completude.md). La Phase 1 étant iso-comportement, elle ne les
+> corrige pas ; ils forment des chantiers de correction 2014 dédiés.
+
 **Phase 1 — base propre (clean), iso-2014, test-guardée** (migration additive, cf. [D9](./decisions.md#d9), [D13](./decisions.md#d13))
 1. **Tests d'équivalence 2014** (le filet, *en premier*) — contrat de valeurs vérifiées
    (Ambroise + 1 martial + 1 caster), cf. [D12](./decisions.md#d12) et `rules-engine.md` §8.
