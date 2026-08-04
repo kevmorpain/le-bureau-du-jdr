@@ -1,5 +1,6 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 import characterSpecies from './character_species'
 import characterClasses from './character_classes'
 import characterAbilityScores from './character_ability_scores'
@@ -39,6 +40,9 @@ const characterSheets = sqliteTable('character_sheets', {
   // existantes (backfill manuel) ; toute nouvelle fiche pose toujours l'owner.
   ownerId: integer('owner_id').references(() => users.id),
   name: text('name').notNull(),
+  // Édition de règles figée à la création (cf. shared/rules/ruleset.ts, decisions.md
+  // D1/D2). Défaut '5' = toutes les fiches existantes sont en 2014.
+  ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
   speciesId: integer('species_id').references(() => characterSpecies.id).notNull(),
   alignment: text().$type<Alignment>().default(Alignment.TrueNeutral).notNull(),
   maxHp: integer('max_hp').default(0).notNull(),
