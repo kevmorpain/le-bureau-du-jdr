@@ -20,7 +20,7 @@ test **fonctionnel** les révèle.
 
 ## Bugs identifiés
 
-### B1 — Arcanums mystiques non cumulatifs (Occultiste) · front + serveur
+### B1 — Arcanums mystiques non cumulatifs (Occultiste) · front + serveur — ✅ RÉSOLU
 - **Symptôme** : créer un occultiste à un niveau ≠ 11/13/15/17 (12, 14, 15–20…) n'affiche aucun
   sélecteur d'arcanum ; à un niveau de palier, un seul arcanum, jamais les précédents (à 13, pas
   d'accès à l'arcanum niv. 6 débloqué à 11). La fiche, elle, supporte les 4 (`arcanum_6/7/8/9`).
@@ -30,11 +30,18 @@ test **fonctionnel** les révèle.
 - **Racine serveur** : `server/utils/characterCreate.ts` n'accepte qu'un `arcaneMysteriumSpellId`
   et mappe la source via `ARCANUM_LEVEL_TO_SOURCE[<niveau du perso>]` → `undefined` hors
   11/13/15/17 (rien stocké). Idem `characterLevelUp.ts`.
-- **Fix** : state → multi (Record/array par niveau d'arcanum) ; UI builder → **boucle sur les
-  points de choix `spell` DUS** (déjà exposés par `resolveChoices` depuis le lot 6b) ; submit →
-  tableau ; serveur → accepter/valider/écrire N arcanums, source mappée par le niveau de
-  l'**arcanum** (pas du perso). Le level-up reste 1-par-montée (naturel).
-- Découvert : vérif visuelle du lot 6b (2026-08-02). **NON régressé par 6b** (préservé à l'identique).
+- **Correctif** : état front `arcaneMysteriumSpellIds: Record<niveauSort, spellId>` (multi) ;
+  `arcaneMysteriumSpellLevels[]` dérivé de **tous** les points de choix `spell` du catalogue
+  (`resolveChoices` gate déjà `classLevel ≥ ownerLevelRequired`) ; UI `StepSpells` en **boucle**
+  (un bloc par palier débloqué) ; payload `arcaneMysteria: [{spellLevel, spellId}]` ; serveur
+  `characterCreate` valide chaque arcanum contre la choice de **même `maxLevel`** (V5, rejette un
+  palier non débloqué ou un sort hors-niveau) et écrit la source par niveau de **sort**
+  (`ARCANUM_SPELL_LEVEL_TO_SOURCE`), non plus par niveau du perso.
+- **Le level-up était déjà correct** (mono-palier : `ARCANUM_LEVEL_TO_SOURCE[newLevel]` mappe le
+  palier tout juste atteint) → laissé intact. **Aucune migration** (`character_spells.source`
+  accepte déjà `arcanum_6..9`).
+- Découvert : vérif visuelle du lot 6b (2026-08-02). **✅ RÉSOLU** ; tests dans
+  `test/nuxt/createCharacter.test.ts` (arcanums cumulatifs niv. 17 + rejets palier/sort illégaux).
 
 ### B2 — Base d'ASI non cumulative entre paliers (création) · front (affichage)
 - **Symptôme** : avec ≥2 paliers d'ASI à la création (ex. niv. 4 et 8), chaque palier affiche la
