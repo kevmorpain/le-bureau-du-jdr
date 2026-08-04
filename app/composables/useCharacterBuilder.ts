@@ -324,7 +324,7 @@ export function useCharacterBuilder() {
     return bonuses
   })
 
-  // Scores finaux (base + racial + ASI). PHB plafonne les ASI à 20.
+  // Scores finaux (base + racial + ASI + bonus de dons). PHB plafonne à 20.
   const finalAbilities = computed<Partial<Record<AbilityKey, number>>>(() => {
     const result: Partial<Record<AbilityKey, number>> = {}
     for (const ab of ABILITIES) {
@@ -332,7 +332,8 @@ export function useCharacterBuilder() {
       if (base != null) {
         const baseWithRace = base + (raceBonuses.value[ab] ?? 0)
         const asi = asiBonusByAbility.value[ab] ?? 0
-        result[ab] = Math.min(20, baseWithRace + asi)
+        const feat = featBonusByAbility.value[ab] ?? 0
+        result[ab] = Math.min(20, baseWithRace + asi + feat)
       }
     }
     return result
@@ -455,6 +456,29 @@ export function useCharacterBuilder() {
       const bonuses = state.value.asiBonuses[lvl] ?? {}
       for (const [ab, amount] of Object.entries(bonuses) as [AbilityKey, number][]) {
         sum[ab] = (sum[ab] ?? 0) + amount
+      }
+    }
+    return sum
+  })
+
+  // Bonus de caractéristique apportés par les DONS choisis (don bonus + un don par palier d'ASI) :
+  // effet `ability_increase` (carac. fixe) ou `ability_increase_choice` (carac. choisie via
+  // featChoices). Sans ça, un demi-don (Vigueur, Résilient…) n'était reflété ni dans l'Aperçu ni
+  // dans les paliers d'ASI suivants (bug B4).
+  const featBonusByAbility = computed<Partial<Record<AbilityKey, number>>>(() => {
+    const sum: Partial<Record<AbilityKey, number>> = {}
+    const featIds = [state.value.bonusFeatureId, ...Object.values(state.value.asiFeats)]
+      .filter((id): id is number => id != null)
+    for (const id of featIds) {
+      for (const e of (getFeatById(id)?.effects ?? []) as any[]) {
+        if (e.type === 'ability_increase') {
+          const ab = e.value.ability as AbilityKey
+          sum[ab] = (sum[ab] ?? 0) + e.value.amount
+        }
+        else if (e.type === 'ability_increase_choice') {
+          const ab = state.value.featChoices[id]?.ability
+          if (ab) sum[ab] = (sum[ab] ?? 0) + (e.value.amount ?? 0)
+        }
       }
     }
     return sum
@@ -696,6 +720,7 @@ export function useCharacterBuilder() {
     needsAsi,
     asiLevelsForCharacter,
     asiBonusByAbility,
+    featBonusByAbility,
     // Dons
     feats,
     getFeatById,

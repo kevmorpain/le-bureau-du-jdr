@@ -65,23 +65,36 @@ test **fonctionnel** les révèle.
 - **Fix** : utiliser le mod canonique (`abilityModifiers.cha`). **✅ RÉSOLU.**
 - Découvert : vérif visuelle 6b (2026-08-02, utilisateur).
 
+### B4 — Bonus de caractéristique des DONS non appliqués (création) · front (calcul) — ✅ RÉSOLU
+- **Symptôme** : un demi-don (Vigueur, Résilient…) pris comme don bonus ou à un palier d'ASI, qui
+  accorde un bonus de carac., n'était reflété ni dans l'**Aperçu** (ni PV/CA/mods dérivés) ni dans les
+  **paliers d'ASI suivants** du builder.
+- **Racine** : `app/composables/useCharacterBuilder.ts` `finalAbilities` = `min(20, base + racial + ASI)`,
+  qui **omettait les bonus de dons** ; `StepAsi.vue` (`baseScore`/`otherAsiBonus`/`finalAfterAsi`) idem.
+- **Correctif** : nouveau `featBonusByAbility` (somme des effets `ability_increase` fixes +
+  `ability_increase_choice` résolu via `featChoices`, sur le don bonus ET les dons d'ASI), replié dans
+  `finalAbilities` et dans l'affichage par palier de `StepAsi`. La fiche appliquait déjà `ability_increase`
+  (via `featureEffects`, `useCharacterAbilities`) → cohérence création ⟺ fiche.
+- Découvert : vérif visuelle 6b (2026-08-02). **✅ RÉSOLU.**
+
 ### B5 — pas de jet d20 « pour toucher » pour les sorts d'attaque · front (feature) — ✅ RÉSOLU
 Lancer un sort ne jetait que **dégâts / soins** ; **aucun jet d20 + bonus d'attaque** n'existait
 (le « Bonus d'attaque » de l'en-tête n'était qu'un affichage). Ajout d'un bouton **Attaque** pour
 les sorts à jet pour toucher (dégâts **sans `dc`**) : `rollSpellAttack` jette `d20 + bonus d'attaque
 de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Décharge occulte).
 
-### B6 — Aperçu des emplacements au level-up = mono-classe · front (affichage) — OUVERT
-- **Symptôme** : au level-up, l'aperçu « avant → après » des emplacements de sorts est faux pour un
-  personnage à **deux classes lanceuses** (ex. Magicien/Clerc) : il ne reflète que la classe montée,
+### B6 — Aperçu des emplacements au level-up = mono-classe · front (affichage) — ✅ RÉSOLU
+- **Symptôme** : au level-up, l'aperçu « avant → après » des emplacements de sorts était faux pour un
+  personnage à **deux classes lanceuses** (ex. Magicien/Clerc) : il ne reflétait que la classe montée,
   pas le total combiné du multiclassage.
-- **Racine** : `app/components/level_up/LevelUpStepSpells.vue` (l.355-363) calcule `oldSlots`/`newSlots`
+- **Racine** : `app/components/level_up/LevelUpStepSpells.vue` calculait `oldSlots`/`newSlots`
   via `spellSlotsAtLevel(casterType, fromLevel/toLevel)` — la table d'**une seule** classe. La **fiche**,
   elle, est correcte : le serveur stocke le total combiné via `combinedSpellSlots` (`shared/rules/spellSlots.ts`,
   depuis le lot 5d).
-- **Fix** : brancher l'aperçu sur `combinedSpellSlots` en tenant compte des **autres** classes lanceuses
-  du personnage (pas seulement celle qu'on monte).
-- Découvert : audit du lot 6c (2026-08-02). **NON régressé** (préservé à l'identique).
+- **Correctif** : `oldSlots`/`newSlots` passent par `combinedSpellSlots` sur **toutes** les classes
+  lanceuses du perso (le pool affiché suit la classe montée : régulier vs pacte). Mono-classe →
+  résultat **identique à avant** (zéro régression).
+- Découvert : audit du lot 6c (2026-08-02). **✅ RÉSOLU.**
 
 ## Suspects à vérifier (audit non encore fait)
 - Level-up en **multiclasse** (flux de choix, résolution d'IDs de classe).

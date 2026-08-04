@@ -191,6 +191,7 @@ const {
   state,
   asiLevelsForCharacter,
   asiBonusByAbility,
+  featBonusByAbility,
   raceBonuses,
   abilityMod,
   formatMod,
@@ -221,9 +222,11 @@ function baseScore(ab: AbilityKey): number {
 // ASI des AUTRES paliers (≠ lvl) : affiché « base (+autres) +ce palier → total » pour que chaque
 // bloc montre le total final, la contribution du palier courant restant distincte.
 function otherAsiBonus(lvl: number, ab: AbilityKey): number {
-  return Object.entries(state.value.asiBonuses)
+  const otherAsi = Object.entries(state.value.asiBonuses)
     .filter(([l]) => Number(l) !== lvl)
     .reduce((sum, [, bonuses]) => sum + (bonuses[ab] ?? 0), 0)
+  // Les bonus de dons (demi-dons) sont des contributions permanentes → comptés en « autres ».
+  return otherAsi + (featBonusByAbility.value[ab] ?? 0)
 }
 
 function getBonus(lvl: number, ab: AbilityKey): number {
@@ -242,7 +245,8 @@ function finalAfterAsi(lvl: number, ab: AbilityKey): number {
   const base = baseScore(ab)
   // Bonus des AUTRES paliers (somme - palier courant local seulement, pas global)
   const otherAsi = (asiBonusByAbility.value[ab] ?? 0) - getBonus(lvl, ab)
-  return Math.min(20, base + otherAsi + getBonus(lvl, ab))
+  const feat = featBonusByAbility.value[ab] ?? 0
+  return Math.min(20, base + otherAsi + getBonus(lvl, ab) + feat)
 }
 
 function canIncrease(lvl: number, ab: AbilityKey): boolean {
