@@ -245,8 +245,9 @@ async function handleSubmit() {
       bonusFeatChoices: state.value.bonusFeatureId != null
         ? (state.value.featChoices[state.value.bonusFeatureId] ?? null)
         : null,
-      // Arcanum mystique (Occultiste niv 11/13/15/17) + Livre des secrets anciens
-      arcaneMysteriumSpellId: state.value.arcaneMysteriumSpellId,
+      // Arcanums mystiques (Occultiste niv 11/13/15/17, cumulatifs) + Livre des secrets anciens
+      arcaneMysteria: Object.entries(state.value.arcaneMysteriumSpellIds)
+        .map(([spellLevel, spellId]) => ({ spellLevel: Number(spellLevel), spellId })),
       bookOfAncientSecretsSpellIds: state.value.bookOfAncientSecretsSpellIds,
       ...currency,
     }

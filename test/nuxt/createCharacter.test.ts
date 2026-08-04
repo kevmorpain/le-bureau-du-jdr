@@ -194,14 +194,36 @@ describe('createCharacter — validation serveur (rejette les choix illégaux)',
       .rejects.toThrow(/pacte/i)
   })
 
-  it('sort d\'arcanum illégal (niveau 9 alors que l\'arcanum de niveau 11 plafonne à 6) → rejet', async () => {
-    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 11, arcaneMysteriumSpellId: 601 }), OWNER))
+  it('sort d\'arcanum illégal (sort niv. 9 pour l\'arcanum niv. 6 d\'un occultiste 11) → rejet', async () => {
+    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 11, arcaneMysteria: [{ spellLevel: 6, spellId: 601 }] }), OWNER))
       .rejects.toThrow(CharacterValidationError)
   })
 
-  it('sort d\'arcanum légal (niveau 6 au niveau 11) → accepté', async () => {
-    const { id } = await createCharacter(db, baseInput({ classId: WARLOCK, level: 11, arcaneMysteriumSpellId: 600 }), OWNER)
+  it('arcanum d\'un palier non débloqué (arcanum niv. 9 pour un occultiste 11) → rejet', async () => {
+    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 11, arcaneMysteria: [{ spellLevel: 9, spellId: 601 }] }), OWNER))
+      .rejects.toThrow(CharacterValidationError)
+  })
+
+  it('sort d\'arcanum légal (sort niv. 6 pour l\'arcanum niv. 6 d\'un occultiste 11) → accepté', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: WARLOCK, level: 11, arcaneMysteria: [{ spellLevel: 6, spellId: 600 }] }), OWNER)
     const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))
     expect(spells.some((s: { spellId: number, source: string | null }) => s.spellId === 600 && s.source === 'arcanum_6')).toBe(true)
+  })
+
+  it('arcanums CUMULATIFS (occultiste 17) : niv. 6 ET niv. 9 → deux sources distinctes écrites', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      classId: WARLOCK,
+      level: 17,
+      arcaneMysteria: [{ spellLevel: 6, spellId: 600 }, { spellLevel: 9, spellId: 601 }],
+    }), OWNER)
+    const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))
+    const arcana = spells
+      .filter((s: { source: string | null }) => s.source?.startsWith('arcanum_'))
+      .map((s: { spellId: number, source: string | null }) => ({ spellId: s.spellId, source: s.source }))
+      .sort((a: { source: string | null }, b: { source: string | null }) => (a.source! < b.source! ? -1 : 1))
+    expect(arcana).toEqual([
+      { spellId: 600, source: 'arcanum_6' },
+      { spellId: 601, source: 'arcanum_9' },
+    ])
   })
 })

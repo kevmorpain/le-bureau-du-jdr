@@ -42,12 +42,14 @@ const ALIGNMENT_MAP: Record<string, string> = {
   le: 'LE', ne: 'NE', ce: 'CE',
 }
 
-// Mapping niveau d'occultiste → source DB pour les sorts d'Arcanum mystique
-const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcanum_8' | 'arcanum_9'> = {
-  11: 'arcanum_6',
-  13: 'arcanum_7',
-  15: 'arcanum_8',
-  17: 'arcanum_9',
+// Mapping niveau de SORT d'arcanum (6/7/8/9) → source DB. À la création, chaque arcanum
+// débloqué porte son propre niveau de sort (contrairement au level-up, mono-palier, qui
+// mappe le niveau d'occultiste atteint).
+const ARCANUM_SPELL_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcanum_8' | 'arcanum_9'> = {
+  6: 'arcanum_6',
+  7: 'arcanum_7',
+  8: 'arcanum_8',
+  9: 'arcanum_9',
 }
 
 export const createCharacterSchema = z.object({
@@ -120,8 +122,12 @@ export const createCharacterSchema = z.object({
   // Don bonus hors-palier (homebrew MJ — typiquement attribué au niveau 1).
   bonusFeatureId: z.number().int().positive().nullable().optional(),
   bonusFeatChoices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
-  // Arcanum mystique (Occultiste niv 11/13/15/17) — sort de niv 6/7/8/9 choisi
-  arcaneMysteriumSpellId: z.number().int().positive().nullable().optional(),
+  // Arcanums mystiques (Occultiste niv 11/13/15/17) — un sort de niv 6/7/8/9 par palier
+  // débloqué (cumulatif à la création d'un perso de haut niveau).
+  arcaneMysteria: z.array(z.object({
+    spellLevel: z.number().int().min(6).max(9),
+    spellId: z.number().int().positive(),
+  })).optional(),
   // Livre des secrets anciens — 2 sorts rituels niv 1 quand la manifestation est choisie
   bookOfAncientSecretsSpellIds: z.array(z.number().int().positive()).max(2).optional(),
 })
@@ -148,7 +154,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   }
 
   const invocationIds = d.invocationIds ?? []
-  const needsCatalog = invocationIds.length > 0 || d.pactBoon != null || d.arcaneMysteriumSpellId != null
+  const needsCatalog = invocationIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0
   if (!needsCatalog) return
 
   const catalog = await buildCatalog(db, { classIds: [classId] })
@@ -171,10 +177,16 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     throw new CharacterValidationError(`Cette classe ne peut pas choisir de faveur de pacte au niveau ${d.level}.`)
   }
 
-  // V5 — arcanum mystique : le sort doit être un choix légal (sort de la classe ≤ niveau de l'arcanum)
-  if (d.arcaneMysteriumSpellId != null) {
-    const legal = choices.some(c => c.kind === 'spell' && c.options.some(o => o.spellId === d.arcaneMysteriumSpellId))
-    if (!legal) throw new CharacterValidationError(`Le sort d'arcanum mystique (id=${d.arcaneMysteriumSpellId}) n'est pas un choix légal au niveau ${d.level}.`)
+  // V5 — arcanums mystiques : chaque sort doit être un choix légal du palier correspondant,
+  // c.-à-d. un point de choix `spell` de MÊME maxLevel réellement débloqué au niveau du perso
+  // (matcher par maxLevel évite d'accepter un arcanum niv. 9 pour un occultiste 13).
+  for (const arc of d.arcaneMysteria ?? []) {
+    const legal = choices.some(c =>
+      c.kind === 'spell'
+      && c.optionSource.type === 'spells'
+      && c.optionSource.maxLevel === arc.spellLevel
+      && c.options.some(o => o.spellId === arc.spellId))
+    if (!legal) throw new CharacterValidationError(`Le sort d'arcanum mystique de niveau ${arc.spellLevel} (id=${arc.spellId}) n'est pas un choix légal au niveau ${d.level}.`)
   }
 }
 
@@ -475,13 +487,13 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  // Arcanum mystique — sort 1×/repos long (source arcanum_*)
-  if (d.arcaneMysteriumSpellId != null) {
-    const source = ARCANUM_LEVEL_TO_SOURCE[d.level]
+  // Arcanums mystiques — un sort 1×/repos long par palier débloqué (source arcanum_*)
+  for (const arc of d.arcaneMysteria ?? []) {
+    const source = ARCANUM_SPELL_LEVEL_TO_SOURCE[arc.spellLevel]
     if (source) {
       stmts.push(db.insert(schema.characterSpells)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .values({ characterSheetId: sheetId, spellId: d.arcaneMysteriumSpellId, isKnown: true, isPrepared: false, source } as any)
+        .values({ characterSheetId: sheetId, spellId: arc.spellId, isKnown: true, isPrepared: false, source } as any)
         .onConflictDoNothing())
     }
   }

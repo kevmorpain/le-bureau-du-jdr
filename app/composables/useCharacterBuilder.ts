@@ -109,9 +109,10 @@ export interface BuilderState {
   // features.id du don. Vaut pour le don bonus ET les dons d'ASI.
   featChoices: Record<number, { ability?: AbilityKey }>
 
-  // Arcanum mystique (Occultiste niv 11/13/15/17). Sort de niv 6/7/8/9
-  // lançable 1× par repos long sans dépenser d'emplacement.
-  arcaneMysteriumSpellId: number | null
+  // Arcanums mystiques (Occultiste niv 11/13/15/17). À la création d'un perso de haut
+  // niveau, TOUS les arcanums débloqués (≤ niveau) sont configurables → map niveau de
+  // sort (6/7/8/9) → id du sort choisi (lançable 1× par repos long, sans emplacement).
+  arcaneMysteriumSpellIds: Record<number, number>
 
   // Livre des secrets anciens (manifestation TCoE/Tome). 2 sorts rituels niv 1
   // inscrits dans le Livre des Ombres.
@@ -177,7 +178,7 @@ const INIT_STATE: BuilderState = {
   asiFeats: {},
   bonusFeatureId: null,
   featChoices: {},
-  arcaneMysteriumSpellId: null,
+  arcaneMysteriumSpellIds: {},
   bookOfAncientSecretsSpellIds: [],
   bookOfAncientSecretsRequired: false,
 }
@@ -413,13 +414,18 @@ export function useCharacterBuilder() {
     return CANTRIPS_KNOWN[classData.value.id]?.[level.value - 1] ?? 0
   })
 
-  // ─── Arcanum mystique (Occultiste niv 11/13/15/17) ────────────────────────
-
-  const arcaneMysteriumSpellLevel = computed<number | null>(() => {
-    const c = catalogChoices.value.find(ch => ch.kind === 'spell' && ch.ownerLevelRequired === state.value.level)
-    return c && c.optionSource.type === 'spells' ? c.optionSource.maxLevel ?? null : null
-  })
-  const needsArcaneMysterium = computed(() => arcaneMysteriumSpellLevel.value !== null)
+  // ─── Arcanums mystiques (Occultiste niv 11/13/15/17) ──────────────────────
+  // Niveaux de sort (6/7/8/9) de TOUS les arcanums débloqués au niveau du perso : le
+  // catalogue (resolveChoices) expose déjà un point de choix `spell` par palier atteint
+  // (gating classLevel ≥ ownerLevelRequired), pas seulement celui du niveau exact.
+  const arcaneMysteriumSpellLevels = computed<number[]>(() =>
+    catalogChoices.value
+      .filter(ch => ch.kind === 'spell' && ch.optionSource.type === 'spells')
+      .map(ch => (ch.optionSource.type === 'spells' ? ch.optionSource.maxLevel ?? null : null))
+      .filter((l): l is number => l !== null)
+      .sort((a, b) => a - b),
+  )
+  const needsArcaneMysterium = computed(() => arcaneMysteriumSpellLevels.value.length > 0)
 
   // ─── Livre des secrets anciens (manifestation) ────────────────────────────
   // L'ID de la manifestation est résolu côté composant via /api/invocations
@@ -524,8 +530,8 @@ export function useCharacterBuilder() {
         const cls = classData.value
         if (!cls?.spellcasting) return true
         const cantripsDone = cantripsNeeded.value === 0 || s.selectedCantrips.length >= cantripsNeeded.value
-        // Arcanum mystique : 1 sort obligatoire au palier déclencheur
-        if (needsArcaneMysterium.value && s.arcaneMysteriumSpellId == null) return false
+        // Arcanums mystiques : un sort obligatoire par palier débloqué (≤ niveau)
+        if (arcaneMysteriumSpellLevels.value.some(lvl => s.arcaneMysteriumSpellIds[lvl] == null)) return false
         // Livre des secrets anciens : 2 sorts rituels obligatoires si l'invocation est choisie.
         // (Flag positionné par le composant via watchEffect — cf. StepSpells.)
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
@@ -695,9 +701,9 @@ export function useCharacterBuilder() {
     getFeatById,
     featNeedsAbility,
     featChoiceComplete,
-    // Arcanum / Livre des secrets
+    // Arcanums / Livre des secrets
     needsArcaneMysterium,
-    arcaneMysteriumSpellLevel,
+    arcaneMysteriumSpellLevels,
     picksBookOfAncientSecrets,
   }
 }

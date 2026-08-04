@@ -50,34 +50,34 @@
         </div>
       </div>
 
-      <!-- Arcanum mystique (Occultiste niv 11/13/15/17) -->
-      <div v-if="needsArcaneMysterium" class="mb-6">
+      <!-- Arcanums mystiques (Occultiste niv 11/13/15/17) — un bloc par palier débloqué -->
+      <div v-for="lvl in arcaneMysteriumSpellLevels" :key="`arcanum-${lvl}`" class="mb-6">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">
-            ✨ Arcanum mystique (niv.&nbsp;{{ arcaneMysteriumSpellLevel }})
+            ✨ Arcanum mystique (niv.&nbsp;{{ lvl }})
           </p>
           <span
             class="text-xs font-semibold"
-            :class="state.arcaneMysteriumSpellId !== null ? 'text-green-400' : 'text-amber-400'"
-          >{{ state.arcaneMysteriumSpellId !== null ? '1/1' : '0/1' }}</span>
+            :class="state.arcaneMysteriumSpellIds[lvl] != null ? 'text-green-400' : 'text-amber-400'"
+          >{{ state.arcaneMysteriumSpellIds[lvl] != null ? '1/1' : '0/1' }}</span>
         </div>
         <p class="text-xs text-muted mb-3">
-          Choisissez un sort de niveau {{ arcaneMysteriumSpellLevel }} dans la liste de sorts d'occultiste.
+          Choisissez un sort de niveau {{ lvl }} dans la liste de sorts d'occultiste.
           Vous pourrez le lancer une fois par repos long sans dépenser d'emplacement.
         </p>
         <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
-        <div v-else-if="!arcanumSpellsCandidates.length" class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400">
-          Aucun sort de niveau {{ arcaneMysteriumSpellLevel }} dans la liste d'occultiste — relancez les seeds.
+        <div v-else-if="!arcanumCandidates(lvl).length" class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400">
+          Aucun sort de niveau {{ lvl }} dans la liste d'occultiste — relancez les seeds.
         </div>
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
           <SpellCardBuilder
-            v-for="spell in arcanumSpellsCandidates"
+            v-for="spell in arcanumCandidates(lvl)"
             :key="spell.id"
             :spell="spell"
-            :selected="state.arcaneMysteriumSpellId === spell.id"
+            :selected="state.arcaneMysteriumSpellIds[lvl] === spell.id"
             :character-level="state.level"
             :spellcasting-mod="spellcastingMod"
-            @click="toggleArcanumSpell(spell.id)"
+            @click="toggleArcanumSpell(lvl, spell.id)"
           />
         </div>
       </div>
@@ -341,8 +341,7 @@ const {
   needsPactBoon,
   ABILITY_SHORT,
   abilityMod,
-  needsArcaneMysterium,
-  arcaneMysteriumSpellLevel,
+  arcaneMysteriumSpellLevels,
   picksBookOfAncientSecrets,
 } = useCharacterBuilder()
 
@@ -522,20 +521,18 @@ function toggleSpell(id: number) {
   else if (list.length < spellsNeeded.value) list.push(id)
 }
 
-// ─── Arcanum mystique ──────────────────────────────────────────────────────
+// ─── Arcanums mystiques ─────────────────────────────────────────────────────
 
-const arcanumSpellsCandidates = computed(() => {
-  const lvl = arcaneMysteriumSpellLevel.value
-  if (!lvl) return [] as any[]
-  return ((allSpells.value ?? []) as any[]).filter(s => s.level === lvl)
-})
+function arcanumCandidates(level: number) {
+  return ((allSpells.value ?? []) as any[]).filter(s => s.level === level)
+}
 
-function toggleArcanumSpell(id: number) {
-  if (state.value.arcaneMysteriumSpellId === id) {
-    state.value.arcaneMysteriumSpellId = null
+function toggleArcanumSpell(level: number, id: number) {
+  if (state.value.arcaneMysteriumSpellIds[level] === id) {
+    delete state.value.arcaneMysteriumSpellIds[level]
   }
   else {
-    state.value.arcaneMysteriumSpellId = id
+    state.value.arcaneMysteriumSpellIds[level] = id
   }
 }
 
