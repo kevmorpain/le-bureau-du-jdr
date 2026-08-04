@@ -323,12 +323,14 @@
 </template>
 
 <script lang="ts" setup>
+import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
+
 const {
   state,
   pickedClass,
+  charClasses,
   finalAbilities,
   currentSpellIds,
-  spellSlotsAtLevel,
   CANTRIPS_KNOWN,
   SPELLS_KNOWN,
   ABILITY_SHORT,
@@ -350,16 +352,33 @@ const filterSchool = ref<string | null>(null)
 const filterConc = ref(false)
 const filterRitual = ref(false)
 
-const casterType = computed(() => pickedClass.value?.spellcasting?.type ?? null)
+// Classes lanceuses actuelles du perso (type de lanceur + niveau), base du calcul combiné.
+const casterClasses = computed(() =>
+  charClasses.value
+    .filter(c => c.data?.spellcasting?.type)
+    .map(c => ({ classId: c.classId, casterType: c.data!.spellcasting!.type, level: c.level })),
+)
 
+// Le pool affiché suit la classe qu'on monte : la magie de pacte ne se combine pas au régulier.
+const slotPool = computed<'regular' | 'pact'>(() =>
+  pickedClass.value?.spellcasting?.type === 'pact' ? 'pact' : 'regular',
+)
+
+// Emplacements COMBINÉS du multiclassage (PHB 2014 p.164 — même calcul que la fiche, côté serveur,
+// via combinedSpellSlots) : l'aperçu doit refléter TOUTES les classes lanceuses, pas seulement celle
+// qu'on monte, sinon il est faux en multiclasse (bug B6). Mono-classe : résultat identique à avant.
 const oldSlots = computed((): number[] => {
-  if (!casterType.value || state.value.fromLevel === 0) return Array(9).fill(0)
-  return spellSlotsAtLevel(casterType.value as any, state.value.fromLevel)
+  if (!pickedClass.value?.spellcasting || state.value.fromLevel === 0) return Array(9).fill(0)
+  return combinedSpellSlots(casterClasses.value)[slotPool.value] ?? Array(9).fill(0)
 })
 
 const newSlots = computed((): number[] => {
-  if (!casterType.value) return Array(9).fill(0)
-  return spellSlotsAtLevel(casterType.value as any, state.value.toLevel)
+  const pc = pickedClass.value
+  if (!pc?.spellcasting) return Array(9).fill(0)
+  const after = state.value.isMulticlass
+    ? [...casterClasses.value, { classId: pc.id, casterType: pc.spellcasting.type, level: state.value.toLevel }]
+    : casterClasses.value.map(c => (c.classId === state.value.pickedClassId ? { ...c, level: state.value.toLevel } : c))
+  return combinedSpellSlots(after)[slotPool.value] ?? Array(9).fill(0)
 })
 
 const spellcastingAbility = computed(() => pickedClass.value?.spellcasting?.ability ?? null)
