@@ -589,6 +589,13 @@
       "when": 1747872041000,
       "tag": "0083_backgrounds_features_items_mastery",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "6",
+      "when": 1747872042000,
+      "tag": "0084_ruleset_discriminant",
+      "breakpoints": true
     }
   ]
 }

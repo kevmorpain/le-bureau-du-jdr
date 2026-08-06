@@ -1,6 +1,7 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { SpellcastingType } from '~~/shared/rules/spellcasting'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 import spellClasses from './spell_classes'
 
 export type Die = string // e.g., "1d6", "1d8"
@@ -10,6 +11,8 @@ export type Die = string // e.g., "1d6", "1d8"
 const classes = sqliteTable('classes', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
+  // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2).
+  ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
   hitDice: text('hit_dice').$type<Die>().notNull(),
   spellcastingAbility: text('spellcasting_ability'),
   // Niveau auquel la classe accède à sa sous-classe (1 à 3 en 2014 ; 3 pour toutes

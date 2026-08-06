@@ -2,6 +2,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { Formula } from '~~/shared/utils/formula'
 import type { FeatureTag } from '~~/shared/rules/featureTags'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityScoreKey } from './effects'
 import classes from './classes'
 import subclasses from './subclasses'
@@ -45,6 +46,9 @@ const features = sqliteTable(
     id: integer().primaryKey().notNull(),
     name: text('name').notNull(),
     description: text('description'),
+    // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2). Les features
+    // 5.5 (traits d'espèce, capacités de classe remaniées) cohabitent avec les 2014.
+    ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
     featureType: text('feature_type').$type<FeatureType>().notNull(),
     // class/subclass features only
     classId: integer('class_id').references(() => classes.id, { onDelete: 'set null' }),
