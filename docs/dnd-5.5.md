@@ -98,8 +98,18 @@ Bouleversement central : **les bonus de caractéristiques passent de l'espèce v
 
 ## 4. À sourcer / trancher avant les lots de contenu (Phase 2)
 
-- ⚠️ **Sourcing** : aidedd bloque le WebFetch automatique (seuls les snippets de recherche
-  passent). Prévoir une stratégie (saisie manuelle depuis aidedd, ou autre source).
+- **Sourcing** : WebFetch **fonctionne** sur aidedd — y compris sur les pages de **détail** qui
+  portent les données (vérifié le 2026-08-06). L'ancienne note « aidedd bloque le WebFetch » était
+  un **faux positif** : les URLs d'aperçu (`regles-24/`, `regles-24/dons/`) n'ont pas de données par
+  entrée, donc un fetch y « réussit mais ne rapporte rien ». Le contenu réel est une page plus bas :
+  - historiques → [`.../origines-des-personnages/description-des-historiques/`](https://www.aidedd.org/regles-24/origines-des-personnages/description-des-historiques/)
+    (a rendu les 16 : triade + don d'origine + compétences/outil) ;
+  - espèces → [`.../description-des-especes/`](https://www.aidedd.org/regles-24/origines-des-personnages/description-des-especes/)
+    (a rendu les 9 : taille/vitesse/traits).
+  `WebSearch` (domaine `aidedd.org`) révèle ces URLs profondes. **Réserves avant de seeder** :
+  (1) WebFetch passe par un petit modèle de conversion → recouper chaque entrée (viser 1 fetch =
+  1 page de détail par entité, pas une page-liste résumée) ; (2) seuls historiques + espèces ont été
+  testés — classes, maîtrise d'armes et liste complète des dons restent à confirmer page par page.
 - Les 16 historiques : triade de carac. + don d'origine + compétences/outils par entrée.
 - Traits des 10 espèces + lignées (elfe/gnome/tieffelin/drakéide).
 - Table de maîtrise d'armes (les 8 propriétés) + accès par classe.
