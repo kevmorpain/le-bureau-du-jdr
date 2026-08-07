@@ -96,22 +96,38 @@ Bouleversement central : **les bonus de caractéristiques passent de l'espèce v
 
 ---
 
-## 4. À sourcer / trancher avant les lots de contenu (Phase 2)
+## 4. Sourcing du contenu 5.5 (Phase 2) — décidé
 
-- **Sourcing** : WebFetch **fonctionne** sur aidedd — y compris sur les pages de **détail** qui
-  portent les données (vérifié le 2026-08-06). L'ancienne note « aidedd bloque le WebFetch » était
-  un **faux positif** : les URLs d'aperçu (`regles-24/`, `regles-24/dons/`) n'ont pas de données par
-  entrée, donc un fetch y « réussit mais ne rapporte rien ». Le contenu réel est une page plus bas :
-  - historiques → [`.../origines-des-personnages/description-des-historiques/`](https://www.aidedd.org/regles-24/origines-des-personnages/description-des-historiques/)
-    (a rendu les 16 : triade + don d'origine + compétences/outil) ;
-  - espèces → [`.../description-des-especes/`](https://www.aidedd.org/regles-24/origines-des-personnages/description-des-especes/)
-    (a rendu les 9 : taille/vitesse/traits).
-  `WebSearch` (domaine `aidedd.org`) révèle ces URLs profondes. **Réserves avant de seeder** :
-  (1) WebFetch passe par un petit modèle de conversion → recouper chaque entrée (viser 1 fetch =
-  1 page de détail par entité, pas une page-liste résumée) ; (2) seuls historiques + espèces ont été
-  testés — classes, maîtrise d'armes et liste complète des dons restent à confirmer page par page.
-- Les 16 historiques : triade de carac. + don d'origine + compétences/outils par entrée.
-- Traits des 10 espèces + lignées (elfe/gnome/tieffelin/drakéide).
-- Table de maîtrise d'armes (les 8 propriétés) + accès par classe.
-- Dons 5.5 : catégories, prérequis, répétabilité.
-- Comportement UI si changement de ruleset en cours de création (reset ?).
+**Source = aidedd** : c'est la traduction FR **officielle** du PHB (2014 **et** 2024), donc la page FR
+fait autorité pour les libellés stockés/affichés. L'EN (`/feat/<slug>`, `/en/<class>-2024/`) ne sert
+qu'à mapper les libellés FR → **clés machine EN** ([D11](./decisions.md#d11)) et de 2ᵉ lecture
+anti-bruit. Méthode = **option A** ([D16](./decisions.md#d16)) : fetch des pages de **détail** →
+**table validée par l'auteur** → seed.
+
+**WebFetch fonctionne sur aidedd** (l'ancienne note « aidedd bloque le WebFetch » était un faux
+positif : les pages d'**aperçu** — `regles-24/`, `regles-24/dons/`, `feat/` — n'ont pas de données
+par entrée ; le contenu réel est sur les pages de **détail**, que `WebSearch` sur le domaine
+`aidedd.org` révèle). Volets vérifiés fetchables (2026-08-06/07) et leurs patterns d'URL :
+
+| Volet | Page de détail | Vérifié |
+|---|---|---|
+| Espèces (9) | `regles-24/origines-des-personnages/description-des-especes/` | ✅ taille / vitesse / traits |
+| Historiques (16) | `regles-24/origines-des-personnages/description-des-historiques/` | ✅ triade + don d'origine + compétences/outil |
+| Classes (12) | `regles-24/classes/<slug>/` | ✅ dé de vie, sauvegardes, maîtrises, bottes, sous-classe, aptitudes/niveau |
+| Maîtrise d'armes | `regles-24/equipement/armes/` | ✅ les 8 propriétés + effets (recoupent `shared/rules/masteryProperties.ts`) |
+| Dons (~75) | `feat/fr/<slug>` (slugs listés sur `/feat/`) | ✅ catégorie + prérequis + effet |
+
+**Deux règles dures de sourcing** (apprises à la vérification) :
+1. **Page de détail uniquement** — jamais les snippets `WebSearch` ni les pages-listes : le snippet
+   « Vigilant » servait la version **2014** d'Alert alors que `feat/fr/vigilant` rend la vraie **2024**
+   ; les snippets **mélangent les éditions**.
+2. **Recouper chaque entrée** — l'extraction WebFetch passe par un petit modèle qui bruite (ex. source
+   rendue « PHB 2024 (BR - édition brésilienne) », artefact) ; croiser FR/EN là où le mapping est
+   piégeux (maîtrise d'armes, effets de dons).
+
+**Restant à trancher au fil des lots** :
+- Traits des espèces → features/effects ; lignées (elfe / gnome / tieffelin / drakéide).
+- Historiques → triade (`progression` `kind:'ability_scores'`) + don d'origine + compétences/outil.
+- Maîtrise d'armes : accès par classe (nombre de bottes par niveau).
+- Dons : catégories, prérequis, répétabilité.
+- Comportement UI si changement de `ruleset` en cours de création (reset ?).
