@@ -1,8 +1,9 @@
-import { asc, eq, inArray, isNull, or } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 
 /**
  * Loaders des LISTES de référence du catalogue (lot 6a) — la tranche plate, statique et
@@ -18,6 +19,10 @@ import type { FeaturePrerequisite } from '~~/server/db/schema/features'
  * shape garantie identique.
  *
  * Lecture via `srcSchema` (schéma source, frais) plutôt que le cache `hub:db` — voir CLAUDE.md.
+ *
+ * Chaque loader d'entité globale filtre par `ruleset` (défaut `'5'`, cf. shared/rules/ruleset.ts) :
+ * le builder 2014 (qui appelle sans argument) ne voit QUE le contenu 2014, même une fois du 5.5 seedé
+ * (Phase 2). No-op tant que tout est `'5'` en base. Un futur appelant 5.5 passera `'5.5'`.
  */
 
 // Instance drizzle SQLite, quel que soit le driver (D1 en prod, libsql en test) — mêmes
@@ -35,11 +40,12 @@ export type CatalogClass = ClassRow & { subclasses: SubclassRow[] }
  * Toutes les classes, chacune avec ses sous-classes imbriquées, triées par id de classe puis
  * nom de sous-classe (≡ endpoint legacy `/api/classes`).
  */
-export async function loadClasses(db: Db): Promise<CatalogClass[]> {
+export async function loadClasses(db: Db, ruleset: Ruleset = '5'): Promise<CatalogClass[]> {
   const rows = await db
     .select()
     .from(srcSchema.classes)
     .leftJoin(srcSchema.subclasses, eq(srcSchema.subclasses.classId, srcSchema.classes.id))
+    .where(eq(srcSchema.classes.ruleset, ruleset))
     .orderBy(asc(srcSchema.classes.id), asc(srcSchema.subclasses.name))
 
   const byId = new Map<number, CatalogClass>()
@@ -55,10 +61,11 @@ export async function loadClasses(db: Db): Promise<CatalogClass[]> {
  * Liste plate des espèces `{id, name}`, triées par nom (≡ endpoint legacy
  * `/api/character_species`). Le builder n'a besoin que de la résolution name → id.
  */
-export async function loadSpecies(db: Db): Promise<{ id: number, name: string }[]> {
+export async function loadSpecies(db: Db, ruleset: Ruleset = '5'): Promise<{ id: number, name: string }[]> {
   return await db
     .select({ id: srcSchema.characterSpecies.id, name: srcSchema.characterSpecies.name })
     .from(srcSchema.characterSpecies)
+    .where(eq(srcSchema.characterSpecies.ruleset, ruleset))
     .orderBy(asc(srcSchema.characterSpecies.name))
 }
 
@@ -88,7 +95,7 @@ export async function loadSubclasses(db: Db, className: string): Promise<{ id: n
  * Tous les dons (`features` de `feature_type='feat'`) avec leurs effets bakés, triés par nom
  * (locale fr) (≡ endpoint legacy `/api/feats`).
  */
-export async function loadFeats(db: Db) {
+export async function loadFeats(db: Db, ruleset: Ruleset = '5') {
   const feats = await db
     .select({
       id: srcSchema.features.id,
@@ -97,7 +104,7 @@ export async function loadFeats(db: Db) {
       prerequisites: srcSchema.features.prerequisites,
     })
     .from(srcSchema.features)
-    .where(eq(srcSchema.features.featureType, 'feat'))
+    .where(and(eq(srcSchema.features.featureType, 'feat'), eq(srcSchema.features.ruleset, ruleset)))
 
   if (feats.length === 0) return []
 
@@ -172,14 +179,17 @@ export async function loadInvocations(db: Db) {
  * `characterSheetId`, ajoute les historiques homebrew de cette fiche (≡ endpoint legacy
  * `/api/backgrounds`, dont la variante per-fiche n'est PAS cachable).
  */
-export async function loadBackgrounds(db: Db, characterSheetId?: number) {
+export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset: Ruleset = '5') {
   return await db
     .select()
     .from(srcSchema.backgrounds)
     .where(
-      characterSheetId
-        ? or(isNull(srcSchema.backgrounds.characterSheetId), eq(srcSchema.backgrounds.characterSheetId, characterSheetId))
-        : isNull(srcSchema.backgrounds.characterSheetId),
+      and(
+        eq(srcSchema.backgrounds.ruleset, ruleset),
+        characterSheetId
+          ? or(isNull(srcSchema.backgrounds.characterSheetId), eq(srcSchema.backgrounds.characterSheetId, characterSheetId))
+          : isNull(srcSchema.backgrounds.characterSheetId),
+      ),
     )
     .orderBy(srcSchema.backgrounds.name)
 }

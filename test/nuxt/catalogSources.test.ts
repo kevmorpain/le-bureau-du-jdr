@@ -91,6 +91,13 @@ beforeAll(async () => {
     { id: 2, name: 'Acolyte' },
     { id: 3, name: 'Passé mystérieux', characterSheetId: 42 },
   ])
+
+  // Contenu 5.5 (ruleset '5.5') — DOIT rester invisible aux loaders par défaut (ruleset '5'),
+  // le filet anti-pollution du builder 2014 (Lot A). Tout ce qui précède est en '5' par défaut.
+  await orm.insert(srcSchema.characterSpecies).values({ id: 4, name: 'Goliath', size: 'M', speed: 30, ruleset: '5.5' })
+  await orm.insert(srcSchema.classes).values({ id: 3, name: 'Barde', hitDice: '1d8', ruleset: '5.5' })
+  await orm.insert(srcSchema.features).values({ id: 102, name: 'Vigilant', featureType: 'feat', description: 'don 5.5', ruleset: '5.5' })
+  await orm.insert(srcSchema.backgrounds).values({ id: 4, name: 'Guide', ruleset: '5.5' })
 })
 
 describe('loadClasses', () => {
@@ -175,5 +182,27 @@ describe('loadBackgrounds', () => {
   it('fiche sans homebrew → globaux uniquement', async () => {
     const bgs = await loadBackgrounds(orm, 99)
     expect(bgs.map(b => b.name)).toEqual(['Acolyte', 'Sage'])
+  })
+})
+
+describe('filtre ruleset (défaut \'5\' → le builder 2014 ne voit jamais le 5.5)', () => {
+  it('loadSpecies : défaut exclut le 5.5 ; \'5.5\' ne rend que le 5.5', async () => {
+    expect((await loadSpecies(orm)).map(s => s.name)).toEqual(['Aasimar', 'Elfe', 'Nain'])
+    expect(await loadSpecies(orm, '5.5')).toEqual([{ id: 4, name: 'Goliath' }])
+  })
+
+  it('loadClasses : défaut exclut le 5.5 ; \'5.5\' ne rend que le 5.5', async () => {
+    expect((await loadClasses(orm)).map(c => c.name)).toEqual(['Guerrier', 'Occultiste'])
+    expect((await loadClasses(orm, '5.5')).map(c => c.name)).toEqual(['Barde'])
+  })
+
+  it('loadFeats : défaut exclut le 5.5 ; \'5.5\' ne rend que le 5.5', async () => {
+    expect((await loadFeats(orm)).map(f => f.name)).toEqual(['Alerte', 'Chanceux'])
+    expect((await loadFeats(orm, '5.5')).map(f => f.name)).toEqual(['Vigilant'])
+  })
+
+  it('loadBackgrounds : défaut exclut le 5.5 ; \'5.5\' ne rend que le 5.5 global', async () => {
+    expect((await loadBackgrounds(orm)).map(b => b.name)).toEqual(['Acolyte', 'Sage'])
+    expect((await loadBackgrounds(orm, undefined, '5.5')).map(b => b.name)).toEqual(['Guide'])
   })
 })
