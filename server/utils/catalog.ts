@@ -32,6 +32,8 @@ type Db = BaseSQLiteDatabase<'async', any, any>
 export interface BuildCatalogOptions {
   /** Restreindre aux points de choix possédés par ces classes (id). Défaut : toutes. */
   classIds?: number[]
+  /** Restreindre aux points de choix possédés par ces espèces (id) — choix de lignée (D17). */
+  speciesIds?: number[]
 }
 
 export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Promise<Catalog> {
@@ -65,20 +67,38 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
     for (const s of subs) classIdBySubclass.set(s.id, s.classId)
   }
 
+  // Résoudre l'ESPÈCE propriétaire des progressions possédées par une feature d'espèce
+  // (species_trait liée via species_features) — celles sans classe NI sous-classe (choix de
+  // lignée, D17). L'owner d'une progression est une classe/sous-classe OU une espèce.
+  const orphanFeatureIds = [...new Set(
+    rows.filter(r => r.ownerClassId == null && r.ownerSubclassId == null).map(r => r.featureId),
+  )]
+  const speciesIdByFeature = new Map<number, number>()
+  if (orphanFeatureIds.length) {
+    const links = await db
+      .select({ featureId: srcSchema.speciesFeatures.featureId, speciesId: srcSchema.speciesFeatures.speciesId })
+      .from(srcSchema.speciesFeatures)
+      .where(inArray(srcSchema.speciesFeatures.featureId, orphanFeatureIds))
+    for (const l of links) speciesIdByFeature.set(l.featureId, l.speciesId)
+  }
+
   const progressions: CatalogProgression[] = []
   for (const r of rows) {
     const ownerClassId = r.ownerClassId
       ?? (r.ownerSubclassId != null ? classIdBySubclass.get(r.ownerSubclassId) : undefined)
-    if (ownerClassId == null) continue // owner sans classe résoluble → donnée incohérente, on ignore
-    if (opts.classIds && !opts.classIds.includes(ownerClassId)) continue
+    const ownerSpeciesId = ownerClassId == null ? speciesIdByFeature.get(r.featureId) : undefined
+    if (ownerClassId == null && ownerSpeciesId == null) continue // owner non résoluble → on ignore
+    if (ownerClassId != null && opts.classIds && !opts.classIds.includes(ownerClassId)) continue
+    if (ownerSpeciesId != null && opts.speciesIds && !opts.speciesIds.includes(ownerSpeciesId)) continue
 
     const optionSource = r.optionSource as OptionSource
-    const options = await resolveOptions(db, optionSource, ownerClassId)
+    const options = await resolveOptions(db, optionSource, { ownerClassId, ownerSpeciesId })
 
     progressions.push({
       progressionId: r.progressionId,
       ownerFeatureId: r.featureId,
-      ownerClassId,
+      ...(ownerClassId != null ? { ownerClassId } : {}),
+      ...(ownerSpeciesId != null ? { ownerSpeciesId } : {}),
       ownerSubclassId: r.ownerSubclassId ?? undefined,
       ownerLevelRequired: r.ownerLevelRequired ?? 1,
       kind: r.kind,
@@ -96,9 +116,10 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
  * Pré-résout l'ensemble d'options d'un `optionSource` cachable. Renvoie `undefined` pour les
  * sources résolues live contre l'état du perso (`proficient_skills`) ou pas encore cataloguées
  * (languages/tools/abilities), auquel cas `resolveChoices` s'en charge ou n'a rien à proposer.
- * `ownerClassId` sert à `subclasses` (les sous-classes de la classe propriétaire).
+ * `owner` porte l'id de la classe propriétaire (`subclasses`) ou de l'espèce propriétaire
+ * (`lineages`, D17) — l'un ou l'autre selon l'owner de la progression.
  */
-async function resolveOptions(db: Db, source: OptionSource, ownerClassId: number): Promise<ResolvedOption[] | undefined> {
+async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassId?: number, ownerSpeciesId?: number }): Promise<ResolvedOption[] | undefined> {
   switch (source.type) {
     case 'feature_group': {
       const feats = await db
@@ -117,11 +138,22 @@ async function resolveOptions(db: Db, source: OptionSource, ownerClassId: number
     }
 
     case 'subclasses': {
+      if (owner.ownerClassId == null) return []
       const subs = await db
         .select({ id: srcSchema.subclasses.id })
         .from(srcSchema.subclasses)
-        .where(eq(srcSchema.subclasses.classId, ownerClassId))
+        .where(eq(srcSchema.subclasses.classId, owner.ownerClassId))
       return subs.map(s => ({ subclassId: s.id }))
+    }
+
+    case 'lineages': {
+      // Sous-races 2014 / lignées 2024 de l'espèce propriétaire (D17).
+      if (owner.ownerSpeciesId == null) return []
+      const lineages = await db
+        .select({ id: srcSchema.speciesLineages.id })
+        .from(srcSchema.speciesLineages)
+        .where(eq(srcSchema.speciesLineages.speciesId, owner.ownerSpeciesId))
+      return lineages.map(l => ({ lineageId: l.id }))
     }
 
     case 'spells': {

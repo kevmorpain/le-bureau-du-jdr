@@ -43,6 +43,7 @@ import type { FeaturePrerequisite } from '../../server/db/schema/features'
 export interface ResolvedOption {
   featureId?: number // feature_group : pacte / invocation / style / métamagie / manœuvre / don
   subclassId?: number // subclasses
+  lineageId?: number // lineages : sous-race 2014 / lignée 2024 (D17)
   spellId?: number // spells
   value?: string // enum / skills / languages / tools (valeur typée sans table)
   /**
@@ -66,8 +67,15 @@ export interface CatalogProgression {
   progressionId: number
   /** Feature propriétaire (owner, D4) — métadonnée utile en aval ; non requise par la résolution. */
   ownerFeatureId?: number
-  /** Classe qui possède le point de choix : c'est SON niveau qui pilote le gating et le `count`. */
-  ownerClassId: number
+  /**
+   * Owner du point de choix — EXACTEMENT un de `ownerClassId` / `ownerSpeciesId` est renseigné
+   * (cf. D17). Une CLASSE possède la plupart des points de choix (sous-classe, invocations…) :
+   * c'est SON niveau qui pilote le gating et le `count`. Une ESPÈCE possède le choix de lignée,
+   * gaté sur la POSSESSION de l'espèce (pas un niveau de classe), disponible dès la création.
+   */
+  ownerClassId?: number
+  /** Espèce propriétaire (choix de lignée, D17). Exclusif avec `ownerClassId`. */
+  ownerSpeciesId?: number
   /**
    * Si le point de choix est possédé par une SOUS-CLASSE (feature de sous-classe), son id : le
    * gating exige alors de POSSÉDER cette sous-classe en plus du niveau de classe requis.
@@ -98,6 +106,8 @@ export interface Catalog {
 export interface CharacterProjection {
   /** Niveau du perso dans chaque classe (id → niveau). En multiclasse, plusieurs entrées. */
   classLevels: Record<number, number>
+  /** Espèce du personnage — gating des points de choix possédés par une espèce (lignée, D17). */
+  speciesId?: number
   /** Sous-classes possédées — gating des points de choix possédés par une sous-classe. */
   subclassIds?: number[]
   /** Compétences dont le perso a déjà la maîtrise — sert à `optionSource:{proficient_skills}`. */
@@ -132,11 +142,17 @@ export interface CharacterProjection {
 export interface ResolvedChoice {
   progressionId: number
   ownerFeatureId?: number
-  ownerClassId: number
+  /** Owner du point de choix (exactement un renseigné, cf. CatalogProgression). */
+  ownerClassId?: number
+  ownerSpeciesId?: number
   ownerSubclassId?: number
   ownerLevelRequired: number
   kind: ChoiceKind
-  /** Niveau de la classe PROPRIÉTAIRE ayant servi au `count` (≠ niveau total en multiclasse). */
+  /**
+   * Niveau de l'OWNER ayant servi au `count` et au gating : niveau de la classe propriétaire
+   * (≠ niveau total en multiclasse) pour un choix de classe ; niveau total pour un choix
+   * d'espèce (lignée), qui n'a pas de niveau de classe.
+   */
   classLevel: number
   count: number
   made: number
@@ -201,15 +217,25 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
   const choices: ResolvedChoice[] = []
 
   for (const p of catalog.progressions) {
-    const classLevel = classLevels[p.ownerClassId] ?? 0
-    // Gating : le perso doit posséder la classe propriétaire à un niveau suffisant…
-    if (classLevel < p.ownerLevelRequired) continue
+    // Owner du point de choix (D17) : une CLASSE (son niveau pilote gating + `count`) ou une
+    // ESPÈCE (choix de lignée — gaté sur la POSSESSION de l'espèce ; le `count`, un `fixed`,
+    // s'évalue au niveau total faute de niveau de classe). Exactement un des deux est renseigné.
+    let ownerLevel: number
+    if (p.ownerSpeciesId != null) {
+      if (projection.speciesId !== p.ownerSpeciesId) continue
+      ownerLevel = totalLevel
+    }
+    else {
+      ownerLevel = classLevels[p.ownerClassId!] ?? 0
+    }
+    // Gating : l'owner doit être possédé à un niveau suffisant…
+    if (ownerLevel < p.ownerLevelRequired) continue
     // …et, si le point de choix est possédé par une sous-classe, posséder cette sous-classe.
     if (p.ownerSubclassId != null && !subclassIds.includes(p.ownerSubclassId)) continue
 
     const ctx: FormulaContext = {
       level: totalLevel,
-      class_level: classLevel,
+      class_level: ownerLevel,
       prof_bonus: profBonus,
       str_mod: mods.str ?? 0,
       dex_mod: mods.dex ?? 0,
@@ -230,16 +256,17 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
       ? proficientSkills.map(skill => ({ value: skill }))
       : (p.options ?? [])
     // Ne garder que les options que le perso peut réellement choisir (prérequis + niveau).
-    const options = rawOptions.filter(o => isOptionEligible(o, classLevel, projection))
+    const options = rawOptions.filter(o => isOptionEligible(o, ownerLevel, projection))
 
     choices.push({
       progressionId: p.progressionId,
       ownerFeatureId: p.ownerFeatureId,
       ownerClassId: p.ownerClassId,
+      ownerSpeciesId: p.ownerSpeciesId,
       ownerSubclassId: p.ownerSubclassId,
       ownerLevelRequired: p.ownerLevelRequired,
       kind: p.kind,
-      classLevel,
+      classLevel: ownerLevel,
       count,
       made,
       remaining,

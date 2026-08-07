@@ -20,6 +20,7 @@ import type { AbilityKey } from './abilities'
  */
 export const CHOICE_KINDS = [
   'subclass',
+  'lineage',
   'pact_boon',
   'fighting_style',
   'expertise',
@@ -63,6 +64,7 @@ export type FeatCategory = string
 export type OptionSource =
   | { type: 'enum', values: string[] }
   | { type: 'subclasses' }
+  | { type: 'lineages' } // sous-races 2014 / lignées 2024 de l'espèce propriétaire (D17)
   | { type: 'feature_group', group: FeatureTag }
   | { type: 'skills', from: SkillKey[] | 'all' }
   | { type: 'proficient_skills' }
