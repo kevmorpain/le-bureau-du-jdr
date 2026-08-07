@@ -4,6 +4,7 @@ import type { SkillKey } from '~~/shared/rules/skills'
 import characterSheets from './character_sheets'
 import progression from './progression'
 import subclasses from './subclasses'
+import speciesLineages from './species_lineages'
 import features from './features'
 import spells from './spells'
 import abilityScores from './ability_scores'
@@ -29,6 +30,7 @@ const characterChoices = sqliteTable(
     classLevel: integer('class_level'),
     // ─── Référentiel typé (au plus un renseigné) ───────────────────────────────
     selectedSubclassId: integer('selected_subclass_id').references(() => subclasses.id, { onDelete: 'cascade' }),
+    selectedLineageId: integer('selected_lineage_id').references(() => speciesLineages.id, { onDelete: 'cascade' }), // lignée (sous-race 2014 / lignée 2024), cf. D17
     selectedFeatureId: integer('selected_feature_id').references(() => features.id, { onDelete: 'cascade' }), // invocation / pacte / style / métamagie / manœuvre / don
     selectedSpellId: integer('selected_spell_id').references(() => spells.id, { onDelete: 'cascade' }),
     selectedAbilityId: text('selected_ability_id').references(() => abilityScores.id),
@@ -48,6 +50,7 @@ const characterChoices = sqliteTable(
       table.characterSheetId,
       table.progressionId,
       table.selectedSubclassId,
+      table.selectedLineageId,
       table.selectedFeatureId,
       table.selectedSpellId,
       table.selectedAbilityId,

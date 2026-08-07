@@ -6,11 +6,12 @@ import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityScoreKey } from './effects'
 import classes from './classes'
 import subclasses from './subclasses'
+import speciesLineages from './species_lineages'
 import featureEffects from './feature_effects'
 import speciesFeatures from './species_features'
 import characterFeatures from './character_features'
 
-export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'eldritch_invocation' | 'feat' | 'background_feature'
+export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
 export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
 export type RechargeType = typeof RECHARGE_TYPES[number]
@@ -53,6 +54,11 @@ const features = sqliteTable(
     // class/subclass features only
     classId: integer('class_id').references(() => classes.id, { onDelete: 'set null' }),
     subclassId: integer('subclass_id').references(() => subclasses.id, { onDelete: 'set null' }),
+    // Lignée (sous-race 2014 / lignée 2024) propriétaire — symétrique de `subclass_id`
+    // (cf. decisions.md D17). Nullable : la plupart des features n'appartiennent pas à une
+    // lignée. Une feature de lignée a `feature_type='lineage_feature'` et n'est accordée
+    // qu'à un perso ayant choisi cette lignée (gating par `level_required`).
+    lineageId: integer('lineage_id').references(() => speciesLineages.id, { onDelete: 'set null' }),
     levelRequired: integer('level_required'),
     // Groupe de features-options auquel cette feature appartient en tant qu'OPTION
     // (cf. shared/rules/featureTags.ts). Nullable : la plupart des features n'en sont
@@ -70,6 +76,7 @@ const features = sqliteTable(
   table => [
     index('features_class_id_idx').on(table.classId),
     index('features_subclass_id_idx').on(table.subclassId),
+    index('features_lineage_id_idx').on(table.lineageId),
     index('features_tag_idx').on(table.tag),
   ],
 )
