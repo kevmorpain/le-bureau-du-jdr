@@ -5,6 +5,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
+import { CreatureSize } from '../../server/db/schema/character_species'
 import {
   loadClasses,
   loadSpecies,
@@ -59,9 +60,9 @@ beforeAll(async () => {
 
   // Espèces — insérées dans le désordre, loadSpecies trie par nom asc (Aasimar < Elfe < Nain).
   await orm.insert(srcSchema.characterSpecies).values([
-    { id: 1, name: 'Elfe', size: 'M', speed: 30 },
-    { id: 2, name: 'Nain', size: 'M', speed: 25 },
-    { id: 3, name: 'Aasimar', size: 'M', speed: 30 },
+    { id: 1, name: 'Elfe', size: CreatureSize.Medium, speed: 30 },
+    { id: 2, name: 'Nain', size: CreatureSize.Medium, speed: 25 },
+    { id: 3, name: 'Aasimar', size: CreatureSize.Medium, speed: 30 },
   ])
 
   // Effets (JSON) pour tester le bakage.
@@ -94,7 +95,7 @@ beforeAll(async () => {
 
   // Contenu 5.5 (ruleset '5.5') — DOIT rester invisible aux loaders par défaut (ruleset '5'),
   // le filet anti-pollution du builder 2014 (Lot A). Tout ce qui précède est en '5' par défaut.
-  await orm.insert(srcSchema.characterSpecies).values({ id: 4, name: 'Goliath', size: 'M', speed: 30, ruleset: '5.5' })
+  await orm.insert(srcSchema.characterSpecies).values({ id: 4, name: 'Goliath', size: CreatureSize.Medium, speed: 30, ruleset: '5.5' })
   await orm.insert(srcSchema.classes).values({ id: 3, name: 'Barde', hitDice: '1d8', ruleset: '5.5' })
   await orm.insert(srcSchema.features).values({ id: 102, name: 'Vigilant', featureType: 'feat', description: 'don 5.5', ruleset: '5.5' })
   await orm.insert(srcSchema.backgrounds).values({ id: 4, name: 'Guide', ruleset: '5.5' })
