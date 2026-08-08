@@ -53,13 +53,13 @@
       </button>
     </div>
 
-    <!-- Section sous-races -->
-    <template v-if="raceData?.subraces?.length">
+    <!-- Section sous-races (Elfe : pilotée par le catalogue — base+lignée, D17 ; autres : blob) -->
+    <template v-if="subraces.length">
       <USeparator class="my-6" />
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Sous-race — choisissez une spécialisation</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <button
-          v-for="sub in raceData.subraces"
+          v-for="sub in subraces"
           :key="sub.id"
           type="button"
           class="text-left rounded-xl border p-4 transition-colors cursor-pointer flex flex-col justify-start"
@@ -217,6 +217,7 @@ import type { AbilityKey } from '~/data/character-builder'
 const {
   state,
   raceData,
+  subraces,
   RACES,
   DRAGON_ANCESTRY,
   ABILITY_SHORT,

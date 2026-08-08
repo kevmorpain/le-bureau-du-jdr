@@ -134,6 +134,7 @@ export interface SubraceData {
   darkvision?: number                     // portée en mètres
   description: string
   traits: string[]
+  lineageId?: number                     // species_lineages.id si la sous-race vient du catalogue (D17, lot 5b)
 }
 
 export interface RaceData {

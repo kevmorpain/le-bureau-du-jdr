@@ -4,6 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { AbilityKey } from '~~/shared/rules/abilities'
 
 /**
  * Loaders des LISTES de référence du catalogue (lot 6a) — la tranche plate, statique et
@@ -192,4 +193,127 @@ export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset
       ),
     )
     .orderBy(srcSchema.backgrounds.name)
+}
+
+/** Lignée du catalogue, champs d'affichage DÉRIVÉS pour le picker du builder (D17, lot 5b). */
+export interface CatalogLineage {
+  id: number
+  name: string
+  description: string | null
+  /** Bonus de carac. COMBINÉS base ⊕ lignée (le builder n'applique que ceux de la sous-race). */
+  abilityBonuses: Partial<Record<AbilityKey, number>>
+  /** Vitesse effective (walking_speed de la lignée sinon celle de la base). */
+  speed: number
+  darkvision: number | null
+  /** Traits propres à la lignée (noms de features), hors carac./vitesse déjà en badges. */
+  traits: string[]
+}
+
+/** Espèce de base + ses lignées avec champs d'affichage dérivés (D17). */
+export interface CatalogSpeciesRich {
+  id: number
+  name: string
+  speed: number
+  size: string
+  lineages: CatalogLineage[]
+}
+
+/** Agrège les bonus de carac. {dex:2,…} depuis des effets `ability_increase`. */
+function abilityBonusesFrom(effects: { type: string, value: unknown }[]): Partial<Record<AbilityKey, number>> {
+  const bonuses: Partial<Record<AbilityKey, number>> = {}
+  for (const e of effects) {
+    if (e.type !== 'ability_increase') continue
+    const v = e.value as { ability?: AbilityKey, amount?: number } | null
+    if (v?.ability && typeof v.amount === 'number') bonuses[v.ability] = (bonuses[v.ability] ?? 0) + v.amount
+  }
+  return bonuses
+}
+
+/**
+ * Espèce de base (par id) + ses lignées avec les champs d'affichage DÉRIVÉS pour le picker du
+ * builder (chantier lignée, D17 — lot 5b). Expose ce que le seed a mis en base (species_features
+ * + lineage_features + effets) sous une forme prête pour les cartes de sous-race : bonus de carac.
+ * **combinés base ⊕ lignée** (le builder n'applique que ceux de la sous-race quand une est choisie),
+ * vitesse effective, vision, et la liste des traits propres à la lignée.
+ *
+ * Rend `null` si l'espèce n'existe pas ; `lineages: []` pour une espèce sans lignée (le builder
+ * retombe alors sur son blob `RaceData`). Lecture via `srcSchema` (frais). Cachable (statique).
+ */
+export async function loadSpeciesLineages(db: Db, speciesId: number): Promise<CatalogSpeciesRich | null> {
+  const [base] = await db
+    .select({ id: srcSchema.characterSpecies.id, name: srcSchema.characterSpecies.name, speed: srcSchema.characterSpecies.speed, size: srcSchema.characterSpecies.size })
+    .from(srcSchema.characterSpecies)
+    .where(eq(srcSchema.characterSpecies.id, speciesId))
+    .limit(1)
+  if (!base) return null
+
+  // Bonus de carac. de la BASE (species_features → effets ability_increase), communs à toute lignée.
+  const baseEffects = await db
+    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
+    .from(srcSchema.speciesFeatures)
+    .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.speciesFeatures.featureId))
+    .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
+    .where(eq(srcSchema.speciesFeatures.speciesId, speciesId))
+  const baseAbilityBonuses = abilityBonusesFrom(baseEffects)
+
+  const lineages = await db
+    .select({ id: srcSchema.speciesLineages.id, name: srcSchema.speciesLineages.name, description: srcSchema.speciesLineages.description })
+    .from(srcSchema.speciesLineages)
+    .where(eq(srcSchema.speciesLineages.speciesId, speciesId))
+    .orderBy(asc(srcSchema.speciesLineages.id))
+  const meta = { id: base.id, name: base.name, speed: base.speed, size: base.size }
+  if (!lineages.length) return { ...meta, lineages: [] }
+
+  const lineageIds = lineages.map(l => l.id)
+  const featRows = await db
+    .select({ id: srcSchema.features.id, name: srcSchema.features.name, lineageId: srcSchema.features.lineageId })
+    .from(srcSchema.features)
+    .where(inArray(srcSchema.features.lineageId, lineageIds))
+  const featIds = featRows.map(f => f.id)
+  const effRows = featIds.length
+    ? await db
+        .select({ featureId: srcSchema.featureEffects.featureId, type: srcSchema.effects.type, value: srcSchema.effects.value })
+        .from(srcSchema.featureEffects)
+        .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
+        .where(inArray(srcSchema.featureEffects.featureId, featIds))
+    : []
+
+  const effectsByFeat = new Map<number, { type: string, value: unknown }[]>()
+  for (const r of effRows) {
+    const list = effectsByFeat.get(r.featureId) ?? []
+    list.push({ type: r.type, value: r.value })
+    effectsByFeat.set(r.featureId, list)
+  }
+  const featsByLineage = new Map<number, typeof featRows>()
+  for (const f of featRows) {
+    if (f.lineageId == null) continue
+    const list = featsByLineage.get(f.lineageId) ?? []
+    list.push(f)
+    featsByLineage.set(f.lineageId, list)
+  }
+
+  // Une feature n'est PAS un trait à afficher si tous ses effets sont carac./vitesse (déjà en badges).
+  const BADGE_ONLY = new Set(['ability_increase', 'walking_speed'])
+
+  const derived: CatalogLineage[] = lineages.map((lin) => {
+    const feats = featsByLineage.get(lin.id) ?? []
+    const allEffects = feats.flatMap(f => effectsByFeat.get(f.id) ?? [])
+    const abilityBonuses = { ...baseAbilityBonuses }
+    for (const [k, v] of Object.entries(abilityBonusesFrom(allEffects)) as [AbilityKey, number][]) {
+      abilityBonuses[k] = (abilityBonuses[k] ?? 0) + v
+    }
+    const speedEffect = allEffects.find(e => e.type === 'walking_speed')
+    const speed = typeof speedEffect?.value === 'number' ? speedEffect.value : base.speed
+    const dv = allEffects.find(e => e.type === 'darkvision')?.value as { range?: number } | undefined
+    const darkvision = typeof dv?.range === 'number' ? dv.range : null
+    const traits = feats
+      .filter((f) => {
+        const es = effectsByFeat.get(f.id) ?? []
+        return !(es.length > 0 && es.every(e => BADGE_ONLY.has(e.type)))
+      })
+      .map(f => f.name)
+    return { id: lin.id, name: lin.name, description: lin.description, abilityBonuses, speed, darkvision, traits }
+  })
+
+  return { ...meta, lineages: derived }
 }
