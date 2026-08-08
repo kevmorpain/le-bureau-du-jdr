@@ -165,10 +165,25 @@ export default defineEventHandler(async (event) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const derived = await deriveChosenLineage(db as any, Number(id), species.id, totalLevel)
     lineageName = derived.lineageName
+
+    // Masque les features « point de choix » de l'espèce : celles qui portent une `progression`
+    // (ex. « Lignage elfique ») pilotent la résolution/builder mais ne sont pas des traits à
+    // afficher sur la fiche (la lignée choisie est déjà rendue via ses propres features + l'en-tête).
+    const baseFeatureIds = species.speciesFeatures
+      .map(sf => sf.feature?.id)
+      .filter((v): v is number => typeof v === 'number')
+    const choicePointIds = baseFeatureIds.length
+      ? new Set((await db
+          .select({ fid: srcSchema.progression.featureId })
+          .from(srcSchema.progression)
+          .where(inArray(srcSchema.progression.featureId, baseFeatureIds))).map(r => r.fid))
+      : new Set<number>()
+    const visibleBaseFeatures = species.speciesFeatures.filter(sf => !choicePointIds.has(sf.feature?.id as number))
+
     speciesWithLineage = {
       ...species,
       speed: derived.speedOverride ?? species.speed,
-      speciesFeatures: [...species.speciesFeatures, ...(derived.features as typeof species.speciesFeatures)],
+      speciesFeatures: [...visibleBaseFeatures, ...(derived.features as typeof species.speciesFeatures)],
     }
   }
 
