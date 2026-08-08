@@ -15,6 +15,9 @@ const SEED_REGISTRY: Record<string, () => Promise<unknown>> = {
   magicSchools: _seed.magicSchools,
   characterSpecies: _seed.characterSpecies,
   elfLineage: _seed.elfLineage,
+  // Migration des fiches vivantes vers base+lignée (lot 4). Mode `only` UNIQUEMENT (jamais dans
+  // le seed complet) : mute des fiches live, à déclencher délibérément après `?only=elfLineage`.
+  migrateLineages: _seed.migrateLineages,
   classes: _seed.classes,
   backgrounds: _seed.backgrounds,
   barbare: _seed.barbare,
