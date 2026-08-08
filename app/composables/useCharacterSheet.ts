@@ -152,13 +152,19 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const allCharacterFeatures = computed(() => {
     const ccs = classes.characterClasses.value
     const speciesName = classes.species.value?.name ?? 'Espèce'
+    // Nom de la lignée choisie (D17) : les features de lignée (feature.lineage_id non nul) sont
+    // badgées avec (ex. « Drow »), au lieu du nom de l'espèce de base (« Elfe »).
+    const lineageName = (classes.species.value as { lineageName?: string | null } | undefined)?.lineageName ?? null
 
     const speciesItems = classes.speciesTraits.value.map(f => ({
       ...f,
       currentUses: 0,
       maxUses: null as number | null,
       effects: (f.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[],
-      origin: { kind: 'species' as const, label: speciesName },
+      origin: {
+        kind: 'species' as const,
+        label: (f as { lineageId?: number | null }).lineageId != null && lineageName ? lineageName : speciesName,
+      },
     }))
 
     const classItems = resolvedFeatures.value.map((f) => {

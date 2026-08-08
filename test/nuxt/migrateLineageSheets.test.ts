@@ -93,11 +93,13 @@ describe('migration des fiches vers base+lignée (D17, lot 4)', () => {
   it('rapporte 3 fiches migrées, une par lignée', () => {
     expect(firstReport.migrated).toBe(3)
     expect(firstReport.choicesInserted).toBe(3)
-    expect(firstReport.byLineage).toEqual({ 'Haut-elfe': 1, 'Elfe des bois': 1, 'Elfe noir': 1 })
+    expect(firstReport.byLineage).toEqual({ 'Haut-elfe': 1, 'Elfe des bois': 1, 'Drow': 1 })
     expect(firstReport.skipped).toEqual([])
   })
 
-  it('repointe chaque fiche vers la base Elfe et pose le choix de lignée homonyme', async () => {
+  it('repointe chaque fiche vers la base Elfe et pose le choix de la bonne lignée', async () => {
+    // Ancienne espèce → lignée : homonyme sauf le drow (« Elfe noir » → lignée « Drow », alias 5c).
+    const LINEAGE_FOR: Record<string, string> = { 'Haut-elfe': 'Haut-elfe', 'Elfe des bois': 'Elfe des bois', 'Elfe noir': 'Drow' }
     for (const name of LEGACY) {
       const sheetId = sheetByLineage[name]!
       const sheet = await orm.select().from(srcSchema.characterSheets)
@@ -105,7 +107,7 @@ describe('migration des fiches vers base+lignée (D17, lot 4)', () => {
       expect(sheet.speciesId).toBe(baseId)
 
       const lineage = await orm.select().from(srcSchema.speciesLineages)
-        .where(and(eq(srcSchema.speciesLineages.speciesId, baseId), eq(srcSchema.speciesLineages.name, name)))
+        .where(and(eq(srcSchema.speciesLineages.speciesId, baseId), eq(srcSchema.speciesLineages.name, LINEAGE_FOR[name]!)))
         .limit(1).get()
       const choices = await orm.select().from(srcSchema.characterChoices)
         .where(eq(srcSchema.characterChoices.characterSheetId, sheetId))

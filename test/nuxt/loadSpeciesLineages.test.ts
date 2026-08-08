@@ -42,12 +42,12 @@ beforeAll(async () => {
 }, 60000)
 
 describe('loadSpeciesLineages (D17, lot 5b)', () => {
-  it('rend base + 3 lignées, triées par id d\'insertion (Haut-elfe, Elfe des bois, Elfe noir)', async () => {
+  it('rend base + 3 lignées, triées par id d\'insertion (Haut-elfe, Elfe des bois, Drow)', async () => {
     const rich = await loadSpeciesLineages(orm, elfBaseId)
     expect(rich).not.toBeNull()
     expect(rich!.name).toBe('Elfe')
     expect(rich!.speed).toBe(9)
-    expect(rich!.lineages.map(l => l.name)).toEqual(['Haut-elfe', 'Elfe des bois', 'Elfe noir'])
+    expect(rich!.lineages.map(l => l.name)).toEqual(['Haut-elfe', 'Elfe des bois', 'Drow'])
   })
 
   it('Haut-elfe : bonus COMBINÉS {dex:2,int:1}, vitesse 9, vision 18, traits hors carac./vitesse', async () => {
@@ -71,8 +71,8 @@ describe('loadSpeciesLineages (D17, lot 5b)', () => {
     expect(wood.traits).toContain('Cachette naturelle')
   })
 
-  it('Elfe noir : {dex:2,cha:1}, vision 36, traits drow (magie/sensibilité)', async () => {
-    const drow = (await loadSpeciesLineages(orm, elfBaseId))!.lineages.find(l => l.name === 'Elfe noir')!
+  it('Drow : {dex:2,cha:1}, vision 36, traits drow (magie/sensibilité)', async () => {
+    const drow = (await loadSpeciesLineages(orm, elfBaseId))!.lineages.find(l => l.name === 'Drow')!
     expect(drow.abilityBonuses).toEqual({ dex: 2, cha: 1 })
     expect(drow.darkvision).toBe(36)
     expect(drow.traits).toContain('Magie drow')

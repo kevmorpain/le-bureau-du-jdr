@@ -50,7 +50,7 @@ describe('seedElfLineages — structure', () => {
     expect(species[0]!.ruleset).toBe('5')
 
     const lineages = await orm.select().from(srcSchema.speciesLineages).where(eq(srcSchema.speciesLineages.speciesId, baseId))
-    expect(lineages.map(l => l.name).sort()).toEqual(['Elfe des bois', 'Elfe noir', 'Haut-elfe'])
+    expect(lineages.map(l => l.name).sort()).toEqual(['Drow', 'Elfe des bois', 'Haut-elfe'])
   })
 
   it('pose la feature de choix + une progression kind:\'lineage\' → 3 options (bout en bout buildCatalog)', async () => {

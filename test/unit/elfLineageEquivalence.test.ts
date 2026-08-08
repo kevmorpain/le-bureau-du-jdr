@@ -27,7 +27,8 @@ function effectSet(traits: Trait[]): string[] {
 const CASES = [
   { lineage: 'Haut-elfe', species: 'Haut-elfe' },
   { lineage: 'Elfe des bois', species: 'Elfe des bois' },
-  { lineage: 'Elfe noir', species: 'Elfe noir' },
+  // La lignée « Drow » (renommée, lot 5c) correspond à l'ancienne espèce séparée « Elfe noir ».
+  { lineage: 'Drow', species: 'Elfe noir' },
 ]
 
 describe('Elfe base + lignée ≡ anciennes espèces (équivalence donnée, D12)', () => {

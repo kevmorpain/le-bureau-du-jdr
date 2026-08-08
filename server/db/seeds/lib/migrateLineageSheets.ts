@@ -38,6 +38,14 @@ type Db = BaseSQLiteDatabase<'async', any, any>
 /** Espèces de BASE à migrer, par nom. Pilote = Elfe seul ; rollout (lot 6) = ajouter des noms. */
 export const LINEAGE_MIGRATION_BASES = ['Elfe'] as const
 
+/**
+ * Alias nom de LIGNÉE → nom de l'ancienne ESPÈCE séparée 2014, quand ils diffèrent (le nom propre /
+ * 2024 rebaptise la sous-race 2014). Ex. la lignée « Drow » migre les fiches de l'ancienne espèce
+ * « Elfe noir » (lot 5c). Par défaut, lignée et ancienne espèce portent le MÊME nom (convention des
+ * lots 3a/4 : Haut-elfe, Elfe des bois) → pas d'entrée nécessaire.
+ */
+const LINEAGE_TO_LEGACY_SPECIES: Record<string, string> = { Drow: 'Elfe noir' }
+
 export interface LineageMigrationReport {
   /** Fiches repointées vers une espèce de base. */
   migrated: number
@@ -90,13 +98,15 @@ export async function migrateLineageSheets(
         continue
       }
 
-      // 3. Pour chaque lignée, l'ancienne espèce homonyme de MÊME ruleset (différente de la base).
+      // 3. Pour chaque lignée, l'ancienne espèce séparée de MÊME ruleset (différente de la base).
+      //    Homonyme par défaut ; alias si le nom de la lignée diffère de l'ancienne espèce (Drow).
       for (const lineage of lineages) {
+        const legacyName = LINEAGE_TO_LEGACY_SPECIES[lineage.name] ?? lineage.name
         const legacy = await db
           .select()
           .from(schema.characterSpecies)
           .where(and(
-            eq(schema.characterSpecies.name, lineage.name),
+            eq(schema.characterSpecies.name, legacyName),
             eq(schema.characterSpecies.ruleset, base.ruleset),
             ne(schema.characterSpecies.id, base.id),
           ))

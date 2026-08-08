@@ -1,0 +1,11 @@
+-- Lot 5c du chantier « lignée » (D17) : renomme la lignée elfe « Elfe noir » (nom PHB 2014 FR)
+-- en « Drow » (nom propre, aligné 2024) pour l'affichage builder + fiche.
+--
+-- La ligne existe en PROD (seed du lot 4, `?only=elfLineage`) → renommée EN PLACE. L'ancienne
+-- ESPÈCE séparée 2014 « Elfe noir » (character_species) reste intacte : c'est une table différente,
+-- non touchée ici. Le matching ancien-nom → lignée pour la migration des fiches est assuré par un
+-- alias applicatif (server/db/seeds/lib/migrateLineageSheets.ts).
+--
+-- Auto-suffisante & idempotente : no-op sur base vierge (aucune lignée) et après un seed frais
+-- (elf.ts crée déjà « Drow » → aucune ligne « Elfe noir » à renommer).
+UPDATE `species_lineages` SET `name` = 'Drow' WHERE `name` = 'Elfe noir';
