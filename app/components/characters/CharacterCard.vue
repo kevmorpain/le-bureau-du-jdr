@@ -1,9 +1,21 @@
 <template>
   <UCard variant="soft">
     <template #header>
-      <h3 class="text-lg font-semibold">
-        {{ characterName }}
-      </h3>
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-lg font-semibold">
+          {{ characterName }}
+        </h3>
+
+        <UButton
+          v-if="deletable"
+          icon="i-heroicons:trash"
+          color="error"
+          variant="ghost"
+          size="sm"
+          :aria-label="`Supprimer ${characterName}`"
+          @click.prevent.stop="emit('delete')"
+        />
+      </div>
     </template>
 
     <p>
@@ -15,6 +27,11 @@
 <script lang="ts" setup>
 const props = defineProps<{
   character: CharacterSheet
+  deletable?: boolean
+}>()
+
+const emit = defineEmits<{
+  delete: []
 }>()
 
 const { mainClass, multiClass, species } = useCharacterSheet(toRef(props, 'character'))
