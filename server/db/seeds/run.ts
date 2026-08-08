@@ -14,6 +14,7 @@ const SEED_REGISTRY: Record<string, () => Promise<unknown>> = {
   damageTypes: _seed.damageTypes,
   magicSchools: _seed.magicSchools,
   characterSpecies: _seed.characterSpecies,
+  elfLineage: _seed.elfLineage,
   classes: _seed.classes,
   backgrounds: _seed.backgrounds,
   barbare: _seed.barbare,
@@ -98,6 +99,8 @@ export async function runSeeds(only?: string[]) {
   const spells = await settle(_seed.spells())
   const items = await settle(_seed.items())
   const feats = await settle(_seed.feats())
+  // Espèce Elfe restructurée base+lignées (D17) — séquentiel (nombreux inserts). Additif.
+  const elfLineage = await settle(_seed.elfLineage())
 
   // Données de test uniquement — ne pas lancer en prod
   // await _seed.characterSheets()
@@ -105,7 +108,7 @@ export async function runSeeds(only?: string[]) {
   const summary = {
     abilityScores, skills, damageTypes, magicSchools, characterSpecies, classes, backgrounds,
     barbare, barde, clerc, druide, guerrier, magicien, moine, paladin, rodeur, roublard, ensorceleur, warlock,
-    spells, items, feats,
+    spells, items, feats, elfLineage,
   }
 
   return buildResult(start, summary)
