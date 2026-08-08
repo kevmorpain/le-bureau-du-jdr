@@ -4,9 +4,11 @@ import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema, CharacterValidationError } from '../../server/utils/characterCreate'
+import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
+import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,6 +34,10 @@ const OWNER = 1 // users.id est un integer
 let client: Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
+// Structure Elfe base+lignées (D17) — seedée dans beforeAll pour tester le choix de lignée à la création.
+let elfBaseId: number
+let highElfLineageId: number
+let elfLineageProgId: number
 
 function baseInput(over: Partial<Parameters<typeof createCharacter>[1]> = {}) {
   return createCharacterSchema.parse({
@@ -111,6 +117,19 @@ beforeAll(async () => {
     { id: 601, name: 'Portail', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
   ])
   await db.insert(schema.spellClasses).values([{ spellId: 600, classId: WARLOCK }, { spellId: 601, classId: WARLOCK }])
+
+  // Structure Elfe base + 3 lignées (D17) — pour tester le choix de lignée à la création.
+  await seedElfLineages(db)
+  const [elfBase] = await db.select().from(schema.characterSpecies)
+    .where(and(eq(schema.characterSpecies.name, 'Elfe'), eq(schema.characterSpecies.ruleset, '5')))
+  elfBaseId = elfBase.id
+  const [highElf] = await db.select().from(schema.speciesLineages)
+    .where(and(eq(schema.speciesLineages.speciesId, elfBaseId), eq(schema.speciesLineages.name, 'Haut-elfe')))
+  highElfLineageId = highElf.id
+  const [prog] = await db.select({ id: schema.progression.id }).from(schema.progression)
+    .innerJoin(schema.speciesFeatures, eq(schema.speciesFeatures.featureId, schema.progression.featureId))
+    .where(and(eq(schema.progression.kind, 'lineage'), eq(schema.speciesFeatures.speciesId, elfBaseId)))
+  elfLineageProgId = prog.id
 }, 60000) // rejoue toute la chaîne de migrations + seed → au-delà du timeout de hook par défaut (10s)
 
 // ── Round-trip : créations valides ─────────────────────────────────────────────
@@ -225,5 +244,46 @@ describe('createCharacter — validation serveur (rejette les choix illégaux)',
       { spellId: 600, source: 'arcanum_6' },
       { spellId: 601, source: 'arcanum_9' },
     ])
+  })
+})
+
+// ── Choix de lignée à la création (D17, lot 5a) ────────────────────────────────
+
+describe('createCharacter — lignée (D17)', () => {
+  it('elfe base + lignée Haut-elfe → character_choices écrit, fiche sur la base, lignée dérivée', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      classId: FIGHTER, level: 1, speciesId: elfBaseId, selectedLineageId: highElfLineageId,
+    }), OWNER)
+
+    const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
+    expect(sheet.speciesId).toBe(elfBaseId)
+
+    const choices = await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, id))
+    expect(choices).toHaveLength(1)
+    expect(choices[0].selectedLineageId).toBe(highElfLineageId)
+    expect(choices[0].progressionId).toBe(elfLineageProgId)
+
+    // La fiche dérive bien la lignée choisie (Haut-elfe → Int +1 entre autres).
+    const derived = await deriveChosenLineage(db, id, elfBaseId, 1)
+    expect(derived.features.length).toBeGreaterThan(0)
+    const effects = derived.features.flatMap((f: { feature: { featureEffects: { effect: { type: string, value: unknown } }[] } }) =>
+      f.feature.featureEffects.map(fe => ({ type: fe.effect.type, value: fe.effect.value })))
+    expect(effects).toContainEqual({ type: 'ability_increase', value: { ability: 'int', amount: 1 } })
+  })
+
+  it('lignée n\'appartenant pas à l\'espèce (Humain + lignée elfe) → rejet', async () => {
+    await expect(createCharacter(db, baseInput({ speciesId: 1, selectedLineageId: highElfLineageId }), OWNER))
+      .rejects.toThrow(CharacterValidationError)
+  })
+
+  it('lignée choisie sans espèce → rejet', async () => {
+    await expect(createCharacter(db, baseInput({ speciesId: null, selectedLineageId: highElfLineageId }), OWNER))
+      .rejects.toThrow(CharacterValidationError)
+  })
+
+  it('sans lignée (création classique) → aucun character_choices (no-op, non-régression)', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 1, speciesId: 1 }), OWNER)
+    const choices = await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, id))
+    expect(choices).toHaveLength(0)
   })
 })
