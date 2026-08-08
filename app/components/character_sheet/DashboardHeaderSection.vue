@@ -1,6 +1,17 @@
 <template>
-  <header class="sticky top-16 z-40 bg-elevated border-b border-default shadow-sm">
+  <header class="sticky top-0 z-40 bg-elevated border-b border-default shadow-sm">
     <div class="flex items-center gap-4 px-5 py-2.5 flex-wrap">
+      <!-- Retour à l'accueil -->
+      <UButton
+        to="/"
+        icon="i-heroicons:home"
+        variant="ghost"
+        color="neutral"
+        size="sm"
+        class="shrink-0"
+        aria-label="Retour à l'accueil"
+      />
+
       <!-- Identité -->
       <div class="shrink-0">
         <div class="flex items-baseline gap-2">
