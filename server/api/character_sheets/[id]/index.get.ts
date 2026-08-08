@@ -1,6 +1,7 @@
 import { db, schema } from 'hub:db'
 import * as srcSchema from '~~/server/db/schema'
 import { eq, inArray } from 'drizzle-orm'
+import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -151,5 +152,22 @@ export default defineEventHandler(async (event) => {
     item: { ...r.item, effects: effectsByItem.get(r.item.id) ?? [] },
   }))
 
-  return { ...characterSheet, features: enrichedFeatures, classes: enrichedClasses, abilityScoreImprovements, inventory: inventoryWithItems }
+  // ─── Lignée choisie (D17) : fusionner ses features dans les traits d'espèce ──────────────
+  // `character_choices`/`species_lineages`/`features.lineage_id` hors relations hub:db → util
+  // `.select()` injecté (patron subclasses/ASI/items). No-op tant que le perso n'a pas de
+  // lignée (selected_lineage_id NULL) → toutes les fiches existantes sont inchangées.
+  const totalLevel = characterSheet.classes.reduce((sum, c) => sum + ((c as { level?: number }).level ?? 0), 0)
+  const species = characterSheet.species
+  let speciesWithLineage = species
+  if (species) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { features: lineageFeatures, speedOverride } = await deriveChosenLineage(db as any, Number(id), species.id, totalLevel)
+    speciesWithLineage = {
+      ...species,
+      speed: speedOverride ?? species.speed,
+      speciesFeatures: [...species.speciesFeatures, ...(lineageFeatures as typeof species.speciesFeatures)],
+    }
+  }
+
+  return { ...characterSheet, species: speciesWithLineage, features: enrichedFeatures, classes: enrichedClasses, abilityScoreImprovements, inventory: inventoryWithItems }
 })
