@@ -137,7 +137,7 @@ const woodElfLineage = {
 const drowLineage = {
   // Nom propre (2024) ; l'ancienne espèce séparée 2014 s'appelait « Elfe noir » (character_species.ts,
   // intacte). Le renommage de la ligne déjà seedée en prod passe par la migration 0086 ; le matching
-  // ancien-nom → lignée pour la migration des fiches est géré par un alias dans migrateLineageSheets.
+  // ancien-nom → lignée pour la migration des fiches a été géré par un alias au rollout lot 6.
   name: 'Drow',
   description: `Nés dans les Outreterre, les drows portent la magie des profondeurs et une vision perçante dans les ténèbres.`,
   traits: [

@@ -13,7 +13,7 @@ import type { LineageSpeciesData } from '../lib/seedLineages'
  * n'est plus sur la base) ; la résistance s'affiche depuis l'effet concret de la lignée (via
  * `resolveDamageType`, identité sur un type concret) ; le souffle (non rendu sur la fiche) devient
  * une donnée concrète. La migration des fiches est BESPOKE (colonne → lignée), pas l'homonyme
- * générique — cf. server/db/seeds/lib/migrateDragonbornLineage.ts.
+ * générique (faite une fois au rollout lot 6, colonne dragonbornAncestry → lignée).
  *
  * ⚠️ Le nom de base « Drakéide » == l'ancienne espèce mono → renommée legacy « Drakéide (2014) »
  * (character_species.ts + migration 0088), comme le Tieffelin.

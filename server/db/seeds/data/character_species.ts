@@ -676,7 +676,7 @@ const human = {
 
 // Renommé « Drakéide (2014) » : cette espèce mono 2014 devient la LEGACY de la base « Drakéide »
 // (chantier lignée, D17 — lot 6). La base + 10 lignées d'ascendance vivent dans data/dragonborn.ts ;
-// les fiches migrent via migrateDragonbornLineage (colonne dragonbornAncestry → lignée) + migration 0088.
+// les fiches ont été basculées (colonne dragonbornAncestry → lignée) au rollout lot 6 ; migration 0088 renomme la ligne.
 const dragonborn = {
   name: 'Drakéide (2014)',
   size: CreatureSize.Medium,
@@ -1141,7 +1141,7 @@ const halfOrc = {
 
 // Renommé « Tieffelin (Asmodée) » : cette espèce mono 2014 devient la LEGACY de la base
 // « Tieffelin » (chantier lignée, D17 — lot 6). La base + lignée Asmodée vivent dans data/tiefling.ts ;
-// les fiches migrent via l'alias {Asmodée→'Tieffelin (Asmodée)'} (migrateLineageSheets) + migration 0087.
+// les fiches ont été basculées via l'alias {Asmodée→'Tieffelin (Asmodée)'} au rollout lot 6 ; migration 0087 renomme la ligne.
 const tiefling = {
   name: 'Tieffelin (Asmodée)',
   size: CreatureSize.Medium,

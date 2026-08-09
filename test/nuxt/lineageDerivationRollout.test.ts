@@ -33,7 +33,7 @@ function stable(v: unknown): string {
 const asSet = (effs: Eff[]) => effs.map(e => stable({ type: e.type, value: e.value })).sort()
 
 const ROLLOUT = [dwarf, halfling, gnome, tiefling]
-// Alias lignée → ancienne espèce (quand le nom diffère ; miroir de LINEAGE_TO_LEGACY_SPECIES).
+// Alias lignée → ancienne espèce (quand le nom diffère, ex. Asmodée → « Tieffelin (Asmodée) »).
 const LEGACY_ALIAS: Record<string, string> = { 'Asmodée': 'Tieffelin (Asmodée)' }
 
 let orm: ReturnType<typeof drizzle>

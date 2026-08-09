@@ -10,7 +10,7 @@ import type { LineageSpeciesData } from '../lib/seedLineages'
  *
  * ⚠️ Le nom de la base (« Tieffelin ») == le nom de l'espèce mono actuelle → celle-ci est renommée
  * legacy « Tieffelin (Asmodée) » (character_species.ts + migration 0087) et l'alias
- * `{Asmodée:'Tieffelin (Asmodée)'}` (migrateLineageSheets) fait le lien (même combo que le Drow, 5c).
+ * `{Asmodée:'Tieffelin (Asmodée)'}` a fait le lien au rollout (même combo que le Drow, 5c).
  *
  * SPLIT (verrouillé par l'équivalence D12) : base = traits COMMUNS à tout héritage infernal (Cha+2,
  * Vitesse, Vision, Résistance au feu, Langues) ; lignée Asmodée = ce qui lui est PROPRE (Int+1 +
