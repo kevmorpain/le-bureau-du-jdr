@@ -1,0 +1,15 @@
+-- Lot 6 du chantier « lignée » (D17) : le Tieffelin passe en base + lignée Asmodée. Le nom de la
+-- BASE (« Tieffelin ») == le nom de l'espèce mono 2014 actuelle → on renomme cette dernière en
+-- espèce LEGACY « Tieffelin (Asmodée) » pour libérer le nom « Tieffelin » à la base (data/tiefling.ts,
+-- seedée manuellement par `?only=lineages`). Même combo que le Drow (0086) : rename + alias applicatif
+-- {Asmodée→'Tieffelin (Asmodée)'} (server/db/seeds/lib/migrateLineageSheets.ts).
+--
+-- La ligne existe en PROD (seed espèces 2014) → renommée EN PLACE. Les fiches Tieffelin pointant
+-- cette espèce migrent ensuite vers base+lignée via `?only=migrateLineages`. Le blob front pointe
+-- désormais son dbName sur ce nom legacy → aucune fenêtre où « Tieffelin » serait irrésolvable avant
+-- le seed de la base.
+--
+-- Auto-suffisante & idempotente : les migrations tournent AVANT tout seed (la base « Tieffelin »
+-- n'existe donc jamais au moment du rename) ; no-op sur base vierge (aucune ligne à renommer, le
+-- seed frais crée directement « Tieffelin (Asmodée) »).
+UPDATE `character_species` SET `name` = 'Tieffelin (Asmodée)' WHERE `name` = 'Tieffelin' AND `ruleset` = '5';

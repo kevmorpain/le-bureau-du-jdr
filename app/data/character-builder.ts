@@ -150,6 +150,9 @@ export interface RaceData {
   traits: string[]
   languages: string[]
   subraces?: SubraceData[]
+  // Espèce « base + lignée » (D17) : nom de l'espèce de base en DB. Quand présent, le picker de
+  // sous-race est PILOTÉ PAR LE CATALOGUE (useSpeciesLineages) au lieu du `subraces` hardcodé.
+  lineageBaseSpeciesName?: string
   // Cas spéciaux
   hasHalfElfBonuses?: boolean             // Demi-Elfe : +1+1 aux carac. hors CHA
   hasVariantOption?: boolean              // Humain : option variante disponible
@@ -181,6 +184,7 @@ export const RACES: RaceData[] = [
     name: 'Elfe',
     emoji: '🧝',
     dbName: null,
+    lineageBaseSpeciesName: 'Elfe',
     description: 'Grâcieux et longévifs, les elfes sont doués d\'une acuité sensorielle remarquable et d\'une résistance naturelle à la magie. Leur transe leur permet de méditer à la place de dormir.',
     abilityBonuses: { dex: 2 },
     speed: 9,
@@ -245,6 +249,7 @@ export const RACES: RaceData[] = [
     name: 'Nain',
     emoji: '⛏️',
     dbName: null,
+    lineageBaseSpeciesName: 'Nain',
     description: 'Courageux et endurants, les nains sont réputés pour leur résistance au poison, leur expertise du travail de la pierre et leur ténacité au combat.',
     abilityBonuses: { con: 2 },
     speed: 7.5,
@@ -290,6 +295,7 @@ export const RACES: RaceData[] = [
     name: 'Halfelin',
     emoji: '🍃',
     dbName: null,
+    lineageBaseSpeciesName: 'Halfelin',
     description: 'Chanceux par nature et remarquablement courageux, les halfelins défient les probabilités et s\'adaptent à toutes les situations avec une agilité surprenante.',
     abilityBonuses: { dex: 2 },
     speed: 7.5,
@@ -331,6 +337,7 @@ export const RACES: RaceData[] = [
     name: 'Gnome',
     emoji: '🔩',
     dbName: null,
+    lineageBaseSpeciesName: 'Gnome',
     description: 'Inventifs et curieux, les gnomes sont des créatures vives et enthousiastes dont la magie innée protège leur intellect contre les assauts de la magie.',
     abilityBonuses: { int: 2 },
     speed: 7.5,
@@ -414,7 +421,11 @@ export const RACES: RaceData[] = [
     id: 'tiefling',
     name: 'Tieffelin',
     emoji: '😈',
-    dbName: 'Tieffelin',
+    // Base+lignée (D17, lot 6) : le picker vient du catalogue (base « Tieffelin »). Le `dbName` pointe
+    // la LEGACY renommée (migration 0087) → repli résolvable AVANT le seed de la base (pas de fenêtre
+    // où « Tieffelin » serait irrésolvable). Après seed, `lineageBaseSpeciesName` prend le relais.
+    dbName: 'Tieffelin (Asmodée)',
+    lineageBaseSpeciesName: 'Tieffelin',
     description: 'Portant le sang infernal de leurs ancêtres diaboliques, les tiéflins font face au monde avec ruse et défi. Charismatiques, résistants au feu et dotés de magie innée.',
     abilityBonuses: { int: 1, cha: 2 },
     speed: 9,
@@ -432,7 +443,11 @@ export const RACES: RaceData[] = [
     id: 'dragonborn',
     name: 'Drakéide',
     emoji: '🐉',
-    dbName: 'Drakéide',
+    // Base+lignée (D17, lot 6) : l'ascendance draconique devient une lignée « Dragon <couleur> »
+    // (picker catalogue). `dbName` pointe la LEGACY renommée (migration 0088) → repli résolvable avant
+    // le seed de la base ; `lineageBaseSpeciesName` prend le relais une fois la base seedée.
+    dbName: 'Drakéide (2014)',
+    lineageBaseSpeciesName: 'Drakéide',
     description: 'Descendants orgueilleux des dragons, les drakéides possèdent une arme de souffle dévastatrice et une résistance élémentaire innée selon leur ascendance draconique.',
     abilityBonuses: { str: 2, cha: 1 },
     speed: 9,
@@ -444,7 +459,6 @@ export const RACES: RaceData[] = [
       'Résistance aux dégâts selon l\'ascendance',
     ],
     languages: ['Commun', 'Draconique'],
-    hasDragonAncestry: true,
   },
 ]
 

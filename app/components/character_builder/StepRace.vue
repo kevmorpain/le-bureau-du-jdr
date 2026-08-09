@@ -28,7 +28,6 @@
             <div class="text-xs font-semibold text-amber-400 mt-0.5">
               {{ formatBonuses(race.abilityBonuses) }}
               <span v-if="race.hasHalfElfBonuses" class="text-amber-400/70"> · +1+1 au choix</span>
-              <span v-if="race.hasDragonAncestry" class="text-amber-400/70"> · selon ascendance</span>
             </div>
           </div>
         </div>
@@ -182,32 +181,8 @@
       </div>
     </template>
 
-    <!-- Cas spécial : Drakéide ascendance draconique -->
-    <template v-if="state.raceId === 'dragonborn'">
-      <USeparator class="my-6" />
-      <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Ascendance draconique — détermine le type de souffle et la résistance</p>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-3">
-          <button
-            v-for="ancestry in DRAGON_ANCESTRY"
-            :key="ancestry.id"
-            type="button"
-            class="text-center rounded-xl border p-3 transition-colors cursor-pointer"
-            :class="state.dragonAncestry === ancestry.id
-              ? 'border-amber-500 bg-amber-500/10'
-              : 'border-(--ui-border) bg-(--ui-bg) hover:border-amber-500/40'"
-            @click="state.dragonAncestry = ancestry.id"
-          >
-            <div class="font-bold text-sm text-(--ui-text)">{{ ancestry.name }}</div>
-            <div class="text-xs text-amber-400 mt-0.5">{{ ancestry.damage }}</div>
-            <div class="text-xs text-muted mt-0.5">{{ ancestry.breathShape }}</div>
-          </button>
-        </div>
-        <div v-if="selectedAncestry" class="text-xs text-muted">
-          Souffle : {{ selectedAncestry.breathShape }} · JS {{ selectedAncestry.breathSave }} · Dégâts {{ selectedAncestry.damage }} · Résistance {{ selectedAncestry.damage }}
-        </div>
-      </div>
-    </template>
+    <!-- Drakéide : l'ascendance draconique est désormais une lignée « Dragon <couleur> » (D17, lot 6),
+         rendue par le picker de sous-race générique ci-dessus — plus de bloc dédié. -->
   </div>
 </template>
 
@@ -219,17 +194,10 @@ const {
   raceData,
   subraces,
   RACES,
-  DRAGON_ANCESTRY,
   ABILITY_SHORT,
   ABILITIES,
   SKILLS,
 } = useCharacterBuilder()
-
-const selectedAncestry = computed(() =>
-  state.value.dragonAncestry
-    ? DRAGON_ANCESTRY.find(d => d.id === state.value.dragonAncestry) ?? null
-    : null,
-)
 
 function formatBonuses(bonuses: Partial<Record<AbilityKey, number>>): string {
   return Object.entries(bonuses)

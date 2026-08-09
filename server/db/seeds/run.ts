@@ -14,10 +14,13 @@ const SEED_REGISTRY: Record<string, () => Promise<unknown>> = {
   damageTypes: _seed.damageTypes,
   magicSchools: _seed.magicSchools,
   characterSpecies: _seed.characterSpecies,
-  elfLineage: _seed.elfLineage,
+  elfLineage: _seed.elfLineage, // compat elfe-seul ; le rollout complet passe par `lineages`
+  lineages: _seed.lineages, // toutes les espèces base+lignées (D17 — Elfe, Nain, Halfelin, Gnome, Tieffelin, Drakéide)
   // Migration des fiches vivantes vers base+lignée (lot 4). Mode `only` UNIQUEMENT (jamais dans
-  // le seed complet) : mute des fiches live, à déclencher délibérément après `?only=elfLineage`.
+  // le seed complet) : mute des fiches live, à déclencher délibérément après `?only=lineages`.
   migrateLineages: _seed.migrateLineages,
+  migrateDragonborn: _seed.migrateDragonborn, // idem, bespoke Drakéide (colonne → lignée) — lot 6
+
   classes: _seed.classes,
   backgrounds: _seed.backgrounds,
   barbare: _seed.barbare,
@@ -102,8 +105,9 @@ export async function runSeeds(only?: string[]) {
   const spells = await settle(_seed.spells())
   const items = await settle(_seed.items())
   const feats = await settle(_seed.feats())
-  // Espèce Elfe restructurée base+lignées (D17) — séquentiel (nombreux inserts). Additif.
-  const elfLineage = await settle(_seed.elfLineage())
+  // Espèces restructurées base+lignées (D17 — Elfe, Nain, Halfelin, Gnome, Tieffelin, Drakéide) —
+  // séquentiel (nombreux inserts). Additif. Après characterSpecies (legacy) → noms de base libres.
+  const lineages = await settle(_seed.lineages())
 
   // Données de test uniquement — ne pas lancer en prod
   // await _seed.characterSheets()
@@ -111,7 +115,7 @@ export async function runSeeds(only?: string[]) {
   const summary = {
     abilityScores, skills, damageTypes, magicSchools, characterSpecies, classes, backgrounds,
     barbare, barde, clerc, druide, guerrier, magicien, moine, paladin, rodeur, roublard, ensorceleur, warlock,
-    spells, items, feats, elfLineage,
+    spells, items, feats, lineages,
   }
 
   return buildResult(start, summary)

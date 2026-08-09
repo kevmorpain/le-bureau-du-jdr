@@ -35,8 +35,8 @@ import * as schema from '../../schema'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-/** Espèces de BASE à migrer, par nom. Pilote = Elfe seul ; rollout (lot 6) = ajouter des noms. */
-export const LINEAGE_MIGRATION_BASES = ['Elfe'] as const
+/** Espèces de BASE à migrer, par nom. Pilote = Elfe ; rollout (lot 6) = Nain/Halfelin/Gnome/Tieffelin (+ Drakéide). */
+export const LINEAGE_MIGRATION_BASES = ['Elfe', 'Nain', 'Halfelin', 'Gnome', 'Tieffelin'] as const
 
 /**
  * Alias nom de LIGNÉE → nom de l'ancienne ESPÈCE séparée 2014, quand ils diffèrent (le nom propre /
@@ -44,7 +44,10 @@ export const LINEAGE_MIGRATION_BASES = ['Elfe'] as const
  * « Elfe noir » (lot 5c). Par défaut, lignée et ancienne espèce portent le MÊME nom (convention des
  * lots 3a/4 : Haut-elfe, Elfe des bois) → pas d'entrée nécessaire.
  */
-const LINEAGE_TO_LEGACY_SPECIES: Record<string, string> = { Drow: 'Elfe noir' }
+const LINEAGE_TO_LEGACY_SPECIES: Record<string, string> = {
+  Drow: 'Elfe noir', // lot 5c
+  'Asmodée': 'Tieffelin (Asmodée)', // lot 6 : la base « Tieffelin » homonymie l'ancienne espèce mono → legacy renommée
+}
 
 export interface LineageMigrationReport {
   /** Fiches repointées vers une espèce de base. */
