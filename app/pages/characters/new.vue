@@ -58,6 +58,8 @@ const {
   classData,
   subraceData,
   raceData,
+  selectedLineageId,
+  elfBaseSpeciesId,
   backgroundData,
   finalAbilities,
   hpMax,
@@ -155,7 +157,11 @@ async function handleSubmit() {
       submitting.value = false
       return
     }
-    const speciesId = resolveSpeciesId(speciesDbName)
+    // Espèce « base + lignée » (D17, lot 5b) : si la sous-race choisie vient du catalogue (elle
+    // porte un lineageId), on envoie l'Elfe BASE + le choix de lignée (chemin serveur du lot 5a),
+    // au lieu de résoudre l'ancienne espèce séparée par nom.
+    const lineageId = selectedLineageId.value
+    const speciesId = lineageId != null ? elfBaseSpeciesId.value : resolveSpeciesId(speciesDbName)
     const backgroundId = isCustomBg ? null : resolveBackgroundId(bgData?.dbName ?? null)
     const { ids: inventoryItemIds, unresolved: inventoryItemNamesUnresolved } = resolveItemIds(itemNames)
     const pactWeaponItemId = needsPactBoon.value && state.value.pactBoon === 'blade' && state.value.pactWeaponItemName
@@ -171,6 +177,7 @@ async function handleSubmit() {
       subclassId,
       level: state.value.level,
       speciesId,
+      selectedLineageId: lineageId,
       backgroundId,
       customBackgroundName: isCustomBg ? state.value.customBackgroundName : null,
       personality: state.value.personality,

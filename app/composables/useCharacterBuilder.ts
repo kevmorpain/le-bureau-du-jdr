@@ -19,6 +19,7 @@ import {
   CANTRIPS_KNOWN,
   SPELLS_KNOWN,
   type AbilityKey,
+  type SubraceData,
 } from '~/data/character-builder'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -254,10 +255,20 @@ export function useCharacterBuilder() {
   // ─── Données dérivées ────────────────────────────────────────────────────────
 
   const raceData = computed(() => RACES.find(r => r.id === state.value.raceId) ?? null)
+  // Sous-races : pour l'Elfe, PILOTÉES PAR LE CATALOGUE (base+lignée, D17, lot 5b) ; les autres
+  // espèces gardent le blob RaceData jusqu'au lot 6. `elfLineageSubraces` (même forme SubraceData)
+  // est vide tant que le catalogue n'est pas chargé → repli transparent sur le blob.
+  const { elfBaseSpeciesId, elfLineageSubraces } = useElfLineages()
+  const subraces = computed<SubraceData[]>(() => {
+    if (state.value.raceId === 'elf' && elfLineageSubraces.value.length) return elfLineageSubraces.value
+    return raceData.value?.subraces ?? []
+  })
   const subraceData = computed(() => {
     if (!state.value.subraceId) return null
-    return raceData.value?.subraces?.find(s => s.id === state.value.subraceId) ?? null
+    return subraces.value.find(s => s.id === state.value.subraceId) ?? null
   })
+  // Lignée choisie (si la sous-race vient du catalogue) → envoyée au serveur à la création (lot 5a).
+  const selectedLineageId = computed(() => subraceData.value?.lineageId ?? null)
   const classData = computed(() => CLASSES.find(c => c.id === state.value.classId) ?? null)
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
 
@@ -501,8 +512,7 @@ export function useCharacterBuilder() {
     switch (stepId) {
       case 'race': {
         if (!s.raceId) return false
-        const race = raceData.value
-        if (race?.subraces?.length && !s.subraceId) return false
+        if (subraces.value.length && !s.subraceId) return false
         if (s.raceId === 'half-elf' && s.halfElfBonuses.length < 2) return false
         if (s.raceId === 'dragonborn' && !s.dragonAncestry) return false
         if (s.raceId === 'human' && s.isVariantHuman) {
@@ -661,7 +671,10 @@ export function useCharacterBuilder() {
     state,
     // Data dérivée
     raceData,
+    subraces,
     subraceData,
+    selectedLineageId,
+    elfBaseSpeciesId,
     classData,
     backgroundData,
     alignmentData,
