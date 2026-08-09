@@ -74,6 +74,9 @@ beforeAll(async () => {
     { id: 403, name: 'Manif C', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
   ])
   await db.insert(schema.spells).values({ id: 500, name: 'Appel de familier', level: 1, castingTime: '1 action', range: 0, duration: '1 h', schoolId: 1 })
+  // Manifestation 5.5 (tag invocation VALIDE) — sert la garde de cohérence d'édition (Lot A) :
+  // elle passe le contrôle de groupe mais est rejetée car incompatible avec une fiche 2014.
+  await db.insert(schema.features).values({ id: 950, name: 'Manif 2024', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation', ruleset: '5.5' })
 }, 60000)
 
 describe('characterLevelUp — Occultiste 2 → 3 (pacte + recalc des emplacements)', () => {
@@ -124,5 +127,11 @@ describe('characterLevelUp — validation serveur', () => {
     const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ subclassId: FIGHTER_SUBCLASS })))
       .rejects.toThrow(CharacterValidationError)
+  })
+
+  it('cohérence d\'édition (Lot A) : manifestation 5.5 sur une fiche 2014 → 422', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 4, pactBoon: 'chain', invocationIds: [401, 402] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ newInvocationIds: [950] })))
+      .rejects.toThrow(/édition/i)
   })
 })

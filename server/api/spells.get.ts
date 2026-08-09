@@ -1,28 +1,18 @@
 import { db } from 'hub:db'
-import * as schema from '~~/server/db/schema'
-import { eq, asc } from 'drizzle-orm'
+import { loadSpells } from '~~/server/utils/catalogSources'
+import { rulesetEnum } from '~~/shared/rules/ruleset'
 
+/**
+ * Base de sorts. Handler MINCE : filtre d'édition (`?ruleset=`, défaut '5' = 2014) + délégation
+ * au loader partagé `loadSpells` (source unique, testable sans HTTP). Un sort porte son propre
+ * `ruleset` (0089) et la LISTE d'une classe est datée par `spell_classes.ruleset` (0084). Les
+ * appelants 2014 n'envoient pas le param → no-op tant que tout est en '5'.
+ */
 export default defineEventHandler(async (event) => {
-  const { className } = getQuery(event) as { className?: string }
+  const query = getQuery(event) as { className?: string, ruleset?: string }
+  // Valeur inconnue/absente → '5' (défaut sûr), jamais une 500.
+  const ruleset = rulesetEnum.catch('5').parse(query.ruleset)
 
-  if (className) {
-    const rows = await db
-      .select({ spell: schema.spells, school: schema.magicSchools })
-      .from(schema.spells)
-      .leftJoin(schema.magicSchools, eq(schema.spells.schoolId, schema.magicSchools.id))
-      .leftJoin(schema.spellClasses, eq(schema.spellClasses.spellId, schema.spells.id))
-      .leftJoin(schema.classes, eq(schema.spellClasses.classId, schema.classes.id))
-      .where(eq(schema.classes.name, className))
-      .orderBy(asc(schema.spells.level), asc(schema.spells.name))
-
-    return rows.map(r => ({ ...r.spell, school: r.school }))
-  }
-
-  const rows = await db
-    .select({ spell: schema.spells, school: schema.magicSchools })
-    .from(schema.spells)
-    .leftJoin(schema.magicSchools, eq(schema.spells.schoolId, schema.magicSchools.id))
-    .orderBy(asc(schema.spells.level), asc(schema.spells.name))
-
-  return rows.map(r => ({ ...r.spell, school: r.school }))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return await loadSpells(db as any, { className: query.className, ruleset })
 })

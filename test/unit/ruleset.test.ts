@@ -13,6 +13,7 @@ import { RULESETS, rulesetEnum } from '../../shared/rules/ruleset'
 const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
 const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
 const MIGRATION = '0084_ruleset_discriminant.sql'
+const MIGRATION_SPELLS = '0089_spells_ruleset.sql'
 
 // Les 6 tables recevant `ruleset` (cf. dnd-5.5.md §3 / decisions.md D2). État minimal
 // d'AVANT 0084 : la seule contrainte est que la table existe pour l'ALTER (SQLite
@@ -83,5 +84,30 @@ describe('ruleset — migration 0084', () => {
     await db.execute('UPDATE classes SET ruleset = \'5.5\' WHERE id = 1')
     const updated = await db.execute('SELECT ruleset FROM classes WHERE id = 1')
     expect(updated.rows[0]!.ruleset).toBe('5.5')
+  })
+})
+
+describe('ruleset — migration 0089 (spells)', () => {
+  it('pose spells.ruleset (DEFAULT \'5\' NOT NULL), backfille l\'existant, accepte \'5.5\'', async () => {
+    const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
+    const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
+
+    const db = createClient({ url: ':memory:' })
+    // État d'avant 0089 : la table spells sans la colonne, avec un sort 2014 existant.
+    await db.execute('CREATE TABLE spells (id integer PRIMARY KEY NOT NULL, name text NOT NULL)')
+    await db.execute('INSERT INTO spells (id, name) VALUES (1, \'Boule de feu\')')
+
+    const sql = await readFile(MIGRATIONS_DIR + MIGRATION_SPELLS, 'utf8')
+    for (const statement of splitSqlQueries(sql)) {
+      await db.execute(statement)
+    }
+
+    const backfilled = await db.execute('SELECT ruleset FROM spells WHERE id = 1')
+    expect(backfilled.rows[0]!.ruleset, 'spells.ruleset backfillé à 5').toBe('5')
+
+    // Duplication par édition : une 2ᵉ ligne « Boule de feu » 5.5 coexiste (contenu divergent).
+    await db.execute('INSERT INTO spells (id, name, ruleset) VALUES (2, \'Boule de feu\', \'5.5\')')
+    const both = await db.execute('SELECT ruleset FROM spells ORDER BY id')
+    expect(both.rows.map(r => r.ruleset)).toEqual(['5', '5.5'])
   })
 })

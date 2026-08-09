@@ -169,6 +169,7 @@ de matérialisation sauf état runtime (`currentUses`).
 | `backgrounds` | aligner sur l'espèce : `background_features` (join) + effects + `progression` pour la triade 5.5 |
 | `features` | `tag` (feature_group) ; `ruleset` (dons standalone sans parent) |
 | `spell_classes` | ⚠️ `ruleset` — les listes de sorts par classe changent en 5.5 |
+| `spells` | ⚠️ `ruleset` (migration `0089`, Lot A) — description/effets divergents → **lignes séparées par édition** |
 | `items` | `mastery_property` (maîtrise d'armes 5.5) |
 | `effects` (union) | + `saving_throw_proficiency` ; `skill_proficiency_choice {count,from}` |
 | `character_ability_scores` | en 5.5, base pure ; triade d'historique dérivée via `choix → ability_increase` |

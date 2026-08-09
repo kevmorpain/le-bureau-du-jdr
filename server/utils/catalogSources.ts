@@ -73,12 +73,17 @@ export async function loadSpecies(db: Db, ruleset: Ruleset = '5'): Promise<{ id:
 /**
  * Sous-classes d'une classe désignée par son NOM en base (≡ endpoint legacy
  * `/api/classes/[name]/subclasses`). Classe inconnue → `[]`.
+ *
+ * La classe est résolue par `(name, ruleset)` (défaut '5') : `subclasses` n'a pas de colonne
+ * `ruleset` (parent-gated par sa classe) → filtrer la classe parente garde la résolution
+ * DÉTERMINISTE quand le 5.5 partagera les noms de classe (« Guerrier »). No-op tant que
+ * tout est '5' ; l'appelant 2014 n'a pas d'argument à passer.
  */
-export async function loadSubclasses(db: Db, className: string): Promise<{ id: number, name: string, description: string | null }[]> {
+export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset = '5'): Promise<{ id: number, name: string, description: string | null }[]> {
   const [cls] = await db
     .select({ id: srcSchema.classes.id })
     .from(srcSchema.classes)
-    .where(eq(srcSchema.classes.name, className))
+    .where(and(eq(srcSchema.classes.name, className), eq(srcSchema.classes.ruleset, ruleset)))
     .limit(1)
   if (!cls) return []
 
@@ -193,6 +198,43 @@ export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset
       ),
     )
     .orderBy(srcSchema.backgrounds.name)
+}
+
+/**
+ * Base de sorts filtrée par ÉDITION (≡ endpoint `/api/spells`). Sans `className` : tous les
+ * sorts de l'édition (navigateur global — un sort porte son propre `ruleset` depuis 0089, car
+ * description/effets divergent entre 2014 et 2024). Avec `className` : la liste de cette classe
+ * pour l'édition — classe résolue par `(nom, ruleset)` (déterministe entre éditions), liens
+ * `spell_classes` ET sort filtrés sur la même édition. Défaut '5' → no-op tant que tout est '5'.
+ * Chaque ligne = le sort + son école (jointure), forme identique à l'endpoint historique.
+ */
+export async function loadSpells(db: Db, opts: { className?: string, ruleset?: Ruleset } = {}) {
+  const ruleset = opts.ruleset ?? '5'
+
+  if (opts.className) {
+    const rows = await db
+      .select({ spell: srcSchema.spells, school: srcSchema.magicSchools })
+      .from(srcSchema.spells)
+      .leftJoin(srcSchema.magicSchools, eq(srcSchema.spells.schoolId, srcSchema.magicSchools.id))
+      .leftJoin(srcSchema.spellClasses, eq(srcSchema.spellClasses.spellId, srcSchema.spells.id))
+      .leftJoin(srcSchema.classes, eq(srcSchema.spellClasses.classId, srcSchema.classes.id))
+      .where(and(
+        eq(srcSchema.classes.name, opts.className),
+        eq(srcSchema.classes.ruleset, ruleset),
+        eq(srcSchema.spellClasses.ruleset, ruleset),
+        eq(srcSchema.spells.ruleset, ruleset),
+      ))
+      .orderBy(asc(srcSchema.spells.level), asc(srcSchema.spells.name))
+    return rows.map(r => ({ ...r.spell, school: r.school }))
+  }
+
+  const rows = await db
+    .select({ spell: srcSchema.spells, school: srcSchema.magicSchools })
+    .from(srcSchema.spells)
+    .leftJoin(srcSchema.magicSchools, eq(srcSchema.spells.schoolId, srcSchema.magicSchools.id))
+    .where(eq(srcSchema.spells.ruleset, ruleset))
+    .orderBy(asc(srcSchema.spells.level), asc(srcSchema.spells.name))
+  return rows.map(r => ({ ...r.spell, school: r.school }))
 }
 
 /** Lignée du catalogue, champs d'affichage DÉRIVÉS pour le picker du builder (D17, lot 5b). */

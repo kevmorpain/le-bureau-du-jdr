@@ -91,6 +91,13 @@ Bouleversement central : **les bonus de caractéristiques passent de l'espèce v
 1. **Poser le discriminant `ruleset`** (`'5'`/`'5.5'`, cf. [D2](./decisions.md#d2)) sur
    `character_sheets` + le catalogue (`character_species`, `classes`, `backgrounds`,
    `features`, `spell_classes`) + backfill `'5'`.
+   - **Lot A (durcissement, migration `0089`)** : `ruleset` posé AUSSI sur `spells` (la
+     description/les effets d'un sort divergent entre 2014 et 2024 → lignes séparées par
+     édition, pas de partage). La **résolution** (`catalog.resolveOptions` : feats /
+     feature_group / spells filtrés par l'édition du propriétaire), le **picker**
+     `/api/spells` (2 branches) et `loadSubclasses` (classe résolue par `(nom, ruleset)`)
+     + l'**écriture** (`createCharacter`/`characterLevelUp` : garde de cohérence d'édition,
+     fiche estampillée) filtrent/valident par `ruleset`. Additif, no-op tant que tout est `'5'`.
 2. **Contenu 5.5** : seed (espèces, historiques + triade + don, classes, maîtrise d'armes,
    dons) + UI d'origines (bonus portés par l'historique) + fiche ruleset-aware.
 

@@ -1,5 +1,6 @@
 import { index, sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { relations, sql } from 'drizzle-orm'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 import magicSchools from './magic_schools'
 import spellClasses from './spell_classes'
 
@@ -73,6 +74,12 @@ const spells = sqliteTable('spells', {
   duration: text('duration').notNull(),
   concentration: integer('concentration', { mode: 'boolean' }).default(false).notNull(),
   description: text('description'),
+
+  // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2). Contrairement à
+  // `spell_classes.ruleset` (appartenance d'un sort à la LISTE d'une classe par édition),
+  // ce discriminant est porté par le SORT lui-même : description et effets peuvent différer
+  // entre 2014 et 2024, donc chaque édition a ses propres lignes (« Boule de feu » 5 vs 5.5).
+  ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
 
   schoolId: integer('school_id').references(() => magicSchools.id).notNull(),
 

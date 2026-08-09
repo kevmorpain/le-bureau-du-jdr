@@ -7,6 +7,7 @@ import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 
 /**
  * Logique de MONTÉE DE NIVEAU extraite du handler (point 5d, volet 3), même patron que
@@ -75,10 +76,46 @@ async function validateLevelUp(db: Db, d: LevelUpInput, classId: number, subclas
   }
 }
 
+/**
+ * Garde de COHÉRENCE d'ÉDITION du level-up (défense en profondeur, Lot A) : toute aptitude/don
+ * (feat d'ASI, nouvelles manifestations) et tout sort référencés doivent partager le `ruleset`
+ * de la fiche. La classe est vérifiée par l'appelant. No-op tant que tout est en '5'.
+ */
+async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset: Ruleset): Promise<void> {
+  const featureIds = [
+    ...(d.featureId != null ? [d.featureId] : []),
+    ...(d.newInvocationIds ?? []),
+  ]
+  if (featureIds.length) {
+    const rows = await db
+      .select({ id: schema.features.id, ruleset: schema.features.ruleset })
+      .from(schema.features)
+      .where(inArray(schema.features.id, featureIds))
+    const bad = rows.find(r => r.ruleset !== ruleset)
+    if (bad) throw new CharacterValidationError(`Une aptitude/un don référencé (id=${bad.id}, éd. ${bad.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
+  }
+
+  const spellIds = [
+    ...(d.newCantripIds ?? []),
+    ...(d.newSpellIds ?? []),
+    ...(d.pactBoonCantripIds ?? []),
+    ...(d.arcaneMysteriumSpellId != null ? [d.arcaneMysteriumSpellId] : []),
+    ...(d.bookOfAncientSecretsSpellIds ?? []),
+  ]
+  if (spellIds.length) {
+    const rows = await db
+      .select({ id: schema.spells.id, ruleset: schema.spells.ruleset })
+      .from(schema.spells)
+      .where(inArray(schema.spells.id, spellIds))
+    const bad = rows.find(r => r.ruleset !== ruleset)
+    if (bad) throw new CharacterValidationError(`Un sort référencé (id=${bad.id}, éd. ${bad.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
+  }
+}
+
 export async function characterLevelUp(db: Db, characterSheetId: number, d: LevelUpInput): Promise<{ success: true, newLevel: number, hpGained: number }> {
   // ── 1. Classe (hitDice pour les PV) ─────────────────────────────────────────
   const [cls] = await db
-    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice })
+    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, ruleset: schema.classes.ruleset })
     .from(schema.classes)
     .where(eq(schema.classes.id, d.classId))
     .limit(1)
@@ -95,13 +132,18 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   const newLevel = d.isMulticlass ? 1 : (existingClass?.level ?? 0) + 1
 
   const [charSheet] = await db
-    .select({ maxHp: schema.characterSheets.maxHp, currentHitDie: schema.characterSheets.currentHitDie })
+    .select({ maxHp: schema.characterSheets.maxHp, currentHitDie: schema.characterSheets.currentHitDie, ruleset: schema.characterSheets.ruleset })
     .from(schema.characterSheets)
     .where(eq(schema.characterSheets.id, characterSheetId))
     .limit(1)
   if (!charSheet) throw new CharacterValidationError('Personnage introuvable.')
 
   // ── 3. Validation serveur (avant écritures) ─────────────────────────────────
+  // Cohérence d'édition (défense en profondeur, Lot A) : la classe montée et toute entité
+  // datée référencée doivent partager le `ruleset` FIGÉ de la fiche. No-op tant que tout='5'.
+  const ruleset: Ruleset = charSheet.ruleset
+  if (cls.ruleset !== ruleset) throw new CharacterValidationError(`La classe (id=${cls.id}, éd. ${cls.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
+  await validateLevelUpRulesetCoherence(db, d, ruleset)
   await validateLevelUp(db, d, cls.id, subclassId)
 
   // ── 4. Lectures dépendantes (features débloquées, familier, slots) ───────────
