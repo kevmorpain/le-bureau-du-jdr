@@ -138,8 +138,11 @@ const classesText = computed(() =>
 
 const characterDescriptionPrefix = computed(() => {
   const speciesName = species.value?.name ?? ''
+  // Lignée choisie (D17) → « Elfe (Drow) ».
+  const lineageName = (species.value as { lineageName?: string | null } | undefined)?.lineageName ?? ''
+  const speciesLabel = lineageName ? `${speciesName} (${lineageName})` : speciesName
   const backgroundName = selectedBackground.value?.name ?? ''
-  const parts = [speciesName, backgroundName].filter(Boolean).join(' · ')
+  const parts = [speciesLabel, backgroundName].filter(Boolean).join(' · ')
   return parts ? `${parts} · ` : ''
 })
 </script>

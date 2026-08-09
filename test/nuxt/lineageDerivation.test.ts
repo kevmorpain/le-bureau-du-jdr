@@ -74,7 +74,7 @@ beforeAll(async () => {
 const CASES = [
   { lineage: 'Haut-elfe', species: 'Haut-elfe', speed: null }, // 9 = vitesse de base → pas de surcharge
   { lineage: 'Elfe des bois', species: 'Elfe des bois', speed: 10.5 },
-  { lineage: 'Elfe noir', species: 'Elfe noir', speed: null }, // 9 = base
+  { lineage: 'Drow', species: 'Elfe noir', speed: null }, // lignée renommée (5c) ; 9 = base
 ]
 
 describe('dérivation lignée — équivalence bout en bout (D17)', () => {
@@ -97,6 +97,6 @@ describe('dérivation lignée — équivalence bout en bout (D17)', () => {
     const sheet = await orm.insert(srcSchema.characterSheets).values({ name: 'Sans lignée', speciesId: baseId }).returning().get()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const derived = await deriveChosenLineage(orm as any, sheet.id, baseId, 20)
-    expect(derived).toEqual({ features: [], speedOverride: null })
+    expect(derived).toEqual({ features: [], speedOverride: null, lineageName: null })
   })
 })

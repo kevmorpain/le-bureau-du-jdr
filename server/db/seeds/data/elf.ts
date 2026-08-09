@@ -135,7 +135,10 @@ const woodElfLineage = {
 }
 
 const drowLineage = {
-  name: 'Elfe noir',
+  // Nom propre (2024) ; l'ancienne espèce séparée 2014 s'appelait « Elfe noir » (character_species.ts,
+  // intacte). Le renommage de la ligne déjà seedée en prod passe par la migration 0086 ; le matching
+  // ancien-nom → lignée pour la migration des fiches est géré par un alias dans migrateLineageSheets.
+  name: 'Drow',
   description: `Nés dans les Outreterre, les drows portent la magie des profondeurs et une vision perçante dans les ténèbres.`,
   traits: [
     {
@@ -193,7 +196,7 @@ export const elf = {
   baseTraits,
   lineageChoice: {
     name: 'Lignage elfique',
-    description: `Vous faites partie d'un lignage elfique qui vous confère des traits particuliers. Choisissez Haut-elfe, Elfe des bois ou Elfe noir (drow).`,
+    description: `Vous faites partie d'un lignage elfique qui vous confère des traits particuliers. Choisissez Haut-elfe, Elfe des bois ou Drow.`,
   },
   lineages: [highElfLineage, woodElfLineage, drowLineage],
 }

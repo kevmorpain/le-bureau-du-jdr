@@ -41,6 +41,8 @@ export interface DerivedLineage {
    * la surcharger — l'endpoint remplace `species.speed` par cette valeur.
    */
   speedOverride: number | null
+  /** Nom de la lignée choisie (ex. « Drow »), pour l'affichage fiche (en-tête + badges). `null` si aucune. */
+  lineageName: string | null
 }
 
 /**
@@ -54,7 +56,7 @@ export async function deriveChosenLineage(
   baseSpeciesId: number,
   totalLevel: number,
 ): Promise<DerivedLineage> {
-  const empty: DerivedLineage = { features: [], speedOverride: null }
+  const empty: DerivedLineage = { features: [], speedOverride: null, lineageName: null }
 
   const pick = await db
     .select({ lineageId: srcSchema.characterChoices.selectedLineageId })
@@ -67,6 +69,13 @@ export async function deriveChosenLineage(
   const lineageId = pick[0]?.lineageId
   if (lineageId == null) return empty
 
+  const lineageRow = await db
+    .select({ name: srcSchema.speciesLineages.name })
+    .from(srcSchema.speciesLineages)
+    .where(eq(srcSchema.speciesLineages.id, lineageId))
+    .limit(1)
+  const lineageName = lineageRow[0]?.name ?? null
+
   const features = await db
     .select()
     .from(srcSchema.features)
@@ -74,7 +83,9 @@ export async function deriveChosenLineage(
       eq(srcSchema.features.lineageId, lineageId),
       or(isNull(srcSchema.features.levelRequired), lte(srcSchema.features.levelRequired, totalLevel)),
     ))
-  if (!features.length) return empty
+  // Lignée choisie mais aucune feature active (toutes gated au-dessus du niveau) → on garde quand
+  // même le nom pour l'affichage de l'identité de lignée.
+  if (!features.length) return { features: [], speedOverride: null, lineageName }
 
   const ids = features.map(f => f.id)
   const effectRows = await db
@@ -99,5 +110,5 @@ export async function deriveChosenLineage(
     feature: { ...f, featureEffects: (effectsByFeature.get(f.id) ?? []).map(effect => ({ effect })) },
   }))
 
-  return { features: derivedFeatures, speedOverride }
+  return { features: derivedFeatures, speedOverride, lineageName }
 }

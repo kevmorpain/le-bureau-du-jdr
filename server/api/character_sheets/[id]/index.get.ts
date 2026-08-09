@@ -159,15 +159,41 @@ export default defineEventHandler(async (event) => {
   const totalLevel = characterSheet.classes.reduce((sum, c) => sum + ((c as { level?: number }).level ?? 0), 0)
   const species = characterSheet.species
   let speciesWithLineage = species
+  // Nom de la lignée choisie (ex. « Drow ») → affichage fiche (en-tête + badges de features).
+  let lineageName: string | null = null
   if (species) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { features: lineageFeatures, speedOverride } = await deriveChosenLineage(db as any, Number(id), species.id, totalLevel)
+    const derived = await deriveChosenLineage(db as any, Number(id), species.id, totalLevel)
+    lineageName = derived.lineageName
+
+    // Masque les features « point de choix » de l'espèce : celles qui portent une `progression`
+    // (ex. « Lignage elfique ») pilotent la résolution/builder mais ne sont pas des traits à
+    // afficher sur la fiche (la lignée choisie est déjà rendue via ses propres features + l'en-tête).
+    const baseFeatureIds = species.speciesFeatures
+      .map(sf => sf.feature?.id)
+      .filter((v): v is number => typeof v === 'number')
+    const choicePointIds = baseFeatureIds.length
+      ? new Set((await db
+          .select({ fid: srcSchema.progression.featureId })
+          .from(srcSchema.progression)
+          .where(inArray(srcSchema.progression.featureId, baseFeatureIds))).map(r => r.fid))
+      : new Set<number>()
+    const visibleBaseFeatures = species.speciesFeatures.filter(sf => !choicePointIds.has(sf.feature?.id as number))
+
     speciesWithLineage = {
       ...species,
-      speed: speedOverride ?? species.speed,
-      speciesFeatures: [...species.speciesFeatures, ...(lineageFeatures as typeof species.speciesFeatures)],
+      speed: derived.speedOverride ?? species.speed,
+      speciesFeatures: [...visibleBaseFeatures, ...(derived.features as typeof species.speciesFeatures)],
     }
   }
 
-  return { ...characterSheet, species: speciesWithLineage, features: enrichedFeatures, classes: enrichedClasses, abilityScoreImprovements, inventory: inventoryWithItems }
+  return {
+    ...characterSheet,
+    // `lineageName` ajouté ici (littéral frais → pas de contrôle d'excès sur le type de `species`).
+    species: speciesWithLineage ? { ...speciesWithLineage, lineageName } : speciesWithLineage,
+    features: enrichedFeatures,
+    classes: enrichedClasses,
+    abilityScoreImprovements,
+    inventory: inventoryWithItems,
+  }
 })
