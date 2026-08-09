@@ -112,6 +112,12 @@ export interface CharacterProjection {
   subclassIds?: number[]
   /** Compétences dont le perso a déjà la maîtrise — sert à `optionSource:{proficient_skills}`. */
   proficientSkills?: SkillKey[]
+  /**
+   * Armes/catégories d'armes dont le perso a déjà la maîtrise — sert à
+   * `optionSource:{proficient_weapons}` (maîtrise d'armes 5.5 : choisir N parmi celles-ci). La
+   * POPULATION (lecture des maîtrises d'armes) viendra au sous-lot C4 ; ici, résolu s'il est fourni.
+   */
+  proficientWeapons?: string[]
   /** Picks déjà enregistrés (`character_choices`) — sert à calculer `made`/`remaining`. */
   picks?: Array<{ progressionId: number }>
   /**
@@ -212,6 +218,7 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
   const mods = projection.abilityModifiers ?? {}
   const picks = projection.picks ?? []
   const proficientSkills = projection.proficientSkills ?? []
+  const proficientWeapons = projection.proficientWeapons ?? []
   const subclassIds = projection.subclassIds ?? []
 
   const choices: ResolvedChoice[] = []
@@ -252,9 +259,13 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
     const made = picks.filter(x => x.progressionId === p.progressionId).length
     const remaining = Math.max(0, count - made)
 
+    // Sources résolues LIVE contre l'état du perso (non cachables) : compétences / armes déjà
+    // maîtrisées. Les autres options viennent pré-résolues du catalogue (`p.options`).
     const rawOptions = p.optionSource.type === 'proficient_skills'
       ? proficientSkills.map(skill => ({ value: skill }))
-      : (p.options ?? [])
+      : p.optionSource.type === 'proficient_weapons'
+        ? proficientWeapons.map(weapon => ({ value: weapon }))
+        : (p.options ?? [])
     // Ne garder que les options que le perso peut réellement choisir (prérequis + niveau).
     const options = rawOptions.filter(o => isOptionEligible(o, ownerLevel, projection))
 
