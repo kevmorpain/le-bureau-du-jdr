@@ -63,6 +63,9 @@ export const createCharacterSchema = z.object({
   subclassId: z.number().int().positive().nullable().optional(),
   level: z.number().int().min(1).max(20),
   speciesId: z.number().int().positive().nullable().optional(),
+  // Lignée choisie (sous-race 2014 / lignée 2024, cf. D17) — une `species_lineages.id`. La fiche
+  // en dérive les traits via un `character_choices.selected_lineage_id` (résolu côté client).
+  selectedLineageId: z.number().int().positive().nullable().optional(),
   backgroundId: z.number().int().positive().nullable().optional(),
   customBackgroundName: z.string().nullable().optional(),
   // Traits
@@ -151,6 +154,19 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
       .limit(1)
     if (!sub) throw new CharacterValidationError(`Sous-classe introuvable (id=${subclassId}).`)
     if (sub.classId !== classId) throw new CharacterValidationError(`La sous-classe (id=${subclassId}) n'appartient pas à la classe (id=${classId}).`)
+  }
+
+  // V6 — lignée (D17) : la lignée choisie doit appartenir à l'espèce de base du perso
+  // (symétrique de sous-classe∈classe). La progression est dérivée à l'écriture.
+  if (d.selectedLineageId != null) {
+    if (d.speciesId == null) throw new CharacterValidationError(`Une lignée (id=${d.selectedLineageId}) est choisie sans espèce.`)
+    const [lin] = await db
+      .select({ speciesId: schema.speciesLineages.speciesId })
+      .from(schema.speciesLineages)
+      .where(eq(schema.speciesLineages.id, d.selectedLineageId))
+      .limit(1)
+    if (!lin) throw new CharacterValidationError(`Lignée introuvable (id=${d.selectedLineageId}).`)
+    if (lin.speciesId !== d.speciesId) throw new CharacterValidationError(`La lignée (id=${d.selectedLineageId}) n'appartient pas à l'espèce (id=${d.speciesId}).`)
   }
 
   const invocationIds = d.invocationIds ?? []
@@ -289,6 +305,20 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
+  // Choix de lignée (D17) : on rattache le pick à la progression `kind:'lineage'` portée par une
+  // `species_feature` de l'espèce de base, pour que la fiche dérive la lignée (cf. lineageDerivation).
+  let lineageProgressionId: number | null = null
+  if (d.selectedLineageId != null && speciesId != null) {
+    const [prog] = await db
+      .select({ id: schema.progression.id })
+      .from(schema.progression)
+      .innerJoin(schema.speciesFeatures, eq(schema.speciesFeatures.featureId, schema.progression.featureId))
+      .where(and(eq(schema.progression.kind, 'lineage'), eq(schema.speciesFeatures.speciesId, speciesId)))
+      .limit(1)
+    if (!prog) throw new CharacterValidationError(`L'espèce (id=${speciesId}) n'a pas de point de choix de lignée — structure non seedée ?`)
+    lineageProgressionId = prog.id
+  }
+
   // ── 4. Insert de la fiche (HORS batch — id auto-incrément) ───────────────────
   const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
   const hitDieSides = hitDieMatch?.[1]
@@ -350,6 +380,15 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     pactBoon: d.pactBoon ?? null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any))
+
+  // Choix de lignée (D17) → character_choices : la fiche dérive la lignée via selected_lineage_id.
+  if (d.selectedLineageId != null && lineageProgressionId != null) {
+    stmts.push(db.insert(schema.characterChoices).values({
+      characterSheetId: sheetId,
+      progressionId: lineageProgressionId,
+      selectedLineageId: d.selectedLineageId,
+    }))
+  }
 
   // Features passifs (classe + sous-classe)
   if (passiveFeatureIds.length) {
