@@ -16,11 +16,6 @@ const SEED_REGISTRY: Record<string, () => Promise<unknown>> = {
   characterSpecies: _seed.characterSpecies,
   elfLineage: _seed.elfLineage, // compat elfe-seul ; le rollout complet passe par `lineages`
   lineages: _seed.lineages, // toutes les espèces base+lignées (D17 — Elfe, Nain, Halfelin, Gnome, Tieffelin, Drakéide)
-  // Migration des fiches vivantes vers base+lignée (lot 4). Mode `only` UNIQUEMENT (jamais dans
-  // le seed complet) : mute des fiches live, à déclencher délibérément après `?only=lineages`.
-  migrateLineages: _seed.migrateLineages,
-  migrateDragonborn: _seed.migrateDragonborn, // idem, bespoke Drakéide (colonne → lignée) — lot 6
-
   classes: _seed.classes,
   backgrounds: _seed.backgrounds,
   barbare: _seed.barbare,

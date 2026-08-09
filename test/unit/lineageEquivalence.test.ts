@@ -30,8 +30,7 @@ function effectSet(traits: Trait[]): string[] {
 /**
  * Alias nom de LIGNÉE → nom de l'ancienne ESPÈCE séparée (quand ils diffèrent). Le trio est
  * homonyme (« Nain des collines » … == l'ancienne espèce) ; le Tieffelin a la base homonyme de
- * l'ancienne espèce mono → celle-ci est renommée « Tieffelin (Asmodée) ». (Miroir de
- * `LINEAGE_TO_LEGACY_SPECIES` côté migration.)
+ * l'ancienne espèce mono → celle-ci est renommée « Tieffelin (Asmodée) ».
  */
 const LEGACY_ALIAS: Record<string, string> = { 'Asmodée': 'Tieffelin (Asmodée)' }
 
