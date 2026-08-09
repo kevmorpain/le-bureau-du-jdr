@@ -3,7 +3,6 @@ import {
   CLASSES,
   BACKGROUNDS,
   ALIGNMENTS,
-  DRAGON_ANCESTRY,
   ABILITIES,
   ABILITY_SHORT,
   SKILLS,
@@ -32,7 +31,6 @@ export interface BuilderState {
   halfElfBonuses: AbilityKey[]
   variantHumanBonuses: AbilityKey[]
   variantHumanSkill: string | null
-  dragonAncestry: string | null
 
   // Étape 2 — Classe
   classId: string | null
@@ -140,7 +138,6 @@ const INIT_STATE: BuilderState = {
   halfElfBonuses: [],
   variantHumanBonuses: [],
   variantHumanSkill: null,
-  dragonAncestry: null,
   classId: null,
   subclass: null,
   skills: [],
@@ -524,8 +521,8 @@ export function useCharacterBuilder() {
         if (!s.raceId) return false
         if (subraces.value.length && !s.subraceId) return false
         if (s.raceId === 'half-elf' && s.halfElfBonuses.length < 2) return false
-        // Drakéide : l'ascendance draconique est désormais une lignée (D17, lot 6) → couverte par la
-        // validation de sous-race générique ci-dessus (plus de champ dragonAncestry obligatoire).
+        // Drakéide : l'ascendance draconique est une lignée (D17, lot 6) → couverte par la
+        // validation de sous-race générique ci-dessus.
         if (s.raceId === 'human' && s.isVariantHuman) {
           if (s.variantHumanBonuses.length < 2 || !s.variantHumanSkill) return false
         }
@@ -726,7 +723,6 @@ export function useCharacterBuilder() {
     ABILITIES,
     ABILITY_SHORT,
     SKILLS,
-    DRAGON_ANCESTRY,
     RACES,
     CLASSES,
     BACKGROUNDS,

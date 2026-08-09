@@ -156,7 +156,6 @@ export interface RaceData {
   // Cas spéciaux
   hasHalfElfBonuses?: boolean             // Demi-Elfe : +1+1 aux carac. hors CHA
   hasVariantOption?: boolean              // Humain : option variante disponible
-  hasDragonAncestry?: boolean             // Drakéide : choix d'ascendance obligatoire
 }
 
 // ─── Races ─────────────────────────────────────────────────────────────────────
@@ -460,29 +459,6 @@ export const RACES: RaceData[] = [
     ],
     languages: ['Commun', 'Draconique'],
   },
-]
-
-// ─── Ascendance Draconique ──────────────────────────────────────────────────────
-
-export interface DragonAncestryData {
-  id: string
-  name: string
-  damage: string
-  breathShape: string
-  breathSave: 'DEX' | 'CON'
-}
-
-export const DRAGON_ANCESTRY: DragonAncestryData[] = [
-  { id: 'black', name: 'Noir', damage: 'Acide', breathShape: 'Ligne 1,5×9m', breathSave: 'DEX' },
-  { id: 'blue', name: 'Bleu', damage: 'Foudre', breathShape: 'Ligne 1,5×9m', breathSave: 'DEX' },
-  { id: 'brass', name: 'Laiton', damage: 'Feu', breathShape: 'Ligne 1,5×9m', breathSave: 'DEX' },
-  { id: 'bronze', name: 'Bronze', damage: 'Foudre', breathShape: 'Ligne 1,5×9m', breathSave: 'DEX' },
-  { id: 'copper', name: 'Cuivre', damage: 'Acide', breathShape: 'Ligne 1,5×9m', breathSave: 'DEX' },
-  { id: 'gold', name: 'Or', damage: 'Feu', breathShape: 'Cône 4,5m', breathSave: 'DEX' },
-  { id: 'green', name: 'Vert', damage: 'Poison', breathShape: 'Cône 4,5m', breathSave: 'CON' },
-  { id: 'red', name: 'Rouge', damage: 'Feu', breathShape: 'Cône 4,5m', breathSave: 'DEX' },
-  { id: 'silver', name: 'Argent', damage: 'Froid', breathShape: 'Cône 4,5m', breathSave: 'CON' },
-  { id: 'white', name: 'Blanc', damage: 'Froid', breathShape: 'Cône 4,5m', breathSave: 'CON' },
 ]
 
 // ─── Types Classes ─────────────────────────────────────────────────────────────
