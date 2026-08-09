@@ -1,0 +1,14 @@
+-- Lot 6 du chantier « lignée » (D17) : le Drakéide passe en base + 10 lignées d'ascendance
+-- draconique. Le nom de la BASE (« Drakéide ») == le nom de l'espèce mono 2014 actuelle → on
+-- renomme cette dernière en espèce LEGACY « Drakéide (2014) » pour libérer le nom « Drakéide » à la
+-- base (data/dragonborn.ts, seedée par `?only=lineages`). Même approche que le Tieffelin (0087).
+--
+-- La ligne existe en PROD (seed espèces 2014) → renommée EN PLACE. Les fiches Drakéide migrent
+-- ensuite vers base+lignée via `?only=migrateDragonborn` : migration BESPOKE (colonne
+-- `dragonborn_ancestry` → lignée « Dragon <couleur> »), pas l'homonyme générique. Le blob front
+-- pointe désormais son dbName sur ce nom legacy → aucune fenêtre d'irrésolvabilité avant le seed.
+--
+-- Auto-suffisante & idempotente : les migrations tournent AVANT tout seed (la base « Drakéide »
+-- n'existe donc jamais au moment du rename) ; no-op sur base vierge (le seed frais crée directement
+-- « Drakéide (2014) »).
+UPDATE `character_species` SET `name` = 'Drakéide (2014)' WHERE `name` = 'Drakéide' AND `ruleset` = '5';

@@ -59,7 +59,7 @@ const {
   subraceData,
   raceData,
   selectedLineageId,
-  elfBaseSpeciesId,
+  lineageBaseSpeciesId,
   backgroundData,
   finalAbilities,
   hpMax,
@@ -161,7 +161,7 @@ async function handleSubmit() {
     // porte un lineageId), on envoie l'Elfe BASE + le choix de lignée (chemin serveur du lot 5a),
     // au lieu de résoudre l'ancienne espèce séparée par nom.
     const lineageId = selectedLineageId.value
-    const speciesId = lineageId != null ? elfBaseSpeciesId.value : resolveSpeciesId(speciesDbName)
+    const speciesId = lineageId != null ? lineageBaseSpeciesId.value : resolveSpeciesId(speciesDbName)
     const backgroundId = isCustomBg ? null : resolveBackgroundId(bgData?.dbName ?? null)
     const { ids: inventoryItemIds, unresolved: inventoryItemNamesUnresolved } = resolveItemIds(itemNames)
     const pactWeaponItemId = needsPactBoon.value && state.value.pactBoon === 'blade' && state.value.pactWeaponItemName

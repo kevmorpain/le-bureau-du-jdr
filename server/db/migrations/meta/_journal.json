@@ -610,6 +610,20 @@
       "when": 1747872044000,
       "tag": "0086_rename_drow_lineage",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "6",
+      "when": 1747872045000,
+      "tag": "0087_rename_tiefling_legacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "6",
+      "when": 1747872046000,
+      "tag": "0088_rename_dragonborn_legacy",
+      "breakpoints": true
     }
   ]
 }

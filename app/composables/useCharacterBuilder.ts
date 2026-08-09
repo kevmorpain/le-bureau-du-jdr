@@ -255,12 +255,14 @@ export function useCharacterBuilder() {
   // ─── Données dérivées ────────────────────────────────────────────────────────
 
   const raceData = computed(() => RACES.find(r => r.id === state.value.raceId) ?? null)
-  // Sous-races : pour l'Elfe, PILOTÉES PAR LE CATALOGUE (base+lignée, D17, lot 5b) ; les autres
-  // espèces gardent le blob RaceData jusqu'au lot 6. `elfLineageSubraces` (même forme SubraceData)
-  // est vide tant que le catalogue n'est pas chargé → repli transparent sur le blob.
-  const { elfBaseSpeciesId, elfLineageSubraces } = useElfLineages()
+  // Sous-races : pour les espèces « base + lignée » (D17 — Elfe, Nain, Halfelin, Gnome, Tieffelin,
+  // Drakéide), PILOTÉES PAR LE CATALOGUE via le champ opt-in `lineageBaseSpeciesName` du blob ; les
+  // autres espèces gardent leur `RaceData.subraces`. `lineageSubraces` reste vide tant que le
+  // catalogue n'est pas chargé (ou ne correspond pas à la base) → repli transparent sur le blob.
+  const lineageBaseName = computed(() => raceData.value?.lineageBaseSpeciesName ?? null)
+  const { baseSpeciesId: lineageBaseSpeciesId, lineageSubraces } = useSpeciesLineages(lineageBaseName)
   const subraces = computed<SubraceData[]>(() => {
-    if (state.value.raceId === 'elf' && elfLineageSubraces.value.length) return elfLineageSubraces.value
+    if (lineageBaseName.value && lineageSubraces.value.length) return lineageSubraces.value
     return raceData.value?.subraces ?? []
   })
   const subraceData = computed(() => {
@@ -269,6 +271,14 @@ export function useCharacterBuilder() {
   })
   // Lignée choisie (si la sous-race vient du catalogue) → envoyée au serveur à la création (lot 5a).
   const selectedLineageId = computed(() => subraceData.value?.lineageId ?? null)
+  // Lignée UNIQUE pilotée par le catalogue (ex. Tieffelin → Asmodée) : auto-sélection pour ne pas
+  // imposer un « faux choix » à une seule carte. Ne s'applique qu'aux espèces base+lignée (D17) et
+  // seulement s'il n'y a qu'une lignée ; les espèces à plusieurs lignées exigent un vrai choix.
+  watch(subraces, (subs) => {
+    if (lineageBaseName.value && subs.length === 1 && !subs.some(s => s.id === state.value.subraceId)) {
+      state.value.subraceId = subs[0]!.id
+    }
+  }, { immediate: true })
   const classData = computed(() => CLASSES.find(c => c.id === state.value.classId) ?? null)
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
 
@@ -514,7 +524,8 @@ export function useCharacterBuilder() {
         if (!s.raceId) return false
         if (subraces.value.length && !s.subraceId) return false
         if (s.raceId === 'half-elf' && s.halfElfBonuses.length < 2) return false
-        if (s.raceId === 'dragonborn' && !s.dragonAncestry) return false
+        // Drakéide : l'ascendance draconique est désormais une lignée (D17, lot 6) → couverte par la
+        // validation de sous-race générique ci-dessus (plus de champ dragonAncestry obligatoire).
         if (s.raceId === 'human' && s.isVariantHuman) {
           if (s.variantHumanBonuses.length < 2 || !s.variantHumanSkill) return false
         }
@@ -674,7 +685,7 @@ export function useCharacterBuilder() {
     subraces,
     subraceData,
     selectedLineageId,
-    elfBaseSpeciesId,
+    lineageBaseSpeciesId,
     classData,
     backgroundData,
     alignmentData,
