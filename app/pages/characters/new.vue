@@ -171,7 +171,6 @@ async function handleSubmit() {
     const payload = {
       name: state.value.name,
       alignment: state.value.alignment ?? undefined,
-      dragonbornAncestry: state.value.dragonAncestry ?? null,
       maxHp: hpMax.value,
       classId,
       subclassId,

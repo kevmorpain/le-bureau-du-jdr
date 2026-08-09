@@ -214,7 +214,6 @@ function selectRace(id: string) {
   state.value.halfElfBonuses = []
   state.value.variantHumanBonuses = []
   state.value.variantHumanSkill = null
-  state.value.dragonAncestry = null
   state.value.isVariantHuman = false
 }
 
