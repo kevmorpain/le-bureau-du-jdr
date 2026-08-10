@@ -73,6 +73,9 @@ beforeAll(async () => {
   await db.insert(schema.magicSchools).values({ id: 1, name: 'Invocation' })
   await db.insert(schema.users).values({ id: OWNER, provider: 'discord', providerUserId: 'x', name: 'Testeur' })
   await db.insert(schema.characterSpecies).values({ id: 1, name: 'Humain', size: 'medium', speed: 30 })
+  // Espèce 5.5 (Goliath) — sert la garde de cohérence d'édition (Lot A) : incompatible avec
+  // une classe 2014. Tout le reste de la fixture est en '5' (défaut).
+  await db.insert(schema.characterSpecies).values({ id: 9, name: 'Goliath', size: 'medium', speed: 30, ruleset: '5.5' })
   await db.insert(schema.abilityScores).values(
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(id => ({ id, name: id.toUpperCase() })),
   )
@@ -244,6 +247,23 @@ describe('createCharacter — validation serveur (rejette les choix illégaux)',
       { spellId: 600, source: 'arcanum_6' },
       { spellId: 601, source: 'arcanum_9' },
     ])
+  })
+})
+
+// ── Cohérence d'édition : garde défense-en-profondeur (Lot A) ──────────────────
+
+describe('createCharacter — cohérence d\'édition (garde Lot A)', () => {
+  const GOLIATH_55 = 9 // espèce ruleset '5.5'
+
+  it('requête forgée : espèce 5.5 sur une classe 2014 → 422 (avant toute écriture)', async () => {
+    await expect(createCharacter(db, baseInput({ classId: FIGHTER, level: 1, speciesId: GOLIATH_55 }), OWNER))
+      .rejects.toThrow(/édition/i)
+  })
+
+  it('création 2014 normale : la fiche est estampillée ruleset \'5\' (no-op)', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 1 }), OWNER)
+    const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
+    expect(sheet.ruleset).toBe('5')
   })
 })
 

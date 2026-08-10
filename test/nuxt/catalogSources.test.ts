@@ -13,6 +13,7 @@ import {
   loadFeats,
   loadInvocations,
   loadBackgrounds,
+  loadSpells,
 } from '../../server/utils/catalogSources'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,6 +100,24 @@ beforeAll(async () => {
   await orm.insert(srcSchema.classes).values({ id: 3, name: 'Barde', hitDice: '1d8', ruleset: '5.5' })
   await orm.insert(srcSchema.features).values({ id: 102, name: 'Vigilant', featureType: 'feat', description: 'don 5.5', ruleset: '5.5' })
   await orm.insert(srcSchema.backgrounds).values({ id: 4, name: 'Guide', ruleset: '5.5' })
+
+  // Guerrier 5.5 HOMONYME (id 5) + sa sous-classe : prouve que loadSubclasses résout par
+  // (nom, ruleset) — sans le filtre, `.limit(1)` sur le nom seul serait non déterministe.
+  await orm.insert(srcSchema.classes).values({ id: 5, name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' })
+  await orm.insert(srcSchema.subclasses).values({ id: 50, classId: 5, name: 'Arcaniste (2024)', description: 'desc 5.5' })
+
+  // Sorts : « Projectile magique » DUPLIQUÉ par édition (contenu divergent, 0089) + un cantrip
+  // 2014. Listes de classe datées : Guerrier 2014 → sort '5', Guerrier 5.5 → sort '5.5'.
+  await orm.insert(srcSchema.magicSchools).values({ id: 1, name: 'Évocation' })
+  await orm.insert(srcSchema.spells).values([
+    { id: 1, name: 'Projectile magique', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: 1 },
+    { id: 2, name: 'Projectile magique', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: 1, ruleset: '5.5' },
+    { id: 3, name: 'Lumière', level: 0, castingTime: '1 action', range: 0, duration: '1 heure', schoolId: 1 },
+  ])
+  await orm.insert(srcSchema.spellClasses).values([
+    { spellId: 1, classId: 1 }, // Guerrier 2014 (ruleset '5' par défaut)
+    { spellId: 2, classId: 5, ruleset: '5.5' }, // Guerrier 5.5
+  ])
 })
 
 describe('loadClasses', () => {
@@ -194,7 +213,30 @@ describe('filtre ruleset (défaut \'5\' → le builder 2014 ne voit jamais le 5.
 
   it('loadClasses : défaut exclut le 5.5 ; \'5.5\' ne rend que le 5.5', async () => {
     expect((await loadClasses(orm)).map(c => c.name)).toEqual(['Guerrier', 'Occultiste'])
-    expect((await loadClasses(orm, '5.5')).map(c => c.name)).toEqual(['Barde'])
+    // 5.5 = Barde (id 3) + Guerrier homonyme (id 5), triés par id de classe.
+    expect((await loadClasses(orm, '5.5')).map(c => c.name)).toEqual(['Barde', 'Guerrier'])
+  })
+
+  it('loadSubclasses : « Guerrier » résolu par (nom, ruleset) — déterministe entre éditions', async () => {
+    // Défaut '5' → le Guerrier 2014 (id 1) et SES sous-classes, jamais celles du 5.5.
+    expect((await loadSubclasses(orm, 'Guerrier')).map(s => s.name)).toEqual(['Champion', 'Chevalier occulte'])
+    // '5.5' → le Guerrier 2024 (id 5) et sa seule sous-classe.
+    expect((await loadSubclasses(orm, 'Guerrier', '5.5')).map(s => s.name)).toEqual(['Arcaniste (2024)'])
+  })
+
+  it('loadSpells (global) : défaut = sorts 2014 ; \'5.5\' = sorts 2024', async () => {
+    // Global, trié par niveau puis nom : Lumière (0) < Projectile magique (1), 2014 uniquement.
+    expect((await loadSpells(orm)).map(s => s.name)).toEqual(['Lumière', 'Projectile magique'])
+    expect((await loadSpells(orm)).map(s => s.id)).toEqual([3, 1])
+    // 5.5 : uniquement le Projectile magique dupliqué en 2024.
+    expect((await loadSpells(orm, { ruleset: '5.5' })).map(s => s.id)).toEqual([2])
+  })
+
+  it('loadSpells (par classe) : liste datée par édition, classe homonyme résolue par ruleset', async () => {
+    // Guerrier 2014 → son sort 2014 (id 1), jamais le 2024.
+    expect((await loadSpells(orm, { className: 'Guerrier' })).map(s => s.id)).toEqual([1])
+    // Guerrier 2024 (homonyme) → son sort 2024 (id 2).
+    expect((await loadSpells(orm, { className: 'Guerrier', ruleset: '5.5' })).map(s => s.id)).toEqual([2])
   })
 
   it('loadFeats : défaut exclut le 5.5 ; \'5.5\' ne rend que le 5.5', async () => {

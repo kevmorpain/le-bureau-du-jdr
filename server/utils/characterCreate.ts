@@ -7,6 +7,7 @@ import { buildCatalog } from '~~/server/utils/catalog'
 import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 
 /**
  * Logique de CRÉATION de personnage extraite du handler (point 5d, volet 2). Objectifs
@@ -138,6 +139,64 @@ export const createCharacterSchema = z.object({
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>
 
 /**
+ * Garde de COHÉRENCE d'ÉDITION (défense en profondeur, Lot A). L'UI filtrée n'expose jamais
+ * un mélange, mais une requête FORGÉE pourrait poser une entité 5.5 sur une fiche 2014. On
+ * exige que toute entité datée référencée (espèce, historique global, aptitudes/dons, sorts)
+ * partage le `ruleset` de la CLASSE — l'ancre (`classId` obligatoire), estampillée sur la fiche.
+ * Sous-classe omise : `subclasses` n'a pas de `ruleset` (parent-gated, déjà validée ∈ classe).
+ * No-op tant que tout est en '5'. Historique homebrew (per-fiche) ignoré (créé ici même).
+ */
+async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset: Ruleset): Promise<void> {
+  if (d.speciesId != null) {
+    const [sp] = await db
+      .select({ ruleset: schema.characterSpecies.ruleset })
+      .from(schema.characterSpecies)
+      .where(eq(schema.characterSpecies.id, d.speciesId))
+      .limit(1)
+    if (sp && sp.ruleset !== ruleset) throw new CharacterValidationError(`L'espèce (id=${d.speciesId}, éd. ${sp.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
+  }
+
+  if (d.backgroundId != null) {
+    const [bg] = await db
+      .select({ ruleset: schema.backgrounds.ruleset })
+      .from(schema.backgrounds)
+      .where(eq(schema.backgrounds.id, d.backgroundId))
+      .limit(1)
+    if (bg && bg.ruleset !== ruleset) throw new CharacterValidationError(`L'historique (id=${d.backgroundId}, éd. ${bg.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
+  }
+
+  const featureIds = [
+    ...(d.asiFeats ?? []).map(f => f.featureId),
+    ...(d.bonusFeatureId != null ? [d.bonusFeatureId] : []),
+    ...(d.invocationIds ?? []),
+  ]
+  if (featureIds.length) {
+    const rows = await db
+      .select({ id: schema.features.id, ruleset: schema.features.ruleset })
+      .from(schema.features)
+      .where(inArray(schema.features.id, featureIds))
+    const bad = rows.find(r => r.ruleset !== ruleset)
+    if (bad) throw new CharacterValidationError(`Une aptitude/un don référencé (id=${bad.id}, éd. ${bad.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
+  }
+
+  // Sorts : datés par édition depuis 0089 (description/effets divergents) → même contrainte.
+  const spellIds = [
+    ...d.spellIds,
+    ...(d.pactBoonCantripIds ?? []),
+    ...(d.arcaneMysteria ?? []).map(a => a.spellId),
+    ...(d.bookOfAncientSecretsSpellIds ?? []),
+  ]
+  if (spellIds.length) {
+    const rows = await db
+      .select({ id: schema.spells.id, ruleset: schema.spells.ruleset })
+      .from(schema.spells)
+      .where(inArray(schema.spells.id, spellIds))
+    const bad = rows.find(r => r.ruleset !== ruleset)
+    if (bad) throw new CharacterValidationError(`Un sort référencé (id=${bad.id}, éd. ${bad.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
+  }
+}
+
+/**
  * VALIDATION serveur des choix — CONSERVATRICE (ne rejette que des violations non ambiguës, pour
  * ne jamais recaler une création légitime). Ce que le catalogue/résolution permettent de vérifier
  * aujourd'hui : sous-classe∈classe, manifestation∈groupe & nombre, faveur de pacte légitime, sort
@@ -209,7 +268,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
 export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: number): Promise<{ id: number }> {
   // ── 1. Lectures des entités résolues côté client ────────────────────────────
   const [cls] = await db
-    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, spellcastingType: schema.classes.spellcastingType })
+    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, spellcastingType: schema.classes.spellcastingType, ruleset: schema.classes.ruleset })
     .from(schema.classes)
     .where(eq(schema.classes.id, d.classId))
     .limit(1)
@@ -249,6 +308,9 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   }
 
   // ── 2. Validation serveur (autorité) — AVANT toute écriture ──────────────────
+  // Édition figée par la CLASSE (ancre), estampillée sur la fiche + garde de cohérence.
+  const ruleset: Ruleset = cls.ruleset
+  await validateRulesetCoherence(db, d, ruleset)
   await validateChoices(db, d, cls.id, subclassId)
 
   // ── 3. Lectures dépendantes (features passifs, sorts octroyés) — avant le batch ──
@@ -329,6 +391,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     .values({
       ownerId,
       name: d.name,
+      ruleset,
       speciesId: speciesId ?? undefined,
       backgroundId: backgroundId ?? undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

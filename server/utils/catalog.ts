@@ -3,6 +3,7 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as srcSchema from '~~/server/db/schema'
 import { classNameFromSlug } from '~~/shared/rules/classSlugs'
 import { SKILL_KEYS } from '~~/shared/rules/skills'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
 import type { Catalog, CatalogProgression, ResolvedOption } from '~~/shared/rules/resolve'
@@ -49,6 +50,9 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
       ownerClassId: srcSchema.features.classId,
       ownerSubclassId: srcSchema.features.subclassId,
       ownerLevelRequired: srcSchema.features.levelRequired,
+      // Édition du propriétaire de la progression : filtre les options cachables (feats /
+      // feature_group / spells) sur la même édition → aucune fuite 5.5 dans un parcours 2014.
+      ownerRuleset: srcSchema.features.ruleset,
     })
     .from(srcSchema.progression)
     .innerJoin(srcSchema.features, eq(srcSchema.progression.featureId, srcSchema.features.id))
@@ -92,7 +96,7 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
     if (ownerSpeciesId != null && opts.speciesIds && !opts.speciesIds.includes(ownerSpeciesId)) continue
 
     const optionSource = r.optionSource as OptionSource
-    const options = await resolveOptions(db, optionSource, { ownerClassId, ownerSpeciesId })
+    const options = await resolveOptions(db, optionSource, { ownerClassId, ownerSpeciesId, ruleset: r.ownerRuleset })
 
     progressions.push({
       progressionId: r.progressionId,
@@ -117,9 +121,12 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
  * sources résolues live contre l'état du perso (`proficient_skills`) ou pas encore cataloguées
  * (languages/tools/abilities), auquel cas `resolveChoices` s'en charge ou n'a rien à proposer.
  * `owner` porte l'id de la classe propriétaire (`subclasses`) ou de l'espèce propriétaire
- * (`lineages`, D17) — l'un ou l'autre selon l'owner de la progression.
+ * (`lineages`, D17) — l'un ou l'autre selon l'owner de la progression — ET son `ruleset` :
+ * les sources cachables globales (feats / feature_group / spells) sont filtrées dessus pour
+ * qu'un point de choix 2014 ne propose jamais une entité 5.5 (et réciproquement). Les sources
+ * parent-gated (subclasses / lineages) sont déjà édition-spécifiques via leur owner.
  */
-async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassId?: number, ownerSpeciesId?: number }): Promise<ResolvedOption[] | undefined> {
+async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassId?: number, ownerSpeciesId?: number, ruleset: Ruleset }): Promise<ResolvedOption[] | undefined> {
   switch (source.type) {
     case 'feature_group': {
       const feats = await db
@@ -129,7 +136,7 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
           prerequisites: srcSchema.features.prerequisites,
         })
         .from(srcSchema.features)
-        .where(eq(srcSchema.features.tag, source.group))
+        .where(and(eq(srcSchema.features.tag, source.group), eq(srcSchema.features.ruleset, owner.ruleset)))
       return feats.map(f => ({
         featureId: f.id,
         ...(f.levelRequired != null ? { levelRequired: f.levelRequired } : {}),
@@ -159,13 +166,19 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
     case 'spells': {
       const className = classNameFromSlug(source.spellClass)
       if (!className) return []
+      // Classe de la liste résolue par (nom, ruleset) — déterministe entre éditions ; puis
+      // liens de liste ET sort filtrés sur la même édition (spell_classes.ruleset + spells.ruleset).
       const [cls] = await db
         .select({ id: srcSchema.classes.id })
         .from(srcSchema.classes)
-        .where(eq(srcSchema.classes.name, className))
+        .where(and(eq(srcSchema.classes.name, className), eq(srcSchema.classes.ruleset, owner.ruleset)))
         .limit(1)
       if (!cls) return []
-      const conds = [eq(srcSchema.spellClasses.classId, cls.id)]
+      const conds = [
+        eq(srcSchema.spellClasses.classId, cls.id),
+        eq(srcSchema.spellClasses.ruleset, owner.ruleset),
+        eq(srcSchema.spells.ruleset, owner.ruleset),
+      ]
       if (source.cantripsOnly) conds.push(eq(srcSchema.spells.level, 0))
       else if (source.maxLevel != null) conds.push(lte(srcSchema.spells.level, source.maxLevel))
       const spellRows = await db
@@ -180,7 +193,7 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
       const feats = await db
         .select({ id: srcSchema.features.id, prerequisites: srcSchema.features.prerequisites })
         .from(srcSchema.features)
-        .where(eq(srcSchema.features.featureType, 'feat'))
+        .where(and(eq(srcSchema.features.featureType, 'feat'), eq(srcSchema.features.ruleset, owner.ruleset)))
       return feats.map(f => ({
         featureId: f.id,
         ...(f.prerequisites ? { prerequisites: f.prerequisites as FeaturePrerequisite } : {}),
