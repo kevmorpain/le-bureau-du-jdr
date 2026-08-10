@@ -108,6 +108,7 @@ export async function loadFeats(db: Db, ruleset: Ruleset = '5') {
       name: srcSchema.features.name,
       description: srcSchema.features.description,
       prerequisites: srcSchema.features.prerequisites,
+      featCategory: srcSchema.features.featCategory, // catégorie 2024 (null pour les dons 2014)
     })
     .from(srcSchema.features)
     .where(and(eq(srcSchema.features.featureType, 'feat'), eq(srcSchema.features.ruleset, ruleset)))

@@ -2,6 +2,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { Formula } from '~~/shared/utils/formula'
 import type { FeatureTag } from '~~/shared/rules/featureTags'
+import type { FeatCategory } from '~~/shared/rules/featCategories'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityScoreKey } from './effects'
 import classes from './classes'
@@ -65,6 +66,10 @@ const features = sqliteTable(
     // pas une. Indexé pour résoudre `optionSource:{feature_group}` (progression, 4c)
     // par `WHERE tag = <group>`. Backfillé pour les invocations par la migration 0081.
     tag: text('tag').$type<FeatureTag>(),
+    // Catégorie de don 2024 (cf. shared/rules/featCategories.ts, « identité → colonne »).
+    // Nullable : seuls les dons (`feature_type='feat'`) 2024 en portent une ; les dons 2014
+    // restent NULL → un `optionSource:{feats}` sans `category` les propose tous (iso-2014).
+    featCategory: text('feat_category').$type<FeatCategory>(),
     actionType: text('action_type').$type<ActionType>(),
     maxUsesFormula: text('max_uses_formula', { mode: 'json' }).$type<Formula>(),
     rechargeType: text('recharge_type').$type<RechargeType>(),
