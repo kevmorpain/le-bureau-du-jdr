@@ -12,7 +12,12 @@ import featureEffects from './feature_effects'
 import speciesFeatures from './species_features'
 import characterFeatures from './character_features'
 
-export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature'
+// `proficiency_grant` : feature PORTEUSE des maîtrises de base d'une classe (armes/armures),
+// jamais matérialisée ni affichée — elle sert de support à des effets `weapon_proficiency`/
+// `proficiency` que la fiche DÉRIVE de l'origine (volet B, cf. shared/rules/classProficiencies.ts).
+// Exclue par construction des sweeps de matérialisation (qui filtrent `class_feature`/
+// `subclass_feature`) et du catalogue (elle ne porte aucune `progression`).
+export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature' | 'proficiency_grant'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
 export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
 export type RechargeType = typeof RECHARGE_TYPES[number]

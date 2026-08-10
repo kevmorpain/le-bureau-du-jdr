@@ -9,6 +9,34 @@ import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequ
 import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
+import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
+
+/**
+ * Nom (interne) de la feature porteuse des maîtrises de base d'une classe. Jamais affichée
+ * ni matérialisée (`feature_type = 'proficiency_grant'`) — elle ne sert qu'à porter les effets
+ * `weapon_proficiency`/`proficiency` que la fiche dérive de l'origine (volet B).
+ */
+export const CLASS_PROFICIENCY_CARRIER_NAME = 'Maîtrises de la classe'
+
+/**
+ * Construit la feature porteuse des maîtrises de base d'une classe depuis la source unique
+ * `CLASS_PROFICIENCIES` (clés machine). `null` si la classe n'y figure pas. Traitée comme une
+ * `FeatureDef` ordinaire par `seedClass` (mais sans tag ni progression → syncs no-op).
+ */
+function buildProficiencyCarrier(className: string): FeatureDef | null {
+  const prof = CLASS_PROFICIENCIES[className]
+  if (!prof) return null
+  return {
+    name: CLASS_PROFICIENCY_CARRIER_NAME,
+    description: null,
+    featureType: 'proficiency_grant',
+    levelRequired: 1,
+    effects: [
+      ...prof.armor.map((value): Effect => ({ type: 'proficiency', value })),
+      ...prof.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
+    ],
+  }
+}
 
 /**
  * Point de choix porté par une feature (owner = featureId, cf. decisions.md D4). Écrit
@@ -64,7 +92,13 @@ export async function seedClass(
     return { featuresInserted, subclassesInserted }
   }
 
-  for (const featureDef of baseFeatures) {
+  // Feature porteuse des maîtrises de base (volet B) : ajoutée à la volée depuis la source
+  // unique `CLASS_PROFICIENCIES`, sans toucher les données de chaque classe. Ne porte ni tag ni
+  // progression → `_syncFeatureTag`/`_syncProgression` sont no-op sur elle.
+  const carrier = buildProficiencyCarrier(className)
+  const allBaseFeatures = carrier ? [...baseFeatures, carrier] : baseFeatures
+
+  for (const featureDef of allBaseFeatures) {
     const { effects = [], meta, prerequisites, tag, progression: progressionDef, ...data } = featureDef
     // Important : on inclut `levelRequired` dans la clef d'unicité, sinon
     // les features récurrentes au même nom (ex. « Amélioration de caractéristiques »
