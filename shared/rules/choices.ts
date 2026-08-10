@@ -1,7 +1,12 @@
 import { z } from 'zod'
 import type { FeatureTag } from './featureTags'
+import type { FeatCategory } from './featCategories'
 import type { SkillKey } from './skills'
 import type { AbilityKey } from './abilities'
+
+// Ré-exporté ici pour les importateurs historiques (`OptionSource` la référence). Source =
+// shared/rules/featCategories.ts (union dérivée de FEAT_CATEGORIES).
+export type { FeatCategory } from './featCategories'
 
 /**
  * Modèle de choix — ensemble fermé canonique du `kind` d'un point de choix, plus le
@@ -43,14 +48,6 @@ export type ChoiceKind = (typeof CHOICE_KINDS)[number]
 
 /** Validateur Zod dérivé — à utiliser au lieu d'un `z.enum([…])` recopié. */
 export const choiceKindEnum = z.enum(CHOICE_KINDS)
-
-/**
- * Catégorie de don (Origine / Général / Style de combat / Faveur épique en 5.5).
- * Pas encore modélisée en base — les dons ne portent pas de colonne `category` avant
- * la Phase 2. Typée `string` pour l'instant ; deviendra une union dérivée (D6) le jour
- * où les dons seront catégorisés. Référencée seulement par `OptionSource` (`feats`).
- */
-export type FeatCategory = string
 
 /**
  * « Parmi quoi » un point de choix propose ses options (cf. rules-engine.md §4). JSON

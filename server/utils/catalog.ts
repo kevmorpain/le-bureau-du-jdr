@@ -190,10 +190,14 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
     }
 
     case 'feats': {
+      // Édition du propriétaire (Lot A) + catégorie 2024 quand la progression la précise (C2) :
+      // un historique 2024 ⟶ dons d'ORIGINE seulement. Sans catégorie (dons 2014) ⟶ tous.
+      const conds = [eq(srcSchema.features.featureType, 'feat'), eq(srcSchema.features.ruleset, owner.ruleset)]
+      if (source.category) conds.push(eq(srcSchema.features.featCategory, source.category))
       const feats = await db
         .select({ id: srcSchema.features.id, prerequisites: srcSchema.features.prerequisites })
         .from(srcSchema.features)
-        .where(and(eq(srcSchema.features.featureType, 'feat'), eq(srcSchema.features.ruleset, owner.ruleset)))
+        .where(and(...conds))
       return feats.map(f => ({
         featureId: f.id,
         ...(f.prerequisites ? { prerequisites: f.prerequisites as FeaturePrerequisite } : {}),
