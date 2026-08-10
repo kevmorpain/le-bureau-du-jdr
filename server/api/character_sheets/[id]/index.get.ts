@@ -2,6 +2,7 @@ import { db, schema } from 'hub:db'
 import * as srcSchema from '~~/server/db/schema'
 import { eq, inArray } from 'drizzle-orm'
 import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
+import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -187,6 +188,13 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // ─── Triade d'origine 2024 (choix composite `ability_scores`) ────────────────────────────
+  // Dérive live l'augmentation de carac. depuis `character_choices.payload` (util DI injecté,
+  // patron lignée). Map VIDE pour toute fiche sans pick `ability_scores` (toutes les fiches
+  // 2014) → aucun changement. Consommé par le front avec le builder 2024 (câblage différé).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const originAbilityBonuses = await deriveAbilityScoreChoices(db as any, Number(id))
+
   return {
     ...characterSheet,
     // `lineageName` ajouté ici (littéral frais → pas de contrôle d'excès sur le type de `species`).
@@ -195,5 +203,6 @@ export default defineEventHandler(async (event) => {
     classes: enrichedClasses,
     abilityScoreImprovements,
     inventory: inventoryWithItems,
+    originAbilityBonuses,
   }
 })
