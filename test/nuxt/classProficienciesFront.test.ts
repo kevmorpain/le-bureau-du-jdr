@@ -1,37 +1,54 @@
 import { describe, it, expect } from 'vitest'
-import { CLASSES, ARMOR_PROF_KEYS, WEAPON_PROF_KEYS } from '../../app/data/character-builder'
+import { CLASSES, ARMOR_PROF_KEYS } from '../../app/data/character-builder'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 
 // Volet B, étape 1 — ÉQUIVALENCE des maîtrises de base de classe (blob front → source unique).
 // Les maîtrises d'armes/armures de classe descendent du BLOB `app/data/character-builder.ts`
-// (libellés FR, mappés à la volée par le builder) vers `shared/rules/classProficiencies.ts`
-// (clés machine), d'où elles seront posées en effets sur une feature porteuse (seedClass).
+// (libellés FR) vers `shared/rules/classProficiencies.ts`, d'où elles seront posées en effets
+// sur une feature porteuse (seedClass).
 //
-// Ce test prouve, AVANT toute logique de seed/dérivation, que la nouvelle source produit
-// EXACTEMENT le même ENSEMBLE de clés que le builder produit aujourd'hui pour chaque classe :
-//   `new Set(blob.map(p => KEYS[p] ?? p))`  (cf. app/pages/characters/new.vue).
-// C'est le filet anti-transcription : un perso créé sur la source dérivée aura les mêmes
-// maîtrises que le stockage actuel. Env `nuxt` (le blob importe l'alias `~~`), patron de
-// `classesIdentityFront.test.ts`. Ce test disparaîtra avec la copie front (volet B, étape 4).
+// Ce test tient la source à la CIBLE CORRIGÉE dérivée du blob (drift-protection : il lit le blob
+// LIVE). La normalisation (volet B étape 1) fixe 3 défauts du mapping historique du builder :
+//   - CATÉGORIES d'arme → token machine EN (`simple_weapons`/`martial_weapons`) ;
+//   - ARMES PRÉCISES → nom FR de l'item (au lieu des clés EN longsword/rapier/… qui ne matchaient
+//     aucun item et s'affichaient en anglais) → donc le libellé FR du blob, verbatim ;
+//   - « Masse » (Druide) → « Masse d'armes » (le vrai nom de l'item).
+// Les ARMURES étaient déjà correctes (token EN) → inchangées, vérifiées contre `ARMOR_PROF_KEYS`.
+// Env `nuxt` (le blob importe l'alias `~~`), patron de `classesIdentityFront.test.ts`.
+// Ce test disparaîtra avec la copie front (volet B, étape 4).
 
 /** Ensemble trié dédupliqué — comparaison indépendante de l'ordre. */
 const asSet = (arr: string[]): string[] => [...new Set(arr)].sort()
 
-/** Reproduit le mapping du builder : clé machine si connue, sinon libellé FR brut. */
-const mapArmor = (labels: string[]): string[] => asSet(labels.map(p => ARMOR_PROF_KEYS[p] ?? p))
-const mapWeapon = (labels: string[]): string[] => asSet(labels.map(p => WEAPON_PROF_KEYS[p] ?? p))
+// Seules les CATÉGORIES d'arme deviennent des tokens machine ; toute arme précise reste en FR.
+const WEAPON_CATEGORY_KEYS: Record<string, string> = {
+  'Armes courantes': 'simple_weapons',
+  'Armes de guerre': 'martial_weapons',
+}
+// Corrections de noms d'arme précise (libellé blob → nom exact de l'item).
+const WEAPON_NAME_FIXES: Record<string, string> = {
+  Masse: 'Masse d\'armes',
+}
 
-describe('maîtrises de base de classe — blob front ≡ source unique (équivalence, volet B)', () => {
+/** Cible corrigée d'un libellé d'arme du blob : catégorie→token, sinon nom FR (fixé au besoin). */
+const normalizeWeapon = (label: string): string =>
+  WEAPON_CATEGORY_KEYS[label] ?? WEAPON_NAME_FIXES[label] ?? label
+
+/** Armures : mapping builder inchangé (elles étaient déjà en tokens EN corrects). */
+const mapArmor = (labels: string[]): string[] => asSet(labels.map(p => ARMOR_PROF_KEYS[p] ?? p))
+
+describe('maîtrises de base de classe — blob front ≡ source unique corrigée (volet B)', () => {
   it('couvre exactement les 12 classes du blob (aucune manquante ni en trop)', () => {
     expect(Object.keys(CLASS_PROFICIENCIES).sort()).toEqual(CLASSES.map(c => c.dbName).sort())
   })
 
   for (const cls of CLASSES) {
-    it(`${cls.dbName} : armes + armures dérivées == mapping du builder`, () => {
+    it(`${cls.dbName} : armes + armures == cible corrigée du blob`, () => {
       const source = CLASS_PROFICIENCIES[cls.dbName]
       expect(source, `entrée manquante pour ${cls.dbName}`).toBeDefined()
       expect(asSet(source!.armor), `armures ${cls.dbName}`).toEqual(mapArmor(cls.armorProficiencies))
-      expect(asSet(source!.weapon), `armes ${cls.dbName}`).toEqual(mapWeapon(cls.weaponProficiencies))
+      expect(asSet(source!.weapon), `armes ${cls.dbName}`)
+        .toEqual(asSet(cls.weaponProficiencies.map(normalizeWeapon)))
     })
   }
 
@@ -40,6 +57,14 @@ describe('maîtrises de base de classe — blob front ≡ source unique (équiva
     const valid = new Set(['light', 'medium', 'heavy', 'shield', 'all_armor'])
     for (const [name, prof] of Object.entries(CLASS_PROFICIENCIES)) {
       for (const a of prof.armor) expect(valid.has(a), `armure inattendue « ${a} » pour ${name}`).toBe(true)
+    }
+  })
+
+  it('aucune clé d\'arme précise anglaise résiduelle (elles ne matchent aucun item FR)', () => {
+    // Garde anti-régression : les clés EN du mapping historique du builder sont proscrites côté source.
+    const forbidden = new Set(['longsword', 'rapier', 'shortsword', 'hand_crossbow', 'light_crossbow', 'longbow', 'shortbow'])
+    for (const [name, prof] of Object.entries(CLASS_PROFICIENCIES)) {
+      for (const w of prof.weapon) expect(forbidden.has(w), `arme précise anglaise « ${w} » pour ${name}`).toBe(false)
     }
   })
 })

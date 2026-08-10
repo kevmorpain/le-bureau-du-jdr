@@ -5,25 +5,30 @@
 // BLOB front `app/data/character-builder.ts` (`ClassData.armorProficiencies`/`weaponProficiencies`,
 // en libellés FR), mappées à la volée en clés machine par le builder
 // (`ARMOR_PROF_KEYS[p] ?? p` / `WEAPON_PROF_KEYS[p] ?? p`) puis STOCKÉES en grants
-// `character_proficiency_overrides`. On les descend ici en clés machine pour les poser en EFFETS
-// sur une feature porteuse de classe (seedClass → feature_type `proficiency_grant`), afin que la
-// fiche les DÉRIVE (comme l'espèce) au lieu de les matérialiser.
+// `character_proficiency_overrides`. On les descend ici pour les poser en EFFETS sur une feature
+// porteuse de classe (seedClass → feature_type `proficiency_grant`), afin que la fiche les DÉRIVE.
 //
-// ⚠️ ÉQUIVALENCE (test/nuxt/classProficienciesFront.test.ts) : pour chaque classe, l'ensemble
-// ci-dessous doit être EXACTEMENT `new Set(blob.map(p => KEYS[p] ?? p))`. On reproduit donc
-// verbatim les quirks pré-existants du blob — SANS les corriger dans ce volet :
-//   - Druide / Ensorceleur / Magicien portent des noms d'armes FR bruts (non mappés en clé
-//     machine par le builder) ; « Masse » (≠ l'item « Masse d'armes ») en est un.
-//   - Moine / Ensorceleur / Magicien n'ont aucune maîtrise d'armure.
+// CONVENTION (normalisée, cf. volet B étape 1) : la fiche reconnaît une maîtrise d'ARME par
+//   - CATÉGORIE → token machine EN (`simple_weapons`/`martial_weapons`), comparé à `weapon_category`,
+//     affiché en FR via `weaponProficiencyLabels` ;
+//   - ARME PRÉCISE → **nom FR de l'item** (`item.name`), comparé par nom (`useCharacterInventory`).
+// De même les ARMURES sont des tokens EN (`light`/`medium`/`heavy`/`shield`/`all_armor`), comparés à
+// `armor_type` et affichés en FR via `armorTypeLabels`.
 //
-// Clés machine : armes → catégories (`simple_weapons`/`martial_weapons`) ou clé d'arme précise
-// (`longsword`, `hand_crossbow`, `light_crossbow`, …) ou nom FR brut ; armures →
-// `light`/`medium`/`all_armor`/`shield` (consommées par `useCharacterInventory.armorProficiencies`).
+// ⚠️ On CORRIGE ici 3 défauts du mapping historique du builder (qui mappait certaines armes précises
+// en clé EN — `longsword`/`rapier`/`shortsword`/`hand_crossbow`/`light_crossbow` — qui ne matchaient
+// AUCUN item FR et s'affichaient en anglais sur la fiche) : les armes précises sont désormais en FR
+// (Barde/Roublard/Moine/Ensorceleur/Magicien), et « Masse » (Druide) devient « Masse d'armes » (le
+// vrai nom de l'item). Divergence assumée vs les grants stockés actuels — l'équivalence
+// (test/nuxt/classProficienciesFront.test.ts) vérifie « == cible corrigée », pas la copie verbatim.
 
 export interface ClassProficiencies {
-  /** Maîtrises d'armure — effet `{ type: 'proficiency', value }`. */
+  /** Maîtrises d'armure — effet `{ type: 'proficiency', value }`. Tokens EN. */
   armor: string[]
-  /** Maîtrises d'arme — effet `{ type: 'weapon_proficiency', value }`. */
+  /**
+   * Maîtrises d'arme — effet `{ type: 'weapon_proficiency', value }`. Catégorie = token EN
+   * (`simple_weapons`/`martial_weapons`) ; arme précise = nom FR de l'item.
+   */
   weapon: string[]
 }
 
@@ -35,7 +40,7 @@ export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
   },
   Barde: {
     armor: ['light'],
-    weapon: ['simple_weapons', 'hand_crossbow', 'longsword', 'rapier', 'shortsword'],
+    weapon: ['simple_weapons', 'Arbalète de poing', 'Épée longue', 'Rapière', 'Épée courte'],
   },
   Clerc: {
     armor: ['light', 'medium', 'shield'],
@@ -43,7 +48,7 @@ export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
   },
   Druide: {
     armor: ['light', 'medium', 'shield'],
-    weapon: ['Gourdin', 'Dague', 'Fléchette', 'Javeline', 'Masse', 'Bâton', 'Cimeterre', 'Fronde', 'Lance'],
+    weapon: ['Gourdin', 'Dague', 'Fléchette', 'Javeline', 'Masse d\'armes', 'Bâton', 'Cimeterre', 'Fronde', 'Lance'],
   },
   Guerrier: {
     armor: ['all_armor', 'shield'],
@@ -51,7 +56,7 @@ export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
   },
   Moine: {
     armor: [],
-    weapon: ['simple_weapons', 'shortsword'],
+    weapon: ['simple_weapons', 'Épée courte'],
   },
   Paladin: {
     armor: ['all_armor', 'shield'],
@@ -63,11 +68,11 @@ export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
   },
   Roublard: {
     armor: ['light'],
-    weapon: ['simple_weapons', 'hand_crossbow', 'longsword', 'rapier', 'shortsword'],
+    weapon: ['simple_weapons', 'Arbalète de poing', 'Épée longue', 'Rapière', 'Épée courte'],
   },
   Ensorceleur: {
     armor: [],
-    weapon: ['Dague', 'Fléchette', 'Fronde', 'Bâton', 'light_crossbow'],
+    weapon: ['Dague', 'Fléchette', 'Fronde', 'Bâton', 'Arbalète légère'],
   },
   Occultiste: {
     armor: ['light'],
@@ -75,6 +80,6 @@ export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
   },
   Magicien: {
     armor: [],
-    weapon: ['Dague', 'Fléchette', 'Fronde', 'Bâton', 'light_crossbow'],
+    weapon: ['Dague', 'Fléchette', 'Fronde', 'Bâton', 'Arbalète légère'],
   },
 }
