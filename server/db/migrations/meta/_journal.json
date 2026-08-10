@@ -638,6 +638,13 @@
       "when": 1747872048000,
       "tag": "0090_features_feat_category",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "6",
+      "when": 1747872049000,
+      "tag": "0091_classes_weapon_mastery_count",
+      "breakpoints": true
     }
   ]
 }

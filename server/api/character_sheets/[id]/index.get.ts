@@ -3,6 +3,7 @@ import * as srcSchema from '~~/server/db/schema'
 import { eq, inArray } from 'drizzle-orm'
 import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
+import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -195,6 +196,12 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const originAbilityBonuses = await deriveAbilityScoreChoices(db as any, Number(id))
 
+  // ─── Maîtrises d'armes 2024 (choix composite `weapon_mastery`) ───────────────────────────
+  // Liste des armes dont le perso maîtrise la propriété (util DI injecté, patron triade/lignée).
+  // `[]` pour toute fiche sans pick (toutes les fiches 2014). Effet appliqué par le front (différé).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const weaponMasteries = await deriveWeaponMasteries(db as any, Number(id))
+
   return {
     ...characterSheet,
     // `lineageName` ajouté ici (littéral frais → pas de contrôle d'excès sur le type de `species`).
@@ -204,5 +211,6 @@ export default defineEventHandler(async (event) => {
     abilityScoreImprovements,
     inventory: inventoryWithItems,
     originAbilityBonuses,
+    weaponMasteries,
   }
 })
