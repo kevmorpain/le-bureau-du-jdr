@@ -9,6 +9,7 @@ import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema, CharacterValidationError } from '../../server/utils/characterCreate'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
+import { deriveAbilityScoreChoices } from '../../server/utils/abilityScoreDerivation'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ let db: any
 let elfBaseId: number
 let highElfLineageId: number
 let elfLineageProgId: number
+let triadeProgId: number
 
 function baseInput(over: Partial<Parameters<typeof createCharacter>[1]> = {}) {
   return createCharacterSchema.parse({
@@ -120,6 +122,17 @@ beforeAll(async () => {
     { id: 601, name: 'Portail', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
   ])
   await db.insert(schema.spellClasses).values([{ spellId: 600, classId: WARLOCK }, { spellId: 601, classId: WARLOCK }])
+
+  // Progression `ability_scores` (triade d'origine 2024) — pour tester le pick composite C3.
+  await db.insert(schema.features).values({ id: 700, name: 'Bonus d\'origine', featureType: 'background_feature', levelRequired: 1 })
+  const [triadeProg] = await db.insert(schema.progression).values({
+    featureId: 700,
+    kind: 'ability_scores',
+    count: { op: 'fixed', value: 1 },
+    optionSource: { type: 'abilities', from: ['str', 'dex', 'con', 'int', 'wis', 'cha'], distributions: ['2+1', '1+1+1'] },
+    replaceable: false,
+  }).returning()
+  triadeProgId = triadeProg.id
 
   // Structure Elfe base + 3 lignées (D17) — pour tester le choix de lignée à la création.
   await seedElfLineages(db)
@@ -264,6 +277,39 @@ describe('createCharacter — cohérence d\'édition (garde Lot A)', () => {
     const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 1 }), OWNER)
     const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
     expect(sheet.ruleset).toBe('5')
+  })
+})
+
+// ── Triade d'origine 2024 : pick composite ability_scores (C3) ─────────────────
+
+describe('createCharacter — triade d\'origine 2024 (ability_scores, C3)', () => {
+  it('répartition valide → character_choices.payload écrit + dérivé par le serveur', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      classId: FIGHTER, level: 1,
+      abilityScoreChoices: [{ progressionId: triadeProgId, payload: { str: 2, dex: 1 } }],
+    }), OWNER)
+
+    const choices = await db.select().from(schema.characterChoices)
+      .where(and(eq(schema.characterChoices.characterSheetId, id), eq(schema.characterChoices.progressionId, triadeProgId)))
+    expect(choices).toHaveLength(1)
+    expect(choices[0].payload).toEqual({ str: 2, dex: 1 })
+
+    // Dérivation serveur (ce que la fiche exposera dans originAbilityBonuses).
+    expect(await deriveAbilityScoreChoices(db, id)).toEqual({ str: 2, dex: 1 })
+  })
+
+  it('répartition illégale (2+2, hors distributions) → 422', async () => {
+    await expect(createCharacter(db, baseInput({
+      classId: FIGHTER, level: 1,
+      abilityScoreChoices: [{ progressionId: triadeProgId, payload: { str: 2, dex: 2 } }],
+    }), OWNER)).rejects.toThrow(CharacterValidationError)
+  })
+
+  it('progression inexistante ou non-triade → 422', async () => {
+    await expect(createCharacter(db, baseInput({
+      classId: FIGHTER, level: 1,
+      abilityScoreChoices: [{ progressionId: 999999, payload: { str: 2, dex: 1 } }],
+    }), OWNER)).rejects.toThrow(CharacterValidationError)
   })
 })
 

@@ -7,7 +7,9 @@ import { buildCatalog } from '~~/server/utils/catalog'
 import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
+import { isValidAbilityDistribution } from '~~/shared/rules/composite'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { AbilityKey } from '~~/shared/rules/abilities'
 
 /**
  * Logique de CRÉATION de personnage extraite du handler (point 5d, volet 2). Objectifs
@@ -134,6 +136,17 @@ export const createCharacterSchema = z.object({
   })).optional(),
   // Livre des secrets anciens — 2 sorts rituels niv 1 quand la manifestation est choisie
   bookOfAncientSecretsSpellIds: z.array(z.number().int().positive()).max(2).optional(),
+  // Choix composites de caractéristiques (triade d'origine 2024) — répartition {str:2,dex:1}
+  // enregistrée en `character_choices.payload`. Chaque pick réfère la progression `ability_scores`
+  // dont il doit respecter la distribution (validé serveur via isValidAbilityDistribution, C1).
+  // Vide pour tout parcours 2014 → no-op (aucune progression `ability_scores` n'y existe).
+  abilityScoreChoices: z
+    .array(z.object({
+      progressionId: z.number().int().positive(),
+      payload: z.record(abilityEnum, z.number().int().min(1).max(2)),
+    }))
+    .optional()
+    .default([]),
 })
 
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>
@@ -226,6 +239,22 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
       .limit(1)
     if (!lin) throw new CharacterValidationError(`Lignée introuvable (id=${d.selectedLineageId}).`)
     if (lin.speciesId !== d.speciesId) throw new CharacterValidationError(`La lignée (id=${d.selectedLineageId}) n'appartient pas à l'espèce (id=${d.speciesId}).`)
+  }
+
+  // V7 — triade d'origine 2024 (`ability_scores`) : chaque pick doit référer une progression
+  // `ability_scores` et respecter SA distribution (validateur pur C1). Résolu directement par la
+  // progression (indépendant du catalogue). Vide en 2014 → boucle no-op.
+  for (const asc of d.abilityScoreChoices ?? []) {
+    const [prog] = await db
+      .select({ kind: schema.progression.kind, optionSource: schema.progression.optionSource })
+      .from(schema.progression)
+      .where(eq(schema.progression.id, asc.progressionId))
+      .limit(1)
+    if (!prog || prog.kind !== 'ability_scores') throw new CharacterValidationError(`Le point de choix de caractéristiques (id=${asc.progressionId}) est inconnu ou n'est pas une triade.`)
+    const source = prog.optionSource as { type: string, from?: AbilityKey[], distributions?: readonly ('2+1' | '1+1+1')[] }
+    if (source.type !== 'abilities' || !source.from || !source.distributions) throw new CharacterValidationError(`Le point de choix (id=${asc.progressionId}) n'offre pas de répartition de caractéristiques.`)
+    const check = isValidAbilityDistribution(asc.payload as Partial<Record<AbilityKey, number>>, { from: source.from, distributions: source.distributions })
+    if (!check.ok) throw new CharacterValidationError(check.reason ?? `Répartition de caractéristiques invalide (progression id=${asc.progressionId}).`)
   }
 
   const invocationIds = d.invocationIds ?? []
@@ -451,6 +480,18 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       progressionId: lineageProgressionId,
       selectedLineageId: d.selectedLineageId,
     }))
+  }
+
+  // Triade d'origine 2024 (`ability_scores`) → character_choices.payload : la fiche dérive
+  // l'augmentation de caractéristiques via `deriveAbilityScoreChoices`. No-op en 2014.
+  if (d.abilityScoreChoices?.length) {
+    stmts.push(db.insert(schema.characterChoices).values(
+      d.abilityScoreChoices.map(asc => ({
+        characterSheetId: sheetId,
+        progressionId: asc.progressionId,
+        payload: asc.payload as Partial<Record<AbilityKey, number>>,
+      })),
+    ))
   }
 
   // Features passifs (classe + sous-classe)
