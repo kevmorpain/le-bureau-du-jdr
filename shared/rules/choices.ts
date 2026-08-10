@@ -60,6 +60,9 @@ export type FeatCategory = string
  *
  * `feature_group` s'appuie sur la colonne indexable `features.tag` (4b) :
  * `SELECT … FROM features WHERE tag = <group>`.
+ *
+ * `proficient_skills` / `proficient_weapons` se résolvent LIVE contre l'état du perso
+ * (compétences / armes déjà maîtrisées) — non cachables, cf. la scission §5.
  */
 export type OptionSource =
   | { type: 'enum', values: string[] }
@@ -68,6 +71,7 @@ export type OptionSource =
   | { type: 'feature_group', group: FeatureTag }
   | { type: 'skills', from: SkillKey[] | 'all' }
   | { type: 'proficient_skills' }
+  | { type: 'proficient_weapons' } // maîtrise d'armes 5.5 : N armes parmi celles déjà maîtrisées
   | { type: 'languages', from?: string[] }
   | { type: 'tools', from?: string[] }
   | { type: 'abilities', from: AbilityKey[], distributions: ('2+1' | '1+1+1')[] }

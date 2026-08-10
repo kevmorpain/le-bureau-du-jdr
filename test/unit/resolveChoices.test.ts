@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveChoices, dueChoices, type CharacterProjection } from '../../shared/rules/resolve'
+import { resolveChoices, dueChoices, type CharacterProjection, type Catalog } from '../../shared/rules/resolve'
 import {
   warlockCatalog,
   expertiseCatalog,
@@ -127,6 +127,66 @@ describe('resolveChoices — proficient_skills résolu live', () => {
       proficientSkills: [],
     }
     const choice = resolveChoices(projection, expertiseCatalog()).choices.find(c => c.kind === 'expertise')!
+    expect(choice.options).toEqual([])
+  })
+})
+
+// ─── C1 : kinds composites (résolution) ──────────────────────────────────────
+describe('resolveChoices — kinds composites (C1)', () => {
+  const ORIGIN_CLASS = 50 // owner synthétique
+
+  function abilityScoresCatalog(): Catalog {
+    return {
+      progressions: [{
+        progressionId: 1,
+        ownerClassId: ORIGIN_CLASS,
+        ownerLevelRequired: 1,
+        kind: 'ability_scores',
+        count: { op: 'fixed', value: 1 },
+        optionSource: { type: 'abilities', from: ['str', 'dex', 'con'], distributions: ['2+1', '1+1+1'] },
+        replaceable: false,
+      }],
+    }
+  }
+
+  function weaponMasteryCatalog(): Catalog {
+    return {
+      progressions: [{
+        progressionId: 1,
+        ownerClassId: ORIGIN_CLASS,
+        ownerLevelRequired: 1,
+        kind: 'weapon_mastery',
+        count: { op: 'fixed', value: 2 },
+        optionSource: { type: 'proficient_weapons' },
+        replaceable: true,
+      }],
+    }
+  }
+
+  it('ability_scores : choix DÛ sans options discrètes (pick = payload), remaining depuis les picks', () => {
+    const catalog = abilityScoresCatalog()
+    const choice = resolveChoices({ classLevels: { [ORIGIN_CLASS]: 1 } }, catalog).choices.find(c => c.kind === 'ability_scores')!
+    expect(choice.count).toBe(1)
+    expect(choice.remaining).toBe(1)
+    expect(choice.options).toEqual([]) // pas de liste discrète : le pick est une répartition (payload)
+
+    // Un pick payload (une ligne character_choices sur cette progression) fait passer remaining à 0.
+    const done = resolveChoices({ classLevels: { [ORIGIN_CLASS]: 1 }, picks: [{ progressionId: 1 }] }, catalog).choices.find(c => c.kind === 'ability_scores')!
+    expect(done.made).toBe(1)
+    expect(done.remaining).toBe(0)
+  })
+
+  it('weapon_mastery : options résolues LIVE depuis proficientWeapons (miroir de proficient_skills)', () => {
+    const choice = resolveChoices(
+      { classLevels: { [ORIGIN_CLASS]: 1 }, proficientWeapons: ['épée longue', 'arc court', 'dague'] },
+      weaponMasteryCatalog(),
+    ).choices.find(c => c.kind === 'weapon_mastery')!
+    expect(choice.count).toBe(2)
+    expect(choice.options).toEqual([{ value: 'épée longue' }, { value: 'arc court' }, { value: 'dague' }])
+  })
+
+  it('weapon_mastery sans proficientWeapons → aucune option (population = C4)', () => {
+    const choice = resolveChoices({ classLevels: { [ORIGIN_CLASS]: 1 } }, weaponMasteryCatalog()).choices.find(c => c.kind === 'weapon_mastery')!
     expect(choice.options).toEqual([])
   })
 })
