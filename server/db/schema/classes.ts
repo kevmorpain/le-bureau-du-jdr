@@ -20,6 +20,11 @@ const classes = sqliteTable('classes', {
   subclassLevel: integer('subclass_level').notNull().default(3),
   // Progression d'incantation de la classe (cf. shared/rules/spellcasting.ts).
   spellcastingType: text('spellcasting_type').$type<SpellcastingType>().notNull().default('none'),
+  // Nombre d'armes maîtrisées (mécanique de MAÎTRISE D'ARMES 5.5, classes martiales).
+  // Nullable : NULL = pas de maîtrise d'armes (toutes les classes 2014, et les non-martiales
+  // 5.5). Fait d'identité de la classe ; le point de choix `weapon_mastery` (progression) porte
+  // le `count` effectif par niveau, cette colonne en est le repère de classe.
+  weaponMasteryCount: integer('weapon_mastery_count'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 })

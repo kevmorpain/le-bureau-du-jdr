@@ -10,6 +10,7 @@ import { createCharacter, createCharacterSchema, CharacterValidationError } from
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '../../server/utils/abilityScoreDerivation'
+import { deriveWeaponMasteries } from '../../server/utils/weaponMasteryDerivation'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,6 +41,7 @@ let elfBaseId: number
 let highElfLineageId: number
 let elfLineageProgId: number
 let triadeProgId: number
+let weaponMasteryProgId: number
 
 function baseInput(over: Partial<Parameters<typeof createCharacter>[1]> = {}) {
   return createCharacterSchema.parse({
@@ -133,6 +135,17 @@ beforeAll(async () => {
     replaceable: false,
   }).returning()
   triadeProgId = triadeProg.id
+
+  // Progression `weapon_mastery` (maîtrise d'armes 2024) — pour tester le pick composite C4.
+  await db.insert(schema.features).values({ id: 800, name: 'Maîtrise d\'armes', featureType: 'class_feature', classId: FIGHTER, levelRequired: 1 })
+  const [wmProg] = await db.insert(schema.progression).values({
+    featureId: 800,
+    kind: 'weapon_mastery',
+    count: { op: 'fixed', value: 2 },
+    optionSource: { type: 'proficient_weapons' },
+    replaceable: true,
+  }).returning()
+  weaponMasteryProgId = wmProg.id
 
   // Structure Elfe base + 3 lignées (D17) — pour tester le choix de lignée à la création.
   await seedElfLineages(db)
@@ -309,6 +322,30 @@ describe('createCharacter — triade d\'origine 2024 (ability_scores, C3)', () =
     await expect(createCharacter(db, baseInput({
       classId: FIGHTER, level: 1,
       abilityScoreChoices: [{ progressionId: 999999, payload: { str: 2, dex: 1 } }],
+    }), OWNER)).rejects.toThrow(CharacterValidationError)
+  })
+})
+
+// ── Maîtrise d'armes 2024 : pick composite weapon_mastery (C4) ─────────────────
+
+describe('createCharacter — maîtrise d\'armes 2024 (weapon_mastery, C4)', () => {
+  it('armes choisies → une ligne character_choices.selected_value par arme + dérivées par le serveur', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      classId: FIGHTER, level: 1,
+      weaponMasteryChoices: [{ progressionId: weaponMasteryProgId, weapons: ['épée longue', 'dague'] }],
+    }), OWNER)
+
+    const choices = await db.select().from(schema.characterChoices)
+      .where(and(eq(schema.characterChoices.characterSheetId, id), eq(schema.characterChoices.progressionId, weaponMasteryProgId)))
+    expect(choices.map((c: { selectedValue: string | null }) => c.selectedValue).sort()).toEqual(['dague', 'épée longue'])
+
+    expect((await deriveWeaponMasteries(db, id)).sort()).toEqual(['dague', 'épée longue'])
+  })
+
+  it('progression non-weapon_mastery (ici la triade) → 422', async () => {
+    await expect(createCharacter(db, baseInput({
+      classId: FIGHTER, level: 1,
+      weaponMasteryChoices: [{ progressionId: triadeProgId, weapons: ['épée longue'] }],
     }), OWNER)).rejects.toThrow(CharacterValidationError)
   })
 })

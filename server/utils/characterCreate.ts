@@ -147,6 +147,15 @@ export const createCharacterSchema = z.object({
     }))
     .optional()
     .default([]),
+  // Maîtrises d'armes 2024 (choix composite `weapon_mastery`) — les armes choisies à chaque
+  // point de choix, une ligne `character_choices.selected_value` par arme. Vide en 2014 → no-op.
+  weaponMasteryChoices: z
+    .array(z.object({
+      progressionId: z.number().int().positive(),
+      weapons: z.array(z.string().min(1)).min(1),
+    }))
+    .optional()
+    .default([]),
 })
 
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>
@@ -255,6 +264,18 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (source.type !== 'abilities' || !source.from || !source.distributions) throw new CharacterValidationError(`Le point de choix (id=${asc.progressionId}) n'offre pas de répartition de caractéristiques.`)
     const check = isValidAbilityDistribution(asc.payload as Partial<Record<AbilityKey, number>>, { from: source.from, distributions: source.distributions })
     if (!check.ok) throw new CharacterValidationError(check.reason ?? `Répartition de caractéristiques invalide (progression id=${asc.progressionId}).`)
+  }
+
+  // V8 — maîtrise d'armes 2024 (`weapon_mastery`) : chaque pick doit référer une progression
+  // `weapon_mastery`. Le nombre et la maîtrise réelle des armes restent front-autoritaires (comme
+  // les compétences libres) jusqu'à la dérivation des maîtrises (volet B). Vide en 2014 → no-op.
+  for (const wm of d.weaponMasteryChoices ?? []) {
+    const [prog] = await db
+      .select({ kind: schema.progression.kind })
+      .from(schema.progression)
+      .where(eq(schema.progression.id, wm.progressionId))
+      .limit(1)
+    if (!prog || prog.kind !== 'weapon_mastery') throw new CharacterValidationError(`Le point de choix de maîtrise d'armes (id=${wm.progressionId}) est inconnu ou n'est pas une maîtrise d'armes.`)
   }
 
   const invocationIds = d.invocationIds ?? []
@@ -492,6 +513,15 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
         payload: asc.payload as Partial<Record<AbilityKey, number>>,
       })),
     ))
+  }
+
+  // Maîtrises d'armes 2024 (`weapon_mastery`) → character_choices : une ligne `selected_value`
+  // par arme. La fiche les dérive via `deriveWeaponMasteries`. No-op en 2014.
+  if (d.weaponMasteryChoices?.length) {
+    const wmRows = d.weaponMasteryChoices.flatMap(wm =>
+      wm.weapons.map(weapon => ({ characterSheetId: sheetId, progressionId: wm.progressionId, selectedValue: weapon })),
+    )
+    if (wmRows.length) stmts.push(db.insert(schema.characterChoices).values(wmRows).onConflictDoNothing())
   }
 
   // Features passifs (classe + sous-classe)
