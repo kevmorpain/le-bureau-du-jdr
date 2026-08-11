@@ -194,10 +194,17 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     return [...speciesItems, ...classItems]
   })
 
-  // Effets de base (espèce + features de classe) — sans les objets magiques
+  // Effets de base (espèce + features de classe + historique) — sans les objets magiques.
+  // `backgroundEffects` : maîtrises d'outils/langues FIXES de l'origine, dérivées par le serveur
+  // (GET fiche, volet B étape 2) → alimentent les computeds toolProficiencies/languageProficiencies
+  // comme l'espèce. Champ dérivé hors type de relations Drizzle → accès casté (cf. weaponMasteries).
+  const backgroundEffects = computed<Effect[]>(() =>
+    (characterSheet?.value as { backgroundEffects?: Effect[] } | undefined)?.backgroundEffects ?? [],
+  )
   const baseAllEffects = computed<Effect[]>(() => [
     ...classes.speciesEffects.value,
     ...classFeatureEffects.value,
+    ...backgroundEffects.value,
   ])
 
   // Forward-declaration : la couche spellcasting a besoin de connaître TOUS

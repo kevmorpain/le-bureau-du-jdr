@@ -4,6 +4,7 @@ import { eq, inArray } from 'drizzle-orm'
 import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
+import { deriveBackgroundProficiencies } from '~~/server/utils/backgroundProficiencyDerivation'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -202,6 +203,12 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const weaponMasteries = await deriveWeaponMasteries(db as any, Number(id))
 
+  // ─── Maîtrises d'outils/langues FIXES d'historique (volet B, étape 2) ────────────────────────
+  // Effets dérivés du porteur (background_features), fusionnés dans allEffects par le front → la
+  // fiche déduit les maîtrises d'outils de l'origine. `[]` si historique custom ou sans fixe.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const backgroundEffects = await deriveBackgroundProficiencies(db as any, characterSheet.backgroundId)
+
   return {
     ...characterSheet,
     // `lineageName` ajouté ici (littéral frais → pas de contrôle d'excès sur le type de `species`).
@@ -212,5 +219,6 @@ export default defineEventHandler(async (event) => {
     inventory: inventoryWithItems,
     originAbilityBonuses,
     weaponMasteries,
+    backgroundEffects,
   }
 })
