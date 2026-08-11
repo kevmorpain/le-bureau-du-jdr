@@ -1,10 +1,11 @@
 import { db, schema } from 'hub:db'
 import { eq } from 'drizzle-orm'
 import { upsertByName } from './lib/upsertByName'
+import { seedBackgroundProficiencies } from './lib/seedBackgroundProficiencies'
 import { backgroundsData } from './data/backgrounds'
 
 export default async function seed() {
-  return upsertByName(
+  const report = await upsertByName(
     name => db.query.backgrounds.findFirst({ where: eq(schema.backgrounds.name, name) }),
     bg => db.insert(schema.backgrounds).values({
       name: bg.name,
@@ -18,4 +19,11 @@ export default async function seed() {
     }),
     backgroundsData,
   )
+
+  // Volet B, étape 2 : porteurs de maîtrises d'outils/langues FIXES sur background_features
+  // (dérivables par la fiche). S'exécute APRÈS l'upsert (les historiques doivent exister).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const proficiencies = await seedBackgroundProficiencies(db as any, backgroundsData)
+
+  return { ...report, proficiencies }
 }

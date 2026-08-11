@@ -8,6 +8,7 @@ import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
+import { fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 
@@ -346,9 +347,11 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       backgroundId = null
     }
     else {
-      const isChoice = (s: string) => s.toLowerCase().includes('choix') || s.includes('×')
-      bgToolProfs = (bg.toolProficiencies ?? []).filter(p => !isChoice(p))
-      bgLangProfs = (bg.languageProficiencies ?? []).filter(p => !isChoice(p))
+      // Maîtrises FIXES de l'historique (hors « au choix ») — même critère partagé que le seed des
+      // porteurs dérivables (volet B). Ces grants font DOUBLE emploi avec la dérivation (dédupliqués
+      // sur la fiche) tant que l'étape 3 ne strippe pas la copie ; conservés ici → aucune régression.
+      bgToolProfs = fixedProficiencies(bg.toolProficiencies ?? [])
+      bgLangProfs = fixedProficiencies(bg.languageProficiencies ?? [])
     }
   }
 
