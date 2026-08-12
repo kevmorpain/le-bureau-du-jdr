@@ -8,7 +8,6 @@ import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
-import { fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 
@@ -328,30 +327,20 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   const subclassId: number | null = d.subclassId ?? null
   const speciesId: number | null = d.speciesId ?? null
 
-  // Background preset — maîtrises héritées (outils / langues)
+  // Background preset — on valide seulement son existence (id → NULL si absent). Les maîtrises
+  // FIXES d'outils/langues de l'historique NE sont PLUS matérialisées ici (volet B étape 3) : la
+  // fiche les DÉRIVE du porteur `background_features` (étape 2). Seuls les outils/langues CHOISIS
+  // (deltas du joueur) restent stockés en grants plus bas.
   let backgroundId: number | null = d.backgroundId ?? null
-  let bgToolProfs: string[] = []
-  let bgLangProfs: string[] = []
   if (backgroundId) {
     const [bg] = await db
-      .select({
-        id: schema.backgrounds.id,
-        toolProficiencies: schema.backgrounds.toolProficiencies,
-        languageProficiencies: schema.backgrounds.languageProficiencies,
-      })
+      .select({ id: schema.backgrounds.id })
       .from(schema.backgrounds)
       .where(and(eq(schema.backgrounds.id, backgroundId), sql`${schema.backgrounds.characterSheetId} IS NULL`))
       .limit(1)
     if (!bg) {
       console.warn(`[createCharacter] backgroundId=${backgroundId} non trouvé en DB (ignoré)`)
       backgroundId = null
-    }
-    else {
-      // Maîtrises FIXES de l'historique (hors « au choix ») — même critère partagé que le seed des
-      // porteurs dérivables (volet B). Ces grants font DOUBLE emploi avec la dérivation (dédupliqués
-      // sur la fiche) tant que l'étape 3 ne strippe pas la copie ; conservés ici → aucune régression.
-      bgToolProfs = fixedProficiencies(bg.toolProficiencies ?? [])
-      bgLangProfs = fixedProficiencies(bg.languageProficiencies ?? [])
     }
   }
 
@@ -592,13 +581,13 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     stmts.push(db.insert(schema.characterSkills).values(skillRows))
   }
 
-  // Maîtrises (armures / armes / outils / langues)
+  // Maîtrises CHOISIES (deltas du joueur) — seuls les outils/langues au choix sont matérialisés en
+  // grants. Les maîtrises de BASE (armes/armures de classe, outils/langues fixes d'historique) NE
+  // sont PLUS copiées (volet B étape 3) : la fiche les DÉRIVE des porteurs de classe/historique
+  // (étapes 4/2). Les champs `d.armorProficiencyKeys`/`d.weaponProficiencyKeys` du builder sont
+  // ainsi devenus vestigiaux (encore acceptés par le schéma, ignorés ici).
   const proficiencyRows = [
-    ...d.armorProficiencyKeys.map(value => ({ characterSheetId: sheetId, proficiencyType: 'armor' as const, value, action: 'grant' as const })),
-    ...d.weaponProficiencyKeys.map(value => ({ characterSheetId: sheetId, proficiencyType: 'weapon' as const, value, action: 'grant' as const })),
-    ...bgToolProfs.map(value => ({ characterSheetId: sheetId, proficiencyType: 'tool' as const, value, action: 'grant' as const })),
     ...d.toolProficiencyChoices.map(value => ({ characterSheetId: sheetId, proficiencyType: 'tool' as const, value, action: 'grant' as const })),
-    ...bgLangProfs.map(value => ({ characterSheetId: sheetId, proficiencyType: 'language' as const, value, action: 'grant' as const })),
     ...d.selectedLanguages.map(value => ({ characterSheetId: sheetId, proficiencyType: 'language' as const, value, action: 'grant' as const })),
   ]
   if (proficiencyRows.length) {
