@@ -645,6 +645,13 @@
       "when": 1747872049000,
       "tag": "0091_classes_weapon_mastery_count",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "6",
+      "when": 1747872050000,
+      "tag": "0092_strip_base_proficiency_grants",
+      "breakpoints": true
     }
   ]
 }

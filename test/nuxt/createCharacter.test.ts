@@ -190,6 +190,24 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
   })
 })
 
+describe('createCharacter — maîtrises (volet B étape 3)', () => {
+  it('ne matérialise PLUS les maîtrises de BASE (armes/armures de classe), garde les outils/langues CHOISIS', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      classId: FIGHTER, level: 1,
+      armorProficiencyKeys: ['all_armor', 'shield'],
+      weaponProficiencyKeys: ['simple_weapons', 'martial_weapons'],
+      toolProficiencyChoices: ['Outils de voleur'],
+      selectedLanguages: ['Elfique'],
+    }), OWNER)
+
+    // Plus AUCUNE ligne d'arme/armure : dérivées du porteur de classe (étape 4). Seuls restent
+    // les deltas du joueur (outils/langues choisis).
+    const overrides = await db.select().from(schema.characterProficiencyOverrides).where(eq(schema.characterProficiencyOverrides.characterSheetId, id))
+    expect(overrides.map((o: { proficiencyType: string, value: string }) => `${o.proficiencyType}:${o.value}`).sort())
+      .toEqual(['language:Elfique', 'tool:Outils de voleur'])
+  })
+})
+
 describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestation)', () => {
   it('dérive les emplacements de pacte, persiste le pacte, la manifestation et son sort octroyé', async () => {
     const { id } = await createCharacter(db, baseInput({
