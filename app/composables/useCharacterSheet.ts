@@ -201,10 +201,18 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const backgroundEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { backgroundEffects?: Effect[] } | undefined)?.backgroundEffects ?? [],
   )
+  // `classEffects` : maîtrises d'armes/armures de BASE de la classe, dérivées par le serveur (GET
+  // fiche, volet B étape 4) → alimentent les computeds weapon/armorProficiencies de
+  // `useCharacterInventory` (via `allEffects`) comme l'espèce/l'historique. Champ dérivé hors type
+  // de relations Drizzle → accès casté (cf. backgroundEffects/weaponMasteries).
+  const classEffects = computed<Effect[]>(() =>
+    (characterSheet?.value as { classEffects?: Effect[] } | undefined)?.classEffects ?? [],
+  )
   const baseAllEffects = computed<Effect[]>(() => [
     ...classes.speciesEffects.value,
     ...classFeatureEffects.value,
     ...backgroundEffects.value,
+    ...classEffects.value,
   ])
 
   // Forward-declaration : la couche spellcasting a besoin de connaître TOUS
