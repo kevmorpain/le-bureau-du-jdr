@@ -5,6 +5,7 @@ import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
 import { deriveBackgroundProficiencies } from '~~/server/utils/backgroundProficiencyDerivation'
+import { deriveClassProficiencies } from '~~/server/utils/classProficiencyDerivation'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -209,6 +210,14 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const backgroundEffects = await deriveBackgroundProficiencies(db as any, characterSheet.backgroundId)
 
+  // ─── Maîtrises d'armes/armures de BASE de classe (volet B, étape 4) ──────────────────────────
+  // Effets dérivés du porteur `proficiency_grant` de chaque classe du perso (multiclasse inclus),
+  // fusionnés dans allEffects par le front → la fiche déduit ses maîtrises d'armes/armures de
+  // l'origine. `[]` tant que la classe n'a pas de porteur seedé (prod pré-seed → aucune régression).
+  const classIds = characterSheet.classes.map(c => c.classId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const classEffects = await deriveClassProficiencies(db as any, classIds)
+
   return {
     ...characterSheet,
     // `lineageName` ajouté ici (littéral frais → pas de contrôle d'excès sur le type de `species`).
@@ -220,5 +229,6 @@ export default defineEventHandler(async (event) => {
     originAbilityBonuses,
     weaponMasteries,
     backgroundEffects,
+    classEffects,
   }
 })
