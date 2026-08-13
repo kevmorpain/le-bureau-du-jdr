@@ -9,6 +9,7 @@ import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequ
 import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 
 /**
@@ -82,13 +83,20 @@ export async function seedClass(
   className: string,
   baseFeatures: FeatureDef[],
   subclassDefs: SubclassDef[],
+  ruleset: Ruleset = '5',
 ): Promise<{ featuresInserted: number; subclassesInserted: number }> {
   let featuresInserted = 0
   let subclassesInserted = 0
 
-  const cls = await db.query.classes.findFirst({ where: eq(schema.classes.name, className) })
+  // Résolution par (name, ruleset) : les features/sous-classes d'une classe 5.5 (« Guerrier »)
+  // doivent s'attacher à SA ligne, pas à l'homonyme 2014 (sinon on seede le 5.5 sous le 2014).
+  // No-op sur le 2014 (défaut '5'). Les features restent keyées par (classId, name) plus bas —
+  // donc naturellement séparées par édition une fois la classe résolue à la bonne ligne.
+  const cls = await db.query.classes.findFirst({
+    where: and(eq(schema.classes.name, className), eq(schema.classes.ruleset, ruleset)),
+  })
   if (!cls) {
-    console.warn(`[seedClass] Classe "${className}" introuvable — skip`)
+    console.warn(`[seedClass] Classe "${className}" (${ruleset}) introuvable — skip`)
     return { featuresInserted, subclassesInserted }
   }
 

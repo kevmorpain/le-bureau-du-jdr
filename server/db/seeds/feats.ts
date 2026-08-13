@@ -3,16 +3,20 @@ import { and, eq } from 'drizzle-orm'
 import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '../schema/effects'
 import { featsData } from './data/feats'
+import { rulesetOf } from './lib/rulesetOf'
 
 export default async function seed() {
   let inserted = 0
 
   for (const feat of featsData) {
-    // name = libellé FR canonique, identifiant fonctionnel d'un don.
+    // Keyé par (name, featureType, ruleset) : un don 5.5 homonyme (« Vigilant » dont les effets
+    // diffèrent) est une ligne DISTINCTE, pas une mise à jour de la 2014 (D2). Un don est une OPTION
+    // (filtrée par features.ruleset dans resolveOptions) → doit être estampillé. No-op sur le 2014.
     const existing = await db.query.features.findFirst({
       where: and(
         eq(schema.features.name, feat.name),
         eq(schema.features.featureType, 'feat'),
+        eq(schema.features.ruleset, rulesetOf(feat)),
       ),
     })
 
@@ -39,6 +43,7 @@ export default async function seed() {
         .insert(schema.features)
         .values({
           name: feat.name,
+          ruleset: rulesetOf(feat),
           description: feat.description,
           featureType: 'feat',
           classId: null,

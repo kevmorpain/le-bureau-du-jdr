@@ -6,9 +6,13 @@ import { eq } from 'drizzle-orm'
 import * as srcSchema from '~~/server/db/schema'
 import { spells } from './data/spells'
 import { spellClassMappings } from './data/spell_class_mappings'
+import { nameRulesetKey } from './lib/rulesetOf'
 
 export default async function seed() {
   // Build class name → ID map (single query)
+  // ⚠️ SUIVI (lot sorts 5.5) : keyé par NOM seul → quand deux « Magicien » (2014+2024) coexisteront,
+  // le lien sort↔classe deviendra ambigu. À reprendre en (nom, ruleset du sort) au moment du seed 5.5
+  // des sorts (hors périmètre P0 : aucun sort ni classe 5.5 seedé aujourd'hui).
   const allClasses = await db.select({ id: schema.classes.id, name: schema.classes.name }).from(schema.classes)
   const classIdByName = Object.fromEntries(allClasses.map(c => [c.name, c.id]))
 
@@ -21,8 +25,11 @@ export default async function seed() {
   // existants en 2 requêtes, plutôt qu'un findFirst par sort (73) + un insert
   // par lien (223) à chaque run. Sans ça, le seed explose la limite de requêtes
   // D1 par invocation Worker (cf. server/db/seeds/run.ts, mode ?only=).
+  // Dédup keyée par (name, ruleset) — PAS par nom seul : un sort 5.5 homonyme (« Boule de feu »,
+  // dont description/effets diffèrent) doit INSÉRER une ligne 5.5, jamais matcher puis RÉÉCRIRE la
+  // ligne 2014 (la branche `changed` ci-dessous écrase tout le contenu). No-op sur le 2014.
   const existingSpells = await db.select().from(srcSchema.spells)
-  const spellByName = new Map(existingSpells.map(s => [s.name, s]))
+  const spellByKey = new Map(existingSpells.map(s => [nameRulesetKey(s), s]))
 
   const existingLinks = await db
     .select({ spellId: schema.spellClasses.spellId, classId: schema.spellClasses.classId })
@@ -35,7 +42,7 @@ export default async function seed() {
   let classLinksInserted = 0
 
   for (const spell of spells) {
-    const existing = spellByName.get(spell.name)
+    const existing = spellByKey.get(nameRulesetKey(spell))
 
     let spellId: number
     if (existing) {

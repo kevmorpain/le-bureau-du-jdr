@@ -138,7 +138,7 @@ export async function loadFeats(db: Db, ruleset: Ruleset = '5') {
  * `levelRequired` (défaut 1), `prerequisites` et effets `{type, value}` (≡ endpoint legacy
  * `/api/invocations`).
  */
-export async function loadInvocations(db: Db) {
+export async function loadInvocations(db: Db, ruleset: Ruleset = '5') {
   const features = await db
     .select({
       id: srcSchema.features.id,
@@ -148,7 +148,9 @@ export async function loadInvocations(db: Db) {
       prerequisites: srcSchema.features.prerequisites,
     })
     .from(srcSchema.features)
-    .where(eq(srcSchema.features.featureType, 'eldritch_invocation'))
+    // Filtre `ruleset` (défaut '5') comme les autres loaders : une invocation 5.5 seedée ne
+    // polluera pas le picker 2014 (les invocations sont des features → colonne `ruleset`).
+    .where(and(eq(srcSchema.features.featureType, 'eldritch_invocation'), eq(srcSchema.features.ruleset, ruleset)))
 
   if (features.length === 0) return []
 
