@@ -2,6 +2,7 @@ import { db, schema } from 'hub:db'
 import { eq, and } from 'drizzle-orm'
 import type { Effect } from '../schema/effects'
 import { characterSpecies } from './data/character_species'
+import { rulesetOf } from './lib/rulesetOf'
 
 export default async function seed() {
   let speciesInserted = 0
@@ -11,8 +12,13 @@ export default async function seed() {
   for (const species of characterSpecies) {
     const { traits, ...speciesData } = species
 
+    // Keyé par (name, ruleset) : une espèce 5.5 homonyme (« Humain », « Tieffelin ») est une ligne
+    // DISTINCTE, pas une mise à jour de la 2014 (D2). No-op sur le 2014 (tout est '5').
     const existingSpecies = await db.query.characterSpecies.findFirst({
-      where: eq(schema.characterSpecies.name, speciesData.name),
+      where: and(
+        eq(schema.characterSpecies.name, speciesData.name),
+        eq(schema.characterSpecies.ruleset, rulesetOf(speciesData)),
+      ),
     })
 
     const insertedSpecies = existingSpecies ?? await db

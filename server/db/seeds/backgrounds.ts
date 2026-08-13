@@ -1,14 +1,20 @@
 import { db, schema } from 'hub:db'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { upsertByName } from './lib/upsertByName'
+import { rulesetOf } from './lib/rulesetOf'
 import { seedBackgroundProficiencies } from './lib/seedBackgroundProficiencies'
 import { backgroundsData } from './data/backgrounds'
 
 export default async function seed() {
+  // Keyé par (name, ruleset) : un historique 5.5 homonyme (« Sage », « Soldat ») est une ligne
+  // DISTINCTE, pas un skip de la 2014 (D2). No-op sur le 2014 (tout est '5').
   const report = await upsertByName(
-    name => db.query.backgrounds.findFirst({ where: eq(schema.backgrounds.name, name) }),
+    (name, ruleset) => db.query.backgrounds.findFirst({
+      where: and(eq(schema.backgrounds.name, name), eq(schema.backgrounds.ruleset, ruleset)),
+    }),
     bg => db.insert(schema.backgrounds).values({
       name: bg.name,
+      ruleset: rulesetOf(bg),
       description: bg.description,
       skillProficiencies: bg.skillProficiencies,
       toolProficiencies: bg.toolProficiencies,

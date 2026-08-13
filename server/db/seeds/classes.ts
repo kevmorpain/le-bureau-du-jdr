@@ -4,8 +4,9 @@ import { db } from 'hub:db'
 // laisserait alors tomber les nouveaux champs en silence (cf. CLAUDE.md « hub:db
 // schema cache »). Seul `db` vient encore de `hub:db`.
 import * as schema from '~~/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { classesData } from './data/classes'
+import { rulesetOf } from './lib/rulesetOf'
 
 export default async function seed() {
   let inserted = 0
@@ -22,7 +23,9 @@ export default async function seed() {
         spellcastingType: schema.classes.spellcastingType,
       })
       .from(schema.classes)
-      .where(eq(schema.classes.name, cls.name))
+      // Keyé par (name, ruleset) : une classe 5.5 homonyme (« Guerrier ») est une ligne DISTINCTE,
+      // pas une mise à jour de la 2014 (D2). No-op sur le 2014 (tout est '5').
+      .where(and(eq(schema.classes.name, cls.name), eq(schema.classes.ruleset, rulesetOf(cls))))
       .get()
 
     if (!existing) {
