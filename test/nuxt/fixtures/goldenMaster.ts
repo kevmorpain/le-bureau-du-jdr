@@ -3,8 +3,9 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import * as schema from '../../../server/db/schema'
+import { seedElfLineages } from '../../../server/db/seeds/lib/seedElfLineages'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../../fixtures/warlockProgression'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -23,16 +24,22 @@ import { WARLOCK_PROGRESSION_CONTRACT } from '../../fixtures/warlockProgression'
 //
 // But : quand F2 généralisera `progression`/`character_choices` à tout le 2014, un `git diff` du
 // fichier de snapshot montrera EXACTEMENT ce que le comportement de création/level-up change.
-// Le catalogue est volontairement 100 % « édition 5 » (2014) et couvre les quatre archétypes du
-// plan : martial (Guerrier), lanceur complet (Magicien), Occultiste (pacte/manifestations/arcanum),
-// et multiclasse (Guerrier/Occultiste).
+// Le catalogue est volontairement 100 % « édition 5 » (2014) et couvre les cinq archétypes du
+// plan (élargis pour fermer les trous de couverture des mécanismes de CHOIX que F2 refactore) :
+// martial (Guerrier), lanceur complet (Magicien Elfe → lignée = `character_choices`), Occultiste
+// (pacte/manifestations/arcanum + ASI & dons À LA CRÉATION), roublard (expertise + `newSkills` au
+// level-up), et multiclasse (Guerrier/Occultiste).
+//
+// Trous de couverture ASSUMÉS (dette documentée, non bloquants pour F2) : pactes Lame/Tome,
+// multiclassage lanceur plein+plein / plein+demi (branche `spellcasting` combinée), demi-lanceur
+// (`half`). `characterRest` et `fightingStyle` (front-only) sont hors périmètre.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Identifiants stables du catalogue ──────────────────────────────────────────
 export const OWNER = 1
 
-export const CLASS = { warlock: 1, fighter: 2, wizard: 3 } as const
-export const SUBCLASS = { champion: 10, evocation: 20 } as const
+export const CLASS = { warlock: 1, fighter: 2, wizard: 3, rogue: 4 } as const
+export const SUBCLASS = { champion: 10, evocation: 20, thief: 30 } as const
 export const SPECIES = { human: 1 } as const
 export const BACKGROUND = { soldier: 1 } as const
 export const MAGIC_SCHOOL = { evocation: 1 } as const
@@ -54,9 +61,16 @@ export const FEATURE = {
   fighterActionSurge: 201, // passif niv 2
   fighterExtraAttack: 202, // passif niv 5
   championImprovedCrit: 210, // sous-classe Champion, niv 3
+  // Roublard
+  rogueSneakAttack: 220, // passif niv 1
+  rogueCunningAction: 221, // passif niv 2
+  thiefFastHands: 230, // sous-classe Voleur, niv 3
   // Magicien
   wizardArcaneRecovery: 300, // passif niv 1
   evocationSculptSpells: 310, // sous-classe Évocation, niv 2
+  // Dons (feature_type 'feat', sans classe) — pour ASI/dons à la création
+  featTough: 400, // « Robuste » — don bonus (source 'bonus')
+  featAlert: 401, // « Vigilant » — don d'ASI (source 'asi')
 } as const
 
 export const SPELL = {
@@ -91,12 +105,19 @@ async function replayMigrations(): Promise<{ client: Client, db: Db }> {
   return { client, db }
 }
 
+/** Identifiants dérivés à l'exécution (auto-incrément) — l'espèce Elfe base+lignées (D17). */
+export interface GoldenIds {
+  elfBaseId: number
+  highElfLineageId: number
+}
+
 /**
  * Seede le catalogue représentatif « édition 5 » (2014). Tout est en `ruleset: '5'` (défaut) :
  * le golden-master fige le socle 2014, cible de F2. Les FK sont actives (libsql) → on seede les
- * référentiels (utilisateur, école de magie, caractéristiques, espèce…).
+ * référentiels (utilisateur, école de magie, caractéristiques, espèce…). Renvoie les id de la
+ * structure Elfe (base + lignée Haut-elfe), dont les auto-incrément ne sont connus qu'après seed.
  */
-export async function seedGoldenCatalog(db: Db): Promise<void> {
+export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
   // Référentiels
   await db.insert(schema.magicSchools).values({ id: MAGIC_SCHOOL.evocation, name: 'Invocation' })
   await db.insert(schema.users).values({ id: OWNER, provider: 'discord', providerUserId: 'x', name: 'Testeur' })
@@ -115,10 +136,12 @@ export async function seedGoldenCatalog(db: Db): Promise<void> {
     { id: CLASS.warlock, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' },
     { id: CLASS.fighter, name: 'Guerrier', hitDice: '1d10', spellcastingType: 'none' },
     { id: CLASS.wizard, name: 'Magicien', hitDice: '1d6', spellcastingType: 'full' },
+    { id: CLASS.rogue, name: 'Roublard', hitDice: '1d8', spellcastingType: 'none' },
   ])
   await db.insert(schema.subclasses).values([
     { id: SUBCLASS.champion, classId: CLASS.fighter, name: 'Champion' },
     { id: SUBCLASS.evocation, classId: CLASS.wizard, name: 'École d\'Évocation' },
+    { id: SUBCLASS.thief, classId: CLASS.rogue, name: 'Voleur' },
   ])
 
   // ── Occultiste : 6 porteurs de progression (contrat 5a) + leur progression ─────
@@ -151,10 +174,23 @@ export async function seedGoldenCatalog(db: Db): Promise<void> {
     { id: FEATURE.championImprovedCrit, name: 'Critique amélioré', featureType: 'subclass_feature', subclassId: SUBCLASS.champion, levelRequired: 3 },
   ])
 
+  // ── Roublard : passifs de palier + feature de sous-classe ──────────────────────
+  await db.insert(schema.features).values([
+    { id: FEATURE.rogueSneakAttack, name: 'Attaque sournoise', featureType: 'class_feature', classId: CLASS.rogue, levelRequired: 1 },
+    { id: FEATURE.rogueCunningAction, name: 'Ruse', featureType: 'class_feature', classId: CLASS.rogue, levelRequired: 2 },
+    { id: FEATURE.thiefFastHands, name: 'Mains lestes', featureType: 'subclass_feature', subclassId: SUBCLASS.thief, levelRequired: 3 },
+  ])
+
   // ── Magicien : passif de palier + feature de sous-classe ───────────────────────
   await db.insert(schema.features).values([
     { id: FEATURE.wizardArcaneRecovery, name: 'Récupération arcanique', featureType: 'class_feature', classId: CLASS.wizard, levelRequired: 1 },
     { id: FEATURE.evocationSculptSpells, name: 'Façonnage des sorts', featureType: 'subclass_feature', subclassId: SUBCLASS.evocation, levelRequired: 2 },
+  ])
+
+  // ── Dons (feature_type 'feat', sans classe ni palier de sweep) — ASI/dons à la création ──
+  await db.insert(schema.features).values([
+    { id: FEATURE.featTough, name: 'Robuste', featureType: 'feat', levelRequired: 1 },
+    { id: FEATURE.featAlert, name: 'Vigilant', featureType: 'feat', levelRequired: 1 },
   ])
 
   // ── Sorts ──────────────────────────────────────────────────────────────────────
@@ -172,13 +208,24 @@ export async function seedGoldenCatalog(db: Db): Promise<void> {
     { spellId: SPELL.circleOfDeath, classId: CLASS.warlock },
     { spellId: SPELL.gate, classId: CLASS.warlock },
   ])
+
+  // ── Espèce Elfe base + lignées (D17) — seed réel injectable, pour le chemin `character_choices`
+  //    de la lignée à la création (le SEUL endroit où le 2014 écrit déjà un choix). Ids auto ⇒ on
+  //    les relit. Inséré en dernier : ses auto-incrément de features/progression ne heurtent pas
+  //    les id explicites (100..401) posés plus haut.
+  await seedElfLineages(db)
+  const [elfBase] = await db.select({ id: schema.characterSpecies.id }).from(schema.characterSpecies)
+    .where(and(eq(schema.characterSpecies.name, 'Elfe'), eq(schema.characterSpecies.ruleset, '5')))
+  const [highElf] = await db.select({ id: schema.speciesLineages.id }).from(schema.speciesLineages)
+    .where(and(eq(schema.speciesLineages.speciesId, elfBase.id), eq(schema.speciesLineages.name, 'Haut-elfe')))
+  return { elfBaseId: elfBase.id, highElfLineageId: highElf.id }
 }
 
 /** Base + catalogue prêts à l'emploi. */
-export async function bootstrapGoldenDb(): Promise<{ client: Client, db: Db }> {
+export async function bootstrapGoldenDb(): Promise<{ client: Client, db: Db, ids: GoldenIds }> {
   const { client, db } = await replayMigrations()
-  await seedGoldenCatalog(db)
-  return { client, db }
+  const ids = await seedGoldenCatalog(db)
+  return { client, db, ids }
 }
 
 // ── Sérialiseur d'état normalisé ────────────────────────────────────────────────

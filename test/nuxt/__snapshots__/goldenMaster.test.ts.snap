@@ -742,7 +742,7 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
 }
 `;
 
-exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-classe + emplacements dérivés) puis montée 2→4 (sort appris, ASI) > B1 · création niv 2 1`] = `
+exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > création niv 2 (lignée → character_choices, sous-classe, emplacements) puis montée 2→4 (sort appris, ASI) > B1 · création niv 2 (lignée Haut-elfe) 1`] = `
 {
   "abilityScoreImprovements": [],
   "abilityScores": [
@@ -771,7 +771,19 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "lineage:Lignage elfique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": "Haut-elfe",
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Magicien",
@@ -820,7 +832,7 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
     },
     "name": "Elyndra",
     "ruleset": "5",
-    "species": "Humain",
+    "species": "Elfe",
     "temporaryHp": 0,
   },
   "skills": [
@@ -886,7 +898,7 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
 }
 `;
 
-exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-classe + emplacements dérivés) puis montée 2→4 (sort appris, ASI) > B2 · niv 3 (Bouclier appris, emplacements recalculés) 1`] = `
+exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > création niv 2 (lignée → character_choices, sous-classe, emplacements) puis montée 2→4 (sort appris, ASI) > B2 · niv 3 (Bouclier appris, emplacements recalculés) 1`] = `
 {
   "abilityScoreImprovements": [],
   "abilityScores": [
@@ -915,7 +927,19 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "lineage:Lignage elfique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": "Haut-elfe",
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Magicien",
@@ -964,7 +988,7 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
     },
     "name": "Elyndra",
     "ruleset": "5",
-    "species": "Humain",
+    "species": "Elfe",
     "temporaryHp": 0,
   },
   "skills": [
@@ -1042,7 +1066,7 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
 }
 `;
 
-exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-classe + emplacements dérivés) puis montée 2→4 (sort appris, ASI) > B3 · niv 4 (ASI +2 INT) 1`] = `
+exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > création niv 2 (lignée → character_choices, sous-classe, emplacements) puis montée 2→4 (sort appris, ASI) > B3 · niv 4 (ASI +2 INT) 1`] = `
 {
   "abilityScoreImprovements": [
     {
@@ -1078,7 +1102,19 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "lineage:Lignage elfique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": "Haut-elfe",
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Magicien",
@@ -1127,7 +1163,7 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
     },
     "name": "Elyndra",
     "ruleset": "5",
-    "species": "Humain",
+    "species": "Elfe",
     "temporaryHp": 0,
   },
   "skills": [
@@ -1205,9 +1241,16 @@ exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-
 }
 `;
 
-exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum) > création niv 10 (Pacte de la Chaîne + 2 manifestations) puis montée 10→11 (arcanum niv 6) > C1 · création niv 10 (pacte + manifestations) 1`] = `
+exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/dons création) > création niv 10 (pacte + manifestations + ASI niv 4, don niv 8, don bonus) puis montée 10→11 (arcanum niv 6) > C1 · création niv 10 (pacte + manifestations + ASI/dons) 1`] = `
 {
-  "abilityScoreImprovements": [],
+  "abilityScoreImprovements": [
+    {
+      "ability": "cha",
+      "amount": 2,
+      "class": "Occultiste",
+      "classLevel": 4,
+    },
+  ],
   "abilityScores": [
     {
       "ability": "cha",
@@ -1274,6 +1317,18 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum) > créa
       "classLevel": null,
       "feature": "Regard de deux esprits",
       "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Robuste",
+      "source": "bonus",
+    },
+    {
+      "choices": null,
+      "classLevel": 8,
+      "feature": "Vigilant",
+      "source": "asi",
     },
   ],
   "inventory": [],
@@ -1367,9 +1422,16 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum) > créa
 }
 `;
 
-exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum) > création niv 10 (Pacte de la Chaîne + 2 manifestations) puis montée 10→11 (arcanum niv 6) > C2 · niv 11 (manifestation ajoutée + arcanum niv 6) 1`] = `
+exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/dons création) > création niv 10 (pacte + manifestations + ASI niv 4, don niv 8, don bonus) puis montée 10→11 (arcanum niv 6) > C2 · niv 11 (manifestation ajoutée + arcanum niv 6) 1`] = `
 {
-  "abilityScoreImprovements": [],
+  "abilityScoreImprovements": [
+    {
+      "ability": "cha",
+      "amount": 2,
+      "class": "Occultiste",
+      "classLevel": 4,
+    },
+  ],
   "abilityScores": [
     {
       "ability": "cha",
@@ -1448,6 +1510,18 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum) > créa
       "classLevel": null,
       "feature": "Regard de deux esprits",
       "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Robuste",
+      "source": "bonus",
+    },
+    {
+      "choices": null,
+      "classLevel": 8,
+      "feature": "Vigilant",
+      "source": "asi",
     },
   ],
   "inventory": [],
@@ -1993,6 +2067,384 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
       "used": 0,
     },
   ],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > création niv 1 puis montée 1→3 (Ruse niv 2, sous-classe niv 3 + expertise + compétence apprise) > E1 · création niv 1 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 12,
+    },
+    {
+      "ability": "dex",
+      "value": 16,
+    },
+    {
+      "ability": "int",
+      "value": 13,
+    },
+    {
+      "ability": "str",
+      "value": 10,
+    },
+    {
+      "ability": "wis",
+      "value": 11,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Roublard",
+      "isMain": true,
+      "level": 1,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Attaque sournoise",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 1,
+        "die": "8",
+      },
+    ],
+    "currentHp": 9,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 9,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Sly",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "deception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "dex_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "insight",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "int_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "stealth",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > création niv 1 puis montée 1→3 (Ruse niv 2, sous-classe niv 3 + expertise + compétence apprise) > E2 · niv 2 (Ruse) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 12,
+    },
+    {
+      "ability": "dex",
+      "value": 16,
+    },
+    {
+      "ability": "int",
+      "value": 13,
+    },
+    {
+      "ability": "str",
+      "value": 10,
+    },
+    {
+      "ability": "wis",
+      "value": 11,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Roublard",
+      "isMain": true,
+      "level": 2,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Attaque sournoise",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Ruse",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 2,
+        "die": "8",
+      },
+    ],
+    "currentHp": 9,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 15,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Sly",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "deception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "dex_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "insight",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "int_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "stealth",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > création niv 1 puis montée 1→3 (Ruse niv 2, sous-classe niv 3 + expertise + compétence apprise) > E3 · niv 3 (Voleur + expertise + Acrobaties) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 12,
+    },
+    {
+      "ability": "dex",
+      "value": 16,
+    },
+    {
+      "ability": "int",
+      "value": 13,
+    },
+    {
+      "ability": "str",
+      "value": 10,
+    },
+    {
+      "ability": "wis",
+      "value": 11,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Roublard",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": "Voleur",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Attaque sournoise",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Mains lestes",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Ruse",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "8",
+      },
+    ],
+    "currentHp": 9,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 21,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Sly",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "acrobatics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "deception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "dex_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "insight",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "int_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "expert",
+      "skillKey": "perception",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "expert",
+      "skillKey": "stealth",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [],
   "spells": [],
 }
 `;

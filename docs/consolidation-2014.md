@@ -66,14 +66,27 @@ dérivations espèce/dons/objets/lignée/maîtrises cohérentes.
     au lot des sorts 5.5.
   - **Golden-master d'équivalence création/level-up : ✅ FAIT.** `test/nuxt/goldenMaster.test.ts`
     (+ fixture/sérialiseur `test/nuxt/fixtures/goldenMaster.ts`) fige la sortie NORMALISÉE de
-    `createCharacter` + `characterLevelUp` pour les quatre archétypes (martial Guerrier→Champion,
-    lanceur complet Magicien, Occultiste pacte/manifestations/arcanum, multiclasse Guerrier/Occultiste)
-    en **13 snapshots** committés (`__snapshots__/goldenMaster.test.ts.snap`). Les clés étrangères y
-    sont résolues en NOMS et les id auto-incrément/horodatages écartés → lisible et déterministe.
-    Quand F2 déplacera les choix de classe (ASI/style/sous-classe/expertise, aujourd'hui front-dupliqués)
-    vers `progression`/`character_choices`, le `git diff` du `.snap` montrera EXACTEMENT le changement
-    de comportement serveur (typiquement : des lignes `choices` qui apparaissent). Diff inattendu =
-    régression ; diff attendu = relu puis re-généré (`vitest -u`). **Filet NON négociable avant F2, posé.**
+    `createCharacter` + `characterLevelUp` pour **cinq** archétypes, en **16 snapshots** committés
+    (`__snapshots__/goldenMaster.test.ts.snap`) — choisis pour couvrir les mécanismes de CHOIX que
+    F2 refactore :
+    - martial (Guerrier→Champion : sous-classe & ASI **au level-up**) ;
+    - lanceur complet (Magicien **Elfe** : lignée = le SEUL `character_choices` déjà écrit en 2014 ;
+      emplacements dérivés) ;
+    - Occultiste (pacte/manifestations/arcanum **+ ASI & dons À LA CRÉATION** : `asiBonuses`,
+      `asiFeats` source `asi`, `bonusFeatureId` source `bonus`) ;
+    - roublard (**expertise** upsert→`expert` + `newSkills` + sous-classe au level-up) ;
+    - multiclasse (Guerrier/Occultiste : emplacements de pacte combinés).
+
+    Les clés étrangères y sont résolues en NOMS et les id auto-incrément/horodatages écartés →
+    lisible et déterministe. Quand F2 déplacera les choix de classe (ASI/style/sous-classe/expertise,
+    aujourd'hui front-dupliqués) vers `progression`/`character_choices`, le `git diff` du `.snap`
+    montrera EXACTEMENT le changement de comportement serveur (typiquement : des lignes `choices` qui
+    apparaissent). Diff inattendu = régression ; diff attendu = relu puis re-généré (`vitest -u`).
+    **Filet NON négociable avant F2, posé.**
+    - _Dette de couverture ASSUMÉE_ (non bloquante — chemins hors du risque F2 direct, à ajouter au
+      besoin) : pactes **Lame/Tome**, multiclassage lanceur **plein+plein / plein+demi** (branche
+      `spellcasting` combinée), **demi-lanceur** (`half`). Hors périmètre : `characterRest`,
+      `fightingStyle` (front-only, jamais écrit serveur).
 - **P1 — le cœur (PROCHAINE ÉTAPE).** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
   toutes et déjà supporté par `resolve.ts`/`buildCatalog`, retirer le blob `character-builder.ts`
   au fur et à mesure — F5 s'y fait) **+ F3** (dériver les compétences sur le même mécanisme). Sous
