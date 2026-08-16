@@ -57,6 +57,39 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 atomique, garde de cohérence d'édition, slots dérivés depuis `spellSlots.ts`), `resolve.ts` pur,
 dérivations espèce/dons/objets/lignée/maîtrises cohérentes.
 
+## Inventaire « front-only » (choix collectés côté client — converge sur F2/F5)
+
+Audit du flux builder/level-up ↔ serveur (2026-08-16, en marge du golden-master). Trois catégories,
+par gravité — la plupart se résolvent AVEC F2 (généralisation `progression`) / F5 (blob front mort) :
+
+- **A. Collecté par le wizard mais NON persisté (vrai trou).**
+  - **Style de combat** — création : dans `BuilderState` (`useCharacterBuilder.ts:40`), bloque l'étape
+    (`:536`), mais **jamais envoyé** (absent du payload `new.vue`). Level-up : envoyé
+    (`useLevelUp.ts:556`), accepté par `levelUpSchema` (`characterLevelUp.ts:37`) mais **jamais lu**
+    par `characterLevelUp` → jeté. Bilan : choix **perdu dans les deux flux**, effet (Défense +1 CA,
+    Archerie +2…) jamais appliqué. Le tag `fighting_style` ET le `ChoiceKind` existent DÉJÀ
+    (`featureTags.ts:32`, `choices.ts:30`) ; seul le CONTENU 2014 n'est pas migré (le seed a un unique
+    `class_feature` descriptif « Style de combat », sans tag/progression/options). **Chantier F2** :
+    seeder les 6 styles en features taguées + progression + matérialisation via `character_choices`,
+    comme les invocations.
+  - **Expertise à la création** (nuance) — semble **non capturée du tout** par le builder (aucun champ
+    d'état, rien au payload), alors qu'un Roublard/Barde créé niv ≥ 1 devrait la choisir. « Non
+    implémenté à la création » plutôt que « collecté-puis-jeté ». Au level-up, elle EST persistée
+    (cf. golden-master archétype E).
+- **B. Envoyé mais volontairement ignoré — donnée NON perdue (dérivée ailleurs).**
+  - `armorProficiencyKeys` / `weaponProficiencyKeys` (création, `new.vue:204-205`) : acceptés par le
+    schéma, **ignorés** par `createCharacter` (les maîtrises sont désormais DÉRIVÉES du porteur de
+    classe, volet B). Payload **mort** = **F5**, à retirer quand le blob front disparaît (dans F2).
+- **C. Envoyé mais abandonné en fallback silencieux.**
+  - `inventoryItemNamesUnresolved` (création) : items non résolus en id côté client → **loggés puis
+    non persistés**. Un objet custom / de la monnaie-en-texte peut disparaître sans bruit.
+
+**Hors de cette liste** (pour lever l'ambiguïté) : les **listes d'options** de sous-classe/ASI des 10
+classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHOIX résultant
+(`subclassId`, `asiBonuses`, `asiFeats`) EST persisté — pas « perdu ». Et l'état d'encounter
+(`activeConditions`, `deathSavingThrows`, `armorClass`) est **localStorage par design**
+(cf. `docs/persistence.md`) — pas un bug (`armorClass` = dette assumée faute de système d'équipement).
+
 ## Plan
 
 - **P0 — débloquer le seed 5.5 (no-op 2014).**
@@ -85,8 +118,11 @@ dérivations espèce/dons/objets/lignée/maîtrises cohérentes.
     **Filet NON négociable avant F2, posé.**
     - _Dette de couverture ASSUMÉE_ (non bloquante — chemins hors du risque F2 direct, à ajouter au
       besoin) : pactes **Lame/Tome**, multiclassage lanceur **plein+plein / plein+demi** (branche
-      `spellcasting` combinée), **demi-lanceur** (`half`). Hors périmètre : `characterRest`,
-      `fightingStyle` (front-only, jamais écrit serveur).
+      `spellcasting` combinée), **demi-lanceur** (`half`). Hors périmètre : `characterRest`.
+    - _Non figeable aujourd'hui_ : le **style de combat** n'a AUCUNE sortie serveur (cf. « Inventaire
+      front-only », cat. A) — ce n'est PAS « hors périmètre » mais un choix perdu à rapatrier en F2.
+      Quand F2 le câblera, l'archétype **Guerrier** du golden-master devra voir apparaître son choix
+      de style dans le snapshot → diff ATTENDU (relire + `vitest -u`).
 - **P1 — le cœur (PROCHAINE ÉTAPE).** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
   toutes et déjà supporté par `resolve.ts`/`buildCatalog`, retirer le blob `character-builder.ts`
   au fur et à mesure — F5 s'y fait) **+ F3** (dériver les compétences sur le même mécanisme). Sous
