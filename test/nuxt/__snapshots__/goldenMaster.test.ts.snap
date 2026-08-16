@@ -1,0 +1,1998 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis montée 1→5 (Fougue, sous-classe niv 3, ASI niv 4, Attaque suppl. niv 5) > A1 · création niv 1 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 13,
+    },
+    {
+      "ability": "int",
+      "value": 8,
+    },
+    {
+      "ability": "str",
+      "value": 16,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Guerrier",
+      "isMain": true,
+      "level": 1,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Second souffle",
+      "source": null,
+    },
+  ],
+  "inventory": [
+    {
+      "equipped": false,
+      "isPactWeapon": false,
+      "item": "Épée longue",
+      "quantity": 1,
+    },
+  ],
+  "proficiencyOverrides": [
+    {
+      "action": "grant",
+      "type": "language",
+      "value": "Orc",
+    },
+    {
+      "action": "grant",
+      "type": "tool",
+      "value": "Jeu de cartes",
+    },
+  ],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Soldat",
+    "currentHitDie": [
+      {
+        "count": 1,
+        "die": "10",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 12,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Aldric",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "athletics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "con_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "str_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "survival",
+      "source": "background",
+    },
+  ],
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis montée 1→5 (Fougue, sous-classe niv 3, ASI niv 4, Attaque suppl. niv 5) > A2 · niv 2 (Fougue) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 13,
+    },
+    {
+      "ability": "int",
+      "value": 8,
+    },
+    {
+      "ability": "str",
+      "value": 16,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Guerrier",
+      "isMain": true,
+      "level": 2,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Fougue",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Second souffle",
+      "source": null,
+    },
+  ],
+  "inventory": [
+    {
+      "equipped": false,
+      "isPactWeapon": false,
+      "item": "Épée longue",
+      "quantity": 1,
+    },
+  ],
+  "proficiencyOverrides": [
+    {
+      "action": "grant",
+      "type": "language",
+      "value": "Orc",
+    },
+    {
+      "action": "grant",
+      "type": "tool",
+      "value": "Jeu de cartes",
+    },
+  ],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Soldat",
+    "currentHitDie": [
+      {
+        "count": 2,
+        "die": "10",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 19,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Aldric",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "athletics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "con_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "str_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "survival",
+      "source": "background",
+    },
+  ],
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis montée 1→5 (Fougue, sous-classe niv 3, ASI niv 4, Attaque suppl. niv 5) > A3 · niv 3 (sous-classe Champion) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 13,
+    },
+    {
+      "ability": "int",
+      "value": 8,
+    },
+    {
+      "ability": "str",
+      "value": 16,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Guerrier",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": "Champion",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Fougue",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Second souffle",
+      "source": null,
+    },
+  ],
+  "inventory": [
+    {
+      "equipped": false,
+      "isPactWeapon": false,
+      "item": "Épée longue",
+      "quantity": 1,
+    },
+  ],
+  "proficiencyOverrides": [
+    {
+      "action": "grant",
+      "type": "language",
+      "value": "Orc",
+    },
+    {
+      "action": "grant",
+      "type": "tool",
+      "value": "Jeu de cartes",
+    },
+  ],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Soldat",
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "10",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 25,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Aldric",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "athletics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "con_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "str_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "survival",
+      "source": "background",
+    },
+  ],
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis montée 1→5 (Fougue, sous-classe niv 3, ASI niv 4, Attaque suppl. niv 5) > A4 · niv 4 (ASI +2 FOR) 1`] = `
+{
+  "abilityScoreImprovements": [
+    {
+      "ability": "str",
+      "amount": 2,
+      "class": "Guerrier",
+      "classLevel": 4,
+    },
+  ],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 13,
+    },
+    {
+      "ability": "int",
+      "value": 8,
+    },
+    {
+      "ability": "str",
+      "value": 16,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Guerrier",
+      "isMain": true,
+      "level": 4,
+      "pactBoon": null,
+      "subclass": "Champion",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Fougue",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Second souffle",
+      "source": null,
+    },
+  ],
+  "inventory": [
+    {
+      "equipped": false,
+      "isPactWeapon": false,
+      "item": "Épée longue",
+      "quantity": 1,
+    },
+  ],
+  "proficiencyOverrides": [
+    {
+      "action": "grant",
+      "type": "language",
+      "value": "Orc",
+    },
+    {
+      "action": "grant",
+      "type": "tool",
+      "value": "Jeu de cartes",
+    },
+  ],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Soldat",
+    "currentHitDie": [
+      {
+        "count": 4,
+        "die": "10",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 31,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Aldric",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "athletics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "con_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "str_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "survival",
+      "source": "background",
+    },
+  ],
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis montée 1→5 (Fougue, sous-classe niv 3, ASI niv 4, Attaque suppl. niv 5) > A5 · niv 5 (Attaque supplémentaire) 1`] = `
+{
+  "abilityScoreImprovements": [
+    {
+      "ability": "str",
+      "amount": 2,
+      "class": "Guerrier",
+      "classLevel": 4,
+    },
+  ],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 13,
+    },
+    {
+      "ability": "int",
+      "value": 8,
+    },
+    {
+      "ability": "str",
+      "value": 16,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Guerrier",
+      "isMain": true,
+      "level": 5,
+      "pactBoon": null,
+      "subclass": "Champion",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Attaque supplémentaire",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Fougue",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Second souffle",
+      "source": null,
+    },
+  ],
+  "inventory": [
+    {
+      "equipped": false,
+      "isPactWeapon": false,
+      "item": "Épée longue",
+      "quantity": 1,
+    },
+  ],
+  "proficiencyOverrides": [
+    {
+      "action": "grant",
+      "type": "language",
+      "value": "Orc",
+    },
+    {
+      "action": "grant",
+      "type": "tool",
+      "value": "Jeu de cartes",
+    },
+  ],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Soldat",
+    "currentHitDie": [
+      {
+        "count": 5,
+        "die": "10",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 37,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Aldric",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "athletics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "con_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "str_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "survival",
+      "source": "background",
+    },
+  ],
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-classe + emplacements dérivés) puis montée 2→4 (sort appris, ASI) > B1 · création niv 2 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 13,
+    },
+    {
+      "ability": "dex",
+      "value": 14,
+    },
+    {
+      "ability": "int",
+      "value": 16,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Magicien",
+      "isMain": true,
+      "level": 2,
+      "pactBoon": null,
+      "subclass": "École d'Évocation",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Façonnage des sorts",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Récupération arcanique",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Sage de la tour",
+    "currentHitDie": [
+      {
+        "count": 2,
+        "die": "6",
+      },
+    ],
+    "currentHp": 8,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 8,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Elyndra",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "arcana",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "history",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "insight",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "int_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "investigation",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "wis_save",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "spellcasting",
+      "total": 3,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Projectile magique",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Trait de feu",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-classe + emplacements dérivés) puis montée 2→4 (sort appris, ASI) > B2 · niv 3 (Bouclier appris, emplacements recalculés) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 13,
+    },
+    {
+      "ability": "dex",
+      "value": 14,
+    },
+    {
+      "ability": "int",
+      "value": 16,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Magicien",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": "École d'Évocation",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Façonnage des sorts",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Récupération arcanique",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Sage de la tour",
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "6",
+      },
+    ],
+    "currentHp": 8,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 13,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Elyndra",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "arcana",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "history",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "insight",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "int_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "investigation",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "wis_save",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "spellcasting",
+      "total": 4,
+      "used": 0,
+    },
+    {
+      "slotLevel": 2,
+      "slotType": "spellcasting",
+      "total": 2,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": null,
+      "spell": "Bouclier",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Projectile magique",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Trait de feu",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · B. Magicien (lanceur complet) > création niv 2 (sous-classe + emplacements dérivés) puis montée 2→4 (sort appris, ASI) > B3 · niv 4 (ASI +2 INT) 1`] = `
+{
+  "abilityScoreImprovements": [
+    {
+      "ability": "int",
+      "amount": 2,
+      "class": "Magicien",
+      "classLevel": 4,
+    },
+  ],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 13,
+    },
+    {
+      "ability": "dex",
+      "value": 14,
+    },
+    {
+      "ability": "int",
+      "value": 16,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Magicien",
+      "isMain": true,
+      "level": 4,
+      "pactBoon": null,
+      "subclass": "École d'Évocation",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Façonnage des sorts",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Récupération arcanique",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Sage de la tour",
+    "currentHitDie": [
+      {
+        "count": 4,
+        "die": "6",
+      },
+    ],
+    "currentHp": 8,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 18,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Elyndra",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "arcana",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "history",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "insight",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "int_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "investigation",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "wis_save",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "spellcasting",
+      "total": 4,
+      "used": 0,
+    },
+    {
+      "slotLevel": 2,
+      "slotType": "spellcasting",
+      "total": 3,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": null,
+      "spell": "Bouclier",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Projectile magique",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Trait de feu",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum) > création niv 10 (Pacte de la Chaîne + 2 manifestations) puis montée 10→11 (arcanum niv 6) > C1 · création niv 10 (pacte + manifestations) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 17,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 14,
+    },
+    {
+      "ability": "int",
+      "value": 10,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 11,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Occultiste",
+      "isMain": true,
+      "level": 10,
+      "pactBoon": "chain",
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Armure des ombres",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Faveur de pacte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Incantation occulte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Manifestations occultes",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Regard de deux esprits",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 10,
+        "die": "8",
+      },
+    ],
+    "currentHp": 60,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 60,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Vex",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "arcana",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "cha_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "deception",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "investigation",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "wis_save",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [
+    {
+      "slotLevel": 5,
+      "slotType": "pact_magic",
+      "total": 2,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "pact_chain",
+      "spell": "Appel de familier",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "invocation",
+      "spell": "Armure de mage",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum) > création niv 10 (Pacte de la Chaîne + 2 manifestations) puis montée 10→11 (arcanum niv 6) > C2 · niv 11 (manifestation ajoutée + arcanum niv 6) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 17,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 14,
+    },
+    {
+      "ability": "int",
+      "value": 10,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 11,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Occultiste",
+      "isMain": true,
+      "level": 11,
+      "pactBoon": "chain",
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Arcanum mystique (niveau 6)",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Armure des ombres",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Faveur de pacte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Incantation occulte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Manifestations occultes",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Maître des masques",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Regard de deux esprits",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 11,
+        "die": "8",
+      },
+    ],
+    "currentHp": 60,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 66,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Vex",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "arcana",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "cha_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "deception",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "investigation",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "wis_save",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [
+    {
+      "slotLevel": 5,
+      "slotType": "pact_magic",
+      "total": 3,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "pact_chain",
+      "spell": "Appel de familier",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "invocation",
+      "spell": "Armure de mage",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "arcanum_6",
+      "spell": "Cercle de mort",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrier 3 (Champion) puis multiclassage Occultiste (emplacements de pacte combinés) > D1 · création Guerrier 3 (Champion) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 13,
+    },
+    {
+      "ability": "int",
+      "value": 10,
+    },
+    {
+      "ability": "str",
+      "value": 15,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Guerrier",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": "Champion",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Fougue",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Second souffle",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Soldat",
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "10",
+      },
+    ],
+    "currentHp": 28,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 28,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Kael",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "acrobatics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "athletics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "con_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "str_save",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrier 3 (Champion) puis multiclassage Occultiste (emplacements de pacte combinés) > D2 · Occultiste 1 (multiclassage, pacte combiné) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 13,
+    },
+    {
+      "ability": "int",
+      "value": 10,
+    },
+    {
+      "ability": "str",
+      "value": 15,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Guerrier",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": "Champion",
+    },
+    {
+      "class": "Occultiste",
+      "isMain": false,
+      "level": 1,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Fougue",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Incantation occulte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Second souffle",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Soldat",
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "10",
+      },
+      {
+        "count": 1,
+        "die": "8",
+      },
+    ],
+    "currentHp": 28,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 33,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Kael",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "acrobatics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "athletics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "con_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "str_save",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "pact_magic",
+      "total": 1,
+      "used": 0,
+    },
+  ],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrier 3 (Champion) puis multiclassage Occultiste (emplacements de pacte combinés) > D3 · Occultiste 2 (manifestation) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 13,
+    },
+    {
+      "ability": "int",
+      "value": 10,
+    },
+    {
+      "ability": "str",
+      "value": 15,
+    },
+    {
+      "ability": "wis",
+      "value": 12,
+    },
+  ],
+  "choices": [],
+  "classes": [
+    {
+      "class": "Guerrier",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": "Champion",
+    },
+    {
+      "class": "Occultiste",
+      "isMain": false,
+      "level": 2,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Fougue",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Incantation occulte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Manifestations occultes",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Regard de deux esprits",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Second souffle",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": "Soldat",
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "10",
+      },
+      {
+        "count": 2,
+        "die": "8",
+      },
+    ],
+    "currentHp": 28,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "inspiration": false,
+    "maxHp": 38,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Kael",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "skills": [
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "acrobatics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "athletics",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "con_save",
+      "source": "class",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "intimidation",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "perception",
+      "source": "background",
+    },
+    {
+      "isOverride": false,
+      "proficiencyLevel": "proficient",
+      "skillKey": "str_save",
+      "source": "class",
+    },
+  ],
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "pact_magic",
+      "total": 2,
+      "used": 0,
+    },
+  ],
+  "spells": [],
+}
+`;

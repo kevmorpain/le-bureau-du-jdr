@@ -16,7 +16,8 @@
     (migration `0092`). Seuls les vrais deltas du joueur sont stockés.
 - **Audit de propreté (2026-08-13)** : réalisé en sous-agent contexte neuf, lecture seule.
   354 tests verts à l'époque. 11 constats (F1–F11) ci-dessous.
-- **P0 (consolidation) — FAIT & MERGÉ (PR #52)** : catalogue *ruleset-safe* (F1 + F4-partiel).
+- **P0 (consolidation)** : catalogue *ruleset-safe* (F1 + F4-partiel) **FAIT & MERGÉ (PR #52)** ;
+  **golden-master d'équivalence création/level-up FAIT** (filet non négociable avant F2, cf. ci-dessous).
 
 **AUCUN contenu 5.5 n'est encore seedé.** Tout le « point 2 » de la roadmap (contenu 5.5) est devant.
 
@@ -63,11 +64,17 @@ dérivations espèce/dons/objets/lignée/maîtrises cohérentes.
     `server/db/seeds/lib/rulesetOf.ts` ; `loadInvocations` filtré. Suivi noté in-code : le lien
     sort↔classe de `spells.ts` (`classIdByName`) reste par nom → à reprendre en `(nom, ruleset)`
     au lot des sorts 5.5.
-  - **Golden-master d'équivalence builder/level-up : À FAIRE (prochaine PR).** Figer la sortie de
-    création + level-up pour un échantillon représentatif (martial, caster, occultiste, multiclasse)
-    → un `git diff` de comportement saute aux yeux quand on généralisera `progression`. **Filet
-    NON négociable avant F2.**
-- **P1 — le cœur.** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
+  - **Golden-master d'équivalence création/level-up : ✅ FAIT.** `test/nuxt/goldenMaster.test.ts`
+    (+ fixture/sérialiseur `test/nuxt/fixtures/goldenMaster.ts`) fige la sortie NORMALISÉE de
+    `createCharacter` + `characterLevelUp` pour les quatre archétypes (martial Guerrier→Champion,
+    lanceur complet Magicien, Occultiste pacte/manifestations/arcanum, multiclasse Guerrier/Occultiste)
+    en **13 snapshots** committés (`__snapshots__/goldenMaster.test.ts.snap`). Les clés étrangères y
+    sont résolues en NOMS et les id auto-incrément/horodatages écartés → lisible et déterministe.
+    Quand F2 déplacera les choix de classe (ASI/style/sous-classe/expertise, aujourd'hui front-dupliqués)
+    vers `progression`/`character_choices`, le `git diff` du `.snap` montrera EXACTEMENT le changement
+    de comportement serveur (typiquement : des lignes `choices` qui apparaissent). Diff inattendu =
+    régression ; diff attendu = relu puis re-généré (`vitest -u`). **Filet NON négociable avant F2, posé.**
+- **P1 — le cœur (PROCHAINE ÉTAPE).** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
   toutes et déjà supporté par `resolve.ts`/`buildCatalog`, retirer le blob `character-builder.ts`
   au fur et à mesure — F5 s'y fait) **+ F3** (dériver les compétences sur le même mécanisme). Sous
   golden-master. Sérialisé sur le modèle puis front.
