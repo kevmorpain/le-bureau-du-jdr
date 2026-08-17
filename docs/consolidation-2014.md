@@ -149,13 +149,23 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
     Les owners VISIBLES de l'Occultiste (Faveur de pacte…) restent des `class_feature` matérialisées —
     _résidu noté_ : par symétrie ils sont eux aussi redondants avec l'option choisie ; les masquer serait
     une décision UX SÉPARÉE (non prise ici, l'utilisateur a choisi B ciblée sous-classe).
-  - **F2 · sous-classe — tranches suivantes** : (2, SERVEUR) `createCharacter`/`characterLevelUp`
-    enregistrent le pick en `character_choices.selected_subclass_id`, `character_classes.subclass_id`
-    en DÉRIVE (rules-engine.md §4, migration additive) — SOUS golden-master (diff attendu : ajout de la
-    fixture sous-classe + apparition des lignes `choices`) ; (3, FRONT) builder + level-up lisent le
-    niveau/les options depuis le catalogue (`loadClasses` les expose déjà) au lieu du blob
-    `app/data/character-builder.ts` — retrait progressif du blob (F5 : clés de maîtrise mortes s'y font).
-    Puis rejouer le même patron pour **style de combat** (cf. Inventaire front-only, cat. A) et le reste.
+  - **F2 · sous-classe — tranche 2 (SERVEUR + backfill prod) : ✅ FAIT.** `createCharacter`/
+    `characterLevelUp` résolvent la progression `subclass` de la classe et écrivent le pick en
+    `character_choices.selected_subclass_id` (LA source, rules-engine.md §4) ; `character_classes.
+    subclass_id` reste écrit (projection dénormalisée pour le read-model / la matérialisation des
+    features de sous-classe) — additif, symétrique de la lignée, garde défensive si pas de progression.
+    Golden-master : la fixture seede les owners `choice_carrier` (Guerrier/Magicien/Roublard) → diff
+    REVU = apparition de lignes `choices` (subclass) et **0 ligne de feature** (owner invisible confirmé
+    au snapshot). **Backfill prod** : migration `0093_subclass_choice_carriers` crée owner+progression
+    pour les 12 classes sur les bases déployées (pendant du seed, comme `0082` pour l'Occultiste), avec
+    gardes `NOT EXISTS` (idempotent, mieux que 0082) et tolérance base vierge (`INSERT...SELECT FROM
+    classes`). Testé base peuplée + idempotence (`subclassBackfill.test.ts`) ; descriptions identiques au
+    seed (convergence). La dette « prod n'a pas la donnée » est donc **levée**.
+  - **F2 · sous-classe — tranche 3 (FRONT) : à faire.** builder + level-up lisent le niveau/les options
+    depuis le catalogue (`loadClasses` les expose déjà, + `dueChoices` sait maintenant que le pick est
+    fait via `character_choices`) au lieu du blob `app/data/character-builder.ts` — retrait progressif du
+    blob (F5 : clés de maîtrise mortes s'y font). Puis rejouer le même patron pour **style de combat**
+    (cf. Inventaire front-only, cat. A) et le reste des choix (ASI/expertise déjà persistés).
 - **Tracks parallèles sûrs** (empreinte disjointe) : **F7** (dragonborn → lignée), **F8/F9**
   (hygiène schéma), **F10** (typecheck baseline + bug mort l.313).
 
