@@ -104,6 +104,12 @@ beforeAll(async () => {
     { id: 300, name: 'Second souffle', featureType: 'class_feature', classId: FIGHTER, levelRequired: 1 }, // passif Guerrier
   ])
 
+  // Owner de choix de SOUS-CLASSE (F2, option B) : type `choice_carrier` → lu par le catalogue mais
+  // JAMAIS matérialisé par le sweep de grants passifs, bien que ce soit une feature de classe de
+  // niveau ≤ à celui du perso. Porte une progression `subclass` (réaliste, Champion déjà seedé).
+  await db.insert(schema.features).values({ id: 250, name: 'Archétype martial', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 1 })
+  await db.insert(schema.progression).values({ featureId: 250, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false })
+
   // 3 manifestations occultes (tag invocation) — l'une octroie un sort
   await db.insert(schema.features).values([
     { id: 401, name: 'Regard de deux esprits', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
@@ -187,6 +193,33 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
 
     const slots = await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, id))
     expect(slots).toHaveLength(0) // Guerrier = non-lanceur
+  })
+})
+
+describe('createCharacter — owner de choix invisible (choice_carrier, F2 option B)', () => {
+  it('ne matérialise PAS la porteuse du choix de sous-classe, mais matérialise le class_feature passif', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 1 }), OWNER)
+    const ids = (await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id)))
+      .map((f: { featureId: number }) => f.featureId)
+    expect(ids).toContain(300) // « Second souffle » (class_feature passif) → matérialisé
+    expect(ids).not.toContain(250) // « Archétype martial » (choice_carrier) → invisible
+  })
+})
+
+describe('createCharacter — pick de sous-classe → character_choices (F2, tranche 2)', () => {
+  it('enregistre le pick en character_choices.selectedSubclassId ET conserve character_classes.subclassId', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 3, subclassId: FIGHTER_SUBCLASS }), OWNER)
+
+    // Projection dénormalisée conservée (read-model / matérialisation des features de sous-classe).
+    const [cc] = await db.select().from(schema.characterClasses).where(eq(schema.characterClasses.characterSheetId, id))
+    expect(cc.subclassId).toBe(FIGHTER_SUBCLASS)
+
+    // Source de la décision : une ligne character_choices rattachée à la progression `subclass` (owner 250).
+    const [prog] = await db.select({ id: schema.progression.id }).from(schema.progression).where(eq(schema.progression.featureId, 250))
+    const choices = await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, id))
+    const sub = choices.find((c: { selectedSubclassId: number | null }) => c.selectedSubclassId === FIGHTER_SUBCLASS)
+    expect(sub, 'character_choices du pick de sous-classe').toBeDefined()
+    expect(sub!.progressionId).toBe(prog.id)
   })
 })
 

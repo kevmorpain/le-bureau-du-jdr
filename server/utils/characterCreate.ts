@@ -423,6 +423,23 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     lineageProgressionId = prog.id
   }
 
+  // Choix de SOUS-CLASSE (F2) : on rattache le pick à la progression `kind:'subclass'` portée par
+  // l'owner `choice_carrier` de la classe → `character_choices` devient LA source de la décision
+  // (rules-engine.md §4). `character_classes.subclass_id` reste écrit (projection dénormalisée pour
+  // le read-model / la matérialisation des features de sous-classe). Additif, symétrique de la lignée.
+  // Défensif : si la classe n'a pas (encore) de progression de sous-classe seedée → on écrit juste
+  // `subclass_id` sans choix (no-op sur le pick), sans casser la création.
+  let subclassProgressionId: number | null = null
+  if (subclassId != null) {
+    const [prog] = await db
+      .select({ id: schema.progression.id })
+      .from(schema.progression)
+      .innerJoin(schema.features, eq(schema.features.id, schema.progression.featureId))
+      .where(and(eq(schema.progression.kind, 'subclass'), eq(schema.features.classId, cls.id)))
+      .limit(1)
+    subclassProgressionId = prog?.id ?? null
+  }
+
   // ── 4. Insert de la fiche (HORS batch — id auto-incrément) ───────────────────
   const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
   const hitDieSides = hitDieMatch?.[1]
@@ -493,6 +510,16 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       progressionId: lineageProgressionId,
       selectedLineageId: d.selectedLineageId,
     }))
+  }
+
+  // Choix de SOUS-CLASSE (F2) → character_choices : enregistre la décision (source), en plus de
+  // `character_classes.subclass_id` déjà posé ci-dessus (projection). onConflictDoNothing par sûreté.
+  if (subclassId != null && subclassProgressionId != null) {
+    stmts.push(db.insert(schema.characterChoices).values({
+      characterSheetId: sheetId,
+      progressionId: subclassProgressionId,
+      selectedSubclassId: subclassId,
+    }).onConflictDoNothing())
   }
 
   // Triade d'origine 2024 (`ability_scores`) → character_choices.payload : la fiche dérive
