@@ -131,8 +131,11 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
     déjà là (migration 0080) ; manquait la « décision → progression ». Posée comme source unique côté
     DONNÉES : helper `server/db/seeds/data/subclassChoice.ts` (`subclassChoiceFeature(className)` →
     feature owner à `subclass_level`, portant une progression `kind:'subclass'`, `optionSource:{subclasses}`,
-    `count` fixed 1), câblé dans les 12 wrappers de classe (Occultiste inclus). Verrouillé par
-    `test/unit/subclassChoice.test.ts` (les 12 classes vs `CLASS_IDENTITY`) + `test/nuxt/subclassProgression.test.ts`
+    `count` fixed 1), **injecté par `seedClass`** pour toute classe ayant des sous-classes — même
+    mécanisme que le carrier de maîtrises (`buildProficiencyCarrier`), donc DRY et inoubliable pour
+    une future classe (pas de câblage dupliqué par wrapper). Verrouillé par
+    `test/unit/subclassChoice.test.ts` (map = les 12 classes de `CLASS_IDENTITY` **et** de `classesData`,
+    pour que `seedClass` ne saute pas en silence une classe non mappée) + `test/nuxt/subclassProgression.test.ts`
     (mécanisme données→`buildCatalog`→`resolveChoices`/`dueChoices`, dû au bon niveau). **Additif** :
     ne touche NI `createCharacter`/`characterLevelUp` (golden-master inchangé) NI le front (blob encore
     en place). ⚠️ _Effet de bord au re-seed_ : la feature owner (« Archétype martial »… non taguée) sera

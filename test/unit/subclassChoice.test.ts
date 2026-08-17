@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../../server/db/seeds/data/subclassChoice'
+import { classesData } from '../../server/db/seeds/data/classes'
 import { CLASS_IDENTITY } from '../fixtures/classIdentity'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -16,6 +17,13 @@ describe('subclassChoiceFeature — contrat de sous-classe', () => {
   it('couvre EXACTEMENT les 12 classes du contrat (aucune oubliée, aucune en trop)', () => {
     expect(Object.keys(SUBCLASS_CHOICE_FEATURE_NAMES).sort())
       .toEqual(CLASS_IDENTITY.map(c => c.dbName).sort())
+  })
+
+  it('couvre toutes les classes seedées (classesData) — `seedClass` saute en silence une classe non mappée', () => {
+    // Garde-fou du choix « injection centralisée dans seedClass » : une classe ajoutée à
+    // classesData mais oubliée dans la map ne recevrait AUCUN choix de sous-classe, sans erreur.
+    expect(Object.keys(SUBCLASS_CHOICE_FEATURE_NAMES).sort())
+      .toEqual([...classesData.map(c => c.name)].sort())
   })
 
   for (const { dbName, subclassLevel } of CLASS_IDENTITY) {
