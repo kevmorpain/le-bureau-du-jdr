@@ -46,9 +46,11 @@ beforeAll(async () => {
     { id: 11, classId: FIGHTER, name: 'Maître de guerre' },
   ])
 
-  // Feature owner du choix de sous-classe, portant EXACTEMENT la progression du seed (helper F2).
+  // Feature owner du choix de sous-classe, portant EXACTEMENT la forme du seed (helper F2) — dont
+  // le `featureType` 'choice_carrier' : on vérifie ainsi que le catalogue la remonte MALGRÉ un type
+  // non matérialisé (buildCatalog ne filtre pas le type).
   const owner = subclassChoiceFeature('Guerrier')
-  await orm.insert(srcSchema.features).values({ id: 50, name: owner.name, featureType: 'class_feature', classId: FIGHTER, levelRequired: owner.levelRequired })
+  await orm.insert(srcSchema.features).values({ id: 50, name: owner.name, featureType: owner.featureType, classId: FIGHTER, levelRequired: owner.levelRequired })
   await orm.insert(srcSchema.progression).values({
     featureId: 50,
     kind: owner.progression!.kind,

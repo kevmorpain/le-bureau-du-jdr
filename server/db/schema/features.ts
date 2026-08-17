@@ -17,7 +17,15 @@ import characterFeatures from './character_features'
 // `proficiency` que la fiche DÉRIVE de l'origine (volet B, cf. shared/rules/classProficiencies.ts).
 // Exclue par construction des sweeps de matérialisation (qui filtrent `class_feature`/
 // `subclass_feature`) et du catalogue (elle ne porte aucune `progression`).
-export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature' | 'proficiency_grant'
+//
+// `choice_carrier` : feature PORTEUSE d'un point de choix (`progression`) dont le RÉSULTAT est déjà
+// rendu ailleurs sur la fiche, donc jamais matérialisée ni affichée — mais bien lue par le catalogue
+// (`buildCatalog` joint `progression`→`features` sans filtrer le type). Usage : le choix de
+// SOUS-CLASSE (F2) — l'owner « Archétype martial »… porte la progression `kind:'subclass'`, mais la
+// sous-classe choisie (+ ses features) est déjà affichée, donc l'owner reste invisible (symétrique du
+// masquage des « points de choix » d'espèce dans index.get.ts). Ne PAS confondre avec les owners
+// VISIBLES de l'Occultiste (Faveur de pacte…), qui restent des `class_feature` matérialisées.
+export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature' | 'proficiency_grant' | 'choice_carrier'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
 export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
 export type RechargeType = typeof RECHARGE_TYPES[number]

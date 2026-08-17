@@ -138,10 +138,17 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
     pour que `seedClass` ne saute pas en silence une classe non mappée) + `test/nuxt/subclassProgression.test.ts`
     (mécanisme données→`buildCatalog`→`resolveChoices`/`dueChoices`, dû au bon niveau). **Additif** :
     ne touche NI `createCharacter`/`characterLevelUp` (golden-master inchangé) NI le front (blob encore
-    en place). ⚠️ _Effet de bord au re-seed_ : la feature owner (« Archétype martial »… non taguée) sera
-    matérialisée sur les fiches créées/montées après re-seed — cohérent avec les owners de l'Occultiste
-    (« Faveur de pacte » déjà matérialisée), et contenu D&D correct. Non couvert par la suite (seeds =
-    `hub:db`, cf. F11) → validé statiquement + au mécanisme.
+    en place).
+  - **F2 · sous-classe — owner INVISIBLE (option B) : ✅ FAIT.** L'owner du choix porte le nouveau
+    `feature_type` **`choice_carrier`** (schema/features.ts) : lu par le catalogue (`buildCatalog` ne
+    filtre pas le type) mais **jamais matérialisé** sur la fiche (le sweep de grants passifs filtre
+    `class_feature`) — la sous-classe choisie + ses features sont déjà affichées, comme pour les points
+    de choix d'espèce déjà masqués dans `index.get.ts`. Aucune migration (pas de CHECK sur `feature_type`).
+    Preuve : `createCharacter.test.ts` (un `choice_carrier` de niv ≤ perso n'est PAS copié, le
+    `class_feature` passif l'est) + `subclassProgression.test.ts` (le catalogue le remonte malgré le type).
+    Les owners VISIBLES de l'Occultiste (Faveur de pacte…) restent des `class_feature` matérialisées —
+    _résidu noté_ : par symétrie ils sont eux aussi redondants avec l'option choisie ; les masquer serait
+    une décision UX SÉPARÉE (non prise ici, l'utilisateur a choisi B ciblée sous-classe).
   - **F2 · sous-classe — tranches suivantes** : (2, SERVEUR) `createCharacter`/`characterLevelUp`
     enregistrent le pick en `character_choices.selected_subclass_id`, `character_classes.subclass_id`
     en DÉRIVE (rules-engine.md §4, migration additive) — SOUS golden-master (diff attendu : ajout de la

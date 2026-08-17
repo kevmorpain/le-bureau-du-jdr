@@ -54,7 +54,10 @@ export function subclassChoiceFeature(className: string): FeatureDef {
   return {
     name,
     description: `Au niveau ${cls.subclassLevel}, vous choisissez votre spécialisation (${name}). Ce choix vous octroie des aptitudes propres à mesure que vous gagnez des niveaux.`,
-    featureType: 'class_feature',
+    // `choice_carrier` (et non `class_feature`) : l'owner porte la progression pour le catalogue mais
+    // n'est JAMAIS matérialisé sur la fiche — la sous-classe choisie + ses features sont déjà rendues
+    // (option B, cf. schema/features.ts). Le sweep de matérialisation filtre `class_feature` → no-op ici.
+    featureType: 'choice_carrier',
     levelRequired: cls.subclassLevel,
     effects: [],
     progression: {

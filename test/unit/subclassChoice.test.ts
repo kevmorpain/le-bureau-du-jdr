@@ -32,7 +32,8 @@ describe('subclassChoiceFeature — contrat de sous-classe', () => {
 
       // Niveau = source unique `classes.subclass_level` (jamais recopié) → doit matcher le contrat.
       expect(f.levelRequired, `${dbName} : niveau d'accès à la sous-classe`).toBe(subclassLevel)
-      expect(f.featureType).toBe('class_feature')
+      // `choice_carrier` = owner invisible (option B) : lu par le catalogue, jamais matérialisé.
+      expect(f.featureType).toBe('choice_carrier')
       expect(f.name).toBe(SUBCLASS_CHOICE_FEATURE_NAMES[dbName])
 
       // Progression = décision « quelle sous-classe » : une, parmi les sous-classes de la classe.

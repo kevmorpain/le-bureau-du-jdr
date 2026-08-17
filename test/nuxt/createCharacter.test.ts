@@ -104,6 +104,12 @@ beforeAll(async () => {
     { id: 300, name: 'Second souffle', featureType: 'class_feature', classId: FIGHTER, levelRequired: 1 }, // passif Guerrier
   ])
 
+  // Owner de choix de SOUS-CLASSE (F2, option B) : type `choice_carrier` → lu par le catalogue mais
+  // JAMAIS matérialisé par le sweep de grants passifs, bien que ce soit une feature de classe de
+  // niveau ≤ à celui du perso. Porte une progression `subclass` (réaliste, Champion déjà seedé).
+  await db.insert(schema.features).values({ id: 250, name: 'Archétype martial', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 1 })
+  await db.insert(schema.progression).values({ featureId: 250, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false })
+
   // 3 manifestations occultes (tag invocation) — l'une octroie un sort
   await db.insert(schema.features).values([
     { id: 401, name: 'Regard de deux esprits', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
@@ -187,6 +193,16 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
 
     const slots = await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, id))
     expect(slots).toHaveLength(0) // Guerrier = non-lanceur
+  })
+})
+
+describe('createCharacter — owner de choix invisible (choice_carrier, F2 option B)', () => {
+  it('ne matérialise PAS la porteuse du choix de sous-classe, mais matérialise le class_feature passif', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 1 }), OWNER)
+    const ids = (await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id)))
+      .map((f: { featureId: number }) => f.featureId)
+    expect(ids).toContain(300) // « Second souffle » (class_feature passif) → matérialisé
+    expect(ids).not.toContain(250) // « Archétype martial » (choice_carrier) → invisible
   })
 })
 
