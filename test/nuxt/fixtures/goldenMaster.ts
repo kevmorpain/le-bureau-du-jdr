@@ -65,6 +65,11 @@ export const FEATURE = {
   rogueSneakAttack: 220, // passif niv 1
   rogueCunningAction: 221, // passif niv 2
   thiefFastHands: 230, // sous-classe Voleur, niv 3
+  // Owners de choix de SOUS-CLASSE (F2) — feature_type `choice_carrier` (invisible), porte la
+  // progression `kind:'subclass'` au niveau d'accès de la classe.
+  fighterSubclassChoice: 240, // « Archétype martial », niv 3
+  rogueSubclassChoice: 241, // « Archétype de roublard », niv 3
+  wizardSubclassChoice: 340, // « Tradition arcanique », niv 2
   // Magicien
   wizardArcaneRecovery: 300, // passif niv 1
   evocationSculptSpells: 310, // sous-classe Évocation, niv 2
@@ -185,6 +190,21 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
   await db.insert(schema.features).values([
     { id: FEATURE.wizardArcaneRecovery, name: 'Récupération arcanique', featureType: 'class_feature', classId: CLASS.wizard, levelRequired: 1 },
     { id: FEATURE.evocationSculptSpells, name: 'Façonnage des sorts', featureType: 'subclass_feature', subclassId: SUBCLASS.evocation, levelRequired: 2 },
+  ])
+
+  // ── Owners de choix de SOUS-CLASSE (F2) — `choice_carrier` (invisible) + progression `subclass` ──
+  // Niveau d'accès = subclass_level de la classe (Guerrier/Roublard 3, Magicien 2). Le pick sera
+  // enregistré en `character_choices.selected_subclass_id` par create/level-up (source), owner NON
+  // matérialisé sur la fiche (option B).
+  await db.insert(schema.features).values([
+    { id: FEATURE.fighterSubclassChoice, name: 'Archétype martial', featureType: 'choice_carrier', classId: CLASS.fighter, levelRequired: 3 },
+    { id: FEATURE.rogueSubclassChoice, name: 'Archétype de roublard', featureType: 'choice_carrier', classId: CLASS.rogue, levelRequired: 3 },
+    { id: FEATURE.wizardSubclassChoice, name: 'Tradition arcanique', featureType: 'choice_carrier', classId: CLASS.wizard, levelRequired: 2 },
+  ])
+  await db.insert(schema.progression).values([
+    { featureId: FEATURE.fighterSubclassChoice, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false },
+    { featureId: FEATURE.rogueSubclassChoice, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false },
+    { featureId: FEATURE.wizardSubclassChoice, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false },
   ])
 
   // ── Dons (feature_type 'feat', sans classe ni palier de sweep) — ASI/dons à la création ──

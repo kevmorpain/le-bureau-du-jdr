@@ -206,6 +206,23 @@ describe('createCharacter — owner de choix invisible (choice_carrier, F2 optio
   })
 })
 
+describe('createCharacter — pick de sous-classe → character_choices (F2, tranche 2)', () => {
+  it('enregistre le pick en character_choices.selectedSubclassId ET conserve character_classes.subclassId', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 3, subclassId: FIGHTER_SUBCLASS }), OWNER)
+
+    // Projection dénormalisée conservée (read-model / matérialisation des features de sous-classe).
+    const [cc] = await db.select().from(schema.characterClasses).where(eq(schema.characterClasses.characterSheetId, id))
+    expect(cc.subclassId).toBe(FIGHTER_SUBCLASS)
+
+    // Source de la décision : une ligne character_choices rattachée à la progression `subclass` (owner 250).
+    const [prog] = await db.select({ id: schema.progression.id }).from(schema.progression).where(eq(schema.progression.featureId, 250))
+    const choices = await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, id))
+    const sub = choices.find((c: { selectedSubclassId: number | null }) => c.selectedSubclassId === FIGHTER_SUBCLASS)
+    expect(sub, 'character_choices du pick de sous-classe').toBeDefined()
+    expect(sub!.progressionId).toBe(prog.id)
+  })
+})
+
 describe('createCharacter — maîtrises (volet B étape 3)', () => {
   it('ne matérialise PLUS les maîtrises de BASE (armes/armures de classe), garde les outils/langues CHOISIS', async () => {
     const { id } = await createCharacter(db, baseInput({

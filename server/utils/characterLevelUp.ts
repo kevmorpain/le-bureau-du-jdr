@@ -181,6 +181,20 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     familiarSpellId = familiar?.id ?? null
   }
 
+  // Choix de SOUS-CLASSE au level-up (F2) : quand une sous-classe est choisie ICI (d.subclassId),
+  // on enregistre le pick en `character_choices` (source), en plus de `character_classes.subclass_id`
+  // (projection, posé plus bas). Symétrique de la création. Défensif : pas de progression → no-op.
+  let subclassProgressionId: number | null = null
+  if (subclassId != null) {
+    const [prog] = await db
+      .select({ id: schema.progression.id })
+      .from(schema.progression)
+      .innerJoin(schema.features, eq(schema.features.id, schema.progression.featureId))
+      .where(and(eq(schema.progression.kind, 'subclass'), eq(schema.features.classId, cls.id)))
+      .limit(1)
+    subclassProgressionId = prog?.id ?? null
+  }
+
   // Recalcul des emplacements de sorts (dérivés serveur)
   const newClassesList = currentClasses
     .filter(c => c.classId !== cls.id)
@@ -262,6 +276,14 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
         pactBoon: d.pactBoon != null ? sql`excluded.pact_boon` : (schema.characterClasses as any).pactBoon,
       },
     }))
+
+  // Choix de SOUS-CLASSE (F2) → character_choices : enregistre le pick fait à ce level-up (source),
+  // en plus de `character_classes.subclass_id` mis à jour ci-dessus (projection). onConflictDoNothing.
+  if (subclassId != null && subclassProgressionId != null) {
+    stmts.push(db.insert(schema.characterChoices)
+      .values({ characterSheetId, progressionId: subclassProgressionId, selectedSubclassId: subclassId })
+      .onConflictDoNothing())
+  }
 
   if (newFeatureIds.length) {
     stmts.push(db.insert(schema.characterFeatures)

@@ -307,7 +307,19 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Archétype martial",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "Champion",
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Guerrier",
@@ -462,7 +474,19 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Archétype martial",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "Champion",
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Guerrier",
@@ -617,7 +641,19 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Archétype martial",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "Champion",
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Guerrier",
@@ -783,6 +819,17 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
       "selectedSubclass": null,
       "selectedValue": null,
     },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Tradition arcanique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "École d'Évocation",
+      "selectedValue": null,
+    },
   ],
   "classes": [
     {
@@ -937,6 +984,17 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
       "selectedLineage": "Haut-elfe",
       "selectedSpell": null,
       "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Tradition arcanique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "École d'Évocation",
       "selectedValue": null,
     },
   ],
@@ -1112,6 +1170,17 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
       "selectedLineage": "Haut-elfe",
       "selectedSpell": null,
       "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Tradition arcanique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "École d'Évocation",
       "selectedValue": null,
     },
   ],
@@ -1650,7 +1719,19 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Archétype martial",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "Champion",
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Guerrier",
@@ -1780,7 +1861,19 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Archétype martial",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "Champion",
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Guerrier",
@@ -1934,7 +2027,19 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Archétype martial",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "Champion",
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Guerrier",
@@ -2342,7 +2447,19 @@ exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > cré
       "value": 11,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Archétype de roublard",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "Voleur",
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Roublard",
