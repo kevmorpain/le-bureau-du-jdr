@@ -123,10 +123,29 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       front-only », cat. A) — ce n'est PAS « hors périmètre » mais un choix perdu à rapatrier en F2.
       Quand F2 le câblera, l'archétype **Guerrier** du golden-master devra voir apparaître son choix
       de style dans le snapshot → diff ATTENDU (relire + `vitest -u`).
-- **P1 — le cœur (PROCHAINE ÉTAPE).** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
+- **P1 — le cœur (EN COURS).** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
   toutes et déjà supporté par `resolve.ts`/`buildCatalog`, retirer le blob `character-builder.ts`
   au fur et à mesure — F5 s'y fait) **+ F3** (dériver les compétences sur le même mécanisme). Sous
   golden-master. Sérialisé sur le modèle puis front.
+  - **F2 · sous-classe — tranche 1 (MODÈLE) : ✅ FAIT.** L'identité (`classes.subclass_level`) était
+    déjà là (migration 0080) ; manquait la « décision → progression ». Posée comme source unique côté
+    DONNÉES : helper `server/db/seeds/data/subclassChoice.ts` (`subclassChoiceFeature(className)` →
+    feature owner à `subclass_level`, portant une progression `kind:'subclass'`, `optionSource:{subclasses}`,
+    `count` fixed 1), câblé dans les 12 wrappers de classe (Occultiste inclus). Verrouillé par
+    `test/unit/subclassChoice.test.ts` (les 12 classes vs `CLASS_IDENTITY`) + `test/nuxt/subclassProgression.test.ts`
+    (mécanisme données→`buildCatalog`→`resolveChoices`/`dueChoices`, dû au bon niveau). **Additif** :
+    ne touche NI `createCharacter`/`characterLevelUp` (golden-master inchangé) NI le front (blob encore
+    en place). ⚠️ _Effet de bord au re-seed_ : la feature owner (« Archétype martial »… non taguée) sera
+    matérialisée sur les fiches créées/montées après re-seed — cohérent avec les owners de l'Occultiste
+    (« Faveur de pacte » déjà matérialisée), et contenu D&D correct. Non couvert par la suite (seeds =
+    `hub:db`, cf. F11) → validé statiquement + au mécanisme.
+  - **F2 · sous-classe — tranches suivantes** : (2, SERVEUR) `createCharacter`/`characterLevelUp`
+    enregistrent le pick en `character_choices.selected_subclass_id`, `character_classes.subclass_id`
+    en DÉRIVE (rules-engine.md §4, migration additive) — SOUS golden-master (diff attendu : ajout de la
+    fixture sous-classe + apparition des lignes `choices`) ; (3, FRONT) builder + level-up lisent le
+    niveau/les options depuis le catalogue (`loadClasses` les expose déjà) au lieu du blob
+    `app/data/character-builder.ts` — retrait progressif du blob (F5 : clés de maîtrise mortes s'y font).
+    Puis rejouer le même patron pour **style de combat** (cf. Inventaire front-only, cat. A) et le reste.
 - **Tracks parallèles sûrs** (empreinte disjointe) : **F7** (dragonborn → lignée), **F8/F9**
   (hygiène schéma), **F10** (typecheck baseline + bug mort l.313).
 
