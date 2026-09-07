@@ -18,7 +18,8 @@ La page utilise un **dashboard 3 colonnes** (`dashboard-grid`) :
 | | `ClassFeaturesSection` | `DefensesSection` |
 | | `MagicSection` | `StatusSection` |
 | | `InventorySection` | `SpellSlotsSection` |
-| | `SpeciesTraitsSection` + `BackgroundSection` | `ConcentrationSection` |
+| | `IdentitySection` | `ConcentrationSection` |
+| | `SpeciesTraitsSection` + `BackgroundSection` | |
 | | | `QuickNotesSection` |
 
 La plupart des sections de la colonne centrale sont enveloppées dans `CollapsibleSection` (état persisté en localStorage via `storage-key`). En-tête fixe : `DashboardHeaderSection`.
@@ -132,6 +133,22 @@ Liste tous les objets du personnage avec quantité, état équipé, bonus magiqu
 **Supprimer :** `DELETE /api/character_sheets/{id}/inventory/{entryId}`
 
 Les effets magiques des objets équipés (`character_inventory.magicEffects`) sont injectés dans `allEffects` et peuvent modifier CA, résistances, vitesse, etc.
+
+### Identité (`IdentitySection`)
+
+Description du personnage : portrait, nom, nom du joueur, apparence physique (âge, taille, poids,
+yeux, cheveux, peau), divinité, histoire et alliés & organisations.
+
+**Source :** colonnes texte de `character_sheets` (`age`, `height`, `weight`, `eyes`, `hair`, `skin`,
+`deity`, `backstory`, `allies`, `portraitUrl`, `name`) via `useCharacterIdentity`. Le **nom du joueur**
+n'a pas de colonne : c'est `owner.name`, chargé par le GET depuis `users` (réduit à `{ id, name }`).
+**Persistence :** `sheetTextField` → deep watch → PUT (cf. [persistence.md](persistence.md)).
+**Édition :** `EditIdentitySlideover` (bouton crayon) — auto-save, pas de bouton « Enregistrer ».
+Le **renommage** du personnage se fait là (un nom vide n'est jamais persisté :
+`updateCharacterSheetSchema` l'interdit). Le portrait n'est rendu que si son URL est en `http(s)`
+ou relative au site.
+
+Ces champs sont aussi saisissables à la création (étape Description, bloc « Apparence & histoire »).
 
 ### Espèce & Historique
 

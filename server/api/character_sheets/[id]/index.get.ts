@@ -218,8 +218,20 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const classEffects = await deriveClassProficiencies(db as any, classIds)
 
+  // ─── Nom du joueur ──────────────────────────────────────────────────────────────────────
+  // Le propriétaire de la fiche EST le joueur : pas de colonne dédiée. Chargé par `.select()`
+  // (la relation `owner` n'existe pas dans le schéma cached de hub:db) et réduit à
+  // `{ id, name }` — l'e-mail et le provider ne sortent pas du serveur.
+  const [owner] = characterSheet.ownerId != null
+    ? await db
+        .select({ id: srcSchema.users.id, name: srcSchema.users.name })
+        .from(srcSchema.users)
+        .where(eq(srcSchema.users.id, characterSheet.ownerId))
+    : []
+
   return {
     ...characterSheet,
+    owner: owner ?? null,
     // `lineageName` ajouté ici (littéral frais → pas de contrôle d'excès sur le type de `species`).
     species: speciesWithLineage ? { ...speciesWithLineage, lineageName } : speciesWithLineage,
     features: enrichedFeatures,

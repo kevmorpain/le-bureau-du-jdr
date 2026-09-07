@@ -9,6 +9,8 @@ import { useCharacterSpellcasting } from './character/useCharacterSpellcasting'
 import { useCharacterSpells } from './character/useCharacterSpells'
 import { useCharacterInventory } from './character/useCharacterInventory'
 import { useCharacterBackground } from './character/useCharacterBackground'
+import { useCharacterIdentity } from './character/useCharacterIdentity'
+import { sheetTextField } from './character/sheetField'
 
 /**
  * Résout les effets « à choix » d'un don en fonction des choix enregistrés
@@ -299,16 +301,14 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     return [...new Set([...fromEffects, ...grants])].filter(p => !revokes.has(p))
   })
 
-  // ─── Historique & description ─────────────────────────────────────────────
+  // ─── Identité, historique & description ───────────────────────────────────
 
+  const identity = useCharacterIdentity(characterSheet)
   const background = useCharacterBackground(characterSheet)
 
   // ─── Notes de session (auto-save via deep watch dans [id].vue) ───────────
 
-  const notes = computed({
-    get: () => characterSheet?.value?.notes ?? '',
-    set: (v: string) => { if (characterSheet?.value) characterSheet.value.notes = v },
-  })
+  const notes = sheetTextField(characterSheet, 'notes')
 
   // ─── Couche 3 : conditions, états, défenses ───────────────────────────────
 
@@ -425,6 +425,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     addProficiencyOverride: inventoryLayer.addProficiencyOverride,
     removeProficiencyOverride: inventoryLayer.removeProficiencyOverride,
     refreshInventory: inventoryLayer.refreshInventory,
+    // Identité & description
+    ...identity,
     // Historique & description
     backgrounds: background.backgrounds,
     selectedBackground: background.selectedBackground,

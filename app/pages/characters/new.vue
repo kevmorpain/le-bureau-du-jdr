@@ -183,6 +183,16 @@ async function handleSubmit() {
       ideals: state.value.ideals,
       bonds: state.value.bonds,
       flaws: state.value.flaws,
+      age: state.value.age,
+      height: state.value.height,
+      weight: state.value.weight,
+      eyes: state.value.eyes,
+      hair: state.value.hair,
+      skin: state.value.skin,
+      deity: state.value.deity,
+      backstory: state.value.backstory,
+      allies: state.value.allies,
+      portraitUrl: state.value.portraitUrl,
       abilityScores: (() => {
         const scores: Record<string, number> = Object.fromEntries(
           Object.entries(state.value.abilities).filter(([, v]) => v != null),

@@ -182,6 +182,62 @@
         />
       </div>
     </div>
+
+    <!-- Apparence & histoire (facultatif) -->
+    <div class="mt-6">
+      <button
+        type="button"
+        class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-(--ui-text) transition-colors cursor-pointer"
+        @click="detailsOpen = !detailsOpen"
+      >
+        <span>{{ detailsOpen ? '▾' : '▸' }}</span>
+        <span>Apparence & histoire</span>
+        <span class="text-amber-400/70 normal-case tracking-normal font-medium">facultatif</span>
+      </button>
+
+      <div
+        v-if="detailsOpen"
+        class="mt-3 space-y-4"
+      >
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div
+            v-for="field in appearanceFields"
+            :key="field.key"
+          >
+            <label class="block text-xs font-bold uppercase tracking-widest text-muted mb-1.5">{{ field.label }}</label>
+            <input
+              v-model="state[field.key]"
+              type="text"
+              :placeholder="field.placeholder"
+              class="w-full px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/50 focus:outline-none"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-muted mb-1.5">Portrait (URL)</label>
+          <input
+            v-model="state.portraitUrl"
+            type="url"
+            placeholder="https://…"
+            class="w-full px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/50 focus:outline-none"
+          >
+        </div>
+
+        <div
+          v-for="field in storyFields"
+          :key="field.key"
+        >
+          <label class="block text-xs font-bold uppercase tracking-widest text-muted mb-1.5">{{ field.label }}</label>
+          <textarea
+            v-model="state[field.key]"
+            :rows="field.rows"
+            :placeholder="field.placeholder"
+            class="w-full px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/50 focus:outline-none resize-none leading-relaxed"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -189,6 +245,8 @@
 import type { BuilderState } from '~/composables/useCharacterBuilder'
 
 type TraitKey = 'personality' | 'ideals' | 'bonds' | 'flaws'
+type AppearanceKey = 'age' | 'height' | 'weight' | 'eyes' | 'hair' | 'skin' | 'deity'
+type StoryKey = 'backstory' | 'allies'
 
 const {
   state,
@@ -213,6 +271,25 @@ const traitFields: { key: TraitKey, label: string, placeholder: string }[] = [
   { key: 'ideals', label: 'Idéaux', placeholder: 'Je crois que…' },
   { key: 'bonds', label: 'Liens', placeholder: 'Je tiens à…' },
   { key: 'flaws', label: 'Défauts', placeholder: 'Mon point faible…' },
+]
+
+// Identité & description — facultatif, replié par défaut pour ne pas alourdir l'étape.
+// Mêmes champs que la section « Identité » de la fiche (character_sheets).
+const detailsOpen = ref(false)
+
+const appearanceFields: { key: AppearanceKey, label: string, placeholder: string }[] = [
+  { key: 'age', label: 'Âge', placeholder: '27 ans' },
+  { key: 'height', label: 'Taille', placeholder: '1,75 m' },
+  { key: 'weight', label: 'Poids', placeholder: '68 kg' },
+  { key: 'eyes', label: 'Yeux', placeholder: 'Verts' },
+  { key: 'hair', label: 'Cheveux', placeholder: 'Bruns' },
+  { key: 'skin', label: 'Peau', placeholder: 'Hâlée' },
+  { key: 'deity', label: 'Divinité', placeholder: 'Tyr' },
+]
+
+const storyFields: { key: StoryKey, label: string, placeholder: string, rows: number }[] = [
+  { key: 'backstory', label: 'Histoire du personnage', placeholder: 'D\'où vient-il ? Qu\'est-ce qui l\'a mis sur la route ?', rows: 5 },
+  { key: 'allies', label: 'Alliés & organisations', placeholder: 'Factions, mentors, contacts, dettes…', rows: 3 },
 ]
 
 function toggleLanguage(lang: string) {

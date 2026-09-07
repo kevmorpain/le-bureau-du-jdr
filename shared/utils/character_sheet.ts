@@ -34,6 +34,19 @@ export const updateCharacterSheetSchema = z.object({
   ideals: z.string().max(1000).optional(),
   bonds: z.string().max(1000).optional(),
   flaws: z.string().max(1000).optional(),
+  age: z.string().max(50).optional(),
+  height: z.string().max(50).optional(),
+  weight: z.string().max(50).optional(),
+  eyes: z.string().max(50).optional(),
+  hair: z.string().max(50).optional(),
+  skin: z.string().max(50).optional(),
+  deity: z.string().max(100).optional(),
+  backstory: z.string().max(10000).optional(),
+  allies: z.string().max(5000).optional(),
+  // URL du portrait — '' = aucun. Le schéma n'impose pas `.url()` (une URL en cours
+  // de frappe casserait l'auto-save) ; l'affichage ne rend que http(s) et les chemins
+  // relatifs (cf. IdentitySection.vue).
+  portraitUrl: z.string().max(2000).optional(),
   concentratingSpellId: z.number().int().positive().nullable().optional(),
   notes: z.string().max(5000).optional(),
 })
