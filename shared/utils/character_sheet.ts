@@ -35,6 +35,7 @@ export const updateCharacterSheetSchema = z.object({
   bonds: z.string().max(1000).optional(),
   flaws: z.string().max(1000).optional(),
   concentratingSpellId: z.number().int().positive().nullable().optional(),
+  notes: z.string().max(5000).optional(),
 })
 
 export const setASISchema = z.object({

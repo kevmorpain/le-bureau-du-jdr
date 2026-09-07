@@ -192,8 +192,8 @@ Visible uniquement si la condition `concentrating` est active. Permet de noter l
 
 ### Notes de session (`QuickNotesSection`)
 
-Zone de texte libre pour notes rapides (PNJ rencontrés, rappels…). Non lié à un personnage.
-**Source :** `localStorage.getItem('cs-quick-notes')`.
+Zone de texte libre pour notes rapides (PNJ rencontrés, rappels…), liée au personnage.
+**Source :** colonne `notes` sur `character_sheets` (computed get/set via `useCharacterSheet`, auto-save par le deep watch de `[id].vue`).
 
 ---
 

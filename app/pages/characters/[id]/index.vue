@@ -101,7 +101,7 @@
         <StatusSection :character-sheet="characterSheet" />
         <SpellSlotsSection :character-sheet="characterSheet" />
         <ConcentrationSection :character-sheet="characterSheet" />
-        <QuickNotesSection />
+        <QuickNotesSection :character-sheet="characterSheet" />
       </div>
     </div>
 

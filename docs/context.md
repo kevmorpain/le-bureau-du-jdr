@@ -25,7 +25,7 @@ grid-template-columns: 240px 1fr 240px; gap: 12px; padding: 16px 20px
 - `SpellSlotsSection.vue` — dots violets par niveau, injecte `spellSlots` via provide/inject
 - `ConcentrationSection.vue` — condition 'concentrating', nom du sort en localStorage
 - `CombatModeSection.vue` — économie d'action + déplacement (+/-1,5m) + actions disponibles
-- `QuickNotesSection.vue` — textarea localStorage
+- `QuickNotesSection.vue` — textarea, persisté en DB (colonne `character_sheets.notes`)
 
 ### Patterns clés
 

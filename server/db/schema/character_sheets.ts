@@ -63,6 +63,7 @@ const characterSheets = sqliteTable('character_sheets', {
   pa: integer('pa').default(0).notNull(),
   pc: integer('pc').default(0).notNull(),
   concentratingSpellId: integer('concentrating_spell_id').references(() => spells.id, { onDelete: 'set null' }),
+  notes: text('notes').default('').notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 }, table => [

@@ -303,6 +303,13 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   const background = useCharacterBackground(characterSheet)
 
+  // ─── Notes de session (auto-save via deep watch dans [id].vue) ───────────
+
+  const notes = computed({
+    get: () => characterSheet?.value?.notes ?? '',
+    set: (v: string) => { if (characterSheet?.value) characterSheet.value.notes = v },
+  })
+
   // ─── Couche 3 : conditions, états, défenses ───────────────────────────────
 
   const conditions = useCharacterConditions(characterSheet, {
@@ -427,5 +434,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     ideals: background.ideals,
     bonds: background.bonds,
     flaws: background.flaws,
+    // Notes de session
+    notes,
   }
 }
