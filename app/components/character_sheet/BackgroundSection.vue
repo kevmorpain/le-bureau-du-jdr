@@ -1,87 +1,95 @@
 <template>
   <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <h2 class="font-semibold text-sm text-muted uppercase tracking-wide">
-        Historique & Description
-      </h2>
-      <EditBackgroundSection v-model:character-sheet="characterSheet" />
-    </div>
-
     <!-- Historique sélectionné -->
-    <div v-if="selectedBackground" class="space-y-3">
-      <div class="flex items-center gap-2">
-        <span class="font-medium text-sm">{{ selectedBackground.name }}</span>
-        <div class="flex flex-wrap gap-1">
-          <UBadge
-            v-for="skill in selectedBackground.skillProficiencies"
-            :key="skill"
-            variant="soft"
-            color="primary"
-            size="md"
-          >
-            {{ getSkillLabel(skill) }}
-          </UBadge>
-        </div>
+    <div class="space-y-3">
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-muted">
+          Historique
+        </h3>
+        <EditBackgroundSection v-model:character-sheet="characterSheet" />
       </div>
 
-      <!-- Description de l'historique (prédéfini ou personnalisé) -->
+      <template v-if="selectedBackground">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-medium text-sm">{{ selectedBackground.name }}</span>
+          <div class="flex flex-wrap gap-1">
+            <UBadge
+              v-for="skill in selectedBackground.skillProficiencies"
+              :key="skill"
+              variant="soft"
+              color="primary"
+              size="md"
+            >
+              {{ getSkillLabel(skill) }}
+            </UBadge>
+          </div>
+        </div>
+
+        <!-- Description de l'historique (prédéfini ou personnalisé) -->
+        <p
+          v-if="selectedBackground.description"
+          class="text-sm text-muted whitespace-pre-line leading-relaxed"
+        >
+          {{ selectedBackground.description }}
+        </p>
+
+        <!-- Capacité de l'historique -->
+        <UAccordion
+          v-if="selectedBackground.featureName"
+          :items="[{ label: `Capacité : ${selectedBackground.featureName}`, content: selectedBackground.featureDescription }]"
+          variant="ghost"
+          class="text-sm"
+        />
+      </template>
+
       <p
-        v-if="selectedBackground.description"
-        class="text-sm text-muted whitespace-pre-line leading-relaxed"
+        v-else
+        class="text-sm text-muted italic"
       >
-        {{ selectedBackground.description }}
+        Aucun historique sélectionné.
       </p>
-
-      <!-- Capacité de l'historique -->
-      <UAccordion
-        v-if="selectedBackground.featureName"
-        :items="[{ label: `Capacité : ${selectedBackground.featureName}`, content: selectedBackground.featureDescription }]"
-        variant="ghost"
-        class="text-sm"
-      />
     </div>
 
-    <div
-      v-else
-      class="text-sm text-muted italic"
-    >
-      Aucun historique sélectionné.
-      <EditBackgroundSection v-model:character-sheet="characterSheet" />
-    </div>
+    <!-- Traits de personnalité (champs libres de la fiche, suggérés par l'historique
+         à la création) -->
+    <div class="border-t border-default pt-4 space-y-3">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-muted">
+        Personnalité
+      </h3>
 
-    <!-- Champs de description du personnage -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <UFormField label="Traits de personnalité">
-        <UTextarea
-          v-model="personalityTraits"
-          :rows="3"
-          placeholder="Décris les traits de personnalité de ton personnage..."
-        />
-      </UFormField>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <UFormField label="Traits de personnalité">
+          <UTextarea
+            v-model="personalityTraits"
+            :rows="3"
+            placeholder="Décris les traits de personnalité de ton personnage..."
+          />
+        </UFormField>
 
-      <UFormField label="Idéaux">
-        <UTextarea
-          v-model="ideals"
-          :rows="3"
-          placeholder="Quels idéaux guide ton personnage ?"
-        />
-      </UFormField>
+        <UFormField label="Idéaux">
+          <UTextarea
+            v-model="ideals"
+            :rows="3"
+            placeholder="Quels idéaux guide ton personnage ?"
+          />
+        </UFormField>
 
-      <UFormField label="Liens">
-        <UTextarea
-          v-model="bonds"
-          :rows="3"
-          placeholder="Quels liens unissent ton personnage au monde ?"
-        />
-      </UFormField>
+        <UFormField label="Liens">
+          <UTextarea
+            v-model="bonds"
+            :rows="3"
+            placeholder="Quels liens unissent ton personnage au monde ?"
+          />
+        </UFormField>
 
-      <UFormField label="Défauts">
-        <UTextarea
-          v-model="flaws"
-          :rows="3"
-          placeholder="Quels sont les défauts ou faiblesses de ton personnage ?"
-        />
-      </UFormField>
+        <UFormField label="Défauts">
+          <UTextarea
+            v-model="flaws"
+            :rows="3"
+            placeholder="Quels sont les défauts ou faiblesses de ton personnage ?"
+          />
+        </UFormField>
+      </div>
     </div>
   </div>
 </template>

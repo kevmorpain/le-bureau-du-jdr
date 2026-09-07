@@ -1,73 +1,66 @@
 <template>
   <div class="space-y-4">
-    <div class="flex items-start gap-4">
-      <!-- Portrait -->
-      <img
-        v-if="portraitSrc"
-        :src="portraitSrc"
-        :alt="`Portrait de ${name}`"
-        class="size-20 rounded-lg object-cover border border-default shrink-0"
-        @error="portraitFailed = true"
-      >
-      <div
-        v-else
-        class="size-20 rounded-lg border border-dashed border-default flex items-center justify-center shrink-0 text-muted"
-      >
-        <UIcon
-          name="i-heroicons:user-circle"
-          class="size-8"
-        />
-      </div>
-
-      <div class="flex-1 min-w-0 space-y-3">
-        <div class="flex items-start justify-between gap-2">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="font-semibold truncate">
-                {{ name || 'Personnage sans nom' }}
-              </h2>
-              <UBadge
-                variant="soft"
-                color="neutral"
-                size="sm"
-              >
-                {{ alignmentLabel }}
-              </UBadge>
-            </div>
-            <p
-              v-if="playerName"
-              class="text-xs text-muted"
+    <!-- Identité : nom, alignement, joueur, apparence -->
+    <div class="space-y-3">
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="font-semibold truncate">
+              {{ name || 'Personnage sans nom' }}
+            </h2>
+            <UBadge
+              variant="soft"
+              color="neutral"
+              size="sm"
             >
-              Joueur : {{ playerName }}
-            </p>
+              {{ alignmentLabel }}
+            </UBadge>
           </div>
-          <EditIdentitySlideover v-model:character-sheet="characterSheet" />
-        </div>
-
-        <!-- Apparence physique -->
-        <dl
-          v-if="identityFields.length"
-          class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2"
-        >
-          <div
-            v-for="field in identityFields"
-            :key="field.key"
+          <p
+            v-if="playerName"
+            class="text-xs text-muted"
           >
-            <dt class="text-xs text-muted uppercase tracking-wide">
-              {{ field.label }}
-            </dt>
-            <dd class="text-sm">
-              {{ field.value }}
-            </dd>
-          </div>
-        </dl>
+            Joueur : {{ playerName }}
+          </p>
+        </div>
+        <EditIdentitySlideover v-model:character-sheet="characterSheet" />
       </div>
+
+      <!-- Apparence physique + catégorie de taille de l'espèce -->
+      <dl
+        v-if="identityFields.length"
+        class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2"
+      >
+        <div
+          v-for="field in identityFields"
+          :key="field.key"
+        >
+          <dt class="text-xs text-muted uppercase tracking-wide">
+            {{ field.label }}
+          </dt>
+          <dd class="text-sm">
+            {{ field.value }}
+          </dd>
+        </div>
+      </dl>
+
+      <p
+        v-if="isAppearanceEmpty"
+        class="text-sm text-muted italic"
+      >
+        Aucune apparence renseignée — âge, taille, yeux, cheveux…
+      </p>
+    </div>
+
+    <!-- Historique + traits de personnalité -->
+    <div class="border-t border-default pt-4">
+      <BackgroundSection v-model:character-sheet="characterSheet" />
     </div>
 
     <!-- Histoire & alliés -->
     <div
       v-if="backstory"
-      class="space-y-1"
+      class="border-t border-default pt-4 space-y-1"
     >
       <h3 class="text-xs font-bold uppercase tracking-widest text-muted">
         Histoire
@@ -79,7 +72,7 @@
 
     <div
       v-if="allies"
-      class="space-y-1"
+      class="border-t border-default pt-4 space-y-1"
     >
       <h3 class="text-xs font-bold uppercase tracking-widest text-muted">
         Alliés & organisations
@@ -88,20 +81,6 @@
         {{ allies }}
       </p>
     </div>
-
-    <p
-      v-if="isEmpty"
-      class="text-sm text-muted italic"
-    >
-      Aucune description renseignée — âge, apparence, histoire, alliés…
-    </p>
-
-    <p
-      v-if="portraitFailed"
-      class="text-xs text-warning"
-    >
-      Le portrait n'a pas pu être chargé (URL inaccessible).
-    </p>
   </div>
 </template>
 
@@ -112,13 +91,12 @@ const {
   name,
   backstory,
   allies,
-  portraitSrc,
   appearanceFields,
   alignmentLabel,
   sizeLabel,
 } = useCharacterSheet(characterSheet)
 
-// Apparence saisie + données déjà en base mais jusqu'ici invisibles sur la fiche :
+// Apparence saisie + donnée déjà en base mais jusqu'ici invisible sur la fiche :
 // la catégorie de taille de l'espèce (`character_species.size`).
 const identityFields = computed(() => [
   ...appearanceFields.value,
@@ -129,12 +107,8 @@ const identityFields = computed(() => [
 // pas par une colonne dédiée.
 const playerName = computed<string>(() => characterSheet.value.owner?.name ?? '')
 
-const isEmpty = computed<boolean>(() =>
-  !appearanceFields.value.length && !backstory.value && !allies.value && !portraitSrc.value,
-)
-
-const portraitFailed = ref(false)
-watch(portraitSrc, () => {
-  portraitFailed.value = false
-})
+// Le portrait n'est PAS rendu ici : il vit dans l'en-tête de la fiche
+// (`DashboardHeaderSection`), visible quelle que soit la section ouverte. Son URL
+// reste éditable dans `EditIdentitySlideover`.
+const isAppearanceEmpty = computed<boolean>(() => appearanceFields.value.length === 0)
 </script>

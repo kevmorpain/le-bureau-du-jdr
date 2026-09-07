@@ -43,6 +43,33 @@
             placeholder="https://…"
             class="w-full"
           />
+
+          <!-- Aperçu : c'est ici, au moment de la saisie, qu'on dit si l'URL charge —
+               l'en-tête de la fiche se contente de masquer un portrait injoignable. -->
+          <div
+            v-if="portraitSrc"
+            class="mt-2 flex items-center gap-2"
+          >
+            <img
+              :src="portraitSrc"
+              alt="Aperçu du portrait"
+              class="size-16 rounded-lg object-cover border border-default"
+              @error="portraitFailed = true"
+              @load="portraitFailed = false"
+            >
+            <span
+              v-if="portraitFailed"
+              class="text-xs text-warning"
+            >
+              Image introuvable à cette adresse.
+            </span>
+          </div>
+          <p
+            v-else-if="portraitUrl.trim()"
+            class="mt-2 text-xs text-warning"
+          >
+            Adresse ignorée : seules les URL en http(s) ou les chemins du site sont affichés.
+          </p>
         </UFormField>
 
         <div class="grid grid-cols-2 gap-3">
@@ -108,8 +135,14 @@ const {
   backstory,
   allies,
   portraitUrl,
+  portraitSrc,
   alignment,
 } = useCharacterSheet(characterSheet)
+
+const portraitFailed = ref(false)
+watch(portraitSrc, () => {
+  portraitFailed.value = false
+})
 
 const alignmentItems = ALIGNMENTS.map(a => ({ label: `${a.name} (${a.short})`, value: a.code }))
 

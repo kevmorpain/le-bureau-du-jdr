@@ -12,6 +12,16 @@
         aria-label="Retour à l'accueil"
       />
 
+      <!-- Portrait : seule surface où il est rendu sur la fiche, visible quelle que
+           soit la section ouverte. Son URL s'édite dans EditIdentitySlideover. -->
+      <img
+        v-if="portraitSrc && !portraitFailed"
+        :src="portraitSrc"
+        :alt="`Portrait de ${characterSheet.name ?? 'personnage'}`"
+        class="size-9 rounded-lg object-cover border border-default shrink-0"
+        @error="portraitFailed = true"
+      >
+
       <!-- Identité -->
       <div class="shrink-0">
         <div class="flex items-baseline gap-2">
@@ -127,7 +137,15 @@ const {
   multiClass,
   species,
   selectedBackground,
+  portraitSrc,
 } = useCharacterSheet(characterSheet)
+
+// Une URL injoignable ne laisse pas d'icône d'image cassée dans la barre : on masque.
+// Le retour à l'utilisateur se fait là où il saisit l'URL (EditIdentitySlideover).
+const portraitFailed = ref(false)
+watch(portraitSrc, () => {
+  portraitFailed.value = false
+})
 
 // « Occultiste (Le Grand Ancien) 10 » — la sous-classe est en base (`character_classes.subclass_id`,
 // exposée par le read-model) mais n'apparaissait nulle part dans l'identité du personnage.

@@ -18,8 +18,7 @@ La page utilise un **dashboard 3 colonnes** (`dashboard-grid`) :
 | | `FeaturesSection` | `DefensesSection` |
 | | `MagicSection` | `StatusSection` |
 | | `InventorySection` | `SpellSlotsSection` |
-| | `IdentitySection` | `ConcentrationSection` |
-| | `BackgroundSection` | |
+| | `IdentitySection` *(contient `BackgroundSection`)* | `ConcentrationSection` |
 | | | `QuickNotesSection` |
 
 La plupart des sections de la colonne centrale sont enveloppées dans `CollapsibleSection` (état persisté en localStorage via `storage-key`). En-tête fixe : `DashboardHeaderSection`.
@@ -29,6 +28,8 @@ La plupart des sections de la colonne centrale sont enveloppées dans `Collapsib
 ## En-tête (`DashboardHeaderSection`)
 
 Barre sticky sous la nav principale. Affiche :
+- **Portrait** du personnage (`portraitUrl`) — seule surface où il est rendu sur la fiche, pour
+  rester visible quelle que soit la section ouverte ; masqué si aucune URL
 - Nom du personnage + niveau total
 - Description courte : espèce · historique · classe(s) avec **sous-classe** et niveaux
   (ex. « Nain des collines · Sage · Occultiste (Le Grand Ancien) 10 »)
@@ -141,33 +142,46 @@ Les effets magiques des objets équipés (`character_inventory.magicEffects`) so
 
 ### Identité (`IdentitySection`)
 
-Description du personnage : portrait, nom, nom du joueur, **alignement**, apparence physique (âge,
-taille, poids, yeux, cheveux, peau), **catégorie de taille de l'espèce**, divinité, histoire et
-alliés & organisations.
+**Tout le descriptif du personnage dans une seule section collapsible**, en bas de la colonne
+centrale, dans cet ordre :
+
+1. **Identité** — nom, badge d'alignement, nom du joueur, bouton d'édition
+2. **Apparence** — âge, taille, poids, yeux, cheveux, peau, divinité + catégorie de taille de l'espèce
+3. **Historique** + **Personnalité** — rendus par `BackgroundSection` (cf. plus bas)
+4. **Histoire** puis **Alliés & organisations** — affichés seulement s'ils sont renseignés
+
+Le **portrait n'est pas rendu ici** : il vit dans l'en-tête de la fiche. Son URL reste éditable dans
+le slideover d'identité (et n'est retenue que si elle est en `http(s)` ou relative au site).
 
 **Source :** colonnes texte de `character_sheets` (`age`, `height`, `weight`, `eyes`, `hair`, `skin`,
-`deity`, `backstory`, `allies`, `portraitUrl`, `name`) via `useCharacterIdentity`. Le **nom du joueur**
-n'a pas de colonne : c'est `owner.name`, chargé par le GET depuis `users` (réduit à `{ id, name }`).
+`deity`, `backstory`, `allies`, `portraitUrl`, `name`, `alignment`) via `useCharacterIdentity`. Le
+**nom du joueur** n'a pas de colonne : c'est `owner.name`, chargé par le GET depuis `users` (réduit à
+`{ id, name }`). La **catégorie de taille** vient de `character_species.size`
+(`shared/rules/creatureSize.ts`), l'**alignement** de `shared/rules/alignments.ts`.
 **Persistence :** `sheetTextField` → deep watch → PUT (cf. [persistence.md](persistence.md)).
-**Édition :** `EditIdentitySlideover` (bouton crayon) — auto-save, pas de bouton « Enregistrer ».
+**Édition :** `EditIdentitySlideover` (crayon en haut) — auto-save, pas de bouton « Enregistrer ».
 Le **renommage** du personnage se fait là (un nom vide n'est jamais persisté :
-`updateCharacterSheetSchema` l'interdit). Le portrait n'est rendu que si son URL est en `http(s)`
-ou relative au site.
-
-L'**alignement** (`character_sheets.alignment`) était posé à la création puis plus jamais affiché ni
-modifiable : il est désormais éditable ici (libellés canoniques de `shared/rules/alignments.ts`). La
-**catégorie de taille** vient de `character_species.size` (`shared/rules/creatureSize.ts`).
+`updateCharacterSheetSchema` l'interdit).
 
 Ces champs sont aussi saisissables à la création (étape Description, bloc « Apparence & histoire »).
 
-### Historique (`BackgroundSection`)
+#### Historique & personnalité (`BackgroundSection`)
 
-Les traits d'espèce (Vision dans le noir, Résistance draconique…) ne sont **pas** dans cette
-section : ils sont listés avec les autres aptitudes dans `FeaturesSection`, badgés « espèce ».
+Monté **dans** `IdentitySection` — l'historique et les traits qu'il inspire décrivent le personnage
+au même titre que son apparence, et la fiche officielle les regroupe pareillement. Il garde son
+**propre bouton d'édition** (`EditBackgroundSection`) : ce slideover touche aux maîtrises (resync
+serveur via `PUT /api/character_sheets/{id}/background`), contrairement à celui de l'identité qui
+n'écrit que des colonnes texte.
 
-**`BackgroundSection`** : affiche l'historique sélectionné (nom, maîtrises de compétences, **description**, capacité via accordion) et les champs de description du personnage (traits de personnalité, idéaux, liens, défauts — via `useCharacterBackground`). La description couvre aussi les historiques personnalisés, dont le texte saisi dans `EditBackgroundSection` n'était jusqu'ici jamais réaffiché.
+Affiche l'historique sélectionné (nom, maîtrises de compétences, description, capacité via accordion)
+puis les quatre champs libres de personnalité (traits, idéaux, liens, défauts — éditables en place,
+via `useCharacterBackground`). La description couvre aussi les historiques personnalisés, dont le
+texte saisi dans `EditBackgroundSection` n'était jusqu'ici jamais réaffiché.
+
+Les traits d'**espèce** (Vision dans le noir, Résistance draconique…) ne sont **pas** ici : ils sont
+listés avec les autres aptitudes dans `FeaturesSection`, badgés « espèce ».
+
 **Source :** `character_sheets.background` + champs libres dans `useCharacterBackground`.
-**Édition :** bouton `EditBackgroundSection`.
 
 ---
 

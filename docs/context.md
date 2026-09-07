@@ -26,8 +26,10 @@ grid-template-columns: 240px 1fr 240px; gap: 12px; padding: 16px 20px
 - `ConcentrationSection.vue` — condition 'concentrating', nom du sort en localStorage
 - `CombatModeSection.vue` — économie d'action + déplacement (+/-1,5m) + actions disponibles
 - `QuickNotesSection.vue` — textarea, persisté en DB (colonne `character_sheets.notes`)
-- `IdentitySection.vue` + `EditIdentitySlideover.vue` — identité & description (portrait, nom,
-  alignement, apparence, histoire, alliés), colonnes texte de `character_sheets`
+- `IdentitySection.vue` + `EditIdentitySlideover.vue` — identité & description (nom, alignement,
+  apparence, histoire, alliés), colonnes texte de `character_sheets`. **Englobe `BackgroundSection`**
+  (historique + traits de personnalité) : une seule section pour tout le descriptif, en bas de la
+  colonne centrale. Le portrait, lui, n'est rendu que dans `DashboardHeaderSection`.
 
 ### Composants supprimés avec le dashboard v2
 

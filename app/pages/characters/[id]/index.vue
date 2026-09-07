@@ -80,13 +80,6 @@
         >
           <IdentitySection v-model:character-sheet="characterSheet" />
         </CollapsibleSection>
-
-        <CollapsibleSection
-          title="Historique"
-          storage-key="background"
-        >
-          <BackgroundSection v-model:character-sheet="characterSheet" />
-        </CollapsibleSection>
       </div>
 
       <!-- ── Colonne droite : Widgets compacts ── -->
