@@ -26,6 +26,17 @@ grid-template-columns: 240px 1fr 240px; gap: 12px; padding: 16px 20px
 - `ConcentrationSection.vue` — condition 'concentrating', nom du sort en localStorage
 - `CombatModeSection.vue` — économie d'action + déplacement (+/-1,5m) + actions disponibles
 - `QuickNotesSection.vue` — textarea, persisté en DB (colonne `character_sheets.notes`)
+- `IdentitySection.vue` + `EditIdentitySlideover.vue` — identité & description (portrait, nom,
+  alignement, apparence, histoire, alliés), colonnes texte de `character_sheets`
+
+### Composants supprimés avec le dashboard v2
+
+Le layout 3 colonnes a remplacé neuf sections « une stat par carte » par `QuickStatsSection` et
+`DashboardHeaderSection`, mais les fichiers étaient restés dans l'arbre sans plus aucune référence :
+`ArmorClassSection`, `CharacterNameSection`, `ClassesSection`, `InitiativeSection`,
+`InspirationSection`, `LevelSection`, `PassivePerceptionSection`, `ProficiencyBonusSection`,
+`SpeedSection` (+ l'asset `app/assets/ac_background.svg`, utilisé par le seul `ArmorClassSection`).
+Supprimés — ne pas les recréer : ajouter la stat à `QuickStatsSection`.
 
 ### Patterns clés
 

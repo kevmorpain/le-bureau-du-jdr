@@ -15,11 +15,11 @@ La page utilise un **dashboard 3 colonnes** (`dashboard-grid`) :
 | `AbilityScoresSection` | `QuickStatsSection` | `HitPointsSection` |
 | `ProficienciesSection` | `CombatModeSection` *(combat only)* | `DeathSavingThrowSection` |
 | | | `HitDiceSection` |
-| | `ClassFeaturesSection` | `DefensesSection` |
+| | `FeaturesSection` | `DefensesSection` |
 | | `MagicSection` | `StatusSection` |
 | | `InventorySection` | `SpellSlotsSection` |
 | | `IdentitySection` | `ConcentrationSection` |
-| | `SpeciesTraitsSection` + `BackgroundSection` | |
+| | `BackgroundSection` | |
 | | | `QuickNotesSection` |
 
 La plupart des sections de la colonne centrale sont enveloppées dans `CollapsibleSection` (état persisté en localStorage via `storage-key`). En-tête fixe : `DashboardHeaderSection`.
@@ -89,11 +89,15 @@ Section de gestion du tour de combat :
 
 > Les stats détaillées des armes (attaque, dégâts, propriétés, warnings, toggle "à 2 mains" pour versatile, bouton main secondaire pour les armes légères) sont affichées dans `InventorySection` (onglet Armes). `CombatModeSection` reprend les boutons d'action en compact pour le tour en cours.
 
-### Capacités de classe (`ClassFeaturesSection`)
+### Capacités (`FeaturesSection`)
 
-Liste les aptitudes de classe actives avec compteur d'utilisations. Badge dans le titre = nombre d'aptitudes disponibles (uses restantes).
+Liste **toutes** les aptitudes du personnage — traits d'espèce, aptitudes de classe et de
+sous-classe, dons, manifestations occultes — avec compteur d'utilisations, filtre par origine
+(badge coloré par type) et ajout d'un don (`AddFeatSlideover`). Badge dans le titre = nombre
+d'aptitudes encore disponibles (utilisations restantes).
 
-**Source :** `character_sheets.features` (chargé dans le GET principal).
+**Source :** `allCharacterFeatures` (`useCharacterSheet`), assemblé depuis
+`character_sheets.features` + `species.speciesFeatures` (chargés dans le GET principal).
 **Persistence des utilisations :** `PUT /api/character_sheets/{id}/features` (via deep watch).
 
 ### Magie (`MagicSection`)
@@ -156,12 +160,10 @@ modifiable : il est désormais éditable ici (libellés canoniques de `shared/ru
 
 Ces champs sont aussi saisissables à la création (étape Description, bloc « Apparence & histoire »).
 
-### Espèce & Historique
+### Historique (`BackgroundSection`)
 
-Section collapsible qui regroupe `SpeciesTraitsSection` + `BackgroundSection`.
-
-**`SpeciesTraitsSection`** : liste les aptitudes passives de l'espèce (ex. Vision dans le noir, Résistance draconique).
-**Source :** `character_sheets.species.speciesFeatures` (chargé dans le GET principal via relations Drizzle imbriquées).
+Les traits d'espèce (Vision dans le noir, Résistance draconique…) ne sont **pas** dans cette
+section : ils sont listés avec les autres aptitudes dans `FeaturesSection`, badgés « espèce ».
 
 **`BackgroundSection`** : affiche l'historique sélectionné (nom, maîtrises de compétences, **description**, capacité via accordion) et les champs de description du personnage (traits de personnalité, idéaux, liens, défauts — via `useCharacterBackground`). La description couvre aussi les historiques personnalisés, dont le texte saisi dans `EditBackgroundSection` n'était jusqu'ici jamais réaffiché.
 **Source :** `character_sheets.background` + champs libres dans `useCharacterBackground`.
@@ -196,7 +198,8 @@ Résistances, immunités, vulnérabilités calculées depuis `allEffects`. Visib
 
 ### Conditions (`StatusSection`)
 
-Conditions actives, épuisement, alignement. Toggle de chaque condition.
+Conditions actives et niveau d'épuisement. Toggle de chaque condition. *(L'alignement est
+affiché et modifié dans la section Identité, pas ici.)*
 **Source :** conditions via `useStorage()` (localStorage).
 
 ### Emplacements de sort (`SpellSlotsSection`)
