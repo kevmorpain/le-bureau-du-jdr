@@ -30,7 +30,8 @@ La plupart des sections de la colonne centrale sont enveloppées dans `Collapsib
 
 Barre sticky sous la nav principale. Affiche :
 - Nom du personnage + niveau total
-- Description courte : espèce · historique · classe(s) avec niveaux
+- Description courte : espèce · historique · classe(s) avec **sous-classe** et niveaux
+  (ex. « Nain des collines · Sage · Occultiste (Le Grand Ancien) 10 »)
 - Conditions actives (badges cliquables pour les retirer)
 
 **Boutons d'action :**
@@ -136,8 +137,9 @@ Les effets magiques des objets équipés (`character_inventory.magicEffects`) so
 
 ### Identité (`IdentitySection`)
 
-Description du personnage : portrait, nom, nom du joueur, apparence physique (âge, taille, poids,
-yeux, cheveux, peau), divinité, histoire et alliés & organisations.
+Description du personnage : portrait, nom, nom du joueur, **alignement**, apparence physique (âge,
+taille, poids, yeux, cheveux, peau), **catégorie de taille de l'espèce**, divinité, histoire et
+alliés & organisations.
 
 **Source :** colonnes texte de `character_sheets` (`age`, `height`, `weight`, `eyes`, `hair`, `skin`,
 `deity`, `backstory`, `allies`, `portraitUrl`, `name`) via `useCharacterIdentity`. Le **nom du joueur**
@@ -148,6 +150,10 @@ Le **renommage** du personnage se fait là (un nom vide n'est jamais persisté :
 `updateCharacterSheetSchema` l'interdit). Le portrait n'est rendu que si son URL est en `http(s)`
 ou relative au site.
 
+L'**alignement** (`character_sheets.alignment`) était posé à la création puis plus jamais affiché ni
+modifiable : il est désormais éditable ici (libellés canoniques de `shared/rules/alignments.ts`). La
+**catégorie de taille** vient de `character_species.size` (`shared/rules/creatureSize.ts`).
+
 Ces champs sont aussi saisissables à la création (étape Description, bloc « Apparence & histoire »).
 
 ### Espèce & Historique
@@ -157,7 +163,7 @@ Section collapsible qui regroupe `SpeciesTraitsSection` + `BackgroundSection`.
 **`SpeciesTraitsSection`** : liste les aptitudes passives de l'espèce (ex. Vision dans le noir, Résistance draconique).
 **Source :** `character_sheets.species.speciesFeatures` (chargé dans le GET principal via relations Drizzle imbriquées).
 
-**`BackgroundSection`** : affiche l'historique sélectionné (nom, maîtrises de compétences, capacité via accordion) et les champs de description du personnage (traits de personnalité, idéaux, liens, défauts — via `useCharacterBackground`).
+**`BackgroundSection`** : affiche l'historique sélectionné (nom, maîtrises de compétences, **description**, capacité via accordion) et les champs de description du personnage (traits de personnalité, idéaux, liens, défauts — via `useCharacterBackground`). La description couvre aussi les historiques personnalisés, dont le texte saisi dans `EditBackgroundSection` n'était jusqu'ici jamais réaffiché.
 **Source :** `character_sheets.background` + champs libres dans `useCharacterBackground`.
 **Édition :** bouton `EditBackgroundSection`.
 
@@ -234,4 +240,7 @@ Zone de texte libre pour notes rapides (PNJ rencontrés, rappels…), liée au p
 
 | Champ | Table | Statut |
 |---|---|---|
-| Points d'expérience | — | Pas dans le schéma |
+| Points d'expérience | — | Pas dans le schéma (la montée de niveau est manuelle) |
+
+Y étaient et n'y sont plus : `alignment`, `character_species.size`, `backgrounds.description` et la
+sous-classe, tous branchés sur l'UI (section Identité, en-tête, historique).

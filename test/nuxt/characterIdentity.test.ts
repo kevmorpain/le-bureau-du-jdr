@@ -4,18 +4,18 @@ import { sheetTextField } from '../../app/composables/character/sheetField'
 import { useCharacterIdentity } from '../../app/composables/character/useCharacterIdentity'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Identité & description (lot 1). Deux contrats gardés ici :
+// Identité & description. Deux contrats gardés ici :
 //
 //  1. `sheetTextField` — la fabrique qui remplace les computed get/set copiés-collés
 //     (personnalité, notes, identité). Elle DOIT muter la fiche en place : la moitié
 //     des sections la reçoivent via `toRef(props, 'characterSheet')` (props en lecture
 //     seule), où réassigner `.value` serait silencieusement perdu.
 //  2. `useCharacterIdentity` — garde du nom non vide (contrat de
-//     `updateCharacterSheetSchema`, sinon l'auto-save renvoie 422) et filtrage du
-//     portrait affichable.
+//     `updateCharacterSheetSchema`, sinon l'auto-save renvoie 422), filtrage du
+//     portrait affichable, et exposition des données déjà en base mais jusqu'ici
+//     invisibles sur la fiche (alignement éditable, catégorie de taille d'espèce).
 // ─────────────────────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sheet = (over: Record<string, unknown> = {}) => ref({
   id: 1,
   name: 'Ambroise',
@@ -31,6 +31,7 @@ const sheet = (over: Record<string, unknown> = {}) => ref({
   portraitUrl: '',
   notes: '',
   ...over,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any)
 
 describe('sheetTextField', () => {
@@ -68,7 +69,9 @@ describe('sheetTextField', () => {
   it('ne casse pas quand aucune fiche n\'est fournie (useCharacterSheet() sans argument)', () => {
     const orphan = sheetTextField(undefined, 'notes')
     expect(orphan.value).toBe('')
-    expect(() => { orphan.value = 'x' }).not.toThrow()
+    expect(() => {
+      orphan.value = 'x'
+    }).not.toThrow()
   })
 })
 
@@ -115,6 +118,33 @@ describe('useCharacterIdentity', () => {
       ['Peau', 'Hâlée'],
       ['Divinité', 'Tyr'],
     ])
+  })
+
+  it('rend l\'alignement éditable depuis la fiche (colonne posée à la création)', () => {
+    const s = sheet({ alignment: 'CG' })
+    const { alignment, alignmentLabel } = useCharacterIdentity(s)
+
+    expect(alignment.value).toBe('CG')
+    expect(alignmentLabel.value).toBe('Chaotique Bon')
+
+    alignment.value = 'LE'
+
+    expect(s.value.alignment).toBe('LE')
+    expect(alignmentLabel.value).toBe('Loyal Mauvais')
+  })
+
+  it('retombe sur le neutre quand la fiche n\'en porte pas', () => {
+    const { alignment, alignmentLabel } = useCharacterIdentity(sheet())
+    expect(alignment.value).toBe('TN')
+    expect(alignmentLabel.value).toBe('Neutre')
+  })
+
+  it('affiche la catégorie de taille de l\'espèce (en base, jamais rendue jusqu\'ici)', () => {
+    expect(useCharacterIdentity(sheet({ species: { size: 'S' } })).sizeLabel.value).toBe('Petite')
+    expect(useCharacterIdentity(sheet({ species: { size: 'M' } })).sizeLabel.value).toBe('Moyenne')
+    // Espèce absente ou code inconnu → rien à afficher (pas de « null » à l'écran).
+    expect(useCharacterIdentity(sheet()).sizeLabel.value).toBeNull()
+    expect(useCharacterIdentity(sheet({ species: { size: 'P' } })).sizeLabel.value).toBeNull()
   })
 
   it('ne rend un portrait que pour http(s) ou un chemin du site', () => {

@@ -1,4 +1,6 @@
 import { sheetTextField } from './sheetField'
+import { alignmentByCode, DEFAULT_ALIGNMENT, type AlignmentCode } from '~~/shared/rules/alignments'
+import { creatureSizeLabel } from '~~/shared/rules/creatureSize'
 
 /**
  * Identité & description du personnage : nom, portrait, apparence physique,
@@ -23,6 +25,27 @@ export const useCharacterIdentity = (characterSheet?: Ref<CharacterSheet>) => {
   const backstory = sheetTextField(characterSheet, 'backstory')
   const allies = sheetTextField(characterSheet, 'allies')
   const portraitUrl = sheetTextField(characterSheet, 'portraitUrl')
+
+  /**
+   * Alignement — colonne `character_sheets.alignment`, posée à la création et jusqu'ici
+   * jamais éditable depuis la fiche. Codes canoniques (shared/rules/alignments.ts).
+   */
+  const alignment = computed<AlignmentCode>({
+    get: () => (characterSheet?.value?.alignment as AlignmentCode | undefined) ?? DEFAULT_ALIGNMENT,
+    set: (v: AlignmentCode) => {
+      if (!characterSheet?.value) return
+      const sheet = characterSheet.value as Record<string, unknown>
+      sheet.alignment = v
+    },
+  })
+
+  const alignmentLabel = computed<string>(() => alignmentByCode(alignment.value)?.name ?? '')
+
+  /**
+   * Catégorie de taille de l'espèce (Petite, Moyenne…) : en base depuis toujours
+   * (`character_species.size`), utilisée par la règle des armes lourdes, jamais affichée.
+   */
+  const sizeLabel = computed<string | null>(() => creatureSizeLabel(characterSheet?.value?.species?.size))
 
   /**
    * Portrait réellement affichable : on ne rend que http(s) et les chemins relatifs.
@@ -61,5 +84,8 @@ export const useCharacterIdentity = (characterSheet?: Ref<CharacterSheet>) => {
     portraitUrl,
     portraitSrc,
     appearanceFields,
+    alignment,
+    alignmentLabel,
+    sizeLabel,
   }
 }

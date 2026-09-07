@@ -24,6 +24,14 @@
         </div>
       </div>
 
+      <!-- Description de l'historique (prédéfini ou personnalisé) -->
+      <p
+        v-if="selectedBackground.description"
+        class="text-sm text-muted whitespace-pre-line leading-relaxed"
+      >
+        {{ selectedBackground.description }}
+      </p>
+
       <!-- Capacité de l'historique -->
       <UAccordion
         v-if="selectedBackground.featureName"

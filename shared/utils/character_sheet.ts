@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { abilityEnum } from '~~/shared/rules/abilities'
+import { ALIGNMENT_CODES } from '~~/shared/rules/alignments'
 
 const classInputSchema = z.object({
   classId: z.number().int().positive(),
@@ -18,7 +19,7 @@ export const updateCharacterSheetSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   speciesId: z.number().int().positive().optional(),
   classes: z.array(classInputSchema).optional(),
-  alignment: z.enum(['LG', 'NG', 'CG', 'LN', 'TN', 'CN', 'LE', 'NE', 'CE']).optional(),
+  alignment: z.enum(ALIGNMENT_CODES).optional(),
   maxHp: z.number().int().min(0).optional(),
   currentHp: z.number().int().min(0).optional(),
   temporaryHp: z.number().int().min(0).optional(),

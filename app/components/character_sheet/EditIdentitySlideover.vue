@@ -25,6 +25,15 @@
           />
         </UFormField>
 
+        <UFormField label="Alignement">
+          <USelect
+            v-model="alignment"
+            :items="alignmentItems"
+            value-key="value"
+            class="w-full"
+          />
+        </UFormField>
+
         <UFormField
           label="Portrait (URL)"
           hint="http(s) ou chemin du site"
@@ -83,6 +92,8 @@
 </template>
 
 <script lang="ts" setup>
+import { ALIGNMENTS } from '~~/shared/rules/alignments'
+
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
 const {
@@ -97,7 +108,10 @@ const {
   backstory,
   allies,
   portraitUrl,
+  alignment,
 } = useCharacterSheet(characterSheet)
+
+const alignmentItems = ALIGNMENTS.map(a => ({ label: `${a.name} (${a.short})`, value: a.code }))
 
 const open = ref(false)
 

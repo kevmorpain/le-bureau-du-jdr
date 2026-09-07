@@ -10,6 +10,7 @@ import { resolveChoices } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
+import { alignmentCodeFromBuilderId } from '~~/shared/rules/alignments'
 
 /**
  * Logique de CRÉATION de personnage extraite du handler (point 5d, volet 2). Objectifs
@@ -36,13 +37,6 @@ export class CharacterValidationError extends Error {
     super(message)
     this.name = 'CharacterValidationError'
   }
-}
-
-// Alignement builder (lowercase) → DB (uppercase)
-const ALIGNMENT_MAP: Record<string, string> = {
-  lg: 'LG', ng: 'NG', cg: 'CG',
-  ln: 'LN', n: 'TN', cn: 'CN',
-  le: 'LE', ne: 'NE', ce: 'CE',
 }
 
 // Mapping niveau de SORT d'arcanum (6/7/8/9) → source DB. À la création, chaque arcanum
@@ -464,8 +458,9 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       ruleset,
       speciesId: speciesId ?? undefined,
       backgroundId: backgroundId ?? undefined,
+      // Alignement : l'`id` du builder (minuscules) est converti par la source canonique.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      alignment: (ALIGNMENT_MAP[d.alignment ?? ''] ?? 'TN') as any,
+      alignment: alignmentCodeFromBuilderId(d.alignment) as any,
       maxHp: d.maxHp,
       currentHp: d.maxHp,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

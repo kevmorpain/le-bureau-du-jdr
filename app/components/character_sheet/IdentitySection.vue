@@ -22,9 +22,18 @@
       <div class="flex-1 min-w-0 space-y-3">
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">
-            <h2 class="font-semibold truncate">
-              {{ name || 'Personnage sans nom' }}
-            </h2>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="font-semibold truncate">
+                {{ name || 'Personnage sans nom' }}
+              </h2>
+              <UBadge
+                variant="soft"
+                color="neutral"
+                size="sm"
+              >
+                {{ alignmentLabel }}
+              </UBadge>
+            </div>
             <p
               v-if="playerName"
               class="text-xs text-muted"
@@ -37,11 +46,11 @@
 
         <!-- Apparence physique -->
         <dl
-          v-if="appearanceFields.length"
+          v-if="identityFields.length"
           class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2"
         >
           <div
-            v-for="field in appearanceFields"
+            v-for="field in identityFields"
             :key="field.key"
           >
             <dt class="text-xs text-muted uppercase tracking-wide">
@@ -105,7 +114,16 @@ const {
   allies,
   portraitSrc,
   appearanceFields,
+  alignmentLabel,
+  sizeLabel,
 } = useCharacterSheet(characterSheet)
+
+// Apparence saisie + données déjà en base mais jusqu'ici invisibles sur la fiche :
+// la catégorie de taille de l'espèce (`character_species.size`).
+const identityFields = computed(() => [
+  ...appearanceFields.value,
+  ...(sizeLabel.value ? [{ key: 'size', label: 'Catégorie de taille', value: sizeLabel.value }] : []),
+])
 
 // Nom du joueur : porté par le compte propriétaire de la fiche (`users.name`),
 // pas par une colonne dédiée.

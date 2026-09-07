@@ -129,10 +129,17 @@ const {
   selectedBackground,
 } = useCharacterSheet(characterSheet)
 
+// « Occultiste (Le Grand Ancien) 10 » — la sous-classe est en base (`character_classes.subclass_id`,
+// exposée par le read-model) mais n'apparaissait nulle part dans l'identité du personnage.
 const classesText = computed(() =>
   [mainClass.value, ...multiClass.value]
     .filter(Boolean)
-    .map(cls => `${cls!.name} ${cls!.level}`)
+    .map((cls) => {
+      const subclassName = (cls!.subclass as { name?: string } | null | undefined)?.name
+      return subclassName
+        ? `${cls!.name} (${subclassName}) ${cls!.level}`
+        : `${cls!.name} ${cls!.level}`
+    })
     .join(', '),
 )
 
