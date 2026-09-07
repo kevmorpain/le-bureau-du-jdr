@@ -62,6 +62,19 @@ export interface BuilderState {
   bonds: string
   flaws: string
 
+  // Étape 5 — Identité & description (facultatif). Mêmes colonnes texte que la
+  // fiche (character_sheets) : apparence physique, divinité, histoire, alliés.
+  age: string
+  height: string
+  weight: string
+  eyes: string
+  hair: string
+  skin: string
+  deity: string
+  backstory: string
+  allies: string
+  portraitUrl: string
+
   // Langues choisies
   selectedLanguages: string[]
 
@@ -160,6 +173,16 @@ const INIT_STATE: BuilderState = {
   ideals: '',
   bonds: '',
   flaws: '',
+  age: '',
+  height: '',
+  weight: '',
+  eyes: '',
+  hair: '',
+  skin: '',
+  deity: '',
+  backstory: '',
+  allies: '',
+  portraitUrl: '',
   selectedLanguages: [],
   selectedToolProficiencies: {},
   customBackgroundName: '',

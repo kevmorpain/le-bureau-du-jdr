@@ -1,4 +1,5 @@
 import type { Effect } from '~~/server/db/schema/effects'
+import { hasHeavyWeaponDisadvantage } from '~~/shared/rules/creatureSize'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -310,7 +311,10 @@ export const useCharacterInventory = (
           : props.damage_dice
 
         const warnings: string[] = []
-        if (isHeavy && (speciesSize.value === 'P' || speciesSize.value === 'TP')) {
+        // Codes de taille EN BASE (`character_species.size` : T/S/M/L/H/G, cf.
+        // shared/rules/creatureSize.ts) — la comparaison littérale précédente utilisait
+        // « P »/« TP », qui n'existent pas → le désavantage ne se déclenchait jamais.
+        if (isHeavy && hasHeavyWeaponDisadvantage(speciesSize.value)) {
           warnings.push('Désavantage : arme lourde + Petite taille')
         }
         if (isTwoHanded && equippedShield.value) {

@@ -75,10 +75,10 @@
         </CollapsibleSection>
 
         <CollapsibleSection
-          title="Historique"
-          storage-key="background"
+          title="Identité"
+          storage-key="identity"
         >
-          <BackgroundSection v-model:character-sheet="characterSheet" />
+          <IdentitySection v-model:character-sheet="characterSheet" />
         </CollapsibleSection>
       </div>
 

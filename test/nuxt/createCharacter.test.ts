@@ -196,6 +196,41 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
   })
 })
 
+describe('createCharacter — identité & description (lot 1)', () => {
+  it('persiste apparence, divinité, histoire, alliés et portrait saisis au builder', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      name: 'Ambroise',
+      age: '27 ans', height: '1,75 m', weight: '68 kg',
+      eyes: 'Verts', hair: 'Bruns', skin: 'Hâlée',
+      deity: 'Tyr',
+      backstory: 'Orphelin de Neverwinter.',
+      allies: 'Ordre du Gantelet',
+      portraitUrl: 'https://exemple.test/ambroise.png',
+    }), OWNER)
+
+    const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
+    expect(sheet).toMatchObject({
+      name: 'Ambroise',
+      age: '27 ans', height: '1,75 m', weight: '68 kg',
+      eyes: 'Verts', hair: 'Bruns', skin: 'Hâlée',
+      deity: 'Tyr',
+      backstory: 'Orphelin de Neverwinter.',
+      allies: 'Ordre du Gantelet',
+      portraitUrl: 'https://exemple.test/ambroise.png',
+    })
+  })
+
+  it('création sans description : colonnes vides, jamais NULL (contrat NOT NULL de la migration)', async () => {
+    const { id } = await createCharacter(db, baseInput(), OWNER)
+
+    const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
+    expect(sheet).toMatchObject({
+      age: '', height: '', weight: '', eyes: '', hair: '', skin: '',
+      deity: '', backstory: '', allies: '', portraitUrl: '',
+    })
+  })
+})
+
 describe('createCharacter — owner de choix invisible (choice_carrier, F2 option B)', () => {
   it('ne matérialise PAS la porteuse du choix de sous-classe, mais matérialise le class_feature passif', async () => {
     const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 1 }), OWNER)

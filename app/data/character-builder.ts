@@ -1,3 +1,5 @@
+import { ALIGNMENTS as CANONICAL_ALIGNMENTS } from '~~/shared/rules/alignments'
+
 // Données riches D&D 5e (2014) pour le Character Builder.
 // Ces données sont hardcodées côté frontend car la DB ne stocke pas
 // les traits, bonus de carac., descriptions détaillées, etc.
@@ -897,17 +899,14 @@ export interface AlignmentData {
   description: string
 }
 
-export const ALIGNMENTS: AlignmentData[] = [
-  { id: 'lg', short: 'LB', name: 'Loyal Bon', description: 'Suit les règles avec compassion.' },
-  { id: 'ng', short: 'NB', name: 'Neutre Bon', description: 'Fait le bien selon sa conscience.' },
-  { id: 'cg', short: 'CB', name: 'Chaotique Bon', description: 'Fait le bien, peu importe les règles.' },
-  { id: 'ln', short: 'LN', name: 'Loyal Neutre', description: 'Respecte l\'ordre avant tout.' },
-  { id: 'n', short: 'N', name: 'Neutre', description: 'Équilibre et pragmatisme.' },
-  { id: 'cn', short: 'CN', name: 'Chaotique Neutre', description: 'Liberté absolue, sans morale fixe.' },
-  { id: 'le', short: 'LM', name: 'Loyal Mauvais', description: 'Pouvoir et règles au service du mal.' },
-  { id: 'ne', short: 'NM', name: 'Neutre Mauvais', description: 'Sert ses seuls intérêts.' },
-  { id: 'ce', short: 'CM', name: 'Chaotique Mauvais', description: 'Violence et caprice sans limite.' },
-]
+// Libellés et ordre viennent de la source canonique partagée (shared/rules/alignments.ts),
+// qui porte aussi le code stocké en base ; le builder n'en garde que son `id` historique.
+export const ALIGNMENTS: AlignmentData[] = CANONICAL_ALIGNMENTS.map(a => ({
+  id: a.builderId,
+  short: a.short,
+  name: a.name,
+  description: a.description,
+}))
 
 // ─── Historiques ───────────────────────────────────────────────────────────────
 

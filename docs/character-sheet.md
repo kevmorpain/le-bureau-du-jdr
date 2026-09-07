@@ -15,10 +15,10 @@ La page utilise un **dashboard 3 colonnes** (`dashboard-grid`) :
 | `AbilityScoresSection` | `QuickStatsSection` | `HitPointsSection` |
 | `ProficienciesSection` | `CombatModeSection` *(combat only)* | `DeathSavingThrowSection` |
 | | | `HitDiceSection` |
-| | `ClassFeaturesSection` | `DefensesSection` |
+| | `FeaturesSection` | `DefensesSection` |
 | | `MagicSection` | `StatusSection` |
 | | `InventorySection` | `SpellSlotsSection` |
-| | `SpeciesTraitsSection` + `BackgroundSection` | `ConcentrationSection` |
+| | `IdentitySection` *(contient `BackgroundSection`)* | `ConcentrationSection` |
 | | | `QuickNotesSection` |
 
 La plupart des sections de la colonne centrale sont enveloppées dans `CollapsibleSection` (état persisté en localStorage via `storage-key`). En-tête fixe : `DashboardHeaderSection`.
@@ -28,8 +28,11 @@ La plupart des sections de la colonne centrale sont enveloppées dans `Collapsib
 ## En-tête (`DashboardHeaderSection`)
 
 Barre sticky sous la nav principale. Affiche :
+- **Portrait** du personnage (`portraitUrl`) — seule surface où il est rendu sur la fiche, pour
+  rester visible quelle que soit la section ouverte ; masqué si aucune URL
 - Nom du personnage + niveau total
-- Description courte : espèce · historique · classe(s) avec niveaux
+- Description courte : espèce · historique · classe(s) avec **sous-classe** et niveaux
+  (ex. « Nain des collines · Sage · Occultiste (Le Grand Ancien) 10 »)
 - Conditions actives (badges cliquables pour les retirer)
 
 **Boutons d'action :**
@@ -87,11 +90,15 @@ Section de gestion du tour de combat :
 
 > Les stats détaillées des armes (attaque, dégâts, propriétés, warnings, toggle "à 2 mains" pour versatile, bouton main secondaire pour les armes légères) sont affichées dans `InventorySection` (onglet Armes). `CombatModeSection` reprend les boutons d'action en compact pour le tour en cours.
 
-### Capacités de classe (`ClassFeaturesSection`)
+### Capacités (`FeaturesSection`)
 
-Liste les aptitudes de classe actives avec compteur d'utilisations. Badge dans le titre = nombre d'aptitudes disponibles (uses restantes).
+Liste **toutes** les aptitudes du personnage — traits d'espèce, aptitudes de classe et de
+sous-classe, dons, manifestations occultes — avec compteur d'utilisations, filtre par origine
+(badge coloré par type) et ajout d'un don (`AddFeatSlideover`). Badge dans le titre = nombre
+d'aptitudes encore disponibles (utilisations restantes).
 
-**Source :** `character_sheets.features` (chargé dans le GET principal).
+**Source :** `allCharacterFeatures` (`useCharacterSheet`), assemblé depuis
+`character_sheets.features` + `species.speciesFeatures` (chargés dans le GET principal).
 **Persistence des utilisations :** `PUT /api/character_sheets/{id}/features` (via deep watch).
 
 ### Magie (`MagicSection`)
@@ -133,16 +140,48 @@ Liste tous les objets du personnage avec quantité, état équipé, bonus magiqu
 
 Les effets magiques des objets équipés (`character_inventory.magicEffects`) sont injectés dans `allEffects` et peuvent modifier CA, résistances, vitesse, etc.
 
-### Espèce & Historique
+### Identité (`IdentitySection`)
 
-Section collapsible qui regroupe `SpeciesTraitsSection` + `BackgroundSection`.
+**Tout le descriptif du personnage dans une seule section collapsible**, en bas de la colonne
+centrale, dans cet ordre :
 
-**`SpeciesTraitsSection`** : liste les aptitudes passives de l'espèce (ex. Vision dans le noir, Résistance draconique).
-**Source :** `character_sheets.species.speciesFeatures` (chargé dans le GET principal via relations Drizzle imbriquées).
+1. **Identité** — nom, badge d'alignement, nom du joueur, bouton d'édition
+2. **Apparence** — âge, taille, poids, yeux, cheveux, peau, divinité + catégorie de taille de l'espèce
+3. **Historique** + **Personnalité** — rendus par `BackgroundSection` (cf. plus bas)
+4. **Histoire** puis **Alliés & organisations** — affichés seulement s'ils sont renseignés
 
-**`BackgroundSection`** : affiche l'historique sélectionné (nom, maîtrises de compétences, capacité via accordion) et les champs de description du personnage (traits de personnalité, idéaux, liens, défauts — via `useCharacterBackground`).
+Le **portrait n'est pas rendu ici** : il vit dans l'en-tête de la fiche. Son URL reste éditable dans
+le slideover d'identité (et n'est retenue que si elle est en `http(s)` ou relative au site).
+
+**Source :** colonnes texte de `character_sheets` (`age`, `height`, `weight`, `eyes`, `hair`, `skin`,
+`deity`, `backstory`, `allies`, `portraitUrl`, `name`, `alignment`) via `useCharacterIdentity`. Le
+**nom du joueur** n'a pas de colonne : c'est `owner.name`, chargé par le GET depuis `users` (réduit à
+`{ id, name }`). La **catégorie de taille** vient de `character_species.size`
+(`shared/rules/creatureSize.ts`), l'**alignement** de `shared/rules/alignments.ts`.
+**Persistence :** `sheetTextField` → deep watch → PUT (cf. [persistence.md](persistence.md)).
+**Édition :** `EditIdentitySlideover` (crayon en haut) — auto-save, pas de bouton « Enregistrer ».
+Le **renommage** du personnage se fait là (un nom vide n'est jamais persisté :
+`updateCharacterSheetSchema` l'interdit).
+
+Ces champs sont aussi saisissables à la création (étape Description, bloc « Apparence & histoire »).
+
+#### Historique & personnalité (`BackgroundSection`)
+
+Monté **dans** `IdentitySection` — l'historique et les traits qu'il inspire décrivent le personnage
+au même titre que son apparence, et la fiche officielle les regroupe pareillement. Il garde son
+**propre bouton d'édition** (`EditBackgroundSection`) : ce slideover touche aux maîtrises (resync
+serveur via `PUT /api/character_sheets/{id}/background`), contrairement à celui de l'identité qui
+n'écrit que des colonnes texte.
+
+Affiche l'historique sélectionné (nom, maîtrises de compétences, description, capacité via accordion)
+puis les quatre champs libres de personnalité (traits, idéaux, liens, défauts — éditables en place,
+via `useCharacterBackground`). La description couvre aussi les historiques personnalisés, dont le
+texte saisi dans `EditBackgroundSection` n'était jusqu'ici jamais réaffiché.
+
+Les traits d'**espèce** (Vision dans le noir, Résistance draconique…) ne sont **pas** ici : ils sont
+listés avec les autres aptitudes dans `FeaturesSection`, badgés « espèce ».
+
 **Source :** `character_sheets.background` + champs libres dans `useCharacterBackground`.
-**Édition :** bouton `EditBackgroundSection`.
 
 ---
 
@@ -173,7 +212,8 @@ Résistances, immunités, vulnérabilités calculées depuis `allEffects`. Visib
 
 ### Conditions (`StatusSection`)
 
-Conditions actives, épuisement, alignement. Toggle de chaque condition.
+Conditions actives et niveau d'épuisement. Toggle de chaque condition. *(L'alignement est
+affiché et modifié dans la section Identité, pas ici.)*
 **Source :** conditions via `useStorage()` (localStorage).
 
 ### Emplacements de sort (`SpellSlotsSection`)
@@ -217,4 +257,7 @@ Zone de texte libre pour notes rapides (PNJ rencontrés, rappels…), liée au p
 
 | Champ | Table | Statut |
 |---|---|---|
-| Points d'expérience | — | Pas dans le schéma |
+| Points d'expérience | — | Pas dans le schéma (la montée de niveau est manuelle) |
+
+Y étaient et n'y sont plus : `alignment`, `character_species.size`, `backgrounds.description` et la
+sous-classe, tous branchés sur l'UI (section Identité, en-tête, historique).

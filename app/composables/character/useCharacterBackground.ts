@@ -1,3 +1,5 @@
+import { sheetTextField } from './sheetField'
+
 export type Background = {
   id: number
   name: string
@@ -59,33 +61,10 @@ export const useCharacterBackground = (characterSheet?: Ref<CharacterSheet>) => 
 
   // ─── Champs de personnalité (auto-save via deep watch dans [id].vue) ──────
 
-  const personalityTraits = computed({
-    get: () => characterSheet?.value?.personalityTraits ?? '',
-    set: (v: string) => {
-      if (characterSheet?.value) characterSheet.value = { ...characterSheet.value, personalityTraits: v }
-    },
-  })
-
-  const ideals = computed({
-    get: () => characterSheet?.value?.ideals ?? '',
-    set: (v: string) => {
-      if (characterSheet?.value) characterSheet.value = { ...characterSheet.value, ideals: v }
-    },
-  })
-
-  const bonds = computed({
-    get: () => characterSheet?.value?.bonds ?? '',
-    set: (v: string) => {
-      if (characterSheet?.value) characterSheet.value = { ...characterSheet.value, bonds: v }
-    },
-  })
-
-  const flaws = computed({
-    get: () => characterSheet?.value?.flaws ?? '',
-    set: (v: string) => {
-      if (characterSheet?.value) characterSheet.value = { ...characterSheet.value, flaws: v }
-    },
-  })
+  const personalityTraits = sheetTextField(characterSheet, 'personalityTraits')
+  const ideals = sheetTextField(characterSheet, 'ideals')
+  const bonds = sheetTextField(characterSheet, 'bonds')
+  const flaws = sheetTextField(characterSheet, 'flaws')
 
   return {
     backgrounds,
