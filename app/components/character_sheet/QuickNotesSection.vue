@@ -23,19 +23,24 @@
 </template>
 
 <script lang="ts" setup>
-const STORAGE_KEY = 'cs-quick-notes'
+const props = defineProps<{
+  characterSheet: CharacterSheet
+}>()
 
-const notes = ref('')
+const { notes } = useCharacterSheet(toRef(props, 'characterSheet'))
 
+// Migration ponctuelle depuis l'ancien stockage localStorage (clé globale, non
+// scopée par personnage) vers la colonne DB. Ne s'applique qu'une fois : dès que
+// la clé legacy est lue, elle est supprimée pour ne pas être réappliquée sur un
+// autre personnage.
 onMounted(() => {
+  if (notes.value) return
   try {
-    notes.value = localStorage.getItem(STORAGE_KEY) ?? ''
-  } catch { /* localStorage non disponible */ }
-})
-
-watch(notes, (val) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, val)
+    const legacy = localStorage.getItem('cs-quick-notes')
+    if (legacy) {
+      notes.value = legacy
+      localStorage.removeItem('cs-quick-notes')
+    }
   } catch { /* localStorage non disponible */ }
 })
 </script>

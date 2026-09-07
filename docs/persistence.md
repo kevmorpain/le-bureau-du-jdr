@@ -8,6 +8,7 @@
 | `dragonbornAncestry` | DB (`character_sheets`) | Persistance cross-session |
 | `spellcastingAbility` | DB (`character_classes`) | Dérivé de la classe, voir [architecture.md](architecture.md) |
 | `spellSlots` | DB (`character_spell_slots`) | Persistance cross-session |
+| `notes` (notes de session) | DB (`character_sheets`) | Persistance cross-device, cross-session |
 | `armorClass` | localStorage | Dépend du futur système d'équipement |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
 | `deathSavingThrows` | localStorage | État d'encounter, remis à zéro entre sessions |
