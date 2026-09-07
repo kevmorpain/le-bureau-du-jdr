@@ -165,26 +165,26 @@
         </div>
       </template>
 
-      <!-- Sous-classe -->
-      <template v-if="classData.subclasses.length">
+      <!-- Sous-classe (niveau d'accès + options lus dans le catalogue, F2 tranche 3) -->
+      <template v-if="subclassOptions.length">
         <USeparator class="my-6" />
-        <template v-if="state.level >= classData.subclassLevel">
+        <template v-if="needsSubclass">
           <div class="rounded-xl border border-amber-500/40 bg-(--ui-bg-elevated) p-4">
             <p class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-3">
-              {{ classData.subclassLabel }} — niveau {{ classData.subclassLevel }}
+              {{ classData.subclassLabel }} — niveau {{ subclassLevel }}
             </p>
             <div class="flex flex-wrap gap-2">
               <button
-                v-for="sub in classData.subclasses"
-                :key="sub"
+                v-for="sub in subclassOptions"
+                :key="sub.id"
                 type="button"
                 class="px-3 py-1.5 rounded-md border text-xs font-medium transition-colors cursor-pointer"
-                :class="state.subclass === sub
+                :class="state.subclass === sub.name
                   ? 'border-amber-500 bg-amber-500/10 text-amber-400'
                   : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-amber-500/40'"
-                @click="state.subclass = sub"
+                @click="state.subclass = sub.name"
               >
-                {{ sub }}
+                {{ sub.name }}
               </button>
             </div>
           </div>
@@ -196,7 +196,7 @@
         >
           Vous choisirez votre
           <strong :style="`color: ${classData.color}`">{{ classData.subclassLabel }}</strong>
-          au niveau {{ classData.subclassLevel }}.
+          au niveau {{ subclassLevel }}.
         </div>
       </template>
 
@@ -343,6 +343,9 @@ const {
   classData,
   hpMax,
   profBonus,
+  needsSubclass,
+  subclassLevel,
+  subclassOptions,
   needsPactBoon,
   needsInvocations,
   invocationsExpected,

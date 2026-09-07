@@ -286,12 +286,12 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Choix de progression lus dans le CATALOGUE (/api/catalog, lot 6a) ──────
   // resolveChoices résout localement les points de choix de la classe montée, aux niveaux
-  // d'ARRIVÉE et de DÉPART (le delta pilote le nombre de nouvelles invocations). Aujourd'hui
-  // seul l'Occultiste est seedé → pacte / invocations / arcanums ; style de combat, expertise
-  // et sous-classe restent pilotés par app/data (contenu Phase 2). Équivalence vs les anciennes
-  // tables verrouillée par test/unit/warlockCatalogEquivalence.test.ts.
+  // d'ARRIVÉE et de DÉPART (le delta pilote le nombre de nouvelles invocations). Seedés à ce
+  // jour : la SOUS-CLASSE de toutes les classes (F2 tranche 3) + pacte/invocations/arcanums de
+  // l'Occultiste ; style de combat, expertise et ASI restent pilotés par app/data (à migrer,
+  // cf. consolidation-2014.md). Équivalence Occultiste verrouillée par warlockCatalogEquivalence.test.ts.
   const { choicesForClassLevel } = useCatalog()
-  const { resolveClassId } = useBuilderEntities()
+  const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
   const luClassDbId = computed(() =>
     charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId
     ?? resolveClassId(pickedClass.value?.dbName),
@@ -362,15 +362,24 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return state.value.newInvocationIds.includes(id)
   }
 
-  // ── Subclass availability ─────────────────────────────────────────────────
+  // ── Subclass availability (lue dans le CATALOGUE, F2 tranche 3) ────────────
+  // Le niveau d'accès à la sous-classe vient du catalogue (progression `kind:'subclass'`, owner à
+  // `classes.subclass_level`) au lieu du blob `app/data/character-builder.ts`. Gating = miroir de
+  // needsPactBoon : débloquée AU niveau d'arrivée (`ownerLevelRequired === toLevel`).
 
   const isSubclassLevel = computed(() => {
-    const cls = pickedClass.value
-    if (!cls) return false
-    // For existing class: don't show if already has subclass
+    if (!state.value.pickedClassId) return false
+    // Classe existante ayant déjà sa sous-classe → ne pas re-demander.
     if (!state.value.isMulticlass && pickedCharClass.value?.subclassName) return false
-    return state.value.toLevel === cls.subclassLevel
+    return choicesAtToLevel.value.some(c => c.kind === 'subclass' && c.ownerLevelRequired === state.value.toLevel)
   })
+
+  // Niveau d'accès à la sous-classe d'une classe (par builderId), lu dans le catalogue — sert aux
+  // badges/gating de LevelUpStepClass (liste de classes). `null` tant que le catalogue n'est pas chargé.
+  function subclassLevelFor(builderClassId: string): number | null {
+    const cls = CLASSES.find(c => c.id === builderClassId)
+    return subclassCatalogFor(resolveClassId(cls?.dbName))?.subclassLevel ?? null
+  }
 
   // ── Step visibility ────────────────────────────────────────────────────────
 
@@ -592,6 +601,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     computedHpGained,
     // Step conditions
     isSubclassLevel,
+    subclassLevelFor,
     isAsiLevel,
     needsFightingStyle,
     needsExpertise,

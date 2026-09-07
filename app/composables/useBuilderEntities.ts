@@ -4,13 +4,19 @@
  * « slug/name → dbId », ce qui permet au reste du builder de ne manipuler
  * que des IDs côté payload, sans WHERE name lookup côté serveur.
  */
-type DbClass = { id: number, name: string, subclasses: Array<{ id: number, name: string }> }
+export type DbSubclass = { id: number, name: string, description?: string | null }
+// `subclassLevel` = fait d'identité (`classes.subclass_level`, migration 0080) exposé par le
+// catalogue ; le builder/level-up en dérivent le niveau d'accès à la sous-classe au lieu du blob
+// front (F2 tranche 3). `subclasses` imbriquées = les options du choix de sous-classe.
+export type DbClass = { id: number, name: string, subclassLevel: number, subclasses: DbSubclass[] }
 type DbSpecies = { id: number, name: string }
 type DbBackground = { id: number, name: string }
 type DbItem = { id: number, name: string }
 
 export function useBuilderEntities() {
-  const { data: classes } = useFetch<DbClass[]>('/api/classes', {
+  // `/api/catalog/classes` (≡ legacy `/api/classes`, même loader `loadClasses`) : la source
+  // catalogue, cachable au edge (F4). Porte `subclassLevel` + sous-classes imbriquées.
+  const { data: classes } = useFetch<DbClass[]>('/api/catalog/classes', {
     default: () => [],
   })
   const { data: species } = useFetch<DbSpecies[]>('/api/character_species', {
@@ -50,6 +56,17 @@ export function useBuilderEntities() {
     return backgrounds.value?.find(b => norm(b.name) === norm(dbName))?.id ?? null
   }
 
+  // ── Identité de sous-classe (catalogue) ─────────────────────────────────────
+  // Niveau d'accès + options de sous-classe d'une classe (par id DB). Source unique du builder
+  // ET du level-up (F2 tranche 3), à la place du blob `app/data/character-builder.ts`. `null`
+  // tant que le catalogue n'est pas chargé ou pour une classe inconnue.
+
+  function subclassCatalogFor(classDbId: number | null | undefined): { subclassLevel: number, subclasses: DbSubclass[] } | null {
+    if (classDbId == null) return null
+    const cls = classes.value?.find(c => c.id === classDbId)
+    return cls ? { subclassLevel: cls.subclassLevel, subclasses: cls.subclasses } : null
+  }
+
   function resolveItemIds(itemNames: string[]): { ids: number[], unresolved: string[] } {
     if (!itemNames.length || !items.value?.length) return { ids: [], unresolved: itemNames }
     const map = new Map<string, number>()
@@ -74,5 +91,6 @@ export function useBuilderEntities() {
     resolveSpeciesId,
     resolveBackgroundId,
     resolveItemIds,
+    subclassCatalogFor,
   }
 }

@@ -3,10 +3,10 @@
 //
 // Volet B (dérivation des maîtrises depuis l'origine) : ces valeurs vivaient jusqu'ici dans le
 // BLOB front `app/data/character-builder.ts` (`ClassData.armorProficiencies`/`weaponProficiencies`,
-// en libellés FR), mappées à la volée en clés machine par le builder
-// (`ARMOR_PROF_KEYS[p] ?? p` / `WEAPON_PROF_KEYS[p] ?? p`) puis STOCKÉES en grants
+// en libellés FR), mappées à la volée en clés machine par le builder puis STOCKÉES en grants
 // `character_proficiency_overrides`. On les descend ici pour les poser en EFFETS sur une feature
 // porteuse de classe (seedClass → feature_type `proficiency_grant`), afin que la fiche les DÉRIVE.
+// (Depuis F5, le builder n'émet plus ces clés — payload vestigial + map `WEAPON_PROF_KEYS` retirés.)
 //
 // CONVENTION (normalisée, cf. volet B étape 1) : la fiche reconnaît une maîtrise d'ARME par
 //   - CATÉGORIE → token machine EN (`simple_weapons`/`martial_weapons`), comparé à `weapon_category`,
