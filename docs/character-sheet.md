@@ -29,7 +29,8 @@ La plupart des sections de la colonne centrale sont enveloppées dans `Collapsib
 
 Barre sticky sous la nav principale. Affiche :
 - **Portrait** du personnage (`portraitUrl`) — seule surface où il est rendu sur la fiche, pour
-  rester visible quelle que soit la section ouverte ; masqué si aucune URL
+  rester visible quelle que soit la section ouverte ; masqué s'il n'y a pas d'URL ou si l'image
+  est injoignable (le retour à l'utilisateur se fait dans le slideover, au moment de la saisie)
 - Nom du personnage + niveau total
 - Description courte : espèce · historique · classe(s) avec **sous-classe** et niveaux
   (ex. « Nain des collines · Sage · Occultiste (Le Grand Ancien) 10 »)
@@ -150,8 +151,10 @@ centrale, dans cet ordre :
 3. **Historique** + **Personnalité** — rendus par `BackgroundSection` (cf. plus bas)
 4. **Histoire** puis **Alliés & organisations** — affichés seulement s'ils sont renseignés
 
-Le **portrait n'est pas rendu ici** : il vit dans l'en-tête de la fiche. Son URL reste éditable dans
-le slideover d'identité (et n'est retenue que si elle est en `http(s)` ou relative au site).
+Le **portrait n'est pas rendu ici** : il vit dans l'en-tête de la fiche. Il s'ajoute depuis le
+slideover d'identité, de deux façons au choix — **téléverser** une image (réduite dans le navigateur,
+stockée dans R2, cf. [persistence.md](persistence.md) §3) ou **coller un lien** externe. L'URL n'est
+retenue que si elle est en `http(s)` ou relative au site.
 
 **Source :** colonnes texte de `character_sheets` (`age`, `height`, `weight`, `eyes`, `hair`, `skin`,
 `deity`, `backstory`, `allies`, `portraitUrl`, `name`, `alignment`) via `useCharacterIdentity`. Le

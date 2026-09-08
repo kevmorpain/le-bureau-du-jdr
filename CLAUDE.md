@@ -134,7 +134,7 @@ See `docs/context.md` for accumulated development context: dashboard v2 architec
 
 ### Deployment
 
-Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, KV binding `KV`).
+Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, KV binding `KV`, R2 binding `BLOB` → bucket `le-bureau-du-jdr-media`, portraits de personnage).
 
 **Deployment is automatic via Cloudflare Workers Builds (CI) on `git push`** to the default branch — the build runs `nuxt build`, deploys the worker, and **applies pending D1 migrations** (from `.output/server/db/migrations/`, tracked in the `_hub_migrations` table per wrangler.jsonc). There's no GitHub Actions workflow (`.github/workflows/` is empty) — the CI is configured on Cloudflare's side via the Git integration. `npm run deploy` (`nuxt build` + `wrangler deploy`) remains available as a manual fallback.
 

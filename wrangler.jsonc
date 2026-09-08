@@ -23,5 +23,13 @@
       "binding": "KV",
       "id": "c00d70edde834c9998ef99d0db30d9e8"
     }
+  ],
+  // Portraits de personnage (et autres médias à venir : la séparation se fait par
+  // préfixe de clé, pas par bucket). Consommé via `hub:blob` (driver cloudflare-r2).
+  "r2_buckets": [
+    {
+      "binding": "BLOB",
+      "bucket_name": "le-bureau-du-jdr-media"
+    }
   ]
 }
