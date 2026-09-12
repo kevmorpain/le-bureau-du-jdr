@@ -107,6 +107,8 @@ export const createCharacterSchema = z.object({
   pactBoonCantripIds: z.array(z.number().int()).optional(),
   // Manifestations occultes (Occultiste niveau ≥ 2)
   invocationIds: z.array(z.number().int().positive()).optional(),
+  // Options de Métamagie (Ensorceleur niveau ≥ 3)
+  metamagicIds: z.array(z.number().int().positive()).optional(),
   // Bonus ASI répartis (paliers 4/8/12/… selon classe).
   asiBonuses: z
     .array(z.object({
@@ -191,6 +193,7 @@ async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset
     ...(d.asiFeats ?? []).map(f => f.featureId),
     ...(d.bonusFeatureId != null ? [d.bonusFeatureId] : []),
     ...(d.invocationIds ?? []),
+    ...(d.metamagicIds ?? []),
   ]
   if (featureIds.length) {
     const rows = await db
@@ -279,7 +282,8 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   }
 
   const invocationIds = d.invocationIds ?? []
-  const needsCatalog = invocationIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0
+  const metamagicIds = d.metamagicIds ?? []
+  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0
   if (!needsCatalog) return
 
   const catalog = await buildCatalog(db, { classIds: [classId] })
@@ -295,6 +299,18 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
       .where(and(eq(schema.features.tag, 'invocation'), inArray(schema.features.id, invocationIds)))
     if (inGroup.length !== invocationIds.length) throw new CharacterValidationError(`Une manifestation choisie est inconnue ou n'est pas une invocation.`)
     if (invocationIds.length > invChoice.count) throw new CharacterValidationError(`Trop de manifestations occultes (${invocationIds.length} pour un maximum de ${invChoice.count}).`)
+  }
+
+  // Métamagie — chaque option ∈ groupe `metamagic`, nombre ≤ table du niveau (kind 'metamagic').
+  if (metamagicIds.length > 0) {
+    const mmChoice = choices.find(c => c.kind === 'metamagic')
+    if (!mmChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir d'options de métamagie au niveau ${d.level}.`)
+    const inGroup = await db
+      .select({ id: schema.features.id })
+      .from(schema.features)
+      .where(and(eq(schema.features.tag, 'metamagic'), inArray(schema.features.id, metamagicIds)))
+    if (inGroup.length !== metamagicIds.length) throw new CharacterValidationError(`Une option de métamagie choisie est inconnue ou n'est pas une métamagie.`)
+    if (metamagicIds.length > mmChoice.count) throw new CharacterValidationError(`Trop d'options de métamagie (${metamagicIds.length} pour un maximum de ${mmChoice.count}).`)
   }
 
   // V4 — faveur de pacte : la classe doit y avoir droit à ce niveau
@@ -650,6 +666,13 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
         .values(invocationGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'invocation' as const })))
         .onConflictDoNothing())
     }
+  }
+
+  // Métamagie — options choisies matérialisées comme features de la fiche (aucun sort octroyé).
+  if (d.metamagicIds?.length) {
+    stmts.push(db.insert(schema.characterFeatures)
+      .values(d.metamagicIds.map(featureId => ({ characterSheetId: sheetId, featureId, currentUses: 0 })))
+      .onConflictDoNothing())
   }
 
   // Arcanums mystiques — un sort 1×/repos long par palier débloqué (source arcanum_*)

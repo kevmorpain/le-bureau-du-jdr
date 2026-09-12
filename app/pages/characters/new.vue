@@ -219,6 +219,7 @@ async function handleSubmit() {
       pactWeaponItemId,
       pactBoonCantripIds: needsPactBoon.value && state.value.pactBoon === 'tome' ? state.value.selectedPactBoonCantripIds : [],
       invocationIds: state.value.invocationIds,
+      metamagicIds: state.value.metamagicIds,
       inventoryItemIds,
       inventoryItemNamesUnresolved,
       // Bonus ASI aplatis : { classLevel, ability, amount } prêt à insérer

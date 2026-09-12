@@ -240,6 +240,17 @@
         </div>
       </template>
 
+      <!-- Métamagie (Ensorceleur niveau ≥ 3) -->
+      <template v-if="needsMetamagic">
+        <USeparator class="my-6" />
+        <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
+          <MetamagicPicker
+            v-model="state.metamagicIds"
+            :max-count="metamagicExpected"
+          />
+        </div>
+      </template>
+
       <!-- Points de vie -->
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -346,6 +357,8 @@ const {
   needsPactBoon,
   needsInvocations,
   invocationsExpected,
+  needsMetamagic,
+  metamagicExpected,
   CLASSES,
   SKILLS,
   ABILITY_SHORT,

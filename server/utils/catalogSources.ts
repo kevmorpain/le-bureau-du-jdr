@@ -210,6 +210,27 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended =
 }
 
 /**
+ * Options de Métamagie de l'Ensorceleur (`features` taguées `metamagic`, cf. featureTags.ts),
+ * triées par nom (fr). DESCRIPTIVES (pas d'effets bakés — le joueur applique en jeu). Contenu
+ * socle (source 'core') → le filtre `extended` est un no-op ici, gardé par cohérence.
+ */
+export async function loadMetamagic(db: Db, ruleset: Ruleset = '5', extended = false) {
+  return await db
+    .select({
+      id: srcSchema.features.id,
+      name: srcSchema.features.name,
+      description: srcSchema.features.description,
+    })
+    .from(srcSchema.features)
+    .where(and(
+      eq(srcSchema.features.tag, 'metamagic'),
+      eq(srcSchema.features.ruleset, ruleset),
+      ...(extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
+    ))
+    .orderBy(asc(srcSchema.features.name))
+}
+
+/**
  * Historiques, triés par nom. Sans `characterSheetId` → uniquement les historiques GLOBAUX
  * (`character_sheet_id IS NULL`), la tranche statique cachable du catalogue. Avec un
  * `characterSheetId`, ajoute les historiques homebrew de cette fiche (≡ endpoint legacy

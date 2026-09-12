@@ -85,6 +85,9 @@ export interface BuilderState {
   // Manifestations occultes (Occultiste niveau ≥ 2)
   invocationIds: number[]
 
+  // Options de Métamagie (Ensorceleur niveau ≥ 3)
+  metamagicIds: number[]
+
   // Choix par palier d'ASI (niveau de classe) : carac ('asi') ou don ('feat').
   // Format : { 4: 'asi', 8: 'feat', 12: 'asi', ... }
   asiChoice: Record<number, 'asi' | 'feat'>
@@ -171,6 +174,7 @@ const INIT_STATE: BuilderState = {
   pactWeaponItemName: null,
   selectedPactBoonCantripIds: [],
   invocationIds: [],
+  metamagicIds: [],
   asiChoice: {},
   asiBonuses: {},
   asiFeats: {},
@@ -295,6 +299,14 @@ export function useCharacterBuilder() {
   )
 
   const needsInvocations = computed(() => invocationsExpected.value > 0)
+
+  // Métamagie (Ensorceleur) — même mécanique que les invocations : N options (par niveau) parmi
+  // le groupe `metamagic`, lues dans le catalogue via resolveChoices.
+  const metamagicExpected = computed(() =>
+    catalogChoices.value.find(c => c.kind === 'metamagic')?.count ?? 0,
+  )
+  const needsMetamagic = computed(() => metamagicExpected.value > 0)
+
   const alignmentData = computed(() => ALIGNMENTS.find(a => a.id === state.value.alignment) ?? null)
 
   // Bonus raciaux fusionnés (race + sous-race + cas spéciaux)
@@ -537,6 +549,7 @@ export function useCharacterBuilder() {
         if (fightingStyleOptions && !s.fightingStyle) return false
         if (needsPactBoon.value && !s.pactBoon) return false
         if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
+        if (needsMetamagic.value && s.metamagicIds.length < metamagicExpected.value) return false
         return true
       }
       case 'abilities': {
@@ -736,6 +749,9 @@ export function useCharacterBuilder() {
     // Invocations
     needsInvocations,
     invocationsExpected,
+    // Métamagie
+    needsMetamagic,
+    metamagicExpected,
     // ASI
     needsAsi,
     asiLevelsForCharacter,
