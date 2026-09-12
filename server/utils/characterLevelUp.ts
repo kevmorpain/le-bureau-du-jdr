@@ -4,6 +4,7 @@ import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
+import { applyMetamagicChanges } from '~~/server/utils/metamagic'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
@@ -48,6 +49,8 @@ export const levelUpSchema = z.object({
   pactBoonCantripIds: z.array(z.number().int()).optional(),
   newInvocationIds: z.array(z.number().int().positive()).optional(),
   replacedInvocationId: z.number().int().positive().nullable().optional(),
+  newMetamagicIds: z.array(z.number().int().positive()).optional(),
+  replacedMetamagicId: z.number().int().positive().nullable().optional(),
   arcaneMysteriumSpellId: z.number().int().positive().nullable().optional(),
   bookOfAncientSecretsSpellIds: z.array(z.number().int().positive()).max(2).optional(),
 })
@@ -74,6 +77,15 @@ async function validateLevelUp(db: Db, d: LevelUpInput, classId: number, subclas
       .where(and(eq(schema.features.tag, 'invocation'), inArray(schema.features.id, newInv)))
     if (inGroup.length !== newInv.length) throw new CharacterValidationError(`Une manifestation choisie est inconnue ou n'est pas une invocation.`)
   }
+
+  const newMeta = d.newMetamagicIds ?? []
+  if (newMeta.length) {
+    const inGroup = await db
+      .select({ id: schema.features.id })
+      .from(schema.features)
+      .where(and(eq(schema.features.tag, 'metamagic'), inArray(schema.features.id, newMeta)))
+    if (inGroup.length !== newMeta.length) throw new CharacterValidationError(`Une option de métamagie choisie est inconnue ou n'est pas une métamagie.`)
+  }
 }
 
 /**
@@ -85,6 +97,7 @@ async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset:
   const featureIds = [
     ...(d.featureId != null ? [d.featureId] : []),
     ...(d.newInvocationIds ?? []),
+    ...(d.newMetamagicIds ?? []),
   ]
   if (featureIds.length) {
     const rows = await db
@@ -377,6 +390,11 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   // ── 6. Manifestations occultes (remplacement + ajouts) — util DI, idempotent ──
   if (d.replacedInvocationId || (d.newInvocationIds && d.newInvocationIds.length)) {
     await applyInvocationChanges(db, characterSheetId, d.newInvocationIds ?? [], d.replacedInvocationId ?? null)
+  }
+
+  // ── 7. Métamagie (remplacement + ajouts) — util DI, idempotent ──
+  if (d.replacedMetamagicId || (d.newMetamagicIds && d.newMetamagicIds.length)) {
+    await applyMetamagicChanges(db, characterSheetId, d.newMetamagicIds ?? [], d.replacedMetamagicId ?? null)
   }
 
   return { success: true, newLevel, hpGained: d.hpGained }

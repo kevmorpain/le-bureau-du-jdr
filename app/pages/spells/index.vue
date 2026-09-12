@@ -36,7 +36,8 @@ const selectedComponent = computed(() => {
   return selectedList.value === 'card' ? CardList : TableList
 })
 
-const { data } = await useFetch<Spell[]>('/api/spells')
+const { extendedQuery } = useExtendedContent()
+const { data } = await useFetch<Spell[]>('/api/spells', { query: extendedQuery })
 
 const { filters } = useSpellFilters()
 

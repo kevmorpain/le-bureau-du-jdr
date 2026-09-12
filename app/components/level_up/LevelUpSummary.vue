@@ -242,7 +242,9 @@ const submitting = ref(false)
 const spellNamesById = useState<Record<number, string>>('level-up-spell-names', () => ({}))
 
 // Invocation names (pour affichage du récap)
+const { extendedQuery } = useExtendedContent()
 const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  query: extendedQuery,
   default: () => [],
 })
 const invocationNamesById = computed(() => {

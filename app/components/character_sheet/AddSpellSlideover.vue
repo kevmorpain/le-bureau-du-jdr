@@ -97,7 +97,8 @@ const search = ref('')
 const selectedLevels = ref<number[]>([])
 const addingIds = ref<Set<number>>(new Set())
 
-const { data: allSpells, pending } = useFetch<Spell[]>('/api/spells')
+const { extendedQuery } = useExtendedContent()
+const { data: allSpells, pending } = useFetch<Spell[]>('/api/spells', { query: extendedQuery })
 
 const levelOptions = [
   { label: 'Tour', value: 0 },

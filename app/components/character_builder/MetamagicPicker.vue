@@ -3,7 +3,7 @@
     <!-- Compteur -->
     <div class="flex items-center justify-between text-xs">
       <p class="font-bold uppercase tracking-widest text-muted">
-        Métamagie — choisissez {{ maxCount }}
+        {{ pickerLabel ?? `Métamagie — choisissez ${maxCount}` }}
       </p>
       <span
         class="font-semibold"
@@ -19,7 +19,7 @@
 
     <div v-else class="flex flex-col gap-2 max-h-[480px] overflow-y-auto pr-1">
       <button
-        v-for="opt in options"
+        v-for="opt in visibleOptions"
         :key="opt.id"
         type="button"
         class="text-left px-3 py-2.5 rounded-xl border transition-all"
@@ -43,6 +43,9 @@ interface MetamagicOption {
 const props = defineProps<{
   modelValue: number[]
   maxCount: number
+  // Options à masquer (typiquement les métamagies déjà connues lors d'un level-up).
+  excludedIds?: number[]
+  pickerLabel?: string
 }>()
 
 const emit = defineEmits<{
@@ -51,6 +54,11 @@ const emit = defineEmits<{
 
 const { data: options } = useFetch<MetamagicOption[]>('/api/catalog/metamagic', {
   default: () => [],
+})
+
+const visibleOptions = computed(() => {
+  const excluded = new Set(props.excludedIds ?? [])
+  return (options.value ?? []).filter(o => !excluded.has(o.id))
 })
 
 function cardClass(id: number): string {

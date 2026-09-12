@@ -532,6 +532,9 @@ export interface ClassData {
   features: ClassFeature[]
   equipment: EquipmentGroup[]
   levelMilestones: LevelMilestones
+  // Provenance / gating (cf. shared/rules/source.ts). Absent = socle. Aucune classe gatée
+  // aujourd'hui ; le filtre est prêt si une classe d'extension est ajoutée.
+  source?: Source
 }
 
 // ─── Classes ───────────────────────────────────────────────────────────────────
@@ -953,6 +956,9 @@ export interface BackgroundData {
   featureName: string
   featureDescription: string
   suggestions: BackgroundSuggestions
+  // Provenance / gating (cf. shared/rules/source.ts). Absent = socle. Aucun historique gaté
+  // aujourd'hui ; le filtre est prêt si un historique d'extension est ajouté.
+  source?: Source
 }
 
 export const BACKGROUNDS: BackgroundData[] = [

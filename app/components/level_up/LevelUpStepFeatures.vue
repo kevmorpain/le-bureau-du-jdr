@@ -229,9 +229,56 @@
       </div>
     </div>
 
+    <!-- Métamagie (Ensorceleur) -->
+    <div v-if="needsMetamagic || canReplaceMetamagic" class="mb-6 space-y-5">
+      <!-- Bloc : remplacement d'une option existante (optionnel) -->
+      <div v-if="canReplaceMetamagic">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">
+            🔁 Remplacer une option de Métamagie (optionnel)
+          </p>
+          <button
+            v-if="state.replacedMetamagicId !== null"
+            type="button"
+            class="text-xs text-muted hover:text-amber-400 underline"
+            @click="state.replacedMetamagicId = null"
+          >
+            Annuler
+          </button>
+        </div>
+        <div v-if="!knownMetamagicDetails.length" class="px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic">
+          Vous ne connaissez encore aucune option de Métamagie.
+        </div>
+        <div v-else class="flex flex-wrap gap-2">
+          <button
+            v-for="m in knownMetamagicDetails"
+            :key="m.id"
+            type="button"
+            class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
+            :class="state.replacedMetamagicId === m.id
+              ? 'border-amber-500/60 bg-amber-500/10 text-amber-400 font-semibold line-through'
+              : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-amber-500/40 cursor-pointer'"
+            @click="state.replacedMetamagicId = state.replacedMetamagicId === m.id ? null : m.id"
+          >
+            {{ m.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Picker — affiché si gain de niveau OU remplacement actif -->
+      <div v-if="needsMetamagic || state.replacedMetamagicId !== null">
+        <MetamagicPicker
+          v-model="state.newMetamagicIds"
+          :max-count="totalMetamagicPickCount"
+          :excluded-ids="excludedMetamagicIds"
+          :picker-label="metamagicPickerLabel"
+        />
+      </div>
+    </div>
+
     <!-- No choices required -->
     <div
-      v-if="!isSubclassLevel && !needsFightingStyle && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation"
+      v-if="!isSubclassLevel && !needsFightingStyle && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation && !needsMetamagic && !canReplaceMetamagic"
       class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted"
     >
       Aucun choix requis à cette étape. Cliquez sur Suivant pour continuer.
@@ -262,6 +309,10 @@ const {
   canReplaceInvocation,
   newInvocationsCount,
   knownInvocationIds,
+  needsMetamagic,
+  canReplaceMetamagic,
+  newMetamagicCount,
+  knownMetamagicIds,
   effectivePactBoon,
   knownSpellNames,
   proficientSkills,
@@ -274,8 +325,12 @@ const {
   totalLevel,
 } = useLevelUp(charSheet)
 
+// Gating `source` : inclure le contenu d'extension quand le drapeau global est actif.
+const { extendedQuery } = useExtendedContent()
+
 // Détails des invocations connues pour le bloc « Remplacer »
 const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  query: extendedQuery,
   default: () => [],
 })
 const knownInvocationDetails = computed(() => {
@@ -310,6 +365,35 @@ watch(() => state.value.replacedInvocationId, (newVal) => {
   }
 })
 
+// ── Métamagie (Ensorceleur) — parallèle aux invocations ────────────────────
+const { data: allMetamagic } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/metamagic', {
+  default: () => [],
+})
+const knownMetamagicDetails = computed(() => {
+  const known = new Set(knownMetamagicIds.value)
+  return (allMetamagic.value ?? []).filter(m => known.has(m.id))
+})
+const totalMetamagicPickCount = computed(() =>
+  newMetamagicCount.value + (state.value.replacedMetamagicId ? 1 : 0),
+)
+const excludedMetamagicIds = computed(() =>
+  knownMetamagicIds.value.filter(id => id !== state.value.replacedMetamagicId),
+)
+const metamagicPickerLabel = computed(() => {
+  if (state.value.replacedMetamagicId !== null && newMetamagicCount.value === 0) {
+    return '✨ Choisissez l\'option de remplacement'
+  }
+  if (state.value.replacedMetamagicId !== null) {
+    return `✨ Nouvelles options de Métamagie — choisissez ${totalMetamagicPickCount.value} (${newMetamagicCount.value} gain + 1 remplacement)`
+  }
+  return `✨ Nouvelles options de Métamagie — choisissez ${newMetamagicCount.value}`
+})
+watch(() => state.value.replacedMetamagicId, (newVal) => {
+  if (newVal === null && state.value.newMetamagicIds.length > newMetamagicCount.value) {
+    state.value.newMetamagicIds = state.value.newMetamagicIds.slice(0, newMetamagicCount.value)
+  }
+})
+
 // Melee weapons from inventory (for Pacte de la Lame)
 const meleeWeapons = computed(() => {
   const inventory: Array<{ inventory: any, item: any }> = (charSheet.value as any)?.inventory ?? []
@@ -337,7 +421,7 @@ const profBonusChange = computed(() =>
 // Subclasses from API
 const { data: subclassesData } = useFetch(
   () => pickedClass.value ? `/api/classes/${encodeURIComponent(pickedClass.value!.dbName)}/subclasses` : '',
-  { watch: [pickedClass], immediate: true },
+  { query: extendedQuery, watch: [pickedClass, () => extendedQuery.value], immediate: true },
 )
 const subclasses = computed(() => (subclassesData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>)
 
