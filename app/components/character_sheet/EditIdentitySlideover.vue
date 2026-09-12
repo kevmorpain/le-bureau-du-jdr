@@ -35,14 +35,32 @@
         </UFormField>
 
         <UFormField
-          label="Portrait (URL)"
-          hint="http(s) ou chemin du site"
+          label="Portrait"
+          hint="téléversez une image ou collez un lien"
         >
-          <UInput
-            v-model="portraitUrl"
-            placeholder="https://…"
-            class="w-full"
-          />
+          <div class="flex items-center gap-2">
+            <UInput
+              v-model="portraitUrl"
+              placeholder="https://…"
+              class="flex-1"
+            />
+            <UButton
+              icon="i-heroicons:arrow-up-tray"
+              variant="outline"
+              color="neutral"
+              :loading="uploading"
+              @click="fileInput?.click()"
+            >
+              Téléverser
+            </UButton>
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              class="hidden"
+              @change="uploadPortrait"
+            >
+          </div>
 
           <!-- Aperçu : c'est ici, au moment de la saisie, qu'on dit si l'URL charge —
                l'en-tête de la fiche se contente de masquer un portrait injoignable. -->
@@ -143,6 +161,42 @@ const portraitFailed = ref(false)
 watch(portraitSrc, () => {
   portraitFailed.value = false
 })
+
+// ─── Téléversement (R2 via /api/character_sheets/{id}/portrait) ──────────────
+// L'image est réduite dans le navigateur avant l'envoi, et c'est le serveur qui écrit
+// `portraitUrl` (il supprime aussi l'ancien objet) — on ne fait que refléter sa réponse
+// localement. Un envoi de fichier ne passe pas par la file hors-ligne : il faut le réseau.
+const toast = useToast()
+const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
+const uploading = ref(false)
+
+async function uploadPortrait(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  uploading.value = true
+  try {
+    const image = await resizeImageForUpload(file)
+    const form = new FormData()
+    form.append('file', image, file.name)
+
+    const { portraitUrl: uploaded } = await $fetch<{ portraitUrl: string }>(
+      `/api/character_sheets/${characterSheet.value.id}/portrait`,
+      { method: 'POST', body: form },
+    )
+    portraitUrl.value = uploaded
+  } catch (e: unknown) {
+    const message = (e as { statusMessage?: string, data?: { statusMessage?: string } })?.statusMessage
+      ?? (e as { data?: { statusMessage?: string } })?.data?.statusMessage
+      ?? 'Réessayez, ou collez un lien vers une image.'
+    toast.add({ title: 'Téléversement impossible', description: message, color: 'error' })
+  } finally {
+    uploading.value = false
+    // Permet de resélectionner le même fichier après une erreur.
+    input.value = ''
+  }
+}
 
 const alignmentItems = ALIGNMENTS.map(a => ({ label: `${a.name} (${a.short})`, value: a.code }))
 
