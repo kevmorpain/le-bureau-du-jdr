@@ -93,6 +93,8 @@ export const updateInventoryEntrySchema = z.object({
   currentUses: z.number().int().min(0).optional(),
   notes: z.string().max(500).optional(),
   usingTwoHanded: z.boolean().optional(),
+  // Harmonisation par instance (objets magiques, cf. items.requiresAttunement).
+  attuned: z.boolean().optional(),
 })
 
 // ─── Proficiency override schemas ─────────────────────────────────────────────

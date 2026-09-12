@@ -4,6 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import { CORE_SOURCE } from '~~/shared/rules/source'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 
 /**
@@ -24,6 +25,10 @@ import type { AbilityKey } from '~~/shared/rules/abilities'
  * Chaque loader d'entité globale filtre par `ruleset` (défaut `'5'`, cf. shared/rules/ruleset.ts) :
  * le builder 2014 (qui appelle sans argument) ne voit QUE le contenu 2014, même une fois du 5.5 seedé
  * (Phase 2). No-op tant que tout est `'5'` en base. Un futur appelant 5.5 passera `'5.5'`.
+ *
+ * Et par `source` (cf. shared/rules/source.ts) via le drapeau `extended` (défaut `false`) : par
+ * défaut seul le socle (`'core'`) remonte, le contenu d'extension gaté reste caché ; `extended=true`
+ * lève le filtre (cas spéciaux, ex. un one-shot Tasha). Axe orthogonal au `ruleset`.
  */
 
 // Instance drizzle SQLite, quel que soit le driver (D1 en prod, libsql en test) — mêmes
@@ -41,12 +46,20 @@ export type CatalogClass = ClassRow & { subclasses: SubclassRow[] }
  * Toutes les classes, chacune avec ses sous-classes imbriquées, triées par id de classe puis
  * nom de sous-classe (≡ endpoint legacy `/api/classes`).
  */
-export async function loadClasses(db: Db, ruleset: Ruleset = '5'): Promise<CatalogClass[]> {
+export async function loadClasses(db: Db, ruleset: Ruleset = '5', extended = false): Promise<CatalogClass[]> {
   const rows = await db
     .select()
     .from(srcSchema.classes)
-    .leftJoin(srcSchema.subclasses, eq(srcSchema.subclasses.classId, srcSchema.classes.id))
-    .where(eq(srcSchema.classes.ruleset, ruleset))
+    // Le filtre `source` des sous-classes va dans le ON (pas le WHERE) : une classe socle
+    // n'ayant que des sous-classes gatées doit remonter quand même (leftJoin), sa liste vide.
+    .leftJoin(srcSchema.subclasses, and(
+      eq(srcSchema.subclasses.classId, srcSchema.classes.id),
+      ...(extended ? [] : [eq(srcSchema.subclasses.source, CORE_SOURCE)]),
+    ))
+    .where(and(
+      eq(srcSchema.classes.ruleset, ruleset),
+      ...(extended ? [] : [eq(srcSchema.classes.source, CORE_SOURCE)]),
+    ))
     .orderBy(asc(srcSchema.classes.id), asc(srcSchema.subclasses.name))
 
   const byId = new Map<number, CatalogClass>()
@@ -62,11 +75,14 @@ export async function loadClasses(db: Db, ruleset: Ruleset = '5'): Promise<Catal
  * Liste plate des espèces `{id, name}`, triées par nom (≡ endpoint legacy
  * `/api/character_species`). Le builder n'a besoin que de la résolution name → id.
  */
-export async function loadSpecies(db: Db, ruleset: Ruleset = '5'): Promise<{ id: number, name: string }[]> {
+export async function loadSpecies(db: Db, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string }[]> {
   return await db
     .select({ id: srcSchema.characterSpecies.id, name: srcSchema.characterSpecies.name })
     .from(srcSchema.characterSpecies)
-    .where(eq(srcSchema.characterSpecies.ruleset, ruleset))
+    .where(and(
+      eq(srcSchema.characterSpecies.ruleset, ruleset),
+      ...(extended ? [] : [eq(srcSchema.characterSpecies.source, CORE_SOURCE)]),
+    ))
     .orderBy(asc(srcSchema.characterSpecies.name))
 }
 
@@ -79,7 +95,7 @@ export async function loadSpecies(db: Db, ruleset: Ruleset = '5'): Promise<{ id:
  * DÉTERMINISTE quand le 5.5 partagera les noms de classe (« Guerrier »). No-op tant que
  * tout est '5' ; l'appelant 2014 n'a pas d'argument à passer.
  */
-export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset = '5'): Promise<{ id: number, name: string, description: string | null }[]> {
+export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string, description: string | null }[]> {
   const [cls] = await db
     .select({ id: srcSchema.classes.id })
     .from(srcSchema.classes)
@@ -94,14 +110,17 @@ export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset
       description: srcSchema.subclasses.description,
     })
     .from(srcSchema.subclasses)
-    .where(eq(srcSchema.subclasses.classId, cls.id))
+    .where(and(
+      eq(srcSchema.subclasses.classId, cls.id),
+      ...(extended ? [] : [eq(srcSchema.subclasses.source, CORE_SOURCE)]),
+    ))
 }
 
 /**
  * Tous les dons (`features` de `feature_type='feat'`) avec leurs effets bakés, triés par nom
  * (locale fr) (≡ endpoint legacy `/api/feats`).
  */
-export async function loadFeats(db: Db, ruleset: Ruleset = '5') {
+export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false) {
   const feats = await db
     .select({
       id: srcSchema.features.id,
@@ -111,7 +130,11 @@ export async function loadFeats(db: Db, ruleset: Ruleset = '5') {
       featCategory: srcSchema.features.featCategory, // catégorie 2024 (null pour les dons 2014)
     })
     .from(srcSchema.features)
-    .where(and(eq(srcSchema.features.featureType, 'feat'), eq(srcSchema.features.ruleset, ruleset)))
+    .where(and(
+      eq(srcSchema.features.featureType, 'feat'),
+      eq(srcSchema.features.ruleset, ruleset),
+      ...(extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
+    ))
 
   if (feats.length === 0) return []
 
@@ -138,7 +161,7 @@ export async function loadFeats(db: Db, ruleset: Ruleset = '5') {
  * `levelRequired` (défaut 1), `prerequisites` et effets `{type, value}` (≡ endpoint legacy
  * `/api/invocations`).
  */
-export async function loadInvocations(db: Db, ruleset: Ruleset = '5') {
+export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended = false) {
   const features = await db
     .select({
       id: srcSchema.features.id,
@@ -150,7 +173,11 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5') {
     .from(srcSchema.features)
     // Filtre `ruleset` (défaut '5') comme les autres loaders : une invocation 5.5 seedée ne
     // polluera pas le picker 2014 (les invocations sont des features → colonne `ruleset`).
-    .where(and(eq(srcSchema.features.featureType, 'eldritch_invocation'), eq(srcSchema.features.ruleset, ruleset)))
+    .where(and(
+      eq(srcSchema.features.featureType, 'eldritch_invocation'),
+      eq(srcSchema.features.ruleset, ruleset),
+      ...(extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
+    ))
 
   if (features.length === 0) return []
 
@@ -188,7 +215,7 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5') {
  * `characterSheetId`, ajoute les historiques homebrew de cette fiche (≡ endpoint legacy
  * `/api/backgrounds`, dont la variante per-fiche n'est PAS cachable).
  */
-export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset: Ruleset = '5') {
+export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset: Ruleset = '5', extended = false) {
   return await db
     .select()
     .from(srcSchema.backgrounds)
@@ -198,6 +225,7 @@ export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset
         characterSheetId
           ? or(isNull(srcSchema.backgrounds.characterSheetId), eq(srcSchema.backgrounds.characterSheetId, characterSheetId))
           : isNull(srcSchema.backgrounds.characterSheetId),
+        ...(extended ? [] : [eq(srcSchema.backgrounds.source, CORE_SOURCE)]),
       ),
     )
     .orderBy(srcSchema.backgrounds.name)
@@ -211,8 +239,9 @@ export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset
  * `spell_classes` ET sort filtrés sur la même édition. Défaut '5' → no-op tant que tout est '5'.
  * Chaque ligne = le sort + son école (jointure), forme identique à l'endpoint historique.
  */
-export async function loadSpells(db: Db, opts: { className?: string, ruleset?: Ruleset } = {}) {
+export async function loadSpells(db: Db, opts: { className?: string, ruleset?: Ruleset, extended?: boolean } = {}) {
   const ruleset = opts.ruleset ?? '5'
+  const sourceFilter = opts.extended ? [] : [eq(srcSchema.spells.source, CORE_SOURCE)]
 
   if (opts.className) {
     const rows = await db
@@ -226,6 +255,7 @@ export async function loadSpells(db: Db, opts: { className?: string, ruleset?: R
         eq(srcSchema.classes.ruleset, ruleset),
         eq(srcSchema.spellClasses.ruleset, ruleset),
         eq(srcSchema.spells.ruleset, ruleset),
+        ...sourceFilter,
       ))
       .orderBy(asc(srcSchema.spells.level), asc(srcSchema.spells.name))
     return rows.map(r => ({ ...r.spell, school: r.school }))
@@ -235,7 +265,10 @@ export async function loadSpells(db: Db, opts: { className?: string, ruleset?: R
     .select({ spell: srcSchema.spells, school: srcSchema.magicSchools })
     .from(srcSchema.spells)
     .leftJoin(srcSchema.magicSchools, eq(srcSchema.spells.schoolId, srcSchema.magicSchools.id))
-    .where(eq(srcSchema.spells.ruleset, ruleset))
+    .where(and(
+      eq(srcSchema.spells.ruleset, ruleset),
+      ...sourceFilter,
+    ))
     .orderBy(asc(srcSchema.spells.level), asc(srcSchema.spells.name))
   return rows.map(r => ({ ...r.spell, school: r.school }))
 }
@@ -284,7 +317,7 @@ function abilityBonusesFrom(effects: { type: string, value: unknown }[]): Partia
  * Rend `null` si l'espèce n'existe pas ; `lineages: []` pour une espèce sans lignée (le builder
  * retombe alors sur son blob `RaceData`). Lecture via `srcSchema` (frais). Cachable (statique).
  */
-export async function loadSpeciesLineages(db: Db, speciesId: number): Promise<CatalogSpeciesRich | null> {
+export async function loadSpeciesLineages(db: Db, speciesId: number, extended = false): Promise<CatalogSpeciesRich | null> {
   const [base] = await db
     .select({ id: srcSchema.characterSpecies.id, name: srcSchema.characterSpecies.name, speed: srcSchema.characterSpecies.speed, size: srcSchema.characterSpecies.size })
     .from(srcSchema.characterSpecies)
@@ -304,7 +337,10 @@ export async function loadSpeciesLineages(db: Db, speciesId: number): Promise<Ca
   const lineages = await db
     .select({ id: srcSchema.speciesLineages.id, name: srcSchema.speciesLineages.name, description: srcSchema.speciesLineages.description })
     .from(srcSchema.speciesLineages)
-    .where(eq(srcSchema.speciesLineages.speciesId, speciesId))
+    .where(and(
+      eq(srcSchema.speciesLineages.speciesId, speciesId),
+      ...(extended ? [] : [eq(srcSchema.speciesLineages.source, CORE_SOURCE)]),
+    ))
     .orderBy(asc(srcSchema.speciesLineages.id))
   const meta = { id: base.id, name: base.name, speed: base.speed, size: base.size }
   if (!lineages.length) return { ...meta, lineages: [] }

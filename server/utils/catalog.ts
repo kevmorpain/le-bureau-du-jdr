@@ -4,6 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import { classNameFromSlug } from '~~/shared/rules/classSlugs'
 import { SKILL_KEYS } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import { CORE_SOURCE } from '~~/shared/rules/source'
 import type { OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
 import type { Catalog, CatalogProgression, ResolvedOption } from '~~/shared/rules/resolve'
@@ -35,6 +36,11 @@ export interface BuildCatalogOptions {
   classIds?: number[]
   /** Restreindre aux points de choix possédés par ces espèces (id) — choix de lignée (D17). */
   speciesIds?: number[]
+  /**
+   * Inclure le contenu d'extension gaté (cf. shared/rules/source.ts) dans les OPTIONS résolues
+   * (feats / feature_group / subclasses / lineages / spells). Défaut `false` = socle seul.
+   */
+  extended?: boolean
 }
 
 export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Promise<Catalog> {
@@ -96,7 +102,7 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
     if (ownerSpeciesId != null && opts.speciesIds && !opts.speciesIds.includes(ownerSpeciesId)) continue
 
     const optionSource = r.optionSource as OptionSource
-    const options = await resolveOptions(db, optionSource, { ownerClassId, ownerSpeciesId, ruleset: r.ownerRuleset })
+    const options = await resolveOptions(db, optionSource, { ownerClassId, ownerSpeciesId, ruleset: r.ownerRuleset, extended: opts.extended ?? false })
 
     progressions.push({
       progressionId: r.progressionId,
@@ -126,7 +132,7 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
  * qu'un point de choix 2014 ne propose jamais une entité 5.5 (et réciproquement). Les sources
  * parent-gated (subclasses / lineages) sont déjà édition-spécifiques via leur owner.
  */
-async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassId?: number, ownerSpeciesId?: number, ruleset: Ruleset }): Promise<ResolvedOption[] | undefined> {
+async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassId?: number, ownerSpeciesId?: number, ruleset: Ruleset, extended: boolean }): Promise<ResolvedOption[] | undefined> {
   switch (source.type) {
     case 'feature_group': {
       const feats = await db
@@ -136,7 +142,11 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
           prerequisites: srcSchema.features.prerequisites,
         })
         .from(srcSchema.features)
-        .where(and(eq(srcSchema.features.tag, source.group), eq(srcSchema.features.ruleset, owner.ruleset)))
+        .where(and(
+          eq(srcSchema.features.tag, source.group),
+          eq(srcSchema.features.ruleset, owner.ruleset),
+          ...(owner.extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
+        ))
       return feats.map(f => ({
         featureId: f.id,
         ...(f.levelRequired != null ? { levelRequired: f.levelRequired } : {}),
@@ -149,7 +159,10 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
       const subs = await db
         .select({ id: srcSchema.subclasses.id })
         .from(srcSchema.subclasses)
-        .where(eq(srcSchema.subclasses.classId, owner.ownerClassId))
+        .where(and(
+          eq(srcSchema.subclasses.classId, owner.ownerClassId),
+          ...(owner.extended ? [] : [eq(srcSchema.subclasses.source, CORE_SOURCE)]),
+        ))
       return subs.map(s => ({ subclassId: s.id }))
     }
 
@@ -159,7 +172,10 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
       const lineages = await db
         .select({ id: srcSchema.speciesLineages.id })
         .from(srcSchema.speciesLineages)
-        .where(eq(srcSchema.speciesLineages.speciesId, owner.ownerSpeciesId))
+        .where(and(
+          eq(srcSchema.speciesLineages.speciesId, owner.ownerSpeciesId),
+          ...(owner.extended ? [] : [eq(srcSchema.speciesLineages.source, CORE_SOURCE)]),
+        ))
       return lineages.map(l => ({ lineageId: l.id }))
     }
 
@@ -179,6 +195,7 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
         eq(srcSchema.spellClasses.ruleset, owner.ruleset),
         eq(srcSchema.spells.ruleset, owner.ruleset),
       ]
+      if (!owner.extended) conds.push(eq(srcSchema.spells.source, CORE_SOURCE))
       if (source.cantripsOnly) conds.push(eq(srcSchema.spells.level, 0))
       else if (source.maxLevel != null) conds.push(lte(srcSchema.spells.level, source.maxLevel))
       const spellRows = await db
@@ -193,6 +210,7 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
       // Édition du propriétaire (Lot A) + catégorie 2024 quand la progression la précise (C2) :
       // un historique 2024 ⟶ dons d'ORIGINE seulement. Sans catégorie (dons 2014) ⟶ tous.
       const conds = [eq(srcSchema.features.featureType, 'feat'), eq(srcSchema.features.ruleset, owner.ruleset)]
+      if (!owner.extended) conds.push(eq(srcSchema.features.source, CORE_SOURCE))
       if (source.category) conds.push(eq(srcSchema.features.featCategory, source.category))
       const feats = await db
         .select({ id: srcSchema.features.id, prerequisites: srcSchema.features.prerequisites })

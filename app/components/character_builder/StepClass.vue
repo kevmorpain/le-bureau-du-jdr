@@ -352,7 +352,10 @@ const {
 } = useCharacterBuilder()
 
 // Sorts connus du perso pour la résolution des prérequis (Décharge occulte etc.)
-const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells')
+const { extendedQuery } = useExtendedContent()
+const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells', {
+  query: extendedQuery,
+})
 const knownSpellNames = computed(() => {
   const ids = new Set<number>([
     ...state.value.selectedCantrips,

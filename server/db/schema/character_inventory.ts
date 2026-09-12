@@ -18,6 +18,9 @@ const characterInventory = sqliteTable(
     notes: text('notes'),
     usingTwoHanded: integer('using_two_handed', { mode: 'boolean' }).default(false).notNull(),
     isPactWeapon: integer('is_pact_weapon', { mode: 'boolean' }).default(false).notNull(),
+    // Harmonisation (attunement) de CETTE instance d'objet (items.requiresAttunement définit
+    // si l'objet l'exige). État par instance, comme equipped/currentUses.
+    attuned: integer('attuned', { mode: 'boolean' }).default(false).notNull(),
   },
   table => [
     index('idx_character_inventory_sheet').on(table.characterSheetId),

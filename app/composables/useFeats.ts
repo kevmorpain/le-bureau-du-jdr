@@ -28,8 +28,12 @@ export function featAllowedAbilities(effects: Effect[] | undefined): AbilityKey[
 // fois et la cache via useFetch — partagée entre StepAsi (builder), StepFeats
 // (builder), LevelUpStepAsi, et la section Dons de la fiche perso.
 export function useFeats() {
+  // Gating `source` : inclure les dons d'extension quand le drapeau global est actif. Pas de
+  // `key` fixe — l'auto-clé (URL + query) sépare les entrées de cache socle / étendu, sinon une
+  // clé figée réutiliserait la mauvaise liste au basculement.
+  const { extendedQuery } = useExtendedContent()
   const { data, refresh, pending } = useFetch<Feat[]>('/api/feats', {
-    key: 'feats-list',
+    query: extendedQuery,
     default: () => [],
   })
 

@@ -12,7 +12,7 @@
     <!-- Grille des races -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       <button
-        v-for="race in RACES"
+        v-for="race in filteredRaces"
         :key="race.id"
         type="button"
         class="text-left rounded-xl border p-4 transition-colors cursor-pointer flex flex-col justify-start"
@@ -188,6 +188,7 @@
 
 <script lang="ts" setup>
 import type { AbilityKey } from '~/data/character-builder'
+import { isGatedSource } from '~~/shared/rules/source'
 
 const {
   state,
@@ -198,6 +199,12 @@ const {
   ABILITIES,
   SKILLS,
 } = useCharacterBuilder()
+
+// Gating : les races d'extension (source gatée) ne sont visibles qu'avec le toggle « Étendu ».
+const { extended } = useExtendedContent()
+const filteredRaces = computed(() =>
+  RACES.filter(r => !r.source || !isGatedSource(r.source) || extended.value),
+)
 
 function formatBonuses(bonuses: Partial<Record<AbilityKey, number>>): string {
   return Object.entries(bonuses)

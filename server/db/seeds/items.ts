@@ -1,4 +1,5 @@
 import { db, schema } from 'hub:db'
+import * as srcSchema from '~~/server/db/schema'
 import { itemsData } from './data/items'
 
 export default async function seed() {
@@ -11,14 +12,20 @@ export default async function seed() {
 
   for (const item of itemsData) {
     if (existingIds.has(item.id)) continue
+    // Insert via srcSchema (schéma frais) : le cache hub:db peut ignorer les colonnes récentes
+    // (source/rarity/requires_attunement/attunement_note) et les droppe silencieusement (CLAUDE.md).
     await db
-      .insert(schema.items)
+      .insert(srcSchema.items)
       .values({
         id: item.id,
         name: item.name,
         itemType: item.itemType,
         properties: item.properties,
         description: item.description ?? null,
+        source: item.source ?? 'core',
+        rarity: item.rarity ?? null,
+        requiresAttunement: item.requiresAttunement ?? false,
+        attunementNote: item.attunementNote ?? null,
         isCustom: false,
       })
       .onConflictDoNothing()

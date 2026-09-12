@@ -261,7 +261,9 @@ const pactBoonLabel = computed(() =>
 )
 
 // Charger les noms d'invocations pour affichage
+const { extendedQuery } = useExtendedContent()
 const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  query: extendedQuery,
   default: () => [],
   immediate: true,
 })

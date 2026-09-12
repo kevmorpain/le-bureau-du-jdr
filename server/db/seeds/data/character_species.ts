@@ -1351,7 +1351,51 @@ const drow = {
   ],
 }
 
+// Fadette (Fairy) — espèce d'extension (The Wild Beyond the Witchlight / MPMM), GATÉE
+// (source 'wbtw'). Pas de lignée. Vol modélisé en description (aucun effet flying_speed).
+const fadette = {
+  name: 'Fadette',
+  size: CreatureSize.Small,
+  speed: 9,
+  source: 'wbtw' as const,
+  traits: [
+    {
+      name: 'Augmentation de caractéristiques',
+      description: `La Fadette (MPMM/WBtW) a des bonus de caractéristiques flexibles. Attribution ici : Charisme +2, Dextérité +1 (ajustable selon le personnage).`,
+      effects: [
+        { type: 'ability_increase', value: { ability: 'cha', amount: 2 } },
+        { type: 'ability_increase', value: { ability: 'dex', amount: 1 } },
+      ],
+    },
+    {
+      name: 'Type de créature',
+      description: `Vous êtes une fée, et non une humanoïde.`,
+      effects: [],
+    },
+    {
+      name: 'Vitesse',
+      description: `Votre vitesse de base au sol est de 9 m.`,
+      effects: [{ type: 'walking_speed', value: 9 }],
+    },
+    {
+      name: 'Vol',
+      description: `Grâce à vos ailes féeriques, vous disposez d'une vitesse de vol de 9 m. Vous ne pouvez pas utiliser cette vitesse de vol si vous portez une armure intermédiaire ou lourde.`,
+      effects: [],
+    },
+    {
+      name: 'Magie des fées',
+      description: `Vous connaissez le sort mineur Druidisme. À partir du niveau 3, vous pouvez lancer Lueurs féeriques ; à partir du niveau 5, Agrandissement/rapetissement. Vous lancez chacun de ces deux sorts une fois par l'intermédiaire de ce trait et récupérez cette faculté en terminant un repos long ; vous pouvez aussi les lancer normalement avec vos emplacements de sort. La caractéristique d'incantation est l'Intelligence, la Sagesse ou le Charisme (choisie à la création — ici le Charisme).`,
+      effects: [
+        { type: 'spell_grant', value: { level: 0, spellcastingAbility: 'cha', spellName: 'druidcraft', countPerLongRest: Infinity } },
+        { type: 'spell_grant', value: { level: 1, spellcastingAbility: 'cha', spellName: 'faerie_fire', countPerLongRest: 1, unlockLevel: 3 } },
+        { type: 'spell_grant', value: { level: 2, spellcastingAbility: 'cha', spellName: 'enlarge_reduce', countPerLongRest: 1, unlockLevel: 5 } },
+      ],
+    },
+  ],
+}
+
 export const characterSpecies = [
+  fadette,
   highElf,
   woodElf,
   drow,

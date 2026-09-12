@@ -4,6 +4,7 @@ import type { Formula } from '~~/shared/utils/formula'
 import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { FeatCategory } from '~~/shared/rules/featCategories'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { Source } from '~~/shared/rules/source'
 import type { AbilityScoreKey } from './effects'
 import classes from './classes'
 import subclasses from './subclasses'
@@ -56,6 +57,9 @@ const features = sqliteTable(
     // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2). Les features
     // 5.5 (traits d'espèce, capacités de classe remaniées) cohabitent avec les 2014.
     ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
+    // Provenance / gating de visibilité (cf. shared/rules/source.ts). DEFAULT 'core' = socle
+    // toujours visible ; les dons/traits d'extension (ex. Faveur des fées) sont gatés.
+    source: text('source').$type<Source>().notNull().default('core'),
     featureType: text('feature_type').$type<FeatureType>().notNull(),
     // class/subclass features only
     classId: integer('class_id').references(() => classes.id, { onDelete: 'set null' }),

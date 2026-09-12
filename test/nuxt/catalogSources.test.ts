@@ -118,6 +118,19 @@ beforeAll(async () => {
     { spellId: 1, classId: 1 }, // Guerrier 2014 (ruleset '5' par défaut)
     { spellId: 2, classId: 5, ruleset: '5.5' }, // Guerrier 5.5
   ])
+
+  // Contenu d'EXTENSION gaté (source 'tasha', ruleset '5') — invisible aux loaders par défaut,
+  // visible seulement avec extended=true (cf. shared/rules/source.ts). Tous en '5' → ne change
+  // AUCUNE assertion par défaut ci-dessus (elles filtrent implicitement source='core').
+  await orm.insert(srcSchema.characterSpecies).values({ id: 5, name: 'Fadette', size: CreatureSize.Small, speed: 30, source: 'tasha' })
+  await orm.insert(srcSchema.features).values([
+    { id: 103, name: 'Faveur des fées', featureType: 'feat', description: 'don Tasha', source: 'tasha' },
+    { id: 202, name: 'Invocation gatée', featureType: 'eldritch_invocation', classId: WARLOCK, tag: 'invocation', source: 'tasha' },
+  ])
+  await orm.insert(srcSchema.subclasses).values({ id: 12, classId: FIGHTER, name: 'Sous-classe gatée', description: 'desc gatée', source: 'tasha' })
+  await orm.insert(srcSchema.backgrounds).values({ id: 5, name: 'Historique gaté', source: 'tasha' })
+  await orm.insert(srcSchema.spells).values({ id: 4, name: 'Sort gaté', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: 1, source: 'tasha' })
+  await orm.insert(srcSchema.spellClasses).values({ spellId: 4, classId: FIGHTER }) // sort gaté sur la liste Guerrier 2014
 })
 
 describe('loadClasses', () => {
@@ -247,5 +260,46 @@ describe('filtre ruleset (défaut \'5\' → le builder 2014 ne voit jamais le 5.
   it('loadBackgrounds : défaut exclut le 5.5 ; \'5.5\' ne rend que le 5.5 global', async () => {
     expect((await loadBackgrounds(orm)).map(b => b.name)).toEqual(['Acolyte', 'Sage'])
     expect((await loadBackgrounds(orm, undefined, '5.5')).map(b => b.name)).toEqual(['Guide'])
+  })
+})
+
+describe('filtre source (gating extension : défaut = socle \'core\', extended = tout)', () => {
+  it('loadSpecies : défaut cache le gaté ; extended l\'inclut', async () => {
+    expect((await loadSpecies(orm)).map(s => s.name)).toEqual(['Aasimar', 'Elfe', 'Nain'])
+    expect((await loadSpecies(orm, '5', true)).map(s => s.name)).toContain('Fadette')
+  })
+
+  it('loadFeats : défaut cache le don Tasha ; extended l\'inclut', async () => {
+    expect((await loadFeats(orm)).map(f => f.name)).toEqual(['Alerte', 'Chanceux'])
+    expect((await loadFeats(orm, '5', true)).map(f => f.name)).toEqual(['Alerte', 'Chanceux', 'Faveur des fées'])
+  })
+
+  it('loadInvocations : défaut cache la gatée ; extended l\'inclut', async () => {
+    expect((await loadInvocations(orm)).map(i => i.name)).not.toContain('Invocation gatée')
+    expect((await loadInvocations(orm, '5', true)).map(i => i.name)).toContain('Invocation gatée')
+  })
+
+  it('loadSubclasses + loadClasses : sous-classe gatée cachée par défaut (ON du leftJoin), visible en extended', async () => {
+    expect((await loadSubclasses(orm, 'Guerrier')).map(s => s.name)).toEqual(['Champion', 'Chevalier occulte'])
+    expect((await loadSubclasses(orm, 'Guerrier', '5', true)).map(s => s.name)).toContain('Sous-classe gatée')
+    // loadClasses gate les sous-classes dans le ON → une classe socle garde sa liste 'core'…
+    const fighterDefault = (await loadClasses(orm)).find(c => c.name === 'Guerrier')!
+    expect(fighterDefault.subclasses.map(s => s.name)).toEqual(['Champion', 'Chevalier occulte'])
+    // … et remonte la gatée en extended.
+    const fighterExtended = (await loadClasses(orm, '5', true)).find(c => c.name === 'Guerrier')!
+    expect(fighterExtended.subclasses.map(s => s.name)).toContain('Sous-classe gatée')
+  })
+
+  it('loadBackgrounds : défaut cache le gaté ; extended l\'inclut', async () => {
+    expect((await loadBackgrounds(orm)).map(b => b.name)).toEqual(['Acolyte', 'Sage'])
+    expect((await loadBackgrounds(orm, undefined, '5', true)).map(b => b.name)).toContain('Historique gaté')
+  })
+
+  it('loadSpells : global + par classe, défaut cache le gaté ; extended l\'inclut', async () => {
+    expect((await loadSpells(orm)).map(s => s.name)).toEqual(['Lumière', 'Projectile magique'])
+    expect((await loadSpells(orm, { extended: true })).map(s => s.name)).toContain('Sort gaté')
+    // Par classe : le sort gaté est lié à la liste Guerrier 2014 → caché par défaut, visible en extended.
+    expect((await loadSpells(orm, { className: 'Guerrier' })).map(s => s.id)).toEqual([1])
+    expect((await loadSpells(orm, { className: 'Guerrier', extended: true })).map(s => s.id).sort()).toEqual([1, 4])
   })
 })

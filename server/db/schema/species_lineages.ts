@@ -1,4 +1,5 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import type { Source } from '~~/shared/rules/source'
 import characterSpecies from './character_species'
 
 /**
@@ -20,6 +21,10 @@ const speciesLineages = sqliteTable('species_lineages', {
   speciesId: integer('species_id').notNull().references(() => characterSpecies.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
+  // Provenance / gating de visibilité (cf. shared/rules/source.ts). PAS parent-gated par
+  // l'espèce (contrairement au ruleset) : une lignée d'extension (ex. bloodlines MToF) peut
+  // vivre sur une espèce socle. DEFAULT 'core' = toujours visible.
+  source: text('source').$type<Source>().notNull().default('core'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 })

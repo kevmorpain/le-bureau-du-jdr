@@ -10,15 +10,21 @@ type DbBackground = { id: number, name: string }
 type DbItem = { id: number, name: string }
 
 export function useBuilderEntities() {
+  // Gating `source` : inclure le contenu d'extension quand le drapeau global est actif.
+  const { extendedQuery } = useExtendedContent()
   const { data: classes } = useFetch<DbClass[]>('/api/classes', {
+    query: extendedQuery,
     default: () => [],
   })
   const { data: species } = useFetch<DbSpecies[]>('/api/character_species', {
+    query: extendedQuery,
     default: () => [],
   })
   const { data: backgrounds } = useFetch<DbBackground[]>('/api/backgrounds', {
+    query: extendedQuery,
     default: () => [],
   })
+  // `/api/items` n'a pas (encore) de filtre `source` côté serveur → pas de query extended ici.
   const { data: items } = useFetch<DbItem[]>('/api/items', {
     default: () => [],
   })

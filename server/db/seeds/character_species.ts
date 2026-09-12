@@ -1,5 +1,6 @@
 import { db, schema } from 'hub:db'
 import { eq, and } from 'drizzle-orm'
+import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '../schema/effects'
 import { characterSpecies } from './data/character_species'
 import { rulesetOf } from './lib/rulesetOf'
@@ -21,8 +22,10 @@ export default async function seed() {
       ),
     })
 
+    // Insert via srcSchema (schéma frais) : le cache hub:db peut ignorer la colonne récente
+    // `source` et la dropper silencieusement (CLAUDE.md) → l'espèce gatée ne serait pas gatée.
     const insertedSpecies = existingSpecies ?? await db
-      .insert(schema.characterSpecies)
+      .insert(srcSchema.characterSpecies)
       .values(speciesData)
       .returning()
       .get()

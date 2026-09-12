@@ -1,5 +1,6 @@
 import { db } from 'hub:db'
 import { loadSpeciesLineages } from '~~/server/utils/catalogSources'
+import { isExtendedRequested } from '~~/server/utils/catalogRequest'
 
 /**
  * Catalogue : une espèce de base + ses lignées avec champs d'affichage dérivés (D17, lot 5b).
@@ -12,7 +13,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'id d\'espèce invalide' })
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data = await loadSpeciesLineages(db as any, id)
+  const data = await loadSpeciesLineages(db as any, id, isExtendedRequested(event))
   if (!data) throw createError({ statusCode: 404, statusMessage: 'Espèce introuvable' })
   return data
 })

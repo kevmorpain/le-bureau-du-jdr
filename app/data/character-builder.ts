@@ -5,6 +5,7 @@
 
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import type { CasterType } from '~~/shared/rules/spellcasting'
+import type { Source } from '~~/shared/rules/source'
 
 // Ré-export depuis la source canonique (cf. shared/rules/abilities.ts, decisions.md D6) —
 // les consommateurs continuent d'importer `AbilityKey` / `ABILITIES` d'ici.
@@ -156,6 +157,9 @@ export interface RaceData {
   // Cas spéciaux
   hasHalfElfBonuses?: boolean             // Demi-Elfe : +1+1 aux carac. hors CHA
   hasVariantOption?: boolean              // Humain : option variante disponible
+  // Provenance / gating (cf. shared/rules/source.ts). Absent = socle (toujours visible) ;
+  // une valeur d'extension (ex. 'wbtw') = masquée sauf toggle « contenu étendu » du builder.
+  source?: Source
 }
 
 // ─── Races ─────────────────────────────────────────────────────────────────────
@@ -458,6 +462,25 @@ export const RACES: RaceData[] = [
       'Résistance aux dégâts selon l\'ascendance',
     ],
     languages: ['Commun', 'Draconique'],
+  },
+  // ─── Espèce d'extension GATÉE (The Wild Beyond the Witchlight / MPMM) ──────────
+  {
+    id: 'fairy',
+    name: 'Fadette',
+    emoji: '🧚',
+    dbName: 'Fadette',
+    source: 'wbtw',
+    description: 'Petites créatures du Pays des Fées, dotées d\'ailes chatoyantes. Les fadettes allient magie innée féerique et vol naturel.',
+    abilityBonuses: { cha: 2, dex: 1 },
+    speed: 9,
+    size: 'Petite',
+    traits: [
+      '+2 Charisme, +1 Dextérité (bonus flexibles — attribution proposée)',
+      'Vol 9 m (sauf armure intermédiaire ou lourde)',
+      'Type de créature : fée',
+      'Magie des fées : Druidisme, puis Lueurs féeriques (niv. 3) et Agrandissement/rapetissement (niv. 5)',
+    ],
+    languages: ['Commun', '+1 au choix'],
   },
 ]
 
