@@ -256,7 +256,7 @@ export function useCharacterBuilder() {
 
   const { feats, getById: getFeatById } = useFeats()
   const { choicesForClassLevel } = useCatalog()
-  const { resolveClassId } = useBuilderEntities()
+  const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
 
   // Un don requiert-il un choix de caractéristique (ability_increase_choice) ?
   const featNeedsAbility = (featureId: number | null | undefined): boolean => {
@@ -303,15 +303,25 @@ export function useCharacterBuilder() {
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
 
   // Points de choix (progression) de la classe courante, lus dans le CATALOGUE (/api/catalog,
-  // lot 6a) et résolus localement par resolveChoices (rules-engine §5). Aujourd'hui seul
-  // l'Occultiste est seedé → pacte / invocations / arcanums ; les autres classes (style de
-  // combat, expertise, sous-classe) restent pilotées par app/data (contenu Phase 2). Équivalence
-  // vs les anciennes tables verrouillée par test/unit/warlockCatalogEquivalence.test.ts.
+  // lot 6a) et résolus localement par resolveChoices (rules-engine §5). Seedés à ce jour : la
+  // SOUS-CLASSE de toutes les classes (F2 tranche 3) + pacte/invocations/arcanums de l'Occultiste.
+  // Restent pilotés par app/data (à migrer, cf. consolidation-2014.md) : style de combat, expertise,
+  // ASI. Équivalence Occultiste verrouillée par test/unit/warlockCatalogEquivalence.test.ts.
+  const classDbId = computed(() => resolveClassId(classData.value?.dbName))
   const catalogChoices = computed(() =>
-    choicesForClassLevel(resolveClassId(classData.value?.dbName), state.value.level),
+    choicesForClassLevel(classDbId.value, state.value.level),
   )
 
   const needsPactBoon = computed(() => catalogChoices.value.some(c => c.kind === 'pact_boon'))
+
+  // ─── Sous-classe (lue dans le CATALOGUE, F2 tranche 3) ─────────────────────
+  // Niveau d'accès + options viennent de `/api/catalog/classes` (colonne `subclass_level` +
+  // sous-classes imbriquées) au lieu du blob `app/data/character-builder.ts`. Le gating « faut-il
+  // choisir une sous-classe à ce niveau ? » se dérive de `resolveChoices` — miroir de needsPactBoon.
+  const subclassCatalog = computed(() => subclassCatalogFor(classDbId.value))
+  const subclassLevel = computed(() => subclassCatalog.value?.subclassLevel ?? null)
+  const subclassOptions = computed(() => subclassCatalog.value?.subclasses ?? [])
+  const needsSubclass = computed(() => catalogChoices.value.some(c => c.kind === 'subclass'))
 
   const invocationsExpected = computed(() =>
     catalogChoices.value.find(c => c.kind === 'invocations')?.count ?? 0,
@@ -754,6 +764,10 @@ export function useCharacterBuilder() {
     abilityMod,
     formatMod,
     profBonusAtLevel,
+    // Sous-classe (catalogue)
+    needsSubclass,
+    subclassLevel,
+    subclassOptions,
     // Pacte
     needsPactBoon,
     // Invocations

@@ -48,7 +48,7 @@
 
 <script lang="ts" setup>
 import { useOnline } from '@vueuse/core'
-import { RACES, BACKGROUNDS, ARMOR_PROF_KEYS, WEAPON_PROF_KEYS } from '~/data/character-builder'
+import { BACKGROUNDS } from '~/data/character-builder'
 
 definePageMeta({ layout: 'blank' })
 
@@ -211,8 +211,9 @@ async function handleSubmit() {
       })(),
       classSkills: state.value.skills,
       classSavingThrows: classData.value.savingThrows,
-      armorProficiencyKeys: [...new Set(classData.value.armorProficiencies.map(p => ARMOR_PROF_KEYS[p] ?? p))],
-      weaponProficiencyKeys: [...new Set(classData.value.weaponProficiencies.map(p => WEAPON_PROF_KEYS[p] ?? p))],
+      // F5 : plus de `armorProficiencyKeys`/`weaponProficiencyKeys` — les maîtrises de base de
+      // classe sont DÉRIVÉES côté serveur du porteur de classe (volet B), ces champs étaient
+      // vestigiaux (acceptés puis ignorés par createCharacter). Le schéma les garde optionnels.
       backgroundSkills: [
         ...backgroundSkills,
         // Compétence bonus Humain variant

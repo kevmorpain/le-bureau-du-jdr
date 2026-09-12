@@ -334,9 +334,9 @@ const profBonusChange = computed(() =>
   newProfBonus.value > oldProfBonus.value ? newProfBonus.value : null,
 )
 
-// Subclasses from API
+// Subclasses from catalog (F4 : endpoint /api/catalog/*, ≡ legacy, cachable au edge)
 const { data: subclassesData } = useFetch(
-  () => pickedClass.value ? `/api/classes/${encodeURIComponent(pickedClass.value!.dbName)}/subclasses` : '',
+  () => pickedClass.value ? `/api/catalog/classes/${encodeURIComponent(pickedClass.value!.dbName)}/subclasses` : '',
   { watch: [pickedClass], immediate: true },
 )
 const subclasses = computed(() => (subclassesData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>)
