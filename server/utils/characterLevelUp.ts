@@ -50,7 +50,6 @@ export const levelUpSchema = z.object({
   newInvocationIds: z.array(z.number().int().positive()).optional(),
   replacedInvocationId: z.number().int().positive().nullable().optional(),
   newMetamagicIds: z.array(z.number().int().positive()).optional(),
-  replacedMetamagicId: z.number().int().positive().nullable().optional(),
   arcaneMysteriumSpellId: z.number().int().positive().nullable().optional(),
   bookOfAncientSecretsSpellIds: z.array(z.number().int().positive()).max(2).optional(),
 })
@@ -392,9 +391,9 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     await applyInvocationChanges(db, characterSheetId, d.newInvocationIds ?? [], d.replacedInvocationId ?? null)
   }
 
-  // ── 7. Métamagie (remplacement + ajouts) — util DI, idempotent ──
-  if (d.replacedMetamagicId || (d.newMetamagicIds && d.newMetamagicIds.length)) {
-    await applyMetamagicChanges(db, characterSheetId, d.newMetamagicIds ?? [], d.replacedMetamagicId ?? null)
+  // ── 7. Métamagie (ajouts uniquement — non remplaçable en 2014, contrairement aux invocations) ──
+  if (d.newMetamagicIds && d.newMetamagicIds.length) {
+    await applyMetamagicChanges(db, characterSheetId, d.newMetamagicIds)
   }
 
   return { success: true, newLevel, hpGained: d.hpGained }

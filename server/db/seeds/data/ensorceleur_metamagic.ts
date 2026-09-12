@@ -116,8 +116,9 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
 /**
  * Le point de choix (`progression`) de la Métamagie, rattaché à sa feature PROPRIÉTAIRE
  * « Métamagie » (niveau 3) — owner = featureId (D4). `kind:'metamagic'` (cf.
- * shared/rules/choices.ts) ; N options (table par niveau) parmi le groupe `metamagic`,
- * échangeables (une option remplaçable à chaque montée de niveau, PHB).
+ * shared/rules/choices.ts) ; N options (table par niveau) parmi le groupe `metamagic`.
+ * NON échangeable : contrairement aux invocations occultes, la Métamagie 2014 n'offre AUCUN
+ * remplacement d'option à la montée de niveau (d'où `replaceable: false`).
  */
 export interface EnsorceleurProgressionOwner {
   ownerName: string
@@ -133,7 +134,7 @@ export const ensorceleurProgressionByOwner: EnsorceleurProgressionOwner[] = [
       kind: 'metamagic',
       count: METAMAGIC_KNOWN,
       optionSource: { type: 'feature_group', group: 'metamagic' },
-      replaceable: true,
+      replaceable: false,
     },
   },
 ]

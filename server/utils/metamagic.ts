@@ -1,4 +1,3 @@
-import { and, eq } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as srcSchema from '~~/server/db/schema'
 
@@ -6,29 +5,20 @@ import * as srcSchema from '~~/server/db/schema'
 type Db = BaseSQLiteDatabase<'async', any, any>
 
 /**
- * Applique l'ajout / remplacement d'options de Métamagie (Ensorceleur) au level-up.
- * Les options choisies sont des `character_features` (comme les invocations) mais SANS
- * spell_grant → util plus simple qu'`applyInvocationChanges` (aucune matérialisation de sorts).
+ * Ajoute des options de Métamagie (Ensorceleur) apprises au level-up. Les options choisies sont
+ * des `character_features` (comme les invocations) mais SANS spell_grant → util plus simple.
+ *
+ * ⚠️ Contrairement aux invocations occultes, la Métamagie 2014 n'est PAS remplaçable à la montée
+ * de niveau (règles PHB) : cet util n'ajoute donc que des options, il n'en retire jamais.
  *
  * `db` est INJECTÉ (D1 en prod, libsql en test). ⚠️ D1 ne supporte pas BEGIN TRANSACTION :
- * statements séquentiels + `onConflictDoNothing` pour l'idempotence.
+ * `onConflictDoNothing` pour l'idempotence.
  */
 export async function applyMetamagicChanges(
   db: Db,
   characterSheetId: number,
   newMetamagicIds: number[],
-  replacedMetamagicId: number | null,
 ) {
-  // Remplacement (une option échangeable par montée de niveau, PHB) : retirer l'ancienne feature.
-  if (replacedMetamagicId) {
-    await db
-      .delete(srcSchema.characterFeatures)
-      .where(and(
-        eq(srcSchema.characterFeatures.characterSheetId, characterSheetId),
-        eq(srcSchema.characterFeatures.featureId, replacedMetamagicId),
-      ))
-  }
-
   if (!newMetamagicIds.length) return
 
   await db
