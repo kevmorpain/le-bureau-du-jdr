@@ -123,13 +123,13 @@ export const createCharacterSchema = z.object({
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
       featureId: z.number().int().positive(),
-      choices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
+      choices: z.object({ ability: abilityEnum.optional(), spellId: z.number().int().positive().optional() }).nullable().optional(),
     }))
     .optional()
     .default([]),
   // Don bonus hors-palier (homebrew MJ — typiquement attribué au niveau 1).
   bonusFeatureId: z.number().int().positive().nullable().optional(),
-  bonusFeatChoices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
+  bonusFeatChoices: z.object({ ability: abilityEnum.optional(), spellId: z.number().int().positive().optional() }).nullable().optional(),
   // Arcanums mystiques (Occultiste niv 11/13/15/17) — un sort de niv 6/7/8/9 par palier
   // débloqué (cumulatif à la création d'un perso de haut niveau).
   arcaneMysteria: z.array(z.object({
@@ -577,6 +577,43 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   if (featRows.length) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stmts.push(db.insert(schema.characterFeatures).values(featRows as any).onConflictDoNothing())
+  }
+
+  // Faveur des fées (dons marqués `other:{kind:'fey_touched_spells'}`) : octroie Foulée brumeuse
+  // (fixe) + le sort de niveau 1 choisi (choices.spellId) comme sorts connus (source 'feat').
+  const feyFeatEntries = [
+    ...(d.asiFeats ?? []).map(f => ({ featureId: f.featureId, spellId: f.choices?.spellId })),
+    ...(d.bonusFeatureId ? [{ featureId: d.bonusFeatureId, spellId: d.bonusFeatChoices?.spellId }] : []),
+  ]
+  if (feyFeatEntries.length) {
+    const markers = await db
+      .select({ featureId: schema.featureEffects.featureId, value: schema.effects.value })
+      .from(schema.featureEffects)
+      .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+      .where(and(
+        inArray(schema.featureEffects.featureId, feyFeatEntries.map(f => f.featureId)),
+        eq(schema.effects.type, 'other'),
+      ))
+    const feyFeatIds = new Set(
+      markers.filter(m => (m.value as { kind?: string } | null)?.kind === 'fey_touched_spells').map(m => m.featureId),
+    )
+    if (feyFeatIds.size) {
+      const featSpellIds = new Set<number>()
+      const [mistyStep] = await db
+        .select({ id: schema.spells.id })
+        .from(schema.spells)
+        .where(eq(schema.spells.name, 'Foulée brumeuse'))
+        .limit(1)
+      if (mistyStep) featSpellIds.add(mistyStep.id)
+      for (const entry of feyFeatEntries) {
+        if (feyFeatIds.has(entry.featureId) && entry.spellId != null) featSpellIds.add(entry.spellId)
+      }
+      if (featSpellIds.size) {
+        stmts.push(db.insert(schema.characterSpells)
+          .values([...featSpellIds].map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'feat' as const })))
+          .onConflictDoNothing())
+      }
+    }
   }
 
   // Caractéristiques

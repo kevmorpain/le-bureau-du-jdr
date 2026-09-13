@@ -112,7 +112,7 @@ export interface BuilderState {
 
   // Choix résolus des dons (ex : caractéristique +1 d'Observateur), indexés par
   // features.id du don. Vaut pour le don bonus ET les dons d'ASI.
-  featChoices: Record<number, { ability?: AbilityKey }>
+  featChoices: Record<number, { ability?: AbilityKey, spellId?: number }>
 
   // Arcanums mystiques (Occultiste niv 11/13/15/17). À la création d'un perso de haut
   // niveau, TOUS les arcanums débloqués (≤ niveau) sont configurables → map niveau de
@@ -250,11 +250,20 @@ export function useCharacterBuilder() {
     return (feat?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice')
   }
 
-  // Le choix de caractéristique d'un don est-il complet (ou non requis) ?
+  // Un don requiert-il un choix de SORT (ex. Faveur des fées) ? Repéré par l'effet marqueur
+  // `other:{kind:'fey_touched_spells'}` (data/feats.ts).
+  const featNeedsSpell = (featureId: number | null | undefined): boolean => {
+    if (featureId == null) return false
+    const feat = getFeatById(featureId)
+    return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'fey_touched_spells')
+  }
+
+  // Les choix d'un don sont-ils complets (carac. ET/OU sort, selon ce qu'il requiert) ?
   const featChoiceComplete = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return true
-    if (!featNeedsAbility(featureId)) return true
-    return !!state.value.featChoices[featureId]?.ability
+    if (featNeedsAbility(featureId) && !state.value.featChoices[featureId]?.ability) return false
+    if (featNeedsSpell(featureId) && !state.value.featChoices[featureId]?.spellId) return false
+    return true
   }
 
   // ─── Données dérivées ────────────────────────────────────────────────────────
@@ -773,6 +782,7 @@ export function useCharacterBuilder() {
     feats,
     getFeatById,
     featNeedsAbility,
+    featNeedsSpell,
     featChoiceComplete,
     // Arcanums / Livre des secrets
     needsArcaneMysterium,

@@ -19,6 +19,7 @@ const characterSpells = sqliteTable(
       | 'arcanum_8'
       | 'arcanum_9'
       | 'book_of_ancient_secrets'
+      | 'feat'
     >(),
   },
   table => [
