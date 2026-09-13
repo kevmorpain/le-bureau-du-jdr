@@ -26,7 +26,11 @@ import characterFeatures from './character_features'
 // sous-classe choisie (+ ses features) est déjà affichée, donc l'owner reste invisible (symétrique du
 // masquage des « points de choix » d'espèce dans index.get.ts). Ne PAS confondre avec les owners
 // VISIBLES de l'Occultiste (Faveur de pacte…), qui restent des `class_feature` matérialisées.
-export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature' | 'proficiency_grant' | 'choice_carrier'
+// `fighting_style` : feature-OPTION d'un style de combat (Archerie, Défense…), énumérée par le
+// point de choix `kind:'fighting_style'` (progression, `optionSource:{feature_group:'fighting_style'}`).
+// Comme `eldritch_invocation` : jamais matérialisée par les sweeps (qui filtrent `class_feature`/
+// `subclass_feature`) — seule l'option CHOISIE est copiée sur la fiche (character_features).
+export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature' | 'proficiency_grant' | 'choice_carrier' | 'fighting_style'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
 export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
 export type RechargeType = typeof RECHARGE_TYPES[number]

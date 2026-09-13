@@ -11,6 +11,7 @@ import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../data/subclassChoice'
+import { fightingStyleOptionFeatures } from '../data/fightingStyles'
 import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 
 /**
@@ -117,10 +118,17 @@ export async function seedClass(
     ? subclassChoiceFeature(className)
     : null
 
+  // Features-OPTIONS de style de combat (F2) : injectées à la volée depuis la source unique
+  // `fightingStyleOptionFeatures` pour les classes martiales concernées (Guerrier/Paladin/Rôdeur).
+  // La feature « Style de combat » (dans les données de classe) porte la progression owner ;
+  // ces options en sont les candidats (`feature_group:'fighting_style'`). `[]` sinon.
+  const fightingStyleOptions = fightingStyleOptionFeatures(className)
+
   const allBaseFeatures = [
     ...baseFeatures,
     ...(carrier ? [carrier] : []),
     ...(subclassChoice ? [subclassChoice] : []),
+    ...fightingStyleOptions,
   ]
 
   for (const featureDef of allBaseFeatures) {

@@ -42,7 +42,7 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 | # | Sévérité | Constat | Bloque 5.5 |
 |---|---|---|---|
 | **F1** | ✅ **résolu (#52)** | Upserts de catalogue par NOM SEUL → un homonyme 5.5 écrasait le 2014. Passé en `(name, ruleset)`. | oui (levé) |
-| **F2** | ✅ sous-classe (tranche 3) ; reste ASI/style/expertise | `progression`/`character_choices` généralisé à la **sous-classe** de toutes les classes (builder + level-up la lisent dans le catalogue, blob rétréci). Restent **front-dupliqués** : ASI (`LU_ASI_LEVELS`/`ASI_LEVELS_BY_CLASS`), style de combat (`LU_FIGHTING_STYLE_LEVELS`/`FIGHTING_STYLES`), expertise (`LU_EXPERTISE_LEVELS`) — mêmes patrons à rejouer (cf. P1). | partiellement |
+| **F2** | ✅ sous-classe ; 🚧 style de combat (tranche 1/4) ; reste ASI/expertise | `progression`/`character_choices` généralisé à la **sous-classe** de toutes les classes (front lit le catalogue). **Style de combat** en cours (chantier 4 tranches, cf. P1 — fondation données+moteur faite). Restent **front-dupliqués** : ASI (`LU_ASI_LEVELS`/`ASI_LEVELS_BY_CLASS`), expertise (`LU_EXPERTISE_LEVELS`) — mêmes patrons. | partiellement |
 | **F3** | haute | Aucune dérivation d'origine pour `character_skills` : compétences classe/historique **matérialisées figées** (`characterCreate.ts:575-582`), incohérent avec les maîtrises désormais dérivées. | oui (historiques) |
 | **F4** | ✅ partiel (#52) | `loadInvocations` filtré par `ruleset` (fait). Reste : 6 endpoints `/api/catalog/*` créés mais **non consommés** (surface morte doublant les legacy) → repointer le front ou supprimer. | partiellement |
 | **F5** | ✅ partiel (F2 tranche 3) | `WEAPON_PROF_KEYS` (tokens EN morts `longsword`…) + le payload vestigial `armor/weaponProficiencyKeys` de `new.vue` **retirés** (`createCharacter` les ignorait, volet B). Reste `ARMOR_PROF_KEYS` (tokens corrects, référence de `classProficienciesFront.test.ts`) → part avec cette copie front (volet B étape 4). | non |
@@ -190,12 +190,33 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       pré-existant, inchangé par cette tranche), alors que le **level-up l'exige** (`isStepComplete('features')`).
       Le gating catalogue affiche le picker au bon niveau ; rendre le choix obligatoire à la création serait un
       changement de comportement à décider séparément.
-  - **F2 · style de combat (prochain chantier, MÊME patron) : à faire.** Rejouer tranche 3 pour le style de
-    combat : aujourd'hui gating/options viennent des tables `LU_FIGHTING_STYLE_LEVELS` + `FIGHTING_STYLES`
-    (front, cf. `useLevelUp`/`StepClass`). ⚠️ Prérequis = **tranche 1-2 style de combat** (seed des 6 styles
-    en features taguées `fighting_style` + progression + matérialisation via `character_choices` — cf.
-    Inventaire front-only cat. A : le choix est aujourd'hui **perdu** dans les deux flux). Puis expertise/ASI
-    (déjà persistés, options front à repointer).
+  - **F2 · style de combat — chantier en 4 tranches (décision utilisateur : appliquer AUSSI les effets).**
+    Contrairement à la sous-classe, le style de combat n'existait NULLE PART comme donnée (choix **perdu**
+    aux deux flux, cf. Inventaire cat. A) ET porte des effets mécaniques jamais appliqués → chantier plus gros.
+    Décisions utilisateur : (1) périmètre = capturer/persister/matérialiser **+ appliquer les effets** sur la
+    fiche ; (2) options **dupliquées par classe** (sous-ensembles différents : Guerrier 6, Paladin 4, Rôdeur 4).
+    - **Tranche 1 (FONDATION) : ✅ FAIT (cette PR).** Effet `fighting_style_modifier` (`kind` discriminant,
+      façon `eldritch_blast_modifier`) ; `FeatureType` `'fighting_style'` (option non matérialisée par les
+      sweeps, comme `eldritch_invocation`) ; module unique `server/db/seeds/data/fightingStyles.ts` (6 styles
+      PHB + sous-ensembles/niveaux par classe) ; features-options injectées par `seedClass`
+      (`fightingStyleOptionFeatures`), progression `kind:'fighting_style'` posée sur la feature owner « Style de
+      combat » (guerrier/paladin/rodeur.ts) ; **`buildCatalog` filtre `feature_group` par classe propriétaire**
+      (no-op invocations/pacte Occultiste, tous `class_id`=Occultiste). Additif : owner reste `class_feature`
+      visible, aucune écriture serveur → golden-master **inchangé**. Tests : `fightingStyles.test.ts` (contrat) +
+      `fightingStyleProgression.test.ts` (filtre par classe + gating). ⚠️ Le **Rôdeur récupère Duel** (le blob
+      front l'omettait). Prod : PAS de backfill ici (dormant, rien ne lit la progression serveur) → tranche 2.
+    - **Tranche 2 (SERVEUR) : à faire.** `createCharacter`/`characterLevelUp` écrivent le pick en
+      `character_choices` + matérialisent la feature-option choisie (comme les invocations) ; owner « Style de
+      combat » → `choice_carrier` (invisible) ; **diff golden-master ATTENDU** (Guerrier/Paladin/Rôdeur gagnent
+      leur choix + feature matérialisée, perdent la prose générique) → fixture à étendre ; backfill prod
+      (migration ou `?only=`). + le 2e style du **Champion niv 10** (progression possédée par la sous-classe).
+    - **Tranche 3 (APPLICATION DES EFFETS) : à faire.** `computedAC` (+1 Défense si armure) et
+      `equippedWeaponStats` (Archerie +2 attaque à distance, Duel +2 dégâts à une main, Combat à deux armes =
+      mod aux dégâts de la main secondaire) consomment `fighting_style_modifier` via `allEffects`.
+      `great_weapon` (relance de dés) / `protection` (réaction) = rendus en texte, non auto-appliqués.
+    - **Tranche 4 (FRONT) : à faire.** builder + level-up lisent niveau/options du catalogue (miroir sous-classe) ;
+      retrait de `FIGHTING_STYLES`/`FIGHTING_STYLE_DESCRIPTIONS`/`LU_FIGHTING_STYLE_LEVELS` du blob + du
+      `fightingStyle` collecté-puis-perdu ; Rôdeur affiche alors Duel. Puis expertise/ASI (déjà persistés).
 - **Tracks parallèles sûrs** (empreinte disjointe) : **F7** (dragonborn → lignée), **F8/F9**
   (hygiène schéma), **F10** (typecheck baseline + bug mort l.313).
 

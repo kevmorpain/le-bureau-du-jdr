@@ -1,4 +1,4 @@
-import { and, eq, inArray, lte } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as srcSchema from '~~/server/db/schema'
 import { classNameFromSlug } from '~~/shared/rules/classSlugs'
@@ -135,6 +135,16 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
 async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassId?: number, ownerSpeciesId?: number, ruleset: Ruleset, extended: boolean }): Promise<ResolvedOption[] | undefined> {
   switch (source.type) {
     case 'feature_group': {
+      // Options du groupe (tag), filtrées par édition. Restreintes en plus à la CLASSE propriétaire
+      // (ou aux features partagées `class_id IS NULL`) : les styles de combat sont dupliqués par classe
+      // (sous-ensembles différents — Guerrier 6, Paladin 4, Rôdeur 4), donc le Paladin ne doit pas se
+      // voir proposer Archerie. No-op pour les invocations/pactes de l'Occultiste (tous `class_id`=Occultiste).
+      const conds = [eq(srcSchema.features.tag, source.group), eq(srcSchema.features.ruleset, owner.ruleset)]
+      // Source (core vs extension, #59) : un parcours non étendu ne voit que le contenu de base.
+      if (!owner.extended) conds.push(eq(srcSchema.features.source, CORE_SOURCE))
+      if (owner.ownerClassId != null) {
+        conds.push(or(eq(srcSchema.features.classId, owner.ownerClassId), isNull(srcSchema.features.classId))!)
+      }
       const feats = await db
         .select({
           id: srcSchema.features.id,
@@ -142,11 +152,7 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
           prerequisites: srcSchema.features.prerequisites,
         })
         .from(srcSchema.features)
-        .where(and(
-          eq(srcSchema.features.tag, source.group),
-          eq(srcSchema.features.ruleset, owner.ruleset),
-          ...(owner.extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
-        ))
+        .where(and(...conds))
       return feats.map(f => ({
         featureId: f.id,
         ...(f.levelRequired != null ? { levelRequired: f.levelRequired } : {}),

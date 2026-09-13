@@ -99,6 +99,12 @@ export type Effect
     | { type: 'weapon_proficiency', value: string }
     | { type: 'eldritch_blast_modifier', value: { kind: 'agonizing' | 'repelling' | 'range_extended' } }
     | { type: 'pact_weapon_modifier', value: { kind: 'extra_attack' | 'lifedrinker' } }
+    // Style de combat (Guerrier/Paladin/Rôdeur, PHB 2014). Porté par la feature-option du style
+    // choisi (feature_type 'fighting_style'), consommé par la fiche selon `kind` : Défense (+1 CA),
+    // Archerie (+2 attaque à distance), Duel (+2 dégâts à une main), Combat à deux armes (mod aux
+    // dégâts de la main secondaire). `great_weapon`/`protection` = relance de dés / réaction, non
+    // réductibles à un bonus statique → rendus en texte, pas auto-appliqués.
+    | { type: 'fighting_style_modifier', value: { kind: 'archery' | 'two_weapon' | 'defense' | 'dueling' | 'great_weapon' | 'protection' } }
     | { type: 'sight_modifier', value: { kind: 'magical_darkness_120' | 'invisible_in_dim_light' | 'true_sight_disguise' | 'read_all_writing' } }
     | { type: 'spell_save_dc_bonus', value: { amount: number } }
     | { type: 'spell_attack_bonus', value: { amount: number } }
