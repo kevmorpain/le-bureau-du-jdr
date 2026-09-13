@@ -181,6 +181,36 @@
       </div>
     </template>
 
+    <!-- Cas spécial : Fadette — bonus de caractéristiques flexibles (+2/+1 ou +1/+1/+1) -->
+    <template v-if="state.raceId === 'fairy'">
+      <USeparator class="my-6" />
+      <div class="rounded-xl border border-amber-500/40 bg-(--ui-bg-elevated) p-4">
+        <div class="flex items-center gap-2 mb-1">
+          <p class="text-xs font-semibold text-amber-400">Bonus de caractéristiques · répartissez +3 (un +2 et un +1, ou trois +1)</p>
+          <span
+            class="text-xs font-semibold"
+            :class="fairyAsiTotal === 3 ? 'text-green-400' : 'text-muted'"
+          >{{ fairyAsiTotal }}/3</span>
+        </div>
+        <p class="text-xs text-muted mb-3">Cliquez une caractéristique pour cycler +0 → +1 → +2.</p>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="ab in ABILITIES"
+            :key="ab"
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+            :class="(state.fairyAsiBonuses[ab] ?? 0) > 0
+              ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+              : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-amber-500/40'"
+            @click="cycleFairyBonus(ab)"
+          >
+            {{ ABILITY_SHORT[ab] }}
+            <span v-if="(state.fairyAsiBonuses[ab] ?? 0) > 0" class="ml-1 font-mono">+{{ state.fairyAsiBonuses[ab] }}</span>
+          </button>
+        </div>
+      </div>
+    </template>
+
     <!-- Drakéide : l'ascendance draconique est désormais une lignée « Dragon <couleur> » (D17, lot 6),
          rendue par le picker de sous-race générique ci-dessus — plus de bloc dédié. -->
   </div>
@@ -222,6 +252,25 @@ function selectRace(id: string) {
   state.value.variantHumanBonuses = []
   state.value.variantHumanSkill = null
   state.value.isVariantHuman = false
+  state.value.fairyAsiBonuses = {}
+}
+
+// Fadette (MPMM) — bonus flexibles : chaque carac. cyclée 0 → +1 → +2 → 0, somme plafonnée à 3.
+// Ce stepper couvre nativement « +2 et +1 » ET « +1/+1/+1 » (pas besoin de sélecteur de mode).
+const fairyAsiTotal = computed(() =>
+  Object.values(state.value.fairyAsiBonuses).reduce((a, b) => a + (b ?? 0), 0),
+)
+
+function cycleFairyBonus(ab: AbilityKey) {
+  const cur = state.value.fairyAsiBonuses[ab] ?? 0
+  const others = fairyAsiTotal.value - cur
+  let next = cur + 1
+  if (next > 2) next = 0
+  if (others + next > 3) next = 0 // dépasserait le budget de 3 → on remet à 0
+  const map = { ...state.value.fairyAsiBonuses }
+  if (next === 0) delete map[ab]
+  else map[ab] = next
+  state.value.fairyAsiBonuses = map
 }
 
 function toggleHalfElfBonus(ab: AbilityKey) {

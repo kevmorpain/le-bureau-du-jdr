@@ -1360,12 +1360,11 @@ const fadette = {
   source: 'wbtw' as const,
   traits: [
     {
+      // ASI FLEXIBLE (MPMM/WBtW) : au choix du joueur, réparti dans le builder — donc PAS d'effet
+      // `ability_increase` fixe ici (contrairement aux espèces à bonus figés). Descriptif seulement.
       name: 'Augmentation de caractéristiques',
-      description: `La Fadette (MPMM/WBtW) a des bonus de caractéristiques flexibles. Attribution ici : Charisme +2, Dextérité +1 (ajustable selon le personnage).`,
-      effects: [
-        { type: 'ability_increase', value: { ability: 'cha', amount: 2 } },
-        { type: 'ability_increase', value: { ability: 'dex', amount: 1 } },
-      ],
+      description: `Bonus de caractéristiques flexibles, au choix : soit +2 à une caractéristique et +1 à une autre, soit +1 à trois caractéristiques différentes.`,
+      effects: [],
     },
     {
       name: 'Type de créature',

@@ -31,6 +31,9 @@ export interface BuilderState {
   halfElfBonuses: AbilityKey[]
   variantHumanBonuses: AbilityKey[]
   variantHumanSkill: string | null
+  // Bonus de caractéristiques FLEXIBLES (Fadette/MPMM : +2 sur une carac. et +1 sur une autre,
+  // OU +1 sur trois). Distribution au choix du joueur ; somme attendue = 3, max 2 par carac.
+  fairyAsiBonuses: Partial<Record<AbilityKey, number>>
 
   // Étape 2 — Classe
   classId: string | null
@@ -141,6 +144,7 @@ const INIT_STATE: BuilderState = {
   halfElfBonuses: [],
   variantHumanBonuses: [],
   variantHumanSkill: null,
+  fairyAsiBonuses: {},
   classId: null,
   subclass: null,
   skills: [],
@@ -350,6 +354,12 @@ export function useCharacterBuilder() {
         addBonus(ab as AbilityKey, 1)
       }
     }
+    // Fadette (MPMM) : bonus flexibles répartis par le joueur (state.fairyAsiBonuses).
+    if (race.id === 'fairy') {
+      for (const [k, v] of Object.entries(state.value.fairyAsiBonuses) as [AbilityKey, number][]) {
+        addBonus(k, v)
+      }
+    }
 
     return bonuses
   })
@@ -538,6 +548,8 @@ export function useCharacterBuilder() {
         if (s.raceId === 'human' && s.isVariantHuman) {
           if (s.variantHumanBonuses.length < 2 || !s.variantHumanSkill) return false
         }
+        // Fadette : les bonus flexibles doivent totaliser exactement 3 (+2/+1 ou +1/+1/+1).
+        if (s.raceId === 'fairy' && Object.values(s.fairyAsiBonuses).reduce((a, b) => a + (b ?? 0), 0) !== 3) return false
         return true
       }
       case 'class': {

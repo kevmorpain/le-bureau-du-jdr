@@ -471,11 +471,11 @@ export const RACES: RaceData[] = [
     dbName: 'Fadette',
     source: 'wbtw',
     description: 'Petites créatures du Pays des Fées, dotées d\'ailes chatoyantes. Les fadettes allient magie innée féerique et vol naturel.',
-    abilityBonuses: { cha: 2, dex: 1 },
+    abilityBonuses: {},
     speed: 9,
     size: 'Petite',
     traits: [
-      '+2 Charisme, +1 Dextérité (bonus flexibles — attribution proposée)',
+      'Bonus de caractéristiques flexibles : +2 et +1 (deux carac.), ou +1/+1/+1',
       'Vol 9 m (sauf armure intermédiaire ou lourde)',
       'Type de créature : fée',
       'Magie des fées : Druidisme, puis Lueurs féeriques (niv. 3) et Agrandissement/rapetissement (niv. 5)',
