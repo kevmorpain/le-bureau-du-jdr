@@ -30,15 +30,17 @@ import { WARLOCK_PROGRESSION_CONTRACT } from '../../fixtures/warlockProgression'
 // (pacte/manifestations/arcanum + ASI & dons À LA CRÉATION), roublard (expertise + `newSkills` au
 // level-up), et multiclasse (Guerrier/Occultiste).
 //
-// Trous de couverture ASSUMÉS (dette documentée, non bloquants pour F2) : pactes Lame/Tome,
-// multiclassage lanceur plein+plein / plein+demi (branche `spellcasting` combinée), demi-lanceur
-// (`half`). `characterRest` et `fightingStyle` (front-only) sont hors périmètre.
+// Le STYLE DE COMBAT est désormais couvert (F2 tranche 2) : owner `choice_carrier` + options
+// `fighting_style` seedés pour le Guerrier (niv 1) et le Paladin (niv 2, pour le gating/level-up) ;
+// l'archétype A pique « Défense » à la création. Trous de couverture ASSUMÉS (non bloquants) :
+// pactes Lame/Tome, multiclassage lanceur plein+plein / plein+demi, demi-lanceur (`half`),
+// `characterRest`.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Identifiants stables du catalogue ──────────────────────────────────────────
 export const OWNER = 1
 
-export const CLASS = { warlock: 1, fighter: 2, wizard: 3, rogue: 4 } as const
+export const CLASS = { warlock: 1, fighter: 2, wizard: 3, rogue: 4, paladin: 5 } as const
 export const SUBCLASS = { champion: 10, evocation: 20, thief: 30 } as const
 export const SPECIES = { human: 1 } as const
 export const BACKGROUND = { soldier: 1 } as const
@@ -70,6 +72,14 @@ export const FEATURE = {
   fighterSubclassChoice: 240, // « Archétype martial », niv 3
   rogueSubclassChoice: 241, // « Archétype de roublard », niv 3
   wizardSubclassChoice: 340, // « Tradition arcanique », niv 2
+  // Style de combat (F2 tranche 2) — owner `choice_carrier` (invisible) + options taguées `fighting_style`.
+  fighterFightingStyle: 250, // owner « Style de combat », niv 1 (Guerrier)
+  fighterFsDefense: 251, // option « Défense »
+  fighterFsArchery: 252, // option « Archerie »
+  // Paladin (style de combat au niv 2 — pour tester le gating par niveau + le level-up).
+  paladinFightingStyle: 260, // owner « Style de combat », niv 2
+  paladinFsDefense: 261, // option « Défense »
+  paladinFsDueling: 262, // option « Duel »
   // Magicien
   wizardArcaneRecovery: 300, // passif niv 1
   evocationSculptSpells: 310, // sous-classe Évocation, niv 2
@@ -142,6 +152,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { id: CLASS.fighter, name: 'Guerrier', hitDice: '1d10', spellcastingType: 'none' },
     { id: CLASS.wizard, name: 'Magicien', hitDice: '1d6', spellcastingType: 'full' },
     { id: CLASS.rogue, name: 'Roublard', hitDice: '1d8', spellcastingType: 'none' },
+    { id: CLASS.paladin, name: 'Paladin', hitDice: '1d10', spellcastingType: 'half' },
   ])
   await db.insert(schema.subclasses).values([
     { id: SUBCLASS.champion, classId: CLASS.fighter, name: 'Champion' },
@@ -205,6 +216,22 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { featureId: FEATURE.fighterSubclassChoice, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false },
     { featureId: FEATURE.rogueSubclassChoice, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false },
     { featureId: FEATURE.wizardSubclassChoice, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false },
+  ])
+
+  // ── Style de combat (F2 tranche 2) — owner `choice_carrier` + options `fighting_style`, par classe ──
+  // Guerrier au niv 1, Paladin au niv 2 (gating par niveau). Le style choisi est enregistré en
+  // `character_choices.selected_feature_id` + matérialisé (character_features).
+  await db.insert(schema.features).values([
+    { id: FEATURE.fighterFightingStyle, name: 'Style de combat', featureType: 'choice_carrier', classId: CLASS.fighter, levelRequired: 1 },
+    { id: FEATURE.fighterFsDefense, name: 'Défense', featureType: 'fighting_style', classId: CLASS.fighter, tag: 'fighting_style' },
+    { id: FEATURE.fighterFsArchery, name: 'Archerie', featureType: 'fighting_style', classId: CLASS.fighter, tag: 'fighting_style' },
+    { id: FEATURE.paladinFightingStyle, name: 'Style de combat', featureType: 'choice_carrier', classId: CLASS.paladin, levelRequired: 2 },
+    { id: FEATURE.paladinFsDefense, name: 'Défense', featureType: 'fighting_style', classId: CLASS.paladin, tag: 'fighting_style' },
+    { id: FEATURE.paladinFsDueling, name: 'Duel', featureType: 'fighting_style', classId: CLASS.paladin, tag: 'fighting_style' },
+  ])
+  await db.insert(schema.progression).values([
+    { featureId: FEATURE.fighterFightingStyle, kind: 'fighting_style', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feature_group', group: 'fighting_style' }, replaceable: false },
+    { featureId: FEATURE.paladinFightingStyle, kind: 'fighting_style', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feature_group', group: 'fighting_style' }, replaceable: false },
   ])
 
   // ── Dons (feature_type 'feat', sans classe ni palier de sweep) — ASI/dons à la création ──

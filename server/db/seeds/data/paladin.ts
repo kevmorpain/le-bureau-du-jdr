@@ -31,7 +31,8 @@ Cette réserve se restaure après un repos long. Elle est sans effet sur les mor
   {
     name: 'Style de combat',
     description: `Au niveau 2, vous adoptez un style de combat particulier. Choisissez parmi : Défense (+1 CA avec armure), Duel (+2 dégâts arme à une main), Grande arme (relancer 1 ou 2 aux dés de dégâts), Protection (réaction pour désavantage sur attaque contre allié adjacent, nécessite bouclier).`,
-    featureType: 'class_feature',
+    // Owner INVISIBLE du choix (choice_carrier) — le style choisi est matérialisé sur la fiche.
+    featureType: 'choice_carrier',
     levelRequired: 2,
     actionType: null,
     rechargeType: null,

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
+import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
@@ -58,6 +59,10 @@ export const createCharacterSchema = z.object({
   // Liens vers entités DB (résolus côté client via useBuilderEntities)
   classId: z.number().int().positive(),
   subclassId: z.number().int().positive().nullable().optional(),
+  // Style de combat choisi (nom, ex. « Défense ») — Guerrier/Paladin/Rôdeur. Résolu en feature-option
+  // (F2 tranche 2) → character_choices + matérialisation. Optionnel (classes non martiales, ou niveau
+  // sous le palier d'accès).
+  fightingStyle: z.string().nullable().optional(),
   level: z.number().int().min(1).max(20),
   speciesId: z.number().int().positive().nullable().optional(),
   // Lignée choisie (sous-race 2014 / lignée 2024, cf. D17) — une `species_lineages.id`. La fiche
@@ -501,6 +506,13 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     subclassProgressionId = prog?.id ?? null
   }
 
+  // Choix de STYLE DE COMBAT à la création (F2 tranche 2) : le nom envoyé est résolu en
+  // progression + feature-option de la classe → character_choices + matérialisation (batch plus bas).
+  // Défensif : classe non martiale / nom inconnu → null → aucun choix persisté, sans casser la création.
+  const fightingStylePick = d.fightingStyle
+    ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, d.level)
+    : null
+
   // ── 4. Insert de la fiche (HORS batch — id auto-incrément) ───────────────────
   const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
   const hitDieSides = hitDieMatch?.[1]
@@ -592,6 +604,19 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       progressionId: subclassProgressionId,
       selectedSubclassId: subclassId,
     }).onConflictDoNothing())
+  }
+
+  // Choix de STYLE DE COMBAT (F2) → character_choices (source) + matérialisation de l'option choisie
+  // (feature `fighting_style`). Symétrique de la sous-classe.
+  if (fightingStylePick) {
+    stmts.push(db.insert(schema.characterChoices).values({
+      characterSheetId: sheetId,
+      progressionId: fightingStylePick.progressionId,
+      selectedFeatureId: fightingStylePick.featureId,
+    }).onConflictDoNothing())
+    stmts.push(db.insert(schema.characterFeatures)
+      .values({ characterSheetId: sheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
+      .onConflictDoNothing())
   }
 
   // Triade d'origine 2024 (`ability_scores`) → character_choices.payload : la fiche dérive

@@ -35,7 +35,8 @@ Vous choisissez des terrains favoris supplémentaires aux niveaux 6 et 10.`,
   {
     name: 'Style de combat',
     description: `Au niveau 2, choisissez un style de combat : Archerie (+2 aux jets d'attaque à distance), Combat à deux armes (ajoutez le modificateur aux dégâts de la 2e attaque), Défense (+1 CA avec armure), Duel (+2 dégâts arme à une main).`,
-    featureType: 'class_feature',
+    // Owner INVISIBLE du choix (choice_carrier) — le style choisi est matérialisé sur la fiche.
+    featureType: 'choice_carrier',
     levelRequired: 2,
     actionType: null,
     rechargeType: null,

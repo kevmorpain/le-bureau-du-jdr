@@ -59,6 +59,8 @@ describe('golden-master · A. Guerrier Champion (martial)', () => {
       classSkills: ['athletics', 'intimidation'],
       classSavingThrows: ['str', 'con'],
       backgroundSkills: ['perception', 'survival'],
+      fightingStyle: 'Défense', // F2 tranche 2 : style choisi au niv 1 → character_choices + matérialisation
+
       // Maîtrises d'armes/armures : champs vestigiaux (volet B) — ne doivent PAS se matérialiser.
       weaponProficiencyKeys: ['simple_weapons', 'martial_weapons'],
       armorProficiencyKeys: ['all_armor', 'shield'],
