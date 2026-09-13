@@ -205,11 +205,20 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       visible, aucune écriture serveur → golden-master **inchangé**. Tests : `fightingStyles.test.ts` (contrat) +
       `fightingStyleProgression.test.ts` (filtre par classe + gating). ⚠️ Le **Rôdeur récupère Duel** (le blob
       front l'omettait). Prod : PAS de backfill ici (dormant, rien ne lit la progression serveur) → tranche 2.
-    - **Tranche 2 (SERVEUR) : à faire.** `createCharacter`/`characterLevelUp` écrivent le pick en
-      `character_choices` + matérialisent la feature-option choisie (comme les invocations) ; owner « Style de
-      combat » → `choice_carrier` (invisible) ; **diff golden-master ATTENDU** (Guerrier/Paladin/Rôdeur gagnent
-      leur choix + feature matérialisée, perdent la prose générique) → fixture à étendre ; backfill prod
-      (migration ou `?only=`). + le 2e style du **Champion niv 10** (progression possédée par la sous-classe).
+    - **Tranche 2 (SERVEUR) : ✅ FAIT.** `createCharacter`/`characterLevelUp` résolvent le style choisi (par
+      nom) via l'util DI `server/utils/fightingStyle.ts` (`resolveFightingStylePick`) → écrivent le pick en
+      `character_choices.selected_feature_id` (source) + matérialisent la feature-option (comme les invocations).
+      **Autorité serveur = gating par niveau** : l'util refuse un style sous le palier d'accès (owner
+      `levelRequired` : Guerrier 1, Paladin/Rôdeur 2) — un Paladin niv 1 qui envoie « Défense » ne le reçoit pas.
+      Owner « Style de combat » → **`choice_carrier` (invisible)** (guerrier/paladin/rodeur.ts). `new.vue` envoie
+      désormais `fightingStyle` à la création (le choix était **collecté puis perdu**). Golden-master : archétype
+      A (Guerrier « Défense » niv 1) → **diff revu** (apparition du choix `fighting_style` + feature Défense,
+      A seul). Tests : `fightingStyleServer.test.ts` (création persistée, **gating** Paladin niv 1, level-up
+      Paladin 1→2, classe non martiale ignorée) + fixture golden-master étendue (Guerrier + Paladin FS).
+      **Prod** : migration `0098` (auto) flippe l'owner existant → `choice_carrier` ; les options + la progression
+      viennent du seed des classes → geste prod `?only=guerrier,paladin,rodeur` (idempotent, après déploiement).
+      ⚠️ **Résidu remonté** : le 2e style du **Champion niv 10** (« Style de combat supplémentaire », progression
+      possédée par la sous-classe) N'EST PAS câblé — chantier séparé (owner `ownerSubclassId`, cas unique).
     - **Tranche 3 (APPLICATION DES EFFETS) : à faire.** `computedAC` (+1 Défense si armure) et
       `equippedWeaponStats` (Archerie +2 attaque à distance, Duel +2 dégâts à une main, Combat à deux armes =
       mod aux dégâts de la main secondaire) consomment `fighting_style_modifier` via `allEffects`.

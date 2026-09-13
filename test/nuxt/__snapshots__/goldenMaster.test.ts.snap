@@ -29,7 +29,19 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "fighting_style:Style de combat",
+      "selectedAbility": null,
+      "selectedFeature": "Défense",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Guerrier",
@@ -40,6 +52,12 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     },
   ],
   "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Défense",
+      "source": null,
+    },
     {
       "choices": null,
       "classLevel": null,
@@ -165,7 +183,19 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "value": 12,
     },
   ],
-  "choices": [],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "fighting_style:Style de combat",
+      "selectedAbility": null,
+      "selectedFeature": "Défense",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+  ],
   "classes": [
     {
       "class": "Guerrier",
@@ -176,6 +206,12 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     },
   ],
   "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Défense",
+      "source": null,
+    },
     {
       "choices": null,
       "classLevel": null,
@@ -311,6 +347,17 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     {
       "classLevel": null,
       "payload": null,
+      "progression": "fighting_style:Style de combat",
+      "selectedAbility": null,
+      "selectedFeature": "Défense",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
       "progression": "subclass:Archétype martial",
       "selectedAbility": null,
       "selectedFeature": null,
@@ -334,6 +381,12 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "choices": null,
       "classLevel": null,
       "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Défense",
       "source": null,
     },
     {
@@ -478,6 +531,17 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     {
       "classLevel": null,
       "payload": null,
+      "progression": "fighting_style:Style de combat",
+      "selectedAbility": null,
+      "selectedFeature": "Défense",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
       "progression": "subclass:Archétype martial",
       "selectedAbility": null,
       "selectedFeature": null,
@@ -501,6 +565,12 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "choices": null,
       "classLevel": null,
       "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Défense",
       "source": null,
     },
     {
@@ -645,6 +715,17 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     {
       "classLevel": null,
       "payload": null,
+      "progression": "fighting_style:Style de combat",
+      "selectedAbility": null,
+      "selectedFeature": "Défense",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
       "progression": "subclass:Archétype martial",
       "selectedAbility": null,
       "selectedFeature": null,
@@ -674,6 +755,12 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "choices": null,
       "classLevel": null,
       "feature": "Critique amélioré",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Défense",
       "source": null,
     },
     {

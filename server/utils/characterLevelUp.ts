@@ -5,6 +5,7 @@ import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { applyMetamagicChanges } from '~~/server/utils/metamagic'
+import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
@@ -207,6 +208,12 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     subclassProgressionId = prog?.id ?? null
   }
 
+  // Choix de STYLE DE COMBAT au level-up (F2) : le front envoie le nom du style ; on le résout en
+  // progression + feature-option de la classe → character_choices + matérialisation (batch ci-dessous).
+  const fightingStylePick = d.fightingStyle
+    ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, newLevel)
+    : null
+
   // Recalcul des emplacements de sorts (dérivés serveur)
   const newClassesList = currentClasses
     .filter(c => c.classId !== cls.id)
@@ -294,6 +301,16 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   if (subclassId != null && subclassProgressionId != null) {
     stmts.push(db.insert(schema.characterChoices)
       .values({ characterSheetId, progressionId: subclassProgressionId, selectedSubclassId: subclassId })
+      .onConflictDoNothing())
+  }
+
+  // Choix de STYLE DE COMBAT (F2) → character_choices (source) + matérialisation de l'option choisie.
+  if (fightingStylePick) {
+    stmts.push(db.insert(schema.characterChoices)
+      .values({ characterSheetId, progressionId: fightingStylePick.progressionId, selectedFeatureId: fightingStylePick.featureId })
+      .onConflictDoNothing())
+    stmts.push(db.insert(schema.characterFeatures)
+      .values({ characterSheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
       .onConflictDoNothing())
   }
 

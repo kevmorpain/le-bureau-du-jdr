@@ -687,6 +687,13 @@
       "when": 1747872055000,
       "tag": "0097_magic_item_modeling",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "6",
+      "when": 1747872056000,
+      "tag": "0098_fighting_style_choice_carrier",
+      "breakpoints": true
     }
   ]
 }
