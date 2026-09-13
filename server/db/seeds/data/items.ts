@@ -494,7 +494,7 @@ const magicItems: ItemSeed[] = [
     rarity: 'uncommon',
     requiresAttunement: true,
     attunementNote: 'par un ensorceleur',
-    description: 'Éclat de magie sorcière lié au plan de la Féérie. Tant que vous le tenez, il vous sert de focaliseur d\'incantation. Il confère en outre une propriété féerique liée à vos tests de Charisme (relance), utilisable une fois par repos long. Voir Tasha\'s Cauldron of Everything pour le détail exact des règles.',
+    description: '- Sert de focaliseur d\'incantation.\n- Quand vous appliquez une option de Métamagie à un sort, vous pouvez lancer sur la table de Pic de magie sauvage (surcharge chaotique ajoutée au sort).\n- Par une action, le fixer à un petit objet (arme, bijou) ou l\'en détacher ; il tombe si l\'harmonisation cesse.',
   },
 ]
 
