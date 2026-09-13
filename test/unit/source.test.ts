@@ -6,12 +6,12 @@ import { SOURCES, sourceEnum, CORE_SOURCE, isGatedSource } from '../../shared/ru
 
 // Le discriminant de provenance/visibilité a une seule source de vérité (la const
 // shared/rules/source.ts) dont les colonnes `source` dérivent. On vérifie l'ensemble,
-// la validation Zod, la dérivation de gating (isGatedSource), et que la migration 0093
+// la validation Zod, la dérivation de gating (isGatedSource), et que la migration 0096
 // pose bien la colonne (NOT NULL DEFAULT 'core', donc backfill) sur les 8 tables ciblées.
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
 const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
-const MIGRATION = '0093_source_discriminant.sql'
+const MIGRATION = '0096_source_discriminant.sql'
 
 // Les 8 tables d'entités du catalogue recevant `source`. État minimal d'AVANT 0093 : la
 // seule contrainte est que la table existe pour l'ALTER (SQLite ADD COLUMN ignore le reste).
@@ -54,7 +54,7 @@ describe('source — const canonique', () => {
   })
 })
 
-describe('source — migration 0093', () => {
+describe('source — migration 0096', () => {
   it('ajoute la colonne source (DEFAULT \'core\' NOT NULL) et backfille les lignes existantes', async () => {
     const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
     const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
