@@ -16,7 +16,8 @@
     (migration `0092`). Seuls les vrais deltas du joueur sont stockés.
 - **Audit de propreté (2026-08-13)** : réalisé en sous-agent contexte neuf, lecture seule.
   354 tests verts à l'époque. 11 constats (F1–F11) ci-dessous.
-- **P0 (consolidation) — FAIT & MERGÉ (PR #52)** : catalogue *ruleset-safe* (F1 + F4-partiel).
+- **P0 (consolidation)** : catalogue *ruleset-safe* (F1 + F4-partiel) **FAIT & MERGÉ (PR #52)** ;
+  **golden-master d'équivalence création/level-up FAIT** (filet non négociable avant F2, cf. ci-dessous).
 
 **AUCUN contenu 5.5 n'est encore seedé.** Tout le « point 2 » de la roadmap (contenu 5.5) est devant.
 
@@ -41,10 +42,10 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 | # | Sévérité | Constat | Bloque 5.5 |
 |---|---|---|---|
 | **F1** | ✅ **résolu (#52)** | Upserts de catalogue par NOM SEUL → un homonyme 5.5 écrasait le 2014. Passé en `(name, ruleset)`. | oui (levé) |
-| **F2** | haute | `progression`/`character_choices` câblé **seulement** pour Occultiste + lignée Elfe. Les choix des 10 autres classes (ASI/style/expertise/sous-classe) sont **front, dupliqués** builder↔level-up (`useLevelUp.ts:21-34`, `useCharacterBuilder.ts:132,464`, `LevelUpStepClass.vue:130-171`). C'est le « point 6 » non fait. | partiellement |
+| **F2** | ✅ sous-classe (tranche 3) ; reste ASI/style/expertise | `progression`/`character_choices` généralisé à la **sous-classe** de toutes les classes (builder + level-up la lisent dans le catalogue, blob rétréci). Restent **front-dupliqués** : ASI (`LU_ASI_LEVELS`/`ASI_LEVELS_BY_CLASS`), style de combat (`LU_FIGHTING_STYLE_LEVELS`/`FIGHTING_STYLES`), expertise (`LU_EXPERTISE_LEVELS`) — mêmes patrons à rejouer (cf. P1). | partiellement |
 | **F3** | haute | Aucune dérivation d'origine pour `character_skills` : compétences classe/historique **matérialisées figées** (`characterCreate.ts:575-582`), incohérent avec les maîtrises désormais dérivées. | oui (historiques) |
 | **F4** | ✅ partiel (#52) | `loadInvocations` filtré par `ruleset` (fait). Reste : 6 endpoints `/api/catalog/*` créés mais **non consommés** (surface morte doublant les legacy) → repointer le front ou supprimer. | partiellement |
-| **F5** | moyenne | `WEAPON_PROF_KEYS` (`character-builder.ts:60-70`) émet des tokens EN **morts** (`longsword`…) que `createCharacter` ignore. Chemin mort. **À faire DANS F2** (le blob front disparaît). | non |
+| **F5** | ✅ partiel (F2 tranche 3) | `WEAPON_PROF_KEYS` (tokens EN morts `longsword`…) + le payload vestigial `armor/weaponProficiencyKeys` de `new.vue` **retirés** (`createCharacter` les ignorait, volet B). Reste `ARMOR_PROF_KEYS` (tokens corrects, référence de `classProficienciesFront.test.ts`) → part avec cette copie front (volet B étape 4). | non |
 | **F6** | moyenne | `originAbilityBonuses`/`weaponMasteries` sérialisés à chaque GET fiche mais **non lus** ; `items.mastery_property` sans consommateur. Pipeline maîtrise d'armes 5.5 **construit mais dormant**. À câbler au seed 5.5. | non |
 | **F7** | moyenne | Colonne legacy `character_sheets.dragonborn_ancestry` + souffle-par-ascendance = chemin **parallèle** au modèle lignée (Drakéide 2014 déjà migrée en lignées). Trancher avant la Drakéide 5.5. | oui (Drakéide) |
 | **F8** | basse | `spells.ts:13-36` redéfinit `enum AbilityScore`/`DamageType` (doublons de `shared/rules` + table `damage_types`). Ménage D6 non appliqué ici. | non |
@@ -56,6 +57,39 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 atomique, garde de cohérence d'édition, slots dérivés depuis `spellSlots.ts`), `resolve.ts` pur,
 dérivations espèce/dons/objets/lignée/maîtrises cohérentes.
 
+## Inventaire « front-only » (choix collectés côté client — converge sur F2/F5)
+
+Audit du flux builder/level-up ↔ serveur (2026-08-16, en marge du golden-master). Trois catégories,
+par gravité — la plupart se résolvent AVEC F2 (généralisation `progression`) / F5 (blob front mort) :
+
+- **A. Collecté par le wizard mais NON persisté (vrai trou).**
+  - **Style de combat** — création : dans `BuilderState` (`useCharacterBuilder.ts:40`), bloque l'étape
+    (`:536`), mais **jamais envoyé** (absent du payload `new.vue`). Level-up : envoyé
+    (`useLevelUp.ts:556`), accepté par `levelUpSchema` (`characterLevelUp.ts:37`) mais **jamais lu**
+    par `characterLevelUp` → jeté. Bilan : choix **perdu dans les deux flux**, effet (Défense +1 CA,
+    Archerie +2…) jamais appliqué. Le tag `fighting_style` ET le `ChoiceKind` existent DÉJÀ
+    (`featureTags.ts:32`, `choices.ts:30`) ; seul le CONTENU 2014 n'est pas migré (le seed a un unique
+    `class_feature` descriptif « Style de combat », sans tag/progression/options). **Chantier F2** :
+    seeder les 6 styles en features taguées + progression + matérialisation via `character_choices`,
+    comme les invocations.
+  - **Expertise à la création** (nuance) — semble **non capturée du tout** par le builder (aucun champ
+    d'état, rien au payload), alors qu'un Roublard/Barde créé niv ≥ 1 devrait la choisir. « Non
+    implémenté à la création » plutôt que « collecté-puis-jeté ». Au level-up, elle EST persistée
+    (cf. golden-master archétype E).
+- **B. Envoyé mais volontairement ignoré — donnée NON perdue (dérivée ailleurs).**
+  - `armorProficiencyKeys` / `weaponProficiencyKeys` (création) : ✅ **RETIRÉS du payload** (F2 tranche 3 /
+    F5). Ils étaient acceptés par le schéma (toujours optionnels) mais **ignorés** par `createCharacter`
+    (maîtrises DÉRIVÉES du porteur de classe, volet B). La map morte `WEAPON_PROF_KEYS` est supprimée du blob.
+- **C. Envoyé mais abandonné en fallback silencieux.**
+  - `inventoryItemNamesUnresolved` (création) : items non résolus en id côté client → **loggés puis
+    non persistés**. Un objet custom / de la monnaie-en-texte peut disparaître sans bruit.
+
+**Hors de cette liste** (pour lever l'ambiguïté) : les **listes d'options** de sous-classe/ASI des 10
+classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHOIX résultant
+(`subclassId`, `asiBonuses`, `asiFeats`) EST persisté — pas « perdu ». Et l'état d'encounter
+(`activeConditions`, `deathSavingThrows`, `armorClass`) est **localStorage par design**
+(cf. `docs/persistence.md`) — pas un bug (`armorClass` = dette assumée faute de système d'équipement).
+
 ## Plan
 
 - **P0 — débloquer le seed 5.5 (no-op 2014).**
@@ -63,14 +97,105 @@ dérivations espèce/dons/objets/lignée/maîtrises cohérentes.
     `server/db/seeds/lib/rulesetOf.ts` ; `loadInvocations` filtré. Suivi noté in-code : le lien
     sort↔classe de `spells.ts` (`classIdByName`) reste par nom → à reprendre en `(nom, ruleset)`
     au lot des sorts 5.5.
-  - **Golden-master d'équivalence builder/level-up : À FAIRE (prochaine PR).** Figer la sortie de
-    création + level-up pour un échantillon représentatif (martial, caster, occultiste, multiclasse)
-    → un `git diff` de comportement saute aux yeux quand on généralisera `progression`. **Filet
-    NON négociable avant F2.**
-- **P1 — le cœur.** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
+  - **Golden-master d'équivalence création/level-up : ✅ FAIT.** `test/nuxt/goldenMaster.test.ts`
+    (+ fixture/sérialiseur `test/nuxt/fixtures/goldenMaster.ts`) fige la sortie NORMALISÉE de
+    `createCharacter` + `characterLevelUp` pour **cinq** archétypes, en **16 snapshots** committés
+    (`__snapshots__/goldenMaster.test.ts.snap`) — choisis pour couvrir les mécanismes de CHOIX que
+    F2 refactore :
+    - martial (Guerrier→Champion : sous-classe & ASI **au level-up**) ;
+    - lanceur complet (Magicien **Elfe** : lignée = le SEUL `character_choices` déjà écrit en 2014 ;
+      emplacements dérivés) ;
+    - Occultiste (pacte/manifestations/arcanum **+ ASI & dons À LA CRÉATION** : `asiBonuses`,
+      `asiFeats` source `asi`, `bonusFeatureId` source `bonus`) ;
+    - roublard (**expertise** upsert→`expert` + `newSkills` + sous-classe au level-up) ;
+    - multiclasse (Guerrier/Occultiste : emplacements de pacte combinés).
+
+    Les clés étrangères y sont résolues en NOMS et les id auto-incrément/horodatages écartés →
+    lisible et déterministe. Quand F2 déplacera les choix de classe (ASI/style/sous-classe/expertise,
+    aujourd'hui front-dupliqués) vers `progression`/`character_choices`, le `git diff` du `.snap`
+    montrera EXACTEMENT le changement de comportement serveur (typiquement : des lignes `choices` qui
+    apparaissent). Diff inattendu = régression ; diff attendu = relu puis re-généré (`vitest -u`).
+    **Filet NON négociable avant F2, posé.**
+    - _Dette de couverture ASSUMÉE_ (non bloquante — chemins hors du risque F2 direct, à ajouter au
+      besoin) : pactes **Lame/Tome**, multiclassage lanceur **plein+plein / plein+demi** (branche
+      `spellcasting` combinée), **demi-lanceur** (`half`). Hors périmètre : `characterRest`.
+    - _Non figeable aujourd'hui_ : le **style de combat** n'a AUCUNE sortie serveur (cf. « Inventaire
+      front-only », cat. A) — ce n'est PAS « hors périmètre » mais un choix perdu à rapatrier en F2.
+      Quand F2 le câblera, l'archétype **Guerrier** du golden-master devra voir apparaître son choix
+      de style dans le snapshot → diff ATTENDU (relire + `vitest -u`).
+- **P1 — le cœur (EN COURS).** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
   toutes et déjà supporté par `resolve.ts`/`buildCatalog`, retirer le blob `character-builder.ts`
   au fur et à mesure — F5 s'y fait) **+ F3** (dériver les compétences sur le même mécanisme). Sous
   golden-master. Sérialisé sur le modèle puis front.
+  - **F2 · sous-classe — tranche 1 (MODÈLE) : ✅ FAIT.** L'identité (`classes.subclass_level`) était
+    déjà là (migration 0080) ; manquait la « décision → progression ». Posée comme source unique côté
+    DONNÉES : helper `server/db/seeds/data/subclassChoice.ts` (`subclassChoiceFeature(className)` →
+    feature owner à `subclass_level`, portant une progression `kind:'subclass'`, `optionSource:{subclasses}`,
+    `count` fixed 1), **injecté par `seedClass`** pour toute classe ayant des sous-classes — même
+    mécanisme que le carrier de maîtrises (`buildProficiencyCarrier`), donc DRY et inoubliable pour
+    une future classe (pas de câblage dupliqué par wrapper). Verrouillé par
+    `test/unit/subclassChoice.test.ts` (map = les 12 classes de `CLASS_IDENTITY` **et** de `classesData`,
+    pour que `seedClass` ne saute pas en silence une classe non mappée) + `test/nuxt/subclassProgression.test.ts`
+    (mécanisme données→`buildCatalog`→`resolveChoices`/`dueChoices`, dû au bon niveau). **Additif** :
+    ne touche NI `createCharacter`/`characterLevelUp` (golden-master inchangé) NI le front (blob encore
+    en place).
+  - **F2 · sous-classe — owner INVISIBLE (option B) : ✅ FAIT.** L'owner du choix porte le nouveau
+    `feature_type` **`choice_carrier`** (schema/features.ts) : lu par le catalogue (`buildCatalog` ne
+    filtre pas le type) mais **jamais matérialisé** sur la fiche (le sweep de grants passifs filtre
+    `class_feature`) — la sous-classe choisie + ses features sont déjà affichées, comme pour les points
+    de choix d'espèce déjà masqués dans `index.get.ts`. Aucune migration (pas de CHECK sur `feature_type`).
+    Preuve : `createCharacter.test.ts` (un `choice_carrier` de niv ≤ perso n'est PAS copié, le
+    `class_feature` passif l'est) + `subclassProgression.test.ts` (le catalogue le remonte malgré le type).
+    Les owners VISIBLES de l'Occultiste (Faveur de pacte…) restent des `class_feature` matérialisées —
+    _résidu noté_ : par symétrie ils sont eux aussi redondants avec l'option choisie ; les masquer serait
+    une décision UX SÉPARÉE (non prise ici, l'utilisateur a choisi B ciblée sous-classe).
+  - **F2 · sous-classe — tranche 2 (SERVEUR + backfill prod) : ✅ FAIT.** `createCharacter`/
+    `characterLevelUp` résolvent la progression `subclass` de la classe et écrivent le pick en
+    `character_choices.selected_subclass_id` (LA source, rules-engine.md §4) ; `character_classes.
+    subclass_id` reste écrit (projection dénormalisée pour le read-model / la matérialisation des
+    features de sous-classe) — additif, symétrique de la lignée, garde défensive si pas de progression.
+    Golden-master : la fixture seede les owners `choice_carrier` (Guerrier/Magicien/Roublard) → diff
+    REVU = apparition de lignes `choices` (subclass) et **0 ligne de feature** (owner invisible confirmé
+    au snapshot). **Backfill prod** : migration `0093_subclass_choice_carriers` crée owner+progression
+    pour les 12 classes sur les bases déployées (pendant du seed, comme `0082` pour l'Occultiste), avec
+    gardes `NOT EXISTS` (idempotent, mieux que 0082) et tolérance base vierge (`INSERT...SELECT FROM
+    classes`). Testé base peuplée + idempotence (`subclassBackfill.test.ts`) ; descriptions identiques au
+    seed (convergence). La dette « prod n'a pas la donnée » est donc **levée**.
+  - **F2 · sous-classe — tranche 3 (FRONT) : ✅ FAIT.** builder + level-up lisent le NIVEAU d'accès et
+    les OPTIONS de sous-classe DANS LE CATALOGUE au lieu du blob `app/data/character-builder.ts` :
+    - `useBuilderEntities` repointé `/api/classes` → **`/api/catalog/classes`** (≡ `loadClasses`, cachable
+      au edge — F4) ; son type `DbClass` porte désormais `subclassLevel` + sous-classes imbriquées, et il
+      expose `subclassCatalogFor(classDbId)` = source unique du niveau/des options (builder ET level-up).
+    - **Gating = miroir de `needsPactBoon`** : `catalogChoices.some(c => c.kind === 'subclass')` dans
+      `useCharacterBuilder` (`needsSubclass`) ; `choicesAtToLevel.some(c => c.kind === 'subclass' &&
+      c.ownerLevelRequired === toLevel)` dans `useLevelUp` (`isSubclassLevel`). `LevelUpStepClass` dérive
+      ses badges via `subclassLevelFor(builderClassId)` (catalogue), `LevelUpStepFeatures` lit ses options
+      via `/api/catalog/classes/[name]/subclasses` (F4).
+    - **Blob rétréci** : `ClassData.subclassLevel` et `subclasses[]` **retirés** (les 12 entrées + l'interface) ;
+      `subclassLabel` (libellé FR d'affichage, aucune colonne DB) conservé.
+    - Couvre les classes à sous-classe niv 1 (Clerc/Ensorceleur/Occultiste) comme niv 2/3, et le
+      multiclasse au level-up (le `count`/gating utilise le niveau de la classe **propriétaire**).
+    - **Tests** : `classesIdentityFront.test.ts` repointé — l'assertion sur le `subclassLevel` du blob
+      (supprimé) laisse place à la dérivation catalogue-driven verrouillée contre `CLASS_IDENTITY` (les
+      12 classes × 20 niveaux : dû au bon niveau/pas avant, options = sous-classes, pick déjà fait via
+      `character_choices` → plus dû) ; l'équivalence du **type d'incantation** (emplacements front-driven)
+      reste sur le blob. `git diff` du snapshot golden-master **vide** (serveur non touché). 385 → 399 tests.
+    - **F5 (dans la foulée) : partiel.** Le payload vestigial `armorProficiencyKeys`/`weaponProficiencyKeys`
+      (ignoré par `createCharacter`, volet B) est retiré de `new.vue`, et la map morte **`WEAPON_PROF_KEYS`**
+      (tokens EN `longsword`…) supprimée du blob. `ARMOR_PROF_KEYS` est **conservé** : ses tokens sont
+      corrects (light/medium/…) et il sert encore de référence d'équivalence à `classProficienciesFront.test.ts`
+      (volet B, drift-protection) — il disparaîtra avec cette copie front (volet B étape 4).
+    - **Résidu remonté (non traité ici, décision UX à l'utilisateur)** : le **builder n'impose PAS** la
+      sélection d'une sous-classe même au niveau d'accès (`isStepComplete('class')` ne la vérifie pas — état
+      pré-existant, inchangé par cette tranche), alors que le **level-up l'exige** (`isStepComplete('features')`).
+      Le gating catalogue affiche le picker au bon niveau ; rendre le choix obligatoire à la création serait un
+      changement de comportement à décider séparément.
+  - **F2 · style de combat (prochain chantier, MÊME patron) : à faire.** Rejouer tranche 3 pour le style de
+    combat : aujourd'hui gating/options viennent des tables `LU_FIGHTING_STYLE_LEVELS` + `FIGHTING_STYLES`
+    (front, cf. `useLevelUp`/`StepClass`). ⚠️ Prérequis = **tranche 1-2 style de combat** (seed des 6 styles
+    en features taguées `fighting_style` + progression + matérialisation via `character_choices` — cf.
+    Inventaire front-only cat. A : le choix est aujourd'hui **perdu** dans les deux flux). Puis expertise/ASI
+    (déjà persistés, options front à repointer).
 - **Tracks parallèles sûrs** (empreinte disjointe) : **F7** (dragonborn → lignée), **F8/F9**
   (hygiène schéma), **F10** (typecheck baseline + bug mort l.313).
 

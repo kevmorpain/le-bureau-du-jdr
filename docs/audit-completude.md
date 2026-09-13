@@ -96,6 +96,19 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   résultat **identique à avant** (zéro régression).
 - Découvert : audit du lot 6c (2026-08-02). **✅ RÉSOLU.**
 
+### B7 — Désavantage « arme lourde + petite taille » jamais déclenché · front (calcul) — ✅ RÉSOLU
+- **Symptôme** : un Halfelin ou un Gnome (taille Petite) maniant une arme **lourde** (épée à deux
+  mains, arbalète lourde…) n'affichait aucun avertissement de désavantage (PHB 2014 p. 147).
+- **Racine** : `app/composables/character/useCharacterInventory.ts` comparait
+  `species.size` aux abréviations **françaises** `'P'`/`'TP'`, alors que la colonne stocke les codes
+  de l'enum `CreatureSize` (`'S'`/`'T'`, cf. `server/db/schema/character_species.ts` et les seeds).
+  La condition était donc toujours fausse — un test n'existait pas, la donnée n'étant affichée nulle part.
+- **Correctif** : codes et libellés séparés dans `shared/rules/creatureSize.ts`
+  (`hasHeavyWeaponDisadvantage`, `creatureSizeLabel`), consommés par le composable ET par la
+  section Identité (qui affiche enfin la catégorie de taille). Tests : `test/unit/creatureSize.test.ts`
+  (libellés ⟺ enum, toutes les espèces seedées portent un code connu, `'P'` n'est plus un code).
+- Découvert : câblage du lot 2 « données en DB mais invisibles » (2026-09-07). **✅ RÉSOLU.**
+
 ## Suspects à vérifier (audit non encore fait)
 - Level-up en **multiclasse** (flux de choix, résolution d'IDs de classe).
 - Invocations **échangeables** (`replaceable`) au level-up.

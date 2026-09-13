@@ -104,8 +104,8 @@
           </div>
         </div>
 
-        <!-- Badge sous-classe au niv.1 -->
-        <div v-if="cls.subclassLevel === 1" class="mb-1.5">
+        <!-- Badge sous-classe au niv.1 (niveau d'accès lu dans le catalogue) -->
+        <div v-if="subclassLevelFor(cls.id) === 1" class="mb-1.5">
           <UBadge color="warning" variant="subtle" size="md">⚡ Sous-classe dès le niv.1</UBadge>
         </div>
 
@@ -140,6 +140,7 @@ const {
   totalLevel,
   finalAbilities,
   pickedClass,
+  subclassLevelFor,
   CLASSES,
 } = useLevelUp(inject('charSheet') as any)
 
@@ -155,8 +156,8 @@ function getFeaturesAt(classId: string, level: number): string[] {
 }
 
 function isSubclassDue(cc: { classId: string, level: number, subclassName: string | null }): boolean {
-  const cls = CLASSES.find(c => c.id === cc.classId)
-  return !!cls && cc.level + 1 === cls.subclassLevel && !cc.subclassName
+  // Niveau d'accès à la sous-classe lu dans le catalogue (subclassLevelFor) au lieu du blob.
+  return subclassLevelFor(cc.classId) === cc.level + 1 && !cc.subclassName
 }
 
 function isAsiDue(classId: string, level: number): boolean {

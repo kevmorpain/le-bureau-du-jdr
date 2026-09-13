@@ -53,6 +53,19 @@ const characterSheets = sqliteTable('character_sheets', {
   ideals: text().default('').notNull(),
   bonds: text().default('').notNull(),
   flaws: text().default('').notNull(),
+  // Identité & description (fiche officielle : apparence p.1, histoire/alliés p.2).
+  // Champs libres — `age`/`height`/`weight` restent du texte pour accepter « 3 siècles »,
+  // « 1,75 m », « 68 kg » sans imposer d'unité.
+  age: text().default('').notNull(),
+  height: text().default('').notNull(),
+  weight: text().default('').notNull(),
+  eyes: text().default('').notNull(),
+  hair: text().default('').notNull(),
+  skin: text().default('').notNull(),
+  deity: text().default('').notNull(),
+  backstory: text().default('').notNull(),
+  allies: text().default('').notNull(),
+  portraitUrl: text('portrait_url').default('').notNull(),
   currentHitDie: text('current_hit_die', { mode: 'json' }).$type<CurrentHitDie[]>(),
   inspiration: integer({ mode: 'boolean' }).default(false).notNull(),
   exhaustionLevel: integer('exhaustion_level').default(0).notNull(),
@@ -63,6 +76,7 @@ const characterSheets = sqliteTable('character_sheets', {
   pa: integer('pa').default(0).notNull(),
   pc: integer('pc').default(0).notNull(),
   concentratingSpellId: integer('concentrating_spell_id').references(() => spells.id, { onDelete: 'set null' }),
+  notes: text('notes').default('').notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 }, table => [

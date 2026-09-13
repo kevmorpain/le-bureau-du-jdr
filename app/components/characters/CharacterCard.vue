@@ -2,9 +2,17 @@
   <UCard variant="soft">
     <template #header>
       <div class="flex items-center justify-between gap-2">
-        <h3 class="text-lg font-semibold">
-          {{ characterName }}
-        </h3>
+        <div class="flex items-center gap-3 min-w-0">
+          <img
+            v-if="portraitSrc"
+            :src="portraitSrc"
+            :alt="`Portrait de ${characterName}`"
+            class="size-9 rounded-full object-cover border border-default shrink-0"
+          >
+          <h3 class="text-lg font-semibold truncate">
+            {{ characterName }}
+          </h3>
+        </div>
 
         <UButton
           v-if="deletable"
@@ -34,7 +42,7 @@ const emit = defineEmits<{
   delete: []
 }>()
 
-const { mainClass, multiClass, species } = useCharacterSheet(toRef(props, 'character'))
+const { mainClass, multiClass, species, portraitSrc } = useCharacterSheet(toRef(props, 'character'))
 
 const characterName = computed<string>(() => props.character.name ?? 'Personnage sans nom')
 const characterDescription = computed<string>(() => {

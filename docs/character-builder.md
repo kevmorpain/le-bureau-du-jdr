@@ -72,6 +72,13 @@ interface BuilderState {
   ideals: string
   bonds: string
   flaws: string
+  // Identité & description (facultatif) — mêmes colonnes que character_sheets
+  age: string; height: string; weight: string
+  eyes: string; hair: string; skin: string
+  deity: string
+  backstory: string
+  allies: string
+  portraitUrl: string
 
   // Étape 6 — Équipement
   equipChoices: (string | null)[]  // choix par groupe d'équipement de classe
@@ -250,6 +257,11 @@ cantripsOk && spellsOk
 - **Alignement** : grille 3×3 (code court LB/NB/CB…, nom complet, description)
 - **Traits de personnalité** : 4 textareas (Personnalité, Idéaux, Liens, Défauts)
   - Chaque textarea a un bouton "+ Suggestions" qui affiche les suggestions de l'historique
+- **Apparence & histoire** *(facultatif, replié par défaut)* : âge, taille, poids, yeux, cheveux,
+  peau, divinité, URL de portrait, histoire du personnage, alliés & organisations
+  - Aucun impact sur les règles — ces champs alimentent la section **Identité** de la fiche
+    (mêmes colonnes `character_sheets`, cf. [character-sheet.md](character-sheet.md))
+  - Non requis par la validation d'étape
 
 **Validation step** :
 ```ts

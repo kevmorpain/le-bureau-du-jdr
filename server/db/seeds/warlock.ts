@@ -8,6 +8,8 @@ import type { Effect } from '../schema/effects'
 export default async function seed() {
   // `warlockFeatures` inclut désormais les 3 options de pacte (taguées pact_boon) ;
   // `warlockInvocationFeatures` porte feature_type='eldritch_invocation' + tag='invocation'.
+  // Le choix de sous-classe (Protecteur d'outre-monde, niv 1) est injecté par `seedClass` comme
+  // pour toutes les classes (F2), en plus des points de choix propres à l'Occultiste ci-dessous.
   const baseFeatures: FeatureDef[] = [
     ...warlockFeatures.map(f => ({ ...f, effects: (f.effects ?? []) as Effect[] })),
     ...warlockInvocationFeatures,

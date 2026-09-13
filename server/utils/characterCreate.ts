@@ -10,6 +10,7 @@ import { resolveChoices } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
+import { alignmentCodeFromBuilderId } from '~~/shared/rules/alignments'
 
 /**
  * Logique de CRÉATION de personnage extraite du handler (point 5d, volet 2). Objectifs
@@ -36,13 +37,6 @@ export class CharacterValidationError extends Error {
     super(message)
     this.name = 'CharacterValidationError'
   }
-}
-
-// Alignement builder (lowercase) → DB (uppercase)
-const ALIGNMENT_MAP: Record<string, string> = {
-  lg: 'LG', ng: 'NG', cg: 'CG',
-  ln: 'LN', n: 'TN', cn: 'CN',
-  le: 'LE', ne: 'NE', ce: 'CE',
 }
 
 // Mapping niveau de SORT d'arcanum (6/7/8/9) → source DB. À la création, chaque arcanum
@@ -76,6 +70,17 @@ export const createCharacterSchema = z.object({
   ideals: z.string().optional(),
   bonds: z.string().optional(),
   flaws: z.string().optional(),
+  // Identité & description (facultatif) — mêmes bornes que `updateCharacterSheetSchema`.
+  age: z.string().max(50).optional(),
+  height: z.string().max(50).optional(),
+  weight: z.string().max(50).optional(),
+  eyes: z.string().max(50).optional(),
+  hair: z.string().max(50).optional(),
+  skin: z.string().max(50).optional(),
+  deity: z.string().max(100).optional(),
+  backstory: z.string().max(10000).optional(),
+  allies: z.string().max(5000).optional(),
+  portraitUrl: z.string().max(2000).optional(),
   // Caractéristiques
   abilityScores: z.record(z.string(), z.number().int()),
   // Compétences & maîtrises de classe
@@ -479,6 +484,23 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     lineageProgressionId = prog.id
   }
 
+  // Choix de SOUS-CLASSE (F2) : on rattache le pick à la progression `kind:'subclass'` portée par
+  // l'owner `choice_carrier` de la classe → `character_choices` devient LA source de la décision
+  // (rules-engine.md §4). `character_classes.subclass_id` reste écrit (projection dénormalisée pour
+  // le read-model / la matérialisation des features de sous-classe). Additif, symétrique de la lignée.
+  // Défensif : si la classe n'a pas (encore) de progression de sous-classe seedée → on écrit juste
+  // `subclass_id` sans choix (no-op sur le pick), sans casser la création.
+  let subclassProgressionId: number | null = null
+  if (subclassId != null) {
+    const [prog] = await db
+      .select({ id: schema.progression.id })
+      .from(schema.progression)
+      .innerJoin(schema.features, eq(schema.features.id, schema.progression.featureId))
+      .where(and(eq(schema.progression.kind, 'subclass'), eq(schema.features.classId, cls.id)))
+      .limit(1)
+    subclassProgressionId = prog?.id ?? null
+  }
+
   // ── 4. Insert de la fiche (HORS batch — id auto-incrément) ───────────────────
   const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
   const hitDieSides = hitDieMatch?.[1]
@@ -492,8 +514,9 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       ruleset,
       speciesId: speciesId ?? undefined,
       backgroundId: backgroundId ?? undefined,
+      // Alignement : l'`id` du builder (minuscules) est converti par la source canonique.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      alignment: (ALIGNMENT_MAP[d.alignment ?? ''] ?? 'TN') as any,
+      alignment: alignmentCodeFromBuilderId(d.alignment) as any,
       maxHp: d.maxHp,
       currentHp: d.maxHp,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -503,6 +526,16 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       ideals: d.ideals ?? '',
       bonds: d.bonds ?? '',
       flaws: d.flaws ?? '',
+      age: d.age ?? '',
+      height: d.height ?? '',
+      weight: d.weight ?? '',
+      eyes: d.eyes ?? '',
+      hair: d.hair ?? '',
+      skin: d.skin ?? '',
+      deity: d.deity ?? '',
+      backstory: d.backstory ?? '',
+      allies: d.allies ?? '',
+      portraitUrl: d.portraitUrl ?? '',
       pp: d.pp ?? 0,
       po: d.po ?? 0,
       pe: d.pe ?? 0,
@@ -549,6 +582,16 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       progressionId: lineageProgressionId,
       selectedLineageId: d.selectedLineageId,
     }))
+  }
+
+  // Choix de SOUS-CLASSE (F2) → character_choices : enregistre la décision (source), en plus de
+  // `character_classes.subclass_id` déjà posé ci-dessus (projection). onConflictDoNothing par sûreté.
+  if (subclassId != null && subclassProgressionId != null) {
+    stmts.push(db.insert(schema.characterChoices).values({
+      characterSheetId: sheetId,
+      progressionId: subclassProgressionId,
+      selectedSubclassId: subclassId,
+    }).onConflictDoNothing())
   }
 
   // Triade d'origine 2024 (`ability_scores`) → character_choices.payload : la fiche dérive

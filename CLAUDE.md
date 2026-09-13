@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Definition of Done (méthode de travail)
+
+S'applique à **chaque** changement, sans qu'on ait à le demander :
+
+- **Vérifier avant de dire « fait ».** Relire le vrai `git diff` (pas sa mémoire), lancer la suite complète + lint, et confirmer qu'aucun snapshot / golden-master ne bouge par accident.
+- **Complétude — ne rien oublier.** Parcourir les angles morts récurrents : chemin prod/déploiement (migration auto vs seed manuel vs front — le piège du backfill), duplication vs un pattern existant qui centralise déjà (ex. `buildProficiencyCarrier`), surface non testée (`seeds hub:db`, front) et comment elle est gardée (test-contrat, garde-fou), effets de bord (read-model, features matérialisées, fixtures), cohérence avec les conventions du repo (nommage, `ruleset`, tests-contrat).
+- **La meilleure solution, pas un quick fix.** Préférer le design correct / DRY / aligné sur les patterns existants à une rustine ; réutiliser le pattern plutôt que le ré-implémenter.
+- **Zéro dette nouvelle.** Ne pas introduire de dette. Si un compromis est réellement inévitable, le remonter explicitement (dans la réponse, et dans `docs/` s'il doit être suivi) — jamais en silence.
+
 ## Commands
 
 ```bash
@@ -125,9 +134,9 @@ See `docs/context.md` for accumulated development context: dashboard v2 architec
 
 ### Deployment
 
-Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, KV binding `KV`).
+Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, KV binding `KV`, R2 binding `BLOB` → bucket `le-bureau-du-jdr-media`, portraits de personnage).
 
-**Deployment is automatic via Cloudflare Workers Builds (CI) on `git push`** to the default branch — the build runs `nuxt build`, deploys the worker, and **applies pending D1 migrations** (from `.output/server/db/migrations/`, tracked in the `_hub_migrations` table per wrangler.jsonc). There's no GitHub Actions workflow (`.github/workflows/` is empty) — the CI is configured on Cloudflare's side via the Git integration. `npm run deploy` (`nuxt build` + `wrangler deploy`) remains available as a manual fallback.
+**Deployment is automatic via Cloudflare Workers Builds (CI) on `git push`** to the default branch — the build runs `nuxt build`, deploys the worker, and **applies pending D1 migrations** (from `.output/server/db/migrations/`, tracked in the `_hub_migrations` table per wrangler.jsonc). Deployment is configured on Cloudflare's side via the Git integration — not in GitHub Actions. The only GitHub Actions workflow is [.github/workflows/tests.yml](.github/workflows/tests.yml), which runs the Vitest suite (`unit` + `nuxt` projects) on push to `main` and on every PR; it does **not** build or deploy. `npm run deploy` (`nuxt build` + `wrangler deploy`) remains available as a manual fallback.
 
 NuxtHub's role is limited to dev: the `@nuxthub/core` module wires up the local D1 emulation and the `hub:db` schema cache (see gotchas below). The deployed worker uses the native Cloudflare D1 binding directly via Drizzle.
 

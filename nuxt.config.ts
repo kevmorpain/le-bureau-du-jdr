@@ -67,6 +67,18 @@ export default defineNuxtConfig({
 
   hub: {
     db: 'sqlite',
+    // Médias (portraits) : R2 en production via le binding `BLOB` de wrangler.jsonc.
+    // `hub.hosting` vaut ici toujours « cloudflare » (preset nitro), donc le driver R2
+    // serait AUSSI choisi en dev, où aucun binding n'existe → `$development` bascule
+    // sur le driver fs (.data/blob), même logique d'émulation locale que la base.
+    blob: { driver: 'cloudflare-r2', binding: 'BLOB' },
+  },
+
+  // Surcharge appliquée par `nuxt dev` uniquement (cf. hub.blob ci-dessus).
+  $development: {
+    hub: {
+      blob: { driver: 'fs', dir: '.data/blob' },
+    },
   },
 
   fonts: {

@@ -657,14 +657,35 @@
       "idx": 93,
       "version": "6",
       "when": 1747872051000,
-      "tag": "0093_source_discriminant",
+      "tag": "0093_subclass_choice_carriers",
       "breakpoints": true
     },
     {
       "idx": 94,
       "version": "6",
       "when": 1747872052000,
-      "tag": "0094_magic_item_modeling",
+      "tag": "0094_character_sheets_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "6",
+      "when": 1747872053000,
+      "tag": "0095_character_sheets_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "6",
+      "when": 1747872054000,
+      "tag": "0096_source_discriminant",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "6",
+      "when": 1747872055000,
+      "tag": "0097_magic_item_modeling",
       "breakpoints": true
     }
   ]

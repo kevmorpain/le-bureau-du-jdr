@@ -10,6 +10,7 @@ import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../data/subclassChoice'
 import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 
 /**
@@ -104,7 +105,23 @@ export async function seedClass(
   // unique `CLASS_PROFICIENCIES`, sans toucher les données de chaque classe. Ne porte ni tag ni
   // progression → `_syncFeatureTag`/`_syncProgression` sont no-op sur elle.
   const carrier = buildProficiencyCarrier(className)
-  const allBaseFeatures = carrier ? [...baseFeatures, carrier] : baseFeatures
+
+  // Feature « choix de sous-classe » (F2) : MÊME principe que le carrier de maîtrises — injectée à
+  // la volée depuis la source unique `subclassChoiceFeature` (niveau = `classes.subclass_level`),
+  // pour toute classe ayant des sous-classes. Porte une progression `kind:'subclass'` (source de la
+  // décision, rules-engine.md §4). Centralisé ici → pas de câblage dupliqué dans les 12 wrappers, et
+  // toute classe future l'obtient automatiquement (fail-fast via la map si le nom manque).
+  // ⚠️ Périmètre 2014 : le niveau vient de `classesData` par NOM ; l'awareness `ruleset` viendra avec
+  // le contenu 5.5 (aucune classe 5.5 seedée à ce jour).
+  const subclassChoice = subclassDefs.length > 0 && SUBCLASS_CHOICE_FEATURE_NAMES[className]
+    ? subclassChoiceFeature(className)
+    : null
+
+  const allBaseFeatures = [
+    ...baseFeatures,
+    ...(carrier ? [carrier] : []),
+    ...(subclassChoice ? [subclassChoice] : []),
+  ]
 
   for (const featureDef of allBaseFeatures) {
     const { effects = [], meta, prerequisites, tag, progression: progressionDef, ...data } = featureDef
