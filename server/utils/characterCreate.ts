@@ -425,6 +425,46 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
+  // Sorts INNÉS d'espèce (+ lignée choisie) : les traits raciaux type « Magie des fées » / « Magie
+  // drow » portent des effets `spell_grant`. On les matérialise en `character_spells` (source
+  // 'species') comme les invocations/dons, sinon ils restent en prose et n'apparaissent jamais dans
+  // la liste de sorts. Gating par `unlockLevel` (niveau de perso débloquant le sort — druidisme dès
+  // le niveau 1, lueurs féeriques au 3, agrandissement au 5) ; résolution nom→id FILTRÉE par
+  // `ruleset` (deux éditions peuvent partager le même nom français).
+  let speciesGrantSpellIds: number[] = []
+  if (speciesId != null) {
+    const baseFeatureRows = await db
+      .select({ featureId: schema.speciesFeatures.featureId })
+      .from(schema.speciesFeatures)
+      .where(eq(schema.speciesFeatures.speciesId, speciesId))
+    const lineageFeatureRows = d.selectedLineageId != null
+      ? await db
+          .select({ id: schema.features.id })
+          .from(schema.features)
+          .where(eq(schema.features.lineageId, d.selectedLineageId))
+      : []
+    const featureIds = [...baseFeatureRows.map(r => r.featureId), ...lineageFeatureRows.map(r => r.id)]
+    if (featureIds.length) {
+      const grants = await db
+        .select({ value: schema.effects.value })
+        .from(schema.featureEffects)
+        .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+        .where(and(inArray(schema.featureEffects.featureId, featureIds), eq(schema.effects.type, 'spell_grant')))
+      const spellNames = grants
+        .map(r => r.value as { spellName?: string, unlockLevel?: number } | null)
+        .filter((v): v is { spellName: string, unlockLevel?: number } =>
+          typeof v?.spellName === 'string' && (v.unlockLevel ?? 0) <= d.level)
+        .map(v => v.spellName)
+      if (spellNames.length) {
+        const spellRows = await db
+          .select({ id: schema.spells.id })
+          .from(schema.spells)
+          .where(and(inArray(schema.spells.name, spellNames), eq(schema.spells.ruleset, ruleset)))
+        speciesGrantSpellIds = spellRows.map(s => s.id)
+      }
+    }
+  }
+
   // Choix de lignée (D17) : on rattache le pick à la progression `kind:'lineage'` portée par une
   // `species_feature` de l'espèce de base, pour que la fiche dérive la lignée (cf. lineageDerivation).
   let lineageProgressionId: number | null = null
@@ -703,6 +743,13 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
         .values(invocationGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'invocation' as const })))
         .onConflictDoNothing())
     }
+  }
+
+  // Sorts innés d'espèce (+ lignée) — matérialisés comme sorts connus (source 'species')
+  if (speciesGrantSpellIds.length) {
+    stmts.push(db.insert(schema.characterSpells)
+      .values(speciesGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'species' as const })))
+      .onConflictDoNothing())
   }
 
   // Métamagie — options choisies matérialisées comme features de la fiche (aucun sort octroyé).
