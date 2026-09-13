@@ -183,6 +183,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         // Affichées dans la section features de classe avec un label dédié
         label = 'Manifestation'
       }
+      else if (f.featureType === 'fighting_style') {
+        // Style de combat CHOISI (F2) — matérialisé comme une feature, label dédié.
+        label = 'Style de combat'
+      }
       else if (f.featureType === 'feat') {
         // Les dons sont rendus dans leur propre section (CharacterFeats.vue),
         // mais on les expose tout de même dans allCharacterFeatures pour les
