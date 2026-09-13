@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { fightingStyleProgression } from './fightingStyles'
 
 export const guerrierName = 'Guerrier'
 
@@ -19,6 +20,9 @@ export const guerrierFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    // Owner du point de choix : la progression énumère les 6 styles (features-options taguées
+    // `fighting_style`, injectées par seedClass). Le style choisi est matérialisé sur la fiche.
+    progression: fightingStyleProgression,
   },
   {
     name: 'Second souffle',

@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { fightingStyleProgression } from './fightingStyles'
 
 export const rodeurName = 'Rôdeur'
 
@@ -40,6 +41,8 @@ Vous choisissez des terrains favoris supplémentaires aux niveaux 6 et 10.`,
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    // Owner du choix de style : progression → features-options `fighting_style` (Rôdeur : 4, Duel inclus).
+    progression: fightingStyleProgression,
   },
   {
     name: 'Incantation',

@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { fightingStyleProgression } from './fightingStyles'
 
 export const paladinName = 'Paladin'
 
@@ -29,13 +30,15 @@ Cette réserve se restaure après un repos long. Elle est sans effet sur les mor
   },
   {
     name: 'Style de combat',
-    description: `Au niveau 2, vous adoptez un style de combat particulier. Choisissez parmi : Défense (+1 CA avec armure), Duel (+2 dégâts arme à une main), Arme à deux mains (relancer 1 ou 2 aux dés de dégâts), Protection (réaction pour désavantage sur attaque contre allié adjacent, nécessite bouclier).`,
+    description: `Au niveau 2, vous adoptez un style de combat particulier. Choisissez parmi : Défense (+1 CA avec armure), Duel (+2 dégâts arme à une main), Grande arme (relancer 1 ou 2 aux dés de dégâts), Protection (réaction pour désavantage sur attaque contre allié adjacent, nécessite bouclier).`,
     featureType: 'class_feature',
     levelRequired: 2,
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    // Owner du choix de style : progression → features-options `fighting_style` (Paladin : 4).
+    progression: fightingStyleProgression,
   },
   {
     name: 'Incantation',
