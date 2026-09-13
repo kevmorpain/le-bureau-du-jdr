@@ -11,7 +11,7 @@ import { RARITIES, rarityEnum, RARITY_LABELS_FR } from '../../shared/rules/itemR
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
 const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
-const MIGRATION = '0094_magic_item_modeling.sql'
+const MIGRATION = '0097_magic_item_modeling.sql'
 
 describe('itemRarity — const canonique', () => {
   it('RARITIES = les 6 raretés 2014, dans l\'ordre', () => {
@@ -29,7 +29,7 @@ describe('itemRarity — const canonique', () => {
   })
 })
 
-describe('itemRarity — migration 0094', () => {
+describe('itemRarity — migration 0097', () => {
   it('pose rarity/requires_attunement/attunement_note + attuned avec les bons défauts', async () => {
     const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
     const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
