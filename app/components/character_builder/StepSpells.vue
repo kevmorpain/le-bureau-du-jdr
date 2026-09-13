@@ -351,9 +351,12 @@ const filterSchool = ref<string | null>(null)
 const filterConc = ref(false)
 const filterRitual = ref(false)
 
+// Gating `source` : inclure le contenu d'extension quand le drapeau global est actif.
+const { extendedQuery } = useExtendedContent()
+
 // Fetch sorts filtrés par classe
 const { data: allSpells, pending } = useFetch('/api/spells', {
-  query: computed(() => ({ className: classData.value?.dbName ?? '' })),
+  query: computed(() => ({ className: classData.value?.dbName ?? '', ...extendedQuery.value })),
   immediate: true,
 })
 
@@ -371,6 +374,7 @@ watch(allSpells, mergeSpellNames, { immediate: true })
 
 // Sorts du Pacte du Tome — tous les cantrips toutes classes
 const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
+  query: extendedQuery,
   immediate: true,
 })
 const pactCantrips = computed(() =>
@@ -390,7 +394,7 @@ function isRegularCantrip(id: number): boolean {
 
 // Sort Appel de familier (pour Pacte de la Chaîne)
 const { data: magicianSpells } = useFetch('/api/spells', {
-  query: { className: 'Magicien' },
+  query: computed(() => ({ className: 'Magicien', ...extendedQuery.value })),
   immediate: true,
 })
 const familiarSpell = computed(() =>
@@ -539,12 +543,14 @@ function toggleArcanumSpell(level: number, id: number) {
 // ─── Livre des secrets anciens : sorts rituels niv 1 toutes classes ───────
 
 const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('/api/spells', {
+  query: extendedQuery,
   immediate: true,
 })
 
 // Map des invocations pour détecter si « Livre des secrets anciens » est dans
 // les invocations sélectionnées.
 const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  query: extendedQuery,
   default: () => [],
 })
 const invocationsByName = computed<Record<string, number>>(() => {

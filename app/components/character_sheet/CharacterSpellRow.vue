@@ -169,6 +169,8 @@ const props = defineProps<{
     | 'arcanum_8'
     | 'arcanum_9'
     | 'book_of_ancient_secrets'
+    | 'feat'
+    | 'species'
     | null
   // Modifications de Décharge occulte (passées par MagicSection)
   eldritchBlastAgonizing?: boolean
@@ -264,6 +266,8 @@ const sourceLabel = computed(() => {
   if (props.source === 'pact_tome') return 'Pacte · Tome'
   if (props.source === 'invocation') return 'Manifestation'
   if (props.source === 'book_of_ancient_secrets') return 'Livre des Ombres'
+  if (props.source === 'feat') return 'Don'
+  if (props.source === 'species') return 'Espèce'
   if (props.source && (ARCANUM_SOURCES as readonly string[]).includes(props.source)) {
     return `Arcanum (niv. ${arcanumLevel(props.source as ArcanumSource)}) — 1/repos long`
   }
@@ -274,6 +278,8 @@ const sourceTooltip = computed(() => {
   if (props.source === 'pact_chain') return 'Sort octroyé par le Pacte de la Chaîne'
   if (props.source === 'pact_tome') return 'Sort mineur du Pacte du Tome'
   if (props.source === 'invocation') return 'Sort octroyé par une manifestation occulte'
+  if (props.source === 'feat') return 'Sort octroyé par un don'
+  if (props.source === 'species') return 'Sort inné octroyé par un trait de votre espèce'
   if (props.source === 'book_of_ancient_secrets') {
     return 'Sort rituel inscrit dans votre Livre des Ombres (lançable uniquement en tant que rituel).'
   }

@@ -20,6 +20,16 @@
       size="sm"
     />
 
+    <!-- Cap d'harmonisation (règle 2014 : max 3) — avertissement non bloquant. -->
+    <UAlert
+      v-if="attunedCount > 3"
+      color="warning"
+      variant="subtle"
+      icon="i-heroicons:exclamation-triangle"
+      :title="`${attunedCount} objets harmonisés`"
+      description="La règle 2014 limite l'harmonisation à 3 objets à la fois."
+    />
+
     <!-- ── Armes ────────────────────────────────────────────────────────── -->
     <template v-if="activeTab === 'weapons'">
       <div
@@ -420,6 +430,11 @@
               class="shrink-0"
             />
 
+            <MagicItemMeta
+              :entry="entry"
+              @toggle-attune="toggleAttuned"
+            />
+
             <UInput
               :model-value="entry.quantity"
               type="number"
@@ -526,6 +541,10 @@
               size="md"
               class="shrink-0"
             />
+            <MagicItemMeta
+              :entry="entry"
+              @toggle-attune="toggleAttuned"
+            />
             <UBadge
               v-if="entry.item"
               :label="toolCategoryLabel(entry.item)"
@@ -615,6 +634,8 @@ const {
   removeItem,
   updateInventoryEntry,
   toggleEquipped,
+  toggleAttuned,
+  attunedCount,
   setUsingTwoHanded,
 } = useCharacterSheet(characterSheetModel)
 

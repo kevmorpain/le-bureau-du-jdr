@@ -33,8 +33,11 @@ interface CatalogSpeciesRich {
 }
 
 export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>) {
+  // Gating `source` : même drapeau global que useBuilderEntities → l'URL espèces reste dédupée.
+  const { extended, extendedQuery } = useExtendedContent()
   // Réutilise le fetch d'espèces (dédupé par URL avec useBuilderEntities) pour résoudre la base.
   const { data: species } = useFetch<{ id: number, name: string }[]>('/api/character_species', {
+    query: extendedQuery,
     default: () => [],
   })
   const baseSpeciesId = computed(() => {
@@ -46,9 +49,10 @@ export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>) {
   // Charge la structure riche dès que l'id de base est connu (immediate:false → pas d'appel à id=0).
   const { data: rich, refresh } = useFetch<CatalogSpeciesRich | null>(
     () => `/api/catalog/species/${baseSpeciesId.value ?? 0}`,
-    { default: () => null, immediate: false, watch: false },
+    { query: extendedQuery, default: () => null, immediate: false, watch: false },
   )
-  watch(baseSpeciesId, (id) => { if (id) refresh() }, { immediate: true })
+  // Refetch quand la base OU le drapeau étendu change (les lignées gatées apparaissent/disparaissent).
+  watch([baseSpeciesId, extended], ([id]) => { if (id) refresh() }, { immediate: true })
 
   const lineageSubraces = computed<SubraceData[]>(() => {
     // Ne rend les lignées que si la structure chargée correspond à la base courante (anti-flash).

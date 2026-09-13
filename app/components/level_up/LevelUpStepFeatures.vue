@@ -229,9 +229,18 @@
       </div>
     </div>
 
+    <!-- Métamagie (Ensorceleur) — ajout de nouvelles options ; NON remplaçable en 2014 -->
+    <div v-if="needsMetamagic" class="mb-6 space-y-5">
+      <MetamagicPicker
+        v-model="state.newMetamagicIds"
+        :max-count="newMetamagicCount"
+        :excluded-ids="knownMetamagicIds"
+      />
+    </div>
+
     <!-- No choices required -->
     <div
-      v-if="!isSubclassLevel && !needsFightingStyle && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation"
+      v-if="!isSubclassLevel && !needsFightingStyle && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation && !needsMetamagic"
       class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted"
     >
       Aucun choix requis à cette étape. Cliquez sur Suivant pour continuer.
@@ -262,6 +271,9 @@ const {
   canReplaceInvocation,
   newInvocationsCount,
   knownInvocationIds,
+  needsMetamagic,
+  newMetamagicCount,
+  knownMetamagicIds,
   effectivePactBoon,
   knownSpellNames,
   proficientSkills,
@@ -274,8 +286,12 @@ const {
   totalLevel,
 } = useLevelUp(charSheet)
 
+// Gating `source` : inclure le contenu d'extension quand le drapeau global est actif.
+const { extendedQuery } = useExtendedContent()
+
 // Détails des invocations connues pour le bloc « Remplacer »
 const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  query: extendedQuery,
   default: () => [],
 })
 const knownInvocationDetails = computed(() => {
@@ -337,7 +353,7 @@ const profBonusChange = computed(() =>
 // Subclasses from catalog (F4 : endpoint /api/catalog/*, ≡ legacy, cachable au edge)
 const { data: subclassesData } = useFetch(
   () => pickedClass.value ? `/api/catalog/classes/${encodeURIComponent(pickedClass.value!.dbName)}/subclasses` : '',
-  { watch: [pickedClass], immediate: true },
+  { query: extendedQuery, watch: [pickedClass, () => extendedQuery.value], immediate: true },
 )
 const subclasses = computed(() => (subclassesData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>)
 

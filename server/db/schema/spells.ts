@@ -1,6 +1,7 @@
 import { index, sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { relations, sql } from 'drizzle-orm'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { Source } from '~~/shared/rules/source'
 import magicSchools from './magic_schools'
 import spellClasses from './spell_classes'
 
@@ -80,6 +81,10 @@ const spells = sqliteTable('spells', {
   // ce discriminant est porté par le SORT lui-même : description et effets peuvent différer
   // entre 2014 et 2024, donc chaque édition a ses propres lignes (« Boule de feu » 5 vs 5.5).
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
+
+  // Provenance / gating de visibilité (cf. shared/rules/source.ts, orthogonal à `ruleset`).
+  // DEFAULT 'core' = socle toujours visible ; les extensions (tasha, xanathar…) sont gatées.
+  source: text('source').$type<Source>().notNull().default('core'),
 
   schoolId: integer('school_id').references(() => magicSchools.id).notNull(),
 

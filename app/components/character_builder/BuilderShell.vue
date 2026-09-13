@@ -21,6 +21,13 @@
     </template>
 
     <template #header-actions>
+      <UTooltip text="Affiche le contenu d'extension gaté (Tasha, Xanathar…), masqué par défaut. Réglage global mémorisé.">
+        <USwitch
+          v-model="extended"
+          size="md"
+          label="Étendu"
+        />
+      </UTooltip>
       <UTooltip text="Recommencer depuis le début">
         <UButton
           variant="ghost"
@@ -75,6 +82,10 @@ const {
   goPrev,
   resetBuilder,
 } = useCharacterBuilder()
+
+// Toggle « contenu étendu » (gating source) — drapeau global persistant, surfacé ici pour
+// débloquer le contenu d'extension pendant la création (ex. one-shot Tasha).
+const { extended } = useExtendedContent()
 
 const showResetConfirm = ref(false)
 const emit = defineEmits<{ finish: [] }>()

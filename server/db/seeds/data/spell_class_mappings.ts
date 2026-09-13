@@ -140,4 +140,12 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Oeil magique', classNames: ['Magicien'] },
   { spellName: 'Immobilisation de monstre', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Invocation d\'élémentaire', classNames: ['Druide', 'Magicien'] },
+  // Sorts ajoutés pour le perso Fadette/Ensorceleur (2026-09).
+  { spellName: 'Rayon de givre', classNames: ['Ensorceleur', 'Magicien'] },
+  { spellName: 'Illusion mineure', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
+  { spellName: 'Charme-personne', classNames: ['Barde', 'Druide', 'Ensorceleur', 'Occultiste', 'Magicien'] },
+  { spellName: 'Voir l\'invisible', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
+  { spellName: 'Boule de feu', classNames: ['Ensorceleur', 'Magicien'] },
+  { spellName: 'Éclair de chaos', classNames: ['Ensorceleur'] },
+  { spellName: 'Espièglerie de nathair', classNames: ['Ensorceleur', 'Magicien'] },
 ]

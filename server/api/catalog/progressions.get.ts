@@ -1,5 +1,6 @@
 import { db } from 'hub:db'
 import { buildCatalog } from '~~/server/utils/catalog'
+import { isExtendedRequested } from '~~/server/utils/catalogRequest'
 
 /**
  * Catalogue de CHOIX (lot 6a, le « 5e » reporté) : les `progression` par classe avec leurs
@@ -17,5 +18,8 @@ export default defineEventHandler(async (event) => {
     : undefined
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return await buildCatalog(db as any, classIds && classIds.length ? { classIds } : {})
+  return await buildCatalog(db as any, {
+    ...(classIds && classIds.length ? { classIds } : {}),
+    extended: isExtendedRequested(event),
+  })
 })

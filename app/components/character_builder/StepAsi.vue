@@ -163,6 +163,31 @@
             </button>
           </div>
         </div>
+
+        <!-- Choix de sort (Faveur des fées : 1 sort niv 1 Divination/Enchantement) -->
+        <div
+          v-if="state.asiFeats[lvl] != null && featNeedsSpell(state.asiFeats[lvl])"
+          class="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-2"
+        >
+          <p class="text-sm font-semibold text-(--ui-text)">
+            Sort de niveau 1 au choix (Divination ou Enchantement)
+          </p>
+          <p class="text-xs text-muted">Foulée brumeuse est octroyée en plus, automatiquement.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-60 overflow-y-auto">
+            <button
+              v-for="sp in feyTouchedSpells"
+              :key="sp.id"
+              type="button"
+              class="text-left rounded-lg border px-3 py-1.5 text-xs transition-colors cursor-pointer"
+              :class="featSpellFor(state.asiFeats[lvl]) === sp.id
+                ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-medium'
+                : 'border-(--ui-border) text-muted hover:border-amber-500/40'"
+              @click="setFeatSpell(state.asiFeats[lvl]!, sp.id)"
+            >
+              {{ sp.name }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Aucun choix -->
@@ -196,9 +221,32 @@ const {
   abilityMod,
   formatMod,
   featNeedsAbility,
+  featNeedsSpell,
 } = useCharacterBuilder()
 
 const { feats, getById: getFeatById } = useFeats()
+
+// Sorts éligibles au don Faveur des fées : niveau 1, école Divination ou Enchantement (en plus
+// de Foulée brumeuse, octroyée d'office). Le drapeau `extended` inclut le contenu gaté si actif.
+const { extendedQuery } = useExtendedContent()
+const { data: allSpellsForFeat } = useFetch<any[]>('/api/spells', {
+  query: extendedQuery,
+  default: () => [],
+})
+const feyTouchedSpells = computed(() =>
+  (allSpellsForFeat.value ?? [])
+    .filter((s: any) => s.level === 1 && (s.school?.name === 'Divination' || s.school?.name === 'Enchantment'))
+    .sort((a: any, b: any) => a.name.localeCompare(b.name, 'fr')),
+)
+const featSpellFor = (featureId: number | undefined) =>
+  featureId != null ? (state.value.featChoices[featureId]?.spellId ?? null) : null
+
+function setFeatSpell(featureId: number, spellId: number) {
+  state.value.featChoices = {
+    ...state.value.featChoices,
+    [featureId]: { ...state.value.featChoices[featureId], spellId },
+  }
+}
 
 // Caractéristiques autorisées par le don choisi à ce palier (sous-ensemble du PHB).
 const allowedAbilities = (featureId: number | undefined): AbilityKey[] =>
@@ -209,7 +257,7 @@ const abilityFor = (featureId: number) => state.value.featChoices[featureId]?.ab
 function setAbility(featureId: number, ability: AbilityKey) {
   state.value.featChoices = {
     ...state.value.featChoices,
-    [featureId]: { ability },
+    [featureId]: { ...state.value.featChoices[featureId], ability },
   }
 }
 

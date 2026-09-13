@@ -269,6 +269,12 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   // allEffects complets (base + effets des objets magiques équipés) — alias public
   const allEffects = allEffectsForSpellcasting
 
+  // Vitesse de vol (ex. Fadette) — dérivée d'un effet `flying_speed` (trait d'espèce). 0 = pas de vol.
+  const flyingSpeed = computed<number>(() => {
+    const eff = allEffects.value.find(e => e.type === 'flying_speed')
+    return typeof eff?.value === 'number' ? eff.value : 0
+  })
+
   // ─── Maîtrises de langues et outils ──────────────────────────────────────
   // Calculées ici car elles dépendent de allEffects (tous les effets) et des overrides,
   // mais n'ont aucune interaction avec les items d'inventaire.
@@ -333,6 +339,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     // Classes & espèce
     species: classes.species,
     speed: classes.speed,
+    flyingSpeed,
     speciesTraits: classes.speciesTraits,
     speciesEffects: classes.speciesEffects,
     characterLevel: classes.characterLevel,
@@ -421,6 +428,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     removeItem: inventoryLayer.removeItem,
     updateInventoryEntry: inventoryLayer.updateEntry,
     toggleEquipped: inventoryLayer.toggleEquipped,
+    toggleAttuned: inventoryLayer.toggleAttuned,
+    attunedCount: inventoryLayer.attunedCount,
     setUsingTwoHanded: inventoryLayer.setUsingTwoHanded,
     addProficiencyOverride: inventoryLayer.addProficiencyOverride,
     removeProficiencyOverride: inventoryLayer.removeProficiencyOverride,

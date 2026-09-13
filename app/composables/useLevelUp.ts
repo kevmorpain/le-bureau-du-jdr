@@ -112,6 +112,7 @@ export interface LevelUpState {
   pactBoonCantripIds: number[]
   newInvocationIds: number[]
   replacedInvocationId: number | null
+  newMetamagicIds: number[]
   // Sort choisi pour l'Arcane Mystérieux (niveau 11/13/15/17). Le niveau du sort
   // dépend du niveau d'occultiste atteint (cf. arcaneMysteriumSpellLevel, dérivé du catalogue).
   arcaneMysteriumSpellId: number | null
@@ -152,6 +153,7 @@ const INIT_STATE: LevelUpState = {
   pactBoonCantripIds: [],
   newInvocationIds: [],
   replacedInvocationId: null,
+  newMetamagicIds: [],
   arcaneMysteriumSpellId: null,
   bookOfAncientSecretsSpellIds: [],
   bookOfAncientSecretsRequired: false,
@@ -332,6 +334,20 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       .map((f: any) => f.feature.id)
   })
 
+  // ── Métamagie (Ensorceleur niveaux 3/10/17) ────────────────────────────────
+  const metamagicAtToLevel = computed(() => choicesAtToLevel.value.find(c => c.kind === 'metamagic')?.count ?? 0)
+  const metamagicAtFromLevel = computed(() => choicesAtFromLevel.value.find(c => c.kind === 'metamagic')?.count ?? 0)
+  const newMetamagicCount = computed(() => Math.max(0, metamagicAtToLevel.value - metamagicAtFromLevel.value))
+  const needsMetamagic = computed(() => newMetamagicCount.value > 0)
+  // NB : pas de `canReplaceMetamagic` — la Métamagie 2014 n'est pas remplaçable au level-up
+  // (contrairement aux invocations occultes). On n'ajoute que de nouvelles options.
+  const knownMetamagicIds = computed<number[]>(() => {
+    const features = (charSheet.value as any)?.features ?? []
+    return features
+      .filter((f: any) => f.feature?.tag === 'metamagic')
+      .map((f: any) => f.feature.id)
+  })
+
   // Effective pact boon (for filtering invocations) — existing on charClass OR being picked this level-up
   const effectivePactBoon = computed<'chain' | 'blade' | 'tome' | null>(() => {
     return ((pickedCharClass.value as any)?.pactBoon ?? null) ?? state.value.pactBoon
@@ -452,6 +468,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         if (needsPactBoon.value && !s.pactBoon) return false
         const expectedInvocations = newInvocationsCount.value + (s.replacedInvocationId ? 1 : 0)
         if (expectedInvocations > 0 && s.newInvocationIds.length < expectedInvocations) return false
+        if (newMetamagicCount.value > 0 && s.newMetamagicIds.length < newMetamagicCount.value) return false
         return true
       }
 
@@ -576,6 +593,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         pactBoonCantripIds: s.pactBoonCantripIds,
         newInvocationIds: s.newInvocationIds,
         replacedInvocationId: s.replacedInvocationId,
+        newMetamagicIds: s.newMetamagicIds,
         arcaneMysteriumSpellId: s.arcaneMysteriumSpellId,
         bookOfAncientSecretsSpellIds: s.bookOfAncientSecretsSpellIds,
       },
@@ -612,6 +630,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     canReplaceInvocation,
     newInvocationsCount,
     knownInvocationIds,
+    needsMetamagic,
+    newMetamagicCount,
+    knownMetamagicIds,
     effectivePactBoon,
     knownSpellNames,
     needsArcaneMysterium,

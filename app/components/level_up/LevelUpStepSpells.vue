@@ -425,13 +425,17 @@ const spellsToLearn = computed(() => {
   return 0
 })
 
+// Gating `source` : inclure le contenu d'extension quand le drapeau global est actif.
+const { extendedQuery } = useExtendedContent()
+
 const { data: allSpells, pending } = useFetch('/api/spells', {
-  query: computed(() => ({ className: pickedClass.value?.dbName ?? '' })),
+  query: computed(() => ({ className: pickedClass.value?.dbName ?? '', ...extendedQuery.value })),
   immediate: true,
 })
 
 // Sorts du Pacte du Tome — tous les cantrips toutes classes
 const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
+  query: extendedQuery,
   immediate: true,
 })
 
@@ -447,7 +451,7 @@ const filteredPactCantrips = computed(() =>
 
 // Sort Appel de familier (pour affichage Pacte de la Chaîne)
 const { data: magicianSpells } = useFetch('/api/spells', {
-  query: { className: 'Magicien' },
+  query: computed(() => ({ className: 'Magicien', ...extendedQuery.value })),
   immediate: true,
 })
 
@@ -475,6 +479,7 @@ function toggleArcanumSpell(id: number) {
 // ─── Livre des anciens secrets : sorts rituels de niveau 1 toutes classes ──
 
 const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('/api/spells', {
+  query: extendedQuery,
   immediate: true,
 })
 
@@ -482,6 +487,7 @@ const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('
 // les invocations nouvellement choisies (ou déjà connue, on n'affiche alors
 // l'éditeur que si pas encore 2 sorts associés — sinon rien à choisir).
 const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+  query: extendedQuery,
   default: () => [],
 })
 const invocationsByName = computed<Record<string, number>>(() => {

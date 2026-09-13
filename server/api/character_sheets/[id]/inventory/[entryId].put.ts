@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
   if (body.currentUses !== undefined) updateValues.currentUses = body.currentUses
   if (body.notes !== undefined) updateValues.notes = body.notes
   if (body.usingTwoHanded !== undefined) updateValues.usingTwoHanded = body.usingTwoHanded
+  if (body.attuned !== undefined) updateValues.attuned = body.attuned
 
   if (Object.keys(updateValues).length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'No fields to update' })

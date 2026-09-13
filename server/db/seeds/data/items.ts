@@ -1,4 +1,6 @@
 import type { ItemType, ItemProperties, WeaponProperties, ArmorProperties, EquipmentProperties, ToolProperties } from '../../schema/items'
+import type { Source } from '~~/shared/rules/source'
+import type { Rarity } from '~~/shared/rules/itemRarity'
 
 interface ItemSeed {
   id: number
@@ -6,6 +8,12 @@ interface ItemSeed {
   itemType: ItemType
   properties: ItemProperties
   description?: string
+  // Objet magique (cf. shared/rules/itemRarity.ts) + gating (source.ts). Absents = objet
+  // ordinaire, socle : rarity NULL, pas d'harmonisation, source 'core'.
+  source?: Source
+  rarity?: Rarity
+  requiresAttunement?: boolean
+  attunementNote?: string
 }
 
 function weapon(
@@ -474,7 +482,24 @@ const toolItems: ItemSeed[] = [
   tool(104, 'Kit de contrefaçon', 'other', 'Outil spécial'),
 ]
 
+// ─── Objets magiques d'extension (GATÉS) ───────────────────────────────────────
+// Ids réservés à partir de 200 (gap au-dessus des objets socle, max id ~116).
+const magicItems: ItemSeed[] = [
+  {
+    id: 200,
+    name: 'Fragment de Féérie',
+    itemType: 'equipment',
+    properties: { category: 'Objet merveilleux' } satisfies EquipmentProperties,
+    source: 'tasha',
+    rarity: 'uncommon',
+    requiresAttunement: true,
+    attunementNote: 'par un ensorceleur',
+    description: '- Sert de focaliseur d\'incantation.\n- Quand vous appliquez une option de Métamagie à un sort, vous pouvez lancer sur la table de Pic de magie sauvage (surcharge chaotique ajoutée au sort).\n- Par une action, le fixer à un petit objet (arme, bijou) ou l\'en détacher ; il tombe si l\'harmonisation cesse.',
+  },
+]
+
 export const itemsData: ItemSeed[] = [
+  ...magicItems,
   ...simpleMeleeWeapons,
   ...simpleRangedWeapons,
   ...martialMeleeWeapons,

@@ -39,11 +39,14 @@ export default async function seed() {
       }
     }
     else {
+      // Insert via srcSchema (schéma frais) : le cache hub:db peut ignorer la colonne récente
+      // `source` et la dropper silencieusement (CLAUDE.md) → le don gaté ne serait pas gaté.
       feature = await db
-        .insert(schema.features)
+        .insert(srcSchema.features)
         .values({
           name: feat.name,
           ruleset: rulesetOf(feat),
+          source: feat.source ?? 'core',
           description: feat.description,
           featureType: 'feat',
           classId: null,

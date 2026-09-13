@@ -1,6 +1,8 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { MasteryProperty } from '~~/shared/rules/masteryProperties'
+import type { Source } from '~~/shared/rules/source'
+import type { Rarity } from '~~/shared/rules/itemRarity'
 import type { DamageTypeKey } from './effects'
 import characterInventory from './character_inventory'
 import itemEffects from './item_effects'
@@ -64,6 +66,9 @@ const items = sqliteTable('items', {
   itemType: text('item_type').$type<ItemType>().notNull(),
   properties: text('properties', { mode: 'json' }).$type<ItemProperties>().notNull(),
   description: text('description'),
+  // Provenance / gating de visibilité (cf. shared/rules/source.ts). DEFAULT 'core' = socle
+  // toujours visible ; les objets d'extension (ex. Fragment de Féérie) sont gatés.
+  source: text('source').$type<Source>().notNull().default('core'),
   // Maîtrise d'armes 2024 (« weapon mastery ») — au plus une par arme. Nullable :
   // absente en 2014, et le contenu 5.5 (quelle arme porte quelle maîtrise) est seedé
   // en Phase 2. Ensemble fermé canonique : shared/rules/masteryProperties.ts.
@@ -76,6 +81,14 @@ const items = sqliteTable('items', {
   maxUses: integer('max_uses'),
   rechargeType: text('recharge_type').$type<ItemRechargeType>(),
   rechargeDice: text('recharge_dice'),
+  // ─── Objet magique (cf. shared/rules/itemRarity.ts) ─────────────────────
+  // rarity : NULL = objet non magique (arme/armure/équipement ordinaire) ; une valeur = magique.
+  // requiresAttunement : l'objet doit être harmonisé pour donner ses bénéfices (état par
+  //   instance via character_inventory.attuned).
+  // attunementNote : contrainte d'harmonisation en clair (ex. « par un ensorceleur »), nullable.
+  rarity: text('rarity').$type<Rarity>(),
+  requiresAttunement: integer('requires_attunement', { mode: 'boolean' }).default(false).notNull(),
+  attunementNote: text('attunement_note'),
   isCustom: integer('is_custom', { mode: 'boolean' }).default(false).notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').$onUpdateFn(() => new Date().toISOString()),

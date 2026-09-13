@@ -13,7 +13,10 @@ import { resolveChoices, type Catalog, type CharacterProjection, type ResolvedCh
  * `useFetch` dédupe par URL : plusieurs appels (builder, level-up) partagent le même fetch.
  */
 export function useCatalog() {
+  // Gating `source` : inclure les options d'extension quand le drapeau global est actif.
+  const { extendedQuery } = useExtendedContent()
   const { data: catalog } = useFetch<Catalog>('/api/catalog/progressions', {
+    query: extendedQuery,
     default: () => ({ progressions: [] }),
   })
 

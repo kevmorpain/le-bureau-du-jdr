@@ -16,15 +16,22 @@ type DbItem = { id: number, name: string }
 export function useBuilderEntities() {
   // `/api/catalog/classes` (≡ legacy `/api/classes`, même loader `loadClasses`) : la source
   // catalogue, cachable au edge (F4). Porte `subclassLevel` + sous-classes imbriquées.
+  // Gating `source` : inclure le contenu d'extension quand le drapeau global est actif
+  // (?extended propagé au loader via isExtendedRequested).
+  const { extendedQuery } = useExtendedContent()
   const { data: classes } = useFetch<DbClass[]>('/api/catalog/classes', {
+    query: extendedQuery,
     default: () => [],
   })
   const { data: species } = useFetch<DbSpecies[]>('/api/character_species', {
+    query: extendedQuery,
     default: () => [],
   })
   const { data: backgrounds } = useFetch<DbBackground[]>('/api/backgrounds', {
+    query: extendedQuery,
     default: () => [],
   })
+  // `/api/items` n'a pas (encore) de filtre `source` côté serveur → pas de query extended ici.
   const { data: items } = useFetch<DbItem[]>('/api/items', {
     default: () => [],
   })

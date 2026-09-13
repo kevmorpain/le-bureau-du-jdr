@@ -112,6 +112,8 @@ export const createCharacterSchema = z.object({
   pactBoonCantripIds: z.array(z.number().int()).optional(),
   // Manifestations occultes (Occultiste niveau ≥ 2)
   invocationIds: z.array(z.number().int().positive()).optional(),
+  // Options de Métamagie (Ensorceleur niveau ≥ 3)
+  metamagicIds: z.array(z.number().int().positive()).optional(),
   // Bonus ASI répartis (paliers 4/8/12/… selon classe).
   asiBonuses: z
     .array(z.object({
@@ -126,13 +128,13 @@ export const createCharacterSchema = z.object({
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
       featureId: z.number().int().positive(),
-      choices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
+      choices: z.object({ ability: abilityEnum.optional(), spellId: z.number().int().positive().optional() }).nullable().optional(),
     }))
     .optional()
     .default([]),
   // Don bonus hors-palier (homebrew MJ — typiquement attribué au niveau 1).
   bonusFeatureId: z.number().int().positive().nullable().optional(),
-  bonusFeatChoices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
+  bonusFeatChoices: z.object({ ability: abilityEnum.optional(), spellId: z.number().int().positive().optional() }).nullable().optional(),
   // Arcanums mystiques (Occultiste niv 11/13/15/17) — un sort de niv 6/7/8/9 par palier
   // débloqué (cumulatif à la création d'un perso de haut niveau).
   arcaneMysteria: z.array(z.object({
@@ -196,6 +198,7 @@ async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset
     ...(d.asiFeats ?? []).map(f => f.featureId),
     ...(d.bonusFeatureId != null ? [d.bonusFeatureId] : []),
     ...(d.invocationIds ?? []),
+    ...(d.metamagicIds ?? []),
   ]
   if (featureIds.length) {
     const rows = await db
@@ -284,7 +287,8 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   }
 
   const invocationIds = d.invocationIds ?? []
-  const needsCatalog = invocationIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0
+  const metamagicIds = d.metamagicIds ?? []
+  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0
   if (!needsCatalog) return
 
   const catalog = await buildCatalog(db, { classIds: [classId] })
@@ -300,6 +304,18 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
       .where(and(eq(schema.features.tag, 'invocation'), inArray(schema.features.id, invocationIds)))
     if (inGroup.length !== invocationIds.length) throw new CharacterValidationError(`Une manifestation choisie est inconnue ou n'est pas une invocation.`)
     if (invocationIds.length > invChoice.count) throw new CharacterValidationError(`Trop de manifestations occultes (${invocationIds.length} pour un maximum de ${invChoice.count}).`)
+  }
+
+  // Métamagie — chaque option ∈ groupe `metamagic`, nombre ≤ table du niveau (kind 'metamagic').
+  if (metamagicIds.length > 0) {
+    const mmChoice = choices.find(c => c.kind === 'metamagic')
+    if (!mmChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir d'options de métamagie au niveau ${d.level}.`)
+    const inGroup = await db
+      .select({ id: schema.features.id })
+      .from(schema.features)
+      .where(and(eq(schema.features.tag, 'metamagic'), inArray(schema.features.id, metamagicIds)))
+    if (inGroup.length !== metamagicIds.length) throw new CharacterValidationError(`Une option de métamagie choisie est inconnue ou n'est pas une métamagie.`)
+    if (metamagicIds.length > mmChoice.count) throw new CharacterValidationError(`Trop d'options de métamagie (${metamagicIds.length} pour un maximum de ${mmChoice.count}).`)
   }
 
   // V4 — faveur de pacte : la classe doit y avoir droit à ce niveau
@@ -411,6 +427,46 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
         .from(schema.spells)
         .where(inArray(schema.spells.name, spellNames))
       invocationGrantSpellIds = spellRows.map(s => s.id)
+    }
+  }
+
+  // Sorts INNÉS d'espèce (+ lignée choisie) : les traits raciaux type « Magie des fées » / « Magie
+  // drow » portent des effets `spell_grant`. On les matérialise en `character_spells` (source
+  // 'species') comme les invocations/dons, sinon ils restent en prose et n'apparaissent jamais dans
+  // la liste de sorts. Gating par `unlockLevel` (niveau de perso débloquant le sort — druidisme dès
+  // le niveau 1, lueurs féeriques au 3, agrandissement au 5) ; résolution nom→id FILTRÉE par
+  // `ruleset` (deux éditions peuvent partager le même nom français).
+  let speciesGrantSpellIds: number[] = []
+  if (speciesId != null) {
+    const baseFeatureRows = await db
+      .select({ featureId: schema.speciesFeatures.featureId })
+      .from(schema.speciesFeatures)
+      .where(eq(schema.speciesFeatures.speciesId, speciesId))
+    const lineageFeatureRows = d.selectedLineageId != null
+      ? await db
+          .select({ id: schema.features.id })
+          .from(schema.features)
+          .where(eq(schema.features.lineageId, d.selectedLineageId))
+      : []
+    const featureIds = [...baseFeatureRows.map(r => r.featureId), ...lineageFeatureRows.map(r => r.id)]
+    if (featureIds.length) {
+      const grants = await db
+        .select({ value: schema.effects.value })
+        .from(schema.featureEffects)
+        .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+        .where(and(inArray(schema.featureEffects.featureId, featureIds), eq(schema.effects.type, 'spell_grant')))
+      const spellNames = grants
+        .map(r => r.value as { spellName?: string, unlockLevel?: number } | null)
+        .filter((v): v is { spellName: string, unlockLevel?: number } =>
+          typeof v?.spellName === 'string' && (v.unlockLevel ?? 0) <= d.level)
+        .map(v => v.spellName)
+      if (spellNames.length) {
+        const spellRows = await db
+          .select({ id: schema.spells.id })
+          .from(schema.spells)
+          .where(and(inArray(schema.spells.name, spellNames), eq(schema.spells.ruleset, ruleset)))
+        speciesGrantSpellIds = spellRows.map(s => s.id)
+      }
     }
   }
 
@@ -606,6 +662,43 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     stmts.push(db.insert(schema.characterFeatures).values(featRows as any).onConflictDoNothing())
   }
 
+  // Faveur des fées (dons marqués `other:{kind:'fey_touched_spells'}`) : octroie Foulée brumeuse
+  // (fixe) + le sort de niveau 1 choisi (choices.spellId) comme sorts connus (source 'feat').
+  const feyFeatEntries = [
+    ...(d.asiFeats ?? []).map(f => ({ featureId: f.featureId, spellId: f.choices?.spellId })),
+    ...(d.bonusFeatureId ? [{ featureId: d.bonusFeatureId, spellId: d.bonusFeatChoices?.spellId }] : []),
+  ]
+  if (feyFeatEntries.length) {
+    const markers = await db
+      .select({ featureId: schema.featureEffects.featureId, value: schema.effects.value })
+      .from(schema.featureEffects)
+      .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+      .where(and(
+        inArray(schema.featureEffects.featureId, feyFeatEntries.map(f => f.featureId)),
+        eq(schema.effects.type, 'other'),
+      ))
+    const feyFeatIds = new Set(
+      markers.filter(m => (m.value as { kind?: string } | null)?.kind === 'fey_touched_spells').map(m => m.featureId),
+    )
+    if (feyFeatIds.size) {
+      const featSpellIds = new Set<number>()
+      const [mistyStep] = await db
+        .select({ id: schema.spells.id })
+        .from(schema.spells)
+        .where(eq(schema.spells.name, 'Foulée brumeuse'))
+        .limit(1)
+      if (mistyStep) featSpellIds.add(mistyStep.id)
+      for (const entry of feyFeatEntries) {
+        if (feyFeatIds.has(entry.featureId) && entry.spellId != null) featSpellIds.add(entry.spellId)
+      }
+      if (featSpellIds.size) {
+        stmts.push(db.insert(schema.characterSpells)
+          .values([...featSpellIds].map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'feat' as const })))
+          .onConflictDoNothing())
+      }
+    }
+  }
+
   // Caractéristiques
   const abilityEntries = Object.entries(d.abilityScores)
   if (abilityEntries.length) {
@@ -693,6 +786,20 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
         .values(invocationGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'invocation' as const })))
         .onConflictDoNothing())
     }
+  }
+
+  // Sorts innés d'espèce (+ lignée) — matérialisés comme sorts connus (source 'species')
+  if (speciesGrantSpellIds.length) {
+    stmts.push(db.insert(schema.characterSpells)
+      .values(speciesGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'species' as const })))
+      .onConflictDoNothing())
+  }
+
+  // Métamagie — options choisies matérialisées comme features de la fiche (aucun sort octroyé).
+  if (d.metamagicIds?.length) {
+    stmts.push(db.insert(schema.characterFeatures)
+      .values(d.metamagicIds.map(featureId => ({ characterSheetId: sheetId, featureId, currentUses: 0 })))
+      .onConflictDoNothing())
   }
 
   // Arcanums mystiques — un sort 1×/repos long par palier débloqué (source arcanum_*)

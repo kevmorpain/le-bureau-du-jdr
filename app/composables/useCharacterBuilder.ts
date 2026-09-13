@@ -31,6 +31,9 @@ export interface BuilderState {
   halfElfBonuses: AbilityKey[]
   variantHumanBonuses: AbilityKey[]
   variantHumanSkill: string | null
+  // Bonus de caractéristiques FLEXIBLES (Fadette/MPMM : +2 sur une carac. et +1 sur une autre,
+  // OU +1 sur trois). Distribution au choix du joueur ; somme attendue = 3, max 2 par carac.
+  fairyAsiBonuses: Partial<Record<AbilityKey, number>>
 
   // Étape 2 — Classe
   classId: string | null
@@ -98,6 +101,9 @@ export interface BuilderState {
   // Manifestations occultes (Occultiste niveau ≥ 2)
   invocationIds: number[]
 
+  // Options de Métamagie (Ensorceleur niveau ≥ 3)
+  metamagicIds: number[]
+
   // Choix par palier d'ASI (niveau de classe) : carac ('asi') ou don ('feat').
   // Format : { 4: 'asi', 8: 'feat', 12: 'asi', ... }
   asiChoice: Record<number, 'asi' | 'feat'>
@@ -119,7 +125,7 @@ export interface BuilderState {
 
   // Choix résolus des dons (ex : caractéristique +1 d'Observateur), indexés par
   // features.id du don. Vaut pour le don bonus ET les dons d'ASI.
-  featChoices: Record<number, { ability?: AbilityKey }>
+  featChoices: Record<number, { ability?: AbilityKey, spellId?: number }>
 
   // Arcanums mystiques (Occultiste niv 11/13/15/17). À la création d'un perso de haut
   // niveau, TOUS les arcanums débloqués (≤ niveau) sont configurables → map niveau de
@@ -151,6 +157,7 @@ const INIT_STATE: BuilderState = {
   halfElfBonuses: [],
   variantHumanBonuses: [],
   variantHumanSkill: null,
+  fairyAsiBonuses: {},
   classId: null,
   subclass: null,
   skills: [],
@@ -194,6 +201,7 @@ const INIT_STATE: BuilderState = {
   pactWeaponItemName: null,
   selectedPactBoonCantripIds: [],
   invocationIds: [],
+  metamagicIds: [],
   asiChoice: {},
   asiBonuses: {},
   asiFeats: {},
@@ -265,11 +273,20 @@ export function useCharacterBuilder() {
     return (feat?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice')
   }
 
-  // Le choix de caractéristique d'un don est-il complet (ou non requis) ?
+  // Un don requiert-il un choix de SORT (ex. Faveur des fées) ? Repéré par l'effet marqueur
+  // `other:{kind:'fey_touched_spells'}` (data/feats.ts).
+  const featNeedsSpell = (featureId: number | null | undefined): boolean => {
+    if (featureId == null) return false
+    const feat = getFeatById(featureId)
+    return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'fey_touched_spells')
+  }
+
+  // Les choix d'un don sont-ils complets (carac. ET/OU sort, selon ce qu'il requiert) ?
   const featChoiceComplete = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return true
-    if (!featNeedsAbility(featureId)) return true
-    return !!state.value.featChoices[featureId]?.ability
+    if (featNeedsAbility(featureId) && !state.value.featChoices[featureId]?.ability) return false
+    if (featNeedsSpell(featureId) && !state.value.featChoices[featureId]?.spellId) return false
+    return true
   }
 
   // ─── Données dérivées ────────────────────────────────────────────────────────
@@ -328,6 +345,14 @@ export function useCharacterBuilder() {
   )
 
   const needsInvocations = computed(() => invocationsExpected.value > 0)
+
+  // Métamagie (Ensorceleur) — même mécanique que les invocations : N options (par niveau) parmi
+  // le groupe `metamagic`, lues dans le catalogue via resolveChoices.
+  const metamagicExpected = computed(() =>
+    catalogChoices.value.find(c => c.kind === 'metamagic')?.count ?? 0,
+  )
+  const needsMetamagic = computed(() => metamagicExpected.value > 0)
+
   const alignmentData = computed(() => ALIGNMENTS.find(a => a.id === state.value.alignment) ?? null)
 
   // Bonus raciaux fusionnés (race + sous-race + cas spéciaux)
@@ -369,6 +394,12 @@ export function useCharacterBuilder() {
       for (const k of ABILITIES) bonuses[k] = 0
       for (const ab of state.value.variantHumanBonuses) {
         addBonus(ab as AbilityKey, 1)
+      }
+    }
+    // Fadette (MPMM) : bonus flexibles répartis par le joueur (state.fairyAsiBonuses).
+    if (race.id === 'fairy') {
+      for (const [k, v] of Object.entries(state.value.fairyAsiBonuses) as [AbilityKey, number][]) {
+        addBonus(k, v)
       }
     }
 
@@ -559,6 +590,8 @@ export function useCharacterBuilder() {
         if (s.raceId === 'human' && s.isVariantHuman) {
           if (s.variantHumanBonuses.length < 2 || !s.variantHumanSkill) return false
         }
+        // Fadette : les bonus flexibles doivent totaliser exactement 3 (+2/+1 ou +1/+1/+1).
+        if (s.raceId === 'fairy' && Object.values(s.fairyAsiBonuses).reduce((a, b) => a + (b ?? 0), 0) !== 3) return false
         return true
       }
       case 'class': {
@@ -570,6 +603,7 @@ export function useCharacterBuilder() {
         if (fightingStyleOptions && !s.fightingStyle) return false
         if (needsPactBoon.value && !s.pactBoon) return false
         if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
+        if (needsMetamagic.value && s.metamagicIds.length < metamagicExpected.value) return false
         return true
       }
       case 'abilities': {
@@ -773,6 +807,9 @@ export function useCharacterBuilder() {
     // Invocations
     needsInvocations,
     invocationsExpected,
+    // Métamagie
+    needsMetamagic,
+    metamagicExpected,
     // ASI
     needsAsi,
     asiLevelsForCharacter,
@@ -782,6 +819,7 @@ export function useCharacterBuilder() {
     feats,
     getFeatById,
     featNeedsAbility,
+    featNeedsSpell,
     featChoiceComplete,
     // Arcanums / Livre des secrets
     needsArcaneMysterium,

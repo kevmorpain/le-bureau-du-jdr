@@ -12,7 +12,7 @@
     <!-- Grille des classes -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       <button
-        v-for="cls in CLASSES"
+        v-for="cls in filteredClasses"
         :key="cls.id"
         type="button"
         class="text-left rounded-xl border p-4 transition-colors cursor-pointer flex flex-col justify-start"
@@ -240,6 +240,17 @@
         </div>
       </template>
 
+      <!-- Métamagie (Ensorceleur niveau ≥ 3) -->
+      <template v-if="needsMetamagic">
+        <USeparator class="my-6" />
+        <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
+          <MetamagicPicker
+            v-model="state.metamagicIds"
+            :max-count="metamagicExpected"
+          />
+        </div>
+      </template>
+
       <!-- Points de vie -->
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -331,6 +342,7 @@ import {
   FIGHTING_STYLE_DESCRIPTIONS,
   type AbilityKey,
 } from '~/data/character-builder'
+import { isGatedSource } from '~~/shared/rules/source'
 
 const PACT_BOON_OPTIONS = [
   { id: 'chain' as const, name: 'Pacte de la Chaîne', hint: 'Apprend Appel de familier. Peut convoquer un familier spécial.' },
@@ -349,13 +361,23 @@ const {
   needsPactBoon,
   needsInvocations,
   invocationsExpected,
+  needsMetamagic,
+  metamagicExpected,
   CLASSES,
   SKILLS,
   ABILITY_SHORT,
 } = useCharacterBuilder()
 
+// Gating : les classes d'extension (source gatée) ne sont visibles qu'avec le toggle « Étendu ».
+const { extended, extendedQuery } = useExtendedContent()
+const filteredClasses = computed(() =>
+  CLASSES.filter(c => !c.source || !isGatedSource(c.source) || extended.value),
+)
+
 // Sorts connus du perso pour la résolution des prérequis (Décharge occulte etc.)
-const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells')
+const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells', {
+  query: extendedQuery,
+})
 const knownSpellNames = computed(() => {
   const ids = new Set<number>([
     ...state.value.selectedCantrips,

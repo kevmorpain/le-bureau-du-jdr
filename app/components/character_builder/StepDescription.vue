@@ -26,7 +26,7 @@
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Historique</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <button
-          v-for="bg in BACKGROUNDS"
+          v-for="bg in filteredBackgrounds"
           :key="bg.id"
           type="button"
           class="text-left rounded-xl border p-3 transition-colors cursor-pointer flex flex-col justify-start"
@@ -243,6 +243,7 @@
 
 <script lang="ts" setup>
 import type { BuilderState } from '~/composables/useCharacterBuilder'
+import { isGatedSource } from '~~/shared/rules/source'
 
 type TraitKey = 'personality' | 'ideals' | 'bonds' | 'flaws'
 type AppearanceKey = 'age' | 'height' | 'weight' | 'eyes' | 'hair' | 'skin' | 'deity'
@@ -258,6 +259,12 @@ const {
   languageChoiceCount,
   TOOL_CHOICE_MAP,
 } = useCharacterBuilder()
+
+// Gating : les historiques d'extension (source gatée) ne sont visibles qu'avec le toggle « Étendu ».
+const { extended } = useExtendedContent()
+const filteredBackgrounds = computed(() =>
+  BACKGROUNDS.filter(b => !b.source || !isGatedSource(b.source) || extended.value),
+)
 
 // Entrées de choix d'outils pour le background courant
 const toolChoices = computed(() =>

@@ -1,6 +1,7 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { Source } from '~~/shared/rules/source'
 
 const backgrounds = sqliteTable('backgrounds', {
   id: integer().primaryKey().notNull(),
@@ -9,6 +10,9 @@ const backgrounds = sqliteTable('backgrounds', {
   // l'historique porte les bonus de carac. + un don d'origine ; distinct de son
   // homonyme 2014.
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
+  // Provenance / gating de visibilité (cf. shared/rules/source.ts). DEFAULT 'core' = socle
+  // toujours visible ; un historique d'extension serait gaté.
+  source: text('source').$type<Source>().notNull().default('core'),
   description: text().default('').notNull(),
   skillProficiencies: text('skill_proficiencies', { mode: 'json' }).$type<string[]>().default([]).notNull(),
   toolProficiencies: text('tool_proficiencies', { mode: 'json' }).$type<string[]>().default([]).notNull(),

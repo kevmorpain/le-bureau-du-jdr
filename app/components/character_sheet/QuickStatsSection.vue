@@ -59,6 +59,13 @@
         >
           {{ effectiveSpeed }}m
         </p>
+        <p
+          v-if="flyingSpeed > 0"
+          class="text-[11px] font-semibold leading-none text-sky-400 mt-1"
+          title="Vitesse de vol"
+        >
+          {{ flyingSpeed }}m vol
+        </p>
         <ConditionWarning
           v-if="speedModifiers.length"
           :lines="speedModifiers"
@@ -132,6 +139,7 @@ const {
   armorClass,
   initiativeBonus,
   effectiveSpeed,
+  flyingSpeed,
   speedModifiers,
   passivePerception,
   proficiencyBonus,

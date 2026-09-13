@@ -1,5 +1,6 @@
 import type { Effect } from '../../schema/effects'
 import type { FeaturePrerequisite } from '../../schema/features'
+import type { Source } from '~~/shared/rules/source'
 
 export interface FeatSeed {
   name: string // Nom FR canonique (PHB 2014, trad. AideDD)
@@ -8,6 +9,8 @@ export interface FeatSeed {
   // Stocké uniquement dans le seed, pas en DB — la résolution côté serveur
   // se fait via le nom FR.
   slug: string
+  // Provenance / gating (cf. shared/rules/source.ts). Absent = 'core' (socle, non gaté).
+  source?: Source
   effects: Effect[]
   // Prérequis de sélection (caractéristique minimale, maîtrise d'armure,
   // lanceur de sorts). null / absent = don sans prérequis.
@@ -405,5 +408,17 @@ export const featsData: FeatSeed[] = [
       { type: 'other', value: { kind: 'skulker' } },
     ],
     prerequisites: { minAbilityScore: { abilities: ['dex'], score: 13 } },
+  },
+
+  // ─── Don d'extension GATÉ (Tasha's Cauldron of Everything) ──────────────────
+  {
+    slug: 'fey-touched',
+    name: 'Faveur des fées',
+    source: 'tasha',
+    description: 'Augmentez de 1 votre Intelligence, votre Sagesse ou votre Charisme (max 20). Vous apprenez le sort Foulée brumeuse ainsi qu\'un sort de niveau 1 de votre choix de l\'école de Divination ou d\'Enchantement. Vous pouvez lancer chacun de ces sorts une fois sans dépenser d\'emplacement, en récupérant cette capacité après un repos long ; vous pouvez aussi les lancer normalement avec vos emplacements. La caractéristique d\'incantation de ces sorts est celle augmentée par ce don.',
+    effects: [
+      { type: 'ability_increase_choice', value: { count: 1, amount: 1, abilities: ['int', 'wis', 'cha'] } },
+      { type: 'other', value: { kind: 'fey_touched_spells' } },
+    ],
   },
 ]

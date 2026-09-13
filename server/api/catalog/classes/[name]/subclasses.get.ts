@@ -1,5 +1,6 @@
 import { db } from 'hub:db'
 import { loadSubclasses } from '~~/server/utils/catalogSources'
+import { isExtendedRequested } from '~~/server/utils/catalogRequest'
 
 /** Catalogue : sous-classes d'une classe (par nom en base). Statique, cachable. Cf. lot 6a. */
 export default defineEventHandler(async (event) => {
@@ -7,5 +8,5 @@ export default defineEventHandler(async (event) => {
   if (!name) throw createError({ statusCode: 400, statusMessage: 'Class name required' })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return await loadSubclasses(db as any, decodeURIComponent(name))
+  return await loadSubclasses(db as any, decodeURIComponent(name), '5', isExtendedRequested(event))
 })

@@ -5,6 +5,7 @@ import type {
   ArmorProperties,
   ToolProperties,
 } from '~~/server/db/schema/items'
+import type { Rarity } from '~~/shared/rules/itemRarity'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,11 @@ export interface InventoryItem {
   rechargeType: 'short_rest' | 'long_rest' | 'dawn' | null
   rechargeDice: string | null
   isCustom: boolean
+  // Objet magique (cf. shared/rules/itemRarity.ts) : rarity null = objet non magique.
+  // requiresAttunement = l'objet exige une harmonisation (état par instance : entry.attuned).
+  rarity: Rarity | null
+  requiresAttunement: boolean
+  attunementNote: string | null
 }
 
 export interface InventoryEntry {
@@ -36,6 +42,7 @@ export interface InventoryEntry {
   currentUses: number
   notes: string | null
   usingTwoHanded: boolean
+  attuned: boolean
   item: InventoryItem | null
 }
 
@@ -379,6 +386,7 @@ export const useCharacterInventory = (
       currentUses: 0,
       notes: notes ?? null,
       usingTwoHanded: false,
+      attuned: false,
       item: optimisticItem ?? null,
     }]
 
@@ -422,6 +430,7 @@ export const useCharacterInventory = (
     currentUses?: number
     notes?: string
     usingTwoHanded?: boolean
+    attuned?: boolean
   }) => {
     if (!characterId.value) return
     inventoryData.value = (inventoryData.value ?? []).map(e =>
@@ -446,6 +455,15 @@ export const useCharacterInventory = (
     if (!entry) return
     return updateEntry(entryId, { equipped: !entry.equipped })
   }
+
+  const toggleAttuned = (entryId: number) => {
+    const entry = inventory.value.find(e => e.id === entryId)
+    if (!entry) return
+    return updateEntry(entryId, { attuned: !entry.attuned })
+  }
+
+  // Nombre d'objets harmonisés (règle 2014 : max 3). Sert d'avertissement non bloquant à l'UI.
+  const attunedCount = computed(() => inventory.value.filter(e => e.attuned).length)
 
   const setUsingTwoHanded = async (entryId: number, value: boolean) => {
     await updateEntry(entryId, { usingTwoHanded: value })
@@ -505,6 +523,8 @@ export const useCharacterInventory = (
     removeItem,
     updateEntry,
     toggleEquipped,
+    toggleAttuned,
+    attunedCount,
     setUsingTwoHanded,
     addProficiencyOverride,
     removeProficiencyOverride,
