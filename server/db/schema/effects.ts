@@ -95,6 +95,7 @@ export type Effect
     | { type: 'tool_proficiency_choice', value: string[] }
     | { type: 'vulnerability', value: { damageType: DamageTypeKey } }
     | { type: 'walking_speed', value: number }
+    | { type: 'flying_speed', value: number }
     | { type: 'weapon_proficiency', value: string }
     | { type: 'eldritch_blast_modifier', value: { kind: 'agonizing' | 'repelling' | 'range_extended' } }
     | { type: 'pact_weapon_modifier', value: { kind: 'extra_attack' | 'lifedrinker' } }

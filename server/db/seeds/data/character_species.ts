@@ -1379,7 +1379,7 @@ const fadette = {
     {
       name: 'Vol',
       description: `Grâce à vos ailes féeriques, vous disposez d'une vitesse de vol de 9 m. Vous ne pouvez pas utiliser cette vitesse de vol si vous portez une armure intermédiaire ou lourde.`,
-      effects: [],
+      effects: [{ type: 'flying_speed', value: 9 }],
     },
     {
       name: 'Magie des fées',

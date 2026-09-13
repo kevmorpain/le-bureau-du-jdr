@@ -15,6 +15,19 @@
     <p class="text-xs text-muted">
       {{ speedInSquares }} case{{ speedInSquares > 1 ? 's' : '' }}
     </p>
+
+    <p
+      v-if="flyingSpeed > 0"
+      class="flex items-center gap-1 mt-1"
+      title="Vitesse de vol"
+    >
+      <UIcon
+        name="i-game-icons:fairy-wings"
+        class="size-4 mr-1"
+      />
+      <span>{{ $n(flyingSpeed) }} m</span>
+      <span class="text-xs text-muted">vol</span>
+    </p>
   </div>
 </template>
 
@@ -25,6 +38,7 @@ const props = defineProps<{
 
 const {
   speed,
+  flyingSpeed,
   effectiveSpeed,
   speedModifiers,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
