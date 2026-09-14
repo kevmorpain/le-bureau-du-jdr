@@ -128,7 +128,6 @@
 <script lang="ts" setup>
 import {
   LU_ASI_LEVELS,
-  LU_FIGHTING_STYLE_LEVELS,
   LU_EXPERTISE_LEVELS,
   LU_MULTICLASS_PREREQS,
 } from '~/composables/useLevelUp'
@@ -141,6 +140,7 @@ const {
   finalAbilities,
   pickedClass,
   subclassLevelFor,
+  fightingStyleLevelFor,
   CLASSES,
 } = useLevelUp(inject('charSheet') as any)
 
@@ -165,7 +165,8 @@ function isAsiDue(classId: string, level: number): boolean {
 }
 
 function isFightingStyleDue(classId: string, level: number): boolean {
-  return (LU_FIGHTING_STYLE_LEVELS[classId] ?? []).includes(level)
+  // Niveau d'accès au style de combat lu dans le catalogue (fightingStyleLevelFor) au lieu du blob.
+  return fightingStyleLevelFor(classId) === level
 }
 
 function isExpertiseDue(classId: string, level: number): boolean {

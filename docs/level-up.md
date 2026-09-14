@@ -255,7 +255,8 @@ Toutes exportées pour usage dans les composants d'étape :
 
 ```ts
 LU_ASI_LEVELS           // niveaux ASI par classe
-LU_FIGHTING_STYLE_LEVELS // niveaux de style de combat par classe
+// (le style de combat est désormais lu dans le catalogue — cf. `needsFightingStyle` /
+//  `fightingStyleLevelFor` + endpoint `/api/catalog/classes/[name]/fighting-styles`, F2 tranche 4)
 LU_EXPERTISE_LEVELS      // niveaux d'expertise (Roublard/Barde)
 LU_MULTICLASS_PREREQS    // prérequis de carac. pour multiclassage
 LU_MULTICLASS_SKILL_POOL // pool de compétences disponibles par multiclassage

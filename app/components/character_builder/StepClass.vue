@@ -143,23 +143,26 @@
         </div>
       </div>
 
-      <!-- Style de combat -->
-      <template v-if="fightingStyleOptions">
+      <!-- Style de combat (options + niveau lus dans le catalogue, F2 tranche 4) -->
+      <template v-if="needsFightingStyle && fightingStyleOptions.length">
         <USeparator class="my-6" />
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Style de combat</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+            Style de combat<span v-if="fightingStyleLevel"> — niveau {{ fightingStyleLevel }}</span>
+          </p>
           <div class="flex flex-col gap-2">
             <button
               v-for="style in fightingStyleOptions"
-              :key="style"
+              :key="style.id"
               type="button"
               class="text-left rounded-lg border px-3 py-2.5 transition-colors cursor-pointer"
-              :class="state.fightingStyle === style
+              :class="state.fightingStyle === style.name
                 ? 'border-amber-500 bg-amber-500/10 text-amber-400'
                 : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-amber-500/40'"
+              @click="state.fightingStyle = style.name"
             >
-              <div class="font-bold text-sm mb-0.5" @click="state.fightingStyle = style">{{ style }}</div>
-              <div class="text-xs text-muted" @click="state.fightingStyle = style">{{ FIGHTING_STYLE_DESCRIPTIONS[style] }}</div>
+              <div class="font-bold text-sm mb-0.5">{{ style.name }}</div>
+              <div class="text-xs text-muted">{{ style.description }}</div>
             </button>
           </div>
         </div>
@@ -337,11 +340,7 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  FIGHTING_STYLES,
-  FIGHTING_STYLE_DESCRIPTIONS,
-  type AbilityKey,
-} from '~/data/character-builder'
+import { type AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
 
 const PACT_BOON_OPTIONS = [
@@ -358,6 +357,8 @@ const {
   needsSubclass,
   subclassLevel,
   subclassOptions,
+  needsFightingStyle,
+  fightingStyleLevel,
   needsPactBoon,
   needsInvocations,
   invocationsExpected,
@@ -387,8 +388,13 @@ const knownSpellNames = computed(() => {
   return (allSpells.value ?? []).filter(s => ids.has(s.id)).map(s => s.name)
 })
 
+// Options de style de combat lues dans le catalogue (F2 tranche 4) au lieu du blob.
+const { data: fightingStyleData } = useFetch(
+  () => classData.value ? `/api/catalog/classes/${encodeURIComponent(classData.value.dbName)}/fighting-styles` : '',
+  { watch: [classData], default: () => [] },
+)
 const fightingStyleOptions = computed(() =>
-  state.value.classId ? FIGHTING_STYLES[state.value.classId] ?? null : null,
+  (fightingStyleData.value ?? []) as Array<{ id: number, name: string, description: string | null }>,
 )
 
 const availableSkills = computed(() => {
