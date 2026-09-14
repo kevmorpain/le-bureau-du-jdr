@@ -18,9 +18,10 @@
 >
 > État : 2026-09-14. Dernier commit couvert : `1203446`.
 >
-> **Journal** : une entrée corrigée après relecture du code (R3, épuisement — largement implémenté,
-> contrairement à ce que disait la première version). Les entrées rectifiées gardent la mention
-> inline plutôt que d'être réécrites en silence.
+> **Journal des corrections** — trois entrées rectifiées après relecture du code, mention gardée
+> inline plutôt que réécrite en silence : **R3** (épuisement, largement implémenté), **U2**
+> (le tiroir de détail d'un sort existe bien), **U8** (les sorts ont déjà 4 filtres).
+> **U1** (mobile) est **écarté par décision de l'auteur**, pas résolu.
 
 ---
 
@@ -35,7 +36,8 @@
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S6 | Rituel, limite de préparation, zone d'effet |
 | [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P5 | Choix jamais proposés |
 | [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 118 sorts sur ~360, dons, objets magiques |
-| [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U9 | Mobile, texte des sorts, historique de jets |
+| [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U10 | Lecture des sorts, montée en puissance, historique de jets |
+| [N — Contrôle manuel & préférences](#n--contrôle-manuel--préférences) | N1–N6 | L'app décide tout, le joueur ne peut rien reprendre |
 | [X — Surface produit](#x--surface-produit) | X1–X7 | XP, partage, export, EN, groupe |
 
 ---
@@ -211,20 +213,49 @@ présentation/interaction.
 
 | # | Manque | Détail | Effort |
 |---|---|---|---|
-| **U1** | **Aucune mise en page mobile** | `.dashboard-grid` est figé à `240px 1fr 240px`, avec **un seul** point de rupture (`≤1200px` → `200px 1fr 200px`). Rien en dessous : à 390 px de large, les trois colonnes sont écrasées. Et **aucune** classe responsive (`sm:`/`md:`/`lg:`) dans les pages `characters/index`, `spells/index`, `characters/new`. Or l'app **est** une PWA (`@vite-pwa/nuxt`, manifeste configuré) et `context.md` documente déjà son comportement en mode standalone → l'usage « téléphone posé à côté du dé » est un scénario **prévu mais pas servi** | 🟠 |
-| **U2** | **Le texte d'un sort est illisible depuis la fiche** | `CharacterSpellRow.vue` affiche nom, temps d'incantation, portée, durée, DD, concentration, rituel, composantes et dégâts — **jamais `spell.description`**, et aucun accordéon pour l'ouvrir. `SpellCard.vue` (page `/spells`) le fait, lui. En plein combat, il faut quitter la fiche pour relire son propre sort | 🟢 |
+| **U1** | ~~**Aucune mise en page mobile**~~ | 🚫 **ÉCARTÉ — décision (2026-09-14)**. Le constat technique tient (`.dashboard-grid` figé à `240px 1fr 240px`, un seul point de rupture à 1200 px, aucune classe responsive dans les pages ; l'app est pourtant une PWA). **Écarté volontairement** : la fiche est trop dense pour être réagencée sans un vrai travail d'UX, que l'auteur ne souhaite pas porter. À ne pas re-proposer sans qu'une décision de design précède. | — |
+| **U2** | **Lire un sort demande d'ouvrir un tiroir, et son texte n'est pas structuré** | *(Corrigé — la version précédente disait « illisible depuis la fiche », c'était faux : cliquer la ligne appelle `openSpellDetail()` qui ouvre un `USlideover` rendant `SpellCard`, description comprise.)* Restent trois manques, tous demandés explicitement : **(a)** aucun **accordéon** sur la ligne — il faut le tiroir modal pour la moindre relecture ; **(b)** les effets sont **noyés dans le texte** : `SpellCard` rend bien `HealSection`/`DamageSection` au-dessus, mais rien pour le DD, le type d'attaque, la zone, les composantes coûteuses ni la concentration, qui restent à chercher dans la prose ; **(c)** aucun **encart de montée en puissance** (cf. U10, le cas est plus grave qu'un simple manque d'affichage) | 🟢 |
 | **U3** | **Effets d'objet rendus en JSON brut** | `InventorySection.vue:199` affiche `{{ eff.type }} : {{ JSON.stringify(eff.value) }}` dans le détail d'un objet — le joueur lit `extra_damage : {"die_count_notation":"1d6"…}`. Un `magicEffectLabel()` existe **dans le même fichier** (utilisé pour les badges) mais n'est pas appelé ici ; et lui-même retombe sur `effect.type` (clé machine nue) pour tout ce qu'il ne connaît pas — donc les 10 effets de la famille E s'afficheraient en brut | 🟢 |
 | **U4** | **Aucun historique de jets** | Les toasts vivent 4,5 s, plafonnés à 5 (`useDiceRoller`). Pas de journal, pas de « relancer », pas de copier. Un jet qu'on n'a pas lu à temps est définitivement perdu — et il n'y a rien à montrer au MJ | 🟢 |
 | **U5** | **L'initiative n'est conservée nulle part** | `toggleCombat` lance `roll('Initiative', …)` → un toast qui s'efface. La valeur n'est ni stockée ni réaffichée, et le Mode Combat n'a ni ordre de tour, ni compteur de round | 🟢 |
 | **U6** | **Pas de suivi de durée** | Ni les conditions (`StatusSection`) ni les sorts actifs n'ont de compteur de tours/minutes. « Bénédiction pendant 1 minute » se suit de tête. Jumeau UI de S6 | 🟠 |
 | **U7** | **Pas de confirmation sur les actions destructrices de la fiche** | Le **repos long** (réinitialise emplacements, PV, dés de vie) et la **suppression d'objet** partent au premier clic, sans confirmation ni annulation. Seule la suppression de *personnage* en a une (`characters/index.vue`). Combiné à U4 (aucun historique), un clic de travers est irrécupérable | 🟢 |
-| **U8** | **Ni recherche ni tri dans l'inventaire et les sorts** | Inventaire = 4 onglets par `itemType`, sans recherche texte ni tri. Sorts = groupés par niveau + 2 filtres booléens (« préparés » / « disponibles »), sans recherche. Tenable au niveau 3, pénible au niveau 12 | 🟢 |
+| **U8** | **Pas de recherche texte** | *(Corrigé — je sous-estimais les sorts : `MagicSection` filtre déjà par **préparés**, **type d'action**, **composantes V/S/M** et **niveau**.)* Ce qui manque vraiment : la **recherche par nom**, absente des sorts comme de l'inventaire. Et l'inventaire, lui, n'a que 4 onglets par `itemType` — ni filtre, ni tri | 🟢 |
+| **U10** | **Les dégâts affichés ne montent JAMAIS en puissance** | Plus qu'un manque d'encart : `DamageSection.vue:76` et `HealSection.vue:33` font `const slotLevel = ref(props.spell.level)` — initialisé au niveau **de base** du sort et **jamais modifié** (aucun prop, aucune injection, aucun contrôle). La table `damage_at_slot_level` est donc en base, mais **seule sa première ligne est lue**. Un Projectile magique lancé en emplacement 5 **affiche** 3d4+3. ⚠️ Le **jet**, lui, est correct (`CastSpellModal` choisit le niveau et `rollSpellEffect(spell, slotLevel)` l'applique) → **l'affiché et le jeté divergent**, ce qui est pire qu'un affichage manquant. L'encart demandé (« ce que le niveau supérieur implique ») consiste à rendre cette table, déjà présente en JSON | 🟢 |
 | **U9** | **État mort en localStorage** | `useCharacterClasses` crée `useStorage(storageKey('armorClass'), 10)` — mais **tous** les consommateurs lisent en réalité `computedAC` (remappé par `useCharacterSheet`). Une clé localStorage est écrite par personnage pour rien. Hygiène, pas fonctionnel | 🟢 |
 
 **Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
 *à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),
 R2 (le critique ne colore qu'un toast), R6 (les jets de mort ne suivent pas l'appareil),
 R7 (l'économie d'action du Mode Combat est purement manuelle).
+
+---
+
+## N — Contrôle manuel & préférences
+
+Famille née de deux demandes de l'auteur (désactiver les jets de dés ; activer la concentration
+sans lancer de sort). Elles ont la **même racine** : l'app suppose partout qu'elle pilote, et
+n'offre aucune porte de sortie quand le joueur veut faire autrement ou quand le modèle ne sait pas
+exprimer sa situation.
+
+**Constat de fond : il n'existe aucune couche de préférences.** Ni table, ni colonne, ni composable.
+`useStorage` sert à de l'état de jeu (conditions, jets de mort, sections repliées), jamais à un
+réglage. Toute entrée ci-dessous suppose de trancher d'abord **où vit une préférence** — cf. N6.
+
+| # | Manque | Détail | Effort |
+|---|---|---|---|
+| **N1** | **Désactiver les jets de dés** *(demandé)* | Un joueur qui lance ses vrais dés n'a pas besoin des boutons ni des toasts — il lui faut le **modificateur**, qui est déjà affiché à côté (« Attaque +7 »). Un réglage « pas de jets » masquerait boutons et `DiceRollerSection` sans rien casser. C'est l'entrée la moins chère de tout ce document | 🟢 |
+| **N2** | **Saisir soi-même le résultat d'un jet** | Corollaire indispensable de N1 : sans lui, « je lance mes dés » devient « la fiche ne sait plus rien ». Les jets qui **écrivent un état** doivent accepter une saisie — dés de vie (le soin s'applique aux PV), jets de mort (succès/échecs), charges d'objet. Le pattern existe déjà : `HitPointsSection` fait saisir les dégâts à la main, type et résistance compris | 🟠 |
+| **N3** | **Concentration libre** *(demandé)* | `ConcentrationSection` est en `v-if="isConcentrating"` : invisible tant qu'on ne concentre pas → **aucun moyen de la déclencher** hors du lancement d'un sort. ⚠️ **Piège de schéma** : `character_sheets.concentrating_spell_id` est une **FK vers `spells`** et `setConcentration(spellId)` n'accepte qu'un id — se concentrer sur un effet de monstre, un sort non seedé (D1 : 118 sorts sur ~360) ou du homebrew est **inexprimable**. Il faut un libellé libre nullable à côté de la FK, pas seulement un bouton | 🟠 |
+| **N4** | **Surcharges manuelles des valeurs dérivées** | **La soupape qui manque à E11.** Le modèle d'effets ne sait pas exprimer « +1 CA » (Anneau de protection) ni un bonus aux JS, et ne le saura pas avant un chantier 🟠. En attendant, **rien** ne permet de corriger à la main : `computedAC` est entièrement dérivé. Or le pattern existe déjà deux fois — `character_proficiency_overrides` (grant/revoke manuel sur une maîtrise dérivée) et l'« Édition directe » des PV. Le généraliser à **CA, vitesse, initiative, DD de sort** débloque aujourd'hui tout ce que le modèle ne sait pas dire, pour un coût dérisoire | 🟠 |
+| **N5** | **Encart d'effet mécanique sur les capacités** | Même problème que U2b, un cran plus loin : les descriptions de features sont des **pavés** (cf. Rage : 7 lignes dont 3 mécaniques). Rien ne met en avant « ce que ça change ». À traiter avec U2b pour ne concevoir le bloc qu'une fois | 🟠 |
+| **N6** | **Où vit une préférence ?** *(décision, pas une feature)* | localStorage = par appareil (un réglage « pas de dés » ne suivrait pas le joueur) ; colonne sur `users` = suit le compte ; colonne sur `character_sheets` = par personnage (défendable : un perso « théâtre de l'esprit », un autre non). **À trancher avant N1**, sinon chaque réglage suivant re-pose la question | 🔴 (décision) |
+
+> **Bonne nouvelle pour U2b / U10 / N5** : aucun de ces encarts n'est un problème de *design*. Les
+> données structurées existent déjà (`spell.damages`, `spell.heal`, `spell.dc`,
+> `spell.concentration`, `spell.multiAttack`, `damage_at_slot_level`) — l'encart est le **rendu
+> d'un JSON déjà en base**, pas un système visuel à inventer. Sa complétude est en revanche
+> **plafonnée par S3** (pas de zone d'effet) et **S4** (type d'attaque seulement déduit).
 
 ---
 
@@ -258,10 +289,13 @@ R7 (l'économie d'action du Mode Combat est purement manuelle).
 5. **Respecter le North Star** (`consolidation-2014.md`) : aucune règle spécifique à une classe
    dans le code. Toute entrée C ci-dessus se traduit d'abord par « quel effet manque à l'union »,
    puis par du seed — jamais par un `if (className === 'Barbare')`.
-6. **U1 (mobile) est le seul manque qui touche *tous* les autres.** Une fiche de JDR se consulte
-   à la table, et l'app est déjà empaquetée en PWA — mais la grille trois colonnes n'a aucun point
-   de rupture sous 1200 px. C'est aussi le seul chantier de cette liste qui ne demande aucune
-   décision de règles.
-7. **O1 (harmonisation non gardée) est un one-liner** : un filtre sur `attuned` dans
+6. **U10 est le seul écart où l'affiché contredit le jeté.** Partout ailleurs la fiche est
+   incomplète ; là, elle affiche 3d4+3 pendant que le bouton roule 5d4+5. À traiter comme un bug.
+7. **N1 + N4 sont le meilleur rapport valeur/effort du document.** Désactiver les jets coûte un
+   `v-if`, et les surcharges manuelles débloquent *aujourd'hui* tout ce que le modèle d'effets ne
+   sait pas exprimer (E11) — sans attendre le chantier qui le lui apprendra. Ni l'un ni l'autre ne
+   demande de décision de règles ni de travail de design.
+8. **Le mobile (U1) est écarté par décision** — pas oublié. Ne pas le re-proposer.
+9. **O1 (harmonisation non gardée) est un one-liner** : un filtre sur `attuned` dans
    `inventoryEffects`. À faire dès qu'un objet magique exigeant l'harmonisation est seedé, sinon
    la règle est silencieusement contournée.
