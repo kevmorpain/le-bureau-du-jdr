@@ -17,6 +17,10 @@
 > fiche + tests) · 🔴 structurant (schéma, migration, nouveau modèle).
 >
 > État : 2026-09-14. Dernier commit couvert : `1203446`.
+>
+> **Journal** : une entrée corrigée après relecture du code (R3, épuisement — largement implémenté,
+> contrairement à ce que disait la première version). Les entrées rectifiées gardent la mention
+> inline plutôt que d'être réécrites en silence.
 
 ---
 
@@ -26,11 +30,12 @@
 |---|---|---|
 | [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E10 | La donnée est seedée, le type existe, **personne ne la lit** |
 | [C — Capacités de classe sans mécanique](#c--capacités-de-classe-sans-mécanique) | C1–C9 | ~340 features n'ont qu'une `description` |
-| [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, épuisement, encombrement… |
+| [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, concentration, encombrement… |
 | [O — Objets & inventaire](#o--objets--inventaire) | O1–O6 | Harmonisation non gardée, pas de poids ni de prix |
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S6 | Rituel, limite de préparation, zone d'effet |
 | [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P5 | Choix jamais proposés |
 | [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 118 sorts sur ~360, dons, objets magiques |
+| [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U9 | Mobile, texte des sorts, historique de jets |
 | [X — Surface produit](#x--surface-produit) | X1–X7 | XP, partage, export, EN, groupe |
 
 ---
@@ -122,12 +127,12 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 |---|---|---|---|---|
 | **R1** | **Avantage / désavantage** | ❌ | `useDiceRoller.roll()` jette **toujours un seul d20**. La fiche *détecte* et *affiche* correctement les sources de désavantage (conditions, armure non maîtrisée, arme lourde + Petite taille, discrétion) — mais le bouton de jet les ignore. Le plus gros écart perçu entre l'affichage et le jet | 🟢 |
 | **R2** | **Coup critique** | ❌ (cosmétique) | `isCrit` ne sert qu'à **colorer le toast**. Pas de doublement des dés de dégâts, pas de plage de crit élargie (Champion 19–20 / 18–20), pas de crit auto contre une cible paralysée | 🟢 |
-| **R3** | **Épuisement** | ⚠️ affichage seul | `exhaustionLevel` est persisté et les 6 paliers sont listés en tooltip (`exhaustionImpactLines`), mais **aucun** n'est appliqué : ni désavantage (niv. 1/3), ni vitesse ÷2 (niv. 2), ni PV max ÷2 (niv. 4), ni vitesse 0 (niv. 5). Et le **repos long ne le réduit pas de 1** | 🟠 |
+| **R3** | **Épuisement** | ✅ **largement fait** | *(Corrigé après vérification — cette ligne disait initialement « rien n'est appliqué », c'était faux.)* `useCharacterConditions` applique bien les 5 premiers paliers : niv. 1 désavantage aux jets de carac. (`skillDisadvantageReasons`), niv. 2 vitesse ÷2 et niv. 5 vitesse 0 (`effectiveSpeed`), niv. 3 désavantage aux JS (`saveStatuses`), niv. 4 PV max ÷2 (`effectiveMaxHp`, consommé par `HitPointsSection`). **Restent** : le niv. 6 (mort) et la **réduction de 1 au repos long**. Les paliers « désavantage » sont *signalés* mais pas appliqués au jet — c'est R1, pas un trou propre | 🟢 (le résidu) |
 | **R4** | **Concentration** | ⚠️ partielle | `concentratingSpellId` est persisté ✅. Manquent : le **JS de Constitution** quand on subit des dégâts (DD = max(10, dégâts/2)), la rupture **automatique** en lançant un 2ᵉ sort à concentration, et la rupture à 0 PV | 🟠 |
 | **R5** | **Encombrement / capacité de charge** | ❌ | `items` n'a **aucune colonne `weight`**. Ni charge portée, ni capacité (FOR×7,5 kg), ni seuils encombré / lourdement encombré | 🔴 |
 | **R6** | **Jets de mort** | ⚠️ | État en **localStorage** (perdu entre appareils, non synchronisé — contrairement aux PV et à la concentration). Le jet n'applique pas le **20 naturel = 1 PV** ni le **1 naturel = 2 échecs**. Pas de stabilisation, pas de mort instantanée par dégâts massifs | 🟢 → 🟠 |
 | **R7** | **Économie d'action** | ⚠️ décorative | Les toggles Action / Bonus / Réaction du Mode Combat sont **purement manuels** : rien ne consomme automatiquement une action quand on lance un sort ou attaque, et l'`actionType` des features (déjà seedé) ne gate rien | 🟢 |
-| **R8** | **Repos** | ⚠️ trous | Le repos long ne remet **pas** les PV temporaires à 0, ne réinitialise pas les jets de mort, ne réduit pas l'épuisement (R3). La **recharge partielle** des objets (`items.rechargeDice`, ex. « 1d6+4 charges à l'aube ») est lue par `characterRest` puis **explicitement exclue** — seule la recharge complète marche. Pas de règle « 1 repos long / 24 h » | 🟠 |
+| **R8** | **Repos** | ⚠️ trous | Le repos long ne remet **pas** les PV temporaires à 0, ne réinitialise pas les jets de mort, ne réduit pas l'épuisement de 1 (R3). La **recharge partielle** des objets (`items.rechargeDice`, ex. « 1d6+4 charges à l'aube ») est lue par `characterRest` puis **explicitement exclue** — seule la recharge complète marche. Pas de règle « 1 repos long / 24 h » | 🟠 |
 | **R9** | **Prérequis de multiclassage** | ❌ | Aucune vérification des scores minimaux (FOR/DEX/CHA 13…) au level-up multiclasse, et les **maîtrises réduites** du multiclassage (on ne reçoit pas les maîtrises de départ complètes) ne sont pas appliquées | 🟠 |
 | **R10** | **Prérequis d'armure lourde (FOR)** | ❌ | `ArmorProperties.strength_requirement` existe dans le schéma **et** dans le Zod — **zéro lecteur**. Porter une cotte de mailles avec FOR 12 ne déclenche aucun avertissement de vitesse −3 m | 🟢 |
 
@@ -191,6 +196,38 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 
 ---
 
+## U — Interface de la fiche
+
+Trouvailles de la relecture des 38 composants de `app/components/character_sheet/`. Contrairement
+aux familles précédentes, rien ici ne dépend du moteur de règles : ce sont des manques de la couche
+présentation/interaction.
+
+> **Ce qui va bien, pour cadrer** : les jets sont largement couverts (carac., compétences, JS,
+> armes, sorts, dés de vie, jets de mort, charges d'objets), les dégâts appliquent le type et la
+> résistance, les descriptions de capacités sont rendues en `whitespace-pre-line`, l'accessibilité
+> de base tient (39 vrais `<button>`, les deux seuls `<div @click>` sont des gardes d'événement),
+> et le hors-ligne est traité sérieusement (file de mutations, snapshot local, modale de conflit).
+> Les entrées ci-dessous sont les creux dans ce tableau, pas un procès général.
+
+| # | Manque | Détail | Effort |
+|---|---|---|---|
+| **U1** | **Aucune mise en page mobile** | `.dashboard-grid` est figé à `240px 1fr 240px`, avec **un seul** point de rupture (`≤1200px` → `200px 1fr 200px`). Rien en dessous : à 390 px de large, les trois colonnes sont écrasées. Et **aucune** classe responsive (`sm:`/`md:`/`lg:`) dans les pages `characters/index`, `spells/index`, `characters/new`. Or l'app **est** une PWA (`@vite-pwa/nuxt`, manifeste configuré) et `context.md` documente déjà son comportement en mode standalone → l'usage « téléphone posé à côté du dé » est un scénario **prévu mais pas servi** | 🟠 |
+| **U2** | **Le texte d'un sort est illisible depuis la fiche** | `CharacterSpellRow.vue` affiche nom, temps d'incantation, portée, durée, DD, concentration, rituel, composantes et dégâts — **jamais `spell.description`**, et aucun accordéon pour l'ouvrir. `SpellCard.vue` (page `/spells`) le fait, lui. En plein combat, il faut quitter la fiche pour relire son propre sort | 🟢 |
+| **U3** | **Effets d'objet rendus en JSON brut** | `InventorySection.vue:199` affiche `{{ eff.type }} : {{ JSON.stringify(eff.value) }}` dans le détail d'un objet — le joueur lit `extra_damage : {"die_count_notation":"1d6"…}`. Un `magicEffectLabel()` existe **dans le même fichier** (utilisé pour les badges) mais n'est pas appelé ici ; et lui-même retombe sur `effect.type` (clé machine nue) pour tout ce qu'il ne connaît pas — donc les 10 effets de la famille E s'afficheraient en brut | 🟢 |
+| **U4** | **Aucun historique de jets** | Les toasts vivent 4,5 s, plafonnés à 5 (`useDiceRoller`). Pas de journal, pas de « relancer », pas de copier. Un jet qu'on n'a pas lu à temps est définitivement perdu — et il n'y a rien à montrer au MJ | 🟢 |
+| **U5** | **L'initiative n'est conservée nulle part** | `toggleCombat` lance `roll('Initiative', …)` → un toast qui s'efface. La valeur n'est ni stockée ni réaffichée, et le Mode Combat n'a ni ordre de tour, ni compteur de round | 🟢 |
+| **U6** | **Pas de suivi de durée** | Ni les conditions (`StatusSection`) ni les sorts actifs n'ont de compteur de tours/minutes. « Bénédiction pendant 1 minute » se suit de tête. Jumeau UI de S6 | 🟠 |
+| **U7** | **Pas de confirmation sur les actions destructrices de la fiche** | Le **repos long** (réinitialise emplacements, PV, dés de vie) et la **suppression d'objet** partent au premier clic, sans confirmation ni annulation. Seule la suppression de *personnage* en a une (`characters/index.vue`). Combiné à U4 (aucun historique), un clic de travers est irrécupérable | 🟢 |
+| **U8** | **Ni recherche ni tri dans l'inventaire et les sorts** | Inventaire = 4 onglets par `itemType`, sans recherche texte ni tri. Sorts = groupés par niveau + 2 filtres booléens (« préparés » / « disponibles »), sans recherche. Tenable au niveau 3, pénible au niveau 12 | 🟢 |
+| **U9** | **État mort en localStorage** | `useCharacterClasses` crée `useStorage(storageKey('armorClass'), 10)` — mais **tous** les consommateurs lisent en réalité `computedAC` (remappé par `useCharacterSheet`). Une clé localStorage est écrite par personnage pour rien. Hygiène, pas fonctionnel | 🟢 |
+
+**Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
+*à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),
+R2 (le critique ne colore qu'un toast), R6 (les jets de mort ne suivent pas l'appareil),
+R7 (l'économie d'action du Mode Combat est purement manuelle).
+
+---
+
 ## X — Surface produit
 
 | # | Fonctionnalité | Détail |
@@ -221,6 +258,10 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 5. **Respecter le North Star** (`consolidation-2014.md`) : aucune règle spécifique à une classe
    dans le code. Toute entrée C ci-dessus se traduit d'abord par « quel effet manque à l'union »,
    puis par du seed — jamais par un `if (className === 'Barbare')`.
-6. **O1 (harmonisation non gardée) est un one-liner** : un filtre sur `attuned` dans
+6. **U1 (mobile) est le seul manque qui touche *tous* les autres.** Une fiche de JDR se consulte
+   à la table, et l'app est déjà empaquetée en PWA — mais la grille trois colonnes n'a aucun point
+   de rupture sous 1200 px. C'est aussi le seul chantier de cette liste qui ne demande aucune
+   décision de règles.
+7. **O1 (harmonisation non gardée) est un one-liner** : un filtre sur `attuned` dans
    `inventoryEffects`. À faire dès qu'un objet magique exigeant l'harmonisation est seedé, sinon
    la règle est silencieusement contournée.
