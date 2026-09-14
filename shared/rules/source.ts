@@ -13,14 +13,14 @@ import { z } from 'zod'
  *   l'existant. ⚠️ Conséquence assumée : quelques entrées non-SRD déjà en base avant ce
  *   discriminant (Magie sauvage, Piqûre mentale, Ennemis à foison…) restent `'core'` ;
  *   le gating cible le contenu d'extension AJOUTÉ ensuite, pas un audit SRD rétroactif.
- * - `'tasha'`, `'xanathar'`, `'fizban'`, `'wbtw'` — livres d'extension : GATÉS par défaut.
+ * - `'tasha'`, `'xanathar'`, `'fizban'`, `'wbtw'`, `'strixhaven'` — livres d'extension : GATÉS par défaut.
  * - `'homebrew'` — contenu maison : GATÉ par défaut.
  *
  * Comme `ruleset`, cette const n'en porte que l'ensemble des valeurs légales, dont le type
  * et le Zod dérivent (même pattern que [[shared/rules/ruleset.ts]]). Node-safe : aucun
  * import de valeur `~~`/`hub:db`.
  */
-export const SOURCES = ['core', 'tasha', 'xanathar', 'fizban', 'wbtw', 'homebrew'] as const
+export const SOURCES = ['core', 'tasha', 'xanathar', 'fizban', 'wbtw', 'strixhaven', 'homebrew'] as const
 
 /** Union dérivée. Valeur de la colonne `source`. */
 export type Source = (typeof SOURCES)[number]

@@ -148,4 +148,9 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Boule de feu', classNames: ['Ensorceleur', 'Magicien'] },
   { spellName: 'Éclair de chaos', classNames: ['Ensorceleur'] },
   { spellName: 'Espièglerie de nathair', classNames: ['Ensorceleur', 'Magicien'] },
+  // Sorts éligibles aux dons Faveur des fées / Télépathe / Frappé par l'ombre (2026-09).
+  { spellName: 'Murmures dissonants', classNames: ['Barde'] },
+  { spellName: 'Détection des pensées', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
+  { spellName: 'Invisibilité', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
+  { spellName: 'Barbes argentées', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
 ]
