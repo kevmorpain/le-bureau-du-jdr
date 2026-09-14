@@ -43,6 +43,11 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-12-27',
 
+  // Sourcemaps serveur (activées par défaut en prod) : jamais uploadées sur le Worker (pas de
+  // `upload_source_maps`), mais leur génération au bundling Nitro fait dépasser le tas Node
+  // par défaut (~2 Go) de Cloudflare Workers Builds → OOM. Le script `build` relève aussi le tas.
+  sourcemap: { server: false, client: false },
+
   // Cache edge du catalogue (lot 6a). Le catalogue est STATIQUE (un seul `ruleset` en Phase 1 ;
   // le discriminant = Phase 2) et ne change qu'à un (re)seed → TTL long + `swr` (sert la version
   // en cache immédiatement puis revalide en arrière-plan). `cache` wrappe les handlers en cached

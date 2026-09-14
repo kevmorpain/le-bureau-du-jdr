@@ -219,10 +219,18 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       viennent du seed des classes → geste prod `?only=guerrier,paladin,rodeur` (idempotent, après déploiement).
       ⚠️ **Résidu remonté** : le 2e style du **Champion niv 10** (« Style de combat supplémentaire », progression
       possédée par la sous-classe) N'EST PAS câblé — chantier séparé (owner `ownerSubclassId`, cas unique).
-    - **Tranche 3 (APPLICATION DES EFFETS) : à faire.** `computedAC` (+1 Défense si armure) et
-      `equippedWeaponStats` (Archerie +2 attaque à distance, Duel +2 dégâts à une main, Combat à deux armes =
-      mod aux dégâts de la main secondaire) consomment `fighting_style_modifier` via `allEffects`.
-      `great_weapon` (relance de dés) / `protection` (réaction) = rendus en texte, non auto-appliqués.
+    - **Tranche 3 (APPLICATION DES EFFETS) : ✅ FAIT.** Le style choisi (feature `fighting_style`
+      matérialisée) porte un effet `fighting_style_modifier` qui remonte à `allEffects` (via
+      character_features → resolvedFeatures → classFeatureEffects → baseAllEffects, chemin des
+      invocations). `useCharacterInventory` l'applique : **Défense** +1 CA (armé), **Archerie** +2
+      attaque à distance, **Duel** +2 dégâts (mêlée à une main, sans autre arme), **Combat à deux
+      armes** (mod de carac. aux dégâts de la main secondaire). Logique arithmétique extraite en
+      module PUR `shared/rules/fightingStyleEffects.ts` (testé : `test/unit/fightingStyleEffects.test.ts`).
+      `great_weapon` (relance de dés) / `protection` (réaction) = non statiques → rendus par la
+      description de la feature (qui s'affiche sur la fiche, label « Style de combat »).
+      Baseline typecheck (63/10) préservée. **✅ Vérifié visuellement** sur le dev (fiche rendue) :
+      Guerrier « Défense » + armure de cuir → CA **14** (11 + DEX +2 + Défense +1) ; Guerrier
+      « Archerie » + arc long → Attaque **+6** (DEX +2, maîtrise +2, Archerie +2), dégâts 1d8+2 inchangés.
     - **Tranche 4 (FRONT) : à faire.** builder + level-up lisent niveau/options du catalogue (miroir sous-classe) ;
       retrait de `FIGHTING_STYLES`/`FIGHTING_STYLE_DESCRIPTIONS`/`LU_FIGHTING_STYLE_LEVELS` du blob + du
       `fightingStyle` collecté-puis-perdu ; Rôdeur affiche alors Duel. Puis expertise/ASI (déjà persistés).

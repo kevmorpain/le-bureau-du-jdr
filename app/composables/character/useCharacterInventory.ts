@@ -1,5 +1,6 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import { hasHeavyWeaponDisadvantage } from '~~/shared/rules/creatureSize'
+import { archeryAttackBonus, defenseAcBonus, duelingDamageBonus, twoWeaponOffhandUsesAbilityMod } from '~~/shared/rules/fightingStyleEffects'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -204,6 +205,20 @@ export const useCharacterInventory = (
     )
   }
 
+  // ─── Style de combat (F2 tranche 3) ───────────────────────────────────────
+  // Le style CHOISI est matérialisé (character_features) et porte un effet
+  // `fighting_style_modifier` déjà agrégé dans `allEffects`. On applique ici les bonus statiques :
+  // Défense (+1 CA armé), Archerie (+2 attaque à distance), Duel (+2 dégâts à une main sans autre
+  // arme), Combat à deux armes (mod aux dégâts de la main secondaire). Grande arme (relance de dés)
+  // et Protection (réaction) ne sont pas des bonus statiques → rendus par la description de la feature.
+  const fightingStyleKinds = computed<Set<string>>(() => {
+    const kinds = new Set<string>()
+    for (const e of deps?.allEffects.value ?? []) {
+      if (e.type === 'fighting_style_modifier') kinds.add((e.value as { kind: string }).kind)
+    }
+    return kinds
+  })
+
   // ─── Armor class ──────────────────────────────────────────────────────────
 
   const computedAC = computed<ArmorClassBreakdown>(() => {
@@ -238,13 +253,17 @@ export const useCharacterInventory = (
 
     acFromArmor += dexContrib
 
-    const total = acFromArmor + shieldBonus
+    // Style de combat Défense : +1 CA tant qu'une armure est portée (branche « armure équipée »).
+    const defenseBonus = defenseAcBonus(fightingStyleKinds.value, true)
+
+    const total = acFromArmor + shieldBonus + defenseBonus
     const shieldDetail = shieldBonus ? ` + bouclier +${shieldBonus}` : ''
     const magicDetail = magicAC > 0 ? ` +${magicAC}` : ''
+    const defenseDetail = defenseBonus ? ' + Défense +1' : ''
 
     return {
       total,
-      detail: `${armor.item!.name} ${props.base_ac}${magicDetail}${dexDetail}${shieldDetail}`,
+      detail: `${armor.item!.name} ${props.base_ac}${magicDetail}${dexDetail}${shieldDetail}${defenseDetail}`,
       armorName: armor.item!.name,
       hasShield: !!equippedShield.value,
     }
@@ -307,10 +326,21 @@ export const useCharacterInventory = (
           ? Math.max(strMod, dexMod)
           : isRanged ? dexMod : strMod
 
-        const attackBonus = abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0)
-        const damageBonus = abilityMod + (entry.magicBonus ?? 0)
-        // Dégâts main secondaire : pas de modificateur sauf s'il est négatif (règle PHB)
-        const offhandMod = abilityMod < 0 ? abilityMod : 0
+        // Styles de combat (F2 tranche 3) — bonus statiques selon le type d'arme (helpers purs).
+        const styles = fightingStyleKinds.value
+        const archeryBonus = archeryAttackBonus(styles, isRanged)
+        const duelingBonus = duelingDamageBonus(styles, {
+          isMelee: !isRanged,
+          isTwoHanded,
+          usingTwoHanded: entry.usingTwoHanded ?? false,
+          equippedWeaponCount: equippedWeapons.value.length,
+        })
+
+        const attackBonus = abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0) + archeryBonus
+        const damageBonus = abilityMod + (entry.magicBonus ?? 0) + duelingBonus
+        // Dégâts main secondaire : normalement sans modificateur (sauf négatif, règle PHB) ; le
+        // style Combat à deux armes ajoute le modificateur de caractéristique.
+        const offhandMod = twoWeaponOffhandUsesAbilityMod(styles) ? abilityMod : (abilityMod < 0 ? abilityMod : 0)
         const damageBonusOffhand = offhandMod + (entry.magicBonus ?? 0)
 
         const damageDice = isVersatile && entry.usingTwoHanded
