@@ -71,7 +71,7 @@ Maîtrises d'armes, d'armures, de langues et d'outils.
 ### Statistiques (`QuickStatsSection`)
 
 Bandeau horizontal compact avec 6 StatCards :
-- **CA** : computed depuis armure équipée + modificateur DEX + bouclier + effets magiques (tooltip avec détail)
+- **CA** : computed depuis armure équipée + modificateur DEX + bouclier + `magicBonus` de l'armure/du bouclier (tooltip avec détail). ⚠️ *Aucun effet de l'union `Effect` n'alimente la CA* — il n'existe pas de type d'effet « bonus de CA » (cf. [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md#e11--types-deffet-absents-de-lunion-objets-magiques-classiques-non-modélisables))
 - **Initiative** : modificateur DEX ± effets (clic → lancer le dé)
 - **Vitesse** : espèce + conditions (entrave, paralysie…) en mètres (tooltip en cases)
 - **Perception passive** : 10 + modificateur Perception
@@ -139,7 +139,7 @@ Liste tous les objets du personnage avec quantité, état équipé, bonus magiqu
 **Équiper/déséquiper :** `PUT /api/character_sheets/{id}/inventory/{entryId}`
 **Supprimer :** `DELETE /api/character_sheets/{id}/inventory/{entryId}`
 
-Les effets magiques des objets équipés (`character_inventory.magicEffects`) sont injectés dans `allEffects` et peuvent modifier CA, résistances, vitesse, etc.
+Les effets des objets **équipés** (`item_effects` → `effects`, exposés par le GET inventaire) sont injectés dans `allEffects` et peuvent modifier résistances, vitesse, DD/attaque de sort, etc. ⚠️ **Pas la CA** (cf. ci-dessus), et le filtre ne regarde que `equipped` — **pas `attuned`** (cf. `fonctionnalites-manquantes.md` O1).
 
 ### Identité (`IdentitySection`)
 

@@ -9,6 +9,10 @@
 > niveau, level-up multi-paliers). Ce fichier trace cette classe d'angle mort et les bugs qu'elle
 > recèle. **Ces correctifs ne relèvent NI de la Phase 1 (iso-comportement) NI de la Phase 2
 > (contenu 5.5)** : ce sont des chantiers de correction 2014 à part entière.
+>
+> **Registre jumeau** : [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md) trace
+> ce qui **n'existe pas** (effets seedés jamais appliqués, capacités sans mécanique, règles
+> absentes). Ici, le comportement existe et il est **faux** ; là-bas, il est **absent**.
 
 ## Classe de risque
 
