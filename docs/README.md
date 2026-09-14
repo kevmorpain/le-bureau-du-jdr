@@ -25,6 +25,17 @@ Carte des documents. Commence par le sujet qui te concerne.
 | [`seeds.md`](./seeds.md) | Données de seed |
 | [`context.md`](./context.md) | Contexte de dev accumulé (bugs, conventions, décisions passées) |
 
+## Registres de trous
+
+| Doc | Sujet | Cycle de vie |
+|---|---|---|
+| [`audit-completude.md`](./audit-completude.md) | **Bugs** des parcours 2014 (le comportement existe mais il est faux) | vivant |
+| [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md) | **Fonctionnalités absentes** : effets seedés jamais appliqués, capacités de classe sans mécanique, mécaniques de règles, contenu | vivant |
+
+> Les deux sont **complémentaires** : `audit-completude.md` trace ce qui est *faux*,
+> `fonctionnalites-manquantes.md` trace ce qui *n'existe pas*. Ni l'un ni l'autre n'est une roadmap
+> (celle-ci vit dans [`dnd-5.5.md`](./dnd-5.5.md) et [`consolidation-2014.md`](./consolidation-2014.md)).
+
 > ⚠️ Certains docs de fonctionnalités précèdent l'audit et peuvent contenir des
 > affirmations datées (signalées inline quand repérées). En cas de conflit, `rules-engine.md`
 > et `decisions.md` font foi.
