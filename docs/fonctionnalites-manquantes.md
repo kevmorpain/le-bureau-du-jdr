@@ -249,7 +249,19 @@ réglage. Toute entrée ci-dessous suppose de trancher d'abord **où vit une pr�
 | **N3** | **Concentration libre** *(demandé)* | `ConcentrationSection` est en `v-if="isConcentrating"` : invisible tant qu'on ne concentre pas → **aucun moyen de la déclencher** hors du lancement d'un sort. ⚠️ **Piège de schéma** : `character_sheets.concentrating_spell_id` est une **FK vers `spells`** et `setConcentration(spellId)` n'accepte qu'un id — se concentrer sur un effet de monstre, un sort non seedé (D1 : 118 sorts sur ~360) ou du homebrew est **inexprimable**. Il faut un libellé libre nullable à côté de la FK, pas seulement un bouton | 🟠 |
 | **N4** | **Surcharges manuelles des valeurs dérivées** | **La soupape qui manque à E11.** Le modèle d'effets ne sait pas exprimer « +1 CA » (Anneau de protection) ni un bonus aux JS, et ne le saura pas avant un chantier 🟠. En attendant, **rien** ne permet de corriger à la main : `computedAC` est entièrement dérivé. Or le pattern existe déjà deux fois — `character_proficiency_overrides` (grant/revoke manuel sur une maîtrise dérivée) et l'« Édition directe » des PV. Le généraliser à **CA, vitesse, initiative, DD de sort** débloque aujourd'hui tout ce que le modèle ne sait pas dire, pour un coût dérisoire | 🟠 |
 | **N5** | **Encart d'effet mécanique sur les capacités** | Même problème que U2b, un cran plus loin : les descriptions de features sont des **pavés** (cf. Rage : 7 lignes dont 3 mécaniques). Rien ne met en avant « ce que ça change ». À traiter avec U2b pour ne concevoir le bloc qu'une fois | 🟠 |
-| **N6** | **Où vit une préférence ?** *(décision, pas une feature)* | localStorage = par appareil (un réglage « pas de dés » ne suivrait pas le joueur) ; colonne sur `users` = suit le compte ; colonne sur `character_sheets` = par personnage (défendable : un perso « théâtre de l'esprit », un autre non). **À trancher avant N1**, sinon chaque réglage suivant re-pose la question | 🔴 (décision) |
+| **N6** | **Où vit une préférence ?** | ✅ **TRANCHÉ (2026-09-14)** : sur **la fiche**, avec des **défauts au niveau du compte**. Voir [D18](./decisions.md#d18) pour la forme retenue et le piège du tri-état | 🟠 |
+
+### N6 — ce que la décision implique
+
+Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le détail et le
+*pourquoi* sont en [D18](./decisions.md#d18) ; le strict nécessaire pour lire les entrées N :
+
+- **`NULL` sur la fiche = « hérite du compte »**, pas « désactivé ». Chaque préférence est donc
+  **tri-état** (`oui` / `non` / `hérité`) — une colonne **nullable sans DEFAULT**. La typer
+  `boolean NOT NULL DEFAULT false` détruirait l'état « hérité » de façon irréversible.
+- **Aucun backfill** : les fiches existantes restent à `NULL` et héritent immédiatement.
+- La résolution `fiche ?? compte ?? défaut codé` est une **fonction pure partagée**
+  (serveur + client), comme le reste du moteur ([D10](./decisions.md#d10)).
 
 > **Bonne nouvelle pour U2b / U10 / N5** : aucun de ces encarts n'est un problème de *design*. Les
 > données structurées existent déjà (`spell.damages`, `spell.heal`, `spell.dc`,
@@ -294,7 +306,8 @@ réglage. Toute entrée ci-dessous suppose de trancher d'abord **où vit une pr�
 7. **N1 + N4 sont le meilleur rapport valeur/effort du document.** Désactiver les jets coûte un
    `v-if`, et les surcharges manuelles débloquent *aujourd'hui* tout ce que le modèle d'effets ne
    sait pas exprimer (E11) — sans attendre le chantier qui le lui apprendra. Ni l'un ni l'autre ne
-   demande de décision de règles ni de travail de design.
+   demande de décision de règles ni de travail de design. **N6 étant tranché ([D18](./decisions.md#d18)),
+   N1 n'a plus de préalable** : le premier réglage pose le substrat, les suivants sont une clé de plus.
 8. **Le mobile (U1) est écarté par décision** — pas oublié. Ne pas le re-proposer.
 9. **O1 (harmonisation non gardée) est un one-liner** : un filtre sur `attuned` dans
    `inventoryEffects`. À faire dès qu'un objet magique exigeant l'harmonisation est seedé, sinon
