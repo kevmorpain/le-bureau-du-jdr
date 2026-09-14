@@ -16,12 +16,14 @@
 > **Légende de l'effort** : 🟢 local (un computed / un composant) · 🟠 transverse (moteur +
 > fiche + tests) · 🔴 structurant (schéma, migration, nouveau modèle).
 >
-> État : 2026-09-14. Dernier commit couvert : `1203446`.
+> État : 2026-09-14. Dernier commit couvert : `5695fd1` (tranche 3 du style de combat incluse).
 >
 > **Journal des corrections** — trois entrées rectifiées après relecture du code, mention gardée
 > inline plutôt que réécrite en silence : **R3** (épuisement, largement implémenté), **U2**
 > (le tiroir de détail d'un sort existe bien), **U8** (les sorts ont déjà 4 filtres).
-> **U1** (mobile) est **écarté par décision de l'auteur**, pas résolu.
+> **U1** (mobile) est **écarté par décision de l'auteur**, pas résolu. Une entrée a été rattrapée
+> par le code pendant la rédaction (`fighting_style_modifier`, PR #63) et **E11 revu en conséquence** :
+> un effet alimente désormais la CA, mais en dur — le manque d'un effet *générique* demeure.
 
 ---
 
@@ -62,17 +64,21 @@ donnée est déjà là, il ne manque que la projection.
 | **E9** | `pact_weapon_modifier` | 2 invocations (Fléau de la Lame = attaque supplémentaire, Buveur de vie = +CHA aux dégâts) | Modifier les stats de l'arme de pacte (`isPactWeapon` est déjà posé à l'insert par `characterCreate`). Rien ne relie les deux | 🟠 |
 | **E10** | `extra_damage` | une espèce + **proposé à l'utilisateur** dans `MagicEffectEditor` | ⚠️ **Double problème** : (a) jamais appliqué ; (b) l'éditeur d'objet magique écrit une **forme différente** de l'union (`{die_count_notation, damage_type}` vs `{trigger, attackType, extraDie}`) → donnée non typée, silencieusement morte | 🟠 |
 
-**🔗 suivi ailleurs** — `fighting_style_modifier` : effet posé, seedé, persisté ; l'application
-(CA +1 Défense, +2 Archerie, +2 Duel, mod en main secondaire) est la **tranche 3** du chantier F2
-(`consolidation-2014.md`). Pas ré-ouvert ici.
+**✅ résolu pendant la rédaction** — `fighting_style_modifier` : la **tranche 3** du chantier F2
+(PR #63, mergée le 2026-09-14) applique désormais les bonus statiques sur la fiche — Défense +1 CA,
+Archerie +2 à distance, Duel +2 à une main, Combat à deux armes (mod en main secondaire) — via le
+module pur `shared/rules/fightingStyleEffects.ts`. `great_weapon` et `protection` restent rendus en
+texte, par conception (relance de dés / réaction, non réductibles à un bonus statique).
 
 ### E11 — Types d'effet **absents** de l'union (objets magiques classiques non modélisables)
 
 Il n'existe aucun effet pour :
-- **Bonus de CA hors armure** (Anneau de protection, Cape de protection, Bracelets de défense,
-  Bâton de défense). `computedAC` ne lit que `magicBonus` sur l'armure/le bouclier équipé → un
-  objet qui donne +1 CA « en plus » n'est pas représentable.
-  ⚠️ `docs/character-sheet.md` affirme que les effets magiques « peuvent modifier CA » : **c'est faux**.
+- **Bonus de CA générique** (Anneau de protection, Cape de protection, Bracelets de défense,
+  Bâton de défense). *(Nuance depuis la PR #63 : `computedAC` consomme bien **un** effet — le
+  `fighting_style_modifier` de kind `defense`, +1 CA — mais c'est un cas **codé en dur**, et
+  seulement avec une armure de corps portée. Il n'existe toujours aucun effet **générique**
+  « +N CA ».)* Un objet qui donne +1 CA reste donc non représentable, sauf à détourner le
+  `magicBonus` de l'armure.
 - **Bonus aux jets de sauvegarde** (même famille d'objets : +1 aux JS).
 - **Bonus aux jets d'attaque / de dégâts non liés à une arme portée**.
 - **Vitesse de nage / d'escalade / de creusement** (`walking_speed` et `flying_speed` existent seuls).
