@@ -42,7 +42,7 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 | # | Sévérité | Constat | Bloque 5.5 |
 |---|---|---|---|
 | **F1** | ✅ **résolu (#52)** | Upserts de catalogue par NOM SEUL → un homonyme 5.5 écrasait le 2014. Passé en `(name, ruleset)`. | oui (levé) |
-| **F2** | ✅ sous-classe ; 🚧 style de combat (tranche 1/4) ; reste ASI/expertise | `progression`/`character_choices` généralisé à la **sous-classe** de toutes les classes (front lit le catalogue). **Style de combat** en cours (chantier 4 tranches, cf. P1 — fondation données+moteur faite). Restent **front-dupliqués** : ASI (`LU_ASI_LEVELS`/`ASI_LEVELS_BY_CLASS`), expertise (`LU_EXPERTISE_LEVELS`) — mêmes patrons. | partiellement |
+| **F2** | ✅ sous-classe ; ✅ style de combat (4/4, effets appliqués) ; reste ASI/expertise | `progression`/`character_choices` généralisé à la **sous-classe** ET au **style de combat** de toutes les classes (front lit le catalogue ; les effets de style — Défense/Archerie/Duel/Combat à deux armes — sont appliqués sur la fiche). Restent **front-dupliqués** : ASI (`LU_ASI_LEVELS`/`ASI_LEVELS_BY_CLASS`), expertise (`LU_EXPERTISE_LEVELS`) — mêmes patrons. | partiellement |
 | **F3** | haute | Aucune dérivation d'origine pour `character_skills` : compétences classe/historique **matérialisées figées** (`characterCreate.ts:575-582`), incohérent avec les maîtrises désormais dérivées. | oui (historiques) |
 | **F4** | ✅ partiel (#52) | `loadInvocations` filtré par `ruleset` (fait). Reste : 6 endpoints `/api/catalog/*` créés mais **non consommés** (surface morte doublant les legacy) → repointer le front ou supprimer. | partiellement |
 | **F5** | ✅ partiel (F2 tranche 3) | `WEAPON_PROF_KEYS` (tokens EN morts `longsword`…) + le payload vestigial `armor/weaponProficiencyKeys` de `new.vue` **retirés** (`createCharacter` les ignorait, volet B). Reste `ARMOR_PROF_KEYS` (tokens corrects, référence de `classProficienciesFront.test.ts`) → part avec cette copie front (volet B étape 4). | non |
@@ -231,9 +231,18 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       Baseline typecheck (63/10) préservée. **✅ Vérifié visuellement** sur le dev (fiche rendue) :
       Guerrier « Défense » + armure de cuir → CA **14** (11 + DEX +2 + Défense +1) ; Guerrier
       « Archerie » + arc long → Attaque **+6** (DEX +2, maîtrise +2, Archerie +2), dégâts 1d8+2 inchangés.
-    - **Tranche 4 (FRONT) : à faire.** builder + level-up lisent niveau/options du catalogue (miroir sous-classe) ;
-      retrait de `FIGHTING_STYLES`/`FIGHTING_STYLE_DESCRIPTIONS`/`LU_FIGHTING_STYLE_LEVELS` du blob + du
-      `fightingStyle` collecté-puis-perdu ; Rôdeur affiche alors Duel. Puis expertise/ASI (déjà persistés).
+    - **Tranche 4 (FRONT) : ✅ FAIT — CLÔT le chantier style de combat.** builder (`useCharacterBuilder`/
+      `StepClass`) et level-up (`useLevelUp`/`LevelUpStepFeatures`/`LevelUpStepClass`) lisent le niveau/les
+      options du catalogue au lieu du blob (miroir exact de la sous-classe) : gating dérivé de `resolveChoices`
+      (`needsFightingStyle` = `catalogChoices.some(kind==='fighting_style')`, gaté au palier d'accès) ; options
+      (nom + description) via le nouvel endpoint **`/api/catalog/classes/[name]/fighting-styles`** (loader
+      `loadFightingStyles`) ; niveau via `ownerLevelRequired` (`fightingStyleLevelFor` pour les badges level-up).
+      **Blob retiré** : `FIGHTING_STYLES` + `FIGHTING_STYLE_DESCRIPTIONS` (`character-builder.ts`) +
+      `LU_FIGHTING_STYLE_LEVELS` (`useLevelUp.ts`) supprimés. **Le Rôdeur affiche désormais Duel** (l'ancien
+      blob l'omettait). Bonus : le builder gate maintenant le style par niveau (Paladin niv 1 n'est plus forcé
+      de choisir). Tests : `loadFightingStyles` (catalogSources.test) ; gating catalogue déjà couvert par
+      `fightingStyleProgression.test`. Suite 468 verte, typecheck 63/10 baseline. **Reste (autres chantiers F2) :
+      expertise/ASI (déjà persistés, options front à repointer sur le même patron).**
 - **Tracks parallèles sûrs** (empreinte disjointe) : **F7** (dragonborn → lignée), **F8/F9**
   (hygiène schéma), **F10** (typecheck baseline + bug mort l.313).
 

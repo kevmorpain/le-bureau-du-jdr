@@ -864,22 +864,9 @@ export const CLASSES: ClassData[] = [
   },
 ]
 
-// ─── Styles de combat ─────────────────────────────────────────────────────────
-
-export const FIGHTING_STYLES: Record<string, string[]> = {
-  fighter: ['Archerie', 'Combat à deux armes', 'Défense', 'Duel', 'Grande arme', 'Protection'],
-  paladin: ['Défense', 'Duel', 'Grande arme', 'Protection'],
-  ranger: ['Archerie', 'Combat à deux armes', 'Défense'],
-}
-
-export const FIGHTING_STYLE_DESCRIPTIONS: Record<string, string> = {
-  'Archerie': '+2 aux jets d\'attaque avec les armes à distance.',
-  'Combat à deux armes': 'Ajoutez votre modificateur de caractéristique aux dégâts de la seconde attaque avec une arme légère.',
-  'Défense': '+1 à la CA quand vous portez une armure.',
-  'Duel': '+2 aux dégâts avec une arme à une main, sans autre arme tenue.',
-  'Grande arme': 'Relancez un 1 ou 2 sur les dés de dégâts d\'une arme à deux mains ou polyvalente.',
-  'Protection': 'Réaction : imposez le désavantage à une attaque contre un allié adjacent (bouclier requis).',
-}
+// Les styles de combat (options + descriptions + niveaux d'accès) sont désormais lus dans le
+// CATALOGUE (`/api/catalog/classes/[name]/fighting-styles` + `resolveChoices`), plus dans le blob
+// (F2 tranche 4). Le Rôdeur inclut Duel (que l'ancien blob omettait).
 
 // ─── Alignements ──────────────────────────────────────────────────────────────
 

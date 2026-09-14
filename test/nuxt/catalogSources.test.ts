@@ -10,6 +10,7 @@ import {
   loadClasses,
   loadSpecies,
   loadSubclasses,
+  loadFightingStyles,
   loadFeats,
   loadInvocations,
   loadBackgrounds,
@@ -86,6 +87,13 @@ beforeAll(async () => {
     { id: 201, name: 'Manifestation Lame', featureType: 'eldritch_invocation', classId: WARLOCK, tag: 'invocation', prerequisites: { requiredPactBoon: 'blade' } },
   ])
   await orm.insert(srcSchema.featureEffects).values({ featureId: 201, effectId: 2 })
+
+  // Styles de combat du Guerrier (tag fighting_style) — insérés dans le désordre, triés par id.
+  await orm.insert(srcSchema.features).values([
+    { id: 212, name: 'Duel', featureType: 'fighting_style', classId: FIGHTER, tag: 'fighting_style', description: 'desc Duel' },
+    { id: 210, name: 'Archerie', featureType: 'fighting_style', classId: FIGHTER, tag: 'fighting_style', description: 'desc Archerie' },
+    { id: 211, name: 'Défense', featureType: 'fighting_style', classId: FIGHTER, tag: 'fighting_style', description: 'desc Défense' },
+  ])
 
   // Historiques : 2 globaux (character_sheet_id NULL) + 1 homebrew rattaché à la fiche 42.
   await orm.insert(srcSchema.backgrounds).values([
@@ -167,6 +175,19 @@ describe('loadSubclasses', () => {
 
   it('classe inconnue → []', async () => {
     expect(await loadSubclasses(orm, 'Inconnue')).toEqual([])
+  })
+})
+
+describe('loadFightingStyles', () => {
+  it('styles de combat d\'une classe, triés par id {id, name, description}', async () => {
+    const fs = await loadFightingStyles(orm, 'Guerrier')
+    expect(fs.map(s => s.name)).toEqual(['Archerie', 'Défense', 'Duel'])
+    expect(fs[0]).toEqual({ id: 210, name: 'Archerie', description: 'desc Archerie' })
+  })
+
+  it('classe sans style (Occultiste) ou inconnue → []', async () => {
+    expect(await loadFightingStyles(orm, 'Occultiste')).toEqual([])
+    expect(await loadFightingStyles(orm, 'Inconnue')).toEqual([])
   })
 })
 

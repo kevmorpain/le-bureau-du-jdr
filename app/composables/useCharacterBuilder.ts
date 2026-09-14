@@ -6,7 +6,6 @@ import {
   ABILITIES,
   ABILITY_SHORT,
   SKILLS,
-  FIGHTING_STYLES,
   LANGUAGES,
   TOOL_CHOICE_MAP,
   abilityMod,
@@ -340,6 +339,14 @@ export function useCharacterBuilder() {
   const subclassOptions = computed(() => subclassCatalog.value?.subclasses ?? [])
   const needsSubclass = computed(() => catalogChoices.value.some(c => c.kind === 'subclass'))
 
+  // ─── Style de combat (lu dans le CATALOGUE, F2 tranche 4) — miroir de la sous-classe. ────
+  // Gating dérivé de resolveChoices (le choix n'est dû qu'au palier d'accès : Guerrier 1,
+  // Paladin/Rôdeur 2) ; les OPTIONS (nom + description) viennent de l'endpoint
+  // `/api/catalog/classes/[name]/fighting-styles` (côté StepClass). Le style envoyé au serveur est
+  // son NOM ; le serveur re-gate par niveau. Remplace le blob `FIGHTING_STYLES`.
+  const needsFightingStyle = computed(() => catalogChoices.value.some(c => c.kind === 'fighting_style'))
+  const fightingStyleLevel = computed(() => catalogChoices.value.find(c => c.kind === 'fighting_style')?.ownerLevelRequired ?? null)
+
   const invocationsExpected = computed(() =>
     catalogChoices.value.find(c => c.kind === 'invocations')?.count ?? 0,
   )
@@ -599,8 +606,8 @@ export function useCharacterBuilder() {
         const cls = classData.value
         if (!cls) return false
         if (s.skills.length < cls.skillChoices.count) return false
-        const fightingStyleOptions = FIGHTING_STYLES[s.classId]
-        if (fightingStyleOptions && !s.fightingStyle) return false
+        // Style de combat requis quand le catalogue le rend dû à ce niveau (Guerrier 1, Paladin/Rôdeur 2).
+        if (needsFightingStyle.value && !s.fightingStyle) return false
         if (needsPactBoon.value && !s.pactBoon) return false
         if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
         if (needsMetamagic.value && s.metamagicIds.length < metamagicExpected.value) return false
@@ -802,6 +809,9 @@ export function useCharacterBuilder() {
     needsSubclass,
     subclassLevel,
     subclassOptions,
+    // Style de combat (catalogue)
+    needsFightingStyle,
+    fightingStyleLevel,
     // Pacte
     needsPactBoon,
     // Invocations

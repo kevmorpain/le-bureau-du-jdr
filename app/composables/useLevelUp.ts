@@ -4,8 +4,6 @@ import {
   ABILITY_SHORT,
   ABILITY_LABELS,
   SKILLS,
-  FIGHTING_STYLES,
-  FIGHTING_STYLE_DESCRIPTIONS,
   spellSlotsAtLevel,
   CANTRIPS_KNOWN,
   SPELLS_KNOWN,
@@ -23,12 +21,6 @@ export const LU_ASI_LEVELS: Record<string, number[]> = {
   rogue: [4, 8, 10, 12, 16, 19],
 }
 const DEFAULT_ASI_LEVELS = [4, 8, 12, 16, 19]
-
-export const LU_FIGHTING_STYLE_LEVELS: Record<string, number[]> = {
-  fighter: [1, 10],
-  paladin: [2],
-  ranger: [2],
-}
 
 // Expertise: classId → levels that grant expertise (2 skills each time)
 export const LU_EXPERTISE_LEVELS: Record<string, number[]> = {
@@ -406,12 +398,22 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return levels.includes(state.value.toLevel)
   })
 
+  // Style de combat (lu dans le CATALOGUE, F2 tranche 4) — débloqué AU niveau d'arrivée
+  // (`ownerLevelRequired === toLevel`), miroir de isSubclassLevel/needsPactBoon.
   const needsFightingStyle = computed(() => {
-    const clsId = state.value.pickedClassId
-    if (!clsId) return false
-    const levels = LU_FIGHTING_STYLE_LEVELS[clsId] ?? []
-    return levels.includes(state.value.toLevel)
+    if (!state.value.pickedClassId) return false
+    return choicesAtToLevel.value.some(c => c.kind === 'fighting_style' && c.ownerLevelRequired === state.value.toLevel)
   })
+
+  // Niveau d'accès au style de combat d'une classe (par builderId), lu dans le catalogue — sert au
+  // badge de LevelUpStepClass. On résout au niveau 20 (le point de choix est alors présent) et on lit
+  // son `ownerLevelRequired`. `null` si la classe n'a pas de style (ou catalogue pas chargé).
+  function fightingStyleLevelFor(builderClassId: string): number | null {
+    const cls = CLASSES.find(c => c.id === builderClassId)
+    const dbId = resolveClassId(cls?.dbName)
+    if (!dbId) return null
+    return choicesForClassLevel(dbId, 20).find(c => c.kind === 'fighting_style')?.ownerLevelRequired ?? null
+  }
 
   const needsExpertise = computed(() => {
     const clsId = state.value.pickedClassId
@@ -622,6 +624,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     subclassLevelFor,
     isAsiLevel,
     needsFightingStyle,
+    fightingStyleLevelFor,
     needsExpertise,
     needsMulticlassSkills,
     hasSpellcasting,
@@ -660,8 +663,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     ABILITY_SHORT,
     ABILITY_LABELS,
     SKILLS,
-    FIGHTING_STYLES,
-    FIGHTING_STYLE_DESCRIPTIONS,
     profBonusAtLevel,
     abilityMod,
     formatMod,

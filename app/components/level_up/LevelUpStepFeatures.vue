@@ -69,15 +69,15 @@
       <div class="flex flex-col gap-2">
         <button
           v-for="style in availableStyles"
-          :key="style"
+          :key="style.id"
           class="text-left px-4 py-3 rounded-xl border transition-all"
-          :class="state.fightingStyle === style
+          :class="state.fightingStyle === style.name
             ? 'border-red-500/60 bg-red-500/10 text-red-400'
             : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-(--ui-border-strong) text-(--ui-text)'"
-          @click="state.fightingStyle = style"
+          @click="state.fightingStyle = style.name"
         >
-          <div class="font-semibold text-sm">{{ style }}</div>
-          <div class="text-xs text-muted mt-0.5">{{ FIGHTING_STYLE_DESCRIPTIONS[style] }}</div>
+          <div class="font-semibold text-sm">{{ style.name }}</div>
+          <div class="text-xs text-muted mt-0.5">{{ style.description }}</div>
         </button>
       </div>
     </div>
@@ -249,7 +249,7 @@
 </template>
 
 <script lang="ts" setup>
-import { LU_EXPERTISE_LEVELS, LU_FIGHTING_STYLE_LEVELS } from '~/composables/useLevelUp'
+import { LU_EXPERTISE_LEVELS } from '~/composables/useLevelUp'
 
 const PACT_BOON_OPTIONS = [
   { id: 'chain' as const, name: 'Pacte de la Chaîne', description: 'Vous apprenez Appel de familier et pouvez invoquer un familier spécial (diablotin, pseudodragon, quasit ou lutin).' },
@@ -279,8 +279,6 @@ const {
   proficientSkills,
   CLASSES,
   SKILLS,
-  FIGHTING_STYLES,
-  FIGHTING_STYLE_DESCRIPTIONS,
   profBonusAtLevel,
   formatMod,
   totalLevel,
@@ -357,12 +355,14 @@ const { data: subclassesData } = useFetch(
 )
 const subclasses = computed(() => (subclassesData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>)
 
-// Available fighting styles for this class
-const availableStyles = computed(() => {
-  const clsId = state.value.pickedClassId
-  if (!clsId) return []
-  return FIGHTING_STYLES[clsId] ?? []
-})
+// Available fighting styles for this class — catalogue (F2 tranche 4), plus le blob.
+const { data: fightingStyleData } = useFetch(
+  () => pickedClass.value ? `/api/catalog/classes/${encodeURIComponent(pickedClass.value!.dbName)}/fighting-styles` : '',
+  { watch: [pickedClass], immediate: true },
+)
+const availableStyles = computed(() =>
+  (fightingStyleData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>,
+)
 
 // Skills eligible for expertise (must already be proficient)
 const eligibleSkills = computed(() => {
