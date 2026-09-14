@@ -228,7 +228,9 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       module PUR `shared/rules/fightingStyleEffects.ts` (testé : `test/unit/fightingStyleEffects.test.ts`).
       `great_weapon` (relance de dés) / `protection` (réaction) = non statiques → rendus par la
       description de la feature (qui s'affiche sur la fiche, label « Style de combat »).
-      Baseline typecheck (63/10) préservée. ⚠️ Vérif visuelle recommandée avant merge (AC +1, attaque +2).
+      Baseline typecheck (63/10) préservée. **✅ Vérifié visuellement** sur le dev (fiche rendue) :
+      Guerrier « Défense » + armure de cuir → CA **14** (11 + DEX +2 + Défense +1) ; Guerrier
+      « Archerie » + arc long → Attaque **+6** (DEX +2, maîtrise +2, Archerie +2), dégâts 1d8+2 inchangés.
     - **Tranche 4 (FRONT) : à faire.** builder + level-up lisent niveau/options du catalogue (miroir sous-classe) ;
       retrait de `FIGHTING_STYLES`/`FIGHTING_STYLE_DESCRIPTIONS`/`LU_FIGHTING_STYLE_LEVELS` du blob + du
       `fightingStyle` collecté-puis-perdu ; Rôdeur affiche alors Duel. Puis expertise/ASI (déjà persistés).
