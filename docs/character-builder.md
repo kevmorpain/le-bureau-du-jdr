@@ -254,6 +254,12 @@ cantripsOk && spellsOk
 - **Nom** : grand input (font-size 18px, fond panel)
 - **Historique** : grille 3 colonnes de cartes (nom, description courte, compétences en amber)
   - Carte sélectionnée : affiche bonus de compétences + feature de l'historique
+  - Les variantes PHB d'un historique sont des historiques à part entière (ex. **Marchand de guilde**,
+    variante de l'Artisan de guilde) : une variante ne fait que substituer des valeurs
+- **Maîtrises d'outils** : un choix par placeholder « … au choix » de l'historique (`TOOL_CHOICE_MAP`).
+  L'option `EXTRA_LANGUAGE_OPTION` (« outils de navigateur OU langue » du Marchand de guilde) n'est pas
+  une maîtrise d'outil : elle ajoute une langue à choisir
+- **Langues supplémentaires** : l'excédent est retiré si le nombre de langues baisse
 - **Alignement** : grille 3×3 (code court LB/NB/CB…, nom complet, description)
 - **Traits de personnalité** : 4 textareas (Personnalité, Idéaux, Liens, Défauts)
   - Chaque textarea a un bouton "+ Suggestions" qui affiche les suggestions de l'historique

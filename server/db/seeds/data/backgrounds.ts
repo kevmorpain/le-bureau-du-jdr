@@ -53,6 +53,17 @@ export const backgroundsData = [
     featureName: 'Membre de guilde',
     featureDescription: 'En tant que membre établi d\'une guilde, vous bénéficiez d\'un certain soutien : logement chez d\'autres membres, accès à des ressources et à l\'aide juridique de la guilde.',
   },
+  // Variante PHB de l'Artisan de guilde, portée comme un historique à part entière : une variante
+  // ne fait que substituer des valeurs (maîtrise d'outils, équipement), sans règle propre.
+  {
+    name: 'Marchand de guilde',
+    description: 'Vous êtes membre d\'une guilde de marchands : plutôt qu\'un artisanat, vous pratiquez le négoce, le transport et l\'échange de marchandises.',
+    skillProficiencies: ['insight', 'persuasion'],
+    toolProficiencies: ['Outils de navigateur ou langue au choix'],
+    languageProficiencies: ['Au choix ×1'],
+    featureName: 'Membre de guilde',
+    featureDescription: 'En tant que membre établi d\'une guilde, vous bénéficiez d\'un certain soutien : logement chez d\'autres membres, accès à des ressources et à l\'aide juridique de la guilde.',
+  },
   {
     name: 'Ermite',
     description: 'Vous avez vécu en isolement — soit dans une communauté recluse, soit seul — pendant une bonne partie de votre vie.',

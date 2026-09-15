@@ -48,7 +48,7 @@
 
 <script lang="ts" setup>
 import { useOnline } from '@vueuse/core'
-import { BACKGROUNDS } from '~/data/character-builder'
+import { BACKGROUNDS, chosenToolProficiencies } from '~/data/character-builder'
 
 definePageMeta({ layout: 'blank' })
 
@@ -227,7 +227,7 @@ async function handleSubmit() {
         // Humain variant : 'Commun' n'est plus apporté par les effets d'espèce (lien espèce absent)
         ...(isVariantHuman ? ['Commun'] : []),
       ],
-      toolProficiencyChoices: Object.values(state.value.selectedToolProficiencies).filter(Boolean),
+      toolProficiencyChoices: chosenToolProficiencies(state.value.selectedToolProficiencies),
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],
       pactBoon: needsPactBoon.value ? state.value.pactBoon : null,
       pactWeaponItemId,
