@@ -1282,8 +1282,6 @@ export const spells: InsertSpell[] = [
     schoolId: 3,
   },
   {
-    // Note : le modèle de dés du projet ne sait pas représenter « 1d4 + 4 »
-    // (cf. parseDie), donc pas de bloc `heal` — les chiffres sont en description.
     name: 'Simulacre de vie',
     level: 1,
     castingTime: '1 action',
@@ -1293,6 +1291,21 @@ export const spells: InsertSpell[] = [
     duration: '1 heure',
     description: 'Une pâle imitation nécromantique de la vie vous enveloppe : vous gagnez 1d4 + 4 points de vie temporaires pour la durée du sort.\nAux niveaux supérieurs. Lorsque vous lancez ce sort en utilisant un emplacement de sort de niveau 2 ou supérieur, vous gagnez 5 points de vie temporaires de plus pour chaque niveau d\'emplacement au-delà du niveau 1.',
     schoolId: 7,
+    // Le bonus fixe de la notation (« 1d4+4 ») est désormais résolu par shared/rules/spellScaling.
+    heal: {
+      heal_type: 'temporary_hit_points',
+      heal_at_slot_level: {
+        1: '1d4+4',
+        2: '1d4+9',
+        3: '1d4+14',
+        4: '1d4+19',
+        5: '1d4+24',
+        6: '1d4+29',
+        7: '1d4+34',
+        8: '1d4+39',
+        9: '1d4+44',
+      },
+    },
   },
   {
     name: 'Déguisement',

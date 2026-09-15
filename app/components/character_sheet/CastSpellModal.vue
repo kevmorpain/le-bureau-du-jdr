@@ -55,6 +55,13 @@
                     >
                       Pacte
                     </UBadge>
+                    <!-- Ce que donne CE niveau : l'affiché correspond à ce qui sera jeté -->
+                    <span
+                      v-if="effectAt(opt.level)"
+                      class="text-sm font-mono"
+                    >
+                      {{ effectAt(opt.level) }}
+                    </span>
                   </span>
                   <span class="text-muted text-sm">
                     {{ opt.slot.current }}/{{ opt.slot.max }} restant{{ opt.slot.current !== 1 ? 's' : '' }}
@@ -150,6 +157,12 @@ const availableSlots = computed<SlotOption[]>(() => {
   result.sort((a, b) => a.level - b.level || (a.slotType === 'spellcasting' ? -1 : 1))
   return result
 })
+
+// Récapitulatif de la montée en puissance, au moment où l'emplacement est choisi : sans lui,
+// l'affichage du sort reste au niveau de base pendant que le jet applique le niveau choisi
+// (U10 de docs/fonctionnalites-manquantes.md).
+const { previewAt } = useSpellEffectPreview()
+const effectAt = (slotLevel: number): string => previewAt(props.spell, slotLevel)
 
 const isSelected = (opt: SlotOption) =>
   selected.value?.level === opt.level && selected.value?.slotType === opt.slotType

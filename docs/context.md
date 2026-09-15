@@ -127,3 +127,57 @@ Garde-fous :
 - Cible restreinte aux chemins internes (`//host` rejeté) et périmée au-delà de 24 h.
 
 L'ordre alphabétique des middlewares globaux place `auth.global.ts` avant `restore-route.global.ts` : une route restaurée qui exige une session repasse par la garde d'auth.
+
+---
+
+## Montée en puissance des sorts — une seule résolution (U10)
+
+**Symptôme** : un Projectile magique lancé avec un emplacement de niveau 3 **affichait** `3d4+3`
+pendant que le bouton de lancement **jetait** `5d4+5`. L'affiché contredisait le jeté.
+
+**Cause** : la règle « prendre le palier le plus haut atteint dans la table » était réécrite
+**quatre fois**, avec quatre comportements :
+
+| Emplacement | Comportement d'origine |
+|---|---|
+| `MagicSection.rollSpellEffect` | `getSpellDieAt` — appliquait le niveau d'emplacement **choisi** (correct) |
+| `DamageSection` / `HealSection` | `slotLevel = ref(spell.level)`, jamais modifié → figé au niveau de base |
+| `CharacterSpellRow` | `getClosestDie` — niveau de base, `spell.level || 1` |
+| `SpellCardBuilder` | `closestLevelDie` — idem, mais avec un repli sur le **premier** palier |
+
+Trois d'entre eux ne lisaient donc **que la première ligne** de `damage_at_slot_level`.
+
+**Correctif** : un module pur, [`shared/rules/spellScaling.ts`](../shared/rules/spellScaling.ts),
+seule source de la résolution — les quatre appelants le consomment. Deux axes y sont explicitement
+séparés : `characterLevel` (progressions `*_at_character_level`, les tours de magie) et `slotLevel`
+(`*_at_slot_level`, la montée en puissance).
+
+| Fichier | Rôle |
+|---|---|
+| [shared/rules/spellScaling.ts](../shared/rules/spellScaling.ts) | `resolveAtLevel`, `resolveDamageDie`, `resolveHealDie`, `resolveAttackCount`, `parseDiceNotation`, `diceRange`, `upcastRows` |
+| [app/components/spells/UpcastSection.vue](../app/components/spells/UpcastSection.vue) | Encart « Aux niveaux supérieurs » dans `SpellCard` |
+| [app/components/character_sheet/CastSpellModal.vue](../app/components/character_sheet/CastSpellModal.vue) | Annonce le résultat de **chaque** emplacement proposé |
+| [app/components/character_sheet/RollDamageModal.vue](../app/components/character_sheet/RollDamageModal.vue) | Choix du niveau pour le jet de dégâts, sans dépense d'emplacement |
+| [test/unit/spellScaling.test.ts](../test/unit/spellScaling.test.ts) | La règle, en isolation |
+| [test/nuxt/spellScalingDisplay.test.ts](../test/nuxt/spellScalingDisplay.test.ts) | Le rendu (premier test de composant du repo — `mountSuspended`) |
+
+À retenir :
+- `upcastRows` ne liste que les niveaux où la valeur **change** (Arme spirituelle : 4, 6, 8 — pas 3,
+  5, 7, 9), sinon l'encart déroule neuf lignes identiques.
+- `parseDiceNotation` accepte le bonus fixe porté par la table (`1d4+4`, `10d6+40`) et la valeur
+  plate (`5` d'Aide). Une valeur plate n'est **pas** jetée : il n'y a pas de dé.
+- Le seed contract de `test/unit/spellSeedData.test.ts` garde l'invariant qui rend la résolution
+  sûre : une table par niveau d'emplacement **commence au niveau du sort**, et chaque valeur est une
+  notation exploitable.
+- Un sort d'**attaque** jette ses dégâts en deux gestes (« Lancer » pour toucher, puis « Dégâts ») :
+  le second **hérite** du niveau du premier (`MagicSection.lastCastLevel`, mémoire de session par
+  `spellId`, non persistée) et l'affiche sur le bouton (« Dégâts (niv. 3) »). Un clic, pas de
+  modale : redemander le niveau qu'on vient de choisir est une corvée, pas une sécurité. Le chevron
+  du `UButtonGroup` — rendu seulement pour les sorts qui montent en puissance — ouvre
+  `RollDamageModal` pour les cas où l'app n'a pas vu le lancement. Deux modales plutôt qu'un mode :
+  celle-ci **ne dépense aucun emplacement** et propose les niveaux **même épuisés** (celui qu'on
+  vient de dépenser est justement celui auquel il faut jeter).
+- `useSpellEffectPreview` porte le libellé « ce que donne le niveau N » (« 5d4+5 force ») pour les
+  deux modales : le même choix doit se lire pareil des deux côtés.
+- Monter un composant Nuxt UI en isolation demande de bouchonner `UTooltip` (il attend le contexte
+  de `<UApp>`).

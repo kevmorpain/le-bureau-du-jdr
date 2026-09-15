@@ -248,6 +248,8 @@ Zone de texte libre pour notes rapides (PNJ rencontrés, rappels…), liée au p
 
 **`spellContext` (provide/inject) :** `MagicSection` fournit `{ characterLevel, spellcastingModifier }` via `provide('spellContext', ...)`. `DamageSection` et `HealSection` l'injectent pour éviter d'instancier tout l'arbre `useCharacterSheet` depuis un composant leaf.
 
+**Montée en puissance des sorts :** la résolution « quelle valeur à quel niveau » (tables `damage_at_*`, `heal_at_*`, `count_at_*`) vit dans le module pur [`shared/rules/spellScaling.ts`](../shared/rules/spellScaling.ts) — source unique du **jet** (`rollSpellEffect`) comme de l'**affichage** (`CharacterSpellRow`, `DamageSection`, `HealSection`, `SpellCardBuilder`). Les sections affichent le niveau de **base** ; la progression complète est rendue par `UpcastSection` (encart « Aux niveaux supérieurs » de `SpellCard`) et, au moment de choisir un niveau, par les deux modales qui annoncent le résultat de chacun : `CastSpellModal` (l'emplacement qu'on dépense) et `RollDamageModal` (le niveau auquel on jette les dégâts d'un sort d'attaque, sans rien dépenser). Leur libellé commun vient de `useSpellEffectPreview`.
+
 **`useFetch` et réactivité :** `useFetch` retourne un `shallowRef`. Pour déclencher la réactivité sur une mise à jour d'élément dans un tableau, toujours réassigner `data.value` entier (ex. `.map(...)`) — ne pas muter un élément en place.
 
 **Fetch null-guard :** Tous les `useFetch` dans les composables de personnage retournent `null` comme URL si `characterId` est `undefined`, pour éviter des requêtes parasites quand `useCharacterSheet()` est appelé sans argument (ex. depuis la page spellbook).

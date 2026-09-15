@@ -106,6 +106,8 @@
         :spell
       />
 
+      <UpcastSection :spell />
+
       <p class="whitespace-pre-line leading-5">
         {{ spell.description }}
       </p>

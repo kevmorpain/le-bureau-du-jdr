@@ -264,18 +264,35 @@
             >
               Lancer
             </UButton>
-            <!-- Bouton Dégâts (sorts d'attaque) : jet de dégâts, sans reconsommer d'emplacement -->
-            <UButton
+            <!-- Dégâts (sorts d'attaque) : jet au niveau du lancement, sans reconsommer
+                 d'emplacement. Le chevron permet de changer ce niveau quand il y a un choix. -->
+            <UButtonGroup
               v-if="isAttackSpell(cs) && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
               size="xs"
-              variant="soft"
-              color="warning"
-              icon="i-game-icons:blood"
               class="shrink-0"
-              @click.stop="rollSpellEffect(cs, cs.spell.level || 0)"
             >
-              Dégâts
-            </UButton>
+              <UButton
+                variant="soft"
+                color="warning"
+                icon="i-game-icons:blood"
+                @click.stop="rollSpellEffect(cs, castLevelFor(cs))"
+              >
+                {{ damageButtonLabel(cs) }}
+              </UButton>
+              <UTooltip
+                v-if="scalingSpellIds.has(cs.spellId)"
+                :delay-duration="0"
+                text="Jeter à un autre niveau"
+              >
+                <UButton
+                  variant="soft"
+                  color="warning"
+                  icon="i-heroicons:chevron-down"
+                  :aria-label="`Jeter les dégâts de ${cs.spell.name} à un autre niveau`"
+                  @click.stop="openDamageLevelPicker(cs)"
+                />
+              </UTooltip>
+            </UButtonGroup>
           </div>
         </template>
       </div>
@@ -341,6 +358,16 @@
       @cast="handleCast"
     />
 
+    <!-- Choix du niveau pour le jet de dégâts (aucun emplacement dépensé) -->
+    <RollDamageModal
+      v-if="selectedSpell"
+      v-model:open="showDamageModal"
+      :spell="selectedSpell.spell"
+      :owned-levels="ownedSlotLevels"
+      :initial-level="castLevelFor(selectedSpell)"
+      @roll="handleRollDamage"
+    />
+
     <!-- Slideover ajout de sort -->
     <AddSpellSlideover
       v-model:open="showAddSpell"
@@ -353,6 +380,15 @@
 <script lang="ts" setup>
 import { SpellComponent } from '~~/server/db/schema/spells'
 import type { CharacterSpellWithSpell } from '~/composables/character/useCharacterSpells'
+import {
+  baseSlotLevel,
+  parseDiceNotation,
+  resolveAttackCount,
+  resolveDamageDie,
+  resolveHealDie,
+  upcastRows,
+  type CastLevels,
+} from '~~/shared/rules/spellScaling'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
@@ -483,67 +519,86 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
 // ─── Jets de dés au lancement de sort ──────────────────────────────────────
 const { roll } = useDiceRoller()
 
-// Parse "1d10" ou "10d6+40" → { count, sides, flat }
-function parseSpellDie(die: string): { count: number, sides: number, flat: number } | null {
-  const m = die.match(/^(\d+)d(\d+)(?:\+(\d+))?$/)
-  if (!m) return null
-  return {
-    count: Number(m[1]),
-    sides: Number(m[2]),
-    flat: m[3] ? Number(m[3]) : 0,
+// Niveau d'emplacement du DERNIER lancement, par sort. Pour un sort d'attaque, le jet de dégâts
+// est un second geste (bouton « Dégâts », après le jet pour toucher) : sans cette mémoire, il
+// repartirait du niveau de base et contredirait le niveau que CastSpellModal vient d'annoncer.
+// État de session volontairement non persisté : au rechargement, on retombe sur le niveau de base.
+const lastCastLevel = ref<Record<number, number>>({})
+
+const castLevelFor = (cs: CharacterSpellWithSpell): number =>
+  lastCastLevel.value[cs.spellId] ?? baseSlotLevel(cs.spell)
+
+const castLevelsFor = (cs: CharacterSpellWithSpell): CastLevels => ({
+  characterLevel: characterLevel.value,
+  slotLevel: castLevelFor(cs),
+})
+
+const rememberCastLevel = (spellId: number, slotLevel: number) => {
+  lastCastLevel.value = { ...lastCastLevel.value, [spellId]: slotLevel }
+}
+
+// Niveaux d'emplacement que le personnage possède, tous types confondus — proposés au jet de
+// dégâts même épuisés (l'emplacement vient justement d'être dépensé par le lancement).
+const ownedSlotLevels = computed<number[]>(() => {
+  const levels = new Set<number>()
+  for (const byLevel of [spellSlots.value.spellcasting, spellSlots.value.pact_magic]) {
+    for (const [level, slot] of Object.entries(byLevel)) {
+      if (slot.max > 0) levels.add(Number(level))
+    }
   }
+  return [...levels].sort((a, b) => a - b)
+})
+
+const showDamageModal = ref(false)
+
+// Le niveau retenu est affiché : un niveau mémorisé en silence serait un piège.
+const damageButtonLabel = (cs: CharacterSpellWithSpell): string => {
+  const level = castLevelFor(cs)
+  return level > baseSlotLevel(cs.spell) ? `Dégâts (niv. ${level})` : 'Dégâts'
 }
 
-// Récupère le die à infliger pour le niveau actuel
-function getSpellDieAt(damageMap: Record<string, string>, atLevel: number): string | undefined {
-  const levels = Object.keys(damageMap).map(Number).filter(n => n <= atLevel)
-  if (!levels.length) return undefined
-  return damageMap[String(Math.max(...levels))]
+// Sorts dont les dégâts dépendent de l'emplacement dépensé : les seuls où changer de niveau veut
+// dire quelque chose (un tour de magie suit le niveau du PERSONNAGE, il n'y a rien à choisir).
+const scalingSpellIds = computed<Set<number>>(() =>
+  new Set((characterSpells.value ?? [])
+    .filter(cs => upcastRows(cs.spell).length > 0)
+    .map(cs => cs.spellId)),
+)
+
+const openDamageLevelPicker = (cs: CharacterSpellWithSpell) => {
+  selectedSpell.value = cs
+  showDamageModal.value = true
 }
 
-// Résout le nombre d'attaques pour un sort multi-cible au niveau donné.
-// Renvoie null si le sort n'est pas multi-attaque.
-function resolveAttackCount(
-  spell: Spell,
-  castAtLevel: number,
-  charLevel: number,
-): { count: number, label: string } | null {
-  const ma = (spell as any).multiAttack as
-    | { label?: string, count_at_character_level?: Record<string, number>, count_at_slot_level?: Record<string, number> }
-    | null
-    | undefined
-  if (!ma) return null
-  const map = ma.count_at_character_level ?? ma.count_at_slot_level
-  if (!map) return null
-  const ref = ma.count_at_character_level ? charLevel : castAtLevel
-  const levels = Object.keys(map).map(Number).filter(n => n <= ref)
-  if (!levels.length) return null
-  const count = map[String(Math.max(...levels))] ?? 1
-  if (count <= 1) return null
-  return { count, label: ma.label ?? 'Attaque' }
+const handleRollDamage = (slotLevel: number) => {
+  if (!selectedSpell.value) return
+  rememberCastLevel(selectedSpell.value.spellId, slotLevel)
+  rollSpellEffect(selectedSpell.value, slotLevel)
 }
 
 // Lance les dés de dégâts ou de soin du sort, si présents
 function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
   const spell = cs.spell
+  // Niveaux de résolution : l'emplacement RÉELLEMENT dépensé pilote la montée en puissance
+  // (c'est ce que l'encart « Aux niveaux supérieurs » et CastSpellModal affichent).
+  const levels: CastLevels = { characterLevel: characterLevel.value, slotLevel: castAtLevel }
 
   // Un sort peut cumuler plusieurs types de dégâts (ex. Voracité de Hadar :
   // froid + acide). On jette chaque composante séparément.
   const damages = spell.damages ?? []
   if (damages.length) {
     for (const dmg of damages) {
-      const die = 'damage_at_character_level' in dmg
-        ? getSpellDieAt(dmg.damage_at_character_level, characterLevel.value)
-        : getSpellDieAt((dmg as any).damage_at_slot_level, castAtLevel)
+      const die = resolveDamageDie(dmg, levels)
       if (!die) continue
-      const parsed = parseSpellDie(die)
-      if (!parsed) continue
+      const parsed = parseDiceNotation(die)
+      // Valeur plate sans dé (« 5 » d'Aide) : rien à jeter, la fiche l'affiche déjà.
+      if (!parsed || parsed.count === 0) continue
 
       // ─── Sorts multi-attaques (Décharge occulte, Rayon ardent, Trait magique…)
       // Convention : les dés déclarés (NdM+K) représentent le TOTAL pour toutes
       // les attaques. Per-attaque = (N/count)d(M) + (K/count). Les modificateurs
       // (CHA via Coup agonisant, spellcasting mod) sont appliqués PAR attaque.
-      const multi = resolveAttackCount(spell, castAtLevel, characterLevel.value)
+      const multi = resolveAttackCount(spell.multiAttack, levels)
       if (multi) {
         const diePerAttack = Math.max(1, Math.floor(parsed.count / multi.count))
         const flatPerAttack = Math.floor(parsed.flat / multi.count)
@@ -575,12 +630,10 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
 
   if (spell.heal) {
     const heal = spell.heal
-    const die = 'heal_at_character_level' in heal
-      ? getSpellDieAt(heal.heal_at_character_level, characterLevel.value)
-      : getSpellDieAt((heal as any).heal_at_slot_level, castAtLevel)
+    const die = resolveHealDie(heal, levels)
     if (!die) return
-    const parsed = parseSpellDie(die)
-    if (!parsed) return
+    const parsed = parseDiceNotation(die)
+    if (!parsed || parsed.count === 0) return // valeur plate : rien à jeter (cf. ci-dessus)
 
     let bonus = parsed.flat
     if (heal.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
@@ -599,8 +652,7 @@ const isAttackSpell = (cs: CharacterSpellWithSpell): boolean =>
 function rollSpellAttack(cs: CharacterSpellWithSpell) {
   const atk = spellcastingStats.value?.attackBonus
   if (atk == null) return
-  const castLevel = cs.spell.level || characterLevel.value
-  const n = resolveAttackCount(cs.spell, castLevel, characterLevel.value)?.count ?? 1
+  const n = resolveAttackCount(cs.spell.multiAttack, castLevelsFor(cs))?.count ?? 1
   for (let r = 1; r <= n; r++) {
     roll(n > 1 ? `${cs.spell.name} · attaque ${r}` : `${cs.spell.name} · attaque`, atk, 20, 1)
   }
@@ -671,6 +723,7 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
   }
 
   // Sort d'attaque → jet pour toucher ; sinon effet direct (Arcanum lancé au niveau de base).
+  rememberCastLevel(cs.spellId, cs.spell.level || lvl)
   if (isAttackSpell(cs)) rollSpellAttack(cs)
   else rollSpellEffect(cs, cs.spell.level || lvl)
 }
@@ -717,6 +770,8 @@ const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number
   }
   // Sort d'attaque → jet pour toucher ; sinon effet direct.
   if (selectedSpell.value) {
+    // Avant de jeter : le bouton « Dégâts » doit retrouver CET emplacement, pas le niveau de base.
+    rememberCastLevel(selectedSpell.value.spellId, slotLevel)
     if (isAttackSpell(selectedSpell.value)) rollSpellAttack(selectedSpell.value)
     else rollSpellEffect(selectedSpell.value, slotLevel)
   }
