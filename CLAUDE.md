@@ -119,7 +119,7 @@ installées automatiquement au démarrage de chaque session distante (hook `Sess
 à froid, ~10 s ensuite) : `npm ci` ci-dessous n'est donc plus nécessaire en temps normal. Le
 hook ne fait rien en local (garde sur `CLAUDE_CODE_REMOTE`) et exporte `NUXT_SESSION_PASSWORD`
 via `$CLAUDE_ENV_FILE`. La recette manuelle reste la référence si le hook n'a pas tourné
-(Node 22, mesures réelles) :
+(mesures réelles) :
 
 ```bash
 npm ci                                       # ~40 s (postinstall `nuxt prepare` inclus)
@@ -136,6 +136,33 @@ Notes :
   du bundle. C'est ce qui rattrape une erreur de déploiement sans toucher la prod.
 - `deploy --dry-run` ne couvre que le *bundling*. Pour exercer le Worker et ses bindings,
   voir la section suivante.
+
+### Version de Node : `.nvmrc` fait foi (sauf en session cloud)
+
+[`.nvmrc`](.nvmrc) épingle Node **24**. Deux surfaces le lisent, et c'est la source unique :
+
+| Surface | Lit `.nvmrc` ? | Node effectif |
+|---|---|---|
+| Cloudflare Workers Builds (prod) | oui | 24 |
+| GitHub Actions (`tests.yml`, via `node-version-file`) | oui | 24 |
+| **Conteneur des sessions cloud** | **non** | **22** |
+| Poste local | seulement via `nvm use` | au choix |
+
+Le conteneur cloud sert un Node système (`/opt/node22/bin/node`, pas de nvm) : `.nvmrc` y est
+inerte et on ne peut pas l'y aligner. Les mesures ci-dessus sont donc prises sur Node 22, alors
+que prod et CI tournent sur 24. Écart connu et assumé — la chaîne complète (suite Vitest, build,
+`deploy --dry-run`) a été rejouée sur Node 24.18.0, tout vert, bundle identique à l'octet près.
+
+Ne jamais remettre de version en dur dans `tests.yml` : c'est la double valeur à synchroniser à
+la main qui avait laissé la prod basculer sur Node 24 (défaut de Workers Builds depuis le
+2026-07-30) pendant que le CI validait encore sur 22.
+
+⚠️ Conséquence peu visible : Node 24 embarque **npm 11**, qui **bloque par défaut les scripts
+d'installation des dépendances** (`npm warn allow-scripts`, 12 paquets ici dont `workerd`,
+`sharp`, `@parcel/watcher`). Sans effet aujourd'hui — le postinstall du projet racine
+(`nuxt prepare`) tourne quand même, et `esbuild` reçoit son binaire par ses optional deps — mais
+une future dépendance qui a réellement besoin de son script d'install échouera de façon peu
+lisible. Le cas échéant : `npm approve-scripts <pkg>`.
 
 ### Instancier Cloudflare en local (workerd + D1/KV/R2 émulés)
 
