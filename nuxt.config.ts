@@ -3,24 +3,10 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxthub/core', '@vite-pwa/nuxt', 'nuxt-zod-i18n', '@nuxtjs/i18n', 'nuxt-auth-utils'],
 
-  // Session scellée (nuxt-auth-utils). maxAge long pour survivre au mode hors-ligne :
-  // la file de synchro rejoue les mutations tant que le cookie est valide.
-  // Secrets attendus en env : NUXT_SESSION_PASSWORD (≥32 car.),
-  // NUXT_OAUTH_DISCORD_CLIENT_ID/SECRET, NUXT_OAUTH_GOOGLE_CLIENT_ID/SECRET.
-  runtimeConfig: {
-    session: {
-      maxAge: 60 * 60 * 24 * 30, // 30 jours
-    },
-  },
-
-  ui: {
-    theme: {
-      colors: [
-        'primary', 'secondary', 'success', 'info', 'warning', 'error', 'neutral',
-        // Couleurs par classe — alias vers une palette Tailwind dans app.config.ts
-        'barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk',
-        'paladin', 'ranger', 'rogue', 'sorcerer', 'warlock', 'wizard',
-      ],
+  // Surcharge appliquée par `nuxt dev` uniquement (cf. hub.blob ci-dessous).
+  $development: {
+    hub: {
+      blob: { driver: 'fs', dir: '.data/blob' },
     },
   },
 
@@ -41,12 +27,26 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
 
-  compatibilityDate: '2025-12-27',
+  ui: {
+    theme: {
+      colors: [
+        'primary', 'secondary', 'success', 'info', 'warning', 'error', 'neutral',
+        // Couleurs par classe — alias vers une palette Tailwind dans app.config.ts
+        'barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk',
+        'paladin', 'ranger', 'rogue', 'sorcerer', 'warlock', 'wizard',
+      ],
+    },
+  },
 
-  // Sourcemaps serveur (activées par défaut en prod) : jamais uploadées sur le Worker (pas de
-  // `upload_source_maps`), mais leur génération au bundling Nitro fait dépasser le tas Node
-  // par défaut (~2 Go) de Cloudflare Workers Builds → OOM. Le script `build` relève aussi le tas.
-  sourcemap: { server: false, client: false },
+  // Session scellée (nuxt-auth-utils). maxAge long pour survivre au mode hors-ligne :
+  // la file de synchro rejoue les mutations tant que le cookie est valide.
+  // Secrets attendus en env : NUXT_SESSION_PASSWORD (≥32 car.),
+  // NUXT_OAUTH_DISCORD_CLIENT_ID/SECRET, NUXT_OAUTH_GOOGLE_CLIENT_ID/SECRET.
+  runtimeConfig: {
+    session: {
+      maxAge: 60 * 60 * 24 * 30, // 30 jours
+    },
+  },
 
   // Cache edge du catalogue (lot 6a). Le catalogue est STATIQUE (un seul `ruleset` en Phase 1 ;
   // le discriminant = Phase 2) et ne change qu'à un (re)seed → TTL long + `swr` (sert la version
@@ -57,6 +57,13 @@ export default defineNuxtConfig({
   routeRules: {
     '/api/catalog/**': { cache: { maxAge: 60 * 60, staleMaxAge: 60 * 60 * 24, swr: true } },
   },
+
+  // Sourcemaps serveur (activées par défaut en prod) : jamais uploadées sur le Worker (pas de
+  // `upload_source_maps`), mais leur génération au bundling Nitro fait dépasser le tas Node
+  // par défaut (~2 Go) de Cloudflare Workers Builds → OOM. Le script `build` relève aussi le tas.
+  sourcemap: { server: false, client: false },
+
+  compatibilityDate: '2025-12-27',
 
   // to seed database
   nitro: {
@@ -77,13 +84,6 @@ export default defineNuxtConfig({
     // serait AUSSI choisi en dev, où aucun binding n'existe → `$development` bascule
     // sur le driver fs (.data/blob), même logique d'émulation locale que la base.
     blob: { driver: 'cloudflare-r2', binding: 'BLOB' },
-  },
-
-  // Surcharge appliquée par `nuxt dev` uniquement (cf. hub.blob ci-dessus).
-  $development: {
-    hub: {
-      blob: { driver: 'fs', dir: '.data/blob' },
-    },
   },
 
   fonts: {
