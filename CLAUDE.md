@@ -31,8 +31,13 @@ Pour linter un fichier précis hors dev server : `npx eslint <fichier>`.
 
 ### Build et tests depuis un environnement cloud (Claude Code on the web)
 
-**Le build est testable en cloud — pas besoin de Docker.** Le conteneur démarre juste avec
-`node_modules/` vide, ce qui donne la fausse impression du contraire. Recette vérifiée
+**Le build est testable en cloud — pas besoin de Docker.**
+
+Depuis [.claude/hooks/session-start.sh](.claude/hooks/session-start.sh), les dépendances sont
+installées automatiquement au démarrage de chaque session distante (hook `SessionStart`, ~40 s
+à froid, ~10 s ensuite) : `npm ci` ci-dessous n'est donc plus nécessaire en temps normal. Le
+hook ne fait rien en local (garde sur `CLAUDE_CODE_REMOTE`) et exporte `NUXT_SESSION_PASSWORD`
+via `$CLAUDE_ENV_FILE`. La recette manuelle reste la référence si le hook n'a pas tourné
 (Node 22, mesures réelles) :
 
 ```bash
