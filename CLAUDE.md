@@ -2,6 +2,75 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Avant d'affirmer : sourcer ou s'abstenir
+
+S'applique à **toute affirmation factuelle sur ce dépôt** — code, tests, comportement en prod,
+ce qui existe ou n'existe pas — et pas seulement aux changements qu'on vient d'écrire.
+
+- **Une affirmation = une source.** Chaque affirmation sur le code cite soit `fichier:ligne` lu
+  pendant *cette* réponse, soit la commande lancée et sa sortie. Sans source, ce n'est pas une
+  affirmation : c'est une hypothèse, et elle doit être présentée comme telle.
+- **Marquer ce qui n'est pas vérifié.** `⚠️ hypothèse` devant toute déduction non vérifiée.
+  Tout le reste est réputé vérifié — donc ne jamais laisser passer une affirmation non sourcée
+  sans ce marqueur. Le but est que le lecteur repère d'un coup d'œil ce qu'il doit challenger.
+- **Les négations coûtent plus cher que les affirmations.** « il n'y a pas de X », « ce n'est
+  utilisé nulle part », « rien ne teste ça » ne valent qu'accompagnées de la recherche
+  exhaustive qui les établit, motif inclus (`grep -rn '<motif>' …`). À défaut, la formulation
+  honnête est « je n'ai pas trouvé de X en cherchant `<motif>` » — qui n'est pas la même chose.
+- **Jamais de réponse de mémoire** sur : le contenu d'un fichier, la signature ou le
+  comportement d'une fonction, ce qu'un test couvre réellement, l'état du schéma et des
+  migrations, ce qui tourne en prod. Vérifier coûte quelques secondes ; se tromper coûte une
+  session entière à démêler.
+- **« Je ne sais pas » et « je vérifie » sont des réponses valides**, et préférables à une
+  reconstitution plausible. Ne jamais combler un trou par ce qui *devrait* logiquement s'y
+  trouver.
+- **Face à « tu es sûr ? » : rouvrir le fichier, pas le débat.** Ni re-affirmation, ni
+  rétractation réflexe. On relance la vérification et on répond avec la sortie brute. Changer
+  d'avis sans nouvelle preuve est une erreur au même titre que l'affirmation d'origine.
+- **Une vérification a une date de péremption.** Elle vaut pour l'état lu à l'instant. Après un
+  edit, un `git pull`, un changement de branche : relire, ne pas recycler une lecture
+  antérieure — y compris la sienne, plus haut dans la même session.
+- **« Impossible » et « indisponible » sont des affirmations comme les autres.** Un symptôme
+  n'établit pas une limite : `node_modules/` vide ne signifie pas que le build est intestable ici,
+  une erreur d'authentification ne signifie pas qu'un compte est requis. Avant de déclarer qu'une
+  chose ne peut pas se faire dans cet environnement, l'essayer **une fois pour de vrai** et citer
+  l'échec obtenu. C'est le plus coûteux des raccourcis : les autres désinforment, celui-là fait
+  renoncer à du travail parfaitement faisable.
+- **Les règles D&D se citent, elles ne se restituent pas.** Un bonus, une progression, un
+  prérequis viennent de la source (AideDD, le seed, le catalogue en DB) — jamais de la mémoire du
+  modèle, y compris quand la règle *semble* connue. Une règle restituée de tête ne produit pas un
+  détail faux : elle produit une fonctionnalité entière fausse, construite et testée autour de
+  l'erreur.
+- **Une explication plausible n'est pas un diagnostic.** La première cause qui colle au symptôme
+  est une piste à confirmer, pas une conclusion : on établit le mécanisme réel avant d'écrire le
+  correctif, sinon on corrige quelque chose qui n'était pas cassé.
+
+## Avant d'implémenter : challenger la solution
+
+Le réflexe de fin de dev — « est-ce la meilleure solution ? a-t-on introduit de la dette ?
+a-t-on oublié quelque chose ? » — se prend **avant** d'écrire le code, spontanément, sans que
+l'utilisateur ait à le demander. Posé à la fin, il arrive au moment où la réponse coûte le plus
+cher : rien ne pousse autant à justifier une approche que le temps déjà passé à l'écrire.
+
+Pour tout changement non trivial (plus d'un fichier, une règle de calcul, le schéma, un seed, un
+contrat d'API), annoncer **avant de commencer**, en quelques lignes :
+
+- **L'approche retenue et au moins une alternative écartée**, avec la raison de l'écarter. Ne pas
+  trouver d'alternative n'est pas le signe que la solution s'impose : c'est le signe qu'on n'a pas
+  cherché.
+- **Ce que le dépôt fait déjà** — le pattern qui couvre tout ou partie du besoin (`shared/rules/`,
+  un util serveur partagé, un composable existant), trouvé par une recherche réelle, pas de
+  mémoire. Ré-implémenter à côté d'un pattern existant est la dette la plus fréquente ici.
+- **Ce que la solution laisse de côté** : compromis assumé, cas non couvert, surface non testée,
+  effet de bord sur le read-model / les seeds / le chemin prod. Nommé avant, c'est une décision ;
+  découvert après, c'est un oubli.
+
+Un challenge qui conclut « tout va bien » à chaque fois ne sert à rien : il doit pouvoir changer
+le plan, et quand il y aboutit, on change de plan — le travail déjà fourni n'est pas un argument.
+
+La **Definition of Done** repose les mêmes questions à la fin, mais contre le vrai diff : ici
+elles filtrent le design, là elles contrôlent le résultat.
+
 ## Definition of Done (méthode de travail)
 
 S'applique à **chaque** changement, sans qu'on ait à le demander :
@@ -10,6 +79,18 @@ S'applique à **chaque** changement, sans qu'on ait à le demander :
 - **Complétude — ne rien oublier.** Parcourir les angles morts récurrents : chemin prod/déploiement (migration auto vs seed manuel vs front — le piège du backfill), duplication vs un pattern existant qui centralise déjà (ex. `buildProficiencyCarrier`), surface non testée (`seeds hub:db`, front) et comment elle est gardée (test-contrat, garde-fou), effets de bord (read-model, features matérialisées, fixtures), cohérence avec les conventions du repo (nommage, `ruleset`, tests-contrat).
 - **La meilleure solution, pas un quick fix.** Préférer le design correct / DRY / aligné sur les patterns existants à une rustine ; réutiliser le pattern plutôt que le ré-implémenter.
 - **Zéro dette nouvelle.** Ne pas introduire de dette. Si un compromis est réellement inévitable, le remonter explicitement (dans la réponse, et dans `docs/` s'il doit être suivi) — jamais en silence.
+
+## Quand une erreur est relevée
+
+Une erreur qu'il a fallu me signaler se consigne dans [`docs/torts.md`](docs/torts.md) — commande
+`/tort` — au moment où elle est relevée, **sans toucher à ce fichier-ci**. Les règles se révisent
+d'un bloc quand la file est relue (~10 entrées), pas PR par PR : une convention retouchée à chaud
+après chaque incident grossit sans qu'on voie jamais lesquelles de ses règles servent.
+
+Le registre est une **file d'attente** : une entrée en sort quand elle a produit une règle, ou
+qu'on a constaté qu'elle n'en méritait pas. Il note aussi, pour chaque erreur, si une règle
+existante aurait dû l'attraper — auquel cas en ajouter une n'est pas la réponse.
+
 
 ## Commands
 
