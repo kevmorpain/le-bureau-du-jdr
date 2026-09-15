@@ -2,6 +2,35 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Avant d'affirmer : sourcer ou s'abstenir
+
+S'applique à **toute affirmation factuelle sur ce dépôt** — code, tests, comportement en prod,
+ce qui existe ou n'existe pas — et pas seulement aux changements qu'on vient d'écrire.
+
+- **Une affirmation = une source.** Chaque affirmation sur le code cite soit `fichier:ligne` lu
+  pendant *cette* réponse, soit la commande lancée et sa sortie. Sans source, ce n'est pas une
+  affirmation : c'est une hypothèse, et elle doit être présentée comme telle.
+- **Marquer ce qui n'est pas vérifié.** `⚠️ hypothèse` devant toute déduction non vérifiée.
+  Tout le reste est réputé vérifié — donc ne jamais laisser passer une affirmation non sourcée
+  sans ce marqueur. Le but est que le lecteur repère d'un coup d'œil ce qu'il doit challenger.
+- **Les négations coûtent plus cher que les affirmations.** « il n'y a pas de X », « ce n'est
+  utilisé nulle part », « rien ne teste ça » ne valent qu'accompagnées de la recherche
+  exhaustive qui les établit, motif inclus (`grep -rn '<motif>' …`). À défaut, la formulation
+  honnête est « je n'ai pas trouvé de X en cherchant `<motif>` » — qui n'est pas la même chose.
+- **Jamais de réponse de mémoire** sur : le contenu d'un fichier, la signature ou le
+  comportement d'une fonction, ce qu'un test couvre réellement, l'état du schéma et des
+  migrations, ce qui tourne en prod. Vérifier coûte quelques secondes ; se tromper coûte une
+  session entière à démêler.
+- **« Je ne sais pas » et « je vérifie » sont des réponses valides**, et préférables à une
+  reconstitution plausible. Ne jamais combler un trou par ce qui *devrait* logiquement s'y
+  trouver.
+- **Face à « tu es sûr ? » : rouvrir le fichier, pas le débat.** Ni re-affirmation, ni
+  rétractation réflexe. On relance la vérification et on répond avec la sortie brute. Changer
+  d'avis sans nouvelle preuve est une erreur au même titre que l'affirmation d'origine.
+- **Une vérification a une date de péremption.** Elle vaut pour l'état lu à l'instant. Après un
+  edit, un `git pull`, un changement de branche : relire, ne pas recycler une lecture
+  antérieure — y compris la sienne, plus haut dans la même session.
+
 ## Definition of Done (méthode de travail)
 
 S'applique à **chaque** changement, sans qu'on ait à le demander :
