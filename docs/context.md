@@ -170,11 +170,13 @@ séparés : `characterLevel` (progressions `*_at_character_level`, les tours de 
   sûre : une table par niveau d'emplacement **commence au niveau du sort**, et chaque valeur est une
   notation exploitable.
 - Un sort d'**attaque** jette ses dégâts en deux gestes (« Lancer » pour toucher, puis « Dégâts ») :
-  le bouton Dégâts ouvre `RollDamageModal`, qui redemande le niveau — présélectionné sur
-  `MagicSection.lastCastLevel` (mémoire de session par `spellId`, non persistée) et affiché sur le
-  bouton (« Dégâts (niv. 3) »). Deux modales plutôt qu'un mode : celle-ci **ne dépense aucun
-  emplacement** et propose les niveaux **même épuisés** — celui qu'on vient de dépenser est
-  justement celui auquel il faut jeter. Sans montée en puissance, pas de modale : on jette.
+  le second **hérite** du niveau du premier (`MagicSection.lastCastLevel`, mémoire de session par
+  `spellId`, non persistée) et l'affiche sur le bouton (« Dégâts (niv. 3) »). Un clic, pas de
+  modale : redemander le niveau qu'on vient de choisir est une corvée, pas une sécurité. Le chevron
+  du `UButtonGroup` — rendu seulement pour les sorts qui montent en puissance — ouvre
+  `RollDamageModal` pour les cas où l'app n'a pas vu le lancement. Deux modales plutôt qu'un mode :
+  celle-ci **ne dépense aucun emplacement** et propose les niveaux **même épuisés** (celui qu'on
+  vient de dépenser est justement celui auquel il faut jeter).
 - `useSpellEffectPreview` porte le libellé « ce que donne le niveau N » (« 5d4+5 force ») pour les
   deux modales : le même choix doit se lire pareil des deux côtés.
 - Monter un composant Nuxt UI en isolation demande de bouchonner `UTooltip` (il attend le contexte

@@ -252,13 +252,14 @@ représenter. ⚠️ **Nécessite un re-seed en prod** (`POST /api/admin/seed?on
 
 **Cas des sorts d'attaque** : leurs dégâts se jettent en **deux gestes** (« Lancer » = jet pour
 toucher, puis « Dégâts »), donc le second doit savoir à quel niveau le sort a été lancé — sinon la
-modale annonce 6d6 au niveau 3 et le bouton jette 4d6. Le bouton **Dégâts ouvre son propre choix de
-niveau** (`RollDamageModal`), présélectionné sur le dernier lancement : le niveau redevient une
-décision explicite au lieu d'un état caché. Deux différences avec `CastSpellModal`, qui justifient
-un composant distinct : **aucun emplacement n'est dépensé** (il l'a été au lancement) et les niveaux
-sont proposés **même épuisés** — après avoir lancé son dernier emplacement de niveau 3, c'est
-précisément à ce niveau qu'il faut pouvoir jeter. Quand le sort ne monte pas en puissance (tour de
-magie, table à un seul palier), il n'y a rien à choisir : le bouton jette directement.
+modale annonce 6d6 au niveau 3 et le bouton jette 4d6. Le niveau choisi au lancement est donc
+**hérité** par le jet de dégâts, et affiché sur le bouton (« Dégâts (niv. 3) ») : un clic, pas de
+question — on ne redemande pas ce qu'on vient de répondre. Un **chevron** à côté (seulement pour les
+sorts qui montent en puissance) ouvre `RollDamageModal` pour jeter à un autre niveau : utile quand
+le lancement n'est pas passé par l'app, ou après un rechargement (la mémoire est de session).
+Composant distinct de `CastSpellModal` pour deux raisons : **aucun emplacement n'est dépensé** (il
+l'a été au lancement) et les niveaux sont proposés **même épuisés** — après avoir lancé son dernier
+emplacement de niveau 3, c'est précisément à ce niveau qu'il faut pouvoir jeter.
 
 **Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
 *à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),

@@ -264,18 +264,35 @@
             >
               Lancer
             </UButton>
-            <!-- Bouton Dégâts (sorts d'attaque) : jet de dégâts, sans reconsommer d'emplacement -->
-            <UButton
+            <!-- Dégâts (sorts d'attaque) : jet au niveau du lancement, sans reconsommer
+                 d'emplacement. Le chevron permet de changer ce niveau quand il y a un choix. -->
+            <UButtonGroup
               v-if="isAttackSpell(cs) && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
               size="xs"
-              variant="soft"
-              color="warning"
-              icon="i-game-icons:blood"
               class="shrink-0"
-              @click.stop="openDamageFor(cs)"
             >
-              {{ damageButtonLabel(cs) }}
-            </UButton>
+              <UButton
+                variant="soft"
+                color="warning"
+                icon="i-game-icons:blood"
+                @click.stop="rollSpellEffect(cs, castLevelFor(cs))"
+              >
+                {{ damageButtonLabel(cs) }}
+              </UButton>
+              <UTooltip
+                v-if="scalingSpellIds.has(cs.spellId)"
+                :delay-duration="0"
+                text="Jeter à un autre niveau"
+              >
+                <UButton
+                  variant="soft"
+                  color="warning"
+                  icon="i-heroicons:chevron-down"
+                  :aria-label="`Jeter les dégâts de ${cs.spell.name} à un autre niveau`"
+                  @click.stop="openDamageLevelPicker(cs)"
+                />
+              </UTooltip>
+            </UButtonGroup>
           </div>
         </template>
       </div>
@@ -534,19 +551,21 @@ const ownedSlotLevels = computed<number[]>(() => {
 
 const showDamageModal = ref(false)
 
-// Le niveau retenu est affiché : un niveau mémorisé en silence serait le même piège à l'envers.
+// Le niveau retenu est affiché : un niveau mémorisé en silence serait un piège.
 const damageButtonLabel = (cs: CharacterSpellWithSpell): string => {
   const level = castLevelFor(cs)
   return level > baseSlotLevel(cs.spell) ? `Dégâts (niv. ${level})` : 'Dégâts'
 }
 
-// Bouton « Dégâts » : demander le niveau n'a de sens que si le sort monte en puissance par
-// emplacement. Sinon (tour de magie, table à un seul palier), il n'y a rien à choisir → on jette.
-const openDamageFor = (cs: CharacterSpellWithSpell) => {
-  if (!upcastRows(cs.spell).length) {
-    rollSpellEffect(cs, castLevelFor(cs))
-    return
-  }
+// Sorts dont les dégâts dépendent de l'emplacement dépensé : les seuls où changer de niveau veut
+// dire quelque chose (un tour de magie suit le niveau du PERSONNAGE, il n'y a rien à choisir).
+const scalingSpellIds = computed<Set<number>>(() =>
+  new Set((characterSpells.value ?? [])
+    .filter(cs => upcastRows(cs.spell).length > 0)
+    .map(cs => cs.spellId)),
+)
+
+const openDamageLevelPicker = (cs: CharacterSpellWithSpell) => {
   selectedSpell.value = cs
   showDamageModal.value = true
 }
