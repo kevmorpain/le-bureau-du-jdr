@@ -65,3 +65,18 @@ commande).
 - **Règle** : **présente, non appliquée** — « Vérifier avant de dire "fait" » (Definition of Done)
   et « Une affirmation = une source » couvrent toutes deux le cas. Aucune règle ne manquait.
 - Relevé par l'utilisateur.
+
+### 2026-09-15 — Annoncé l'annulation d'un rappel sans l'annuler
+
+- **Affirmé / fait** : « J'annule mon rappel de relance, il n'a plus d'objet. »
+- **Vrai** : aucun `delete_trigger` n'a été appelé. Le rappel
+  (`trig_01DHAmwHw4U3gsS6qYBYXRbU`) a sonné cinq minutes plus tard et s'est désactivé de lui-même
+  (`ended_reason: run_once_fired`). Sans conséquence — un one-shot ne resonne pas — mais l'annonce
+  était fausse au moment où elle a été faite.
+- **Manque** : ne pas avoir appelé l'outil dans le tour où l'annonce était écrite. Une action
+  annoncée en fin de message et renvoyée à plus tard n'est jamais exécutée : il n'y a pas de
+  « plus tard » entre deux tours.
+- **Règle** : **présente, non appliquée** — « Vérifier avant de dire "fait" ». Deux des trois
+  entrées de cette file relèvent d'un énoncé à l'indicatif pour une action non exécutée.
+- Révélé par le déclenchement du rappel lui-même ; consigné à la demande de l'utilisateur, qui a
+  écarté le filtre « erreur relevée par l'utilisateur » pour ce cas.
