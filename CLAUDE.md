@@ -45,6 +45,32 @@ ce qui existe ou n'existe pas — et pas seulement aux changements qu'on vient d
   est une piste à confirmer, pas une conclusion : on établit le mécanisme réel avant d'écrire le
   correctif, sinon on corrige quelque chose qui n'était pas cassé.
 
+## Avant d'implémenter : challenger la solution
+
+Le réflexe de fin de dev — « est-ce la meilleure solution ? a-t-on introduit de la dette ?
+a-t-on oublié quelque chose ? » — se prend **avant** d'écrire le code, spontanément, sans que
+l'utilisateur ait à le demander. Posé à la fin, il arrive au moment où la réponse coûte le plus
+cher : rien ne pousse autant à justifier une approche que le temps déjà passé à l'écrire.
+
+Pour tout changement non trivial (plus d'un fichier, une règle de calcul, le schéma, un seed, un
+contrat d'API), annoncer **avant de commencer**, en quelques lignes :
+
+- **L'approche retenue et au moins une alternative écartée**, avec la raison de l'écarter. Ne pas
+  trouver d'alternative n'est pas le signe que la solution s'impose : c'est le signe qu'on n'a pas
+  cherché.
+- **Ce que le dépôt fait déjà** — le pattern qui couvre tout ou partie du besoin (`shared/rules/`,
+  un util serveur partagé, un composable existant), trouvé par une recherche réelle, pas de
+  mémoire. Ré-implémenter à côté d'un pattern existant est la dette la plus fréquente ici.
+- **Ce que la solution laisse de côté** : compromis assumé, cas non couvert, surface non testée,
+  effet de bord sur le read-model / les seeds / le chemin prod. Nommé avant, c'est une décision ;
+  découvert après, c'est un oubli.
+
+Un challenge qui conclut « tout va bien » à chaque fois ne sert à rien : il doit pouvoir changer
+le plan, et quand il y aboutit, on change de plan — le travail déjà fourni n'est pas un argument.
+
+La **Definition of Done** repose les mêmes questions à la fin, mais contre le vrai diff : ici
+elles filtrent le design, là elles contrôlent le résultat.
+
 ## Definition of Done (méthode de travail)
 
 S'applique à **chaque** changement, sans qu'on ait à le demander :
