@@ -30,6 +30,20 @@ ce qui existe ou n'existe pas — et pas seulement aux changements qu'on vient d
 - **Une vérification a une date de péremption.** Elle vaut pour l'état lu à l'instant. Après un
   edit, un `git pull`, un changement de branche : relire, ne pas recycler une lecture
   antérieure — y compris la sienne, plus haut dans la même session.
+- **« Impossible » et « indisponible » sont des affirmations comme les autres.** Un symptôme
+  n'établit pas une limite : `node_modules/` vide ne signifie pas que le build est intestable ici,
+  une erreur d'authentification ne signifie pas qu'un compte est requis. Avant de déclarer qu'une
+  chose ne peut pas se faire dans cet environnement, l'essayer **une fois pour de vrai** et citer
+  l'échec obtenu. C'est le plus coûteux des raccourcis : les autres désinforment, celui-là fait
+  renoncer à du travail parfaitement faisable.
+- **Les règles D&D se citent, elles ne se restituent pas.** Un bonus, une progression, un
+  prérequis viennent de la source (AideDD, le seed, le catalogue en DB) — jamais de la mémoire du
+  modèle, y compris quand la règle *semble* connue. Une règle restituée de tête ne produit pas un
+  détail faux : elle produit une fonctionnalité entière fausse, construite et testée autour de
+  l'erreur.
+- **Une explication plausible n'est pas un diagnostic.** La première cause qui colle au symptôme
+  est une piste à confirmer, pas une conclusion : on établit le mécanisme réel avant d'écrire le
+  correctif, sinon on corrige quelque chose qui n'était pas cassé.
 
 ## Definition of Done (méthode de travail)
 
