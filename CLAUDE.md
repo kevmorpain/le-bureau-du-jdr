@@ -139,7 +139,9 @@ Notes :
 
 ### Version de Node : `.nvmrc` fait foi (sauf en session cloud)
 
-[`.nvmrc`](.nvmrc) épingle Node **24**. Deux surfaces le lisent, et c'est la source unique :
+[`.nvmrc`](.nvmrc) épingle Node **24** (la majeure, pas le patch : chaque surface résout sa
+propre 24.x — Cloudflare 24.18.0, le runner GitHub 24.20.0). Deux surfaces le lisent, et c'est
+la source unique :
 
 | Surface | Lit `.nvmrc` ? | Node effectif |
 |---|---|---|
@@ -162,7 +164,9 @@ d'installation des dépendances** (`npm warn allow-scripts`, 12 paquets ici dont
 `sharp`, `@parcel/watcher`). Sans effet aujourd'hui — le postinstall du projet racine
 (`nuxt prepare`) tourne quand même, et `esbuild` reçoit son binaire par ses optional deps — mais
 une future dépendance qui a réellement besoin de son script d'install échouera de façon peu
-lisible. Le cas échéant : `npm approve-scripts <pkg>`.
+lisible. Le cas échéant, suivre la commande que l'avertissement imprime lui-même : elle a été
+renommée en cours de route (`npm install-scripts approve <pkg>` en npm 11.19, le CI actuel ;
+`npm approve-scripts <pkg>` dans les 11.x antérieurs).
 
 ### Instancier Cloudflare en local (workerd + D1/KV/R2 émulés)
 
