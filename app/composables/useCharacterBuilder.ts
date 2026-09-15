@@ -8,6 +8,7 @@ import {
   SKILLS,
   LANGUAGES,
   TOOL_CHOICE_MAP,
+  extraLanguagesFromToolChoices,
   abilityMod,
   formatMod,
   profBonusAtLevel,
@@ -496,6 +497,7 @@ export function useCharacterBuilder() {
     countChoices(raceData.value?.languages ?? [])
     countChoices(subraceData.value?.languages ?? [])
     count += backgroundData.value?.languages ?? 0
+    count += extraLanguagesFromToolChoices(state.value.selectedToolProficiencies)
     return count
   })
 

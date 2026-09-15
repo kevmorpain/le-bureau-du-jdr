@@ -327,4 +327,10 @@ watch(() => state.value.backgroundId, (id) => {
   }
   state.value.selectedToolProficiencies = {}
 })
+
+// Le nombre de langues peut baisser (changement d'historique, « langue supplémentaire » désélectionnée) :
+// on retire l'excédent, sinon il partirait quand même à la création.
+watch(languageChoiceCount, (count) => {
+  if (state.value.selectedLanguages.length > count) state.value.selectedLanguages.splice(count)
+})
 </script>

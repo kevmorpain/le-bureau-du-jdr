@@ -43,11 +43,26 @@ export const GENERIC_ITEM_OPTIONS: Record<string, string[]> = {
   'Un jeu au choix': ['Jeu de dés', 'Jeu de cartes', "Jeu d'échecs draconiques", 'Jeu des Dragons'],
 }
 
+// Option d'un choix d'outil qui n'est PAS une maîtrise d'outil : elle ajoute une langue à choisir
+// (Marchand de guilde : outils de navigateur OU une langue supplémentaire).
+export const EXTRA_LANGUAGE_OPTION = 'Langue supplémentaire'
+
 // Maîtrises d'outils avec choix : strings exacts utilisés dans BackgroundData.toolProficiencies → liste d'options
 export const TOOL_CHOICE_MAP: Record<string, string[]> = {
   'Un jeu au choix': GENERIC_ITEM_OPTIONS['Un jeu au choix']!,
   'Outil d\'artisan au choix': GENERIC_ITEM_OPTIONS["Outil d'artisan au choix"]!,
   'Instrument de musique au choix': GENERIC_ITEM_OPTIONS['Instrument de musique au choix']!,
+  'Outils de navigateur ou langue au choix': ['Outils de navigateur', EXTRA_LANGUAGE_OPTION],
+}
+
+/** Maîtrises d'outils réellement choisies (sans l'option « langue supplémentaire »). */
+export function chosenToolProficiencies(selected: Record<string, string>): string[] {
+  return Object.values(selected).filter(v => v && v !== EXTRA_LANGUAGE_OPTION)
+}
+
+/** Langues supplémentaires débloquées par des choix d'outils. */
+export function extraLanguagesFromToolChoices(selected: Record<string, string>): number {
+  return Object.values(selected).filter(v => v === EXTRA_LANGUAGE_OPTION).length
 }
 
 // Mapping French display → machine-readable keys (used for character_proficiency_overrides)
@@ -912,6 +927,44 @@ export interface BackgroundData {
   source?: Source
 }
 
+// Artisan de guilde et sa variante Marchand de guilde partagent les mêmes tables du PHB.
+const GUILD_SUGGESTIONS: BackgroundSuggestions = {
+  personality: [
+    'Je crois que si quelque chose doit être fait, il doit l\'être correctement. Je n\'y peux rien, je suis un perfectionniste.',
+    'Je suis un snob qui regarde de haut ceux qui ne peuvent apprécier les arts de qualité.',
+    'Je veux tout le temps savoir comment les choses fonctionnent et ce qui pousse les gens à avancer.',
+    'Je lance plein d\'aphorismes spirituels et ai un proverbe pour chaque occasion.',
+    'Je suis grossier envers ceux qui n\'ont pas mon engagement pour le travail bien fait et mon fair-play.',
+    'J\'aime parler de longues heures de ma profession.',
+    'Je ne me sépare pas de mon or facilement et marchande sans relâche pour faire la meilleure affaire possible.',
+    'Je suis reconnu pour mon travail, et je veux m\'assurer que tout le monde l\'apprécie. Je suis toujours pris au dépourvu lorsque quelqu\'un n\'a pas entendu parlé de moi.',
+  ],
+  ideals: [
+    'Communauté. Il est du devoir de tout peuple civilisé de renforcer les liens qui unissent sa communauté ainsi que d\'assurer la sécurité de sa civilisation.',
+    'Générosité. Mes talents m\'ont été donnés pour que je les utilise pour le plus grand nombre.',
+    'Liberté. Chacun devrait être libre d\'exercer son propre gagne-pain.',
+    'Avarice. Je ne suis là que pour l\'argent.',
+    'Peuple. Je m\'engage pour des personnes que j\'apprécie, pas pour des idées.',
+    'Aspiration. Je travaille dur pour être le meilleur dans mon domaine.',
+  ],
+  bonds: [
+    'L\'atelier où j\'ai appris mon métier est l\'endroit le plus important au monde pour moi.',
+    'J\'ai créé un travail remarquable pour certaines personnes, puis les ai trouvées indignes de le recevoir. Je suis encore à la recherche d\'une personne qui le méritera.',
+    'J\'ai une énorme dette envers ma guilde, car elle a fait de moi ce que je suis aujourd\'hui.',
+    'Je cherche à être riche pour m\'assurer l\'amour d\'une personne.',
+    'Un jour je retournerai à ma guilde et leur prouverai que je suis un bien plus grand artisan qu\'eux.',
+    'Je vais prendre ma revanche sur les forces maléfiques qui ont détruit mon atelier et anéanti mon gagne-pain.',
+  ],
+  flaws: [
+    'Je ferais n\'importe quoi pour mettre la main sur quelque chose de rare ou d\'inestimable.',
+    'Je me persuade très vite que les gens cherchent à me rouler dans la farine.',
+    'Personne ne doit savoir que j\'ai un jour dérobé l\'or des coffres d\'une guilde.',
+    'Je ne suis jamais satisfait de ce que j\'ai, je veux toujours plus.',
+    'Je tuerai pour obtenir un titre de noblesse.',
+    'Je suis horriblement jaloux de tous ceux qui peuvent surpasser mes créations. Partout où je vais, je suis entouré de rivaux.',
+  ],
+}
+
 export const BACKGROUNDS: BackgroundData[] = [
   {
     id: 'acolyte',
@@ -1164,42 +1217,20 @@ export const BACKGROUNDS: BackgroundData[] = [
     equipment: ['Outils d\'artisan', 'Lettre de la guilde', 'Vêtements de voyage', '15 po'],
     featureName: 'Membre de guilde',
     featureDescription: 'Logement et assistance auprès des membres de votre guilde dans n\'importe quelle ville.',
-    suggestions: {
-      personality: [
-        'Je crois que si quelque chose doit être fait, il doit l\'être correctement. Je n\'y peux rien, je suis un perfectionniste.',
-        'Je suis un snob qui regarde de haut ceux qui ne peuvent apprécier les arts de qualité.',
-        'Je veux tout le temps savoir comment les choses fonctionnent et ce qui pousse les gens à avancer.',
-        'Je lance plein d\'aphorismes spirituels et ai un proverbe pour chaque occasion.',
-        'Je suis grossier envers ceux qui n\'ont pas mon engagement pour le travail bien fait et mon fair-play.',
-        'J\'aime parler de longues heures de ma profession.',
-        'Je ne me sépare pas de mon or facilement et marchande sans relâche pour faire la meilleure affaire possible.',
-        'Je suis reconnu pour mon travail, et je veux m\'assurer que tout le monde l\'apprécie. Je suis toujours pris au dépourvu lorsque quelqu\'un n\'a pas entendu parlé de moi.',
-      ],
-      ideals: [
-        'Communauté. Il est du devoir de tout peuple civilisé de renforcer les liens qui unissent sa communauté ainsi que d\'assurer la sécurité de sa civilisation.',
-        'Générosité. Mes talents m\'ont été donnés pour que je les utilise pour le plus grand nombre.',
-        'Liberté. Chacun devrait être libre d\'exercer son propre gagne-pain.',
-        'Avarice. Je ne suis là que pour l\'argent.',
-        'Peuple. Je m\'engage pour des personnes que j\'apprécie, pas pour des idées.',
-        'Aspiration. Je travaille dur pour être le meilleur dans mon domaine.',
-      ],
-      bonds: [
-        'L\'atelier où j\'ai appris mon métier est l\'endroit le plus important au monde pour moi.',
-        'J\'ai créé un travail remarquable pour certaines personnes, puis les ai trouvées indignes de le recevoir. Je suis encore à la recherche d\'une personne qui le méritera.',
-        'J\'ai une énorme dette envers ma guilde, car elle a fait de moi ce que je suis aujourd\'hui.',
-        'Je cherche à être riche pour m\'assurer l\'amour d\'une personne.',
-        'Un jour je retournerai à ma guilde et leur prouverai que je suis un bien plus grand artisan qu\'eux.',
-        'Je vais prendre ma revanche sur les forces maléfiques qui ont détruit mon atelier et anéanti mon gagne-pain.',
-      ],
-      flaws: [
-        'Je ferais n\'importe quoi pour mettre la main sur quelque chose de rare ou d\'inestimable.',
-        'Je me persuade très vite que les gens cherchent à me rouler dans la farine.',
-        'Personne ne doit savoir que j\'ai un jour dérobé l\'or des coffres d\'une guilde.',
-        'Je ne suis jamais satisfait de ce que j\'ai, je veux toujours plus.',
-        'Je tuerai pour obtenir un titre de noblesse.',
-        'Je suis horriblement jaloux de tous ceux qui peuvent surpasser mes créations. Partout où je vais, je suis entouré de rivaux.',
-      ],
-    },
+    suggestions: GUILD_SUGGESTIONS,
+  },
+  {
+    id: 'guild-merchant',
+    dbName: 'Marchand de guilde',
+    name: 'Marchand de guilde',
+    description: 'Variante de l\'artisan de guilde : membre d\'une guilde de marchands, négociant plutôt qu\'artisan.',
+    skillProficiencies: ['insight', 'persuasion'],
+    toolProficiencies: ['Outils de navigateur ou langue au choix'],
+    languages: 1,
+    equipment: ['Mule', 'Charrette', 'Lettre de la guilde', 'Vêtements de voyage', '15 po'],
+    featureName: 'Membre de guilde',
+    featureDescription: 'Logement et assistance auprès des membres de votre guilde dans n\'importe quelle ville.',
+    suggestions: GUILD_SUGGESTIONS,
   },
   {
     id: 'hermit',
