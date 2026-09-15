@@ -80,6 +80,18 @@ S'applique à **chaque** changement, sans qu'on ait à le demander :
 - **La meilleure solution, pas un quick fix.** Préférer le design correct / DRY / aligné sur les patterns existants à une rustine ; réutiliser le pattern plutôt que le ré-implémenter.
 - **Zéro dette nouvelle.** Ne pas introduire de dette. Si un compromis est réellement inévitable, le remonter explicitement (dans la réponse, et dans `docs/` s'il doit être suivi) — jamais en silence.
 
+## Quand une erreur est relevée
+
+Une erreur qu'il a fallu me signaler se consigne dans [`docs/torts.md`](docs/torts.md) — commande
+`/tort` — au moment où elle est relevée, **sans toucher à ce fichier-ci**. Les règles se révisent
+d'un bloc quand la file est relue (~10 entrées), pas PR par PR : une convention retouchée à chaud
+après chaque incident grossit sans qu'on voie jamais lesquelles de ses règles servent.
+
+Le registre est une **file d'attente** : une entrée en sort quand elle a produit une règle, ou
+qu'on a constaté qu'elle n'en méritait pas. Il note aussi, pour chaque erreur, si une règle
+existante aurait dû l'attraper — auquel cas en ajouter une n'est pas la réponse.
+
+
 ## Commands
 
 ```bash
