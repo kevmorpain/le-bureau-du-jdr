@@ -48,8 +48,48 @@ Notes :
 - `deploy --dry-run` est le seul contrôle qui couvre l'étape **après** `nuxt build` : il
   résout `wrangler.jsonc`, vérifie les bindings (`DB`, `KV`, `BLOB`, `ASSETS`) et la taille
   du bundle. C'est ce qui rattrape une erreur de déploiement sans toucher la prod.
-- Ce que le cloud ne couvre **pas** : les bindings réels (D1/KV/R2 de prod), donc pas de
-  migration appliquée ni de seed — seulement leur bundling dans `.output/server/db/migrations/`.
+- `deploy --dry-run` ne couvre que le *bundling*. Pour exercer le Worker et ses bindings,
+  voir la section suivante.
+
+### Instancier Cloudflare en local (workerd + D1/KV/R2 émulés)
+
+Wrangler embarque `workerd` (le vrai runtime des Workers) et Miniflare (émulation des
+bindings). **Aucun compte ni credential Cloudflare n'est requis** — tout tourne hors ligne
+et l'état persiste dans `.wrangler/state/` (gitignoré). Recette vérifiée de bout en bout :
+
+```bash
+npm run build                                       # .output/ doit exister d'abord
+npx wrangler d1 migrations apply DB --local         # applique les migrations à la D1 locale
+npx wrangler dev --port 8787 --ip 127.0.0.1 \
+  --var SEED_SECRET:localdev \
+  --var NUXT_SESSION_PASSWORD:local_dev_dummy_session_password_32c
+```
+
+Au démarrage, Wrangler doit lister les 4 bindings en mode `local` :
+`KV`, `DB`, `BLOB`, `ASSETS`. Ensuite, le seed et l'API répondent pour de vrai :
+
+```bash
+curl -X POST -H "x-seed-secret: localdev" \
+  "http://127.0.0.1:8787/api/admin/seed?only=abilityScores,skills,magicSchools"
+# → {"result":"success","summary":{"abilityScores":{"inserted":6,"skipped":0},…}}
+curl http://127.0.0.1:8787/api/magic_schools     # relit les données depuis la D1 locale
+npx wrangler d1 execute DB --local --command "SELECT …"   # inspection directe du SQLite
+```
+
+C'est le seul moyen de tester **avant déploiement** ce que `nuxt build` ne voit pas : une
+migration qui casse, un seed non idempotent, un handler qui plante au runtime Workers
+(et non sous Node/Vitest).
+
+Gotchas :
+- Lancer `wrangler dev` **depuis la racine**, pas `--cwd .output` : le `migrations_dir`
+  généré (`.output/server/db/migrations/`) est relatif à la racine. Wrangler suit tout seul
+  la redirection `.wrangler/deploy/config.json` → `.output/server/wrangler.json`.
+- Passer les secrets par `--var` plutôt que de créer un fichier `.dev.vars`.
+- Deux avertissements au boot sont **bénins** : `Unable to fetch the Request.cf object`
+  (pas de réseau sortant vers Cloudflare → placeholder) et `Duplicate key "provider"`
+  (`@nuxt/image` dans le bundle).
+- Émulé ≠ prod : pas de limite de requêtes D1 par invocation ici, donc un seed complet peut
+  passer en local et échouer en prod. Garder le découpage `?only=`.
 
 ### Running `nuxt dev` from a Claude session
 

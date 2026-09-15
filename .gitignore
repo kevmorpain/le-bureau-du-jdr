@@ -19,6 +19,10 @@ logs
 .idea
 
 .wrangler/
+# Secrets locaux de `wrangler dev` (cf. CLAUDE.md — on préfère `--var`, mais ne jamais
+# committer ce fichier s'il est créé).
+.dev.vars
+.dev.vars.*
 
 # Claude
 .claude/settings.local.json
