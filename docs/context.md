@@ -168,5 +168,9 @@ séparés : `characterLevel` (progressions `*_at_character_level`, les tours de 
 - Le seed contract de `test/unit/spellSeedData.test.ts` garde l'invariant qui rend la résolution
   sûre : une table par niveau d'emplacement **commence au niveau du sort**, et chaque valeur est une
   notation exploitable.
+- Un sort d'**attaque** jette ses dégâts en deux gestes (« Lancer » pour toucher, puis « Dégâts ») :
+  `MagicSection.lastCastLevel` mémorise le niveau du dernier lancement par `spellId` pour que le
+  second geste retrouve l'emplacement dépensé, et le bouton l'affiche (« Dégâts (niv. 3) ») — un
+  niveau mémorisé sans le dire serait le même piège à l'envers. Mémoire de session, non persistée.
 - Monter un composant Nuxt UI en isolation demande de bouchonner `UTooltip` (il attend le contexte
   de `<UApp>`).

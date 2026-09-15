@@ -250,9 +250,11 @@ donnée) ; la fourchette min~max du grimoire rendait `NaN` sur une notation à b
 et « Simulacre de vie » retrouve son bloc `heal` (`1d4+4`), que l'ancien parseur ne savait pas
 représenter. ⚠️ **Nécessite un re-seed en prod** (`POST /api/admin/seed?only=spells`, idempotent).
 
-**Résidu assumé** : le bouton **Dégâts** de la ligne d'un sort d'attaque jette toujours au niveau de
-base — la fiche ne mémorise pas le niveau du dernier lancement. L'affiché et le jeté restent
-cohérents (tous deux au niveau de base) ; c'est un manque, plus une contradiction.
+**Cas des sorts d'attaque** : leurs dégâts se jettent en **deux gestes** (« Lancer » = jet pour
+toucher, puis « Dégâts »), donc le second devait retrouver l'emplacement dépensé au premier — sinon
+la modale annonçait 6d6 au niveau 3 et le bouton jetait 4d6. `MagicSection` mémorise le niveau du
+dernier lancement par sort et l'affiche sur le bouton (« Dégâts (niv. 3) »), plutôt que d'en faire
+un état invisible. Mémoire **de session** : au rechargement, retour au niveau de base.
 
 **Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
 *à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),
