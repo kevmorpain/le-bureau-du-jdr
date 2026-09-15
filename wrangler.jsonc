@@ -31,5 +31,48 @@
       "binding": "BLOB",
       "bucket_name": "le-bureau-du-jdr-media"
     }
-  ]
+  ],
+
+  // ── Environnement de staging ────────────────────────────────────────────────
+  // Cible du staging partagé (cf. docs/staging.md et .github/workflows/deploy-staging.yml).
+  //
+  // ⚠️ L'environnement se choisit au BUILD, pas au déploiement : `@nuxthub/core` lit
+  // `CLOUDFLARE_ENV` à la fermeture du build et APLATIT `env.<valeur>` dans le
+  // `.output/server/wrangler.json` généré. Donc `CLOUDFLARE_ENV=staging npm run build`,
+  // puis `wrangler deploy` SANS `--env`. Sans `CLOUDFLARE_ENV`, ce bloc est simplement
+  // retiré du config généré : le chemin de production est inchangé.
+  //
+  // Les bindings (d1/kv/r2) ne sont PAS hérités du niveau racine : chaque ressource doit
+  // être redéclarée ici, sinon le staging écrirait dans la prod. À l'inverse `main`,
+  // `assets`, `compatibility_date`/`_flags` et `observability` sont hérités — ne pas les
+  // dupliquer, ils dériveraient.
+  "env": {
+    "staging": {
+      // OBLIGATOIRE : `name` est hérité du niveau racine s'il est absent ici — le
+      // staging écraserait alors le Worker de production. (L'auto-suffixage de
+      // `wrangler --env` ne s'applique pas : le config est aplati au build, cf. ci-dessus.)
+      "name": "le-bureau-du-jdr-staging",
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_id": "REMPLACER_PAR_ID_D1_STAGING",
+          "migrations_table": "_hub_migrations",
+          "migrations_dir": ".output/server/db/migrations/"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "REMPLACER_PAR_ID_KV_STAGING"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "BLOB",
+          "bucket_name": "le-bureau-du-jdr-media-staging"
+        }
+      ]
+    }
+  }
 }

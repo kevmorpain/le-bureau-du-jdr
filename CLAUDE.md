@@ -204,9 +204,16 @@ See `docs/context.md` for accumulated development context: dashboard v2 architec
 
 Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, KV binding `KV`, R2 binding `BLOB` → bucket `le-bureau-du-jdr-media`, portraits de personnage).
 
-**Deployment is automatic via Cloudflare Workers Builds (CI) on `git push`** to the default branch — the build runs `nuxt build`, deploys the worker, and **applies pending D1 migrations** (from `.output/server/db/migrations/`, tracked in the `_hub_migrations` table per wrangler.jsonc). Deployment is configured on Cloudflare's side via the Git integration — not in GitHub Actions. The only GitHub Actions workflow is [.github/workflows/tests.yml](.github/workflows/tests.yml), which runs the Vitest suite (`unit` + `nuxt` projects) on push to `main` and on every PR; it does **not** build or deploy. `npm run deploy` (`nuxt build` + `wrangler deploy`) remains available as a manual fallback.
+**Deployment is automatic via Cloudflare Workers Builds (CI) on `git push`** to the default branch — the build runs `nuxt build`, deploys the worker, and **applies pending D1 migrations** (from `.output/server/db/migrations/`, tracked in the `_hub_migrations` table per wrangler.jsonc). Deployment is configured on Cloudflare's side via the Git integration — not in GitHub Actions. `npm run deploy` (`nuxt build` + `wrangler deploy`) remains available as a manual fallback.
 
-NuxtHub's role is limited to dev: the `@nuxthub/core` module wires up the local D1 emulation and the `hub:db` schema cache (see gotchas below). The deployed worker uses the native Cloudflare D1 binding directly via Drizzle.
+Three GitHub Actions workflows, aucun ne déploie la prod :
+- [tests.yml](.github/workflows/tests.yml) — suite Vitest (`unit` + `nuxt`) sur push `main` et sur chaque PR.
+- [build.yml](.github/workflows/build.yml) — garde-fou de déployabilité sur chaque PR : `nuxt build`, migrations D1 rejouées sur base vierge, `wrangler deploy --dry-run`, et un smoke test sur workerd ([.github/scripts/smoke-worker.sh](.github/scripts/smoke-worker.sh)). Tout en local/dry-run, aucun credential Cloudflare.
+- [deploy-staging.yml](.github/workflows/deploy-staging.yml) — déploie la PR sur le staging partagé et commente l'URL.
+
+**Preview de PR et staging : voir [docs/staging.md](docs/staging.md)** — en particulier le fait que l'environnement Wrangler se choisit au **build** (`CLOUDFLARE_ENV=staging npm run build`) et non au déploiement, et le `name` explicite dans `env.staging` sans lequel le staging écraserait la prod.
+
+NuxtHub's role is mostly dev: the `@nuxthub/core` module wires up the local D1 emulation and the `hub:db` schema cache (see gotchas below). The deployed worker uses the native Cloudflare D1 binding directly via Drizzle. Une exception au build : `@nuxthub/core` post-traite le `.output/server/wrangler.json` généré par nitro pour y aplatir l'environnement désigné par `CLOUDFLARE_ENV` (cf. [docs/staging.md](docs/staging.md)).
 
 **Seeding prod:** the full seed (`POST /api/admin/seed`) can exceed D1's per-invocation query limit. Pass `?only=<seed>[,<seed>]` (e.g. `?only=feats`) to run only a subset sequentially — see `server/db/seeds/run.ts`. Seeds are idempotent.
 

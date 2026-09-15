@@ -1,0 +1,64 @@
+name: Build
+
+# Garde-fou de déployabilité, joué sur chaque PR.
+#
+# tests.yml couvre la logique (Vitest, sous Node). Ce workflow couvre tout ce qui ne se
+# révélait jusqu'ici qu'au déploiement Cloudflare, donc après merge sur main :
+#   - un `nuxt build` qui saute (cf. #65 — OOM sur Workers Builds) ;
+#   - une migration D1 invalide ;
+#   - un binding manquant ou un bundle Worker hors limites ;
+#   - un handler qui plante sous workerd (le runtime Workers) et non sous Node.
+#
+# Tout tourne hors ligne : `--local` (D1/KV/R2 émulés par Miniflare) et `--dry-run`
+# n'appellent pas l'API Cloudflare. Aucun credential n'est requis, donc ce workflow
+# tourne aussi sur les PR venant d'un fork.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Annule un run précédent encore en cours sur la même réf (économise des minutes CI).
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build + Worker (workerd)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Valeurs factices (≥ 32 car. pour la session) : aucun secret réel n'est nécessaire,
+      # rien ici ne touche la prod — les bindings sont émulés et l'état reste dans .wrangler/.
+      NUXT_SESSION_PASSWORD: ci_only_dummy_session_password_do_not_use
+      SEED_SECRET: ci_only_dummy_seed_secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Node 22 (LTS), aligné sur tests.yml et sur le CI Cloudflare.
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Exactement ce que Workers Builds joue en prod (le tas à 4 Go est dans le script npm).
+      - name: Build
+        run: npm run build
+
+      # Rejoue toutes les migrations sur une D1 vierge : une migration invalide échoue ici,
+      # plus au déploiement. Lancé depuis la racine — `migrations_dir` y est relatif.
+      - name: Apply D1 migrations (local)
+        run: npx wrangler d1 migrations apply DB --local
+
+      # Seul contrôle qui couvre l'étape APRÈS `nuxt build` : résolution de wrangler.jsonc,
+      # bindings (DB/KV/BLOB/ASSETS) et taille du bundle Worker, sans rien déployer.
+      - name: Worker bundle dry-run
+        run: npx wrangler --cwd .output deploy --dry-run
+
+      # Boote le Worker sur workerd et exerce un aller-retour complet (seed → D1 → lecture).
+      - name: Smoke test (workerd + D1/KV/R2 émulés)
+        run: .github/scripts/smoke-worker.sh
