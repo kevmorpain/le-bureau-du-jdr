@@ -353,6 +353,14 @@
 <script lang="ts" setup>
 import { SpellComponent } from '~~/server/db/schema/spells'
 import type { CharacterSpellWithSpell } from '~/composables/character/useCharacterSpells'
+import {
+  baseCastLevels,
+  parseDiceNotation,
+  resolveAttackCount,
+  resolveDamageDie,
+  resolveHealDie,
+  type CastLevels,
+} from '~~/shared/rules/spellScaling'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
@@ -483,67 +491,29 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
 // ─── Jets de dés au lancement de sort ──────────────────────────────────────
 const { roll } = useDiceRoller()
 
-// Parse "1d10" ou "10d6+40" → { count, sides, flat }
-function parseSpellDie(die: string): { count: number, sides: number, flat: number } | null {
-  const m = die.match(/^(\d+)d(\d+)(?:\+(\d+))?$/)
-  if (!m) return null
-  return {
-    count: Number(m[1]),
-    sides: Number(m[2]),
-    flat: m[3] ? Number(m[3]) : 0,
-  }
-}
-
-// Récupère le die à infliger pour le niveau actuel
-function getSpellDieAt(damageMap: Record<string, string>, atLevel: number): string | undefined {
-  const levels = Object.keys(damageMap).map(Number).filter(n => n <= atLevel)
-  if (!levels.length) return undefined
-  return damageMap[String(Math.max(...levels))]
-}
-
-// Résout le nombre d'attaques pour un sort multi-cible au niveau donné.
-// Renvoie null si le sort n'est pas multi-attaque.
-function resolveAttackCount(
-  spell: Spell,
-  castAtLevel: number,
-  charLevel: number,
-): { count: number, label: string } | null {
-  const ma = (spell as any).multiAttack as
-    | { label?: string, count_at_character_level?: Record<string, number>, count_at_slot_level?: Record<string, number> }
-    | null
-    | undefined
-  if (!ma) return null
-  const map = ma.count_at_character_level ?? ma.count_at_slot_level
-  if (!map) return null
-  const ref = ma.count_at_character_level ? charLevel : castAtLevel
-  const levels = Object.keys(map).map(Number).filter(n => n <= ref)
-  if (!levels.length) return null
-  const count = map[String(Math.max(...levels))] ?? 1
-  if (count <= 1) return null
-  return { count, label: ma.label ?? 'Attaque' }
-}
-
 // Lance les dés de dégâts ou de soin du sort, si présents
 function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
   const spell = cs.spell
+  // Niveaux de résolution : l'emplacement RÉELLEMENT dépensé pilote la montée en puissance
+  // (c'est ce que l'encart « Aux niveaux supérieurs » et CastSpellModal affichent).
+  const levels: CastLevels = { characterLevel: characterLevel.value, slotLevel: castAtLevel }
 
   // Un sort peut cumuler plusieurs types de dégâts (ex. Voracité de Hadar :
   // froid + acide). On jette chaque composante séparément.
   const damages = spell.damages ?? []
   if (damages.length) {
     for (const dmg of damages) {
-      const die = 'damage_at_character_level' in dmg
-        ? getSpellDieAt(dmg.damage_at_character_level, characterLevel.value)
-        : getSpellDieAt((dmg as any).damage_at_slot_level, castAtLevel)
+      const die = resolveDamageDie(dmg, levels)
       if (!die) continue
-      const parsed = parseSpellDie(die)
-      if (!parsed) continue
+      const parsed = parseDiceNotation(die)
+      // Valeur plate sans dé (« 5 » d'Aide) : rien à jeter, la fiche l'affiche déjà.
+      if (!parsed || parsed.count === 0) continue
 
       // ─── Sorts multi-attaques (Décharge occulte, Rayon ardent, Trait magique…)
       // Convention : les dés déclarés (NdM+K) représentent le TOTAL pour toutes
       // les attaques. Per-attaque = (N/count)d(M) + (K/count). Les modificateurs
       // (CHA via Coup agonisant, spellcasting mod) sont appliqués PAR attaque.
-      const multi = resolveAttackCount(spell, castAtLevel, characterLevel.value)
+      const multi = resolveAttackCount(spell.multiAttack, levels)
       if (multi) {
         const diePerAttack = Math.max(1, Math.floor(parsed.count / multi.count))
         const flatPerAttack = Math.floor(parsed.flat / multi.count)
@@ -575,12 +545,10 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
 
   if (spell.heal) {
     const heal = spell.heal
-    const die = 'heal_at_character_level' in heal
-      ? getSpellDieAt(heal.heal_at_character_level, characterLevel.value)
-      : getSpellDieAt((heal as any).heal_at_slot_level, castAtLevel)
+    const die = resolveHealDie(heal, levels)
     if (!die) return
-    const parsed = parseSpellDie(die)
-    if (!parsed) return
+    const parsed = parseDiceNotation(die)
+    if (!parsed || parsed.count === 0) return // valeur plate : rien à jeter (cf. ci-dessus)
 
     let bonus = parsed.flat
     if (heal.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
@@ -599,8 +567,7 @@ const isAttackSpell = (cs: CharacterSpellWithSpell): boolean =>
 function rollSpellAttack(cs: CharacterSpellWithSpell) {
   const atk = spellcastingStats.value?.attackBonus
   if (atk == null) return
-  const castLevel = cs.spell.level || characterLevel.value
-  const n = resolveAttackCount(cs.spell, castLevel, characterLevel.value)?.count ?? 1
+  const n = resolveAttackCount(cs.spell.multiAttack, baseCastLevels(cs.spell, characterLevel.value))?.count ?? 1
   for (let r = 1; r <= n; r++) {
     roll(n > 1 ? `${cs.spell.name} · attaque ${r}` : `${cs.spell.name} · attaque`, atk, 20, 1)
   }

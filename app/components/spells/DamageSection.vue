@@ -12,7 +12,7 @@
       </p>
 
       <p
-        v-if="isSpellbook"
+        v-if="isSpellbook && line.rangeText"
         class="text-2xl"
       >
         {{ line.rangeText }}
@@ -40,6 +40,8 @@
 </template>
 
 <script lang="ts" setup>
+import { baseCastLevels, diceRange, resolveDamageDie } from '~~/shared/rules/spellScaling'
+
 const props = defineProps<{
   spell: Spell
 }>()
@@ -72,18 +74,10 @@ const eldritchBlastBonus = computed<number>(() => {
   return (charismaModifier?.value ?? 0) * eldritchBlastRayCount.value
 })
 
-const slotLevel = ref<number>(props.spell.level)
-
-const dieForEntry = (entry: DamageEntry): string | undefined => {
-  if ('damage_at_character_level' in entry) {
-    const list = entry.damage_at_character_level
-    const level = closestLevel(Object.keys(list).map(Number), characterLevel.value)
-    return level !== undefined ? list[String(level)] : undefined
-  }
-  const list = entry.damage_at_slot_level
-  const level = closestLevel(Object.keys(list).map(Number), slotLevel.value)
-  return level !== undefined ? list[String(level)] : undefined
-}
+// Sort lancé SANS montée en puissance : la progression par emplacement est rendue à part, par
+// `UpcastSection` (l'encart « Aux niveaux supérieurs ») et par le récapitulatif de CastSpellModal
+// au moment où l'emplacement est choisi.
+const levels = computed(() => baseCastLevels(props.spell, characterLevel.value))
 
 // Bonus global (modificateur d'incantation + bonus manifestation) pour une entrée.
 const bonusForEntry = (entry: DamageEntry): number => {
@@ -100,7 +94,7 @@ const lines = computed<Line[]>(() => {
   const result: Line[] = []
 
   for (const [i, entry] of damages.entries()) {
-    const die = dieForEntry(entry)
+    const die = resolveDamageDie(entry, levels.value)
     if (!die) continue
 
     const bonus = bonusForEntry(entry)
@@ -126,10 +120,11 @@ const lines = computed<Line[]>(() => {
     // Fourchette min~max (mode grimoire)
     let rangeText = ''
     if (isSpellbook) {
-      const { count, die: faces } = parseDie(die)
-      const min = count + bonus
-      const max = count * faces + bonus
-      rangeText = `${min}${min !== max ? `~${max}` : ''} ${t(`damage_types.${entry.damage_type}`, Math.max(min, max))}`
+      const range = diceRange(die, bonus)
+      if (range) {
+        const { min, max } = range
+        rangeText = `${min}${min !== max ? `~${max}` : ''} ${t(`damage_types.${entry.damage_type}`, Math.max(min, max))}`
+      }
     }
 
     result.push({

@@ -1,10 +1,10 @@
 <template>
-  <div v-if="defaultDie">
+  <div v-if="die">
     <p
-      v-if="isSpellbook"
+      v-if="isSpellbook && rangeText"
       class="text-2xl"
     >
-      {{ defaultDieText }}
+      {{ rangeText }}
     </p>
 
     <p
@@ -20,6 +20,8 @@
 </template>
 
 <script lang="ts" setup>
+import { baseCastLevels, diceRange, resolveHealDie } from '~~/shared/rules/spellScaling'
+
 const props = defineProps<{
   spell: Spell
 }>()
@@ -28,45 +30,41 @@ const { t } = useI18n()
 
 const isSpellbook = inject<boolean>('isSpellbook', false)
 const spellContext = inject<SpellContext | null>('spellContext', null)
-const { spellcastingModifier } = spellContext ?? useSpellLens()
+const { characterLevel, spellcastingModifier } = spellContext ?? useSpellLens()
 
-const slotLevel = ref<number>(props.spell.level)
+// Sort lancé SANS montée en puissance — cf. la note de DamageSection : la progression par
+// emplacement est rendue par `UpcastSection` et par le récapitulatif de CastSpellModal.
+const levels = computed(() => baseCastLevels(props.spell, characterLevel.value))
 
-const defaultDie = computed<string | undefined>(() => {
-  const map = 'heal_at_character_level' in props.spell.heal! ? props.spell.heal!.heal_at_character_level : props.spell.heal!.heal_at_slot_level
-  return map?.[slotLevel.value]
-})
+const die = computed<string | undefined>(() =>
+  props.spell.heal ? resolveHealDie(props.spell.heal, levels.value) : undefined,
+)
 
-const hasModifier = computed<boolean | undefined>(() => props.spell.heal!.isSpellcastingModifierAdded)
+const modifier = computed<number>(() =>
+  props.spell.heal?.isSpellcastingModifierAdded ? spellcastingModifier.value ?? 0 : 0,
+)
 
 const dieText = computed<string>(() => {
-  if (!defaultDie.value) return ''
-  let text = defaultDie.value
+  if (!die.value) return ''
+  let text = die.value
 
-  if (hasModifier.value) {
-    if (isSpellbook) {
-      text += ` ${formatModifier(spellcastingModifier.value ?? 0)}`
-    } else {
-      text += ' + mod'
-    }
+  if (props.spell.heal!.isSpellcastingModifierAdded) {
+    text += isSpellbook ? ` ${formatModifier(modifier.value)}` : ' + mod'
   }
 
   if (!isSpellbook) {
-    const count = isNumeric(defaultDie.value) ? Number(defaultDie.value) : 0
-
+    const count = isNumeric(die.value) ? Number(die.value) : 0
     text += ` ${t(`heal_types.${props.spell.heal!.heal_type}`, count)}`
   }
 
   return text
 })
 
-const defaultDieText = computed<string>(() => {
-  if (!defaultDie.value) return ''
-  const { count, die } = parseDie(defaultDie.value)
-
-  const modifier = hasModifier.value && spellcastingModifier.value ? spellcastingModifier.value : 0
-  const min = count + modifier
-  const max = count * die + modifier
+const rangeText = computed<string>(() => {
+  if (!die.value) return ''
+  const range = diceRange(die.value, modifier.value)
+  if (!range) return ''
+  const { min, max } = range
 
   return `${min}${min !== max ? `~${max}` : ''} ${t(`heal_types.${props.spell.heal!.heal_type}`, Math.max(min, max))}`
 })

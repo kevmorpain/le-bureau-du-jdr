@@ -95,6 +95,8 @@
 </template>
 
 <script lang="ts" setup>
+import { baseSlotLevel, resolveAtLevel } from '~~/shared/rules/spellScaling'
+
 const { t } = useI18n()
 
 const COMPONENT_KEYS: Record<string, string> = {
@@ -171,23 +173,14 @@ const rangeDisplay = computed(() => {
   return `${r} m`
 })
 
-// Trouver le dé approprié pour le niveau de personnage
-function closestLevelDie(table: Record<string, string>, level: number): string | null {
-  const keys = Object.keys(table).map(Number).sort((a, b) => a - b)
-  const best = keys.filter(k => k <= level).at(-1) ?? keys[0]
-  return best !== undefined ? table[String(best)] ?? null : null
-}
-
 const damageDisplays = computed(() => {
   const damages = props.spell.damages
   if (!damages || !damages.length) return []
   const result: { die: string, type: string, label?: string, color: string, addsMod: boolean }[] = []
   for (const d of damages) {
     const die = d.damage_at_character_level
-      ? closestLevelDie(d.damage_at_character_level, props.characterLevel ?? 1)
-      : d.damage_at_slot_level
-        ? closestLevelDie(d.damage_at_slot_level, props.spell.level || 1)
-        : null
+      ? resolveAtLevel(d.damage_at_character_level, props.characterLevel ?? 1)
+      : resolveAtLevel(d.damage_at_slot_level, baseSlotLevel(props.spell))
     if (!die) continue
     result.push({
       die,
@@ -204,10 +197,8 @@ const healDisplay = computed(() => {
   const h = props.spell.heal
   if (!h) return null
   const die = h.heal_at_character_level
-    ? closestLevelDie(h.heal_at_character_level, props.characterLevel ?? 1)
-    : h.heal_at_slot_level
-      ? closestLevelDie(h.heal_at_slot_level, props.spell.level || 1)
-      : null
+    ? resolveAtLevel(h.heal_at_character_level, props.characterLevel ?? 1)
+    : resolveAtLevel(h.heal_at_slot_level, baseSlotLevel(props.spell))
   if (!die) return null
   return { die, type: t(`heal_types.${h.heal_type}`, 2) }
 })

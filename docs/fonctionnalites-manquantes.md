@@ -16,7 +16,10 @@
 > **Légende de l'effort** : 🟢 local (un computed / un composant) · 🟠 transverse (moteur +
 > fiche + tests) · 🔴 structurant (schéma, migration, nouveau modèle).
 >
-> État : 2026-09-14. Dernier commit couvert : `5695fd1` (tranche 3 du style de combat incluse).
+> État : 2026-09-15. Dernier commit couvert : `53c43d3` (tranche 4 du style de combat incluse).
+>
+> **Résolu depuis** : **U10** (montée en puissance affichée) et **U2 (c)** — voir la note sous le
+> tableau U.
 >
 > **Journal des corrections** — trois entrées rectifiées après relecture du code, mention gardée
 > inline plutôt que réécrite en silence : **R3** (épuisement, largement implémenté), **U2**
@@ -38,7 +41,7 @@
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S6 | Rituel, limite de préparation, zone d'effet |
 | [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P5 | Choix jamais proposés |
 | [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 118 sorts sur ~360, dons, objets magiques |
-| [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U10 | Lecture des sorts, montée en puissance, historique de jets |
+| [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U10 | Lecture des sorts, ~~montée en puissance~~, historique de jets |
 | [N — Contrôle manuel & préférences](#n--contrôle-manuel--préférences) | N1–N6 | L'app décide tout, le joueur ne peut rien reprendre |
 | [X — Surface produit](#x--surface-produit) | X1–X7 | XP, partage, export, EN, groupe |
 
@@ -220,15 +223,36 @@ présentation/interaction.
 | # | Manque | Détail | Effort |
 |---|---|---|---|
 | **U1** | ~~**Aucune mise en page mobile**~~ | 🚫 **ÉCARTÉ — décision (2026-09-14)**. Le constat technique tient (`.dashboard-grid` figé à `240px 1fr 240px`, un seul point de rupture à 1200 px, aucune classe responsive dans les pages ; l'app est pourtant une PWA). **Écarté volontairement** : la fiche est trop dense pour être réagencée sans un vrai travail d'UX, que l'auteur ne souhaite pas porter. À ne pas re-proposer sans qu'une décision de design précède. | — |
-| **U2** | **Lire un sort demande d'ouvrir un tiroir, et son texte n'est pas structuré** | *(Corrigé — la version précédente disait « illisible depuis la fiche », c'était faux : cliquer la ligne appelle `openSpellDetail()` qui ouvre un `USlideover` rendant `SpellCard`, description comprise.)* Restent trois manques, tous demandés explicitement : **(a)** aucun **accordéon** sur la ligne — il faut le tiroir modal pour la moindre relecture ; **(b)** les effets sont **noyés dans le texte** : `SpellCard` rend bien `HealSection`/`DamageSection` au-dessus, mais rien pour le DD, le type d'attaque, la zone, les composantes coûteuses ni la concentration, qui restent à chercher dans la prose ; **(c)** aucun **encart de montée en puissance** (cf. U10, le cas est plus grave qu'un simple manque d'affichage) | 🟢 |
+| **U2** | **Lire un sort demande d'ouvrir un tiroir, et son texte n'est pas structuré** | *(Corrigé — la version précédente disait « illisible depuis la fiche », c'était faux : cliquer la ligne appelle `openSpellDetail()` qui ouvre un `USlideover` rendant `SpellCard`, description comprise.)* Restent trois manques, tous demandés explicitement : **(a)** aucun **accordéon** sur la ligne — il faut le tiroir modal pour la moindre relecture ; **(b)** les effets sont **noyés dans le texte** : `SpellCard` rend bien `HealSection`/`DamageSection` au-dessus, mais rien pour le DD, le type d'attaque, la zone, les composantes coûteuses ni la concentration, qui restent à chercher dans la prose ; ~~**(c)** aucun **encart de montée en puissance**~~ → ✅ **fait** (cf. la note sous le tableau) | 🟢 |
 | **U3** | **Effets d'objet rendus en JSON brut** | `InventorySection.vue:199` affiche `{{ eff.type }} : {{ JSON.stringify(eff.value) }}` dans le détail d'un objet — le joueur lit `extra_damage : {"die_count_notation":"1d6"…}`. Un `magicEffectLabel()` existe **dans le même fichier** (utilisé pour les badges) mais n'est pas appelé ici ; et lui-même retombe sur `effect.type` (clé machine nue) pour tout ce qu'il ne connaît pas — donc les 10 effets de la famille E s'afficheraient en brut | 🟢 |
 | **U4** | **Aucun historique de jets** | Les toasts vivent 4,5 s, plafonnés à 5 (`useDiceRoller`). Pas de journal, pas de « relancer », pas de copier. Un jet qu'on n'a pas lu à temps est définitivement perdu — et il n'y a rien à montrer au MJ | 🟢 |
 | **U5** | **L'initiative n'est conservée nulle part** | `toggleCombat` lance `roll('Initiative', …)` → un toast qui s'efface. La valeur n'est ni stockée ni réaffichée, et le Mode Combat n'a ni ordre de tour, ni compteur de round | 🟢 |
 | **U6** | **Pas de suivi de durée** | Ni les conditions (`StatusSection`) ni les sorts actifs n'ont de compteur de tours/minutes. « Bénédiction pendant 1 minute » se suit de tête. Jumeau UI de S6 | 🟠 |
 | **U7** | **Pas de confirmation sur les actions destructrices de la fiche** | Le **repos long** (réinitialise emplacements, PV, dés de vie) et la **suppression d'objet** partent au premier clic, sans confirmation ni annulation. Seule la suppression de *personnage* en a une (`characters/index.vue`). Combiné à U4 (aucun historique), un clic de travers est irrécupérable | 🟢 |
 | **U8** | **Pas de recherche texte** | *(Corrigé — je sous-estimais les sorts : `MagicSection` filtre déjà par **préparés**, **type d'action**, **composantes V/S/M** et **niveau**.)* Ce qui manque vraiment : la **recherche par nom**, absente des sorts comme de l'inventaire. Et l'inventaire, lui, n'a que 4 onglets par `itemType` — ni filtre, ni tri | 🟢 |
-| **U10** | **Les dégâts affichés ne montent JAMAIS en puissance** | Plus qu'un manque d'encart : `DamageSection.vue:76` et `HealSection.vue:33` font `const slotLevel = ref(props.spell.level)` — initialisé au niveau **de base** du sort et **jamais modifié** (aucun prop, aucune injection, aucun contrôle). La table `damage_at_slot_level` est donc en base, mais **seule sa première ligne est lue**. Un Projectile magique lancé en emplacement 5 **affiche** 3d4+3. ⚠️ Le **jet**, lui, est correct (`CastSpellModal` choisit le niveau et `rollSpellEffect(spell, slotLevel)` l'applique) → **l'affiché et le jeté divergent**, ce qui est pire qu'un affichage manquant. L'encart demandé (« ce que le niveau supérieur implique ») consiste à rendre cette table, déjà présente en JSON | 🟢 |
+| **U10** | ~~**Les dégâts affichés ne montent JAMAIS en puissance**~~ | ✅ **RÉSOLU (2026-09-15)** — voir la note sous le tableau. Le constat d'origine : `DamageSection`/`HealSection` figeaient `slotLevel` au niveau de base, donc seule la **première ligne** de `damage_at_slot_level` était lue, pendant que `rollSpellEffect` appliquait, lui, le niveau choisi | 🟢 |
 | **U9** | **État mort en localStorage** | `useCharacterClasses` crée `useStorage(storageKey('armorClass'), 10)` — mais **tous** les consommateurs lisent en réalité `computedAC` (remappé par `useCharacterSheet`). Une clé localStorage est écrite par personnage pour rien. Hygiène, pas fonctionnel | 🟢 |
+
+**✅ résolu — U10 + U2 (c) : montée en puissance (2026-09-15)**
+
+La résolution « quelle valeur à quel niveau » était réimplémentée **quatre fois** (le jet dans
+`MagicSection`, `CharacterSpellRow`, `DamageSection`/`HealSection`, `SpellCardBuilder`), avec des
+comportements divergents — la cause racine de l'écart affiché ≠ jeté. Elle est désormais **unique**,
+dans le module pur [`shared/rules/spellScaling.ts`](../shared/rules/spellScaling.ts), consommé par
+les quatre. Côté lecture : `UpcastSection` rend l'encart « Aux niveaux supérieurs » dans `SpellCard`
+(un palier par niveau où la valeur **change** : Arme spirituelle affiche 4/6/8, pas 3/5/7/9), et
+`CastSpellModal` annonce, **sur chaque emplacement proposé**, ce que ce niveau donnera — c'est là que
+le joueur choisit, donc là que l'affiché doit correspondre au jeté.
+
+Effets de bord traités au passage, même famille : le soin d'un sort à progression **par niveau de
+personnage** était indexé par le niveau du sort (jamais rencontré en seed, faux dès la première
+donnée) ; la fourchette min~max du grimoire rendait `NaN` sur une notation à bonus fixe (`10d6+40`) ;
+et « Simulacre de vie » retrouve son bloc `heal` (`1d4+4`), que l'ancien parseur ne savait pas
+représenter. ⚠️ **Nécessite un re-seed en prod** (`POST /api/admin/seed?only=spells`, idempotent).
+
+**Résidu assumé** : le bouton **Dégâts** de la ligne d'un sort d'attaque jette toujours au niveau de
+base — la fiche ne mémorise pas le niveau du dernier lancement. L'affiché et le jeté restent
+cohérents (tous deux au niveau de base) ; c'est un manque, plus une contradiction.
 
 **Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
 *à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),
@@ -269,7 +293,7 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
 - La résolution `fiche ?? compte ?? défaut codé` est une **fonction pure partagée**
   (serveur + client), comme le reste du moteur ([D10](./decisions.md#d10)).
 
-> **Bonne nouvelle pour U2b / U10 / N5** : aucun de ces encarts n'est un problème de *design*. Les
+> **Bonne nouvelle pour U2b / N5** (et vérifiée par U10, désormais fait) : aucun de ces encarts n'est un problème de *design*. Les
 > données structurées existent déjà (`spell.damages`, `spell.heal`, `spell.dc`,
 > `spell.concentration`, `spell.multiAttack`, `damage_at_slot_level`) — l'encart est le **rendu
 > d'un JSON déjà en base**, pas un système visuel à inventer. Sa complétude est en revanche
@@ -307,8 +331,10 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
 5. **Respecter le North Star** (`consolidation-2014.md`) : aucune règle spécifique à une classe
    dans le code. Toute entrée C ci-dessus se traduit d'abord par « quel effet manque à l'union »,
    puis par du seed — jamais par un `if (className === 'Barbare')`.
-6. **U10 est le seul écart où l'affiché contredit le jeté.** Partout ailleurs la fiche est
-   incomplète ; là, elle affiche 3d4+3 pendant que le bouton roule 5d4+5. À traiter comme un bug.
+6. ~~**U10 est le seul écart où l'affiché contredit le jeté.**~~ ✅ **Résolu le 2026-09-15** : la
+   résolution des progressions est passée en module pur partagé (`shared/rules/spellScaling.ts`),
+   affichage et jet la lisent au même endroit. Reste une leçon : avant d'écrire un calcul de règle
+   dans un composant, chercher qui le fait déjà — celui-ci existait en quatre exemplaires.
 7. **N1 + N4 sont le meilleur rapport valeur/effort du document.** Désactiver les jets coûte un
    `v-if`, et les surcharges manuelles débloquent *aujourd'hui* tout ce que le modèle d'effets ne
    sait pas exprimer (E11) — sans attendre le chantier qui le lui apprendra. Ni l'un ni l'autre ne

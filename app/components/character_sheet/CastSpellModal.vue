@@ -55,6 +55,13 @@
                     >
                       Pacte
                     </UBadge>
+                    <!-- Ce que donne CE niveau : l'affiché correspond à ce qui sera jeté -->
+                    <span
+                      v-if="effectAt(opt.level)"
+                      class="text-sm font-mono"
+                    >
+                      {{ effectAt(opt.level) }}
+                    </span>
                   </span>
                   <span class="text-muted text-sm">
                     {{ opt.slot.current }}/{{ opt.slot.max }} restant{{ opt.slot.current !== 1 ? 's' : '' }}
@@ -94,6 +101,8 @@
 </template>
 
 <script lang="ts" setup>
+import { slotScalingEntries } from '~~/shared/rules/spellScaling'
+
 type SlotState = { max: number, current: number }
 type SlotsByType = {
   spellcasting: Record<number, SlotState>
@@ -150,6 +159,24 @@ const availableSlots = computed<SlotOption[]>(() => {
   result.sort((a, b) => a.level - b.level || (a.slotType === 'spellcasting' ? -1 : 1))
   return result
 })
+
+const { t } = useI18n()
+
+// Récapitulatif de la montée en puissance, au moment où l'emplacement est choisi : sans lui,
+// l'affichage du sort reste au niveau de base pendant que le jet applique le niveau choisi
+// (U10 de docs/fonctionnalites-manquantes.md). Le modificateur d'incantation n'est pas ajouté ici :
+// il est déjà rendu sur la fiche (« + mod »).
+const effectAt = (slotLevel: number): string =>
+  slotScalingEntries(props.spell, slotLevel)
+    .map((entry) => {
+      if (entry.kind === 'attacks') return `${entry.count} × ${entry.label}`
+      const count = isNumeric(entry.die) ? Number(entry.die) : 0
+      const type = entry.kind === 'damage'
+        ? t(`damage_types.${entry.damageType}`, count)
+        : t(`heal_types.${entry.healType}`, count)
+      return `${entry.die} ${type}`
+    })
+    .join(' + ')
 
 const isSelected = (opt: SlotOption) =>
   selected.value?.level === opt.level && selected.value?.slotType === opt.slotType

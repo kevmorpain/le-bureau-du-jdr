@@ -153,6 +153,7 @@
 import type { Component } from 'vue'
 import { CauldronIcon, HandGestureIcon, VoiceActivateIcon } from '#components'
 import { SpellComponent } from '~~/server/db/schema/spells'
+import { baseCastLevels, resolveDamageDie, resolveHealDie } from '~~/shared/rules/spellScaling'
 
 const props = defineProps<{
   spell: Spell
@@ -201,11 +202,6 @@ const getComponentIcon = (component: SpellComponent): Component => {
   }
 }
 
-const getClosestDie = (record: Record<string, string>, atLevel: number): string | undefined => {
-  const level = closestLevel(Object.keys(record).map(Number), atLevel)
-  return level !== undefined ? record[String(level)] : undefined
-}
-
 // Nombre de rayons de Décharge occulte au niveau du perso (5e PHB)
 const eldritchBlastRayCount = computed(() => {
   const lvl = props.characterLevel
@@ -222,6 +218,8 @@ const displayedRange = computed(() => {
   return formatRange(props.spell.range)
 })
 
+const levels = computed(() => baseCastLevels(props.spell, props.characterLevel))
+
 // Une part de dégâts par entrée, avec son propre type pour la coloriser
 // individuellement (ex. Voracité de Hadar : « 2d6 froid » en bleu + « 2d6 acide » en vert).
 const damageParts = computed<{ text: string, damageType: string }[]>(() => {
@@ -230,13 +228,9 @@ const damageParts = computed<{ text: string, damageType: string }[]>(() => {
 
   const parts: { text: string, damageType: string }[] = []
   for (const dmg of damages) {
-    let die: string | undefined
-    if ('damage_at_character_level' in dmg) {
-      die = getClosestDie(dmg.damage_at_character_level, props.characterLevel)
-    } else {
-      die = getClosestDie(dmg.damage_at_slot_level, props.spell.level || 1)
-    }
-
+    // Niveau de base : la ligne résume le sort, la montée en puissance est rendue par
+    // `UpcastSection` (détail du sort) et par CastSpellModal au moment de choisir l'emplacement.
+    const die = resolveDamageDie(dmg, levels.value)
     if (!die) continue
 
     let bonus = 0
@@ -316,13 +310,7 @@ const healText = computed<string | null>(() => {
   if (!props.spell.heal) return null
   const heal = props.spell.heal
 
-  let die: string | undefined
-  if ('heal_at_character_level' in heal) {
-    die = getClosestDie(heal.heal_at_character_level, props.characterLevel)
-  } else {
-    die = getClosestDie(heal.heal_at_slot_level, props.spell.level || 1)
-  }
-
+  const die = resolveHealDie(heal, levels.value)
   if (!die) return null
 
   const mod = heal.isSpellcastingModifierAdded && props.spellcastingModifier !== null

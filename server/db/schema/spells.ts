@@ -60,6 +60,38 @@ export type DamageEntry = {
   | { damage_at_slot_level: Record<SlotLevel, Die> }
 )
 
+/**
+ * Le soin d'un sort, même forme que `DamageEntry` : une progression indexée soit par niveau de
+ * PERSONNAGE (tours de magie), soit par niveau d'EMPLACEMENT (montée en puissance).
+ */
+export type HealEntry = {
+  heal_type: 'hit_points' | 'temporary_hit_points'
+  isSpellcastingModifierAdded?: boolean
+} & (
+  | { heal_at_character_level: Record<CharacterLevel, Die> }
+  | { heal_at_slot_level: Record<SlotLevel, Die> }
+)
+
+/**
+ * Pour les sorts à plusieurs attaques indépendantes (Décharge occulte, Rayon
+ * ardent, Trait magique…). Chaque "attaque" est un jet d'attaque distinct
+ * (ou auto-touche pour Trait magique) ; on roule N jets séparés.
+ *
+ * Convention : les dés (count×Md+K) déclarés dans `damage_at_*` représentent
+ * le TOTAL pour toutes les attaques. Per-attaque = (count/N)d(M) + (K/N).
+ * Les modificateurs (CHA via Coup éldritique agonisant, spellcasting mod,
+ * etc.) sont appliqués PAR attaque.
+ *
+ * - `count_at_character_level` : pour les tours de magie (cantrip) — clé = niveau du perso.
+ * - `count_at_slot_level` : pour les sorts à emplacement — clé = niveau d'emplacement utilisé.
+ * - `label` : nom singulier pour chaque jet ("Rayon", "Dard", "Trait"…). Défaut = "Attaque".
+ */
+export type MultiAttack = {
+  label?: string
+  count_at_character_level?: Record<CharacterLevel, number>
+  count_at_slot_level?: Record<SlotLevel, number>
+}
+
 const spells = sqliteTable('spells', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
@@ -95,36 +127,10 @@ const spells = sqliteTable('spells', {
     .$type<DamageEntry[]>(),
 
   heal: text('heal', { mode: 'json' })
-    .$type<{
-      heal_type: 'hit_points' | 'temporary_hit_points'
-      heal_at_character_level: Record<CharacterLevel, Die>
-      isSpellcastingModifierAdded?: boolean
-    } | {
-      heal_type: 'hit_points' | 'temporary_hit_points'
-      heal_at_slot_level: Record<SlotLevel, Die>
-      isSpellcastingModifierAdded?: boolean
-    }>(),
+    .$type<HealEntry>(),
 
-  /**
-   * Pour les sorts à plusieurs attaques indépendantes (Décharge occulte, Rayon
-   * ardent, Trait magique…). Chaque "attaque" est un jet d'attaque distinct
-   * (ou auto-touche pour Trait magique) ; on roule N jets séparés.
-   *
-   * Convention : les dés (count×Md+K) déclarés dans `damage_at_*` représentent
-   * le TOTAL pour toutes les attaques. Per-attaque = (count/N)d(M) + (K/N).
-   * Les modificateurs (CHA via Coup éldritique agonisant, spellcasting mod,
-   * etc.) sont appliqués PAR attaque.
-   *
-   * - `count_at_character_level` : pour les tours de magie (cantrip) — clé = niveau du perso.
-   * - `count_at_slot_level` : pour les sorts à emplacement — clé = niveau d'emplacement utilisé.
-   * - `label` : nom singulier pour chaque jet ("Rayon", "Dard", "Trait"…). Défaut = "Attaque".
-   */
   multiAttack: text('multi_attack', { mode: 'json' })
-    .$type<{
-      label?: string
-      count_at_character_level?: Record<CharacterLevel, number>
-      count_at_slot_level?: Record<SlotLevel, number>
-    }>(),
+    .$type<MultiAttack>(),
 
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at'),
