@@ -49,3 +49,19 @@ commande).
 - **Règle** : aucune. `CLAUDE.md` encadre la véracité des affirmations, pas l'adéquation de la
   réponse à la question posée.
 - Relevé par l'utilisateur.
+
+### 2026-09-15 — Routine livrée comme fonctionnelle sans l'avoir exécutée une fois
+
+- **Affirmé / fait** : après avoir créé la routine hebdomadaire de relecture
+  (`trig_01XzJrTxRVbC4nWsjmG3TQ8t`), je l'ai décrite à l'indicatif — « elle ouvre une session
+  neuve, lit la file, et ne fait rien si elle est sous 10 entrées » — puis j'ai signalé un doute
+  sur son accès au dépôt en **proposant** de la tester.
+- **Vrai** : seule la création était vérifiée (sortie de `create_trigger`). Le comportement décrit
+  n'était que la reformulation du prompt que je venais d'écrire, sans aucune exécution derrière.
+  `fire_trigger` était disponible : le test coûtait une exécution et levait le doute sur-le-champ.
+- **Manque** : ne pas avoir déclenché la routine une fois avant de la décrire. Proposer une
+  vérification à l'utilisateur au lieu de la faire, quand l'outil est à portée de main, revient à
+  livrer non vérifié en s'en donnant l'air averti.
+- **Règle** : **présente, non appliquée** — « Vérifier avant de dire "fait" » (Definition of Done)
+  et « Une affirmation = une source » couvrent toutes deux le cas. Aucune règle ne manquait.
+- Relevé par l'utilisateur.
