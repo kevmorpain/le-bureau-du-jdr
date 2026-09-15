@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import DamageSection from '../../app/components/spells/DamageSection.vue'
 import HealSection from '../../app/components/spells/HealSection.vue'
 import UpcastSection from '../../app/components/spells/UpcastSection.vue'
 import SpellCard from '../../app/components/spells/SpellCard.vue'
 import CastSpellModal from '../../app/components/character_sheet/CastSpellModal.vue'
+import RollDamageModal from '../../app/components/character_sheet/RollDamageModal.vue'
 
 // Garde-fou de rendu pour U10 (docs/fonctionnalites-manquantes.md) : l'affichage d'un sort doit
 // dire la même chose que le jet. Les sections rendent le niveau de BASE, et la montée en puissance
@@ -45,6 +46,12 @@ const eldritchBlast = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const asSpell = (spell: object) => spell as any
+
+// Une modale se téléporte dans `document.body` et y reste après le test : sans ce nettoyage, les
+// assertions sur le corps du document liraient la modale du test précédent.
+beforeEach(() => {
+  document.body.innerHTML = ''
+})
 
 describe('affichage de la montée en puissance des sorts', () => {
   it('rend les dégâts au niveau de base du sort', async () => {
@@ -112,5 +119,45 @@ describe('surfaces de lecture', () => {
     const text = document.body.textContent ?? wrapper.text()
     expect(text).toContain('3d4+3')
     expect(text).toContain('5d4+5')
+  })
+})
+
+// Un sort d'attaque jette ses dégâts en second geste : le niveau est donc redemandé là, sans
+// dépenser d'emplacement — y compris un niveau dont il ne reste plus rien, puisque c'est
+// justement celui que le lancement vient de consommer.
+describe('choix du niveau au jet de dégâts', () => {
+  const mountModal = (props: Record<string, unknown> = {}) => mountSuspended(RollDamageModal, {
+    props: { spell: asSpell(magicMissile), ownedLevels: [1, 2, 3], open: true, ...props },
+  })
+
+  it('propose chaque niveau possédé avec ce qu\'il donne', async () => {
+    await mountModal()
+    const text = document.body.textContent ?? ''
+    expect(text).toContain('Niveau 1')
+    expect(text).toContain('3d4+3')
+    expect(text).toContain('Niveau 3')
+    expect(text).toContain('5d4+5')
+  })
+
+  it('n\'offre aucun niveau sous celui du sort', async () => {
+    await mountModal({ spell: asSpell({ ...magicMissile, level: 2 }), ownedLevels: [1, 2, 3] })
+    const text = document.body.textContent ?? ''
+    expect(text).not.toContain('Niveau 1')
+    expect(text).toContain('Niveau 2')
+  })
+
+  it('présélectionne le niveau du dernier lancement et le renvoie', async () => {
+    const wrapper = await mountModal({ initialLevel: 3 })
+    const buttons = document.body.querySelectorAll('button')
+    const confirm = [...buttons].find(b => b.textContent?.includes('Jeter les dégâts'))
+    confirm?.click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(wrapper.emitted('roll')).toEqual([[3]])
+  })
+
+  it('garde un niveau dont l\'emplacement est épuisé (il vient d\'être dépensé)', async () => {
+    await mountModal({ ownedLevels: [], initialLevel: 3 })
+    const text = document.body.textContent ?? ''
+    expect(text).toContain('Niveau 3')
   })
 })

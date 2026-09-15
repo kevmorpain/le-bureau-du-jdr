@@ -251,10 +251,14 @@ et « Simulacre de vie » retrouve son bloc `heal` (`1d4+4`), que l'ancien parse
 représenter. ⚠️ **Nécessite un re-seed en prod** (`POST /api/admin/seed?only=spells`, idempotent).
 
 **Cas des sorts d'attaque** : leurs dégâts se jettent en **deux gestes** (« Lancer » = jet pour
-toucher, puis « Dégâts »), donc le second devait retrouver l'emplacement dépensé au premier — sinon
-la modale annonçait 6d6 au niveau 3 et le bouton jetait 4d6. `MagicSection` mémorise le niveau du
-dernier lancement par sort et l'affiche sur le bouton (« Dégâts (niv. 3) »), plutôt que d'en faire
-un état invisible. Mémoire **de session** : au rechargement, retour au niveau de base.
+toucher, puis « Dégâts »), donc le second doit savoir à quel niveau le sort a été lancé — sinon la
+modale annonce 6d6 au niveau 3 et le bouton jette 4d6. Le bouton **Dégâts ouvre son propre choix de
+niveau** (`RollDamageModal`), présélectionné sur le dernier lancement : le niveau redevient une
+décision explicite au lieu d'un état caché. Deux différences avec `CastSpellModal`, qui justifient
+un composant distinct : **aucun emplacement n'est dépensé** (il l'a été au lancement) et les niveaux
+sont proposés **même épuisés** — après avoir lancé son dernier emplacement de niveau 3, c'est
+précisément à ce niveau qu'il faut pouvoir jeter. Quand le sort ne monte pas en puissance (tour de
+magie, table à un seul palier), il n'y a rien à choisir : le bouton jette directement.
 
 **Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
 *à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),

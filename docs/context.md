@@ -157,6 +157,7 @@ séparés : `characterLevel` (progressions `*_at_character_level`, les tours de 
 | [shared/rules/spellScaling.ts](../shared/rules/spellScaling.ts) | `resolveAtLevel`, `resolveDamageDie`, `resolveHealDie`, `resolveAttackCount`, `parseDiceNotation`, `diceRange`, `upcastRows` |
 | [app/components/spells/UpcastSection.vue](../app/components/spells/UpcastSection.vue) | Encart « Aux niveaux supérieurs » dans `SpellCard` |
 | [app/components/character_sheet/CastSpellModal.vue](../app/components/character_sheet/CastSpellModal.vue) | Annonce le résultat de **chaque** emplacement proposé |
+| [app/components/character_sheet/RollDamageModal.vue](../app/components/character_sheet/RollDamageModal.vue) | Choix du niveau pour le jet de dégâts, sans dépense d'emplacement |
 | [test/unit/spellScaling.test.ts](../test/unit/spellScaling.test.ts) | La règle, en isolation |
 | [test/nuxt/spellScalingDisplay.test.ts](../test/nuxt/spellScalingDisplay.test.ts) | Le rendu (premier test de composant du repo — `mountSuspended`) |
 
@@ -169,8 +170,12 @@ séparés : `characterLevel` (progressions `*_at_character_level`, les tours de 
   sûre : une table par niveau d'emplacement **commence au niveau du sort**, et chaque valeur est une
   notation exploitable.
 - Un sort d'**attaque** jette ses dégâts en deux gestes (« Lancer » pour toucher, puis « Dégâts ») :
-  `MagicSection.lastCastLevel` mémorise le niveau du dernier lancement par `spellId` pour que le
-  second geste retrouve l'emplacement dépensé, et le bouton l'affiche (« Dégâts (niv. 3) ») — un
-  niveau mémorisé sans le dire serait le même piège à l'envers. Mémoire de session, non persistée.
+  le bouton Dégâts ouvre `RollDamageModal`, qui redemande le niveau — présélectionné sur
+  `MagicSection.lastCastLevel` (mémoire de session par `spellId`, non persistée) et affiché sur le
+  bouton (« Dégâts (niv. 3) »). Deux modales plutôt qu'un mode : celle-ci **ne dépense aucun
+  emplacement** et propose les niveaux **même épuisés** — celui qu'on vient de dépenser est
+  justement celui auquel il faut jeter. Sans montée en puissance, pas de modale : on jette.
+- `useSpellEffectPreview` porte le libellé « ce que donne le niveau N » (« 5d4+5 force ») pour les
+  deux modales : le même choix doit se lire pareil des deux côtés.
 - Monter un composant Nuxt UI en isolation demande de bouchonner `UTooltip` (il attend le contexte
   de `<UApp>`).

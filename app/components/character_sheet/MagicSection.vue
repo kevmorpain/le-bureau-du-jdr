@@ -272,9 +272,9 @@
               color="warning"
               icon="i-game-icons:blood"
               class="shrink-0"
-              @click.stop="rollSpellEffect(cs, castLevelFor(cs))"
+              @click.stop="openDamageFor(cs)"
             >
-              Dégâts<template v-if="castLevelFor(cs) > baseSlotLevel(cs.spell)"> (niv. {{ castLevelFor(cs) }})</template>
+              {{ damageButtonLabel(cs) }}
             </UButton>
           </div>
         </template>
@@ -341,6 +341,16 @@
       @cast="handleCast"
     />
 
+    <!-- Choix du niveau pour le jet de dégâts (aucun emplacement dépensé) -->
+    <RollDamageModal
+      v-if="selectedSpell"
+      v-model:open="showDamageModal"
+      :spell="selectedSpell.spell"
+      :owned-levels="ownedSlotLevels"
+      :initial-level="castLevelFor(selectedSpell)"
+      @roll="handleRollDamage"
+    />
+
     <!-- Slideover ajout de sort -->
     <AddSpellSlideover
       v-model:open="showAddSpell"
@@ -359,6 +369,7 @@ import {
   resolveAttackCount,
   resolveDamageDie,
   resolveHealDie,
+  upcastRows,
   type CastLevels,
 } from '~~/shared/rules/spellScaling'
 
@@ -504,6 +515,47 @@ const castLevelsFor = (cs: CharacterSpellWithSpell): CastLevels => ({
   characterLevel: characterLevel.value,
   slotLevel: castLevelFor(cs),
 })
+
+const rememberCastLevel = (spellId: number, slotLevel: number) => {
+  lastCastLevel.value = { ...lastCastLevel.value, [spellId]: slotLevel }
+}
+
+// Niveaux d'emplacement que le personnage possède, tous types confondus — proposés au jet de
+// dégâts même épuisés (l'emplacement vient justement d'être dépensé par le lancement).
+const ownedSlotLevels = computed<number[]>(() => {
+  const levels = new Set<number>()
+  for (const byLevel of [spellSlots.value.spellcasting, spellSlots.value.pact_magic]) {
+    for (const [level, slot] of Object.entries(byLevel)) {
+      if (slot.max > 0) levels.add(Number(level))
+    }
+  }
+  return [...levels].sort((a, b) => a - b)
+})
+
+const showDamageModal = ref(false)
+
+// Le niveau retenu est affiché : un niveau mémorisé en silence serait le même piège à l'envers.
+const damageButtonLabel = (cs: CharacterSpellWithSpell): string => {
+  const level = castLevelFor(cs)
+  return level > baseSlotLevel(cs.spell) ? `Dégâts (niv. ${level})` : 'Dégâts'
+}
+
+// Bouton « Dégâts » : demander le niveau n'a de sens que si le sort monte en puissance par
+// emplacement. Sinon (tour de magie, table à un seul palier), il n'y a rien à choisir → on jette.
+const openDamageFor = (cs: CharacterSpellWithSpell) => {
+  if (!upcastRows(cs.spell).length) {
+    rollSpellEffect(cs, castLevelFor(cs))
+    return
+  }
+  selectedSpell.value = cs
+  showDamageModal.value = true
+}
+
+const handleRollDamage = (slotLevel: number) => {
+  if (!selectedSpell.value) return
+  rememberCastLevel(selectedSpell.value.spellId, slotLevel)
+  rollSpellEffect(selectedSpell.value, slotLevel)
+}
 
 // Lance les dés de dégâts ou de soin du sort, si présents
 function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
@@ -652,7 +704,7 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
   }
 
   // Sort d'attaque → jet pour toucher ; sinon effet direct (Arcanum lancé au niveau de base).
-  lastCastLevel.value = { ...lastCastLevel.value, [cs.spellId]: cs.spell.level || lvl }
+  rememberCastLevel(cs.spellId, cs.spell.level || lvl)
   if (isAttackSpell(cs)) rollSpellAttack(cs)
   else rollSpellEffect(cs, cs.spell.level || lvl)
 }
@@ -700,7 +752,7 @@ const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number
   // Sort d'attaque → jet pour toucher ; sinon effet direct.
   if (selectedSpell.value) {
     // Avant de jeter : le bouton « Dégâts » doit retrouver CET emplacement, pas le niveau de base.
-    lastCastLevel.value = { ...lastCastLevel.value, [selectedSpell.value.spellId]: slotLevel }
+    rememberCastLevel(selectedSpell.value.spellId, slotLevel)
     if (isAttackSpell(selectedSpell.value)) rollSpellAttack(selectedSpell.value)
     else rollSpellEffect(selectedSpell.value, slotLevel)
   }
