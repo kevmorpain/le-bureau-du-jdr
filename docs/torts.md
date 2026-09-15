@@ -80,3 +80,32 @@ commande).
   entrées de cette file relèvent d'un énoncé à l'indicatif pour une action non exécutée.
 - Révélé par le déclenchement du rappel lui-même ; consigné à la demande de l'utilisateur, qui a
   écarté le filtre « erreur relevée par l'utilisateur » pour ce cas.
+
+### 2026-09-15 — SHA de commit fabriqué de toutes pièces
+
+- **Affirmé / fait** : passé `expectedHeadSha: 45dd1edb3eea6e3de0e0d1a25b7c4ba8bdb4d7d1` à
+  `merge_pull_request`.
+- **Vrai** : le SHA réel était `45dd1ed82057d78cfb18fbfcf25898a10c6af43e`. Seuls les 7 premiers
+  caractères — ceux qu'affiche `git log --oneline` — étaient sourcés ; les 33 suivants n'avaient
+  jamais figuré dans la session. GitHub a rejeté l'appel (`409 Head branch was modified`).
+- **Manque** : ne pas avoir lu la valeur à sa source. `git rev-parse` était à un appel. Un
+  identifiant ne s'écrit pas à la main : il se lit, ou il se passe par substitution de commande.
+- **Règle** : couverte en esprit (« ne jamais combler un trou par ce qui *devrait* logiquement s'y
+  trouver ») mais **aucune règle ne vise les identifiants**, qui sont précisément le cas où le trou
+  est invisible : un SHA bien formé a toutes les apparences d'un SHA. Classe distincte des autres
+  entrées de la file.
+- Relevé par l'utilisateur.
+
+### 2026-09-15 — Citations `fichier:ligne` reprises d'un doc sans vérifier qu'elles pointent encore
+
+- **Affirmé / fait** : présenté « `MagicSection.vue:721` reconstruit le mod de CHA » et
+  « `StepAsi.vue` `baseScore` (l.214) » comme des localisations de code, dans un tableau de constats.
+- **Vrai** : ces numéros viennent de `docs/audit-completude.md` (l.54 et l.66) et y sont rapportés
+  fidèlement — mais le code a bougé depuis le 2026-08-02 : `charismaModifier` est aujourd'hui en
+  `MagicSection.vue:811`, `baseScore` en `StepAsi.vue:264`. Les lignes citées ne contiennent plus
+  rien de tel.
+- **Manque** : ne pas avoir fait résoudre la citation avant de la reprendre. Citer une source n'est
+  pas vérifier : la source aussi se périme, et un `fichier:ligne` est ce qui se périme le plus vite.
+- **Règle** : **présente, mal cadrée** — « Une vérification a une date de péremption » ne vise que
+  mes propres lectures, pas les références reprises d'un document du dépôt.
+- Relevé en vérifiant, à la demande de l'utilisateur, si d'autres identifiants avaient été fabriqués.
