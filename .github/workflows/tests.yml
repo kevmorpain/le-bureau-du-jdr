@@ -28,8 +28,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # Node 22 (LTS) → npm 10.x, aligné sur le CI Cloudflare (npm ci en 10.9.2).
-          node-version: 22
+          # Version lue dans `.nvmrc`, source unique partagée avec Cloudflare Workers Builds
+          # (qui lit ce même fichier). Ne pas remettre de version en dur ici : c'est la double
+          # valeur à synchroniser à la main qui avait laissé la prod passer à Node 24 pendant
+          # que le CI validait encore sur 22.
+          node-version-file: .nvmrc
           cache: npm
 
       # `npm ci` déclenche le postinstall `nuxt prepare` (génère .nuxt requis par le projet nuxt).

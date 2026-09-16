@@ -109,3 +109,26 @@ commande).
 - **Règle** : **présente, mal cadrée** — « Une vérification a une date de péremption » ne vise que
   mes propres lectures, pas les références reprises d'un document du dépôt.
 - Relevé en vérifiant, à la demande de l'utilisateur, si d'autres identifiants avaient été fabriqués.
+
+### 2026-09-15 — Remède prescrit en nommant la mauvaise surface (`.nvmrc`)
+
+- **Affirmé / fait** : « Node n'est épinglé nulle part […] le jour où l'image passe à Node 24, la
+  session cloud diverge silencieusement du CI. Un `.nvmrc` réglerait ça. » Présenté comme un
+  risque futur, à corriger sur la surface « session cloud ».
+- **Vrai** : rien dans le conteneur cloud ne lit `.nvmrc` — `readlink -f $(command -v node)` donne
+  `/opt/node22/bin/node` (Node système de l'image) et `~/.nvm` est absent. Un `.nvmrc` y est donc
+  inerte et ne corrige *pas* cette divergence-là, qui reste non corrigeable. La surface réellement
+  concernée, que je n'avais pas identifiée, est Cloudflare Workers Builds, qui lit `.nvmrc` et dont
+  le défaut est passé à Node 24 le 2026-07-30 : le risque n'était pas futur, il était déjà réalisé
+  en production depuis six semaines. Confirmé ensuite par l'utilisateur (`nodejs@24.18.0` dans son
+  dernier build) — je n'ai pas accès au dashboard Cloudflare pour le vérifier moi-même.
+- **Manque** : ne pas avoir cherché *qui lit `.nvmrc`* avant d'en prescrire un. Une ligne
+  (`readlink -f $(command -v node)`) suffisait à écarter la surface citée ; la doc Cloudflare
+  suffisait à trouver la bonne. J'ai raisonné sur ce qu'un `.nvmrc` fait *en général* au lieu de
+  vérifier ce qu'il fait *ici*.
+- **Règle** : **absente à l'époque** — « Une affirmation = une source » est arrivée après, avec
+  `04d08bc` (#72), postérieur au message fautif. Elle couvre le cas aujourd'hui, à une nuance près :
+  elle est écrite pour les affirmations *descriptives* (« le code fait X »), alors qu'il s'agissait
+  ici d'une affirmation *prescriptive* (« ajouter X réglera Y »), dont le mécanisme se source
+  exactement de la même façon.
+- Relevé par l'utilisateur d'un simple « Nvmrc vraiment utile ? », sans indiquer ce qui clochait.
