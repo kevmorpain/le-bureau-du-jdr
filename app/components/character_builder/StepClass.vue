@@ -135,7 +135,6 @@
         </div>
       </div>
 
-      <!-- Style de combat (options + niveau lus dans le catalogue, F2 tranche 4) -->
       <template v-if="needsFightingStyle && fightingStyleOptions.length">
         <USeparator class="my-6" />
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -370,7 +369,7 @@ const knownSpellNames = computed(() => {
   return (allSpells.value ?? []).filter(s => ids.has(s.id)).map(s => s.name)
 })
 
-// Options de style de combat lues dans le catalogue (F2 tranche 4) au lieu du blob.
+// Options de style de combat lues dans le catalogue, plus dans le blob front.
 const { data: fightingStyleData } = useFetch(
   () => classData.value ? `/api/catalog/classes/${encodeURIComponent(classData.value.dbName)}/fighting-styles` : '',
   { watch: [classData], default: () => [] },

@@ -74,10 +74,8 @@ export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset
 }
 
 /**
- * Styles de combat (features-options `tag='fighting_style'`) d'une classe désignée par son NOM
- * (F2 tranche 4). Renvoie `{id, name, description}` triés par id (ordre de seed). Comme
- * `loadSubclasses` : classe résolue par `(name, ruleset)`, options filtrées par édition + source
- * (core par défaut). Classe sans style (non martiale) ou inconnue → `[]`.
+ * Styles de combat (features-options taguées `fighting_style`) d'une classe désignée par son NOM.
+ * Classe résolue par `(name, ruleset)` comme `loadSubclasses` ; classe non martiale ou inconnue → `[]`.
  */
 export async function loadFightingStyles(db: Db, className: string, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string, description: string | null }[]> {
   const [cls] = await db
@@ -103,10 +101,6 @@ export async function loadFightingStyles(db: Db, className: string, ruleset: Rul
     .orderBy(asc(srcSchema.features.id))
 }
 
-/**
- * Tous les dons (`features` de `feature_type='feat'`) avec leurs effets bakés, triés par nom
- * (locale fr) (≡ endpoint legacy `/api/feats`).
- */
 export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false) {
   const feats = await db
     .select({

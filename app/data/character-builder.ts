@@ -852,9 +852,8 @@ export const CLASSES: ClassData[] = [
   },
 ]
 
-// Les styles de combat (options + descriptions + niveaux d'accès) sont désormais lus dans le
-// CATALOGUE (`/api/catalog/classes/[name]/fighting-styles` + `resolveChoices`), plus dans le blob
-// (F2 tranche 4). Le Rôdeur inclut Duel (que l'ancien blob omettait).
+// Les styles de combat (options, descriptions, niveaux d'accès) sont lus dans le catalogue
+// (`/api/catalog/classes/[name]/fighting-styles`), plus dans ce blob.
 
 export interface AlignmentData {
   id: string

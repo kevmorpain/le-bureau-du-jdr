@@ -335,7 +335,7 @@ const { data: subclassesData } = useFetch(
 )
 const subclasses = computed(() => (subclassesData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>)
 
-// Available fighting styles for this class — catalogue (F2 tranche 4), plus le blob.
+// Options de style de combat lues dans le catalogue, plus dans le blob front.
 const { data: fightingStyleData } = useFetch(
   () => pickedClass.value ? `/api/catalog/classes/${encodeURIComponent(pickedClass.value!.dbName)}/fighting-styles` : '',
   { watch: [pickedClass], immediate: true },

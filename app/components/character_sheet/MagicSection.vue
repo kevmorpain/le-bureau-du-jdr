@@ -352,7 +352,6 @@
       @roll="handleRollDamage"
     />
 
-    <!-- Slideover ajout de sort -->
     <AddSpellSlideover
       v-model:open="showAddSpell"
       :already-added-ids
@@ -493,7 +492,6 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
   showCastModal.value = true
 }
 
-// Jets de dés au lancement de sort
 const { roll } = useDiceRoller()
 
 // Niveau d'emplacement du DERNIER lancement, par sort. Pour un sort d'attaque, le jet de dégâts
@@ -745,8 +743,6 @@ const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number
   }
 }
 
-// Emplacements (toggle manuel)
-
 const toggleSlot = (level: number, slotType: SlotType, n: number) => {
   const slot = spellSlots.value[slotType][level]
   if (!slot) return
@@ -764,15 +760,11 @@ const adjustSlotMax = (level: number, slotType: SlotType, delta: number) => {
   else slot.current = Math.min(slot.current, newMax)
 }
 
-// Ajout de sort
-
 const showAddSpell = ref(false)
 
 const alreadyAddedIds = computed(() =>
   new Set((characterSpells.value ?? []).map(cs => cs.spellId)),
 )
-
-// Modifications de Décharge occulte (Manifestations occultes)
 
 // Mod canonique de CHA (total : espèce + ASI + effets). NE PAS le recalculer à la main depuis
 // baseAbilityScores + ASI — ça omettait le bonus d'espèce (Coup agonisant sous-évalué).
