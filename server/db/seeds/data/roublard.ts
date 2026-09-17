@@ -15,7 +15,6 @@ Au niveau 6, vous pouvez choisir deux autres compétences maîtrisées pour bén
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
-    // Owner du point de choix d'expertise (F2) : 2 compétences au niv 1, 2 de plus au niv 6.
     progression: expertiseProgression('Roublard'),
   },
   {
