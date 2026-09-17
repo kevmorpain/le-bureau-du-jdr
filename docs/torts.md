@@ -132,3 +132,27 @@ commande).
   ici d'une affirmation *prescriptive* (« ajouter X réglera Y »), dont le mécanisme se source
   exactement de la même façon.
 - Relevé par l'utilisateur d'un simple « Nvmrc vraiment utile ? », sans indiquer ce qui clochait.
+
+### 2026-09-17 — Règle de `CLAUDE.md` opposée hors de son déclencheur
+
+- **Affirmé / fait** : après avoir ajouté la section « Commentaires » à `CLAUDE.md` — ajout demandé
+  explicitement par l'utilisateur (« est-ce qu'on peut aussi ajouter une règle claude.md […] sur
+  les commentaires ? ») — j'ai clos ma réponse par « un point à trancher de ton côté » : la règle
+  « les conventions se révisent d'un bloc […] pas PR par PR » rendrait cet ajout hors rythme, et
+  j'ai proposé de le déplacer vers `docs/` ou d'attendre la prochaine relecture.
+- **Vrai** : la section invoquée (`CLAUDE.md:113-118`) s'ouvre sur son déclencheur — « Une erreur
+  qu'il a fallu me signaler se consigne dans `docs/torts.md` […] **sans toucher à ce fichier-ci** ».
+  Elle vise le réflexe de patcher les conventions à chaud **après un incident** ; « ce fichier-ci »
+  désigne `CLAUDE.md` à ce moment-là. Aucun tort n'était en jeu : la règle ne s'appliquait pas, et
+  il n'y avait rien à trancher.
+- **Manque** : ne pas avoir relu la phrase entière avant de l'opposer à une action demandée. J'ai
+  cité sa clause de conséquence (« pas PR par PR ») en la détachant de sa condition d'application
+  (« une erreur qu'il a fallu me signaler »), alors que les deux tiennent dans la même phrase, déjà
+  sous mes yeux.
+- **Règle** : **absente**. `CLAUDE.md` encadre la véracité de ce que j'affirme sur le code, pas
+  l'usage que je fais de ses propres règles. Classe inédite dans cette file — les cinq entrées
+  précédentes sont des affirmations fausses ou non vérifiées ; ici tout était lu et exact, mais
+  appliqué hors périmètre, ce qui a produit un faux problème que l'utilisateur a dû venir écarter.
+  Proche par l'effet de l'entrée « Répondu à côté » : le coût n'est pas une erreur factuelle, c'est
+  un tour de conversation dépensé à défaire du bruit.
+- Relevé par l'utilisateur (« qu'est-ce que tu racontes par rapport aux torts ? »).
