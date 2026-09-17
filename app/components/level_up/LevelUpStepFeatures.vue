@@ -9,7 +9,6 @@
 
     <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Aptitudes</h2>
 
-    <!-- Features unlocked -->
     <div class="mb-5">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Nouvelles aptitudes</p>
       <template v-if="newFeatures.length">
@@ -29,7 +28,6 @@
       </div>
     </div>
 
-    <!-- Proficiency bonus change -->
     <div
       v-if="profBonusChange"
       class="mb-5 flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-500/30 bg-amber-500/8 text-sm"
@@ -40,7 +38,6 @@
       <span class="text-amber-400 font-bold font-mono">{{ formatMod(profBonusChange) }}</span>
     </div>
 
-    <!-- Subclass choice -->
     <div v-if="isSubclassLevel && subclasses.length" class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
         ⚡ Choisissez votre {{ pickedClass?.subclassLabel ?? 'sous-classe' }}
@@ -61,7 +58,6 @@
       </div>
     </div>
 
-    <!-- Fighting style -->
     <div v-if="needsFightingStyle" class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
         ⚔ Style de combat
@@ -82,7 +78,6 @@
       </div>
     </div>
 
-    <!-- Expertise -->
     <div v-if="needsExpertise" class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
         ★ Expertise
@@ -109,7 +104,6 @@
       </div>
     </div>
 
-    <!-- Faveur du Pacte (Occultiste niveau 3) -->
     <div v-if="needsPactBoon" class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
         🌑 Don du Pacte
@@ -129,7 +123,6 @@
         </button>
       </div>
 
-      <!-- Feedback selon le choix -->
       <template v-if="state.pactBoon === 'chain'">
         <div class="mt-3 px-3 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/8 text-xs text-emerald-400">
           ✦ Le sort <strong>Appel de familier</strong> sera automatiquement ajouté à votre grimoire.
@@ -174,10 +167,8 @@
       </template>
     </div>
 
-    <!-- Manifestations occultes -->
     <div v-if="needsInvocations || canReplaceInvocation" class="mb-6 space-y-5">
 
-      <!-- Bloc : remplacement d'une invocation existante (optionnel) -->
       <div v-if="canReplaceInvocation">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">
@@ -214,7 +205,6 @@
         </div>
       </div>
 
-      <!-- Picker — affiché si gain de niveau OU remplacement actif -->
       <div v-if="needsInvocations || state.replacedInvocationId !== null">
         <InvocationPicker
           v-model="state.newInvocationIds"
@@ -238,7 +228,6 @@
       />
     </div>
 
-    <!-- No choices required -->
     <div
       v-if="!isSubclassLevel && !needsFightingStyle && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation && !needsMetamagic"
       class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted"
@@ -284,10 +273,8 @@ const {
   totalLevel,
 } = useLevelUp(charSheet)
 
-// Gating `source` : inclure le contenu d'extension quand le drapeau global est actif.
 const { extendedQuery } = useExtendedContent()
 
-// Détails des invocations connues pour le bloc « Remplacer »
 const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
   query: extendedQuery,
   default: () => [],
@@ -297,12 +284,10 @@ const knownInvocationDetails = computed(() => {
   return (allInvocations.value ?? []).filter(inv => known.has(inv.id))
 })
 
-// Slots du picker : new picks + 1 si on remplace
 const totalPickCount = computed(() =>
   newInvocationsCount.value + (state.value.replacedInvocationId ? 1 : 0),
 )
 
-// Cacher de la liste les invocations déjà connues, sauf celle qu'on remplace
 const excludedInvocationIds = computed(() =>
   knownInvocationIds.value.filter(id => id !== state.value.replacedInvocationId),
 )
@@ -317,14 +302,12 @@ const pickerLabel = computed(() => {
   return `🌑 Nouvelles manifestations occultes — choisissez ${newInvocationsCount.value}`
 })
 
-// Si l'utilisateur annule le remplacement, retirer le pick "extra" du tableau
 watch(() => state.value.replacedInvocationId, (newVal) => {
   if (newVal === null && state.value.newInvocationIds.length > newInvocationsCount.value) {
     state.value.newInvocationIds = state.value.newInvocationIds.slice(0, newInvocationsCount.value)
   }
 })
 
-// Melee weapons from inventory (for Pacte de la Lame)
 const meleeWeapons = computed(() => {
   const inventory: Array<{ inventory: any, item: any }> = (charSheet.value as any)?.inventory ?? []
   return inventory.filter((inv) => {
@@ -333,7 +316,6 @@ const meleeWeapons = computed(() => {
   })
 })
 
-// Features unlocked at the new level
 const newFeatures = computed<string[]>(() => {
   if (!pickedClass.value) return []
   const lvl = state.value.toLevel
@@ -341,14 +323,12 @@ const newFeatures = computed<string[]>(() => {
   return text ? text.split(/[,+]/).map((s: string) => s.trim()).filter(Boolean) : []
 })
 
-// Proficiency bonus change
 const oldProfBonus = computed(() => profBonusAtLevel(totalLevel.value))
 const newProfBonus = computed(() => profBonusAtLevel(totalLevel.value + 1))
 const profBonusChange = computed(() =>
   newProfBonus.value > oldProfBonus.value ? newProfBonus.value : null,
 )
 
-// Subclasses from catalog (F4 : endpoint /api/catalog/*, ≡ legacy, cachable au edge)
 const { data: subclassesData } = useFetch(
   () => pickedClass.value ? `/api/catalog/classes/${encodeURIComponent(pickedClass.value!.dbName)}/subclasses` : '',
   { query: extendedQuery, watch: [pickedClass, () => extendedQuery.value], immediate: true },

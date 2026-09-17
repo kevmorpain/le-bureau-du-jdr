@@ -3,18 +3,9 @@ import { ref, toRef, reactive } from 'vue'
 import { sheetTextField } from '../../app/composables/character/sheetField'
 import { useCharacterIdentity } from '../../app/composables/character/useCharacterIdentity'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Identité & description. Deux contrats gardés ici :
-//
-//  1. `sheetTextField` — la fabrique qui remplace les computed get/set copiés-collés
-//     (personnalité, notes, identité). Elle DOIT muter la fiche en place : la moitié
-//     des sections la reçoivent via `toRef(props, 'characterSheet')` (props en lecture
-//     seule), où réassigner `.value` serait silencieusement perdu.
-//  2. `useCharacterIdentity` — garde du nom non vide (contrat de
-//     `updateCharacterSheetSchema`, sinon l'auto-save renvoie 422), filtrage du
-//     portrait affichable, et exposition des données déjà en base mais jusqu'ici
-//     invisibles sur la fiche (alignement éditable, catégorie de taille d'espèce).
-// ─────────────────────────────────────────────────────────────────────────────
+// Deux contrats : `sheetTextField` DOIT muter la fiche en place (la moitié des sections la reçoivent
+// via `toRef(props, …)`, où réassigner `.value` serait silencieusement perdu) ; `useCharacterIdentity`
+// garde le nom non vide (sinon l'auto-save renvoie 422) et ne rend qu'un portrait affichable.
 
 const sheet = (over: Record<string, unknown> = {}) => ref({
   id: 1,

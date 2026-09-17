@@ -70,8 +70,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
   }
 
-  // Charge subclasses séparément (le schéma cached de hub:db n'a pas la relation subclass)
-  // + enrichit chaque classe avec subclassId + subclass via SQL raw
+  // Relations absentes du schéma cached de hub:db → requêtes séparées (idem ci-dessous).
   const classesWithSubclass = await db
     .select()
     .from(srcSchema.characterClasses)
@@ -99,14 +98,11 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  // Charge ASI séparément (le schéma cached de hub:db n'a pas la relation)
   const abilityScoreImprovements = await db
     .select()
     .from(srcSchema.characterAbilityScoreImprovements)
     .where(eq(srcSchema.characterAbilityScoreImprovements.characterSheetId, Number(id)))
 
-  // Enrichit chaque character_feature avec source/classLevel/choices (colonnes
-  // ajoutées en 0053 que le schéma cached de hub:db ne connaît pas).
   const charFeatureMeta = await db
     .select({
       featureId: srcSchema.characterFeatures.featureId,
@@ -128,8 +124,6 @@ export default defineEventHandler(async (event) => {
   })
 
 
-  // Charge l'inventaire avec les items + leurs effets magiques (item_effects).
-  // Hub:db ne connaît pas item_effects (ajoutée en 0053) → utiliser srcSchema.
   const inventoryRows = await db
     .select({ inventory: srcSchema.characterInventory, item: srcSchema.items })
     .from(srcSchema.characterInventory)
@@ -156,23 +150,17 @@ export default defineEventHandler(async (event) => {
     item: { ...r.item, effects: effectsByItem.get(r.item.id) ?? [] },
   }))
 
-  // ─── Lignée choisie (D17) : fusionner ses features dans les traits d'espèce ──────────────
-  // `character_choices`/`species_lineages`/`features.lineage_id` hors relations hub:db → util
-  // `.select()` injecté (patron subclasses/ASI/items). No-op tant que le perso n'a pas de
-  // lignée (selected_lineage_id NULL) → toutes les fiches existantes sont inchangées.
+  // Lignée choisie (D17) : ses features sont fusionnées dans les traits d'espèce.
   const totalLevel = characterSheet.classes.reduce((sum, c) => sum + ((c as { level?: number }).level ?? 0), 0)
   const species = characterSheet.species
   let speciesWithLineage = species
-  // Nom de la lignée choisie (ex. « Drow ») → affichage fiche (en-tête + badges de features).
   let lineageName: string | null = null
   if (species) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const derived = await deriveChosenLineage(db as any, Number(id), species.id, totalLevel)
     lineageName = derived.lineageName
 
-    // Masque les features « point de choix » de l'espèce : celles qui portent une `progression`
-    // (ex. « Lignage elfique ») pilotent la résolution/builder mais ne sont pas des traits à
-    // afficher sur la fiche (la lignée choisie est déjà rendue via ses propres features + l'en-tête).
+    // Les features portant une `progression` (ex. « Lignage elfique ») sont des points de choix, pas des traits à afficher.
     const baseFeatureIds = species.speciesFeatures
       .map(sf => sf.feature?.id)
       .filter((v): v is number => typeof v === 'number')
@@ -191,37 +179,20 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // ─── Triade d'origine 2024 (choix composite `ability_scores`) ────────────────────────────
-  // Dérive live l'augmentation de carac. depuis `character_choices.payload` (util DI injecté,
-  // patron lignée). Map VIDE pour toute fiche sans pick `ability_scores` (toutes les fiches
-  // 2014) → aucun changement. Consommé par le front avec le builder 2024 (câblage différé).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const originAbilityBonuses = await deriveAbilityScoreChoices(db as any, Number(id))
 
-  // ─── Maîtrises d'armes 2024 (choix composite `weapon_mastery`) ───────────────────────────
-  // Liste des armes dont le perso maîtrise la propriété (util DI injecté, patron triade/lignée).
-  // `[]` pour toute fiche sans pick (toutes les fiches 2014). Effet appliqué par le front (différé).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const weaponMasteries = await deriveWeaponMasteries(db as any, Number(id))
 
-  // ─── Maîtrises d'outils/langues FIXES d'historique (volet B, étape 2) ────────────────────────
-  // Effets dérivés du porteur (background_features), fusionnés dans allEffects par le front → la
-  // fiche déduit les maîtrises d'outils de l'origine. `[]` si historique custom ou sans fixe.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const backgroundEffects = await deriveBackgroundProficiencies(db as any, characterSheet.backgroundId)
 
-  // ─── Maîtrises d'armes/armures de BASE de classe (volet B, étape 4) ──────────────────────────
-  // Effets dérivés du porteur `proficiency_grant` de chaque classe du perso (multiclasse inclus),
-  // fusionnés dans allEffects par le front → la fiche déduit ses maîtrises d'armes/armures de
-  // l'origine. `[]` tant que la classe n'a pas de porteur seedé (prod pré-seed → aucune régression).
   const classIds = characterSheet.classes.map(c => c.classId)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const classEffects = await deriveClassProficiencies(db as any, classIds)
 
-  // ─── Nom du joueur ──────────────────────────────────────────────────────────────────────
-  // Le propriétaire de la fiche EST le joueur : pas de colonne dédiée. Chargé par `.select()`
-  // (la relation `owner` n'existe pas dans le schéma cached de hub:db) et réduit à
-  // `{ id, name }` — l'e-mail et le provider ne sortent pas du serveur.
+  // Le propriétaire est le joueur ; on n'expose que `{ id, name }` (ni e-mail ni provider).
   const [owner] = characterSheet.ownerId != null
     ? await db
         .select({ id: srcSchema.users.id, name: srcSchema.users.name })

@@ -1,13 +1,10 @@
 import { db } from 'hub:db'
-// hub:db schema cache ne connaît pas item_effects (ajoutée en 0053) → on lit
-// les définitions depuis la source pour ces tables.
 import * as schema from '~~/server/db/schema'
 import * as srcSchema from '~~/server/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
 import { createItemSchema } from '~~/shared/utils/item'
 import { z } from 'zod'
 
-// Même schéma que la création, étendu avec les effets magiques (item_effects).
 const updateCustomItemSchema = createItemSchema.extend({
   effects: z
     .array(z.object({ type: z.string(), value: z.any() }))
@@ -50,13 +47,10 @@ export default defineEventHandler(async (event) => {
     } as Partial<typeof schema.items.$inferInsert>)
     .where(eq(schema.items.id, itemId))
 
-  // Reconstruit les effets magiques : on efface les liens existants puis on
-  // réinsère depuis le payload (statements séquentiels — pas de db.transaction()
-  // sur Cloudflare D1).
+  // Statements séquentiels : pas de db.transaction() sur D1.
   await db.delete(srcSchema.itemEffects).where(eq(srcSchema.itemEffects.itemId, itemId))
 
   for (const effect of body.effects) {
-    // Réutilise l'effect existant si même (type, value), sinon on l'insère.
     const existingEffect = await db
       .select({ id: srcSchema.effects.id })
       .from(srcSchema.effects)

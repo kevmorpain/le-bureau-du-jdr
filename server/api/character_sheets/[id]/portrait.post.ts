@@ -11,17 +11,8 @@ import {
   portraitUrlFromKey,
 } from '~~/server/utils/portraits'
 
-/**
- * Téléverse le portrait d'une fiche dans R2 et écrit son URL en base.
- *
- * L'autorisation (session + propriété de la fiche) est assurée en amont par le
- * middleware `character-sheets-authz`, qui couvre tout `/api/character_sheets/<id>/**`.
- *
- * C'est le SERVEUR qui écrit `portraitUrl` : si le client disparaissait entre l'upload et
- * son auto-save, l'objet resterait orphelin dans le bucket. L'ancien portrait de la fiche
- * est supprimé dans la foulée (jamais une URL externe, jamais l'objet d'une autre fiche —
- * cf. `ownedPortraitKey`).
- */
+// C'est le serveur qui écrit `portraitUrl` : un client qui disparaîtrait entre l'upload et son auto-save
+// laisserait sinon un objet orphelin dans le bucket.
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
   const sheetId = Number(id)
@@ -33,7 +24,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Aucun fichier reçu' })
   }
 
-  // Lève un 400 explicite (taille / type) — le message remonte tel quel au client.
   ensureBlob(file, { maxSize: PORTRAIT_MAX_SIZE, types: Object.keys(PORTRAIT_TYPES) })
 
   const ext = PORTRAIT_TYPES[file.type]

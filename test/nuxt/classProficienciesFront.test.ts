@@ -2,20 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { CLASSES, ARMOR_PROF_KEYS } from '../../app/data/character-builder'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 
-// Volet B, étape 1 — ÉQUIVALENCE des maîtrises de base de classe (blob front → source unique).
-// Les maîtrises d'armes/armures de classe descendent du BLOB `app/data/character-builder.ts`
-// (libellés FR) vers `shared/rules/classProficiencies.ts`, d'où elles seront posées en effets
-// sur une feature porteuse (seedClass).
-//
-// Ce test tient la source à la CIBLE CORRIGÉE dérivée du blob (drift-protection : il lit le blob
-// LIVE). La normalisation (volet B étape 1) fixe 3 défauts du mapping historique du builder :
-//   - CATÉGORIES d'arme → token machine EN (`simple_weapons`/`martial_weapons`) ;
-//   - ARMES PRÉCISES → nom FR de l'item (au lieu des clés EN longsword/rapier/… qui ne matchaient
-//     aucun item et s'affichaient en anglais) → donc le libellé FR du blob, verbatim ;
-//   - « Masse » (Druide) → « Masse d'armes » (le vrai nom de l'item).
-// Les ARMURES étaient déjà correctes (token EN) → inchangées, vérifiées contre `ARMOR_PROF_KEYS`.
-// Env `nuxt` (le blob importe l'alias `~~`), patron de `classesIdentityFront.test.ts`.
-// Ce test disparaîtra avec la copie front (volet B, étape 4).
+// Équivalence des maîtrises de base de classe entre le blob front (lu LIVE) et la source unique.
+// La normalisation corrige 3 défauts du mapping historique du builder : catégories → tokens EN,
+// armes précises → nom FR de l'item, « Masse » → « Masse d'armes ». Les armures étaient déjà
+// correctes. Ce test disparaîtra avec la copie front.
 
 /** Ensemble trié dédupliqué — comparaison indépendante de l'ordre. */
 const asSet = (arr: string[]): string[] => [...new Set(arr)].sort()

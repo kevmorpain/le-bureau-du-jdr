@@ -5,9 +5,7 @@
       ? 'border-amber-500 bg-amber-500/10'
       : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-amber-500/40'"
   >
-    <!-- Ligne principale (cliquable pour sélectionner) -->
     <div class="flex items-center gap-2 px-2.5 py-2 cursor-pointer" @click="$emit('click')">
-      <!-- Dot sélection -->
       <span
         class="w-2.5 h-2.5 rounded-full shrink-0 border transition-colors"
         :class="selected ? 'bg-amber-500 border-amber-500' : 'bg-transparent border-muted'"
@@ -21,7 +19,6 @@
         </div>
       </div>
 
-      <!-- Icônes indicateurs -->
       <div class="flex items-center gap-1 shrink-0">
         <UTooltip v-if="spell.concentration" :text="$t('concentration')" :delay-duration="0">
           <ConcentrationIcon class="size-4 text-amber-400" />
@@ -32,7 +29,6 @@
         <UTooltip v-if="spell.dc" :text="`JdS ${$t('ability_scores.' + spell.dc.ability)}`" :delay-duration="0">
           <ShieldIcon class="size-4 text-blue-400" />
         </UTooltip>
-        <!-- Composantes -->
         <UTooltip v-for="comp in (spell.components ?? [])" :key="comp" :text="componentLabel(comp)" :delay-duration="0">
           <VoiceActivateIcon v-if="comp === 'V'" class="size-4 text-muted" />
           <HandGestureIcon v-else-if="comp === 'S'" class="size-4 text-muted" />
@@ -40,7 +36,6 @@
         </UTooltip>
       </div>
 
-      <!-- Bouton expand -->
       <button
         class="w-7 h-7 flex items-center justify-center rounded-md text-sm text-muted hover:text-(--ui-text) hover:bg-(--ui-bg) transition-all shrink-0 cursor-pointer"
         :class="expanded ? 'rotate-180' : ''"
@@ -48,9 +43,7 @@
       >▾</button>
     </div>
 
-    <!-- Détail déplié -->
     <div v-if="expanded" class="border-t border-(--ui-border) px-3 py-2.5 space-y-2">
-      <!-- Métadonnées -->
       <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
         <span v-if="spell.castingTime">⏱ {{ spell.castingTime }}</span>
         <span v-if="spell.duration">⌛ {{ spell.duration }}</span>
@@ -61,10 +54,8 @@
         </span>
       </div>
 
-      <!-- Matériau si composante M -->
       <p v-if="spell.material" class="text-xs text-muted italic">{{ spell.material }}</p>
 
-      <!-- Dégâts (une ligne par type de dégâts) -->
       <div
         v-for="(dmg, i) in damageDisplays"
         :key="i"
@@ -79,7 +70,6 @@
         <span class="text-muted font-normal ml-1">{{ dmg.type }}</span>
       </div>
 
-      <!-- Soins -->
       <div v-if="healDisplay" class="text-xs font-semibold text-heal">
         {{ healDisplay.die }}
         <span v-if="spellcastingMod != null && spell.heal!.isSpellcastingModifierAdded">
@@ -88,7 +78,6 @@
         <span class="text-muted font-normal ml-1">{{ healDisplay.type }}</span>
       </div>
 
-      <!-- Description -->
       <p class="text-xs text-muted leading-relaxed">{{ spell.description ?? 'Aucune description.' }}</p>
     </div>
   </div>
@@ -205,7 +194,6 @@ const healDisplay = computed(() => {
 
 const spellSaveDC = computed(() => {
   if (!props.spell.dc || props.spellcastingMod == null) return null
-  // profBonus would ideally come from parent but we don't have it here — display DC only if passed
   return null // DC calculation requires profBonus from parent
 })
 </script>

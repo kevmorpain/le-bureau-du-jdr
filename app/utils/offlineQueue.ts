@@ -1,9 +1,6 @@
-// File de mutations hors-ligne, persistée en localStorage par personnage.
-// Couche « pure » (pas de réactivité Vue, pas de $fetch) : lecture/écriture du stockage
-// + dédoublonnage. Le rejeu réseau vit dans useOfflineSync.
-//
-// iOS/iPadOS n'expose pas l'API Background Sync : la file est rejouée par l'app
-// (events online + reprise au premier plan), pas par le service worker.
+// File de mutations hors-ligne, persistée en localStorage par personnage. Couche « pure » : le rejeu
+// réseau vit dans useOfflineSync. iOS/iPadOS n'expose pas Background Sync → c'est l'app qui rejoue,
+// pas le service worker.
 
 // Import explicite (plutôt que via l'auto-import Nuxt) pour rester testable hors contexte Nuxt.
 import { characterStorageKey } from './storage'
@@ -22,7 +19,6 @@ export interface QueuedMutation {
   dedupeKey?: string
   // character_sheets.updatedAt connu au moment de l'enfilement (garde-fou anti-écrasement).
   baseVersion?: string | null
-  // Libellé court pour l'UI (« PV », « Slots de sorts »…).
   label?: string
 }
 
@@ -53,7 +49,6 @@ export function writeQueue(characterId: number, ops: QueuedMutation[]): void {
   }
 }
 
-/** Enfile une op (dédoublonnage des ops à dedupeKey) et renvoie la file mise à jour. */
 export function enqueueMutation(op: QueuedMutation): QueuedMutation[] {
   const ops = readQueue(op.characterId)
   const next = op.dedupeKey ? ops.filter(o => o.dedupeKey !== op.dedupeKey) : ops
@@ -73,7 +68,6 @@ export function clearQueue(characterId: number): void {
   localStorage.removeItem(queueKey(characterId))
 }
 
-/** Énumère les persos ayant au moins une op en attente (scan du localStorage). */
 export function listQueuedCharacterIds(): number[] {
   if (import.meta.server) return []
   const ids: number[] = []
@@ -95,7 +89,7 @@ export function hasPending(characterId: number): boolean {
   return readQueue(characterId).length > 0
 }
 
-// ── Snapshots d'état local ───────────────────────────────────────────────────
+// Snapshots d'état local
 // Permettent de restaurer l'état optimiste après un reload hors-ligne (le cache
 // Workbox ne contient que l'état serveur *avant* les modifs en attente).
 

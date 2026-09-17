@@ -2,7 +2,6 @@
   <USlideover v-model:open="open" title="Ajouter un sort">
     <template #body>
       <div class="space-y-4 p-4">
-        <!-- Recherche -->
         <UInput
           v-model="search"
           placeholder="Rechercher un sort..."
@@ -10,7 +9,6 @@
           autofocus
         />
 
-        <!-- Filtres niveau -->
         <div class="flex flex-wrap gap-2">
           <UBadge
             v-for="lvl in levelOptions"
@@ -23,7 +21,6 @@
           </UBadge>
         </div>
 
-        <!-- Liste des sorts -->
         <div
           v-if="pending"
           class="flex justify-center py-8"

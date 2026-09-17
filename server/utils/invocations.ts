@@ -5,22 +5,13 @@ import * as srcSchema from '~~/server/db/schema'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-// Applique l'ajout / remplacement d'invocations occultes pour un personnage.
-// - newInvocationIds : invocations à apprendre
-// - replacedInvocationId : invocation existante à retirer (avec ses spell_grants)
-//
-// `db` est INJECTÉ (D1 en prod, libsql en test) — seul le level-up appelle cette fonction
-// (la création a inliné sa propre matérialisation au lot 5d volet 2).
-//
-// ⚠️ D1 (Cloudflare) ne supporte pas BEGIN TRANSACTION en SQL brut — on enchaîne des
-//    statements séquentiels avec onConflictDoNothing pour l'idempotence.
+// ⚠️ Pas de BEGIN TRANSACTION sur D1 : statements séquentiels + onConflictDoNothing pour l'idempotence.
 export async function applyInvocationChanges(
   db: Db,
   characterSheetId: number,
   newInvocationIds: number[],
   replacedInvocationId: number | null,
 ) {
-  // 1. Remplacement : supprimer l'invocation existante + ses sorts octroyés
   if (replacedInvocationId) {
     const grantedSpellNames = await db
       .select({ value: srcSchema.effects.value })
@@ -60,7 +51,6 @@ export async function applyInvocationChanges(
       ))
   }
 
-  // 2. Insertion des nouvelles invocations
   if (!newInvocationIds.length) return
 
   await db
@@ -72,7 +62,6 @@ export async function applyInvocationChanges(
     })))
     .onConflictDoNothing()
 
-  // 3. Matérialiser les spell_grant en character_spells (source='invocation')
   const grantRows = await db
     .select({
       featureId: srcSchema.featureEffects.featureId,

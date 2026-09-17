@@ -8,8 +8,6 @@ interface ItemSeed {
   itemType: ItemType
   properties: ItemProperties
   description?: string
-  // Objet magique (cf. shared/rules/itemRarity.ts) + gating (source.ts). Absents = objet
-  // ordinaire, socle : rarity NULL, pas d'harmonisation, source 'core'.
   source?: Source
   rarity?: Rarity
   requiresAttunement?: boolean
@@ -53,11 +51,7 @@ function tool(
   return { id, name, itemType: 'tool', properties: { tool_type, category } satisfies ToolProperties, description }
 }
 
-// Noms officiels alignés sur AideDD (trad FR du PHB 2014). Voir migration
-// 0076_items_phb_naming pour les renommages/ajouts/suppressions appliqués aux
-// bases déjà peuplées (ce seed est INSERT-only par id).
-
-// ─── Armes simples de mêlée ───────────────────────────────────────────────────
+// Seed INSERT-only par id : les renommages passent par migration (cf. 0076_items_phb_naming).
 
 const simpleMeleeWeapons: ItemSeed[] = [
   weapon(1, 'Gourdin', {
@@ -129,8 +123,6 @@ const simpleMeleeWeapons: ItemSeed[] = [
   }),
 ]
 
-// ─── Armes simples à distance ─────────────────────────────────────────────────
-
 const simpleRangedWeapons: ItemSeed[] = [
   weapon(11, 'Arbalète légère', {
     damage_dice: '1d8',
@@ -161,8 +153,6 @@ const simpleRangedWeapons: ItemSeed[] = [
     range: { normal: 24, long: 96 },
   }),
 ]
-
-// ─── Armes de guerre de mêlée ─────────────────────────────────────────────────
 
 const martialMeleeWeapons: ItemSeed[] = [
   weapon(15, 'Hache d\'armes', {
@@ -281,8 +271,6 @@ const martialMeleeWeapons: ItemSeed[] = [
   }),
 ]
 
-// ─── Armes de guerre à distance ───────────────────────────────────────────────
-
 const martialRangedWeapons: ItemSeed[] = [
   weapon(32, 'Arbalète de poing', {
     damage_dice: '1d6',
@@ -323,8 +311,6 @@ const martialRangedWeapons: ItemSeed[] = [
     range: { normal: 7.5, long: 30 },
   }, 'Dégâts fixes de 1 (aiguille de sarbacane), sans jet de dé.'),
 ]
-
-// ─── Armures ──────────────────────────────────────────────────────────────────
 
 const armors: ItemSeed[] = [
   // Armures légères
@@ -415,8 +401,6 @@ const armors: ItemSeed[] = [
   }),
 ]
 
-// ─── Équipement d'aventurier ──────────────────────────────────────────────────
-
 const equipmentItems: ItemSeed[] = [
   equipment(60, 'Sac à dos', 'Conteneur', 'Contient jusqu\'à 30 livres de matériel.'),
   equipment(61, 'Sac de couchage', 'Repos'),
@@ -429,8 +413,6 @@ const equipmentItems: ItemSeed[] = [
   equipment(68, 'Trousse de soins', 'Médical', 'Stabilise un personnage mourant. 10 utilisations.'),
   equipment(69, 'Outils de voleur', 'Outil', 'Nécessaires pour crocheter des serrures et désamorcer des pièges. Maîtrise requise.'),
 ]
-
-// ─── Outils ───────────────────────────────────────────────────────────────────
 
 const toolItems: ItemSeed[] = [
   // Outils d'artisan
@@ -482,8 +464,7 @@ const toolItems: ItemSeed[] = [
   tool(104, 'Kit de contrefaçon', 'other', 'Outil spécial'),
 ]
 
-// ─── Objets magiques d'extension (GATÉS) ───────────────────────────────────────
-// Ids réservés à partir de 200 (gap au-dessus des objets socle, max id ~116).
+// Objets magiques d'extension (GATÉS) — ids réservés à partir de 200.
 const magicItems: ItemSeed[] = [
   {
     id: 200,

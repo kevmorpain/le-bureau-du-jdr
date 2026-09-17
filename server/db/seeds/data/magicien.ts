@@ -64,8 +64,6 @@ Vous pouvez lancer un sort comme rituel s'il a l'étiquette rituel et est dans v
   },
 ]
 
-// Une aptitude « X érudit » de niveau 2 est commune à chaque école : copier un
-// sort de l'école concernée dans le grimoire coûte moitié moins de temps et d'or.
 const savant = (ecole: string): FeatureDef => ({
   name: `${ecole} érudit`,
   description: `Au niveau 2, copier un sort de l'école correspondante dans votre grimoire vous coûte moitié moins de temps et d'or.`,

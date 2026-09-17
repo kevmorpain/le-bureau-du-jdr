@@ -9,8 +9,6 @@ const spellClasses = sqliteTable(
   {
     spellId: integer('spell_id').notNull().references(() => spells.id, { onDelete: 'cascade' }),
     classId: integer('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
-    // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2) : la liste de
-    // sorts d'une classe peut différer entre 2014 et 2024.
     ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
   },
   table => [

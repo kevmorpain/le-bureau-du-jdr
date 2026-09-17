@@ -41,7 +41,6 @@
         />
       </div>
 
-      <!-- extra_damage -->
       <div v-if="effect.type === 'extra_damage'" class="grid grid-cols-2 gap-2">
         <UFormField label="Dés de dégâts">
           <UInput
@@ -59,7 +58,6 @@
         </UFormField>
       </div>
 
-      <!-- damage_resistance -->
       <div v-else-if="effect.type === 'damage_resistance' || effect.type === 'damage_immunity' || effect.type === 'vulnerability'">
         <UFormField label="Type de dégâts">
           <USelect
@@ -70,7 +68,6 @@
         </UFormField>
       </div>
 
-      <!-- ability_increase -->
       <div v-else-if="effect.type === 'ability_increase'" class="grid grid-cols-2 gap-2">
         <UFormField label="Caractéristique">
           <USelect
@@ -90,7 +87,6 @@
         </UFormField>
       </div>
 
-      <!-- walking_speed -->
       <div v-else-if="effect.type === 'walking_speed'">
         <UFormField label="Bonus de vitesse (m)">
           <UInput
@@ -103,7 +99,6 @@
         </UFormField>
       </div>
 
-      <!-- darkvision -->
       <div v-else-if="effect.type === 'darkvision'">
         <UFormField label="Portée (m)">
           <UInput
@@ -116,7 +111,6 @@
         </UFormField>
       </div>
 
-      <!-- weapon_proficiency -->
       <div v-else-if="effect.type === 'weapon_proficiency'">
         <UFormField label="Maîtrise d'arme">
           <UInput
@@ -128,7 +122,6 @@
         </UFormField>
       </div>
 
-      <!-- proficiency -->
       <div v-else-if="effect.type === 'proficiency'">
         <UFormField label="Maîtrise">
           <UInput
@@ -140,7 +133,6 @@
         </UFormField>
       </div>
 
-      <!-- spell_save_dc_bonus, spell_attack_bonus, initiative_bonus, hp_per_level -->
       <div
         v-else-if="['spell_save_dc_bonus', 'spell_attack_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
       >
@@ -155,7 +147,6 @@
         </UFormField>
       </div>
 
-      <!-- passive_skill_bonus -->
       <div v-else-if="effect.type === 'passive_skill_bonus'" class="grid grid-cols-2 gap-2">
         <UFormField label="Compétence">
           <USelect

@@ -7,12 +7,9 @@ import {
   EXPERTISE_CLASS_ID,
 } from '../fixtures/resolveCatalog'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Contrat de résolution des CHOIX (cf. decisions.md D12, rules-engine.md §5).
-// Cas de vérité : l'Occultiste seedé au lot 4c — pacte (1 parmi 3) au niveau 3,
-// manifestations occultes (table par niveau, échangeables) au niveau 2, arcanums
-// mystiques (1 sort) aux niveaux 11/13/15/17. Valeurs PHB FR 2014 vérifiées à la main.
-// ─────────────────────────────────────────────────────────────────────────────
+// Contrat de résolution des CHOIX. Cas de vérité : l'Occultiste — pacte (1 parmi 3) au niveau 3,
+// manifestations (table par niveau, échangeables) au niveau 2, arcanums (1 sort) aux niveaux
+// 11/13/15/17. Valeurs PHB FR 2014 vérifiées à la main.
 
 const catalog = warlockCatalog()
 const INVOCATIONS_PROG_ID = catalog.progressions.find(p => p.kind === 'invocations')!.progressionId
@@ -131,7 +128,7 @@ describe('resolveChoices — proficient_skills résolu live', () => {
   })
 })
 
-// ─── C1 : kinds composites (résolution) ──────────────────────────────────────
+// C1 : kinds composites (résolution)
 describe('resolveChoices — kinds composites (C1)', () => {
   const ORIGIN_CLASS = 50 // owner synthétique
 

@@ -6,16 +6,8 @@ import { CharacterValidationError } from '~~/server/utils/characterCreate'
 import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
 import type { RechargeType } from '~~/server/db/schema/features'
 
-/**
- * Logique de REPOS extraite du handler (point 5d, volet 4) — `db` INJECTÉ (testable libsql),
- * écritures rendues atomiques par un seul `db.batch()` (jamais `db.transaction()`).
- *
- * ⚠️ Dépendance d'ORDRE préservée : sur un repos LONG, on met d'abord `currentHp = maxHp`, PUIS
- * (si des dés de vie sont dépensés) le soin recalcule `min(currentHp LU + soin, maxHp)` à partir de
- * la valeur LUE au début — donc ce dernier écrase le plein soin. C'est le comportement historique
- * (sur un repos long sans dés dépensés, c'est un no-op) : l'ordre des statements dans le batch le
- * reproduit exactement.
- */
+// ⚠️ Ordre : sur un repos long, `currentHp = maxHp` PUIS le soin par dés de vie recalcule depuis la valeur
+// lue au début et écrase le plein soin. Comportement historique, reproduit par l'ordre du batch.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
@@ -47,13 +39,11 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
 
   const rechargingTypes = REST_RECHARGE_MAP[type]
 
-  // Features à recharger (dont le type de recharge est couvert par ce repos)
   const rechargingFeatureIds = characterSheet.features
     .filter((cf: { feature?: { rechargeType?: string | null } | null, featureId: number }) =>
       cf.feature?.rechargeType && rechargingTypes.includes(cf.feature.rechargeType as RechargeType))
     .map((cf: { featureId: number }) => cf.featureId)
 
-  // Objets à charges à recharge COMPLÈTE (recharge_dice null) — lecture avant le batch.
   const invToRecharge = await db
     .select({ invId: schema.characterInventory.id })
     .from(schema.characterInventory)
@@ -83,7 +73,6 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
       .where(inArray(schema.characterInventory.id, invToRecharge.map((r: { invId: number }) => r.invId))))
   }
 
-  // Repos court : réinitialise les emplacements de magie de pacte
   if (type === 'short') {
     stmts.push(db.update(schema.characterSpellSlots)
       .set({ used: 0 })
@@ -93,7 +82,6 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
       )))
   }
 
-  // Repos long : PV au max, tous les emplacements réinitialisés, dés de vie récupérés
   if (type === 'long') {
     const hitDiceMax: Record<string, number> = {}
     for (const cls of characterSheet.classes ?? []) {
@@ -126,7 +114,6 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
   }
 
   if (stmts.length) {
-    // db.batch() = atomique sur D1 (JAMAIS db.transaction()). Ordre des statements préservé.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (db as any).batch(stmts as [any, ...any[]])
   }

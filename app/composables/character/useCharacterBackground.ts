@@ -35,7 +35,6 @@ export const useCharacterBackground = (characterSheet?: Ref<CharacterSheet>) => 
 
   async function setBackground(backgroundId: number | null) {
     if (!characterId.value) return
-    // Optimiste d'abord (l'auto-save de la fiche reflétera aussi backgroundId).
     if (characterSheet?.value) {
       characterSheet.value = { ...characterSheet.value, backgroundId }
     }

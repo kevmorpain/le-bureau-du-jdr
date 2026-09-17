@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-4">
-    <!-- Économie d'action -->
     <div class="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 space-y-3">
       <div class="flex items-center justify-between">
         <span class="text-sm font-bold text-primary">Ton tour</span>
@@ -32,7 +31,6 @@
         </button>
       </div>
 
-      <!-- Déplacement -->
       <div class="space-y-1">
         <div class="flex items-center justify-between text-xs">
           <span class="text-muted">Déplacement</span>
@@ -67,13 +65,11 @@
       </div>
     </div>
 
-    <!-- Actions disponibles ce tour -->
     <div class="space-y-2">
       <p class="text-xs font-bold uppercase tracking-widest text-muted">
         Actions disponibles
       </p>
 
-      <!-- Armes équipées -->
       <div
         v-for="weapon in equippedWeaponStats"
         :key="weapon.entryId"
@@ -135,7 +131,6 @@
         </div>
       </div>
 
-      <!-- Capacités avec type d'action -->
       <template
         v-for="actionType in ['action', 'bonus_action', 'reaction', 'free']"
         :key="actionType"
@@ -156,7 +151,6 @@
         </div>
       </template>
 
-      <!-- Sorts préparés disponibles -->
       <div
         v-if="preparedSpells.length"
         class="p-2 rounded-lg border border-default space-y-1"
@@ -198,7 +192,6 @@ const damageTypeLabels: Record<string, string> = {
 const csRef = toRef(props, 'characterSheet')
 const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells } = useCharacterSheet(csRef)
 
-// ── Économie d'action ────────────────────────────────────────────────────────
 const actionTypes = [
   { key: 'action' as const, label: 'Action', color: '#22c55e' },
   { key: 'bonus_action' as const, label: 'Bonus', color: '#f97316' },
@@ -212,7 +205,6 @@ const resetTurn = () => {
   movementUsed.value = 0
 }
 
-// ── Déplacement ──────────────────────────────────────────────────────────────
 const movementUsed = ref(0)
 const remainingMovement = computed(() => Math.max(0, effectiveSpeed.value - movementUsed.value))
 const movementPercent = computed(() =>
@@ -225,7 +217,7 @@ const moveBy = (delta: number) => {
   movementUsed.value = Math.max(0, Math.min(effectiveSpeed.value * 2, movementUsed.value + delta))
 }
 
-// ── Capacités triées par type d'action ──────────────────────────────────────
+// Capacités triées par type d'action
 const featuresByActionType = computed(() => {
   const map: Record<string, typeof resolvedFeatures.value> = {}
   for (const f of resolvedFeatures.value) {
@@ -236,10 +228,9 @@ const featuresByActionType = computed(() => {
   return map
 })
 
-// ── Sorts préparés ───────────────────────────────────────────────────────────
 const preparedSpells = computed(() => characterSpells.value.filter(s => s.prepared))
 
-// ── Roll dégâts arme ────────────────────────────────────────────────────────
+// Roll dégâts arme
 type WeaponStat = typeof equippedWeaponStats.value[number]
 
 const parseDice = (dice: string) => {

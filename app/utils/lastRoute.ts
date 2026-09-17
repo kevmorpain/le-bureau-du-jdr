@@ -1,13 +1,6 @@
-// Reprise de navigation en PWA installée.
-//
-// Une PWA en mode standalone est un processus comme un autre : quand la tablette
-// manque de mémoire (Chrome, Discord… ouverts à côté), l'OS le tue en arrière-plan.
-// Au retour, il n'y a rien à réveiller — le système relance l'app à froid sur le
-// `start_url` du manifeste, c'est-à-dire « / ». D'où le retour à l'accueil au lieu
-// de la fiche qu'on regardait.
-//
-// Aucune API web ne permet d'empêcher cette éviction. On mémorise donc la dernière
-// route consultée pour y revenir soi-même au démarrage à froid.
+// Reprise de navigation en PWA installée : quand la tablette manque de mémoire, l'OS tue le
+// processus et relance l'app à froid sur « / » (le `start_url` du manifeste). Aucune API web
+// n'empêche cette éviction — d'où la mémorisation de la dernière route consultée.
 
 const STORAGE_KEY = 'bjdr:last-route'
 
@@ -20,10 +13,9 @@ const TRANSIENT_PREFIXES = ['/login', '/auth']
 export type RouteMemoryAction = 'save' | 'clear' | 'ignore'
 
 /**
- * Ce qu'il faut faire de la mémoire de navigation quand on arrive sur `fullPath`.
- * Aller volontairement à l'accueil efface la mémoire — sinon le prochain démarrage
- * ramènerait sur la fiche que l'utilisateur venait justement de quitter.
- * Fonction pure (testée unitairement).
+ * Ce qu'il faut faire de la mémoire de navigation quand on arrive sur `fullPath`. Aller
+ * volontairement à l'accueil l'efface : sinon le prochain démarrage ramènerait sur la fiche que
+ * l'utilisateur venait de quitter.
  */
 export function routeMemoryAction(fullPath: string): RouteMemoryAction {
   const path = fullPath.split(/[?#]/)[0] ?? fullPath
@@ -32,10 +24,7 @@ export function routeMemoryAction(fullPath: string): RouteMemoryAction {
   return 'save'
 }
 
-/**
- * Relit une entrée sérialisée et renvoie la route à restaurer, ou `null` si elle est
- * illisible, périmée ou non restaurable. Fonction pure (testée unitairement).
- */
+/** Renvoie `null` si l'entrée est illisible, périmée ou non restaurable. Fonction pure. */
 export function parseStoredRoute(
   raw: string | null,
   now: number,
@@ -62,7 +51,6 @@ export function parseStoredRoute(
   return path
 }
 
-/** Mémorise (ou oublie) la route courante. Silencieux si le stockage est indisponible. */
 export function saveLastRoute(fullPath: string): void {
   const action = routeMemoryAction(fullPath)
   if (action === 'ignore') return
@@ -78,7 +66,6 @@ export function saveLastRoute(fullPath: string): void {
   }
 }
 
-/** Dernière route consultée si elle est encore valable, sinon `null`. */
 export function readLastRoute(): string | null {
   try {
     return parseStoredRoute(localStorage.getItem(STORAGE_KEY), Date.now())
@@ -87,7 +74,6 @@ export function readLastRoute(): string | null {
   }
 }
 
-/** Vrai si l'app tourne en PWA installée plutôt que dans un onglet de navigateur. */
 export function isStandaloneDisplay(): boolean {
   if (typeof window === 'undefined') return false
 

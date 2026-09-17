@@ -3,22 +3,15 @@ import { blob } from 'hub:blob'
 import { portraitPrefix } from '~~/server/utils/portraits'
 
 export default defineEventHandler(async (event) => {
-  // Autorisation (session + appartenance de la fiche) assurée en amont par le
-  // middleware `character-sheets-authz` pour toutes les routes `/[id]/**` :
-  // la fiche existe et appartient au demandeur si on arrive ici.
+  // Autorisation assurée par le middleware `character-sheets-authz`.
   const { id } = getRouterParams(event)
 
-  // Les tables enfants (classes, sorts, compétences, inventaire, choix, features…)
-  // référencent character_sheets.id en `onDelete: 'cascade'` → un seul DELETE
-  // nettoie toute la fiche.
+  // Les tables enfants sont en `onDelete: 'cascade'`.
   await db
     .delete(schema.characterSheets)
     .where(eq(schema.characterSheets.id, Number(id)))
 
-  // Le bucket, lui, n'a pas de cascade : sans cette purge, chaque fiche supprimée
-  // laisserait ses portraits dans R2 pour toujours. On liste par préfixe (une fiche
-  // n'a qu'un portrait courant, mais un échec de purge antérieur peut en laisser).
-  // Après le DELETE : une purge qui échoue ne doit pas empêcher la suppression.
+  // R2 n'a pas de cascade. Purge après le DELETE : un échec ne doit pas bloquer la suppression.
   try {
     const { blobs } = await blob.list({ prefix: portraitPrefix(Number(id)) })
     if (blobs.length) {

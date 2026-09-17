@@ -1,15 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { ambroise, lixek, uka, blankFixture, mountAbilities, type AbilitiesFixture } from './fixtures/characters'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Contrat d'équivalence 2014 — useCharacterAbilities (cf. decisions.md D12,
-// rules-engine.md §8). Assertions sur des valeurs D&D vérifiées à la main,
-// PAS de snapshot : ce test doit révéler une régression, pas la figer.
-//
-// Cible : la couche de dérivation des caractéristiques, testée d'abord sur le
-// sous-composable pur ; elle sera re-pointée sur les fonctions extraites en
-// shared/rules/ sans changer ces attentes.
-// ─────────────────────────────────────────────────────────────────────────────
+// Contrat d'équivalence 2014 — assertions sur des valeurs D&D vérifiées à la main, PAS un snapshot :
+// ce test doit révéler une régression, pas la figer.
 
 describe('useCharacterAbilities — Ambroise (Nain des collines · Occultiste 10)', () => {
   const a = mountAbilities(ambroise)
@@ -182,12 +175,10 @@ describe('useCharacterAbilities — Uka (Demi-orc · Barde Collège du savoir 10
   })
 })
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Branches non exercées par la fiche seedée d'Ambroise (expertise, effets de
 // maîtrise, canaux feature/ASI, effets de dons). Cas ciblés et minimaux — ils
 // complètent le filet avant l'extraction vers shared/rules/. Les futures fixtures
 // « martial » et « caster » (D12) les couvriront de façon réaliste.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe('useCharacterAbilities — dérivation par canal', () => {
   it('empile base + espèce + feature + ASI, et applique 10 par défaut aux caracs absentes', () => {

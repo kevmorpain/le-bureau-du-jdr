@@ -40,8 +40,6 @@ const characterSheets = sqliteTable('character_sheets', {
   // existantes (backfill manuel) ; toute nouvelle fiche pose toujours l'owner.
   ownerId: integer('owner_id').references(() => users.id),
   name: text('name').notNull(),
-  // Édition de règles figée à la création (cf. shared/rules/ruleset.ts, decisions.md
-  // D1/D2). Défaut '5' = toutes les fiches existantes sont en 2014.
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
   speciesId: integer('species_id').references(() => characterSpecies.id).notNull(),
   alignment: text().$type<Alignment>().default(Alignment.TrueNeutral).notNull(),
@@ -53,9 +51,7 @@ const characterSheets = sqliteTable('character_sheets', {
   ideals: text().default('').notNull(),
   bonds: text().default('').notNull(),
   flaws: text().default('').notNull(),
-  // Identité & description (fiche officielle : apparence p.1, histoire/alliés p.2).
-  // Champs libres — `age`/`height`/`weight` restent du texte pour accepter « 3 siècles »,
-  // « 1,75 m », « 68 kg » sans imposer d'unité.
+  // Texte libre : accepte « 3 siècles », « 1,75 m », « 68 kg » sans imposer d'unité.
   age: text().default('').notNull(),
   height: text().default('').notNull(),
   weight: text().default('').notNull(),

@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen flex flex-col bg-(--ui-bg)">
-    <!-- Header -->
     <header class="sticky top-0 z-50 flex items-center gap-3 px-4 h-11 bg-(--ui-bg-elevated) border-b border-(--ui-border) shadow-sm">
       <NuxtLink
         :to="backTo ?? '/'"
@@ -16,7 +15,6 @@
       </div>
     </header>
 
-    <!-- Sidebar mobile (pills) -->
     <nav class="lg:hidden flex items-center gap-1.5 px-3 py-2 border-b border-(--ui-border) overflow-x-auto scrollbar-none">
       <button
         v-for="step in steps"
@@ -31,9 +29,7 @@
       </button>
     </nav>
 
-    <!-- Corps -->
     <div class="flex flex-1 min-h-0">
-      <!-- Sidebar desktop -->
       <nav class="hidden lg:flex flex-col gap-1 py-4 px-3 border-r border-(--ui-border) w-48 shrink-0 sticky top-11 h-[calc(100vh-2.75rem)] overflow-y-auto">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3 px-2">Étapes</p>
         <button
@@ -63,13 +59,11 @@
         </button>
       </nav>
 
-      <!-- Zone centrale -->
       <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <div class="flex-1 px-6 py-6">
           <slot />
         </div>
 
-        <!-- Navigation bas -->
         <div class="sticky bottom-0 bg-(--ui-bg) border-t border-(--ui-border) px-6 py-3">
           <div class="flex justify-between items-center">
             <UButton
@@ -95,13 +89,11 @@
         </div>
       </main>
 
-      <!-- Aperçu desktop -->
       <aside class="hidden lg:flex flex-col gap-3 py-4 px-3 w-56 shrink-0 border-l border-(--ui-border) sticky top-11 h-[calc(100vh-2.75rem)] overflow-y-auto">
         <slot name="preview" />
       </aside>
     </div>
 
-    <!-- Aperçu mobile (accordéon) -->
     <div class="lg:hidden border-t border-(--ui-border)">
       <button
         class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-muted"

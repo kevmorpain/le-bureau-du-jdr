@@ -15,21 +15,9 @@ import {
   type GoldenIds,
 } from './fixtures/goldenMaster'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GOLDEN-MASTER — filet d'équivalence création / level-up (docs/consolidation-2014.md,
-// dernière étape de P0, AVANT F2).
-//
-// On fige la sortie NORMALISÉE de `createCharacter` + `characterLevelUp` pour les quatre
-// archétypes du plan, sur un catalogue « édition 5 » (2014) représentatif (cf. fixtures/
-// goldenMaster.ts). Chaque instantané résout les clés étrangères en noms et retire les id
-// auto-incrément / horodatages → lisible et déterministe. Quand F2 généralisera
-// `progression`/`character_choices` à tout le 2014 (aujourd'hui les choix de classe — ASI,
-// style, sous-classe, expertise — sont front-dupliqués, hors DB), le `git diff` du fichier de
-// snapshot montrera EXACTEMENT ce que le comportement serveur change. Un diff INATTENDU = une
-// régression ; un diff ATTENDU se relit et se re-génère (`vitest -u`) en connaissance de cause.
-//
-// Env `nuxt` (comme createCharacter.test / buildCatalog.test) : les utils importent `~~/...`.
-// ─────────────────────────────────────────────────────────────────────────────
+// Fige la sortie NORMALISÉE de `createCharacter` + `characterLevelUp` pour les archétypes du plan,
+// sur un catalogue 2014 représentatif (cf. fixtures/goldenMaster.ts). Un diff INATTENDU du snapshot
+// = une régression ; un diff ATTENDU se relit puis se régénère (`vitest -u`) en connaissance de cause.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
@@ -49,7 +37,7 @@ const levelUp = (id: number, over: Record<string, unknown>) => characterLevelUp(
   classId: CLASS.fighter, isMulticlass: false, hpGained: 1, ...over,
 }))
 
-// ── A. Martial — Guerrier → Champion (niv 1 → 5) ───────────────────────────────
+// A. Martial — Guerrier → Champion (niv 1 → 5)
 describe('golden-master · A. Guerrier Champion (martial)', () => {
   it('création niv 1 puis montée 1→5 (Fougue, sous-classe niv 3, ASI niv 4, Attaque suppl. niv 5)', async () => {
     const { id } = await create({
@@ -84,7 +72,7 @@ describe('golden-master · A. Guerrier Champion (martial)', () => {
   })
 })
 
-// ── B. Lanceur complet — Magicien Elfe / École d'Évocation (niv 2 → 4) ─────────
+// B. Lanceur complet — Magicien Elfe / École d'Évocation (niv 2 → 4)
 // Elfe base + lignée Haut-elfe : exerce le SEUL chemin `character_choices` déjà présent en 2014
 // (le mécanisme même que F2 généralisera), en plus des emplacements dérivés et du sort appris.
 describe('golden-master · B. Magicien Elfe (lanceur complet, lignée)', () => {
@@ -140,7 +128,7 @@ describe('golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/do
   })
 })
 
-// ── D. Multiclasse — Guerrier 3 / Occultiste 2 ─────────────────────────────────
+// D. Multiclasse — Guerrier 3 / Occultiste 2
 describe('golden-master · D. Multiclasse Guerrier/Occultiste', () => {
   it('création Guerrier 3 (Champion) puis multiclassage Occultiste (emplacements de pacte combinés)', async () => {
     const { id } = await create({
@@ -164,7 +152,7 @@ describe('golden-master · D. Multiclasse Guerrier/Occultiste', () => {
   })
 })
 
-// ── E. Roublard — expertise + nouvelles compétences au level-up (niv 1 → 3) ────
+// E. Roublard — expertise + nouvelles compétences au level-up (niv 1 → 3)
 // Exerce les chemins de choix « compétences » du level-up qu'aucun autre archétype ne touche :
 //  - `expertiseSkills` → upsert d'une compétence de classe existante vers proficiencyLevel 'expert' ;
 //  - `newSkills` → insertion d'une nouvelle compétence ;

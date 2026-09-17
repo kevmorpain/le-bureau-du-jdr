@@ -11,9 +11,8 @@ import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { dragonborn, DRAGONBORN_LINEAGE_BY_ANCESTRY } from '../../server/db/seeds/data/dragonborn'
 import { dragonbornAncestryDamageType, allDragonbornAncestries } from '../../shared/utils/draconic_ancestry'
 
-// Rollout lot 6 (chantier lignée, D17) — Drakéide, seed base+10 lignées + DÉRIVATION : la résistance
-// dérivée est CONCRÈTE et vaut ce que l'ancienne colonne dragonbornAncestry résolvait
-// (`dragonbornAncestryDamageType[X]`) → le passage colonne→lignée préserve la résistance affichée.
+// Seed base + 10 lignées et dérivation : la résistance dérivée est CONCRÈTE et vaut ce que
+// l'ancienne colonne `dragonbornAncestry` résolvait à l'affichage.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

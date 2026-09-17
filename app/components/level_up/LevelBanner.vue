@@ -8,7 +8,6 @@
       boxShadow: `0 0 28px ${classData.color}22 inset`,
     }"
   >
-    <!-- Emoji background watermark -->
     <div
       class="absolute top-0 right-0 text-[120px] leading-none opacity-[0.06] pointer-events-none select-none"
       style="transform: translate(15px, -20px)"
@@ -17,7 +16,6 @@
     </div>
 
     <div class="relative flex items-center gap-4">
-      <!-- Class icon -->
       <div
         class="size-14 rounded-xl shrink-0 flex items-center justify-center text-3xl"
         :style="{

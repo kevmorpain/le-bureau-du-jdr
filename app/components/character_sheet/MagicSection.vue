@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-4">
-    <!-- Alerte armure -->
     <UAlert
       v-if="armorSpellcastingWarning"
       :title="armorSpellcastingWarning"
@@ -9,7 +8,6 @@
       icon="i-heroicons:no-symbol"
     />
 
-    <!-- Sélecteur de classe lanceuse (multiclasse) -->
     <div
       v-if="spellcasterClasses.length > 1"
       class="flex items-center gap-2"
@@ -24,7 +22,6 @@
       />
     </div>
 
-    <!-- Stats d'incantation -->
     <div
       v-if="spellcastingStats"
       class="flex gap-x-6"
@@ -55,7 +52,6 @@
       </div>
     </div>
 
-    <!-- Stats de Magie du Pacte -->
     <div
       v-if="pactMagicStats"
       class="flex gap-x-6 rounded-lg border border-violet-500/30 bg-violet-500/5 p-2"
@@ -89,7 +85,6 @@
       </div>
     </div>
 
-    <!-- Filtres + bouton ajouter -->
     <div class="flex flex-wrap items-center gap-2">
       <USwitch
         v-model="showPreparedOnly"
@@ -97,7 +92,6 @@
         size="sm"
       />
 
-      <!-- Filtre type d'action -->
       <div class="flex gap-1">
         <button
           v-for="f in actionTypeFilters"
@@ -112,7 +106,6 @@
         </button>
       </div>
 
-      <!-- Filtre composantes -->
       <div class="flex gap-1">
         <button
           v-for="c in ['V', 'S', 'M']"
@@ -127,7 +120,6 @@
         </button>
       </div>
 
-      <!-- Filtre niveau -->
       <div class="flex gap-1">
         <button
           v-for="lvl in availableLevels"
@@ -153,7 +145,6 @@
       </UButton>
     </div>
 
-    <!-- Liste des sorts groupés par niveau -->
     <div
       v-if="characterSpells && characterSpells.length > 0"
       class="space-y-4"
@@ -163,7 +154,6 @@
         :key="group.level"
         class="space-y-1"
       >
-        <!-- En-tête de niveau avec emplacements -->
         <div
           class="flex items-center gap-3 border-b border-default pb-1 cursor-pointer select-none"
           @click="toggleLevelCollapse(group.level)"
@@ -176,13 +166,11 @@
             {{ group.level === 0 ? 'Tours de magie' : `Niveau ${group.level}` }}
           </span>
 
-          <!-- Bulles d'emplacements (niveaux ≥ 1 seulement) -->
           <div
             v-if="group.level > 0"
             class="flex items-center gap-1.5 flex-wrap"
             @click.stop
           >
-            <!-- Spellcasting -->
             <template v-if="spellSlots.spellcasting[group.level]">
               <button
                 v-if="spellSlots.spellcasting[group.level]!.max > 0"
@@ -206,7 +194,6 @@
               </button>
             </template>
 
-            <!-- Pact Magic -->
             <template v-if="spellSlots.pact_magic[group.level] && spellSlots.pact_magic[group.level]!.max > 0">
               <UBadge color="violet" variant="subtle" size="md" class="ml-2">
                 Pacte
@@ -222,7 +209,6 @@
           </div>
         </div>
 
-        <!-- Sorts du groupe -->
         <template v-if="!collapsedLevels.has(group.level)">
           <div
             v-for="cs in filteredSpells(group.spells)"
@@ -305,7 +291,6 @@
       Aucun sort ajouté. Cliquez sur "Ajouter un sort" pour commencer.
     </p>
 
-    <!-- Slideover détail du sort + lancer -->
     <USlideover
       v-model:open="showSpellDetail"
       :title="selectedSpell?.spell.name"
@@ -347,7 +332,6 @@
       </template>
     </USlideover>
 
-    <!-- Modal choix d'emplacement -->
     <CastSpellModal
       v-if="selectedSpell"
       v-model:open="showCastModal"
@@ -446,8 +430,6 @@ const castSpell = (slotLevel: number, slotType: SlotType) => {
 
 const isIncapacitated = computed(() => activeConditions.value.includes('incapacitated'))
 
-// ─── Filtres supplémentaires ─────────────────────────────────────────────────
-
 const activeActionFilter = ref<string | null>(null)
 const activeComponentFilters = ref<string[]>([])
 const activeLevelFilters = ref<number[]>([])
@@ -491,8 +473,6 @@ const filteredSpells = (spells: typeof spellsByLevel.value[number]['spells']) =>
   })
 }
 
-// ─── Slideover détail ────────────────────────────────────────────────────────
-
 const showSpellDetail = ref(false)
 const selectedSpell = ref<CharacterSpellWithSpell | null>(null)
 
@@ -501,8 +481,6 @@ const openSpellDetail = (cs: CharacterSpellWithSpell) => {
   showSpellDetail.value = true
 }
 
-// ─── Modal lancer ────────────────────────────────────────────────────────────
-
 const showCastModal = ref(false)
 
 const openCastModal = () => {
@@ -510,13 +488,12 @@ const openCastModal = () => {
   showCastModal.value = true
 }
 
-// Ouverture directe depuis le bouton inline
 const openCastModalFor = (cs: CharacterSpellWithSpell) => {
   selectedSpell.value = cs
   showCastModal.value = true
 }
 
-// ─── Jets de dés au lancement de sort ──────────────────────────────────────
+// Jets de dés au lancement de sort
 const { roll } = useDiceRoller()
 
 // Niveau d'emplacement du DERNIER lancement, par sort. Pour un sort d'attaque, le jet de dégâts
@@ -576,7 +553,6 @@ const handleRollDamage = (slotLevel: number) => {
   rollSpellEffect(selectedSpell.value, slotLevel)
 }
 
-// Lance les dés de dégâts ou de soin du sort, si présents
 function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
   const spell = cs.spell
   // Niveaux de résolution : l'emplacement RÉELLEMENT dépensé pilote la montée en puissance
@@ -594,7 +570,7 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
       // Valeur plate sans dé (« 5 » d'Aide) : rien à jeter, la fiche l'affiche déjà.
       if (!parsed || parsed.count === 0) continue
 
-      // ─── Sorts multi-attaques (Décharge occulte, Rayon ardent, Trait magique…)
+      // Sorts multi-attaques (Décharge occulte, Rayon ardent, Trait magique…)
       // Convention : les dés déclarés (NdM+K) représentent le TOTAL pour toutes
       // les attaques. Per-attaque = (N/count)d(M) + (K/count). Les modificateurs
       // (CHA via Coup agonisant, spellcasting mod) sont appliqués PAR attaque.
@@ -658,7 +634,7 @@ function rollSpellAttack(cs: CharacterSpellWithSpell) {
   }
 }
 
-// ─── Cast Arcane Mystérieux (sans emplacement, 1×/repos long) ──────────────
+// Cast Arcane Mystérieux (sans emplacement, 1×/repos long)
 
 const ARCANUM_FEATURE_NAME_BY_LEVEL: Record<number, string> = {
   6: 'Arcanum mystique (niveau 6)',
@@ -677,7 +653,6 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
   const lvl = arcanumLevelFromSource(cs.source)
   if (!lvl) return
 
-  // Cherche la feature Arcane mystérieux (Xe niveau) sur la fiche
   const wantedName = ARCANUM_FEATURE_NAME_BY_LEVEL[lvl]
   const charFeatures = (characterSheetRef.value as any)?.features ?? []
   const cf = charFeatures.find((f: any) => f.feature?.name === wantedName)
@@ -700,7 +675,6 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
     return
   }
 
-  // Décrémente le compteur côté serveur
   try {
     await $fetch(`/api/character_sheets/${props.characterSheet.id}/features`, {
       method: 'PUT',
@@ -713,7 +687,6 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
     return
   }
 
-  // Concentration éventuelle
   if (cs.spell.concentration) {
     setConcentration(cs.spellId)
     useToast().add({
@@ -730,7 +703,6 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
 
 const isArcanumSpell = (cs: CharacterSpellWithSpell) => arcanumLevelFromSource(cs.source) !== null
 
-// Lancer un cantrip directement (pas d'emplacement à consommer)
 const castCantripDirect = (cs: CharacterSpellWithSpell) => {
   if (cs.spell.concentration) {
     setConcentration(cs.spellId)
@@ -739,7 +711,6 @@ const castCantripDirect = (cs: CharacterSpellWithSpell) => {
       color: 'info',
     })
   }
-  // Sort d'attaque → jet pour toucher (les dégâts suivent via le bouton Dégâts) ; sinon effet direct.
   if (isAttackSpell(cs)) rollSpellAttack(cs)
   else rollSpellEffect(cs, cs.spell.level || 0)
 }
@@ -758,9 +729,7 @@ const castArcanumFromSlideover = () => {
 
 const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number | null) => {
   castSpell(slotLevel, slotType)
-  // Mémorise la classe lanceuse choisie (les stats spellcasting suivent)
   if (casterClassId !== null) setSelectedCaster(casterClassId)
-  // Activer la concentration si le sort la requiert
   if (selectedSpell.value?.spell.concentration) {
     setConcentration(selectedSpell.value.spellId)
     useToast().add({
@@ -768,7 +737,6 @@ const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number
       color: 'info',
     })
   }
-  // Sort d'attaque → jet pour toucher ; sinon effet direct.
   if (selectedSpell.value) {
     // Avant de jeter : le bouton « Dégâts » doit retrouver CET emplacement, pas le niveau de base.
     rememberCastLevel(selectedSpell.value.spellId, slotLevel)
@@ -777,7 +745,7 @@ const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number
   }
 }
 
-// ─── Emplacements (toggle manuel) ────────────────────────────────────────────
+// Emplacements (toggle manuel)
 
 const toggleSlot = (level: number, slotType: SlotType, n: number) => {
   const slot = spellSlots.value[slotType][level]
@@ -796,7 +764,7 @@ const adjustSlotMax = (level: number, slotType: SlotType, delta: number) => {
   else slot.current = Math.min(slot.current, newMax)
 }
 
-// ─── Ajout de sort ───────────────────────────────────────────────────────────
+// Ajout de sort
 
 const showAddSpell = ref(false)
 
@@ -804,7 +772,7 @@ const alreadyAddedIds = computed(() =>
   new Set((characterSpells.value ?? []).map(cs => cs.spellId)),
 )
 
-// ─── Modifications de Décharge occulte (Manifestations occultes) ─────────────
+// Modifications de Décharge occulte (Manifestations occultes)
 
 // Mod canonique de CHA (total : espèce + ASI + effets). NE PAS le recalculer à la main depuis
 // baseAbilityScores + ASI — ça omettait le bonus d'espèce (Coup agonisant sous-évalué).

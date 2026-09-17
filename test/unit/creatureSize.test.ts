@@ -8,13 +8,9 @@ import {
 import { CreatureSize } from '../../server/db/schema/character_species'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Taille de créature. Ces tests gardent la classe de bug qui vivait dans
-// `useCharacterInventory` : une comparaison littérale sur des codes FRANÇAIS
-// (« P », « TP ») alors que la base stocke les codes de l'enum `CreatureSize`
-// (T/S/M/L/H/G) → le désavantage « arme lourde + petite taille » ne se
-// déclenchait jamais. Les libellés sont désormais séparés des codes.
-// ─────────────────────────────────────────────────────────────────────────────
+// Garde la classe de bug qui vivait dans `useCharacterInventory` : une comparaison littérale sur des
+// codes FRANÇAIS (« P », « TP ») alors que la base stocke l'enum `CreatureSize` (T/S/M/L/H/G) → le
+// désavantage « arme lourde + petite taille » ne se déclenchait jamais.
 
 describe('taille de créature — codes vs libellés', () => {
   it('libelle exactement les valeurs stockables en base (enum Drizzle)', () => {

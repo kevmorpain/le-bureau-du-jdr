@@ -2,11 +2,6 @@ import { db } from 'hub:db'
 import { loadSpeciesLineages } from '~~/server/utils/catalogSources'
 import { isExtendedRequested } from '~~/server/utils/catalogRequest'
 
-/**
- * Catalogue : une espèce de base + ses lignées avec champs d'affichage dérivés (D17, lot 5b).
- * Alimente le picker de sous-race du builder pour les espèces « base + lignée » (Elfe). Statique
- * et cachable. 404 si l'espèce n'existe pas ; `lineages: []` pour une espèce sans lignée.
- */
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   if (!Number.isInteger(id) || id <= 0) {

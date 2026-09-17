@@ -8,9 +8,7 @@ const subclasses = sqliteTable('subclasses', {
   classId: integer('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
-  // Provenance / gating de visibilité (cf. shared/rules/source.ts). PAS parent-gated par la
-  // classe (contrairement au ruleset) : une sous-classe d'extension peut vivre sur une classe
-  // socle. DEFAULT 'core' = toujours visible.
+  // PAS parent-gated (contrairement au ruleset) : une sous-classe d'extension peut vivre sur une classe socle.
   source: text('source').$type<Source>().notNull().default('core'),
   spellcastingAbility: text('spellcasting_ability'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),

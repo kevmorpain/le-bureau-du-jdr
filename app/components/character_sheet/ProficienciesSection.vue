@@ -4,7 +4,6 @@
       Maîtrises
     </h2>
 
-    <!-- ── Armes ────────────────────────────────────────────────────────────── -->
     <div class="space-y-2">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-medium">Armes</h3>
@@ -64,7 +63,6 @@
       </div>
     </div>
 
-    <!-- ── Armures ──────────────────────────────────────────────────────────── -->
     <div class="space-y-2">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-medium">Armures</h3>
@@ -124,7 +122,6 @@
       </div>
     </div>
 
-    <!-- ── Langues ──────────────────────────────────────────────────────────── -->
     <div class="space-y-2">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-medium">Langues</h3>
@@ -184,7 +181,6 @@
       </div>
     </div>
 
-    <!-- ── Outils ───────────────────────────────────────────────────────────── -->
     <div class="space-y-2">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-medium">Outils</h3>
@@ -267,8 +263,6 @@ const {
   removeProficiencyOverride,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const isManualGrant = (type: ProficiencyOverrideType, value: string): boolean =>
   proficiencyOverrides.value.some(o => o.proficiencyType === type && o.value === value && o.action === 'grant')
 
@@ -296,8 +290,6 @@ const removeProficiency = (type: ProficiencyOverrideType, value: string) => {
     addProficiencyOverride(type, value, 'revoke')
   }
 }
-
-// ─── Options pour les sélecteurs ─────────────────────────────────────────────
 
 const weaponAddOptions = [
   { type: 'label' as const, label: 'Catégories' },
@@ -412,8 +404,6 @@ const toolAddOptions = [
   { label: 'Véhicules (terrestres)', value: 'Véhicules (terrestres)' },
   { label: 'Véhicules (maritimes)', value: 'Véhicules (maritimes)' },
 ]
-
-// ─── State des popovers ───────────────────────────────────────────────────────
 
 const addWeaponOpen = ref(false)
 const addWeaponSelect = ref('')

@@ -3,28 +3,13 @@ import { CLASSES } from '../../app/data/character-builder'
 import { CLASS_IDENTITY } from '../fixtures/classIdentity'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 
-// Faits d'identité de classe — côté FRONT.
-//
-// Deux faits d'identité pilotent le wizard : le NIVEAU d'accès à la sous-classe et le TYPE
-// d'incantation. Depuis F2 tranche 3, le builder et le level-up lisent le niveau/les options de
-// sous-classe DANS LE CATALOGUE (`/api/catalog/classes` + `/api/catalog/progressions` →
-// `resolveChoices`) au lieu du blob `app/data/character-builder.ts` (les champs `subclassLevel`
-// et `subclasses[]` en ont été retirés). Le TYPE d'incantation, lui, pilote encore les
-// emplacements de sorts côté front depuis le blob (`spellcasting.type`) → il y reste verrouillé.
-//
-// Ce test suit donc les deux sources :
-//   1. la DÉRIVATION catalogue-driven de la sous-classe (formule exacte des composables) doit
-//      rendre le choix DÛ au bon niveau, avec les bonnes options, et le considérer satisfait une
-//      fois le pick fait — le tout verrouillé contre `CLASS_IDENTITY` (la source de vérité) ;
-//   2. la copie front du TYPE d'incantation ne doit pas diverger de la base.
-// (Que la BASE porte bien `subclass_level == CLASS_IDENTITY` est verrouillé par
-// `classesIdentity.test.ts` — seed + migration — et `subclassChoice.test.ts` — owner du choix.)
-//
-// Env `nuxt` : le blob importe l'alias `~~` (résolu par Nuxt Test Utils).
+// Faits d'identité de classe, côté FRONT. Le niveau et les options de sous-classe viennent désormais
+// du catalogue : on vérifie ici la dérivation par la formule EXACTE des composables, verrouillée
+// contre `CLASS_IDENTITY`. Le TYPE d'incantation, lui, reste une copie front (emplacements de sorts
+// front-driven) qui ne doit pas diverger de la base.
 
-// ─── 1. Sous-classe : dérivation catalogue-driven (F2 tranche 3) ───────────────
+// 1. Sous-classe : dérivation catalogue-driven (F2 tranche 3)
 
-// Projection mono-classe : un id de classe DB arbitraire, propriétaire du point de choix.
 const CLASS_DB_ID = 1
 
 /** Catalogue minimal d'un choix de sous-classe débloqué à `subclassLevel`, avec ses options. */
@@ -81,7 +66,7 @@ describe('sous-classe — dérivation catalogue-driven (F2 tranche 3)', () => {
   })
 })
 
-// ─── 2. Type d'incantation : copie front (emplacements de sorts front-driven) ──
+// 2. Type d'incantation : copie front (emplacements de sorts front-driven)
 
 describe('type d\'incantation — copie du builder', () => {
   it('couvre exactement les 12 classes du contrat', () => {

@@ -14,9 +14,7 @@ export const guerrierFeatures: FeatureDef[] = [
 **Duel :** +2 aux jets de dégâts quand vous maniez une arme à une main sans autre arme.
 **Arme à deux mains :** Relancez les 1 et 2 aux dés de dégâts d'armes à deux mains.
 **Protection :** Réaction pour imposer le désavantage sur une attaque contre un allié adjacent (nécessite un bouclier).`,
-    // Owner INVISIBLE du choix (choice_carrier, comme l'archétype de sous-classe) : la progression
-    // énumère les 6 styles (features-options taguées `fighting_style`, injectées par seedClass) ; le
-    // style CHOISI est matérialisé sur la fiche (tranche 2), donc l'owner générique n'est pas affiché.
+    // Owner INVISIBLE du choix : le style CHOISI est matérialisé sur la fiche, pas cet owner générique.
     featureType: 'choice_carrier',
     levelRequired: 1,
     actionType: null,

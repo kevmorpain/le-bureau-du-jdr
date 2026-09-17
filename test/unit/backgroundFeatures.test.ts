@@ -3,10 +3,8 @@ import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
 
-// La table de jointure `background_features` (lot 4d) aligne les historiques sur le
-// pattern espèce (`species_features`). Rien ne la seede encore (contenu 5.5 en Phase 2) :
-// on vérifie donc le SCHÉMA que la migration 0083 pose — création, intégrité FK
-// (cascade), et clef primaire composite — sur une base peuplée façon prod.
+// Rien ne seede encore `background_features` : on vérifie le SCHÉMA que pose la migration 0083
+// (création, cascade FK, clef primaire composite) sur une base peuplée façon prod.
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
 const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)

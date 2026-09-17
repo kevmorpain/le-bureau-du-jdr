@@ -5,7 +5,6 @@
       :key
       class="flex gap-2.5 rounded-lg bg-default ring ring-default p-2"
     >
-      <!-- ── Cercle modificateur + score éditable ── -->
       <div class="flex flex-col items-center gap-1 shrink-0">
         <UPopover
           mode="hover"
@@ -111,13 +110,11 @@
         </UPopover>
       </div>
 
-      <!-- ── Contenu ── -->
       <div class="flex-1 min-w-0 space-y-0.5">
         <p class="text-xs font-bold text-muted uppercase tracking-wider mb-1">
           {{ $t(`ability_scores.${key}`) }}
         </p>
 
-        <!-- Jet de sauvegarde -->
         <div class="flex items-center gap-1 rounded px-0.5">
           <button
             class="shrink-0 hover:scale-110 transition-transform"
@@ -144,7 +141,6 @@
           </span>
         </div>
 
-        <!-- Compétences -->
         <template v-if="abilitySkillKeys[key]!.length > 0">
           <USeparator />
           <div
@@ -211,7 +207,7 @@ const {
   armorStealthDisadvantage,
 } = useCharacterSheet(characterSheet)
 
-// ── Édition du score de base ──────────────────────────────────────────────────
+// Édition du score de base
 
 const updateBaseScore = async (key: string, value: number) => {
   const entry = characterSheet.value.baseAbilityScores?.find(s => s.abilityId === key)
@@ -224,7 +220,7 @@ const updateBaseScore = async (key: string, value: number) => {
   }
 }
 
-// ── Toggle proficiency (compétences + jets de sauvegarde) ────────────────────
+// Toggle proficiency (compétences + jets de sauvegarde)
 
 const proficiencyCycle: Record<ProficiencyLevel, ProficiencyLevel> = {
   none: 'proficient',

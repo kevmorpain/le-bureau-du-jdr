@@ -29,8 +29,7 @@ export const useCharacterConditions = (
     allEffects: ComputedRef<Effect[]>
     speed: ComputedRef<number>
     abilityModifiers: ComputedRef<Record<string, number>>
-    // Bonus rétroactif aux PV max (don Robuste : +2 PV par niveau).
-    // Ajouté au maxHp DB pour le calcul d'épuisement.
+    // Bonus rétroactif aux PV max (don Robuste), ajouté au maxHp DB pour le calcul d'épuisement.
     maxHpBonus?: ComputedRef<number>
   },
 ) => {
@@ -55,7 +54,6 @@ export const useCharacterConditions = (
     concentratingSpellId.value = spellId
   }
 
-  // Clean up legacy 'concentrating' entries from localStorage
   if (import.meta.client) {
     onMounted(() => {
       const idx = storedActiveConditions.value.indexOf('concentrating' as ConditionKey)
@@ -63,8 +61,7 @@ export const useCharacterConditions = (
     })
   }
 
-  // activeConditions ne contient plus 'concentrating' — la concentration a sa
-  // propre UI (ConcentrationSection) et ses propres helpers (isConcentrating).
+  // 'concentrating' a sa propre UI (ConcentrationSection) et reste hors des états stockés.
   const activeConditions = storedActiveConditions
 
   const toggleCondition = (condition: ConditionKey) => {
@@ -133,7 +130,6 @@ export const useCharacterConditions = (
       }
     }
 
-    // Résistances temporaires issues des états actifs
     for (const c of activeConditions.value) {
       const m = conditionMechanics[c]
       if (m?.resistAllDamage) {

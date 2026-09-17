@@ -6,14 +6,12 @@
   >
     <template #body>
       <div class="space-y-4 p-4">
-        <!-- Recherche -->
         <UInput
           v-model="search"
           icon="i-heroicons:magnifying-glass"
           placeholder="Rechercher un don..."
         />
 
-        <!-- Liste des dons disponibles -->
         <div class="space-y-1.5 max-h-72 overflow-y-auto">
           <button
             v-for="feat in filteredFeats"
@@ -42,7 +40,6 @@
           </p>
         </div>
 
-        <!-- Choix de caractéristique (si le don en demande un) -->
         <div
           v-if="selectedFeat && needsAbilityChoice"
           class="rounded-lg ring ring-primary/40 bg-primary/5 p-3 space-y-2"
@@ -132,7 +129,6 @@ const needsAbilityChoice = computed(() =>
   (selectedFeat.value?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice'),
 )
 
-// Caractéristiques réellement proposées par le don (FOR/DEX pour Athlète, etc.).
 const allowedAbilityOptions = computed(() => {
   const allowed = featAllowedAbilities(selectedFeat.value?.effects)
   return ABILITY_OPTIONS.filter(o => allowed.includes(o.value))

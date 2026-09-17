@@ -1,10 +1,8 @@
 import type { SpellcastingType } from '~~/shared/rules/spellcasting'
 import type { Die } from '../../schema/classes'
 
-// Faits d'identité des 12 classes du PHB 2014 (cf. rules-engine.md §3, decisions.md D3).
-// `subclassLevel` et `spellcastingType` sont aussi backfillés par la migration
-// 0080 pour les bases déjà déployées : les deux sources DOIVENT rester d'accord,
-// c'est ce que vérifie `test/unit/classesIdentity.test.ts`.
+// `subclassLevel` et `spellcastingType` sont aussi backfillés par la migration 0080 : les deux sources
+// DOIVENT rester d'accord (test/unit/classesIdentity.test.ts).
 class DnDClass {
   name: string
   hitDice: Die

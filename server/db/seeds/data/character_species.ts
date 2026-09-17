@@ -674,9 +674,7 @@ const human = {
   ],
 }
 
-// Renommé « Drakéide (2014) » : cette espèce mono 2014 devient la LEGACY de la base « Drakéide »
-// (chantier lignée, D17 — lot 6). La base + 10 lignées d'ascendance vivent dans data/dragonborn.ts ;
-// les fiches ont été basculées (colonne dragonbornAncestry → lignée) au rollout lot 6 ; migration 0088 renomme la ligne.
+// LEGACY : la base « Drakéide » et ses 10 lignées vivent dans data/dragonborn.ts (migration 0088 renomme cette ligne).
 const dragonborn = {
   name: 'Drakéide (2014)',
   size: CreatureSize.Medium,
@@ -1139,9 +1137,7 @@ const halfOrc = {
   ],
 }
 
-// Renommé « Tieffelin (Asmodée) » : cette espèce mono 2014 devient la LEGACY de la base
-// « Tieffelin » (chantier lignée, D17 — lot 6). La base + lignée Asmodée vivent dans data/tiefling.ts ;
-// les fiches ont été basculées via l'alias {Asmodée→'Tieffelin (Asmodée)'} au rollout lot 6 ; migration 0087 renomme la ligne.
+// LEGACY : la base « Tieffelin » et la lignée Asmodée vivent dans data/tiefling.ts (migration 0087 renomme cette ligne).
 const tiefling = {
   name: 'Tieffelin (Asmodée)',
   size: CreatureSize.Medium,
@@ -1351,8 +1347,7 @@ const drow = {
   ],
 }
 
-// Fadette (Fairy) — espèce d'extension (The Wild Beyond the Witchlight / MPMM), GATÉE
-// (source 'wbtw'). Pas de lignée. Vol modélisé en description (aucun effet flying_speed).
+// Espèce d'extension gatée (source 'wbtw'). Vol modélisé en description (aucun effet `flying_speed`).
 const fadette = {
   name: 'Fadette',
   size: CreatureSize.Small,
@@ -1360,8 +1355,7 @@ const fadette = {
   source: 'wbtw' as const,
   traits: [
     {
-      // ASI FLEXIBLE (MPMM/WBtW) : au choix du joueur, réparti dans le builder — donc PAS d'effet
-      // `ability_increase` fixe ici (contrairement aux espèces à bonus figés). Descriptif seulement.
+      // ASI flexible (au choix du joueur, réparti dans le builder) → aucun effet `ability_increase` fixe.
       name: 'Augmentation de caractéristiques',
       description: `Bonus de caractéristiques flexibles, au choix : soit +2 à une caractéristique et +1 à une autre, soit +1 à trois caractéristiques différentes.`,
       effects: [],

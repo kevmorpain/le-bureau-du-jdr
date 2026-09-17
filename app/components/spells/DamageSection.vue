@@ -79,7 +79,6 @@ const eldritchBlastBonus = computed<number>(() => {
 // au moment où l'emplacement est choisi.
 const levels = computed(() => baseCastLevels(props.spell, characterLevel.value))
 
-// Bonus global (modificateur d'incantation + bonus manifestation) pour une entrée.
 const bonusForEntry = (entry: DamageEntry): number => {
   let bonus = 0
   if (entry.isSpellcastingModifierAdded && spellcastingModifier.value !== null) bonus += spellcastingModifier.value ?? 0
@@ -99,7 +98,6 @@ const lines = computed<Line[]>(() => {
 
     const bonus = bonusForEntry(entry)
 
-    // Texte principal (die + éventuel modificateur + type de dégâts)
     let dieText = die
     if (bonus !== 0) {
       if (isSpellbook) {
@@ -117,7 +115,6 @@ const lines = computed<Line[]>(() => {
       dieText += ` ${t(`damage_types.${entry.damage_type}`, count)}`
     }
 
-    // Fourchette min~max (mode grimoire)
     let rangeText = ''
     if (isSpellbook) {
       const range = diceRange(die, bonus)

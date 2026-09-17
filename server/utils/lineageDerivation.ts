@@ -2,29 +2,13 @@ import { and, eq, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as srcSchema from '~~/server/db/schema'
 
-/**
- * Dérivation de la LIGNÉE choisie (chantier lignée, D17). Un personnage « base + lignée »
- * (ex. Elfe + Haut-elfe) dérive, EN PLUS des traits de son espèce de base, les features de la
- * lignée qu'il a choisie — exactement comme une sous-classe grante ses features. La fiche les
- * fusionne dans le même bucket que les traits d'espèce, si bien que rien en aval ne fait la
- * différence (mêmes effets → même dérivation de PV/CA/mods/sorts).
- *
- * `character_choices` / `species_lineages` / `features.lineage_id` ne sont PAS dans les
- * relations du cache `hub:db` → on lit par `.select()` explicite et on merge en JS (patron
- * des subclasses/ASI/item_effects du GET fiche). Le `db` est INJECTÉ → testable sur libsql.
- *
- * Gating par `level_required` (comparé au niveau TOTAL du perso, un trait d'espèce n'étant pas
- * lié à une classe). L'étalement fin des sorts de lignée (drow niv.3/5) est porté par
- * `spell_grant.unlockLevel` DANS l'effet — géré en aval comme pour l'ancien drow — et non par
- * `level_required` de la feature (toutes à 1).
- */
+// Gating par `level_required` comparé au niveau TOTAL (un trait d'espèce n'est pas lié à une classe).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
 type EffectRow = typeof srcSchema.effects.$inferSelect
 type FeatureRow = typeof srcSchema.features.$inferSelect
 
-/** Une feature de lignée, à la forme d'une entrée `species.speciesFeatures[]` du GET fiche. */
 export interface DerivedLineageFeature {
   speciesId: number
   featureId: number
@@ -32,24 +16,12 @@ export interface DerivedLineageFeature {
 }
 
 export interface DerivedLineage {
-  /** Features de la lignée, à concaténer à `species.speciesFeatures`. */
   features: DerivedLineageFeature[]
-  /**
-   * Vitesse imposée par la lignée (effet `walking_speed`), ou `null` si la lignée ne la change
-   * pas. La fiche lit la COLONNE `species.speed` (`useCharacterClasses`), pas l'effet ; l'espèce
-   * de base porte une vitesse par défaut, donc une lignée « rapide » (Elfe des bois 10,5 m) doit
-   * la surcharger — l'endpoint remplace `species.speed` par cette valeur.
-   */
+  /** La fiche lit la colonne `species.speed`, pas l'effet : une lignée « rapide » doit la surcharger. */
   speedOverride: number | null
-  /** Nom de la lignée choisie (ex. « Drow »), pour l'affichage fiche (en-tête + badges). `null` si aucune. */
   lineageName: string | null
 }
 
-/**
- * Dérive la lignée choisie par le personnage : ses features (prêtes pour `species.speciesFeatures`)
- * et une éventuelle surcharge de vitesse. Tout est vide/`null` si aucune lignée n'est choisie
- * (cas de toutes les fiches existantes → dérivation inchangée, no-op).
- */
 export async function deriveChosenLineage(
   db: Db,
   characterSheetId: number,

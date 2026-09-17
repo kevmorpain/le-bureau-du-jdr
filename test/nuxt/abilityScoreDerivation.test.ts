@@ -7,12 +7,8 @@ import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { deriveAbilityScoreChoices } from '../../server/utils/abilityScoreDerivation'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// C3 — dérivation de la triade d'origine 2024. La fiche transforme les `character_choices.payload`
-// des points de choix `ability_scores` en une augmentation de caractéristiques (sommée). No-op
-// (map vide) sans pick. FK OFF (libsql par défaut) : on teste la logique de jointure/somme, pas
-// l'intégrité référentielle (couverte ailleurs) → pas besoin de seeder une fiche complète.
-// ─────────────────────────────────────────────────────────────────────────────
+// Dérivation de la triade d'origine 2024 : somme des `character_choices.payload` des points de
+// choix `ability_scores`. Map vide sans pick.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

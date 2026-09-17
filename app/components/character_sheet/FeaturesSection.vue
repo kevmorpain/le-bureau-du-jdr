@@ -48,7 +48,6 @@
                 size="md"
                 class="shrink-0"
               />
-              <!-- Avertissement si un choix de caractéristique reste à faire -->
               <UBadge
                 v-if="isFeat(feature) && needsAbility(feature) && !feature.choices?.ability"
                 label="Choix requis"
@@ -110,7 +109,6 @@
               {{ feature.description }}
             </p>
 
-            <!-- Choix de caractéristique +1 (dons type Observateur/Résilient…) -->
             <div
               v-if="isFeat(feature) && needsAbility(feature)"
               class="mt-3 space-y-1.5"
@@ -134,7 +132,6 @@
               </div>
             </div>
 
-            <!-- ASI de classe (Amélioration de caractéristiques) -->
             <div
               v-if="isASIFeature(feature)"
               class="mt-3 space-y-1"
@@ -214,7 +211,7 @@ const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [
   { label: 'CHA', value: 'cha' },
 ]
 
-// ── Filtre par origine ─────────────────────────────────────────────────────
+// Filtre par origine
 
 const selectedOrigin = ref<string>('all')
 
@@ -247,8 +244,6 @@ const originColor = (kind: 'species' | 'class' | 'subclass', label?: string) => 
   return 'primary' as const
 }
 
-// ── Dons ────────────────────────────────────────────────────────────────────
-
 const addFeatOpen = ref(false)
 
 const ownedFeatIds = computed(() =>
@@ -260,7 +255,6 @@ const isFeat = (feature: { featureType?: string }) => feature.featureType === 'f
 const needsAbility = (feature: { effects?: unknown[] }) =>
   (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'ability_increase_choice') ?? false
 
-// Caractéristiques réellement proposées par le don (FOR/DEX, INT/SAG, ou les 6).
 const allowedAbilityOptions = (feature: { effects?: unknown[] }) => {
   const allowed = featAllowedAbilities(feature.effects as Effect[] | undefined)
   return ABILITY_OPTIONS.filter(o => allowed.includes(o.value))
@@ -290,7 +284,7 @@ const removeFeat = async (featureId: number) => {
   }
 }
 
-// ── ASI modal state ────────────────────────────────────────────────────────
+// ASI modal state
 
 const asiModal = reactive({
   open: false,
@@ -303,12 +297,8 @@ const isASIFeature = (feature: { effects?: unknown[] }) =>
   (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'asi_or_feat') ?? false
 
 /**
- * Certaines features utilisent `maxUsesFormula` à des fins purement informatives :
- * - Magie du Pacte : c'est le nombre d'emplacements de sort, gérés dans la section
- *   « Emplacements de sorts » (la feature porte un `meta.slotLevelFormula`).
- * - Invocations occultes : c'est le nombre d'invocations connues, marqué via
- *   `meta.hideCounter` dans le seed.
- * Pour ces cas, on cache le compteur d'utilisations.
+ * Compteur masqué quand `maxUsesFormula` est purement informatif : emplacements de Magie du Pacte
+ * (section dédiée) et nombre d'invocations connues (`meta.hideCounter`).
  */
 const hasHiddenCounter = (feature: { meta?: { slotLevelFormula?: unknown, hideCounter?: boolean } | null }) =>
   Boolean(feature.meta?.slotLevelFormula) || Boolean(feature.meta?.hideCounter)

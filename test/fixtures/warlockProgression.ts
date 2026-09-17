@@ -4,16 +4,9 @@ import type { FeatureTag } from '../../shared/rules/featureTags'
 import type { FeatureType } from '../../server/db/schema/features'
 
 /**
- * Contrat du CATALOGUE de choix de l'Occultiste (cf. decisions.md D12 : des valeurs D&D
- * vérifiées à la main, pas un snapshot). Table de référence UNIQUE que trois angles
- * doivent respecter — comme test/fixtures/classIdentity.ts (4a) et featureTags.ts (4b) :
- *   1. le seed des bases neuves — data/warlock_progression.ts (warlockProgressionByOwner,
- *      warlockPactBoonFeatures, INVOCATIONS_KNOWN) ;
- *   2. la migration 0082 rejouée sur une base peuplée (backfill des bases déployées) ;
- *   3. la RÉSOLUTION d'un optionSource:{feature_group} → un ensemble d'options non vide.
- *
- * Source : PHB FR 2014 (occultiste) — pacte au niveau 3, manifestations au niveau 2 (table
- * d'invocations connues), arcanums mystiques aux niveaux 11/13/15/17 (sorts de niveau 6/7/8/9).
+ * Contrat du catalogue de choix de l'Occultiste : valeurs vérifiées à la main (PHB FR 2014 — pacte
+ * niv. 3, manifestations niv. 2, arcanums 11/13/15/17). Le seed, la migration 0082 et la résolution
+ * d'un `optionSource:{feature_group}` doivent s'y conformer.
  */
 const INVOCATIONS_COUNT: Formula = {
   op: 'lookup',
@@ -52,9 +45,8 @@ export const WARLOCK_PACT_BOON_OPTIONS: PactBoonOptionContract[] = [
 ]
 
 /**
- * Résolution attendue d'un `optionSource:{feature_group}` : le nombre de features taguées
- * pour chaque groupe qu'une progression de l'Occultiste énumère. Le cœur du lot : un point
- * de choix doit pointer un ensemble d'options RÉEL et non vide.
+ * Nombre de features taguées qu'une progression de l'Occultiste doit énumérer : un point de choix
+ * doit pointer un ensemble d'options RÉEL et non vide.
  */
 export const FEATURE_GROUP_RESOLUTION: Record<string, number> = {
   pact_boon: 3, // les 3 WARLOCK_PACT_BOON_OPTIONS

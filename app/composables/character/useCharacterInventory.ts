@@ -16,18 +16,12 @@ export interface InventoryItem {
   itemType: 'weapon' | 'armor' | 'equipment' | 'tool'
   properties: WeaponProperties | ArmorProperties | { category: string } | ToolProperties
   description: string | null
-  // Effets magiques baked-in sur l'item (jointure item_effects). Toujours
-  // appliqués quand l'item est équipé. Pour un objet différent, créer un nouvel
-  // item custom (item_effects sont fixes une fois définis).
+  // Effets baked-in de l'item (item_effects), fixes : pour un autre effet, créer un item custom.
   effects: Effect[]
-  // Charges : maxUses null = objet sans charge. rechargeDice null = recharge
-  // complète ; sinon expression de dés (recharge partielle).
   maxUses: number | null
   rechargeType: 'short_rest' | 'long_rest' | 'dawn' | null
   rechargeDice: string | null
   isCustom: boolean
-  // Objet magique (cf. shared/rules/itemRarity.ts) : rarity null = objet non magique.
-  // requiresAttunement = l'objet exige une harmonisation (état par instance : entry.attuned).
   rarity: Rarity | null
   requiresAttunement: boolean
   attunementNote: string | null
@@ -137,9 +131,6 @@ export const useCharacterInventory = (
   )
 
   // ─── Magic item effects → merged into allEffects upstream ─────────────────
-  // Les effets sont stockés sur l'item lui-même (table item_effects, exposée
-  // via item.effects). Pas d'override par-instance : pour personnaliser,
-  // créer un nouvel item custom.
 
   const inventoryEffects = computed<Effect[]>(() =>
     inventory.value
@@ -206,11 +197,7 @@ export const useCharacterInventory = (
   }
 
   // ─── Style de combat (F2 tranche 3) ───────────────────────────────────────
-  // Le style CHOISI est matérialisé (character_features) et porte un effet
-  // `fighting_style_modifier` déjà agrégé dans `allEffects`. On applique ici les bonus statiques :
-  // Défense (+1 CA armé), Archerie (+2 attaque à distance), Duel (+2 dégâts à une main sans autre
-  // arme), Combat à deux armes (mod aux dégâts de la main secondaire). Grande arme (relance de dés)
-  // et Protection (réaction) ne sont pas des bonus statiques → rendus par la description de la feature.
+  // Grande arme (relance de dés) et Protection (réaction) ne sont pas des bonus statiques.
   const fightingStyleKinds = computed<Set<string>>(() => {
     const kinds = new Set<string>()
     for (const e of deps?.allEffects.value ?? []) {
@@ -253,7 +240,6 @@ export const useCharacterInventory = (
 
     acFromArmor += dexContrib
 
-    // Style de combat Défense : +1 CA tant qu'une armure est portée (branche « armure équipée »).
     const defenseBonus = defenseAcBonus(fightingStyleKinds.value, true)
 
     const total = acFromArmor + shieldBonus + defenseBonus
@@ -326,7 +312,6 @@ export const useCharacterInventory = (
           ? Math.max(strMod, dexMod)
           : isRanged ? dexMod : strMod
 
-        // Styles de combat (F2 tranche 3) — bonus statiques selon le type d'arme (helpers purs).
         const styles = fightingStyleKinds.value
         const archeryBonus = archeryAttackBonus(styles, isRanged)
         const duelingBonus = duelingDamageBonus(styles, {
@@ -348,9 +333,7 @@ export const useCharacterInventory = (
           : props.damage_dice
 
         const warnings: string[] = []
-        // Codes de taille EN BASE (`character_species.size` : T/S/M/L/H/G, cf.
-        // shared/rules/creatureSize.ts) — la comparaison littérale précédente utilisait
-        // « P »/« TP », qui n'existent pas → le désavantage ne se déclenchait jamais.
+        // Codes de taille EN BASE (T/S/M/L/H/G) — les littéraux FR « P »/« TP » ne matchaient jamais.
         if (isHeavy && hasHeavyWeaponDisadvantage(speciesSize.value)) {
           warnings.push('Désavantage : arme lourde + Petite taille')
         }
@@ -389,16 +372,14 @@ export const useCharacterInventory = (
 
   // ─── Mutations ────────────────────────────────────────────────────────────
 
-  // Toutes les mutations sont optimistes (mise à jour locale immédiate) puis routées via la
-  // file hors-ligne. On supprime les `refresh()` qui échouaient hors-ligne ; la réconciliation
-  // post-synchro (signal `lastSynced` → re-fetch dans la page) récupère l'état serveur canonique.
+  // Mutations optimistes routées via la file hors-ligne ; la réconciliation post-synchro récupère
+  // l'état serveur canonique.
 
   const addItem = async (itemId: number, options: {
     quantity?: number
     equipped?: boolean
     magicBonus?: number
     notes?: string
-    // Détails de l'objet pour l'affichage optimiste hors-ligne (l'appelant les a déjà).
     item?: InventoryItem
   } = {}) => {
     if (!characterId.value) return

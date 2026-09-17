@@ -1,24 +1,9 @@
 import { CreatureSize } from '../../schema/character_species'
 import type { LineageSpeciesData } from '../lib/seedLineages'
 
-/**
- * Tieffelin 2014 restructuré en **base + lignée** (chantier lignée, D17 — rollout lot 6). Le PHB/
- * règles de base 2014 n'exposent QU'UNE lignée : celle d'**Asmodée** (les 8 autres bloodlines sont
- * MToF, les variantes SCAG — contenu additionnel futur). On matérialise quand même la structure
- * base + 1 lignée pour homogénéiser le modèle et préparer l'ajout des bloodlines (source :
- * dnd5e.wikidot.com/lineage:tiefling).
- *
- * ⚠️ Le nom de la base (« Tieffelin ») == le nom de l'espèce mono actuelle → celle-ci est renommée
- * legacy « Tieffelin (Asmodée) » (character_species.ts + migration 0087) et l'alias
- * `{Asmodée:'Tieffelin (Asmodée)'}` a fait le lien au rollout (même combo que le Drow, 5c).
- *
- * SPLIT (verrouillé par l'équivalence D12) : base = traits COMMUNS à tout héritage infernal (Cha+2,
- * Vitesse, Vision, Résistance au feu, Langues) ; lignée Asmodée = ce qui lui est PROPRE (Int+1 +
- * l'Ascendance infernale, dont les sorts diffèrent d'un bloodline à l'autre). Effets **copiés à
- * l'identique** de l'ancienne espèce.
- */
+// ⚠️ Effets copiés à l'identique de l'ancienne espèce (équivalence D12) : base = traits communs à tout
+// héritage infernal, lignée Asmodée = ce qui lui est propre. Les 8 autres bloodlines (MToF) restent à ajouter.
 
-// ─── Traits COMMUNS à tout héritage infernal (base) ──────────────────────────────────────
 const baseTraits = [
   {
     name: 'Augmentation de caractéristiques',
@@ -50,7 +35,6 @@ const baseTraits = [
   },
 ]
 
-// ─── Lignée d'Asmodée (règles de base 2014) ──────────────────────────────────────────────
 const asmodeusLineage = {
   name: 'Asmodée',
   description: `Héritiers du sang d'Asmodée, seigneur des Neuf Enfers, ces tieffelins portent une magie infernale tournée vers le feu et les ténèbres.`,

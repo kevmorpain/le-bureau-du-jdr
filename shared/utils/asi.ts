@@ -1,8 +1,3 @@
-// Niveaux d'ASI (Amélioration de caractéristiques) standards en D&D 5e 2014.
-// Référence : 4, 8, 12, 16, 19 pour la plupart des classes.
-// Exceptions :
-//  - Guerrier : ajoute 6 et 14
-//  - Roublard : ajoute 10
 const DEFAULT_ASI_LEVELS = [4, 8, 12, 16, 19]
 
 const CLASS_ASI_LEVELS: Record<string, number[]> = {

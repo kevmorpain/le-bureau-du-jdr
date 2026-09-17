@@ -1,33 +1,14 @@
 import type { FeatureDef, ProgressionDef } from '../lib/seedClass'
 import type { Formula } from '~~/shared/utils/formula'
 
-// ⚠️ Module de DONNÉES PURES : imports de TYPES uniquement (effacés au runtime), donc
-// aucun import de valeur en `~~/…` ni de `hub:db`. C'est ce qui le rend importable par
-// le projet vitest `unit` (environnement node, sans alias `~~`) — même contrat que
-// data/warlock_invocations.ts (4b) et data/classes.ts (4a). Les Formula y sont écrites
-// en littéraux (pas via les helpers `fixed`/`lookup`, qui sont des imports de valeur).
-
-/**
- * Nombre d'invocations connues par niveau d'occultiste (PHB 2014). Index = niveau - 1.
- * Source unique : réutilisé à la fois pour le compteur de « Manifestations occultes »
- * (`maxUsesFormula`) et pour le `count` de la progression `invocations`.
- */
+/** Nombre d'invocations connues par niveau d'occultiste (PHB 2014). Index = niveau - 1. */
 export const INVOCATIONS_KNOWN: Formula = {
   op: 'lookup',
   table: [0, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8],
 }
 
-/**
- * Les trois faveurs de pacte de l'Occultiste, comme features-OPTIONS individuelles
- * taguées `pact_boon` (cf. shared/rules/featureTags.ts). Elles matérialisent en base ce
- * qui n'était jusqu'ici que de la prose dans la feature conteneur « Faveur de pacte » —
- * pour que la progression `pact_boon` les énumère via
- * `optionSource:{feature_group:'pact_boon'}`. `tag` non nul ⇒ ce ne sont PAS des grants
- * passifs : jamais attribuées d'office (cf. server/utils/features.ts).
- *
- * Descriptions volontairement concises et IDENTIQUES à celles de la migration 0082, pour
- * que les deux chemins (seed base neuve / migration base déployée) convergent au mot près.
- */
+// Faveurs de pacte comme features-OPTIONS taguées `pact_boon` : jamais attribuées d'office.
+// Descriptions identiques à celles de la migration 0082, pour que seed et migration convergent.
 export const warlockPactBoonFeatures: FeatureDef[] = [
   {
     name: 'Pacte de la Chaîne',
@@ -64,18 +45,7 @@ export const warlockPactBoonFeatures: FeatureDef[] = [
   },
 ]
 
-/**
- * Les points de choix (`progression`) de l'Occultiste, chacun rattaché à sa feature
- * PROPRIÉTAIRE par (nom + niveau requis) — owner = featureId (D4). Le seed (via
- * seedClass._syncProgression) et la migration 0082 doivent produire exactement ces
- * lignes ; le contrat est vérifié dans test/unit/warlockProgression.test.ts contre
- * test/fixtures/warlockProgression.ts.
- *
- * Trois `kind` :
- *  - `pact_boon`   : 1 choix parmi le groupe `pact_boon` (les 3 features ci-dessus) ;
- *  - `invocations` : N (table par niveau) parmi le groupe `invocation`, échangeables ;
- *  - `spell`       : 1 sort d'occultiste d'un niveau donné (les 4 arcanums mystiques).
- */
+/** Chaque point de choix est rattaché à sa feature PROPRIÉTAIRE par (nom + niveau) — owner = featureId (D4). */
 export interface WarlockProgressionOwner {
   ownerName: string
   ownerLevelRequired: number

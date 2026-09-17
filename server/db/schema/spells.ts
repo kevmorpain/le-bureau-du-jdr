@@ -42,15 +42,7 @@ type SlotLevel = string // e.g., "1", "2", "3", etc.
 type CharacterLevel = string // e.g., "1", "2", "3", etc.
 type Die = string // e.g., "1d6", "2d8"
 
-/**
- * Une composante de dégâts d'un sort. Un sort peut en cumuler plusieurs (types
- * différents et/ou déclencheurs différents), par ex. Voracité de Hadar
- * (froid à l'entrée + acide en fin de tour). Chaque entrée porte son propre type
- * et sa propre progression de dés.
- *
- * `label` (optionnel) désambiguïse une entrée quand le sort en a plusieurs
- * (ex. « à l'entrée », « en fin de tour », « cible secondaire »).
- */
+/** Un sort peut cumuler plusieurs composantes (types et/ou déclencheurs différents). */
 export type DamageEntry = {
   damage_type: DamageType
   label?: string
@@ -108,14 +100,8 @@ const spells = sqliteTable('spells', {
   concentration: integer('concentration', { mode: 'boolean' }).default(false).notNull(),
   description: text('description'),
 
-  // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2). Contrairement à
-  // `spell_classes.ruleset` (appartenance d'un sort à la LISTE d'une classe par édition),
-  // ce discriminant est porté par le SORT lui-même : description et effets peuvent différer
-  // entre 2014 et 2024, donc chaque édition a ses propres lignes (« Boule de feu » 5 vs 5.5).
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
 
-  // Provenance / gating de visibilité (cf. shared/rules/source.ts, orthogonal à `ruleset`).
-  // DEFAULT 'core' = socle toujours visible ; les extensions (tasha, xanathar…) sont gatées.
   source: text('source').$type<Source>().notNull().default('core'),
 
   schoolId: integer('school_id').references(() => magicSchools.id).notNull(),

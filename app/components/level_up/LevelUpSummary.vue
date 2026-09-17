@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-(--ui-bg) flex flex-col">
-  <!-- Header : même format que le wizard, sans les step pills -->
   <header class="sticky top-0 z-50 flex items-center gap-3 px-4 h-11 bg-(--ui-bg-elevated) border-b border-(--ui-border) shadow-sm">
     <NuxtLink
       :to="`/characters/${charSheet?.id}`"
@@ -16,7 +15,6 @@
 
   <div class="max-w-4xl mx-auto w-full px-6 py-8">
 
-    <!-- Hero : radial gradient + watermark + badge symétrique -->
     <div
       v-if="pickedClass"
       class="relative overflow-hidden rounded-2xl mb-6 px-7 py-8 text-center"
@@ -26,13 +24,11 @@
         boxShadow: `0 0 60px ${pickedClass.color}25 inset`,
       }"
     >
-      <!-- Watermark emoji géant -->
       <div
         class="absolute inset-0 flex items-center justify-center text-[300px] leading-none opacity-[0.05] pointer-events-none select-none"
       >{{ pickedClass.emoji }}</div>
 
       <div class="relative">
-        <!-- Badge symétrique -->
         <div
           class="text-xs font-bold tracking-[0.25em] uppercase mb-2"
           :style="{ color: pickedClass.color }"
@@ -40,12 +36,10 @@
           {{ state.isMulticlass ? '✦ MULTI-CLASSAGE ✦' : '▲ NIVEAU SUPÉRIEUR ▲' }}
         </div>
 
-        <!-- Nom du personnage -->
         <div class="text-4xl font-black text-(--ui-text) tracking-tight mb-1.5">
           {{ charSheet?.name ?? '—' }}
         </div>
 
-        <!-- "devient ClassName niv. X → Y" -->
         <div class="text-sm text-muted mb-4">
           {{ state.isMulticlass ? 'devient aussi ' : '' }}
           <span class="font-bold" :style="{ color: pickedClass.color }">{{ pickedClass.name }}</span>
@@ -55,7 +49,6 @@
           </span>
         </div>
 
-        <!-- Pill "Niveau total X → Y" -->
         <div
           class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-(--ui-border) bg-(--ui-bg)"
         >
@@ -67,9 +60,7 @@
       </div>
     </div>
 
-    <!-- Avant / Après côte à côte -->
     <div class="grid grid-cols-[1fr_auto_1fr] gap-4 items-stretch mb-6">
-      <!-- AVANT -->
       <div
         class="rounded-xl p-4"
         style="opacity: 0.72"
@@ -79,7 +70,6 @@
         }"
       >
         <div class="text-xs font-bold tracking-[0.18em] uppercase text-muted mb-3">AVANT</div>
-        <!-- PV + Maîtrise -->
         <div class="grid grid-cols-2 gap-2 mb-3">
           <div class="px-2 py-2 rounded-lg bg-(--ui-bg) text-center">
             <div class="text-xs text-muted mb-0.5">PV MAX</div>
@@ -90,7 +80,6 @@
             <div class="font-mono font-black text-xl text-muted">+{{ oldProfBonus }}</div>
           </div>
         </div>
-        <!-- 6 caractéristiques -->
         <div class="grid grid-cols-6 gap-1">
           <div v-for="ab in ABILITIES" :key="ab" class="rounded-md bg-(--ui-bg) py-1 text-center">
             <div class="text-xs text-muted uppercase">{{ ABILITY_SHORT[ab] }}</div>
@@ -100,10 +89,8 @@
         </div>
       </div>
 
-      <!-- Flèche -->
       <div class="flex items-center justify-center text-[28px] text-amber-400 px-1">→</div>
 
-      <!-- APRÈS -->
       <div
         v-if="pickedClass"
         class="rounded-xl p-4"
@@ -116,7 +103,6 @@
           class="text-xs font-bold tracking-[0.18em] uppercase mb-3"
           :style="{ color: pickedClass.color }"
         >APRÈS</div>
-        <!-- PV + Maîtrise -->
         <div class="grid grid-cols-2 gap-2 mb-3">
           <div class="px-2 py-2 rounded-lg bg-(--ui-bg) text-center">
             <div class="text-xs text-muted mb-0.5">PV MAX</div>
@@ -127,7 +113,6 @@
             <div class="font-mono font-black text-xl text-(--ui-text)">+{{ newProfBonus }}</div>
           </div>
         </div>
-        <!-- 6 caractéristiques -->
         <div class="grid grid-cols-6 gap-1">
           <div v-for="ab in ABILITIES" :key="ab" class="rounded-md bg-(--ui-bg) py-1 text-center">
             <div class="text-xs text-muted uppercase">{{ ABILITY_SHORT[ab] }}</div>
@@ -145,7 +130,6 @@
       </div>
     </div>
 
-    <!-- Acquis ce niveau -->
     <div v-if="gains.length" class="mb-7">
       <div class="text-xs font-bold tracking-[0.15em] uppercase text-muted mb-3">✦ Acquis ce niveau</div>
       <div class="flex flex-col gap-2">
@@ -179,7 +163,6 @@
       ⚠ La montée de niveau nécessite une connexion.
     </p>
 
-    <!-- Boutons -->
     <div class="flex gap-3 justify-center">
       <button
         class="px-6 py-3 rounded-xl text-sm font-semibold text-muted border border-(--ui-border) hover:text-(--ui-text) transition-colors cursor-pointer"
@@ -238,10 +221,8 @@ const { getById: getFeatById } = useFeats()
 
 const submitting = ref(false)
 
-// Spell names shared from StepSpells via useState
 const spellNamesById = useState<Record<number, string>>('level-up-spell-names', () => ({}))
 
-// Invocation names (pour affichage du récap)
 const { extendedQuery } = useExtendedContent()
 const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
   query: extendedQuery,
@@ -257,10 +238,8 @@ const currentHpMax = computed(() => charSheet?.value?.maxHp ?? 0)
 const oldProfBonus = computed(() => profBonusAtLevel(totalLevel.value))
 const newProfBonus = computed(() => profBonusAtLevel(totalLevel.value + 1))
 
-// Abilities before (base + previous ASI, no new bonuses)
 const oldAbilities = computed(() => finalAbilities.value)
 
-// Abilities after (+ new ASI bonuses)
 const newAbilities = computed<Record<AbilityKey, number>>(() => {
   const result = { ...finalAbilities.value }
   for (const ab of ABILITIES) {
@@ -269,7 +248,6 @@ const newAbilities = computed<Record<AbilityKey, number>>(() => {
   return result
 })
 
-// Features unlocked at the new level (from class data)
 const newFeatureNames = computed<string[]>(() => {
   if (!pickedClass.value) return []
   const lvl = state.value.toLevel
@@ -282,27 +260,22 @@ const gains = computed(() => {
   const cls = pickedClass.value
   const s = state.value
 
-  // HP
   if (s.hpGained) {
     list.push({ label: `+${s.hpGained} PV`, detail: `max ${currentHpMax.value} → ${currentHpMax.value + s.hpGained}` })
   }
 
-  // Proficiency bonus
   if (newProfBonus.value !== oldProfBonus.value) {
     list.push({ label: `Maîtrise +${newProfBonus.value}`, detail: `auparavant +${oldProfBonus.value}` })
   }
 
-  // Subclass
   if (s.newSubclassName && cls) {
     list.push({ label: `${cls.subclassLabel} : ${s.newSubclassName}`, detail: 'choisie ce niveau' })
   }
 
-  // Fighting style
   if (s.fightingStyle) {
     list.push({ label: `Style de combat : ${s.fightingStyle}`, detail: '' })
   }
 
-  // ASI
   if (s.asiChoice === 'asi') {
     const bonuses = (Object.entries(s.asiBonuses) as Array<[AbilityKey, number]>)
       .filter(([, v]) => v > 0)
@@ -312,35 +285,29 @@ const gains = computed(() => {
     }
   }
 
-  // Feat
   if (s.asiChoice === 'feat' && s.featureId) {
     const feat = getFeatById(s.featureId)
     list.push({ label: 'Don acquis', detail: feat?.name ?? `Don #${s.featureId}` })
   }
 
-  // Class features
   for (const f of newFeatureNames.value) {
     list.push({ label: f, detail: 'capacité de classe' })
   }
 
-  // Expertise
   if (s.expertiseSkills.length) {
     list.push({ label: 'Expertise', detail: s.expertiseSkills.join(', ') })
   }
 
-  // New cantrips
   if (s.newCantripIds.length) {
     const names = s.newCantripIds.map(id => spellNamesById.value[id]).filter(Boolean).join(', ')
     list.push({ label: `${s.newCantripIds.length} nouveau(x) tour(s) de magie`, detail: names })
   }
 
-  // New spells
   if (s.newSpellIds.length) {
     const names = s.newSpellIds.map(id => spellNamesById.value[id]).filter(Boolean).join(', ')
     list.push({ label: `${s.newSpellIds.length} nouveau(x) sort(s)`, detail: names })
   }
 
-  // Pact Boon (Warlock niveau 3)
   if (s.pactBoon) {
     list.push({
       label: `Faveur du Pacte : ${({ chain: 'Chaîne', blade: 'Lame', tome: 'Tome' } as const)[s.pactBoon]}`,
@@ -348,7 +315,6 @@ const gains = computed(() => {
     })
   }
 
-  // Invocations gagnées / remplacées
   if (s.newInvocationIds.length || s.replacedInvocationId) {
     const newNames = s.newInvocationIds.map(id => invocationNamesById.value[id]).filter(Boolean)
     const replacedName = s.replacedInvocationId ? invocationNamesById.value[s.replacedInvocationId] : null
@@ -365,12 +331,10 @@ const gains = computed(() => {
     }
   }
 
-  // Multiclass skills
   if (s.newSkills.length) {
     list.push({ label: `${s.newSkills.length} compétence(s) multiclasse`, detail: '' })
   }
 
-  // Hit die
   if (cls) {
     list.push({ label: `+1 dé de vie`, detail: `d${cls.hitDie}` })
   }

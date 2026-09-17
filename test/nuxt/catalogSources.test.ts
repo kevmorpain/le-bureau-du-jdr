@@ -17,14 +17,8 @@ import {
   loadSpells,
 } from '../../server/utils/catalogSources'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Contrat des LOADERS de listes de référence (lot 6a). Même patron que
-// `buildCatalog.test.ts` : on rejoue TOUTE la chaîne de migrations sur une base libsql en
-// mémoire (schéma de prod), on seede un jeu minimal, puis on vérifie la FORME exacte que chaque
-// loader produit — celle dont dépendent le builder et la fiche, et que les endpoints
-// `/api/catalog/*` (ET les endpoints legacy repointés) renvoient tels quels. Le `db` est injecté
-// (drizzle-sur-libsql ici, D1 en prod via `useDrizzle()`).
-// ─────────────────────────────────────────────────────────────────────────────
+// Contrat des loaders de listes de référence : la FORME exacte dont dépendent le builder, la fiche
+// et les endpoints `/api/catalog/*`. `db` injecté (libsql ici, D1 en prod).
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
@@ -67,7 +61,6 @@ beforeAll(async () => {
     { id: 3, name: 'Aasimar', size: CreatureSize.Medium, speed: 30 },
   ])
 
-  // Effets (JSON) pour tester le bakage.
   await orm.insert(srcSchema.effects).values([
     { id: 1, type: 'skill_proficiency', value: { skill: 'perception' } },
     { id: 2, type: 'proficiency', value: 'armes de guerre' },

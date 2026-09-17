@@ -1,7 +1,6 @@
 <template>
   <header class="sticky top-0 z-40 bg-elevated border-b border-default shadow-sm">
     <div class="flex items-center gap-4 px-5 py-2.5 flex-wrap">
-      <!-- Retour à l'accueil -->
       <UButton
         to="/"
         icon="i-heroicons:home"
@@ -22,7 +21,6 @@
         @error="portraitFailed = true"
       >
 
-      <!-- Identité -->
       <div class="shrink-0">
         <div class="flex items-baseline gap-2">
           <h1 class="text-lg font-bold">
@@ -43,7 +41,6 @@
         </p>
       </div>
 
-      <!-- Conditions actives -->
       <div
         v-if="activeConditions.length"
         class="flex flex-wrap gap-1"
@@ -65,7 +62,6 @@
         </UBadge>
       </div>
 
-      <!-- Actions -->
       <div class="flex items-center gap-2 ml-auto flex-wrap">
         <ClientOnly>
           <SyncStatus />
@@ -147,8 +143,7 @@ watch(portraitSrc, () => {
   portraitFailed.value = false
 })
 
-// « Occultiste (Le Grand Ancien) 10 » — la sous-classe est en base (`character_classes.subclass_id`,
-// exposée par le read-model) mais n'apparaissait nulle part dans l'identité du personnage.
+// « Occultiste (Le Grand Ancien) 10 » — la sous-classe est exposée par le read-model.
 const classesText = computed(() =>
   [mainClass.value, ...multiClass.value]
     .filter(Boolean)

@@ -13,26 +13,9 @@ import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 import { alignmentCodeFromBuilderId } from '~~/shared/rules/alignments'
 
-/**
- * Logique de CRÉATION de personnage extraite du handler (point 5d, volet 2). Objectifs
- * (rules-engine.md §7, decisions.md D14) :
- *  - **autorité serveur** : dériver (emplacements de sorts) et VALIDER les choix (sous-classe∈classe,
- *    manifestation∈groupe & nombre, faveur de pacte légitime, sort d'arcanum légal) au lieu de faire
- *    confiance au client ;
- *  - **atomicité** : les ~10 inserts dépendants passent par un seul `db.batch()` (atomique sur D1,
- *    JAMAIS `db.transaction()` qui rejette BEGIN). ⚠️ Limite D1 : l'insert de la FICHE reste
- *    hors-batch (on a besoin de son id auto-incrément pour tout le reste) ;
- *  - **testabilité** : `db` est INJECTÉ (D1 en prod, libsql en test) → la logique est testable sans
- *    la barrière d'auth `requireUserSession` (qui reste dans le handler mince).
- *
- * Périmètre volet 2 : la CRÉATION. Le level-up et le rest suivront. La dérivation de `maxHp` reste
- * cliente (formule PV front-only aujourd'hui) — chantier séparé.
- */
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-/** Erreur de validation métier → le handler la mappe en HTTP 422. */
 export class CharacterValidationError extends Error {
   constructor(message: string) {
     super(message)
@@ -51,31 +34,22 @@ const ARCANUM_SPELL_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 
 }
 
 export const createCharacterSchema = z.object({
-  // Identité
   name: z.string().min(1).max(100),
   alignment: z.string().optional(),
   dragonbornAncestry: z.string().nullable().optional(),
   maxHp: z.number().int().positive(),
-  // Liens vers entités DB (résolus côté client via useBuilderEntities)
   classId: z.number().int().positive(),
   subclassId: z.number().int().positive().nullable().optional(),
-  // Style de combat choisi (nom, ex. « Défense ») — Guerrier/Paladin/Rôdeur. Résolu en feature-option
-  // (F2 tranche 2) → character_choices + matérialisation. Optionnel (classes non martiales, ou niveau
-  // sous le palier d'accès).
   fightingStyle: z.string().nullable().optional(),
   level: z.number().int().min(1).max(20),
   speciesId: z.number().int().positive().nullable().optional(),
-  // Lignée choisie (sous-race 2014 / lignée 2024, cf. D17) — une `species_lineages.id`. La fiche
-  // en dérive les traits via un `character_choices.selected_lineage_id` (résolu côté client).
   selectedLineageId: z.number().int().positive().nullable().optional(),
   backgroundId: z.number().int().positive().nullable().optional(),
   customBackgroundName: z.string().nullable().optional(),
-  // Traits
   personality: z.string().optional(),
   ideals: z.string().optional(),
   bonds: z.string().optional(),
   flaws: z.string().optional(),
-  // Identité & description (facultatif) — mêmes bornes que `updateCharacterSheetSchema`.
   age: z.string().max(50).optional(),
   height: z.string().max(50).optional(),
   weight: z.string().max(50).optional(),
@@ -86,40 +60,28 @@ export const createCharacterSchema = z.object({
   backstory: z.string().max(10000).optional(),
   allies: z.string().max(5000).optional(),
   portraitUrl: z.string().max(2000).optional(),
-  // Caractéristiques
   abilityScores: z.record(z.string(), z.number().int()),
-  // Compétences & maîtrises de classe
   classSkills: z.array(z.string()),
-  // Zod dérivé de la source canonique (D6) : les JS de classe sont des clés de
-  // caractéristique, transformées en `<carac>_save` à l'insertion (savingThrowKey).
   classSavingThrows: z.array(abilityEnum),
   armorProficiencyKeys: z.array(z.string()).optional().default([]),
   weaponProficiencyKeys: z.array(z.string()).optional().default([]),
   toolProficiencyChoices: z.array(z.string()).optional().default([]),
   backgroundSkills: z.array(z.string()),
-  // Langues choisies par l'utilisateur
   selectedLanguages: z.array(z.string()).optional().default([]),
-  // Sorts
   spellIds: z.array(z.number().int()),
-  // Équipement — IDs résolus côté client ; les items inconnus sont retombés en texte
-  // libre pour ne pas perdre l'info (currency, items custom, etc.).
+  // Items non résolus côté client : conservés en texte libre.
   inventoryItemIds: z.array(z.number().int().positive()).optional().default([]),
   inventoryItemNamesUnresolved: z.array(z.string()).optional().default([]),
-  // Monnaie
   pp: z.number().int().min(0).optional(),
   po: z.number().int().min(0).optional(),
   pe: z.number().int().min(0).optional(),
   pa: z.number().int().min(0).optional(),
   pc: z.number().int().min(0).optional(),
-  // Faveur du Pacte (Occultiste niveau ≥ 3)
   pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
   pactWeaponItemId: z.number().int().positive().nullable().optional(),
   pactBoonCantripIds: z.array(z.number().int()).optional(),
-  // Manifestations occultes (Occultiste niveau ≥ 2)
   invocationIds: z.array(z.number().int().positive()).optional(),
-  // Options de Métamagie (Ensorceleur niveau ≥ 3)
   metamagicIds: z.array(z.number().int().positive()).optional(),
-  // Bonus ASI répartis (paliers 4/8/12/… selon classe).
   asiBonuses: z
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
@@ -128,7 +90,6 @@ export const createCharacterSchema = z.object({
     }))
     .optional()
     .default([]),
-  // Dons choisis par palier d'ASI (source='asi'). featureId = features.id du don.
   asiFeats: z
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
@@ -137,21 +98,15 @@ export const createCharacterSchema = z.object({
     }))
     .optional()
     .default([]),
-  // Don bonus hors-palier (homebrew MJ — typiquement attribué au niveau 1).
+  // Don bonus hors palier (homebrew MJ).
   bonusFeatureId: z.number().int().positive().nullable().optional(),
   bonusFeatChoices: z.object({ ability: abilityEnum.optional(), spellId: z.number().int().positive().optional() }).nullable().optional(),
-  // Arcanums mystiques (Occultiste niv 11/13/15/17) — un sort de niv 6/7/8/9 par palier
-  // débloqué (cumulatif à la création d'un perso de haut niveau).
+  // Cumulatif à la création d'un perso de haut niveau : un sort par palier débloqué.
   arcaneMysteria: z.array(z.object({
     spellLevel: z.number().int().min(6).max(9),
     spellId: z.number().int().positive(),
   })).optional(),
-  // Livre des secrets anciens — 2 sorts rituels niv 1 quand la manifestation est choisie
   bookOfAncientSecretsSpellIds: z.array(z.number().int().positive()).max(2).optional(),
-  // Choix composites de caractéristiques (triade d'origine 2024) — répartition {str:2,dex:1}
-  // enregistrée en `character_choices.payload`. Chaque pick réfère la progression `ability_scores`
-  // dont il doit respecter la distribution (validé serveur via isValidAbilityDistribution, C1).
-  // Vide pour tout parcours 2014 → no-op (aucune progression `ability_scores` n'y existe).
   abilityScoreChoices: z
     .array(z.object({
       progressionId: z.number().int().positive(),
@@ -159,8 +114,6 @@ export const createCharacterSchema = z.object({
     }))
     .optional()
     .default([]),
-  // Maîtrises d'armes 2024 (choix composite `weapon_mastery`) — les armes choisies à chaque
-  // point de choix, une ligne `character_choices.selected_value` par arme. Vide en 2014 → no-op.
   weaponMasteryChoices: z
     .array(z.object({
       progressionId: z.number().int().positive(),
@@ -172,14 +125,7 @@ export const createCharacterSchema = z.object({
 
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>
 
-/**
- * Garde de COHÉRENCE d'ÉDITION (défense en profondeur, Lot A). L'UI filtrée n'expose jamais
- * un mélange, mais une requête FORGÉE pourrait poser une entité 5.5 sur une fiche 2014. On
- * exige que toute entité datée référencée (espèce, historique global, aptitudes/dons, sorts)
- * partage le `ruleset` de la CLASSE — l'ancre (`classId` obligatoire), estampillée sur la fiche.
- * Sous-classe omise : `subclasses` n'a pas de `ruleset` (parent-gated, déjà validée ∈ classe).
- * No-op tant que tout est en '5'. Historique homebrew (per-fiche) ignoré (créé ici même).
- */
+// Défense en profondeur : une requête forgée pourrait poser une entité 5.5 sur une fiche 2014. La classe sert d'ancre.
 async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset: Ruleset): Promise<void> {
   if (d.speciesId != null) {
     const [sp] = await db
@@ -214,7 +160,6 @@ async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset
     if (bad) throw new CharacterValidationError(`Une aptitude/un don référencé (id=${bad.id}, éd. ${bad.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
   }
 
-  // Sorts : datés par édition depuis 0089 (description/effets divergents) → même contrainte.
   const spellIds = [
     ...d.spellIds,
     ...(d.pactBoonCantripIds ?? []),
@@ -231,15 +176,8 @@ async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset
   }
 }
 
-/**
- * VALIDATION serveur des choix — CONSERVATRICE (ne rejette que des violations non ambiguës, pour
- * ne jamais recaler une création légitime). Ce que le catalogue/résolution permettent de vérifier
- * aujourd'hui : sous-classe∈classe, manifestation∈groupe & nombre, faveur de pacte légitime, sort
- * d'arcanum légal. Les compétences/sorts « libres » restent front-autoritaires jusqu'au point 6
- * (données non catalogables encore) — documenté, pas une régression.
- */
+// Conservatrice : ne rejette que les violations non ambiguës, pour ne jamais recaler une création légitime.
 async function validateChoices(db: Db, d: CreateCharacterInput, classId: number, subclassId: number | null): Promise<void> {
-  // V1 — sous-classe ∈ classe
   if (subclassId != null) {
     const [sub] = await db
       .select({ classId: schema.subclasses.classId })
@@ -250,8 +188,6 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (sub.classId !== classId) throw new CharacterValidationError(`La sous-classe (id=${subclassId}) n'appartient pas à la classe (id=${classId}).`)
   }
 
-  // V6 — lignée (D17) : la lignée choisie doit appartenir à l'espèce de base du perso
-  // (symétrique de sous-classe∈classe). La progression est dérivée à l'écriture.
   if (d.selectedLineageId != null) {
     if (d.speciesId == null) throw new CharacterValidationError(`Une lignée (id=${d.selectedLineageId}) est choisie sans espèce.`)
     const [lin] = await db
@@ -263,9 +199,6 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (lin.speciesId !== d.speciesId) throw new CharacterValidationError(`La lignée (id=${d.selectedLineageId}) n'appartient pas à l'espèce (id=${d.speciesId}).`)
   }
 
-  // V7 — triade d'origine 2024 (`ability_scores`) : chaque pick doit référer une progression
-  // `ability_scores` et respecter SA distribution (validateur pur C1). Résolu directement par la
-  // progression (indépendant du catalogue). Vide en 2014 → boucle no-op.
   for (const asc of d.abilityScoreChoices ?? []) {
     const [prog] = await db
       .select({ kind: schema.progression.kind, optionSource: schema.progression.optionSource })
@@ -279,9 +212,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (!check.ok) throw new CharacterValidationError(check.reason ?? `Répartition de caractéristiques invalide (progression id=${asc.progressionId}).`)
   }
 
-  // V8 — maîtrise d'armes 2024 (`weapon_mastery`) : chaque pick doit référer une progression
-  // `weapon_mastery`. Le nombre et la maîtrise réelle des armes restent front-autoritaires (comme
-  // les compétences libres) jusqu'à la dérivation des maîtrises (volet B). Vide en 2014 → no-op.
+  // Le nombre et la maîtrise réelle des armes restent front-autoritaires.
   for (const wm of d.weaponMasteryChoices ?? []) {
     const [prog] = await db
       .select({ kind: schema.progression.kind })
@@ -299,7 +230,6 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   const catalog = await buildCatalog(db, { classIds: [classId] })
   const { choices } = resolveChoices({ classLevels: { [classId]: d.level }, subclassIds: subclassId != null ? [subclassId] : [] }, catalog)
 
-  // V2 + V3 — manifestations occultes : chacune ∈ groupe `invocation`, nombre ≤ table du niveau
   if (invocationIds.length > 0) {
     const invChoice = choices.find(c => c.kind === 'invocations')
     if (!invChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir de manifestations occultes au niveau ${d.level}.`)
@@ -311,7 +241,6 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (invocationIds.length > invChoice.count) throw new CharacterValidationError(`Trop de manifestations occultes (${invocationIds.length} pour un maximum de ${invChoice.count}).`)
   }
 
-  // Métamagie — chaque option ∈ groupe `metamagic`, nombre ≤ table du niveau (kind 'metamagic').
   if (metamagicIds.length > 0) {
     const mmChoice = choices.find(c => c.kind === 'metamagic')
     if (!mmChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir d'options de métamagie au niveau ${d.level}.`)
@@ -323,14 +252,11 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (metamagicIds.length > mmChoice.count) throw new CharacterValidationError(`Trop d'options de métamagie (${metamagicIds.length} pour un maximum de ${mmChoice.count}).`)
   }
 
-  // V4 — faveur de pacte : la classe doit y avoir droit à ce niveau
   if (d.pactBoon != null && !choices.some(c => c.kind === 'pact_boon')) {
     throw new CharacterValidationError(`Cette classe ne peut pas choisir de faveur de pacte au niveau ${d.level}.`)
   }
 
-  // V5 — arcanums mystiques : chaque sort doit être un choix légal du palier correspondant,
-  // c.-à-d. un point de choix `spell` de MÊME maxLevel réellement débloqué au niveau du perso
-  // (matcher par maxLevel évite d'accepter un arcanum niv. 9 pour un occultiste 13).
+  // Matcher par maxLevel évite d'accepter un arcanum niv. 9 pour un occultiste 13.
   for (const arc of d.arcaneMysteria ?? []) {
     const legal = choices.some(c =>
       c.kind === 'spell'
@@ -342,7 +268,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
 }
 
 export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: number): Promise<{ id: number }> {
-  // ── 1. Lectures des entités résolues côté client ────────────────────────────
+  // 1. Lectures des entités résolues côté client
   const [cls] = await db
     .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, spellcastingType: schema.classes.spellcastingType, ruleset: schema.classes.ruleset })
     .from(schema.classes)
@@ -353,10 +279,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   const subclassId: number | null = d.subclassId ?? null
   const speciesId: number | null = d.speciesId ?? null
 
-  // Background preset — on valide seulement son existence (id → NULL si absent). Les maîtrises
-  // FIXES d'outils/langues de l'historique NE sont PLUS matérialisées ici (volet B étape 3) : la
-  // fiche les DÉRIVE du porteur `background_features` (étape 2). Seuls les outils/langues CHOISIS
-  // (deltas du joueur) restent stockés en grants plus bas.
+  // Les maîtrises fixes de l'historique sont dérivées par la fiche, pas matérialisées ici.
   let backgroundId: number | null = d.backgroundId ?? null
   if (backgroundId) {
     const [bg] = await db
@@ -375,8 +298,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     console.warn('[createCharacter] items non résolus côté client :', d.inventoryItemNamesUnresolved)
   }
 
-  // ── 2. Validation serveur (autorité) — AVANT toute écriture ──────────────────
-  // Édition figée par la CLASSE (ancre), estampillée sur la fiche + garde de cohérence.
+  // 2. Validation serveur (autorité) — AVANT toute écriture
   const ruleset: Ruleset = cls.ruleset
   await validateRulesetCoherence(db, d, ruleset)
   await validateChoices(db, d, cls.id, subclassId)
@@ -404,7 +326,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     : []
   const passiveFeatureIds = [...classFeatureRows, ...subclassFeatureRows].map(f => f.id)
 
-  // Pacte de la Chaîne : sort « Appel de familier »
   let familiarSpellId: number | null = null
   if (d.pactBoon === 'chain') {
     const [familiar] = await db
@@ -415,7 +336,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     familiarSpellId = familiar?.id ?? null
   }
 
-  // Manifestations : sorts octroyés (spell_grant → nom → id) à matérialiser
   let invocationGrantSpellIds: number[] = []
   if (d.invocationIds?.length) {
     const grants = await db
@@ -435,12 +355,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  // Sorts INNÉS d'espèce (+ lignée choisie) : les traits raciaux type « Magie des fées » / « Magie
-  // drow » portent des effets `spell_grant`. On les matérialise en `character_spells` (source
-  // 'species') comme les invocations/dons, sinon ils restent en prose et n'apparaissent jamais dans
-  // la liste de sorts. Gating par `unlockLevel` (niveau de perso débloquant le sort — druidisme dès
-  // le niveau 1, lueurs féeriques au 3, agrandissement au 5) ; résolution nom→id FILTRÉE par
-  // `ruleset` (deux éditions peuvent partager le même nom français).
+  // Sorts innés d'espèce (+ lignée) matérialisés en `character_spells`, sinon ils restent en prose.
+  // Nom → id filtré par `ruleset` : deux éditions peuvent partager un nom.
   let speciesGrantSpellIds: number[] = []
   if (speciesId != null) {
     const baseFeatureRows = await db
@@ -475,8 +391,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  // Choix de lignée (D17) : on rattache le pick à la progression `kind:'lineage'` portée par une
-  // `species_feature` de l'espèce de base, pour que la fiche dérive la lignée (cf. lineageDerivation).
   let lineageProgressionId: number | null = null
   if (d.selectedLineageId != null && speciesId != null) {
     const [prog] = await db
@@ -489,12 +403,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     lineageProgressionId = prog.id
   }
 
-  // Choix de SOUS-CLASSE (F2) : on rattache le pick à la progression `kind:'subclass'` portée par
-  // l'owner `choice_carrier` de la classe → `character_choices` devient LA source de la décision
-  // (rules-engine.md §4). `character_classes.subclass_id` reste écrit (projection dénormalisée pour
-  // le read-model / la matérialisation des features de sous-classe). Additif, symétrique de la lignée.
-  // Défensif : si la classe n'a pas (encore) de progression de sous-classe seedée → on écrit juste
-  // `subclass_id` sans choix (no-op sur le pick), sans casser la création.
+  // `character_choices` est la source de la décision ; `character_classes.subclass_id` reste écrit (projection).
   let subclassProgressionId: number | null = null
   if (subclassId != null) {
     const [prog] = await db
@@ -506,14 +415,11 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     subclassProgressionId = prog?.id ?? null
   }
 
-  // Choix de STYLE DE COMBAT à la création (F2 tranche 2) : le nom envoyé est résolu en
-  // progression + feature-option de la classe → character_choices + matérialisation (batch plus bas).
-  // Défensif : classe non martiale / nom inconnu → null → aucun choix persisté, sans casser la création.
   const fightingStylePick = d.fightingStyle
     ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, d.level)
     : null
 
-  // ── 4. Insert de la fiche (HORS batch — id auto-incrément) ───────────────────
+  // 4. Insert de la fiche (HORS batch — id auto-incrément)
   const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
   const hitDieSides = hitDieMatch?.[1]
   const currentHitDie = hitDieSides ? [{ die: hitDieSides, count: d.level }] : []
@@ -526,7 +432,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       ruleset,
       speciesId: speciesId ?? undefined,
       backgroundId: backgroundId ?? undefined,
-      // Alignement : l'`id` du builder (minuscules) est converti par la source canonique.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       alignment: alignmentCodeFromBuilderId(d.alignment) as any,
       maxHp: d.maxHp,
@@ -558,7 +463,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     .returning()
   const sheetId = sheet!.id
 
-  // Background personnalisé — insert (hors batch pour son id), la liaison va dans le batch
+  // Hors batch : son id est requis pour la liaison.
   let customBackgroundId: number | null = null
   if (d.customBackgroundName) {
     const [customBg] = await db
@@ -568,7 +473,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     customBackgroundId = customBg!.id
   }
 
-  // ── 5. Écritures dépendantes — un seul db.batch() atomique ───────────────────
+  // 5. Écritures dépendantes — un seul db.batch() atomique
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stmts: any[] = []
 
@@ -576,7 +481,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     stmts.push(db.update(schema.characterSheets).set({ backgroundId: customBackgroundId }).where(eq(schema.characterSheets.id, sheetId)))
   }
 
-  // Classe
   stmts.push(db.insert(schema.characterClasses).values({
     characterSheetId: sheetId,
     classId: cls.id,
@@ -587,7 +491,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any))
 
-  // Choix de lignée (D17) → character_choices : la fiche dérive la lignée via selected_lineage_id.
   if (d.selectedLineageId != null && lineageProgressionId != null) {
     stmts.push(db.insert(schema.characterChoices).values({
       characterSheetId: sheetId,
@@ -596,8 +499,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }))
   }
 
-  // Choix de SOUS-CLASSE (F2) → character_choices : enregistre la décision (source), en plus de
-  // `character_classes.subclass_id` déjà posé ci-dessus (projection). onConflictDoNothing par sûreté.
   if (subclassId != null && subclassProgressionId != null) {
     stmts.push(db.insert(schema.characterChoices).values({
       characterSheetId: sheetId,
@@ -606,8 +507,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }).onConflictDoNothing())
   }
 
-  // Choix de STYLE DE COMBAT (F2) → character_choices (source) + matérialisation de l'option choisie
-  // (feature `fighting_style`). Symétrique de la sous-classe.
   if (fightingStylePick) {
     stmts.push(db.insert(schema.characterChoices).values({
       characterSheetId: sheetId,
@@ -619,8 +518,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       .onConflictDoNothing())
   }
 
-  // Triade d'origine 2024 (`ability_scores`) → character_choices.payload : la fiche dérive
-  // l'augmentation de caractéristiques via `deriveAbilityScoreChoices`. No-op en 2014.
   if (d.abilityScoreChoices?.length) {
     stmts.push(db.insert(schema.characterChoices).values(
       d.abilityScoreChoices.map(asc => ({
@@ -631,8 +528,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  // Maîtrises d'armes 2024 (`weapon_mastery`) → character_choices : une ligne `selected_value`
-  // par arme. La fiche les dérive via `deriveWeaponMasteries`. No-op en 2014.
   if (d.weaponMasteryChoices?.length) {
     const wmRows = d.weaponMasteryChoices.flatMap(wm =>
       wm.weapons.map(weapon => ({ characterSheetId: sheetId, progressionId: wm.progressionId, selectedValue: weapon })),
@@ -640,14 +535,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     if (wmRows.length) stmts.push(db.insert(schema.characterChoices).values(wmRows).onConflictDoNothing())
   }
 
-  // Features passifs (classe + sous-classe)
   if (passiveFeatureIds.length) {
     stmts.push(db.insert(schema.characterFeatures).values(
       passiveFeatureIds.map(featureId => ({ characterSheetId: sheetId, featureId, currentUses: 0 })),
     ))
   }
 
-  // Bonus ASI
   if (d.asiBonuses?.length) {
     stmts.push(db.insert(schema.characterAbilityScoreImprovements).values(
       d.asiBonuses.map(b => ({
@@ -661,7 +554,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  // Dons (asiFeats source='asi' + bonusFeatureId source='bonus')
   const featRows = [
     ...(d.asiFeats ?? []).map(f => ({
       characterSheetId: sheetId,
@@ -724,7 +616,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  // Caractéristiques
   const abilityEntries = Object.entries(d.abilityScores)
   if (abilityEntries.length) {
     stmts.push(db.insert(schema.characterAbilityScores).values(
@@ -732,7 +623,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  // Compétences + JDS de classe + compétences d'historique
   const skillRows = [
     ...d.classSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
     ...d.classSavingThrows.map(key => ({ characterSheetId: sheetId, skillKey: savingThrowKey(key), proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
@@ -742,11 +632,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     stmts.push(db.insert(schema.characterSkills).values(skillRows))
   }
 
-  // Maîtrises CHOISIES (deltas du joueur) — seuls les outils/langues au choix sont matérialisés en
-  // grants. Les maîtrises de BASE (armes/armures de classe, outils/langues fixes d'historique) NE
-  // sont PLUS copiées (volet B étape 3) : la fiche les DÉRIVE des porteurs de classe/historique
-  // (étapes 4/2). Les champs `d.armorProficiencyKeys`/`d.weaponProficiencyKeys` du builder sont
-  // ainsi devenus vestigiaux (encore acceptés par le schéma, ignorés ici).
+  // Seuls les outils/langues choisis sont stockés ; les maîtrises de base sont dérivées par la fiche.
+  // `armorProficiencyKeys` / `weaponProficiencyKeys` sont vestigiaux (acceptés, ignorés).
   const proficiencyRows = [
     ...d.toolProficiencyChoices.map(value => ({ characterSheetId: sheetId, proficiencyType: 'tool' as const, value, action: 'grant' as const })),
     ...d.selectedLanguages.map(value => ({ characterSheetId: sheetId, proficiencyType: 'language' as const, value, action: 'grant' as const })),
@@ -755,7 +642,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     stmts.push(db.insert(schema.characterProficiencyOverrides).values(proficiencyRows))
   }
 
-  // Emplacements de sorts (DÉRIVÉS serveur, cf. shared/rules/spellSlots.ts)
   const casterType = cls.spellcastingType
   if (casterType !== 'none') {
     const slots = slotsForLevel(casterType, d.level)
@@ -769,14 +655,13 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  // Sorts connus
   if (d.spellIds.length) {
     stmts.push(db.insert(schema.characterSpells).values(
       d.spellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: true })),
     ))
   }
 
-  // Inventaire (isPactWeapon posé À L'INSERT pour le pacte de la Lame — évite un read+update)
+  // isPactWeapon posé à l'insert pour éviter un read+update.
   if (itemIds.length) {
     stmts.push(db.insert(schema.characterInventory).values(
       itemIds.map(itemId => ({
@@ -788,7 +673,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  // Faveur du Pacte — sorts associés
   if (d.pactBoon === 'chain' && familiarSpellId != null) {
     stmts.push(db.insert(schema.characterSpells)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -801,7 +685,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       .onConflictDoNothing())
   }
 
-  // Manifestations occultes — features + sorts octroyés (materialisés dans le batch)
   if (d.invocationIds?.length) {
     stmts.push(db.insert(schema.characterFeatures)
       .values(d.invocationIds.map(featureId => ({ characterSheetId: sheetId, featureId, currentUses: 0 })))
@@ -813,21 +696,18 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  // Sorts innés d'espèce (+ lignée) — matérialisés comme sorts connus (source 'species')
   if (speciesGrantSpellIds.length) {
     stmts.push(db.insert(schema.characterSpells)
       .values(speciesGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'species' as const })))
       .onConflictDoNothing())
   }
 
-  // Métamagie — options choisies matérialisées comme features de la fiche (aucun sort octroyé).
   if (d.metamagicIds?.length) {
     stmts.push(db.insert(schema.characterFeatures)
       .values(d.metamagicIds.map(featureId => ({ characterSheetId: sheetId, featureId, currentUses: 0 })))
       .onConflictDoNothing())
   }
 
-  // Arcanums mystiques — un sort 1×/repos long par palier débloqué (source arcanum_*)
   for (const arc of d.arcaneMysteria ?? []) {
     const source = ARCANUM_SPELL_LEVEL_TO_SOURCE[arc.spellLevel]
     if (source) {
@@ -838,7 +718,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  // Livre des secrets anciens — 2 sorts rituels niv. 1
   if (d.bookOfAncientSecretsSpellIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
       .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'book_of_ancient_secrets' as const })))
@@ -846,8 +725,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   }
 
   if (stmts.length) {
-    // db.batch() = atomique sur D1 (JAMAIS db.transaction() qui rejette BEGIN). `.batch()` n'est
-    // pas sur le type de base `BaseSQLiteDatabase` (il vit sur les classes driver d1/libsql) → cast.
+    // `.batch()` n'est pas sur `BaseSQLiteDatabase` (il vit sur les drivers d1/libsql) → cast.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (db as any).batch(stmts as [any, ...any[]])
   }

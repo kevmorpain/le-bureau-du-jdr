@@ -3,12 +3,9 @@ import { dragonborn, DRAGONBORN_LINEAGE_BY_ANCESTRY } from '../../server/db/seed
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
 import { dragonbornAncestryDamageType, allDragonbornAncestries } from '../../shared/utils/draconic_ancestry'
 
-// Rollout lot 6 (chantier lignée, D17) — Drakéide : ÉQUIVALENCE au niveau RÉSOLU (D12). Contrairement
-// au trio/Tieffelin (copie brute), l'ancienne fiche résolvait le type de dégâts depuis la COLONNE
-// dragonbornAncestry via `dragonbornAncestryDamageType`. On prouve donc que, pour CHAQUE ascendance X,
-// la lignée « Dragon <couleur> » porte le type de dégâts CONCRET que l'ancienne colonne=X résolvait —
-// donc la même résistance affichée (et le même souffle). Et que la base porte tout le RESTE (les
-// effets NON dépendants de l'ascendance) de l'ancienne espèce mono.
+// Drakéide — équivalence au niveau RÉSOLU : pour chaque ascendance, la lignée « Dragon <couleur> »
+// doit porter le type de dégâts CONCRET que l'ancienne colonne `dragonbornAncestry` résolvait (donc
+// la même résistance et le même souffle), et la base porter tout le reste.
 
 interface Eff { type: string, value: unknown }
 function stable(v: unknown): string {

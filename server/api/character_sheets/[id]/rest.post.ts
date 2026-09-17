@@ -2,12 +2,6 @@ import { db } from 'hub:db'
 import { characterRest, restSchema } from '~~/server/utils/characterRest'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 
-/**
- * Handler MINCE : auth (via middleware d'authz) + validation de forme (Zod) + délégation à
- * `characterRest` (server/utils/characterRest.ts), qui applique le repos atomiquement en
- * `db.batch()`. Logique extraite dans un util à `db` injecté → testable contre libsql
- * (cf. test/nuxt/characterRest.test.ts).
- */
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
   const characterSheetId = Number(id)

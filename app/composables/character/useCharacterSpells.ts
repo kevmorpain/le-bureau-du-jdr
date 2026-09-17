@@ -106,7 +106,6 @@ export const useCharacterSpells = (
   }
 
   const removeSpell = async (spellId: number) => {
-    // Suppression optimiste immédiate.
     if (characterSpells.value) {
       const idx = characterSpells.value.findIndex(cs => cs.spellId === spellId)
       if (idx !== -1) characterSpells.value.splice(idx, 1)

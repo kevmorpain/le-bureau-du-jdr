@@ -4,7 +4,6 @@
     class="flex items-center flex-wrap gap-1.5"
     @click.stop
   >
-    <!-- Pastilles de charges -->
     <button
       v-for="i in maxUses"
       :key="i"
@@ -29,7 +28,6 @@
       class="ml-0.5"
     />
 
-    <!-- Recharge -->
     <template v-if="currentUses > 0">
       <!-- Recharge complète : un clic remet à plein -->
       <UButton

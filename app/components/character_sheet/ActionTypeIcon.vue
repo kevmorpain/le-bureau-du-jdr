@@ -4,25 +4,21 @@
       class="inline-flex items-center justify-center size-4 shrink-0"
       :aria-label="label"
     >
-      <!-- Action : cercle plein vert -->
       <span
         v-if="type === 'action'"
         class="size-3 rounded-full"
         style="background: #22c55e"
       />
-      <!-- Action bonus : triangle plein orange -->
       <span
         v-else-if="type === 'bonus_action'"
         class="size-0 border-l-[5px] border-r-[5px] border-b-[9px] border-l-transparent border-r-transparent"
         style="border-bottom-color: #f97316"
       />
-      <!-- Réaction : losange plein rose -->
       <span
         v-else-if="type === 'reaction'"
         class="size-2.5 rotate-45"
         style="background: #f472b6"
       />
-      <!-- Gratuite : étoile via game-icons -->
       <UIcon
         v-else-if="type === 'free'"
         name="i-game-icons:star-formation"

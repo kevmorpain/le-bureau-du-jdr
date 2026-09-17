@@ -7,8 +7,6 @@ import type { DamageTypeKey } from './effects'
 import characterInventory from './character_inventory'
 import itemEffects from './item_effects'
 
-// ─── Weapon sub-types ─────────────────────────────────────────────────────────
-
 export type WeaponProperty
   = | 'finesse' | 'light' | 'heavy' | 'two_handed' | 'thrown'
     | 'reach' | 'loading' | 'ammunition' | 'versatile'
@@ -24,8 +22,6 @@ export interface WeaponProperties {
   versatile_damage?: string // "1d10" pour les armes polyvalentes
 }
 
-// ─── Armor sub-types ──────────────────────────────────────────────────────────
-
 export type ArmorType = 'light' | 'medium' | 'heavy' | 'shield'
 
 export interface ArmorProperties {
@@ -35,8 +31,6 @@ export interface ArmorProperties {
   strength_requirement?: number
   stealth_disadvantage: boolean
 }
-
-// ─── Equipment / Tool sub-types ───────────────────────────────────────────────
 
 export interface EquipmentProperties {
   category: string
@@ -49,16 +43,11 @@ export interface ToolProperties {
   category: string
 }
 
-// ─── Discriminated union ──────────────────────────────────────────────────────
-
 export type ItemType = 'weapon' | 'armor' | 'equipment' | 'tool'
 
 export type ItemProperties = WeaponProperties | ArmorProperties | EquipmentProperties | ToolProperties
 
-// Type de recharge des charges (aligné sur les features).
 export type ItemRechargeType = 'short_rest' | 'long_rest' | 'dawn'
-
-// ─── Drizzle table ────────────────────────────────────────────────────────────
 
 const items = sqliteTable('items', {
   id: integer().primaryKey().notNull(),
@@ -66,26 +55,14 @@ const items = sqliteTable('items', {
   itemType: text('item_type').$type<ItemType>().notNull(),
   properties: text('properties', { mode: 'json' }).$type<ItemProperties>().notNull(),
   description: text('description'),
-  // Provenance / gating de visibilité (cf. shared/rules/source.ts). DEFAULT 'core' = socle
-  // toujours visible ; les objets d'extension (ex. Fragment de Féérie) sont gatés.
   source: text('source').$type<Source>().notNull().default('core'),
-  // Maîtrise d'armes 2024 (« weapon mastery ») — au plus une par arme. Nullable :
-  // absente en 2014, et le contenu 5.5 (quelle arme porte quelle maîtrise) est seedé
-  // en Phase 2. Ensemble fermé canonique : shared/rules/masteryProperties.ts.
+  // Maîtrise d'armes 2024 — au plus une par arme. NULL en 2014.
   masteryProperty: text('mastery_property').$type<MasteryProperty>(),
-  // ─── Charges (objets à utilisations limitées) ───────────────────────────
-  // maxUses : nombre de charges max (null = objet sans charge).
-  // rechargeType : quand l'objet récupère ses charges.
-  // rechargeDice : null = recharge complète ; sinon expression de dés ("1d6+4")
-  //   = recharge partielle (montant à ajouter, plafonné à maxUses).
+  // rechargeDice : null = recharge complète ; sinon dés à ajouter, plafonné à maxUses.
   maxUses: integer('max_uses'),
   rechargeType: text('recharge_type').$type<ItemRechargeType>(),
   rechargeDice: text('recharge_dice'),
-  // ─── Objet magique (cf. shared/rules/itemRarity.ts) ─────────────────────
-  // rarity : NULL = objet non magique (arme/armure/équipement ordinaire) ; une valeur = magique.
-  // requiresAttunement : l'objet doit être harmonisé pour donner ses bénéfices (état par
-  //   instance via character_inventory.attuned).
-  // attunementNote : contrainte d'harmonisation en clair (ex. « par un ensorceleur »), nullable.
+  // rarity NULL = objet non magique ; l'harmonisation est un état par instance (character_inventory.attuned).
   rarity: text('rarity').$type<Rarity>(),
   requiresAttunement: integer('requires_attunement', { mode: 'boolean' }).default(false).notNull(),
   attunementNote: text('attunement_note'),

@@ -4,25 +4,9 @@ import type { FeatCategory } from './featCategories'
 import type { SkillKey } from './skills'
 import type { AbilityKey } from './abilities'
 
-// Ré-exporté ici pour les importateurs historiques (`OptionSource` la référence). Source =
-// shared/rules/featCategories.ts (union dérivée de FEAT_CATEGORIES).
 export type { FeatCategory } from './featCategories'
 
-/**
- * Modèle de choix — ensemble fermé canonique du `kind` d'un point de choix, plus le
- * type `OptionSource` qui décrit « parmi quoi » on choisit (cf. decisions.md D4/D5/D6,
- * rules-engine.md §4).
- *
- * Une ligne `progression` (référence) porte un `kind` + un `count` (JSON<Formula>) +
- * un `optionSource` ; une ligne `character_choices` (config) enregistre le pick. La
- * const ne porte que l'ensemble des `kind` légaux, dont le type et le Zod dérivent —
- * même pattern que [[shared/rules/featureTags.ts]] (4b) et [[shared/rules/spellcasting.ts]] (4a).
- *
- * ⚠️ Nuances de nombre voulues : `invocations`/`maneuvers` (pluriel) désignent des
- * points de choix qui piochent PLUSIEURS options, alors que le `FeatureTag` du groupe
- * correspondant est au singulier (`invocation`/`maneuver`). Ce n'est pas une faute :
- * `kind` nomme le point de choix, `FeatureTag` nomme le groupe d'options.
- */
+// `kind` au pluriel (`invocations`) nomme le point de choix ; le `FeatureTag` au singulier nomme le groupe d'options.
 export const CHOICE_KINDS = [
   'subclass',
   'lineage',
@@ -43,24 +27,11 @@ export const CHOICE_KINDS = [
   'weapon_mastery',
 ] as const
 
-/** Union dérivée. Valeur de la colonne `progression.kind`. */
 export type ChoiceKind = (typeof CHOICE_KINDS)[number]
 
-/** Validateur Zod dérivé — à utiliser au lieu d'un `z.enum([…])` recopié. */
 export const choiceKindEnum = z.enum(CHOICE_KINDS)
 
-/**
- * « Parmi quoi » un point de choix propose ses options (cf. rules-engine.md §4). JSON
- * stocké sur `progression.optionSource`. Le catalogue (`enum`, `subclasses`,
- * `feature_group`, `spells`, `feats`) se résout sans l'état du perso ; la projection
- * perso (`proficient_skills`) s'y résout — cf. la scission catalogue / projection en §5.
- *
- * `feature_group` s'appuie sur la colonne indexable `features.tag` (4b) :
- * `SELECT … FROM features WHERE tag = <group>`.
- *
- * `proficient_skills` / `proficient_weapons` se résolvent LIVE contre l'état du perso
- * (compétences / armes déjà maîtrisées) — non cachables, cf. la scission §5.
- */
+// `proficient_skills` / `proficient_weapons` se résolvent contre l'état du perso (non cachables) ; le reste via le catalogue.
 export type OptionSource =
   | { type: 'enum', values: string[] }
   | { type: 'subclasses' }

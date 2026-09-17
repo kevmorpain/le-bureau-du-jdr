@@ -3,19 +3,6 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 
-/**
- * Dérivation des MAÎTRISES d'outils/langues FIXES d'un historique (volet B, étape 2). L'historique
- * porte ses maîtrises fixes en effets sur une feature `proficiency_grant` liée par
- * `background_features` (posée par {@link seedBackgroundProficiencies}). La fiche en dérive LIVE les
- * effets — comme l'espèce dérive les siens — pour les fusionner dans `allEffects` (front), au lieu
- * de les matérialiser en grants. Patron {@link deriveWeaponMasteries} / {@link deriveChosenLineage} :
- * `db` INJECTÉ (testable libsql), lecture via le schéma FRAIS (`background_features` hors relations
- * hub:db → `.select().from()`, cf. son docstring).
- *
- * `[]` si l'historique n'a pas de porteur (historique custom, ou sans maîtrise fixe — ex. Acolyte,
- * Sage) → aucune régression. Les maîtrises « au choix » restent des deltas du joueur (grants).
- */
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 

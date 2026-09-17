@@ -13,18 +13,10 @@ import { deriveAbilityScoreChoices } from '../../server/utils/abilityScoreDeriva
 import { deriveWeaponMasteries } from '../../server/utils/weaponMasteryDerivation'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Filet du volet 2 (5d) : la logique de création extraite (createCharacter) est testée
-// contre libsql, SANS la barrière d'auth (débloqué par la DI du `db`). On vérifie :
-//  - le round-trip d'une création valide (les bonnes lignes sont persistées via db.batch) ;
-//  - la dérivation serveur des emplacements de sorts ;
-//  - la VALIDATION serveur (sous-classe∈classe, manifestations∈groupe & nombre, pacte légitime,
-//    sort d'arcanum légal) qui rejette les choix illégaux AVANT toute écriture.
-//
-// FK désactivées : on teste la logique de création, pas l'intégrité référentielle du schéma
-// (couverte par migrations.test.ts) → évite de seeder tous les référentiels (users, ability_scores…).
-// Env `nuxt` car l'util importe `~~/...`.
-// ─────────────────────────────────────────────────────────────────────────────
+// La logique de création extraite est testée contre libsql, SANS la barrière d'auth (DI du `db`) :
+// round-trip d'une création valide, dérivation serveur des emplacements de sorts, et VALIDATION
+// serveur qui rejette les choix illégaux avant toute écriture.
+// FK désactivées : on teste la création, pas l'intégrité référentielle (couverte par migrations.test.ts).
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
@@ -84,7 +76,6 @@ beforeAll(async () => {
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(id => ({ id, name: id.toUpperCase() })),
   )
 
-  // Classes
   await db.insert(schema.classes).values([
     { id: WARLOCK, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' },
     { id: FIGHTER, name: 'Guerrier', hitDice: '1d10', spellcastingType: 'none' },
@@ -98,7 +89,6 @@ beforeAll(async () => {
     await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
   }
 
-  // Grants passifs (matérialisés d'office à la création)
   await db.insert(schema.features).values([
     { id: 200, name: 'Incantation occulte', featureType: 'class_feature', classId: WARLOCK, levelRequired: 1 }, // passif, non tagué
     { id: 300, name: 'Second souffle', featureType: 'class_feature', classId: FIGHTER, levelRequired: 1 }, // passif Guerrier
@@ -110,7 +100,6 @@ beforeAll(async () => {
   await db.insert(schema.features).values({ id: 250, name: 'Archétype martial', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 1 })
   await db.insert(schema.progression).values({ featureId: 250, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false })
 
-  // 3 manifestations occultes (tag invocation) — l'une octroie un sort
   await db.insert(schema.features).values([
     { id: 401, name: 'Regard de deux esprits', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
     { id: 402, name: 'Armure des ombres', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
@@ -122,7 +111,6 @@ beforeAll(async () => {
   const [eff] = await db.insert(schema.effects).values({ type: 'spell_grant', value: { level: 1, spellcastingAbility: 'cha', spellName: 'Armure de mage', countPerLongRest: 0 } }).returning()
   await db.insert(schema.featureEffects).values({ featureId: 401, effectId: eff.id })
 
-  // Sorts : familier (pacte), sort octroyé par la manifestation, 2 sorts d'arcanum (niv 6 et 9)
   await db.insert(schema.spells).values([
     { id: 500, name: 'Appel de familier', level: 1, castingTime: '1 action', range: 0, duration: '1 heure', schoolId: 1 },
     { id: 501, name: 'Armure de mage', level: 1, castingTime: '1 action', range: 0, duration: '8 heures', schoolId: 1 },
@@ -167,7 +155,7 @@ beforeAll(async () => {
   elfLineageProgId = prog.id
 }, 60000) // rejoue toute la chaîne de migrations + seed → au-delà du timeout de hook par défaut (10s)
 
-// ── Round-trip : créations valides ─────────────────────────────────────────────
+// Round-trip : créations valides
 
 describe('createCharacter — round-trip Guerrier niveau 1', () => {
   it('persiste fiche, classe, feature passive, caracs, compétences ; pas d\'emplacement de sort', async () => {
@@ -305,7 +293,7 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
   })
 })
 
-// ── Validation serveur : rejets ────────────────────────────────────────────────
+// Validation serveur : rejets
 
 describe('createCharacter — validation serveur (rejette les choix illégaux)', () => {
   it('sous-classe n\'appartenant pas à la classe → 422', async () => {
@@ -362,7 +350,7 @@ describe('createCharacter — validation serveur (rejette les choix illégaux)',
   })
 })
 
-// ── Cohérence d'édition : garde défense-en-profondeur (Lot A) ──────────────────
+// Cohérence d'édition : garde défense-en-profondeur (Lot A)
 
 describe('createCharacter — cohérence d\'édition (garde Lot A)', () => {
   const GOLIATH_55 = 9 // espèce ruleset '5.5'
@@ -379,7 +367,7 @@ describe('createCharacter — cohérence d\'édition (garde Lot A)', () => {
   })
 })
 
-// ── Triade d'origine 2024 : pick composite ability_scores (C3) ─────────────────
+// Triade d'origine 2024 : pick composite ability_scores (C3)
 
 describe('createCharacter — triade d\'origine 2024 (ability_scores, C3)', () => {
   it('répartition valide → character_choices.payload écrit + dérivé par le serveur', async () => {
@@ -412,7 +400,7 @@ describe('createCharacter — triade d\'origine 2024 (ability_scores, C3)', () =
   })
 })
 
-// ── Maîtrise d'armes 2024 : pick composite weapon_mastery (C4) ─────────────────
+// Maîtrise d'armes 2024 : pick composite weapon_mastery (C4)
 
 describe('createCharacter — maîtrise d\'armes 2024 (weapon_mastery, C4)', () => {
   it('armes choisies → une ligne character_choices.selected_value par arme + dérivées par le serveur', async () => {
@@ -436,7 +424,7 @@ describe('createCharacter — maîtrise d\'armes 2024 (weapon_mastery, C4)', () 
   })
 })
 
-// ── Choix de lignée à la création (D17, lot 5a) ────────────────────────────────
+// Choix de lignée à la création (D17, lot 5a)
 
 describe('createCharacter — lignée (D17)', () => {
   it('elfe base + lignée Haut-elfe → character_choices écrit, fiche sur la base, lignée dérivée', async () => {

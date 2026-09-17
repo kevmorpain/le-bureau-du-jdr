@@ -1,8 +1,5 @@
-// Mémorise la route courante pour que `restore-route.global.ts` puisse y revenir
-// après une relance à froid de la PWA (cf. app/utils/lastRoute.ts).
-//
-// Uniquement en PWA installée : dans un onglet, le navigateur restaure déjà la page
-// lui-même, et on éviterait de polluer la mémoire partagée avec la PWA (même origine).
+// Mémorise la route courante pour `restore-route.global.ts`. Uniquement en PWA installée : dans un
+// onglet, le navigateur restaure déjà la page lui-même.
 export default defineNuxtPlugin(() => {
   if (!isStandaloneDisplay()) return
 

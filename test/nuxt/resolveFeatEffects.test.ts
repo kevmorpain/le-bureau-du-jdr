@@ -3,14 +3,9 @@ import type { Effect } from '../../server/db/schema/effects'
 import { resolveFeatEffects } from '../../app/composables/useCharacterSheet'
 import { blankFixture, mountAbilities, type AbilitiesFixture } from './fixtures/characters'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Contrat de résolution des effets « à choix » d'un don (cf. decisions.md D12).
-//
-// Cas de référence : **Résilient** (PHB 2014) — « choisissez une caractéristique :
-// +1 dans celle-ci et vous gagnez la maîtrise des jets de sauvegarde correspondants ».
-// Les deux effets seedés (server/db/seeds/data/feats.ts) suivent LE MÊME choix, stocké
-// dans `character_features.choices.ability`.
-// ─────────────────────────────────────────────────────────────────────────────
+// Résolution des effets « à choix » d'un don. Cas de référence : Résilient (PHB 2014) — +1 dans une
+// caractéristique ET maîtrise du jet de sauvegarde correspondant : les deux effets suivent LE MÊME
+// choix, stocké dans `character_features.choices.ability`.
 
 const resilient: Effect[] = [
   { type: 'ability_increase_choice', value: { count: 1, amount: 1 } },

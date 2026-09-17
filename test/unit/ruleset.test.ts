@@ -4,11 +4,9 @@ import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
 import { RULESETS, rulesetEnum } from '../../shared/rules/ruleset'
 
-// Le discriminant d'édition a une seule source de vérité (la const
-// shared/rules/ruleset.ts) dont les colonnes `ruleset` dérivent. On vérifie
-// l'ensemble/l'ordre (contrat D12 : valeurs écrites à la main), la validation Zod, et
-// que la migration 0084 pose bien la colonne (NOT NULL DEFAULT '5', donc backfill) sur
-// une base peuplée — sur les 6 tables ciblées.
+// Le discriminant d'édition a une seule source de vérité, dont les colonnes `ruleset` dérivent. On
+// vérifie l'ensemble et l'ordre (valeurs écrites à la main), la validation Zod, et que la migration
+// 0084 pose la colonne (NOT NULL DEFAULT '5', donc backfill) sur les 6 tables ciblées.
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
 const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)

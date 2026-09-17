@@ -9,7 +9,6 @@
         </template>
 
         <div class="space-y-4">
-          <!-- Classe lanceuse (multiclasse spellcaster) -->
           <div
             v-if="casterChoices.length > 1 && selected?.slotType === 'spellcasting'"
             class="space-y-2"

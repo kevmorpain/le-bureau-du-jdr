@@ -4,9 +4,7 @@ import * as srcSchema from '~~/server/db/schema'
 import { itemsData } from './data/items'
 
 export default async function seed() {
-  // Lecture/écriture via srcSchema (schéma frais) : le cache hub:db peut ignorer les colonnes
-  // récentes (source/rarity/requires_attunement/attunement_note) et les droppe silencieusement
-  // (cf. CLAUDE.md « hub:db schema cache »).
+  // srcSchema (schéma frais) : le cache hub:db peut dropper les colonnes récentes en silence.
   const existing = await db
     .select({
       id: srcSchema.items.id,
@@ -23,10 +21,8 @@ export default async function seed() {
   let updated = 0
 
   for (const item of itemsData) {
-    // Contenu piloté par le seed (source de vérité). Le nom/type/properties ne sont PAS
-    // resynchronisés ici (les renommages passent par migration, cf. 0076) : on resynchronise la
-    // description + les champs d'objet magique, pour qu'un seed corrigé mette à jour une base
-    // déjà peuplée (l'insert seul saute les ids existants).
+    // Le nom/type/properties ne sont PAS resynchronisés (les renommages passent par migration, cf. 0076) ;
+    // la description et les champs d'objet magique le sont, pour corriger une base déjà peuplée.
     const content = {
       description: item.description ?? null,
       source: item.source ?? 'core',

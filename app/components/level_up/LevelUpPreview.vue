@@ -2,7 +2,6 @@
   <div class="flex flex-col gap-3" :class="mobile ? 'py-2' : 'py-1'">
     <p v-if="!mobile" class="text-xs font-bold uppercase tracking-widest text-muted">Aperçu</p>
 
-    <!-- Progression -->
     <div>
       <div class="flex justify-between text-xs text-muted mb-1">
         <span>Progression</span>
@@ -16,7 +15,6 @@
       />
     </div>
 
-    <!-- Identity -->
     <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <div class="flex items-center gap-2 mb-2">
         <span v-if="pickedClass" class="text-xl">{{ pickedClass.emoji }}</span>
@@ -30,7 +28,6 @@
         </div>
       </div>
 
-      <!-- New class list -->
       <div class="flex flex-wrap gap-1.5">
         <span
           v-for="cc in newClassesList"
@@ -55,11 +52,9 @@
       </div>
     </div>
 
-    <!-- Stat changes -->
     <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Changements</p>
       <div class="flex flex-col gap-1.5 text-xs">
-        <!-- HP -->
         <div class="flex items-center gap-1">
           <span class="text-muted w-12 shrink-0">PV max</span>
           <span class="font-mono text-(--ui-text)">{{ currentHpMax }}</span>
@@ -67,29 +62,24 @@
           <span class="font-mono font-bold text-green-400">{{ currentHpMax + (state.hpGained ?? 0) }}</span>
           <span v-if="state.hpGained" class="text-green-400 text-xs">+{{ state.hpGained }}</span>
         </div>
-        <!-- Proficiency -->
         <div v-if="profBonusChanged" class="flex items-center gap-1">
           <span class="text-muted w-12 shrink-0">Maîtrise</span>
           <span class="font-mono text-(--ui-text)">+{{ oldProfBonus }}</span>
           <span class="text-muted">→</span>
           <span class="font-mono font-bold text-amber-400">+{{ newProfBonus }}</span>
         </div>
-        <!-- Subclass -->
         <div v-if="state.newSubclassName">
           <span class="text-muted">Sous-classe : </span>
           <span class="text-amber-400 font-semibold">{{ state.newSubclassName }}</span>
         </div>
-        <!-- Fighting style -->
         <div v-if="state.fightingStyle">
           <span class="text-muted">Style : </span>
           <span class="text-amber-400">{{ state.fightingStyle }}</span>
         </div>
-        <!-- Feat -->
         <div v-if="state.asiChoice === 'feat' && state.featureId">
           <span class="text-muted">Don : </span>
           <span class="text-amber-400">{{ getFeatById(state.featureId)?.name ?? 'Don' }}</span>
         </div>
-        <!-- ASI bonuses -->
         <div
           v-for="[ab, v] in abiChanges"
           :key="ab"
@@ -103,7 +93,6 @@
       </div>
     </div>
 
-    <!-- Abilities snapshot -->
     <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Caractéristiques</p>
       <div class="grid grid-cols-3 gap-1">
@@ -159,7 +148,6 @@ const abiChanges = computed(() =>
     .filter(([, v]) => v > 0),
 )
 
-// Projected classes list after level-up
 const newClassesList = computed(() => {
   const s = state.value
   const list = charClasses.value.map(cc => ({

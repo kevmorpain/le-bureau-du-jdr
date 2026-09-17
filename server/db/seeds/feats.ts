@@ -9,9 +9,7 @@ export default async function seed() {
   let inserted = 0
 
   for (const feat of featsData) {
-    // Keyé par (name, featureType, ruleset) : un don 5.5 homonyme (« Vigilant » dont les effets
-    // diffèrent) est une ligne DISTINCTE, pas une mise à jour de la 2014 (D2). Un don est une OPTION
-    // (filtrée par features.ruleset dans resolveOptions) → doit être estampillé. No-op sur le 2014.
+    // Keyé par (name, featureType, ruleset) : un don 5.5 homonyme est une ligne DISTINCTE (D2).
     const existing = await db.query.features.findFirst({
       where: and(
         eq(schema.features.name, feat.name),
@@ -25,7 +23,6 @@ export default async function seed() {
     let feature
     if (existing) {
       feature = existing
-      // Resync description + prérequis s'ils ont changé entre deux versions du seed.
       const patch: Record<string, unknown> = {}
       if (existing.description !== feat.description) patch.description = feat.description
       if (JSON.stringify(existing.prerequisites ?? null) !== JSON.stringify(prerequisites)) {
@@ -39,8 +36,7 @@ export default async function seed() {
       }
     }
     else {
-      // Insert via srcSchema (schéma frais) : le cache hub:db peut ignorer la colonne récente
-      // `source` et la dropper silencieusement (CLAUDE.md) → le don gaté ne serait pas gaté.
+      // srcSchema (schéma frais) : le cache hub:db peut dropper la colonne `source` en silence.
       feature = await db
         .insert(srcSchema.features)
         .values({
@@ -70,11 +66,8 @@ export default async function seed() {
 }
 
 async function _seedEffects(featureId: number, effects: Effect[]) {
-  // Idempotence : on retire d'abord les liens existants de la feature, sinon une
-  // modification de la valeur d'un effet (ex : ajout de `abilities`) crée un
-  // nouvel effet ET garde l'ancien lien → doublon. On reconstruit proprement.
-  // hub:db schema cache ne connaît pas forcément l'effet le plus récent, on
-  // utilise srcSchema pour les comparaisons fines.
+  // On efface d'abord les liens : sinon une valeur d'effet modifiée crée un nouvel effet ET garde
+  // l'ancien lien → doublon.
   await db.delete(srcSchema.featureEffects).where(eq(srcSchema.featureEffects.featureId, featureId))
   for (const effect of effects) {
     const existing = await db

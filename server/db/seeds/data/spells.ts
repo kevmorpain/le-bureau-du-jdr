@@ -428,8 +428,6 @@ export const spells: InsertSpell[] = [
     },
   },
 
-  // ─── Sorts d'Ambroise (occultiste niv. 10, Pacte du Grimoire) ─────────────────
-
   // Pacte du Grimoire — sorts de rituel
   {
     name: 'Alarme',
@@ -616,7 +614,6 @@ export const spells: InsertSpell[] = [
       damage_at_slot_level: { '4': '3d6' },
     }],
   },
-  // ─── Sorts d'Ambroise (Occultiste) ───────────────────────────────────────────
 
   {
     name: 'Décharge occulte',
@@ -901,7 +898,7 @@ export const spells: InsertSpell[] = [
     schoolId: 3,
   },
 
-  // ─── Niveau 6 Occultiste (PHB 2014) ──────────────────────────────────────────
+  // Niveau 6 Occultiste (PHB 2014)
   {
     name: 'Cercle de mort',
     level: 6,
@@ -980,7 +977,7 @@ export const spells: InsertSpell[] = [
     schoolId: 3,
   },
 
-  // ─── Niveau 7 Occultiste (PHB 2014) ──────────────────────────────────────────
+  // Niveau 7 Occultiste (PHB 2014)
   {
     name: 'Cage de force',
     level: 7,
@@ -1031,7 +1028,7 @@ export const spells: InsertSpell[] = [
     dc: { ability: AbilityScore.Charisma, success: 'none' },
   },
 
-  // ─── Sort référencé par une manifestation occulte (Murmures ensorcelants) ───
+  // Sort référencé par une manifestation occulte (Murmures ensorcelants)
   {
     name: 'Compulsion',
     level: 4,
@@ -1045,7 +1042,6 @@ export const spells: InsertSpell[] = [
     dc: { ability: AbilityScore.Wisdom, success: 'none' },
   },
 
-  // ─── Sorts de niveau 3 (auparavant ajoutés à la main en prod, audités AideDD) ──
   {
     name: 'Antidétection',
     level: 3,
@@ -1267,9 +1263,8 @@ export const spells: InsertSpell[] = [
     }],
   },
 
-  // ─── Sorts octroyés par les manifestations occultes (PHB 2014, AideDD) ────────
-  // Ces 14 sorts étaient référencés par les `spell_grant` des invocations mais
-  // absents du catalogue : le grant ne matérialisait donc rien sur la fiche.
+  // Sorts octroyés par les manifestations occultes : référencés par leurs `spell_grant` mais absents
+  // du catalogue, donc le grant ne matérialisait rien.
   {
     name: 'Communication avec les animaux',
     level: 1,
@@ -1454,8 +1449,7 @@ export const spells: InsertSpell[] = [
     schoolId: 2,
   },
 
-  // ─── Sorts ajoutés pour le perso Fadette/Ensorceleur (2026-09) ──────────────
-  // 5 SRD (source 'core' par défaut) + 2 d'extension gatés (xanathar/fizban).
+  // 5 SRD (source 'core') + 2 d'extension gatés (xanathar/fizban).
   {
     name: 'Rayon de givre',
     level: 0,
@@ -1578,8 +1572,7 @@ export const spells: InsertSpell[] = [
     dc: { ability: AbilityScore.Constitution, success: 'none' },
   },
 
-  // ─── Sorts éligibles aux dons Faveur des fées / Télépathe / Frappé par l'ombre (2026-09) ──
-  // 3 PHB 2014 (source 'core' par défaut) + Barbes argentées (Strixhaven, gaté).
+  // 3 PHB 2014 (source 'core') + Barbes argentées (Strixhaven, gaté).
   {
     name: 'Murmures dissonants',
     level: 1,

@@ -4,7 +4,6 @@
       Aperçu
     </p>
 
-    <!-- Progression -->
     <div>
       <div class="flex justify-between text-xs text-muted mb-1">
         <span>Progression</span>
@@ -18,7 +17,6 @@
       />
     </div>
 
-    <!-- Identité -->
     <div class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <p class="font-bold text-sm" :class="state.name ? 'text-(--ui-text)' : 'text-muted italic'">
         {{ state.name || 'Nom à définir…' }}
@@ -52,7 +50,6 @@
       </p>
     </div>
 
-    <!-- Stats clés -->
     <div v-if="classData" class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Stats</p>
       <div class="grid grid-cols-3 gap-1">
@@ -67,7 +64,6 @@
       </div>
     </div>
 
-    <!-- Caractéristiques -->
     <div v-if="hasAbilities" class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Caractéristiques</p>
       <div class="grid grid-cols-3 gap-1">
@@ -90,7 +86,6 @@
       </div>
     </div>
 
-    <!-- Compétences -->
     <div v-if="allSkills.length" class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Compétences</p>
       <div class="flex flex-wrap gap-1">
@@ -104,7 +99,6 @@
       </div>
     </div>
 
-    <!-- Sorts -->
     <div
       v-if="selectedSpellNames.length > 0"
       class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3"

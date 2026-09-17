@@ -14,12 +14,9 @@ import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 // featureType + classId, pas par nom → sa valeur exacte est indifférente ici.
 const CARRIER_NAME = 'Maîtrises de la classe'
 
-// Volet B, étape 4 — dérivation des maîtrises d'armes/armures de BASE de classe, bout en bout.
-// On rejoue la chaîne de migrations sur libsql, on pose pour chaque classe un porteur
-// `proficiency_grant` (comme `seedClass.buildProficiencyCarrier`, mais en insert direct car
-// `seedClass` dépend de `hub:db`), puis on vérifie que `deriveClassProficiencies` rend EXACTEMENT
-// les effets de `CLASS_PROFICIENCIES` (filet d'équivalence source ⟺ dérivé), l'union en multiclasse
-// et les cas `[]` (aucune classe, ou classe sans porteur).
+// Dérivation des maîtrises d'armes/armures de base de classe, bout en bout : `deriveClassProficiencies`
+// doit rendre EXACTEMENT les effets de `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé), l'union
+// en multiclasse, et `[]` sans porteur.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

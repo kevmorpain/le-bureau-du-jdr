@@ -9,11 +9,8 @@ import {
 import { Alignment } from '../../server/db/schema/character_sheets'
 import { ALIGNMENTS as BUILDER_ALIGNMENTS } from '../../app/data/character-builder'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Source canonique des alignements (shared/rules/alignments.ts). Elle a remplacé trois
-// copies : l'enum du schéma, la table de conversion du serveur et la liste du builder.
-// Ces tests gardent l'alignement de ces trois surfaces.
-// ─────────────────────────────────────────────────────────────────────────────
+// La source canonique des alignements a remplacé trois copies (enum du schéma, table de conversion
+// serveur, liste du builder) : ces tests gardent leur alignement.
 
 describe('alignements — source canonique', () => {
   it('couvre exactement les 9 valeurs stockables en base (enum Drizzle)', () => {

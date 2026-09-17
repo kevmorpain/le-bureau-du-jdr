@@ -1,5 +1,3 @@
-// ─── Formula AST ─────────────────────────────────────────────────────────────
-
 export type FormulaVar =
   | 'level'
   | 'class_level'
@@ -19,8 +17,6 @@ export type Formula =
   | { op: 'floor' | 'ceil'; value: Formula }
   | { op: 'lookup'; table: number[] } // index = class_level - 1
 
-// ─── Evaluation context ───────────────────────────────────────────────────────
-
 export interface FormulaContext {
   level: number
   class_level: number
@@ -32,8 +28,6 @@ export interface FormulaContext {
   wis_mod: number
   cha_mod: number
 }
-
-// ─── Evaluator ────────────────────────────────────────────────────────────────
 
 export function evaluate(formula: Formula, ctx: FormulaContext): number {
   switch (formula.op) {
@@ -73,8 +67,6 @@ export function evaluate(formula: Formula, ctx: FormulaContext): number {
     }
   }
 }
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export const fixed = (value: number): Formula => ({ op: 'fixed', value })
 export const variable = (name: FormulaVar): Formula => ({ op: 'var', name })

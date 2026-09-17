@@ -3,7 +3,6 @@
     class="flex items-center gap-x-3 gap-y-1 py-1.5 px-2 rounded-md cursor-pointer group flex-wrap hover:bg-elevated/50 transition-colors"
     @click="$emit('click')"
   >
-    <!-- Warning somatique -->
     <UTooltip
       v-if="hasSomaticWarning"
       :delay-duration="0"
@@ -15,10 +14,8 @@
       />
     </UTooltip>
 
-    <!-- Nom -->
     <span class="font-medium min-w-0 flex-shrink-0">{{ spell.name }}</span>
 
-    <!-- Infos clés -->
     <ul class="flex items-center gap-x-3 text-muted text-xs flex-wrap">
       <li class="flex items-center gap-1">
         <StarsIcon class="size-3.5 flex-none" />
@@ -63,7 +60,6 @@
       </li>
     </ul>
 
-    <!-- Composantes -->
     <ul class="flex items-center gap-1">
       <li
         v-for="component in spell.components"
@@ -82,7 +78,6 @@
       </li>
     </ul>
 
-    <!-- Badge source (Pacte / Manifestation) -->
     <UTooltip
       v-if="source"
       :text="sourceTooltip"
@@ -93,7 +88,6 @@
       </span>
     </UTooltip>
 
-    <!-- Badge modifications Décharge occulte (Manifestations) -->
     <UTooltip
       v-if="eldritchBlastModifierLabel"
       :text="eldritchBlastModifierTooltip"
@@ -104,7 +98,6 @@
       </span>
     </UTooltip>
 
-    <!-- Dégâts / Soins calculés -->
     <span
       v-if="damageParts.length"
       class="text-xs font-mono"
@@ -128,7 +121,6 @@
     </span>
 
     <div class="ml-auto flex items-center gap-2">
-      <!-- Toggle préparé -->
       <div @click.stop>
         <UCheckbox
           v-model="prepared"
@@ -136,7 +128,6 @@
         />
       </div>
 
-      <!-- Supprimer -->
       <UButton
         icon="i-heroicons:trash"
         variant="ghost"

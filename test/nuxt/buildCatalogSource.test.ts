@@ -8,14 +8,8 @@ import * as srcSchema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import type { Catalog } from '../../shared/rules/resolve'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Gating `source` dans la RÉSOLUTION (étape 1b). Pendant de buildCatalogRuleset.test.ts pour
-// l'axe `source` : pour chaque source cachable (feature_group / feats / spells) on seede une
-// option socle ('core') ET une option d'extension ('tasha'), et on vérifie que `buildCatalog`
-// n'inclut le contenu gaté QUE si `extended: true`. Défaut = socle seul. Les branches
-// subclasses / lineages utilisent le même pattern `and(eq(owner), source filter)` (couvert par
-// les tests de loaders). Même harnais (chaîne de migrations rejouée sur libsql, `db` injecté).
-// ─────────────────────────────────────────────────────────────────────────────
+// Gating `source` dans la résolution : le contenu d'extension ne remonte que si `extended: true`.
+// Pendant de buildCatalogRuleset.test.ts pour l'axe `source`.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

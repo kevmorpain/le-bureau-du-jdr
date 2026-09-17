@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { resolveChoices, dueChoices, type Catalog, type CatalogProgression } from '../../shared/rules/resolve'
 
-// Lot 2 du chantier lignée (D17) : `resolveChoices` doit OFFRIR le choix de lignée, possédé
-// par une ESPÈCE (pas une classe). Gating = possession de l'espèce (pas un niveau de classe),
-// dispo dès la création. On teste la généralisation additive de l'owner (le chemin classe
-// reste couvert par eligibility.test / resolveCatalog).
+// `resolveChoices` doit offrir le choix de lignée, possédé par une ESPÈCE (pas une classe) : gating
+// sur la POSSESSION de l'espèce, donc disponible dès la création.
 
 const ELF = 3
 

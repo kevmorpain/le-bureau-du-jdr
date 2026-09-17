@@ -3,16 +3,11 @@ import type { SubclassDef } from '../lib/seedClass'
 import type { Effect } from '../../schema/effects'
 import { INVOCATIONS_KNOWN, warlockPactBoonFeatures } from './warlock_progression'
 
-// ─── Pact Magic slot tables (PHB 5e) ──────────────────────────────────────────
+// Pact Magic slot tables (PHB 5e)
 // Index = class_level - 1 (levels 1–20)
 
 const pactMagicSlotCount = lookup([1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4])
 const pactMagicSlotLevel = lookup([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])
-
-// Nombre d'invocations connues par niveau : source unique dans data/warlock_progression.ts
-// (INVOCATIONS_KNOWN), partagée avec le `count` de la progression `invocations`.
-
-// ─── Warlock base class features ──────────────────────────────────────────────
 
 export const warlockFeatures = [
   {
@@ -156,13 +151,9 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     rechargeType: 'long_rest' as const,
     effects: [],
   },
-  // Les 3 faveurs de pacte comme features-OPTIONS taguées `pact_boon` (cf.
-  // data/warlock_progression.ts). Elles sont énumérées par la progression `pact_boon`
-  // portée par « Faveur de pacte » ; leur `tag` les exclut de la matérialisation passive.
+  // Options de pacte taguées `pact_boon` : leur tag les exclut de la matérialisation passive.
   ...warlockPactBoonFeatures,
 ]
-
-// ─── Grand Ancien subclass features ───────────────────────────────────────────
 
 export const grandAncienFeatures = [
   {
@@ -363,7 +354,6 @@ Niveaux 9-10 : Apparence trompeuse, Domination de personne`,
   },
 ]
 
-// Helper: build the context for formula evaluation at a given class level
 export const buildFormulaContext = (classLevel: number, totalLevel: number, abilityMods: Record<string, number>, profBonus: number) => ({
   level: totalLevel,
   class_level: classLevel,

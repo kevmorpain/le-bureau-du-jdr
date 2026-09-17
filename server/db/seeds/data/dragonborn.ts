@@ -2,28 +2,12 @@ import { CreatureSize } from '../../schema/character_species'
 import type { LineageSpeciesData } from '../lib/seedLineages'
 
 /**
- * Drakéide 2014 restructuré en **base + lignées** (chantier lignée, D17 — rollout lot 6). Cas
- * PARTICULIER : en 2014 l'ascendance draconique n'était PAS une sous-race mais un choix stocké en
- * COLONNE `character_sheets.dragonbornAncestry`, résolu à l'affichage (placeholders
- * `draconic_ancestry` → type de dégâts via `dragonbornAncestryDamageType`). On la matérialise ici
- * comme 10 lignées « Dragon <couleur> » portant chacune son type de dégâts CONCRET.
- *
- * Conséquences (voulues) : l'ascendance devient FIXÉE à la création (comme toute lignée) ; le
- * sélecteur d'ascendance de la fiche se masque tout seul (l'effet `{choice:'draconic_ancestry'}`
- * n'est plus sur la base) ; la résistance s'affiche depuis l'effet concret de la lignée (via
- * `resolveDamageType`, identité sur un type concret) ; le souffle (non rendu sur la fiche) devient
- * une donnée concrète. La migration des fiches est BESPOKE (colonne → lignée), pas l'homonyme
- * générique (faite une fois au rollout lot 6, colonne dragonbornAncestry → lignée).
- *
- * ⚠️ Le nom de base « Drakéide » == l'ancienne espèce mono → renommée legacy « Drakéide (2014) »
- * (character_species.ts + migration 0088), comme le Tieffelin.
- *
- * ÉQUIVALENCE (D12) au niveau RÉSOLU (pas copie brute, car placeholder → concret) : une fiche
- * lignée « Dragon <X> » affiche la MÊME résistance qu'une ancienne fiche colonne=<X>
- * (`dragonbornAncestryDamageType[X]`). Prouvé par dragonbornLineageEquivalence.test.ts.
+ * Cas PARTICULIER : en 2014 l'ascendance draconique était une COLONNE
+ * (`character_sheets.dragonbornAncestry`) résolue à l'affichage ; elle est matérialisée ici en 10
+ * lignées portant chacune son type de dégâts concret. Conséquence voulue : l'ascendance est FIXÉE à la
+ * création et le sélecteur de la fiche se masque de lui-même.
  */
 
-/** Les 10 ascendances : clé colonne, nom de lignée, type de dégâts, forme/JS du souffle. */
 const DRAGONS = [
   { key: 'black', name: 'Dragon noir', damage: 'acid', area: 'line', save: 'dex' },
   { key: 'blue', name: 'Dragon bleu', damage: 'lightning', area: 'line', save: 'dex' },
@@ -37,12 +21,11 @@ const DRAGONS = [
   { key: 'white', name: 'Dragon blanc', damage: 'cold', area: 'cone', save: 'con' },
 ] as const
 
-/** Mapping clé d'ascendance (colonne) → nom de lignée. Source unique, consommée par la migration. */
+/** Clé d'ascendance (colonne legacy) → nom de lignée. */
 export const DRAGONBORN_LINEAGE_BY_ANCESTRY: Record<string, string> = Object.fromEntries(
   DRAGONS.map(d => [d.key, d.name]),
 )
 
-/** Effet « Souffle » concret (structure identique au legacy, placeholders → valeurs concrètes). */
 function breathEffect(damage: string, area: string, save: string) {
   return {
     type: 'action',
@@ -62,7 +45,6 @@ function breathEffect(damage: string, area: string, save: string) {
   }
 }
 
-// ─── Traits COMMUNS à toute ascendance (base) ────────────────────────────────────────────
 const baseTraits = [
   {
     name: 'Augmentation de caractéristiques',
@@ -87,7 +69,6 @@ const baseTraits = [
   },
 ]
 
-// ─── Une lignée par ascendance draconique ────────────────────────────────────────────────
 const lineages = DRAGONS.map(d => ({
   name: d.name,
   description: `Votre ascendance remonte à un ${d.name.toLowerCase()} : votre souffle et votre résistance en découlent.`,

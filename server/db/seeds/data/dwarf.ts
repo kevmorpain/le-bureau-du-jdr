@@ -1,19 +1,9 @@
 import { CreatureSize } from '../../schema/character_species'
 import type { LineageSpeciesData } from '../lib/seedLineages'
 
-/**
- * Nain 2014 restructuré en **base + lignées** (chantier lignée, D17 — rollout lot 6). Remplace à
- * terme les deux espèces séparées `hillDwarf`/`mountainDwarf` de `character_species.ts` : la base
- * porte les traits communs, chaque lignée porte SES traits propres (le +1/+2 de carac. spécifique,
- * et l'exclusif : Ténacité naine pour les collines, armures pour les montagnes).
- *
- * ⚠️ Effets **copiés à l'identique** des anciennes données → l'équivalence (D12) tient : base ⊕
- * lignée dérive exactement les mêmes effets que l'ancienne espèce. Nommage des lignées == anciennes
- * espèces (« Nain des collines/montagnes ») → migration des fiches sans alias, vitesse commune (7,5)
- * → aucun speedOverride.
- */
+// ⚠️ Effets copiés à l'identique des anciennes espèces `hillDwarf`/`mountainDwarf` : c'est ce qui fait
+// tenir le test d'équivalence (D12).
 
-// ─── Traits COMMUNS aux deux lignées (base) ──────────────────────────────────────────────
 const baseTraits = [
   {
     name: 'Augmentation de caractéristiques',
@@ -71,7 +61,6 @@ const baseTraits = [
   },
 ]
 
-// ─── Traits PROPRES à chaque lignée ──────────────────────────────────────────────────────
 const hillDwarfLineage = {
   name: 'Nain des collines',
   description: `Sagaces et endurants, les nains des collines ont des sens affûtés, une intuition profonde et une résistance remarquable aux blessures.`,

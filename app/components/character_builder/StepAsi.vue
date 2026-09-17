@@ -9,7 +9,6 @@
     </header>
 
 
-    <!-- Un bloc par palier d'ASI atteint -->
     <section
       v-for="lvl in asiLevelsForCharacter"
       :key="lvl"
@@ -29,7 +28,6 @@
         </UBadge>
       </header>
 
-      <!-- Toggle ASI / Don -->
       <div class="flex gap-2">
         <button
           type="button"
@@ -53,7 +51,6 @@
         </button>
       </div>
 
-      <!-- Bloc ASI -->
       <div v-if="state.asiChoice[lvl] === 'asi'" class="space-y-3">
         <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-(--ui-border) bg-(--ui-bg) text-sm">
           <span class="text-muted flex-1">Distribuez <strong class="text-amber-400">2 points</strong>.</span>
@@ -117,7 +114,6 @@
         </div>
       </div>
 
-      <!-- Bloc Don -->
       <div v-else-if="state.asiChoice[lvl] === 'feat'" class="space-y-3">
         <p class="text-xs text-muted">
           Liste complète des dons. Effets mécaniques appliqués automatiquement quand disponibles.
@@ -140,7 +136,6 @@
           </button>
         </div>
 
-        <!-- Choix de caractéristique (si le don sélectionné en demande un) -->
         <div
           v-if="state.asiFeats[lvl] != null && featNeedsAbility(state.asiFeats[lvl])"
           class="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-2"
@@ -164,7 +159,6 @@
           </div>
         </div>
 
-        <!-- Choix de sort (Faveur des fées : 1 sort niv 1 Divination/Enchantement) -->
         <div
           v-if="state.asiFeats[lvl] != null && featNeedsSpell(state.asiFeats[lvl])"
           class="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-2"
@@ -190,7 +184,6 @@
         </div>
       </div>
 
-      <!-- Aucun choix -->
       <div
         v-else
         class="px-4 py-4 rounded-lg border border-(--ui-border) bg-(--ui-bg) text-sm text-muted text-center"
@@ -199,7 +192,6 @@
       </div>
     </section>
 
-    <!-- Filet de sécurité -->
     <div
       v-if="!asiLevelsForCharacter.length"
       class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm text-muted"
@@ -248,7 +240,6 @@ function setFeatSpell(featureId: number, spellId: number) {
   }
 }
 
-// Caractéristiques autorisées par le don choisi à ce palier (sous-ensemble du PHB).
 const allowedAbilities = (featureId: number | undefined): AbilityKey[] =>
   featAllowedAbilities(getFeatById(featureId)?.effects) as AbilityKey[]
 
@@ -287,11 +278,9 @@ function remainingForLevel(lvl: number): number {
   return 2 - total
 }
 
-// Score final EN TENANT COMPTE des ASI déjà alloués sur ce palier ET les autres,
-// avec le cap à 20 du PHB. Sert à grise les boutons + qui dépasseraient.
+// Score final (ASI de ce palier + des autres + dons), plafonné à 20 : sert à griser les boutons +.
 function finalAfterAsi(lvl: number, ab: AbilityKey): number {
   const base = baseScore(ab)
-  // Bonus des AUTRES paliers (somme - palier courant local seulement, pas global)
   const otherAsi = (asiBonusByAbility.value[ab] ?? 0) - getBonus(lvl, ab)
   const feat = featBonusByAbility.value[ab] ?? 0
   return Math.min(20, base + otherAsi + getBonus(lvl, ab) + feat)
@@ -316,7 +305,6 @@ function adjust(lvl: number, ab: AbilityKey, delta: number) {
 }
 
 function setChoice(lvl: number, choice: 'asi' | 'feat') {
-  // Toggle : reclic sur le même choix → annule
   if (state.value.asiChoice[lvl] === choice) {
     const next = { ...state.value.asiChoice }
     delete next[lvl]
@@ -324,7 +312,6 @@ function setChoice(lvl: number, choice: 'asi' | 'feat') {
     return
   }
   state.value.asiChoice = { ...state.value.asiChoice, [lvl]: choice }
-  // Nettoie l'autre côté
   if (choice === 'asi') {
     const feats = { ...state.value.asiFeats }
     delete feats[lvl]

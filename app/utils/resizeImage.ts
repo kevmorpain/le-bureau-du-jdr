@@ -1,11 +1,6 @@
 /**
- * Réduit une image avant envoi (portraits). Les portraits s'affichent à 36 px dans
- * l'en-tête et 64 px dans l'aperçu : envoyer la photo brute d'un téléphone (plusieurs Mo)
- * ne servirait qu'à remplir le bucket et à se heurter à la limite de l'endpoint.
- *
- * Convertit en WebP, borne le plus grand côté à `maxDimension`, et **retombe sur le
- * fichier d'origine** si le navigateur ne sait pas faire (l'endpoint accepte de toute
- * façon png/jpeg/webp et refusera lui-même ce qui est trop gros).
+ * Réduit une image avant envoi (portraits affichés à 36 px / 64 px) : convertit en WebP et borne le
+ * plus grand côté. Retombe sur le fichier d'origine si le navigateur ne sait pas faire.
  */
 export const PORTRAIT_MAX_DIMENSION = 512
 

@@ -4,10 +4,8 @@ function settle<T>(promise: Promise<T>): Promise<T | { error: string }> {
   return promise.catch((e: unknown) => ({ error: e instanceof Error ? e.message : String(e) }))
 }
 
-// Registre nom → fonction de seed. Sert au mode ciblé (`only`), qui permet de
-// ne lancer qu'un seed précis. Utile car le seed complet dépasse la limite de
-// requêtes D1 par invocation Worker : les derniers seeds (items, feats) ne sont
-// jamais atteints. En ciblant un seul seed, on reste largement sous la limite.
+// Le mode ciblé (`only`) existe parce que le seed complet dépasse la limite de requêtes D1 par
+// invocation Worker : les derniers seeds ne sont jamais atteints.
 const SEED_REGISTRY: Record<string, () => Promise<unknown>> = {
   abilityScores: _seed.abilityScores,
   skills: _seed.skills,
@@ -48,16 +46,10 @@ function buildResult(start: number, summary: Record<string, unknown>) {
   }
 }
 
-/**
- * Lance les seeds.
- * @param only Liste de noms de seeds à lancer (cf. SEED_REGISTRY). Si fourni,
- *   seuls ces seeds tournent, séquentiellement — pratique pour rester sous la
- *   limite de requêtes D1 (ex : `only=['feats']`). Sinon, seed complet.
- */
+/** @param only Noms de seeds à lancer séquentiellement (cf. SEED_REGISTRY) ; sinon, seed complet. */
 export async function runSeeds(only?: string[]) {
   const start = Date.now()
 
-  // ── Mode ciblé ──────────────────────────────────────────────────────────
   if (only && only.length) {
     const summary: Record<string, unknown> = {}
     for (const name of only) {
@@ -67,9 +59,6 @@ export async function runSeeds(only?: string[]) {
     return buildResult(start, summary)
   }
 
-  // ── Seed complet ────────────────────────────────────────────────────────
-
-  // Étape 1 : données de base (parallèle)
   const [abilityScores, skills, damageTypes, magicSchools, characterSpecies, classes, backgrounds] = await Promise.all([
     settle(_seed.abilityScores()),
     settle(_seed.skills()),
@@ -80,7 +69,6 @@ export async function runSeeds(only?: string[]) {
     settle(_seed.backgrounds()),
   ])
 
-  // Étape 2 : features de classe (nécessite classes, parallèle)
   const [barbare, barde, clerc, druide, guerrier, magicien, moine, paladin, rodeur, roublard, ensorceleur, warlock] = await Promise.all([
     settle(_seed.barbare()),
     settle(_seed.barde()),
@@ -100,8 +88,6 @@ export async function runSeeds(only?: string[]) {
   const spells = await settle(_seed.spells())
   const items = await settle(_seed.items())
   const feats = await settle(_seed.feats())
-  // Espèces restructurées base+lignées (D17 — Elfe, Nain, Halfelin, Gnome, Tieffelin, Drakéide) —
-  // séquentiel (nombreux inserts). Additif. Après characterSpecies (legacy) → noms de base libres.
   const lineages = await settle(_seed.lineages())
 
   // Données de test uniquement — ne pas lancer en prod

@@ -6,7 +6,6 @@
       (<em>multi-classage</em>). Les prérequis D&amp;D 5e 2014 sont indiqués à titre indicatif — le MJ a le dernier mot.
     </p>
 
-    <!-- Niveau actuel -->
     <div class="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm">
       <span class="text-xs font-bold uppercase tracking-widest text-muted">État actuel</span>
       <div class="flex flex-wrap gap-2 flex-1">
@@ -28,7 +27,6 @@
       </span>
     </div>
 
-    <!-- Continuer une classe -->
     <div class="text-xs font-bold tracking-[0.12em] uppercase text-amber-400 mb-2">
       ① Continuer une classe existante
     </div>
@@ -56,7 +54,6 @@
           <UBadge :color="cc.classId" variant="subtle" size="md">d{{ cc.hitDie }}</UBadge>
         </div>
 
-        <!-- Features at next level -->
         <div class="text-xs text-muted leading-snug">
           <template v-if="getFeaturesAt(cc.classId, cc.level + 1).length">
             <span :style="{ color: cc.color }" class="font-semibold">Débloque :</span>
@@ -65,7 +62,6 @@
           <span v-else class="italic">Pas de nouvelle aptitude · +PV et progression.</span>
         </div>
 
-        <!-- Badges -->
         <div class="flex flex-wrap gap-1.5 mt-2.5">
           <UBadge v-if="isSubclassDue(cc)" color="warning" variant="subtle" size="md">⚡ Sous-classe</UBadge>
           <UBadge v-if="isAsiDue(cc.classId, cc.level + 1)" color="violet" variant="subtle" size="md">✦ ASI / Don</UBadge>
@@ -75,12 +71,10 @@
       </button>
     </div>
 
-    <!-- Multiclassage -->
     <div class="text-xs font-bold tracking-[0.12em] uppercase text-amber-400 mb-2">
       ② Nouvelle classe (multi-classage)
     </div>
 
-    <!-- Prereq info -->
     <div class="text-xs text-muted mb-3 px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated)">
       Le multi-classage nécessite une caractéristique minimale de 13 dans l'aptitude principale de la nouvelle classe. Les prérequis sont affichés mais non bloquants.
     </div>
@@ -104,12 +98,10 @@
           </div>
         </div>
 
-        <!-- Badge sous-classe au niv.1 (niveau d'accès lu dans le catalogue) -->
         <div v-if="subclassLevelFor(cls.id) === 1" class="mb-1.5">
           <UBadge color="warning" variant="subtle" size="md">⚡ Sous-classe dès le niv.1</UBadge>
         </div>
 
-        <!-- Prereqs -->
         <div v-if="getPrereqs(cls.id)" class="flex flex-wrap gap-1">
           <template v-for="(req, idx) in getPrereqs(cls.id)" :key="idx">
             <span
@@ -208,7 +200,6 @@ function pickContinue(cc: { classId: string, level: number }) {
   state.value.isMulticlass = false
   state.value.fromLevel = cc.level
   state.value.toLevel = cc.level + 1
-  // Reset dependent fields
   state.value.newSubclassId = null
   state.value.newSubclassName = null
   state.value.fightingStyle = null
