@@ -3,7 +3,6 @@ import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../../serv
 import { classesData } from '../../server/db/seeds/data/classes'
 import { CLASS_IDENTITY } from '../fixtures/classIdentity'
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Contrat du point de choix de SOUS-CLASSE (F2, « décision → progression »). Comme
 // classesIdentity.test.ts pour l'identité, on VERROUILLE la source de données (le helper
 // `subclassChoiceFeature`) contre le contrat unique `CLASS_IDENTITY` : chaque classe doit poser
@@ -11,7 +10,6 @@ import { CLASS_IDENTITY } from '../fixtures/classIdentity'
 // Un désalignement (niveau recopié à la main qui dérive, classe oubliée) casse ici.
 //
 // Env `unit` : le helper n'a aucune dépendance runtime `hub:db` (import de type seul).
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe('subclassChoiceFeature — contrat de sous-classe', () => {
   it('couvre EXACTEMENT les 12 classes du contrat (aucune oubliée, aucune en trop)', () => {

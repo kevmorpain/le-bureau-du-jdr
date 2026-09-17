@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- En-tête -->
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">⚔️</span>
       <div>
@@ -9,7 +8,6 @@
       </div>
     </div>
 
-    <!-- Grille des classes -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       <button
         v-for="cls in filteredClasses"
@@ -43,10 +41,8 @@
       </button>
     </div>
 
-    <!-- Sections post-sélection -->
     <template v-if="classData">
 
-      <!-- Sélecteur de niveau -->
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-2.5 mb-3">
@@ -55,7 +51,6 @@
           <span class="text-xs text-muted">· Maîtrise +{{ profBonus }}</span>
         </div>
 
-        <!-- Grille niveaux -->
         <div class="flex flex-wrap gap-1.5 mb-3">
           <button
             v-for="n in 20"
@@ -77,7 +72,6 @@
           </button>
         </div>
 
-        <!-- Liste cumulée des jalons jusqu'au niveau actuel -->
         <div v-if="milestonesUpToLevel.length" class="flex flex-col gap-1 mb-3">
           <div v-for="[lv, feat] in milestonesUpToLevel" :key="lv" class="flex gap-2 text-xs">
             <span class="font-mono text-amber-400 w-5 shrink-0">{{ lv }}</span>
@@ -94,7 +88,6 @@
         </p>
       </div>
 
-      <!-- Capacités de départ -->
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Capacités de classe</p>
@@ -110,7 +103,6 @@
         </ul>
       </div>
 
-      <!-- Compétences -->
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-2 mb-3">
@@ -143,7 +135,6 @@
         </div>
       </div>
 
-      <!-- Style de combat (options + niveau lus dans le catalogue, F2 tranche 4) -->
       <template v-if="needsFightingStyle && fightingStyleOptions.length">
         <USeparator class="my-6" />
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -168,7 +159,6 @@
         </div>
       </template>
 
-      <!-- Sous-classe (niveau d'accès + options lus dans le catalogue, F2 tranche 3) -->
       <template v-if="subclassOptions.length">
         <USeparator class="my-6" />
         <template v-if="needsSubclass">
@@ -203,7 +193,6 @@
         </div>
       </template>
 
-      <!-- Faveur du Pacte (Occultiste niveau ≥ 3) -->
       <template v-if="needsPactBoon">
         <USeparator class="my-6" />
         <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
@@ -228,7 +217,6 @@
         </div>
       </template>
 
-      <!-- Manifestations occultes (Occultiste niveau ≥ 2) -->
       <template v-if="needsInvocations">
         <USeparator class="my-6" />
         <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
@@ -243,7 +231,6 @@
         </div>
       </template>
 
-      <!-- Métamagie (Ensorceleur niveau ≥ 3) -->
       <template v-if="needsMetamagic">
         <USeparator class="my-6" />
         <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
@@ -254,7 +241,6 @@
         </div>
       </template>
 
-      <!-- Points de vie -->
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-3 mb-3">
@@ -263,7 +249,6 @@
           <span class="text-xs text-muted">PV max</span>
         </div>
 
-        <!-- Sélecteur de mode -->
         <div class="flex gap-2 mb-4">
           <button
             v-for="m in HP_MODES"
@@ -279,12 +264,10 @@
           </button>
         </div>
 
-        <!-- Mode Moyenne -->
         <p v-if="state.hpMode === 'average'" class="text-xs text-muted">
           Niveau 1 : {{ classData.hitDie }} (maximum). Niveaux suivants : {{ Math.ceil(classData.hitDie / 2) + 1 }} par niveau.
         </p>
 
-        <!-- Mode Jet de dés -->
         <template v-if="state.hpMode === 'roll'">
           <div v-if="state.level === 1" class="text-xs text-muted">
             Niveau 1 : toujours le maximum ({{ classData.hitDie }}).
@@ -322,7 +305,6 @@
           </template>
         </template>
 
-        <!-- Mode Manuel -->
         <div v-if="state.hpMode === 'manual'" class="flex items-center gap-3">
           <input
             type="number"
@@ -375,7 +357,6 @@ const filteredClasses = computed(() =>
   CLASSES.filter(c => !c.source || !isGatedSource(c.source) || extended.value),
 )
 
-// Sorts connus du perso pour la résolution des prérequis (Décharge occulte etc.)
 const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells', {
   query: extendedQuery,
 })
@@ -388,7 +369,7 @@ const knownSpellNames = computed(() => {
   return (allSpells.value ?? []).filter(s => ids.has(s.id)).map(s => s.name)
 })
 
-// Options de style de combat lues dans le catalogue (F2 tranche 4) au lieu du blob.
+// Options de style de combat lues dans le catalogue, plus dans le blob front.
 const { data: fightingStyleData } = useFetch(
   () => classData.value ? `/api/catalog/classes/${encodeURIComponent(classData.value.dbName)}/fighting-styles` : '',
   { watch: [classData], default: () => [] },

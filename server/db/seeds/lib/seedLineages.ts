@@ -4,53 +4,31 @@ import * as schema from '../../schema'
 import type { CreatureSize } from '../../schema/character_species'
 import type { Effect } from '../../schema/effects'
 
-/**
- * Moteur GÉNÉRIQUE du modèle « espèce = base + lignées » (chantier lignée, D17). Extrait du
- * pilote elfe (ex-`seedElfLineages`) et paramétré par les DONNÉES d'une espèce → ajouter une
- * espèce = 1 fichier de données (`data/<espèce>.ts`) + 1 ligne de registre (`data/lineageSpecies.ts`),
- * sans toucher au moteur. Insère, pour l'espèce décrite :
- *   - l'espèce de BASE (par `name`+`ruleset`) + ses traits communs en `species_features` ;
- *   - la feature de choix (« Lignage … ») portant une `progression kind:'lineage'` /
- *     `optionSource:{type:'lineages'}` (le point de choix, résolu par le lot 2) ;
- *   - chaque lignée en `species_lineages` + ses traits propres en `lineage_feature`
- *     (`features.lineage_id`, `level_required=1`).
- *
- * `db` est INJECTÉ (patron des utils 5/6) : le `db` de `hub:db` en prod via un wrapper, une
- * instance libsql en test — d'où la testabilité sans HTTP. Lecture/écriture via le schéma FRAIS
- * (`../../schema`), jamais le cache `hub:db` (colonnes/tables neuves garanties, cf. CLAUDE.md).
- *
- * **Idempotent** (re-run sûr) : base par (name, ruleset), features par (owner, name), lignées
- * par (species, name), progression par featureId. **Additif** : n'efface RIEN.
- */
+// Moteur générique du modèle « espèce = base + lignées » (D17) : ajouter une espèce = 1 fichier de
+// données + 1 ligne de registre, sans toucher au moteur. Idempotent (re-run sûr) et additif.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-/** Un trait (feature) : nom + description + effets (typés `unknown[]`, castés `Effect[]` au seed). */
 export interface LineageTraitData {
   name: string
   description: string
   effects?: unknown[]
 }
 
-/** Une lignée = un nom, une description, et ses traits PROPRES (ceux qui diffèrent des autres). */
 export interface LineageData {
   name: string
   description: string
   traits: LineageTraitData[]
 }
 
-/** Description complète d'une espèce « base + lignées » — la matière que consomme le moteur. */
 export interface LineageSpeciesData {
   name: string
   ruleset: '5' | '5.5'
   size: CreatureSize
   speed: number
-  /** Traits COMMUNS à toutes les lignées → portés par la base. */
   baseTraits: LineageTraitData[]
-  /** Le point de choix (feature qui porte la progression `kind:'lineage'`). */
   lineageChoice: { name: string, description: string }
-  /** Les lignées (sous-races 2014 / origines 2024). */
   lineages: LineageData[]
 }
 
@@ -80,7 +58,6 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
 
   const { name, ruleset, size, speed, baseTraits, lineageChoice, lineages } = data
 
-  // 1. Espèce de BASE (idempotent par name+ruleset).
   const existingBase = await db
     .select()
     .from(schema.characterSpecies)
@@ -90,7 +67,6 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
   const base = existingBase ?? await db.insert(schema.characterSpecies).values({ name, ruleset, size, speed }).returning().get()
   if (!existingBase) speciesInserted++
 
-  // 2. Traits communs → `species_features` (idempotent par (espèce, nom de feature)).
   for (const trait of baseTraits) {
     const { effects, ...traitData } = trait
     const exists = await db
@@ -107,7 +83,6 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
     await db.insert(schema.speciesFeatures).values({ speciesId: base.id, featureId: feature.id }).onConflictDoNothing()
   }
 
-  // 3. Feature de choix « Lignage … » + sa `progression` (kind:'lineage').
   const existingChoice = await db
     .select({ id: schema.features.id })
     .from(schema.features)
@@ -130,7 +105,6 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
     await db.insert(schema.progression).values({ featureId: choiceFeatureId, kind: 'lineage', count: { op: 'fixed', value: 1 }, optionSource: { type: 'lineages' }, replaceable: false })
   }
 
-  // 4. Lignées + leurs features propres (idempotent par (espèce, nom de lignée) / (lignée, nom)).
   for (const lineage of lineages) {
     const existingLineage = await db
       .select()

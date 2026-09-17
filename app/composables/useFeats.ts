@@ -7,30 +7,21 @@ export interface Feat {
   name: string
   description: string | null
   effects: Effect[]
-  // Prérequis PHB 2014 (carac min, maîtrise d'armure, lanceur de sorts) —
-  // exposés par /api/feats pour affichage/validation ultérieure.
   prerequisites?: FeaturePrerequisite | null
 }
 
 export type { AbilityKey }
 const ALL_ABILITIES: AbilityKey[] = [...ABILITY_KEYS]
 
-// Caractéristiques autorisées par un don à choix de carac. La liste vient de
-// l'effet `ability_increase_choice.value.abilities` (ex : Observateur → INT/SAG,
-// Athlète → FOR/DEX). Absente/vide = n'importe quelle caractéristique (Résilient).
+// Caractéristiques autorisées par un don à choix de carac. Absente/vide = n'importe laquelle (Résilient).
 export function featAllowedAbilities(effects: Effect[] | undefined): AbilityKey[] {
   const eff = (effects ?? []).find(e => e.type === 'ability_increase_choice')
   const abilities = (eff?.value as { abilities?: AbilityKey[] } | undefined)?.abilities
   return abilities && abilities.length ? abilities : ALL_ABILITIES
 }
 
-// Charge la liste complète des dons (features feature_type='feat') une seule
-// fois et la cache via useFetch — partagée entre StepAsi (builder), StepFeats
-// (builder), LevelUpStepAsi, et la section Dons de la fiche perso.
 export function useFeats() {
-  // Gating `source` : inclure les dons d'extension quand le drapeau global est actif. Pas de
-  // `key` fixe — l'auto-clé (URL + query) sépare les entrées de cache socle / étendu, sinon une
-  // clé figée réutiliserait la mauvaise liste au basculement.
+  // Pas de `key` fixe : l'auto-clé (URL + query) sépare les entrées de cache socle / étendu.
   const { extendedQuery } = useExtendedContent()
   const { data, refresh, pending } = useFetch<Feat[]>('/api/feats', {
     query: extendedQuery,

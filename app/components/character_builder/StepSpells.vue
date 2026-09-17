@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- En-tête -->
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">✨</span>
       <div>
@@ -9,7 +8,6 @@
       </div>
     </div>
 
-    <!-- Classe sans magie -->
     <div
       v-if="!spellcastingInfo"
       class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-8 text-center text-sm text-muted"
@@ -18,7 +16,6 @@
     </div>
 
     <template v-else>
-      <!-- Bandeau stats (DD, attaque, caractéristique) -->
       <div class="flex flex-wrap gap-2 mb-4">
         <div
           v-for="stat in spellCastStats"
@@ -30,7 +27,6 @@
         </div>
       </div>
 
-      <!-- Emplacements de sorts en ronds -->
       <div v-if="slotsWithCount.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-5">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Emplacements de sorts</p>
         <div class="space-y-1.5">
@@ -50,7 +46,6 @@
         </div>
       </div>
 
-      <!-- Arcanums mystiques (Occultiste niv 11/13/15/17) — un bloc par palier débloqué -->
       <div v-for="lvl in arcaneMysteriumSpellLevels" :key="`arcanum-${lvl}`" class="mb-6">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">
@@ -82,7 +77,6 @@
         </div>
       </div>
 
-      <!-- Livre des secrets anciens (manifestation TCoE Tome) -->
       <div v-if="showBookOfAncientSecrets" class="mb-6">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">
@@ -114,7 +108,6 @@
         </div>
       </div>
 
-      <!-- Sorts du Pacte de la Chaîne (en premier, avant les onglets) -->
       <div v-if="needsPactBoon && state.pactBoon === 'chain'" class="mb-6">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
@@ -134,7 +127,6 @@
         </div>
       </div>
 
-      <!-- Sorts du Pacte du Tome (en premier, avant les onglets) -->
       <div v-if="needsPactBoon && state.pactBoon === 'tome'" class="mb-6">
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte du Tome</p>
@@ -165,7 +157,6 @@
         <p v-if="!pactCantripsPending && filteredPactCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
       </div>
 
-      <!-- Onglets (sorts classiques de la classe) -->
       <div class="flex gap-2 mb-4">
         <button
           v-if="cantripsNeeded > 0"
@@ -198,7 +189,6 @@
         </button>
       </div>
 
-      <!-- Info box casters préparés / grimoire -->
       <div
         v-if="activeTab === 'spells' && (isPrepared || isGrimoire)"
         class="mb-4 px-3 py-2 rounded-lg border text-xs text-muted"
@@ -216,7 +206,6 @@
         </template>
       </div>
 
-      <!-- Filtres -->
       <div class="flex flex-wrap items-center gap-2 mb-4">
         <input
           v-model="filterText"
@@ -254,10 +243,8 @@
         </button>
       </div>
 
-      <!-- Chargement -->
       <div v-if="pending" class="text-sm text-muted py-8 text-center">Chargement des sorts…</div>
 
-      <!-- Tab : Sorts mineurs -->
       <template v-if="activeTab === 'cantrips' && !pending">
         <div class="text-xs text-muted mb-3">
           Sélectionnez {{ cantripsNeeded }} {{ $t('sort', cantripsNeeded) }} mineur{{ cantripsNeeded > 1 ? 's' : '' }}
@@ -286,7 +273,6 @@
         <div v-if="!filteredCantrips.length" class="text-sm text-muted italic py-4">Aucun sort mineur correspondant.</div>
       </template>
 
-      <!-- Tab : Sorts connus / grimoire / préparés -->
       <template v-if="activeTab === 'spells' && !pending">
         <div class="text-xs text-muted mb-3">
           Sélectionnez {{ spellsNeeded }} {{ $t('sort', spellsNeeded) }}
@@ -351,16 +337,13 @@ const filterSchool = ref<string | null>(null)
 const filterConc = ref(false)
 const filterRitual = ref(false)
 
-// Gating `source` : inclure le contenu d'extension quand le drapeau global est actif.
 const { extendedQuery } = useExtendedContent()
 
-// Fetch sorts filtrés par classe
 const { data: allSpells, pending } = useFetch('/api/spells', {
   query: computed(() => ({ className: classData.value?.dbName ?? '', ...extendedQuery.value })),
   immediate: true,
 })
 
-// Partager les noms de sorts pour BuilderPreview (toutes les sources)
 const spellNamesById = useState<Record<number, string>>('builder-spell-names', () => ({}))
 
 function mergeSpellNames(spells: any[] | null) {
@@ -372,7 +355,6 @@ function mergeSpellNames(spells: any[] | null) {
 
 watch(allSpells, mergeSpellNames, { immediate: true })
 
-// Sorts du Pacte du Tome — tous les cantrips toutes classes
 const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
   query: extendedQuery,
   immediate: true,
@@ -387,12 +369,10 @@ const filteredPactCantrips = computed(() =>
 )
 watch(allCantripsData, mergeSpellNames, { immediate: true })
 
-// Cantrips déjà choisis dans la liste classique (pour grisage dans le Tome picker)
 function isRegularCantrip(id: number): boolean {
   return state.value.selectedCantrips.includes(id)
 }
 
-// Sort Appel de familier (pour Pacte de la Chaîne)
 const { data: magicianSpells } = useFetch('/api/spells', {
   query: computed(() => ({ className: 'Magicien', ...extendedQuery.value })),
   immediate: true,
@@ -416,7 +396,6 @@ const spellsByLevel = computed(() => {
   return result
 })
 
-// Filtres appliqués
 function applyFilters(list: any[]) {
   return list.filter((s) => {
     if (filterText.value && !s.name.toLowerCase().includes(filterText.value.toLowerCase())) return false
@@ -440,7 +419,6 @@ const filteredSpellsByLevel = computed(() => {
 
 const { t } = useI18n()
 
-// Options pour USelect école
 const schoolOptions = computed(() => {
   const seen = new Set<string>()
   const options: { label: string, value: string | null }[] = [{ label: 'Toutes les écoles', value: null }]
@@ -525,8 +503,6 @@ function toggleSpell(id: number) {
   else if (list.length < spellsNeeded.value) list.push(id)
 }
 
-// ─── Arcanums mystiques ─────────────────────────────────────────────────────
-
 function arcanumCandidates(level: number) {
   return ((allSpells.value ?? []) as any[]).filter(s => s.level === level)
 }
@@ -540,15 +516,13 @@ function toggleArcanumSpell(level: number, id: number) {
   }
 }
 
-// ─── Livre des secrets anciens : sorts rituels niv 1 toutes classes ───────
+// Livre des secrets anciens : sorts rituels niv 1 toutes classes
 
 const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('/api/spells', {
   query: extendedQuery,
   immediate: true,
 })
 
-// Map des invocations pour détecter si « Livre des secrets anciens » est dans
-// les invocations sélectionnées.
 const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
   query: extendedQuery,
   default: () => [],
@@ -563,7 +537,6 @@ const showBookOfAncientSecrets = computed(() =>
   picksBookOfAncientSecrets(invocationsByName.value),
 )
 
-// Synchronise le flag de validation tant que la manifestation est cochée.
 watchEffect(() => {
   state.value.bookOfAncientSecretsRequired = showBookOfAncientSecrets.value
 })

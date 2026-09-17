@@ -5,15 +5,9 @@ import { createCharacter, createCharacterSchema } from '../../server/utils/chara
 import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLevelUp'
 import { bootstrapGoldenDb, OWNER, CLASS, SPECIES, FEATURE } from './fixtures/goldenMaster'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLE DE COMBAT — autorité serveur (F2 tranche 2). Le golden-master (archétype A) couvre déjà la
-// CRÉATION du Guerrier (« Défense » niv 1). Ce test cible ce qu'il ne couvre pas :
-//  - la MONTÉE de niveau (Paladin 1→2 : le style se débloque au niv 2) ;
-//  - le GATING PAR NIVEAU (autorité serveur) : un Paladin niv 1 qui envoie un style ne le reçoit PAS ;
-//  - la matérialisation en character_features + l'écriture en character_choices.
-//
-// Réutilise le catalogue du golden-master (Guerrier FS niv 1, Paladin FS niv 2).
-// ─────────────────────────────────────────────────────────────────────────────
+// Style de combat — autorité serveur, sur ce que le golden-master ne couvre pas : la MONTÉE de
+// niveau (Paladin 1→2), le gating par niveau (un Paladin niv 1 qui envoie un style ne le reçoit pas),
+// et la matérialisation en character_features + l'écriture en character_choices.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any

@@ -1,12 +1,7 @@
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import { rulesetOf } from './rulesetOf'
 
-/**
- * Upsert idempotent d'entités de catalogue keyé par **(name, ruleset)** — PAS par nom seul :
- * un contenu 5.5 homonyme (« Sage », « Soldat »…) insère une ligne distincte au lieu d'écraser
- * la 2014 (cf. {@link rulesetOf}, decisions.md D2). `findFirst` reçoit donc `(name, ruleset)`.
- * `insert` doit estampiller la ligne avec `ruleset` (défaut `'5'` via la colonne / `rulesetOf`).
- */
+/** Upsert keyé par (name, ruleset) — jamais par nom seul : un homonyme 5.5 insère une ligne distincte (D2). */
 export async function upsertByName<T extends { name: string; ruleset?: Ruleset }>(
   findFirst: (name: string, ruleset: Ruleset) => Promise<unknown>,
   insert: (row: T) => Promise<unknown>,

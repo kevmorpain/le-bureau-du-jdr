@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-4">
-    <!-- Historique sélectionné -->
     <div class="space-y-3">
       <div class="flex items-center justify-between gap-2">
         <h3 class="text-xs font-bold uppercase tracking-widest text-muted">
@@ -25,7 +24,6 @@
           </div>
         </div>
 
-        <!-- Description de l'historique (prédéfini ou personnalisé) -->
         <p
           v-if="selectedBackground.description"
           class="text-sm text-muted whitespace-pre-line leading-relaxed"
@@ -33,7 +31,6 @@
           {{ selectedBackground.description }}
         </p>
 
-        <!-- Capacité de l'historique -->
         <UAccordion
           v-if="selectedBackground.featureName"
           :items="[{ label: `Capacité : ${selectedBackground.featureName}`, content: selectedBackground.featureDescription }]"

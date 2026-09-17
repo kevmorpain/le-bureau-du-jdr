@@ -1,15 +1,5 @@
 import type { CasterType, SpellcastingType } from './spellcasting'
 
-/**
- * Tables d'emplacements de sorts D&D 5e (2014) — **source unique** (cf. decisions.md D6,
- * rules-engine.md §1). Ces tables + `slotsForLevel` étaient recopiées à l'IDENTIQUE dans
- * `character_sheets/index.post.ts` ET `[id]/level-up.post.ts` (et une variante dans le front),
- * et `combinedSpellSlots` (multiclassage) vivait dans le level-up — cf. architecture-audit.md §7.
- *
- * Module PUR & node-safe (types uniquement en import, aucune valeur `~~`/`hub:db`) : importable
- * par le projet vitest `unit` et par le serveur. Le front (point 6) y pointera à son tour.
- */
-
 // Lanceur complet (Barde, Clerc, Druide, Ensorceleur, Magicien). Index = niveau - 1 ; colonnes = niveaux de sort 1→9.
 const FULL_SLOTS: number[][] = [
   [2, 0, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0, 0, 0, 0, 0, 0], [4, 2, 0, 0, 0, 0, 0, 0, 0],
@@ -37,10 +27,7 @@ const HALF_SLOTS: number[][] = [
 const PACT_LEVEL = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
 const PACT_COUNT = [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4]
 
-/**
- * Emplacements de sorts d'une classe seule à un niveau donné → tableau de 9 (niveaux de sort 1→9).
- * Le niveau est borné à [1, 20]. Pour `pact`, un seul niveau de sort porte tous les emplacements.
- */
+/** Niveau borné à [1, 20]. */
 export function slotsForLevel(type: CasterType, level: number): number[] {
   const idx = Math.max(0, Math.min(19, level - 1))
   if (type === 'full') return [...FULL_SLOTS[idx]!]
@@ -51,7 +38,6 @@ export function slotsForLevel(type: CasterType, level: number): number[] {
   return row
 }
 
-/** Niveau de sort MAXIMAL accessible (1→9) pour une classe seule à un niveau donné ; 0 si aucun. */
 export function maxSpellLevelForLevel(type: CasterType, level: number): number {
   const slots = slotsForLevel(type, level)
   for (let i = 8; i >= 0; i--) {

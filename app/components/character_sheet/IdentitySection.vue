@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-4">
-    <!-- Identité : nom, alignement, joueur, apparence -->
     <div class="space-y-3">
       <div class="flex items-start justify-between gap-2">
         <div class="min-w-0">
@@ -26,7 +25,6 @@
         <EditIdentitySlideover v-model:character-sheet="characterSheet" />
       </div>
 
-      <!-- Apparence physique + catégorie de taille de l'espèce -->
       <dl
         v-if="identityFields.length"
         class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2"
@@ -52,12 +50,10 @@
       </p>
     </div>
 
-    <!-- Historique + traits de personnalité -->
     <div class="border-t border-default pt-4">
       <BackgroundSection v-model:character-sheet="characterSheet" />
     </div>
 
-    <!-- Histoire & alliés -->
     <div
       v-if="backstory"
       class="border-t border-default pt-4 space-y-1"
@@ -96,8 +92,7 @@ const {
   sizeLabel,
 } = useCharacterSheet(characterSheet)
 
-// Apparence saisie + donnée déjà en base mais jusqu'ici invisible sur la fiche :
-// la catégorie de taille de l'espèce (`character_species.size`).
+// Catégorie de taille de l'espèce : en base depuis toujours, jusqu'ici jamais affichée.
 const identityFields = computed(() => [
   ...appearanceFields.value,
   ...(sizeLabel.value ? [{ key: 'size', label: 'Catégorie de taille', value: sizeLabel.value }] : []),

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { resolveChoices } from '../../shared/rules/resolve'
 import { warlockCatalog, WARLOCK_CLASS_ID } from '../fixtures/resolveCatalog'
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Contrat d'ÉQUIVALENCE (lot 6b) : la dérivation catalogue-driven que le front va adopter
 // (builder + level-up lisent `/api/catalog/progressions` puis `resolveChoices`) doit rendre
 // EXACTEMENT les mêmes valeurs que les tables Occultiste aujourd'hui codées en dur dans
@@ -16,7 +15,6 @@ import { warlockCatalog, WARLOCK_CLASS_ID } from '../fixtures/resolveCatalog'
 //   invocationsCount(L)   = choicesAt(L).find(c => c.kind === 'invocations')?.count ?? 0
 //   arcanumSpellLevel(L)  = choicesAt(L).find(c => c.kind === 'spell' && c.ownerLevelRequired === L)
 //                             .optionSource.maxLevel                                 // arcanum débloqué À ce niveau
-// ─────────────────────────────────────────────────────────────────────────────
 
 // Tables « golden » = copies EXACTES de celles aujourd'hui dans les composables front.
 const WARLOCK_INVOCATIONS_KNOWN = [0, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8]

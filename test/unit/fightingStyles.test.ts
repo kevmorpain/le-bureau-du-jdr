@@ -8,13 +8,8 @@ import {
   type FightingStyleKind,
 } from '../../server/db/seeds/data/fightingStyles'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Contrat des données de STYLE DE COMBAT (F2, « décision → progression »). Verrouille la source
-// unique `fightingStyles.ts` : les 6 styles PHB 2014, les sous-ensembles par classe, et la forme
-// des features-options injectées par seedClass.
-//
-// Env `unit` : le module n'a aucune dépendance runtime `hub:db` (imports de type seuls).
-// ─────────────────────────────────────────────────────────────────────────────
+// Contrat des données de STYLE DE COMBAT : les 6 styles du PHB 2014, les sous-ensembles par classe,
+// et la forme des features-options injectées par seedClass.
 
 const ALL_KINDS: FightingStyleKind[] = ['archery', 'two_weapon', 'defense', 'dueling', 'great_weapon', 'protection']
 

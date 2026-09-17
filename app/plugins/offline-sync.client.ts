@@ -14,12 +14,10 @@ export default defineNuxtPlugin(() => {
   refreshPendingCount()
   if (online.value) void flushAll()
 
-  // Rejeu dès le retour du réseau.
   watch(online, (isOnline) => {
     if (isOnline) void flushAll()
   })
 
-  // Reprise au premier plan (réveil de l'app sur tablette).
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return
     refreshPendingCount()

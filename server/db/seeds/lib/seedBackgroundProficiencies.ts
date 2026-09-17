@@ -4,28 +4,13 @@ import * as schema from '../../schema'
 import type { Effect } from '../../schema/effects'
 import { fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
 
-/**
- * Volet B, étape 2 — porte les maîtrises d'outils/langues FIXES d'un historique en EFFETS sur
- * `background_features` (table posée dormante au lot 4d, cf. son docstring), afin que la fiche les
- * DÉRIVE de l'origine (comme l'espèce) au lieu de les matérialiser en grants. Symétrique de
- * `seedLineages` : DI (`db` injecté → testable libsql), lecture/écriture via le schéma FRAIS
- * (`../../schema`, jamais le cache `hub:db`), **idempotent** (par (background, nom de feature)) et
- * **additif**.
- *
- * Chaque historique ayant ≥1 maîtrise fixe reçoit UNE feature porteuse (`feature_type =
- * 'proficiency_grant'`, jamais matérialisée ni affichée — même type inerte que les maîtrises de
- * classe, volet B étape 1), liée par `background_features`, portant un effet `tool_proficiency` /
- * `language_proficiency` par entrée fixe. Les entrées « au choix » restent des deltas du joueur
- * (grants), non dérivées — cf. [[shared/rules/backgroundProficiencies]].
- *
- * NB 2014 : les langues d'historique sont toutes « au choix » → aucun effet `language_proficiency`
- * émis en pratique ; le code reste général (5.5 / homebrew).
- */
+// Pose les maîtrises d'outils/langues FIXES d'un historique en effets sur une feature porteuse
+// (`proficiency_grant`, jamais matérialisée ni affichée) pour que la fiche les DÉRIVE. Les entrées
+// « au choix » restent des deltas du joueur (grants). Idempotent et additif.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-/** Nom (interne) de la feature porteuse des maîtrises fixes d'un historique. */
 export const BACKGROUND_PROFICIENCY_CARRIER_NAME = 'Maîtrises d\'historique'
 
 export interface BackgroundProficiencyData {
@@ -39,7 +24,6 @@ export interface BackgroundProficiencySeedReport {
   effectsLinked: number
 }
 
-/** Lie un effet à une feature (dédup de l'effet par (type, value)). `true` si un NOUVEAU lien est créé. */
 async function linkEffect(db: Db, featureId: number, effect: Effect): Promise<boolean> {
   const existingEffect = await db
     .select({ id: schema.effects.id })
@@ -81,7 +65,6 @@ export async function seedBackgroundProficiencies(
       .get()
     if (!background) continue // historique pas encore seedé → skip (le seed backgrounds tourne avant)
 
-    // Feature porteuse (idempotent par (background, nom)).
     const existingCarrier = await db
       .select({ id: schema.features.id })
       .from(schema.features)

@@ -173,7 +173,6 @@ watch(lastSynced, (s) => {
   refreshSpells()
 })
 
-// Après résolution d'un conflit (garder local / recharger serveur), on resynchronise l'affichage.
 function reconcileAfterConflict() {
   refreshSheet()
   refreshInventory()
@@ -187,7 +186,6 @@ const shortRest = async (...args: Parameters<typeof _shortRest>) => { await _sho
 const longRest = async () => { await _longRest(); await refreshInventory() }
 const dawn = async () => { await _dawn(); await refreshInventory() }
 
-// ── Mode combat ──────────────────────────────────────────────────────────────
 const combatMode = ref(false)
 
 const toggleCombat = () => {
@@ -197,7 +195,7 @@ const toggleCombat = () => {
   }
 }
 
-// ── Badges pour les sections collapsibles ────────────────────────────────────
+// Badges pour les sections collapsibles
 const availableFeaturesCount = computed(() =>
   allCharacterFeatures.value.filter(f => f.maxUses !== null && f.currentUses < (f.maxUses ?? 0)).length || null,
 )
@@ -206,7 +204,7 @@ const preparedSpellsCount = computed(() =>
   (characterSpells.value ?? []).filter(s => s.prepared).length || null,
 )
 
-// ── Auto-save avec debounce ──────────────────────────────────────────────────
+// Auto-save avec debounce
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
 const pauseAutoSave = ref(false)
 

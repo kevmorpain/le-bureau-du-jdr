@@ -1,20 +1,9 @@
 import type { SpellcastingType } from '../../shared/rules/spellcasting'
 
 /**
- * Contrat des **faits d'identité** des 12 classes du PHB 2014 (cf. decisions.md D12 :
- * des valeurs D&D vérifiées à la main, pas un snapshot).
- *
- * Trois sources doivent s'y conformer, et ce sont trois tests distincts qui le
- * vérifient :
- *   1. la migration `0080_classes_identity_columns` (backfill des bases déployées) ;
- *   2. les données de seed `server/db/seeds/data/classes.ts` (bases neuves) ;
- *   3. le front `app/data/character-builder.ts`, qui garde sa copie jusqu'à ce que le
- *      builder lise le catalogue via l'API (point 6 de la roadmap, dnd-5.5.md §3).
- *
- * Source : PHB FR 2014 / https://www.aidedd.org/regles/classes/
- * (niveau d'accès à la sous-classe et progression d'incantation).
- *
- * `builderId` = clé du front (`CLASSES[].id`), `dbName` = `classes.name`.
+ * Contrat des faits d'identité des 12 classes du PHB 2014 : valeurs vérifiées à la main, pas un
+ * snapshot. Trois sources doivent s'y conformer (migration 0080, seed, blob front), vérifiées par
+ * trois tests distincts. Source : PHB FR 2014 / https://www.aidedd.org/regles/classes/
  */
 export interface ClassIdentity {
   builderId: string

@@ -2,24 +2,12 @@ import { computed, ref } from 'vue'
 import type { Effect } from '../../../server/db/schema/effects'
 import { useCharacterAbilities } from '../../../app/composables/character/useCharacterAbilities'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Fixtures de personnages pour les contrats d'équivalence 2014 (cf. decisions.md D12).
-//
-// Chaque fixture décrit les *entrées* de la couche de dérivation (caracs de base,
-// maîtrises, effets par source) telles qu'elles arriveraient du read-model GET
-// (server/api/character_sheets/[id]/index.get.ts) après assemblage par
-// useCharacterSheet. Les *sorties* attendues (valeurs D&D vérifiées à la main)
-// vivent dans les tests, pas ici — pas de snapshot.
-// ─────────────────────────────────────────────────────────────────────────────
+// Fixtures de personnages pour les contrats d'équivalence 2014 : les ENTRÉES de la couche de
+// dérivation, telles qu'elles arriveraient du read-model après assemblage par useCharacterSheet.
+// Les SORTIES attendues (valeurs D&D vérifiées à la main) vivent dans les tests — pas de snapshot.
 
-/**
- * Slice des entrées consommées par `useCharacterAbilities`.
- * On ne modélise que ce que le composable lit réellement :
- *  - `characterSheet.baseAbilityScores` / `.skills` / `.classes`
- *  - les 4 `deps` (effets d'espèce/feature/ASI + bonus de maîtrise).
- */
+/** Slice des entrées réellement lues par `useCharacterAbilities`. */
 export interface AbilitiesFixture {
-  /** Nom affiché dans les titres de tests. */
   name: string
   /** Caractéristiques de base (avant effets), telles que stockées en base. */
   baseAbilityScores: { abilityId: string, value: number }[]
@@ -182,10 +170,6 @@ export const uka: AbilitiesFixture = {
   ],
   proficiencyBonus: 4,
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Montage
-// ─────────────────────────────────────────────────────────────────────────────
 
 type SheetRef = Parameters<typeof useCharacterAbilities>[0]
 

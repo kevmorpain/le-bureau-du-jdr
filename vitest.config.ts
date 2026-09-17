@@ -6,9 +6,8 @@ export default defineConfig({
   test: {
     projects: [
       {
-        // Alias `~~` = racine du projet, comme dans Nuxt : les modules purs de `shared/`
-        // et `app/` (qui l'utilisent pour s'importer entre eux) restent testables dans
-        // le projet unit, sans démarrer Nuxt.
+        // Alias `~~` comme dans Nuxt : les modules purs de `shared/` et `app/` restent testables
+        // sans démarrer Nuxt.
         resolve: {
           alias: { '~~': fileURLToPath(new URL('.', import.meta.url)) },
         },

@@ -6,8 +6,6 @@ import type { AbilityScoreKey } from './effects'
 
 export type CharacterFeatureSource = 'asi' | 'bonus' | 'class' | 'subclass' | 'species' | 'invocation'
 
-// Choix résolus d'un don au moment où il est pris (ex : caractéristique +1
-// pour Observateur / Résilient / Athlète…). Volontairement souple/extensible.
 export interface FeatChoices {
   ability?: AbilityScoreKey
 }
@@ -18,9 +16,7 @@ const characterFeatures = sqliteTable(
     characterSheetId: integer('character_sheet_id').notNull().references(() => characterSheets.id, { onDelete: 'cascade' }),
     featureId: integer('feature_id').notNull().references(() => features.id, { onDelete: 'cascade' }),
     currentUses: integer('current_uses').default(0).notNull(),
-    // Source utile pour les dons (asi vs bonus MJ). Pour les autres features
-    // (class, subclass, species, invocation), c'est dérivable de feature.featureType
-    // mais on autorise le stockage explicite.
+    // Dérivable de `feature.featureType` sauf pour les dons (asi vs bonus MJ).
     source: text('source').$type<CharacterFeatureSource>(),
     classLevel: integer('class_level'),
     choices: text('choices', { mode: 'json' }).$type<FeatChoices>(),

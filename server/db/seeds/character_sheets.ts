@@ -33,7 +33,6 @@ export default async function seed() {
       )
     }
 
-    // Lier les capacités de classe au personnage
     if (className) {
       const cls = await db.query.classes.findFirst({
         where: eq(schema.classes.name, className),
@@ -58,7 +57,6 @@ export default async function seed() {
       }
     }
 
-    // Lier les capacités de sous-classe au personnage
     if (subclassName) {
       const subclass = await db.query.subclasses.findFirst({
         where: eq(schema.subclasses.name, subclassName),

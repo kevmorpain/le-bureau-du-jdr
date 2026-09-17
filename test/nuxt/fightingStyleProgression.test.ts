@@ -13,17 +13,9 @@ import {
   FIGHTING_STYLE_LEVEL_BY_CLASS,
 } from '../../server/db/seeds/data/fightingStyles'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mécanisme du point de choix de STYLE DE COMBAT (F2, tranche 1). Ferme la boucle
-// données→catalogue→résolution pour la progression `kind:'fighting_style'`, en vérifiant SURTOUT
-// le FILTRE PAR CLASSE de `buildCatalog` sur `feature_group` : les styles sont dupliqués par classe
-// (sous-ensembles différents), donc le Paladin ne doit PAS se voir proposer Archerie.
-//
-// On seede 2 classes (Guerrier 6 styles niv 1, Paladin 4 styles niv 2) via les helpers de
-// `fightingStyles.ts` (source du seed), puis on vérifie buildCatalog + resolveChoices/dueChoices.
-//
-// Env `nuxt` (comme buildCatalog.test) : le loader importe `~~/server/db/schema`.
-// ─────────────────────────────────────────────────────────────────────────────
+// Point de choix de STYLE DE COMBAT. Vérifie surtout le FILTRE PAR CLASSE de `buildCatalog` sur
+// `feature_group` : les styles sont dupliqués par classe, donc le Paladin ne doit PAS se voir
+// proposer Archerie.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

@@ -3,12 +3,8 @@ import * as schema from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { sheetIdFromPath } from '~~/server/utils/sheetIdFromPath'
 
-// Garde d'autorisation (default-deny) pour tout le sous-arbre
-// `/api/character_sheets/<id>/**` : toute route ciblant une fiche précise exige
-// une session ET la propriété de la fiche. Les nouvelles routes `[id]` sont donc
-// protégées automatiquement, sans intervention. La route collection
-// (`/api/character_sheets`, sans id) n'est PAS concernée : elle gère sa propre
-// session dans son handler (filtre/owner sur index.get / index.post).
+// Default-deny : toute route `/api/character_sheets/<id>/**` exige une session ET la propriété de la fiche.
+// La route collection (sans id) gère sa propre session.
 export default defineEventHandler(async (event) => {
   const sheetId = sheetIdFromPath(event.path)
   if (sheetId === null) return

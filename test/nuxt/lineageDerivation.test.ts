@@ -10,11 +10,8 @@ import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
 
-// Lot 3b-2 (chantier lignée, D17) — ÉQUIVALENCE BOUT EN BOUT de la dérivation (D12). On seede la
-// structure Elfe base+lignées, on crée des persos « Elfe base + lignée choisie », on DÉRIVE
-// (util `deriveChosenLineage`), et on vérifie que l'ENSEMBLE des effets (traits de base ⊕
-// features de la lignée) est EXACTEMENT celui de l'ancienne espèce séparée — plus la surcharge
-// de vitesse (Elfe des bois 10,5 m). Preuve qu'une fiche migrée (lot 4) ne changera pas de règles.
+// Équivalence bout en bout de la dérivation : un perso « Elfe base + lignée » doit dériver EXACTEMENT
+// les effets de l'ancienne espèce séparée, plus la surcharge de vitesse (Elfe des bois 10,5 m).
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

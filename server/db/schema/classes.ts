@@ -7,27 +7,17 @@ import spellClasses from './spell_classes'
 
 export type Die = string // e.g., "1d6", "1d8"
 
-// Les colonnes de `classes` portent les **faits d'identité** de la classe : statiques,
-// toujours vrais, ni grant ni décision (cf. rules-engine.md §3, decisions.md D3).
 const classes = sqliteTable('classes', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
-  // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2).
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
-  // Provenance / gating de visibilité (cf. shared/rules/source.ts). DEFAULT 'core' = socle
-  // toujours visible ; une classe d'extension serait gatée.
   source: text('source').$type<Source>().notNull().default('core'),
   hitDice: text('hit_dice').$type<Die>().notNull(),
   spellcastingAbility: text('spellcasting_ability'),
-  // Niveau auquel la classe accède à sa sous-classe (1 à 3 en 2014 ; 3 pour toutes
-  // en 5.5). Défaut 3 = le cas majoritaire en 2014 ET la règle unique en 5.5.
+  // Défaut 3 = le cas majoritaire en 2014 et la règle unique en 5.5.
   subclassLevel: integer('subclass_level').notNull().default(3),
-  // Progression d'incantation de la classe (cf. shared/rules/spellcasting.ts).
   spellcastingType: text('spellcasting_type').$type<SpellcastingType>().notNull().default('none'),
-  // Nombre d'armes maîtrisées (mécanique de MAÎTRISE D'ARMES 5.5, classes martiales).
-  // Nullable : NULL = pas de maîtrise d'armes (toutes les classes 2014, et les non-martiales
-  // 5.5). Fait d'identité de la classe ; le point de choix `weapon_mastery` (progression) porte
-  // le `count` effectif par niveau, cette colonne en est le repère de classe.
+  // NULL = pas de maîtrise d'armes (toutes les classes 2014). Le `count` par niveau vit sur la progression.
   weaponMasteryCount: integer('weapon_mastery_count'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),

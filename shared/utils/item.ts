@@ -1,7 +1,5 @@
 import { z } from 'zod'
 
-// ─── Weapon schemas ────────────────────────────────────────────────────────────
-
 export const weaponPropertySchema = z.enum([
   'finesse', 'light', 'heavy', 'two_handed', 'thrown',
   'reach', 'loading', 'ammunition', 'versatile',
@@ -20,8 +18,6 @@ export const weaponPropertiesSchema = z.object({
   versatile_damage: z.string().optional(),
 })
 
-// ─── Armor schemas ─────────────────────────────────────────────────────────────
-
 export const armorTypeSchema = z.enum(['light', 'medium', 'heavy', 'shield'])
 
 export const armorPropertiesSchema = z.object({
@@ -31,8 +27,6 @@ export const armorPropertiesSchema = z.object({
   strength_requirement: z.number().int().min(1).optional(),
   stealth_disadvantage: z.boolean(),
 })
-
-// ─── Equipment / Tool schemas ──────────────────────────────────────────────────
 
 export const equipmentPropertiesSchema = z.object({
   category: z.string().min(1),
@@ -44,8 +38,6 @@ export const toolPropertiesSchema = z.object({
   tool_type: toolTypeSchema,
   category: z.string().min(1),
 })
-
-// ─── Item type discriminator ───────────────────────────────────────────────────
 
 export const itemTypeSchema = z.enum(['weapon', 'armor', 'equipment', 'tool'])
 
@@ -65,18 +57,13 @@ export const createItemSchema = z.object({
   name: z.string().min(1).max(100),
   itemType: itemTypeSchema,
   properties: itemPropertiesSchema,
-  // nullable/optional : le front envoie null/undefined quand le champ est vide.
-  // Limite généreuse (la colonne DB est un text) : les descriptions d'objets
-  // magiques peuvent être longues (entrées de sourcebook).
+  // Limite généreuse : les descriptions d'objets magiques peuvent être longues.
   description: z.string().max(5000).nullable().optional(),
-  // Charges (objets à utilisations limitées).
   maxUses: z.number().int().min(1).max(99).nullable().optional(),
   rechargeType: itemRechargeTypeSchema.nullable().optional(),
   // null = recharge complète ; sinon expression de dés "XdY±Z" (recharge partielle).
   rechargeDice: z.string().regex(/^\d+d\d+([+-]\d+)?$/).nullable().optional(),
 })
-
-// ─── Inventory entry schemas ───────────────────────────────────────────────────
 
 export const createInventoryEntrySchema = z.object({
   itemId: z.number().int().positive(),
@@ -93,19 +80,14 @@ export const updateInventoryEntrySchema = z.object({
   currentUses: z.number().int().min(0).optional(),
   notes: z.string().max(500).optional(),
   usingTwoHanded: z.boolean().optional(),
-  // Harmonisation par instance (objets magiques, cf. items.requiresAttunement).
   attuned: z.boolean().optional(),
 })
-
-// ─── Proficiency override schemas ─────────────────────────────────────────────
 
 export const proficiencyOverrideSchema = z.object({
   proficiencyType: z.enum(['weapon', 'armor', 'language', 'tool']),
   value: z.string().min(1),
   action: z.enum(['grant', 'revoke']),
 })
-
-// ─── Labels ───────────────────────────────────────────────────────────────────
 
 export const weaponCategoryLabels: Record<string, string> = {
   simple_melee: 'Arme simple de mêlée',

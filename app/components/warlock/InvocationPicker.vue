@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col gap-3">
-    <!-- Compteur -->
     <div class="flex items-center justify-between text-xs">
       <p class="font-bold uppercase tracking-widest text-muted">
         {{ pickerLabel }}
@@ -13,12 +12,10 @@
       </span>
     </div>
 
-    <!-- Loading -->
     <div v-if="!invocations" class="text-xs text-muted italic px-3 py-2">
       Chargement…
     </div>
 
-    <!-- Liste -->
     <div v-else class="flex flex-col gap-2 max-h-[480px] overflow-y-auto pr-1">
       <button
         v-for="inv in sortedInvocations"

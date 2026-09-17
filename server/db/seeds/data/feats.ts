@@ -5,36 +5,16 @@ import type { Source } from '~~/shared/rules/source'
 export interface FeatSeed {
   name: string // Nom FR canonique (PHB 2014, trad. AideDD)
   description: string
-  // Slug stable utilisé par l'UI pour les mappings côté front (LU_FEATS).
-  // Stocké uniquement dans le seed, pas en DB — la résolution côté serveur
-  // se fait via le nom FR.
+  // Slug consommé par le front (LU_FEATS) : pas stocké en DB, la résolution serveur se fait par nom FR.
   slug: string
-  // Provenance / gating (cf. shared/rules/source.ts). Absent = 'core' (socle, non gaté).
   source?: Source
   effects: Effect[]
-  // Prérequis de sélection (caractéristique minimale, maîtrise d'armure,
-  // lanceur de sorts). null / absent = don sans prérequis.
+  // null / absent = don sans prérequis.
   prerequisites?: FeaturePrerequisite | null
 }
 
-// Dons du PHB 2014 (FR, trad. AideDD). Chacun se traduit en feature
-// `feature_type='feat'` au seed, avec ses effets mécaniques quand ils sont
-// automatisables. Les 42 dons du Player's Handbook 2014 y figurent.
-//
-// Modélisation des effets :
-// - `ability_increase` (carac fixe) : appliqué automatiquement par
-//   useCharacterAbilities (ex. Comédien → Charisme).
-// - `ability_increase_choice` / `saving_throw_proficiency_choice` (carac au choix) :
-//   résolus par le choix du joueur à la sélection du don (ex. Athlète → For/Dex ;
-//   Résilient → +1 ET maîtrise du JS de la même carac), cf. `resolveFeatEffects`.
-// - `proficiency` / `weapon_proficiency` / `language_proficiency_choice` /
-//   `passive_skill_bonus` / `initiative_bonus` / `hp_per_level` : consommés par
-//   la fiche (maîtrises, scores passifs, initiative, PV).
-// - `other` : mécaniques situationnelles de combat que l'app ne simule pas
-//   (attaques bonus, avantages conditionnels, riders de dégâts…) — purement
-//   descriptives, sans consommateur front.
+// Effets `other` = mécaniques situationnelles que l'app ne simule pas : purement descriptives.
 export const featsData: FeatSeed[] = [
-  // ─── Alerte / Vigilant ──────────────────────────────────────────────────
   {
     slug: 'alert',
     name: 'Vigilant',
@@ -410,7 +390,7 @@ export const featsData: FeatSeed[] = [
     prerequisites: { minAbilityScore: { abilities: ['dex'], score: 13 } },
   },
 
-  // ─── Don d'extension GATÉ (Tasha's Cauldron of Everything) ──────────────────
+  // Don d'extension GATÉ (Tasha's Cauldron of Everything)
   {
     slug: 'fey-touched',
     name: 'Faveur des fées',

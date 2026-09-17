@@ -13,12 +13,10 @@ export const characterSheets = [
       { abilityId: 'wis', value: 15 },
       { abilityId: 'cha', value: 9 },
     ],
-    // Occultiste : jets de sauvegarde SAG + CHA
     skills: [
       { skillKey: 'wis_save', proficiencyLevel: 'proficient' as const, source: 'class' as const },
       { skillKey: 'cha_save', proficiencyLevel: 'proficient' as const, source: 'class' as const },
     ],
-    // Features liées dynamiquement par le seed (nécessite que warlock seed ait été exécuté)
     className: 'Occultiste',
     subclassName: 'Le Grand Ancien',
     classLevel: 10,

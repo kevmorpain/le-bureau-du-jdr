@@ -80,6 +80,36 @@ S'applique à **chaque** changement, sans qu'on ait à le demander :
 - **La meilleure solution, pas un quick fix.** Préférer le design correct / DRY / aligné sur les patterns existants à une rustine ; réutiliser le pattern plutôt que le ré-implémenter.
 - **Zéro dette nouvelle.** Ne pas introduire de dette. Si un compromis est réellement inévitable, le remonter explicitement (dans la réponse, et dans `docs/` s'il doit être suivi) — jamais en silence.
 
+## Commentaires
+
+Par défaut : **pas de commentaire**. Le code est expressif (noms clairs, petites fonctions) — un
+commentaire qui redit *ce que fait* le code est du bruit, et il se désynchronise.
+
+N'en écrire un que pour le **pourquoi non-évident** :
+
+- **piège / contournement** : pas de `db.transaction()` sur D1, cache de schéma `hub:db`,
+  dépendance d'ordre dans un `db.batch()`, `useDrizzle()` cassé ;
+- **intention de sécurité** et menace précise contrée (`sanitizeRedirect`, clés de portrait R2,
+  middleware default-deny) ;
+- **nombre magique** (`maxAge: 60 * 10 // durée du flux OAuth`) ;
+- **règle D&D non déductible du code** (cap d'harmonisation à 3, emplacements combinés PHB p.164)
+  ou valeur vérifiée à la main dans un test ;
+- **décision contre-intuitive** assumée, ou dette à suivre.
+
+À bannir :
+
+- **l'historique du projet** (« lot 5b », « point 6 », « F2 tranche 3 », « viendra en Phase 2 ») :
+  ça ne se relit pas, et le `git log` / `docs/` le portent déjà ;
+- les pavés JSDoc qui paraphrasent la signature, les `/** Union dérivée. */` au-dessus d'un type
+  dérivé, les labels de champs évidents ;
+- dans les templates Vue, les `<!-- Libellé -->` qui répètent le titre affiché juste en dessous ;
+- les bandeaux de section (`// ─── X ───`) **sauf dans `app/composables`**, où ils découpent des
+  fichiers de 400-800 lignes.
+
+Préférer **une ligne concise** à un pavé, et coller à la densité du code environnant. Les directives
+d'outillage (`eslint-disable`, `@ts-*`, `@vite-ignore`, `@vitest-environment`) ne sont pas des
+commentaires : ne jamais les retirer.
+
 ## Quand une erreur est relevée
 
 Une erreur qu'il a fallu me signaler se consigne dans [`docs/torts.md`](docs/torts.md) — commande

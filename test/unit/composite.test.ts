@@ -8,11 +8,8 @@ import {
 } from '../../shared/rules/composite'
 import type { AbilityKey } from '../../shared/rules/abilities'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// C1 — contrat PUR des choix composites (triade d'origine 2024, ASI/don). Aucune donnée
-// seedée n'utilise encore ces kinds → ces validateurs sont le socle que C3 (autorité serveur)
-// et l'UI câbleront. Test node pur (pas de DB, pas d'alias ~~).
-// ─────────────────────────────────────────────────────────────────────────────
+// Contrat PUR des choix composites (triade d'origine 2024, ASI/don) : le socle que l'autorité
+// serveur et l'UI câblent. Test node pur (pas de DB, pas d'alias `~~`).
 
 const TRIAD_SOURCE = {
   from: ['str', 'dex', 'con', 'int', 'wis', 'cha'] as AbilityKey[],

@@ -8,16 +8,9 @@ import * as srcSchema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import type { Catalog } from '../../shared/rules/resolve'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Filet du Lot A (durcissement du filtrage ruleset dans la RÉSOLUTION). On seede DEUX
-// éditions homonymes (Occultiste '5' et '5.5') avec, pour chaque source cachable globale
-// (feature_group / feats / spells), une option '5' ET une option '5.5'. On vérifie que
-// `buildCatalog` (via `resolveOptions`) ne fait REMONTER que les options de l'édition du
-// PROPRIÉTAIRE de la progression (features.ruleset) : jamais de fuite 5.5 dans un parcours
-// 2014, et symétriquement le propriétaire 5.5 ne voit que le 5.5 (le filtre est piloté par
-// l'owner, pas figé sur '5'). Même harnais que buildCatalog.test.ts (chaîne de migrations
-// rejouée sur libsql en mémoire, `db` injecté).
-// ─────────────────────────────────────────────────────────────────────────────
+// Filtrage par ÉDITION dans la résolution : avec deux Occultistes homonymes ('5' et '5.5'), les
+// options remontées doivent suivre le `ruleset` du PROPRIÉTAIRE de la progression — jamais de fuite
+// 5.5 dans un parcours 2014, et symétriquement.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

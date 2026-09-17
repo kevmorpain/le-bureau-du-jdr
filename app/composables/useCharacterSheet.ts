@@ -13,18 +13,9 @@ import { useCharacterIdentity } from './character/useCharacterIdentity'
 import { sheetTextField } from './character/sheetField'
 
 /**
- * Résout les effets « à choix » d'un don en fonction des choix enregistrés
- * (`character_features.choices`). Fonction pure — exportée pour être testée
- * directement (cf. decisions.md D12) ; elle rejoindra `shared/rules/` avec le
- * reste du moteur de résolution (rules-engine.md §5).
- *
- * - `ability_increase_choice` → `ability_increase` ;
- * - `saving_throw_proficiency_choice` → `saving_throw_proficiency` (don Résilient :
- *   la maîtrise de JS suit la caractéristique choisie pour le +1).
- *
- * Tant qu'aucun choix n'est enregistré, l'effet n'accorde rien. `choices` ne porte
- * qu'un `ability` → seul `count: 1` est représentable aujourd'hui ; le cas général
- * viendra avec `character_choices` (rules-engine.md §4).
+ * Résout les effets « à choix » d'un don selon les choix enregistrés (`character_features.choices`).
+ * Sans choix enregistré, l'effet n'accorde rien. `choices` ne porte qu'un `ability` → seul
+ * `count: 1` est représentable aujourd'hui.
  */
 export const resolveFeatEffects = (effects: Effect[], choices: { ability?: string } | null): Effect[] =>
   effects.flatMap((e) => {
@@ -53,9 +44,6 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const classes = useCharacterClasses(characterSheet)
 
   // ─── Features brutes (sans formule, pour filtrage par niveau) ──────────────
-  // On extrait les métadonnées (featureType, classId, subclassId, levelRequired, effects)
-  // pour pouvoir filtrer les effets ASI avant useCharacterAbilities, sans dépendre
-  // de formulaContext (qui dépend de abilities).
 
   const rawFeatures = computed(() =>
     (characterSheet?.value?.features ?? []).map((cf) => {
@@ -67,8 +55,6 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         classId: feature.classId,
         subclassId: feature.subclassId,
         levelRequired: feature.levelRequired,
-        // Choix résolus du don (ex : caractéristique +1). Présent uniquement sur
-        // les character_features de type 'feat'.
         choices: (cf as any).choices as { ability?: string } | null ?? null,
         effects: (feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[],
       }
@@ -79,9 +65,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     const ccs = classes.characterClasses.value
     return rawFeatures.value.flatMap((f) => {
       if (f.featureType === 'species_trait') return f.effects
-      // Manifestations occultes : sélectionnées par le joueur, effets toujours actifs
       if (f.featureType === 'eldritch_invocation') return f.effects
-      // Dons : effets toujours actifs, avec résolution des choix (carac +1…)
       if (f.featureType === 'feat') return resolveFeatEffects(f.effects, f.choices)
       const lvlReq = f.levelRequired ?? 1
       const owner = f.featureType === 'class_feature'
@@ -154,8 +138,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const allCharacterFeatures = computed(() => {
     const ccs = classes.characterClasses.value
     const speciesName = classes.species.value?.name ?? 'Espèce'
-    // Nom de la lignée choisie (D17) : les features de lignée (feature.lineage_id non nul) sont
-    // badgées avec (ex. « Drow »), au lieu du nom de l'espèce de base (« Elfe »).
+    // Les features de lignée sont badgées avec le nom de la lignée, pas celui de l'espèce de base.
     const lineageName = (classes.species.value as { lineageName?: string | null } | undefined)?.lineageName ?? null
 
     const speciesItems = classes.speciesTraits.value.map(f => ({
@@ -180,17 +163,12 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         label = ccs.find(c => c.subclass?.id === f.subclassId)?.subclass?.name ?? ''
       }
       else if (f.featureType === 'eldritch_invocation') {
-        // Affichées dans la section features de classe avec un label dédié
         label = 'Manifestation'
       }
       else if (f.featureType === 'fighting_style') {
-        // Style de combat CHOISI (F2) — matérialisé comme une feature, label dédié.
         label = 'Style de combat'
       }
       else if (f.featureType === 'feat') {
-        // Les dons sont rendus dans leur propre section (CharacterFeats.vue),
-        // mais on les expose tout de même dans allCharacterFeatures pour les
-        // composants qui itèrent globalement (badges, recherche).
         kind = 'class'
         label = 'Don'
       }
@@ -200,17 +178,11 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     return [...speciesItems, ...classItems]
   })
 
-  // Effets de base (espèce + features de classe + historique) — sans les objets magiques.
-  // `backgroundEffects` : maîtrises d'outils/langues FIXES de l'origine, dérivées par le serveur
-  // (GET fiche, volet B étape 2) → alimentent les computeds toolProficiencies/languageProficiencies
-  // comme l'espèce. Champ dérivé hors type de relations Drizzle → accès casté (cf. weaponMasteries).
+  // Effets de base (espèce + classe + historique), hors objets magiques. Champs dérivés hors du type
+  // de relations Drizzle → accès casté.
   const backgroundEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { backgroundEffects?: Effect[] } | undefined)?.backgroundEffects ?? [],
   )
-  // `classEffects` : maîtrises d'armes/armures de BASE de la classe, dérivées par le serveur (GET
-  // fiche, volet B étape 4) → alimentent les computeds weapon/armorProficiencies de
-  // `useCharacterInventory` (via `allEffects`) comme l'espèce/l'historique. Champ dérivé hors type
-  // de relations Drizzle → accès casté (cf. backgroundEffects/weaponMasteries).
   const classEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { classEffects?: Effect[] } | undefined)?.classEffects ?? [],
   )
@@ -221,11 +193,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     ...classEffects.value,
   ])
 
-  // Forward-declaration : la couche spellcasting a besoin de connaître TOUS
-  // les effets actifs (y compris ceux des objets magiques) pour appliquer
-  // les bonus spell_save_dc_bonus / spell_attack_bonus. Comme inventoryLayer
-  // est créée après spellcasting (qui lui fournit spellcastingAbility),
-  // on passe une ref qu'on remplit après création de inventoryLayer.
+  // Forward-declaration : la couche spellcasting a besoin des effets des objets magiques, alors que
+  // l'inventaire est créé après elle (il lui faut spellcastingAbility).
   const inventoryEffectsRef = shallowRef<ComputedRef<Effect[]> | null>(null)
   const allEffectsForSpellcasting = computed<Effect[]>(() => [
     ...baseAllEffects.value,
@@ -235,7 +204,6 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   // ─── Couche 4 : incantation ───────────────────────────────────────────────
   // (avant conditions pour passer spellcastingAbility à l'inventaire)
 
-  // Classe lanceuse active (persistance localStorage par perso)
   const selectedCasterClassId = useStorage<number | null>(
     characterStorageKey(characterSheet?.value?.id, 'selectedCasterClassId'),
     null,
@@ -266,11 +234,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     spellcastingAbility: spellcasting.spellcastingAbility,
   })
 
-  // Une fois inventoryLayer disponible, on alimente la ref que la couche
-  // spellcasting lit pour calculer DD/atk avec les bonus d'objets magiques.
   inventoryEffectsRef.value = inventoryLayer.inventoryEffects
 
-  // allEffects complets (base + effets des objets magiques équipés) — alias public
   const allEffects = allEffectsForSpellcasting
 
   // Vitesse de vol (ex. Fadette) — dérivée d'un effet `flying_speed` (trait d'espèce). 0 = pas de vol.
@@ -280,8 +245,6 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   })
 
   // ─── Maîtrises de langues et outils ──────────────────────────────────────
-  // Calculées ici car elles dépendent de allEffects (tous les effets) et des overrides,
-  // mais n'ont aucune interaction avec les items d'inventaire.
 
   const languageProficiencies = computed<string[]>(() => {
     const fromEffects = allEffects.value

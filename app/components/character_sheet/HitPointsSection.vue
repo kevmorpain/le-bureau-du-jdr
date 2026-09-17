@@ -11,7 +11,6 @@
       </span>
     </div>
 
-    <!-- Barre HP -->
     <div class="h-1.5 rounded-full bg-elevated overflow-hidden">
       <div
         class="h-full rounded-full transition-all duration-300"
@@ -19,7 +18,6 @@
       />
     </div>
 
-    <!-- Avertissement PV max réduit -->
     <UTooltip
       v-if="effectiveMaxHp !== characterSheet.maxHp"
       text="Épuisement niv. 4 : PV max ÷ 2"
@@ -27,7 +25,6 @@
       <span class="text-xs text-rose-400 font-semibold">→ Max effectif : {{ effectiveMaxHp }}</span>
     </UTooltip>
 
-    <!-- Flash résultat -->
     <Transition name="slide-in">
       <p
         v-if="flashResult"
@@ -38,7 +35,6 @@
       </p>
     </Transition>
 
-    <!-- Boutons Soins / Dégâts -->
     <div class="flex gap-2">
       <button
         class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-sm border transition-colors"
@@ -68,12 +64,10 @@
       </button>
     </div>
 
-    <!-- Formulaire de saisie -->
     <div
       v-if="mode"
       class="space-y-2"
     >
-      <!-- Sélecteur type de dégâts (mode dégâts seulement) -->
       <template v-if="mode === 'damage'">
         <USelect
           v-model="damageType"
@@ -89,7 +83,6 @@
         </p>
       </template>
 
-      <!-- Saisie PV temporaires (mode soins) -->
       <div
         v-if="mode === 'heal'"
         class="flex items-center gap-1 text-xs text-muted"
@@ -122,7 +115,6 @@
       </div>
     </div>
 
-    <!-- Édition directe -->
     <details class="text-xs">
       <summary class="text-muted cursor-pointer hover:text-default transition-colors">
         Édition directe
@@ -162,7 +154,6 @@
     </details>
   </div>
 
-  <!-- Modal vérification de concentration -->
   <UModal v-model:open="showConcentrationCheck">
     <template #content>
       <div class="p-5 space-y-4">
@@ -226,7 +217,6 @@ const props = defineProps<{
 
 const { effectiveMaxHp, defenseEntries, isConcentrating, concentratingSpell, setConcentration, savingThrows } = useCharacterSheet(characterSheet)
 
-// ── HP bar ───────────────────────────────────────────────────────────────────
 const hpPercent = computed(() => {
   const max = effectiveMaxHp.value || 1
   return Math.min(100, Math.max(0, (characterSheet.value.currentHp / max) * 100))
@@ -238,7 +228,7 @@ const hpColor = computed(() => {
   return '#ef4444'
 })
 
-// ── Mode soin / dégâts ───────────────────────────────────────────────────────
+// Mode soin / dégâts
 const mode = ref<'heal' | 'damage' | null>(null)
 const amount = ref('')
 const damageType = ref('none')
@@ -254,7 +244,7 @@ const toggleMode = (m: 'heal' | 'damage') => {
   nextTick(() => inputRef.value?.input?.focus())
 }
 
-// ── Types de dégâts ──────────────────────────────────────────────────────────
+// Types de dégâts
 const damageTypeOptions = computed(() => [
   { label: 'Type non spécifié', value: 'none' },
   ...Object.entries(damageTypeLabels)
@@ -281,7 +271,7 @@ const resistanceColor = computed(() => {
   return { immunity: 'text-green-400', resistance: 'text-blue-400', vulnerability: 'text-red-400' }[d.level] ?? ''
 })
 
-// ── Sauvegarde de concentration ───────────────────────────────────────────────
+// Sauvegarde de concentration
 const showConcentrationCheck = ref(false)
 const concentrationDamage = ref(0)
 const concentrationDC = ref(10)
@@ -312,7 +302,7 @@ const concentrationFail = () => {
   })
 }
 
-// ── Commit action soins / dégâts ─────────────────────────────────────────────
+// Commit action soins / dégâts
 const commit = () => {
   const raw = parseInt(amount.value) || 0
   if (!raw) {
@@ -335,7 +325,6 @@ const commit = () => {
     else if (d?.level === 'resistance') final = Math.floor(raw / 2)
     else if (d?.level === 'vulnerability') final = raw * 2
 
-    // Absorb temporary HP first
     const absorbedByTemp = Math.min(characterSheet.value.temporaryHp, final)
     characterSheet.value.temporaryHp -= absorbedByTemp
     characterSheet.value.currentHp = Math.max(0, characterSheet.value.currentHp - (final - absorbedByTemp))
@@ -343,7 +332,6 @@ const commit = () => {
     const suffix = d?.level === 'immunity' ? ' (immunité)' : d?.level === 'resistance' ? ' (résistance)' : d?.level === 'vulnerability' ? ' (vulnérabilité)' : ''
     showFlash(`−${final} PV${suffix}`)
 
-    // Vérification concentration si concentré
     if (isConcentrating.value && final > 0) {
       concentrationDamage.value = final
       concentrationDC.value = Math.max(10, Math.floor(final / 2))

@@ -111,7 +111,6 @@ export function useOfflineSync() {
     }
   }
 
-  /** Résolution de conflit (UI Phase 4). */
   async function resolveConflict(characterId: number, choice: 'local' | 'server'): Promise<void> {
     if (choice === 'local') {
       isSyncing.value = true

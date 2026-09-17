@@ -1,8 +1,5 @@
 import { db } from 'hub:db'
-// Colonnes neuves (subclass_level, spellcasting_type) → schéma importé de la source
-// et non de `hub:db`, dont le cache peut être périmé au démarrage : `drizzle.set()`
-// laisserait alors tomber les nouveaux champs en silence (cf. CLAUDE.md « hub:db
-// schema cache »). Seul `db` vient encore de `hub:db`.
+// Schéma importé de la source : le cache hub:db peut être périmé et dropper les colonnes neuves en silence.
 import * as schema from '~~/server/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { classesData } from './data/classes'
@@ -23,8 +20,7 @@ export default async function seed() {
         spellcastingType: schema.classes.spellcastingType,
       })
       .from(schema.classes)
-      // Keyé par (name, ruleset) : une classe 5.5 homonyme (« Guerrier ») est une ligne DISTINCTE,
-      // pas une mise à jour de la 2014 (D2). No-op sur le 2014 (tout est '5').
+      // Keyé par (name, ruleset) : un homonyme 5.5 est une ligne DISTINCTE, pas une mise à jour (D2).
       .where(and(eq(schema.classes.name, cls.name), eq(schema.classes.ruleset, rulesetOf(cls))))
       .get()
 

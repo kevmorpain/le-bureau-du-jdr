@@ -2,28 +2,14 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import type { Source } from '~~/shared/rules/source'
 import characterSpecies from './character_species'
 
-/**
- * `species_lineages` — variante d'une espèce de base : sous-race 2014 (Haut-elfe, Nain
- * des montagnes…) ou lignée 2024 (Drow, Haut-elfe…). **Symétrique de `subclasses`** pour
- * les classes (cf. decisions.md D17) : la base (`character_species`) porte les traits
- * communs via `species_features` ; la lignée porte SES features via `features.lineage_id`
- * (gated par `levelRequired`, ex. sorts drow niv.1/3/5) ; le choix d'une lignée passe par
- * `progression` + `character_choices.selected_lineage_id`, comme le choix de sous-classe.
- *
- * Pas de colonne `ruleset` : une lignée est rattachée par FK à une espèce — elle-même
- * datée par son `ruleset` —, donc **parent-gated**, exactement comme `subclasses` l'est par
- * sa classe (cf. shared/rules/ruleset.ts). Pas de `relations()` (calqué sur
- * `background_features`, lot 4c) : évite le crash d'init du cache `hub:db` sur une table
- * neuve (`referencedTable`) ; la résolution se fait par `.select()` explicite.
- */
+// Variante d'une espèce de base (sous-race 2014 / lignée 2024) — symétrique de `subclasses` (D17).
+// Pas de colonne `ruleset` : parent-gated par l'espèce. Pas de `relations()` (init du cache `hub:db`).
 const speciesLineages = sqliteTable('species_lineages', {
   id: integer().primaryKey().notNull(),
   speciesId: integer('species_id').notNull().references(() => characterSpecies.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
-  // Provenance / gating de visibilité (cf. shared/rules/source.ts). PAS parent-gated par
-  // l'espèce (contrairement au ruleset) : une lignée d'extension (ex. bloodlines MToF) peut
-  // vivre sur une espèce socle. DEFAULT 'core' = toujours visible.
+  // PAS parent-gated (contrairement au ruleset) : une lignée d'extension peut vivre sur une espèce socle.
   source: text('source').$type<Source>().notNull().default('core'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),

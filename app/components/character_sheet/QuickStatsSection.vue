@@ -1,6 +1,5 @@
 <template>
   <div class="flex gap-3 items-stretch">
-    <!-- CA -->
     <UTooltip
       class="flex-1"
       :text="armorClass.detail"
@@ -19,7 +18,6 @@
       </StatCard>
     </UTooltip>
 
-    <!-- Initiative -->
     <UTooltip
       class="flex-1"
       text="Lancer l'initiative"
@@ -40,7 +38,6 @@
       </StatCard>
     </UTooltip>
 
-    <!-- Vitesse -->
     <UTooltip
       class="flex-1"
       :text="`${Math.round(effectiveSpeed / 1.5)} cases`"
@@ -74,7 +71,6 @@
       </StatCard>
     </UTooltip>
 
-    <!-- Perception passive -->
     <StatCard
       label="Perc. passive"
       class="flex-1"
@@ -88,7 +84,6 @@
       </p>
     </StatCard>
 
-    <!-- Bonus de maîtrise -->
     <StatCard
       label="Maîtrise"
       class="flex-1"
@@ -102,7 +97,6 @@
       </p>
     </StatCard>
 
-    <!-- Inspiration -->
     <UTooltip
       class="flex-1"
       :text="characterSheet.inspiration ? 'Inspiration active — cliquer pour retirer' : 'Pas d\'inspiration — cliquer pour activer'"

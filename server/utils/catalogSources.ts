@@ -7,45 +7,14 @@ import type { Ruleset } from '~~/shared/rules/ruleset'
 import { CORE_SOURCE } from '~~/shared/rules/source'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 
-/**
- * Loaders des LISTES de référence du catalogue (lot 6a) — la tranche plate, statique et
- * cachable que consomment le builder et la fiche : classes (+ sous-classes), espèces, dons,
- * invocations, historiques. Ils encapsulent en un seul endroit les requêtes aujourd'hui
- * éparpillées dans les endpoints `server/api/{classes,character_species,feats,invocations,
- * backgrounds}` (rules-engine.md §7 #3 : « encapsuler l'accès données hub:db dans un module »).
- *
- * Le `db` est INJECTÉ : en prod le `db` de `hub:db` (⚠️ PAS `useDrizzle()`, qui casse à l'appel —
- * cf. server/utils/drizzle.ts), en test une instance drizzle-sur-libsql — exactement comme
- * {@link buildCatalog} (`server/utils/catalog.ts`). Cela les rend testables sans HTTP ni auth
- * (patron du point 5) ; les endpoints `/api/catalog/*` ET legacy délèguent ici : source unique,
- * shape garantie identique.
- *
- * Lecture via `srcSchema` (schéma source, frais) plutôt que le cache `hub:db` — voir CLAUDE.md.
- *
- * Chaque loader d'entité globale filtre par `ruleset` (défaut `'5'`, cf. shared/rules/ruleset.ts) :
- * le builder 2014 (qui appelle sans argument) ne voit QUE le contenu 2014, même une fois du 5.5 seedé
- * (Phase 2). No-op tant que tout est `'5'` en base. Un futur appelant 5.5 passera `'5.5'`.
- *
- * Et par `source` (cf. shared/rules/source.ts) via le drapeau `extended` (défaut `false`) : par
- * défaut seul le socle (`'core'`) remonte, le contenu d'extension gaté reste caché ; `extended=true`
- * lève le filtre (cas spéciaux, ex. un one-shot Tasha). Axe orthogonal au `ruleset`.
- */
-
-// Instance drizzle SQLite, quel que soit le driver (D1 en prod, libsql en test) — mêmes
-// génériques `any` que dans catalog.ts : seul le query-builder `.select().from()` est utilisé.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
 type ClassRow = typeof srcSchema.classes.$inferSelect
 type SubclassRow = typeof srcSchema.subclasses.$inferSelect
 
-/** Classe du catalogue = ligne `classes` + ses sous-classes imbriquées. */
 export type CatalogClass = ClassRow & { subclasses: SubclassRow[] }
 
-/**
- * Toutes les classes, chacune avec ses sous-classes imbriquées, triées par id de classe puis
- * nom de sous-classe (≡ endpoint legacy `/api/classes`).
- */
 export async function loadClasses(db: Db, ruleset: Ruleset = '5', extended = false): Promise<CatalogClass[]> {
   const rows = await db
     .select()
@@ -71,10 +40,6 @@ export async function loadClasses(db: Db, ruleset: Ruleset = '5', extended = fal
   return [...byId.values()]
 }
 
-/**
- * Liste plate des espèces `{id, name}`, triées par nom (≡ endpoint legacy
- * `/api/character_species`). Le builder n'a besoin que de la résolution name → id.
- */
 export async function loadSpecies(db: Db, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string }[]> {
   return await db
     .select({ id: srcSchema.characterSpecies.id, name: srcSchema.characterSpecies.name })
@@ -86,15 +51,7 @@ export async function loadSpecies(db: Db, ruleset: Ruleset = '5', extended = fal
     .orderBy(asc(srcSchema.characterSpecies.name))
 }
 
-/**
- * Sous-classes d'une classe désignée par son NOM en base (≡ endpoint legacy
- * `/api/classes/[name]/subclasses`). Classe inconnue → `[]`.
- *
- * La classe est résolue par `(name, ruleset)` (défaut '5') : `subclasses` n'a pas de colonne
- * `ruleset` (parent-gated par sa classe) → filtrer la classe parente garde la résolution
- * DÉTERMINISTE quand le 5.5 partagera les noms de classe (« Guerrier »). No-op tant que
- * tout est '5' ; l'appelant 2014 n'a pas d'argument à passer.
- */
+// Classe résolue par `(name, ruleset)` : `subclasses` n'a pas de `ruleset` et les noms de classe seront partagés en 5.5.
 export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string, description: string | null }[]> {
   const [cls] = await db
     .select({ id: srcSchema.classes.id })
@@ -117,10 +74,8 @@ export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset
 }
 
 /**
- * Styles de combat (features-options `tag='fighting_style'`) d'une classe désignée par son NOM
- * (F2 tranche 4). Renvoie `{id, name, description}` triés par id (ordre de seed). Comme
- * `loadSubclasses` : classe résolue par `(name, ruleset)`, options filtrées par édition + source
- * (core par défaut). Classe sans style (non martiale) ou inconnue → `[]`.
+ * Styles de combat (features-options taguées `fighting_style`) d'une classe désignée par son NOM.
+ * Classe résolue par `(name, ruleset)` comme `loadSubclasses` ; classe non martiale ou inconnue → `[]`.
  */
 export async function loadFightingStyles(db: Db, className: string, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string, description: string | null }[]> {
   const [cls] = await db
@@ -146,10 +101,6 @@ export async function loadFightingStyles(db: Db, className: string, ruleset: Rul
     .orderBy(asc(srcSchema.features.id))
 }
 
-/**
- * Tous les dons (`features` de `feature_type='feat'`) avec leurs effets bakés, triés par nom
- * (locale fr) (≡ endpoint legacy `/api/feats`).
- */
 export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false) {
   const feats = await db
     .select({
@@ -186,11 +137,6 @@ export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
 }
 
-/**
- * Toutes les invocations occultes (`features` de `feature_type='eldritch_invocation'`) avec
- * `levelRequired` (défaut 1), `prerequisites` et effets `{type, value}` (≡ endpoint legacy
- * `/api/invocations`).
- */
 export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended = false) {
   const features = await db
     .select({
@@ -201,8 +147,6 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended =
       prerequisites: srcSchema.features.prerequisites,
     })
     .from(srcSchema.features)
-    // Filtre `ruleset` (défaut '5') comme les autres loaders : une invocation 5.5 seedée ne
-    // polluera pas le picker 2014 (les invocations sont des features → colonne `ruleset`).
     .where(and(
       eq(srcSchema.features.featureType, 'eldritch_invocation'),
       eq(srcSchema.features.ruleset, ruleset),
@@ -239,11 +183,7 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended =
   }))
 }
 
-/**
- * Options de Métamagie de l'Ensorceleur (`features` taguées `metamagic`, cf. featureTags.ts),
- * triées par nom (fr). DESCRIPTIVES (pas d'effets bakés — le joueur applique en jeu). Contenu
- * socle (source 'core') → le filtre `extended` est un no-op ici, gardé par cohérence.
- */
+// Descriptives : pas d'effets bakés, le joueur applique en jeu.
 export async function loadMetamagic(db: Db, ruleset: Ruleset = '5', extended = false) {
   return await db
     .select({
@@ -260,12 +200,7 @@ export async function loadMetamagic(db: Db, ruleset: Ruleset = '5', extended = f
     .orderBy(asc(srcSchema.features.name))
 }
 
-/**
- * Historiques, triés par nom. Sans `characterSheetId` → uniquement les historiques GLOBAUX
- * (`character_sheet_id IS NULL`), la tranche statique cachable du catalogue. Avec un
- * `characterSheetId`, ajoute les historiques homebrew de cette fiche (≡ endpoint legacy
- * `/api/backgrounds`, dont la variante per-fiche n'est PAS cachable).
- */
+// Avec `characterSheetId`, ajoute les historiques homebrew de la fiche (non cachable).
 export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset: Ruleset = '5', extended = false) {
   return await db
     .select()
@@ -282,14 +217,7 @@ export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset
     .orderBy(srcSchema.backgrounds.name)
 }
 
-/**
- * Base de sorts filtrée par ÉDITION (≡ endpoint `/api/spells`). Sans `className` : tous les
- * sorts de l'édition (navigateur global — un sort porte son propre `ruleset` depuis 0089, car
- * description/effets divergent entre 2014 et 2024). Avec `className` : la liste de cette classe
- * pour l'édition — classe résolue par `(nom, ruleset)` (déterministe entre éditions), liens
- * `spell_classes` ET sort filtrés sur la même édition. Défaut '5' → no-op tant que tout est '5'.
- * Chaque ligne = le sort + son école (jointure), forme identique à l'endpoint historique.
- */
+// Un sort porte son propre `ruleset` (description/effets divergent entre 2014 et 2024).
 export async function loadSpells(db: Db, opts: { className?: string, ruleset?: Ruleset, extended?: boolean } = {}) {
   const ruleset = opts.ruleset ?? '5'
   const sourceFilter = opts.extended ? [] : [eq(srcSchema.spells.source, CORE_SOURCE)]
@@ -324,21 +252,17 @@ export async function loadSpells(db: Db, opts: { className?: string, ruleset?: R
   return rows.map(r => ({ ...r.spell, school: r.school }))
 }
 
-/** Lignée du catalogue, champs d'affichage DÉRIVÉS pour le picker du builder (D17, lot 5b). */
 export interface CatalogLineage {
   id: number
   name: string
   description: string | null
   /** Bonus de carac. COMBINÉS base ⊕ lignée (le builder n'applique que ceux de la sous-race). */
   abilityBonuses: Partial<Record<AbilityKey, number>>
-  /** Vitesse effective (walking_speed de la lignée sinon celle de la base). */
   speed: number
   darkvision: number | null
-  /** Traits propres à la lignée (noms de features), hors carac./vitesse déjà en badges. */
   traits: string[]
 }
 
-/** Espèce de base + ses lignées avec champs d'affichage dérivés (D17). */
 export interface CatalogSpeciesRich {
   id: number
   name: string
@@ -347,7 +271,6 @@ export interface CatalogSpeciesRich {
   lineages: CatalogLineage[]
 }
 
-/** Agrège les bonus de carac. {dex:2,…} depuis des effets `ability_increase`. */
 function abilityBonusesFrom(effects: { type: string, value: unknown }[]): Partial<Record<AbilityKey, number>> {
   const bonuses: Partial<Record<AbilityKey, number>> = {}
   for (const e of effects) {
@@ -358,16 +281,7 @@ function abilityBonusesFrom(effects: { type: string, value: unknown }[]): Partia
   return bonuses
 }
 
-/**
- * Espèce de base (par id) + ses lignées avec les champs d'affichage DÉRIVÉS pour le picker du
- * builder (chantier lignée, D17 — lot 5b). Expose ce que le seed a mis en base (species_features
- * + lineage_features + effets) sous une forme prête pour les cartes de sous-race : bonus de carac.
- * **combinés base ⊕ lignée** (le builder n'applique que ceux de la sous-race quand une est choisie),
- * vitesse effective, vision, et la liste des traits propres à la lignée.
- *
- * Rend `null` si l'espèce n'existe pas ; `lineages: []` pour une espèce sans lignée (le builder
- * retombe alors sur son blob `RaceData`). Lecture via `srcSchema` (frais). Cachable (statique).
- */
+// `lineages: []` pour une espèce sans lignée (le builder retombe alors sur son blob `RaceData`).
 export async function loadSpeciesLineages(db: Db, speciesId: number, extended = false): Promise<CatalogSpeciesRich | null> {
   const [base] = await db
     .select({ id: srcSchema.characterSpecies.id, name: srcSchema.characterSpecies.name, speed: srcSchema.characterSpecies.speed, size: srcSchema.characterSpecies.size })
@@ -376,7 +290,6 @@ export async function loadSpeciesLineages(db: Db, speciesId: number, extended = 
     .limit(1)
   if (!base) return null
 
-  // Bonus de carac. de la BASE (species_features → effets ability_increase), communs à toute lignée.
   const baseEffects = await db
     .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
     .from(srcSchema.speciesFeatures)

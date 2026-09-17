@@ -15,7 +15,6 @@
       </button>
     </div>
 
-    <!-- Panel suggestions -->
     <div
       v-if="open && suggestions.length"
       class="mb-2 p-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) space-y-1"

@@ -9,17 +9,9 @@ import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Contrat du LOADER (lot 5b). Ferme la boucle seed↔migration↔loader↔resolve : on rejoue
-// TOUTE la chaîne de migrations sur une base libsql en mémoire (schéma de production), on
-// seede un Occultiste minimal (les 6 features propriétaires + leurs progressions = le contrat
-// 5a, 3 faveurs de pacte, 2 invocations, 2 sorts), puis on vérifie que `buildCatalog` en tire
-// EXACTEMENT le `Catalog` que `resolveChoices` (5a) attend — options pré-résolues, prérequis et
-// `levelRequired` charriés, sorts filtrés par slug de classe + maxLevel.
-//
-// En env `nuxt` (et non `unit`) car le loader importe `~~/server/db/schema` : l'alias `~~` n'est
-// résolu que par le projet nuxt. Le `db` est injecté (drizzle-sur-libsql ici, D1 en prod).
-// ─────────────────────────────────────────────────────────────────────────────
+// Contrat du loader : toute la chaîne de migrations est rejouée sur libsql, on seede un Occultiste
+// minimal, puis on vérifie que `buildCatalog` en tire exactement le `Catalog` que `resolveChoices`
+// attend. Env `nuxt` (et non `unit`) : le loader importe `~~/server/db/schema`.
 
 // En env `nuxt`, `import.meta.url` n'est pas un file:// → on résout depuis la racine du projet
 // (process.cwd() = rootDir du projet vitest nuxt = ce worktree).
@@ -43,17 +35,14 @@ beforeAll(async () => {
 
   const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
-  // Classe
   await orm.insert(srcSchema.classes).values({ id: WARLOCK_ID, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' })
 
-  // 6 features propriétaires + leur progression (= le contrat 5a, source unique)
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
     await orm.insert(srcSchema.features).values({ id: 10 + i, name: c.ownerName, featureType: 'class_feature', classId: WARLOCK_ID, levelRequired: c.ownerLevelRequired })
     await orm.insert(srcSchema.progression).values({ featureId: 10 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
   }
 
-  // 3 faveurs de pacte (tag pact_boon)
   const pacts = ['Pacte de la Chaîne', 'Pacte de la Lame', 'Pacte du Tome']
   for (let j = 0; j < pacts.length; j++)
     await orm.insert(srcSchema.features).values({ id: 20 + j, name: pacts[j]!, featureType: 'class_feature', classId: WARLOCK_ID, levelRequired: 3, tag: 'pact_boon' })
@@ -62,7 +51,6 @@ beforeAll(async () => {
   await orm.insert(srcSchema.features).values({ id: 30, name: 'Manifestation niv.5', featureType: 'eldritch_invocation', classId: WARLOCK_ID, levelRequired: 5, tag: 'invocation' })
   await orm.insert(srcSchema.features).values({ id: 31, name: 'Manifestation Lame', featureType: 'eldritch_invocation', classId: WARLOCK_ID, levelRequired: 1, tag: 'invocation', prerequisites: { requiredPactBoon: 'blade' } })
 
-  // Sorts d'occultiste pour les arcanums (niveaux 6 et 9)
   await orm.insert(srcSchema.magicSchools).values({ id: 1, name: 'Invocation' })
   await orm.insert(srcSchema.spells).values({ id: 100, name: 'Sort niv.6', level: 6, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 })
   await orm.insert(srcSchema.spells).values({ id: 101, name: 'Sort niv.9', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 })

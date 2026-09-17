@@ -8,12 +8,9 @@ import {
   portraitUrlFromKey,
 } from '../../server/utils/portraits'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Contrat des clés de portrait (R2). Trois surfaces en dépendent — l'upload, la route
-// de service et la purge à la suppression de fiche — et un désaccord entre elles se
-// paierait cher : URL qui pointe dans le vide, objets orphelins facturés à vie, ou pire,
-// suppression du portrait d'autrui. D'où ces tests sur les fonctions pures.
-// ─────────────────────────────────────────────────────────────────────────────
+// Contrat des clés de portrait (R2). Trois surfaces en dépendent — upload, route de service, purge à
+// la suppression — et un désaccord se paierait cher : URL qui pointe dans le vide, objets orphelins
+// facturés à vie, ou suppression du portrait d'autrui.
 
 const UUID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301'
 

@@ -4,11 +4,8 @@ import { ABILITY_SKILLS } from '~~/shared/rules/skills'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
-// Ordre canonique des caractéristiques (cf. shared/rules/abilities.ts, D6).
 const abilityScoreOrder = ABILITY_KEYS
 
-// Dérivé de la const canonique `shared/rules/skills.ts` (cf. decisions.md D6) — la
-// casse snake_case fait désormais foi de bout en bout (fini `sleightOfHand`).
 export const abilitySkillKeys: Record<string, string[]> = ABILITY_SKILLS
 
 export type ProficiencyLevel = 'none' | 'proficient' | 'expert'
@@ -95,11 +92,7 @@ export const useCharacterAbilities = (
         map.set(s.skillKey, level)
       }
     }
-    // Maîtrises accordées par les effets d'espèce ou de feature :
-    //  - `skill_proficiency` → compétence (ex. Demi-orc Menaçant → Intimidation) ;
-    //  - `saving_throw_proficiency` → jet de sauvegarde (ex. don Résilient), projeté
-    //    sur la même map via la convention `<carac>_save` qu'utilisent déjà
-    //    `character_skills` et `savingThrows` — les deux sources cohabitent.
+    // `saving_throw_proficiency` est projeté sur la même map via la convention `<carac>_save`.
     const effectSources = [...(deps?.speciesEffects.value ?? []), ...(deps?.featureEffects.value ?? [])]
     for (const e of effectSources) {
       let key: string | null = null

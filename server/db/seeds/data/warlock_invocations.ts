@@ -12,11 +12,9 @@ export type InvocationDef = {
 
 const cha = 'cha' as const
 
-// Noms et prérequis alignés sur AideDD (PHB 2014 pour les 32 manifestations de
-// base ; les entrées XGtE/TCoE conservées sont signalées par un commentaire).
-// `levelRequired: 1` = aucun prérequis de niveau d'occultiste.
+// Noms et prérequis alignés sur AideDD (PHB 2014) ; `levelRequired: 1` = aucun prérequis de niveau.
 export const warlockInvocations: InvocationDef[] = [
-  // ─── Niveau 1 (pas de prérequis de niveau) ───────────────────────────────────
+  // Niveau 1 (pas de prérequis de niveau)
   {
     name: 'Armure d\'ombres',
     description: 'Vous pouvez lancer Armure de mage sur vous-même à volonté, sans dépenser d\'emplacement de sort ni de composantes matérielles.',
@@ -208,7 +206,6 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'other', value: { kind: 'investment_of_the_chain_master' } },
     ],
   },
-  // ─── Niveau 5 ────────────────────────────────────────────────────────────────
   {
     name: 'Lame assoiffée',
     description: 'Vous pouvez attaquer deux fois, et non plus une seule, lorsque vous effectuez l\'action Attaquer à votre tour avec votre arme de pacte.',
@@ -264,7 +261,6 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'other', value: { kind: 'tomb_of_levistus' } },
     ],
   },
-  // ─── Niveau 7 ────────────────────────────────────────────────────────────────
   {
     name: 'Murmures ensorcelants',
     description: 'Vous pouvez lancer Compulsion une fois en utilisant un emplacement de sort d\'occultiste. Vous ne pouvez plus le lancer ainsi avant la fin d\'un repos long.',
@@ -302,7 +298,6 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'other', value: { kind: 'ghostly_gaze' } },
     ],
   },
-  // ─── Niveau 9 ────────────────────────────────────────────────────────────────
   {
     name: 'Pas aérien',
     description: 'Vous pouvez lancer Lévitation sur vous-même à volonté, sans dépenser d\'emplacement de sort ni de composantes matérielles.',
@@ -349,7 +344,6 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'other', value: { kind: 'gift_of_protectors' } },
     ],
   },
-  // ─── Niveau 12 ───────────────────────────────────────────────────────────────
   {
     name: 'Buveuse de vie',
     description: 'Quand vous touchez une créature avec votre arme de pacte, elle subit des dégâts nécrotiques supplémentaires égaux à votre modificateur de Charisme (minimum 1).',
@@ -359,7 +353,6 @@ export const warlockInvocations: InvocationDef[] = [
       { type: 'pact_weapon_modifier', value: { kind: 'lifedrinker' } },
     ],
   },
-  // ─── Niveau 15 ───────────────────────────────────────────────────────────────
   {
     name: 'Chaînes des Carcères',
     description: 'Vous pouvez lancer Immobilisation de monstre à volonté sans dépenser d\'emplacement de sort, mais uniquement sur des créatures célestes, élémentaires ou fiélonnes. Vous ne pouvez pas relancer ce sort sur la même cible avant la fin d\'un repos long.',
@@ -398,14 +391,7 @@ export const warlockInvocations: InvocationDef[] = [
   },
 ]
 
-/**
- * Les invocations, projetées en `FeatureDef` pour le seed : `feature_type =
- * 'eldritch_invocation'` et `tag = 'invocation'` (cf. shared/rules/featureTags.ts).
- * C'est ce tag qui, sur base neuve, fait des invocations les features-options du
- * groupe `invocation` — le même résultat que le backfill de la migration 0081 sur
- * les bases déjà déployées. Données pures (imports de types seulement), donc
- * importable par les tests unitaires (cf. test/unit/featureTags.test.ts).
- */
+/** `tag = 'invocation'` fait des invocations les features-options du groupe `invocation`. */
 export const warlockInvocationFeatures: FeatureDef[] = warlockInvocations.map(inv => ({
   name: inv.name,
   description: inv.description,

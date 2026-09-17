@@ -162,10 +162,9 @@ watch(portraitSrc, () => {
   portraitFailed.value = false
 })
 
-// ─── Téléversement (R2 via /api/character_sheets/{id}/portrait) ──────────────
-// L'image est réduite dans le navigateur avant l'envoi, et c'est le serveur qui écrit
-// `portraitUrl` (il supprime aussi l'ancien objet) — on ne fait que refléter sa réponse
-// localement. Un envoi de fichier ne passe pas par la file hors-ligne : il faut le réseau.
+// Téléversement (R2 via /api/character_sheets/{id}/portrait)
+// C'est le serveur qui écrit `portraitUrl` (et supprime l'ancien objet) ; un envoi de fichier ne
+// passe pas par la file hors-ligne : il faut le réseau.
 const toast = useToast()
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const uploading = ref(false)

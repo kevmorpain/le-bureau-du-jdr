@@ -50,10 +50,7 @@ export const useCharacterSpellcasting = (
     resolvedFeatures?: ComputedRef<ResolvedFeature[]>
     formulaContext?: ComputedRef<FormulaContext>
     selectedCasterClassId?: Ref<number | null>
-    // Optionnel : tous les effets actifs (features + objets équipés). Sert à
-    // appliquer spell_save_dc_bonus / spell_attack_bonus issus d'objets magiques.
-    // Lazy (peut être créée après ce composable dans useCharacterSheet — Vue
-    // résout la dépendance au moment de l'accès).
+    // Lazy : peut être créée après ce composable (Vue résout la dépendance à l'accès).
     allEffects?: ComputedRef<Effect[]>
   },
 ) => {
@@ -87,7 +84,6 @@ export const useCharacterSpellcasting = (
       const found = list.find(c => c.classId === selectedId)
       if (found) return found
     }
-    // Fallback : main class spellcaster sinon premier de la liste
     const classes = characterSheet?.value?.classes ?? []
     const mainClass = classes.find(c => c.isMain)
     if (mainClass) {
@@ -121,7 +117,6 @@ export const useCharacterSpellcasting = (
 
   // ─── Stats helpers ─────────────────────────────────────────────────────────
 
-  // Bonus issus des objets magiques équipés / features (additifs).
   const spellDcBonus = computed<number>(() =>
     (deps?.allEffects?.value ?? [])
       .filter(e => e.type === 'spell_save_dc_bonus')
@@ -148,7 +143,6 @@ export const useCharacterSpellcasting = (
   const spellcastingStats = computed(() => computeStats(spellcastingAbility.value))
   const pactMagicStats = computed(() => computeStats(pactMagicAbility.value))
 
-  // Compat backward (utilisés ailleurs dans l'app pour les stats spellcasting actives)
   const spellcastingModifier = computed<number | null>(() => spellcastingStats.value?.modifier ?? null)
   const spellSaveDC = computed<number | null>(() => spellcastingStats.value?.dc ?? null)
   const spellAttackModifier = computed<number | null>(() => spellcastingStats.value?.attackBonus ?? null)
@@ -162,7 +156,6 @@ export const useCharacterSpellcasting = (
 
   const { offlineMutate } = useOfflineMutation(() => characterSheet?.value?.id ?? 0)
 
-  // Initialisation depuis DB + auto-gen Pact Magic
   watchEffect(() => {
     const dbSlots = characterSheet?.value?.spellSlots ?? []
     const next: SlotsByType = {
@@ -179,7 +172,6 @@ export const useCharacterSpellcasting = (
       }
     }
 
-    // Auto-génération Pact Magic
     const feat = pactMagicFeature.value
     if (feat && deps?.formulaContext) {
       const slotLevel = evaluate(feat.meta!.slotLevelFormula!, deps.formulaContext.value)
@@ -208,7 +200,6 @@ export const useCharacterSpellcasting = (
     spellSlots.value = next
   })
 
-  // Synchronisation vers DB (debounce 500ms), via la file hors-ligne
   let syncTimeout: ReturnType<typeof setTimeout> | null = null
   const normalizeSlots = (
     arr: Array<{ slotLevel: number, slotType: string, total: number, used: number }>,

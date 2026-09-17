@@ -4,7 +4,6 @@
       Bourse
     </h2>
 
-    <!-- Soldes actuels -->
     <div class="grid grid-cols-5 gap-2">
       <div
         v-for="coin in coins"
@@ -23,7 +22,6 @@
       </div>
     </div>
 
-    <!-- Flash résultat -->
     <Transition name="slide-in">
       <p
         v-if="flashResult"
@@ -34,7 +32,6 @@
       </p>
     </Transition>
 
-    <!-- Boutons Gagner / Dépenser -->
     <div class="flex gap-2">
       <button
         class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-sm border transition-colors"
@@ -104,7 +101,6 @@
       </UButton>
     </div>
 
-    <!-- Édition directe -->
     <details class="text-xs">
       <summary class="text-muted cursor-pointer hover:text-default transition-colors">
         Édition directe
@@ -149,7 +145,7 @@ const coins: { key: CoinKey, label: string, color: string }[] = [
   { key: 'pc', label: 'PC', color: 'text-amber-700' },
 ]
 
-// ── Mode gagner / dépenser ─────────────────────────────────────────────────────
+// Mode gagner / dépenser
 const mode = ref<'gain' | 'spend' | null>(null)
 const deltas = ref<Record<CoinKey, string>>({ pp: '', po: '', pe: '', pa: '', pc: '' })
 const flashResult = ref<string | null>(null)
@@ -169,7 +165,7 @@ const toggleMode = (m: 'gain' | 'spend') => {
   if (mode.value) nextTick(() => inputRefs[0]?.input?.focus())
 }
 
-// ── Applique tous les deltas saisis d'un coup ──────────────────────────────────
+// Applique tous les deltas saisis d'un coup
 // Chaque pièce est plafonnée à 0 indépendamment (pas de conversion automatique :
 // D&D ne fait pas la monnaie).
 const commit = () => {

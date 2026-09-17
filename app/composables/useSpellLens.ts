@@ -2,18 +2,9 @@ import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
 
-// ─── Spell lens ────────────────────────────────────────────────────────────────
-//
-// « Lentille » utilisée par les pages /spells pour paramétrer l'affichage des
-// sorts (DD de sauvegarde, bonus d'attaque, dégâts / upcast) sans devoir créer
-// de personnage. État volontairement DÉCOUPLÉ de useCharacterSheet : un simple
-// jeu de stats éditables, partagé via useState entre le drawer et les composants
-// d'affichage (DamageSection / HealSection / spellbook).
-//
-// Deux usages :
-//   - Bac à sable manuel (fallback, fonctionne hors-ligne / sans compte).
-//   - « Lentille de fiche » : un utilisateur connecté charge une de SES fiches
-//     pour auto-remplir les stats (loadSheet → snapshot des vraies valeurs).
+// « Lentille » des pages /spells : jeu de stats éditables, volontairement DÉCOUPLÉ de
+// useCharacterSheet, partagé via useState entre le drawer et les composants d'affichage.
+// Deux usages : bac à sable manuel (hors-ligne / sans compte), ou snapshot d'une vraie fiche.
 
 type Ability = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
 
@@ -48,9 +39,7 @@ const defaultStats = (): LensStats => ({
 
 // ─── Dérivation depuis une vraie fiche ──────────────────────────────────────────
 
-// Caractéristique d'incantation « active » : classe principale lanceuse, sinon
-// première classe lanceuse (sans le selectedCasterClassId persistant — la
-// lentille n'a pas vocation à gérer le multiclassage lanceur).
+// Classe principale lanceuse sinon la première : la lentille ne gère pas le multiclassage lanceur.
 const deriveSpellcastingAbility = (sheet: CharacterSheet): Ability | null => {
   const casters = (sheet.classes ?? [])
     .map((cc) => {
@@ -65,18 +54,13 @@ const deriveSpellcastingAbility = (sheet: CharacterSheet): Ability | null => {
   return (casters.find(c => c.isMain) ?? casters[0]!).ability
 }
 
-// Snapshot des stats réelles d'une fiche, en réutilisant les couches pures de
-// dérivation (classes + caractéristiques). Tout est lu synchroniquement dans un
-// effectScope DÉTACHÉ puis libéré : aucune fuite de watcher, aucun appel réseau
-// (useCharacterClasses / useCharacterAbilities ne font pas de useFetch).
+// Snapshot lu dans un effectScope DÉTACHÉ puis libéré : aucune fuite de watcher, aucun appel réseau.
 const deriveStatsFromSheet = (sheet: CharacterSheet): LensStats => {
   const scope = effectScope(true)
   const snapshot = scope.run<LensStats>(() => {
     const sheetRef = shallowRef(sheet) as Ref<CharacterSheet>
     const classes = useCharacterClasses(sheetRef)
 
-    // Effets débloqués (espèce + features de classe selon niveau + dons + ASI).
-    // Logique alignée sur useCharacterSheet — source de vérité des bonus de carac.
     const resolveFeatEffects = (effects: Effect[], choices: { ability?: string } | null): Effect[] =>
       effects.flatMap((e) => {
         if (e.type === 'ability_increase_choice') {
@@ -149,7 +133,6 @@ const deriveStatsFromSheet = (sheet: CharacterSheet): LensStats => {
 // ─── Composable ──────────────────────────────────────────────────────────────
 
 export const useSpellLens = () => {
-  // État partagé (useState) : le drawer écrit, les composants de sorts lisent.
   const stats = useState<LensStats>('spell-lens-stats', defaultStats)
   // Fiche actuellement chargée dans la lentille (null = saisie manuelle).
   const selectedSheetId = useState<number | null>('spell-lens-sheet-id', () => null)
@@ -162,7 +145,6 @@ export const useSpellLens = () => {
     ),
   )
 
-  // Compat SpellContext (consommé par DamageSection / HealSection).
   const characterLevel = computed<number>(() => stats.value.characterLevel)
 
   const spellcastingModifier = computed<number | null>(() => {
@@ -196,16 +178,13 @@ export const useSpellLens = () => {
 
   // ─── Actions ───────────────────────────────────────────────────────────────
 
-  // Charge une vraie fiche (réservé aux utilisateurs connectés — la liste et le
-  // détail renvoient 401 sinon). Utilise $fetch (utilisable hors setup, contrai-
-  // rement à useFetch) : appelable depuis un handler d'événement.
+  // `$fetch` (et non `useFetch`) : appelable depuis un handler d'événement, hors setup.
   const loadSheet = async (id: number): Promise<void> => {
     const sheet = await $fetch<CharacterSheet>(`/api/character_sheets/${id}`)
     stats.value = deriveStatsFromSheet(sheet)
     selectedSheetId.value = id
   }
 
-  // Retour au bac à sable manuel (valeurs par défaut).
   const reset = (): void => {
     stats.value = defaultStats()
     selectedSheetId.value = null

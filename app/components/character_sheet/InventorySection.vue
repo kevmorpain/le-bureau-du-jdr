@@ -30,7 +30,6 @@
       description="La règle 2014 limite l'harmonisation à 3 objets à la fois."
     />
 
-    <!-- ── Armes ────────────────────────────────────────────────────────── -->
     <template v-if="activeTab === 'weapons'">
       <div
         v-if="weapons.length === 0"
@@ -48,9 +47,7 @@
           class="rounded-lg bg-default ring ring-default p-2"
         >
           <UCollapsible>
-            <!-- Trigger : seule la ligne principale ouvre le détail -->
             <div class="flex items-center gap-2 flex-wrap">
-              <!-- Équiper toggle -->
               <div @click.stop>
                 <USwitch
                   :model-value="entry.equipped"
@@ -68,7 +65,6 @@
                 > +{{ entry.magicBonus }}</span>
               </span>
 
-              <!-- Stats inline si équipée -->
               <template v-if="entry.equipped && weaponStatsByEntry.get(entry.id)">
                 <div
                   class="flex items-center gap-1 flex-wrap"
@@ -106,7 +102,6 @@
                 </div>
               </template>
 
-              <!-- Résumé arme non équipée -->
               <span
                 v-else-if="!entry.equipped"
                 class="text-sm text-muted"
@@ -114,7 +109,6 @@
                 {{ weaponDamageSummary(entry) }}
               </span>
 
-              <!-- Warning non-maîtrise -->
               <UTooltip
                 v-if="entry.item && !isWeaponProficient(entry.item as InventoryItem)"
                 text="Arme non maîtrisée : pas de bonus de maîtrise à l'attaque"
@@ -125,7 +119,6 @@
                 />
               </UTooltip>
 
-              <!-- Édition (objets custom uniquement) -->
               <UButton
                 v-if="entry.item?.isCustom"
                 icon="i-heroicons:pencil-square"
@@ -136,7 +129,6 @@
                 @click.stop="openEdit(entry)"
               />
 
-              <!-- Delete -->
               <UButton
                 icon="i-heroicons:trash"
                 size="sm"
@@ -211,9 +203,7 @@
             </template>
           </UCollapsible>
 
-          <!-- Toujours visibles, hors UCollapsible -->
           <div class="space-y-1.5 mt-1.5">
-            <!-- Propriétés (badges) -->
             <div
               v-if="weaponPropertiesOf(entry).length"
               class="flex flex-wrap items-center gap-1"
@@ -237,7 +227,6 @@
               </span>
             </div>
 
-            <!-- Toggle "Tenue à deux mains" si versatile et équipée -->
             <UCheckbox
               v-if="entry.equipped && weaponStatsByEntry.get(entry.id)?.isVersatile"
               :model-value="entry.usingTwoHanded === true"
@@ -246,7 +235,6 @@
               @update:model-value="(val: boolean | 'indeterminate') => setUsingTwoHanded(entry.id, val === true)"
             />
 
-            <!-- Warnings (équipée seulement) -->
             <ul
               v-if="entry.equipped && (weaponStatsByEntry.get(entry.id)?.warnings.length ?? 0) > 0"
               class="space-y-0.5"
@@ -264,7 +252,6 @@
               </li>
             </ul>
 
-            <!-- Charges (armes à utilisations limitées) -->
             <ItemCharges
               :entry="entry"
               :roll="roll"
@@ -275,7 +262,6 @@
       </ul>
     </template>
 
-    <!-- ── Armures ──────────────────────────────────────────────────────── -->
     <template v-if="activeTab === 'armors'">
       <div
         v-if="armors.length === 0"
@@ -293,7 +279,6 @@
           class="rounded-lg bg-default ring ring-default p-2"
         >
           <div class="flex items-center gap-2">
-            <!-- Équiper toggle -->
             <USwitch
               :model-value="entry.equipped"
               size="xs"
@@ -309,7 +294,6 @@
               > +{{ entry.magicBonus }}</span>
             </span>
 
-            <!-- CA si équipée -->
             <span
               v-if="entry.equipped"
               class="text-sm font-mono text-primary"
@@ -323,7 +307,6 @@
               {{ armorBaseACSummary(entry) }}
             </span>
 
-            <!-- Désavantage Discrétion -->
             <UTooltip
               v-if="entry.equipped && armorStealthDisadvantage"
               text="Désavantage en Discrétion"
@@ -336,7 +319,6 @@
               />
             </UTooltip>
 
-            <!-- Warning non-maîtrise -->
             <UTooltip
               v-if="entry.equipped && equippedArmorProficiencyWarning"
               :text="equippedArmorProficiencyWarning"
@@ -347,7 +329,6 @@
               />
             </UTooltip>
 
-            <!-- Édition (objets custom uniquement) -->
             <UButton
               v-if="entry.item?.isCustom"
               icon="i-heroicons:pencil-square"
@@ -358,7 +339,6 @@
               @click.stop="openEdit(entry)"
             />
 
-            <!-- Delete -->
             <UButton
               icon="i-heroicons:trash"
               size="xs"
@@ -369,7 +349,6 @@
             />
           </div>
 
-          <!-- Détail armure -->
           <div
             v-if="entry.equipped && armorClass.detail"
             class="text-sm text-muted mt-1 pl-8"
@@ -377,7 +356,6 @@
             {{ armorClass.detail }}
           </div>
 
-          <!-- Charges -->
           <ItemCharges
             class="mt-1.5"
             :entry="entry"
@@ -388,7 +366,6 @@
       </ul>
     </template>
 
-    <!-- ── Équipement ───────────────────────────────────────────────────── -->
     <template v-if="activeTab === 'equipment'">
       <div
         v-if="equipmentItems.length === 0"
@@ -466,7 +443,6 @@
           >
             {{ entry.item.description }}
           </p>
-          <!-- Effets magiques de l'objet -->
           <ul
             v-if="hasMagicEffects(entry)"
             class="mt-1.5 flex flex-wrap gap-1"
@@ -484,7 +460,6 @@
             </li>
           </ul>
 
-          <!-- Charges -->
           <ItemCharges
             class="mt-1.5"
             :entry="entry"
@@ -494,14 +469,12 @@
         </li>
       </ul>
 
-      <!-- Monnaie intégrée dans l'onglet équipement -->
       <USeparator class="my-3" />
       <CurrencySection
         v-model:character-sheet="characterSheetModel"
       />
     </template>
 
-    <!-- ── Outils ───────────────────────────────────────────────────────── -->
     <template v-if="activeTab === 'tools'">
       <div
         v-if="toolItems.length === 0"
@@ -589,7 +562,6 @@
             </li>
           </ul>
 
-          <!-- Charges -->
           <ItemCharges
             class="mt-1.5"
             :entry="entry"
@@ -601,7 +573,6 @@
     </template>
   </div>
 
-  <!-- Slideover d'ajout / d'édition -->
   <AddItemSlideover
     v-model:open="slideoverOpen"
     :character-sheet="characterSheet"
@@ -639,12 +610,11 @@ const {
   setUsingTwoHanded,
 } = useCharacterSheet(characterSheetModel)
 
-// ─── Objets magiques (effets via item_effects) ──────────────────────────────
+// Objets magiques (effets via item_effects)
 
 const hasMagicEffects = (entry: InventoryEntry): boolean =>
   (entry.item?.effects?.length ?? 0) > 0
 
-// Libellé FR court d'un effet magique, pour les badges d'inventaire.
 const magicEffectLabel = (effect: Effect): string => {
   const v = effect.value as any
   switch (effect.type) {
@@ -666,7 +636,6 @@ const magicEffectLabel = (effect: Effect): string => {
   }
 }
 
-// Map d'accès rapide aux stats par entryId
 const weaponStatsByEntry = computed(() => {
   const map = new Map<number, typeof equippedWeaponStats.value[number]>()
   for (const w of equippedWeaponStats.value) map.set(w.entryId, w)
@@ -715,12 +684,9 @@ const openEdit = (entry: InventoryEntry) => {
   slideoverOpen.value = true
 }
 
-// Réinitialise la cible d'édition quand le slideover se ferme.
 watch(slideoverOpen, (isOpen) => {
   if (!isOpen) editingItem.value = null
 })
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
 
 const activeTab = ref('weapons')
 
@@ -730,8 +696,6 @@ const tabItems = computed(() => [
   { label: `Équipement ${equipmentItems.value.length ? `(${equipmentItems.value.length})` : ''}`, value: 'equipment' },
   { label: `Outils ${toolItems.value.length ? `(${toolItems.value.length})` : ''}`, value: 'tools' },
 ])
-
-// ─── Filtered inventory ───────────────────────────────────────────────────────
 
 const weapons = computed(() =>
   (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'weapon'),
@@ -745,8 +709,6 @@ const equipmentItems = computed(() =>
 const toolItems = computed(() =>
   (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'tool'),
 )
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const damageTypeLabels: Record<string, string> = {
   acid: 'acide', bludgeoning: 'contondant', cold: 'froid', fire: 'feu', force: 'force',
@@ -788,7 +750,7 @@ const toolCategoryLabel = (item: InventoryItem): string => {
   return toolTypeLabels[props.tool_type] ?? props.category
 }
 
-// ─── Armor equip logic (only one body armor at a time) ───────────────────────
+// Armor equip logic (only one body armor at a time)
 
 const onToggleArmor = async (entry: InventoryEntry) => {
   const props = entry.item?.properties as ArmorProperties | undefined

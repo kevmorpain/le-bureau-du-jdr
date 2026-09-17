@@ -13,8 +13,7 @@ export default async function seed() {
   for (const species of characterSpecies) {
     const { traits, ...speciesData } = species
 
-    // Keyé par (name, ruleset) : une espèce 5.5 homonyme (« Humain », « Tieffelin ») est une ligne
-    // DISTINCTE, pas une mise à jour de la 2014 (D2). No-op sur le 2014 (tout est '5').
+    // Keyé par (name, ruleset) : un homonyme 5.5 est une ligne DISTINCTE, pas une mise à jour (D2).
     const existingSpecies = await db.query.characterSpecies.findFirst({
       where: and(
         eq(schema.characterSpecies.name, speciesData.name),
@@ -22,8 +21,7 @@ export default async function seed() {
       ),
     })
 
-    // Insert via srcSchema (schéma frais) : le cache hub:db peut ignorer la colonne récente
-    // `source` et la dropper silencieusement (CLAUDE.md) → l'espèce gatée ne serait pas gatée.
+    // srcSchema (schéma frais) : le cache hub:db peut dropper la colonne `source` en silence.
     const insertedSpecies = existingSpecies ?? await db
       .insert(srcSchema.characterSpecies)
       .values(speciesData)
@@ -38,7 +36,6 @@ export default async function seed() {
     for (const trait of traits) {
       const { effects, ...traitData } = trait
 
-      // Skip if this feature is already linked to this species (idempotency on re-run)
       const existingFeature = await db
         .select({ id: schema.features.id })
         .from(schema.features)

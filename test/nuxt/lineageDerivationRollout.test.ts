@@ -14,11 +14,8 @@ import { halfling } from '../../server/db/seeds/data/halfling'
 import { gnome } from '../../server/db/seeds/data/gnome'
 import { tiefling } from '../../server/db/seeds/data/tiefling'
 
-// Rollout lot 6 (chantier lignée, D17) — SEED + DÉRIVATION bout en bout pour Nain/Halfelin/Gnome/
-// Tieffelin (l'elfe a `lineageDerivation.test.ts`). Prouve que les DONNÉES traversent le moteur
-// générique `seedLineages` sans erreur, puis qu'un perso « base + lignée » DÉRIVE exactement les
-// effets de l'ancienne espèce séparée (D12). Le trio + Tieffelin mettent « Vitesse » sur la BASE
-// (commune) → aucune surcharge attendue (`speedOverride === null`, la fiche garde species.speed).
+// Seed + dérivation pour Nain/Halfelin/Gnome/Tieffelin : base ⊕ lignée dérive exactement les effets
+// de l'ancienne espèce séparée. « Vitesse » est portée par la BASE → aucune surcharge attendue.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

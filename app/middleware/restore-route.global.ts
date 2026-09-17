@@ -1,9 +1,5 @@
-// Reprise après relance à froid de la PWA : l'OS rouvre l'app sur « / » (le
-// `start_url` du manifeste), on renvoie l'utilisateur là où il en était.
-// Voir app/utils/lastRoute.ts pour le pourquoi.
-//
-// S'exécute après `auth.global.ts` (ordre alphabétique) : une route restaurée qui
-// demande une session repassera de toute façon par la garde d'auth.
+// Relance à froid de la PWA : l'OS rouvre l'app sur « / » (le `start_url` du manifeste) → on renvoie
+// l'utilisateur là où il en était (cf. app/utils/lastRoute.ts). S'exécute après `auth.global.ts`.
 export default defineNuxtRouteMiddleware((to) => {
   if (import.meta.server) return
 

@@ -1,6 +1,5 @@
 <template>
   <div class="rounded-xl overflow-hidden border border-default">
-    <!-- Header -->
     <button
       class="w-full flex items-center gap-2 px-3 py-2 bg-elevated hover:bg-accented transition-colors text-left"
       @click="toggle"
@@ -19,7 +18,6 @@
       />
     </button>
 
-    <!-- Content -->
     <div
       v-if="!isCollapsed"
       class="bg-default p-3"

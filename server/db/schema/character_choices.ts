@@ -9,17 +9,8 @@ import features from './features'
 import spells from './spells'
 import abilityScores from './ability_scores'
 
-/**
- * `character_choices` — la CONFIG : une ligne = un pick atomique d'un personnage pour
- * une `progression`. Valeurs typées / FK partout où une table existe
- * ([D5](../../../docs/decisions.md#d5)) ; au plus une colonne `selected_*` renseignée.
- * `payload` porte les choix composés (la triade de caractéristiques d'un historique 5.5).
- *
- * Ces lignes ne sont PAS matérialisées en `character_features` : la fiche dérive live
- * les features/effets actifs en joignant `character_choices → features` + gating de
- * niveau ([D8](../../../docs/decisions.md#d8)). Pas de `relations()` (cf. progression.ts).
- * Config par personnage → aucune ligne seedée.
- */
+// Un pick atomique par ligne ; au plus une colonne `selected_*` renseignée. `payload` porte les choix
+// composés. Pas de `relations()` (cf. progression.ts).
 const characterChoices = sqliteTable(
   'character_choices',
   {
@@ -28,13 +19,11 @@ const characterChoices = sqliteTable(
     progressionId: integer('progression_id').notNull().references(() => progression.id, { onDelete: 'cascade' }),
     // Niveau de la classe propriétaire au moment du pick (utile en multiclasse).
     classLevel: integer('class_level'),
-    // ─── Référentiel typé (au plus un renseigné) ───────────────────────────────
     selectedSubclassId: integer('selected_subclass_id').references(() => subclasses.id, { onDelete: 'cascade' }),
     selectedLineageId: integer('selected_lineage_id').references(() => speciesLineages.id, { onDelete: 'cascade' }), // lignée (sous-race 2014 / lignée 2024), cf. D17
     selectedFeatureId: integer('selected_feature_id').references(() => features.id, { onDelete: 'cascade' }), // invocation / pacte / style / métamagie / manœuvre / don
     selectedSpellId: integer('selected_spell_id').references(() => spells.id, { onDelete: 'cascade' }),
     selectedAbilityId: text('selected_ability_id').references(() => abilityScores.id),
-    // ─── Résiduel typé (seulement si aucune table) + composé ───────────────────
     selectedValue: text('selected_value').$type<SkillKey | (string & {})>(), // compétence / langue / outil
     payload: text('payload', { mode: 'json' }).$type<Partial<Record<AbilityKey, number>>>(), // triade {str:2, dex:1}
     createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),

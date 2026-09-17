@@ -11,11 +11,9 @@ import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLev
 import { CharacterValidationError } from '../../server/utils/characterCreate'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 
-// Volet 3 (5d) : montée de niveau extraite → testée contre libsql (chaîne de migrations rejouée),
-// SANS auth. On crée un Occultiste via createCharacter (code testé) puis on le monte de niveau et
-// on vérifie le db.batch() : bump de niveau, recalc + PURGE des emplacements de pacte, features
-// débloquées, faveur de pacte, une manifestation ajoutée (applyInvocationChanges DI) + un rejet.
-// FK désactivables ignorées par libsql → on seede les référentiels (comme createCharacter.test).
+// Montée de niveau testée contre libsql (migrations rejouées), sans auth : bump de niveau, recalcul
+// et PURGE des emplacements de pacte, features débloquées, faveur de pacte, manifestation ajoutée,
+// plus un rejet.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
@@ -50,24 +48,20 @@ beforeAll(async () => {
   }
   db = drizzle(client, { schema, casing: 'snake_case' })
 
-  // Référentiels
   await db.insert(schema.magicSchools).values({ id: 1, name: 'Invocation' })
   await db.insert(schema.users).values({ id: OWNER, provider: 'discord', providerUserId: 'x', name: 'T' })
   await db.insert(schema.characterSpecies).values({ id: 1, name: 'Humain', size: 'medium', speed: 30 })
   await db.insert(schema.abilityScores).values(['str', 'dex', 'con', 'int', 'wis', 'cha'].map(id => ({ id, name: id.toUpperCase() })))
-  // Classes + sous-classe (Guerrier, pour le rejet « sous-classe d'une autre classe »)
   await db.insert(schema.classes).values([
     { id: WARLOCK, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' },
     { id: FIGHTER, name: 'Guerrier', hitDice: '1d10', spellcastingType: 'none' },
   ])
   await db.insert(schema.subclasses).values({ id: FIGHTER_SUBCLASS, classId: FIGHTER, name: 'Champion' })
-  // Features propriétaires + progressions (contrat 5a)
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
     await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: 'class_feature', classId: WARLOCK, levelRequired: c.ownerLevelRequired })
     await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
   }
-  // 3 manifestations (tag invocation)
   await db.insert(schema.features).values([
     { id: 401, name: 'Manif A', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
     { id: 402, name: 'Manif B', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },

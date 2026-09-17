@@ -1,23 +1,14 @@
 import { ALIGNMENTS as CANONICAL_ALIGNMENTS } from '~~/shared/rules/alignments'
 
-// Données riches D&D 5e (2014) pour le Character Builder.
-// Ces données sont hardcodées côté frontend car la DB ne stocke pas
-// les traits, bonus de carac., descriptions détaillées, etc.
-// Voir docs/character-builder.md pour le contexte complet.
+// Données D&D 5e (2014) du builder, hardcodées côté front : la DB ne stocke ni les traits, ni les
+// bonus de carac., ni les descriptions détaillées. Cf. docs/character-builder.md.
 
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import type { CasterType } from '~~/shared/rules/spellcasting'
 import type { Source } from '~~/shared/rules/source'
 
-// Ré-export depuis la source canonique (cf. shared/rules/abilities.ts, decisions.md D6) —
-// les consommateurs continuent d'importer `AbilityKey` / `ABILITIES` d'ici.
 export type { AbilityKey }
-// L'ensemble fermé des types d'incantation vit dans `shared/rules/spellcasting.ts` et
-// sa valeur par classe dans `classes.spellcasting_type` ; ici on ne manipule que les
-// trois progressions qui ont une table d'emplacements (`CasterType`, `'none'` exclu).
 export type { CasterType }
-
-// ─── Constantes ────────────────────────────────────────────────────────────────
 
 export const ABILITIES: AbilityKey[] = [...ABILITY_KEYS]
 
@@ -100,8 +91,6 @@ export const POINT_BUY_COSTS: Record<number, number> = {
   8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9,
 }
 
-// ─── Compétences ───────────────────────────────────────────────────────────────
-
 export interface SkillDef {
   key: string
   label: string
@@ -128,8 +117,6 @@ export const SKILLS: SkillDef[] = [
   { key: 'stealth', label: 'Discrétion', ability: 'dex' },
   { key: 'survival', label: 'Survie', ability: 'wis' },
 ]
-
-// ─── Types Races ───────────────────────────────────────────────────────────────
 
 export interface SubraceData {
   id: string
@@ -162,12 +149,8 @@ export interface RaceData {
   // Cas spéciaux
   hasHalfElfBonuses?: boolean             // Demi-Elfe : +1+1 aux carac. hors CHA
   hasVariantOption?: boolean              // Humain : option variante disponible
-  // Provenance / gating (cf. shared/rules/source.ts). Absent = socle (toujours visible) ;
-  // une valeur d'extension (ex. 'wbtw') = masquée sauf toggle « contenu étendu » du builder.
   source?: Source
 }
-
-// ─── Races ─────────────────────────────────────────────────────────────────────
 
 export const RACES: RaceData[] = [
   {
@@ -429,9 +412,8 @@ export const RACES: RaceData[] = [
     id: 'tiefling',
     name: 'Tieffelin',
     emoji: '😈',
-    // Base+lignée (D17, lot 6) : le picker vient du catalogue (base « Tieffelin »). Le `dbName` pointe
-    // la LEGACY renommée (migration 0087) → repli résolvable AVANT le seed de la base (pas de fenêtre
-    // où « Tieffelin » serait irrésolvable). Après seed, `lineageBaseSpeciesName` prend le relais.
+    // `dbName` pointe la LEGACY renommée (migration 0087) : résolvable même avant le seed de la base ;
+    // ensuite `lineageBaseSpeciesName` prend le relais.
     dbName: 'Tieffelin (Asmodée)',
     lineageBaseSpeciesName: 'Tieffelin',
     description: 'Portant le sang infernal de leurs ancêtres diaboliques, les tiéflins font face au monde avec ruse et défi. Charismatiques, résistants au feu et dotés de magie innée.',
@@ -451,9 +433,8 @@ export const RACES: RaceData[] = [
     id: 'dragonborn',
     name: 'Drakéide',
     emoji: '🐉',
-    // Base+lignée (D17, lot 6) : l'ascendance draconique devient une lignée « Dragon <couleur> »
-    // (picker catalogue). `dbName` pointe la LEGACY renommée (migration 0088) → repli résolvable avant
-    // le seed de la base ; `lineageBaseSpeciesName` prend le relais une fois la base seedée.
+    // `dbName` pointe la LEGACY renommée (migration 0088) : résolvable même avant le seed de la base ;
+    // ensuite `lineageBaseSpeciesName` prend le relais.
     dbName: 'Drakéide (2014)',
     lineageBaseSpeciesName: 'Drakéide',
     description: 'Descendants orgueilleux des dragons, les drakéides possèdent une arme de souffle dévastatrice et une résistance élémentaire innée selon leur ascendance draconique.',
@@ -468,7 +449,7 @@ export const RACES: RaceData[] = [
     ],
     languages: ['Commun', 'Draconique'],
   },
-  // ─── Espèce d'extension GATÉE (The Wild Beyond the Witchlight / MPMM) ──────────
+  // Espèce d'extension GATÉE (The Wild Beyond the Witchlight / MPMM)
   {
     id: 'fairy',
     name: 'Fadette',
@@ -488,8 +469,6 @@ export const RACES: RaceData[] = [
     languages: ['Commun', '+1 au choix'],
   },
 ]
-
-// ─── Types Classes ─────────────────────────────────────────────────────────────
 
 export interface ClassFeature {
   name: string
@@ -531,19 +510,13 @@ export interface ClassData {
   weaponProficiencies: string[]
   skillChoices: SkillChoices
   spellcasting: SpellcastingInfo | null
-  // Libellé FR de la spécialisation (ex. « Domaine divin ») — donnée d'affichage front-only
-  // (aucune colonne DB). Le NIVEAU d'accès et la LISTE des sous-classes viennent désormais du
-  // catalogue (`/api/catalog/classes`, F2 tranche 3), plus du blob.
+  // Affichage seul : le niveau d'accès et la liste des sous-classes viennent du catalogue.
   subclassLabel: string
   features: ClassFeature[]
   equipment: EquipmentGroup[]
   levelMilestones: LevelMilestones
-  // Provenance / gating (cf. shared/rules/source.ts). Absent = socle. Aucune classe gatée
-  // aujourd'hui ; le filtre est prêt si une classe d'extension est ajoutée.
   source?: Source
 }
-
-// ─── Classes ───────────────────────────────────────────────────────────────────
 
 export const CLASSES: ClassData[] = [
   {
@@ -879,11 +852,8 @@ export const CLASSES: ClassData[] = [
   },
 ]
 
-// Les styles de combat (options + descriptions + niveaux d'accès) sont désormais lus dans le
-// CATALOGUE (`/api/catalog/classes/[name]/fighting-styles` + `resolveChoices`), plus dans le blob
-// (F2 tranche 4). Le Rôdeur inclut Duel (que l'ancien blob omettait).
-
-// ─── Alignements ──────────────────────────────────────────────────────────────
+// Les styles de combat (options, descriptions, niveaux d'accès) sont lus dans le catalogue
+// (`/api/catalog/classes/[name]/fighting-styles`), plus dans ce blob.
 
 export interface AlignmentData {
   id: string
@@ -892,16 +862,13 @@ export interface AlignmentData {
   description: string
 }
 
-// Libellés et ordre viennent de la source canonique partagée (shared/rules/alignments.ts),
-// qui porte aussi le code stocké en base ; le builder n'en garde que son `id` historique.
+// Libellés et ordre viennent de shared/rules/alignments.ts ; le builder garde son `id` historique.
 export const ALIGNMENTS: AlignmentData[] = CANONICAL_ALIGNMENTS.map(a => ({
   id: a.builderId,
   short: a.short,
   name: a.name,
   description: a.description,
 }))
-
-// ─── Historiques ───────────────────────────────────────────────────────────────
 
 export interface BackgroundSuggestions {
   personality: string[]
@@ -922,8 +889,6 @@ export interface BackgroundData {
   featureName: string
   featureDescription: string
   suggestions: BackgroundSuggestions
-  // Provenance / gating (cf. shared/rules/source.ts). Absent = socle. Aucun historique gaté
-  // aujourd'hui ; le filtre est prêt si un historique d'extension est ajouté.
   source?: Source
 }
 
@@ -1583,11 +1548,7 @@ export const BACKGROUNDS: BackgroundData[] = [
   },
 ]
 
-// ─── Calculs de sorts ─────────────────────────────────────────────────────────
-
-// Emplacements de sorts : SOURCE UNIQUE dans shared/rules/spellSlots.ts (dédup point 6c). Ré-exports
-// sous les noms historiques pour ne pas toucher les importateurs (useCharacterBuilder, useLevelUp,
-// LevelUpStepSpells).
+// Ré-exports sous les noms historiques (source unique : shared/rules/spellSlots.ts).
 export {
   slotsForLevel as spellSlotsAtLevel,
   maxSpellLevelForLevel as maxSpellLevelAtLevel,
@@ -1608,10 +1569,7 @@ export const SPELLS_KNOWN: Partial<Record<string, number[]>> = {
   warlock:  [2,3,4,5,6,7,8,9,10,10,11,11,12,12,13,13,14,15,15,15],
 }
 
-// ─── Utilitaires ──────────────────────────────────────────────────────────────
-
-// Helpers de calcul purs : SOURCE UNIQUE dans shared/rules/math.ts (dédup point 6c-3). Ré-exports
-// sous les noms historiques pour ne pas toucher les importateurs.
+// Ré-exports sous les noms historiques (source unique : shared/rules/math.ts).
 export {
   profBonusAtLevel,
   abilityMod,

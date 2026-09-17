@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- En-tête -->
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">📜</span>
       <div>
@@ -9,7 +8,6 @@
       </div>
     </div>
 
-    <!-- Nom -->
     <div class="mb-6">
       <label class="block text-xs font-bold uppercase tracking-widest text-muted mb-2">Nom</label>
       <input
@@ -21,7 +19,6 @@
       >
     </div>
 
-    <!-- Historique -->
     <div class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Historique</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -54,7 +51,6 @@
             >+{{ bg.languages }} langue{{ bg.languages > 1 ? 's' : '' }}</span>
           </div>
 
-          <!-- Capacité si sélectionné (backgrounds prédéfinis) -->
           <div v-if="state.backgroundId === bg.id && bg.featureName" class="mt-3 pt-3 border-t border-(--ui-border) w-full">
             <div class="text-xs font-semibold text-amber-400 mb-0.5">{{ bg.featureName }}</div>
             <div class="text-xs text-muted leading-relaxed">{{ bg.featureDescription }}</div>
@@ -62,7 +58,6 @@
         </button>
       </div>
 
-      <!-- Formulaire background personnalisé -->
       <div v-if="state.backgroundId === 'custom'" class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 flex flex-col gap-4">
         <div>
           <label class="block text-xs font-bold uppercase tracking-widest text-muted mb-2">Nom de l'historique</label>
@@ -97,7 +92,6 @@
       </div>
     </div>
 
-    <!-- Choix de maîtrises d'outils (backgrounds avec options) -->
     <div v-if="toolChoices.length > 0" class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Maîtrises d'outils</p>
       <div v-for="tc in toolChoices" :key="tc.label" class="mb-4">
@@ -119,7 +113,6 @@
       </div>
     </div>
 
-    <!-- Choix de langues -->
     <div v-if="languageChoiceCount > 0" class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-1">
         Langues supplémentaires
@@ -143,7 +136,6 @@
       </div>
     </div>
 
-    <!-- Alignement -->
     <div class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Alignement</p>
       <div class="grid grid-cols-3 gap-2">
@@ -167,7 +159,6 @@
       </div>
     </div>
 
-    <!-- Traits de personnalité -->
     <div>
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Traits de personnalité</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -183,7 +174,6 @@
       </div>
     </div>
 
-    <!-- Apparence & histoire (facultatif) -->
     <div class="mt-6">
       <button
         type="button"
@@ -266,7 +256,6 @@ const filteredBackgrounds = computed(() =>
   BACKGROUNDS.filter(b => !b.source || !isGatedSource(b.source) || extended.value),
 )
 
-// Entrées de choix d'outils pour le background courant
 const toolChoices = computed(() =>
   (backgroundData.value?.toolProficiencies ?? [])
     .filter(p => TOOL_CHOICE_MAP[p])
@@ -280,8 +269,6 @@ const traitFields: { key: TraitKey, label: string, placeholder: string }[] = [
   { key: 'flaws', label: 'Défauts', placeholder: 'Mon point faible…' },
 ]
 
-// Identité & description — facultatif, replié par défaut pour ne pas alourdir l'étape.
-// Mêmes champs que la section « Identité » de la fiche (character_sheets).
 const detailsOpen = ref(false)
 
 const appearanceFields: { key: AppearanceKey, label: string, placeholder: string }[] = [
@@ -319,7 +306,6 @@ function toggleCustomSkill(key: string) {
   }
 }
 
-// Reset background-specific fields when switching background
 watch(() => state.value.backgroundId, (id) => {
   if (id !== 'custom') {
     state.value.customBackgroundName = ''

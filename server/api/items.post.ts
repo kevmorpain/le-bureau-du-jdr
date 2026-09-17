@@ -1,14 +1,10 @@
 import { db } from 'hub:db'
-// hub:db schema cache ne connaît pas item_effects (ajoutée en 0053) → on lit
-// les définitions depuis la source pour les nouvelles tables.
 import * as schema from '~~/server/db/schema'
 import * as srcSchema from '~~/server/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
 import { createItemSchema } from '~~/shared/utils/item'
 import { z } from 'zod'
 
-// Le schéma de base de l'item est partagé (cf. shared/utils/item.ts). On l'étend
-// ici avec une liste optionnelle d'effets magiques, persistés via item_effects.
 const createCustomItemSchema = createItemSchema.extend({
   effects: z
     .array(z.object({ type: z.string(), value: z.any() }))
@@ -38,9 +34,7 @@ export default defineEventHandler(async (event) => {
 
   if (!item) throw createError({ statusCode: 500, statusMessage: 'Failed to create item' })
 
-  // Pour chaque effet : on réutilise l'effect existant si même (type, value),
-  // sinon on l'insère. L'égalité sur la colonne JSON `value` se fait via une
-  // comparaison string (sqlite la stocke en text).
+  // Réutilise l'effect existant si même (type, value) ; `value` JSON comparé en string (stocké en text).
   for (const effect of body.effects) {
     const existing = await db
       .select({ id: srcSchema.effects.id })

@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { profBonusAtLevel, abilityMod, formatMod, hpAtLevel } from '../../shared/rules/math'
 
-// Helpers de calcul purs (source unique shared/rules/math.ts depuis le point 6c-3, avant :
-// front-only dans app/data/character-builder.ts). On verrouille les formules 2014 contre les
-// valeurs de référence du PHB — toute dérive casserait l'affichage builder/level-up/fiche.
+// Helpers de calcul purs : on verrouille les formules 2014 contre les valeurs de référence du PHB —
+// toute dérive casserait l'affichage builder / level-up / fiche.
 
 describe('profBonusAtLevel', () => {
   it('suit les paliers +2/+3/+4/+5/+6 du PHB 2014', () => {

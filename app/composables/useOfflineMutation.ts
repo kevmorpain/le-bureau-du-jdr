@@ -14,11 +14,9 @@ interface MutateArgs {
 }
 
 /**
- * Remplace les `$fetch` de mutation : en ligne et sans file en attente → requête directe ;
- * sinon (hors-ligne, ou backlog à respecter) → enfile pour rejeu. Les erreurs serveur réelles
- * (validation, 4xx) ne sont PAS enfilées (elles ne réussiraient jamais au rejeu).
- *
- * L'update optimiste de l'état local reste à la charge de l'appelant.
+ * En ligne et sans file en attente → requête directe ; sinon (hors-ligne, ou backlog à respecter) →
+ * enfile pour rejeu. Les erreurs serveur réelles (validation, 4xx) ne sont PAS enfilées : elles ne
+ * réussiraient jamais au rejeu. L'update optimiste de l'état local reste à la charge de l'appelant.
  */
 export function useOfflineMutation(characterId: MaybeRefOrGetter<number>) {
   const { enqueue, online } = useOfflineSync()

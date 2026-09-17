@@ -42,15 +42,7 @@ type SlotLevel = string // e.g., "1", "2", "3", etc.
 type CharacterLevel = string // e.g., "1", "2", "3", etc.
 type Die = string // e.g., "1d6", "2d8"
 
-/**
- * Une composante de dégâts d'un sort. Un sort peut en cumuler plusieurs (types
- * différents et/ou déclencheurs différents), par ex. Voracité de Hadar
- * (froid à l'entrée + acide en fin de tour). Chaque entrée porte son propre type
- * et sa propre progression de dés.
- *
- * `label` (optionnel) désambiguïse une entrée quand le sort en a plusieurs
- * (ex. « à l'entrée », « en fin de tour », « cible secondaire »).
- */
+/** Un sort peut cumuler plusieurs composantes (types et/ou déclencheurs différents). */
 export type DamageEntry = {
   damage_type: DamageType
   label?: string
@@ -73,18 +65,9 @@ export type HealEntry = {
 )
 
 /**
- * Pour les sorts à plusieurs attaques indépendantes (Décharge occulte, Rayon
- * ardent, Trait magique…). Chaque "attaque" est un jet d'attaque distinct
- * (ou auto-touche pour Trait magique) ; on roule N jets séparés.
- *
- * Convention : les dés (count×Md+K) déclarés dans `damage_at_*` représentent
- * le TOTAL pour toutes les attaques. Per-attaque = (count/N)d(M) + (K/N).
- * Les modificateurs (CHA via Coup éldritique agonisant, spellcasting mod,
- * etc.) sont appliqués PAR attaque.
- *
- * - `count_at_character_level` : pour les tours de magie (cantrip) — clé = niveau du perso.
- * - `count_at_slot_level` : pour les sorts à emplacement — clé = niveau d'emplacement utilisé.
- * - `label` : nom singulier pour chaque jet ("Rayon", "Dard", "Trait"…). Défaut = "Attaque".
+ * Sorts à plusieurs attaques indépendantes. Convention : les dés déclarés dans `damage_at_*` sont le
+ * TOTAL pour toutes les attaques (per-attaque = (count/N)d(M) + (K/N)) ; les modificateurs, eux,
+ * s'appliquent PAR attaque.
  */
 export type MultiAttack = {
   label?: string
@@ -108,14 +91,8 @@ const spells = sqliteTable('spells', {
   concentration: integer('concentration', { mode: 'boolean' }).default(false).notNull(),
   description: text('description'),
 
-  // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2). Contrairement à
-  // `spell_classes.ruleset` (appartenance d'un sort à la LISTE d'une classe par édition),
-  // ce discriminant est porté par le SORT lui-même : description et effets peuvent différer
-  // entre 2014 et 2024, donc chaque édition a ses propres lignes (« Boule de feu » 5 vs 5.5).
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
 
-  // Provenance / gating de visibilité (cf. shared/rules/source.ts, orthogonal à `ruleset`).
-  // DEFAULT 'core' = socle toujours visible ; les extensions (tasha, xanathar…) sont gatées.
   source: text('source').$type<Source>().notNull().default('core'),
 
   schoolId: integer('school_id').references(() => magicSchools.id).notNull(),

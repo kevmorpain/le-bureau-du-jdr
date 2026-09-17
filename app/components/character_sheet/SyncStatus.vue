@@ -1,5 +1,4 @@
 <template>
-  <!-- Conflit : la fiche a changé ailleurs (la modale de résolution arrive en Phase 4). -->
   <UBadge
     v-if="hasConflict"
     color="error"
@@ -14,7 +13,6 @@
     Conflit de synchro
   </UBadge>
 
-  <!-- Hors-ligne -->
   <UBadge
     v-else-if="!online"
     color="warning"
@@ -29,7 +27,6 @@
     Hors-ligne<template v-if="pendingCount"> · {{ pendingCount }} en attente</template>
   </UBadge>
 
-  <!-- Synchronisation en cours -->
   <UBadge
     v-else-if="isSyncing"
     color="info"
@@ -44,7 +41,6 @@
     Synchronisation…
   </UBadge>
 
-  <!-- En ligne avec des modifs en attente (backlog) -->
   <UBadge
     v-else-if="pendingCount"
     color="warning"
@@ -59,7 +55,6 @@
     {{ pendingCount }} en attente
   </UBadge>
 
-  <!-- À jour -->
   <UBadge
     v-else
     color="success"

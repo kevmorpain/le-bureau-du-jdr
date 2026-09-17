@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- En-tête -->
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">🧬</span>
       <div>
@@ -9,7 +8,6 @@
       </div>
     </div>
 
-    <!-- Grille des races -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       <button
         v-for="race in filteredRaces"
@@ -34,7 +32,6 @@
 
         <div class="text-xs text-muted leading-relaxed">{{ race.description }}</div>
 
-        <!-- Expansion inline si sélectionnée -->
         <div v-if="state.raceId === race.id" class="mt-3 pt-3 border-t border-(--ui-border) w-full">
           <div class="text-xs font-bold uppercase tracking-wider text-muted mb-2">Traits raciaux</div>
           <ul class="space-y-1 mb-3">
@@ -52,7 +49,6 @@
       </button>
     </div>
 
-    <!-- Section sous-races (Elfe : pilotée par le catalogue — base+lignée, D17 ; autres : blob) -->
     <template v-if="subraces.length">
       <USeparator class="my-6" />
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Sous-race — choisissez une spécialisation</p>
@@ -74,7 +70,6 @@
           </div>
           <div class="text-xs text-muted mt-1 leading-relaxed">{{ sub.description }}</div>
 
-          <!-- Traits si sélectionnée -->
           <div v-if="state.subraceId === sub.id" class="mt-3 pt-3 border-t border-(--ui-border) w-full">
             <ul class="space-y-1">
               <li v-for="trait in sub.traits" :key="trait" class="text-xs text-(--ui-text) flex gap-1.5">
@@ -87,7 +82,6 @@
       </div>
     </template>
 
-    <!-- Cas spécial : Humain variante -->
     <template v-if="state.raceId === 'human'">
       <USeparator class="my-6" />
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Variante humaine</p>
@@ -151,7 +145,6 @@
       </template>
     </template>
 
-    <!-- Cas spécial : Demi-Elfe bonus +1+1 -->
     <template v-if="state.raceId === 'half-elf'">
       <USeparator class="my-6" />
       <div class="rounded-xl border border-amber-500/40 bg-(--ui-bg-elevated) p-4">
@@ -246,7 +239,6 @@ function formatBonuses(bonuses: Partial<Record<AbilityKey, number>>): string {
 function selectRace(id: string) {
   const race = RACES.find(r => r.id === id)
   state.value.raceId = id
-  // Auto-sélectionner si une seule sous-race
   state.value.subraceId = race?.subraces?.length === 1 ? race.subraces[0].id : null
   state.value.halfElfBonuses = []
   state.value.variantHumanBonuses = []

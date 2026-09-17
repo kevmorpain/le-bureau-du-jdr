@@ -7,13 +7,9 @@ import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
 import * as srcSchema from '../../server/db/schema'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Backfill prod du choix de SOUS-CLASSE — migration 0093 (F2). `migrations.test.ts` ne rejoue la
-// chaîne que sur base VIERGE (classes vides → INSERT...SELECT insère 0 ligne). Ici on teste le
-// comportement sur base PEUPLÉE (= une base déployée) : après avoir seedé une classe + ses
-// sous-classes, appliquer 0093 doit créer l'owner `choice_carrier` au niveau d'accès + sa
-// progression `subclass` ; un 2ᵉ passage ne doit RIEN dupliquer (gardes NOT EXISTS = idempotence).
-// ─────────────────────────────────────────────────────────────────────────────
+// Backfill du choix de sous-classe (0093) sur base PEUPLÉE — migrations.test.ts ne rejoue la chaîne
+// que sur base vierge. L'owner `choice_carrier` et sa progression doivent être créés, et un 2ᵉ passage
+// ne rien dupliquer.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

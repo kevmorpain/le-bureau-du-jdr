@@ -18,7 +18,6 @@
       >Inconscient</span>
     </div>
 
-    <!-- Succès & Échecs (design en opposition depuis le centre) -->
     <div class="grid grid-cols-2 divide-x divide-default">
       <!-- Succès (gauche, dots de droite vers gauche) -->
       <div class="flex items-center justify-end gap-1 pr-2">
@@ -59,7 +58,6 @@
       </div>
     </div>
 
-    <!-- États terminaux -->
     <p
       v-if="isDead"
       class="text-xs font-bold text-red-400"
@@ -72,7 +70,6 @@
     >
       ♥ Stabilisé — 3 succès
     </p>
-    <!-- Bouton lancer un jet de mort -->
     <UButton
       v-if="!isDead && !isStable"
       size="xs"
@@ -113,7 +110,6 @@ const rollDeathSave = () => {
   const natural = props.roll?.('Jet de mort', 0) ?? 0
 
   if (natural === 20) {
-    // Récupération miraculeuse
     emit('recover', 1)
     deathSavingThrows.value = { success: 0, failure: 0 }
     toaster.add({ title: '20 naturel — récupéré à 1 PV !', color: 'success' })

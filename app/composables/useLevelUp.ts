@@ -69,10 +69,6 @@ export const LU_MULTICLASS_PROFICIENCIES: Record<string, string[]> = {
   wizard: [],
 }
 
-// La liste des dons est désormais servie par /api/feats (cf. useFeats). On
-// expose seulement le type ici pour les consommateurs qui n'ont pas besoin de
-// la liste complète.
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type AbilityBonuses = Record<AbilityKey, number>
@@ -92,9 +88,7 @@ export interface LevelUpState {
   expertiseSkills: string[]
   asiChoice: 'asi' | 'feat' | null
   asiBonuses: AbilityBonuses
-  // Don choisi quand asiChoice='feat'. Référence directe à features.id du don.
   featureId: number | null
-  // Choix de caractéristique +1 du don (Observateur/Résilient…) le cas échéant.
   featAbility: AbilityKey | null
   newSkills: string[]
   newCantripIds: number[]
@@ -108,8 +102,6 @@ export interface LevelUpState {
   // Sort choisi pour l'Arcane Mystérieux (niveau 11/13/15/17). Le niveau du sort
   // dépend du niveau d'occultiste atteint (cf. arcaneMysteriumSpellLevel, dérivé du catalogue).
   arcaneMysteriumSpellId: number | null
-  // Sorts rituels niv. 1 choisis quand on prend la manifestation
-  // « Livre des secrets anciens » (2 sorts au choix de toute classe).
   bookOfAncientSecretsSpellIds: number[]
   // Flag positionné par le composant Magie quand l'invocation « Livre des anciens
   // secrets » est dans les choix de cette montée de niveau. Sert à valider le
@@ -117,7 +109,6 @@ export interface LevelUpState {
   bookOfAncientSecretsRequired: boolean
 }
 
-// Nom canonique de l'invocation qui débloque la sélection de sorts rituels.
 export const BOOK_OF_ANCIENT_SECRETS_NAME = 'Livre des secrets anciens'
 
 const INIT_STATE: LevelUpState = {
@@ -178,8 +169,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const state = useState<LevelUpState>('level-up-state', () => ({ ...INIT_STATE }))
   const toast = useToast()
 
-  // Dons : la liste vient de /api/feats (useFeats). Sert à savoir si le don
-  // choisi exige un choix de caractéristique (ability_increase_choice).
   const { getById: getFeatById } = useFeats()
   const featNeedsAbility = (featureId: number | null): boolean => {
     if (featureId == null) return false
@@ -188,7 +177,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Derived character data ─────────────────────────────────────────────────
 
-  // Map character classes to usable objects with frontend class data
   const charClasses = computed(() => {
     return (charSheet.value?.classes ?? []).map((cc) => {
       const cls = CLASSES.find(c => c.dbName === (cc as any).class?.name)
@@ -211,7 +199,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   const totalLevel = computed(() => charClasses.value.reduce((s, c) => s + c.level, 0))
 
-  // Final ability scores (base + ASI improvements)
   const finalAbilities = computed<Record<AbilityKey, number>>(() => {
     const base: Record<AbilityKey, number> = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }
     for (const score of charSheet.value?.baseAbilityScores ?? []) {
@@ -225,21 +212,18 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return base
   })
 
-  // Current expert skills from character sheet
   const expertSkills = computed<string[]>(() => {
     return (charSheet.value?.skills ?? [])
       .filter((s: any) => s.proficiencyLevel === 'expert')
       .map((s: any) => s.skillKey)
   })
 
-  // Current proficient skills
   const proficientSkills = computed<string[]>(() => {
     return (charSheet.value?.skills ?? [])
       .filter((s: any) => s.proficiencyLevel === 'proficient' || s.proficiencyLevel === 'expert')
       .map((s: any) => s.skillKey)
   })
 
-  // Current spell IDs
   const currentSpellIds = computed<number[]>(() => {
     return (charSheet.value?.spells ?? []).map((s: any) => s.spellId ?? s.id)
   })
@@ -256,10 +240,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return charClasses.value.find(c => c.classId === state.value.pickedClassId) ?? null
   })
 
-  // CON modifier
   const conMod = computed(() => abilityMod(finalAbilities.value.con))
 
-  // HP per level if using average method
   const averageHpGain = computed(() => {
     if (!pickedClass.value) return 0
     const die = pickedClass.value.hitDie
@@ -279,11 +261,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   })
 
   // ── Choix de progression lus dans le CATALOGUE (/api/catalog, lot 6a) ──────
-  // resolveChoices résout localement les points de choix de la classe montée, aux niveaux
-  // d'ARRIVÉE et de DÉPART (le delta pilote le nombre de nouvelles invocations). Seedés à ce
-  // jour : la SOUS-CLASSE de toutes les classes (F2 tranche 3) + pacte/invocations/arcanums de
-  // l'Occultiste ; style de combat, expertise et ASI restent pilotés par app/data (à migrer,
-  // cf. consolidation-2014.md). Équivalence Occultiste verrouillée par warlockCatalogEquivalence.test.ts.
+  // Choix résolus aux niveaux d'ARRIVÉE et de DÉPART : le delta pilote le nombre de nouvelles
+  // invocations. Style de combat, expertise et ASI restent pilotés par app/data.
   const { choicesForClassLevel } = useCatalog()
   const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
   const luClassDbId = computed(() =>
@@ -318,7 +297,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     && invocationsAtFromLevel.value > 0,
   )
 
-  // Current invocation IDs known by the character (warlock features with featureType=eldritch_invocation)
   const knownInvocationIds = computed<number[]>(() => {
     const features = (charSheet.value as any)?.features ?? []
     return features
@@ -340,12 +318,10 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       .map((f: any) => f.feature.id)
   })
 
-  // Effective pact boon (for filtering invocations) — existing on charClass OR being picked this level-up
   const effectivePactBoon = computed<'chain' | 'blade' | 'tome' | null>(() => {
     return ((pickedCharClass.value as any)?.pactBoon ?? null) ?? state.value.pactBoon
   })
 
-  // Known spell names (for prereq Décharge occulte etc.)
   const knownSpellNames = computed<string[]>(() => {
     const spells = (charSheet.value?.spells ?? []) as any[]
     return spells.map(s => s.spell?.name ?? '').filter(Boolean)
@@ -361,9 +337,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Livre des anciens secrets — sorts rituels (manifestation TCoE) ─────────
 
-  // L'ID de l'invocation est résolu côté UI via /api/invocations (cf. composant Magie).
-  // Le composable expose juste l'aide pour savoir « est-ce que cette manifestation
-  // figure dans les invocations nouvellement choisies ? »
   const picksBookOfAncientSecrets = (allInvocationsByName: Record<string, number>) => {
     const id = allInvocationsByName[BOOK_OF_ANCIENT_SECRETS_NAME]
     if (!id) return false
@@ -371,9 +344,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   }
 
   // ── Subclass availability (lue dans le CATALOGUE, F2 tranche 3) ────────────
-  // Le niveau d'accès à la sous-classe vient du catalogue (progression `kind:'subclass'`, owner à
-  // `classes.subclass_level`) au lieu du blob `app/data/character-builder.ts`. Gating = miroir de
-  // needsPactBoon : débloquée AU niveau d'arrivée (`ownerLevelRequired === toLevel`).
 
   const isSubclassLevel = computed(() => {
     if (!state.value.pickedClassId) return false
@@ -382,8 +352,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return choicesAtToLevel.value.some(c => c.kind === 'subclass' && c.ownerLevelRequired === state.value.toLevel)
   })
 
-  // Niveau d'accès à la sous-classe d'une classe (par builderId), lu dans le catalogue — sert aux
-  // badges/gating de LevelUpStepClass (liste de classes). `null` tant que le catalogue n'est pas chargé.
   function subclassLevelFor(builderClassId: string): number | null {
     const cls = CLASSES.find(c => c.id === builderClassId)
     return subclassCatalogFor(resolveClassId(cls?.dbName))?.subclassLevel ?? null
@@ -429,7 +397,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   const hasSpellcasting = computed(() => {
     if (!pickedClass.value?.spellcasting) return false
-    // For half-casters, spells start at level 2
     const startsAt = pickedClass.value.spellcasting.startsAtLevel ?? 1
     return state.value.toLevel >= startsAt
   })
@@ -477,7 +444,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       case 'asi': {
         if (s.asiChoice === 'feat') {
           if (s.featureId == null) return false
-          // Si le don exige un choix de caractéristique, il doit être fait.
           if (featNeedsAbility(s.featureId) && !s.featAbility) return false
           return true
         }
@@ -495,9 +461,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
       case 'spells':
         if (s.pactBoon === 'tome' && s.pactBoonCantripIds.length < 3) return false
-        // L'Arcane Mystérieux exige un sort du niveau correspondant.
         if (needsArcaneMysterium.value && s.arcaneMysteriumSpellId === null) return false
-        // Livre des anciens secrets : 2 sorts rituels niv. 1 obligatoires.
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
         return true
 
@@ -519,7 +483,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         : null,
       hp: s.hpGained != null ? `+${s.hpGained} PV` : null,
       features: s.newSubclassName ?? (s.pactBoon ? ({ chain: 'Pacte de la Chaîne', blade: 'Pacte de la Lame', tome: 'Pacte du Tome' })[s.pactBoon] : null) ?? (s.fightingStyle ? `Style: ${s.fightingStyle}` : null),
-      // Affichage du nom du don dans le résumé — résolu via useFeats côté UI.
       asi: s.asiChoice === 'feat'
         ? (s.featureId != null ? 'don' : null)
         : (Object.values(s.asiBonuses).some(v => v > 0) ? '+2 carac.' : null),
@@ -559,9 +522,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
     const s = state.value
 
-    // Résolution dbName → classId. Pour les classes existantes du perso, on
-    // peut prendre le dbClassId directement depuis charClasses ; pour un
-    // multiclasse, il faut résoudre via /api/classes.
+    // Classe déjà possédée : son dbClassId est connu ; en multiclasse, il faut le résoudre.
     const existingDbClassId = charClasses.value.find(c => c.classId === s.pickedClassId)?.dbClassId
     const classId = existingDbClassId ?? resolveClassId(pickedClass.value.dbName)
     if (!classId) {
@@ -579,7 +540,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         classId,
         isMulticlass: s.isMulticlass,
         hpGained: s.hpGained,
-        // Au niveau de pick de sous-classe, on a déjà l'ID via les radios.
         subclassId: s.newSubclassId,
         fightingStyle: s.fightingStyle,
         expertiseSkills: s.expertiseSkills,

@@ -18,8 +18,6 @@ export default defineEventHandler(async (event) => {
     .get()
   if (!sheet) throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
 
-  // db.select() with source schema = fresh column definitions (incl. recently
-  // added columns that hub:db's cached schema doesn't know about).
   const rows = await db
     .select()
     .from(schema.characterInventory)
@@ -27,9 +25,6 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.characterInventory.characterSheetId, charId))
     .orderBy(asc(schema.characterInventory.id))
 
-  // Charge les effets de chaque item (jointure item_effects → effects).
-  // On le fait en lookup séparé pour éviter le N+1 et parce que hub:db ne
-  // connaît pas item_effects (ajoutée en 0053).
   const itemIds = rows.map(r => r.items?.id).filter((i): i is number => i !== undefined)
   const itemEffectsRows = itemIds.length
     ? await db

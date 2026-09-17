@@ -2,12 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { elf } from '../../server/db/seeds/data/elf'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
 
-// Chantier lignée (D17), pilote Elfe — ÉQUIVALENCE AU NIVEAU DONNÉE (D12). Prouve, AVANT toute
-// logique de seed ou de dérivation, que la restructuration « Elfe base + lignée » est fidèle :
-// pour chaque lignée, l'ENSEMBLE des effets (traits de base ⊕ traits de lignée) est exactement
-// celui de l'ancienne espèce séparée correspondante. C'est le filet qui garantit qu'un perso
-// migré ne change pas de règles. Le split place vitesse/vision/armes sur les lignées (elles
-// diffèrent) → l'équivalence est une UNION, sans effet qui en écrase un autre.
+// Équivalence au niveau DONNÉE : pour chaque lignée, l'ensemble des effets (base ⊕ lignée) est
+// exactement celui de l'ancienne espèce séparée — le filet qui garantit qu'un perso migré ne change
+// pas de règles. Vitesse/vision/armes vivent sur les lignées (elles diffèrent) → union sans écrasement.
 
 interface Trait { effects: unknown[] }
 

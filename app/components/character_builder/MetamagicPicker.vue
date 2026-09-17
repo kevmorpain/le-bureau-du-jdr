@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col gap-3">
-    <!-- Compteur -->
     <div class="flex items-center justify-between text-xs">
       <p class="font-bold uppercase tracking-widest text-muted">
         {{ pickerLabel ?? `Métamagie — choisissez ${maxCount}` }}

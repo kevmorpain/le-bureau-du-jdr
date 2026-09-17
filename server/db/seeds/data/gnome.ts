@@ -1,18 +1,8 @@
 import { CreatureSize } from '../../schema/character_species'
 import type { LineageSpeciesData } from '../lib/seedLineages'
 
-/**
- * Gnome 2014 restructuré en **base + lignées** (chantier lignée, D17 — rollout lot 6). Remplace à
- * terme `rockGnome`/`forestGnome` de `character_species.ts` : base = traits communs, lignées = le
- * +1 propre + les exclusifs (Ingénierie/Bricoleur pour les roches, Illusionniste-né/Communication
- * pour les forêts).
- *
- * ⚠️ Effets **copiés à l'identique** → équivalence (D12). Noms de lignée == anciennes espèces
- * (« Gnome des roches/forêts ») → migration sans alias ; vitesse commune (7,5) → pas de
- * speedOverride.
- */
+// ⚠️ Effets copiés à l'identique des anciennes espèces `rockGnome`/`forestGnome` (équivalence D12).
 
-// ─── Traits COMMUNS aux deux lignées (base) ──────────────────────────────────────────────
 const baseTraits = [
   {
     name: 'Augmentation de caractéristiques',
@@ -48,7 +38,6 @@ const baseTraits = [
   },
 ]
 
-// ─── Traits PROPRES à chaque lignée ──────────────────────────────────────────────────────
 const rockGnomeLineage = {
   name: 'Gnome des roches',
   description: `Ingénieux et curieux, les gnomes des roches ont un don naturel pour la mécanique et l'invention.`,

@@ -8,11 +8,8 @@ import * as srcSchema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import { loadFeats } from '../../server/utils/catalogSources'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// C2 — catégories de dons. Un `optionSource:{feats, category}` ne doit proposer QUE les dons
-// de cette catégorie (composé avec le filtre d'édition de Lot A) ; sans catégorie, tous les
-// dons de l'édition. `loadFeats` expose `featCategory`. Même harnais que buildCatalog.test.ts.
-// ─────────────────────────────────────────────────────────────────────────────
+// Un `optionSource:{feats, category}` ne doit proposer QUE les dons de cette catégorie (composé avec
+// le filtre d'édition) ; sans catégorie, tous les dons de l'édition.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

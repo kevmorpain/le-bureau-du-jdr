@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- En-tête -->
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">💪</span>
       <div>
@@ -9,7 +8,6 @@
       </div>
     </div>
 
-    <!-- Onglets méthode -->
     <div class="flex gap-2 mb-5">
       <button
         v-for="tab in TABS"
@@ -25,7 +23,6 @@
       </button>
     </div>
 
-    <!-- Pool de scores (standard + roll) -->
     <template v-if="state.abilityMethod !== 'pointbuy'">
       <div class="text-xs font-bold uppercase tracking-wider text-muted mb-3">
         <template v-if="state.abilityMethod === 'roll' && !state.rolledSets">
@@ -36,7 +33,6 @@
         </template>
       </div>
 
-      <!-- Bouton lancer + total + toggle manuel -->
       <div v-if="state.abilityMethod === 'roll'" class="flex items-center gap-3 mb-4 flex-wrap">
         <button
           type="button"
@@ -60,7 +56,6 @@
         </span>
       </div>
 
-      <!-- Saisie manuelle : 6 inputs -->
       <div v-if="state.abilityMethod === 'roll' && manualMode" class="flex gap-2 flex-wrap mb-4">
         <div v-for="(_, idx) in 6" :key="idx" class="flex flex-col items-center gap-1">
           <span class="text-xs text-muted">{{ idx + 1 }}</span>
@@ -83,7 +78,6 @@
         </button>
       </div>
 
-      <!-- Scores disponibles (pool) -->
       <div v-if="scores.length && !manualMode" class="flex gap-2 flex-wrap mb-5">
         <button
           v-for="(sc, idx) in scores"
@@ -109,7 +103,6 @@
       </div>
     </template>
 
-    <!-- Budget point buy -->
     <template v-if="state.abilityMethod === 'pointbuy'">
       <div class="flex items-center gap-2 mb-5">
         <span class="text-xs text-muted">Points restants :</span>
@@ -121,7 +114,6 @@
       </div>
     </template>
 
-    <!-- Grille 3×2 des caractéristiques -->
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
       <div
         v-for="ab in ABILITIES"
@@ -157,7 +149,6 @@
 
         <div class="text-xs text-muted/60">{{ ABILITY_LABELS[ab] }}</div>
 
-        <!-- Contrôles point buy -->
         <div v-if="state.abilityMethod === 'pointbuy'" class="flex items-center gap-2 mt-2">
           <button
             type="button"
@@ -176,7 +167,6 @@
       </div>
     </div>
 
-    <!-- Bannière succès -->
     <div
       v-if="allDone"
       class="mt-4 px-4 py-2 rounded-lg border text-xs font-medium"

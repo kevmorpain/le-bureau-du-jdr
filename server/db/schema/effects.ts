@@ -2,10 +2,6 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 import type { SkillKey } from '~~/shared/rules/skills'
 
-// ─── Shared primitive types ────────────────────────────────────────────────
-
-// Alias vers la source canonique (cf. shared/rules/abilities.ts, decisions.md D6) —
-// plus d'union de caractéristiques recopiée à la main (architecture-audit.md §6).
 export type AbilityScoreKey = AbilityKey
 
 export type DamageTypeKey
@@ -17,8 +13,6 @@ export type ConditionKey
   = | 'blinded' | 'charmed' | 'deafened' | 'exhaustion' | 'frightened' | 'grappled'
     | 'incapacitated' | 'invisible' | 'paralyzed' | 'petrified' | 'poisoned'
     | 'prone' | 'restrained' | 'stunned' | 'unconscious'
-
-// ─── Action sub-types ──────────────────────────────────────────────────────
 
 type BreathWeaponAction = {
   type: 'breathe_weapon'
@@ -40,27 +34,13 @@ type RevivalAction = {
   countPerLongRest: number
 }
 
-// ─── Choix ─────────────────────────────────────────────────────────────────
-
-/**
- * Ensemble dans lequel un effet « au choix » puise ses options : une liste
- * explicite, ou `'all'` pour tout l'ensemble canonique (`SKILL_KEYS`,
- * `ABILITY_KEYS`…). Même vocabulaire que `OptionSource` de `progression`
- * (cf. rules-engine.md §4), qui prendra le relais à terme.
- *
- * `from` est **optionnel** sur les effets : les lignes seedées avant son
- * introduction (ex. Humain « Polyvalence » : `{ count: 2 }`) restent valides et
- * s'entendent comme `'all'` — cf. `choiceOptions()` et decisions.md D9/D13.
- */
+/** `from` absent ⇒ `'all'` : les lignes seedées avant son introduction restent valides. */
 export type ChoiceFrom<K extends string> = K[] | 'all'
 
-/** Résout un `from` d'effet en liste d'options ; absent ⇒ tout l'ensemble. */
 export const choiceOptions = <K extends string>(
   from: ChoiceFrom<K> | undefined,
   all: readonly K[],
 ): K[] => (from === undefined || from === 'all' ? [...all] : from)
-
-// ─── Discriminated union ───────────────────────────────────────────────────
 
 export type Effect
   = | { type: 'ability_increase', value: { ability: AbilityScoreKey, amount: number } }
@@ -80,10 +60,7 @@ export type Effect
     | { type: 'other', value: Record<string, unknown> }
     | { type: 'proficiency', value: string }
     | { type: 'reroll', value: { rollType: 'd20', trigger: number } }
-    // Maîtrise de jets de sauvegarde. Accordée telle quelle (JS de classe, don
-    // Résilient une fois la caractéristique choisie) ou laissée « au choix » tant
-    // que la décision n'est pas prise. Consommée par useCharacterAbilities, qui la
-    // projette sur la convention de maîtrise `<carac>_save` (cf. `savingThrows`).
+    // Accordée telle quelle (JS de classe) ou « au choix » tant que la caractéristique n'est pas décidée.
     | { type: 'saving_throw_proficiency', value: { ability: AbilityScoreKey } }
     | { type: 'saving_throw_proficiency_choice', value: { count: number, from?: ChoiceFrom<AbilityScoreKey> } }
     | { type: 'skill_bonus', value: { skill: string, bonusType: string, multiplier: number, condition: string } }
@@ -99,16 +76,11 @@ export type Effect
     | { type: 'weapon_proficiency', value: string }
     | { type: 'eldritch_blast_modifier', value: { kind: 'agonizing' | 'repelling' | 'range_extended' } }
     | { type: 'pact_weapon_modifier', value: { kind: 'extra_attack' | 'lifedrinker' } }
-    // Style de combat (Guerrier/Paladin/Rôdeur, PHB 2014). Porté par la feature-option du style
-    // choisi (feature_type 'fighting_style'), consommé par la fiche selon `kind` : Défense (+1 CA),
-    // Archerie (+2 attaque à distance), Duel (+2 dégâts à une main), Combat à deux armes (mod aux
-    // dégâts de la main secondaire). `great_weapon`/`protection` = relance de dés / réaction, non
-    // réductibles à un bonus statique → rendus en texte, pas auto-appliqués.
+    // `great_weapon` / `protection` (relance de dés, réaction) ne sont pas des bonus statiques : rendus en texte.
     | { type: 'fighting_style_modifier', value: { kind: 'archery' | 'two_weapon' | 'defense' | 'dueling' | 'great_weapon' | 'protection' } }
     | { type: 'sight_modifier', value: { kind: 'magical_darkness_120' | 'invisible_in_dim_light' | 'true_sight_disguise' | 'read_all_writing' } }
     | { type: 'spell_save_dc_bonus', value: { amount: number } }
     | { type: 'spell_attack_bonus', value: { amount: number } }
-    // Dons — bonus fixes appliqués automatiquement par useCharacterSheet.
     | { type: 'initiative_bonus', value: { amount: number } }
     | { type: 'hp_per_level', value: { amount: number } }
     // Bonus aux scores passifs (Observateur : +5 Perception passive + Investigation passive).
@@ -117,11 +89,7 @@ export type Effect
 export type EffectType = Effect['type']
 export type EffectValue = Effect['value']
 
-// ─── Helper to narrow an effect by type ───────────────────────────────────
-
 export type ExtractEffect<T extends EffectType> = Extract<Effect, { type: T }>
-
-// ─── Drizzle table ─────────────────────────────────────────────────────────
 
 const effects = sqliteTable('effects', {
   id: integer().primaryKey(),

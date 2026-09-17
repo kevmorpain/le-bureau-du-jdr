@@ -71,7 +71,6 @@ const slotRows = computed(() => {
   for (const [level, slot] of Object.entries(spellSlots.value.pact_magic)) {
     if (slot.max > 0) rows.push({ level: Number(level), slotType: 'pact_magic', slot })
   }
-  // Sort by level asc, with spellcasting before pact_magic at same level
   rows.sort((a, b) => a.level - b.level || (a.slotType === 'spellcasting' ? -1 : 1))
   return rows
 })

@@ -1,23 +1,11 @@
-/**
- * Fetch et cache des entités DB nécessaires au builder (classes/sous-classes,
- * espèces, backgrounds, items). Sert d'unique point de résolution
- * « slug/name → dbId », ce qui permet au reste du builder de ne manipuler
- * que des IDs côté payload, sans WHERE name lookup côté serveur.
- */
+// Unique point de résolution « slug/name → dbId » : le reste du builder ne manipule que des ids.
 export type DbSubclass = { id: number, name: string, description?: string | null }
-// `subclassLevel` = fait d'identité (`classes.subclass_level`, migration 0080) exposé par le
-// catalogue ; le builder/level-up en dérivent le niveau d'accès à la sous-classe au lieu du blob
-// front (F2 tranche 3). `subclasses` imbriquées = les options du choix de sous-classe.
 export type DbClass = { id: number, name: string, subclassLevel: number, subclasses: DbSubclass[] }
 type DbSpecies = { id: number, name: string }
 type DbBackground = { id: number, name: string }
 type DbItem = { id: number, name: string }
 
 export function useBuilderEntities() {
-  // `/api/catalog/classes` (≡ legacy `/api/classes`, même loader `loadClasses`) : la source
-  // catalogue, cachable au edge (F4). Porte `subclassLevel` + sous-classes imbriquées.
-  // Gating `source` : inclure le contenu d'extension quand le drapeau global est actif
-  // (?extended propagé au loader via isExtendedRequested).
   const { extendedQuery } = useExtendedContent()
   const { data: classes } = useFetch<DbClass[]>('/api/catalog/classes', {
     query: extendedQuery,
@@ -36,9 +24,7 @@ export function useBuilderEntities() {
     default: () => [],
   })
 
-  // ── Résolution name → id ───────────────────────────────────────────────────
-  // Strict (exact, case-insensitive) : renvoie null si pas trouvé pour exposer
-  // tôt les divergences au lieu de les laisser silencieuses côté serveur.
+  // Résolution stricte (exacte, insensible à la casse) : `null` si absent, pour exposer tôt les divergences.
 
   const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase()
 
@@ -64,9 +50,6 @@ export function useBuilderEntities() {
   }
 
   // ── Identité de sous-classe (catalogue) ─────────────────────────────────────
-  // Niveau d'accès + options de sous-classe d'une classe (par id DB). Source unique du builder
-  // ET du level-up (F2 tranche 3), à la place du blob `app/data/character-builder.ts`. `null`
-  // tant que le catalogue n'est pas chargé ou pour une classe inconnue.
 
   function subclassCatalogFor(classDbId: number | null | undefined): { subclassLevel: number, subclasses: DbSubclass[] } | null {
     if (classDbId == null) return null

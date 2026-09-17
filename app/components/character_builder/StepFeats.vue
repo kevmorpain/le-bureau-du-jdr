@@ -46,7 +46,6 @@
         </button>
       </div>
 
-      <!-- Choix de caractéristique (si le don en demande un) -->
       <div
         v-if="state.bonusFeatureId != null && featNeedsAbility(state.bonusFeatureId)"
         class="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-2"

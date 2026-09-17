@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-(--ui-bg) flex flex-col">
-    <!-- Header -->
     <header class="sticky top-0 z-50 flex items-center gap-3 px-4 h-11 bg-(--ui-bg-elevated) border-b border-(--ui-border) shadow-sm">
       <button class="text-xs text-muted hover:text-(--ui-text) transition-colors cursor-pointer" @click="$emit('back')">
         ← Modifier
@@ -11,7 +10,6 @@
 
     <div class="flex-1 px-4 py-8 max-w-2xl mx-auto w-full">
 
-      <!-- Identité -->
       <div class="text-center mb-8">
         <div class="text-5xl mb-3">{{ classData?.emoji ?? '⚔️' }}</div>
         <h1 class="text-3xl font-black text-(--ui-text) mb-2">{{ state.name }}</h1>
@@ -29,7 +27,6 @@
         <div v-if="state.subclass" class="text-sm text-amber-400 mt-1">{{ state.subclass }}</div>
       </div>
 
-      <!-- Stats clés -->
       <div class="grid grid-cols-3 gap-2.5 mb-4">
         <div
           v-for="stat in keyStats"
@@ -41,7 +38,6 @@
         </div>
       </div>
 
-      <!-- Caractéristiques -->
       <div class="grid grid-cols-6 gap-2 mb-4">
         <div
           v-for="ab in ABILITIES"
@@ -57,9 +53,7 @@
         </div>
       </div>
 
-      <!-- Jets de sauvegarde + Compétences -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        <!-- Jets de sauvegarde -->
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
           <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Jets de sauvegarde</p>
           <div class="space-y-1.5">
@@ -77,7 +71,6 @@
           </div>
         </div>
 
-        <!-- Compétences -->
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
           <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Compétences maîtrisées</p>
           <div v-if="allSkills.length" class="space-y-1.5">
@@ -91,7 +84,6 @@
         </div>
       </div>
 
-      <!-- Sorts (si caster) -->
       <div v-if="selectedSpellNames.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-6">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
           Sorts <span class="text-amber-400 ml-1">{{ selectedSpellNames.length }}</span>
@@ -107,7 +99,6 @@
         </div>
       </div>
 
-      <!-- Faveur du Pacte -->
       <div v-if="state.pactBoon" class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6">
         <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">
           Faveur du Pacte
@@ -118,7 +109,6 @@
         </div>
       </div>
 
-      <!-- Manifestations occultes -->
       <div v-if="selectedInvocationNames.length" class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6">
         <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">
           Manifestations occultes <span class="ml-1">{{ selectedInvocationNames.length }}</span>
@@ -134,7 +124,6 @@
         </div>
       </div>
 
-      <!-- Équipement -->
       <div v-if="state.equipment.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-8">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
           Équipement <span class="text-amber-400 ml-1">{{ state.equipment.length }} objets</span>
@@ -150,7 +139,6 @@
         </div>
       </div>
 
-      <!-- Boutons -->
       <div class="flex gap-3 justify-center">
         <UButton
           size="lg"
@@ -260,7 +248,6 @@ const pactBoonLabel = computed(() =>
   state.value.pactBoon ? PACT_BOON_LABELS[state.value.pactBoon] : '',
 )
 
-// Charger les noms d'invocations pour affichage
 const { extendedQuery } = useExtendedContent()
 const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
   query: extendedQuery,

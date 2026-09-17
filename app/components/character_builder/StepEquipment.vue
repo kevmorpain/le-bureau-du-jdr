@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- En-tête -->
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">🎒</span>
       <div>
@@ -14,7 +13,6 @@
     </div>
 
     <template v-else>
-      <!-- Équipement de classe -->
       <div class="mb-6">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Équipement — {{ classData.name }}</p>
         <div class="flex flex-col gap-3">
@@ -23,7 +21,6 @@
             :key="i"
             class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4"
           >
-            <!-- Choix entre options -->
             <template v-if="grp.choice && grp.options">
               <p class="text-xs text-muted mb-2">Choisissez une option</p>
               <div class="flex flex-wrap gap-2 mb-2">
@@ -41,7 +38,6 @@
                 </button>
               </div>
 
-              <!-- Sous-sélecteur si l'option choisie est générique -->
               <template v-if="choices[i] && genericOptions(choices[i]!)">
                 <p class="text-xs text-muted/70 mb-2 mt-1">Choisissez un item spécifique :</p>
                 <div class="flex flex-wrap gap-1.5">
@@ -61,7 +57,6 @@
               </template>
             </template>
 
-            <!-- Équipement automatique -->
             <template v-else-if="grp.items">
               <p class="text-xs text-muted/60 mb-1.5">Inclus automatiquement</p>
               <p class="text-sm text-(--ui-text)">{{ grp.items.join(' · ') }}</p>
@@ -70,7 +65,6 @@
         </div>
       </div>
 
-      <!-- Équipement d'historique -->
       <div v-if="backgroundData" class="mb-6">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Équipement — {{ backgroundData.name }}</p>
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -82,7 +76,6 @@
         </div>
       </div>
 
-      <!-- Récapitulatif -->
       <div>
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
           Inventaire final
@@ -99,7 +92,6 @@
         </div>
       </div>
 
-      <!-- Arme de Pacte (Occultiste — Pacte de la Lame) -->
       <div v-if="needsPactBoon && state.pactBoon === 'blade'" class="mt-6">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
           🌑 Arme de Pacte (facultatif)
@@ -145,8 +137,7 @@ const {
   needsPactBoon,
 } = useCharacterBuilder()
 
-// Armes de corps-à-corps parmi l'équipement sélectionné (pour Pacte de la Lame)
-// Fetch les items connus comme armes de mêlée depuis l'API items (approximation : noms contenant épée, hache, etc.)
+// Armes de mêlée pour le Pacte de la Lame (approximation : filtrage sur les noms d'armes).
 const { data: allItems } = useFetch('/api/items', {
   query: { type: 'weapon' },
   immediate: computed(() => needsPactBoon.value && state.value.pactBoon === 'blade'),
@@ -167,17 +158,13 @@ const meleEquipmentItems = computed(() =>
   state.value.equipment.filter(name => meleeItemNames.value.has(name)),
 )
 
-// Choix locaux (index → option choisie ou null)
 const choices = ref<(string | null)[]>([])
-// Sous-choix pour les options génériques (index → item spécifique)
 const subChoices = ref<Record<number, string | null>>({})
 
-// Retourne la liste d'items spécifiques si l'option est générique, sinon null
 function genericOptions(opt: string): string[] | null {
   return GENERIC_ITEM_OPTIONS[opt] ?? null
 }
 
-// Initialiser les choix quand la classe change
 watch(classData, (cls) => {
   if (!cls) { choices.value = []; subChoices.value = {}; return }
   choices.value = cls.equipment.map((grp, i) =>
@@ -189,7 +176,6 @@ watch(classData, (cls) => {
 
 function setChoice(i: number, opt: string) {
   choices.value[i] = opt
-  // Reset sub-choice si l'option change
   subChoices.value[i] = null
   syncEquipment()
 }
@@ -208,7 +194,6 @@ function syncEquipment() {
     if (grp.choice) {
       const chosen = choices.value[i]
       if (chosen) {
-        // Utiliser le sous-choix si disponible, sinon l'option générique
         const sub = subChoices.value[i]
         items.push(sub ?? chosen)
       }
@@ -224,6 +209,5 @@ function syncEquipment() {
   state.value.equipment = items
 }
 
-// Re-sync si l'historique change
 watch(() => backgroundData.value, syncEquipment)
 </script>

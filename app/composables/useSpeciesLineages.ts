@@ -2,17 +2,10 @@ import type { MaybeRefOrGetter } from 'vue'
 import type { SubraceData } from '~/data/character-builder'
 
 /**
- * Picker de sous-race PILOTÉ PAR LE CATALOGUE pour les espèces « base + lignée » (chantier lignée,
- * D17 — généralisé au lot 6 ; ex-`useElfLineages`, elfe-only). Résout l'id de l'espèce de base par
- * son `baseName` (Elfe, Nain, Halfelin, Gnome, Tieffelin, Drakéide), charge
- * `/api/catalog/species/[id]` (loader `loadSpeciesLineages`, champs d'affichage dérivés) et l'expose
- * comme des `SubraceData` — la MÊME forme que le blob `RaceData` hardcodé, si bien que `StepRace` et
- * l'aperçu fonctionnent sans réécriture. Chaque sous-race porte en plus son `lineageId` : la
- * soumission envoie `speciesId = base` + `selectedLineageId` (chemin serveur du lot 5a).
- *
- * `baseName` est RÉACTIF (getter/ref) : quand la race change, l'id de base et la structure riche se
- * ré-résolvent. `lineageSubraces` reste `[]` tant que la structure chargée ne correspond pas à la
- * base courante (évite un flash des lignées de l'espèce précédente pendant le refetch).
+ * Picker de sous-race PILOTÉ PAR LE CATALOGUE pour les espèces « base + lignée » (D17) : expose les
+ * lignées sous la MÊME forme que le blob `RaceData` (plus leur `lineageId`), si bien que `StepRace`
+ * fonctionne sans réécriture. `baseName` est RÉACTIF ; `lineageSubraces` reste `[]` tant que la
+ * structure chargée ne correspond pas à la base courante (évite un flash pendant le refetch).
  */
 
 interface CatalogLineage {
@@ -33,9 +26,7 @@ interface CatalogSpeciesRich {
 }
 
 export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>) {
-  // Gating `source` : même drapeau global que useBuilderEntities → l'URL espèces reste dédupée.
   const { extended, extendedQuery } = useExtendedContent()
-  // Réutilise le fetch d'espèces (dédupé par URL avec useBuilderEntities) pour résoudre la base.
   const { data: species } = useFetch<{ id: number, name: string }[]>('/api/character_species', {
     query: extendedQuery,
     default: () => [],

@@ -13,7 +13,6 @@
       Augmentez vos caractéristiques (maximum +2, plafond 20) ou prenez un don.
     </p>
 
-    <!-- Toggle -->
     <div class="flex gap-2 mb-6">
       <button
         v-for="opt in [['asi','✦ Caractéristiques'], ['feat','📜 Don']]"
@@ -28,7 +27,6 @@
       </button>
     </div>
 
-    <!-- ASI grid -->
     <div v-if="state.asiChoice === 'asi'">
       <div class="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm">
         <span class="text-muted flex-1">Distribuez <strong class="text-amber-400">2 points</strong> entre vos caractéristiques.</span>
@@ -87,7 +85,6 @@
       </div>
     </div>
 
-    <!-- Feat grid -->
     <div v-else-if="state.asiChoice === 'feat'">
       <p class="text-xs text-muted mb-4">
         Liste complète des dons du PHB. Effets mécaniques appliqués automatiquement quand disponibles.
@@ -109,7 +106,6 @@
         </button>
       </div>
 
-      <!-- Choix de caractéristique (si le don sélectionné en demande un) -->
       <div
         v-if="state.featureId != null && featNeedsAbility(state.featureId)"
         class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 space-y-2"
@@ -134,7 +130,6 @@
       </div>
     </div>
 
-    <!-- Prompt if nothing selected yet -->
     <div
       v-else
       class="px-4 py-6 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm text-muted text-center"
@@ -162,11 +157,9 @@ const {
 
 const { feats, getById: getFeatById } = useFeats()
 
-// Caractéristiques autorisées par le don choisi (sous-ensemble du PHB).
 const allowedAbilities = (featureId: number | null): AbilityKey[] =>
   featAllowedAbilities(getFeatById(featureId)?.effects) as AbilityKey[]
 
-// Reset le choix de caractéristique quand on change de don.
 function pickFeat(featureId: number) {
   state.value.featureId = featureId
   state.value.featAbility = null

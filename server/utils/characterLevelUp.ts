@@ -11,15 +11,7 @@ import { abilityEnum } from '~~/shared/rules/abilities'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 
-/**
- * Logique de MONTÉE DE NIVEAU extraite du handler (point 5d, volet 3), même patron que
- * `characterCreate` : `db` INJECTÉ (testable libsql sans auth), VALIDATION serveur conservatrice
- * (sous-classe∈classe, manifestation∈groupe) et ~10 écritures rendues atomiques par un seul
- * `db.batch()` (jamais `db.transaction()`). Les changements d'invocations passent par
- * `applyInvocationChanges` (util DI, remplacement + ajouts idempotents) après le batch.
- *
- * maxHp/hpGained restent fournis par le client (formule PV front-only, chantier à part).
- */
+// maxHp/hpGained restent fournis par le client (formule PV front-only).
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
@@ -57,7 +49,6 @@ export const levelUpSchema = z.object({
 
 export type LevelUpInput = z.infer<typeof levelUpSchema>
 
-/** Validation serveur CONSERVATRICE (ne rejette que l'illégal non ambigu). */
 async function validateLevelUp(db: Db, d: LevelUpInput, classId: number, subclassId: number | null): Promise<void> {
   if (subclassId != null) {
     const [sub] = await db
@@ -88,11 +79,6 @@ async function validateLevelUp(db: Db, d: LevelUpInput, classId: number, subclas
   }
 }
 
-/**
- * Garde de COHÉRENCE d'ÉDITION du level-up (défense en profondeur, Lot A) : toute aptitude/don
- * (feat d'ASI, nouvelles manifestations) et tout sort référencés doivent partager le `ruleset`
- * de la fiche. La classe est vérifiée par l'appelant. No-op tant que tout est en '5'.
- */
 async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset: Ruleset): Promise<void> {
   const featureIds = [
     ...(d.featureId != null ? [d.featureId] : []),
@@ -126,7 +112,7 @@ async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset:
 }
 
 export async function characterLevelUp(db: Db, characterSheetId: number, d: LevelUpInput): Promise<{ success: true, newLevel: number, hpGained: number }> {
-  // ── 1. Classe (hitDice pour les PV) ─────────────────────────────────────────
+  // 1. Classe (hitDice pour les PV)
   const [cls] = await db
     .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, ruleset: schema.classes.ruleset })
     .from(schema.classes)
@@ -136,7 +122,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
 
   const subclassId: number | null = d.subclassId ?? null
 
-  // ── 2. État courant (classes + fiche) ───────────────────────────────────────
+  // 2. État courant (classes + fiche)
   const currentClasses = await db
     .select()
     .from(schema.characterClasses)
@@ -151,15 +137,13 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     .limit(1)
   if (!charSheet) throw new CharacterValidationError('Personnage introuvable.')
 
-  // ── 3. Validation serveur (avant écritures) ─────────────────────────────────
-  // Cohérence d'édition (défense en profondeur, Lot A) : la classe montée et toute entité
-  // datée référencée doivent partager le `ruleset` FIGÉ de la fiche. No-op tant que tout='5'.
+  // 3. Validation serveur (avant écritures)
   const ruleset: Ruleset = charSheet.ruleset
   if (cls.ruleset !== ruleset) throw new CharacterValidationError(`La classe (id=${cls.id}, éd. ${cls.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
   await validateLevelUpRulesetCoherence(db, d, ruleset)
   await validateLevelUp(db, d, cls.id, subclassId)
 
-  // ── 4. Lectures dépendantes (features débloquées, familier, slots) ───────────
+  // 4. Lectures dépendantes (features débloquées, familier, slots)
   const newClassFeatures = await db
     .select({ id: schema.features.id })
     .from(schema.features)
@@ -194,9 +178,6 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     familiarSpellId = familiar?.id ?? null
   }
 
-  // Choix de SOUS-CLASSE au level-up (F2) : quand une sous-classe est choisie ICI (d.subclassId),
-  // on enregistre le pick en `character_choices` (source), en plus de `character_classes.subclass_id`
-  // (projection, posé plus bas). Symétrique de la création. Défensif : pas de progression → no-op.
   let subclassProgressionId: number | null = null
   if (subclassId != null) {
     const [prog] = await db
@@ -208,13 +189,10 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     subclassProgressionId = prog?.id ?? null
   }
 
-  // Choix de STYLE DE COMBAT au level-up (F2) : le front envoie le nom du style ; on le résout en
-  // progression + feature-option de la classe → character_choices + matérialisation (batch ci-dessous).
   const fightingStylePick = d.fightingStyle
     ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, newLevel)
     : null
 
-  // Recalcul des emplacements de sorts (dérivés serveur)
   const newClassesList = currentClasses
     .filter(c => c.classId !== cls.id)
     .map(c => ({ classId: c.classId, level: c.level }))
@@ -258,7 +236,6 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   }
   const pactSlotsToDelete = existingSlots.filter(s => s.slotType === 'pact_magic' && s.slotLevel !== newPactLevel)
 
-  // Dé de vie mis à jour (+1 sur le dé de la classe qui monte)
   const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
   const hitDieSides = hitDieMatch?.[1] as ('4' | '6' | '8' | '10' | '12') | undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -270,7 +247,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     else updatedHitDie.push({ die: hitDieSides, count: 1 })
   }
 
-  // ── 5. Écritures dépendantes — un seul db.batch() atomique ───────────────────
+  // 5. Écritures dépendantes — un seul db.batch() atomique
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stmts: any[] = []
 
@@ -296,15 +273,12 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       },
     }))
 
-  // Choix de SOUS-CLASSE (F2) → character_choices : enregistre le pick fait à ce level-up (source),
-  // en plus de `character_classes.subclass_id` mis à jour ci-dessus (projection). onConflictDoNothing.
   if (subclassId != null && subclassProgressionId != null) {
     stmts.push(db.insert(schema.characterChoices)
       .values({ characterSheetId, progressionId: subclassProgressionId, selectedSubclassId: subclassId })
       .onConflictDoNothing())
   }
 
-  // Choix de STYLE DE COMBAT (F2) → character_choices (source) + matérialisation de l'option choisie.
   if (fightingStylePick) {
     stmts.push(db.insert(schema.characterChoices)
       .values({ characterSheetId, progressionId: fightingStylePick.progressionId, selectedFeatureId: fightingStylePick.featureId })
@@ -346,7 +320,6 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .onConflictDoNothing())
   }
 
-  // Faveur du Pacte
   if (d.pactBoon === 'chain' && familiarSpellId != null) {
     stmts.push(db.insert(schema.characterSpells)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -421,7 +394,6 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       }))
   }
 
-  // db.batch() = atomique sur D1 (JAMAIS db.transaction()).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db as any).batch(stmts as [any, ...any[]])
 

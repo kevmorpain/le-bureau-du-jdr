@@ -1,8 +1,6 @@
-// Maps spell names to the classes that can learn them.
-// classNames must match exactly the names in data/classes.ts.
+// `classNames` doit correspondre exactement aux noms de data/classes.ts.
 
 export const spellClassMappings: { spellName: string; classNames: string[] }[] = [
-  // ─── Sorts mineurs ────────────────────────────────────────────────────────────
   { spellName: 'Assistance', classNames: ['Clerc', 'Druide', 'Magicien'] },
   { spellName: 'Flamme sacrée', classNames: ['Clerc'] },
   { spellName: 'Glas', classNames: ['Clerc', 'Occultiste'] },
@@ -12,7 +10,6 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Contact glacial', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Prestidigitation', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
-  // ─── Niveau 1 ─────────────────────────────────────────────────────────────────
   { spellName: 'Aide', classNames: ['Clerc', 'Paladin'] },
   { spellName: 'Identification', classNames: ['Barde', 'Magicien'] },
   { spellName: 'Injonction', classNames: ['Clerc'] },
@@ -31,7 +28,6 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Alarme', classNames: ['Magicien', 'Occultiste', 'Rôdeur'] },
   { spellName: 'Détection du poison et des maladies', classNames: ['Clerc', 'Druide', 'Occultiste', 'Paladin', 'Rôdeur'] },
 
-  // ─── Niveau 2 ─────────────────────────────────────────────────────────────────
   { spellName: 'Augure', classNames: ['Clerc'] },
   { spellName: 'Suggestion', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Arme spirituelle', classNames: ['Clerc'] },
@@ -46,20 +42,16 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Zone de vérité', classNames: ['Clerc', 'Paladin'] },
   { spellName: 'Pattes d\'araignée', classNames: ['Druide', 'Ensorceleur', 'Magicien', 'Occultiste', 'Rôdeur'] },
 
-  // ─── Niveau 3 ─────────────────────────────────────────────────────────────────
   { spellName: 'Peur', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Vol', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
 
-  // ─── Niveau 4 ─────────────────────────────────────────────────────────────────
   { spellName: 'Tentacules noirs d\'Evard', classNames: ['Magicien', 'Occultiste'] },
   { spellName: 'Charme-monstre', classNames: ['Barde', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Flétrissement', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
-  // ─── Niveau 5 ─────────────────────────────────────────────────────────────────
   { spellName: 'Contact avec un autre plan', classNames: ['Clerc', 'Magicien', 'Occultiste'] },
   { spellName: 'Perturbations synaptiques', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
-  // ─── Niveau 6 ─────────────────────────────────────────────────────────────────
   { spellName: 'Prison mentale', classNames: ['Magicien', 'Occultiste'] },
   { spellName: 'Cercle de mort', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Invocation de fée', classNames: ['Druide', 'Occultiste'] },
@@ -68,13 +60,10 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Mauvais oeil', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Vision suprême', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
-  // ─── Niveau 7 ─────────────────────────────────────────────────────────────────
   { spellName: 'Cage de force', classNames: ['Barde', 'Magicien', 'Occultiste'] },
   { spellName: 'Doigt de mort', classNames: ['Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Forme éthérée', classNames: ['Barde', 'Clerc', 'Magicien', 'Occultiste', 'Ensorceleur'] },
   { spellName: 'Changement de plan', classNames: ['Clerc', 'Druide', 'Ensorceleur', 'Magicien', 'Occultiste'] },
-
-  // ─── Sorts d'Ambroise ─────────────────────────────────────────────────────────
 
   // Sorts mineurs
   { spellName: 'Décharge occulte', classNames: ['Occultiste'] },
@@ -104,7 +93,6 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Délivrance des malédictions', classNames: ['Clerc', 'Magicien', 'Occultiste', 'Paladin'] },
   { spellName: 'Motif hypnotique', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
 
-  // ─── Sorts de niveau 3 intégrés depuis la prod (listes de classe PHB 2014) ─────
   { spellName: 'Antidétection', classNames: ['Barde', 'Magicien', 'Rôdeur'] },
   { spellName: 'Cercle magique', classNames: ['Clerc', 'Magicien', 'Occultiste', 'Paladin'] },
   { spellName: 'Clairvoyance', classNames: ['Barde', 'Clerc', 'Ensorceleur', 'Magicien'] },
@@ -124,7 +112,7 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Retour à la vie', classNames: ['Clerc', 'Paladin'] },
   { spellName: 'Transfert de vie', classNames: ['Clerc', 'Magicien'] },
 
-  // ─── Sorts octroyés par les manifestations occultes (listes de classe AideDD) ──
+  // Sorts octroyés par les manifestations occultes (listes de classe AideDD)
   // L'occultiste ne les a pas tous sur sa liste : il y accède via l'invocation.
   { spellName: 'Communication avec les animaux', classNames: ['Barde', 'Druide', 'Rôdeur'] },
   { spellName: 'Simulacre de vie', classNames: ['Ensorceleur', 'Magicien'] },
@@ -140,7 +128,6 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Oeil magique', classNames: ['Magicien'] },
   { spellName: 'Immobilisation de monstre', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },
   { spellName: 'Invocation d\'élémentaire', classNames: ['Druide', 'Magicien'] },
-  // Sorts ajoutés pour le perso Fadette/Ensorceleur (2026-09).
   { spellName: 'Rayon de givre', classNames: ['Ensorceleur', 'Magicien'] },
   { spellName: 'Illusion mineure', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
   { spellName: 'Charme-personne', classNames: ['Barde', 'Druide', 'Ensorceleur', 'Occultiste', 'Magicien'] },
@@ -148,7 +135,6 @@ export const spellClassMappings: { spellName: string; classNames: string[] }[] =
   { spellName: 'Boule de feu', classNames: ['Ensorceleur', 'Magicien'] },
   { spellName: 'Éclair de chaos', classNames: ['Ensorceleur'] },
   { spellName: 'Espièglerie de nathair', classNames: ['Ensorceleur', 'Magicien'] },
-  // Sorts éligibles aux dons Faveur des fées / Télépathe / Frappé par l'ombre (2026-09).
   { spellName: 'Murmures dissonants', classNames: ['Barde'] },
   { spellName: 'Détection des pensées', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
   { spellName: 'Invisibilité', classNames: ['Barde', 'Ensorceleur', 'Magicien', 'Occultiste'] },

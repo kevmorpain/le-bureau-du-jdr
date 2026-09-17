@@ -65,8 +65,6 @@ export interface BuilderState {
   bonds: string
   flaws: string
 
-  // Étape 5 — Identité & description (facultatif). Mêmes colonnes texte que la
-  // fiche (character_sheets) : apparence physique, divinité, histoire, alliés.
   age: string
   height: string
   weight: string
@@ -132,15 +130,12 @@ export interface BuilderState {
   // sort (6/7/8/9) → id du sort choisi (lançable 1× par repos long, sans emplacement).
   arcaneMysteriumSpellIds: Record<number, number>
 
-  // Livre des secrets anciens (manifestation TCoE/Tome). 2 sorts rituels niv 1
-  // inscrits dans le Livre des Ombres.
   bookOfAncientSecretsSpellIds: number[]
   // Flag positionné par StepSpells via watchEffect : true tant que la
   // manifestation est dans `invocationIds` → la validation step Sorts exige 2 rituels.
   bookOfAncientSecretsRequired: boolean
 }
 
-// Nom canonique de la manifestation qui débloque la sélection de sorts rituels.
 export const BOOK_OF_ANCIENT_SECRETS_NAME = 'Livre des secrets anciens'
 
 // Niveaux d'ASI par classe (PHB 2014). Défaut [4,8,12,16,19] pour la majorité.
@@ -225,7 +220,6 @@ const ALL_STEPS: BuilderStep[] = [
   { id: 'class', label: 'Classe', icon: 'i-game-icons:sword' },
   { id: 'abilities', label: 'Carac.', icon: 'i-game-icons:muscle-up' },
   { id: 'asi', label: 'Bonus carac.', icon: 'i-heroicons:arrow-trending-up' },
-  // Step dédié au don bonus (homebrew MJ). Toujours actif, optionnel.
   { id: 'feats', label: 'Don bonus', icon: 'i-heroicons:sparkles' },
   { id: 'spells', label: 'Sorts', icon: 'i-game-icons:spell-book' },
   { id: 'description', label: 'Description', icon: 'i-heroicons:document-text' },
@@ -250,7 +244,6 @@ export function useCharacterBuilder() {
     return { ...INIT_STATE }
   })
 
-  // Persist to localStorage on every change (client-side only)
   if (import.meta.client) {
     watch(state, (val) => {
       try {
@@ -266,7 +259,6 @@ export function useCharacterBuilder() {
   const { choicesForClassLevel } = useCatalog()
   const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
 
-  // Un don requiert-il un choix de caractéristique (ability_increase_choice) ?
   const featNeedsAbility = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return false
     const feat = getFeatById(featureId)
@@ -281,7 +273,6 @@ export function useCharacterBuilder() {
     return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'fey_touched_spells')
   }
 
-  // Les choix d'un don sont-ils complets (carac. ET/OU sort, selon ce qu'il requiert) ?
   const featChoiceComplete = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return true
     if (featNeedsAbility(featureId) && !state.value.featChoices[featureId]?.ability) return false
@@ -292,10 +283,8 @@ export function useCharacterBuilder() {
   // ─── Données dérivées ────────────────────────────────────────────────────────
 
   const raceData = computed(() => RACES.find(r => r.id === state.value.raceId) ?? null)
-  // Sous-races : pour les espèces « base + lignée » (D17 — Elfe, Nain, Halfelin, Gnome, Tieffelin,
-  // Drakéide), PILOTÉES PAR LE CATALOGUE via le champ opt-in `lineageBaseSpeciesName` du blob ; les
-  // autres espèces gardent leur `RaceData.subraces`. `lineageSubraces` reste vide tant que le
-  // catalogue n'est pas chargé (ou ne correspond pas à la base) → repli transparent sur le blob.
+  // Espèces « base + lignée » (D17) : sous-races PILOTÉES PAR LE CATALOGUE via le champ opt-in
+  // `lineageBaseSpeciesName` ; repli transparent sur le blob `RaceData.subraces` sinon.
   const lineageBaseName = computed(() => raceData.value?.lineageBaseSpeciesName ?? null)
   const { baseSpeciesId: lineageBaseSpeciesId, lineageSubraces } = useSpeciesLineages(lineageBaseName)
   const subraces = computed<SubraceData[]>(() => {
@@ -306,11 +295,8 @@ export function useCharacterBuilder() {
     if (!state.value.subraceId) return null
     return subraces.value.find(s => s.id === state.value.subraceId) ?? null
   })
-  // Lignée choisie (si la sous-race vient du catalogue) → envoyée au serveur à la création (lot 5a).
   const selectedLineageId = computed(() => subraceData.value?.lineageId ?? null)
-  // Lignée UNIQUE pilotée par le catalogue (ex. Tieffelin → Asmodée) : auto-sélection pour ne pas
-  // imposer un « faux choix » à une seule carte. Ne s'applique qu'aux espèces base+lignée (D17) et
-  // seulement s'il n'y a qu'une lignée ; les espèces à plusieurs lignées exigent un vrai choix.
+  // Lignée unique (ex. Tieffelin → Asmodée) : auto-sélection pour ne pas imposer un faux choix.
   watch(subraces, (subs) => {
     if (lineageBaseName.value && subs.length === 1 && !subs.some(s => s.id === state.value.subraceId)) {
       state.value.subraceId = subs[0]!.id
@@ -319,11 +305,8 @@ export function useCharacterBuilder() {
   const classData = computed(() => CLASSES.find(c => c.id === state.value.classId) ?? null)
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
 
-  // Points de choix (progression) de la classe courante, lus dans le CATALOGUE (/api/catalog,
-  // lot 6a) et résolus localement par resolveChoices (rules-engine §5). Seedés à ce jour : la
-  // SOUS-CLASSE de toutes les classes (F2 tranche 3) + pacte/invocations/arcanums de l'Occultiste.
-  // Restent pilotés par app/data (à migrer, cf. consolidation-2014.md) : style de combat, expertise,
-  // ASI. Équivalence Occultiste verrouillée par test/unit/warlockCatalogEquivalence.test.ts.
+  // Points de choix lus dans le catalogue et résolus localement. Style de combat, expertise et ASI
+  // restent pilotés par app/data (à migrer, cf. consolidation-2014.md).
   const classDbId = computed(() => resolveClassId(classData.value?.dbName))
   const catalogChoices = computed(() =>
     choicesForClassLevel(classDbId.value, state.value.level),
@@ -331,10 +314,7 @@ export function useCharacterBuilder() {
 
   const needsPactBoon = computed(() => catalogChoices.value.some(c => c.kind === 'pact_boon'))
 
-  // ─── Sous-classe (lue dans le CATALOGUE, F2 tranche 3) ─────────────────────
-  // Niveau d'accès + options viennent de `/api/catalog/classes` (colonne `subclass_level` +
-  // sous-classes imbriquées) au lieu du blob `app/data/character-builder.ts`. Le gating « faut-il
-  // choisir une sous-classe à ce niveau ? » se dérive de `resolveChoices` — miroir de needsPactBoon.
+  // ─── Sous-classe (lue dans le CATALOGUE) ───────────────────────────────────
   const subclassCatalog = computed(() => subclassCatalogFor(classDbId.value))
   const subclassLevel = computed(() => subclassCatalog.value?.subclassLevel ?? null)
   const subclassOptions = computed(() => subclassCatalog.value?.subclasses ?? [])
@@ -354,8 +334,6 @@ export function useCharacterBuilder() {
 
   const needsInvocations = computed(() => invocationsExpected.value > 0)
 
-  // Métamagie (Ensorceleur) — même mécanique que les invocations : N options (par niveau) parmi
-  // le groupe `metamagic`, lues dans le catalogue via resolveChoices.
   const metamagicExpected = computed(() =>
     catalogChoices.value.find(c => c.kind === 'metamagic')?.count ?? 0,
   )
@@ -363,7 +341,6 @@ export function useCharacterBuilder() {
 
   const alignmentData = computed(() => ALIGNMENTS.find(a => a.id === state.value.alignment) ?? null)
 
-  // Bonus raciaux fusionnés (race + sous-race + cas spéciaux)
   const raceBonuses = computed<Partial<Record<AbilityKey, number>>>(() => {
     const bonuses: Partial<Record<AbilityKey, number>> = {}
     const addBonus = (k: AbilityKey, v: number) => {
@@ -373,38 +350,31 @@ export function useCharacterBuilder() {
     const race = raceData.value
     if (!race) return bonuses
 
-    // Bonus de la race de base (sauf si sous-race override)
     const hasSub = !!subraceData.value
     if (!hasSub || race.id === 'half-elf') {
-      // Pour les races sans sous-races, appliquer les bonus de la race
-      // Pour demi-elfe, les bonus de race s'appliquent toujours (+2 CHA)
       for (const [k, v] of Object.entries(race.abilityBonuses) as [AbilityKey, number][]) {
         addBonus(k, v)
       }
     }
 
-    // Bonus de la sous-race (incluent les bonus parentaux pour les races avec subraces)
     if (subraceData.value) {
       for (const [k, v] of Object.entries(subraceData.value.abilityBonuses) as [AbilityKey, number][]) {
         addBonus(k, v)
       }
     }
 
-    // Cas spéciaux
     if (race.id === 'half-elf') {
       for (const ab of state.value.halfElfBonuses) {
         addBonus(ab as AbilityKey, 1)
       }
     }
     if (race.id === 'human' && state.value.isVariantHuman) {
-      // Variante : remplace les +1 universels par +1+1 au choix
-      // On retire d'abord les +1 universels déjà ajoutés
+      // Variante humaine : on retire les +1 universels avant d'appliquer les +1+1 au choix.
       for (const k of ABILITIES) bonuses[k] = 0
       for (const ab of state.value.variantHumanBonuses) {
         addBonus(ab as AbilityKey, 1)
       }
     }
-    // Fadette (MPMM) : bonus flexibles répartis par le joueur (state.fairyAsiBonuses).
     if (race.id === 'fairy') {
       for (const [k, v] of Object.entries(state.value.fairyAsiBonuses) as [AbilityKey, number][]) {
         addBonus(k, v)
@@ -431,7 +401,6 @@ export function useCharacterBuilder() {
 
   const hasAbilities = computed(() => ABILITIES.some(ab => finalAbilities.value[ab] != null))
 
-  // Stats dérivées
   const level = computed(() => state.value.level)
   const profBonus = computed(() => profBonusAtLevel(level.value))
 
@@ -475,7 +444,6 @@ export function useCharacterBuilder() {
     return dex != null ? abilityMod(dex) : 0
   })
 
-  // Sorts
   const spellcastingInfo = computed(() => classData.value?.spellcasting ?? null)
   const spellSlots = computed(() => {
     if (!spellcastingInfo.value) return null
@@ -485,7 +453,6 @@ export function useCharacterBuilder() {
     if (!spellcastingInfo.value) return 0
     return maxSpellLevelAtLevel(spellcastingInfo.value.type, level.value)
   })
-  // Nombre de langues à choisir (race + sous-race + background)
   const languageChoiceCount = computed(() => {
     let count = 0
     const countChoices = (langs: string[]) => {
@@ -507,9 +474,7 @@ export function useCharacterBuilder() {
   })
 
   // ─── Arcanums mystiques (Occultiste niv 11/13/15/17) ──────────────────────
-  // Niveaux de sort (6/7/8/9) de TOUS les arcanums débloqués au niveau du perso : le
-  // catalogue (resolveChoices) expose déjà un point de choix `spell` par palier atteint
-  // (gating classLevel ≥ ownerLevelRequired), pas seulement celui du niveau exact.
+  // Tous les paliers débloqués (≤ niveau), pas seulement celui du niveau exact.
   const arcaneMysteriumSpellLevels = computed<number[]>(() =>
     catalogChoices.value
       .filter(ch => ch.kind === 'spell' && ch.optionSource.type === 'spells')
@@ -520,8 +485,6 @@ export function useCharacterBuilder() {
   const needsArcaneMysterium = computed(() => arcaneMysteriumSpellLevels.value.length > 0)
 
   // ─── Livre des secrets anciens (manifestation) ────────────────────────────
-  // L'ID de la manifestation est résolu côté composant via /api/invocations
-  // (cf. StepSpells). On expose juste l'aide pour interroger l'état.
   const picksBookOfAncientSecrets = (allInvocationsByName: Record<string, number>) => {
     const id = allInvocationsByName[BOOK_OF_ANCIENT_SECRETS_NAME]
     if (!id) return false
@@ -530,7 +493,6 @@ export function useCharacterBuilder() {
 
   // ─── ASI (paliers de bonus de caractéristique) ────────────────────────────────
 
-  // Niveaux d'ASI atteints par ce personnage (selon classe + niveau choisi).
   const asiLevelsForCharacter = computed<number[]>(() => {
     const clsId = state.value.classId
     if (!clsId) return []
@@ -540,7 +502,6 @@ export function useCharacterBuilder() {
 
   const needsAsi = computed(() => asiLevelsForCharacter.value.length > 0)
 
-  // Total des points ASI attribués à une carac, toutes ASI levels confondues.
   const asiBonusByAbility = computed<Partial<Record<AbilityKey, number>>>(() => {
     const sum: Partial<Record<AbilityKey, number>> = {}
     for (const lvl of asiLevelsForCharacter.value) {
@@ -552,10 +513,8 @@ export function useCharacterBuilder() {
     return sum
   })
 
-  // Bonus de caractéristique apportés par les DONS choisis (don bonus + un don par palier d'ASI) :
-  // effet `ability_increase` (carac. fixe) ou `ability_increase_choice` (carac. choisie via
-  // featChoices). Sans ça, un demi-don (Vigueur, Résilient…) n'était reflété ni dans l'Aperçu ni
-  // dans les paliers d'ASI suivants (bug B4).
+  // Bonus de carac. apportés par les dons choisis : sans ça, un demi-don n'était reflété ni dans
+  // l'aperçu ni dans les paliers d'ASI suivants (bug B4).
   const featBonusByAbility = computed<Partial<Record<AbilityKey, number>>>(() => {
     const sum: Partial<Record<AbilityKey, number>> = {}
     const featIds = [state.value.bonusFeatureId, ...Object.values(state.value.asiFeats)]
@@ -594,8 +553,6 @@ export function useCharacterBuilder() {
         if (!s.raceId) return false
         if (subraces.value.length && !s.subraceId) return false
         if (s.raceId === 'half-elf' && s.halfElfBonuses.length < 2) return false
-        // Drakéide : l'ascendance draconique est une lignée (D17, lot 6) → couverte par la
-        // validation de sous-race générique ci-dessus.
         if (s.raceId === 'human' && s.isVariantHuman) {
           if (s.variantHumanBonuses.length < 2 || !s.variantHumanSkill) return false
         }
@@ -619,7 +576,6 @@ export function useCharacterBuilder() {
         return ABILITIES.every(ab => s.abilities[ab] != null)
       }
       case 'asi': {
-        // Chaque palier exige un choix ASI/Don complet.
         for (const lvl of asiLevelsForCharacter.value) {
           const choice = s.asiChoice[lvl]
           if (!choice) return false
@@ -632,15 +588,13 @@ export function useCharacterBuilder() {
           }
           else if (choice === 'feat') {
             if (s.asiFeats[lvl] == null) return false
-            // Si le don exige un choix de caractéristique, il doit être fait.
             if (!featChoiceComplete(s.asiFeats[lvl])) return false
           }
         }
         return true
       }
       case 'feats': {
-        // Le don bonus est optionnel ; mais s'il est choisi et qu'il demande
-        // un choix de caractéristique, celui-ci est obligatoire.
+        // Le don bonus est optionnel, mais ses choix deviennent obligatoires s'il est choisi.
         if (s.bonusFeatureId != null && !featChoiceComplete(s.bonusFeatureId)) return false
         return true
       }
@@ -653,7 +607,6 @@ export function useCharacterBuilder() {
         // Livre des secrets anciens : 2 sorts rituels obligatoires si l'invocation est choisie.
         // (Flag positionné par le composant via watchEffect — cf. StepSpells.)
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
-        // Pour les sorts : si classe préparée, pas de validation stricte
         const preparedCasters = ['cleric', 'druid', 'paladin', 'ranger', 'wizard']
         if (preparedCasters.includes(s.classId ?? '')) return cantripsDone
         const spellsNeeded = SPELLS_KNOWN[s.classId ?? '']?.[level.value - 1] ?? 0

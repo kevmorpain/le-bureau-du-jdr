@@ -7,13 +7,9 @@ import {
   type ResolvedOption,
 } from '../../shared/rules/resolve'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Contrat d'ÉLIGIBILITÉ des options (lot 5b — clôt la limite #1 de resolve.ts).
-// Cas de vérité : les 4 prérequis d'invocation que `InvocationPicker.vue`
-// `isSelectable()` applique aujourd'hui côté front (niveau propre, pacte, sort connu,
-// invocation connue), + les prérequis de dons (minAbilityScore / armure / incantation).
-// `resolveChoices` doit n'exposer QUE les options sélectionnables, pas l'appartenance brute.
-// ─────────────────────────────────────────────────────────────────────────────
+// Contrat d'ÉLIGIBILITÉ des options : les prérequis d'invocation (niveau propre, pacte, sort connu,
+// invocation connue) et de dons (carac. minimale, armure, incantation). `resolveChoices` ne doit
+// exposer QUE les options sélectionnables, pas l'appartenance brute.
 
 const OWNER_LEVEL = 5
 const noState: CharacterProjection = { classLevels: {} }
@@ -69,7 +65,7 @@ describe('isOptionEligible — prérequis de dons', () => {
   })
 })
 
-// ── resolveChoices n'expose que les options ÉLIGIBLES ──────────────────────────
+// resolveChoices n'expose que les options ÉLIGIBLES
 
 const WARLOCK = 1
 

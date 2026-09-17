@@ -11,11 +11,8 @@ import { deriveBackgroundProficiencies } from '../../server/utils/backgroundProf
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
 import { fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
 
-// Volet B, étape 2 — le seed des porteurs de maîtrises d'historique + la dérivation, bout en bout.
-// On rejoue la chaîne de migrations sur libsql, on insère les historiques, on lance
-// `seedBackgroundProficiencies` (injecté), puis on vérifie que la fiche DÉRIVE exactement les
-// maîtrises FIXES (== ce que createCharacter matérialise en grants aujourd'hui = filet d'équivalence),
-// que les historiques sans fixe n'ont pas de porteur, et l'idempotence du seed.
+// Seed des porteurs de maîtrises d'historique + dérivation, bout en bout : la fiche doit dériver
+// exactement les maîtrises FIXES (== ce que createCharacter matérialisait en grants).
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

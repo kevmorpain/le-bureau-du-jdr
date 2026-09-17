@@ -1,18 +1,8 @@
 import { CreatureSize } from '../../schema/character_species'
 import type { LineageSpeciesData } from '../lib/seedLineages'
 
-/**
- * Halfelin 2014 restructuré en **base + lignées** (chantier lignée, D17 — rollout lot 6). Remplace
- * à terme `lightfootHalfling`/`stoutHalfling` de `character_species.ts` : base = traits communs,
- * lignées = le +1 propre + l'exclusif (Discrétion naturelle pour le pied-léger, Résistance des
- * robustes pour le robuste).
- *
- * ⚠️ Effets **copiés à l'identique** → équivalence (D12). Noms de lignée == anciennes espèces
- * (« Halfelin pied-léger/robuste ») → migration sans alias ; vitesse commune (7,5) → pas de
- * speedOverride.
- */
+// ⚠️ Effets copiés à l'identique des anciennes espèces `lightfootHalfling`/`stoutHalfling` (équivalence D12).
 
-// ─── Traits COMMUNS aux deux lignées (base) ──────────────────────────────────────────────
 const baseTraits = [
   {
     name: 'Augmentation de caractéristiques',
@@ -49,7 +39,6 @@ const baseTraits = [
   },
 ]
 
-// ─── Traits PROPRES à chaque lignée ──────────────────────────────────────────────────────
 const lightfootHalflingLineage = {
   name: 'Halfelin pied-léger',
   description: `Discrets et affables, les halfelins pied-léger savent se fondre dans la foule et passer inaperçus.`,

@@ -6,17 +6,14 @@
   >
     <template #body>
       <div class="space-y-4 p-4">
-        <!-- Tabs : Chercher / Créer (masqués en édition) -->
         <UTabs
           v-if="!isEdit"
           v-model="activeTab"
           :items="tabItems"
         />
 
-        <!-- ── Onglet Chercher ───────────────────────────────────────── -->
         <template v-if="!isEdit && activeTab === 'search'">
           <div class="space-y-3">
-            <!-- Filtres -->
             <div class="flex gap-2">
               <UInput
                 v-model="searchQuery"
@@ -32,7 +29,6 @@
               />
             </div>
 
-            <!-- Résultats -->
             <div
               v-if="isSearching"
               class="text-center py-8 text-muted"
@@ -78,7 +74,6 @@
               </button>
             </div>
 
-            <!-- Objets sélectionnés -->
             <div v-if="selectedEntries.length > 0" class="space-y-2">
               <p class="text-sm font-medium text-muted">
                 {{ selectedEntries.length }} objet{{ selectedEntries.length > 1 ? 's' : '' }} sélectionné{{ selectedEntries.length > 1 ? 's' : '' }}
@@ -127,7 +122,6 @@
           </div>
         </template>
 
-        <!-- ── Onglet Créer / Éditer ─────────────────────────────────── -->
         <template v-if="isEdit || activeTab === 'create'">
           <div class="space-y-3">
             <div class="grid grid-cols-2 gap-3">
@@ -163,7 +157,6 @@
               />
             </UFormField>
 
-            <!-- Champs spécifiques par type -->
             <template v-if="createForm.itemType === 'weapon'">
               <div class="grid grid-cols-2 gap-3">
                 <UFormField label="Dés de dégâts">
@@ -231,7 +224,6 @@
               </UFormField>
             </template>
 
-            <!-- Charges (utilisations limitées + recharge) -->
             <div class="rounded-lg ring ring-default p-3 space-y-3">
               <p class="text-sm font-medium">Charges</p>
               <div class="grid grid-cols-2 gap-3">
@@ -342,15 +334,11 @@ const emit = defineEmits<{
 const { addItem, refreshInventory } = useCharacterSheet(toRef(props, 'characterSheet'))
 const toast = useToast()
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
 const activeTab = ref('search')
 const tabItems = [
   { label: 'Chercher', value: 'search' },
   { label: 'Créer un objet', value: 'create' },
 ]
-
-// ─── Search ───────────────────────────────────────────────────────────────────
 
 const searchQuery = ref('')
 const typeFilter = ref('all')
@@ -432,16 +420,12 @@ const deselectItem = (id: number) => {
   if (idx >= 0) selectedEntries.value.splice(idx, 1)
 }
 
-// ─── Magic bonus options ──────────────────────────────────────────────────────
-
 const magicBonusOptions = [
   { label: 'Aucun', value: 0 },
   { label: '+1', value: 1 },
   { label: '+2', value: 2 },
   { label: '+3', value: 3 },
 ]
-
-// ─── Create form ──────────────────────────────────────────────────────────────
 
 const createForm = ref({
   name: '',
@@ -549,8 +533,6 @@ const toolTypeOptions = [
   { label: 'Autre', value: 'other' },
 ]
 
-// ─── Submit ───────────────────────────────────────────────────────────────────
-
 const isSubmitting = ref(false)
 
 const canSubmit = computed(() => {
@@ -560,7 +542,6 @@ const canSubmit = computed(() => {
   return false
 })
 
-// Construit le corps de requête item (partagé création POST / édition PUT).
 const buildItemBody = () => {
   const form = createForm.value
   let properties: Record<string, unknown>
@@ -663,7 +644,6 @@ const resetForm = () => {
   }
 }
 
-// Pré-remplit le formulaire depuis un objet existant (mode édition).
 const prefillFromItem = (item: InventoryItem) => {
   const p = item.properties as Record<string, any>
   const knownCategory = item.itemType === 'equipment'
@@ -705,7 +685,6 @@ const prefillFromItem = (item: InventoryItem) => {
   }
 }
 
-// À l'ouverture en mode édition : pré-remplir. À la fermeture : réinitialiser.
 watch(open, (isOpen) => {
   if (isOpen && props.editItem) prefillFromItem(props.editItem)
   else if (!isOpen) resetForm()

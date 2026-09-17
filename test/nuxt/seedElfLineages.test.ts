@@ -9,12 +9,8 @@ import * as srcSchema from '../../server/db/schema'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { buildCatalog } from '../../server/utils/catalog'
 
-// Lot 3b (chantier lignée, D17) — la LOGIQUE DE SEED de l'Elfe base+lignées. On rejoue toute la
-// chaîne de migrations sur libsql, on lance `seedElfLineages` (injecté), puis on vérifie la
-// STRUCTURE posée : espèce de base, 3 lignées, feature de choix + progression `kind:'lineage'`
-// (bout en bout via `buildCatalog`), features de base vs de lignée, et l'idempotence.
-// (L'équivalence des EFFETS est déjà prouvée au niveau donnée par elfLineageEquivalence.test ;
-// l'équivalence bout en bout via la fiche viendra avec la dérivation, lot 3b-2.)
+// Logique de seed de l'Elfe base + lignées : structure posée (espèce de base, 3 lignées, feature de
+// choix + progression `kind:'lineage'`, features de base vs de lignée) et idempotence.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

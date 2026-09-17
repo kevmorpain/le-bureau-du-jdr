@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { slotsForLevel, combinedSpellSlots, maxSpellLevelForLevel } from '../../shared/rules/spellSlots'
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Contrat d'équivalence des tables d'emplacements (D12) — la source unique de
 // shared/rules/spellSlots.ts doit rendre EXACTEMENT les valeurs que les copies
 // (index.post / level-up) produisaient. Valeurs PHB 2014 vérifiées à la main.
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe('slotsForLevel — lanceur complet', () => {
   it('niveau 1 : 2 emplacements de niveau 1', () => {

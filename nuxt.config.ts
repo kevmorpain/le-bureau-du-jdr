@@ -48,12 +48,8 @@ export default defineNuxtConfig({
     },
   },
 
-  // Cache edge du catalogue (lot 6a). Le catalogue est STATIQUE (un seul `ruleset` en Phase 1 ;
-  // le discriminant = Phase 2) et ne change qu'à un (re)seed → TTL long + `swr` (sert la version
-  // en cache immédiatement puis revalide en arrière-plan). `cache` wrappe les handlers en cached
-  // handler ET émet le `Cache-Control` (navigateur + CDN) ; aucun binding requis (on n'active pas
-  // le cache durable NuxtHub, provisionné par `nuxthub deploy`, alors qu'ici le déploiement passe
-  // par Wrangler/CF Builds). La clé de cache par défaut inclut l'URL → `?classIds` varie bien.
+  // Le catalogue est STATIQUE (ne change qu'à un reseed) → TTL long + `swr`. La clé de cache par
+  // défaut inclut l'URL, donc `?classIds` / `?extended` varient bien.
   routeRules: {
     '/api/catalog/**': { cache: { maxAge: 60 * 60, staleMaxAge: 60 * 60 * 24, swr: true } },
   },
@@ -65,7 +61,6 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-12-27',
 
-  // to seed database
   nitro: {
     experimental: {
       tasks: true,

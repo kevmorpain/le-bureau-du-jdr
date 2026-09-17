@@ -35,7 +35,6 @@
       </UPopover>
     </div>
 
-    <!-- Conditions actives -->
     <div
       v-if="activeConditions.length"
       class="flex flex-wrap gap-1"
@@ -73,7 +72,6 @@
       Aucun état actif
     </p>
 
-    <!-- Épuisement : dots cliquables -->
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">
         <span class="text-xs text-muted">Épuisement</span>

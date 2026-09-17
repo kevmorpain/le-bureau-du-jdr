@@ -35,7 +35,6 @@ export const useRest = (
         }
       })
 
-      // Reset pact_magic spell slots (local + persisté côté DB par le serveur)
       if (spellSlots?.value) refillSlots(spellSlots.value.pact_magic)
       characterSheet.value.spellSlots
         ?.filter(s => s.slotType === 'pact_magic')
@@ -77,7 +76,6 @@ export const useRest = (
 
       characterSheet.value.currentHp = characterSheet.value.maxHp
 
-      // Reset spell slots (local + DB)
       if (spellSlots?.value) {
         refillSlots(spellSlots.value.spellcasting)
         refillSlots(spellSlots.value.pact_magic)

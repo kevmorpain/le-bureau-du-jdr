@@ -13,7 +13,6 @@
       Ajoutez votre modificateur de Constitution ({{ formatMod(conMod) }}).
     </p>
 
-    <!-- Method selector -->
     <div class="flex gap-2 mb-5">
       <button
         v-for="m in methods"
@@ -28,7 +27,6 @@
       </button>
     </div>
 
-    <!-- Average method -->
     <div v-if="state.hpMethod === 'average'" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-5 text-center">
       <div class="text-xs text-muted mb-2 uppercase tracking-widest font-bold">Moyenne fixe</div>
       <div class="font-mono text-5xl font-black text-amber-400">+{{ averageHpGain }}</div>
@@ -37,11 +35,9 @@
       </div>
     </div>
 
-    <!-- Roll method -->
     <div v-else-if="state.hpMethod === 'roll'" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-5">
       <div class="text-xs text-muted mb-4 uppercase tracking-widest font-bold text-center">Jet de dé</div>
 
-      <!-- Dice result display -->
       <div class="flex items-center justify-center gap-4 mb-5">
         <div class="text-center">
           <div class="text-xs text-muted mb-1">Jet (1d{{ pickedClass?.hitDie ?? '?' }})</div>
@@ -75,7 +71,6 @@
         🎲 Lancer 1d{{ pickedClass?.hitDie ?? '?' }}
       </UButton>
 
-      <!-- Manual override for roll -->
       <div class="mt-4 flex items-center gap-2">
         <span class="text-xs text-muted">Ou entrer le résultat du jet :</span>
         <input
@@ -88,7 +83,6 @@
       </div>
     </div>
 
-    <!-- Manual method -->
     <div v-else-if="state.hpMethod === 'manual'" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-5">
       <div class="text-xs text-muted mb-4 uppercase tracking-widest font-bold text-center">Saisie manuelle</div>
       <div class="flex items-center gap-4 justify-center">
@@ -123,7 +117,6 @@
       </div>
     </div>
 
-    <!-- Before / after -->
     <div v-if="state.hpGained" class="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm">
       <span class="text-muted">PV max :</span>
       <span class="font-mono font-bold text-(--ui-text)">{{ currentHpMax }}</span>

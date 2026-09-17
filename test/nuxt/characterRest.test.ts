@@ -10,9 +10,8 @@ import { createCharacter, createCharacterSchema } from '../../server/utils/chara
 import { characterRest } from '../../server/utils/characterRest'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 
-// Volet 4 (5d) : repos extrait → testé contre libsql (migrations rejouées), sans auth. On vérifie
-// la recharge (features + emplacements) ET la préservation de la dépendance d'ORDRE sur currentHp
-// (repos long puis soin par dés de vie).
+// Repos testé contre libsql : recharge (features + emplacements) ET préservation de la dépendance
+// d'ORDRE sur currentHp (repos long puis soin par dés de vie).
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

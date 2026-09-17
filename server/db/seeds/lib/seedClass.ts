@@ -1,7 +1,5 @@
 import { db, schema } from 'hub:db'
-// `progression` est une table NEUVE (lot 4c) : on l'écrit via le schéma SOURCE
-// (`srcSchema`) et non le cache de `hub:db`, qui peut l'ignorer au démarrage — même
-// motif que le seed `classes` du lot 4a pour ses colonnes neuves (cf. CLAUDE.md).
+// `progression` s'écrit via le schéma SOURCE : le cache de `hub:db` peut l'ignorer au démarrage.
 import * as srcSchema from '../../schema'
 import { eq, and, sql } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
@@ -14,18 +12,9 @@ import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../data/su
 import { fightingStyleOptionFeatures } from '../data/fightingStyles'
 import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 
-/**
- * Nom (interne) de la feature porteuse des maîtrises de base d'une classe. Jamais affichée
- * ni matérialisée (`feature_type = 'proficiency_grant'`) — elle ne sert qu'à porter les effets
- * `weapon_proficiency`/`proficiency` que la fiche dérive de l'origine (volet B).
- */
+/** Feature porteuse des maîtrises de base d'une classe : jamais affichée ni matérialisée. */
 export const CLASS_PROFICIENCY_CARRIER_NAME = 'Maîtrises de la classe'
 
-/**
- * Construit la feature porteuse des maîtrises de base d'une classe depuis la source unique
- * `CLASS_PROFICIENCIES` (clés machine). `null` si la classe n'y figure pas. Traitée comme une
- * `FeatureDef` ordinaire par `seedClass` (mais sans tag ni progression → syncs no-op).
- */
 function buildProficiencyCarrier(className: string): FeatureDef | null {
   const prof = CLASS_PROFICIENCIES[className]
   if (!prof) return null
@@ -41,11 +30,6 @@ function buildProficiencyCarrier(className: string): FeatureDef | null {
   }
 }
 
-/**
- * Point de choix porté par une feature (owner = featureId, cf. decisions.md D4). Écrit
- * sur la table `progression` par `_syncProgression`. Renseigné pour l'Occultiste au lot
- * 4c ; les autres classes suivront. Cf. rules-engine.md §4.
- */
 export type ProgressionDef = {
   kind: ChoiceKind
   count: Formula
@@ -64,13 +48,7 @@ export type FeatureDef = {
   effects?: Effect[]
   meta?: FeatureMeta
   prerequisites?: FeaturePrerequisite | null
-  // Groupe de features-options auquel cette feature appartient (cf.
-  // shared/rules/featureTags.ts). Renseigné pour les invocations ; les autres
-  // groupes suivront au lot 4c. La migration 0081 fait le même backfill côté
-  // bases déjà déployées.
   tag?: FeatureTag | null
-  // Point de choix dont cette feature est PROPRIÉTAIRE (owner, D4). Persisté sur la
-  // table `progression`. La migration 0082 crée les mêmes lignes côté bases déployées.
   progression?: ProgressionDef | null
 }
 
@@ -90,10 +68,8 @@ export async function seedClass(
   let featuresInserted = 0
   let subclassesInserted = 0
 
-  // Résolution par (name, ruleset) : les features/sous-classes d'une classe 5.5 (« Guerrier »)
-  // doivent s'attacher à SA ligne, pas à l'homonyme 2014 (sinon on seede le 5.5 sous le 2014).
-  // No-op sur le 2014 (défaut '5'). Les features restent keyées par (classId, name) plus bas —
-  // donc naturellement séparées par édition une fois la classe résolue à la bonne ligne.
+  // Résolution par (name, ruleset) : les features d'une classe 5.5 doivent s'attacher à SA ligne,
+  // pas à l'homonyme 2014.
   const cls = await db.query.classes.findFirst({
     where: and(eq(schema.classes.name, className), eq(schema.classes.ruleset, ruleset)),
   })
@@ -102,26 +78,14 @@ export async function seedClass(
     return { featuresInserted, subclassesInserted }
   }
 
-  // Feature porteuse des maîtrises de base (volet B) : ajoutée à la volée depuis la source
-  // unique `CLASS_PROFICIENCIES`, sans toucher les données de chaque classe. Ne porte ni tag ni
-  // progression → `_syncFeatureTag`/`_syncProgression` sont no-op sur elle.
   const carrier = buildProficiencyCarrier(className)
 
-  // Feature « choix de sous-classe » (F2) : MÊME principe que le carrier de maîtrises — injectée à
-  // la volée depuis la source unique `subclassChoiceFeature` (niveau = `classes.subclass_level`),
-  // pour toute classe ayant des sous-classes. Porte une progression `kind:'subclass'` (source de la
-  // décision, rules-engine.md §4). Centralisé ici → pas de câblage dupliqué dans les 12 wrappers, et
-  // toute classe future l'obtient automatiquement (fail-fast via la map si le nom manque).
-  // ⚠️ Périmètre 2014 : le niveau vient de `classesData` par NOM ; l'awareness `ruleset` viendra avec
-  // le contenu 5.5 (aucune classe 5.5 seedée à ce jour).
+  // Feature « choix de sous-classe » injectée à la volée depuis la source unique (niveau =
+  // `classes.subclass_level`) : pas de câblage dupliqué dans les 12 wrappers.
   const subclassChoice = subclassDefs.length > 0 && SUBCLASS_CHOICE_FEATURE_NAMES[className]
     ? subclassChoiceFeature(className)
     : null
 
-  // Features-OPTIONS de style de combat (F2) : injectées à la volée depuis la source unique
-  // `fightingStyleOptionFeatures` pour les classes martiales concernées (Guerrier/Paladin/Rôdeur).
-  // La feature « Style de combat » (dans les données de classe) porte la progression owner ;
-  // ces options en sont les candidats (`feature_group:'fighting_style'`). `[]` sinon.
   const fightingStyleOptions = fightingStyleOptionFeatures(className)
 
   const allBaseFeatures = [
@@ -149,15 +113,11 @@ export async function seedClass(
     let feature
     if (existing) {
       feature = existing
-      // Resync le contenu mutable (description + mécaniques) sur les features
-      // existantes : le seed est la source de vérité du contenu, donc un seed
-      // corrigé doit pouvoir mettre à jour une base déjà peuplée.
+      // Le seed est la source de vérité du contenu : un seed corrigé doit mettre à jour une base peuplée.
       await _resyncFeatureContent(existing, data)
-      // Resync meta on existing features when seed defines it
       if (meta !== undefined && meta !== null && JSON.stringify(existing.meta) !== JSON.stringify(meta)) {
         await db.run(sql`UPDATE features SET meta = ${JSON.stringify(meta)} WHERE id = ${existing.id}`)
       }
-      // Resync prerequisites on existing features when seed defines it
       if (prerequisites !== undefined && JSON.stringify(existing.prerequisites) !== JSON.stringify(prerequisites)) {
         await db.run(sql`UPDATE features SET prerequisites = ${prerequisites ? JSON.stringify(prerequisites) : null} WHERE id = ${existing.id}`)
       }
@@ -188,12 +148,10 @@ export async function seedClass(
     let subclass
     if (existingSubclass) {
       subclass = existingSubclass
-      // Resync la description sur les sous-classes existantes (source de vérité = seed)
       const seedDesc = subclassDef.description ?? null
       if (existingSubclass.description !== seedDesc) {
         await db.run(sql`UPDATE subclasses SET description = ${seedDesc} WHERE id = ${existingSubclass.id}`)
       }
-      // Resync spellcastingAbility on existing subclasses when seed defines it
       const seedAbility = subclassDef.spellcastingAbility ?? null
       if (seedAbility !== null && existingSubclass.spellcastingAbility !== seedAbility) {
         await db.run(sql`UPDATE subclasses SET spellcasting_ability = ${seedAbility} WHERE id = ${existingSubclass.id}`)
@@ -255,24 +213,13 @@ export async function seedClass(
   return { featuresInserted, subclassesInserted }
 }
 
-/**
- * Écrit le `tag` (feature_group) d'une feature. `undefined` = le seed ne se prononce
- * pas (on laisse le tag existant). Écriture par `sql` brut — comme meta/prerequisites
- * ci-dessus — pour être robuste au cache de schéma de `hub:db`, potentiellement
- * périmé après l'ajout de la colonne (cf. CLAUDE.md « hub:db schema cache » et le
- * précédent des colonnes d'identité de `classes` au lot 4a).
- */
+/** Écriture par `sql` brut : robuste au cache de schéma `hub:db`, périmé après l'ajout de la colonne. */
 async function _syncFeatureTag(featureId: number, tag: FeatureTag | null | undefined) {
   if (tag === undefined) return
   await db.run(sql`UPDATE features SET tag = ${tag ?? null} WHERE id = ${featureId}`)
 }
 
-/**
- * Écrit le point de choix (`progression`) dont la feature est propriétaire (D4).
- * `undefined`/`null` = pas de progression → no-op. Écrit via `srcSchema.progression`
- * (table NEUVE, cf. import en tête) plutôt que le cache `hub:db`. Idempotent : une
- * feature porte au plus une progression par `kind` ; on met à jour si elle existe déjà.
- */
+/** Idempotent : une feature porte au plus une progression par `kind`. */
 async function _syncProgression(featureId: number, prog: ProgressionDef | null | undefined) {
   if (!prog) return
   const existing = await db
@@ -294,12 +241,6 @@ async function _syncProgression(featureId: number, prog: ProgressionDef | null |
   }
 }
 
-/**
- * Met à jour le contenu mutable d'une feature existante pour qu'il colle au seed
- * (description + mécaniques : type d'action, recharge, formule d'utilisations).
- * Le nom et le niveau servent de clef d'identité (gérés en amont via migration),
- * ils ne sont donc pas touchés ici. N'écrit qu'en cas de différence.
- */
 async function _resyncFeatureContent(
   existing: {
     id: number

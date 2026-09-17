@@ -10,41 +10,17 @@ import type { Formula } from '~~/shared/utils/formula'
 import type { Catalog, CatalogProgression, ResolvedOption } from '~~/shared/rules/resolve'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 
-/**
- * Loader du CATALOGUE (lot 5b) — construit la tranche cachable que `resolveChoices`
- * (`shared/rules/resolve.ts`) consomme : les `progression` rattachées à leur classe/sous-classe
- * propriétaire, avec pour chaque `optionSource` cachable son ensemble d'options PRÉ-RÉSOLU —
- * feature_group avec les prérequis + `levelRequired` de chaque option (que le filtre
- * d'éligibilité de `resolve()` exploitera), subclasses, spells (slug → classe → `spell_classes`),
- * feats, enum, skills. `proficient_skills` n'a PAS d'options ici : elles se résolvent live contre
- * l'état du perso dans `resolveChoices` (cf. rules-engine.md §5).
- *
- * ⚠️ Tables NEUVES sans `relations()` (progression) → lecture via `srcSchema` + `.select().from()`
- * explicites, jamais `db.query.X.with:{…}` (cf. CLAUDE.md « hub:db schema cache »). Le `db` est
- * INJECTÉ — le `db` de `hub:db` en prod (⚠️ PAS `useDrizzle()`, cassé, cf. server/utils/drizzle.ts),
- * libsql en mémoire en test — pour la testabilité.
- */
-
-// Instance drizzle SQLite, quel que soit le driver (D1 en prod, libsql en test). Les génériques
-// sont volontairement `any` : D1 et libsql ont des TRunResult/TFullSchema différents, et seul le
-// query-builder (`.select().from()`) est utilisé ici — indépendant de ces génériques.
+// Génériques `any` : D1 et libsql ont des TRunResult/TFullSchema différents.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
 export interface BuildCatalogOptions {
-  /** Restreindre aux points de choix possédés par ces classes (id). Défaut : toutes. */
   classIds?: number[]
-  /** Restreindre aux points de choix possédés par ces espèces (id) — choix de lignée (D17). */
   speciesIds?: number[]
-  /**
-   * Inclure le contenu d'extension gaté (cf. shared/rules/source.ts) dans les OPTIONS résolues
-   * (feats / feature_group / subclasses / lineages / spells). Défaut `false` = socle seul.
-   */
   extended?: boolean
 }
 
 export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Promise<Catalog> {
-  // 1. Progressions jointes à leur feature propriétaire (classe / sous-classe / niveau requis).
   const rows = await db
     .select({
       progressionId: srcSchema.progression.id,
@@ -63,8 +39,6 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
     .from(srcSchema.progression)
     .innerJoin(srcSchema.features, eq(srcSchema.progression.featureId, srcSchema.features.id))
 
-  // Résoudre la classe propriétaire des progressions possédées par une SOUS-CLASSE (aucune
-  // aujourd'hui — l'Occultiste ne pose que des choix au niveau classe — mais on gère le cas).
   const subclassIds = [...new Set(
     rows.filter(r => r.ownerClassId == null && r.ownerSubclassId != null).map(r => r.ownerSubclassId!),
   )]
@@ -77,9 +51,6 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
     for (const s of subs) classIdBySubclass.set(s.id, s.classId)
   }
 
-  // Résoudre l'ESPÈCE propriétaire des progressions possédées par une feature d'espèce
-  // (species_trait liée via species_features) — celles sans classe NI sous-classe (choix de
-  // lignée, D17). L'owner d'une progression est une classe/sous-classe OU une espèce.
   const orphanFeatureIds = [...new Set(
     rows.filter(r => r.ownerClassId == null && r.ownerSubclassId == null).map(r => r.featureId),
   )]
@@ -122,25 +93,13 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
   return { progressions }
 }
 
-/**
- * Pré-résout l'ensemble d'options d'un `optionSource` cachable. Renvoie `undefined` pour les
- * sources résolues live contre l'état du perso (`proficient_skills`) ou pas encore cataloguées
- * (languages/tools/abilities), auquel cas `resolveChoices` s'en charge ou n'a rien à proposer.
- * `owner` porte l'id de la classe propriétaire (`subclasses`) ou de l'espèce propriétaire
- * (`lineages`, D17) — l'un ou l'autre selon l'owner de la progression — ET son `ruleset` :
- * les sources cachables globales (feats / feature_group / spells) sont filtrées dessus pour
- * qu'un point de choix 2014 ne propose jamais une entité 5.5 (et réciproquement). Les sources
- * parent-gated (subclasses / lineages) sont déjà édition-spécifiques via leur owner.
- */
+// Les sources globales (feats / feature_group / spells) sont filtrées sur le `ruleset` de l'owner :
+// un choix 2014 ne propose jamais une entité 5.5.
 async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassId?: number, ownerSpeciesId?: number, ruleset: Ruleset, extended: boolean }): Promise<ResolvedOption[] | undefined> {
   switch (source.type) {
     case 'feature_group': {
-      // Options du groupe (tag), filtrées par édition. Restreintes en plus à la CLASSE propriétaire
-      // (ou aux features partagées `class_id IS NULL`) : les styles de combat sont dupliqués par classe
-      // (sous-ensembles différents — Guerrier 6, Paladin 4, Rôdeur 4), donc le Paladin ne doit pas se
-      // voir proposer Archerie. No-op pour les invocations/pactes de l'Occultiste (tous `class_id`=Occultiste).
+      // Restreint aussi à la classe propriétaire : les styles de combat sont dupliqués par classe (sous-ensembles différents).
       const conds = [eq(srcSchema.features.tag, source.group), eq(srcSchema.features.ruleset, owner.ruleset)]
-      // Source (core vs extension, #59) : un parcours non étendu ne voit que le contenu de base.
       if (!owner.extended) conds.push(eq(srcSchema.features.source, CORE_SOURCE))
       if (owner.ownerClassId != null) {
         conds.push(or(eq(srcSchema.features.classId, owner.ownerClassId), isNull(srcSchema.features.classId))!)
@@ -173,7 +132,6 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
     }
 
     case 'lineages': {
-      // Sous-races 2014 / lignées 2024 de l'espèce propriétaire (D17).
       if (owner.ownerSpeciesId == null) return []
       const lineages = await db
         .select({ id: srcSchema.speciesLineages.id })
@@ -188,8 +146,6 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
     case 'spells': {
       const className = classNameFromSlug(source.spellClass)
       if (!className) return []
-      // Classe de la liste résolue par (nom, ruleset) — déterministe entre éditions ; puis
-      // liens de liste ET sort filtrés sur la même édition (spell_classes.ruleset + spells.ruleset).
       const [cls] = await db
         .select({ id: srcSchema.classes.id })
         .from(srcSchema.classes)
@@ -213,8 +169,6 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
     }
 
     case 'feats': {
-      // Édition du propriétaire (Lot A) + catégorie 2024 quand la progression la précise (C2) :
-      // un historique 2024 ⟶ dons d'ORIGINE seulement. Sans catégorie (dons 2014) ⟶ tous.
       const conds = [eq(srcSchema.features.featureType, 'feat'), eq(srcSchema.features.ruleset, owner.ruleset)]
       if (!owner.extended) conds.push(eq(srcSchema.features.source, CORE_SOURCE))
       if (source.category) conds.push(eq(srcSchema.features.featCategory, source.category))

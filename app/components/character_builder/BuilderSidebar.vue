@@ -1,5 +1,4 @@
 <template>
-  <!-- Desktop : sidebar verticale -->
   <nav class="hidden lg:flex flex-col gap-1 py-4 px-3 border-r border-(--ui-border) w-48 shrink-0">
     <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3 px-2">
       Étapes
@@ -24,7 +23,6 @@
         />
       </div>
 
-      <!-- Résumé de la valeur sélectionnée -->
       <p
         v-if="stepSummaries[step.id]"
         class="text-xs text-muted leading-tight pl-6 truncate"
@@ -34,7 +32,6 @@
     </button>
   </nav>
 
-  <!-- Mobile / tablette portrait : pills horizontales -->
   <nav class="lg:hidden flex items-center gap-1.5 px-3 py-2 border-b border-(--ui-border) overflow-x-auto scrollbar-none">
     <button
       v-for="step in activeSteps"

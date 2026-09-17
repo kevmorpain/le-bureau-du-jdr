@@ -1,26 +1,20 @@
 import type { DamageEntry, HealEntry, MultiAttack } from '~~/server/db/schema/spells'
 
 /**
- * Montée en puissance d'un sort — **source unique** de la résolution « quelle valeur à quel
- * niveau » (cf. decisions.md D6, même esprit que `shared/rules/math.ts`).
+ * Montée en puissance d'un sort — **source unique** de la résolution « quelle valeur à quel niveau ».
  *
- * Les tables `damage_at_*` / `heal_at_*` / `count_at_*` sont des progressions creuses : la clé est
- * un niveau, la valeur s'applique **jusqu'au palier suivant** (Arme spirituelle : `{2, 4, 6, 8}`).
- * Deux axes INDÉPENDANTS, à ne jamais confondre :
+ * Les tables `damage_at_*` / `heal_at_*` / `count_at_*` sont des progressions creuses : la clé est un
+ * niveau, la valeur s'applique **jusqu'au palier suivant** (Arme spirituelle : `{2, 4, 6, 8}`). Deux
+ * axes INDÉPENDANTS, à ne jamais confondre :
  * - `*_at_character_level` → niveau du PERSONNAGE (tours de magie, qui n'ont pas d'emplacement) ;
- * - `*_at_slot_level` → niveau de l'EMPLACEMENT réellement dépensé (montée en puissance).
+ * - `*_at_slot_level` → niveau de l'EMPLACEMENT réellement dépensé.
  *
- * Ce module existe parce que cette résolution était réimplémentée **quatre fois** (MagicSection
- * pour le jet, CharacterSpellRow, DamageSection/HealSection, SpellCardBuilder) avec des
- * comportements divergents — d'où l'écart « affiché ≠ jeté » de U10
- * (`docs/fonctionnalites-manquantes.md`) : le jet appliquait le niveau choisi, l'affichage restait
- * figé au niveau de base.
+ * Cette résolution était réimplémentée quatre fois avec des comportements divergents, d'où l'écart
+ * « affiché ≠ jeté » (U10) : le jet appliquait le niveau choisi, l'affichage restait au niveau de base.
  *
- * Module pur (imports de TYPES uniquement) : testable dans le projet vitest `unit`, consommable
- * par le serveur comme par le front.
+ * Module pur (imports de TYPES uniquement) : testable dans le projet vitest `unit`.
  */
 
-/** Les deux niveaux de référence d'une incantation. */
 export type CastLevels = {
   characterLevel: number
   /** Niveau de l'emplacement dépensé (= niveau du sort quand il est lancé sans montée en puissance). */
@@ -30,7 +24,6 @@ export type CastLevels = {
 /** Niveau d'emplacement d'un sort lancé SANS montée en puissance (plancher à 1 pour les tours de magie). */
 export const baseSlotLevel = (spell: { level: number }): number => Math.max(1, spell.level)
 
-/** Niveaux de référence d'un sort lancé sans montée en puissance. */
 export const baseCastLevels = (spell: { level: number }, characterLevel: number): CastLevels => ({
   characterLevel,
   slotLevel: baseSlotLevel(spell),
@@ -113,10 +106,8 @@ export function diceRange(die: string, bonus = 0): { min: number, max: number } 
   }
 }
 
-// ─── Montée en puissance (encart « Aux niveaux supérieurs ») ──────────────────
-//
-// Ne concernent QUE les progressions par niveau d'emplacement : une progression par niveau de
-// personnage ne change pas selon l'emplacement dépensé, elle n'a rien à faire dans l'encart.
+// Montée en puissance : ne concerne QUE les progressions par niveau d'emplacement — une progression
+// par niveau de personnage ne change pas selon l'emplacement dépensé.
 
 /** Sort réduit à ce dont la montée en puissance a besoin (évite de dépendre du type `Spell` complet). */
 export type ScalableSpell = {
@@ -134,7 +125,6 @@ export type ScalingEntry =
 /** Une ligne de l'encart : ce que donne le sort lancé avec un emplacement de ce niveau. */
 export type ScalingRow = { level: number, entries: ScalingEntry[] }
 
-/** Niveau d'emplacement maximum (PHB 2014). */
 const MAX_SLOT_LEVEL = 9
 
 /** Ce que donne le sort à ce niveau d'emplacement — progressions par emplacement uniquement. */

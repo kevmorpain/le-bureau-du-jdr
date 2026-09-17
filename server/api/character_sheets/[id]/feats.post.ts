@@ -5,13 +5,11 @@ import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { abilityEnum } from '~~/shared/rules/abilities'
 
-// Attache un don (feature feature_type='feat') au personnage.
-// source: 'asi' (don pris à un palier 4/8/12...) ou 'bonus' (homebrew MJ).
+// source 'bonus' = don homebrew attribué par le MJ.
 const schemaBody = z.object({
   featureId: z.number().int().positive(),
   source: z.enum(['asi', 'bonus']).default('bonus'),
   classLevel: z.number().int().min(1).max(20).nullable().optional(),
-  // Choix résolus du don (ex : caractéristique +1). Optionnel.
   choices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
 })
 
@@ -25,7 +23,6 @@ export default defineEventHandler(async (event) => {
 
   const { featureId, source, classLevel, choices } = result.data
 
-  // Vérifie que la feature existe ET est bien un don.
   const [feat] = await db
     .select({ id: schema.features.id })
     .from(schema.features)
@@ -34,8 +31,6 @@ export default defineEventHandler(async (event) => {
 
   if (!feat) throw createError({ statusCode: 404, statusMessage: 'Don introuvable' })
 
-  // upsert : permet aussi de mettre à jour les choix d'un don déjà possédé
-  // (ex : changer la caractéristique +1 d'Observateur).
   await db
     .insert(srcSchema.characterFeatures)
     .values({

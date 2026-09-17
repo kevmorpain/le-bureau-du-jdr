@@ -83,8 +83,7 @@ const {
   resetBuilder,
 } = useCharacterBuilder()
 
-// Toggle « contenu étendu » (gating source) — drapeau global persistant, surfacé ici pour
-// débloquer le contenu d'extension pendant la création (ex. one-shot Tasha).
+// Toggle « contenu étendu » surfacé ici pour débloquer le contenu d'extension pendant la création.
 const { extended } = useExtendedContent()
 
 const showResetConfirm = ref(false)

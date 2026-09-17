@@ -1,23 +1,8 @@
 import { CreatureSize } from '../../schema/character_species'
 
-/**
- * Elfe 2014 restructuré en **base + lignées** (chantier lignée, D17). Remplace à terme les
- * trois espèces séparées `highElf`/`woodElf`/`drow` de `character_species.ts` : la base porte
- * les traits communs aux trois, chaque lignée porte SES traits propres (dont le +1 de carac.,
- * la vitesse, la vision et les armes — qui DIFFÈRENT d'une lignée à l'autre, d'où leur place
- * sur la lignée et non sur la base : l'équivalence est alors une union `base ⊕ lignée`, sans
- * effet qui en écrase un autre).
- *
- * ⚠️ Effets **copiés à l'identique** des anciennes données (`highElf`/`woodElf`/`drow`) — c'est
- * ce qui garantit que le test d'équivalence (D12) tient : un perso « Elfe base + lignée X »
- * dérive exactement les mêmes effets que l'ancienne espèce X.
- *
- * SEED SEUL, ruleset `'5'` (2014). Additif : les anciennes espèces ne sont PAS supprimées ici
- * (migration des fiches = lot suivant). Les traits « sans effet » (Transe, Cachette naturelle,
- * Sensibilité au soleil) restent descriptifs, comme en 2014.
- */
+// ⚠️ Effets copiés à l'identique des anciennes espèces `highElf`/`woodElf`/`drow` : c'est ce qui fait
+// tenir le test d'équivalence (D12). Additif : les anciennes espèces ne sont pas supprimées.
 
-// ─── Traits COMMUNS aux trois lignées (base) ─────────────────────────────────────────────
 const baseTraits = [
   {
     name: 'Augmentation de caractéristiques',
@@ -54,7 +39,6 @@ const baseTraits = [
   },
 ]
 
-// ─── Traits PROPRES à chaque lignée ──────────────────────────────────────────────────────
 const highElfLineage = {
   name: 'Haut-elfe',
   description: `Raffinés et lettrés, les hauts-elfes ont l'esprit vif et maîtrisent les rudiments de la magie.`,
@@ -135,9 +119,7 @@ const woodElfLineage = {
 }
 
 const drowLineage = {
-  // Nom propre (2024) ; l'ancienne espèce séparée 2014 s'appelait « Elfe noir » (character_species.ts,
-  // intacte). Le renommage de la ligne déjà seedée en prod passe par la migration 0086 ; le matching
-  // ancien-nom → lignée pour la migration des fiches a été géré par un alias au rollout lot 6.
+  // L'ancienne espèce 2014 s'appelait « Elfe noir » ; la migration 0086 renomme la ligne déjà seedée.
   name: 'Drow',
   description: `Nés dans les Outreterre, les drows portent la magie des profondeurs et une vision perçante dans les ténèbres.`,
   traits: [
@@ -182,12 +164,6 @@ const drowLineage = {
   ],
 }
 
-/**
- * Elfe 2014 (ruleset `'5'`) = base + le point de choix « Lignage elfique » (une `progression`
- * `kind:'lineage'`) + les 3 lignées. Le seed (lot suivant) posera la base species, ses
- * `species_features`, la feature de choix portant la progression, et chaque lignée comme
- * `species_lineages` avec ses `lineage_feature`.
- */
 export const elf = {
   name: 'Elfe',
   ruleset: '5' as const,

@@ -6,12 +6,7 @@ import type { Source } from '~~/shared/rules/source'
 const backgrounds = sqliteTable('backgrounds', {
   id: integer().primaryKey().notNull(),
   name: text().notNull(),
-  // Édition de règles (cf. shared/rules/ruleset.ts, decisions.md D2). En 5.5
-  // l'historique porte les bonus de carac. + un don d'origine ; distinct de son
-  // homonyme 2014.
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
-  // Provenance / gating de visibilité (cf. shared/rules/source.ts). DEFAULT 'core' = socle
-  // toujours visible ; un historique d'extension serait gaté.
   source: text('source').$type<Source>().notNull().default('core'),
   description: text().default('').notNull(),
   skillProficiencies: text('skill_proficiencies', { mode: 'json' }).$type<string[]>().default([]).notNull(),
@@ -23,8 +18,7 @@ const backgrounds = sqliteTable('backgrounds', {
   characterSheetId: integer('character_sheet_id'),
 })
 
-// Les relations sont déclarées ici mais la FK n'est pas contrainte au niveau DB
-// pour éviter la référence circulaire avec character_sheets
+// FK non contrainte côté DB : elle créerait une référence circulaire avec character_sheets.
 export const backgroundRelations = relations(backgrounds, () => ({}))
 
 export default backgrounds

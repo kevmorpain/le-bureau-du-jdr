@@ -9,12 +9,8 @@ import { CreatureSize } from '../../server/db/schema/character_species'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices } from '../../shared/rules/resolve'
 
-// Lot 2 du chantier lignée (D17). Ferme la boucle seed↔migration↔loader↔resolve pour un point
-// de choix possédé par une ESPÈCE : une feature `species_trait` « Lignage elfique » liée à
-// l'Elfe via `species_features`, portant une `progression` `kind:'lineage'` /
-// `optionSource:{type:'lineages'}`. On vérifie que `buildCatalog` résout l'espèce propriétaire
-// (via species_features), énumère les lignées de cette espèce, et que `resolveChoices` offre le
-// choix à un perso de cette espèce.
+// Point de choix possédé par une ESPÈCE : `buildCatalog` doit résoudre l'espèce propriétaire via
+// `species_features` et n'énumérer que SES lignées.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

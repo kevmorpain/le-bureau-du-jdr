@@ -13,7 +13,6 @@
 
     <template #body>
       <div class="space-y-6">
-        <!-- Sélection de l'historique -->
         <UFormField label="Historique">
           <USelect
             v-model="selectedId"
@@ -24,7 +23,6 @@
           />
         </UFormField>
 
-        <!-- Formulaire custom -->
         <template v-if="isCustom">
           <div class="space-y-4 border border-dashed rounded-lg p-4">
             <p class="text-xs text-muted font-medium uppercase tracking-wide">
@@ -79,7 +77,6 @@
           </div>
         </template>
 
-        <!-- Aperçu du background sélectionné -->
         <template v-else-if="previewBackground">
           <div class="space-y-3 bg-elevated rounded-lg p-4">
             <div class="flex flex-wrap gap-1.5">
@@ -172,8 +169,6 @@ const backgroundItems = computed(() => [
   { label: '+ Créer un historique personnalisé', value: CUSTOM_VALUE },
 ])
 
-// ─── Custom form ───────────────────────────────────────────────────────────────
-
 const customForm = reactive({
   name: '',
   description: '',
@@ -195,8 +190,6 @@ const toggleSkill = (key: string) => {
   if (idx === -1) customForm.skillProficiencies.push(key)
   else customForm.skillProficiencies.splice(idx, 1)
 }
-
-// ─── Skill labels ──────────────────────────────────────────────────────────────
 
 const allSkillKeys = [
   { key: 'athletics', label: t('skills.str.athletics') },
@@ -221,8 +214,6 @@ const allSkillKeys = [
 
 const getSkillLabel = (key: string): string =>
   allSkillKeys.find(s => s.key === key)?.label ?? key
-
-// ─── Submit ────────────────────────────────────────────────────────────────────
 
 const handleSubmit = async () => {
   saving.value = true

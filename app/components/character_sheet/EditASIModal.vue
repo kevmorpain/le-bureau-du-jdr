@@ -159,7 +159,6 @@ const initSlots = () => {
     if (rows.length === 2 && rows.every(r => r.amount === 1)) {
       return { classLevel, mode: '+1/+1', first: rows[0]!.ability, second: rows[1]!.ability }
     }
-    // Fallback (donnée incohérente) : reset
     return { classLevel, mode: 'none', first: null, second: null }
   })
 }
@@ -192,7 +191,6 @@ const setSecond = (classLevel: number, ability: AbilityScoreKey) => {
 const save = async () => {
   saving.value = true
   try {
-    // Rebuild full ASI array: garde toutes les autres classes intactes, remplace celles de cette classe
     const otherClasses = props.allImprovements.filter(a => a.classId !== props.classId)
     const thisClass: ASIRow[] = []
     for (const s of slots.value) {

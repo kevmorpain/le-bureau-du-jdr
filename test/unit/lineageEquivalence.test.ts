@@ -6,11 +6,8 @@ import { tiefling } from '../../server/db/seeds/data/tiefling'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
 import type { LineageSpeciesData } from '../../server/db/seeds/lib/seedLineages'
 
-// Chantier lignée (D17), rollout lot 6 — ÉQUIVALENCE AU NIVEAU DONNÉE (D12), généralisée au trio
-// Nain/Halfelin/Gnome (l'elfe a son propre `elfLineageEquivalence.test.ts`). Prouve, AVANT toute
-// logique de seed ou de dérivation, que « base + lignée » est fidèle : pour chaque lignée,
-// l'ENSEMBLE des effets (base ⊕ lignée) est exactement celui de l'ancienne espèce séparée. C'est le
-// filet qui garantit qu'un perso migré ne change pas de règles.
+// Équivalence au niveau DONNÉE pour le trio Nain/Halfelin/Gnome et le Tieffelin (l'elfe a son propre
+// test) : pour chaque lignée, base ⊕ lignée == l'ancienne espèce séparée.
 
 interface Trait { effects?: unknown[] }
 

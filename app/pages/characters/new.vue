@@ -9,7 +9,6 @@
     class="m-3"
   />
 
-  <!-- Écran de résumé final -->
   <BuilderSummary
     v-if="showSummary"
     :submitting="submitting"
@@ -17,7 +16,6 @@
     @submit="handleSubmit"
   />
 
-  <!-- Wizard en 6 étapes -->
   <BuilderShell v-else @finish="showSummary = true">
     <div v-if="currentStepId === 'race'">
       <StepRace />
@@ -68,7 +66,6 @@ const {
   asiLevelsForCharacter,
 } = useCharacterBuilder()
 
-// Résolveurs name → dbId (fetch unique des entités DB nécessaires)
 const {
   resolveClassId,
   resolveSubclassId,
@@ -113,16 +110,13 @@ async function handleSubmit() {
       ? null
       : (subraceData.value?.dbName ?? raceData.value?.dbName ?? null)
 
-    // Résolution du background
     const bgData = BACKGROUNDS.find(b => b.id === state.value.backgroundId)
     const isCustomBg = bgData?.id === 'custom'
 
-    // Compétences de background (custom ou prédéfini)
     const backgroundSkills = isCustomBg
       ? state.value.customBackgroundSkills
       : bgData?.skillProficiencies ?? []
 
-    // Extraire les pièces ("15 po", "5 pa"…) de l'équipement
     const CURRENCY_RE = /^(\d+)\s*(pp|po|pe|pa|pc)$/i
     const CURRENCY_FIELDS: Record<string, string> = { pp: 'pp', po: 'po', pe: 'pe', pa: 'pa', pc: 'pc' }
     const currency: Record<string, number> = {}
@@ -136,7 +130,7 @@ async function handleSubmit() {
       return true
     })
 
-    // ── Résolution name → dbId au moment du submit ─────────────────────────
+    // Résolution name → dbId au moment du submit
     const classId = resolveClassId(classData.value.dbName)
     if (!classId) {
       toast.add({
@@ -219,7 +213,6 @@ async function handleSubmit() {
       // vestigiaux (acceptés puis ignorés par createCharacter). Le schéma les garde optionnels.
       backgroundSkills: [
         ...backgroundSkills,
-        // Compétence bonus Humain variant
         ...(isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : []),
       ],
       selectedLanguages: [
@@ -236,9 +229,7 @@ async function handleSubmit() {
       metamagicIds: state.value.metamagicIds,
       inventoryItemIds,
       inventoryItemNamesUnresolved,
-      // Bonus ASI aplatis : { classLevel, ability, amount } prêt à insérer
-      // dans character_ability_score_improvements côté serveur. Ne sont envoyés
-      // que pour les paliers où le joueur a choisi 'asi' (pas 'feat').
+      // Seuls les paliers où le joueur a choisi 'asi' (pas 'feat') sont envoyés.
       asiBonuses: asiLevelsForCharacter.value
         .filter(lvl => state.value.asiChoice[lvl] === 'asi')
         .flatMap(lvl =>
@@ -250,8 +241,6 @@ async function handleSubmit() {
               amount: amount as number,
             })),
         ),
-      // Dons choisis par palier (asiChoice === 'feat'). featureId résolu via
-      // useFeats côté composant. Persistés dans character_features (source='asi').
       asiFeats: asiLevelsForCharacter.value
         .filter(lvl => state.value.asiChoice[lvl] === 'feat')
         .map(lvl => ({
@@ -260,13 +249,10 @@ async function handleSubmit() {
           choices: state.value.featChoices[state.value.asiFeats[lvl]] ?? null,
         }))
         .filter(f => f.featureId != null),
-      // Don bonus hors-palier (homebrew MJ). Persisté dans character_features
-      // avec source='bonus'.
       bonusFeatureId: state.value.bonusFeatureId,
       bonusFeatChoices: state.value.bonusFeatureId != null
         ? (state.value.featChoices[state.value.bonusFeatureId] ?? null)
         : null,
-      // Arcanums mystiques (Occultiste niv 11/13/15/17, cumulatifs) + Livre des secrets anciens
       arcaneMysteria: Object.entries(state.value.arcaneMysteriumSpellIds)
         .map(([spellLevel, spellId]) => ({ spellLevel: Number(spellLevel), spellId })),
       bookOfAncientSecretsSpellIds: state.value.bookOfAncientSecretsSpellIds,

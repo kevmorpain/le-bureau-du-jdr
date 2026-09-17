@@ -1,11 +1,9 @@
 <template>
-  <!-- Écran de résumé final -->
   <LevelUpSummary
     v-if="showSummary"
     @back="showSummary = false"
   />
 
-  <!-- Wizard par étapes -->
   <WizardShell
     v-else
     title="Montée de niveau"
@@ -22,7 +20,6 @@
     @prev="goPrev"
     @go-to="goTo"
   >
-    <!-- Subtitle : D&D badge + char name · classes -->
     <template #header-subtitle>
       <span class="text-xs text-amber-400">D&amp;D 5e 2014</span>
       <span v-if="charSheet" class="text-xs text-muted ml-3 truncate">
@@ -30,7 +27,6 @@
       </span>
     </template>
 
-    <!-- Step content -->
     <div v-if="status === 'pending'" class="flex items-center justify-center h-48 text-muted text-sm">
       Chargement du personnage…
     </div>
@@ -46,7 +42,6 @@
       <LevelUpStepSpells v-else-if="currentStepId === 'spells'" />
     </template>
 
-    <!-- Preview panel -->
     <template #preview>
       <LevelUpPreview v-if="charSheet" />
     </template>
@@ -70,7 +65,6 @@ const { data: charSheetData, status } = await useFetch<CharacterSheetWithASI>(
 
 const charSheet = computed(() => charSheetData.value ?? null)
 
-// Provide charSheet to all child components
 provide('charSheet', charSheet)
 
 const {

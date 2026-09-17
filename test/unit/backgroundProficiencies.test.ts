@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { isChoiceProficiency, fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
 
-// Volet B, étape 2 — critère FIXE vs AU CHOIX des maîtrises d'historique (source unique, partagée
-// entre le seed des porteurs dérivables et createCharacter). On verrouille le classement pour que
-// « dérivé == stocké ».
+// Critère FIXE vs AU CHOIX des maîtrises d'historique, partagé entre le seed des porteurs et
+// createCharacter : verrouillé pour que « dérivé == stocké ».
 
 describe('isChoiceProficiency', () => {
   it('classe les maîtrises FIXES (ni « choix » ni « × »)', () => {

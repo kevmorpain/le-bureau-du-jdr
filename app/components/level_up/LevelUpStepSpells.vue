@@ -10,7 +10,6 @@
 
     <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Magie</h2>
 
-    <!-- Bandeau stats de sorts -->
     <div v-if="spellCastStats.length" class="flex flex-wrap gap-2 mb-4">
       <div
         v-for="stat in spellCastStats"
@@ -22,7 +21,6 @@
       </div>
     </div>
 
-    <!-- Emplacements de sorts : avant → après -->
     <div class="mb-5">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Emplacements de sorts</p>
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -70,7 +68,6 @@
       </div>
     </div>
 
-    <!-- Info casters préparés -->
     <div
       v-if="isPreparedCaster && cantripsToLearn === 0 && spellsToLearn === 0"
       class="mb-5 px-3 py-2.5 rounded-xl border text-xs text-muted"
@@ -86,7 +83,6 @@
       </template>
     </div>
 
-    <!-- Arcane Mystérieux (niveaux 11/13/15/17) -->
     <div v-if="needsArcaneMysterium" class="mb-6">
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">
@@ -118,7 +114,6 @@
       </div>
     </div>
 
-    <!-- Livre des anciens secrets (manifestation TCoE Tome) -->
     <div v-if="showBookOfAncientSecrets" class="mb-6">
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">
@@ -150,7 +145,6 @@
       </div>
     </div>
 
-    <!-- Sorts du Pacte de la Chaîne -->
     <div v-if="state.pactBoon === 'chain'" class="mb-6">
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
@@ -170,7 +164,6 @@
       </div>
     </div>
 
-    <!-- Sorts du Pacte du Tome -->
     <div v-if="state.pactBoon === 'tome'" class="mb-6">
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte du Tome</p>
@@ -201,7 +194,6 @@
       <p v-if="!pactCantripsPending && filteredPactCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
     </div>
 
-    <!-- Filtres partagés (cantrips + sorts) -->
     <div v-if="cantripsToLearn > 0 || spellsToLearn > 0" class="flex flex-wrap items-center gap-2 mb-4">
       <input
         v-model="filterText"
@@ -232,7 +224,6 @@
       </button>
     </div>
 
-    <!-- Sorts mineurs -->
     <div v-if="cantripsToLearn > 0" class="mb-6">
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts mineurs</p>
@@ -262,7 +253,6 @@
       <p v-if="!pending && filteredCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
     </div>
 
-    <!-- Sorts connus / grimoire -->
     <div v-if="spellsToLearn > 0" class="mb-5">
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">{{ spellsTabLabel }}</p>
@@ -310,7 +300,6 @@
       </template>
     </div>
 
-    <!-- Rien à faire -->
     <div
       v-if="cantripsToLearn === 0 && spellsToLearn === 0 && !isPreparedCaster"
       class="px-4 py-4 rounded-xl border text-sm text-muted"
@@ -344,7 +333,6 @@ const {
 
 const { t } = useI18n()
 
-// Share spell names with LevelUpSummary
 const spellNamesById = useState<Record<number, string>>('level-up-spell-names', () => ({}))
 
 const filterText = ref('')
@@ -425,7 +413,6 @@ const spellsToLearn = computed(() => {
   return 0
 })
 
-// Gating `source` : inclure le contenu d'extension quand le drapeau global est actif.
 const { extendedQuery } = useExtendedContent()
 
 const { data: allSpells, pending } = useFetch('/api/spells', {
@@ -433,7 +420,6 @@ const { data: allSpells, pending } = useFetch('/api/spells', {
   immediate: true,
 })
 
-// Sorts du Pacte du Tome — tous les cantrips toutes classes
 const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
   query: extendedQuery,
   immediate: true,
@@ -449,7 +435,6 @@ const filteredPactCantrips = computed(() =>
     : pactCantrips.value,
 )
 
-// Sort Appel de familier (pour affichage Pacte de la Chaîne)
 const { data: magicianSpells } = useFetch('/api/spells', {
   query: computed(() => ({ className: 'Magicien', ...extendedQuery.value })),
   immediate: true,
@@ -459,7 +444,7 @@ const familiarSpell = computed(() =>
   ((magicianSpells.value ?? []) as any[]).find((s: any) => s.name === 'Appel de familier') ?? null,
 )
 
-// ─── Arcane Mystérieux : sorts du niveau correspondant pour Occultiste ──────
+// Arcane Mystérieux : sorts du niveau correspondant pour Occultiste
 
 const arcanumSpellsCandidates = computed(() => {
   const lvl = arcaneMysteriumSpellLevel.value
@@ -476,16 +461,13 @@ function toggleArcanumSpell(id: number) {
   }
 }
 
-// ─── Livre des anciens secrets : sorts rituels de niveau 1 toutes classes ──
+// Livre des anciens secrets : sorts rituels de niveau 1 toutes classes
 
 const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('/api/spells', {
   query: extendedQuery,
   immediate: true,
 })
 
-// Map des invocations pour détecter si « Livre des anciens secrets » est dans
-// les invocations nouvellement choisies (ou déjà connue, on n'affiche alors
-// l'éditeur que si pas encore 2 sorts associés — sinon rien à choisir).
 const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
   query: extendedQuery,
   default: () => [],
@@ -500,8 +482,6 @@ const showBookOfAncientSecrets = computed(() =>
   picksBookOfAncientSecrets(invocationsByName.value),
 )
 
-// Synchronise le flag de validation : tant que la manifestation est sélectionnée
-// dans cette montée de niveau, le step Magie exige 2 sorts rituels.
 watchEffect(() => {
   state.value.bookOfAncientSecretsRequired = showBookOfAncientSecrets.value
 })
@@ -518,7 +498,6 @@ function toggleRitualSpell(id: number) {
   else if (list.length < 2) list.push(id)
 }
 
-// Populate spell names map for the summary screen
 watch(allSpells, (spells) => {
   if (!spells) return
   const map: Record<number, string> = { ...spellNamesById.value }

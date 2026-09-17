@@ -10,10 +10,8 @@ import { CreatureSize } from '../../server/db/schema/character_species'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { loadSpeciesLineages } from '../../server/utils/catalogSources'
 
-// Lot 5b (chantier lignée, D17) — le loader `loadSpeciesLineages` expose la matière seedée
-// (species_features + lineage_features + effets) sous la forme d'affichage du picker : bonus de
-// carac. COMBINÉS base ⊕ lignée, vitesse effective, vision, traits propres (hors carac./vitesse).
-// On seede l'Elfe et on vérifie l'équivalence avec les valeurs qu'avait le blob RaceData hardcodé.
+// Le loader expose la matière seedée sous la forme d'affichage du picker (bonus de carac. COMBINÉS
+// base ⊕ lignée, vitesse effective, vision, traits propres), équivalente aux valeurs du blob RaceData.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

@@ -7,12 +7,10 @@ import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { deriveWeaponMasteries } from '../../server/utils/weaponMasteryDerivation'
 
-// ─────────────────────────────────────────────────────────────────────────────
 // C4 — dérivation des maîtrises d'armes. La fiche liste les armes choisies aux points de choix
 // `weapon_mastery` (une ligne character_choices.selected_value par arme). No-op ([]) sans pick,
 // ignore les autres kinds. FK OFF APRÈS migrations (patron abilityScoreDerivation) : test de
 // logique de jointure, pas d'intégrité référentielle.
-// ─────────────────────────────────────────────────────────────────────────────
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

@@ -7,11 +7,8 @@ import { drizzle } from 'drizzle-orm/libsql'
 import { eq } from 'drizzle-orm'
 import * as srcSchema from '../../server/db/schema'
 
-// Volet B, étape 3 — LOGIQUE de la migration de strip `0092_strip_base_proficiency_grants`.
-// On rejoue les migrations sur libsql (0092 tourne à vide → no-op, prouve la validité SQL), on
-// coupe les FK, on bâtit un scénario (base classe/historique + tokens EN legacy + manuels FR +
-// choisis + revoke + fiche sans porteur), on RÉ-EXÉCUTE le DELETE de 0092, puis on vérifie que
-// seuls les grants de BASE (dérivables) et les tokens EN morts partent, les vrais deltas restant.
+// Logique de la migration de strip 0092 : sur un scénario complet, seuls les grants de BASE
+// (dérivables du porteur) et les tokens EN morts doivent partir — les vrais deltas du joueur restent.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href

@@ -9,16 +9,9 @@ import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 import { subclassChoiceFeature } from '../../server/db/seeds/data/subclassChoice'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mécanisme du point de choix de SOUS-CLASSE (F2). Ferme la boucle données→catalogue→résolution
-// pour la progression `kind:'subclass'` — jamais exercée jusqu'ici (seuls pacte/invocations/arcanum
-// et lignée l'étaient). On seede une classe + 2 sous-classes + la feature owner portant EXACTEMENT
-// la progression produite par `subclassChoiceFeature` (source du seed), puis on vérifie que
-// `buildCatalog` en tire un point de choix `subclass` dont `optionSource:{subclasses}` se résout aux
-// 2 sous-classes, et que `resolveChoices`/`dueChoices` le rendent DÛ au niveau d'accès — mais pas avant.
-//
-// Env `nuxt` (comme buildCatalog.test) : le loader importe `~~/server/db/schema`.
-// ─────────────────────────────────────────────────────────────────────────────
+// Point de choix de SOUS-CLASSE : `buildCatalog` doit résoudre `optionSource:{subclasses}` aux
+// sous-classes de la classe, et `resolveChoices`/`dueChoices` rendre le choix DÛ au niveau d'accès,
+// pas avant.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
