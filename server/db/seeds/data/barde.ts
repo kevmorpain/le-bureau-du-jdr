@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { expertiseProgression } from './expertise'
 
 export const bardeName = 'Barde'
 
@@ -67,6 +68,8 @@ Au niveau 10, vous pouvez choisir deux autres maîtrises de compétence à amél
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    // Owner du point de choix d'expertise (F2) : 2 compétences au niv 3, 2 de plus au niv 10.
+    progression: expertiseProgression('Barde'),
   },
   {
     name: 'Source d\'inspiration',
