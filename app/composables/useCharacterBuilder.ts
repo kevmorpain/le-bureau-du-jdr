@@ -363,22 +363,13 @@ export function useCharacterBuilder() {
       }
     }
 
-    if (race.id === 'half-elf') {
-      for (const ab of state.value.halfElfBonuses) {
-        addBonus(ab as AbilityKey, 1)
-      }
-    }
     if (race.id === 'human' && state.value.isVariantHuman) {
       // Variante humaine : on retire les +1 universels avant d'appliquer les +1+1 au choix.
       for (const k of ABILITIES) bonuses[k] = 0
-      for (const ab of state.value.variantHumanBonuses) {
-        addBonus(ab as AbilityKey, 1)
-      }
     }
-    if (race.id === 'fairy') {
-      for (const [k, v] of Object.entries(state.value.fairyAsiBonuses) as [AbilityKey, number][]) {
-        addBonus(k, v)
-      }
+
+    for (const [k, v] of Object.entries(chosenRaceAbilityBonuses(state.value)) as [AbilityKey, number][]) {
+      addBonus(k, v)
     }
 
     return bonuses

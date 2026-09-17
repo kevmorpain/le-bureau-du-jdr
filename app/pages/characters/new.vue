@@ -194,16 +194,9 @@ async function handleSubmit() {
         const scores: Record<string, number> = Object.fromEntries(
           Object.entries(state.value.abilities).filter(([, v]) => v != null),
         ) as Record<string, number>
-        // Half-Elf : ajouter les +1/+1 choisis (le +2 CHA vient des effets d'espèce)
-        if (state.value.raceId === 'half-elf') {
-          for (const ab of state.value.halfElfBonuses)
-            scores[ab] = (scores[ab] ?? 0) + 1
-        }
-        // Humain variant : ajouter les +1/+1 choisis (pas de lien espèce → pas de double cumul)
-        if (isVariantHuman) {
-          for (const ab of state.value.variantHumanBonuses)
-            scores[ab] = (scores[ab] ?? 0) + 1
-        }
+        // Les bonus d'espèce FIXES viennent des effets : les ajouter ici les compterait deux fois.
+        for (const [ab, amount] of Object.entries(chosenRaceAbilityBonuses(state.value)))
+          scores[ab] = (scores[ab] ?? 0) + (amount ?? 0)
         return scores
       })(),
       classSkills: state.value.skills,

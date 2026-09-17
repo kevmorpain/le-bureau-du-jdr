@@ -113,6 +113,34 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   (libellés ⟺ enum, toutes les espèces seedées portent un code connu, `'P'` n'est plus un code).
 - Découvert : câblage du lot 2 « données en DB mais invisibles » (2026-09-07). **✅ RÉSOLU.**
 
+### B8 — Bonus d'espèce AU CHOIX perdus à la création (Fadette) · front (payload) — ✅ RÉSOLU
+- **Symptôme** : créer une Fadette, répartir ses bonus flexibles (+2/+1 ou +1/+1/+1) — le builder
+  les affiche jusqu'au récapitulatif, la fiche créée porte les scores **sans** ces bonus.
+- **Racine** : `app/pages/characters/new.vue` ne pliait dans `abilityScores` que les choix
+  **Demi-elfe** et **Humain variant** ; `state.fairyAsiBonuses` ne quittait jamais le client. La
+  Fadette n'a — volontairement — aucun effet `ability_increase` fixe
+  (`server/db/seeds/data/character_species.ts`, trait « Augmentation de caractéristiques ») : rien
+  côté serveur ne pouvait re-dériver le bonus. L'**affiché** (`raceBonuses` de
+  `useCharacterBuilder`) et l'**enregistré** (payload) étaient deux listes de cas particuliers
+  distinctes — ajouter une espèce à bonus au choix n'en touchait qu'une.
+- **Correctif** : source unique `app/utils/raceAbilityBonuses.ts` (`chosenRaceAbilityBonuses`),
+  consommée par `raceBonuses` **et** par le payload de création. Test :
+  `test/unit/raceAbilityBonuses.test.ts`.
+- **Portée** : correctif pour les créations **suivantes** ; les fiches déjà créées gardent leurs
+  scores erronés (à corriger via l'édition des caractéristiques sur la fiche).
+- **Dette assumée** : le modèle propre — point de choix composite `ability_scores` +
+  `character_choices` — existe **côté serveur** (`server/utils/abilityScoreDerivation.ts`,
+  validation V7 de `server/utils/characterCreate.ts`) mais reste non câblé au front
+  (`originAbilityBonuses` est renvoyé par le GET fiche sans aucun consommateur dans `app/`, et
+  aucune progression `ability_scores` n'est seedée). Le brancher n'est **pas** un chantier isolé :
+  c'est un wagon de l'un des deux lots qui produiront la même brique — **F2 · ASI/expertise**
+  ([`consolidation-2014.md`](./consolidation-2014.md), « options front à repointer sur le même
+  patron ») ou le **lot historiques 5.5** ([`dnd-5.5.md`](./dnd-5.5.md) : « Historiques → triade
+  (`progression` `kind:'ability_scores'`) »), qui devra de toute façon seeder ce `kind`, rendre un
+  sélecteur de répartition et afficher le bonus dérivé sur la fiche. D'ici là, le pliage dans les
+  scores stockés reste le patron 2014 des autres bonus au choix.
+- Découvert : signalé par l'utilisateur (2026-09-16). **✅ RÉSOLU.**
+
 ## Suspects à vérifier (audit non encore fait)
 - Level-up en **multiclasse** (flux de choix, résolution d'IDs de classe).
 - Invocations **échangeables** (`replaceable`) au level-up.
