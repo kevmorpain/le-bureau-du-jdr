@@ -5,6 +5,7 @@ import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
+import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
@@ -41,6 +42,7 @@ export const createCharacterSchema = z.object({
   classId: z.number().int().positive(),
   subclassId: z.number().int().positive().nullable().optional(),
   fightingStyle: z.string().nullable().optional(),
+  expertiseSkills: z.array(z.string()).optional().default([]),
   level: z.number().int().min(1).max(20),
   speciesId: z.number().int().positive().nullable().optional(),
   selectedLineageId: z.number().int().positive().nullable().optional(),
@@ -224,7 +226,8 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
 
   const invocationIds = d.invocationIds ?? []
   const metamagicIds = d.metamagicIds ?? []
-  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0
+  const expertiseSkills = d.expertiseSkills ?? []
+  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0
   if (!needsCatalog) return
 
   const catalog = await buildCatalog(db, { classIds: [classId] })
@@ -264,6 +267,14 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
       && c.optionSource.maxLevel === arc.spellLevel
       && c.options.some(o => o.spellId === arc.spellId))
     if (!legal) throw new CharacterValidationError(`Le sort d'arcanum mystique de niveau ${arc.spellLevel} (id=${arc.spellId}) n'est pas un choix légal au niveau ${d.level}.`)
+  }
+
+  // Expertise : on borne au total dû au niveau (`count` cumulatif). L'appartenance des compétences
+  // reste front-autoritaire — le set maîtrisé (dont les octrois d'espèce) n'est pas connu ici.
+  if (expertiseSkills.length > 0) {
+    const expChoice = choices.find(c => c.kind === 'expertise')
+    if (!expChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir d'expertise au niveau ${d.level}.`)
+    if (expertiseSkills.length > expChoice.count) throw new CharacterValidationError(`Trop de compétences d'expertise (${expertiseSkills.length} pour un maximum de ${expChoice.count}).`)
   }
 }
 
@@ -417,6 +428,10 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
 
   const fightingStylePick = d.fightingStyle
     ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, d.level)
+    : null
+
+  const expertiseProgressionId = d.expertiseSkills?.length
+    ? await resolveExpertiseProgressionId(db, cls.id)
     : null
 
   // 4. Insert de la fiche (HORS batch — id auto-incrément)
@@ -630,6 +645,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   ]
   if (skillRows.length) {
     stmts.push(db.insert(schema.characterSkills).values(skillRows))
+  }
+
+  // Expertise : doubler N compétences (character_skills 'expert') + tracer la décision. Après
+  // skillRows : l'upsert élève une compétence de classe insérée juste au-dessus de 'proficient' à 'expert'.
+  if (d.expertiseSkills?.length) {
+    stmts.push(...expertiseWriteStmts(db, sheetId, expertiseProgressionId, d.expertiseSkills))
   }
 
   // Seuls les outils/langues choisis sont stockés ; les maîtrises de base sont dérivées par la fiche.

@@ -6,6 +6,7 @@ import { isPassiveGrant } from '~~/server/utils/features'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { applyMetamagicChanges } from '~~/server/utils/metamagic'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
+import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
@@ -193,6 +194,10 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, newLevel)
     : null
 
+  const expertiseProgressionId = d.expertiseSkills?.length
+    ? await resolveExpertiseProgressionId(db, cls.id)
+    : null
+
   const newClassesList = currentClasses
     .filter(c => c.classId !== cls.id)
     .map(c => ({ classId: c.classId, level: c.level }))
@@ -367,14 +372,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   }
 
   if (d.expertiseSkills?.length) {
-    for (const skillKey of d.expertiseSkills) {
-      stmts.push(db.insert(schema.characterSkills)
-        .values({ characterSheetId, skillKey, proficiencyLevel: 'expert' as const, source: 'class' as const, isOverride: false })
-        .onConflictDoUpdate({
-          target: [schema.characterSkills.characterSheetId, schema.characterSkills.skillKey, schema.characterSkills.source],
-          set: { proficiencyLevel: sql`'expert'` },
-        }))
-    }
+    stmts.push(...expertiseWriteStmts(db, characterSheetId, expertiseProgressionId, d.expertiseSkills))
   }
 
   // Emplacements de sorts : supprimer les anciens pact_magic périmés, upsert les nouveaux
