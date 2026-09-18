@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { expertiseProgression } from './expertise'
 
 export const roublardName = 'Roublard'
 
@@ -14,6 +15,7 @@ Au niveau 6, vous pouvez choisir deux autres compétences maîtrisées pour bén
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    progression: expertiseProgression('Roublard'),
   },
   {
     name: 'Attaque sournoise',
