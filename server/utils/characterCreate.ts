@@ -269,8 +269,8 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (!legal) throw new CharacterValidationError(`Le sort d'arcanum mystique de niveau ${arc.spellLevel} (id=${arc.spellId}) n'est pas un choix légal au niveau ${d.level}.`)
   }
 
-  // Expertise : on borne au total dû au niveau (`count` cumulatif). L'appartenance des compétences
-  // reste front-autoritaire — le set maîtrisé (dont les octrois d'espèce) n'est pas connu ici.
+  // L'appartenance des compétences reste front-autoritaire : le set maîtrisé (octrois d'espèce
+  // inclus) n'est pas connu ici. On ne borne donc qu'au total cumulatif dû.
   if (expertiseSkills.length > 0) {
     const expChoice = choices.find(c => c.kind === 'expertise')
     if (!expChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir d'expertise au niveau ${d.level}.`)
@@ -647,8 +647,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     stmts.push(db.insert(schema.characterSkills).values(skillRows))
   }
 
-  // Expertise : doubler N compétences (character_skills 'expert') + tracer la décision. Après
-  // skillRows : l'upsert élève une compétence de classe insérée juste au-dessus de 'proficient' à 'expert'.
+  // Après skillRows dans le batch : l'upsert 'expert' élève la compétence de classe insérée juste
+  // avant en 'proficient' (dépendance d'ordre).
   if (d.expertiseSkills?.length) {
     stmts.push(...expertiseWriteStmts(db, sheetId, expertiseProgressionId, d.expertiseSkills))
   }

@@ -5,10 +5,6 @@ import { createCharacter, createCharacterSchema, CharacterValidationError } from
 import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLevelUp'
 import { bootstrapGoldenDb, OWNER, CLASS, SPECIES, FEATURE } from './fixtures/goldenMaster'
 
-// Expertise — autorité serveur (F2 tranche 2). Prouve que la création CAPTURE l'expertise (le trou
-// comblé) et que le level-up écrit character_choices, tous deux via la même machinerie que les
-// invocations : character_choices (source de décision) + character_skills 'expert'.
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
 
@@ -46,12 +42,12 @@ const materializedFeatureIds = async (sheetId: number): Promise<number[]> => {
   return rows.map((r: { featureId: number }) => r.featureId)
 }
 
-describe('expertise — autorité serveur (F2 tranche 2)', () => {
+describe('expertise — autorité serveur', () => {
   it('création Roublard niv 1 : 2 expertises → character_choices + compétences \'expert\' + feature « Expertise » matérialisée', async () => {
     const { id } = await createRogue(1, { expertiseSkills: ['stealth', 'perception'] })
 
     expect(await expertiseChoices(id)).toEqual(['perception', 'stealth'])
-    // Les 2 compétences de classe insérées 'proficient' sont ÉLEVÉES à 'expert' (pas de doublon).
+    // compétences de classe ÉLEVÉES 'proficient'→'expert' (pas de ligne en double)
     expect(await expertSkills(id)).toEqual(['perception', 'stealth'])
     // L'owner « Expertise » (class_feature visible) est matérialisé par le sweep passif.
     expect(await materializedFeatureIds(id)).toContain(FEATURE.rogueExpertise)

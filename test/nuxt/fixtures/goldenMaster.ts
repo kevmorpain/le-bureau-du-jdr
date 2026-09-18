@@ -46,7 +46,7 @@ export const FEATURE = {
   // Roublard
   rogueSneakAttack: 220, // passif niv 1
   rogueCunningAction: 221, // passif niv 2
-  rogueExpertise: 222, // owner « Expertise » (F2), niv 1 — class_feature VISIBLE (pick = compétence 'expert')
+  rogueExpertise: 222, // owner « Expertise » niv 1 — class_feature VISIBLE (le pick est une compétence 'expert')
   thiefFastHands: 230, // sous-classe Voleur, niv 3
   // Owners de choix de SOUS-CLASSE (F2) — feature_type `choice_carrier` (invisible), porte la
   // progression `kind:'subclass'` au niveau d'accès de la classe.
@@ -169,7 +169,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { id: FEATURE.championImprovedCrit, name: 'Critique amélioré', featureType: 'subclass_feature', subclassId: SUBCLASS.champion, levelRequired: 3 },
   ])
 
-  // Roublard : passifs de palier + owner d'expertise (F2) + feature de sous-classe
+  // Roublard : passifs de palier + owner d'expertise + feature de sous-classe
   await db.insert(schema.features).values([
     { id: FEATURE.rogueSneakAttack, name: 'Attaque sournoise', featureType: 'class_feature', classId: CLASS.rogue, levelRequired: 1 },
     { id: FEATURE.rogueCunningAction, name: 'Ruse', featureType: 'class_feature', classId: CLASS.rogue, levelRequired: 2 },

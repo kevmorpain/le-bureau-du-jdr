@@ -5,7 +5,6 @@ import * as schema from '~~/server/db/schema'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-// Progression `kind:'expertise'` possédée par la classe (une par classe qui a l'expertise), null sinon.
 export async function resolveExpertiseProgressionId(db: Db, classId: number): Promise<number | null> {
   const [prog] = await db
     .select({ id: schema.progression.id })
@@ -16,10 +15,9 @@ export async function resolveExpertiseProgressionId(db: Db, classId: number): Pr
   return prog?.id ?? null
 }
 
-// Statements pour matérialiser des picks d'expertise : la compétence doublée (character_skills
-// 'expert', upsert qui ÉLÈVE une maîtrise existante sans la rétrograder) + la source de la décision
-// (character_choices). Le character_choices n'est écrit QUE si la progression existe : entre le
-// déploiement et le re-seed prod des progressions Roublard/Barde, la compétence reste doublée.
+// L'upsert ÉLÈVE une maîtrise existante à 'expert' sans jamais la rétrograder. character_choices
+// n'est écrit QUE si la progression existe : entre le déploiement et le re-seed prod des
+// progressions Roublard/Barde, la compétence reste doublée, sans sa source de décision.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function expertiseWriteStmts(db: Db, characterSheetId: number, progressionId: number | null, skillKeys: string[]): any[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
