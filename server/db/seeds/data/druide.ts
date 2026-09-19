@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { asiFeatures } from './asi'
 
 export const druideName = 'Druide'
 
@@ -46,16 +47,7 @@ En forme de bête : vos statistiques sont remplacées par celles de la bête (ma
     maxUsesFormula: null,
     effects: [],
   },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 12, 16 et 19), vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Maximum 20.`,
-    featureType: 'class_feature',
-    levelRequired: 4,
-    actionType: null,
-    rechargeType: null,
-    maxUsesFormula: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
+  ...asiFeatures('Druide'),
   {
     name: 'Jeunesse éternelle',
     description: `À partir du niveau 18, la magie primordiale que vous canalisez vous fait vieillir plus lentement. Pour chaque 10 ans qui s'écoulent, votre corps n'en vieillit que d'un. De plus, vous ne pouvez pas être vieilli par magie.`,

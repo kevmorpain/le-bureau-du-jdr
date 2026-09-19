@@ -1,5 +1,6 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
+import { asiFeatures } from './asi'
 
 export const guerrierName = 'Guerrier'
 
@@ -43,16 +44,7 @@ export const guerrierFeatures: FeatureDef[] = [
     maxUsesFormula: null,
     effects: [],
   },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 6, 8, 12, 14, 16 et 19), vous pouvez augmenter une valeur de caractéristique de 2, ou deux de 1. Maximum 20.`,
-    featureType: 'class_feature',
-    levelRequired: 4,
-    actionType: null,
-    rechargeType: null,
-    maxUsesFormula: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
+  ...asiFeatures('Guerrier'),
   {
     name: 'Attaque supplémentaire',
     description: `À partir du niveau 5, vous pouvez attaquer deux fois lorsque vous choisissez l'action Attaquer. Ce nombre passe à trois au niveau 11 et à quatre au niveau 20.`,

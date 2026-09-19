@@ -2,6 +2,7 @@ import { fixed, lookup, variable, add, mul, max } from '~~/shared/utils/formula'
 import type { SubclassDef } from '../lib/seedClass'
 import type { Effect } from '../../schema/effects'
 import { INVOCATIONS_KNOWN, warlockPactBoonFeatures } from './warlock_progression'
+import { asiFeatures } from './asi'
 
 // Pact Magic slot tables (PHB 5e)
 // Index = class_level - 1 (levels 1–20)
@@ -51,26 +52,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     rechargeType: null,
     effects: [],
   },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 12, 16 et 19), vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
-    featureType: 'class_feature' as const,
-    levelRequired: 4,
-    maxUsesFormula: null,
-    actionType: null,
-    rechargeType: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Quand vous atteignez le niveau 8 (et à nouveau aux niveaux 12, 16 et 19), vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
-    featureType: 'class_feature' as const,
-    levelRequired: 8,
-    maxUsesFormula: null,
-    actionType: null,
-    rechargeType: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
+  ...asiFeatures('Occultiste'),
   {
     name: 'Arcanum mystique (niveau 6)',
     description: `À partir du niveau 11, votre patron vous octroie un secret magique appelé arcanum mystique. Choisissez un sort de niveau 6 de la liste de sorts d'occultiste. Vous pouvez lancer ce sort une fois sans dépenser d'emplacement de sort. Vous devez terminer un repos long avant de pouvoir le lancer à nouveau de cette façon.`,
@@ -80,16 +62,6 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     actionType: null,
     rechargeType: 'long_rest' as const,
     effects: [],
-  },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
-    featureType: 'class_feature' as const,
-    levelRequired: 12,
-    maxUsesFormula: null,
-    actionType: null,
-    rechargeType: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
     name: 'Arcanum mystique (niveau 7)',
@@ -112,16 +84,6 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     effects: [],
   },
   {
-    name: 'Amélioration de caractéristiques',
-    description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
-    featureType: 'class_feature' as const,
-    levelRequired: 16,
-    maxUsesFormula: null,
-    actionType: null,
-    rechargeType: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
-  {
     name: 'Arcanum mystique (niveau 9)',
     description: `Au niveau 17, votre patron vous octroie un quatrième arcanum mystique. Choisissez un sort de niveau 9 de la liste de sorts d'occultiste. Vous pouvez lancer ce sort une fois sans dépenser d'emplacement de sort. Vous devez terminer un repos long avant de pouvoir le lancer à nouveau de cette façon.`,
     featureType: 'class_feature' as const,
@@ -130,16 +92,6 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
     actionType: null,
     rechargeType: 'long_rest' as const,
     effects: [],
-  },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Vous pouvez augmenter la valeur de votre choix de caractéristique de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 en utilisant cette aptitude.`,
-    featureType: 'class_feature' as const,
-    levelRequired: 19,
-    maxUsesFormula: null,
-    actionType: null,
-    rechargeType: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
   },
   {
     name: 'Maître de l\'occulte',
