@@ -171,6 +171,7 @@ async function handleSubmit() {
       // Style de combat choisi (F2 tranche 2) : envoyé au serveur, qui le résout + matérialise (le
       // choix était auparavant collecté puis PERDU). Le serveur gate par niveau (Paladin/Rôdeur niv 2).
       fightingStyle: state.value.fightingStyle ?? undefined,
+      expertiseSkills: state.value.expertiseSkills,
       level: state.value.level,
       speciesId,
       selectedLineageId: lineageId,

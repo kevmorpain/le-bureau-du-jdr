@@ -22,12 +22,6 @@ export const LU_ASI_LEVELS: Record<string, number[]> = {
 }
 const DEFAULT_ASI_LEVELS = [4, 8, 12, 16, 19]
 
-// Expertise: classId → levels that grant expertise (2 skills each time)
-export const LU_EXPERTISE_LEVELS: Record<string, number[]> = {
-  rogue: [1, 6],
-  bard: [3, 10],
-}
-
 // Skills available for multiclass proficiency choices (null = any skill)
 export const LU_MULTICLASS_SKILL_POOL: Record<string, string[] | null> = {
   bard: null,
@@ -262,7 +256,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Choix de progression lus dans le CATALOGUE (/api/catalog, lot 6a) ──────
   // Choix résolus aux niveaux d'ARRIVÉE et de DÉPART : le delta pilote le nombre de nouvelles
-  // invocations. Style de combat, expertise et ASI restent pilotés par app/data.
+  // invocations et compétences d'expertise. Seul l'ASI reste piloté par app/data.
   const { choicesForClassLevel } = useCatalog()
   const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
   const luClassDbId = computed(() =>
@@ -383,11 +377,23 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return choicesForClassLevel(dbId, 20).find(c => c.kind === 'fighting_style')?.ownerLevelRequired ?? null
   }
 
-  const needsExpertise = computed(() => {
-    const clsId = state.value.pickedClassId
-    if (!clsId) return false
-    return (LU_EXPERTISE_LEVELS[clsId] ?? []).includes(state.value.toLevel)
-  })
+  // Expertise : count CUMULATIF (comme les invocations) — le delta départ→arrivée donne le nombre
+  // de nouvelles compétences à doubler.
+  const expertiseAtToLevel = computed(() => choicesAtToLevel.value.find(c => c.kind === 'expertise')?.count ?? 0)
+  const expertiseAtFromLevel = computed(() => choicesAtFromLevel.value.find(c => c.kind === 'expertise')?.count ?? 0)
+  const newExpertiseCount = computed(() => Math.max(0, expertiseAtToLevel.value - expertiseAtFromLevel.value))
+  const needsExpertise = computed(() => newExpertiseCount.value > 0)
+
+  // Un palier d'expertise tombe-t-il à ce niveau de classe ? (delta > 0) — sert au badge de LevelUpStepClass.
+  function expertiseDueForClassLevel(builderClassId: string, level: number): boolean {
+    if (level < 1) return false
+    const cls = CLASSES.find(c => c.id === builderClassId)
+    const dbId = resolveClassId(cls?.dbName)
+    if (!dbId) return false
+    const at = choicesForClassLevel(dbId, level).find(c => c.kind === 'expertise')?.count ?? 0
+    const prev = choicesForClassLevel(dbId, level - 1).find(c => c.kind === 'expertise')?.count ?? 0
+    return at - prev > 0
+  }
 
   const needsMulticlassSkills = computed(() => {
     if (!state.value.isMulticlass) return false
@@ -433,7 +439,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       case 'features': {
         if (isSubclassLevel.value && !s.newSubclassId) return false
         if (needsFightingStyle.value && !s.fightingStyle) return false
-        if (needsExpertise.value && s.expertiseSkills.length < 2) return false
+        if (needsExpertise.value && s.expertiseSkills.length < newExpertiseCount.value) return false
         if (needsPactBoon.value && !s.pactBoon) return false
         const expectedInvocations = newInvocationsCount.value + (s.replacedInvocationId ? 1 : 0)
         if (expectedInvocations > 0 && s.newInvocationIds.length < expectedInvocations) return false
@@ -586,6 +592,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     needsFightingStyle,
     fightingStyleLevelFor,
     needsExpertise,
+    newExpertiseCount,
+    expertiseDueForClassLevel,
     needsMulticlassSkills,
     hasSpellcasting,
     needsPactBoon,
