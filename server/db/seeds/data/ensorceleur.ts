@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { asiFeatures } from './asi'
 
 export const ensorceleurName = 'Ensorceleur'
 
@@ -52,16 +53,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     maxUsesFormula: null,
     effects: [],
   },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 12, 16 et 19), vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 grâce à cette capacité.`,
-    featureType: 'class_feature',
-    levelRequired: 4,
-    actionType: null,
-    rechargeType: null,
-    maxUsesFormula: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
+  ...asiFeatures('Ensorceleur'),
   {
     name: 'Restauration ensorcelée',
     description: `Au niveau 20, vous rechargez votre source de magie plus rapidement. Vous regagnez 4 points de sorcellerie dépensés chaque fois que vous terminez un repos court.`,

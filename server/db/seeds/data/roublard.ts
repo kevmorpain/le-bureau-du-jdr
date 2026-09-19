@@ -1,5 +1,6 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { expertiseProgression } from './expertise'
+import { asiFeatures } from './asi'
 
 export const roublardName = 'Roublard'
 
@@ -53,16 +54,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     maxUsesFormula: null,
     effects: [],
   },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 10, 12, 16 et 19), vous pouvez augmenter la valeur d'une caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 grâce à cette capacité.`,
-    featureType: 'class_feature',
-    levelRequired: 4,
-    actionType: null,
-    rechargeType: null,
-    maxUsesFormula: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
+  ...asiFeatures('Roublard'),
   {
     name: 'Esquive instinctive',
     description: `À partir du niveau 5, quand un attaquant que vous pouvez voir vous touche avec une attaque, vous pouvez utiliser votre réaction pour réduire de moitié les dégâts de l'attaque contre vous.`,

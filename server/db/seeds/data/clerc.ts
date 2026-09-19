@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { asiFeatures } from './asi'
 
 export const clercName = 'Clerc'
 
@@ -60,16 +61,7 @@ Vous devez terminer un repos court ou long pour pouvoir l'utiliser à nouveau. �
     maxUsesFormula: null,
     effects: [],
   },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Quand vous atteignez le niveau 4 (et à nouveau aux niveaux 8, 12, 16 et 19), vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou deux de 1. Maximum 20.`,
-    featureType: 'class_feature',
-    levelRequired: 4,
-    actionType: null,
-    rechargeType: null,
-    maxUsesFormula: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
+  ...asiFeatures('Clerc'),
 ]
 
 export const clercSubclasses: SubclassDef[] = [

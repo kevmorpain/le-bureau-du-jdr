@@ -1,4 +1,5 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
+import { asiFeatures } from './asi'
 
 export const barbareName = 'Barbare'
 
@@ -139,16 +140,7 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
       { type: 'ability_increase', value: { ability: 'con', amount: 4 } },
     ],
   },
-  {
-    name: 'Amélioration de caractéristiques',
-    description: `Lorsque vous atteignez le niveau 4, et encore aux niveaux 8, 12, 16 et 19, vous pouvez augmenter une valeur de caractéristique de votre choix de 2, ou augmenter deux valeurs de caractéristique de votre choix de 1. Comme d'habitude, vous ne pouvez pas augmenter une valeur de caractéristique au-delà de 20 grâce à cette capacité.`,
-    featureType: 'class_feature',
-    levelRequired: 4,
-    actionType: null,
-    rechargeType: null,
-    maxUsesFormula: null,
-    effects: [{ type: 'asi_or_feat', value: {} }],
-  },
+  ...asiFeatures('Barbare'),
 ]
 
 export const barbareSubclasses: SubclassDef[] = [
