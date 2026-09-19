@@ -377,15 +377,14 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return choicesForClassLevel(dbId, 20).find(c => c.kind === 'fighting_style')?.ownerLevelRequired ?? null
   }
 
-  // Expertise (lue dans le CATALOGUE) — count CUMULATIF, comme les invocations : le delta entre les
-  // niveaux de départ et d'arrivée donne le nombre de nouvelles compétences à doubler.
+  // Expertise : count CUMULATIF (comme les invocations) — le delta départ→arrivée donne le nombre
+  // de nouvelles compétences à doubler.
   const expertiseAtToLevel = computed(() => choicesAtToLevel.value.find(c => c.kind === 'expertise')?.count ?? 0)
   const expertiseAtFromLevel = computed(() => choicesAtFromLevel.value.find(c => c.kind === 'expertise')?.count ?? 0)
   const newExpertiseCount = computed(() => Math.max(0, expertiseAtToLevel.value - expertiseAtFromLevel.value))
   const needsExpertise = computed(() => newExpertiseCount.value > 0)
 
-  // Un palier d'expertise tombe-t-il à ce niveau de classe ? (delta > 0) — sert au badge de
-  // LevelUpStepClass, résolu par classe (builderId) au lieu du blob par niveaux.
+  // Un palier d'expertise tombe-t-il à ce niveau de classe ? (delta > 0) — sert au badge de LevelUpStepClass.
   function expertiseDueForClassLevel(builderClassId: string, level: number): boolean {
     if (level < 1) return false
     const cls = CLASSES.find(c => c.id === builderClassId)

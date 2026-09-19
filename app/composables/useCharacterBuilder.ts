@@ -342,9 +342,8 @@ export function useCharacterBuilder() {
   const needsMetamagic = computed(() => metamagicExpected.value > 0)
 
   // ─── Expertise (lue dans le CATALOGUE, miroir de la sous-classe) ───────────
-  // `count` CUMULATIF au niveau de création (Roublard 2 aux niv 1-5 / 4 au niv 6+ ; Barde 2/4).
-  // Options = compétences déjà maîtrisées ici — classe + historique + variante humaine (les octrois
-  // d'espèce viennent des effets, hors état builder ; le serveur laisse l'appartenance front-autoritaire).
+  // Éligibilité = compétences maîtrisées connues du builder (classe + historique + variante) ; les
+  // octrois d'espèce viennent des effets, hors état builder → l'appartenance reste front-autoritaire.
   const expertiseExpected = computed(() => catalogChoices.value.find(c => c.kind === 'expertise')?.count ?? 0)
   const needsExpertise = computed(() => expertiseExpected.value > 0)
   const proficientSkills = computed<string[]>(() => {

@@ -424,7 +424,6 @@ const availableSkills = computed(() => {
   return SKILLS.filter(s => from.includes(s.key))
 })
 
-// Expertise : on double des compétences DÉJÀ maîtrisées (classe + historique + variante humaine).
 const eligibleExpertiseSkills = computed(() => SKILLS.filter(s => proficientSkills.value.includes(s.key)))
 function toggleExpertise(skillKey: string) {
   const idx = state.value.expertiseSkills.indexOf(skillKey)
