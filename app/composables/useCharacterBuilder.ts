@@ -139,13 +139,6 @@ export interface BuilderState {
 
 export const BOOK_OF_ANCIENT_SECRETS_NAME = 'Livre des secrets anciens'
 
-// Niveaux d'ASI par classe (PHB 2014). Défaut [4,8,12,16,19] pour la majorité.
-export const ASI_LEVELS_BY_CLASS: Record<string, number[]> = {
-  fighter: [4, 6, 8, 12, 14, 16, 19],
-  rogue: [4, 8, 10, 12, 16, 19],
-}
-const DEFAULT_ASI_LEVELS = [4, 8, 12, 16, 19]
-
 const INIT_STATE: BuilderState = {
   raceId: null,
   isVariantHuman: false,
@@ -307,8 +300,7 @@ export function useCharacterBuilder() {
   const classData = computed(() => CLASSES.find(c => c.id === state.value.classId) ?? null)
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
 
-  // Points de choix lus dans le catalogue et résolus localement. Seul l'ASI reste piloté par
-  // app/data (à migrer, cf. consolidation-2014.md).
+  // Points de choix lus dans le catalogue et résolus localement.
   const classDbId = computed(() => resolveClassId(classData.value?.dbName))
   const catalogChoices = computed(() =>
     choicesForClassLevel(classDbId.value, state.value.level),
@@ -506,12 +498,13 @@ export function useCharacterBuilder() {
 
   // ─── ASI (paliers de bonus de caractéristique) ────────────────────────────────
 
-  const asiLevelsForCharacter = computed<number[]>(() => {
-    const clsId = state.value.classId
-    if (!clsId) return []
-    const levels = ASI_LEVELS_BY_CLASS[clsId] ?? DEFAULT_ASI_LEVELS
-    return levels.filter(l => l <= state.value.level)
-  })
+  // resolveChoices ne rend que les paliers ≤ niveau de classe → pas de filtre explicite ici.
+  const asiLevelsForCharacter = computed<number[]>(() =>
+    catalogChoices.value
+      .filter(c => c.kind === 'asi_or_feat')
+      .map(c => c.ownerLevelRequired)
+      .sort((a, b) => a - b),
+  )
 
   const needsAsi = computed(() => asiLevelsForCharacter.value.length > 0)
 

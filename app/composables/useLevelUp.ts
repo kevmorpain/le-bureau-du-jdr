@@ -16,12 +16,6 @@ import type { CharacterSheet } from '~~/server/utils/drizzle'
 
 // ─── D&D 5e 2014 Rule Data ────────────────────────────────────────────────────
 
-export const LU_ASI_LEVELS: Record<string, number[]> = {
-  fighter: [4, 6, 8, 12, 14, 16, 19],
-  rogue: [4, 8, 10, 12, 16, 19],
-}
-const DEFAULT_ASI_LEVELS = [4, 8, 12, 16, 19]
-
 // Skills available for multiclass proficiency choices (null = any skill)
 export const LU_MULTICLASS_SKILL_POOL: Record<string, string[] | null> = {
   bard: null,
@@ -256,7 +250,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Choix de progression lus dans le CATALOGUE (/api/catalog, lot 6a) ──────
   // Choix résolus aux niveaux d'ARRIVÉE et de DÉPART : le delta pilote le nombre de nouvelles
-  // invocations et compétences d'expertise. Seul l'ASI reste piloté par app/data.
+  // invocations et compétences d'expertise.
   const { choicesForClassLevel } = useCatalog()
   const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
   const luClassDbId = computed(() =>
@@ -353,12 +347,20 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Step visibility ────────────────────────────────────────────────────────
 
+  // Owner discret par palier (count 1) — dû au niveau d'arrivée, PAS un delta cumulatif comme l'expertise.
   const isAsiLevel = computed(() => {
-    const clsId = state.value.pickedClassId
-    if (!clsId) return false
-    const levels = LU_ASI_LEVELS[clsId] ?? DEFAULT_ASI_LEVELS
-    return levels.includes(state.value.toLevel)
+    if (!state.value.pickedClassId) return false
+    return choicesAtToLevel.value.some(c => c.kind === 'asi_or_feat' && c.ownerLevelRequired === state.value.toLevel)
   })
+
+  // Badge de LevelUpStepClass — discret (pas un delta), cf. isAsiLevel.
+  function asiDueForClassLevel(builderClassId: string, level: number): boolean {
+    if (level < 1) return false
+    const cls = CLASSES.find(c => c.id === builderClassId)
+    const dbId = resolveClassId(cls?.dbName)
+    if (!dbId) return false
+    return choicesForClassLevel(dbId, level).some(c => c.kind === 'asi_or_feat' && c.ownerLevelRequired === level)
+  }
 
   // Style de combat (lu dans le CATALOGUE, F2 tranche 4) — débloqué AU niveau d'arrivée
   // (`ownerLevelRequired === toLevel`), miroir de isSubclassLevel/needsPactBoon.
@@ -589,6 +591,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     isSubclassLevel,
     subclassLevelFor,
     isAsiLevel,
+    asiDueForClassLevel,
     needsFightingStyle,
     fightingStyleLevelFor,
     needsExpertise,

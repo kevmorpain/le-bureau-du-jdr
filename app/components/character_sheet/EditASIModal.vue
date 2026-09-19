@@ -41,7 +41,6 @@
               v-if="slot.mode === '+2'"
               class="flex items-center gap-2"
             >
-              <span class="text-sm text-muted">Caractéristique :</span>
               <USelect
                 :model-value="slot.first ?? 'str'"
                 :items="abilityOptions"
@@ -93,7 +92,6 @@
 </template>
 
 <script lang="ts" setup>
-import { getASILevels } from '~~/shared/utils/asi'
 import type { AbilityScoreKey } from '~~/server/db/schema/effects'
 
 type ASIRow = {
@@ -142,13 +140,21 @@ const modeItems = [
   { label: '+1 / +1', value: '+1/+1' },
 ]
 
+// `props.classId` est déjà l'id DB (pas de resolve) ; resolveChoices ne rend que les paliers ≤ niveau.
+const { choicesForClassLevel } = useCatalog()
+const asiLevels = computed<number[]>(() =>
+  choicesForClassLevel(props.classId, props.classLevel)
+    .filter(c => c.kind === 'asi_or_feat')
+    .map(c => c.ownerLevelRequired)
+    .sort((a, b) => a - b),
+)
+
 const slots = ref<SlotState[]>([])
 
 const availableSlots = computed(() => slots.value)
 
 const initSlots = () => {
-  const asiLevels = getASILevels(props.className).filter(l => l <= props.classLevel)
-  slots.value = asiLevels.map((classLevel) => {
+  slots.value = asiLevels.value.map((classLevel) => {
     const rows = props.allImprovements.filter(a => a.classId === props.classId && a.classLevel === classLevel)
     if (rows.length === 0) {
       return { classLevel, mode: 'none', first: null, second: null }
@@ -163,9 +169,10 @@ const initSlots = () => {
   })
 }
 
-watch(open, (val) => {
-  if (val) initSlots()
-})
+// La fiche ne fetch le catalogue nulle part ailleurs → il arrive en asynchrone : ré-init au chargement (sinon « aucun slot » au 1er open).
+watch([open, asiLevels], ([isOpen]) => {
+  if (isOpen) initSlots()
+}, { immediate: true })
 
 const setMode = (classLevel: number, mode: SlotState['mode']) => {
   const s = slots.value.find(x => x.classLevel === classLevel)

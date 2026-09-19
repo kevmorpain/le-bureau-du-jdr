@@ -118,10 +118,7 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  LU_ASI_LEVELS,
-  LU_MULTICLASS_PREREQS,
-} from '~/composables/useLevelUp'
+import { LU_MULTICLASS_PREREQS } from '~/composables/useLevelUp'
 import { ABILITY_SHORT, type AbilityKey } from '~/data/character-builder'
 
 const {
@@ -133,10 +130,9 @@ const {
   subclassLevelFor,
   fightingStyleLevelFor,
   expertiseDueForClassLevel,
+  asiDueForClassLevel,
   CLASSES,
 } = useLevelUp(inject('charSheet') as any)
-
-const DEFAULT_ASI_LEVELS = [4, 8, 12, 16, 19]
 
 const currentClassIds = computed(() => new Set(charClasses.value.map(c => c.classId)))
 const otherClasses = computed(() => CLASSES.filter(c => !currentClassIds.value.has(c.id)))
@@ -153,7 +149,7 @@ function isSubclassDue(cc: { classId: string, level: number, subclassName: strin
 }
 
 function isAsiDue(classId: string, level: number): boolean {
-  return (LU_ASI_LEVELS[classId] ?? DEFAULT_ASI_LEVELS).includes(level)
+  return asiDueForClassLevel(classId, level)
 }
 
 function isFightingStyleDue(classId: string, level: number): boolean {
