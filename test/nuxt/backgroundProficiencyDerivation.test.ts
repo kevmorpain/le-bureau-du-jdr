@@ -12,7 +12,7 @@ import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
 import { fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
 
 // Seed des porteurs de maîtrises d'historique + dérivation, bout en bout : la fiche doit dériver
-// exactement les maîtrises FIXES (== ce que createCharacter matérialisait en grants).
+// exactement les maîtrises FIXES — compétences, outils, langues (== ce que createCharacter matérialisait).
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
@@ -21,9 +21,13 @@ const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthu
 let orm: any
 const bgIdByName = new Map<string, number>()
 
-/** Historiques ayant ≥1 maîtrise fixe (outils/langues) → doivent avoir un porteur. */
-const withFixed = backgroundsData.filter(b =>
-  fixedProficiencies(b.toolProficiencies).length + fixedProficiencies(b.languageProficiencies).length > 0)
+const fixedCount = (b: typeof backgroundsData[number]) =>
+  fixedProficiencies(b.skillProficiencies).length
+  + fixedProficiencies(b.toolProficiencies).length
+  + fixedProficiencies(b.languageProficiencies).length
+
+/** Historiques ayant ≥1 maîtrise fixe (compétences/outils/langues) → doivent avoir un porteur. */
+const withFixed = backgroundsData.filter(b => fixedCount(b) > 0)
 
 beforeAll(async () => {
   const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
@@ -58,9 +62,10 @@ describe('seedBackgroundProficiencies — structure', () => {
   it('crée un porteur pour chaque historique à maîtrise fixe, et aucun sinon', async () => {
     const report = await seedBackgroundProficiencies(orm, backgroundsData)
     expect(report.carriersInserted).toBe(withFixed.length)
-    // 1 effet lié par entrée fixe (outils + langues) sur l'ensemble des historiques.
-    const expectedEffects = backgroundsData.reduce((n, b) =>
-      n + fixedProficiencies(b.toolProficiencies).length + fixedProficiencies(b.languageProficiencies).length, 0)
+    // 1 effet lié par entrée fixe (compétences + outils + langues) sur l'ensemble des historiques.
+    // NB : `effectsLinked` compte les LIENS ; un effet partagé (ex. 2 historiques donnant « insight »)
+    // réutilise la même ligne `effects` mais crée bien un lien par porteur.
+    const expectedEffects = backgroundsData.reduce((n, b) => n + fixedCount(b), 0)
     expect(report.effectsLinked).toBe(expectedEffects)
   })
 
@@ -77,8 +82,10 @@ describe('deriveBackgroundProficiencies — équivalence dérivé == fixe', () =
   for (const bg of backgroundsData) {
     it(`${bg.name} : dérive exactement ses maîtrises fixes`, async () => {
       const effects = await deriveBackgroundProficiencies(orm, bgIdByName.get(bg.name)!)
+      const derivedSkills = effects.filter(e => e.type === 'skill_proficiency').map(e => (e.value as { skill: string }).skill).sort()
       const derivedTools = effects.filter(e => e.type === 'tool_proficiency').map(e => e.value).sort()
       const derivedLangs = effects.filter(e => e.type === 'language_proficiency').map(e => e.value).sort()
+      expect(derivedSkills).toEqual([...fixedProficiencies(bg.skillProficiencies)].sort())
       expect(derivedTools).toEqual([...fixedProficiencies(bg.toolProficiencies)].sort())
       expect(derivedLangs).toEqual([...fixedProficiencies(bg.languageProficiencies)].sort())
     })
