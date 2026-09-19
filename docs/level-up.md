@@ -122,15 +122,11 @@ Si aucune condition → affiche un résumé des aptitudes débloquées (liste in
 
 ### Étape 4 — Carac. / Don (`LevelUpStepAsi.vue`) — conditionnelle
 
-**Affiché uniquement si** `isAsiLevel` :
-```ts
-LU_ASI_LEVELS = {
-  fighter: [4, 6, 8, 12, 14, 16, 19],
-  rogue:   [4, 8, 10, 12, 16, 19],
-  // toutes les autres classes :
-  default: [4, 8, 12, 16, 19],
-}
-```
+**Affiché uniquement si** `isAsiLevel` — désormais lu dans le catalogue (F2 ASI) : une progression
+`asi_or_feat` par palier (owner discret, `count 1`), due au niveau d'arrivée
+(`ownerLevelRequired === toLevel`), comme le style de combat. Les niveaux (défaut `[4,8,12,16,19]` ;
+Guerrier `[4,6,8,12,14,16,19]` ; Roublard `[4,8,10,12,16,19]`) viennent du seed
+[`server/db/seeds/data/asi.ts`](../server/db/seeds/data/asi.ts), source unique.
 
 **But :** Choisir entre amélioration de caractéristiques (+2 répartis librement) ou un don.
 
@@ -254,10 +250,10 @@ Corps :
 Toutes exportées pour usage dans les composants d'étape :
 
 ```ts
-LU_ASI_LEVELS           // niveaux ASI par classe
-// (le style de combat est désormais lu dans le catalogue — cf. `needsFightingStyle` /
-//  `fightingStyleLevelFor` + endpoint `/api/catalog/classes/[name]/fighting-styles`, F2 tranche 4)
-LU_EXPERTISE_LEVELS      // niveaux d'expertise (Roublard/Barde)
+// ASI, style de combat et expertise sont désormais lus dans le CATALOGUE (plus de tables front) :
+//   ASI            → `isAsiLevel` / `asiDueForClassLevel` (progression asi_or_feat par palier)
+//   style de combat → `needsFightingStyle` / `fightingStyleLevelFor` + endpoint /api/catalog/classes/[name]/fighting-styles
+//   expertise       → `needsExpertise` / `expertiseDueForClassLevel` (count cumulatif)
 LU_MULTICLASS_PREREQS    // prérequis de carac. pour multiclassage
 LU_MULTICLASS_SKILL_POOL // pool de compétences disponibles par multiclassage
 LU_MULTICLASS_SKILL_COUNT // nombre de compétences octroyées par multiclassage
