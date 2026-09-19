@@ -156,3 +156,25 @@ commande).
   Proche par l'effet de l'entrée « Répondu à côté » : le coût n'est pas une erreur factuelle, c'est
   un tour de conversation dépensé à défaire du bruit.
 - Relevé par l'utilisateur (« qu'est-ce que tu racontes par rapport aux torts ? »).
+
+### 2026-09-19 — Commentaires verbeux nettoyés en réaction, chantier après chantier
+
+- **Affirmé / fait** : sur les tranches 2 et 3 du chantier expertise (PR #79, #80), j'ai écrit des
+  commentaires qui paraphrasent le code ou portent l'historique projet (« F2 tranche 3 »), puis
+  produit un commit séparé « Nettoyage des commentaires » **une fois que l'utilisateur a dit
+  « nettoie les commentaires »**. Même schéma sur plusieurs chantiers d'affilée.
+- **Vrai** : la règle existe déjà — `CLAUDE.md:83` section « Commentaires » (« Par défaut : pas de
+  commentaire […] seulement le pourquoi non-évident ») et la mémoire `feedback_commentaires_verbeux`.
+  Le nettoyage n'aurait pas dû être une passe séparée déclenchée par l'utilisateur : il fait partie
+  de l'écriture, et la relecture du diff avant commit l'aurait attrapé.
+- **Manque** : ne pas avoir relu mes propres lignes de commentaire ajoutées dans le `git diff` avant
+  de committer. La discipline de commentaire a été traitée comme une étape optionnelle déclenchée par
+  une relance, pas comme une partie de la Definition of Done.
+- **Règle** : **présente, non appliquée**, doublement — la section « Commentaires » (le fond) ET la
+  Definition of Done « Relire le vrai `git diff` […] avant de dire "fait" » (`CLAUDE.md:78`, le
+  geste). En ajouter une troisième n'y changerait rien : le défaut est l'application réactive.
+  Distillation possible : expliciter dans la DoD que « relire le diff » inclut couper ses propres
+  commentaires superflus, ou sortir la règle de la prose vers un mécanisme (hook/lint) — la prose
+  seule n'a pas suffi sur ~4 chantiers.
+- Relevé par l'utilisateur, agacé de devoir le répéter (« je dois te dire combien de fois pour les
+  commentaires ? ça devrait être enregistré dans ta mémoire et appliqué à chaque fois »).
