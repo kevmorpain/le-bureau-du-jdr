@@ -41,6 +41,7 @@ export interface BuilderState {
   skills: string[]
   level: number
   fightingStyle: string | null
+  expertiseSkills: string[]
   hpMode: 'average' | 'roll' | 'manual'
   hpRolled: number[] | null   // jets pour niveaux 2+ (longueur = level - 1)
   hpManual: number | null
@@ -158,6 +159,7 @@ const INIT_STATE: BuilderState = {
   skills: [],
   level: 1,
   fightingStyle: null,
+  expertiseSkills: [],
   hpMode: 'average',
   hpRolled: null,
   hpManual: null,
@@ -305,8 +307,8 @@ export function useCharacterBuilder() {
   const classData = computed(() => CLASSES.find(c => c.id === state.value.classId) ?? null)
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
 
-  // Points de choix lus dans le catalogue et résolus localement. Style de combat, expertise et ASI
-  // restent pilotés par app/data (à migrer, cf. consolidation-2014.md).
+  // Points de choix lus dans le catalogue et résolus localement. Seul l'ASI reste piloté par
+  // app/data (à migrer, cf. consolidation-2014.md).
   const classDbId = computed(() => resolveClassId(classData.value?.dbName))
   const catalogChoices = computed(() =>
     choicesForClassLevel(classDbId.value, state.value.level),
@@ -338,6 +340,27 @@ export function useCharacterBuilder() {
     catalogChoices.value.find(c => c.kind === 'metamagic')?.count ?? 0,
   )
   const needsMetamagic = computed(() => metamagicExpected.value > 0)
+
+  // ─── Expertise (lue dans le CATALOGUE, miroir de la sous-classe) ───────────
+  // `count` CUMULATIF au niveau de création (Roublard 2 aux niv 1-5 / 4 au niv 6+ ; Barde 2/4).
+  // Options = compétences déjà maîtrisées ici — classe + historique + variante humaine (les octrois
+  // d'espèce viennent des effets, hors état builder ; le serveur laisse l'appartenance front-autoritaire).
+  const expertiseExpected = computed(() => catalogChoices.value.find(c => c.kind === 'expertise')?.count ?? 0)
+  const needsExpertise = computed(() => expertiseExpected.value > 0)
+  const proficientSkills = computed<string[]>(() => {
+    const bg = backgroundData.value
+    const bgSkills = bg?.id === 'custom' ? state.value.customBackgroundSkills : (bg?.skillProficiencies ?? [])
+    const variant = state.value.isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : []
+    return [...new Set([...state.value.skills, ...bgSkills, ...variant])]
+  })
+  // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
+  // sans expertise (changement de classe) ne doit pas survivre.
+  watch(proficientSkills, (prof) => {
+    state.value.expertiseSkills = state.value.expertiseSkills.filter(s => prof.includes(s))
+  })
+  watch(expertiseExpected, (count) => {
+    if (state.value.expertiseSkills.length > count) state.value.expertiseSkills = state.value.expertiseSkills.slice(0, count)
+  })
 
   const alignmentData = computed(() => ALIGNMENTS.find(a => a.id === state.value.alignment) ?? null)
 
@@ -558,6 +581,7 @@ export function useCharacterBuilder() {
         if (s.skills.length < cls.skillChoices.count) return false
         // Style de combat requis quand le catalogue le rend dû à ce niveau (Guerrier 1, Paladin/Rôdeur 2).
         if (needsFightingStyle.value && !s.fightingStyle) return false
+        if (needsExpertise.value && s.expertiseSkills.length < expertiseExpected.value) return false
         if (needsPactBoon.value && !s.pactBoon) return false
         if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
         if (needsMetamagic.value && s.metamagicIds.length < metamagicExpected.value) return false
@@ -758,6 +782,10 @@ export function useCharacterBuilder() {
     // Style de combat (catalogue)
     needsFightingStyle,
     fightingStyleLevel,
+    // Expertise (catalogue)
+    needsExpertise,
+    expertiseExpected,
+    proficientSkills,
     // Pacte
     needsPactBoon,
     // Invocations

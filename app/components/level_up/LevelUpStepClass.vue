@@ -120,7 +120,6 @@
 <script lang="ts" setup>
 import {
   LU_ASI_LEVELS,
-  LU_EXPERTISE_LEVELS,
   LU_MULTICLASS_PREREQS,
 } from '~/composables/useLevelUp'
 import { ABILITY_SHORT, type AbilityKey } from '~/data/character-builder'
@@ -133,6 +132,7 @@ const {
   pickedClass,
   subclassLevelFor,
   fightingStyleLevelFor,
+  expertiseDueForClassLevel,
   CLASSES,
 } = useLevelUp(inject('charSheet') as any)
 
@@ -162,7 +162,7 @@ function isFightingStyleDue(classId: string, level: number): boolean {
 }
 
 function isExpertiseDue(classId: string, level: number): boolean {
-  return (LU_EXPERTISE_LEVELS[classId] ?? []).includes(level)
+  return expertiseDueForClassLevel(classId, level)
 }
 
 function getPrereqs(classId: string): Array<{ label: string, ok: boolean }> | null {

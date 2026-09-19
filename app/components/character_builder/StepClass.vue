@@ -159,6 +159,42 @@
         </div>
       </template>
 
+      <template v-if="needsExpertise">
+        <USeparator class="my-6" />
+        <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
+          <div class="flex items-center gap-2 mb-1">
+            <p class="text-xs font-bold uppercase tracking-widest text-muted">
+              ★ Expertise — choisissez {{ expertiseExpected }}
+            </p>
+            <span
+              class="text-xs font-semibold"
+              :class="state.expertiseSkills.length >= expertiseExpected ? 'text-green-400' : 'text-amber-400'"
+            >
+              {{ state.expertiseSkills.length }}/{{ expertiseExpected }}
+            </span>
+          </div>
+          <p class="text-xs text-muted mb-3">Doublez le bonus de maîtrise sur des compétences déjà maîtrisées.</p>
+          <div v-if="eligibleExpertiseSkills.length" class="flex flex-wrap gap-1.5">
+            <button
+              v-for="sk in eligibleExpertiseSkills"
+              :key="sk.key"
+              type="button"
+              class="px-2.5 py-1 rounded-md border text-xs transition-all"
+              :class="state.expertiseSkills.includes(sk.key)
+                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400 font-semibold cursor-pointer'
+                : !state.expertiseSkills.includes(sk.key) && state.expertiseSkills.length >= expertiseExpected
+                  ? 'border-(--ui-border) text-muted/40 cursor-not-allowed opacity-40'
+                  : 'border-(--ui-border) bg-transparent text-muted hover:border-emerald-500/40 cursor-pointer'"
+              :disabled="!state.expertiseSkills.includes(sk.key) && state.expertiseSkills.length >= expertiseExpected"
+              @click="toggleExpertise(sk.key)"
+            >
+              {{ sk.label }}
+            </button>
+          </div>
+          <p v-else class="text-xs italic text-muted">Choisissez d'abord vos compétences de classe ci-dessus.</p>
+        </div>
+      </template>
+
       <template v-if="subclassOptions.length">
         <USeparator class="my-6" />
         <template v-if="needsSubclass">
@@ -341,6 +377,9 @@ const {
   subclassOptions,
   needsFightingStyle,
   fightingStyleLevel,
+  needsExpertise,
+  expertiseExpected,
+  proficientSkills,
   needsPactBoon,
   needsInvocations,
   invocationsExpected,
@@ -384,6 +423,14 @@ const availableSkills = computed(() => {
   if (from === 'all') return SKILLS
   return SKILLS.filter(s => from.includes(s.key))
 })
+
+// Expertise : on double des compétences DÉJÀ maîtrisées (classe + historique + variante humaine).
+const eligibleExpertiseSkills = computed(() => SKILLS.filter(s => proficientSkills.value.includes(s.key)))
+function toggleExpertise(skillKey: string) {
+  const idx = state.value.expertiseSkills.indexOf(skillKey)
+  if (idx >= 0) state.value.expertiseSkills.splice(idx, 1)
+  else if (state.value.expertiseSkills.length < expertiseExpected.value) state.value.expertiseSkills.push(skillKey)
+}
 
 const milestonesUpToLevel = computed(() => {
   if (!classData.value) return []
@@ -433,6 +480,7 @@ function selectClass(id: string) {
   state.value.subclass = null
   state.value.skills = []
   state.value.fightingStyle = null
+  state.value.expertiseSkills = []
   state.value.hpMode = 'average'
   state.value.hpRolled = null
   state.value.hpManual = null

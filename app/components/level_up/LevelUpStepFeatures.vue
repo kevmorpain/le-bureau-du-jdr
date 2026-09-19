@@ -82,11 +82,11 @@
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
         ★ Expertise
         <span class="ml-1 text-muted/60 normal-case font-normal tracking-normal">
-          — Choisissez 2 compétences sur lesquelles doubler le bonus de maîtrise
+          — Choisissez {{ newExpertiseCount }} compétence{{ newExpertiseCount > 1 ? 's' : '' }} sur lesquelles doubler le bonus de maîtrise
         </span>
       </p>
       <p class="text-xs text-muted mb-3">
-        Sélectionné : <span :class="state.expertiseSkills.length >= 2 ? 'text-green-400' : 'text-amber-400'">{{ state.expertiseSkills.length }}/2</span>
+        Sélectionné : <span :class="state.expertiseSkills.length >= newExpertiseCount ? 'text-green-400' : 'text-amber-400'">{{ state.expertiseSkills.length }}/{{ newExpertiseCount }}</span>
       </p>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
         <button
@@ -96,7 +96,7 @@
           :class="state.expertiseSkills.includes(sk.key)
             ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-400 font-semibold'
             : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-(--ui-border-strong)'"
-          :disabled="!state.expertiseSkills.includes(sk.key) && state.expertiseSkills.length >= 2"
+          :disabled="!state.expertiseSkills.includes(sk.key) && state.expertiseSkills.length >= newExpertiseCount"
           @click="toggleExpertise(sk.key)"
         >
           {{ sk.label }}
@@ -238,8 +238,6 @@
 </template>
 
 <script lang="ts" setup>
-import { LU_EXPERTISE_LEVELS } from '~/composables/useLevelUp'
-
 const PACT_BOON_OPTIONS = [
   { id: 'chain' as const, name: 'Pacte de la Chaîne', description: 'Vous apprenez Appel de familier et pouvez invoquer un familier spécial (diablotin, pseudodragon, quasit ou lutin).' },
   { id: 'blade' as const, name: 'Pacte de la Lame', description: 'Vous pouvez créer une arme de pacte magique dans votre main vide. Vous en choisissez la forme à chaque invocation.' },
@@ -255,6 +253,7 @@ const {
   isSubclassLevel,
   needsFightingStyle,
   needsExpertise,
+  newExpertiseCount,
   needsPactBoon,
   needsInvocations,
   canReplaceInvocation,
@@ -359,7 +358,7 @@ function toggleExpertise(skillKey: string) {
   const idx = state.value.expertiseSkills.indexOf(skillKey)
   if (idx >= 0) {
     state.value.expertiseSkills.splice(idx, 1)
-  } else if (state.value.expertiseSkills.length < 2) {
+  } else if (state.value.expertiseSkills.length < newExpertiseCount.value) {
     state.value.expertiseSkills.push(skillKey)
   }
 }
