@@ -88,6 +88,9 @@
       <p class="text-xs text-muted mb-3">
         Sélectionné : <span :class="state.expertiseSkills.length >= newExpertiseCount ? 'text-green-400' : 'text-amber-400'">{{ state.expertiseSkills.length }}/{{ newExpertiseCount }}</span>
       </p>
+      <p v-if="alreadyExpertLabels.length" class="text-xs text-muted/70 mb-3">
+        Déjà expert : {{ alreadyExpertLabels.join(', ') }}
+      </p>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
         <button
           v-for="sk in eligibleSkills"
@@ -265,6 +268,7 @@ const {
   effectivePactBoon,
   knownSpellNames,
   proficientSkills,
+  expertSkills,
   CLASSES,
   SKILLS,
   profBonusAtLevel,
@@ -343,10 +347,15 @@ const availableStyles = computed(() =>
   (fightingStyleData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>,
 )
 
-// Skills eligible for expertise (must already be proficient)
+// Compétences maîtrisées mais pas encore d'expertise : on exclut celles déjà 'expert' (paliers
+// précédents) pour ne pas laisser regagner l'expertise d'une compétence qui l'a déjà.
 const eligibleSkills = computed(() => {
-  const prof = proficientSkills.value
-  return SKILLS.filter(s => prof.includes(s.key))
+  const already = new Set(expertSkills.value)
+  return SKILLS.filter(s => proficientSkills.value.includes(s.key) && !already.has(s.key))
+})
+const alreadyExpertLabels = computed(() => {
+  const already = new Set(expertSkills.value)
+  return SKILLS.filter(s => already.has(s.key)).map(s => s.label)
 })
 
 function selectSubclass(sub: { id: number, name: string }) {
