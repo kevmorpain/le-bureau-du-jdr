@@ -104,7 +104,7 @@ export const SKILLS: SkillDef[] = [
   { key: 'athletics', label: 'Athlétisme', ability: 'str' },
   { key: 'deception', label: 'Tromperie', ability: 'cha' },
   { key: 'history', label: 'Histoire', ability: 'int' },
-  { key: 'insight', label: 'Perspicacité', ability: 'wis' },
+  { key: 'insight', label: 'Intuition', ability: 'wis' },
   { key: 'intimidation', label: 'Intimidation', ability: 'cha' },
   { key: 'investigation', label: 'Investigation', ability: 'int' },
   { key: 'medicine', label: 'Médecine', ability: 'wis' },

@@ -10,6 +10,7 @@ import type { Formula } from '~~/shared/utils/formula'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../data/subclassChoice'
 import { fightingStyleOptionFeatures } from '../data/fightingStyles'
+import { classSkillChoiceFeature } from '../data/classSkills'
 import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 
 /** Feature porteuse des maîtrises de base d'une classe : jamais affichée ni matérialisée. */
@@ -88,11 +89,13 @@ export async function seedClass(
     : null
 
   const fightingStyleOptions = fightingStyleOptionFeatures(className)
+  const classSkillChoice = classSkillChoiceFeature(className)
 
   const allBaseFeatures = [
     ...baseFeatures,
     ...(carrier ? [carrier] : []),
     ...(subclassChoice ? [subclassChoice] : []),
+    ...(classSkillChoice ? [classSkillChoice] : []),
     ...fightingStyleOptions,
   ]
 

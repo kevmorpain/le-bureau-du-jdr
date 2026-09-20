@@ -2,6 +2,7 @@ import { and, eq, inArray } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
+import type { SkillKey } from '~~/shared/rules/skills'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
@@ -18,6 +19,22 @@ export async function deriveClassProficiencies(db: Db, classIds: number[]): Prom
       eq(srcSchema.features.featureType, 'proficiency_grant'),
     ))
   return rows.map(r => ({ type: r.type, value: r.value }) as Effect)
+}
+
+// Compétences de classe CHOISIES → dérivées du pick stocké en character_choices (progression `skill`),
+// F3 tranche 3. Le choix est enregistré à la création ; la maîtrise 'proficient' est produite ici.
+export async function deriveClassSkills(db: Db, characterSheetId: number): Promise<Effect[]> {
+  const rows = await db
+    .select({ value: srcSchema.characterChoices.selectedValue })
+    .from(srcSchema.characterChoices)
+    .innerJoin(srcSchema.progression, eq(srcSchema.progression.id, srcSchema.characterChoices.progressionId))
+    .where(and(
+      eq(srcSchema.characterChoices.characterSheetId, characterSheetId),
+      eq(srcSchema.progression.kind, 'skill'),
+    ))
+  return rows
+    .filter((r): r is { value: string } => r.value != null)
+    .map(r => ({ type: 'skill_proficiency', value: { skill: r.value as SkillKey } }) as Effect)
 }
 
 // Les JS ne sont accordés que par la 1re classe (PHB) : dérivation scopée à la classe PRINCIPALE, pas

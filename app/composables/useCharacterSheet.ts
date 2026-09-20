@@ -99,12 +99,16 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const classSavingThrowEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { classSavingThrowEffects?: Effect[] } | undefined)?.classSavingThrowEffects ?? [],
   )
+  const classSkillEffects = computed<Effect[]>(() =>
+    (characterSheet?.value as { classSkillEffects?: Effect[] } | undefined)?.classSkillEffects ?? [],
+  )
 
   const abilities = useCharacterAbilities(characterSheet, {
     speciesEffects: classes.speciesEffects,
     featureEffects: unlockedFeatureEffects,
     backgroundEffects,
     classSavingThrowEffects,
+    classSkillEffects,
     asiEffects,
     proficiencyBonus: classes.proficiencyBonus,
   })

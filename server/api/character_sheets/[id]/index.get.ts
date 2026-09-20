@@ -5,7 +5,7 @@ import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
 import { deriveBackgroundProficiencies } from '~~/server/utils/backgroundProficiencyDerivation'
-import { deriveClassProficiencies, deriveMainClassSavingThrows } from '~~/server/utils/classProficiencyDerivation'
+import { deriveClassProficiencies, deriveMainClassSavingThrows, deriveClassSkills } from '~~/server/utils/classProficiencyDerivation'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -197,6 +197,10 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const classSavingThrowEffects = await deriveMainClassSavingThrows(db as any, mainClassId)
 
+  // Compétences de classe dérivées du choix (character_choices, progression skill).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const classSkillEffects = await deriveClassSkills(db as any, Number(id))
+
   // Le propriétaire est le joueur ; on n'expose que `{ id, name }` (ni e-mail ni provider).
   const [owner] = characterSheet.ownerId != null
     ? await db
@@ -219,5 +223,6 @@ export default defineEventHandler(async (event) => {
     backgroundEffects,
     classEffects,
     classSavingThrowEffects,
+    classSkillEffects,
   }
 })

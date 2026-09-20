@@ -261,6 +261,20 @@ describe('useCharacterAbilities — dérivation par canal', () => {
     expect(getEffectiveProficiency('athletics')).toBe('none')
   })
 
+  it('les compétences de classe CHOISIES (F3 tranche 3, dérivées du pick) accordent la maîtrise', () => {
+    const f: AbilitiesFixture = {
+      ...blankFixture,
+      baseAbilityScores: [{ abilityId: 'str', value: 14 }], // mod +2
+      // La compétence de classe choisie est dérivée de character_choices (plus matérialisée).
+      classSkillEffects: [{ type: 'skill_proficiency', value: { skill: 'athletics' } }],
+      proficiencyBonus: 3,
+    }
+    const { getEffectiveProficiency, getSkillModifier } = mountAbilities(f)
+
+    expect(getEffectiveProficiency('athletics')).toBe('proficient')
+    expect(getSkillModifier('str', 'athletics')).toBe(5) // 2 + 3
+  })
+
   it('les JS de la classe principale (F3, dérivés) accordent la maîtrise, sans déborder sur les compétences', () => {
     const f: AbilitiesFixture = {
       ...blankFixture,

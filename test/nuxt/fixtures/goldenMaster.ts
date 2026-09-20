@@ -7,6 +7,7 @@ import { and, eq } from 'drizzle-orm'
 import * as schema from '../../../server/db/schema'
 import { seedElfLineages } from '../../../server/db/seeds/lib/seedElfLineages'
 import { expertiseProgression } from '../../../server/db/seeds/data/expertise'
+import { CLASS_SKILL_CHOICES } from '../../../server/db/seeds/data/classSkills'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../../fixtures/warlockProgression'
 
 // GOLDEN-MASTER — socle du filet d'équivalence création / level-up. Fournit une base libsql (chaîne
@@ -214,6 +215,15 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { featureId: FEATURE.fighterFightingStyle, kind: 'fighting_style', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feature_group', group: 'fighting_style' }, replaceable: false },
     { featureId: FEATURE.paladinFightingStyle, kind: 'fighting_style', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feature_group', group: 'fighting_style' }, replaceable: false },
   ])
+
+  // ── Choix de COMPÉTENCES DE CLASSE (F3 tranche 3) — owner choice_carrier + progression `skill` ──
+  // Le pick est enregistré en character_choices (progression skill) ; la maîtrise est dérivée à la
+  // lecture (deriveClassSkills), plus matérialisée en character_skills. Ids auto : le snapshot résout par nom.
+  for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin]] as const) {
+    const choice = CLASS_SKILL_CHOICES[className]!
+    const [f] = await db.insert(schema.features).values({ name: 'Compétences de classe', featureType: 'choice_carrier', classId, levelRequired: 1 }).returning()
+    await db.insert(schema.progression).values({ featureId: f!.id, kind: 'skill', count: { op: 'fixed', value: choice.count }, optionSource: { type: 'skills', from: choice.from }, replaceable: false })
+  }
 
   // ── Dons (feature_type 'feat', sans classe ni palier de sweep) — ASI/dons à la création ──
   await db.insert(schema.features).values([
