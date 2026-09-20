@@ -6,7 +6,7 @@ import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
-import { abilityEnum, savingThrowKey } from '~~/shared/rules/abilities'
+import { abilityEnum } from '~~/shared/rules/abilities'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
@@ -64,7 +64,7 @@ export const createCharacterSchema = z.object({
   portraitUrl: z.string().max(2000).optional(),
   abilityScores: z.record(z.string(), z.number().int()),
   classSkills: z.array(z.string()),
-  classSavingThrows: z.array(abilityEnum),
+  // classSavingThrows retiré : les JS sont dérivés du porteur de la classe principale (F3 tranche 2).
   armorProficiencyKeys: z.array(z.string()).optional().default([]),
   weaponProficiencyKeys: z.array(z.string()).optional().default([]),
   toolProficiencyChoices: z.array(z.string()).optional().default([]),
@@ -640,12 +640,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  // Les compétences d'historique SEEDÉ sont DÉRIVÉES (effets skill_proficiency du porteur, cf. maîtrises)
-  // et ne transitent plus ici. `backgroundSkills` ne porte que les non-dérivables (historique custom +
-  // Humain variant), matérialisées source 'background'.
+  // Sont DÉRIVÉS du porteur de classe/historique (effets, cf. maîtrises), plus matérialisés ici : les JS
+  // de la 1re classe (saving_throw_proficiency) et les compétences d'historique SEEDÉ (skill_proficiency).
+  // Reste matérialisé : le CHOIX de compétences de classe + `backgroundSkills` non-dérivables (historique
+  // custom + Humain variant).
   const skillRows = [
     ...d.classSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
-    ...d.classSavingThrows.map(key => ({ characterSheetId: sheetId, skillKey: savingThrowKey(key), proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
     ...d.backgroundSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'background' as const, isOverride: false })),
   ]
   if (skillRows.length) {

@@ -5,7 +5,7 @@ import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
 import { deriveBackgroundProficiencies } from '~~/server/utils/backgroundProficiencyDerivation'
-import { deriveClassProficiencies } from '~~/server/utils/classProficiencyDerivation'
+import { deriveClassProficiencies, deriveMainClassSavingThrows } from '~~/server/utils/classProficiencyDerivation'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -192,6 +192,11 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const classEffects = await deriveClassProficiencies(db as any, classIds)
 
+  // JS dérivés de la classe PRINCIPALE seulement (le multiclassage n'accorde pas de JS).
+  const mainClassId = characterSheet.classes.find(c => c.isMain)?.classId ?? characterSheet.classes[0]?.classId ?? null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const classSavingThrowEffects = await deriveMainClassSavingThrows(db as any, mainClassId)
+
   // Le propriétaire est le joueur ; on n'expose que `{ id, name }` (ni e-mail ni provider).
   const [owner] = characterSheet.ownerId != null
     ? await db
@@ -213,5 +218,6 @@ export default defineEventHandler(async (event) => {
     weaponMasteries,
     backgroundEffects,
     classEffects,
+    classSavingThrowEffects,
   }
 })

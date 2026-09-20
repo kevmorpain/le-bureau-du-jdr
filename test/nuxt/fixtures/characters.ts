@@ -19,6 +19,8 @@ export interface AbilitiesFixture {
   speciesEffects: Effect[]
   /** Effets dérivés de l'historique (compétences fixes en skill_proficiency, F3). */
   backgroundEffects?: Effect[]
+  /** JS dérivés de la classe principale (saving_throw_proficiency, F3 tranche 2). */
+  classSavingThrowEffects?: Effect[]
   /** Effets des features débloquées (traits, sous-classe, dons, invocations…). */
   featureEffects: Effect[]
   /** Effets d'ASI (améliorations de caractéristiques) déjà résolus en ability_increase. */
@@ -189,6 +191,7 @@ export function mountAbilities(f: AbilitiesFixture) {
   return useCharacterAbilities(sheet, {
     speciesEffects: computed(() => f.speciesEffects),
     backgroundEffects: computed(() => f.backgroundEffects ?? []),
+    classSavingThrowEffects: computed(() => f.classSavingThrowEffects ?? []),
     featureEffects: computed(() => f.featureEffects),
     asiEffects: computed(() => f.asiEffects),
     proficiencyBonus: computed(() => f.proficiencyBonus),

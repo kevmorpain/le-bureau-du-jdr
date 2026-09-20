@@ -90,16 +90,21 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   // ─── Couche 2 : scores de caractéristiques ────────────────────────────────
 
-  // Effets dérivés de l'historique (maîtrises + compétences fixes) : champs hors du type de relations
-  // Drizzle → accès casté. Définis ici car la couche `abilities` en dérive les compétences.
+  // Effets dérivés de l'historique (maîtrises + compétences fixes) et JS de la classe principale : champs
+  // hors du type de relations Drizzle → accès casté. Définis ici car la couche `abilities` en dérive
+  // compétences et JS.
   const backgroundEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { backgroundEffects?: Effect[] } | undefined)?.backgroundEffects ?? [],
+  )
+  const classSavingThrowEffects = computed<Effect[]>(() =>
+    (characterSheet?.value as { classSavingThrowEffects?: Effect[] } | undefined)?.classSavingThrowEffects ?? [],
   )
 
   const abilities = useCharacterAbilities(characterSheet, {
     speciesEffects: classes.speciesEffects,
     featureEffects: unlockedFeatureEffects,
     backgroundEffects,
+    classSavingThrowEffects,
     asiEffects,
     proficiencyBonus: classes.proficiencyBonus,
   })
