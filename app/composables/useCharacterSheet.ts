@@ -90,9 +90,16 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   // ─── Couche 2 : scores de caractéristiques ────────────────────────────────
 
+  // Effets dérivés de l'historique (maîtrises + compétences fixes) : champs hors du type de relations
+  // Drizzle → accès casté. Définis ici car la couche `abilities` en dérive les compétences.
+  const backgroundEffects = computed<Effect[]>(() =>
+    (characterSheet?.value as { backgroundEffects?: Effect[] } | undefined)?.backgroundEffects ?? [],
+  )
+
   const abilities = useCharacterAbilities(characterSheet, {
     speciesEffects: classes.speciesEffects,
     featureEffects: unlockedFeatureEffects,
+    backgroundEffects,
     asiEffects,
     proficiencyBonus: classes.proficiencyBonus,
   })
@@ -178,11 +185,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     return [...speciesItems, ...classItems]
   })
 
-  // Effets de base (espèce + classe + historique), hors objets magiques. Champs dérivés hors du type
-  // de relations Drizzle → accès casté.
-  const backgroundEffects = computed<Effect[]>(() =>
-    (characterSheet?.value as { backgroundEffects?: Effect[] } | undefined)?.backgroundEffects ?? [],
-  )
+  // Effets de base (espèce + classe + historique), hors objets magiques. `backgroundEffects` est défini
+  // plus haut (la couche abilities en dérive les compétences). Champs hors du type de relations → casté.
   const classEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { classEffects?: Effect[] } | undefined)?.classEffects ?? [],
   )

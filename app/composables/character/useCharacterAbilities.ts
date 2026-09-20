@@ -19,6 +19,7 @@ export const useCharacterAbilities = (
   deps?: {
     speciesEffects: ComputedRef<Effect[]>
     featureEffects: ComputedRef<Effect[]>
+    backgroundEffects?: ComputedRef<Effect[]>
     asiEffects: ComputedRef<Effect[]>
     proficiencyBonus: ComputedRef<number>
   },
@@ -93,7 +94,8 @@ export const useCharacterAbilities = (
       }
     }
     // `saving_throw_proficiency` est projeté sur la même map via la convention `<carac>_save`.
-    const effectSources = [...(deps?.speciesEffects.value ?? []), ...(deps?.featureEffects.value ?? [])]
+    // Les compétences fixes d'historique arrivent par `backgroundEffects` (dérivées, plus matérialisées).
+    const effectSources = [...(deps?.speciesEffects.value ?? []), ...(deps?.featureEffects.value ?? []), ...(deps?.backgroundEffects?.value ?? [])]
     for (const e of effectSources) {
       let key: string | null = null
       if (e.type === 'skill_proficiency') key = e.value.skill

@@ -68,7 +68,9 @@ export const createCharacterSchema = z.object({
   armorProficiencyKeys: z.array(z.string()).optional().default([]),
   weaponProficiencyKeys: z.array(z.string()).optional().default([]),
   toolProficiencyChoices: z.array(z.string()).optional().default([]),
-  backgroundSkills: z.array(z.string()),
+  // Compétences d'historique SEEDÉ : dérivées (F3), plus envoyées. Ne restent ici que les non-dérivables :
+  // compétences d'un historique custom (sans porteur en base) + compétence d'Humain variant.
+  backgroundSkills: z.array(z.string()).optional().default([]),
   selectedLanguages: z.array(z.string()).optional().default([]),
   spellIds: z.array(z.number().int()),
   // Items non résolus côté client : conservés en texte libre.
@@ -638,6 +640,9 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
+  // Les compétences d'historique SEEDÉ sont DÉRIVÉES (effets skill_proficiency du porteur, cf. maîtrises)
+  // et ne transitent plus ici. `backgroundSkills` ne porte que les non-dérivables (historique custom +
+  // Humain variant), matérialisées source 'background'.
   const skillRows = [
     ...d.classSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
     ...d.classSavingThrows.map(key => ({ characterSheetId: sheetId, skillKey: savingThrowKey(key), proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),

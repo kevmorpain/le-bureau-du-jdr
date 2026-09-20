@@ -2,11 +2,12 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { and, eq } from 'drizzle-orm'
 import * as schema from '../../schema'
 import type { Effect } from '../../schema/effects'
+import type { SkillKey } from '~~/shared/rules/skills'
 import { fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
 
-// Pose les maîtrises d'outils/langues FIXES d'un historique en effets sur une feature porteuse
-// (`proficiency_grant`, jamais matérialisée ni affichée) pour que la fiche les DÉRIVE. Les entrées
-// « au choix » restent des deltas du joueur (grants). Idempotent et additif.
+// Pose les maîtrises FIXES d'un historique (compétences, outils, langues) en effets sur une feature
+// porteuse (`proficiency_grant`, jamais matérialisée ni affichée) pour que la fiche les DÉRIVE. Les
+// entrées « au choix » restent des deltas du joueur (grants). Idempotent et additif.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
@@ -15,6 +16,7 @@ export const BACKGROUND_PROFICIENCY_CARRIER_NAME = 'Maîtrises d\'historique'
 
 export interface BackgroundProficiencyData {
   name: string
+  skillProficiencies: string[]
   toolProficiencies: string[]
   languageProficiencies: string[]
 }
@@ -53,9 +55,10 @@ export async function seedBackgroundProficiencies(
   let effectsLinked = 0
 
   for (const bg of data) {
+    const fixedSkills = fixedProficiencies(bg.skillProficiencies ?? [])
     const fixedTools = fixedProficiencies(bg.toolProficiencies ?? [])
     const fixedLangs = fixedProficiencies(bg.languageProficiencies ?? [])
-    if (fixedTools.length === 0 && fixedLangs.length === 0) continue // rien de fixe → pas de porteur
+    if (fixedSkills.length === 0 && fixedTools.length === 0 && fixedLangs.length === 0) continue // rien de fixe → pas de porteur
 
     const background = await db
       .select({ id: schema.backgrounds.id })
@@ -92,6 +95,7 @@ export async function seedBackgroundProficiencies(
     }
 
     const effects: Effect[] = [
+      ...fixedSkills.map((value): Effect => ({ type: 'skill_proficiency', value: { skill: value as SkillKey } })),
       ...fixedTools.map((value): Effect => ({ type: 'tool_proficiency', value })),
       ...fixedLangs.map((value): Effect => ({ type: 'language_proficiency', value })),
     ]

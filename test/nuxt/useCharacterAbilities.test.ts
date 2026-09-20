@@ -224,6 +224,27 @@ describe('useCharacterAbilities — dérivation par canal', () => {
     expect(getSkillModifier('cha', 'intimidation')).toBe(5) // 2 + 3
   })
 
+  it('un effet skill_proficiency d\'HISTORIQUE (F3, dérivé) accorde la maîtrise, sans dégrader une expertise', () => {
+    const f: AbilitiesFixture = {
+      ...blankFixture,
+      baseAbilityScores: [{ abilityId: 'wis', value: 14 }], // mod +2
+      // La compétence est dérivée de l'historique (plus matérialisée en character_skills).
+      backgroundEffects: [
+        { type: 'skill_proficiency', value: { skill: 'insight' } },
+        { type: 'skill_proficiency', value: { skill: 'survival' } },
+      ],
+      // Une expertise stockée sur une compétence aussi donnée par l'historique ne doit pas retomber à proficient.
+      skills: [{ skillKey: 'insight', proficiencyLevel: 'expert' }],
+      proficiencyBonus: 3,
+    }
+    const { getEffectiveProficiency, getSkillModifier } = mountAbilities(f)
+
+    expect(getEffectiveProficiency('survival')).toBe('proficient')
+    expect(getSkillModifier('wis', 'survival')).toBe(5) // 2 + 3
+    expect(getEffectiveProficiency('insight')).toBe('expert') // priorité : expert > proficient dérivé
+    expect(getSkillModifier('wis', 'insight')).toBe(8) // 2 + 3 × 2
+  })
+
   it('un effet saving_throw_proficiency (don Résilient résolu) accorde la maîtrise du JS', () => {
     const f: AbilitiesFixture = {
       ...blankFixture,

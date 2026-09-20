@@ -113,9 +113,11 @@ async function handleSubmit() {
     const bgData = BACKGROUNDS.find(b => b.id === state.value.backgroundId)
     const isCustomBg = bgData?.id === 'custom'
 
+    // Historique SEEDÉ : compétences DÉRIVÉES du porteur (F3), plus envoyées. Custom : pas de porteur en
+    // base → les compétences choisies restent matérialisées (avec la compétence d'Humain variant).
     const backgroundSkills = isCustomBg
       ? state.value.customBackgroundSkills
-      : bgData?.skillProficiencies ?? []
+      : []
 
     const CURRENCY_RE = /^(\d+)\s*(pp|po|pe|pa|pc)$/i
     const CURRENCY_FIELDS: Record<string, string> = { pp: 'pp', po: 'po', pe: 'pe', pa: 'pa', pc: 'pc' }
