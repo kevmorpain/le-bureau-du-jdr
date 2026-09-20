@@ -43,7 +43,7 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 |---|---|---|---|
 | **F1** | ✅ **résolu (#52)** | Upserts de catalogue par NOM SEUL → un homonyme 5.5 écrasait le 2014. Passé en `(name, ruleset)`. | oui (levé) |
 | **F2** | ✅ sous-classe, style de combat, expertise, ASI | `progression`/`character_choices` généralisé aux 4 points de choix ; le front lit le catalogue partout (plus aucune table front). ASI = une progression `asi_or_feat` par palier (owner discret, `count 1`), source unique le seed [`asi.ts`](../server/db/seeds/data/asi.ts) ; expertise = `count` cumulatif ; style de combat = effets appliqués sur la fiche. | non (levé) |
-| **F3** | haute | Aucune dérivation d'origine pour `character_skills` : compétences classe/historique **matérialisées figées** (`characterCreate.ts:575-582`), incohérent avec les maîtrises désormais dérivées. | oui (historiques) |
+| **F3** | ✅ **résolu (#85/#86/#87)** | Compétences classe/historique + JS de classe **dérivés** à la lecture (effets `skill_proficiency`/`saving_throw_proficiency`), plus matérialisés figé. Historique = effets sur le porteur (#85) ; JS = classe **principale** seulement (#86, règle multiclasse) ; compétences de classe = choix `progression skill` + `character_choices` (#87, **migration 0099** pour éviter la fenêtre déploiement→reseed d'un CHOIX). `character_skills` ne garde que overrides joueur + expertise. | non (levé) |
 | **F4** | ✅ partiel (#52) | `loadInvocations` filtré par `ruleset` (fait). Reste : 6 endpoints `/api/catalog/*` créés mais **non consommés** (surface morte doublant les legacy) → repointer le front ou supprimer. | partiellement |
 | **F5** | ✅ partiel (F2 tranche 3) | `WEAPON_PROF_KEYS` (tokens EN morts `longsword`…) + le payload vestigial `armor/weaponProficiencyKeys` de `new.vue` **retirés** (`createCharacter` les ignorait, volet B). Reste `ARMOR_PROF_KEYS` (tokens corrects, référence de `classProficienciesFront.test.ts`) → part avec cette copie front (volet B étape 4). | non |
 | **F6** | moyenne | `originAbilityBonuses`/`weaponMasteries` sérialisés à chaque GET fiche mais **non lus** ; `items.mastery_property` sans consommateur. Pipeline maîtrise d'armes 5.5 **construit mais dormant**. À câbler au seed 5.5. | non |
@@ -123,10 +123,10 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       front-only », cat. A) — ce n'est PAS « hors périmètre » mais un choix perdu à rapatrier en F2.
       Quand F2 le câblera, l'archétype **Guerrier** du golden-master devra voir apparaître son choix
       de style dans le snapshot → diff ATTENDU (relire + `vitest -u`).
-- **P1 — le cœur (EN COURS).** **F2** (généraliser `progression` au 2014, commencer par `subclass` commun à
-  toutes et déjà supporté par `resolve.ts`/`buildCatalog`, retirer le blob `character-builder.ts`
-  au fur et à mesure — F5 s'y fait) **+ F3** (dériver les compétences sur le même mécanisme). Sous
-  golden-master. Sérialisé sur le modèle puis front.
+- **P1 — le cœur : ✅ FAIT.** **F2** (généraliser `progression` au 2014 : sous-classe, style de combat,
+  expertise, ASI — tous mergés+déployés, blob `character-builder.ts` rétréci d'autant) **+ F3** (dériver
+  les compétences classe/historique + JS sur le même mécanisme, tranches #85/#86/#87 mergées+déployées).
+  Le tout sous golden-master (diff relu + `vitest -u` à chaque bascule matérialisation→dérivation).
   - **F2 · sous-classe — tranche 1 (MODÈLE) : ✅ FAIT.** L'identité (`classes.subclass_level`) était
     déjà là (migration 0080) ; manquait la « décision → progression ». Posée comme source unique côté
     DONNÉES : helper `server/db/seeds/data/subclassChoice.ts` (`subclassChoiceFeature(className)` →
