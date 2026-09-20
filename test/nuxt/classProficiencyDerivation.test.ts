@@ -4,19 +4,19 @@ import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import { eq } from 'drizzle-orm'
 import * as srcSchema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
-import { deriveClassProficiencies } from '../../server/utils/classProficiencyDerivation'
+import { deriveClassProficiencies, deriveMainClassSavingThrows } from '../../server/utils/classProficiencyDerivation'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 
 // Nom du porteur (littéral, sans importer seedClass qui dépend de hub:db). La dérivation filtre par
 // featureType + classId, pas par nom → sa valeur exacte est indifférente ici.
 const CARRIER_NAME = 'Maîtrises de la classe'
 
-// Dérivation des maîtrises d'armes/armures de base de classe, bout en bout : `deriveClassProficiencies`
-// doit rendre EXACTEMENT les effets de `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé), l'union
-// en multiclasse, et `[]` sans porteur.
+// Dérivation des maîtrises de base de classe, bout en bout : `deriveClassProficiencies` doit rendre
+// EXACTEMENT les effets de `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé), l'union en multiclasse,
+// `[]` sans porteur ; `deriveMainClassSavingThrows` ne rend QUE les JS de la classe visée (règle PHB :
+// le multiclassage n'accorde pas de JS).
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
@@ -27,13 +27,25 @@ const classIdByName = new Map<string, number>()
 // Classe seedée SANS porteur → doit dériver [].
 let bareClassId = 0
 
-/** Effets attendus du porteur d'une classe (armures = `proficiency`, armes = `weapon_proficiency`). */
-function expectedEffects(className: string): Effect[] {
+const norm = (es: Effect[]) => es.map(e => `${e.type}:${JSON.stringify(e.value)}`).sort()
+
+/** JS attendus du porteur (saving_throw_proficiency), accordés par la 1re classe. */
+function expectedSaves(className: string): Effect[] {
+  return CLASS_PROFICIENCIES[className]!.savingThrows.map((ability): Effect => ({ type: 'saving_throw_proficiency', value: { ability } }))
+}
+
+/** Maîtrises d'armes/armures attendues (armures = `proficiency`, armes = `weapon_proficiency`). */
+function expectedWeaponsArmor(className: string): Effect[] {
   const prof = CLASS_PROFICIENCIES[className]!
   return [
     ...prof.armor.map((value): Effect => ({ type: 'proficiency', value })),
     ...prof.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
   ]
+}
+
+/** Tous les effets du porteur d'une classe. */
+function expectedEffects(className: string): Effect[] {
+  return [...expectedSaves(className), ...expectedWeaponsArmor(className)]
 }
 
 beforeAll(async () => {
@@ -73,9 +85,8 @@ beforeAll(async () => {
 
 describe('deriveClassProficiencies — équivalence dérivé == CLASS_PROFICIENCIES', () => {
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    it(`${className} : dérive exactement ses maîtrises d'armes/armures de base`, async () => {
+    it(`${className} : dérive exactement ses maîtrises de base (JS + armes/armures)`, async () => {
       const effects = await deriveClassProficiencies(orm, [classIdByName.get(className)!])
-      const norm = (es: Effect[]) => es.map(e => `${e.type}:${e.value}`).sort()
       expect(norm(effects)).toEqual(norm(expectedEffects(className)))
     })
   }
@@ -86,7 +97,6 @@ describe('deriveClassProficiencies — multiclasse & cas vides', () => {
     const barbare = classIdByName.get('Barbare')!
     const magicien = classIdByName.get('Magicien')!
     const effects = await deriveClassProficiencies(orm, [barbare, magicien])
-    const norm = (es: Effect[]) => es.map(e => `${e.type}:${e.value}`).sort()
     expect(norm(effects)).toEqual(norm([...expectedEffects('Barbare'), ...expectedEffects('Magicien')]))
   })
 
@@ -96,5 +106,27 @@ describe('deriveClassProficiencies — multiclasse & cas vides', () => {
 
   it('rend [] pour une classe sans porteur (aucune régression pré-seed)', async () => {
     expect(await deriveClassProficiencies(orm, [bareClassId])).toEqual([])
+  })
+})
+
+describe('deriveMainClassSavingThrows — JS de la classe PRINCIPALE seulement', () => {
+  it('rend exactement les 2 JS de la classe visée (et rien d\'autre)', async () => {
+    const guerrier = classIdByName.get('Guerrier')!
+    const effects = await deriveMainClassSavingThrows(orm, guerrier)
+    expect(norm(effects)).toEqual(norm(expectedSaves('Guerrier'))) // str, con — pas d'armes/armures
+  })
+
+  it('multiclasse : n\'accorde QUE les JS de la classe principale, pas ceux de la 2e classe (PHB)', async () => {
+    // On dérive avec l'id de la classe PRINCIPALE (Guerrier) ; la 2e classe (Occultiste : wis/cha) ne doit
+    // PAS apparaître, même si le perso en a un porteur.
+    const guerrier = classIdByName.get('Guerrier')!
+    const effects = await deriveMainClassSavingThrows(orm, guerrier)
+    const abilities = effects.map(e => (e.value as { ability: string }).ability).sort()
+    expect(abilities).toEqual(['con', 'str']) // JS Guerrier uniquement, pas wis/cha de l'Occultiste
+  })
+
+  it('rend [] pour une classe sans porteur ou mainClassId null', async () => {
+    expect(await deriveMainClassSavingThrows(orm, bareClassId)).toEqual([])
+    expect(await deriveMainClassSavingThrows(orm, null)).toEqual([])
   })
 })

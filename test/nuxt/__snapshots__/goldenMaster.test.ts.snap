@@ -121,12 +121,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "con_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "intimidation",
       "source": "class",
     },
@@ -135,12 +129,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "proficiencyLevel": "proficient",
       "skillKey": "perception",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "str_save",
-      "source": "class",
     },
     {
       "isOverride": false,
@@ -281,12 +269,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "con_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "intimidation",
       "source": "class",
     },
@@ -295,12 +277,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "proficiencyLevel": "proficient",
       "skillKey": "perception",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "str_save",
-      "source": "class",
     },
     {
       "isOverride": false,
@@ -458,12 +434,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "con_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "intimidation",
       "source": "class",
     },
@@ -472,12 +442,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "proficiencyLevel": "proficient",
       "skillKey": "perception",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "str_save",
-      "source": "class",
     },
     {
       "isOverride": false,
@@ -642,12 +606,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "con_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "intimidation",
       "source": "class",
     },
@@ -656,12 +614,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "proficiencyLevel": "proficient",
       "skillKey": "perception",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "str_save",
-      "source": "class",
     },
     {
       "isOverride": false,
@@ -832,12 +784,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "con_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "intimidation",
       "source": "class",
     },
@@ -846,12 +792,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "proficiencyLevel": "proficient",
       "skillKey": "perception",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "str_save",
-      "source": "class",
     },
     {
       "isOverride": false,
@@ -991,19 +931,7 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "int_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "investigation",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "wis_save",
       "source": "class",
     },
   ],
@@ -1158,19 +1086,7 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "int_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "investigation",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "wis_save",
       "source": "class",
     },
   ],
@@ -1344,19 +1260,7 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "int_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "investigation",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "wis_save",
       "source": "class",
     },
   ],
@@ -1525,12 +1429,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "cha_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "deception",
       "source": "class",
     },
@@ -1545,12 +1443,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
       "proficiencyLevel": "proficient",
       "skillKey": "investigation",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "wis_save",
-      "source": "class",
     },
   ],
   "spellSlots": [
@@ -1718,12 +1610,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "cha_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "deception",
       "source": "class",
     },
@@ -1738,12 +1624,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
       "proficiencyLevel": "proficient",
       "skillKey": "investigation",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "wis_save",
-      "source": "class",
     },
   ],
   "spellSlots": [
@@ -1892,12 +1772,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "con_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "intimidation",
       "source": "background",
     },
@@ -1906,12 +1780,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
       "proficiencyLevel": "proficient",
       "skillKey": "perception",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "str_save",
-      "source": "class",
     },
   ],
   "spellSlots": [],
@@ -2051,12 +1919,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "con_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "intimidation",
       "source": "background",
     },
@@ -2065,12 +1927,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
       "proficiencyLevel": "proficient",
       "skillKey": "perception",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "str_save",
-      "source": "class",
     },
   ],
   "spellSlots": [
@@ -2229,12 +2085,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "con_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "intimidation",
       "source": "background",
     },
@@ -2243,12 +2093,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
       "proficiencyLevel": "proficient",
       "skillKey": "perception",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "str_save",
-      "source": "class",
     },
   ],
   "spellSlots": [
@@ -2354,20 +2198,8 @@ exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > cré
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "dex_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "insight",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "int_save",
-      "source": "class",
     },
     {
       "isOverride": false,
@@ -2484,20 +2316,8 @@ exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > cré
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "dex_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "insight",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "int_save",
-      "source": "class",
     },
     {
       "isOverride": false,
@@ -2660,20 +2480,8 @@ exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > cré
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",
-      "skillKey": "dex_save",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
       "skillKey": "insight",
       "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "int_save",
-      "source": "class",
     },
     {
       "isOverride": false,

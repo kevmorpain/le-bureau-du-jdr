@@ -176,8 +176,10 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
     const feats = await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id))
     expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(300) // Second souffle (passif)
 
+    // Seule la compétence de classe CHOISIE est matérialisée ; le JS (str_save) est DÉRIVÉ du porteur
+    // de la classe principale (F3 tranche 2) → `classSavingThrows` envoyé est ignoré.
     const skills = await db.select().from(schema.characterSkills).where(eq(schema.characterSkills.characterSheetId, id))
-    expect(skills.map((s: { skillKey: string }) => s.skillKey).sort()).toEqual(['athletics', 'str_save'])
+    expect(skills.map((s: { skillKey: string }) => s.skillKey).sort()).toEqual(['athletics'])
 
     const slots = await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, id))
     expect(slots).toHaveLength(0) // Guerrier = non-lanceur

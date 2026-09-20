@@ -261,6 +261,28 @@ describe('useCharacterAbilities — dérivation par canal', () => {
     expect(getEffectiveProficiency('athletics')).toBe('none')
   })
 
+  it('les JS de la classe principale (F3, dérivés) accordent la maîtrise, sans déborder sur les compétences', () => {
+    const f: AbilitiesFixture = {
+      ...blankFixture,
+      baseAbilityScores: [
+        { abilityId: 'str', value: 14 }, // mod +2
+        { abilityId: 'con', value: 12 }, // mod +1
+      ],
+      // JS dérivés du porteur de la classe principale (plus matérialisés en character_skills).
+      classSavingThrowEffects: [
+        { type: 'saving_throw_proficiency', value: { ability: 'str' } },
+        { type: 'saving_throw_proficiency', value: { ability: 'con' } },
+      ],
+      proficiencyBonus: 3,
+    }
+    const { savingThrows, getEffectiveProficiency } = mountAbilities(f)
+
+    expect(savingThrows.value.str).toEqual({ modifier: 5, proficiency: 'proficient' }) // 2 + 3
+    expect(savingThrows.value.con).toEqual({ modifier: 4, proficiency: 'proficient' }) // 1 + 3
+    expect(savingThrows.value.dex).toEqual({ modifier: 0, proficiency: 'none' })
+    expect(getEffectiveProficiency('athletics')).toBe('none') // ne déborde pas sur les compétences
+  })
+
   it('les JS d\'effet cohabitent avec ceux stockés en `<carac>_save` (JS de classe)', () => {
     const f: AbilitiesFixture = {
       ...blankFixture,
