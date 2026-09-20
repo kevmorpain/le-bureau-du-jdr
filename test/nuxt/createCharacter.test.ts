@@ -8,6 +8,7 @@ import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema, CharacterValidationError } from '../../server/utils/characterCreate'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
+import { CLASS_SKILL_CHOICES } from '../../server/db/seeds/data/classSkills'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '../../server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '../../server/utils/weaponMasteryDerivation'
@@ -100,6 +101,11 @@ beforeAll(async () => {
   await db.insert(schema.features).values({ id: 250, name: 'Archétype martial', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 1 })
   await db.insert(schema.progression).values({ featureId: 250, kind: 'subclass', count: { op: 'fixed', value: 1 }, optionSource: { type: 'subclasses' }, replaceable: false })
 
+  // Owner de choix de COMPÉTENCES DE CLASSE (F3 tranche 3) : progression `skill` → le pick va en
+  // character_choices, dérivé à la lecture (plus matérialisé en character_skills).
+  await db.insert(schema.features).values({ id: 260, name: 'Compétences de classe', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 1 })
+  await db.insert(schema.progression).values({ featureId: 260, kind: 'skill', count: { op: 'fixed', value: CLASS_SKILL_CHOICES.Guerrier.count }, optionSource: { type: 'skills', from: CLASS_SKILL_CHOICES.Guerrier.from }, replaceable: false })
+
   await db.insert(schema.features).values([
     { id: 401, name: 'Regard de deux esprits', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
     { id: 402, name: 'Armure des ombres', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
@@ -176,10 +182,13 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
     const feats = await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id))
     expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(300) // Second souffle (passif)
 
-    // Seule la compétence de classe CHOISIE est matérialisée ; le JS (str_save) est DÉRIVÉ du porteur
-    // de la classe principale (F3 tranche 2) → `classSavingThrows` envoyé est ignoré.
+    // F3 : rien n'est matérialisé en character_skills à la création ici. La compétence de classe choisie
+    // (athletics) va en character_choices (dérivée à la lecture, tranche 3) ; le JS (str) est dérivé du
+    // porteur (tranche 2, classSavingThrows ignoré). Restent stockés ailleurs : overrides + expertise.
     const skills = await db.select().from(schema.characterSkills).where(eq(schema.characterSkills.characterSheetId, id))
-    expect(skills.map((s: { skillKey: string }) => s.skillKey).sort()).toEqual(['athletics'])
+    expect(skills).toEqual([])
+    const choices = await db.select({ v: schema.characterChoices.selectedValue }).from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, id))
+    expect(choices.map((c: { v: string | null }) => c.v).sort()).toEqual(['athletics'])
 
     const slots = await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, id))
     expect(slots).toHaveLength(0) // Guerrier = non-lanceur

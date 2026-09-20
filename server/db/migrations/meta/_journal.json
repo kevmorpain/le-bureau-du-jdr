@@ -694,6 +694,13 @@
       "when": 1747872056000,
       "tag": "0098_fighting_style_choice_carrier",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "6",
+      "when": 1747872057000,
+      "tag": "0099_class_skill_choice_carriers",
+      "breakpoints": true
     }
   ]
 }

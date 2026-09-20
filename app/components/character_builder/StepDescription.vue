@@ -58,6 +58,20 @@
         </button>
       </div>
 
+      <p
+        v-if="classSkillConflicts.length"
+        class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-300"
+      >
+        ⚠️ Conflit : <strong>{{ conflictLabels }}</strong> {{ classSkillConflicts.length > 1 ? 'sont déjà accordées' : 'est déjà accordée' }} par ta classe. Ce doublon est gaspillé.
+        <button
+          type="button"
+          class="underline font-semibold ml-1 hover:text-amber-200"
+          @click="goTo('class')"
+        >
+          Revenir aux compétences de classe
+        </button>
+      </p>
+
       <div v-if="state.backgroundId === 'custom'" class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 flex flex-col gap-4">
         <div>
           <label class="block text-xs font-bold uppercase tracking-widest text-muted mb-2">Nom de l'historique</label>
@@ -248,7 +262,11 @@ const {
   LANGUAGES,
   languageChoiceCount,
   TOOL_CHOICE_MAP,
+  classSkillConflicts,
+  goTo,
 } = useCharacterBuilder()
+
+const conflictLabels = computed(() => classSkillConflicts.value.map(k => SKILLS.find(s => s.key === k)?.label ?? k).join(', '))
 
 // Gating : les historiques d'extension (source gatée) ne sont visibles qu'avec le toggle « Étendu ».
 const { extended } = useExtendedContent()

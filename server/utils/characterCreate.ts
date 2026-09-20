@@ -6,6 +6,7 @@ import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
+import { resolveClassSkillProgressionId, classSkillChoiceWriteStmts } from '~~/server/utils/classSkillChoice'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
@@ -229,7 +230,8 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   const invocationIds = d.invocationIds ?? []
   const metamagicIds = d.metamagicIds ?? []
   const expertiseSkills = d.expertiseSkills ?? []
-  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0
+  const classSkills = d.classSkills ?? []
+  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0 || classSkills.length > 0
   if (!needsCatalog) return
 
   const catalog = await buildCatalog(db, { classIds: [classId] })
@@ -277,6 +279,17 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     const expChoice = choices.find(c => c.kind === 'expertise')
     if (!expChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir d'expertise au niveau ${d.level}.`)
     if (expertiseSkills.length > expChoice.count) throw new CharacterValidationError(`Trop de compétences d'expertise (${expertiseSkills.length} pour un maximum de ${expChoice.count}).`)
+  }
+
+  // Compétences de classe : count + appartenance à la liste de la classe (autoritaire serveur). Les
+  // options viennent du catalogue (from-list, ou toutes pour le Barde).
+  if (classSkills.length > 0) {
+    const skillChoice = choices.find(c => c.kind === 'skill')
+    if (!skillChoice) throw new CharacterValidationError(`Cette classe ne définit pas de choix de compétences.`)
+    if (classSkills.length > skillChoice.count) throw new CharacterValidationError(`Trop de compétences de classe (${classSkills.length} pour un maximum de ${skillChoice.count}).`)
+    const allowed = new Set(skillChoice.options.map(o => o.value))
+    const bad = classSkills.find(s => !allowed.has(s))
+    if (bad) throw new CharacterValidationError(`La compétence de classe « ${bad} » n'est pas dans la liste de la classe.`)
   }
 }
 
@@ -640,20 +653,24 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  // Sont DÉRIVÉS du porteur de classe/historique (effets, cf. maîtrises), plus matérialisés ici : les JS
-  // de la 1re classe (saving_throw_proficiency) et les compétences d'historique SEEDÉ (skill_proficiency).
-  // Reste matérialisé : le CHOIX de compétences de classe + `backgroundSkills` non-dérivables (historique
+  // Sont DÉRIVÉS (effets/choix, cf. maîtrises) et ne sont plus matérialisés ici : JS de la 1re classe,
+  // compétences d'historique SEEDÉ, et le CHOIX de compétences de classe (stocké en character_choices,
+  // dérivé par deriveClassSkills). Reste matérialisé : `backgroundSkills` non-dérivables (historique
   // custom + Humain variant).
   const skillRows = [
-    ...d.classSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })),
     ...d.backgroundSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'background' as const, isOverride: false })),
   ]
   if (skillRows.length) {
     stmts.push(db.insert(schema.characterSkills).values(skillRows))
   }
 
-  // Après skillRows dans le batch : l'upsert 'expert' élève la compétence de classe insérée juste
-  // avant en 'proficient' (dépendance d'ordre).
+  // Choix de compétences de classe → character_choices (la maîtrise est dérivée à la lecture).
+  const classSkillProgressionId = await resolveClassSkillProgressionId(db, cls.id)
+  if (d.classSkills.length > 0 && classSkillProgressionId != null) {
+    stmts.push(...classSkillChoiceWriteStmts(db, sheetId, classSkillProgressionId, d.classSkills))
+  }
+
+  // L'expertise matérialise sa propre ligne 'expert' (upsert, sans dépendre d'une 'proficient' préalable).
   if (d.expertiseSkills?.length) {
     stmts.push(...expertiseWriteStmts(db, sheetId, expertiseProgressionId, d.expertiseSkills))
   }

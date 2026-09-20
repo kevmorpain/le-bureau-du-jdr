@@ -344,6 +344,16 @@ export function useCharacterBuilder() {
     const variant = state.value.isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : []
     return [...new Set([...state.value.skills, ...bgSkills, ...variant])]
   })
+  // Compétences de classe CHOISIES en doublon avec une source FIXE déjà accordée (historique + Humain
+  // variant) : le doublon est gaspillé (F3). On l'INDIQUE (StepClass/StepDescription) pour que le joueur
+  // change son choix de classe — non bloquant. L'étape Classe étant AVANT l'historique, ça n'apparaît
+  // qu'une fois l'historique choisi.
+  const classSkillConflicts = computed<string[]>(() => {
+    const bg = backgroundData.value
+    const bgSkills = bg?.id === 'custom' ? state.value.customBackgroundSkills : (bg?.skillProficiencies ?? [])
+    const owned = new Set([...bgSkills, ...(state.value.isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : [])])
+    return state.value.skills.filter(s => owned.has(s))
+  })
   // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
   // sans expertise (changement de classe) ne doit pas survivre.
   watch(proficientSkills, (prof) => {
@@ -778,6 +788,7 @@ export function useCharacterBuilder() {
     needsExpertise,
     expertiseExpected,
     proficientSkills,
+    classSkillConflicts,
     // Pacte
     needsPactBoon,
     // Invocations
