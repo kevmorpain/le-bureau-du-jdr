@@ -128,6 +128,15 @@
           </button>
         </div>
       </div>
+
+      <SkilledChoicePicker
+        v-if="state.featureId != null && featNeedsSkilled(state.featureId)"
+        v-model:skills="state.featSkills"
+        v-model:tools="state.featTools"
+        :owned-skills="ownedSkills"
+        :owned-tools="ownedTools"
+        class="mt-4"
+      />
     </div>
 
     <div
@@ -148,6 +157,9 @@ const {
   pickedClass,
   finalAbilities,
   featNeedsAbility,
+  featNeedsSkilled,
+  ownedSkills,
+  ownedTools,
   ABILITIES,
   ABILITY_SHORT,
   ABILITY_LABELS,
@@ -163,6 +175,8 @@ const allowedAbilities = (featureId: number | null): AbilityKey[] =>
 function pickFeat(featureId: number) {
   state.value.featureId = featureId
   state.value.featAbility = null
+  state.value.featSkills = []
+  state.value.featTools = []
 }
 
 const remaining = computed(() =>

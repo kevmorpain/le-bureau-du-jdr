@@ -12,7 +12,9 @@ import {
   formatMod,
   type AbilityKey,
 } from '~/data/character-builder'
+import { SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import type { CharacterSheet } from '~~/server/utils/drizzle'
+import type { Effect } from '~~/server/db/schema/effects'
 
 // ─── D&D 5e 2014 Rule Data ────────────────────────────────────────────────────
 
@@ -78,6 +80,9 @@ export interface LevelUpState {
   asiBonuses: AbilityBonuses
   featureId: number | null
   featAbility: AbilityKey | null
+  // Don Doué : 3 maîtrises au choix (compétences + outils, total = SKILLED_FEAT_COUNT).
+  featSkills: string[]
+  featTools: string[]
   newSkills: string[]
   newCantripIds: number[]
   newSpellIds: number[]
@@ -116,6 +121,8 @@ const INIT_STATE: LevelUpState = {
   asiBonuses: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
   featureId: null,
   featAbility: null,
+  featSkills: [],
+  featTools: [],
   newSkills: [],
   newCantripIds: [],
   newSpellIds: [],
@@ -161,6 +168,16 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const featNeedsAbility = (featureId: number | null): boolean => {
     if (featureId == null) return false
     return (getFeatById(featureId)?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice')
+  }
+  const featNeedsSkilled = (featureId: number | null): boolean => {
+    if (featureId == null) return false
+    return (getFeatById(featureId)?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'skilled_choice')
+  }
+  const buildFeatChoices = (s: LevelUpState): { ability?: AbilityKey, skills?: string[], tools?: string[] } | null => {
+    if (s.featureId == null) return null
+    if (featNeedsSkilled(s.featureId)) return { skills: s.featSkills, tools: s.featTools }
+    if (s.featAbility) return { ability: s.featAbility }
+    return null
   }
 
   // ── Derived character data ─────────────────────────────────────────────────
@@ -210,6 +227,36 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return (charSheet.value?.skills ?? [])
       .filter((s: any) => s.proficiencyLevel === 'proficient' || s.proficiencyLevel === 'expert')
       .map((s: any) => s.skillKey)
+  })
+
+  // Maîtrises DÉRIVÉES portées par la fiche GET (F3 : historique + compétences de classe + JS ne sont
+  // plus matérialisés en character_skills). Les octrois d'espèce/dons imbriqués n'y sont pas (rares).
+  const derivedProficiencyEffects = computed<Effect[]>(() => {
+    const s = charSheet.value as any
+    if (!s) return []
+    return [...(s.backgroundEffects ?? []), ...(s.classEffects ?? []), ...(s.classSkillEffects ?? [])] as Effect[]
+  })
+  // Outils choisis (ex. « Outils de voleur » d'un historique) : stockés en overrides, ABSENTS du payload
+  // GET → fetch dédié (comme la fiche). Sert à exclure du picker Doué.
+  const { data: proficiencyOverridesData } = useFetch<Array<{ proficiencyType: string, value: string, action: string }>>(
+    () => (charSheet.value?.id != null ? `/api/character_sheets/${charSheet.value.id}/proficiency-overrides` : null),
+    { default: () => [] },
+  )
+
+  // Compétences maîtrisées COMPLÈTES (stockées + dérivées) : exclues du picker Doué. Distinct de
+  // `proficientSkills` (stocké seul, conservé tel quel pour l'éligibilité expertise).
+  const ownedSkills = computed<string[]>(() => {
+    const derived = derivedProficiencyEffects.value
+      .filter(e => e.type === 'skill_proficiency')
+      .map(e => (e.value as { skill: string }).skill)
+    return [...new Set([...proficientSkills.value, ...derived])]
+  })
+  const ownedTools = computed<string[]>(() => {
+    const fromEffects = derivedProficiencyEffects.value.filter(e => e.type === 'tool_proficiency').map(e => e.value as string)
+    const ov = proficiencyOverridesData.value ?? []
+    const grants = ov.filter(o => o.proficiencyType === 'tool' && o.action === 'grant').map(o => o.value)
+    const revokes = new Set(ov.filter(o => o.proficiencyType === 'tool' && o.action === 'revoke').map(o => o.value))
+    return [...new Set([...fromEffects, ...grants])].filter(t => !revokes.has(t))
   })
 
   const currentSpellIds = computed<number[]>(() => {
@@ -453,6 +500,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         if (s.asiChoice === 'feat') {
           if (s.featureId == null) return false
           if (featNeedsAbility(s.featureId) && !s.featAbility) return false
+          if (featNeedsSkilled(s.featureId) && (s.featSkills.length + s.featTools.length) !== SKILLED_FEAT_COUNT) return false
           return true
         }
         if (s.asiChoice !== 'asi') return false
@@ -554,7 +602,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         asiChoice: s.asiChoice,
         asiBonuses: s.asiChoice === 'asi' ? s.asiBonuses : null,
         featureId: s.asiChoice === 'feat' ? s.featureId : null,
-        featChoices: s.asiChoice === 'feat' && s.featAbility ? { ability: s.featAbility } : null,
+        featChoices: s.asiChoice === 'feat' ? buildFeatChoices(s) : null,
         newSkills: s.newSkills,
         newCantripIds: s.newCantripIds,
         newSpellIds: s.newSpellIds,
@@ -580,6 +628,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     conMod,
     expertSkills,
     proficientSkills,
+    ownedSkills,
+    ownedTools,
     currentSpellIds,
     // Picked class
     pickedClass,
@@ -628,6 +678,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     resetWizard,
     submit,
     featNeedsAbility,
+    featNeedsSkilled,
     // Re-exports for step components
     CLASSES,
     ABILITIES,

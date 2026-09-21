@@ -248,6 +248,7 @@ import {
   armorTypeLabels,
   languageLabels,
 } from '~~/shared/utils/item'
+import { TOOL_CATEGORIES } from '~~/shared/rules/tools'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
@@ -356,54 +357,11 @@ const armorAddOptions = [
 
 const languageAddOptions = Object.entries(languageLabels).map(([value, label]) => ({ label, value }))
 
-const toolAddOptions = [
-  { type: 'label' as const, label: 'Outils d\'artisan' },
-  { label: 'Outils de forgeron', value: 'Outils de forgeron' },
-  { label: 'Outils de charpentier', value: 'Outils de charpentier' },
-  { label: 'Outils de cordonnier', value: 'Outils de cordonnier' },
-  { label: 'Ustensiles de cuisinier', value: 'Ustensiles de cuisinier' },
-  { label: 'Outils de bijoutier', value: 'Outils de bijoutier' },
-  { label: 'Outils de maçon', value: 'Outils de maçon' },
-  { label: 'Matériel de peintre', value: 'Matériel de peintre' },
-  { label: 'Outils de potier', value: 'Outils de potier' },
-  { label: 'Outils de tanneur', value: 'Outils de tanneur' },
-  { label: 'Outils de tisserand', value: 'Outils de tisserand' },
-  { label: 'Outils de souffleur de verre', value: 'Outils de souffleur de verre' },
-  { label: "Matériel d'alchimiste", value: "Matériel d'alchimiste" },
-  { label: 'Matériel de brasseur', value: 'Matériel de brasseur' },
-  { label: 'Matériel de calligraphe', value: 'Matériel de calligraphe' },
-  { label: 'Outils de cartographe', value: 'Outils de cartographe' },
-  { label: 'Outils de bricoleur', value: 'Outils de bricoleur' },
-  { label: 'Outils de menuisier', value: 'Outils de menuisier' },
-  { type: 'separator' as const },
-  { type: 'label' as const, label: 'Instruments de musique' },
-  { label: 'Cornemuse', value: 'Cornemuse' },
-  { label: 'Cor', value: 'Cor' },
-  { label: 'Flûte', value: 'Flûte' },
-  { label: 'Luth', value: 'Luth' },
-  { label: 'Lyre', value: 'Lyre' },
-  { label: 'Tambour', value: 'Tambour' },
-  { label: 'Viole', value: 'Viole' },
-  { label: 'Chalemie', value: 'Chalemie' },
-  { label: 'Flûte de pan', value: 'Flûte de pan' },
-  { label: 'Tympanon', value: 'Tympanon' },
-  { type: 'separator' as const },
-  { type: 'label' as const, label: 'Jeux' },
-  { label: 'Jeu de dés', value: 'Jeu de dés' },
-  { label: 'Jeu de cartes', value: 'Jeu de cartes' },
-  { label: "Jeu d'échecs draconiques", value: "Jeu d'échecs draconiques" },
-  { label: 'Jeu des Dragons', value: 'Jeu des Dragons' },
-  { type: 'separator' as const },
-  { type: 'label' as const, label: 'Outils spéciaux' },
-  { label: 'Outils de voleur', value: 'Outils de voleur' },
-  { label: 'Kit de déguisement', value: 'Kit de déguisement' },
-  { label: "Kit d'empoisonneur", value: "Kit d'empoisonneur" },
-  { label: 'Kit de contrefaçon', value: 'Kit de contrefaçon' },
-  { label: "Kit d'herboriste", value: "Kit d'herboriste" },
-  { label: 'Outils de navigateur', value: 'Outils de navigateur' },
-  { label: 'Véhicules (terrestres)', value: 'Véhicules (terrestres)' },
-  { label: 'Véhicules (maritimes)', value: 'Véhicules (maritimes)' },
-]
+const toolAddOptions = Object.entries(TOOL_CATEGORIES).flatMap(([category, tools], i) => [
+  ...(i > 0 ? [{ type: 'separator' as const }] : []),
+  { type: 'label' as const, label: category },
+  ...tools.map(t => ({ label: t, value: t })),
+])
 
 const addWeaponOpen = ref(false)
 const addWeaponSelect = ref('')
