@@ -8,6 +8,8 @@ import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { resolveClassSkillProgressionId, classSkillChoiceWriteStmts } from '~~/server/utils/classSkillChoice'
 import { abilityEnum } from '~~/shared/rules/abilities'
+import { skillEnum } from '~~/shared/rules/skills'
+import { ALL_TOOLS } from '~~/shared/rules/tools'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
@@ -34,6 +36,16 @@ const ARCANUM_SPELL_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 
   8: 'arcanum_8',
   9: 'arcanum_9',
 }
+
+// Choix portés par un don : caractéristique (demi-don), sort (Faveur des fées), ou maîtrises au
+// choix (Doué → compétences + outils). Membership validée ici ; le compte reste front-autoritaire,
+// comme pour les autres choix de don.
+export const featChoicesSchema = z.object({
+  ability: abilityEnum.optional(),
+  spellId: z.number().int().positive().optional(),
+  skills: z.array(skillEnum).optional(),
+  tools: z.array(z.string()).refine(arr => arr.every(t => ALL_TOOLS.includes(t)), 'Outil inconnu').optional(),
+}).nullable().optional()
 
 export const createCharacterSchema = z.object({
   name: z.string().min(1).max(100),
@@ -99,13 +111,13 @@ export const createCharacterSchema = z.object({
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
       featureId: z.number().int().positive(),
-      choices: z.object({ ability: abilityEnum.optional(), spellId: z.number().int().positive().optional() }).nullable().optional(),
+      choices: featChoicesSchema,
     }))
     .optional()
     .default([]),
   // Don bonus hors palier (homebrew MJ).
   bonusFeatureId: z.number().int().positive().nullable().optional(),
-  bonusFeatChoices: z.object({ ability: abilityEnum.optional(), spellId: z.number().int().positive().optional() }).nullable().optional(),
+  bonusFeatChoices: featChoicesSchema,
   // Cumulatif à la création d'un perso de haut niveau : un sort par palier débloqué.
   arcaneMysteria: z.array(z.object({
     spellLevel: z.number().int().min(6).max(9),

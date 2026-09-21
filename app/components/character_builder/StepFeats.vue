@@ -69,6 +69,14 @@
         </div>
       </div>
 
+      <SkilledChoicePicker
+        v-if="state.bonusFeatureId != null && featNeedsSkilled(state.bonusFeatureId)"
+        v-model:skills="skilledSkills"
+        v-model:tools="skilledTools"
+        :owned-skills="proficientSkills"
+        :owned-tools="ownedTools"
+      />
+
       <button
         v-if="state.bonusFeatureId != null"
         type="button"
@@ -84,7 +92,7 @@
 <script lang="ts" setup>
 import type { AbilityKey } from '~/data/character-builder'
 
-const { state, featNeedsAbility } = useCharacterBuilder()
+const { state, featNeedsAbility, featNeedsSkilled, proficientSkills, ownedTools } = useCharacterBuilder()
 const { feats, pending, getById } = useFeats()
 
 const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [
@@ -111,6 +119,22 @@ function setAbility(featureId: number, ability: AbilityKey) {
     [featureId]: { ability },
   }
 }
+
+function skilledModel(key: 'skills' | 'tools') {
+  return computed<string[]>({
+    get: () => (state.value.bonusFeatureId != null ? state.value.featChoices[state.value.bonusFeatureId]?.[key] ?? [] : []),
+    set: (val) => {
+      const id = state.value.bonusFeatureId
+      if (id == null) return
+      state.value.featChoices = {
+        ...state.value.featChoices,
+        [id]: { ...state.value.featChoices[id], [key]: val },
+      }
+    },
+  })
+}
+const skilledSkills = skilledModel('skills')
+const skilledTools = skilledModel('tools')
 
 function toggle(featId: number) {
   state.value.bonusFeatureId = state.value.bonusFeatureId === featId ? null : featId

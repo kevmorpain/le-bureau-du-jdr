@@ -182,6 +182,16 @@
             </button>
           </div>
         </div>
+
+        <SkilledChoicePicker
+          v-if="state.asiFeats[lvl] != null && featNeedsSkilled(state.asiFeats[lvl])"
+          :skills="state.featChoices[state.asiFeats[lvl]!]?.skills ?? []"
+          :tools="state.featChoices[state.asiFeats[lvl]!]?.tools ?? []"
+          :owned-skills="proficientSkills"
+          :owned-tools="ownedTools"
+          @update:skills="setFeatSkilled(state.asiFeats[lvl]!, 'skills', $event)"
+          @update:tools="setFeatSkilled(state.asiFeats[lvl]!, 'tools', $event)"
+        />
       </div>
 
       <div
@@ -214,6 +224,10 @@ const {
   formatMod,
   featNeedsAbility,
   featNeedsSpell,
+  featNeedsSkilled,
+  featChoiceComplete,
+  proficientSkills,
+  ownedTools,
 } = useCharacterBuilder()
 
 const { feats, getById: getFeatById } = useFeats()
@@ -237,6 +251,13 @@ function setFeatSpell(featureId: number, spellId: number) {
   state.value.featChoices = {
     ...state.value.featChoices,
     [featureId]: { ...state.value.featChoices[featureId], spellId },
+  }
+}
+
+function setFeatSkilled(featureId: number, key: 'skills' | 'tools', val: string[]) {
+  state.value.featChoices = {
+    ...state.value.featChoices,
+    [featureId]: { ...state.value.featChoices[featureId], [key]: val },
   }
 }
 
@@ -328,7 +349,7 @@ function isPalierComplete(lvl: number): boolean {
   const choice = state.value.asiChoice[lvl]
   if (!choice) return false
   if (choice === 'asi') return remainingForLevel(lvl) === 0
-  return !!state.value.asiFeats[lvl]
+  return !!state.value.asiFeats[lvl] && featChoiceComplete(state.value.asiFeats[lvl])
 }
 
 function palierSummary(lvl: number): string {

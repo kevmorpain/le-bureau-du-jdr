@@ -117,6 +117,11 @@ beforeAll(async () => {
   const [eff] = await db.insert(schema.effects).values({ type: 'spell_grant', value: { level: 1, spellcastingAbility: 'cha', spellName: 'Armure de mage', countPerLongRest: 0 } }).returning()
   await db.insert(schema.featureEffects).values({ featureId: 401, effectId: eff.id })
 
+  // Don Doué : `feat` + marqueur skilled_choice, pour tester la persistance des choix (compétences/outils).
+  await db.insert(schema.features).values({ id: 810, name: 'Doué', featureType: 'feat', levelRequired: 1 })
+  const [skilledEff] = await db.insert(schema.effects).values({ type: 'other', value: { kind: 'skilled_choice' } }).returning()
+  await db.insert(schema.featureEffects).values({ featureId: 810, effectId: skilledEff.id })
+
   await db.insert(schema.spells).values([
     { id: 500, name: 'Appel de familier', level: 1, castingTime: '1 action', range: 0, duration: '1 heure', schoolId: 1 },
     { id: 501, name: 'Armure de mage', level: 1, castingTime: '1 action', range: 0, duration: '8 heures', schoolId: 1 },
@@ -192,6 +197,25 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
 
     const slots = await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, id))
     expect(slots).toHaveLength(0) // Guerrier = non-lanceur
+  })
+})
+
+describe('createCharacter — don Doué (choix compétences/outils)', () => {
+  it('persiste les compétences et outils choisis dans character_features.choices', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      bonusFeatureId: 810,
+      bonusFeatChoices: { skills: ['perception', 'stealth'], tools: ['Outils de voleur'] },
+    }), OWNER)
+
+    const [feat] = await db.select().from(schema.characterFeatures)
+      .where(and(eq(schema.characterFeatures.characterSheetId, id), eq(schema.characterFeatures.featureId, 810)))
+    expect(feat.source).toBe('bonus')
+    expect(feat.choices).toEqual({ skills: ['perception', 'stealth'], tools: ['Outils de voleur'] })
+  })
+
+  it('rejette un outil ou une compétence inconnus (validation de membership)', () => {
+    expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { tools: ['Bâton magique'] } })).toThrow()
+    expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { skills: ['voler'] } })).toThrow()
   })
 })
 

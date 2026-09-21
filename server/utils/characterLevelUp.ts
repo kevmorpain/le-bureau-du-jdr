@@ -7,8 +7,7 @@ import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { applyMetamagicChanges } from '~~/server/utils/metamagic'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
-import { CharacterValidationError } from '~~/server/utils/characterCreate'
-import { abilityEnum } from '~~/shared/rules/abilities'
+import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 
@@ -34,7 +33,7 @@ export const levelUpSchema = z.object({
   asiChoice: z.enum(['asi', 'feat']).nullable().optional(),
   asiBonuses: z.record(z.string(), z.number().int().min(0).max(2)).nullable().optional(),
   featureId: z.number().int().positive().nullable().optional(),
-  featChoices: z.object({ ability: abilityEnum.optional() }).nullable().optional(),
+  featChoices: featChoicesSchema,
   newSkills: z.array(z.string()).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),

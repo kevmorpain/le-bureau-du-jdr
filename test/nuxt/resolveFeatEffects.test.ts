@@ -47,7 +47,38 @@ describe('resolveFeatEffects — effets sans choix', () => {
   })
 })
 
+// Don Doué (« Skilled », PHB 2014) : 3 maîtrises au choix, compétences OU outils dans n'importe quelle
+// combinaison. Marqueur `other:{kind:'skilled_choice'}` → une maîtrise par entrée de `choices.skills`/`tools`.
+const skilled: Effect[] = [{ type: 'other', value: { kind: 'skilled_choice' } }]
+
+describe('resolveFeatEffects — don Doué', () => {
+  it('résout les compétences en skill_proficiency et les outils en tool_proficiency', () => {
+    expect(resolveFeatEffects(skilled, { skills: ['perception', 'stealth'], tools: ['Outils de voleur'] })).toEqual([
+      { type: 'skill_proficiency', value: { skill: 'perception' } },
+      { type: 'skill_proficiency', value: { skill: 'stealth' } },
+      { type: 'tool_proficiency', value: 'Outils de voleur' },
+    ])
+  })
+
+  it('n\'accorde rien tant qu\'aucune maîtrise n\'est choisie', () => {
+    expect(resolveFeatEffects(skilled, null)).toEqual([])
+    expect(resolveFeatEffects(skilled, {})).toEqual([])
+    expect(resolveFeatEffects(skilled, { skills: [], tools: [] })).toEqual([])
+  })
+})
+
 describe('resolveFeatEffects → useCharacterAbilities (bout en bout)', () => {
+  it('Doué : les 3 compétences choisies deviennent maîtrisées', () => {
+    const { getEffectiveProficiency } = mountAbilities({
+      ...blankFixture,
+      featureEffects: resolveFeatEffects(skilled, { skills: ['perception', 'stealth', 'sleight_of_hand'], tools: [] }),
+    })
+    expect(getEffectiveProficiency('perception')).toBe('proficient')
+    expect(getEffectiveProficiency('stealth')).toBe('proficient')
+    expect(getEffectiveProficiency('sleight_of_hand')).toBe('proficient')
+    expect(getEffectiveProficiency('arcana')).toBe('none')
+  })
+
   it('Résilient (Constitution) : +1 en CON et maîtrise du JS de Constitution', () => {
     const f: AbilitiesFixture = {
       ...blankFixture,

@@ -2,6 +2,7 @@ import { useStorage } from '@vueuse/core'
 import { evaluate } from '~~/shared/utils/formula'
 import type { FormulaContext } from '~~/shared/utils/formula'
 import type { AbilityScoreKey, Effect } from '~~/server/db/schema/effects'
+import type { SkillKey } from '~~/shared/rules/skills'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
 import { useCharacterConditions, binaryConditions } from './character/useCharacterConditions'
@@ -12,12 +13,15 @@ import { useCharacterBackground } from './character/useCharacterBackground'
 import { useCharacterIdentity } from './character/useCharacterIdentity'
 import { sheetTextField } from './character/sheetField'
 
+export type FeatChoices = { ability?: string, spellId?: number, skills?: string[], tools?: string[] } | null
+
 /**
  * Résout les effets « à choix » d'un don selon les choix enregistrés (`character_features.choices`).
- * Sans choix enregistré, l'effet n'accorde rien. `choices` ne porte qu'un `ability` → seul
- * `count: 1` est représentable aujourd'hui.
+ * Sans choix enregistré, l'effet n'accorde rien. `ability_increase_choice`/`saving_throw_proficiency_choice`
+ * lisent `choices.ability` (count 1) ; le marqueur `skilled_choice` (don Doué) lit `choices.skills`/`tools`
+ * → une maîtrise de compétence/outil par entrée.
  */
-export const resolveFeatEffects = (effects: Effect[], choices: { ability?: string } | null): Effect[] =>
+export const resolveFeatEffects = (effects: Effect[], choices: FeatChoices): Effect[] =>
   effects.flatMap((e) => {
     if (e.type === 'ability_increase_choice') {
       const ability = choices?.ability
@@ -34,6 +38,12 @@ export const resolveFeatEffects = (effects: Effect[], choices: { ability?: strin
         type: 'saving_throw_proficiency' as const,
         value: { ability: ability as AbilityScoreKey },
       }]
+    }
+    if (e.type === 'other' && (e.value as { kind?: string }).kind === 'skilled_choice') {
+      return [
+        ...(choices?.skills ?? []).map((skill): Effect => ({ type: 'skill_proficiency', value: { skill: skill as SkillKey } })),
+        ...(choices?.tools ?? []).map((tool): Effect => ({ type: 'tool_proficiency', value: tool })),
+      ]
     }
     return [e]
   })
@@ -55,7 +65,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         classId: feature.classId,
         subclassId: feature.subclassId,
         levelRequired: feature.levelRequired,
-        choices: (cf as any).choices as { ability?: string } | null ?? null,
+        choices: (cf as any).choices as FeatChoices ?? null,
         effects: (feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[],
       }
     }),
@@ -139,14 +149,20 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         maxUses,
         source: (cf as any).source as string | null ?? null,
         classLevel: (cf as any).classLevel as number | null ?? null,
-        choices: (cf as any).choices as { ability?: string } | null ?? null,
+        choices: (cf as any).choices as FeatChoices ?? null,
         effects: feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? [],
       }
     }),
   )
 
+  // Les effets des DONS sont résolus (choix → effets concrets) : sans ça, les outils du don Doué
+  // (marqueur `skilled_choice`) n'atteindraient pas `allEffects` → l'affichage des maîtrises d'outils.
+  // Les compétences passent déjà par le canal résolu de la couche abilities (`unlockedFeatureEffects`).
   const classFeatureEffects = computed<Effect[]>(() =>
-    resolvedFeatures.value.flatMap(f => f.effects as Effect[]),
+    resolvedFeatures.value.flatMap(f =>
+      f.featureType === 'feat'
+        ? resolveFeatEffects(f.effects as Effect[], f.choices)
+        : (f.effects as Effect[])),
   )
 
   // ─── Liste unifiée des capacités (espèce + classe + sous-classe) ──────────

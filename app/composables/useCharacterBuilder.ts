@@ -20,6 +20,7 @@ import {
   type AbilityKey,
   type SubraceData,
 } from '~/data/character-builder'
+import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -124,7 +125,7 @@ export interface BuilderState {
 
   // Choix résolus des dons (ex : caractéristique +1 d'Observateur), indexés par
   // features.id du don. Vaut pour le don bonus ET les dons d'ASI.
-  featChoices: Record<number, { ability?: AbilityKey, spellId?: number }>
+  featChoices: Record<number, { ability?: AbilityKey, spellId?: number, skills?: string[], tools?: string[] }>
 
   // Arcanums mystiques (Occultiste niv 11/13/15/17). À la création d'un perso de haut
   // niveau, TOUS les arcanums débloqués (≤ niveau) sont configurables → map niveau de
@@ -268,10 +269,21 @@ export function useCharacterBuilder() {
     return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'fey_touched_spells')
   }
 
+  // Le don Doué (`other:{kind:'skilled_choice'}`) accorde 3 maîtrises AU CHOIX (compétences ou outils).
+  const featNeedsSkilled = (featureId: number | null | undefined): boolean => {
+    if (featureId == null) return false
+    const feat = getFeatById(featureId)
+    return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'skilled_choice')
+  }
+
   const featChoiceComplete = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return true
     if (featNeedsAbility(featureId) && !state.value.featChoices[featureId]?.ability) return false
     if (featNeedsSpell(featureId) && !state.value.featChoices[featureId]?.spellId) return false
+    if (featNeedsSkilled(featureId)) {
+      const c = state.value.featChoices[featureId]
+      if (((c?.skills?.length ?? 0) + (c?.tools?.length ?? 0)) !== SKILLED_FEAT_COUNT) return false
+    }
     return true
   }
 
@@ -353,6 +365,14 @@ export function useCharacterBuilder() {
     const bgSkills = bg?.id === 'custom' ? state.value.customBackgroundSkills : (bg?.skillProficiencies ?? [])
     const owned = new Set([...bgSkills, ...(state.value.isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : [])])
     return state.value.skills.filter(s => owned.has(s))
+  })
+  // Outils déjà maîtrisés (historique) : exclus du picker Doué pour ne pas gaspiller un choix. On ne
+  // retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
+  // dans selectedToolProficiencies) + les résolutions choisies.
+  const ownedTools = computed<string[]>(() => {
+    const fixed = (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t))
+    const chosen = Object.values(state.value.selectedToolProficiencies).filter(Boolean)
+    return [...new Set([...fixed, ...chosen])]
   })
   // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
   // sans expertise (changement de classe) ne doit pas survivre.
@@ -789,6 +809,7 @@ export function useCharacterBuilder() {
     expertiseExpected,
     proficientSkills,
     classSkillConflicts,
+    ownedTools,
     // Pacte
     needsPactBoon,
     // Invocations
@@ -807,6 +828,7 @@ export function useCharacterBuilder() {
     getFeatById,
     featNeedsAbility,
     featNeedsSpell,
+    featNeedsSkilled,
     featChoiceComplete,
     // Arcanums / Livre des secrets
     needsArcaneMysterium,
