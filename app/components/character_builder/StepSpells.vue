@@ -313,7 +313,7 @@
 </template>
 
 <script lang="ts" setup>
-import { CANTRIPS_KNOWN, SPELLS_KNOWN } from '~/data/character-builder'
+import { spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 
 const {
   state,
@@ -431,9 +431,10 @@ const schoolOptions = computed(() => {
   return options
 })
 
-const isPrepared = computed(() => ['cleric', 'druid', 'paladin', 'ranger', 'wizard'].includes(state.value.classId ?? ''))
-const isGrimoire = computed(() => state.value.classId === 'wizard')
-const isHalfCaster = computed(() => ['paladin', 'ranger'].includes(state.value.classId ?? ''))
+const spellLearning = computed(() => spellLearningOf(state.value.classId ?? ''))
+const isPrepared = computed(() => spellLearning.value === 'prepared' || spellLearning.value === 'spellbook')
+const isGrimoire = computed(() => spellLearning.value === 'spellbook')
+const isHalfCaster = computed(() => spellcastingInfo.value?.type === 'half')
 
 const hasSpellsTab = computed(() => Object.keys(spellsByLevel.value).length > 0)
 
@@ -445,8 +446,8 @@ const spellsTabLabel = computed(() => {
 
 const spellsNeeded = computed(() => {
   const cls = state.value.classId ?? ''
-  if (SPELLS_KNOWN[cls]) return SPELLS_KNOWN[cls]![state.value.level - 1] ?? 0
-  if (['cleric', 'druid', 'paladin', 'ranger', 'wizard'].includes(cls)) {
+  if (spellLearning.value === 'known') return spellsKnownAt(cls, state.value.level)
+  if (isPrepared.value) {
     const ab = spellcastingInfo.value?.ability
     const mod = ab ? abilityMod(finalAbilities.value[ab] ?? 10) : 0
     const levelVal = isHalfCaster.value ? Math.floor(state.value.level / 2) : state.value.level

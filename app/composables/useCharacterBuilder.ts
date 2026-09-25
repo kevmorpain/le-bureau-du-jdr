@@ -15,12 +15,11 @@ import {
   hpAtLevel,
   spellSlotsAtLevel,
   maxSpellLevelAtLevel,
-  CANTRIPS_KNOWN,
-  SPELLS_KNOWN,
   type AbilityKey,
   type SubraceData,
 } from '~/data/character-builder'
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
+import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -505,7 +504,7 @@ export function useCharacterBuilder() {
 
   const cantripsNeeded = computed(() => {
     if (!classData.value?.id) return 0
-    return CANTRIPS_KNOWN[classData.value.id]?.[level.value - 1] ?? 0
+    return cantripsKnownAt(classData.value.id, level.value)
   })
 
   // ─── Arcanums mystiques (Occultiste niv 11/13/15/17) ──────────────────────
@@ -644,9 +643,8 @@ export function useCharacterBuilder() {
         // Livre des secrets anciens : 2 sorts rituels obligatoires si l'invocation est choisie.
         // (Flag positionné par le composant via watchEffect — cf. StepSpells.)
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
-        const preparedCasters = ['cleric', 'druid', 'paladin', 'ranger', 'wizard']
-        if (preparedCasters.includes(s.classId ?? '')) return cantripsDone
-        const spellsNeeded = SPELLS_KNOWN[s.classId ?? '']?.[level.value - 1] ?? 0
+        if (spellLearningOf(s.classId ?? '') !== 'known') return cantripsDone
+        const spellsNeeded = spellsKnownAt(s.classId ?? '', level.value)
         const spellsDone = spellsNeeded === 0 || s.selectedSpells.length >= spellsNeeded
         if (needsPactBoon.value && s.pactBoon === 'tome' && s.selectedPactBoonCantripIds.length < 3) return false
         return cantripsDone && spellsDone

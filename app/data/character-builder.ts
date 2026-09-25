@@ -1554,21 +1554,6 @@ export {
   maxSpellLevelForLevel as maxSpellLevelAtLevel,
 } from '~~/shared/rules/spellSlots'
 
-export const CANTRIPS_KNOWN: Partial<Record<string, number[]>> = {
-  bard:     [2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4],
-  cleric:   [3,3,3,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5],
-  druid:    [2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4],
-  sorcerer: [4,4,4,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6],
-  warlock:  [2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4],
-  wizard:   [3,3,3,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5],
-}
-
-export const SPELLS_KNOWN: Partial<Record<string, number[]>> = {
-  bard:     [4,5,6,7,8,9,10,11,12,14,15,15,16,18,19,19,20,22,22,22],
-  sorcerer: [2,3,4,5,6,7,8,9,10,11,12,12,13,13,14,14,15,15,15,15],
-  warlock:  [2,3,4,5,6,7,8,9,10,10,11,11,12,12,13,13,14,15,15,15],
-}
-
 // Ré-exports sous les noms historiques (source unique : shared/rules/math.ts).
 export {
   profBonusAtLevel,

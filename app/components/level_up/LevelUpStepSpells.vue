@@ -229,9 +229,12 @@
         <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts mineurs</p>
         <span
           class="text-xs font-semibold"
-          :class="state.newCantripIds.length >= cantripsToLearn ? 'text-green-400' : 'text-amber-400'"
+          :class="state.newCantripIds.length >= requiredCantripPicks ? 'text-green-400' : 'text-amber-400'"
         >{{ state.newCantripIds.length }}/{{ cantripsToLearn }}</span>
       </div>
+      <p v-if="!pending && requiredCantripPicks < cantripsToLearn" class="text-xs text-muted mb-2">
+        Seulement {{ requiredCantripPicks }} sort(s) mineur(s) encore disponible(s) dans le catalogue.
+      </p>
       <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
         <UTooltip
@@ -258,9 +261,12 @@
         <p class="text-xs font-bold uppercase tracking-widest text-muted">{{ spellsTabLabel }}</p>
         <span
           class="text-xs font-semibold"
-          :class="state.newSpellIds.length >= spellsToLearn ? 'text-green-400' : 'text-amber-400'"
+          :class="state.newSpellIds.length >= requiredSpellPicks ? 'text-green-400' : 'text-amber-400'"
         >{{ state.newSpellIds.length }}/{{ spellsToLearn }}</span>
       </div>
+      <p v-if="!pending && requiredSpellPicks < spellsToLearn" class="text-xs text-muted mb-2">
+        Seulement {{ requiredSpellPicks }} sort(s) encore disponible(s) dans le catalogue.
+      </p>
       <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
       <template v-else>
         <div
@@ -320,8 +326,6 @@ const {
   charClasses,
   finalAbilities,
   currentSpellIds,
-  CANTRIPS_KNOWN,
-  SPELLS_KNOWN,
   ABILITY_SHORT,
   abilityMod,
   profBonusAtLevel,
@@ -329,6 +333,15 @@ const {
   needsArcaneMysterium,
   arcaneMysteriumSpellLevel,
   picksBookOfAncientSecrets,
+  spellLearning,
+  cantripsToLearn,
+  spellsToLearn,
+  classSpells: allSpells,
+  classSpellsPending: pending,
+  learnableCantrips,
+  learnableSpells,
+  requiredCantripPicks,
+  requiredSpellPicks,
 } = useLevelUp(inject('charSheet') as any)
 
 const { t } = useI18n()
@@ -356,7 +369,7 @@ const slotPool = computed<'regular' | 'pact'>(() =>
 // via combinedSpellSlots) : l'aperçu doit refléter TOUTES les classes lanceuses, pas seulement celle
 // qu'on monte, sinon il est faux en multiclasse (bug B6). Mono-classe : résultat identique à avant.
 const oldSlots = computed((): number[] => {
-  if (!pickedClass.value?.spellcasting || state.value.fromLevel === 0) return Array(9).fill(0)
+  if (!pickedClass.value?.spellcasting) return Array(9).fill(0)
   return combinedSpellSlots(casterClasses.value)[slotPool.value] ?? Array(9).fill(0)
 })
 
@@ -387,11 +400,8 @@ const spellCastStats = computed(() => {
   ]
 })
 
-const clsId = computed(() => pickedClass.value?.id ?? '')
-const PREPARED_CASTERS = new Set(['cleric', 'druid', 'paladin', 'ranger', 'wizard'])
-const KNOWN_CASTERS = new Set(['bard', 'sorcerer', 'warlock'])
-const isPreparedCaster = computed(() => PREPARED_CASTERS.has(clsId.value))
-const isGrimoire = computed(() => clsId.value === 'wizard')
+const isPreparedCaster = computed(() => spellLearning.value === 'prepared' || spellLearning.value === 'spellbook')
+const isGrimoire = computed(() => spellLearning.value === 'spellbook')
 
 const spellsTabLabel = computed(() => {
   if (isGrimoire.value) return 'Grimoire (nouveaux sorts)'
@@ -399,26 +409,7 @@ const spellsTabLabel = computed(() => {
   return 'Sorts connus'
 })
 
-const cantripsTarget = computed(() => CANTRIPS_KNOWN[clsId.value]?.[state.value.toLevel - 1] ?? 0)
-const cantripsOld = computed(() => CANTRIPS_KNOWN[clsId.value]?.[Math.max(0, state.value.fromLevel - 1)] ?? 0)
-const cantripsToLearn = computed(() => Math.max(0, cantripsTarget.value - cantripsOld.value))
-
-const spellsToLearn = computed(() => {
-  if (isGrimoire.value) return 2
-  if (KNOWN_CASTERS.has(clsId.value)) {
-    const target = SPELLS_KNOWN[clsId.value]?.[state.value.toLevel - 1] ?? 0
-    const old = SPELLS_KNOWN[clsId.value]?.[Math.max(0, state.value.fromLevel - 1)] ?? 0
-    return Math.max(0, target - old)
-  }
-  return 0
-})
-
 const { extendedQuery } = useExtendedContent()
-
-const { data: allSpells, pending } = useFetch('/api/spells', {
-  query: computed(() => ({ className: pickedClass.value?.dbName ?? '', ...extendedQuery.value })),
-  immediate: true,
-})
 
 const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
   query: extendedQuery,
@@ -449,7 +440,7 @@ const familiarSpell = computed(() =>
 const arcanumSpellsCandidates = computed(() => {
   const lvl = arcaneMysteriumSpellLevel.value
   if (!lvl) return [] as any[]
-  return ((allSpells.value ?? []) as any[]).filter(s => s.level === lvl)
+  return allSpells.value.filter(s => s.level === lvl)
 })
 
 function toggleArcanumSpell(id: number) {
@@ -505,23 +496,11 @@ watch(allSpells, (spells) => {
   spellNamesById.value = map
 }, { immediate: true })
 
-const cantrips = computed(() => ((allSpells.value ?? []) as any[]).filter(s => s.level === 0))
-
-const maxSpellLevel = computed(() => {
-  for (let i = 8; i >= 0; i--) {
-    if ((newSlots.value[i] ?? 0) > 0) return i + 1
-  }
-  return 0
-})
-
 const spellsByLevel = computed(() => {
-  const max = maxSpellLevel.value
   const result: Record<number, any[]> = {}
-  for (const spell of ((allSpells.value ?? []) as any[])) {
-    if (spell.level >= 1 && spell.level <= max) {
-      if (!result[spell.level]) result[spell.level] = []
-      result[spell.level].push(spell)
-    }
+  for (const spell of learnableSpells.value) {
+    if (!result[spell.level]) result[spell.level] = []
+    result[spell.level]!.push(spell)
   }
   return result
 })
@@ -529,7 +508,7 @@ const spellsByLevel = computed(() => {
 const schoolOptions = computed(() => {
   const seen = new Set<string>()
   const options: { label: string, value: string | null }[] = [{ label: 'Toutes les écoles', value: null }]
-  for (const s of ((allSpells.value ?? []) as any[]).sort((a, b) => (a.school?.name ?? '').localeCompare(b.school?.name ?? ''))) {
+  for (const s of [...allSpells.value].sort((a, b) => (a.school?.name ?? '').localeCompare(b.school?.name ?? ''))) {
     if (s.school?.name && !seen.has(s.school.name)) {
       seen.add(s.school.name)
       options.push({ label: t(`schools.${s.school.name}`, s.school.name), value: s.school.name })
@@ -548,7 +527,7 @@ function applyFilters(list: any[]) {
   })
 }
 
-const filteredCantrips = computed(() => applyFilters(cantrips.value))
+const filteredCantrips = computed(() => applyFilters(learnableCantrips.value))
 
 const filteredSpellsByLevel = computed(() => {
   const result: Record<number, any[]> = {}
