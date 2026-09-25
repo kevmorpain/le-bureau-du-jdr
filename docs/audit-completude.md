@@ -141,11 +141,38 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   scores stockés reste le patron 2014 des autres bonus au choix.
 - Découvert : signalé par l'utilisateur (2026-09-16). **✅ RÉSOLU.**
 
+### B11 — Multiclasser vers un lanceur ne propose aucun sort · front (calcul) — ✅ RÉSOLU
+- **Symptôme** : au level-up, prendre un 1er niveau d'une classe lanceuse (ex. Guerrier 3 →
+  Occultiste 1) n'offrait ni sort mineur ni sort connu — l'étape Magie affichait seulement
+  « Emplacements mis à jour ».
+- **Racine** : `LevelUpStepSpells.vue` calculait le dû comme `TABLE[toLevel - 1] − TABLE[Math.max(0,
+  fromLevel - 1)]`. En multiclasse `fromLevel = 0` (`LevelUpStepClass.vue`), le `Math.max` relisait la
+  valeur du **niveau 1** → delta nul. Défauts voisins du même composant : grimoire toujours à 2 (il en
+  faut 6 au niveau 1 de Magicien), niveau des sorts proposés tiré des emplacements **combinés** (un
+  Clerc 5 → Magicien 1 se voyait proposer des sorts de niveau 3), « Avant » forcé à vide en
+  multiclasse, aucun choix exigé par la validation. Données : le **Rôdeur 2014 connaît** ses sorts
+  (AideDD) mais était codé « préparé » → jamais de sort à choisir, même en mono-classe ; Occultiste
+  niveau 18 = 15 sorts connus au lieu de 14.
+- **Règle** (AideDD, multiclassage) : sorts connus et préparés déterminés **classe par classe**, comme
+  un mono-classé — seul le niveau **dans la classe** compte (exemple rôdeur 4/magicien 3).
+- **Correctif** : source unique `shared/rules/spellsKnown.ts` (tables, mode connus/préparés/grimoire,
+  `spellsLearnedOnLevelUp`) consommée par le level-up **et** le builder ; `useLevelUp` porte le dû, le
+  niveau max (`maxSpellLevelForLevel` de la classe) et la validation, plafonnée aux candidats encore
+  inconnus du catalogue (un catalogue incomplet — 4 sorts mineurs de Clerc seedés — ne bloque pas).
+  Tests : `test/unit/spellsKnown.test.ts`, `test/nuxt/levelUpSpells.test.ts` (composant monté).
+- **Hors périmètre, à suivre** : aucune validation **serveur** des sorts (nombre, liste de classe,
+  niveau) ni à la création ni au level-up ; `character_spells` ne rattache pas un sort à sa classe
+  (la fiche choisit une classe lanceuse « active ») ; pas de **remplacement** d'un sort connu au
+  level-up ; le **builder** compte le grimoire du Magicien comme des sorts préparés (mod + niveau au
+  lieu de 6 + 2/niveau) ; lanceurs de tiers (Chevalier occulte, Filou ésotérique) sans étape Magie.
+- Découvert : signalé par l'utilisateur (2026-09-23). **✅ RÉSOLU.**
+
 ## Suspects à vérifier (audit non encore fait)
-- Level-up en **multiclasse** (flux de choix, résolution d'IDs de classe).
+- Level-up en **multiclasse** hors sorts (flux de choix, résolution d'IDs de classe) — sorts : B11.
 - Invocations **échangeables** (`replaceable`) au level-up.
 - Choix accordés par une **sous-classe** à plusieurs niveaux.
-- Complétude des **sorts / cantrips connus** à la création d'un caster de haut niveau.
+- Complétude des **sorts / cantrips connus** à la création d'un caster de haut niveau (grimoire du
+  Magicien au builder : cf. B11).
 
 ## Protocole d'audit proposé (~30 min)
 Pour **chaque** classe : créer un perso **niveau 20**, dérouler le wizard, cocher que **chaque**

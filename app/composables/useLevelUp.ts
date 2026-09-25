@@ -5,15 +5,15 @@ import {
   ABILITY_LABELS,
   SKILLS,
   spellSlotsAtLevel,
-  CANTRIPS_KNOWN,
-  SPELLS_KNOWN,
   profBonusAtLevel,
   abilityMod,
   formatMod,
   type AbilityKey,
 } from '~/data/character-builder'
 import { SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
-import type { CharacterSheet } from '~~/server/utils/drizzle'
+import { spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsKnown'
+import { maxSpellLevelForLevel } from '~~/shared/rules/spellSlots'
+import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 
 // ─── D&D 5e 2014 Rule Data ────────────────────────────────────────────────────
@@ -456,6 +456,50 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return state.value.toLevel >= startsAt
   })
 
+  // ── Nouveaux sorts (étape Magie) ──────────────────────────────────────────
+
+  const spellLearning = computed(() => spellLearningOf(state.value.pickedClassId ?? ''))
+  const spellsLearned = computed(() => hasSpellcasting.value
+    ? spellsLearnedOnLevelUp(state.value.pickedClassId ?? '', state.value.fromLevel, state.value.toLevel)
+    : { cantrips: 0, spells: 0 })
+  const cantripsToLearn = computed(() => spellsLearned.value.cantrips)
+  const spellsToLearn = computed(() => spellsLearned.value.spells)
+
+  // Plafonné par le niveau DANS la classe montée, pas par les emplacements combinés du multiclassage.
+  const maxLearnableSpellLevel = computed(() => {
+    const type = pickedClass.value?.spellcasting?.type
+    return type && hasSpellcasting.value ? maxSpellLevelForLevel(type, state.value.toLevel) : 0
+  })
+
+  const { extendedQuery } = useExtendedContent()
+  const classSpellsQuery = computed(() => ({
+    className: hasSpellcasting.value ? pickedClass.value?.dbName ?? '' : '',
+    ...extendedQuery.value,
+  }))
+  const { data: classSpellsData, pending: classSpellsPending } = useAsyncData<Spell[]>(
+    () => `level-up-class-spells:${JSON.stringify(classSpellsQuery.value)}`,
+    () => (classSpellsQuery.value.className
+      ? $fetch<Spell[]>('/api/spells', { query: classSpellsQuery.value })
+      : Promise.resolve([])),
+    { default: () => [] },
+  )
+  const classSpells = computed<Spell[]>(() => classSpellsData.value ?? [])
+
+  const learnableCantrips = computed(() => classSpells.value.filter(s => s.level === 0))
+  const learnableSpells = computed(() =>
+    classSpells.value.filter(s => s.level >= 1 && s.level <= maxLearnableSpellLevel.value),
+  )
+
+  // Choix exigés = dû, plafonné aux candidats encore inconnus : un catalogue incomplet ne doit pas
+  // bloquer l'étape. Pendant le chargement, on exige le dû entier.
+  const requiredPicks = (due: number, candidates: Spell[]) => {
+    if (classSpellsPending.value) return due
+    const available = candidates.filter(s => !currentSpellIds.value.includes(s.id)).length
+    return Math.min(due, available)
+  }
+  const requiredCantripPicks = computed(() => requiredPicks(cantripsToLearn.value, learnableCantrips.value))
+  const requiredSpellPicks = computed(() => requiredPicks(spellsToLearn.value, learnableSpells.value))
+
   // ── Active steps ───────────────────────────────────────────────────────────
 
   const activeSteps = computed(() => ALL_LU_STEPS.filter(s => {
@@ -516,6 +560,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       }
 
       case 'spells':
+        if (s.newCantripIds.length < requiredCantripPicks.value) return false
+        if (s.newSpellIds.length < requiredSpellPicks.value) return false
         if (s.pactBoon === 'tome' && s.pactBoonCantripIds.length < 3) return false
         if (needsArcaneMysterium.value && s.arcaneMysteriumSpellId === null) return false
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
@@ -649,6 +695,16 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     expertiseDueForClassLevel,
     needsMulticlassSkills,
     hasSpellcasting,
+    spellLearning,
+    cantripsToLearn,
+    spellsToLearn,
+    maxLearnableSpellLevel,
+    classSpells,
+    classSpellsPending,
+    learnableCantrips,
+    learnableSpells,
+    requiredCantripPicks,
+    requiredSpellPicks,
     needsPactBoon,
     needsInvocations,
     canReplaceInvocation,
@@ -689,8 +745,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     abilityMod,
     formatMod,
     spellSlotsAtLevel,
-    CANTRIPS_KNOWN,
-    SPELLS_KNOWN,
     toast,
   }
 }
