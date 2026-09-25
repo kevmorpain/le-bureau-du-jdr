@@ -133,7 +133,7 @@
         v-if="state.featureId != null && featNeedsSkilled(state.featureId)"
         v-model:skills="state.featSkills"
         v-model:tools="state.featTools"
-        :owned-skills="ownedSkills"
+        :owned-skills="proficientSkills"
         :owned-tools="ownedTools"
         class="mt-4"
       />
@@ -158,7 +158,7 @@ const {
   finalAbilities,
   featNeedsAbility,
   featNeedsSkilled,
-  ownedSkills,
+  proficientSkills,
   ownedTools,
   ABILITIES,
   ABILITY_SHORT,

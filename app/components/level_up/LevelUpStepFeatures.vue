@@ -93,7 +93,7 @@
       </p>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
         <button
-          v-for="sk in eligibleSkills"
+          v-for="sk in eligibleExpertiseSkills"
           :key="sk.key"
           class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
           :class="state.expertiseSkills.includes(sk.key)
@@ -267,7 +267,7 @@ const {
   knownMetamagicIds,
   effectivePactBoon,
   knownSpellNames,
-  proficientSkills,
+  eligibleExpertiseSkills,
   expertSkills,
   CLASSES,
   SKILLS,
@@ -347,12 +347,6 @@ const availableStyles = computed(() =>
   (fightingStyleData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>,
 )
 
-// Compétences maîtrisées mais pas encore d'expertise : on exclut celles déjà 'expert' (paliers
-// précédents) pour ne pas laisser regagner l'expertise d'une compétence qui l'a déjà.
-const eligibleSkills = computed(() => {
-  const already = new Set(expertSkills.value)
-  return SKILLS.filter(s => proficientSkills.value.includes(s.key) && !already.has(s.key))
-})
 const alreadyExpertLabels = computed(() => {
   const already = new Set(expertSkills.value)
   return SKILLS.filter(s => already.has(s.key)).map(s => s.label)

@@ -48,45 +48,38 @@ export const resolveFeatEffects = (effects: Effect[], choices: FeatChoices): Eff
     return [e]
   })
 
-export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
-  // ─── Couche 1 : classes, espèce ───────────────────────────────────────────
+/**
+ * Effets alimentant la couche abilities, dérivés du seul payload GET (ni fetch ni stockage). Fiche,
+ * level-up et lentille de sorts doivent tous passer par ici : une reconstruction partielle fait diverger
+ * maîtrises et caractéristiques d'un écran à l'autre.
+ */
+export const useAbilityEffectInputs = (characterSheet?: Ref<CharacterSheet | null | undefined>) => {
+  const sheetClasses = computed(() => characterSheet?.value?.classes ?? [])
 
-  const classes = useCharacterClasses(characterSheet)
-
-  // ─── Features brutes (sans formule, pour filtrage par niveau) ──────────────
-
-  const rawFeatures = computed(() =>
-    (characterSheet?.value?.features ?? []).map((cf) => {
-      const feature = cf.feature!
-      return {
-        id: feature.id,
-        name: feature.name,
-        featureType: feature.featureType,
-        classId: feature.classId,
-        subclassId: feature.subclassId,
-        levelRequired: feature.levelRequired,
-        choices: (cf as any).choices as FeatChoices ?? null,
-        effects: (feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[],
-      }
-    }),
+  const speciesEffects = computed<Effect[]>(() =>
+    (characterSheet?.value?.species?.speciesFeatures ?? []).flatMap(sf =>
+      (sf.feature?.featureEffects ?? []).map(fe => fe.effect).filter(Boolean),
+    ) as Effect[],
   )
 
-  const unlockedFeatureEffects = computed<Effect[]>(() => {
-    const ccs = classes.characterClasses.value
-    return rawFeatures.value.flatMap((f) => {
-      if (f.featureType === 'species_trait') return f.effects
-      if (f.featureType === 'eldritch_invocation') return f.effects
-      if (f.featureType === 'feat') return resolveFeatEffects(f.effects, f.choices)
-      const lvlReq = f.levelRequired ?? 1
-      const owner = f.featureType === 'class_feature'
-        ? ccs.find(c => c.classId === f.classId)
-        : ccs.find(c => c.subclass?.id === f.subclassId)
-      return owner && owner.level >= lvlReq ? f.effects : []
+  const featureEffects = computed<Effect[]>(() => {
+    const ccs = sheetClasses.value
+    return (characterSheet?.value?.features ?? []).flatMap((cf) => {
+      const feature = cf.feature!
+      const effects = (feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[]
+      if (feature.featureType === 'species_trait') return effects
+      if (feature.featureType === 'eldritch_invocation') return effects
+      if (feature.featureType === 'feat') return resolveFeatEffects(effects, (cf as { choices?: FeatChoices }).choices ?? null)
+      const lvlReq = feature.levelRequired ?? 1
+      const owner = feature.featureType === 'class_feature'
+        ? ccs.find(c => c.classId === feature.classId)
+        : ccs.find(c => c.subclass?.id === feature.subclassId)
+      return owner && owner.level >= lvlReq ? effects : []
     })
   })
 
   const asiEffects = computed<Effect[]>(() => {
-    const ccs = classes.characterClasses.value
+    const ccs = sheetClasses.value
     return (characterSheet?.value?.abilityScoreImprovements ?? [])
       .filter((asi) => {
         const c = ccs.find(cc => cc.classId === asi.classId)
@@ -98,28 +91,33 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       }))
   })
 
-  // ─── Couche 2 : scores de caractéristiques ────────────────────────────────
-
-  // Effets dérivés de l'historique (maîtrises + compétences fixes) et JS de la classe principale : champs
-  // hors du type de relations Drizzle → accès casté. Définis ici car la couche `abilities` en dérive
-  // compétences et JS.
+  // Maîtrises dérivées par le GET (historique, JS de la classe principale, compétences de classe
+  // choisies) : champs hors du type de relations Drizzle → accès casté.
   const backgroundEffects = computed<Effect[]>(() =>
-    (characterSheet?.value as { backgroundEffects?: Effect[] } | undefined)?.backgroundEffects ?? [],
+    (characterSheet?.value as { backgroundEffects?: Effect[] } | null | undefined)?.backgroundEffects ?? [],
   )
   const classSavingThrowEffects = computed<Effect[]>(() =>
-    (characterSheet?.value as { classSavingThrowEffects?: Effect[] } | undefined)?.classSavingThrowEffects ?? [],
+    (characterSheet?.value as { classSavingThrowEffects?: Effect[] } | null | undefined)?.classSavingThrowEffects ?? [],
   )
   const classSkillEffects = computed<Effect[]>(() =>
-    (characterSheet?.value as { classSkillEffects?: Effect[] } | undefined)?.classSkillEffects ?? [],
+    (characterSheet?.value as { classSkillEffects?: Effect[] } | null | undefined)?.classSkillEffects ?? [],
   )
 
+  return { speciesEffects, featureEffects, asiEffects, backgroundEffects, classSavingThrowEffects, classSkillEffects }
+}
+
+export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
+  // ─── Couche 1 : classes, espèce ───────────────────────────────────────────
+
+  const classes = useCharacterClasses(characterSheet)
+
+  // ─── Couche 2 : scores de caractéristiques ────────────────────────────────
+
+  const abilityInputs = useAbilityEffectInputs(characterSheet)
+  const { speciesEffects, backgroundEffects } = abilityInputs
+
   const abilities = useCharacterAbilities(characterSheet, {
-    speciesEffects: classes.speciesEffects,
-    featureEffects: unlockedFeatureEffects,
-    backgroundEffects,
-    classSavingThrowEffects,
-    classSkillEffects,
-    asiEffects,
+    ...abilityInputs,
     proficiencyBonus: classes.proficiencyBonus,
   })
 
@@ -157,7 +155,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   // Les effets des DONS sont résolus (choix → effets concrets) : sans ça, les outils du don Doué
   // (marqueur `skilled_choice`) n'atteindraient pas `allEffects` → l'affichage des maîtrises d'outils.
-  // Les compétences passent déjà par le canal résolu de la couche abilities (`unlockedFeatureEffects`).
+  // Les compétences passent déjà par le canal résolu de la couche abilities (`useAbilityEffectInputs`).
   const classFeatureEffects = computed<Effect[]>(() =>
     resolvedFeatures.value.flatMap(f =>
       f.featureType === 'feat'
@@ -210,13 +208,13 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     return [...speciesItems, ...classItems]
   })
 
-  // Effets de base (espèce + classe + historique), hors objets magiques. `backgroundEffects` est défini
-  // plus haut (la couche abilities en dérive les compétences). Champs hors du type de relations → casté.
+  // Effets de base (espèce + classe + historique), hors objets magiques. `backgroundEffects` vient des
+  // entrées de la couche abilities (qui en dérive les compétences). Champs hors du type de relations → casté.
   const classEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { classEffects?: Effect[] } | undefined)?.classEffects ?? [],
   )
   const baseAllEffects = computed<Effect[]>(() => [
-    ...classes.speciesEffects.value,
+    ...speciesEffects.value,
     ...classFeatureEffects.value,
     ...backgroundEffects.value,
     ...classEffects.value,
@@ -337,7 +335,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     speed: classes.speed,
     flyingSpeed,
     speciesTraits: classes.speciesTraits,
-    speciesEffects: classes.speciesEffects,
+    speciesEffects,
     characterLevel: classes.characterLevel,
     mainClass: classes.mainClass,
     multiClass: classes.multiClass,
