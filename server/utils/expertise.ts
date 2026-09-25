@@ -1,9 +1,25 @@
 import { and, eq, sql } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
+import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
+import { buildCatalog } from '~~/server/utils/catalog'
+import { resolveChoices } from '~~/shared/rules/resolve'
+import { skillEnum } from '~~/shared/rules/skills'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
+
+export const expertiseSkillsSchema = z.array(skillEnum)
+  .refine(skills => new Set(skills).size === skills.length, 'Compétence d\'expertise en double')
+
+// Le count est CUMULATIF : seul le delta niveau précédent → `newLevel` est dû. Même projection que le
+// level-up front (useCatalog.choicesForClassLevel), niveau 0 inclus pour une classe multiclassée.
+export async function expertiseGainedAtLevel(db: Db, classId: number, newLevel: number): Promise<number> {
+  const catalog = await buildCatalog(db, { classIds: [classId] })
+  const countAt = (level: number) =>
+    resolveChoices({ classLevels: { [classId]: level } }, catalog).choices.find(c => c.kind === 'expertise')?.count ?? 0
+  return Math.max(0, countAt(newLevel) - countAt(newLevel - 1))
+}
 
 export async function resolveExpertiseProgressionId(db: Db, classId: number): Promise<number | null> {
   const [prog] = await db

@@ -6,10 +6,11 @@ import { isPassiveGrant } from '~~/server/utils/features'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { applyMetamagicChanges } from '~~/server/utils/metamagic'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
-import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
+import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseSkillsSchema, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { SkillKey } from '~~/shared/rules/skills'
 
 // maxHp/hpGained restent fournis par le client (formule PV front-only).
 
@@ -29,7 +30,7 @@ export const levelUpSchema = z.object({
   hpGained: z.number().int().min(1),
   subclassId: z.number().int().positive().nullable().optional(),
   fightingStyle: z.string().nullable().optional(),
-  expertiseSkills: z.array(z.string()).optional(),
+  expertiseSkills: expertiseSkillsSchema.optional(),
   asiChoice: z.enum(['asi', 'feat']).nullable().optional(),
   asiBonuses: z.record(z.string(), z.number().int().min(0).max(2)).nullable().optional(),
   featureId: z.number().int().positive().nullable().optional(),
@@ -77,6 +78,29 @@ async function validateLevelUp(db: Db, d: LevelUpInput, classId: number, subclas
       .where(and(eq(schema.features.tag, 'metamagic'), inArray(schema.features.id, newMeta)))
     if (inGroup.length !== newMeta.length) throw new CharacterValidationError(`Une option de métamagie choisie est inconnue ou n'est pas une métamagie.`)
   }
+}
+
+// « Compétence maîtrisée » reste front-autoritaire : la fiche permet déjà de passer n'importe quelle
+// compétence en 'expert' à la main (PUT /skills), et le set maîtrisé complet n'est composé que côté front.
+// Borne haute seulement, comme à la création : le nombre exact est imposé par l'assistant.
+async function validateLevelUpExpertise(db: Db, characterSheetId: number, classId: number, newLevel: number, skills: SkillKey[]): Promise<void> {
+  if (!skills.length) return
+  const gained = await expertiseGainedAtLevel(db, classId, newLevel)
+  if (skills.length > gained) {
+    throw new CharacterValidationError(gained === 0
+      ? `Cette classe ne gagne pas d'expertise au niveau ${newLevel}.`
+      : `Trop de compétences d'expertise (${skills.length} pour ${gained} gagnée${gained > 1 ? 's' : ''} au niveau ${newLevel}).`)
+  }
+  const [alreadyExpert] = await db
+    .select({ skillKey: schema.characterSkills.skillKey })
+    .from(schema.characterSkills)
+    .where(and(
+      eq(schema.characterSkills.characterSheetId, characterSheetId),
+      eq(schema.characterSkills.proficiencyLevel, 'expert'),
+      inArray(schema.characterSkills.skillKey, skills),
+    ))
+    .limit(1)
+  if (alreadyExpert) throw new CharacterValidationError(`La compétence « ${alreadyExpert.skillKey} » a déjà l'expertise.`)
 }
 
 async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset: Ruleset): Promise<void> {
@@ -142,6 +166,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   if (cls.ruleset !== ruleset) throw new CharacterValidationError(`La classe (id=${cls.id}, éd. ${cls.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
   await validateLevelUpRulesetCoherence(db, d, ruleset)
   await validateLevelUp(db, d, cls.id, subclassId)
+  await validateLevelUpExpertise(db, characterSheetId, cls.id, newLevel, d.expertiseSkills ?? [])
 
   // 4. Lectures dépendantes (features débloquées, familier, slots)
   const newClassFeatures = await db

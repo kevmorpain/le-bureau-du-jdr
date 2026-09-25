@@ -107,7 +107,8 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       emplacements dérivés) ;
     - Occultiste (pacte/manifestations/arcanum **+ ASI & dons À LA CRÉATION** : `asiBonuses`,
       `asiFeats` source `asi`, `bonusFeatureId` source `bonus`) ;
-    - roublard (**expertise** upsert→`expert` + `newSkills` + sous-classe au level-up) ;
+    - roublard (**expertise** →`expert` à la création niv 1 — le serveur refuse une expertise hors palier
+      au level-up — + `newSkills` + sous-classe au level-up) ;
     - multiclasse (Guerrier/Occultiste : emplacements de pacte combinés).
 
     Les clés étrangères y sont résolues en NOMS et les id auto-incrément/horodatages écartés →
