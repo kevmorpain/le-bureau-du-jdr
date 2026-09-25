@@ -5,7 +5,7 @@ import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
-import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
+import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseSkillsSchema } from '~~/server/utils/expertise'
 import { resolveClassSkillProgressionId, classSkillChoiceWriteStmts } from '~~/server/utils/classSkillChoice'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { skillEnum } from '~~/shared/rules/skills'
@@ -55,7 +55,7 @@ export const createCharacterSchema = z.object({
   classId: z.number().int().positive(),
   subclassId: z.number().int().positive().nullable().optional(),
   fightingStyle: z.string().nullable().optional(),
-  expertiseSkills: z.array(z.string()).optional().default([]),
+  expertiseSkills: expertiseSkillsSchema.optional().default([]),
   level: z.number().int().min(1).max(20),
   speciesId: z.number().int().positive().nullable().optional(),
   selectedLineageId: z.number().int().positive().nullable().optional(),
