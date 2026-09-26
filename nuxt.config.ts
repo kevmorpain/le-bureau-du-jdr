@@ -52,6 +52,9 @@ export default defineNuxtConfig({
   // défaut inclut l'URL, donc `?classIds` / `?extended` varient bien.
   routeRules: {
     '/api/catalog/**': { cache: { maxAge: 60 * 60, staleMaxAge: 60 * 60 * 24, swr: true } },
+    // Le brouillon du builder vit en localStorage, lu par l'initialiseur de `useState` : rendue en
+    // SSR, la page sérialiserait l'état vide dans le payload, qui l'emporte à l'hydratation (F5 → brouillon perdu).
+    '/characters/new': { ssr: false },
   },
 
   // Sourcemaps serveur (activées par défaut en prod) : jamais uploadées sur le Worker (pas de
