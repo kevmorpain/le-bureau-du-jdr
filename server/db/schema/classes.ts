@@ -19,6 +19,8 @@ const classes = sqliteTable('classes', {
   spellcastingType: text('spellcasting_type').$type<SpellcastingType>().notNull().default('none'),
   // NULL = pas de maîtrise d'armes (toutes les classes 2014). Le `count` par niveau vit sur la progression.
   weaponMasteryCount: integer('weapon_mastery_count'),
+  // Compétences gagnées en REJOIGNANT la classe par multiclassage ; la liste est celle de sa progression `skill`.
+  multiclassSkillCount: integer('multiclass_skill_count').notNull().default(0),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 })

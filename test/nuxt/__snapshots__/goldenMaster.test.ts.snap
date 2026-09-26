@@ -2239,7 +2239,7 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
 }
 `;
 
-exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > création niv 1 puis montée 1→3 (Ruse niv 2, sous-classe niv 3 + expertise + compétence apprise) > E1 · création niv 1 1`] = `
+exports[`golden-master · E. Roublard (expertise, sous-classe) > création niv 1 (expertise) puis montée 1→3 (Ruse niv 2, sous-classe niv 3) > E1 · création niv 1 1`] = `
 {
   "abilityScoreImprovements": [],
   "abilityScores": [
@@ -2396,7 +2396,7 @@ exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > cré
 }
 `;
 
-exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > création niv 1 puis montée 1→3 (Ruse niv 2, sous-classe niv 3 + expertise + compétence apprise) > E2 · niv 2 (Ruse) 1`] = `
+exports[`golden-master · E. Roublard (expertise, sous-classe) > création niv 1 (expertise) puis montée 1→3 (Ruse niv 2, sous-classe niv 3) > E2 · niv 2 (Ruse) 1`] = `
 {
   "abilityScoreImprovements": [],
   "abilityScores": [
@@ -2559,7 +2559,7 @@ exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > cré
 }
 `;
 
-exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > création niv 1 puis montée 1→3 (Ruse niv 2, sous-classe niv 3 + expertise + compétence apprise) > E3 · niv 3 (Voleur + expertise + Acrobaties) 1`] = `
+exports[`golden-master · E. Roublard (expertise, sous-classe) > création niv 1 (expertise) puis montée 1→3 (Ruse niv 2, sous-classe niv 3) > E3 · niv 3 (Voleur) 1`] = `
 {
   "abilityScoreImprovements": [],
   "abilityScores": [
@@ -2709,12 +2709,6 @@ exports[`golden-master · E. Roublard (expertise, nouvelles compétences) > cré
     "temporaryHp": 0,
   },
   "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "acrobatics",
-      "source": "class",
-    },
     {
       "isOverride": false,
       "proficiencyLevel": "proficient",

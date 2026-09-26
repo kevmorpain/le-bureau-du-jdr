@@ -29,6 +29,9 @@ export const SKILL_KEYS = Object.keys(SKILLS) as [SkillKey, ...SkillKey[]]
 
 export const skillEnum = z.enum(SKILL_KEYS)
 
+export const uniqueSkillKeysSchema = z.array(skillEnum)
+  .refine(keys => new Set(keys).size === keys.length, 'Compétence en double')
+
 export const SKILL_ABILITY = Object.fromEntries(
   SKILL_KEYS.map(key => [key, SKILLS[key].ability]),
 ) as Record<SkillKey, AbilityKey>

@@ -6,11 +6,13 @@ import { isPassiveGrant } from '~~/server/utils/features'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { applyMetamagicChanges } from '~~/server/utils/metamagic'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
-import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseSkillsSchema, expertiseGainedAtLevel } from '~~/server/utils/expertise'
+import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
+import { buildCatalog } from '~~/server/utils/catalog'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
+import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
+import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
-import type { SkillKey } from '~~/shared/rules/skills'
 
 // maxHp/hpGained restent fournis par le client (formule PV front-only).
 
@@ -30,12 +32,12 @@ export const levelUpSchema = z.object({
   hpGained: z.number().int().min(1),
   subclassId: z.number().int().positive().nullable().optional(),
   fightingStyle: z.string().nullable().optional(),
-  expertiseSkills: expertiseSkillsSchema.optional(),
+  expertiseSkills: uniqueSkillKeysSchema.optional(),
   asiChoice: z.enum(['asi', 'feat']).nullable().optional(),
   asiBonuses: z.record(z.string(), z.number().int().min(0).max(2)).nullable().optional(),
   featureId: z.number().int().positive().nullable().optional(),
   featChoices: featChoicesSchema,
-  newSkills: z.array(z.string()).optional(),
+  newSkills: uniqueSkillKeysSchema.optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
   pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
@@ -103,6 +105,21 @@ async function validateLevelUpExpertise(db: Db, characterSheetId: number, classI
   if (alreadyExpert) throw new CharacterValidationError(`La compétence « ${alreadyExpert.skillKey} » a déjà l'expertise.`)
 }
 
+// « Déjà maîtrisée » reste front-autoritaire : le set maîtrisé complet (octrois d'espèce, dons) n'est
+// composé que côté front. Borne haute seulement, comme les autres choix : l'assistant impose le nombre exact.
+async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSkillCount: number }, joinsNewClass: boolean, skills: SkillKey[]): Promise<void> {
+  if (!skills.length) return
+  if (!joinsNewClass) throw new CharacterValidationError(`Aucune compétence à choisir : seul le multiclassage vers une nouvelle classe en octroie au level-up.`)
+  const grant = multiclassSkillGrant(cls.id, cls.multiclassSkillCount, await buildCatalog(db, { classIds: [cls.id] }))
+  if (skills.length > grant.count) {
+    throw new CharacterValidationError(grant.count === 0
+      ? `Rejoindre cette classe par multiclassage n'octroie aucune compétence.`
+      : `Trop de compétences de multiclassage (${skills.length} pour ${grant.count}).`)
+  }
+  const bad = skills.find(s => !grant.options.includes(s))
+  if (bad) throw new CharacterValidationError(`La compétence « ${bad} » n'est pas dans la liste de la classe.`)
+}
+
 async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset: Ruleset): Promise<void> {
   const featureIds = [
     ...(d.featureId != null ? [d.featureId] : []),
@@ -138,7 +155,7 @@ async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset:
 export async function characterLevelUp(db: Db, characterSheetId: number, d: LevelUpInput): Promise<{ success: true, newLevel: number, hpGained: number }> {
   // 1. Classe (hitDice pour les PV)
   const [cls] = await db
-    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, ruleset: schema.classes.ruleset })
+    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, ruleset: schema.classes.ruleset, multiclassSkillCount: schema.classes.multiclassSkillCount })
     .from(schema.classes)
     .where(eq(schema.classes.id, d.classId))
     .limit(1)
@@ -167,6 +184,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   await validateLevelUpRulesetCoherence(db, d, ruleset)
   await validateLevelUp(db, d, cls.id, subclassId)
   await validateLevelUpExpertise(db, characterSheetId, cls.id, newLevel, d.expertiseSkills ?? [])
+  await validateMulticlassSkills(db, cls, existingClass == null && currentClasses.length > 0, d.newSkills ?? [])
 
   // 4. Lectures dépendantes (features débloquées, familier, slots)
   const newClassFeatures = await db

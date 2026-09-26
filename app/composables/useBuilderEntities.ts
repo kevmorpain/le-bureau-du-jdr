@@ -1,6 +1,6 @@
 // Unique point de résolution « slug/name → dbId » : le reste du builder ne manipule que des ids.
 export type DbSubclass = { id: number, name: string, description?: string | null }
-export type DbClass = { id: number, name: string, subclassLevel: number, subclasses: DbSubclass[] }
+export type DbClass = { id: number, name: string, subclassLevel: number, multiclassSkillCount: number, subclasses: DbSubclass[] }
 type DbSpecies = { id: number, name: string }
 type DbBackground = { id: number, name: string }
 type DbItem = { id: number, name: string }
@@ -57,6 +57,11 @@ export function useBuilderEntities() {
     return cls ? { subclassLevel: cls.subclassLevel, subclasses: cls.subclasses } : null
   }
 
+  function multiclassSkillCountFor(classDbId: number | null | undefined): number {
+    if (classDbId == null) return 0
+    return classes.value?.find(c => c.id === classDbId)?.multiclassSkillCount ?? 0
+  }
+
   function resolveItemIds(itemNames: string[]): { ids: number[], unresolved: string[] } {
     if (!itemNames.length || !items.value?.length) return { ids: [], unresolved: itemNames }
     const map = new Map<string, number>()
@@ -82,5 +87,6 @@ export function useBuilderEntities() {
     resolveBackgroundId,
     resolveItemIds,
     subclassCatalogFor,
+    multiclassSkillCountFor,
   }
 }

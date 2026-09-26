@@ -152,14 +152,14 @@ describe('golden-master · D. Multiclasse Guerrier/Occultiste', () => {
   })
 })
 
-// E. Roublard — expertise + nouvelles compétences (niv 1 → 3)
+// E. Roublard — expertise, sous-classe (niv 1 → 3)
 // Exerce les chemins de choix « compétences » qu'aucun autre archétype ne touche :
 //  - `expertiseSkills` → ligne 'expert' + character_choices, posés à la création : le Roublard n'en
 //    gagne qu'aux niv 1 et 6, le serveur refuse une expertise au level-up 2→3 ;
-//  - `newSkills` → insertion d'une nouvelle compétence au level-up ;
 //  - une sous-classe posée au level-up (Voleur, niv 3).
-describe('golden-master · E. Roublard (expertise, nouvelles compétences)', () => {
-  it('création niv 1 puis montée 1→3 (Ruse niv 2, sous-classe niv 3 + expertise + compétence apprise)', async () => {
+// `newSkills` n'est légal qu'en rejoignant une classe par multiclassage : cf. multiclassSkillsServer.test.ts.
+describe('golden-master · E. Roublard (expertise, sous-classe)', () => {
+  it('création niv 1 (expertise) puis montée 1→3 (Ruse niv 2, sous-classe niv 3)', async () => {
     const { id } = await create({
       name: 'Sly', maxHp: 9, classId: CLASS.rogue, level: 1,
       abilityScores: { str: 10, dex: 16, con: 12, int: 13, wis: 11, cha: 14 },
@@ -173,11 +173,7 @@ describe('golden-master · E. Roublard (expertise, nouvelles compétences)', () 
     await levelUp(id, { classId: CLASS.rogue, hpGained: 6 })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('E2 · niv 2 (Ruse)')
 
-    await levelUp(id, {
-      classId: CLASS.rogue, hpGained: 6,
-      subclassId: SUBCLASS.thief,
-      newSkills: ['acrobatics'],
-    })
-    expect(await serializeCharacter(db, id)).toMatchSnapshot('E3 · niv 3 (Voleur + expertise + Acrobaties)')
+    await levelUp(id, { classId: CLASS.rogue, hpGained: 6, subclassId: SUBCLASS.thief })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('E3 · niv 3 (Voleur)')
   })
 })
