@@ -79,7 +79,11 @@ const {
   goTo,
   goNext,
   goPrev,
+  resetWizard,
 } = useLevelUp(charSheet)
+
+// L'état (useState) survit à la navigation : un level-up abandonné ne doit pas déborder sur le suivant.
+resetWizard()
 
 const showSummary = ref(false)
 

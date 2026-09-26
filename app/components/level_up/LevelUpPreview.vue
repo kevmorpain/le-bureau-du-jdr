@@ -59,8 +59,8 @@
           <span class="text-muted w-12 shrink-0">PV max</span>
           <span class="font-mono text-(--ui-text)">{{ currentHpMax }}</span>
           <span class="text-muted">→</span>
-          <span class="font-mono font-bold text-green-400">{{ currentHpMax + (state.hpGained ?? 0) }}</span>
-          <span v-if="state.hpGained" class="text-green-400 text-xs">+{{ state.hpGained }}</span>
+          <span class="font-mono font-bold text-green-400">{{ currentHpMax + (hpGained ?? 0) }}</span>
+          <span v-if="hpGained" class="text-green-400 text-xs">+{{ hpGained }}</span>
         </div>
         <div v-if="profBonusChanged" class="flex items-center gap-1">
           <span class="text-muted w-12 shrink-0">Maîtrise</span>
@@ -123,6 +123,7 @@ const {
   charClasses,
   totalLevel,
   pickedClass,
+  hpGained,
   finalAbilities,
   activeSteps,
   isStepComplete,

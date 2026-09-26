@@ -73,7 +73,6 @@ export interface LevelUpState {
   hpMethod: 'average' | 'roll' | 'manual'
   hpRolled: number | null
   hpManual: number | null
-  hpGained: number | null
   newSubclassId: number | null
   newSubclassName: string | null
   fightingStyle: string | null
@@ -114,7 +113,6 @@ const INIT_STATE: LevelUpState = {
   hpMethod: 'average',
   hpRolled: null,
   hpManual: null,
-  hpGained: null,
   newSubclassId: null,
   newSubclassName: null,
   fightingStyle: null,
@@ -138,6 +136,10 @@ const INIT_STATE: LevelUpState = {
   bookOfAncientSecretsSpellIds: [],
   bookOfAncientSecretsRequired: false,
 }
+
+// Copie profonde : les étapes modifient tableaux et objets en place (push, splice…), ce qui
+// polluerait INIT_STATE via une copie superficielle.
+const freshState = (): LevelUpState => structuredClone(INIT_STATE)
 
 export interface LUStep {
   id: string
@@ -163,7 +165,7 @@ export type CharacterSheetWithASI = CharacterSheet & {
 // ─── Composable ───────────────────────────────────────────────────────────────
 
 export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
-  const state = useState<LevelUpState>('level-up-state', () => ({ ...INIT_STATE }))
+  const state = useState<LevelUpState>('level-up-state', freshState)
   const toast = useToast()
 
   const { getById: getFeatById } = useFeats()
@@ -270,16 +272,12 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return Math.ceil(die / 2) + 1 + conMod.value
   })
 
-  const computedHpGained = computed(() => {
+  const hpGained = computed(() => {
     const s = state.value
     if (s.hpMethod === 'average') return averageHpGain.value
     if (s.hpMethod === 'manual' && s.hpManual != null) return Math.max(1, s.hpManual + conMod.value)
     if (s.hpMethod === 'roll' && s.hpRolled != null) return Math.max(1, s.hpRolled + conMod.value)
     return null
-  })
-
-  watch(computedHpGained, (val) => {
-    if (val != null) state.value.hpGained = val
   })
 
   // ── Choix de progression lus dans le CATALOGUE (/api/catalog, lot 6a) ──────
@@ -514,7 +512,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         return !!s.pickedClassId
 
       case 'hp':
-        return s.hpGained != null && s.hpGained > 0
+        return hpGained.value != null && hpGained.value > 0
 
       case 'features': {
         if (isSubclassLevel.value && !s.newSubclassId) return false
@@ -570,7 +568,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       class: cls
         ? `${cls.name}${s.isMulticlass ? ' (nouveau)' : ` niv.${s.toLevel}`}`
         : null,
-      hp: s.hpGained != null ? `+${s.hpGained} PV` : null,
+      hp: hpGained.value != null ? `+${hpGained.value} PV` : null,
       features: s.newSubclassName ?? (s.pactBoon ? ({ chain: 'Pacte de la Chaîne', blade: 'Pacte de la Lame', tome: 'Pacte du Tome' })[s.pactBoon] : null) ?? (s.fightingStyle ? `Style: ${s.fightingStyle}` : null),
       asi: s.asiChoice === 'feat'
         ? (s.featureId != null ? 'don' : null)
@@ -599,8 +597,15 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   }
 
   function resetWizard() {
-    state.value = { ...INIT_STATE }
+    state.value = freshState()
     currentStepId.value = 'class'
+  }
+
+  // Tous les choix en aval dépendent de la classe : en changer repart d'un état vierge.
+  function selectClass(classId: string, fromLevel: number) {
+    const s = state.value
+    if (s.pickedClassId === classId && s.fromLevel === fromLevel) return
+    state.value = { ...freshState(), pickedClassId: classId, isMulticlass: fromLevel === 0, fromLevel, toLevel: fromLevel + 1 }
   }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -628,7 +633,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       body: {
         classId,
         isMulticlass: s.isMulticlass,
-        hpGained: s.hpGained,
+        hpGained: hpGained.value,
         subclassId: s.newSubclassId,
         fightingStyle: s.fightingStyle,
         expertiseSkills: s.expertiseSkills,
@@ -669,7 +674,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     pickedCharClass,
     // HP
     averageHpGain,
-    computedHpGained,
+    hpGained,
     // Step conditions
     isSubclassLevel,
     subclassLevelFor,
@@ -719,6 +724,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     goNext,
     goPrev,
     resetWizard,
+    selectClass,
     submit,
     featNeedsAbility,
     featNeedsSkilled,

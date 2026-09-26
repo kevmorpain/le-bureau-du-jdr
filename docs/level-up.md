@@ -9,7 +9,11 @@ Wizard de montée de niveau D&D 5e (2014). Accessible via `/characters/{id}/leve
 - **Composants :** `app/components/level_up/`
 - **Shell partagé :** `app/components/wizard/WizardShell.vue` (réutilisé depuis le builder)
 - **Soumission :** `POST /api/character_sheets/{id}/level-up`
-- **État :** `useState('level-up-state')` (partagé entre les composants de l'étape)
+- **État :** `useState('level-up-state')` (partagé entre les composants de l'étape). Il survit à la
+  navigation : la page le remet à zéro à chaque ouverture (`resetWizard()` dans son setup), sinon un
+  level-up abandonné déborderait sur le suivant. Chaque état vierge est une copie profonde
+  d'`INIT_STATE` (`freshState()`), les étapes modifiant tableaux et objets en place. Gardé par
+  `test/nuxt/levelUpReset.test.ts`.
 
 ---
 
@@ -26,7 +30,7 @@ interface LevelUpState {
   hpMethod: 'average' | 'roll' | 'manual'
   hpRolled: number | null            // résultat du jet brut (sans CON)
   hpManual: number | null            // saisie manuelle brute (sans CON)
-  hpGained: number | null            // PV gagnés final (avec CON) — calculé automatiquement
+  // PV gagnés (avec CON) : pas dans l'état, computed `hpGained` exposé par useLevelUp
 
   // Aptitudes (step features)
   newSubclassId: number | null       // DB id de la sous-classe choisie
@@ -42,7 +46,7 @@ interface LevelUpState {
   // ASI / Don (step asi)
   asiChoice: 'asi' | 'feat' | null
   asiBonuses: Record<AbilityKey, number>  // valeurs de 0 à 2, total = 2
-  featId: string | null              // clé frontend ex: 'lucky', 'tough'
+  featureId: number | null           // id DB du don
 
   // Multiclassage (step skills)
   newSkills: string[]                // compétences gagnées via multiclassage
@@ -70,7 +74,9 @@ Toutes les étapes sont dans `ALL_LU_STEPS` mais certaines sont filtrées selon 
 
 **Validation :** `pickedClassId !== null`
 
-**Effets sur le state :** `pickContinue` ou `pickMulticlass` reset tous les champs dépendants (subclass, fightingStyle, expertiseSkills, asi, spells)
+**Effets sur le state :** `selectClass(classId, fromLevel)` repart d'un état vierge (`freshState()`) et n'y
+écrit que les champs de classe : tous les choix en aval (PV, aptitudes, don, compétences, magie) dépendent
+de la classe. Re-sélectionner la classe déjà choisie ne change rien.
 
 ---
 
@@ -80,7 +86,7 @@ Toutes les étapes sont dans `ALL_LU_STEPS` mais certaines sont filtrées selon 
 
 **Méthodes (3 onglets) :**
 - **Moyenne** : ⌈dX/2⌉ + 1 + CON — automatique, affiché en gros
-- **Jet de dé** : bouton "🎲 Lancer 1dX" → `hpRolled` = random(1..hitDie) ; `hpGained` = max(1, hpRolled + conMod)
+- **Jet de dé** : bouton "🎲 Lancer 1dX" → `hpRolled` = random(1..hitDie) ; `hpGained` = max(1, hpRolled + conMod) — `null` tant que le dé n'est pas lancé
 - **Saisie manuelle** : input brut → `hpGained` = max(1, hpManual + conMod)
 
 **Aperçu** : si `hpGained` défini, affiche `PV max : N → N+hpGained`
@@ -135,7 +141,7 @@ Guerrier `[4,6,8,12,14,16,19]` ; Roublard `[4,8,10,12,16,19]`) viennent du seed
 - Choix Don : grille de cartes des `LU_FEATS` (12 dons, description courte)
 
 **Validation :**
-- `asiChoice === 'feat'` → `featId !== null`
+- `asiChoice === 'feat'` → `featureId !== null`
 - `asiChoice === 'asi'` → `sum(asiBonuses) === 2`
 
 **Note serveur :** Les ASI sont stockées dans `character_ability_score_improvements` (table dédiée), pas dans `character_ability_scores`. Le GET de la fiche les inclut via `abilityScoreImprovements`. Le composable `useLevelUp` expose dans `finalAbilities` les totaux calculés par la même couche que la fiche (`useCharacterAbilities` + `useAbilityEffectInputs` : base + espèce + dons + ASI débloquées) — prérequis de multiclassage, plafond d'ASI, PV, modificateur d'incantation.
