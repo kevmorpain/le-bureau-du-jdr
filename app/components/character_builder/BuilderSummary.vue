@@ -58,26 +58,23 @@
           <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Jets de sauvegarde</p>
           <div class="space-y-1.5">
             <div v-for="ab in ABILITIES" :key="ab" class="flex items-center gap-2">
-              <span
-                class="size-2 rounded-full shrink-0"
-                :class="savingThrows.includes(ab) ? 'bg-amber-500' : 'bg-muted/30'"
-              />
+              <ProficiencyIndicator :level="savingThrows[ab]!.proficiency" />
               <span class="text-xs text-muted flex-1">{{ ABILITY_LABELS[ab] }}</span>
               <span
                 class="text-xs font-mono font-bold"
-                :class="savingThrows.includes(ab) ? 'text-amber-400' : 'text-muted'"
-              >{{ formatMod(saveBonus(ab)) }}</span>
+                :class="savingThrows[ab]!.proficiency !== 'none' ? 'text-amber-400' : 'text-muted'"
+              >{{ formatMod(savingThrows[ab]!.modifier) }}</span>
             </div>
           </div>
         </div>
 
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
           <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Compétences maîtrisées</p>
-          <div v-if="allSkills.length" class="space-y-1.5">
-            <div v-for="sk in allSkills" :key="sk.key" class="flex items-center gap-2">
-              <span class="size-2 rounded-full bg-amber-500 shrink-0" />
+          <div v-if="masteredSkills.length" class="space-y-1.5">
+            <div v-for="sk in masteredSkills" :key="sk.key" class="flex items-center gap-2">
+              <ProficiencyIndicator :level="sk.proficiency" />
               <span class="text-xs text-muted flex-1">{{ sk.label }}</span>
-              <span class="text-xs font-mono font-bold text-amber-400">{{ formatMod(skillBonus(sk)) }}</span>
+              <span class="text-xs font-mono font-bold text-amber-400">{{ formatMod(sk.modifier) }}</span>
             </div>
           </div>
           <p v-else class="text-xs text-muted italic">Aucune compétence</p>
@@ -175,18 +172,23 @@ const {
   raceData,
   subraceData,
   finalAbilities,
-  hpMax,
   baseAC,
   speed,
-  initiative,
   profBonus,
-  passivePerception,
   ABILITIES,
   ABILITY_SHORT,
-  SKILLS,
   abilityMod,
   formatMod,
 } = useCharacterBuilder()
+
+const {
+  masteredSkills,
+  savingThrows,
+  passivePerception,
+  initiative,
+  maxHp,
+  selectedInvocations,
+} = useBuilderSheetProjection()
 
 const spellNamesById = useState<Record<number, string>>('builder-spell-names', () => ({}))
 
@@ -195,37 +197,13 @@ const raceName = computed(() =>
 )
 
 const keyStats = computed(() => [
-  { label: 'PV max', value: hpMax.value != null ? String(hpMax.value) : '—' },
+  { label: 'PV max', value: maxHp.value != null ? String(maxHp.value) : '—' },
   { label: 'CA', value: String(baseAC.value) },
   { label: 'Vitesse', value: `${speed.value}m` },
   { label: 'Initiative', value: formatMod(initiative.value) },
   { label: 'Maîtrise', value: formatMod(profBonus.value) },
   { label: 'Perc. passive', value: String(passivePerception.value) },
 ])
-
-const savingThrows = computed(() => classData.value?.savingThrows ?? [])
-
-function saveBonus(ab: string) {
-  const score = finalAbilities.value[ab as keyof typeof finalAbilities.value] ?? 10
-  const mod = abilityMod(score)
-  return savingThrows.value.includes(ab) ? mod + profBonus.value : mod
-}
-
-const allSkillKeys = computed(() => [
-  ...new Set([
-    ...state.value.skills,
-    ...(backgroundData.value?.skillProficiencies ?? []),
-  ]),
-])
-
-const allSkills = computed(() =>
-  allSkillKeys.value.map(key => SKILLS.find(s => s.key === key)).filter(Boolean) as typeof SKILLS,
-)
-
-function skillBonus(sk: { ability: string }) {
-  const score = finalAbilities.value[sk.ability as keyof typeof finalAbilities.value] ?? 10
-  return abilityMod(score) + profBonus.value
-}
 
 const selectedSpellNames = computed(() => {
   const map = spellNamesById.value
@@ -248,14 +226,5 @@ const pactBoonLabel = computed(() =>
   state.value.pactBoon ? PACT_BOON_LABELS[state.value.pactBoon] : '',
 )
 
-const { extendedQuery } = useExtendedContent()
-const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
-  query: extendedQuery,
-  default: () => [],
-  immediate: true,
-})
-const selectedInvocationNames = computed(() => {
-  const map = new Map((allInvocations.value ?? []).map(i => [i.id, i.name]))
-  return state.value.invocationIds.map(id => map.get(id)).filter(Boolean) as string[]
-})
+const selectedInvocationNames = computed(() => selectedInvocations.value.map(i => i.name))
 </script>

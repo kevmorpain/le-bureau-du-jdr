@@ -77,11 +77,23 @@ describe('loadSpeciesLineages (D17, lot 5b)', () => {
     expect(drow.traits).toContain('Sensibilité au soleil')
   })
 
+  it('effets : ceux de la base sur l\'espèce, ceux de la lignée sur la lignée (non combinés)', async () => {
+    const rich = (await loadSpeciesLineages(orm, elfBaseId))!
+    // « Sens aiguisés » est un trait de la BASE : c'est lui qui donne Perception à toute lignée d'elfe.
+    expect(rich.effects).toContainEqual({ type: 'skill_proficiency', value: { skill: 'perception' } })
+    expect(rich.effects).toContainEqual({ type: 'ability_increase', value: { ability: 'dex', amount: 2 } })
+
+    const he = rich.lineages.find(l => l.name === 'Haut-elfe')!
+    expect(he.effects).toContainEqual({ type: 'ability_increase', value: { ability: 'int', amount: 1 } })
+    expect(he.effects).not.toContainEqual({ type: 'skill_proficiency', value: { skill: 'perception' } })
+  })
+
   it('espèce sans lignée → lineages: []', async () => {
     const [humain] = await orm.select().from(srcSchema.characterSpecies).where(eq(srcSchema.characterSpecies.name, 'Humain'))
     const rich = await loadSpeciesLineages(orm, humain.id)
     expect(rich).not.toBeNull()
     expect(rich!.lineages).toEqual([])
+    expect(rich!.effects).toEqual([])
   })
 
   it('espèce inconnue → null', async () => {

@@ -46,7 +46,7 @@
 
 <script lang="ts" setup>
 import { useOnline } from '@vueuse/core'
-import { BACKGROUNDS, chosenToolProficiencies } from '~/data/character-builder'
+import { chosenToolProficiencies } from '~/data/character-builder'
 
 definePageMeta({ layout: 'blank' })
 
@@ -57,13 +57,16 @@ const {
   subraceData,
   raceData,
   selectedLineageId,
-  lineageBaseSpeciesId,
+  catalogSpeciesId,
   backgroundData,
   finalAbilities,
   hpMax,
   resetBuilder,
   needsPactBoon,
   asiLevelsForCharacter,
+  isVariantHuman,
+  isCustomBackground,
+  materializedSkills,
 } = useCharacterBuilder()
 
 const {
@@ -103,21 +106,10 @@ async function handleSubmit() {
   submitting.value = true
 
   try {
-    const isVariantHuman = state.value.raceId === 'human' && state.value.isVariantHuman
-
     // Résolution du nom de l'espèce — Humain variant : pas de lien espèce pour éviter le cumul +1 universel
-    const speciesDbName = isVariantHuman
+    const speciesDbName = isVariantHuman.value
       ? null
       : (subraceData.value?.dbName ?? raceData.value?.dbName ?? null)
-
-    const bgData = BACKGROUNDS.find(b => b.id === state.value.backgroundId)
-    const isCustomBg = bgData?.id === 'custom'
-
-    // Historique SEEDÉ : compétences DÉRIVÉES du porteur (F3), plus envoyées. Custom : pas de porteur en
-    // base → les compétences choisies restent matérialisées (avec la compétence d'Humain variant).
-    const backgroundSkills = isCustomBg
-      ? state.value.customBackgroundSkills
-      : []
 
     const CURRENCY_RE = /^(\d+)\s*(pp|po|pe|pa|pc)$/i
     const CURRENCY_FIELDS: Record<string, string> = { pp: 'pp', po: 'po', pe: 'pe', pa: 'pa', pc: 'pc' }
@@ -157,8 +149,8 @@ async function handleSubmit() {
     // porte un lineageId), on envoie l'Elfe BASE + le choix de lignée (chemin serveur du lot 5a),
     // au lieu de résoudre l'ancienne espèce séparée par nom.
     const lineageId = selectedLineageId.value
-    const speciesId = lineageId != null ? lineageBaseSpeciesId.value : resolveSpeciesId(speciesDbName)
-    const backgroundId = isCustomBg ? null : resolveBackgroundId(bgData?.dbName ?? null)
+    const speciesId = lineageId != null ? catalogSpeciesId.value : resolveSpeciesId(speciesDbName)
+    const backgroundId = isCustomBackground.value ? null : resolveBackgroundId(backgroundData.value?.dbName ?? null)
     const { ids: inventoryItemIds, unresolved: inventoryItemNamesUnresolved } = resolveItemIds(itemNames)
     const pactWeaponItemId = needsPactBoon.value && state.value.pactBoon === 'blade' && state.value.pactWeaponItemName
       ? resolveItemIds([state.value.pactWeaponItemName]).ids[0] ?? null
@@ -178,7 +170,7 @@ async function handleSubmit() {
       speciesId,
       selectedLineageId: lineageId,
       backgroundId,
-      customBackgroundName: isCustomBg ? state.value.customBackgroundName : null,
+      customBackgroundName: isCustomBackground.value ? state.value.customBackgroundName : null,
       personality: state.value.personality,
       ideals: state.value.ideals,
       bonds: state.value.bonds,
@@ -207,14 +199,11 @@ async function handleSubmit() {
       // F5 : plus de `armorProficiencyKeys`/`weaponProficiencyKeys` — les maîtrises de base de
       // classe sont DÉRIVÉES côté serveur du porteur de classe (volet B), ces champs étaient
       // vestigiaux (acceptés puis ignorés par createCharacter). Le schéma les garde optionnels.
-      backgroundSkills: [
-        ...backgroundSkills,
-        ...(isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : []),
-      ],
+      backgroundSkills: materializedSkills.value,
       selectedLanguages: [
         ...state.value.selectedLanguages,
         // Humain variant : 'Commun' n'est plus apporté par les effets d'espèce (lien espèce absent)
-        ...(isVariantHuman ? ['Commun'] : []),
+        ...(isVariantHuman.value ? ['Commun'] : []),
       ],
       toolProficiencyChoices: chosenToolProficiencies(state.value.selectedToolProficiencies),
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],

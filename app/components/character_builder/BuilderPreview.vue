@@ -86,15 +86,15 @@
       </div>
     </div>
 
-    <div v-if="allSkills.length" class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+    <div v-if="masteredSkills.length" class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Compétences</p>
       <div class="flex flex-wrap gap-1">
         <span
-          v-for="sk in allSkills"
-          :key="sk"
+          v-for="sk in masteredSkills"
+          :key="sk.key"
           class="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400"
         >
-          {{ SKILLS.find(s => s.key === sk)?.label ?? sk }}
+          {{ sk.label }}
         </span>
       </div>
     </div>
@@ -129,18 +129,16 @@ const {
   alignmentData,
   finalAbilities,
   hasAbilities,
-  hpMax,
   baseAC,
   speed,
-  initiative,
   profBonus,
-  passivePerception,
   ABILITIES,
   ABILITY_SHORT,
-  SKILLS,
   abilityMod,
   formatMod,
 } = useCharacterBuilder()
+
+const { masteredSkills, passivePerception, initiative, maxHp } = useBuilderSheetProjection()
 
 const completedCount = computed(() =>
   activeSteps.value.filter(s => isStepComplete.value(s.id)).length,
@@ -155,19 +153,12 @@ const raceName = computed(() => {
 })
 
 const keyStats = computed(() => [
-  { label: 'PV', value: hpMax.value != null ? String(hpMax.value) : '—' },
+  { label: 'PV', value: maxHp.value != null ? String(maxHp.value) : '—' },
   { label: 'CA', value: String(baseAC.value) },
   { label: 'Vit.', value: `${speed.value}m` },
   { label: 'Prof.', value: formatMod(profBonus.value) },
   { label: 'Init.', value: formatMod(initiative.value) },
   { label: 'Perc.', value: String(passivePerception.value) },
-])
-
-const allSkills = computed(() => [
-  ...new Set([
-    ...state.value.skills,
-    ...(backgroundData.value?.skillProficiencies ?? []),
-  ]),
 ])
 
 const spellNamesById = useState<Record<number, string>>('builder-spell-names', () => ({}))

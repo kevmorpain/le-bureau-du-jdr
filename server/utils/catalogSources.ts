@@ -261,6 +261,8 @@ export interface CatalogLineage {
   speed: number
   darkvision: number | null
   traits: string[]
+  /** Effets PROPRES à la lignée (non combinés, contrairement aux bonus) : ceux de la base sont sur l'espèce. */
+  effects: Effect[]
 }
 
 export interface CatalogSpeciesRich {
@@ -268,6 +270,7 @@ export interface CatalogSpeciesRich {
   name: string
   speed: number
   size: string
+  effects: Effect[]
   lineages: CatalogLineage[]
 }
 
@@ -306,7 +309,7 @@ export async function loadSpeciesLineages(db: Db, speciesId: number, extended = 
       ...(extended ? [] : [eq(srcSchema.speciesLineages.source, CORE_SOURCE)]),
     ))
     .orderBy(asc(srcSchema.speciesLineages.id))
-  const meta = { id: base.id, name: base.name, speed: base.speed, size: base.size }
+  const meta = { id: base.id, name: base.name, speed: base.speed, size: base.size, effects: baseEffects as Effect[] }
   if (!lineages.length) return { ...meta, lineages: [] }
 
   const lineageIds = lineages.map(l => l.id)
@@ -357,7 +360,7 @@ export async function loadSpeciesLineages(db: Db, speciesId: number, extended = 
         return !(es.length > 0 && es.every(e => BADGE_ONLY.has(e.type)))
       })
       .map(f => f.name)
-    return { id: lin.id, name: lin.name, description: lin.description, abilityBonuses, speed, darkvision, traits }
+    return { id: lin.id, name: lin.name, description: lin.description, abilityBonuses, speed, darkvision, traits, effects: allEffects as Effect[] }
   })
 
   return { ...meta, lineages: derived }

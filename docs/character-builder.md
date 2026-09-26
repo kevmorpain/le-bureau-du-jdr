@@ -17,6 +17,7 @@ Accessible via `/characters/new`.
 ```
 app/pages/characters/new.vue                   ← orchestrateur (remplace l'existant)
 app/composables/useCharacterBuilder.ts         ← état global (localStorage)
+app/composables/useBuilderSheetProjection.ts   ← récap/aperçu calculés par le calculateur de la fiche
 app/data/character-builder.ts                  ← données riches D&D 5e
 app/components/character_builder/
   BuilderShell.vue                             ← layout 3 colonnes responsive
@@ -310,8 +311,26 @@ Affiché après validation de l'étape 6 (bouton "Terminer").
 - Race · Classe niv.X · Historique · Alignement
 - Grille 3×2 : PV max, CA, Vitesse, Initiative, Maîtrise, Perception passive
 - Grille 6 carac. : score + mod
-- Jets de sauvegarde + Compétences
+- Jets de sauvegarde + Compétences (indicateur de maîtrise de la fiche : maîtrise / expertise)
 - Boutons : "Créer le personnage" (POST → redirect vers fiche) + "Modifier" (retour étape)
+
+**Récap ≡ fiche** : jets de sauvegarde, compétences, initiative, perception passive et PV max ne sont
+pas recalculés par le builder. `useBuilderSheetProjection` projette l'état du builder dans les canaux
+que le GET de la fiche fournit à `useCharacterAbilities`, et c'est ce calculateur de la fiche qui les
+produit :
+
+| Canal de la fiche | Projection du builder |
+|---|---|
+| `skills` (lignes `character_skills`) | `materializedSkills` (historique perso + Humain variant, = payload `backgroundSkills`) en `proficient`, `expertiseSkills` en `expert` |
+| `classSkillEffects` | `state.skills` |
+| `classSavingThrowEffects` | `CLASS_PROFICIENCIES[classe].savingThrows` (source du seed) |
+| `backgroundEffects` | compétences de l'historique seedé |
+| `speciesEffects` | effets du catalogue (`/api/catalog/species/[id]`, base + lignée choisie) ; aucun pour l'Humain variant |
+| `featureEffects` | dons persistés (`chosenFeatIds`, résolus par `resolveFeatEffects`) + manifestations |
+
+Les scores de base projetés sont `finalAbilities` : les `ability_increase` sont retirés des effets pour
+ne pas être comptés deux fois. `BuilderPreview` lit la même projection. Hors projection : la CA (armure
+équipée) et le plafond de 20 (appliqué par le builder, pas par la fiche).
 
 ---
 
@@ -338,10 +357,10 @@ const speed = subraceData?.speed ?? raceData?.speed ?? 9 // en mètres
 
 // Bonus de maîtrise
 const profBonus = Math.ceil(level / 4) + 1
-
-// Perception passive
-const passivePerception = 10 + mod(finalAbility('wis')) + (skills.includes('perception') ? profBonus : 0)
 ```
+
+PV max affichés, initiative, perception passive et compétences : `useBuilderSheetProjection` (voir
+« Récap ≡ fiche » ci-dessus).
 
 ---
 

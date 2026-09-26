@@ -20,6 +20,7 @@ import {
 } from '~/data/character-builder'
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
+import type { Effect } from '~~/server/db/schema/effects'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -292,7 +293,9 @@ export function useCharacterBuilder() {
   // Espèces « base + lignée » (D17) : sous-races PILOTÉES PAR LE CATALOGUE via le champ opt-in
   // `lineageBaseSpeciesName` ; repli transparent sur le blob `RaceData.subraces` sinon.
   const lineageBaseName = computed(() => raceData.value?.lineageBaseSpeciesName ?? null)
-  const { baseSpeciesId: lineageBaseSpeciesId, lineageSubraces } = useSpeciesLineages(lineageBaseName)
+  // Espèce du catalogue de la race, avec ou sans lignée : ses effets alimentent le récapitulatif.
+  const catalogSpeciesName = computed(() => lineageBaseName.value ?? raceData.value?.dbName ?? null)
+  const { baseSpeciesId: catalogSpeciesId, lineageSubraces, effectsFor } = useSpeciesLineages(catalogSpeciesName)
   const subraces = computed<SubraceData[]>(() => {
     if (lineageBaseName.value && lineageSubraces.value.length) return lineageSubraces.value
     return raceData.value?.subraces ?? []
@@ -345,24 +348,36 @@ export function useCharacterBuilder() {
   const needsMetamagic = computed(() => metamagicExpected.value > 0)
 
   // ─── Expertise (lue dans le CATALOGUE, miroir de la sous-classe) ───────────
-  // Éligibilité = compétences maîtrisées connues du builder (classe + historique + variante) ; les
-  // octrois d'espèce viennent des effets, hors état builder → l'appartenance reste front-autoritaire.
+  // Éligibilité = compétences maîtrisées choisies dans le builder (classe + historique + variante), SANS
+  // les octrois d'espèce (`speciesEffects`, chargés en asynchrone : le watch ci-dessous purgerait un pick
+  // fait avant leur arrivée) → l'appartenance reste front-autoritaire.
   const expertiseExpected = computed(() => catalogChoices.value.find(c => c.kind === 'expertise')?.count ?? 0)
   const needsExpertise = computed(() => expertiseExpected.value > 0)
-  const proficientSkills = computed<string[]>(() => {
-    const bg = backgroundData.value
-    const bgSkills = bg?.id === 'custom' ? state.value.customBackgroundSkills : (bg?.skillProficiencies ?? [])
-    const variant = state.value.isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : []
-    return [...new Set([...state.value.skills, ...bgSkills, ...variant])]
-  })
+  const isVariantHuman = computed(() => state.value.raceId === 'human' && state.value.isVariantHuman)
+  // Humain variant : la création ne lie aucune espèce.
+  const speciesEffects = computed<Effect[]>(() => isVariantHuman.value ? [] : effectsFor(selectedLineageId.value))
+  const isCustomBackground = computed(() => backgroundData.value?.id === 'custom')
+  const backgroundSkills = computed<string[]>(() =>
+    isCustomBackground.value ? state.value.customBackgroundSkills : (backgroundData.value?.skillProficiencies ?? []),
+  )
+  const variantHumanSkills = computed<string[]>(() =>
+    isVariantHuman.value && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : [],
+  )
+  // Sans porteur en base (historique personnalisé, Humain variant) → matérialisées en `character_skills` ;
+  // celles d'un historique seedé sont dérivées de son porteur (F3).
+  const materializedSkills = computed<string[]>(() => [
+    ...(isCustomBackground.value ? state.value.customBackgroundSkills : []),
+    ...variantHumanSkills.value,
+  ])
+  const proficientSkills = computed<string[]>(() =>
+    [...new Set([...state.value.skills, ...backgroundSkills.value, ...variantHumanSkills.value])],
+  )
   // Compétences de classe CHOISIES en doublon avec une source FIXE déjà accordée (historique + Humain
   // variant) : le doublon est gaspillé (F3). On l'INDIQUE (StepClass/StepDescription) pour que le joueur
   // change son choix de classe — non bloquant. L'étape Classe étant AVANT l'historique, ça n'apparaît
   // qu'une fois l'historique choisi.
   const classSkillConflicts = computed<string[]>(() => {
-    const bg = backgroundData.value
-    const bgSkills = bg?.id === 'custom' ? state.value.customBackgroundSkills : (bg?.skillProficiencies ?? [])
-    const owned = new Set([...bgSkills, ...(state.value.isVariantHuman && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : [])])
+    const owned = new Set([...backgroundSkills.value, ...variantHumanSkills.value])
     return state.value.skills.filter(s => owned.has(s))
   })
   // Outils déjà maîtrisés (historique) : exclus du picker Doué pour ne pas gaspiller un choix. On ne
@@ -465,19 +480,6 @@ export function useCharacterBuilder() {
     return 10 + (dex != null ? abilityMod(dex) : 0)
   })
 
-  const passivePerception = computed(() => {
-    const wis = finalAbilities.value.wis
-    const wisBonus = wis != null ? abilityMod(wis) : 0
-    const allSkills = [...state.value.skills, ...(backgroundData.value?.skillProficiencies ?? [])]
-    const hasPerception = allSkills.includes('perception')
-    return 10 + wisBonus + (hasPerception ? profBonus.value : 0)
-  })
-
-  const initiative = computed(() => {
-    const dex = finalAbilities.value.dex
-    return dex != null ? abilityMod(dex) : 0
-  })
-
   const spellcastingInfo = computed(() => classData.value?.spellcasting ?? null)
   const spellSlots = computed(() => {
     if (!spellcastingInfo.value) return null
@@ -548,13 +550,20 @@ export function useCharacterBuilder() {
     return sum
   })
 
+  // Ceux que la création persistera : le don bonus + le don des paliers d'ASI dus où « don » est choisi
+  // (un don resté dans `asiFeats` d'un palier désélectionné ou au-dessus du niveau n'est pas envoyé).
+  const chosenFeatIds = computed<number[]>(() => [
+    state.value.bonusFeatureId,
+    ...asiLevelsForCharacter.value
+      .filter(lvl => state.value.asiChoice[lvl] === 'feat')
+      .map(lvl => state.value.asiFeats[lvl]),
+  ].filter((id): id is number => id != null))
+
   // Bonus de carac. apportés par les dons choisis : sans ça, un demi-don n'était reflété ni dans
   // l'aperçu ni dans les paliers d'ASI suivants (bug B4).
   const featBonusByAbility = computed<Partial<Record<AbilityKey, number>>>(() => {
     const sum: Partial<Record<AbilityKey, number>> = {}
-    const featIds = [state.value.bonusFeatureId, ...Object.values(state.value.asiFeats)]
-      .filter((id): id is number => id != null)
-    for (const id of featIds) {
+    for (const id of chosenFeatIds.value) {
       for (const e of (getFeatById(id)?.effects ?? []) as any[]) {
         if (e.type === 'ability_increase') {
           const ab = e.value.ability as AbilityKey
@@ -746,7 +755,8 @@ export function useCharacterBuilder() {
     subraces,
     subraceData,
     selectedLineageId,
-    lineageBaseSpeciesId,
+    catalogSpeciesId,
+    speciesEffects,
     classData,
     backgroundData,
     alignmentData,
@@ -759,8 +769,6 @@ export function useCharacterBuilder() {
     speed,
     hpMax,
     baseAC,
-    passivePerception,
-    initiative,
     // Sorts
     spellcastingInfo,
     spellSlots,
@@ -805,6 +813,10 @@ export function useCharacterBuilder() {
     // Expertise (catalogue)
     needsExpertise,
     expertiseExpected,
+    isVariantHuman,
+    isCustomBackground,
+    backgroundSkills,
+    materializedSkills,
     proficientSkills,
     classSkillConflicts,
     ownedTools,
@@ -823,6 +835,7 @@ export function useCharacterBuilder() {
     featBonusByAbility,
     // Dons
     feats,
+    chosenFeatIds,
     getFeatById,
     featNeedsAbility,
     featNeedsSpell,

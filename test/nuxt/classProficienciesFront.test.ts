@@ -42,6 +42,13 @@ describe('maîtrises de base de classe — blob front ≡ source unique corrigé
     })
   }
 
+  // StepClass affiche les JS du blob ; le récapitulatif et la fiche, ceux de la source.
+  for (const cls of CLASSES) {
+    it(`${cls.dbName} : jets de sauvegarde du blob == source`, () => {
+      expect(asSet(CLASS_PROFICIENCIES[cls.dbName]!.savingThrows)).toEqual(asSet(cls.savingThrows))
+    })
+  }
+
   it('les clés d\'armure sont des jetons consommés par la fiche (light/medium/heavy/shield/all_armor)', () => {
     // `useCharacterInventory.armorProficiencies` filtre les effets `proficiency` sur ces jetons.
     const valid = new Set(['light', 'medium', 'heavy', 'shield', 'all_armor'])
