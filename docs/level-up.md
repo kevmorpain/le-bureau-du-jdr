@@ -138,7 +138,7 @@ Guerrier `[4,6,8,12,14,16,19]` ; Roublard `[4,8,10,12,16,19]`) viennent du seed
 - `asiChoice === 'feat'` → `featId !== null`
 - `asiChoice === 'asi'` → `sum(asiBonuses) === 2`
 
-**Note serveur :** Les ASI sont stockées dans `character_ability_score_improvements` (table dédiée), pas dans `character_ability_scores`. Le GET de la fiche les inclut via `abilityScoreImprovements`. Le composable `useLevelUp` les accumule dans `finalAbilities` pour les prérequis de multiclassage.
+**Note serveur :** Les ASI sont stockées dans `character_ability_score_improvements` (table dédiée), pas dans `character_ability_scores`. Le GET de la fiche les inclut via `abilityScoreImprovements`. Le composable `useLevelUp` expose dans `finalAbilities` les totaux calculés par la même couche que la fiche (`useCharacterAbilities` + `useAbilityEffectInputs` : base + espèce + dons + ASI débloquées) — prérequis de multiclassage, plafond d'ASI, PV, modificateur d'incantation.
 
 ---
 

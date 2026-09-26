@@ -15,6 +15,8 @@ import { spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsK
 import { maxSpellLevelForLevel } from '~~/shared/rules/spellSlots'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
+import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
+import { useAbilityEffectInputs } from './useCharacterSheet'
 
 // ─── D&D 5e 2014 Rule Data ────────────────────────────────────────────────────
 
@@ -204,38 +206,25 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   const totalLevel = computed(() => charClasses.value.reduce((s, c) => s + c.level, 0))
 
-  const finalAbilities = computed<Record<AbilityKey, number>>(() => {
-    const base: Record<AbilityKey, number> = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }
-    for (const score of charSheet.value?.baseAbilityScores ?? []) {
-      const key = (score as any).abilityId as AbilityKey
-      if (key in base) base[key] = (score as any).value
-    }
-    for (const imp of charSheet.value?.abilityScoreImprovements ?? []) {
-      const key = imp.ability
-      if (key in base) base[key] += imp.amount
-    }
-    return base
+  // Caractéristiques et maîtrises lues dans la MÊME couche que la fiche : le stocké ne porte ni les bonus
+  // d'espèce fixes ni ceux des dons, et `character_skills` que les overrides et l'expertise.
+  const abilityInputs = useAbilityEffectInputs(charSheet)
+  const sheetAbilities = useCharacterAbilities(charSheet, {
+    ...abilityInputs,
+    proficiencyBonus: computed(() => profBonusAtLevel(totalLevel.value)),
   })
 
-  const expertSkills = computed<string[]>(() => {
-    return (charSheet.value?.skills ?? [])
-      .filter((s: any) => s.proficiencyLevel === 'expert')
-      .map((s: any) => s.skillKey)
-  })
+  const finalAbilities = computed<Record<AbilityKey, number>>(() =>
+    Object.fromEntries(ABILITIES.map(ab => [ab, sheetAbilities.abilityScores.value[ab]?.total ?? 10])) as Record<AbilityKey, number>,
+  )
 
-  const proficientSkills = computed<string[]>(() => {
-    return (charSheet.value?.skills ?? [])
-      .filter((s: any) => s.proficiencyLevel === 'proficient' || s.proficiencyLevel === 'expert')
-      .map((s: any) => s.skillKey)
-  })
+  const skillsWhere = (keep: (level: ProficiencyLevel) => boolean) =>
+    SKILLS.filter(s => keep(sheetAbilities.getEffectiveProficiency(s.key)))
 
-  // Maîtrises DÉRIVÉES portées par la fiche GET (F3 : historique + compétences de classe + JS ne sont
-  // plus matérialisés en character_skills). Les octrois d'espèce/dons imbriqués n'y sont pas (rares).
-  const derivedProficiencyEffects = computed<Effect[]>(() => {
-    const s = charSheet.value as any
-    if (!s) return []
-    return [...(s.backgroundEffects ?? []), ...(s.classEffects ?? []), ...(s.classSkillEffects ?? [])] as Effect[]
-  })
+  const expertSkills = computed<string[]>(() => skillsWhere(l => l === 'expert').map(s => s.key))
+  const proficientSkills = computed<string[]>(() => skillsWhere(l => l !== 'none').map(s => s.key))
+  const eligibleExpertiseSkills = computed(() => skillsWhere(l => l === 'proficient'))
+
   // Outils choisis (ex. « Outils de voleur » d'un historique) : stockés en overrides, ABSENTS du payload
   // GET → fetch dédié (comme la fiche). Sert à exclure du picker Doué.
   const { data: proficiencyOverridesData } = useFetch<Array<{ proficiencyType: string, value: string, action: string }>>(
@@ -243,16 +232,14 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     { default: () => [] },
   )
 
-  // Compétences maîtrisées COMPLÈTES (stockées + dérivées) : exclues du picker Doué. Distinct de
-  // `proficientSkills` (stocké seul, conservé tel quel pour l'éligibilité expertise).
-  const ownedSkills = computed<string[]>(() => {
-    const derived = derivedProficiencyEffects.value
-      .filter(e => e.type === 'skill_proficiency')
-      .map(e => (e.value as { skill: string }).skill)
-    return [...new Set([...proficientSkills.value, ...derived])]
-  })
   const ownedTools = computed<string[]>(() => {
-    const fromEffects = derivedProficiencyEffects.value.filter(e => e.type === 'tool_proficiency').map(e => e.value as string)
+    const classEffects = (charSheet.value as { classEffects?: Effect[] } | null)?.classEffects ?? []
+    const fromEffects = [
+      ...abilityInputs.speciesEffects.value,
+      ...abilityInputs.featureEffects.value,
+      ...abilityInputs.backgroundEffects.value,
+      ...classEffects,
+    ].filter(e => e.type === 'tool_proficiency').map(e => e.value as string)
     const ov = proficiencyOverridesData.value ?? []
     const grants = ov.filter(o => o.proficiencyType === 'tool' && o.action === 'grant').map(o => o.value)
     const revokes = new Set(ov.filter(o => o.proficiencyType === 'tool' && o.action === 'revoke').map(o => o.value))
@@ -674,7 +661,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     conMod,
     expertSkills,
     proficientSkills,
-    ownedSkills,
+    eligibleExpertiseSkills,
     ownedTools,
     currentSpellIds,
     // Picked class
