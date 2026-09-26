@@ -27,6 +27,8 @@ export interface AbilitiesFixture {
   featureEffects: Effect[]
   /** Effets d'ASI (améliorations de caractéristiques) déjà résolus en ability_increase. */
   asiEffects: Effect[]
+  /** Effets des objets actifs (équipés, et liés quand l'objet l'exige). */
+  itemEffects?: Effect[]
   /** Bonus de maîtrise — dérivé du niveau ; figé ici pour ancrer le contrat. */
   proficiencyBonus: number
 }
@@ -197,6 +199,7 @@ export function mountAbilities(f: AbilitiesFixture) {
     classSkillEffects: computed(() => f.classSkillEffects ?? []),
     featureEffects: computed(() => f.featureEffects),
     asiEffects: computed(() => f.asiEffects),
+    itemEffects: computed(() => f.itemEffects ?? []),
     proficiencyBonus: computed(() => f.proficiencyBonus),
   })
 }

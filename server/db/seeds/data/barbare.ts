@@ -138,6 +138,8 @@ Chaque fois que vous utilisez cette capacité après la première, le DD augment
     effects: [
       { type: 'ability_increase', value: { ability: 'str', amount: 4 } },
       { type: 'ability_increase', value: { ability: 'con', amount: 4 } },
+      { type: 'ability_max_increase', value: { ability: 'str', amount: 4 } },
+      { type: 'ability_max_increase', value: { ability: 'con', amount: 4 } },
     ],
   },
   ...asiFeatures('Barbare'),

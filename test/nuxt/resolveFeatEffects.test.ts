@@ -89,7 +89,7 @@ describe('resolveFeatEffects → useCharacterAbilities (bout en bout)', () => {
     const { abilityScores, abilityModifiers, savingThrows } = mountAbilities(f)
 
     // 13 + 1 = 14 → modificateur +2.
-    expect(abilityScores.value.con).toEqual({ base: 13, species: 0, feature: 1, asi: 0, bonus: 1, total: 14 })
+    expect(abilityScores.value.con).toEqual({ base: 13, species: 0, feature: 1, asi: 0, bonus: 1, maximum: 20, capped: 0, items: 0, total: 14 })
     expect(abilityModifiers.value.con).toBe(2)
     expect(savingThrows.value.con).toEqual({ modifier: 5, proficiency: 'proficient' }) // 2 + 3
   })

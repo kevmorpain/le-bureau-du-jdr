@@ -116,8 +116,14 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const abilityInputs = useAbilityEffectInputs(characterSheet)
   const { speciesEffects, backgroundEffects } = abilityInputs
 
+  // Forward-declaration : caractéristiques et incantation lisent les effets des objets actifs, alors que
+  // l'inventaire est créé après elles (il lui faut leurs modificateurs et spellcastingAbility).
+  const inventoryEffectsRef = shallowRef<ComputedRef<Effect[]> | null>(null)
+  const inventoryEffects = computed<Effect[]>(() => inventoryEffectsRef.value?.value ?? [])
+
   const abilities = useCharacterAbilities(characterSheet, {
     ...abilityInputs,
+    itemEffects: inventoryEffects,
     proficiencyBonus: classes.proficiencyBonus,
   })
 
@@ -220,12 +226,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     ...classEffects.value,
   ])
 
-  // Forward-declaration : la couche spellcasting a besoin des effets des objets magiques, alors que
-  // l'inventaire est créé après elle (il lui faut spellcastingAbility).
-  const inventoryEffectsRef = shallowRef<ComputedRef<Effect[]> | null>(null)
   const allEffectsForSpellcasting = computed<Effect[]>(() => [
     ...baseAllEffects.value,
-    ...(inventoryEffectsRef.value?.value ?? []),
+    ...inventoryEffects.value,
   ])
 
   // ─── Couche 4 : incantation ───────────────────────────────────────────────

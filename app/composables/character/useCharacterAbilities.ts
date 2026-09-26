@@ -1,5 +1,6 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import { ABILITY_KEYS, savingThrowKey } from '~~/shared/rules/abilities'
+import { resolveAbilityScore } from '~~/shared/rules/abilityScores'
 import { ABILITY_SKILLS } from '~~/shared/rules/skills'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
@@ -31,6 +32,8 @@ export const useCharacterAbilities = (
     classSavingThrowEffects?: ComputedRef<Effect[]>
     classSkillEffects?: ComputedRef<Effect[]>
     asiEffects: ComputedRef<Effect[]>
+    // Objets actifs (équipés, et liés quand l'objet l'exige) : appliqués au-delà du score naturel.
+    itemEffects?: ComputedRef<Effect[]>
     proficiencyBonus: ComputedRef<number>
   },
 ) => {
@@ -62,9 +65,41 @@ export const useCharacterAbilities = (
   const featureBonuses = computed(() => sumAbilityIncreases(deps?.featureEffects.value))
   const asiBonuses = computed(() => sumAbilityIncreases(deps?.asiEffects.value))
 
+  const maxIncreases = computed(() => {
+    const out: Record<string, number> = {}
+    const sources = [deps?.speciesEffects, deps?.featureEffects, deps?.asiEffects, deps?.itemEffects]
+    for (const e of sources.flatMap(s => s?.value ?? [])) {
+      if (e.type === 'ability_max_increase') out[e.value.ability] = (out[e.value.ability] ?? 0) + e.value.amount
+    }
+    return out
+  })
+
+  const itemAbilityEffects = computed(() => {
+    const out: Record<string, { increases: { amount: number, max?: number }[], sets: number[] }> = {}
+    for (const e of deps?.itemEffects?.value ?? []) {
+      if (e.type !== 'ability_increase' && e.type !== 'ability_score_set') continue
+      const entry = (out[e.value.ability] ??= { increases: [], sets: [] })
+      if (e.type === 'ability_score_set') entry.sets.push(e.value.score)
+      // Champ « Maximum » vidé dans l'éditeur d'objet → '' : retombe sur le maximum du personnage.
+      else entry.increases.push({ amount: e.value.amount, max: typeof e.value.max === 'number' ? e.value.max : undefined })
+    }
+    return out
+  })
+
   // ─── Computed scores & modifiers ──────────────────────────────────────────
 
-  type AbilityScore = { base: number, species: number, feature: number, asi: number, bonus: number, total: number }
+  // `capped` : points de `bonus` perdus au plafond ; `items` : apport des objets au-delà du score naturel.
+  type AbilityScore = {
+    base: number
+    species: number
+    feature: number
+    asi: number
+    bonus: number
+    maximum: number
+    capped: number
+    items: number
+    total: number
+  }
 
   const abilityScores = computed<Record<string, AbilityScore>>(() =>
     abilityScoreOrder.reduce<Record<string, AbilityScore>>((acc, abilityId) => {
@@ -73,7 +108,14 @@ export const useCharacterAbilities = (
       const feature = featureBonuses.value[abilityId] ?? 0
       const asi = asiBonuses.value[abilityId] ?? 0
       const bonus = species + feature + asi
-      acc[abilityId] = { base, species, feature, asi, bonus, total: base + bonus }
+      const { maximum, natural, total } = resolveAbilityScore({
+        base,
+        naturalBonus: bonus,
+        maxIncrease: maxIncreases.value[abilityId] ?? 0,
+        itemIncreases: itemAbilityEffects.value[abilityId]?.increases ?? [],
+        itemSets: itemAbilityEffects.value[abilityId]?.sets ?? [],
+      })
+      acc[abilityId] = { base, species, feature, asi, bonus, maximum, capped: base + bonus - natural, items: total - natural, total }
       return acc
     }, {}),
   )
