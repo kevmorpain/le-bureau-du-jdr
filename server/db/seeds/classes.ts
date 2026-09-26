@@ -18,6 +18,7 @@ export default async function seed() {
         spellcastingAbility: schema.classes.spellcastingAbility,
         subclassLevel: schema.classes.subclassLevel,
         spellcastingType: schema.classes.spellcastingType,
+        multiclassSkillCount: schema.classes.multiclassSkillCount,
       })
       .from(schema.classes)
       // Keyé par (name, ruleset) : un homonyme 5.5 est une ligne DISTINCTE, pas une mise à jour (D2).
@@ -32,6 +33,7 @@ export default async function seed() {
       || existing.spellcastingAbility !== cls.spellcastingAbility
       || existing.subclassLevel !== cls.subclassLevel
       || existing.spellcastingType !== cls.spellcastingType
+      || existing.multiclassSkillCount !== cls.multiclassSkillCount
     ) {
       await db
         .update(schema.classes)
@@ -40,6 +42,7 @@ export default async function seed() {
           spellcastingAbility: cls.spellcastingAbility,
           subclassLevel: cls.subclassLevel,
           spellcastingType: cls.spellcastingType,
+          multiclassSkillCount: cls.multiclassSkillCount,
         })
         .where(eq(schema.classes.id, existing.id))
       updated++

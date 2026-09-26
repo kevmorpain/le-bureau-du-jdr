@@ -150,20 +150,22 @@ Guerrier `[4,6,8,12,14,16,19]` ; Roublard `[4,8,10,12,16,19]`) viennent du seed
 
 ### Étape 5 — Compétences (`LevelUpStepSkills.vue`) — conditionnelle
 
-**Affiché uniquement si** `needsMulticlassSkills` (multiclassage dans une classe qui octroie des compétences) :
-```ts
-LU_MULTICLASS_SKILL_COUNT = { bard: 1, ranger: 1, rogue: 1 }
-LU_MULTICLASS_SKILL_POOL  = {
-  bard:   null,    // toutes les compétences
-  ranger: ['animalHandling', 'athletics', 'insight', 'investigation',
-           'nature', 'perception', 'stealth', 'survival'],
-  rogue:  ['acrobatics', 'athletics', 'deception', 'insight', 'intimidation',
-           'investigation', 'perception', 'performance', 'persuasion',
-           'sleightOfHand', 'stealth'],
-}
-```
+**Affiché uniquement si** `needsMulticlassSkills` (multiclassage dans une classe qui octroie des compétences).
+Règle PHB 2014 ([AideDD, multiclassage](https://www.aidedd.org/regles/personnalisation/multiclassage/)) :
+Barde 1 « au choix », Rôdeur et Roublard 1 « dans la liste de la classe », aucune ailleurs.
 
-**Validation :** `newSkills.length >= LU_MULTICLASS_SKILL_COUNT[classId]`
+`multiclassSkills` = `multiclassSkillGrant()` (`shared/rules/multiclass.ts`, partagé avec le serveur) :
+- **nombre** : colonne `classes.multiclass_skill_count` (migration 0103 + seed), lue via `/api/catalog/classes` ;
+- **liste** : options de la progression `skill` de la classe (catalogue) — `all` pour le Barde.
+
+Les compétences déjà maîtrisées (`proficientSkills`, lu dans la couche de la fiche) sont grisées.
+
+**Validation :** `newSkills.length >= requiredMulticlassSkillPicks` (le nombre dû, plafonné aux compétences
+de la liste encore non maîtrisées).
+
+**Serveur :** `newSkills` (clés `skillEnum`, sans doublon) n'est accepté que si la classe est **nouvellement
+rejointe** (déduit de `character_classes`, pas du flag client), en nombre ≤ au dû et dans la liste de la
+classe. « Déjà maîtrisée » reste front-autoritaire.
 
 ---
 
@@ -243,7 +245,7 @@ Corps :
 8. Insérer les nouveaux sorts (`isKnown: true, isPrepared: false`)
 9. Gérer les effets du Pact Boon (chain → Appel de familier, tome → sorts mineurs, blade → isPactWeapon)
 10. **Manifestations occultes** : `applyInvocationChanges` (cf. `server/utils/invocations.ts`) — si `replacedInvocationId`, DELETE le `character_features` correspondant + purge des `character_spells` source='invocation' liés aux `spell_grant` de cette invocation. Puis INSERT des `newInvocationIds` dans `character_features`, et matérialisation des `spell_grant` en `character_spells` avec `source: 'invocation'` (idempotent via `onConflictDoNothing`).
-11. Insérer les nouvelles compétences de multiclassage
+11. Insérer les nouvelles compétences de multiclassage (validées au préalable : classe rejointe, nombre, liste)
 12. Upserter les compétences en expertise (`proficiencyLevel: 'expert'`). Validées **avant** toute écriture (`validateLevelUpExpertise`) : au plus le delta du `count` cumulatif de la progression `expertise` entre `newLevel − 1` et `newLevel` (`expertiseGainedAtLevel`, même projection que le front), et aucune compétence déjà `expert` dans `character_skills` (toutes sources). La maîtrise préalable de la compétence reste **front-autoritaire** : la fiche permet déjà de poser `expert` à la main sur n'importe quelle compétence (`PUT /skills`), et le set maîtrisé complet n'est composé que côté front.
 13. Recalculer les emplacements de sort (full=niveau, half=⌊niveau/2⌋ si ≥2, pact=séparé) — **particularité Pact Magic** : tous les emplacements occultistes sont du même niveau, et ce niveau change avec le niveau d'occultiste (niv. 3 → slots niv. 2, niv. 5 → niv. 3, etc.). Le handler DELETE explicitement les anciens `pact_magic` slots aux autres niveaux avant l'upsert, avec préservation du compteur `used` du précédent niveau.
 
@@ -260,9 +262,8 @@ Toutes exportées pour usage dans les composants d'étape :
 //   ASI            → `isAsiLevel` / `asiDueForClassLevel` (progression asi_or_feat par palier)
 //   style de combat → `needsFightingStyle` / `fightingStyleLevelFor` + endpoint /api/catalog/classes/[name]/fighting-styles
 //   expertise       → `needsExpertise` / `expertiseDueForClassLevel` (count cumulatif)
+//   compétences de multiclassage → `multiclassSkills` / `requiredMulticlassSkillPicks`
 LU_MULTICLASS_PREREQS    // prérequis de carac. pour multiclassage
-LU_MULTICLASS_SKILL_POOL // pool de compétences disponibles par multiclassage
-LU_MULTICLASS_SKILL_COUNT // nombre de compétences octroyées par multiclassage
 LU_MULTICLASS_PROFICIENCIES // maîtrises octroyées par multiclassage (informatif)
 LU_FEATS                 // liste des 12 dons disponibles
 ```

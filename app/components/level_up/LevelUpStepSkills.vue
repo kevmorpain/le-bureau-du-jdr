@@ -17,7 +17,7 @@
 
     <p class="text-xs text-muted mb-3">
       Sélectionné :
-      <span :class="state.newSkills.length >= needed ? 'text-green-400' : 'text-amber-400'">
+      <span :class="state.newSkills.length >= requiredMulticlassSkillPicks ? 'text-green-400' : 'text-amber-400'">
         {{ state.newSkills.length }}/{{ needed }}
       </span>
     </p>
@@ -43,24 +43,22 @@
 </template>
 
 <script lang="ts" setup>
-import { LU_MULTICLASS_SKILL_COUNT, LU_MULTICLASS_SKILL_POOL } from '~/composables/useLevelUp'
+import { SKILL_KEYS } from '~~/shared/rules/skills'
 
 const {
   state,
   pickedClass,
   proficientSkills,
+  multiclassSkills,
+  requiredMulticlassSkillPicks,
   SKILLS,
 } = useLevelUp(inject('charSheet') as any)
 
-const clsId = computed(() => state.value.pickedClassId ?? '')
-const needed = computed(() => LU_MULTICLASS_SKILL_COUNT[clsId.value] ?? 1)
-const poolKeys = computed(() => LU_MULTICLASS_SKILL_POOL[clsId.value])
-const poolIsAll = computed(() => poolKeys.value === null)
-
+const needed = computed(() => multiclassSkills.value.count)
+const poolIsAll = computed(() => multiclassSkills.value.options.length === SKILL_KEYS.length)
 const availableSkills = computed(() => {
-  const pool = poolKeys.value
-  if (!pool) return SKILLS
-  return SKILLS.filter(s => pool.includes(s.key))
+  const pool = new Set<string>(multiclassSkills.value.options)
+  return SKILLS.filter(s => pool.has(s.key))
 })
 
 function alreadyProficient(key: string) {

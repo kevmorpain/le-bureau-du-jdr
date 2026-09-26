@@ -13,23 +13,13 @@ import {
 import { SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsKnown'
 import { maxSpellLevelForLevel } from '~~/shared/rules/spellSlots'
+import { multiclassSkillGrant, type MulticlassSkillGrant } from '~~/shared/rules/multiclass'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
 import { useAbilityEffectInputs } from './useCharacterSheet'
 
 // ─── D&D 5e 2014 Rule Data ────────────────────────────────────────────────────
-
-// Skills available for multiclass proficiency choices (null = any skill)
-export const LU_MULTICLASS_SKILL_POOL: Record<string, string[] | null> = {
-  bard: null,
-  ranger: ['animal_handling', 'athletics', 'insight', 'investigation', 'nature', 'perception', 'stealth', 'survival'],
-  rogue: ['acrobatics', 'athletics', 'deception', 'insight', 'intimidation', 'investigation', 'perception', 'performance', 'persuasion', 'sleight_of_hand', 'stealth'],
-}
-
-export const LU_MULTICLASS_SKILL_COUNT: Record<string, number> = {
-  bard: 1, ranger: 1, rogue: 1,
-}
 
 export const LU_MULTICLASS_PREREQS: Record<string, { or?: Array<Partial<Record<AbilityKey, number>>>, [key: string]: any }> = {
   barbarian: { str: 13 },
@@ -283,14 +273,20 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   // ── Choix de progression lus dans le CATALOGUE (/api/catalog, lot 6a) ──────
   // Choix résolus aux niveaux d'ARRIVÉE et de DÉPART : le delta pilote le nombre de nouvelles
   // invocations et compétences d'expertise.
-  const { choicesForClassLevel } = useCatalog()
-  const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
+  const { catalog, choicesForClassLevel } = useCatalog()
+  const { resolveClassId, subclassCatalogFor, multiclassSkillCountFor } = useBuilderEntities()
   const luClassDbId = computed(() =>
     charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId
     ?? resolveClassId(pickedClass.value?.dbName),
   )
   const choicesAtToLevel = computed(() => choicesForClassLevel(luClassDbId.value, state.value.toLevel))
   const choicesAtFromLevel = computed(() => choicesForClassLevel(luClassDbId.value, state.value.fromLevel))
+
+  const multiclassSkills = computed<MulticlassSkillGrant>(() => {
+    const dbId = luClassDbId.value
+    if (!state.value.isMulticlass || dbId == null) return { count: 0, options: [] }
+    return multiclassSkillGrant(dbId, multiclassSkillCountFor(dbId), catalog.value)
+  })
 
   // ── Pact Boon availability (Warlock level 3) ──────────────────────────────
 
@@ -429,10 +425,11 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return at - prev > 0
   }
 
-  const needsMulticlassSkills = computed(() => {
-    if (!state.value.isMulticlass) return false
-    const clsId = state.value.pickedClassId
-    return clsId ? (LU_MULTICLASS_SKILL_COUNT[clsId] ?? 0) > 0 : false
+  const needsMulticlassSkills = computed(() => multiclassSkills.value.count > 0)
+  // Plafonné aux compétences pas encore maîtrisées, comme les sorts : une liste épuisée ne bloque pas l'étape.
+  const requiredMulticlassSkillPicks = computed(() => {
+    const owned = new Set(proficientSkills.value)
+    return Math.min(multiclassSkills.value.count, multiclassSkills.value.options.filter(k => !owned.has(k)).length)
   })
 
   const hasSpellcasting = computed(() => {
@@ -537,12 +534,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         return total === 2
       }
 
-      case 'skills': {
-        const clsId = s.pickedClassId
-        if (!clsId) return true
-        const needed = LU_MULTICLASS_SKILL_COUNT[clsId] ?? 0
-        return s.newSkills.length >= needed
-      }
+      case 'skills':
+        return s.newSkills.length >= requiredMulticlassSkillPicks.value
 
       case 'spells':
         if (s.newCantripIds.length < requiredCantripPicks.value) return false
@@ -686,6 +679,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     newExpertiseCount,
     expertiseDueForClassLevel,
     needsMulticlassSkills,
+    multiclassSkills,
+    requiredMulticlassSkillPicks,
     hasSpellcasting,
     spellLearning,
     cantripsToLearn,

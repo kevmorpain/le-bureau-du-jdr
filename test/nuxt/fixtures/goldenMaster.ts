@@ -131,7 +131,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { id: CLASS.warlock, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' },
     { id: CLASS.fighter, name: 'Guerrier', hitDice: '1d10', spellcastingType: 'none' },
     { id: CLASS.wizard, name: 'Magicien', hitDice: '1d6', spellcastingType: 'full' },
-    { id: CLASS.rogue, name: 'Roublard', hitDice: '1d8', spellcastingType: 'none' },
+    { id: CLASS.rogue, name: 'Roublard', hitDice: '1d8', spellcastingType: 'none', multiclassSkillCount: 1 },
     { id: CLASS.paladin, name: 'Paladin', hitDice: '1d10', spellcastingType: 'half' },
   ])
   await db.insert(schema.subclasses).values([
