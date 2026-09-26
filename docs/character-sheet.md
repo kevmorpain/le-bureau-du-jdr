@@ -57,6 +57,16 @@ Affiche les 6 scores (FOR/DEX/CON/INT/SAG/CHA) avec :
 **Source :** `character_ability_scores` pour les scores de base, effets d'espèce/classe pour les bonus, `character_skills` pour les maîtrises.
 **Persistence :** `v-model` → deep watch → PUT.
 
+**Calcul du score** (`shared/rules/abilityScores.ts`, appelé par `useCharacterAbilities`) :
+1. **maximum** = 20 + Σ `ability_max_increase` (Champion primitif : +4 en FOR/CON) ;
+2. **score naturel** = base + espèce + capacités + ASI/dons, **plafonné au maximum**. Le plafond borne ce que
+   les sources ajoutent : une base saisie au-delà n'est jamais baissée ;
+3. **objets actifs** (cf. Inventaire) : `ability_increase` ajoute sans dépasser son `max` propre (Pierre de
+   Ioun : 20), ou à défaut le maximum du personnage ; puis `ability_score_set` relève le score à sa valeur
+   s'il est inférieur (Gantelets de puissance d'ogre : 19).
+
+La décomposition au survol du modificateur affiche les lignes « Plafond » (points perdus) et « Objets ».
+
 ### Maîtrises (`ProficienciesSection`)
 
 Maîtrises d'armes, d'armures, de langues et d'outils.
@@ -139,7 +149,7 @@ Liste tous les objets du personnage avec quantité, état équipé, bonus magiqu
 **Équiper/déséquiper :** `PUT /api/character_sheets/{id}/inventory/{entryId}`
 **Supprimer :** `DELETE /api/character_sheets/{id}/inventory/{entryId}`
 
-Les effets des objets **équipés** (`item_effects` → `effects`, exposés par le GET inventaire) sont injectés dans `allEffects` et peuvent modifier résistances, vitesse, DD/attaque de sort, etc. ⚠️ **Pas la CA** hors style de combat Défense (cf. ci-dessus), et le filtre ne regarde que `equipped` — **pas `attuned`** (cf. `fonctionnalites-manquantes.md` O1).
+Les effets des objets **actifs** — équipés, et **liés** quand l'objet exige un lien (`requiresAttunement`) — (`item_effects` → `effects`, exposés par le GET inventaire) sont injectés dans `allEffects` et dans le calcul des caractéristiques ; ils peuvent modifier résistances, vitesse, DD/attaque de sort, scores de caractéristique, etc. ⚠️ **Pas la CA** hors style de combat Défense (cf. ci-dessus). La limite de 3 objets liés reste un avertissement non bloquant (cf. `fonctionnalites-manquantes.md` O1).
 
 ### Identité (`IdentitySection`)
 

@@ -68,20 +68,54 @@
         </UFormField>
       </div>
 
-      <div v-else-if="effect.type === 'ability_increase'" class="grid grid-cols-2 gap-2">
+      <div v-else-if="effect.type === 'ability_increase'" class="grid grid-cols-3 gap-2">
         <UFormField label="Caractéristique">
           <USelect
-            v-model="(effect.value as { ability: string, amount: number }).ability"
+            v-model="(effect.value as AbilityIncreaseValue).ability"
             :items="abilityOptions"
             size="sm"
           />
         </UFormField>
         <UFormField label="Bonus">
           <UInput
-            v-model.number="(effect.value as { ability: string, amount: number }).amount"
+            v-model.number="(effect.value as AbilityIncreaseValue).amount"
             type="number"
             :min="1"
             :max="10"
+            size="sm"
+          />
+        </UFormField>
+        <UFormField
+          label="Maximum"
+          hint="ex. 20"
+        >
+          <UInput
+            v-model.number="(effect.value as AbilityIncreaseValue).max"
+            type="number"
+            :min="1"
+            :max="30"
+            size="sm"
+          />
+        </UFormField>
+      </div>
+
+      <div
+        v-else-if="effect.type === 'ability_score_set'"
+        class="grid grid-cols-2 gap-2"
+      >
+        <UFormField label="Caractéristique">
+          <USelect
+            v-model="(effect.value as AbilityScoreSetValue).ability"
+            :items="abilityOptions"
+            size="sm"
+          />
+        </UFormField>
+        <UFormField label="Score fixé à">
+          <UInput
+            v-model.number="(effect.value as AbilityScoreSetValue).score"
+            type="number"
+            :min="1"
+            :max="30"
             size="sm"
           />
         </UFormField>
@@ -170,12 +204,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { Effect } from '~~/server/db/schema/effects'
+import type { Effect, ExtractEffect } from '~~/server/db/schema/effects'
+import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 
 interface ExtraDamageValue {
   die_count_notation: string
   damage_type: string
 }
+
+type AbilityIncreaseValue = ExtractEffect<'ability_increase'>['value']
+type AbilityScoreSetValue = ExtractEffect<'ability_score_set'>['value']
 
 const props = defineProps<{
   modelValue: Effect[]
@@ -210,6 +248,7 @@ const effectTypeOptions = [
   { label: 'Immunité aux dégâts', value: 'damage_immunity' },
   { label: 'Vulnérabilité aux dégâts', value: 'vulnerability' },
   { label: 'Augmentation de caractéristique', value: 'ability_increase' },
+  { label: 'Caractéristique fixée', value: 'ability_score_set' },
   { label: 'Bonus de vitesse', value: 'walking_speed' },
   { label: 'Vision dans le noir', value: 'darkvision' },
   { label: 'Maîtrise d\'arme', value: 'weapon_proficiency' },
@@ -257,7 +296,8 @@ const defaultValueForType = (type: string): unknown => {
     case 'damage_resistance':
     case 'damage_immunity':
     case 'vulnerability': return { damageType: 'fire' }
-    case 'ability_increase': return { ability: 'str', amount: 2 }
+    case 'ability_increase': return { ability: 'str', amount: 2, max: ABILITY_SCORE_MAX }
+    case 'ability_score_set': return { ability: 'str', score: 19 }
     case 'walking_speed': return 9
     case 'darkvision': return { range: 18 }
     case 'weapon_proficiency': return 'simple_weapons'

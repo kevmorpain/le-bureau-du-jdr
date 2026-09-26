@@ -19,7 +19,8 @@
 > État : 2026-09-15. Dernier commit couvert : `53c43d3` (tranche 4 du style de combat incluse).
 >
 > **Résolu depuis** : **U10** (montée en puissance affichée) et **U2 (c)** — voir la note sous le
-> tableau U.
+> tableau U. **O7** (caractéristiques : effets d'objets et plafond, 2026-09-26) et le volet
+> « effets sans lien » d'**O1** — voir le tableau O.
 >
 > **Journal des corrections** — trois entrées rectifiées après relecture du code, mention gardée
 > inline plutôt que réécrite en silence : **R3** (épuisement, largement implémenté), **U2**
@@ -37,7 +38,7 @@
 | [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E10 | La donnée est seedée, le type existe, **personne ne la lit** |
 | [C — Capacités de classe sans mécanique](#c--capacités-de-classe-sans-mécanique) | C1–C9 | ~340 features n'ont qu'une `description` |
 | [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, concentration, encombrement… |
-| [O — Objets & inventaire](#o--objets--inventaire) | O1–O6 | Harmonisation non gardée, pas de poids ni de prix |
+| [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S6 | Rituel, limite de préparation, zone d'effet |
 | [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P5 | Choix jamais proposés |
 | [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 118 sorts sur ~360, dons, objets magiques |
@@ -153,12 +154,13 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 
 | # | Sujet | État | Détail | Effort |
 |---|---|---|---|---|
-| **O1** | **Harmonisation (attunement)** | ⚠️ **non gardée** | `character_inventory.attuned` est stocké et togglable, `items.requiresAttunement` existe — mais `inventoryEffects` ne filtre **que sur `equipped`**. Un objet qui **exige** l'harmonisation donne ses effets **sans être harmonisé**. Et la limite de 3 n'est qu'un badge d'avertissement non bloquant | 🟢 |
+| **O1** | **Harmonisation (attunement)** | ⚠️ **partiel** | ✅ *(2026-09-26, avec O7)* `inventoryEffects` ne garde un objet qui exige un lien que s'il est lié (DMG : « Une créature qui ne se lie pas à un objet qui nécessite un lien obtient uniquement les avantages non magiques de celui-ci »). **Reste** : la limite de 3 objets liés n'est qu'un badge d'avertissement non bloquant. *Constat d'origine : le filtre ne regardait que `equipped`, un objet exigeant le lien donnait ses effets sans être lié.* | 🟢 |
 | **O2** | **Poids & prix** | ❌ | Pas de colonne `weight` (→ R5) ni `cost`. Conséquence : aucun **achat** possible, la bourse (pp/po/pe/pa/pc) est purement déclarative — on ne peut pas dépenser en achetant un objet | 🔴 |
 | **O3** | **Pénalité de vitesse des armures lourdes** | ❌ | La règle n'est appliquée nulle part (d'où E7 qui l'annule dans le vide) | 🟢 |
 | **O4** | **Munitions** | ❌ | La propriété `ammunition` est stockée et affichée, mais aucun décompte de flèches/carreaux à l'attaque | 🟢 |
 | **O5** | **Armes lancées & portées** | ⚠️ | `thrown` sert à afficher la portée, mais pas à proposer un jet distinct ni à gérer le désavantage **hors portée normale** (longue portée) | 🟢 |
 | **O6** | **Objets magiques à effets actifs** | ❌ | Un objet à charges peut décompter ses charges, mais **rien ne lie une charge à un effet** (lancer un sort depuis un bâton, infliger des dégâts). Combiné à E11, l'essentiel du catalogue d'objets magiques du DMG n'est pas modélisable | 🔴 |
+| **O7** | ~~**Caractéristiques : effets d'objets et plafond**~~ | ✅ **RÉSOLU (2026-09-26)**, restes ci-contre | **Fait** : règle pure `shared/rules/abilityScores.ts` — maximum = 20 + Σ `ability_max_increase` ; score naturel (base + espèce + capacités + ASI/dons) plafonné au maximum, sans jamais baisser une base saisie au-delà ; puis objets actifs : `ability_increase` borné par son `max` propre (nouveau champ optionnel) ou le maximum, et `ability_score_set` (nouveau) en plancher. Câblé dans `useCharacterAbilities` via `useCharacterSheet` ; `MagicEffectEditor` propose « Maximum » et « Caractéristique fixée ». Champion primitif porte ses `ability_max_increase` (seed + migration 0102). **Reste** : **(1)** manuels et tomes (effet **permanent** d'un consommable) non modélisés. Décision : ce sont des faveurs acquises, à porter par des **features** attachées au personnage (comme un don), pas par un objet qu'il faudrait garder « équipé » ; chantier à part (type de feature, seed, parcours d'ajout). **(2)** Builder (`finalAbilities`, `StepAsi`) et level-up (`LevelUpStepAsi`) gardent leur `20` littéral au lieu de `ABILITY_SCORE_MAX`, et le builder ignore Champion primitif pour une création au niveau 20. **(3)** La lentille de sorts (`useSpellLens`) ne charge pas l'inventaire : un Bandeau d'intelligence n'y compte pas. **(4)** ⚠️ Ordre entre un objet qui fixe un score et un objet à bonus (Gantelets + Pierre de Ioun) : choisi (le score fixé s'applique en dernier, comme un plancher), non sourcé. **(5)** Les PV max restent ceux stockés (`effectiveMaxHp` = `maxHp` + bonus de dons) : un objet qui change la CON (Amulette de santé) modifie le modificateur, les JS et les jets, pas les PV max. **Constat d'origine** (2026-09-25, `58a5931`), trois volets. **(a)** Les `ability_increase` d'un objet équipé ne sont appliqués **nulle part** : `useCharacterSheet` n'en passe pas à `useCharacterAbilities` (`inventoryEffects` ne rejoint que `allEffectsForSpellcasting`) — alors que `MagicEffectEditor` propose l'effet et que l'inventaire l'affiche (« +2 FOR »). **(b)** Aucun type d'effet pour **fixer** un score (Gantelets de puissance d'ogre : « Votre Force est de 19 », Ceinturon de force de géant : 21 à 29) ni pour **relever le maximum** (Champion primitif du Barbare : « Votre maximum dans ces valeurs de caractéristique est maintenant de 24 », seedé en simple `ability_increase` +4 ; Manuel de vitalité : +2 au score et au maximum). **(c)** La fiche **ne plafonne rien** (`total: base + bonus`), alors que le builder plafonne à 20 (`finalAbilities`) et que l'ASI l'interdit (« Vous ne pouvez cependant pas augmenter une caractéristique au-delà de 20 par ce biais ») → un demi-don sur un score à 20 : builder 20, fiche 21 | 🟠 |
 
 ---
 
@@ -348,6 +350,5 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
    demande de décision de règles ni de travail de design. **N6 étant tranché ([D18](./decisions.md#d18)),
    N1 n'a plus de préalable** : le premier réglage pose le substrat, les suivants sont une clé de plus.
 8. **Le mobile (U1) est écarté par décision** — pas oublié. Ne pas le re-proposer.
-9. **O1 (harmonisation non gardée) est un one-liner** : un filtre sur `attuned` dans
-   `inventoryEffects`. À faire dès qu'un objet magique exigeant l'harmonisation est seedé, sinon
-   la règle est silencieusement contournée.
+9. ~~**O1 (harmonisation non gardée) est un one-liner**~~ — ✅ fait avec O7 (2026-09-26) : le filtre
+   sur `attuned` est dans `inventoryEffects`. Reste la limite de 3 objets liés, toujours non bloquante.

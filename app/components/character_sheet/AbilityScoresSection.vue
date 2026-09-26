@@ -51,6 +51,22 @@
                     +{{ score.asi }}
                   </td>
                 </tr>
+                <tr v-if="score.capped">
+                  <td class="text-muted pr-4 py-0.5">
+                    Plafond {{ score.maximum }}
+                  </td>
+                  <td class="text-right font-mono">
+                    −{{ score.capped }}
+                  </td>
+                </tr>
+                <tr v-if="score.items">
+                  <td class="text-muted pr-4 py-0.5">
+                    Objets
+                  </td>
+                  <td class="text-right font-mono">
+                    +{{ score.items }}
+                  </td>
+                </tr>
                 <tr class="border-t border-default">
                   <td class="text-muted pr-4 pt-1">
                     Total
@@ -85,14 +101,6 @@
                         class="w-20"
                         @update:model-value="(v) => updateBaseScore(key, v ?? score.base)"
                       />
-                    </td>
-                  </tr>
-                  <tr v-if="score.speciesBonus">
-                    <td class="text-muted pr-4 py-0.5">
-                      Espèce
-                    </td>
-                    <td class="text-right font-mono">
-                      +{{ score.speciesBonus }}
                     </td>
                   </tr>
                   <tr class="border-t border-default">

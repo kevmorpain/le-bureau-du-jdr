@@ -628,7 +628,8 @@ const magicEffectLabel = (effect: Effect): string => {
     }
     case 'walking_speed': return `+${v} m de vitesse`
     case 'darkvision': return `Vision dans le noir ${v.range} m`
-    case 'ability_increase': return `+${v.amount} ${v.ability?.toUpperCase()}`
+    case 'ability_increase': return `+${v.amount} ${v.ability?.toUpperCase()}${typeof v.max === 'number' ? ` (max ${v.max})` : ''}`
+    case 'ability_score_set': return `${v.ability?.toUpperCase()} ${v.score}`
     case 'damage_resistance': return `Résistance ${damageTypeLabels[v.damageType] ?? v.damageType}`
     case 'damage_immunity': return `Immunité ${damageTypeLabels[v.damageType] ?? v.damageType}`
     case 'vulnerability': return `Vulnérabilité ${damageTypeLabels[v.damageType] ?? v.damageType}`

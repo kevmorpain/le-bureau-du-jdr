@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { barbareFeatures } from '../../server/db/seeds/data/barbare'
 import { ambroise, lixek, uka, blankFixture, mountAbilities, type AbilitiesFixture } from './fixtures/characters'
 
 // Contrat d'équivalence 2014 — assertions sur des valeurs D&D vérifiées à la main, PAS un snapshot :
@@ -10,12 +11,12 @@ describe('useCharacterAbilities — Ambroise (Nain des collines · Occultiste 10
   describe('Valeurs de caractéristiques (base + espèce, sans ASI ni don)', () => {
     it('décompose chaque score par source', () => {
       // base (seed) + espèce (Nain des collines : CON +2, SAG +1) ; feature/asi = 0
-      expect(a.abilityScores.value.str).toEqual({ base: 12, species: 0, feature: 0, asi: 0, bonus: 0, total: 12 })
-      expect(a.abilityScores.value.dex).toEqual({ base: 14, species: 0, feature: 0, asi: 0, bonus: 0, total: 14 })
-      expect(a.abilityScores.value.con).toEqual({ base: 13, species: 2, feature: 0, asi: 0, bonus: 2, total: 15 })
-      expect(a.abilityScores.value.int).toEqual({ base: 13, species: 0, feature: 0, asi: 0, bonus: 0, total: 13 })
-      expect(a.abilityScores.value.wis).toEqual({ base: 15, species: 1, feature: 0, asi: 0, bonus: 1, total: 16 })
-      expect(a.abilityScores.value.cha).toEqual({ base: 9, species: 0, feature: 0, asi: 0, bonus: 0, total: 9 })
+      expect(a.abilityScores.value.str).toEqual({ base: 12, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 12 })
+      expect(a.abilityScores.value.dex).toEqual({ base: 14, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 14 })
+      expect(a.abilityScores.value.con).toEqual({ base: 13, species: 2, feature: 0, asi: 0, bonus: 2, maximum: 20, capped: 0, items: 0, total: 15 })
+      expect(a.abilityScores.value.int).toEqual({ base: 13, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 13 })
+      expect(a.abilityScores.value.wis).toEqual({ base: 15, species: 1, feature: 0, asi: 0, bonus: 1, maximum: 20, capped: 0, items: 0, total: 16 })
+      expect(a.abilityScores.value.cha).toEqual({ base: 9, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 9 })
     })
 
     it('agrège le bonus total par caractéristique', () => {
@@ -84,12 +85,12 @@ describe('useCharacterAbilities — Lixek (Drakéide d\'or · Guerrier Champion 
   const l = mountAbilities(lixek)
 
   it('décompose les caractéristiques (base + espèce FOR+2/CHA+1 + ASI FOR+2/CON+2)', () => {
-    expect(l.abilityScores.value.str).toEqual({ base: 15, species: 2, feature: 0, asi: 2, bonus: 4, total: 19 })
-    expect(l.abilityScores.value.dex).toEqual({ base: 13, species: 0, feature: 0, asi: 0, bonus: 0, total: 13 })
-    expect(l.abilityScores.value.con).toEqual({ base: 14, species: 0, feature: 0, asi: 2, bonus: 2, total: 16 })
-    expect(l.abilityScores.value.int).toEqual({ base: 8, species: 0, feature: 0, asi: 0, bonus: 0, total: 8 })
-    expect(l.abilityScores.value.wis).toEqual({ base: 12, species: 0, feature: 0, asi: 0, bonus: 0, total: 12 })
-    expect(l.abilityScores.value.cha).toEqual({ base: 10, species: 1, feature: 0, asi: 0, bonus: 1, total: 11 })
+    expect(l.abilityScores.value.str).toEqual({ base: 15, species: 2, feature: 0, asi: 2, bonus: 4, maximum: 20, capped: 0, items: 0, total: 19 })
+    expect(l.abilityScores.value.dex).toEqual({ base: 13, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 13 })
+    expect(l.abilityScores.value.con).toEqual({ base: 14, species: 0, feature: 0, asi: 2, bonus: 2, maximum: 20, capped: 0, items: 0, total: 16 })
+    expect(l.abilityScores.value.int).toEqual({ base: 8, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 8 })
+    expect(l.abilityScores.value.wis).toEqual({ base: 12, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 12 })
+    expect(l.abilityScores.value.cha).toEqual({ base: 10, species: 1, feature: 0, asi: 0, bonus: 1, maximum: 20, capped: 0, items: 0, total: 11 })
   })
 
   it('calcule les modificateurs (dont INT 8 → −1)', () => {
@@ -127,12 +128,12 @@ describe('useCharacterAbilities — Uka (Demi-orc · Barde Collège du savoir 10
   const u = mountAbilities(uka)
 
   it('décompose les caractéristiques (base + espèce FOR+2/CON+1 + ASI CHA+2)', () => {
-    expect(u.abilityScores.value.str).toEqual({ base: 10, species: 2, feature: 0, asi: 0, bonus: 2, total: 12 })
-    expect(u.abilityScores.value.dex).toEqual({ base: 14, species: 0, feature: 0, asi: 0, bonus: 0, total: 14 })
-    expect(u.abilityScores.value.con).toEqual({ base: 13, species: 1, feature: 0, asi: 0, bonus: 1, total: 14 })
-    expect(u.abilityScores.value.int).toEqual({ base: 8, species: 0, feature: 0, asi: 0, bonus: 0, total: 8 })
-    expect(u.abilityScores.value.wis).toEqual({ base: 12, species: 0, feature: 0, asi: 0, bonus: 0, total: 12 })
-    expect(u.abilityScores.value.cha).toEqual({ base: 15, species: 0, feature: 0, asi: 2, bonus: 2, total: 17 })
+    expect(u.abilityScores.value.str).toEqual({ base: 10, species: 2, feature: 0, asi: 0, bonus: 2, maximum: 20, capped: 0, items: 0, total: 12 })
+    expect(u.abilityScores.value.dex).toEqual({ base: 14, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 14 })
+    expect(u.abilityScores.value.con).toEqual({ base: 13, species: 1, feature: 0, asi: 0, bonus: 1, maximum: 20, capped: 0, items: 0, total: 14 })
+    expect(u.abilityScores.value.int).toEqual({ base: 8, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 8 })
+    expect(u.abilityScores.value.wis).toEqual({ base: 12, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 12 })
+    expect(u.abilityScores.value.cha).toEqual({ base: 15, species: 0, feature: 0, asi: 2, bonus: 2, maximum: 20, capped: 0, items: 0, total: 17 })
   })
 
   it('calcule les modificateurs', () => {
@@ -191,10 +192,10 @@ describe('useCharacterAbilities — dérivation par canal', () => {
     }
     const { abilityScores, abilityModifiers } = mountAbilities(f)
 
-    expect(abilityScores.value.wis).toEqual({ base: 13, species: 2, feature: 2, asi: 2, bonus: 6, total: 19 })
+    expect(abilityScores.value.wis).toEqual({ base: 13, species: 2, feature: 2, asi: 2, bonus: 6, maximum: 20, capped: 0, items: 0, total: 19 })
     expect(abilityModifiers.value.wis).toBe(4)
     // Caractéristique jamais renseignée → base 10 par défaut, aucun bonus.
-    expect(abilityScores.value.str).toEqual({ base: 10, species: 0, feature: 0, asi: 0, bonus: 0, total: 10 })
+    expect(abilityScores.value.str).toEqual({ base: 10, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 0, total: 10 })
     expect(abilityModifiers.value.str).toBe(0)
   })
 
@@ -354,5 +355,51 @@ describe('useCharacterAbilities — dérivation par canal', () => {
     expect(passiveInvestigation.value).toBe(16) // 10 + mod INT 1 + 5
     expect(initiativeBonus.value).toBe(8) // mod DEX 3 + 5
     expect(hpBonusFromFeats.value).toBe(20) // 2 × 10 niveaux
+  })
+})
+
+describe('useCharacterAbilities — plafond et objets', () => {
+  it('plafonne à 20 un demi-don pris sur un score déjà à 20 (base 18 + espèce 2 + don 1)', () => {
+    const { abilityScores, abilityModifiers } = mountAbilities({
+      ...blankFixture,
+      baseAbilityScores: [{ abilityId: 'con', value: 18 }],
+      speciesEffects: [{ type: 'ability_increase', value: { ability: 'con', amount: 2 } }],
+      featureEffects: [{ type: 'ability_increase', value: { ability: 'con', amount: 1 } }],
+    })
+
+    expect(abilityScores.value.con).toEqual({ base: 18, species: 2, feature: 1, asi: 0, bonus: 3, maximum: 20, capped: 1, items: 0, total: 20 })
+    expect(abilityModifiers.value.con).toBe(5)
+  })
+
+  it('Champion primitif (seed barbare.ts) : FOR 20 → 24, maximum relevé à 24', () => {
+    const championPrimitif = barbareFeatures.find(f => f.name === 'Champion primitif')!.effects ?? []
+    const { abilityScores, abilityModifiers } = mountAbilities({
+      ...blankFixture,
+      baseAbilityScores: [{ abilityId: 'str', value: 15 }, { abilityId: 'con', value: 14 }],
+      speciesEffects: [{ type: 'ability_increase', value: { ability: 'str', amount: 2 } }],
+      asiEffects: [
+        { type: 'ability_increase', value: { ability: 'str', amount: 2 } },
+        { type: 'ability_increase', value: { ability: 'str', amount: 1 } },
+      ],
+      featureEffects: championPrimitif,
+    })
+
+    expect(abilityScores.value.str).toEqual({ base: 15, species: 2, feature: 4, asi: 3, bonus: 9, maximum: 24, capped: 0, items: 0, total: 24 })
+    expect(abilityModifiers.value.str).toBe(7)
+    expect(abilityScores.value.con!.total).toBe(18) // 14 + 4, sous le maximum de 24
+  })
+
+  it('les objets s\'appliquent au-delà du score naturel : score fixé et bonus à maximum propre', () => {
+    const { abilityScores } = mountAbilities({
+      ...blankFixture,
+      baseAbilityScores: [{ abilityId: 'str', value: 15 }, { abilityId: 'con', value: 19 }],
+      itemEffects: [
+        { type: 'ability_score_set', value: { ability: 'str', score: 19 } }, // Gantelets de puissance d'ogre
+        { type: 'ability_increase', value: { ability: 'con', amount: 2, max: 20 } }, // Pierre de Ioun (vigueur)
+      ],
+    })
+
+    expect(abilityScores.value.str).toEqual({ base: 15, species: 0, feature: 0, asi: 0, bonus: 0, maximum: 20, capped: 0, items: 4, total: 19 })
+    expect(abilityScores.value.con!.total).toBe(20) // 19 + 2, borné à 20 par la pierre
   })
 })

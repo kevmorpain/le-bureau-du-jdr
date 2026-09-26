@@ -9,7 +9,8 @@ useCharacterClasses        → espèce, classes, level, proficiencyBonus
 useAbilityEffectInputs     → effets d'entrée de la couche 2 (espèce, aptitudes débloquées, dons, ASI,
                              maîtrises dérivées par le GET) — sans fetch ni stockage
   ↓
-useCharacterAbilities      → scores, modificateurs, compétences, jets de sauvegarde
+useCharacterAbilities      → scores (plafond : shared/rules/abilityScores), modificateurs, compétences,
+                             jets de sauvegarde ; + `itemEffects` des objets actifs (fiche seulement)
   ↓ (formulaContext construit ici pour éviter les dépendances circulaires)
 useCharacterConditions     → états, épuisement, défenses, vitesse, PV max
 useCharacterSpellcasting   → caractéristique d'incantation, DD, emplacements de sort
@@ -47,6 +48,8 @@ De même, `resolvedFeatures`, `classFeatureEffects` et `allEffects` sont constru
 - Hors de la fiche (level-up, lentille de sorts), ne jamais reconstruire maîtrises ou caractéristiques à
   la main : instancier `useCharacterAbilities` avec `useAbilityEffectInputs`. `character_skills` ne porte
   que les overrides et l'expertise ; le lire seul donne un résultat faux (cf. `audit-completude.md` B9).
+  Les effets d'objets n'y sont pas (l'inventaire a son propre fetch) : seule la fiche les passe en
+  `itemEffects`, via une forward-declaration car l'inventaire est instancié après la couche 2.
 - Les constantes module-level (listes, maps) vont en tête de fichier, avant le composable.
 - Les types privés au fichier (ex. `DefenseEntry`, `SaveStatus`) ne sont pas exportés.
 - Les constantes utiles à l'extérieur (ex. `binaryConditions`, `abilitySkillKeys`) sont exportées directement depuis le fichier, pas via le `return` du composable.

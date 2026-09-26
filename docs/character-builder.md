@@ -347,7 +347,8 @@ produit :
 
 Les scores de base projetés sont `finalAbilities` : les `ability_increase` sont retirés des effets pour
 ne pas être comptés deux fois. `BuilderPreview` lit la même projection. Hors projection : la CA (armure
-équipée) et le plafond de 20 (appliqué par le builder, pas par la fiche).
+équipée) et le plafond de 20 (appliqué par `finalAbilities` ; la fiche l'applique aussi, via
+`shared/rules/abilityScores.ts`).
 
 ---
 

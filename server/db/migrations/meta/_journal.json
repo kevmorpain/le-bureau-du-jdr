@@ -715,6 +715,13 @@
       "when": 1747872059000,
       "tag": "0101_archfey_charm_immunity",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "6",
+      "when": 1747872060000,
+      "tag": "0102_primal_champion_ability_max",
+      "breakpoints": true
     }
   ]
 }

@@ -47,8 +47,13 @@ export const choiceOptions = <K extends string>(
 ): K[] => (from === undefined || from === 'all' ? [...all] : from)
 
 export type Effect
-  = | { type: 'ability_increase', value: { ability: AbilityScoreKey, amount: number } }
+  // `max` : plafond propre à la source (Pierre de Ioun : « pour un total maximum de 20 ») ; absent → le
+  // maximum du personnage (20 + `ability_max_increase`). Règle appliquée par `shared/rules/abilityScores`.
+  = | { type: 'ability_increase', value: { ability: AbilityScoreKey, amount: number, max?: number } }
     | { type: 'ability_increase_choice', value: { count: number, amount: number, abilities?: AbilityScoreKey[] } }
+    | { type: 'ability_max_increase', value: { ability: AbilityScoreKey, amount: number } }
+    // Objet qui FIXE le score (Gantelets de puissance d'ogre : 19), sans effet sur un score déjà supérieur.
+    | { type: 'ability_score_set', value: { ability: AbilityScoreKey, score: number } }
     | { type: 'asi_or_feat', value: Record<string, never> }
     | { type: 'action', value: BreathWeaponAction | RevivalAction }
     | { type: 'advantage', value: { rollType: 'check' | 'saving_throw', ability: AbilityScoreKey | 'all', condition: string } }

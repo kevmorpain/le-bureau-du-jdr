@@ -132,9 +132,11 @@ export const useCharacterInventory = (
 
   // ─── Magic item effects → merged into allEffects upstream ─────────────────
 
+  // DMG : « Une créature qui ne se lie pas à un objet qui nécessite un lien obtient uniquement les
+  // avantages non magiques de celui-ci » → aucun effet sans lien.
   const inventoryEffects = computed<Effect[]>(() =>
     inventory.value
-      .filter(e => e.equipped)
+      .filter(e => e.equipped && (!e.item?.requiresAttunement || e.attuned))
       .flatMap(e => e.item?.effects ?? []),
   )
 
