@@ -1,9 +1,9 @@
 import { CreatureSize } from '../../schema/character_species'
-import type { LineageSpeciesData } from '../lib/seedLineages'
+import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
 
 // ⚠️ Effets copiés à l'identique des anciennes espèces `lightfootHalfling`/`stoutHalfling` (équivalence D12).
 
-const baseTraits = [
+const baseTraits: SpeciesTraitData[] = [
   {
     name: 'Augmentation de caractéristiques',
     description: `Votre valeur de Dextérité augmente de 2.`,
@@ -39,7 +39,7 @@ const baseTraits = [
   },
 ]
 
-const lightfootHalflingLineage = {
+const lightfootHalflingLineage: LineageData = {
   name: 'Halfelin pied-léger',
   description: `Discrets et affables, les halfelins pied-léger savent se fondre dans la foule et passer inaperçus.`,
   traits: [
@@ -56,7 +56,7 @@ const lightfootHalflingLineage = {
   ],
 }
 
-const stoutHalflingLineage = {
+const stoutHalflingLineage: LineageData = {
   name: 'Halfelin robuste',
   description: `Endurants et vigoureux, les halfelins robustes ont, dit-on, du sang nain et résistent au poison.`,
   traits: [

@@ -1,4 +1,4 @@
-import type { DamageTypeKey, ConditionKey } from '~~/server/db/schema/effects'
+import type { DamageTypeKey, ConditionKey, ImmunityKey } from '~~/server/db/schema/effects'
 
 export const damageTypeLabels: Record<DamageTypeKey, string> = {
   acid: 'Acide',
@@ -33,6 +33,10 @@ export const conditionLabels: Record<ConditionKey, string> = {
   restrained: 'Entravé',
   stunned: 'Étourdi',
   unconscious: 'Inconscient',
+}
+
+export const immunityLabels: Record<ImmunityKey, string> = {
+  sleep_magic: 'Sommeil magique',
 }
 
 export const allConditions: ConditionKey[] = [

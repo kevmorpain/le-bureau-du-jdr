@@ -1,6 +1,6 @@
 import { useStorage } from '@vueuse/core'
 import type { Effect, DamageTypeKey, ConditionKey } from '~~/server/db/schema/effects'
-import { damageTypeLabels, conditionLabels, allConditions } from '~~/shared/utils/labels'
+import { damageTypeLabels, conditionLabels, immunityLabels, allConditions } from '~~/shared/utils/labels'
 import { dragonbornAncestryDamageType } from '~~/shared/utils/draconic_ancestry'
 import type { DragonbornAncestry } from '~~/shared/utils/draconic_ancestry'
 import { conditionMechanics, exhaustionImpactLines } from '~~/shared/utils/condition-effects'
@@ -122,6 +122,8 @@ export const useCharacterConditions = (
       } else if (effect.type === 'condition_immunity') {
         const cond = effect.value.condition
         add(`cond:${cond}`, conditionLabels[cond], 'immunity')
+      } else if (effect.type === 'immunity') {
+        add(`imm:${effect.value}`, immunityLabels[effect.value], 'immunity')
       } else if (effect.type === 'advantage' && effect.value.rollType === 'saving_throw') {
         const cond = effect.value.condition
         const label = `${cond in conditionLabels ? conditionLabels[cond as ConditionKey] : cond} (JdS)`

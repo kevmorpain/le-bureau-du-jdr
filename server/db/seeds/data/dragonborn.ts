@@ -1,5 +1,6 @@
 import { CreatureSize } from '../../schema/character_species'
-import type { LineageSpeciesData } from '../lib/seedLineages'
+import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
+import type { AbilityScoreKey, DamageTypeKey, Effect } from '../../schema/effects'
 
 /**
  * Cas PARTICULIER : en 2014 l'ascendance draconique était une COLONNE
@@ -26,7 +27,7 @@ export const DRAGONBORN_LINEAGE_BY_ANCESTRY: Record<string, string> = Object.fro
   DRAGONS.map(d => [d.key, d.name]),
 )
 
-function breathEffect(damage: string, area: string, save: string) {
+function breathEffect(damage: DamageTypeKey, area: 'line' | 'cone', save: AbilityScoreKey): Effect {
   return {
     type: 'action',
     value: {
@@ -45,7 +46,7 @@ function breathEffect(damage: string, area: string, save: string) {
   }
 }
 
-const baseTraits = [
+const baseTraits: SpeciesTraitData[] = [
   {
     name: 'Augmentation de caractéristiques',
     description: `Votre valeur de Force augmente de 2 et votre valeur de Charisme augmente de 1.`,
@@ -69,7 +70,7 @@ const baseTraits = [
   },
 ]
 
-const lineages = DRAGONS.map(d => ({
+const lineages = DRAGONS.map((d): LineageData => ({
   name: d.name,
   description: `Votre ascendance remonte à un ${d.name.toLowerCase()} : votre souffle et votre résistance en découlent.`,
   traits: [

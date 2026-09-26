@@ -1,9 +1,10 @@
 import { CreatureSize } from '../../schema/character_species'
+import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
 
 // ⚠️ Effets copiés à l'identique des anciennes espèces `highElf`/`woodElf`/`drow` : c'est ce qui fait
 // tenir le test d'équivalence (D12). Additif : les anciennes espèces ne sont pas supprimées.
 
-const baseTraits = [
+const baseTraits: SpeciesTraitData[] = [
   {
     name: 'Augmentation de caractéristiques',
     description: `Votre valeur de Dextérité augmente de 2.`,
@@ -39,7 +40,7 @@ const baseTraits = [
   },
 ]
 
-const highElfLineage = {
+const highElfLineage: LineageData = {
   name: 'Haut-elfe',
   description: `Raffinés et lettrés, les hauts-elfes ont l'esprit vif et maîtrisent les rudiments de la magie.`,
   traits: [
@@ -81,7 +82,7 @@ const highElfLineage = {
   ],
 }
 
-const woodElfLineage = {
+const woodElfLineage: LineageData = {
   name: 'Elfe des bois',
   description: `Furtifs et endurants, les elfes des bois vivent en harmonie avec la nature sauvage.`,
   traits: [
@@ -118,7 +119,7 @@ const woodElfLineage = {
   ],
 }
 
-const drowLineage = {
+const drowLineage: LineageData = {
   // L'ancienne espèce 2014 s'appelait « Elfe noir » ; la migration 0086 renomme la ligne déjà seedée.
   name: 'Drow',
   description: `Nés dans les Outreterre, les drows portent la magie des profondeurs et une vision perçante dans les ténèbres.`,
@@ -164,9 +165,9 @@ const drowLineage = {
   ],
 }
 
-export const elf = {
+export const elf: LineageSpeciesData = {
   name: 'Elfe',
-  ruleset: '5' as const,
+  ruleset: '5',
   size: CreatureSize.Medium,
   speed: 9,
   baseTraits,

@@ -1,10 +1,10 @@
 import { CreatureSize } from '../../schema/character_species'
-import type { LineageSpeciesData } from '../lib/seedLineages'
+import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
 
 // ⚠️ Effets copiés à l'identique des anciennes espèces `hillDwarf`/`mountainDwarf` : c'est ce qui fait
 // tenir le test d'équivalence (D12).
 
-const baseTraits = [
+const baseTraits: SpeciesTraitData[] = [
   {
     name: 'Augmentation de caractéristiques',
     description: `Votre valeur de Constitution augmente de 2.`,
@@ -61,7 +61,7 @@ const baseTraits = [
   },
 ]
 
-const hillDwarfLineage = {
+const hillDwarfLineage: LineageData = {
   name: 'Nain des collines',
   description: `Sagaces et endurants, les nains des collines ont des sens affûtés, une intuition profonde et une résistance remarquable aux blessures.`,
   traits: [
@@ -78,7 +78,7 @@ const hillDwarfLineage = {
   ],
 }
 
-const mountainDwarfLineage = {
+const mountainDwarfLineage: LineageData = {
   name: 'Nain des montagnes',
   description: `Robustes et aguerris, les nains des montagnes sont accoutumés à une vie rude en altitude et à manier armes et armures.`,
   traits: [
