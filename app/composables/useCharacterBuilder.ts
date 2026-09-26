@@ -295,7 +295,7 @@ export function useCharacterBuilder() {
   const lineageBaseName = computed(() => raceData.value?.lineageBaseSpeciesName ?? null)
   // Espèce du catalogue de la race, avec ou sans lignée : ses effets alimentent le récapitulatif.
   const catalogSpeciesName = computed(() => lineageBaseName.value ?? raceData.value?.dbName ?? null)
-  const { baseSpeciesId: catalogSpeciesId, lineageSubraces, effectsFor } = useSpeciesLineages(catalogSpeciesName)
+  const { baseSpeciesId: catalogSpeciesId, lineageSubraces, effectsFor, effectsLoaded: speciesEffectsLoaded } = useSpeciesLineages(catalogSpeciesName)
   const subraces = computed<SubraceData[]>(() => {
     if (lineageBaseName.value && lineageSubraces.value.length) return lineageSubraces.value
     return raceData.value?.subraces ?? []
@@ -348,14 +348,18 @@ export function useCharacterBuilder() {
   const needsMetamagic = computed(() => metamagicExpected.value > 0)
 
   // ─── Expertise (lue dans le CATALOGUE, miroir de la sous-classe) ───────────
-  // Éligibilité = compétences maîtrisées choisies dans le builder (classe + historique + variante), SANS
-  // les octrois d'espèce (`speciesEffects`, chargés en asynchrone : le watch ci-dessous purgerait un pick
-  // fait avant leur arrivée) → l'appartenance reste front-autoritaire.
+  // Éligibilité = toute compétence maîtrisée (classe, espèce, historique, variante) ; l'appartenance
+  // reste front-autoritaire.
   const expertiseExpected = computed(() => catalogChoices.value.find(c => c.kind === 'expertise')?.count ?? 0)
   const needsExpertise = computed(() => expertiseExpected.value > 0)
   const isVariantHuman = computed(() => state.value.raceId === 'human' && state.value.isVariantHuman)
   // Humain variant : la création ne lie aucune espèce.
   const speciesEffects = computed<Effect[]>(() => isVariantHuman.value ? [] : effectsFor(selectedLineageId.value))
+  const speciesSkillsLoaded = computed(() => isVariantHuman.value || speciesEffectsLoaded.value)
+  // Octrois FIXES seulement : `skill_proficiency_choice` (Demi-elfe) n'a pas de picker.
+  const speciesSkills = computed<string[]>(() =>
+    speciesEffects.value.flatMap(e => e.type === 'skill_proficiency' ? [e.value.skill] : []),
+  )
   const isCustomBackground = computed(() => backgroundData.value?.id === 'custom')
   const backgroundSkills = computed<string[]>(() =>
     isCustomBackground.value ? state.value.customBackgroundSkills : (backgroundData.value?.skillProficiencies ?? []),
@@ -369,17 +373,25 @@ export function useCharacterBuilder() {
     ...(isCustomBackground.value ? state.value.customBackgroundSkills : []),
     ...variantHumanSkills.value,
   ])
-  const proficientSkills = computed<string[]>(() =>
-    [...new Set([...state.value.skills, ...backgroundSkills.value, ...variantHumanSkills.value])],
-  )
-  // Compétences de classe CHOISIES en doublon avec une source FIXE déjà accordée (historique + Humain
-  // variant) : le doublon est gaspillé (F3). On l'INDIQUE (StepClass/StepDescription) pour que le joueur
-  // change son choix de classe — non bloquant. L'étape Classe étant AVANT l'historique, ça n'apparaît
-  // qu'une fois l'historique choisi.
-  const classSkillConflicts = computed<string[]>(() => {
-    const owned = new Set([...backgroundSkills.value, ...variantHumanSkills.value])
-    return state.value.skills.filter(s => owned.has(s))
+  // Maîtrises FIXES hors classe, avec leur source (la compétence de l'Humain variant est un trait d'espèce).
+  const grantedSkillSources = computed(() => {
+    const sources = new Map<string, 'espèce' | 'historique'>()
+    for (const skill of [...speciesSkills.value, ...variantHumanSkills.value]) sources.set(skill, 'espèce')
+    for (const skill of backgroundSkills.value) if (!sources.has(skill)) sources.set(skill, 'historique')
+    return sources
   })
+  const proficientSkills = computed<string[]>(() =>
+    [...new Set([...state.value.skills, ...grantedSkillSources.value.keys()])],
+  )
+  // Compétences de classe CHOISIES en doublon avec une source FIXE : le doublon est gaspillé (F3). On
+  // l'INDIQUE (StepClass/StepDescription) pour que le joueur change son choix de classe — non bloquant.
+  // L'historique étant choisi APRÈS la classe, son doublon n'apparaît qu'une fois l'historique choisi.
+  const classSkillConflicts = computed<string[]>(() =>
+    state.value.skills.filter(s => grantedSkillSources.value.has(s)),
+  )
+  const classSkillConflictLabels = computed(() => classSkillConflicts.value
+    .map(k => `${SKILLS.find(s => s.key === k)?.label ?? k} (${grantedSkillSources.value.get(k)})`)
+    .join(', '))
   // Outils déjà maîtrisés (historique) : exclus du picker Doué pour ne pas gaspiller un choix. On ne
   // retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
   // dans selectedToolProficiencies) + les résolutions choisies.
@@ -389,8 +401,10 @@ export function useCharacterBuilder() {
     return [...new Set([...fixed, ...chosen])]
   })
   // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
-  // sans expertise (changement de classe) ne doit pas survivre.
-  watch(proficientSkills, (prof) => {
+  // sans expertise (changement de classe) ne doit pas survivre. Purge différée tant que les compétences
+  // d'espèce arrivent (état restauré, changement de race) : un pick sur l'une d'elles serait perdu.
+  watch([proficientSkills, speciesSkillsLoaded], ([prof, loaded]) => {
+    if (!loaded) return
     state.value.expertiseSkills = state.value.expertiseSkills.filter(s => prof.includes(s))
   })
   watch(expertiseExpected, (count) => {
@@ -819,6 +833,7 @@ export function useCharacterBuilder() {
     materializedSkills,
     proficientSkills,
     classSkillConflicts,
+    classSkillConflictLabels,
     ownedTools,
     // Pacte
     needsPactBoon,

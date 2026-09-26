@@ -137,7 +137,7 @@
           v-if="classSkillConflicts.length"
           class="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300"
         >
-          ⚠️ Déjà accordé par ton historique : <strong>{{ conflictLabels }}</strong>. Ce doublon est gaspillé — change ton choix ci-dessus.
+          ⚠️ Déjà accordé par ailleurs : <strong>{{ classSkillConflictLabels }}</strong>. Ce doublon est gaspillé — change ton choix ci-dessus.
         </p>
       </div>
 
@@ -387,6 +387,7 @@ const {
   expertiseExpected,
   proficientSkills,
   classSkillConflicts,
+  classSkillConflictLabels,
   needsPactBoon,
   needsInvocations,
   invocationsExpected,
@@ -431,7 +432,6 @@ const availableSkills = computed(() => {
   return SKILLS.filter(s => from.includes(s.key))
 })
 
-const conflictLabels = computed(() => classSkillConflicts.value.map(k => SKILLS.find(s => s.key === k)?.label ?? k).join(', '))
 const eligibleExpertiseSkills = computed(() => SKILLS.filter(s => proficientSkills.value.includes(s.key)))
 function toggleExpertise(skillKey: string) {
   const idx = state.value.expertiseSkills.indexOf(skillKey)
