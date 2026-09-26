@@ -6,7 +6,13 @@ Accessible via `/characters/new`.
 ## Contexte technique
 
 - **Stack** : Nuxt 4 + Vue 3 + Nuxt UI (dark, amber) + TypeScript
-- **État** : `useCharacterBuilder` composable, persisté en localStorage
+- **État** : `useCharacterBuilder` composable (`useState('character-builder')`), brouillon persisté en
+  localStorage (`character-builder-state`, réécrit à chaque changement) et relu par l'initialiseur du
+  `useState`. Pour que cette relecture ait lieu au rechargement complet, `/characters/new` est rendue
+  **côté client uniquement** (`routeRules` `ssr: false` dans `nuxt.config.ts`, gardé par
+  `test/unit/routeRules.test.ts`) : rendue en SSR, la page sérialiserait l'état vide dans le payload,
+  qui l'emporte à l'hydratation — et la première modification écraserait le brouillon.
+  L'étape courante n'est pas persistée : un rechargement repart de l'étape Race, brouillon intact.
 - **Données riches** : `app/data/character-builder.ts` (races, classes, backgrounds) — hardcodées côté frontend car la DB ne stocke pas ces infos détaillées
 - **Soumission** : POST `/api/character_sheets` étendu, crée character_sheets + character_classes + character_ability_scores + character_skills + character_spells + character_inventory
 
@@ -16,7 +22,7 @@ Accessible via `/characters/new`.
 
 ```
 app/pages/characters/new.vue                   ← orchestrateur (remplace l'existant)
-app/composables/useCharacterBuilder.ts         ← état global (localStorage)
+app/composables/useCharacterBuilder.ts         ← état global (brouillon en localStorage, page non SSR)
 app/composables/useBuilderSheetProjection.ts   ← récap/aperçu calculés par le calculateur de la fiche
 app/data/character-builder.ts                  ← données riches D&D 5e
 app/components/character_builder/
