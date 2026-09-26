@@ -5,7 +5,9 @@
 `useCharacterSheet` est un **coordinateur** qui orchestre des sous-composables en couches. Chaque couche dépend des précédentes — ne jamais inverser ce sens.
 
 ```
-useCharacterClasses        → espèce, classes, level, proficiencyBonus, speciesEffects
+useCharacterClasses        → espèce, classes, level, proficiencyBonus
+useAbilityEffectInputs     → effets d'entrée de la couche 2 (espèce, aptitudes débloquées, dons, ASI,
+                             maîtrises dérivées par le GET) — sans fetch ni stockage
   ↓
 useCharacterAbilities      → scores, modificateurs, compétences, jets de sauvegarde
   ↓ (formulaContext construit ici pour éviter les dépendances circulaires)
@@ -19,7 +21,7 @@ useCharacterInventory      → inventaire, équipement, maîtrises, effets magiq
 
 ### Pourquoi `formulaContext` est dans le coordinateur
 
-`formulaContext` a besoin de `abilityModifiers` (couche 2) et alimente les features qui utilisent `speciesEffects` (couche 1). Le mettre dans un sous-composable créerait une dépendance circulaire. Il reste donc dans `useCharacterSheet.ts`.
+`formulaContext` a besoin de `abilityModifiers` (couche 2) et alimente les features résolues du coordinateur. Le mettre dans un sous-composable créerait une dépendance circulaire. Il reste donc dans `useCharacterSheet.ts`.
 
 De même, `resolvedFeatures`, `classFeatureEffects` et `allEffects` sont construits dans le coordinateur avant d'être passés à `useCharacterConditions`.
 
@@ -31,6 +33,7 @@ De même, `resolvedFeatures`, `classFeatureEffects` et `allEffects` sont constru
 |---|---|
 | Données d'espèce ou de classe | `useCharacterClasses` |
 | Scores / modificateurs / compétences | `useCharacterAbilities` |
+| Nouvelle source d'effets (maîtrise, bonus de carac.) | `useAbilityEffectInputs` (`useCharacterSheet.ts`) |
 | Conditions, épuisement, défenses, vitesse | `useCharacterConditions` |
 | Incantation, emplacements de sorts | `useCharacterSpellcasting` |
 | Sorts du personnage (liste, fetch, actions) | `useCharacterSpells` |
@@ -41,6 +44,9 @@ De même, `resolvedFeatures`, `classFeatureEffects` et `allEffects` sont constru
 ### Règles
 
 - Les sous-composables reçoivent leurs dépendances inter-couches via un paramètre `deps` explicite — pas d'imports croisés entre eux.
+- Hors de la fiche (level-up, lentille de sorts), ne jamais reconstruire maîtrises ou caractéristiques à
+  la main : instancier `useCharacterAbilities` avec `useAbilityEffectInputs`. `character_skills` ne porte
+  que les overrides et l'expertise ; le lire seul donne un résultat faux (cf. `audit-completude.md` B9).
 - Les constantes module-level (listes, maps) vont en tête de fichier, avant le composable.
 - Les types privés au fichier (ex. `DefenseEntry`, `SaveStatus`) ne sont pas exportés.
 - Les constantes utiles à l'extérieur (ex. `binaryConditions`, `abilitySkillKeys`) sont exportées directement depuis le fichier, pas via le `return` du composable.

@@ -1,6 +1,6 @@
-import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
+import { useAbilityEffectInputs } from './useCharacterSheet'
 
 // « Lentille » des pages /spells : jeu de stats éditables, volontairement DÉCOUPLÉ de
 // useCharacterSheet, partagé via useState entre le drawer et les composants d'affichage.
@@ -61,47 +61,8 @@ const deriveStatsFromSheet = (sheet: CharacterSheet): LensStats => {
     const sheetRef = shallowRef(sheet) as Ref<CharacterSheet>
     const classes = useCharacterClasses(sheetRef)
 
-    const resolveFeatEffects = (effects: Effect[], choices: { ability?: string } | null): Effect[] =>
-      effects.flatMap((e) => {
-        if (e.type === 'ability_increase_choice') {
-          const ability = choices?.ability
-          if (!ability) return []
-          return [{ type: 'ability_increase' as const, value: { ability: ability as Ability, amount: e.value.amount } }]
-        }
-        return [e]
-      })
-
-    const featureEffects = computed<Effect[]>(() => {
-      const ccs = classes.characterClasses.value
-      return (sheet.features ?? []).flatMap((cf) => {
-        const feature = cf.feature!
-        const effects = (feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[]
-        const choices = (cf as { choices?: { ability?: string } | null }).choices ?? null
-        if (feature.featureType === 'species_trait') return effects
-        if (feature.featureType === 'eldritch_invocation') return effects
-        if (feature.featureType === 'feat') return resolveFeatEffects(effects, choices)
-        const lvlReq = feature.levelRequired ?? 1
-        const owner = feature.featureType === 'class_feature'
-          ? ccs.find(c => c.classId === feature.classId)
-          : ccs.find(c => c.subclass?.id === feature.subclassId)
-        return owner && owner.level >= lvlReq ? effects : []
-      })
-    })
-
-    const asiEffects = computed<Effect[]>(() => {
-      const ccs = classes.characterClasses.value
-      return (sheet.abilityScoreImprovements ?? [])
-        .filter((asi) => {
-          const c = ccs.find(cc => cc.classId === asi.classId)
-          return c && c.level >= asi.classLevel
-        })
-        .map(asi => ({ type: 'ability_increase' as const, value: { ability: asi.ability, amount: asi.amount } }))
-    })
-
     const abilities = useCharacterAbilities(sheetRef, {
-      speciesEffects: classes.speciesEffects,
-      featureEffects,
-      asiEffects,
+      ...useAbilityEffectInputs(sheetRef),
       proficiencyBonus: classes.proficiencyBonus,
     })
 

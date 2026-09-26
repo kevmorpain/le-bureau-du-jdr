@@ -141,6 +141,52 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   scores stockés reste le patron 2014 des autres bonus au choix.
 - Découvert : signalé par l'utilisateur (2026-09-16). **✅ RÉSOLU.**
 
+### B9 — Picker d'expertise vide au level-up (compétences dérivées ignorées) · front — ✅ RÉSOLU
+- **Symptôme** : un Roublard ou un Barde créé après la dérivation des compétences (F3) arrive à son
+  palier d'expertise (Roublard 6, Barde 3/10) avec un picker **vide** ou presque, et l'étape
+  « Aptitudes » reste bloquée (2 choix exigés). Même classe d'erreur, sans blocage : l'étape
+  « Compétences » du multiclassage ne marquait pas « déjà maîtrisé » une compétence dérivée.
+- **Racine** : `app/composables/useLevelUp.ts` reconstruisait les maîtrises à partir de
+  `character_skills` seul, qui ne porte plus que les overrides et l'expertise. Un Roublard 5 créé
+  par le serveur n'y a que ses 2 lignes `expert` → éligibles = maîtrisées − expertes = ∅. Les
+  octrois d'espèce (Sens aiguisés → Perception), d'invocation (Présence captivante) et de don
+  (Doué) manquaient aussi, y compris dans la rustine `ownedSkills` du picker Doué.
+- **Correctif** : le level-up lit les maîtrises dans la **même couche que la fiche**
+  (`useCharacterAbilities`), alimentée par `useAbilityEffectInputs` (`useCharacterSheet.ts`) : les
+  entrées « effets » dérivées du payload GET, désormais partagées par la fiche, le level-up et la
+  lentille de sorts (`useSpellLens`, qui en portait une troisième copie). `ownedSkills` disparaît
+  (`proficientSkills` est complet) ; l'éligibilité d'expertise vit dans le composable.
+- **Serveur** : rien à changer ici — `expertiseWriteStmts` upserte une ligne `expert` sans exiger de
+  ligne `proficient` préalable. La validation (delta dû, clés connues, pas déjà experte) est arrivée
+  séparément (#91, `validateLevelUpExpertise`) ; la maîtrise préalable y reste front-autoritaire, donc
+  couverte par ce correctif.
+- **Tests** : `test/nuxt/levelUpSheetDerivation.test.ts` — Roublard 5 créé par le vrai chemin
+  serveur, octrois espèce/invocation/don, et **contrat d'équivalence** fiche ⟺ level-up compétence
+  par compétence (vérifié : échoue sur le code d'avant).
+- **Au passage** : le récapitulatif (`LevelUpSummary.vue`) affichait les clés brutes des expertises
+  (« deception, perception ») → libellés.
+- Découvert : relecture du code après F3 (2026-09-23), confirmé par test. **✅ RÉSOLU.**
+
+### B10 — Caractéristiques du level-up sans bonus d'espèce ni de don · front (calcul) — ✅ RÉSOLU
+- **Symptôme** : au level-up, les caractéristiques ignorent les bonus d'espèce **fixes** et ceux des
+  dons. Nain des collines (CON stockée 14, +2 d'espèce) : le level-up calcule CON 14 / mod +2, la
+  fiche CON 16 / mod +3 (mesuré en test). Touche le **gain de PV** (valeur persistée), les
+  prérequis de multiclassage, l'« avant » des ASI et les modificateurs de sorts du wizard.
+- **Racine** : `app/composables/useLevelUp.ts` `finalAbilities` = base stockée + ASI. Or le stocké
+  n'inclut que les bonus d'espèce **au choix** (`app/pages/characters/new.vue`, pliage) ; les bonus
+  fixes et de dons viennent des effets, que seule la fiche appliquait. Même famille que B3/B4.
+- **Correctif** : `finalAbilities` = totaux `abilityScores` de la couche abilities, déjà instanciée
+  par B9. Tous ses consommateurs le lisaient comme « score total actuel » (PV, prérequis de
+  multiclassage, plafond à 20 de l'étape ASI, aperçu/récapitulatif, modificateur d'incantation) :
+  aucun n'a eu à changer.
+- **Tests** : `test/nuxt/levelUpSheetDerivation.test.ts` — nain des collines (CON, mod, PV moyens) et
+  contrat d'équivalence fiche ⟺ level-up sur les six caractéristiques (espèce, demi-don, ASI, palier
+  non atteint) ; échouent sur le code d'avant.
+- **Hors périmètre** : les choix **du palier en cours** (ASI, demi-don) ne rejaillissent pas sur le mod
+  de CON des PV gagnés ni, pour le demi-don, sur l'aperçu « après » — règle des PV rétroactifs à
+  sourcer avant d'y toucher.
+- Découvert : délimitation du périmètre de B9 (2026-09-23). **✅ RÉSOLU.**
+
 ### B11 — Multiclasser vers un lanceur ne propose aucun sort · front (calcul) — ✅ RÉSOLU
 - **Symptôme** : au level-up, prendre un 1er niveau d'une classe lanceuse (ex. Guerrier 3 →
   Occultiste 1) n'offrait ni sort mineur ni sort connu — l'étape Magie affichait seulement

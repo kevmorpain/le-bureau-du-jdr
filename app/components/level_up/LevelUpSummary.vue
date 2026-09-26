@@ -215,6 +215,7 @@ const {
   resetWizard,
   toast,
   CLASSES,
+  SKILLS,
 } = useLevelUp(charSheet)
 
 const { getById: getFeatById } = useFeats()
@@ -295,7 +296,7 @@ const gains = computed(() => {
   }
 
   if (s.expertiseSkills.length) {
-    list.push({ label: 'Expertise', detail: s.expertiseSkills.join(', ') })
+    list.push({ label: 'Expertise', detail: s.expertiseSkills.map(k => SKILLS.find(sk => sk.key === k)?.label ?? k).join(', ') })
   }
 
   if (s.newCantripIds.length) {

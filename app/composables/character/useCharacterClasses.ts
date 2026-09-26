@@ -1,5 +1,4 @@
 import { useStorage } from '@vueuse/core'
-import type { Effect } from '~~/server/db/schema/effects'
 
 export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
   const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
@@ -10,12 +9,6 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
   const speed = computed<number>(() => species.value?.speed ?? 0)
 
   const speciesTraits = computed(() => species.value?.speciesFeatures?.flatMap(sf => sf.feature!) || [])
-
-  const speciesEffects = computed<Effect[]>(() =>
-    speciesTraits.value.flatMap(f =>
-      (f?.featureEffects ?? []).map(fe => fe.effect).filter(Boolean),
-    ) as Effect[],
-  )
 
   // ─── Classes ──────────────────────────────────────────────────────────────
 
@@ -62,7 +55,6 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
     species,
     speed,
     speciesTraits,
-    speciesEffects,
     characterClasses,
     characterLevel,
     mainClass,
