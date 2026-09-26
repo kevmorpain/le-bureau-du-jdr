@@ -2,7 +2,7 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { and, eq } from 'drizzle-orm'
 import * as schema from '../../schema'
 import type { Effect } from '../../schema/effects'
-import type { SkillKey } from '~~/shared/rules/skills'
+import { skillEnum } from '~~/shared/rules/skills'
 import { fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
 
 // Pose les maîtrises FIXES d'un historique (compétences, outils, langues) en effets sur une feature
@@ -95,7 +95,7 @@ export async function seedBackgroundProficiencies(
     }
 
     const effects: Effect[] = [
-      ...fixedSkills.map((value): Effect => ({ type: 'skill_proficiency', value: { skill: value as SkillKey } })),
+      ...fixedSkills.map((value): Effect => ({ type: 'skill_proficiency', value: { skill: skillEnum.parse(value) } })),
       ...fixedTools.map((value): Effect => ({ type: 'tool_proficiency', value })),
       ...fixedLangs.map((value): Effect => ({ type: 'language_proficiency', value })),
     ]

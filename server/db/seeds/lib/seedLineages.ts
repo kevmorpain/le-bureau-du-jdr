@@ -10,16 +10,16 @@ import type { Effect } from '../../schema/effects'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-export interface LineageTraitData {
+export interface SpeciesTraitData {
   name: string
   description: string
-  effects?: unknown[]
+  effects?: Effect[]
 }
 
 export interface LineageData {
   name: string
   description: string
-  traits: LineageTraitData[]
+  traits: SpeciesTraitData[]
 }
 
 export interface LineageSpeciesData {
@@ -27,7 +27,7 @@ export interface LineageSpeciesData {
   ruleset: '5' | '5.5'
   size: CreatureSize
   speed: number
-  baseTraits: LineageTraitData[]
+  baseTraits: SpeciesTraitData[]
   lineageChoice: { name: string, description: string }
   lineages: LineageData[]
 }
@@ -79,7 +79,7 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
     if (exists) continue
     const feature = await db.insert(schema.features).values({ ...traitData, featureType: 'species_trait', ruleset }).returning().get()
     featuresInserted++
-    await linkEffects(db, feature.id, (effects ?? []) as Effect[])
+    await linkEffects(db, feature.id, effects ?? [])
     await db.insert(schema.speciesFeatures).values({ speciesId: base.id, featureId: feature.id }).onConflictDoNothing()
   }
 
@@ -126,7 +126,7 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
       if (exists) continue
       const feature = await db.insert(schema.features).values({ ...traitData, featureType: 'lineage_feature', ruleset, lineageId: lineageRow.id, levelRequired: 1 }).returning().get()
       featuresInserted++
-      await linkEffects(db, feature.id, (effects ?? []) as Effect[])
+      await linkEffects(db, feature.id, effects ?? [])
     }
   }
 

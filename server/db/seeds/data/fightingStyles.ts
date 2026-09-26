@@ -1,5 +1,4 @@
 import type { FeatureDef, ProgressionDef } from '../lib/seedClass'
-import type { Effect } from '../../schema/effects'
 
 // Options DUPLIQUÉES par classe (une feature « Défense » par classe qui la propose) : chaque classe
 // offre un sous-ensemble différent et `buildCatalog` filtre `feature_group` par classe propriétaire.
@@ -55,7 +54,7 @@ export function fightingStyleOptionFeatures(className: string): FeatureDef[] {
       description: def.description,
       featureType: 'fighting_style',
       tag: 'fighting_style',
-      effects: [{ type: 'fighting_style_modifier', value: { kind } } as Effect],
+      effects: [{ type: 'fighting_style_modifier', value: { kind } }],
     }
   })
 }

@@ -1,9 +1,9 @@
 import { CreatureSize } from '../../schema/character_species'
-import type { LineageSpeciesData } from '../lib/seedLineages'
+import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
 
 // ⚠️ Effets copiés à l'identique des anciennes espèces `rockGnome`/`forestGnome` (équivalence D12).
 
-const baseTraits = [
+const baseTraits: SpeciesTraitData[] = [
   {
     name: 'Augmentation de caractéristiques',
     description: `Votre valeur d'Intelligence augmente de 2.`,
@@ -38,7 +38,7 @@ const baseTraits = [
   },
 ]
 
-const rockGnomeLineage = {
+const rockGnomeLineage: LineageData = {
   name: 'Gnome des roches',
   description: `Ingénieux et curieux, les gnomes des roches ont un don naturel pour la mécanique et l'invention.`,
   traits: [
@@ -60,7 +60,7 @@ const rockGnomeLineage = {
   ],
 }
 
-const forestGnomeLineage = {
+const forestGnomeLineage: LineageData = {
   name: 'Gnome des forêts',
   description: `Furtifs et proches de la nature, les gnomes des forêts ont un talent inné pour l'illusion et un lien avec les petits animaux.`,
   traits: [

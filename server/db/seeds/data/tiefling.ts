@@ -1,10 +1,10 @@
 import { CreatureSize } from '../../schema/character_species'
-import type { LineageSpeciesData } from '../lib/seedLineages'
+import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
 
 // ⚠️ Effets copiés à l'identique de l'ancienne espèce (équivalence D12) : base = traits communs à tout
 // héritage infernal, lignée Asmodée = ce qui lui est propre. Les 8 autres bloodlines (MToF) restent à ajouter.
 
-const baseTraits = [
+const baseTraits: SpeciesTraitData[] = [
   {
     name: 'Augmentation de caractéristiques',
     description: `Votre valeur de Charisme augmente de 2.`,
@@ -35,7 +35,7 @@ const baseTraits = [
   },
 ]
 
-const asmodeusLineage = {
+const asmodeusLineage: LineageData = {
   name: 'Asmodée',
   description: `Héritiers du sang d'Asmodée, seigneur des Neuf Enfers, ces tieffelins portent une magie infernale tournée vers le feu et les ténèbres.`,
   traits: [

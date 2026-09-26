@@ -142,7 +142,7 @@ export async function seedClass(
     }
     await _syncFeatureTag(feature.id, tag)
     await _syncProgression(feature.id, progressionDef)
-    await _seedEffects(feature.id, effects as Effect[])
+    await _seedEffects(feature.id, effects)
   }
 
   for (const subclassDef of subclassDefs) {
@@ -210,7 +210,7 @@ export async function seedClass(
       }
       await _syncFeatureTag(feature.id, tag)
       await _syncProgression(feature.id, progressionDef)
-      await _seedEffects(feature.id, effects as Effect[])
+      await _seedEffects(feature.id, effects)
     }
   }
 

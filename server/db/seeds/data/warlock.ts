@@ -1,6 +1,5 @@
 import { fixed, lookup, variable, add, mul, max } from '~~/shared/utils/formula'
-import type { SubclassDef } from '../lib/seedClass'
-import type { Effect } from '../../schema/effects'
+import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { INVOCATIONS_KNOWN, warlockPactBoonFeatures } from './warlock_progression'
 import { asiFeatures } from './asi'
 
@@ -10,7 +9,7 @@ import { asiFeatures } from './asi'
 const pactMagicSlotCount = lookup([1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4])
 const pactMagicSlotLevel = lookup([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])
 
-export const warlockFeatures = [
+export const warlockFeatures: FeatureDef[] = [
   {
     name: 'Magie de pacte',
     description: `Votre recherche ésotérique et les sorts que votre patron vous a accordés vous ont fourni des installations permettant d'utiliser des sorts. Vous pouvez lancer n'importe quel sort d'occultiste que vous connaissez comme rituel si ce sort possède la caractéristique rituel.
@@ -107,7 +106,7 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
   ...warlockPactBoonFeatures,
 ]
 
-export const grandAncienFeatures = [
+export const grandAncienFeatures: FeatureDef[] = [
   {
     name: 'Sorts étendus',
     description: `Le Grand Ancien vous permet d'apprendre certains sorts supplémentaires lorsque vous atteignez certains niveaux d'occultiste. Ces sorts comptent pour vous comme des sorts d'occultiste mais n'entrent pas dans le nombre de sorts d'occultiste que vous connaissez.
@@ -175,10 +174,7 @@ export const warlockSubclasses: SubclassDef[] = [
   {
     name: 'Le Grand Ancien',
     description: `Votre patron est un être d'une puissance et d'une intelligence insondables, qui réside dans les recoins les plus lointains du multivers. Les motivations de cet être sont incompréhensibles pour les mortels.`,
-    features: grandAncienFeatures.map(f => ({
-      ...f,
-      effects: (f.effects ?? []) as Effect[],
-    })),
+    features: grandAncienFeatures,
   },
   {
     name: 'Le Fiélon',

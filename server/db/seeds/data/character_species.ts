@@ -1,6 +1,10 @@
 import { CreatureSize } from '../../schema/character_species'
+import type * as schema from '../../schema'
+import type { SpeciesTraitData } from '../lib/seedLineages'
 
-const highElf = {
+type SpeciesSeed = typeof schema.characterSpecies.$inferInsert & { traits: SpeciesTraitData[] }
+
+const highElf: SpeciesSeed = {
   name: 'Haut-elfe',
   size: CreatureSize.Medium,
   speed: 9,
@@ -145,7 +149,7 @@ const highElf = {
   ],
 }
 
-const woodElf = {
+const woodElf: SpeciesSeed = {
   name: 'Elfe des bois',
   size: CreatureSize.Medium,
   speed: 10.5,
@@ -212,7 +216,7 @@ const woodElf = {
   ],
 }
 
-const hillDwarf = {
+const hillDwarf: SpeciesSeed = {
   name: 'Nain des collines',
   size: CreatureSize.Medium,
   speed: 7.5,
@@ -359,7 +363,7 @@ const hillDwarf = {
   ],
 }
 
-const mountainDwarf = {
+const mountainDwarf: SpeciesSeed = {
   name: 'Nain des montagnes',
   size: CreatureSize.Medium,
   speed: 7.5,
@@ -451,7 +455,7 @@ const mountainDwarf = {
   ],
 }
 
-const lightfootHalfling = {
+const lightfootHalfling: SpeciesSeed = {
   name: 'Halfelin pied-léger',
   size: CreatureSize.Small,
   speed: 7.5,
@@ -540,7 +544,7 @@ const lightfootHalfling = {
   ],
 }
 
-const stoutHalfling = {
+const stoutHalfling: SpeciesSeed = {
   name: 'Halfelin robuste',
   size: CreatureSize.Small,
   speed: 7.5,
@@ -594,7 +598,7 @@ const stoutHalfling = {
   ],
 }
 
-const human = {
+const human: SpeciesSeed = {
   name: 'Humain',
   size: CreatureSize.Medium,
   speed: 9,
@@ -675,7 +679,7 @@ const human = {
 }
 
 // LEGACY : la base « Drakéide » et ses 10 lignées vivent dans data/dragonborn.ts (migration 0088 renomme cette ligne).
-const dragonborn = {
+const dragonborn: SpeciesSeed = {
   name: 'Drakéide (2014)',
   size: CreatureSize.Medium,
   speed: 9,
@@ -774,7 +778,7 @@ const dragonborn = {
   ],
 }
 
-const rockGnome = {
+const rockGnome: SpeciesSeed = {
   name: 'Gnome des roches',
   size: CreatureSize.Small,
   speed: 7.5,
@@ -890,7 +894,7 @@ const rockGnome = {
   ],
 }
 
-const forestGnome = {
+const forestGnome: SpeciesSeed = {
   name: 'Gnome des forêts',
   size: CreatureSize.Small,
   speed: 7.5,
@@ -943,7 +947,7 @@ const forestGnome = {
   ],
 }
 
-const halfElf = {
+const halfElf: SpeciesSeed = {
   name: 'Demi-elfe',
   size: CreatureSize.Medium,
   speed: 9,
@@ -1038,7 +1042,7 @@ const halfElf = {
   ],
 }
 
-const halfOrc = {
+const halfOrc: SpeciesSeed = {
   name: 'Demi-orc',
   size: CreatureSize.Medium,
   speed: 9,
@@ -1138,7 +1142,7 @@ const halfOrc = {
 }
 
 // LEGACY : la base « Tieffelin » et la lignée Asmodée vivent dans data/tiefling.ts (migration 0087 renomme cette ligne).
-const tiefling = {
+const tiefling: SpeciesSeed = {
   name: 'Tieffelin (Asmodée)',
   size: CreatureSize.Medium,
   speed: 9,
@@ -1246,7 +1250,7 @@ const tiefling = {
   ],
 }
 
-const drow = {
+const drow: SpeciesSeed = {
   name: 'Elfe noir',
   size: CreatureSize.Medium,
   speed: 9,
@@ -1348,7 +1352,7 @@ const drow = {
 }
 
 // Espèce d'extension gatée (source 'wbtw'). Vol modélisé en description (aucun effet `flying_speed`).
-const fadette = {
+const fadette: SpeciesSeed = {
   name: 'Fadette',
   size: CreatureSize.Small,
   speed: 9,

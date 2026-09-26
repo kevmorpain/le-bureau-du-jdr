@@ -14,14 +14,18 @@ export type ConditionKey
     | 'incapacitated' | 'invisible' | 'paralyzed' | 'petrified' | 'poisoned'
     | 'prone' | 'restrained' | 'stunned' | 'unconscious'
 
+// Ni un type de dégâts ni un état : « la magie ne peut pas vous endormir » ≠ immunité à l'état inconscient.
+export type ImmunityKey = 'sleep_magic'
+
+// 'draconic_ancestry' : résolu à l'affichage (espèce 2014) ; valeur concrète : fixée par la lignée.
 type BreathWeaponAction = {
   type: 'breathe_weapon'
   countPerRest: number
   damage: {
-    damageType: 'draconic_ancestry'
-    areaOfEffect: 'draconic_ancestry'
+    damageType: DamageTypeKey
+    areaOfEffect: 'line' | 'cone' | 'draconic_ancestry'
     damageAtCharacterLevel: Record<string, string>
-    savingThrowAbility: 'draconic_ancestry'
+    savingThrowAbility: AbilityScoreKey | 'draconic_ancestry'
     saveDcBase: number
     saveDcModifiers: string[]
     halfOnSave: boolean
@@ -55,6 +59,7 @@ export type Effect
     | { type: 'extra_damage', value: { trigger: string, attackType: string, extraDie: number } }
     | { type: 'damage_immunity', value: { damageType: DamageTypeKey } }
     | { type: 'condition_immunity', value: { condition: ConditionKey } }
+    | { type: 'immunity', value: ImmunityKey }
     | { type: 'language_proficiency', value: string }
     | { type: 'language_proficiency_choice', value: { count: number } }
     | { type: 'other', value: Record<string, unknown> }

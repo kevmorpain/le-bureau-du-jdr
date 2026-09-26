@@ -1,7 +1,6 @@
 import { db, schema } from 'hub:db'
 import { eq, and } from 'drizzle-orm'
 import * as srcSchema from '~~/server/db/schema'
-import type { Effect } from '../schema/effects'
 import { characterSpecies } from './data/character_species'
 import { rulesetOf } from './lib/rulesetOf'
 
@@ -59,7 +58,7 @@ export default async function seed() {
         .returning()
         .get()
 
-      for (const effect of (effects ?? []) as Effect[]) {
+      for (const effect of effects ?? []) {
         const existingEffect = await db
           .select()
           .from(schema.effects)
