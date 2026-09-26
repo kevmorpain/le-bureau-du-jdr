@@ -131,6 +131,7 @@ const {
   fightingStyleLevelFor,
   expertiseDueForClassLevel,
   asiDueForClassLevel,
+  selectClass,
   CLASSES,
 } = useLevelUp(inject('charSheet') as any)
 
@@ -192,34 +193,10 @@ function isPickedMulticlass(classId: string) {
 }
 
 function pickContinue(cc: { classId: string, level: number }) {
-  state.value.pickedClassId = cc.classId
-  state.value.isMulticlass = false
-  state.value.fromLevel = cc.level
-  state.value.toLevel = cc.level + 1
-  state.value.newSubclassId = null
-  state.value.newSubclassName = null
-  state.value.fightingStyle = null
-  state.value.expertiseSkills = []
-  state.value.asiChoice = null
-  state.value.asiBonuses = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }
-  state.value.featId = null
-  state.value.newCantripIds = []
-  state.value.newSpellIds = []
+  selectClass(cc.classId, cc.level)
 }
 
 function pickMulticlass(cls: { id: string }) {
-  state.value.pickedClassId = cls.id
-  state.value.isMulticlass = true
-  state.value.fromLevel = 0
-  state.value.toLevel = 1
-  state.value.newSubclassId = null
-  state.value.newSubclassName = null
-  state.value.fightingStyle = null
-  state.value.expertiseSkills = []
-  state.value.asiChoice = null
-  state.value.asiBonuses = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }
-  state.value.featId = null
-  state.value.newCantripIds = []
-  state.value.newSpellIds = []
+  selectClass(cls.id, 0)
 }
 </script>

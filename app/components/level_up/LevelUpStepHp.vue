@@ -60,9 +60,9 @@
           <div class="text-xs text-muted mb-1">Total</div>
           <div
             class="size-16 rounded-xl border-2 flex items-center justify-center font-mono text-3xl font-black"
-            :class="state.hpGained != null ? 'border-green-500/60 text-green-400' : 'border-(--ui-border) text-muted'"
+            :class="hpGained != null ? 'border-green-500/60 text-green-400' : 'border-(--ui-border) text-muted'"
           >
-            {{ state.hpGained != null ? `+${state.hpGained}` : '?' }}
+            {{ hpGained != null ? `+${hpGained}` : '?' }}
           </div>
         </div>
       </div>
@@ -109,27 +109,27 @@
           <div class="text-xs text-muted mb-1">Total</div>
           <div
             class="w-20 py-2 rounded-xl border text-2xl font-mono font-black text-center"
-            :class="computedHpGained != null ? 'border-green-500/40 text-green-400' : 'border-(--ui-border) text-muted'"
+            :class="hpGained != null ? 'border-green-500/40 text-green-400' : 'border-(--ui-border) text-muted'"
           >
-            {{ computedHpGained != null ? `+${computedHpGained}` : '?' }}
+            {{ hpGained != null ? `+${hpGained}` : '?' }}
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="state.hpGained" class="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm">
+    <div v-if="hpGained" class="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm">
       <span class="text-muted">PV max :</span>
       <span class="font-mono font-bold text-(--ui-text)">{{ currentHpMax }}</span>
       <span class="text-muted">→</span>
-      <span class="font-mono font-bold text-green-400">{{ currentHpMax + state.hpGained }}</span>
-      <UBadge color="success" variant="soft" size="md">+{{ state.hpGained }}</UBadge>
+      <span class="font-mono font-bold text-green-400">{{ currentHpMax + hpGained }}</span>
+      <UBadge color="success" variant="soft" size="md">+{{ hpGained }}</UBadge>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 const lu = useLevelUp(inject('charSheet') as any)
-const { state, pickedClass, conMod, averageHpGain, computedHpGained, formatMod } = lu
+const { state, pickedClass, conMod, averageHpGain, hpGained, formatMod } = lu
 
 const charSheet = inject('charSheet') as any
 const currentHpMax = computed(() => charSheet?.value?.maxHp ?? 0)

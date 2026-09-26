@@ -106,7 +106,7 @@
         <div class="grid grid-cols-2 gap-2 mb-3">
           <div class="px-2 py-2 rounded-lg bg-(--ui-bg) text-center">
             <div class="text-xs text-muted mb-0.5">PV MAX</div>
-            <div class="font-mono font-black text-xl text-(--ui-text)">{{ currentHpMax + (state.hpGained ?? 0) }}</div>
+            <div class="font-mono font-black text-xl text-(--ui-text)">{{ currentHpMax + (hpGained ?? 0) }}</div>
           </div>
           <div class="px-2 py-2 rounded-lg bg-(--ui-bg) text-center">
             <div class="text-xs text-muted mb-0.5">MAÎTRISE</div>
@@ -205,6 +205,7 @@ const {
   charClasses,
   totalLevel,
   pickedClass,
+  hpGained,
   finalAbilities,
   submit,
   ABILITIES,
@@ -212,7 +213,6 @@ const {
   profBonusAtLevel,
   abilityMod,
   formatMod,
-  resetWizard,
   toast,
   CLASSES,
   SKILLS,
@@ -261,8 +261,8 @@ const gains = computed(() => {
   const cls = pickedClass.value
   const s = state.value
 
-  if (s.hpGained) {
-    list.push({ label: `+${s.hpGained} PV`, detail: `max ${currentHpMax.value} → ${currentHpMax.value + s.hpGained}` })
+  if (hpGained.value) {
+    list.push({ label: `+${hpGained.value} PV`, detail: `max ${currentHpMax.value} → ${currentHpMax.value + hpGained.value}` })
   }
 
   if (newProfBonus.value !== oldProfBonus.value) {
@@ -357,7 +357,6 @@ async function handleSubmit() {
       color: 'success',
       duration: 4000,
     })
-    resetWizard()
     await router.push(`/characters/${charSheet?.value?.id}`)
   } catch (e) {
     toast.add({ title: 'Erreur lors de la montée de niveau', color: 'error' })
