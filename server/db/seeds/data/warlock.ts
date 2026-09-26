@@ -1,4 +1,4 @@
-import { fixed, lookup, variable, add, mul, max } from '~~/shared/utils/formula'
+import { fixed, lookup } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { INVOCATIONS_KNOWN, warlockPactBoonFeatures } from './warlock_progression'
 import { asiFeatures } from './asi'
@@ -286,7 +286,9 @@ Niveaux 9-10 : Apparence trompeuse, Domination de personne`,
         actionType: 'reaction' as const,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: [
+          { type: 'condition_immunity', value: { condition: 'charmed' } },
+        ],
       },
       {
         name: 'Sombre délire',
