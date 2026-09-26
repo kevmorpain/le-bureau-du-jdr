@@ -5,10 +5,16 @@ import type { Effect } from '../../server/db/schema/effects'
 import type { SpeciesTraitData } from '../../server/db/seeds/lib/seedLineages'
 import { elf } from '../../server/db/seeds/data/elf'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
+import { warlockSubclasses } from '../../server/db/seeds/data/warlock'
 import { useCharacterConditions } from '../../app/composables/character/useCharacterConditions'
 
 const feyAncestry = (traits: SpeciesTraitData[]): Effect[] =>
   traits.find(t => t.name === 'Ascendance féerique')?.effects ?? []
+
+const archfeyEffectsAt = (level: number): Effect[] =>
+  warlockSubclasses.find(s => s.name === 'L\'Archifée')!.features
+    .filter(f => (f.levelRequired ?? 0) <= level)
+    .flatMap(f => f.effects ?? [])
 
 async function defenseEntries(effects: Effect[]) {
   let entries: { key: string, label: string, level: string }[] = []
@@ -34,5 +40,17 @@ describe('Ascendance féerique — défenses de la fiche', () => {
       { key: 'imm:sleep_magic', label: 'Sommeil magique', level: 'immunity' },
       { key: 'jds:charmed', label: 'Charmé (JdS)', level: 'resistance' },
     ])
+  })
+})
+
+describe('Défenses captivantes (Archifée) — défenses de la fiche', () => {
+  it('Occultiste niv. 10 : immunité à l\'état charmé', async () => {
+    expect(await defenseEntries(archfeyEffectsAt(10))).toEqual([
+      { key: 'cond:charmed', label: 'Charmé', level: 'immunity' },
+    ])
+  })
+
+  it('Occultiste niv. 9 : pas encore', async () => {
+    expect(await defenseEntries(archfeyEffectsAt(9))).toEqual([])
   })
 })

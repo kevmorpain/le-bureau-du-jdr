@@ -708,6 +708,13 @@
       "when": 1747872058000,
       "tag": "0100_effects_legacy_shapes",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "6",
+      "when": 1747872059000,
+      "tag": "0101_archfey_charm_immunity",
+      "breakpoints": true
     }
   ]
 }
