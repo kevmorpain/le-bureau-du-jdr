@@ -44,6 +44,13 @@
         </button>
       </div>
     </template>
+
+    <p
+      v-if="duplicateLabels"
+      class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300"
+    >
+      ⚠️ Déjà maîtrisé par ailleurs : <strong>{{ duplicateLabels }}</strong>. Ce choix est gaspillé — remplace-le.
+    </p>
   </div>
 </template>
 
@@ -51,20 +58,25 @@
 import { SKILLED_FEAT_COUNT, TOOL_CATEGORIES } from '~~/shared/rules/tools'
 import { SKILLS } from '~/data/character-builder'
 
-// Exclut les maîtrises déjà accordées (compétences de classe/historique/variante, outils d'historique)
-// pour ne pas gaspiller un choix sur un doublon.
+// Exclut les maîtrises déjà accordées pour ne pas gaspiller un choix sur un doublon. Un choix devenu
+// doublon après coup (source ajoutée ou chargée ensuite) reste affiché : masqué, il ne serait plus
+// désélectionnable alors qu'il compte dans le total.
 const props = defineProps<{ ownedSkills: string[], ownedTools: string[] }>()
 const skills = defineModel<string[]>('skills', { default: () => [] })
 const tools = defineModel<string[]>('tools', { default: () => [] })
 
 const total = computed(() => skills.value.length + tools.value.length)
 
-const availableSkills = computed(() => SKILLS.filter(s => !props.ownedSkills.includes(s.key)))
+const availableSkills = computed(() => SKILLS.filter(s => !props.ownedSkills.includes(s.key) || skills.value.includes(s.key)))
 const availableToolsByCategory = computed<Record<string, string[]>>(() =>
   Object.fromEntries(
-    Object.entries(TOOL_CATEGORIES).map(([cat, list]) => [cat, list.filter(t => !props.ownedTools.includes(t))]),
+    Object.entries(TOOL_CATEGORIES).map(([cat, list]) => [cat, list.filter(t => !props.ownedTools.includes(t) || tools.value.includes(t))]),
   ),
 )
+const duplicateLabels = computed(() => [
+  ...SKILLS.filter(s => skills.value.includes(s.key) && props.ownedSkills.includes(s.key)).map(s => s.label),
+  ...tools.value.filter(t => props.ownedTools.includes(t)),
+].join(', '))
 
 function toggleSkill(key: string) {
   const i = skills.value.indexOf(key)

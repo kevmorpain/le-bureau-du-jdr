@@ -31,7 +31,7 @@ interface CatalogSpeciesRich {
 
 export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>) {
   const { extended, extendedQuery } = useExtendedContent()
-  const { data: species } = useFetch<{ id: number, name: string }[]>('/api/character_species', {
+  const { data: species, status: speciesStatus } = useFetch<{ id: number, name: string }[]>('/api/character_species', {
     query: extendedQuery,
     default: () => [],
   })
@@ -73,6 +73,12 @@ export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>) {
     const lineage = rich.value.lineages.find(l => l.id === lineageId)
     return [...rich.value.effects, ...(lineage?.effects ?? [])]
   }
+  // Tant que c'est faux, `effectsFor` rend `[]` par défaut de chargement, pas parce que l'espèce n'a rien.
+  const effectsLoaded = computed(() => {
+    if (!toValue(baseName)) return true
+    if (baseSpeciesId.value == null) return speciesStatus.value === 'success'
+    return rich.value?.id === baseSpeciesId.value
+  })
 
-  return { baseSpeciesId, lineageSubraces, effectsFor }
+  return { baseSpeciesId, lineageSubraces, effectsFor, effectsLoaded }
 }

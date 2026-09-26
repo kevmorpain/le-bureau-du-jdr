@@ -172,6 +172,23 @@ raceId !== null
   6. **Faveur du Pacte** (Occultiste niveau ≥ 3) : cartes radio Chaîne / Lame / Tome → `state.pactBoon`
   7. **Manifestations occultes** (Occultiste niveau ≥ 2) : `InvocationPicker` partagé avec le level-up, max = `WARLOCK_INVOCATIONS_KNOWN[level - 1]` (2 au niv.2, 3 au niv.5, etc.), filtre par pacte + sorts connus → `state.invocationIds`
 
+**Compétences maîtrisées** (`useCharacterBuilder`) : `proficientSkills` = compétences de classe choisies +
+sources fixes (`grantedSkillSources` : octrois `skill_proficiency` de l'espèce — ex. Sens aiguisés,
+Menaçant —, compétence de l'Humain variant, historique). Trois usages :
+
+- **Expertise** : les options sont `proficientSkills` (AideDD, Roublard : « choisissez deux des
+  compétences que vous maîtrisez » ; même règle pour le Barde).
+- **Doublon** : `classSkillConflicts` = compétence de classe choisie déjà accordée par une source fixe ;
+  avertissement non bloquant (StepClass, StepDescription) qui nomme la source (`classSkillConflictLabels`).
+- **Picker Doué** (StepFeats/StepAsi) : `proficientSkills` exclues ; un choix devenu doublon après coup
+  reste affiché et signalé, pour rester désélectionnable.
+
+Les effets d'espèce arrivent en asynchrone (`/api/catalog/species/[id]`) : la purge des picks
+d'expertise devenus non maîtrisés attend `effectsLoaded` (`useSpeciesLineages`), sinon un pick restauré
+sur une compétence d'espèce serait perdu avant leur arrivée. Non couverts : Polyvalence du Demi-elfe
+(`skill_proficiency_choice`, sans picker — E5 de `fonctionnalites-manquantes.md`) et compétences des dons
+(Doué) ou des manifestations dans ces trois usages.
+
 **Validation step** :
 ```ts
 classId !== null
