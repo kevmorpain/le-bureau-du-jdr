@@ -224,20 +224,26 @@ const ALL_STEPS: BuilderStep[] = [
 
 const LS_KEY = 'character-builder-state'
 
+// Copie profonde : les étapes modifient tableaux et objets en place (push, splice…), ce qui
+// polluerait INIT_STATE via une copie superficielle.
+const freshState = (): BuilderState => structuredClone(INIT_STATE)
+
 // ─── Composable ───────────────────────────────────────────────────────────────
 
 export function useCharacterBuilder() {
+  // Lu à l'init de `useState` : n'a lieu côté client que parce que /characters/new n'est pas
+  // rendue en SSR (routeRules) — sinon l'état vide du payload l'emporte à l'hydratation.
   const state = useState<BuilderState>('character-builder', () => {
     if (import.meta.client) {
       try {
         const saved = localStorage.getItem(LS_KEY)
         // Merge avec INIT_STATE pour que les nouveaux champs (ex : featChoices)
         // ne soient pas undefined sur un état sauvegardé par une version antérieure.
-        if (saved) return { ...INIT_STATE, ...(JSON.parse(saved) as BuilderState) }
+        if (saved) return { ...freshState(), ...(JSON.parse(saved) as BuilderState) }
       }
       catch {}
     }
-    return { ...INIT_STATE }
+    return freshState()
   })
 
   if (import.meta.client) {
@@ -751,7 +757,7 @@ export function useCharacterBuilder() {
   // ─── Reset ────────────────────────────────────────────────────────────────────
 
   function resetBuilder() {
-    state.value = { ...INIT_STATE }
+    state.value = freshState()
     currentStepId.value = 'race'
     if (import.meta.client) {
       try { localStorage.removeItem(LS_KEY) }
