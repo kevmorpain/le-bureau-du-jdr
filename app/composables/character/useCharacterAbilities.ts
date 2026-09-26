@@ -12,10 +12,18 @@ export type ProficiencyLevel = 'none' | 'proficient' | 'expert'
 
 const proficiencyPriority: Record<ProficiencyLevel, number> = { none: 0, proficient: 1, expert: 2 }
 
+// Seuls champs de la fiche que lit la couche : le builder y projette son état pour que le récapitulatif
+// affiche ce que la fiche affichera (useBuilderSheetProjection).
+export interface AbilitiesSheet {
+  baseAbilityScores?: { abilityId: string, value: number }[]
+  skills?: { skillKey: string, proficiencyLevel: string }[]
+  classes?: { level: number }[]
+}
+
 // ─── Composable ──────────────────────────────────────────────────────────────
 
 export const useCharacterAbilities = (
-  characterSheet?: Ref<CharacterSheet>,
+  characterSheet?: Ref<AbilitiesSheet | null | undefined>,
   deps?: {
     speciesEffects: ComputedRef<Effect[]>
     featureEffects: ComputedRef<Effect[]>
