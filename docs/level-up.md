@@ -214,16 +214,17 @@ Panneau de droite (ou accordéon mobile) avec les stats live du personnage **apr
 Corps :
 ```ts
 {
-  classDbName: string               // nom en DB ex: 'Guerrier', 'Occultiste'
-  isMulticlass: boolean
+  classId: number                   // id DB de la classe
+  isMulticlass: boolean             // doit refléter la fiche : true ⇔ classe absente de character_classes
   hpGained: number                  // PV finaux (avec CON) — toujours > 0
-  subclassName?: string | null      // nom DB de la sous-classe
+  subclassId?: number | null
   fightingStyle?: string | null
   expertiseSkills?: SkillKey[]      // clés de SKILL_KEYS, sans doublon (Zod → 422)
   asiChoice?: 'asi' | 'feat' | null
   asiBonuses?: Record<string, number> | null
-  featId?: string | null
-  newSkills?: string[]
+  featureId?: number | null         // don choisi (asiChoice 'feat')
+  featChoices?: { ability?, spellId?, skills?, tools? } | null
+  newSkills?: SkillKey[]            // multiclassage uniquement ; sans doublon (Zod → 422)
   newCantripIds?: number[]
   newSpellIds?: number[]
   pactBoon?: 'chain' | 'blade' | 'tome' | null
@@ -231,13 +232,16 @@ Corps :
   pactBoonCantripIds?: number[]
   newInvocationIds?: number[]
   replacedInvocationId?: number | null
+  newMetamagicIds?: number[]
+  arcaneMysteriumSpellId?: number | null
+  bookOfAncientSecretsSpellIds?: number[]   // 2 au plus
 }
 ```
 
 **Opérations dans l'ordre :**
-1. Résoudre la classe par `classDbName` (table `classes`)
-2. Résoudre la sous-classe par nom (table `subclasses`, match case-insensitive)
-3. Charger les `character_classes` actuelles
+1. Charger la classe par `classId` (table `classes`) ; la sous-classe éventuelle doit lui appartenir
+2. Charger les `character_classes` actuelles : le niveau atteint est **dérivé de la DB** (niveau actuel de la classe + 1, soit 1 pour une nouvelle classe), jamais du client
+3. Rejeter (422) un `isMulticlass` qui contredit la fiche — `true` sur une classe déjà possédée, `false` sur une classe absente : le reste du payload a été composé pour un autre état (onglet périmé, multiclassage rejoué)
 4. Upsert `character_classes` avec le nouveau niveau + subclassId + pactBoon
 5. Insérer les features de classe au nouveau niveau + features de sous-classe ≤ nouveau niveau
 6. Mettre à jour `character_sheets.maxHp` (+hpGained) et `currentHitDie` (+1 dé de vie)

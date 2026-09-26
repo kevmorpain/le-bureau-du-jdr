@@ -169,7 +169,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     .from(schema.characterClasses)
     .where(eq(schema.characterClasses.characterSheetId, characterSheetId))
   const existingClass = currentClasses.find(c => c.classId === cls.id)
-  const newLevel = d.isMulticlass ? 1 : (existingClass?.level ?? 0) + 1
+  const newLevel = (existingClass?.level ?? 0) + 1
 
   const [charSheet] = await db
     .select({ maxHp: schema.characterSheets.maxHp, currentHitDie: schema.characterSheets.currentHitDie, ruleset: schema.characterSheets.ruleset })
@@ -179,6 +179,13 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   if (!charSheet) throw new CharacterValidationError('Personnage introuvable.')
 
   // 3. Validation serveur (avant écritures)
+  // `isMulticlass` atteste l'état de la fiche sur lequel le client a composé ses choix : s'il ne tient
+  // plus (onglet périmé, envoi rejoué), rejeter plutôt qu'appliquer des choix prévus pour un autre niveau.
+  if (d.isMulticlass !== (existingClass == null)) {
+    throw new CharacterValidationError(existingClass
+      ? `La classe (id=${cls.id}) est déjà au niveau ${existingClass.level} sur la fiche : ce n'est pas un multiclassage.`
+      : `La classe (id=${cls.id}) n'est pas sur la fiche : seul un multiclassage peut l'ajouter.`)
+  }
   const ruleset: Ruleset = charSheet.ruleset
   if (cls.ruleset !== ruleset) throw new CharacterValidationError(`La classe (id=${cls.id}, éd. ${cls.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
   await validateLevelUpRulesetCoherence(db, d, ruleset)
