@@ -267,8 +267,8 @@ Toutes exportées pour usage dans les composants d'étape :
 //   style de combat → `needsFightingStyle` / `fightingStyleLevelFor` + endpoint /api/catalog/classes/[name]/fighting-styles
 //   expertise       → `needsExpertise` / `expertiseDueForClassLevel` (count cumulatif)
 //   compétences de multiclassage → `multiclassSkills` / `requiredMulticlassSkillPicks`
+//   maîtrises de multiclassage   → dérivées par le GET de la fiche (`classEffects`), source CLASS_PROFICIENCIES.multiclass
 LU_MULTICLASS_PREREQS    // prérequis de carac. pour multiclassage
-LU_MULTICLASS_PROFICIENCIES // maîtrises octroyées par multiclassage (informatif)
 LU_FEATS                 // liste des 12 dons disponibles
 ```
 

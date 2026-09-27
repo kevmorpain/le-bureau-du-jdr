@@ -36,21 +36,6 @@ export const LU_MULTICLASS_PREREQS: Record<string, { or?: Array<Partial<Record<A
   wizard: { int: 13 },
 }
 
-export const LU_MULTICLASS_PROFICIENCIES: Record<string, string[]> = {
-  barbarian: ['Boucliers', 'Armes courantes', 'Armes de guerre'],
-  bard: ['Armures légères', '1 compétence au choix', '1 instrument de musique'],
-  cleric: ['Armures légères', 'Armures intermédiaires', 'Boucliers'],
-  druid: ['Armures légères', 'Armures intermédiaires (non-métal)', 'Boucliers (non-métal)'],
-  fighter: ['Armures légères', 'Armures intermédiaires', 'Boucliers', 'Armes courantes', 'Armes de guerre'],
-  monk: ['Armes courantes', 'Épées courtes'],
-  paladin: ['Armures légères', 'Armures intermédiaires', 'Boucliers', 'Armes courantes', 'Armes de guerre'],
-  ranger: ['Armures légères', 'Armures intermédiaires', 'Boucliers', 'Armes courantes', 'Armes de guerre', '1 compétence'],
-  rogue: ['Armures légères', '1 compétence au choix', 'Outils de voleur'],
-  sorcerer: [],
-  warlock: ['Armures légères', 'Armes courantes'],
-  wizard: [],
-}
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type AbilityBonuses = Record<AbilityKey, number>
