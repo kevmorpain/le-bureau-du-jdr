@@ -10,6 +10,7 @@ Carte des documents. Commence par le sujet qui te concerne.
 | [`architecture-audit.md`](./architecture-audit.md) | **Constats** de l'audit du socle actuel (effets, dérivation, choix, API) — le « pourquoi on refactore » | instant T |
 | [`rules-engine.md`](./rules-engine.md) | **Design cible durable** : `shared/rules/`, effets, `progression`/`character_choices`, résolution, API — la spec que l'implémentation suit | durable |
 | [`decisions.md`](./decisions.md) | **Journal de décisions** (ADR) : chaque choix d'architecture + son pourquoi | durable |
+| [`consolidation-2014.md`](./consolidation-2014.md) | **Plan de nettoyage** du socle 2014 avant le contenu 5.5 : constats F1–F14, North Star | vivant |
 
 **Ordre de lecture pour reprendre le chantier** : `dnd-5.5.md` (contexte + plan) → `architecture-audit.md` (constats) → `rules-engine.md` (quoi construire) → `decisions.md` (pourquoi).
 
@@ -31,6 +32,7 @@ Carte des documents. Commence par le sujet qui te concerne.
 |---|---|---|
 | [`audit-completude.md`](./audit-completude.md) | **Bugs** des parcours 2014 (le comportement existe mais il est faux) | vivant |
 | [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md) | **Fonctionnalités absentes** : effets seedés jamais appliqués, capacités de classe sans mécanique, mécaniques de règles, contenu | vivant |
+| [`torts.md`](./torts.md) | **Erreurs de méthode** relevées en session, en file jusqu'à la révision groupée des conventions | file d'attente |
 
 > Les deux sont **complémentaires** : `audit-completude.md` trace ce qui est *faux*,
 > `fonctionnalites-manquantes.md` trace ce qui *n'existe pas*. Ni l'un ni l'autre n'est une roadmap
