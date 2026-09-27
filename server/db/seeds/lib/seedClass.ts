@@ -28,6 +28,7 @@ function buildProficiencyCarrier(className: string): FeatureDef | null {
       ...prof.savingThrows.map((value): Effect => ({ type: 'saving_throw_proficiency', value: { ability: value } })),
       ...prof.armor.map((value): Effect => ({ type: 'proficiency', value })),
       ...prof.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
+      ...prof.tools.map((value): Effect => ({ type: 'tool_proficiency', value })),
     ],
   }
 }

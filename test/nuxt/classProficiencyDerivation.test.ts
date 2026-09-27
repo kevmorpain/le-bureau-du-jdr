@@ -34,18 +34,19 @@ function expectedSaves(className: string): Effect[] {
   return CLASS_PROFICIENCIES[className]!.savingThrows.map((ability): Effect => ({ type: 'saving_throw_proficiency', value: { ability } }))
 }
 
-/** Maîtrises d'armes/armures attendues (armures = `proficiency`, armes = `weapon_proficiency`). */
-function expectedWeaponsArmor(className: string): Effect[] {
+/** Maîtrises d'armures (`proficiency`), d'armes (`weapon_proficiency`) et d'outils (`tool_proficiency`). */
+function expectedGrants(className: string): Effect[] {
   const prof = CLASS_PROFICIENCIES[className]!
   return [
     ...prof.armor.map((value): Effect => ({ type: 'proficiency', value })),
     ...prof.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
+    ...prof.tools.map((value): Effect => ({ type: 'tool_proficiency', value })),
   ]
 }
 
 /** Tous les effets du porteur d'une classe. */
 function expectedEffects(className: string): Effect[] {
-  return [...expectedSaves(className), ...expectedWeaponsArmor(className)]
+  return [...expectedSaves(className), ...expectedGrants(className)]
 }
 
 beforeAll(async () => {
@@ -85,7 +86,7 @@ beforeAll(async () => {
 
 describe('deriveClassProficiencies — équivalence dérivé == CLASS_PROFICIENCIES', () => {
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    it(`${className} : dérive exactement ses maîtrises de base (JS + armes/armures)`, async () => {
+    it(`${className} : dérive exactement ses maîtrises de base (JS + armes/armures/outils)`, async () => {
       const effects = await deriveClassProficiencies(orm, [classIdByName.get(className)!])
       expect(norm(effects)).toEqual(norm(expectedEffects(className)))
     })

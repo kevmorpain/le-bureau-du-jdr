@@ -220,6 +220,16 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   tiers [#113](https://github.com/kevmorpain/le-bureau-du-jdr/issues/113), `character_spells` sans classe [#114](https://github.com/kevmorpain/le-bureau-du-jdr/issues/114) ; validation serveur des sorts dans F12 [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124).
 - Découvert : signalé par l'utilisateur (2026-09-23). **✅ RÉSOLU.**
 
+### B15 — Maîtrises d'outils de classe jamais accordées · seed + migration — ✅ RÉSOLU
+- **Symptôme** : un Roublard n'avait pas les outils de voleur, un Druide pas le kit d'herboriste,
+  sauf si leur historique les donnait.
+- **Règle** (AideDD, ligne « Outils » des pages de classe) : seuls le Roublard (outils de voleur) et le
+  Druide (kit d'herboriste) ont un outil **fixe** ; le Barde et le Moine en choisissent (ChoiceKind
+  `tool`, [#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133)).
+- **Correctif** : champ `tools` de `CLASS_PROFICIENCIES` → effets `tool_proficiency` du porteur
+  « Maîtrises de la classe » ; bases déployées complétées par la migration `0104`. Le picker Doué du
+  builder exclut ces outils, comme celui du level-up. Suivi : [#110](https://github.com/kevmorpain/le-bureau-du-jdr/issues/110).
+
 ## Bugs ouverts à la migration
 
 Détail (symptôme, règle sourcée, racine, piste) dans chaque issue.
@@ -229,7 +239,6 @@ Détail (symptôme, règle sourcée, racine, piste) dans chaque issue.
 | B12 | [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104) | Multiclasse : maîtrises d'armes et d'armures de départ accordées en entier |
 | B13 | [#105](https://github.com/kevmorpain/le-bureau-du-jdr/issues/105) | PV max figés quand le modificateur de CON change (décision requise) |
 | B14 | [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109) | Prérequis de multiclassage : seule la nouvelle classe est vérifiée |
-| B15 | [#110](https://github.com/kevmorpain/le-bureau-du-jdr/issues/110) | Maîtrises d'outils de classe jamais accordées |
 
 ## Correctifs de parcours récents (résolus, hors numérotation)
 

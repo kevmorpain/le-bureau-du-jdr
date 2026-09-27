@@ -204,6 +204,14 @@ describe('picker Doué (palier d\'ASI)', () => {
     expect(skilledButtons(wrapper)).not.toContain('Religion')
   })
 
+  it('n\'offre pas l\'outil fixe de la classe (Roublard : outils de voleur)', async () => {
+    const { ownedTools } = rogue4([])
+    expect(ownedTools.value).toEqual(['Outils de voleur'])
+    const wrapper = await mountSuspended(StepAsi)
+    await vi.waitFor(() => expect(skilledButtons(wrapper)).toContain('Kit d\'herboriste'))
+    expect(skilledButtons(wrapper)).not.toContain('Outils de voleur')
+  })
+
   it('un choix devenu doublon reste affiché (désélectionnable) et signalé', async () => {
     rogue4(['intimidation', 'arcana'])
     const wrapper = await mountSuspended(StepAsi)

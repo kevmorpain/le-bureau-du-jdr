@@ -19,6 +19,7 @@ import {
   type SubraceData,
 } from '~/data/character-builder'
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
+import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 import type { Effect } from '~~/server/db/schema/effects'
 
@@ -398,13 +399,14 @@ export function useCharacterBuilder() {
   const classSkillConflictLabels = computed(() => classSkillConflicts.value
     .map(k => `${SKILLS.find(s => s.key === k)?.label ?? k} (${grantedSkillSources.value.get(k)})`)
     .join(', '))
-  // Outils déjà maîtrisés (historique) : exclus du picker Doué pour ne pas gaspiller un choix. On ne
-  // retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
+  // Outils déjà maîtrisés (classe, historique) : exclus du picker Doué pour ne pas gaspiller un choix. On
+  // ne retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
   // dans selectedToolProficiencies) + les résolutions choisies.
   const ownedTools = computed<string[]>(() => {
+    const fromClass = CLASS_PROFICIENCIES[classData.value?.dbName ?? '']?.tools ?? []
     const fixed = (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t))
     const chosen = Object.values(state.value.selectedToolProficiencies).filter(Boolean)
-    return [...new Set([...fixed, ...chosen])]
+    return [...new Set([...fromClass, ...fixed, ...chosen])]
   })
   // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
   // sans expertise (changement de classe) ne doit pas survivre. Purge différée tant que les compétences
