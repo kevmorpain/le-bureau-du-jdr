@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray, or, type SQL } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
@@ -7,17 +7,23 @@ import type { SkillKey } from '~~/shared/rules/skills'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-export async function deriveClassProficiencies(db: Db, classIds: number[]): Promise<Effect[]> {
-  if (!classIds.length) return []
+// PHB (multiclassage) : seule la 1re classe accorde ses maîtrises de départ, une classe rejointe n'en donne
+// qu'un sous-ensemble — porté par un porteur distinct, `multiclass_proficiency_grant`.
+export async function deriveClassProficiencies(db: Db, mainClassId: number | null | undefined, otherClassIds: number[]): Promise<Effect[]> {
+  const owners: SQL[] = []
+  if (mainClassId != null) {
+    owners.push(and(eq(srcSchema.features.classId, mainClassId), eq(srcSchema.features.featureType, 'proficiency_grant'))!)
+  }
+  if (otherClassIds.length) {
+    owners.push(and(inArray(srcSchema.features.classId, otherClassIds), eq(srcSchema.features.featureType, 'multiclass_proficiency_grant'))!)
+  }
+  if (!owners.length) return []
   const rows = await db
     .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
     .from(srcSchema.features)
     .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
     .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
-    .where(and(
-      inArray(srcSchema.features.classId, classIds),
-      eq(srcSchema.features.featureType, 'proficiency_grant'),
-    ))
+    .where(or(...owners))
   return rows.map(r => ({ type: r.type, value: r.value }) as Effect)
 }
 
@@ -37,8 +43,7 @@ export async function deriveClassSkills(db: Db, characterSheetId: number): Promi
     .map(r => ({ type: 'skill_proficiency', value: { skill: r.value as SkillKey } }) as Effect)
 }
 
-// Les JS ne sont accordés que par la 1re classe (PHB) : dérivation scopée à la classe PRINCIPALE, pas
-// à toutes (deriveClassProficiencies), pour ne pas donner les JS d'une classe multiclassée.
+// Les JS ne sont accordés que par la 1re classe (PHB) : dérivation scopée à la classe PRINCIPALE.
 export async function deriveMainClassSavingThrows(db: Db, mainClassId: number | null | undefined): Promise<Effect[]> {
   if (mainClassId == null) return []
   const rows = await db

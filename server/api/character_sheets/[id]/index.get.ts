@@ -188,12 +188,11 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const backgroundEffects = await deriveBackgroundProficiencies(db as any, characterSheet.backgroundId)
 
-  const classIds = characterSheet.classes.map(c => c.classId)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const classEffects = await deriveClassProficiencies(db as any, classIds)
-
-  // JS dérivés de la classe PRINCIPALE seulement (le multiclassage n'accorde pas de JS).
+  // La classe PRINCIPALE accorde ses maîtrises de départ et ses JS ; les autres, le sous-ensemble du multiclassage.
   const mainClassId = characterSheet.classes.find(c => c.isMain)?.classId ?? characterSheet.classes[0]?.classId ?? null
+  const otherClassIds = characterSheet.classes.map(c => c.classId).filter(classId => classId !== mainClassId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const classEffects = await deriveClassProficiencies(db as any, mainClassId, otherClassIds)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const classSavingThrowEffects = await deriveMainClassSavingThrows(db as any, mainClassId)
 

@@ -736,6 +736,13 @@
       "when": 1747872062000,
       "tag": "0104_class_tool_proficiencies",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "6",
+      "when": 1747872063000,
+      "tag": "0105_multiclass_proficiency_carriers",
+      "breakpoints": true
     }
   ]
 }

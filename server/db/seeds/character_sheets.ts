@@ -1,5 +1,5 @@
 import { db, schema } from 'hub:db'
-import { eq, and, lte, ne } from 'drizzle-orm'
+import { eq, and, lte, notInArray } from 'drizzle-orm'
 import { characterSheets } from './data/character_sheets'
 
 export default async function seed() {
@@ -43,9 +43,9 @@ export default async function seed() {
           where: and(
             eq(schema.features.classId, cls.id),
             lte(schema.features.levelRequired, classLevel ?? 20),
-            // La feature porteuse des maîtrises (volet B) n'est JAMAIS matérialisée : la fiche la
-            // dérive de l'origine (sinon elle apparaîtrait comme une aptitude vide sur les démos).
-            ne(schema.features.featureType, 'proficiency_grant'),
+            // Les features porteuses des maîtrises (volet B) ne sont JAMAIS matérialisées : la fiche les
+            // dérive de l'origine (sinon elles apparaîtraient comme des aptitudes vides sur les démos).
+            notInArray(schema.features.featureType, ['proficiency_grant', 'multiclass_proficiency_grant']),
           ),
         })
 

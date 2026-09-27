@@ -15,10 +15,12 @@ import characterFeatures from './character_features'
 
 // `proficiency_grant` : porteur des maîtrises de base d'une classe — jamais matérialisé ni affiché, la
 // fiche dérive ses effets de l'origine.
+// `multiclass_proficiency_grant` : idem pour le sous-ensemble reçu en rejoignant la classe par
+// multiclassage — dérivé pour les classes NON principales, à la place du précédent.
 // `choice_carrier` : porteur d'un point de choix dont le résultat est déjà rendu ailleurs (choix de
 // sous-classe) — lu par le catalogue, jamais matérialisé.
 // `fighting_style` : feature-OPTION d'un style ; seule l'option CHOISIE est copiée sur la fiche.
-export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature' | 'proficiency_grant' | 'choice_carrier' | 'fighting_style'
+export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature' | 'proficiency_grant' | 'multiclass_proficiency_grant' | 'choice_carrier' | 'fighting_style'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
 export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
 export type RechargeType = typeof RECHARGE_TYPES[number]

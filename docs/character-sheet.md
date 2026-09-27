@@ -72,6 +72,9 @@ La décomposition au survol du modificateur affiche les lignes « Plafond » (po
 Maîtrises d'armes, d'armures, de langues et d'outils.
 
 **Source :** Calculé depuis `allEffects` (effets d'espèce + classe + inventaire) + `character_proficiency_overrides` (ajouts/retraits manuels).
+Les effets de classe (`classEffects`, dérivés par le GET) sont les maîtrises **de départ** de la classe
+principale et le **sous-ensemble du multiclassage** des autres classes (porteurs `proficiency_grant` /
+`multiclass_proficiency_grant`, source `shared/rules/classProficiencies.ts`).
 **API overrides :** `GET/PUT/DELETE /api/character_sheets/{id}/proficiency-overrides`
 
 ---

@@ -7,16 +7,17 @@ import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
 import { deriveClassProficiencies, deriveMainClassSavingThrows } from '../../server/utils/classProficiencyDerivation'
-import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
+import { CLASS_PROFICIENCIES, type ProficiencySet } from '../../shared/rules/classProficiencies'
 
-// Nom du porteur (littéral, sans importer seedClass qui dépend de hub:db). La dérivation filtre par
-// featureType + classId, pas par nom → sa valeur exacte est indifférente ici.
+// Noms des porteurs (littéraux, sans importer seedClass qui dépend de hub:db). La dérivation filtre par
+// featureType + classId, pas par nom → leur valeur exacte est indifférente ici.
 const CARRIER_NAME = 'Maîtrises de la classe'
+const MULTICLASS_CARRIER_NAME = 'Maîtrises de multiclassage'
 
-// Dérivation des maîtrises de base de classe, bout en bout : `deriveClassProficiencies` doit rendre
-// EXACTEMENT les effets de `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé), l'union en multiclasse,
-// `[]` sans porteur ; `deriveMainClassSavingThrows` ne rend QUE les JS de la classe visée (règle PHB :
-// le multiclassage n'accorde pas de JS).
+// Dérivation des maîtrises de classe, bout en bout : `deriveClassProficiencies` doit rendre EXACTEMENT les
+// effets de `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé) — maîtrises de départ pour la classe
+// principale, sous-ensemble `multiclass` pour les autres —, `[]` sans porteur ; `deriveMainClassSavingThrows`
+// ne rend QUE les JS de la classe visée (règle PHB : le multiclassage n'accorde pas de JS).
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
@@ -35,19 +36,20 @@ function expectedSaves(className: string): Effect[] {
 }
 
 /** Maîtrises d'armures (`proficiency`), d'armes (`weapon_proficiency`) et d'outils (`tool_proficiency`). */
-function expectedGrants(className: string): Effect[] {
-  const prof = CLASS_PROFICIENCIES[className]!
+function expectedGrants(set: ProficiencySet): Effect[] {
   return [
-    ...prof.armor.map((value): Effect => ({ type: 'proficiency', value })),
-    ...prof.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
-    ...prof.tools.map((value): Effect => ({ type: 'tool_proficiency', value })),
+    ...set.armor.map((value): Effect => ({ type: 'proficiency', value })),
+    ...set.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
+    ...set.tools.map((value): Effect => ({ type: 'tool_proficiency', value })),
   ]
 }
 
-/** Tous les effets du porteur d'une classe. */
+/** Tous les effets du porteur de départ d'une classe. */
 function expectedEffects(className: string): Effect[] {
-  return [...expectedSaves(className), ...expectedGrants(className)]
+  return [...expectedSaves(className), ...expectedGrants(CLASS_PROFICIENCIES[className]!)]
 }
+
+const expectedMulticlass = (className: string): Effect[] => expectedGrants(CLASS_PROFICIENCIES[className]!.multiclass)
 
 beforeAll(async () => {
   const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
@@ -62,19 +64,26 @@ beforeAll(async () => {
   }
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
-  // Une classe + son porteur `proficiency_grant` par entrée de CLASS_PROFICIENCIES.
+  const carrier = async (classId: number, name: string, featureType: string, effects: Effect[]) => {
+    const feature = await orm.insert(srcSchema.features)
+      .values({ name, featureType, classId, levelRequired: 1 })
+      .returning().get()
+    for (const effect of effects) {
+      const eff = await orm.insert(srcSchema.effects).values(effect).returning().get()
+      await orm.insert(srcSchema.featureEffects).values({ featureId: feature.id, effectId: eff.id })
+    }
+  }
+
+  // Une classe + ses porteurs par entrée de CLASS_PROFICIENCIES (celui de multiclassage seulement s'il
+  // accorde quelque chose, comme le seed).
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
     const cls = await orm.insert(srcSchema.classes)
       .values({ name: className, hitDice: '1d8' }).returning().get()
     classIdByName.set(className, cls.id)
 
-    const carrier = await orm.insert(srcSchema.features)
-      .values({ name: CARRIER_NAME, featureType: 'proficiency_grant', classId: cls.id, levelRequired: 1 })
-      .returning().get()
-
-    for (const effect of expectedEffects(className)) {
-      const eff = await orm.insert(srcSchema.effects).values(effect).returning().get()
-      await orm.insert(srcSchema.featureEffects).values({ featureId: carrier.id, effectId: eff.id })
+    await carrier(cls.id, CARRIER_NAME, 'proficiency_grant', expectedEffects(className))
+    if (expectedMulticlass(className).length) {
+      await carrier(cls.id, MULTICLASS_CARRIER_NAME, 'multiclass_proficiency_grant', expectedMulticlass(className))
     }
   }
 
@@ -84,29 +93,46 @@ beforeAll(async () => {
   bareClassId = bare.id
 })
 
-describe('deriveClassProficiencies — équivalence dérivé == CLASS_PROFICIENCIES', () => {
+describe('deriveClassProficiencies — classe principale : maîtrises de départ', () => {
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
     it(`${className} : dérive exactement ses maîtrises de base (JS + armes/armures/outils)`, async () => {
-      const effects = await deriveClassProficiencies(orm, [classIdByName.get(className)!])
+      const effects = await deriveClassProficiencies(orm, classIdByName.get(className)!, [])
       expect(norm(effects)).toEqual(norm(expectedEffects(className)))
     })
   }
 })
 
-describe('deriveClassProficiencies — multiclasse & cas vides', () => {
-  it('multiclasse : dérive l\'union des porteurs de toutes les classes', async () => {
-    const barbare = classIdByName.get('Barbare')!
-    const magicien = classIdByName.get('Magicien')!
-    const effects = await deriveClassProficiencies(orm, [barbare, magicien])
-    expect(norm(effects)).toEqual(norm([...expectedEffects('Barbare'), ...expectedEffects('Magicien')]))
+describe('deriveClassProficiencies — classe rejointe : sous-ensemble du multiclassage', () => {
+  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+    it(`${className} : dérive exactement ses maîtrises de multiclassage, sans JS`, async () => {
+      const effects = await deriveClassProficiencies(orm, bareClassId, [classIdByName.get(className)!])
+      expect(norm(effects)).toEqual(norm(expectedMulticlass(className)))
+    })
+  }
+
+  it('Magicien qui rejoint Guerrier : armures légères et intermédiaires, pas les lourdes', async () => {
+    const effects = await deriveClassProficiencies(orm, classIdByName.get('Magicien')!, [classIdByName.get('Guerrier')!])
+    expect(norm(effects)).toEqual(norm([...expectedEffects('Magicien'), ...expectedMulticlass('Guerrier')]))
+    const armor = effects.filter(e => e.type === 'proficiency').map(e => e.value).sort()
+    expect(armor).toEqual(['light', 'medium', 'shield'])
   })
 
-  it('rend [] pour une liste de classes vide', async () => {
-    expect(await deriveClassProficiencies(orm, [])).toEqual([])
+  it('Guerrier qui rejoint Roublard puis Magicien : outils de voleur, rien du Magicien', async () => {
+    const effects = await deriveClassProficiencies(orm, classIdByName.get('Guerrier')!, [
+      classIdByName.get('Roublard')!,
+      classIdByName.get('Magicien')!,
+    ])
+    expect(norm(effects)).toEqual(norm([...expectedEffects('Guerrier'), ...expectedMulticlass('Roublard')]))
+  })
+})
+
+describe('deriveClassProficiencies — cas vides', () => {
+  it('rend [] sans classe', async () => {
+    expect(await deriveClassProficiencies(orm, null, [])).toEqual([])
   })
 
   it('rend [] pour une classe sans porteur (aucune régression pré-seed)', async () => {
-    expect(await deriveClassProficiencies(orm, [bareClassId])).toEqual([])
+    expect(await deriveClassProficiencies(orm, bareClassId, [bareClassId])).toEqual([])
   })
 })
 
