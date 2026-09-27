@@ -3,6 +3,7 @@ import { relations } from 'drizzle-orm'
 import type { SpellcastingType } from '~~/shared/rules/spellcasting'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Source } from '~~/shared/rules/source'
+import type { MulticlassPrerequisites } from '~~/shared/rules/multiclass'
 import spellClasses from './spell_classes'
 
 export type Die = string // e.g., "1d6", "1d8"
@@ -21,6 +22,7 @@ const classes = sqliteTable('classes', {
   weaponMasteryCount: integer('weapon_mastery_count'),
   // Compétences gagnées en REJOIGNANT la classe par multiclassage ; la liste est celle de sa progression `skill`.
   multiclassSkillCount: integer('multiclass_skill_count').notNull().default(0),
+  multiclassPrerequisites: text('multiclass_prerequisites', { mode: 'json' }).$type<MulticlassPrerequisites>().notNull().default([]),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 })

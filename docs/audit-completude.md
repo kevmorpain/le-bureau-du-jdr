@@ -232,6 +232,16 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   principale et celui de multiclassage des autres. Bases déployées : migration `0105`. Suivi :
   [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104).
 
+### B14 — Prérequis de multiclassage : seule la nouvelle classe était vérifiée · front + migration — ✅ RÉSOLU
+- **Règle** (AideDD, multiclassage) : « vous devez posséder les valeurs de caractéristiques requises par
+  votre classe actuelle et par la nouvelle classe ». Pour un personnage déjà multiclassé, on évalue
+  chaque classe détenue (lecture retenue : aucun multiclassé en prod au moment du choix).
+- **Correctif** : prérequis en colonne d'identité `classes.multiclass_prerequisites` (alternatives de
+  minimums, migration `0106` + seed, contrat `classIdentity.ts`) au lieu de la table front par slug
+  `LU_MULTICLASS_PREREQS` ; l'étape Classe du level-up rappelle ceux des classes détenues et signale une
+  carte dont l'un des deux n'est pas rempli. **Non bloquants** (décision du PM, 2026-09-27). Suivi :
+  [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109).
+
 ### B15 — Maîtrises d'outils de classe jamais accordées · seed + migration — ✅ RÉSOLU
 - **Symptôme** : un Roublard n'avait pas les outils de voleur, un Druide pas le kit d'herboriste,
   sauf si leur historique les donnait.
@@ -249,7 +259,6 @@ Détail (symptôme, règle sourcée, racine, piste) dans chaque issue.
 | Code | Issue | Bug |
 |---|---|---|
 | B13 | [#105](https://github.com/kevmorpain/le-bureau-du-jdr/issues/105) | PV max figés quand le modificateur de CON change (décision requise) |
-| B14 | [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109) | Prérequis de multiclassage : seule la nouvelle classe est vérifiée |
 
 ## Correctifs de parcours récents (résolus, hors numérotation)
 

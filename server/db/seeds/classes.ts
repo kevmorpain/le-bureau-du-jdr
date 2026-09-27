@@ -19,6 +19,7 @@ export default async function seed() {
         subclassLevel: schema.classes.subclassLevel,
         spellcastingType: schema.classes.spellcastingType,
         multiclassSkillCount: schema.classes.multiclassSkillCount,
+        multiclassPrerequisites: schema.classes.multiclassPrerequisites,
       })
       .from(schema.classes)
       // Keyé par (name, ruleset) : un homonyme 5.5 est une ligne DISTINCTE, pas une mise à jour (D2).
@@ -34,6 +35,7 @@ export default async function seed() {
       || existing.subclassLevel !== cls.subclassLevel
       || existing.spellcastingType !== cls.spellcastingType
       || existing.multiclassSkillCount !== cls.multiclassSkillCount
+      || JSON.stringify(existing.multiclassPrerequisites) !== JSON.stringify(cls.multiclassPrerequisites)
     ) {
       await db
         .update(schema.classes)
@@ -43,6 +45,7 @@ export default async function seed() {
           subclassLevel: cls.subclassLevel,
           spellcastingType: cls.spellcastingType,
           multiclassSkillCount: cls.multiclassSkillCount,
+          multiclassPrerequisites: cls.multiclassPrerequisites,
         })
         .where(eq(schema.classes.id, existing.id))
       updated++

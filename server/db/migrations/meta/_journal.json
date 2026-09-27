@@ -743,6 +743,13 @@
       "when": 1747872063000,
       "tag": "0105_multiclass_proficiency_carriers",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "6",
+      "when": 1747872064000,
+      "tag": "0106_classes_multiclass_prerequisites",
+      "breakpoints": true
     }
   ]
 }

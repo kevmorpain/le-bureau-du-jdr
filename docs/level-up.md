@@ -70,7 +70,7 @@ Toutes les étapes sont dans `ALL_LU_STEPS` mais certaines sont filtrées selon 
 **UI :**
 - Bandeau "État actuel" avec badge coloré par classe existante
 - **Section A — Continuer une classe** : cartes par classe existante, affiche le niveau actuel → suivant, les features débloquées au prochain niveau (depuis `CLASSES.levelMilestones`), et les badges : ⚡ Sous-classe / ✦ ASI / ⚔ Style de combat / ★ Expertise
-- **Section B — Nouvelle classe** : grille de toutes les classes non encore prises, avec les badges de prérequis (vert = OK, rouge = insuffisant) tirés de `LU_MULTICLASS_PREREQS`
+- **Section B — Nouvelle classe** : grille de toutes les classes non encore prises, avec les badges de prérequis (vert = OK, rouge = insuffisant) lus dans le catalogue (colonne `classes.multiclass_prerequisites`, migration 0106). Règle (AideDD, multiclassage) : il faut ceux de la nouvelle classe **et** de chaque classe détenue — ces derniers sont rappelés dans l'encart d'aide, et une carte dont l'un des deux n'est pas rempli affiche « Prérequis non remplis ». **Non bloquants** (choix produit : le MJ a le dernier mot), donc pas de validation serveur.
 
 **Validation :** `pickedClassId !== null`
 
@@ -268,7 +268,7 @@ Toutes exportées pour usage dans les composants d'étape :
 //   expertise       → `needsExpertise` / `expertiseDueForClassLevel` (count cumulatif)
 //   compétences de multiclassage → `multiclassSkills` / `requiredMulticlassSkillPicks`
 //   maîtrises de multiclassage   → dérivées par le GET de la fiche (`classEffects`), source CLASS_PROFICIENCIES.multiclass
-LU_MULTICLASS_PREREQS    // prérequis de carac. pour multiclassage
+//   prérequis de multiclassage   → `currentClassesPrerequisites` / `multiclassPrerequisitesOf` / `canMulticlassInto`
 LU_FEATS                 // liste des 12 dons disponibles
 ```
 

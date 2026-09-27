@@ -109,7 +109,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | **R6** | [#154](https://github.com/kevmorpain/le-bureau-du-jdr/issues/154) | Jets de mort : stockés en localStorage, 20 et 1 naturels, stabilisation |
 | **R7** | [#155](https://github.com/kevmorpain/le-bureau-du-jdr/issues/155) | Économie d'action décorative en Mode Combat |
 | **R8** | [#156](https://github.com/kevmorpain/le-bureau-du-jdr/issues/156) | Repos long : PV temporaires, jets de mort, épuisement, recharges partielles |
-| **R9** | ↪ B14 [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109) ; maîtrises faites (B12 [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104)), compétences faites (#101) | Prérequis et maîtrises de multiclassage |
+| **R9** | ✅ résolu : maîtrises (B12 [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104)), prérequis non bloquants (B14 [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109)), compétences (#101) | Prérequis et maîtrises de multiclassage |
 | **R10** | [#157](https://github.com/kevmorpain/le-bureau-du-jdr/issues/157) | Force requise des armures lourdes jamais vérifiée |
 
 ---

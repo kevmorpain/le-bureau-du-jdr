@@ -1,5 +1,15 @@
 import { resolveChoices, type Catalog } from './resolve'
+import type { AbilityKey } from './abilities'
 import type { SkillKey } from './skills'
+
+// Prérequis de multiclassage d'une classe : alternatives (OU) de minimums (ET) — Guerrier
+// [{ str: 13 }, { dex: 13 }], Moine [{ dex: 13, wis: 13 }] ; `[]` = aucun.
+export type MulticlassPrerequisites = Partial<Record<AbilityKey, number>>[]
+
+export function meetsMulticlassPrerequisites(prerequisites: MulticlassPrerequisites, scores: Partial<Record<AbilityKey, number>>): boolean {
+  return prerequisites.length === 0 || prerequisites.some(group =>
+    Object.entries(group).every(([ability, min]) => (scores[ability as AbilityKey] ?? 0) >= (min ?? 0)))
+}
 
 export interface MulticlassSkillGrant {
   count: number
