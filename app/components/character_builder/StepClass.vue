@@ -32,7 +32,7 @@
         <div class="text-xs text-muted leading-relaxed mb-2">{{ cls.description }}</div>
         <div class="flex gap-3 text-xs">
           <span class="text-muted">
-            JS : <span :style="`color: ${cls.color}`">{{ cls.savingThrows.map(s => ABILITY_SHORT[s as AbilityKey]).join('+') }}</span>
+            JS : <span :style="`color: ${cls.color}`">{{ savingThrowsLabel(cls.dbName) }}</span>
           </span>
           <span v-if="cls.spellcasting" class="text-violet-400">
             Sorts {{ ABILITY_SHORT[cls.spellcasting.ability as AbilityKey] }}
@@ -366,6 +366,7 @@
 <script lang="ts" setup>
 import { type AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
+import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 
 const PACT_BOON_OPTIONS = [
   { id: 'chain' as const, name: 'Pacte de la Chaîne', hint: 'Apprend Appel de familier. Peut convoquer un familier spécial.' },
@@ -403,6 +404,9 @@ const { extended, extendedQuery } = useExtendedContent()
 const filteredClasses = computed(() =>
   CLASSES.filter(c => !c.source || !isGatedSource(c.source) || extended.value),
 )
+
+const savingThrowsLabel = (dbName: string) =>
+  (CLASS_PROFICIENCIES[dbName]?.savingThrows ?? []).map(s => ABILITY_SHORT[s]).join('+')
 
 const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells', {
   query: extendedQuery,

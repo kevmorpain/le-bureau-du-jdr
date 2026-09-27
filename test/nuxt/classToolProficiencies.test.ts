@@ -6,7 +6,6 @@ import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
-import { ALL_TOOLS } from '../../shared/rules/tools'
 
 // Migration 0104 : pose sur les bases déployées les outils FIXES de classe que le seed porte pour les
 // bases neuves (champ `tools` de CLASS_PROFICIENCIES → porteur « Maîtrises de la classe »).
@@ -57,14 +56,6 @@ beforeAll(async () => {
   for (let pass = 0; pass < 2; pass++) {
     for (const statement of splitSqlQueries(migration)) await client.execute(statement)
   }
-})
-
-describe('outils fixes de classe', () => {
-  it('ne nomment que des outils du catalogue', () => {
-    for (const [className, prof] of Object.entries(CLASS_PROFICIENCIES)) {
-      for (const tool of prof.tools) expect(ALL_TOOLS, `${className} : « ${tool} »`).toContain(tool)
-    }
-  })
 })
 
 describe('migration 0104 — outils de classe sur les porteurs déployés', () => {

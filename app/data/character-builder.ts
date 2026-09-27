@@ -56,16 +56,6 @@ export function extraLanguagesFromToolChoices(selected: Record<string, string>):
   return Object.values(selected).filter(v => v === EXTRA_LANGUAGE_OPTION).length
 }
 
-// Mapping French display → machine-readable keys (used for character_proficiency_overrides)
-export const ARMOR_PROF_KEYS: Record<string, string> = {
-  'Armures légères': 'light',
-  'Armures légères (non-métalliques)': 'light',
-  'Armures intermédiaires': 'medium',
-  'Toutes les armures': 'all_armor',
-  'Boucliers': 'shield',
-  'Boucliers (non-métalliques)': 'shield',
-}
-
 export const ABILITY_LABELS: Record<AbilityKey, string> = {
   str: 'Force',
   dex: 'Dextérité',
@@ -505,9 +495,6 @@ export interface ClassData {
   role: string
   description: string
   hitDie: number
-  savingThrows: AbilityKey[]
-  armorProficiencies: string[]
-  weaponProficiencies: string[]
   skillChoices: SkillChoices
   spellcasting: SpellcastingInfo | null
   // Affichage seul : le niveau d'accès et la liste des sous-classes viennent du catalogue.
@@ -528,9 +515,6 @@ export const CLASSES: ClassData[] = [
     role: 'Combattant',
     description: 'Puissance brute et rage primitive. Le barbare encaisse et inflige des dégâts considérables au corps à corps.',
     hitDie: 12,
-    savingThrows: ['str', 'con'],
-    armorProficiencies: ['Armures légères', 'Armures intermédiaires', 'Boucliers'],
-    weaponProficiencies: ['Armes courantes', 'Armes de guerre'],
     skillChoices: { count: 2, from: ['animal_handling', 'athletics', 'intimidation', 'nature', 'perception', 'survival'] },
     spellcasting: null,
     subclassLabel: 'Voie primitive',
@@ -554,9 +538,6 @@ export const CLASSES: ClassData[] = [
     role: 'Soutien / Sorts',
     description: 'Artiste et magicien, le barde inspire ses alliés, manipule ses ennemis et lance des sorts puissants grâce à son charisme naturel.',
     hitDie: 8,
-    savingThrows: ['dex', 'cha'],
-    armorProficiencies: ['Armures légères'],
-    weaponProficiencies: ['Armes courantes', 'Arbalète de poing', 'Épée longue', 'Rapière', 'Épée courte'],
     skillChoices: { count: 3, from: 'all' },
     spellcasting: { ability: 'cha', type: 'full' },
     subclassLabel: 'Collège bardique',
@@ -581,9 +562,6 @@ export const CLASSES: ClassData[] = [
     role: 'Soutien / Soins',
     description: 'Intermédiaire entre les mortels et les dieux, le clerc soigne, protège et frappe au nom de sa divinité grâce à sa sagesse divine.',
     hitDie: 8,
-    savingThrows: ['wis', 'cha'],
-    armorProficiencies: ['Armures légères', 'Armures intermédiaires', 'Boucliers'],
-    weaponProficiencies: ['Armes courantes'],
     skillChoices: { count: 2, from: ['history', 'insight', 'medicine', 'persuasion', 'religion'] },
     spellcasting: { ability: 'wis', type: 'full' },
     subclassLabel: 'Domaine divin',
@@ -608,9 +586,6 @@ export const CLASSES: ClassData[] = [
     role: 'Sorts / Métamorphose',
     description: 'Gardien de la nature et maître des métamorphoses, le druide tire sa magie des forces primordiales du monde naturel.',
     hitDie: 8,
-    savingThrows: ['int', 'wis'],
-    armorProficiencies: ['Armures légères', 'Armures intermédiaires', 'Boucliers (non-métalliques)'],
-    weaponProficiencies: ['Gourdin', 'Dague', 'Fléchette', 'Javeline', 'Masse', 'Bâton', 'Cimeterre', 'Fronde', 'Lance'],
     skillChoices: { count: 2, from: ['arcana', 'animal_handling', 'insight', 'medicine', 'nature', 'perception', 'religion', 'survival'] },
     spellcasting: { ability: 'wis', type: 'full' },
     subclassLabel: 'Cercle druidique',
@@ -634,9 +609,6 @@ export const CLASSES: ClassData[] = [
     role: 'Combattant',
     description: 'Maître des armes et armures, le guerrier est le combattant le plus polyvalent, capable de porter plus d\'attaques que quiconque.',
     hitDie: 10,
-    savingThrows: ['str', 'con'],
-    armorProficiencies: ['Toutes les armures', 'Boucliers'],
-    weaponProficiencies: ['Armes courantes', 'Armes de guerre'],
     skillChoices: { count: 2, from: ['acrobatics', 'animal_handling', 'athletics', 'history', 'insight', 'intimidation', 'perception', 'survival'] },
     spellcasting: null,
     subclassLabel: 'Archétype martial',
@@ -661,9 +633,6 @@ export const CLASSES: ClassData[] = [
     role: 'Mobilité / Dégâts',
     description: 'Artiste martial channelant le ki pour des prouesses physiques extraordinaires — vitesse, esquive et frappes dévastatrices.',
     hitDie: 8,
-    savingThrows: ['str', 'dex'],
-    armorProficiencies: [],
-    weaponProficiencies: ['Armes courantes', 'Épée courte'],
     skillChoices: { count: 2, from: ['acrobatics', 'athletics', 'history', 'insight', 'religion', 'stealth'] },
     spellcasting: null,
     subclassLabel: 'Tradition monastique',
@@ -687,9 +656,6 @@ export const CLASSES: ClassData[] = [
     role: 'Combattant / Soutien',
     description: 'Guerrier sacré lié par un serment solennel, le paladin combine force martiale et magie divine pour protéger les innocents.',
     hitDie: 10,
-    savingThrows: ['wis', 'cha'],
-    armorProficiencies: ['Toutes les armures', 'Boucliers'],
-    weaponProficiencies: ['Armes courantes', 'Armes de guerre'],
     skillChoices: { count: 2, from: ['athletics', 'insight', 'intimidation', 'medicine', 'persuasion', 'religion'] },
     spellcasting: { ability: 'cha', type: 'half', startsAtLevel: 2 },
     subclassLabel: 'Serment sacré',
@@ -713,9 +679,6 @@ export const CLASSES: ClassData[] = [
     role: 'Exploration / Combat',
     description: 'Guerrier des terres sauvages, expert du pistage et du combat naturel. Son ennemi juré et son compagnon animal le définissent.',
     hitDie: 10,
-    savingThrows: ['str', 'dex'],
-    armorProficiencies: ['Armures légères', 'Armures intermédiaires', 'Boucliers'],
-    weaponProficiencies: ['Armes courantes', 'Armes de guerre'],
     skillChoices: { count: 3, from: ['animal_handling', 'athletics', 'insight', 'investigation', 'nature', 'perception', 'stealth', 'survival'] },
     spellcasting: { ability: 'wis', type: 'half', startsAtLevel: 2 },
     subclassLabel: 'Archétype de rôdeur',
@@ -739,9 +702,6 @@ export const CLASSES: ClassData[] = [
     role: 'Discret / Dégâts',
     description: 'Expert de la furtivité et du subterfuge, le roublard excelle à frapper là où ça fait mal grâce à son Attaque sournoise dévastatrice.',
     hitDie: 8,
-    savingThrows: ['dex', 'int'],
-    armorProficiencies: ['Armures légères'],
-    weaponProficiencies: ['Armes courantes', 'Arbalète de poing', 'Épée longue', 'Rapière', 'Épée courte'],
     skillChoices: { count: 4, from: ['acrobatics', 'athletics', 'deception', 'insight', 'intimidation', 'investigation', 'perception', 'performance', 'persuasion', 'sleight_of_hand', 'stealth'] },
     spellcasting: null,
     subclassLabel: 'Archétype de roublard',
@@ -766,9 +726,6 @@ export const CLASSES: ClassData[] = [
     role: 'Incantateur',
     description: 'Magie innée jaillissant du sang ou de l\'âme. L\'ensorceleur façonne les sorts avec une flexibilité unique grâce aux Métamagie.',
     hitDie: 6,
-    savingThrows: ['con', 'cha'],
-    armorProficiencies: [],
-    weaponProficiencies: ['Dague', 'Fléchette', 'Fronde', 'Bâton', 'Arbalète légère'],
     skillChoices: { count: 2, from: ['arcana', 'deception', 'insight', 'intimidation', 'persuasion', 'religion'] },
     spellcasting: { ability: 'cha', type: 'full' },
     subclassLabel: 'Origine magique',
@@ -792,9 +749,6 @@ export const CLASSES: ClassData[] = [
     role: 'Pacte / Sorts',
     description: 'Pouvoirs obtenus par un pacte avec une entité puissante. Peu de sorts mais récupérés à chaque repos court — une magie explosive et unique.',
     hitDie: 8,
-    savingThrows: ['wis', 'cha'],
-    armorProficiencies: ['Armures légères'],
-    weaponProficiencies: ['Armes courantes'],
     skillChoices: { count: 2, from: ['arcana', 'deception', 'history', 'intimidation', 'investigation', 'nature', 'religion'] },
     spellcasting: { ability: 'cha', type: 'pact' },
     subclassLabel: 'Patron d\'Outremonde',
@@ -833,9 +787,6 @@ export const CLASSES: ClassData[] = [
     role: 'Incantateur',
     description: 'Érudit de la magie arcanique dont le grimoire lui permet d\'apprendre et de préparer un vaste répertoire de sorts — le maître incontesté de la magie.',
     hitDie: 6,
-    savingThrows: ['int', 'wis'],
-    armorProficiencies: [],
-    weaponProficiencies: ['Dague', 'Fléchette', 'Fronde', 'Bâton', 'Arbalète légère'],
     skillChoices: { count: 2, from: ['arcana', 'history', 'insight', 'investigation', 'medicine', 'religion'] },
     spellcasting: { ability: 'int', type: 'full' },
     subclassLabel: 'Tradition arcanique',
