@@ -1,35 +1,14 @@
 # Registre des fonctionnalités manquantes
 
-> **Nature du doc** : inventaire *vivant* de ce qui est **décrit mais pas mécanisé**, ou pas
-> implémenté du tout. Ce n'est **ni une roadmap ni un backlog priorisé** — c'est la carte des trous,
-> pour qu'un choix de chantier se fasse en connaissance de cause. Rien ici n'est engagé.
+> **Index et archive depuis le 2026-09-27.** Chaque entrée ouverte est une issue du projet GitHub
+> [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2) (label `manquant`), qui porte son détail, son effort et son
+> statut : ce fichier ne les tient plus à jour. Il garde la correspondance code → issue, les
+> entrées résolues ou écartées, et les notes de conception transverses. Contenu complet avant
+> migration : [version `b584f44`](https://github.com/kevmorpain/le-bureau-du-jdr/blob/b584f44e940e15adb77f8dd526750c3ab390f7ca/docs/fonctionnalites-manquantes.md).
 >
-> **Registres voisins, à ne pas confondre** :
-> - [`audit-completude.md`](./audit-completude.md) — **bugs** des parcours 2014 (le comportement
->   existe mais il est faux). Ici : le comportement **n'existe pas**.
-> - [`consolidation-2014.md`](./consolidation-2014.md) — plan de **refactor** du socle (F1–F11,
->   chantier style de combat). Les entrées ci-dessous qui y ont déjà un chantier sont marquées
->   « 🔗 suivi ailleurs » et listées pour mémoire, sans être re-détaillées.
-> - [`dnd-5.5.md`](./dnd-5.5.md) — support des **règles 2024**. Tout ce qui suit concerne le
->   socle **2014**, sauf mention contraire.
->
-> **Légende de l'effort** : 🟢 local (un computed / un composant) · 🟠 transverse (moteur +
-> fiche + tests) · 🔴 structurant (schéma, migration, nouveau modèle).
->
-> État : 2026-09-27. Dernier commit couvert : `0788fd1` (#102). Revérifié ce jour : E1–E10 toujours
-> sans lecteur (aucune occurrence des 10 types dans `app/` ni `shared/`, éditeur d'objet excepté),
-> R9 et P1 rectifiés ci-dessous.
->
-> **Résolu depuis** : **U10** (montée en puissance affichée) et **U2 (c)** — voir la note sous le
-> tableau U. **O7** (caractéristiques : effets d'objets et plafond, 2026-09-26) et le volet
-> « effets sans lien » d'**O1** — voir le tableau O.
->
-> **Journal des corrections** — trois entrées rectifiées après relecture du code, mention gardée
-> inline plutôt que réécrite en silence : **R3** (épuisement, largement implémenté), **U2**
-> (le tiroir de détail d'un sort existe bien), **U8** (les sorts ont déjà 4 filtres).
-> **U1** (mobile) est **écarté par décision de l'auteur**, pas résolu. Une entrée a été rattrapée
-> par le code pendant la rédaction (`fighting_style_modifier`, PR #63) et **E11 revu en conséquence** :
-> un effet alimente désormais la CA, mais en dur — le manque d'un effet *générique* demeure.
+> **Registres voisins** : [`audit-completude.md`](./audit-completude.md) (bugs, label `bug`),
+> [`consolidation-2014.md`](./consolidation-2014.md) (dette, label `dette`),
+> [`dnd-5.5.md`](./dnd-5.5.md) (règles 2024, label `5.5`).
 
 ---
 
@@ -37,7 +16,7 @@
 
 | Famille | Entrées | En un mot |
 |---|---|---|
-| [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E10 | La donnée est seedée, le type existe, **personne ne la lit** |
+| [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E11 | La donnée est seedée, le type existe, **personne ne la lit** |
 | [C — Capacités de classe sans mécanique](#c--capacités-de-classe-sans-mécanique) | C1–C9 | ~340 features n'ont qu'une `description` |
 | [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, concentration, encombrement… |
 | [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
@@ -57,42 +36,25 @@ seeds sur de vraies features — mais **aucun consommateur** ne les lit côté f
 trait dans « Capacités », et rien ne bouge sur ses stats. C'est la famille la plus rentable : la
 donnée est déjà là, il ne manque que la projection.
 
-| # | Effet | Porté par (seeds) | Ce qui devrait se passer | Effort |
-|---|---|---|---|---|
-| **E1** | `skill_bonus` | Nain (Connaissance de la pierre), Gnome des roches (Bricoleur) | Doubler le bonus de maîtrise sur Histoire dans un contexte donné (`multiplier: 2`, `condition`) — c'est de l'expertise conditionnelle | 🟠 |
-| **E2** | `reroll` | Halfelin (Chanceux), + une 2ᵉ occurrence dans `character_species.ts` | Relancer un d20 naturel de 1. Aucun jet du `useDiceRoller` ne consulte cet effet | 🟠 |
-| **E3** | `tool_proficiency_choice` | Nain (maîtrise d'outil d'artisan au choix), Nain des montagnes | Proposer le choix à la création, puis l'afficher en Maîtrises. Le choix n'est **jamais** offert | 🟠 |
-| **E4** | `language_proficiency_choice` | Humain, Haut-elfe, Demi-elfe, don Linguiste | Idem, pour les langues. Le compteur est perdu | 🟠 |
-| **E5** | `skill_proficiency_choice` | une espèce dans `character_species.ts` (l. 1015) | Idem, pour les compétences. ⚠️ Le `{count, from}` a été ajouté à l'union (Phase 1 §3) mais reste sans lecteur | 🟠 |
-| **E6** | `spell_choice` | Haut-elfe (1 tour de magie de magicien) | Choisir + accorder le cantrip. Aujourd'hui : rien, le joueur doit l'ajouter à la main | 🟠 |
-| **E7** | `equipment_penalty` | Nain, Nain des collines/montagnes | Neutraliser la réduction de vitesse due à une armure lourde (`override: true`). Sans effet — mais la **pénalité elle-même** n'est pas appliquée non plus (cf. O3), donc l'ensemble est cohérent… par accident | 🟢 (après O3) |
-| **E8** | `sight_modifier` | 4 manifestations occultes (Regard de ténèbres, Yeux des runes, Voile de fumée, Vision véritable) | Étendre la vision / marquer un sens spécial sur la fiche. Rendu **nulle part**, même pas en texte | 🟢 |
-| **E9** | `pact_weapon_modifier` | 2 invocations (Fléau de la Lame = attaque supplémentaire, Buveur de vie = +CHA aux dégâts) | Modifier les stats de l'arme de pacte (`isPactWeapon` est déjà posé à l'insert par `characterCreate`). Rien ne relie les deux | 🟠 |
-| **E10** | `extra_damage` | une espèce + **proposé à l'utilisateur** dans `MagicEffectEditor` | ⚠️ **Double problème** : (a) jamais appliqué ; (b) l'éditeur d'objet magique écrit une **forme différente** de l'union (`{die_count_notation, damage_type}` vs `{trigger, attackType, extraDie}`) → donnée non typée, silencieusement morte | 🟠 |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **E1** | [#131](https://github.com/kevmorpain/le-bureau-du-jdr/issues/131) | Bonus de compétence conditionnel (`skill_bonus`, Nain/Gnome) jamais appliqué |
+| **E2** | [#132](https://github.com/kevmorpain/le-bureau-du-jdr/issues/132) | Relance du 1 naturel (`reroll`, Halfelin Chanceux) jamais appliquée |
+| **E3** | [#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133) | Choix de maîtrise d'outil d'espèce jamais proposé (`tool_proficiency_choice`) |
+| **E4** | [#134](https://github.com/kevmorpain/le-bureau-du-jdr/issues/134) | Choix de langues d'espèce et de dons jamais proposé (`language_proficiency_choice`) |
+| **E5** | [#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107) | Choix de compétences d'espèce jamais proposé (Polyvalence du Demi-elfe) |
+| **E6** | [#135](https://github.com/kevmorpain/le-bureau-du-jdr/issues/135) | Choix de sort d'espèce jamais proposé (`spell_choice`, Haut-elfe) |
+| **E7** | [#136](https://github.com/kevmorpain/le-bureau-du-jdr/issues/136) | Neutralisation de la pénalité d'armure lourde du Nain (`equipment_penalty`) sans effet |
+| **E8** | [#137](https://github.com/kevmorpain/le-bureau-du-jdr/issues/137) | Vision étendue des manifestations (`sight_modifier`) jamais affichée |
+| **E9** | [#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138) | Modificateurs d'arme de pacte (`pact_weapon_modifier`) jamais appliqués |
+| **E10** | [#139](https://github.com/kevmorpain/le-bureau-du-jdr/issues/139) | `extra_damage` jamais appliqué, et écrit sous une autre forme par l'éditeur d'objet |
+| **E11** | [#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140) | Types d'effet absents de l'union (CA, JS, attaque, vitesses, avantage structuré) |
 
 **✅ résolu pendant la rédaction** — `fighting_style_modifier` : la **tranche 3** du chantier F2
 (PR #63, mergée le 2026-09-14) applique désormais les bonus statiques sur la fiche — Défense +1 CA,
 Archerie +2 à distance, Duel +2 à une main, Combat à deux armes (mod en main secondaire) — via le
 module pur `shared/rules/fightingStyleEffects.ts`. `great_weapon` et `protection` restent rendus en
 texte, par conception (relance de dés / réaction, non réductibles à un bonus statique).
-
-### E11 — Types d'effet **absents** de l'union (objets magiques classiques non modélisables)
-
-Il n'existe aucun effet pour :
-- **Bonus de CA générique** (Anneau de protection, Cape de protection, Bracelets de défense,
-  Bâton de défense). *(Nuance depuis la PR #63 : `computedAC` consomme bien **un** effet — le
-  `fighting_style_modifier` de kind `defense`, +1 CA — mais c'est un cas **codé en dur**, et
-  seulement avec une armure de corps portée. Il n'existe toujours aucun effet **générique**
-  « +N CA ».)* Un objet qui donne +1 CA reste donc non représentable, sauf à détourner le
-  `magicBonus` de l'armure.
-- **Bonus aux jets de sauvegarde** (même famille d'objets : +1 aux JS).
-- **Bonus aux jets d'attaque / de dégâts non liés à une arme portée**.
-- **Vitesse de nage / d'escalade / de creusement** (`walking_speed` et `flying_speed` existent seuls).
-- **Avantage structuré** : `advantage` existe mais sa `condition` est une **chaîne libre** non
-  interprétée → aucun effet ne peut *réellement* déclencher un avantage, seulement le décrire.
-
-Effort : 🟠 par effet (union + `MagicEffectEditor` + consommateur), 🔴 si on veut un modèle de
-condition interprétable plutôt que du texte.
 
 ---
 
@@ -114,17 +76,17 @@ C'est **normal** pour la majorité (une capacité narrative ou situationnelle n'
 calculée). Les entrées ci-dessous sont celles où l'absence **se voit sur une valeur affichée** —
 donc là où la fiche est objectivement fausse, pas juste incomplète.
 
-| # | Capacité | Classe(s) | Valeur fausse aujourd'hui | Effort |
-|---|---|---|---|---|
-| **C1** | **Défense sans armure** | Barbare (10+DEX+CON), Moine (10+DEX+SAG) | **CA** : `computedAC` renvoie `10 + DEX` sans armure, pour tout le monde. Un Barbare CON 16 est à −3 de sa vraie CA. *(Voisin : Résistance draconique de l'Ensorceleur = 13+DEX.)* | 🟠 |
-| **C2** | **Attaque supplémentaire** | Guerrier (×2/3/4), Barbare, Paladin, Rôdeur, Moine | Le **nombre d'attaques** n'est nulle part : ni dans `equippedWeaponStats`, ni en Mode Combat. Le joueur compte de tête | 🟢 |
-| **C3** | **Attaque sournoise** | Roublard (1d6 → 10d6) | Dés de dégâts **pas affichés**, pas ajoutés au jet. Cœur mécanique de la classe | 🟠 |
-| **C4** | **Rage** | Barbare | Pas de `maxUsesFormula` (**compteur d'utilisations absent** alors que `rechargeType: 'long_rest'` est posé), pas de bonus de dégâts, pas de résistance contondant/perforant/tranchant | 🟠 |
-| **C5** | **Points de ki** | Moine | Ressource **inexistante** (ni colonne, ni feature à compteur). Bloque Frappe étourdissante, Patience défensive, Rafale de coups | 🔴 |
-| **C6** | **Points de sorcellerie / Métamagie** | Ensorceleur | La **métamagie est choisie et persistée** (progression `kind:'metamagic'` ✅) mais les **points** n'existent pas → aucune métamagie n'est activable, ni la conversion points ⇄ emplacements | 🔴 |
-| **C7** | **Inspiration bardique / Conduit divin / Forme sauvage / Châtiment divin** | Barde, Clerc, Druide, Paladin | Ressources à compteur, dé qui évolue, formes disponibles : rien n'est modélisé | 🔴 |
-| **C8** | **Déplacement rapide / Déplacement sans armure** | Barbare (+3 m), Moine (+3→+9 m) | **Vitesse** affichée en QuickStats = espèce seule. Ces capacités sont des `walking_speed` conditionnels qui ne sont pas posés | 🟢 |
-| **C9** | **Touche-à-tout / Talent fiable / Critique brutal / Esquive instinctive** | Barde, Roublard, Barbare | Modificateurs de jet (demi-maîtrise, plancher à 10, dés de crit en plus) — aucun n'est appliqué | 🟠 |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **C1** | [#141](https://github.com/kevmorpain/le-bureau-du-jdr/issues/141) | Défense sans armure (Barbare, Moine) : CA fausse |
+| **C2** | [#142](https://github.com/kevmorpain/le-bureau-du-jdr/issues/142) | Attaque supplémentaire : nombre d'attaques affiché nulle part |
+| **C3** | [#143](https://github.com/kevmorpain/le-bureau-du-jdr/issues/143) | Attaque sournoise : dés ni affichés ni jetés |
+| **C4** | [#144](https://github.com/kevmorpain/le-bureau-du-jdr/issues/144) | Rage : compteur, bonus de dégâts et résistances absents |
+| **C5** | [#145](https://github.com/kevmorpain/le-bureau-du-jdr/issues/145) | Points de ki : ressource inexistante |
+| **C6** | [#146](https://github.com/kevmorpain/le-bureau-du-jdr/issues/146) | Points de sorcellerie : métamagie choisie mais non activable |
+| **C7** | [#147](https://github.com/kevmorpain/le-bureau-du-jdr/issues/147) | Inspiration bardique, Conduit divin, Forme sauvage, Châtiment divin : non modélisés |
+| **C8** | [#148](https://github.com/kevmorpain/le-bureau-du-jdr/issues/148) | Déplacement rapide / sans armure : vitesse non augmentée |
+| **C9** | [#149](https://github.com/kevmorpain/le-bureau-du-jdr/issues/149) | Touche-à-tout, Talent fiable, Critique brutal, Esquive instinctive : non appliqués |
 
 > **Note de conception** : le North Star du repo (`consolidation-2014.md`) interdit le code bespoke
 > par classe. Ces entrées demandent donc d'abord de **nommer les effets manquants** dans l'union
@@ -137,45 +99,45 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 
 ## R — Mécaniques de règles générales
 
-| # | Mécanique | État | Détail | Effort |
-|---|---|---|---|---|
-| **R1** | **Avantage / désavantage** | ❌ | `useDiceRoller.roll()` jette **toujours un seul d20**. La fiche *détecte* et *affiche* correctement les sources de désavantage (conditions, armure non maîtrisée, arme lourde + Petite taille, discrétion) — mais le bouton de jet les ignore. Le plus gros écart perçu entre l'affichage et le jet | 🟢 |
-| **R2** | **Coup critique** | ❌ (cosmétique) | `isCrit` ne sert qu'à **colorer le toast**. Pas de doublement des dés de dégâts, pas de plage de crit élargie (Champion 19–20 / 18–20), pas de crit auto contre une cible paralysée | 🟢 |
-| **R3** | **Épuisement** | ✅ **largement fait** | *(Corrigé après vérification — cette ligne disait initialement « rien n'est appliqué », c'était faux.)* `useCharacterConditions` applique bien les 5 premiers paliers : niv. 1 désavantage aux jets de carac. (`skillDisadvantageReasons`), niv. 2 vitesse ÷2 et niv. 5 vitesse 0 (`effectiveSpeed`), niv. 3 désavantage aux JS (`saveStatuses`), niv. 4 PV max ÷2 (`effectiveMaxHp`, consommé par `HitPointsSection`). **Restent** : le niv. 6 (mort) et la **réduction de 1 au repos long**. Les paliers « désavantage » sont *signalés* mais pas appliqués au jet — c'est R1, pas un trou propre | 🟢 (le résidu) |
-| **R4** | **Concentration** | ⚠️ partielle | `concentratingSpellId` est persisté ✅. Manquent : le **JS de Constitution** quand on subit des dégâts (DD = max(10, dégâts/2)), la rupture **automatique** en lançant un 2ᵉ sort à concentration, et la rupture à 0 PV | 🟠 |
-| **R5** | **Encombrement / capacité de charge** | ❌ | `items` n'a **aucune colonne `weight`**. Ni charge portée, ni capacité (FOR×7,5 kg), ni seuils encombré / lourdement encombré | 🔴 |
-| **R6** | **Jets de mort** | ⚠️ | État en **localStorage** (perdu entre appareils, non synchronisé — contrairement aux PV et à la concentration). Le jet n'applique pas le **20 naturel = 1 PV** ni le **1 naturel = 2 échecs**. Pas de stabilisation, pas de mort instantanée par dégâts massifs | 🟢 → 🟠 |
-| **R7** | **Économie d'action** | ⚠️ décorative | Les toggles Action / Bonus / Réaction du Mode Combat sont **purement manuels** : rien ne consomme automatiquement une action quand on lance un sort ou attaque, et l'`actionType` des features (déjà seedé) ne gate rien | 🟢 |
-| **R8** | **Repos** | ⚠️ trous | Le repos long ne remet **pas** les PV temporaires à 0, ne réinitialise pas les jets de mort, ne réduit pas l'épuisement de 1 (R3). La **recharge partielle** des objets (`items.rechargeDice`, ex. « 1d6+4 charges à l'aube ») est lue par `characterRest` puis **explicitement exclue** — seule la recharge complète marche. Pas de règle « 1 repos long / 24 h » | 🟠 |
-| **R9** | **Prérequis de multiclassage** | ⚠️ | *(Rectifié le 2026-09-27 — la ligne disait « aucune vérification », c'était faux.)* Les scores minimaux **sont affichés**, non bloquants, mais pour la seule classe cible → bug **B14**. Les **maîtrises réduites** ne sont pas « non appliquées » : la fiche accorde les maîtrises de départ **complètes** de chaque classe → bug **B12** (`audit-completude.md`). Volet **compétences fait** : nombre = colonne `classes.multiclass_skill_count` (migration 0103), liste = progression `skill`, validés côté serveur au level-up | 🟠 |
-| **R10** | **Prérequis d'armure lourde (FOR)** | ❌ | `ArmorProperties.strength_requirement` existe dans le schéma **et** dans le Zod — **zéro lecteur**. Porter une cotte de mailles avec FOR 12 ne déclenche aucun avertissement de vitesse −3 m | 🟢 |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **R1** | [#108](https://github.com/kevmorpain/le-bureau-du-jdr/issues/108) | Avantage / désavantage jamais appliqué au jet |
+| **R2** | [#150](https://github.com/kevmorpain/le-bureau-du-jdr/issues/150) | Coup critique : dés non doublés, plage de critique fixe |
+| **R3** | [#151](https://github.com/kevmorpain/le-bureau-du-jdr/issues/151) | Épuisement : niveau 6 et réduction au repos long |
+| **R4** | [#152](https://github.com/kevmorpain/le-bureau-du-jdr/issues/152) | Concentration : JS de CON, rupture automatique, rupture à 0 PV |
+| **R5** | [#153](https://github.com/kevmorpain/le-bureau-du-jdr/issues/153) | Encombrement et capacité de charge |
+| **R6** | [#154](https://github.com/kevmorpain/le-bureau-du-jdr/issues/154) | Jets de mort : stockés en localStorage, 20 et 1 naturels, stabilisation |
+| **R7** | [#155](https://github.com/kevmorpain/le-bureau-du-jdr/issues/155) | Économie d'action décorative en Mode Combat |
+| **R8** | [#156](https://github.com/kevmorpain/le-bureau-du-jdr/issues/156) | Repos long : PV temporaires, jets de mort, épuisement, recharges partielles |
+| **R9** | ↪ B12 [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104), B14 [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109) ; volet compétences fait (#101) | Prérequis et maîtrises de multiclassage |
+| **R10** | [#157](https://github.com/kevmorpain/le-bureau-du-jdr/issues/157) | Force requise des armures lourdes jamais vérifiée |
 
 ---
 
 ## O — Objets & inventaire
 
-| # | Sujet | État | Détail | Effort |
-|---|---|---|---|---|
-| **O1** | **Harmonisation (attunement)** | ⚠️ **partiel** | ✅ *(2026-09-26, avec O7)* `inventoryEffects` ne garde un objet qui exige un lien que s'il est lié (DMG : « Une créature qui ne se lie pas à un objet qui nécessite un lien obtient uniquement les avantages non magiques de celui-ci »). **Reste** : la limite de 3 objets liés n'est qu'un badge d'avertissement non bloquant. *Constat d'origine : le filtre ne regardait que `equipped`, un objet exigeant le lien donnait ses effets sans être lié.* | 🟢 |
-| **O2** | **Poids & prix** | ❌ | Pas de colonne `weight` (→ R5) ni `cost`. Conséquence : aucun **achat** possible, la bourse (pp/po/pe/pa/pc) est purement déclarative — on ne peut pas dépenser en achetant un objet | 🔴 |
-| **O3** | **Pénalité de vitesse des armures lourdes** | ❌ | La règle n'est appliquée nulle part (d'où E7 qui l'annule dans le vide) | 🟢 |
-| **O4** | **Munitions** | ❌ | La propriété `ammunition` est stockée et affichée, mais aucun décompte de flèches/carreaux à l'attaque | 🟢 |
-| **O5** | **Armes lancées & portées** | ⚠️ | `thrown` sert à afficher la portée, mais pas à proposer un jet distinct ni à gérer le désavantage **hors portée normale** (longue portée) | 🟢 |
-| **O6** | **Objets magiques à effets actifs** | ❌ | Un objet à charges peut décompter ses charges, mais **rien ne lie une charge à un effet** (lancer un sort depuis un bâton, infliger des dégâts). Combiné à E11, l'essentiel du catalogue d'objets magiques du DMG n'est pas modélisable | 🔴 |
-| **O7** | ~~**Caractéristiques : effets d'objets et plafond**~~ | ✅ **RÉSOLU (2026-09-26)**, restes ci-contre | **Fait** : règle pure `shared/rules/abilityScores.ts` — maximum = 20 + Σ `ability_max_increase` ; score naturel (base + espèce + capacités + ASI/dons) plafonné au maximum, sans jamais baisser une base saisie au-delà ; puis objets actifs : `ability_increase` borné par son `max` propre (nouveau champ optionnel) ou le maximum, et `ability_score_set` (nouveau) en plancher. Câblé dans `useCharacterAbilities` via `useCharacterSheet` ; `MagicEffectEditor` propose « Maximum » et « Caractéristique fixée ». Champion primitif porte ses `ability_max_increase` (seed + migration 0102). **Reste** : **(1)** manuels et tomes (effet **permanent** d'un consommable) non modélisés. Décision : ce sont des faveurs acquises, à porter par des **features** attachées au personnage (comme un don), pas par un objet qu'il faudrait garder « équipé » ; chantier à part (type de feature, seed, parcours d'ajout). **(2)** Builder (`finalAbilities`, `StepAsi`) et level-up (`LevelUpStepAsi`) gardent leur `20` littéral au lieu de `ABILITY_SCORE_MAX`, et le builder ignore Champion primitif pour une création au niveau 20. **(3)** La lentille de sorts (`useSpellLens`) ne charge pas l'inventaire : un Bandeau d'intelligence n'y compte pas. **(4)** ⚠️ Ordre entre un objet qui fixe un score et un objet à bonus (Gantelets + Pierre de Ioun) : choisi (le score fixé s'applique en dernier, comme un plancher), non sourcé. **(5)** Les PV max restent ceux stockés (`effectiveMaxHp` = `maxHp` + bonus de dons) : un objet qui change la CON (Amulette de santé) modifie le modificateur, les JS et les jets, pas les PV max. **Constat d'origine** (2026-09-25, `58a5931`), trois volets. **(a)** Les `ability_increase` d'un objet équipé ne sont appliqués **nulle part** : `useCharacterSheet` n'en passe pas à `useCharacterAbilities` (`inventoryEffects` ne rejoint que `allEffectsForSpellcasting`) — alors que `MagicEffectEditor` propose l'effet et que l'inventaire l'affiche (« +2 FOR »). **(b)** Aucun type d'effet pour **fixer** un score (Gantelets de puissance d'ogre : « Votre Force est de 19 », Ceinturon de force de géant : 21 à 29) ni pour **relever le maximum** (Champion primitif du Barbare : « Votre maximum dans ces valeurs de caractéristique est maintenant de 24 », seedé en simple `ability_increase` +4 ; Manuel de vitalité : +2 au score et au maximum). **(c)** La fiche **ne plafonne rien** (`total: base + bonus`), alors que le builder plafonne à 20 (`finalAbilities`) et que l'ASI l'interdit (« Vous ne pouvez cependant pas augmenter une caractéristique au-delà de 20 par ce biais ») → un demi-don sur un score à 20 : builder 20, fiche 21 | 🟠 |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **O1** | [#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158) | Harmonisation : limite de 3 objets liés non bloquante |
+| **O2** | [#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159) | Poids et prix des objets |
+| **O3** | [#160](https://github.com/kevmorpain/le-bureau-du-jdr/issues/160) | Pénalité de vitesse des armures lourdes non appliquée |
+| **O4** | [#161](https://github.com/kevmorpain/le-bureau-du-jdr/issues/161) | Munitions non décomptées |
+| **O5** | [#162](https://github.com/kevmorpain/le-bureau-du-jdr/issues/162) | Armes lancées et longue portée |
+| **O6** | [#163](https://github.com/kevmorpain/le-bureau-du-jdr/issues/163) | Objets magiques à effets actifs (une charge → un effet) |
+| **O7** | ✅ résolu (2026-09-26) ; restes : O7a [#164](https://github.com/kevmorpain/le-bureau-du-jdr/issues/164), O7b [#165](https://github.com/kevmorpain/le-bureau-du-jdr/issues/165) | Caractéristiques : effets d'objets et plafond |
 
 ---
 
 ## S — Sorts & incantation
 
-| # | Sujet | État | Détail | Effort |
-|---|---|---|---|---|
-| **S1** | **Limite de sorts préparés** | ❌ | Rien n'affiche ni ne contraint le nombre de sorts préparables (`niveau de classe + mod`). Un Clerc peut tout préparer. Les **sorts de domaine toujours préparés** n'existent pas non plus | 🟠 |
-| **S2** | **Incantation rituelle** | ⚠️ badge seul | `spells.ritual` est stocké et affiché ; aucun bouton « lancer en rituel » (sans consommer d'emplacement, +10 min) | 🟢 |
-| **S3** | **Zone d'effet** | ❌ | Aucune colonne `area_of_effect` sur `spells` (le seul existant est codé en dur dans l'action `breathe_weapon` du souffle drakéide). Cône/sphère/ligne/cylindre ne sont pas des données | 🟠 |
-| **S4** | **Type d'attaque du sort** | ⚠️ inféré | « Jet d'attaque » est déduit de l'**absence** de `dc` (cf. B5 de `audit-completude.md`) — pas de champ explicite, et pas de distinction attaque de sort **au corps à corps** vs **à distance** (donc pas de désavantage à 1,5 m) | 🟢 |
-| **S5** | **Composantes matérielles coûteuses** | ⚠️ | `material` est du texte libre : pas de coût, pas de « consommé à l'usage », pas de focaliseur d'incantation | 🟢 |
-| **S6** | **Durée & effets en cours** | ❌ | `duration` est du texte. Pas de suivi des sorts actifs sur le personnage (Armure du mage, Bénédiction, Hâte…) ni de leur expiration — donc aucun de leurs bonus n'est appliqué à la fiche | 🔴 |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **S1** | [#166](https://github.com/kevmorpain/le-bureau-du-jdr/issues/166) | Limite de sorts préparés et sorts de domaine toujours préparés |
+| **S2** | [#167](https://github.com/kevmorpain/le-bureau-du-jdr/issues/167) | Incantation rituelle |
+| **S3** | [#168](https://github.com/kevmorpain/le-bureau-du-jdr/issues/168) | Zone d'effet des sorts |
+| **S4** | [#169](https://github.com/kevmorpain/le-bureau-du-jdr/issues/169) | Type d'attaque du sort explicite (corps à corps / distance) |
+| **S5** | [#170](https://github.com/kevmorpain/le-bureau-du-jdr/issues/170) | Composantes matérielles coûteuses |
+| **S6** | [#171](https://github.com/kevmorpain/le-bureau-du-jdr/issues/171) | Sorts actifs : durée et effets en cours |
 
 ---
 
@@ -184,13 +146,13 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 Ce qui suit sont des **choix que le joueur ne peut pas faire du tout** (à distinguer des bugs de
 cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 
-| # | Choix | Flux concerné | Détail | Effort |
-|---|---|---|---|---|
-| **P1** | ~~**Expertise à la création**~~ | Création | ✅ **RÉSOLU** (chantier F2 expertise) : le builder exige le nombre dû à l'étape Classe (`needsExpertise`, `useCharacterBuilder.ts:360` et `:634`) et la création l'écrit en `expert`. | — |
-| **P2** | **Manœuvres du Maître de guerre** | Les deux | `ChoiceKind` `'maneuvers'` et `FeatureTag` `'maneuver'` existent **mais aucune manœuvre n'est seedée**, aucune progression posée. Le Guerrier Maître de guerre est inutilisable | 🟠 |
-| **P3** | **Sorts de domaine / de cercle / Secrets magiques** | Les deux | Aucune progression `kind:'spell'` pour le Clerc (domaine), le Druide (cercle terrestre), le Barde (Secrets magiques). Seul l'Occultiste a ses points de choix `spell` (arcanums) | 🟠 |
-| **P4** | **Ennemi juré / Explorateur-né** | Les deux | Choix du Rôdeur niveau 1 : absents (pas de progression, pas d'`optionSource`) | 🟠 |
-| **P5** | **2ᵉ style de combat du Champion (niv. 10)** | Les deux | 🔗 *résidu remonté par F2 tranche 2*. Progression possédée par une **sous-classe** (`ownerSubclassId`), cas unique non câblé | 🟠 |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **P1** | ✅ résolu (F2 expertise) | Expertise à la création |
+| **P2** | [#172](https://github.com/kevmorpain/le-bureau-du-jdr/issues/172) | Manœuvres du Maître de guerre |
+| **P3** | [#173](https://github.com/kevmorpain/le-bureau-du-jdr/issues/173) | Sorts de domaine, de cercle et Secrets magiques |
+| **P4** | [#174](https://github.com/kevmorpain/le-bureau-du-jdr/issues/174) | Ennemi juré et Explorateur-né (Rôdeur) |
+| **P5** | [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175) | 2ᵉ style de combat du Champion (niveau 10) |
 
 > **Généralisation** (recompté le 2026-09-27) : sur les 17 `ChoiceKind` canoniques, **10** sont
 > seedés en `progression` (`subclass`, `lineage`, `pact_boon`, `fighting_style`, `expertise`,
@@ -202,12 +164,12 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 
 ## D — Contenu (données) manquant
 
-| # | Domaine | État | Détail |
-|---|---|---|---|
-| **D1** | **Sorts** | **118 seedés** | Le PHB 2014 en compte ~360. Un magicien de haut niveau n'a pas la moitié de sa liste |
-| **D2** | **Objets magiques** | quasi nuls | Le seed `items.ts` couvre l'équipement ordinaire ; presque aucun objet magique du DMG (et E11/O6 empêcheraient de les modéliser correctement) |
-| **D3** | **Espèces** | trou connu | Drow absent de la DB (🔗 `character-builder.md`) |
-| **D4** | **Sous-classes** | 1–3 par classe | Chaque classe a ses sous-classes seedées mais pas la liste complète du PHB |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **D1** | [#176](https://github.com/kevmorpain/le-bureau-du-jdr/issues/176) | Sorts : 118 seedés sur ~360 |
+| **D2** | [#177](https://github.com/kevmorpain/le-bureau-du-jdr/issues/177) | Objets magiques quasi absents du catalogue |
+| **D3** | [#178](https://github.com/kevmorpain/le-bureau-du-jdr/issues/178) | Drow absent de la base |
+| **D4** | [#179](https://github.com/kevmorpain/le-bureau-du-jdr/issues/179) | Sous-classes incomplètes |
 
 ---
 
@@ -224,18 +186,18 @@ présentation/interaction.
 > et le hors-ligne est traité sérieusement (file de mutations, snapshot local, modale de conflit).
 > Les entrées ci-dessous sont les creux dans ce tableau, pas un procès général.
 
-| # | Manque | Détail | Effort |
-|---|---|---|---|
-| **U1** | ~~**Aucune mise en page mobile**~~ | 🚫 **ÉCARTÉ — décision (2026-09-14)**. Le constat technique tient (`.dashboard-grid` figé à `240px 1fr 240px`, un seul point de rupture à 1200 px, aucune classe responsive dans les pages ; l'app est pourtant une PWA). **Écarté volontairement** : la fiche est trop dense pour être réagencée sans un vrai travail d'UX, que l'auteur ne souhaite pas porter. À ne pas re-proposer sans qu'une décision de design précède. | — |
-| **U2** | **Lire un sort demande d'ouvrir un tiroir, et son texte n'est pas structuré** | *(Corrigé — la version précédente disait « illisible depuis la fiche », c'était faux : cliquer la ligne appelle `openSpellDetail()` qui ouvre un `USlideover` rendant `SpellCard`, description comprise.)* Restent trois manques, tous demandés explicitement : **(a)** aucun **accordéon** sur la ligne — il faut le tiroir modal pour la moindre relecture ; **(b)** les effets sont **noyés dans le texte** : `SpellCard` rend bien `HealSection`/`DamageSection` au-dessus, mais rien pour le DD, le type d'attaque, la zone, les composantes coûteuses ni la concentration, qui restent à chercher dans la prose ; ~~**(c)** aucun **encart de montée en puissance**~~ → ✅ **fait** (cf. la note sous le tableau) | 🟢 |
-| **U3** | **Effets d'objet rendus en JSON brut** | `InventorySection.vue:199` affiche `{{ eff.type }} : {{ JSON.stringify(eff.value) }}` dans le détail d'un objet — le joueur lit `extra_damage : {"die_count_notation":"1d6"…}`. Un `magicEffectLabel()` existe **dans le même fichier** (utilisé pour les badges) mais n'est pas appelé ici ; et lui-même retombe sur `effect.type` (clé machine nue) pour tout ce qu'il ne connaît pas — donc les 10 effets de la famille E s'afficheraient en brut | 🟢 |
-| **U4** | **Aucun historique de jets** | Les toasts vivent 4,5 s, plafonnés à 5 (`useDiceRoller`). Pas de journal, pas de « relancer », pas de copier. Un jet qu'on n'a pas lu à temps est définitivement perdu — et il n'y a rien à montrer au MJ | 🟢 |
-| **U5** | **L'initiative n'est conservée nulle part** | `toggleCombat` lance `roll('Initiative', …)` → un toast qui s'efface. La valeur n'est ni stockée ni réaffichée, et le Mode Combat n'a ni ordre de tour, ni compteur de round | 🟢 |
-| **U6** | **Pas de suivi de durée** | Ni les conditions (`StatusSection`) ni les sorts actifs n'ont de compteur de tours/minutes. « Bénédiction pendant 1 minute » se suit de tête. Jumeau UI de S6 | 🟠 |
-| **U7** | **Pas de confirmation sur les actions destructrices de la fiche** | Le **repos long** (réinitialise emplacements, PV, dés de vie) et la **suppression d'objet** partent au premier clic, sans confirmation ni annulation. Seule la suppression de *personnage* en a une (`characters/index.vue`). Combiné à U4 (aucun historique), un clic de travers est irrécupérable | 🟢 |
-| **U8** | **Pas de recherche texte** | *(Corrigé — je sous-estimais les sorts : `MagicSection` filtre déjà par **préparés**, **type d'action**, **composantes V/S/M** et **niveau**.)* Ce qui manque vraiment : la **recherche par nom**, absente des sorts comme de l'inventaire. Et l'inventaire, lui, n'a que 4 onglets par `itemType` — ni filtre, ni tri | 🟢 |
-| **U10** | ~~**Les dégâts affichés ne montent JAMAIS en puissance**~~ | ✅ **RÉSOLU (2026-09-15)** — voir la note sous le tableau. Le constat d'origine : `DamageSection`/`HealSection` figeaient `slotLevel` au niveau de base, donc seule la **première ligne** de `damage_at_slot_level` était lue, pendant que `rollSpellEffect` appliquait, lui, le niveau choisi | 🟢 |
-| **U9** | **État mort en localStorage** | `useCharacterClasses` crée `useStorage(storageKey('armorClass'), 10)` — mais **tous** les consommateurs lisent en réalité `computedAC` (remappé par `useCharacterSheet`). Une clé localStorage est écrite par personnage pour rien. Hygiène, pas fonctionnel | 🟢 |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **U1** | 🚫 écarté (décision du 2026-09-14) — ne pas re-proposer sans décision de design | Mise en page mobile |
+| **U2** | [#180](https://github.com/kevmorpain/le-bureau-du-jdr/issues/180) | Lecture d'un sort : accordéon et effets structurés |
+| **U3** | [#181](https://github.com/kevmorpain/le-bureau-du-jdr/issues/181) | Effets d'objet rendus en JSON brut |
+| **U4** | [#182](https://github.com/kevmorpain/le-bureau-du-jdr/issues/182) | Aucun historique de jets |
+| **U5** | [#183](https://github.com/kevmorpain/le-bureau-du-jdr/issues/183) | Initiative non conservée |
+| **U6** | [#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184) | Pas de suivi de durée (conditions, sorts) |
+| **U7** | [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Pas de confirmation sur les actions destructrices de la fiche |
+| **U8** | [#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186) | Pas de recherche texte (sorts, inventaire) |
+| **U9** | [#187](https://github.com/kevmorpain/le-bureau-du-jdr/issues/187) | Clé localStorage `armorClass` morte |
+| **U10** | ✅ résolu (2026-09-15), voir la note plus bas | Montée en puissance des dégâts affichés |
 
 **✅ résolu — U10 + U2 (c) : montée en puissance (2026-09-15)**
 
@@ -252,7 +214,7 @@ Effets de bord traités au passage, même famille : le soin d'un sort à progres
 personnage** était indexé par le niveau du sort (jamais rencontré en seed, faux dès la première
 donnée) ; la fourchette min~max du grimoire rendait `NaN` sur une notation à bonus fixe (`10d6+40`) ;
 et « Simulacre de vie » retrouve son bloc `heal` (`1d4+4`), que l'ancien parseur ne savait pas
-représenter. ⚠️ **Nécessite un re-seed en prod** (`POST /api/admin/seed?only=spells`, idempotent).
+représenter. Re-seed prod `?only=spells` fait (vérifié par l'API publique le 2026-09-27).
 
 **Cas des sorts d'attaque** : leurs dégâts se jettent en **deux gestes** (« Lancer » = jet pour
 toucher, puis « Dégâts »), donc le second doit savoir à quel niveau le sort a été lancé — sinon la
@@ -283,14 +245,14 @@ exprimer sa situation.
 `useStorage` sert à de l'état de jeu (conditions, jets de mort, sections repliées), jamais à un
 réglage. Toute entrée ci-dessous suppose de trancher d'abord **où vit une préférence** — cf. N6.
 
-| # | Manque | Détail | Effort |
-|---|---|---|---|
-| **N1** | **Désactiver les jets de dés** *(demandé)* | Un joueur qui lance ses vrais dés n'a pas besoin des boutons ni des toasts — il lui faut le **modificateur**, qui est déjà affiché à côté (« Attaque +7 »). Un réglage « pas de jets » masquerait boutons et `DiceRollerSection` sans rien casser. C'est l'entrée la moins chère de tout ce document | 🟢 |
-| **N2** | **Saisir soi-même le résultat d'un jet** | Corollaire indispensable de N1 : sans lui, « je lance mes dés » devient « la fiche ne sait plus rien ». Les jets qui **écrivent un état** doivent accepter une saisie — dés de vie (le soin s'applique aux PV), jets de mort (succès/échecs), charges d'objet. Le pattern existe déjà : `HitPointsSection` fait saisir les dégâts à la main, type et résistance compris | 🟠 |
-| **N3** | **Concentration libre** *(demandé)* | `ConcentrationSection` est en `v-if="isConcentrating"` : invisible tant qu'on ne concentre pas → **aucun moyen de la déclencher** hors du lancement d'un sort. ⚠️ **Piège de schéma** : `character_sheets.concentrating_spell_id` est une **FK vers `spells`** et `setConcentration(spellId)` n'accepte qu'un id — se concentrer sur un effet de monstre, un sort non seedé (D1 : 118 sorts sur ~360) ou du homebrew est **inexprimable**. Il faut un libellé libre nullable à côté de la FK, pas seulement un bouton | 🟠 |
-| **N4** | **Surcharges manuelles des valeurs dérivées** | **La soupape qui manque à E11.** Le modèle d'effets ne sait pas exprimer « +1 CA » (Anneau de protection) ni un bonus aux JS, et ne le saura pas avant un chantier 🟠. En attendant, **rien** ne permet de corriger à la main : `computedAC` est entièrement dérivé. Or le pattern existe déjà deux fois — `character_proficiency_overrides` (grant/revoke manuel sur une maîtrise dérivée) et l'« Édition directe » des PV. Le généraliser à **CA, vitesse, initiative, DD de sort** débloque aujourd'hui tout ce que le modèle ne sait pas dire, pour un coût dérisoire | 🟠 |
-| **N5** | **Encart d'effet mécanique sur les capacités** | Même problème que U2b, un cran plus loin : les descriptions de features sont des **pavés** (cf. Rage : 7 lignes dont 3 mécaniques). Rien ne met en avant « ce que ça change ». À traiter avec U2b pour ne concevoir le bloc qu'une fois | 🟠 |
-| **N6** | **Où vit une préférence ?** | ✅ **TRANCHÉ (2026-09-14)** : sur **la fiche**, avec des **défauts au niveau du compte**. Voir [D18](./decisions.md#d18) pour la forme retenue et le piège du tri-état | 🟠 |
+| Code | Suivi | Sujet |
+|---|---|---|
+| **N1** | [#188](https://github.com/kevmorpain/le-bureau-du-jdr/issues/188) | Préférence : désactiver les jets de dés |
+| **N2** | [#189](https://github.com/kevmorpain/le-bureau-du-jdr/issues/189) | Saisir soi-même le résultat d'un jet |
+| **N3** | [#190](https://github.com/kevmorpain/le-bureau-du-jdr/issues/190) | Concentration libre, hors lancement de sort |
+| **N4** | [#191](https://github.com/kevmorpain/le-bureau-du-jdr/issues/191) | Surcharges manuelles des valeurs dérivées (CA, vitesse, initiative, DD) |
+| **N5** | [#192](https://github.com/kevmorpain/le-bureau-du-jdr/issues/192) | Encart d'effet mécanique sur les capacités |
+| **N6** | ✅ tranché → [D18](./decisions.md#d18), voir plus bas | Où vit une préférence ? |
 
 ### N6 — ce que la décision implique
 
@@ -314,15 +276,15 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
 
 ## X — Surface produit
 
-| # | Fonctionnalité | Détail |
+| Code | Suivi | Sujet |
 |---|---|---|
-| **X1** | **Points d'expérience** | Aucune colonne, aucune UI. La montée de niveau est entièrement manuelle (🔗 déjà noté dans `character-sheet.md`) |
-| **X2** | **Partage / lecture seule** | Une fiche n'appartient qu'à son `ownerId` ; pas de lien de partage, pas d'accès MJ |
-| **X3** | **Export / impression** | Pas d'export PDF ni de vue imprimable de la fiche officielle |
-| **X4** | **Groupe / campagne** | Pas de notion de table, de groupe, ni de personnages liés |
-| **X5** | **Initiative de rencontre** | Le Mode Combat jette l'initiative du **seul** personnage ; pas de suivi de tour multi-participants |
-| **X6** | **Anglais** | Un seul locale (`i18n/locales/fr.json`). L'architecture i18n est en place (D11), le contenu non |
-| **X7** | **Journal / historique** | Les jets disparaissent après 4,5 s (toasts). Pas d'historique de jets, pas de journal de session au-delà des notes libres |
+| **X1** | [#193](https://github.com/kevmorpain/le-bureau-du-jdr/issues/193) | Points d'expérience |
+| **X2** | [#194](https://github.com/kevmorpain/le-bureau-du-jdr/issues/194) | Partage / lecture seule d'une fiche |
+| **X3** | [#195](https://github.com/kevmorpain/le-bureau-du-jdr/issues/195) | Export / impression de la fiche |
+| **X4** | [#196](https://github.com/kevmorpain/le-bureau-du-jdr/issues/196) | Groupe / campagne |
+| **X5** | [#197](https://github.com/kevmorpain/le-bureau-du-jdr/issues/197) | Initiative de rencontre multi-participants |
+| **X6** | [#198](https://github.com/kevmorpain/le-bureau-du-jdr/issues/198) | Version anglaise |
+| **X7** | [#199](https://github.com/kevmorpain/le-bureau-du-jdr/issues/199) | Journal de session |
 
 ---
 

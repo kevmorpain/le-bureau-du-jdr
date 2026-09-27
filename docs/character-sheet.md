@@ -81,7 +81,7 @@ Maîtrises d'armes, d'armures, de langues et d'outils.
 ### Statistiques (`QuickStatsSection`)
 
 Bandeau horizontal compact avec 6 StatCards :
-- **CA** : computed depuis armure équipée + modificateur DEX + bouclier + `magicBonus` de l'armure/du bouclier + le style de combat **Défense** (+1 avec une armure de corps, depuis la PR #63). ⚠️ C'est le **seul** effet qui alimente la CA, en dur : il n'existe pas de type d'effet **générique** « +N CA », donc un Anneau de protection reste non modélisable (cf. [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md#e11--types-deffet-absents-de-lunion-objets-magiques-classiques-non-modélisables))
+- **CA** : computed depuis armure équipée + modificateur DEX + bouclier + `magicBonus` de l'armure/du bouclier + le style de combat **Défense** (+1 avec une armure de corps, depuis la PR #63). ⚠️ C'est le **seul** effet qui alimente la CA, en dur : il n'existe pas de type d'effet **générique** « +N CA », donc un Anneau de protection reste non modélisable (cf. E11, [#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140))
 - **Initiative** : modificateur DEX ± effets (clic → lancer le dé)
 - **Vitesse** : espèce + conditions (entrave, paralysie…) en mètres (tooltip en cases)
 - **Perception passive** : 10 + modificateur Perception
@@ -149,7 +149,7 @@ Liste tous les objets du personnage avec quantité, état équipé, bonus magiqu
 **Équiper/déséquiper :** `PUT /api/character_sheets/{id}/inventory/{entryId}`
 **Supprimer :** `DELETE /api/character_sheets/{id}/inventory/{entryId}`
 
-Les effets des objets **actifs** — équipés, et **liés** quand l'objet exige un lien (`requiresAttunement`) — (`item_effects` → `effects`, exposés par le GET inventaire) sont injectés dans `allEffects` et dans le calcul des caractéristiques ; ils peuvent modifier résistances, vitesse, DD/attaque de sort, scores de caractéristique, etc. ⚠️ **Pas la CA** hors style de combat Défense (cf. ci-dessus). La limite de 3 objets liés reste un avertissement non bloquant (cf. `fonctionnalites-manquantes.md` O1).
+Les effets des objets **actifs** — équipés, et **liés** quand l'objet exige un lien (`requiresAttunement`) — (`item_effects` → `effects`, exposés par le GET inventaire) sont injectés dans `allEffects` et dans le calcul des caractéristiques ; ils peuvent modifier résistances, vitesse, DD/attaque de sort, scores de caractéristique, etc. ⚠️ **Pas la CA** hors style de combat Défense (cf. ci-dessus). La limite de 3 objets liés reste un avertissement non bloquant (cf. O1, [#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158)).
 
 ### Identité (`IdentitySection`)
 

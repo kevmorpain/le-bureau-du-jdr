@@ -14,7 +14,10 @@
 > ce qui **n'existe pas** (effets seedés jamais appliqués, capacités sans mécanique, règles
 > absentes). Ici, le comportement existe et il est **faux** ; là-bas, il est **absent**.
 >
-> État : 2026-09-27, dernier commit couvert `0788fd1` (#102). **Ouverts : B12–B15** (+ résidus de B11).
+> **Suivi depuis le 2026-09-27** : les bugs ouverts sont des issues (label `bug`) du projet
+> [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2). Ce fichier garde l'archive des
+> bugs résolus, la classe de risque et le protocole d'audit. Détail complet avant migration :
+> [version `b584f44`](https://github.com/kevmorpain/le-bureau-du-jdr/blob/b584f44e940e15adb77f8dd526750c3ab390f7ca/docs/audit-completude.md).
 
 ## Classe de risque
 
@@ -213,69 +216,20 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   (la fiche choisit une classe lanceuse « active ») ; pas de **remplacement** d'un sort connu au
   level-up ; le **builder** compte le grimoire du Magicien comme des sorts préparés (mod + niveau au
   lieu de 6 + 2/niveau) ; lanceurs de tiers (Chevalier occulte, Filou ésotérique) sans étape Magie.
-  *Toujours vrai au 2026-09-27* : `StepSpells.vue` range `spellbook` dans `isPrepared` (l.435) et
-  calcule `mod + niveau` (l.450-454) alors que `spellsKnownAt` sait déjà compter le grimoire ;
-  `levelUpSchema` accepte `newCantripIds`/`newSpellIds` comme des entiers libres.
+  **Suivi** : grimoire du builder [#111](https://github.com/kevmorpain/le-bureau-du-jdr/issues/111), remplacement d'un sort connu [#112](https://github.com/kevmorpain/le-bureau-du-jdr/issues/112), lanceurs de
+  tiers [#113](https://github.com/kevmorpain/le-bureau-du-jdr/issues/113), `character_spells` sans classe [#114](https://github.com/kevmorpain/le-bureau-du-jdr/issues/114) ; validation serveur des sorts dans F12 [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124).
 - Découvert : signalé par l'utilisateur (2026-09-23). **✅ RÉSOLU.**
 
-### B12 — Multiclasse : maîtrises d'armes et d'armures de départ accordées en entier · serveur — ❌ OUVERT
-- **Symptôme** : un Magicien qui prend un niveau de Guerrier ou de Paladin reçoit les armures
-  **lourdes** ; plus généralement, la fiche affiche l'union des maîtrises **de départ** de toutes les
-  classes du personnage.
-- **Règle** (AideDD, [multiclassage](https://www.aidedd.org/regles/personnalisation/multiclassage/),
-  tableau des maîtrises) : rejoindre une classe n'en accorde qu'un sous-ensemble — Guerrier et Paladin :
-  armures légères et intermédiaires, boucliers, armes courantes et de guerre (pas d'armure lourde) ;
-  Roublard : armure légère, une compétence, outils de voleur ; Occultiste : armure légère, armes courantes.
-- **Racine** : `server/api/character_sheets/[id]/index.get.ts:191-193` passe **toutes** les classes à
-  `deriveClassProficiencies`, qui lit l'unique porteur `proficiency_grant` de chaque classe (maîtrises
-  de départ). `test/nuxt/classProficiencyDerivation.test.ts:96` **fige** cette union. Les JS sont déjà
-  scopés à la classe principale (`deriveMainClassSavingThrows`, même util) : c'est le patron à suivre.
-- **Piste** : un second porteur par classe (« maîtrises de multiclassage »), seedé depuis une table
-  `shared/rules` voisine de `CLASS_PROFICIENCIES`, dérivé pour les classes **non principales** ;
-  backfill prod par migration (leçon F3). La table front `LU_MULTICLASS_PROFICIENCIES`
-  (`app/composables/useLevelUp.ts:39`) porte déjà ces valeurs, en libellés FR, **sans aucun
-  consommateur** : à convertir en tokens puis supprimer.
-- Découvert : audit du suspect « level-up multiclasse hors sorts » (2026-09-27).
+## Bugs ouverts à la migration
 
-### B13 — PV max figés quand le modificateur de CON change · modèle + front — ❌ OUVERT
-- **Symptôme** : +2 CON à un palier d'ASI (mod +2 → +3) au niveau 8 n'ajoute aucun PV rétroactif ;
-  idem pour un demi-don de CON ou un objet qui change la CON. Le gain du niveau en cours utilise en
-  plus l'ancien modificateur (B10, hors périmètre).
-- **Règle** (AideDD, [Au-delà du niveau 1](https://www.aidedd.org/regles/creation-de-perso/suite/)) :
-  quand le modificateur de CON augmente de 1, les PV max augmentent de 1 par niveau atteint
-  (exemple de Bruenor : +8 au niveau 8).
-- **Racine** : `character_sheets.max_hp` est une **somme stockée** (`characterLevelUp.ts` :
-  `maxHp: charSheet.maxHp + d.hpGained`), où chaque gain inclut le mod de CON **du moment**
-  (`app/composables/useLevelUp.ts:257-271`). Seul le don Robuste est rétroactif, recalculé à
-  l'affichage (`hpBonusFromFeats`, `app/composables/character/useCharacterAbilities.ts:217`).
-- **Piste (décision à prendre)** : **(a)** stocker les PV **hors CON** et ajouter `mod CON × niveau`
-  à la lecture, comme Robuste — couvre ASI, dons, objets, B10 et O7 (5), mais la migration des fiches
-  existantes ne peut retrancher que le mod **actuel** (inexact si le mod a déjà changé) ; **(b)** au
-  level-up, le serveur ajoute Δmod × niveaux précédents — ne couvre ni les objets ni l'édition
-  manuelle des scores. (a) est l'option alignée sur la dérivation.
-- Découvert : sourcing de la règle laissée « à sourcer » par B10 (2026-09-27).
+Détail (symptôme, règle sourcée, racine, piste) dans chaque issue.
 
-### B14 — Prérequis de multiclassage : seule la nouvelle classe est vérifiée · front — ❌ OUVERT (mineur)
-- **Règle** (AideDD, multiclassage) : il faut les valeurs requises par la classe **actuelle** et par
-  la nouvelle.
-- **Racine** : `LevelUpStepClass.vue` `getPrereqs(classId)` (l.165) n'évalue que la classe cible, et le
-  texte d'aide (l.79) énonce la règle incomplète. Les prérequis sont **non bloquants** par choix
-  affiché — le garder ou non est une décision séparée.
-- **Donnée** : `LU_MULTICLASS_PREREQS` (`useLevelUp.ts:24`) est une table front par slug, sans
-  `ruleset` — candidate à une colonne d'identité de classe, comme `multiclass_skill_count` (0103).
-
-### B15 — Maîtrises d'outils de classe jamais accordées · seed — ❌ OUVERT
-- **Symptôme** : un Roublard n'a pas les outils de voleur, un Druide pas le kit d'herboriste — sauf
-  si leur historique les donne.
-- **Règle** (AideDD, [Roublard](https://www.aidedd.org/regles/classes/roublard/),
-  [Druide](https://www.aidedd.org/regles/classes/druide/)) : ligne « Outils » des maîtrises de classe.
-- **Racine** : `CLASS_PROFICIENCIES` (`shared/rules/classProficiencies.ts`) n'a pas de champ outils ; le
-  porteur `buildProficiencyCarrier` (`server/db/seeds/lib/seedClass.ts:19-32`) n'émet que JS, armures
-  et armes. Aucune autre voie ne les accorde (recherche `tool` dans le schéma et les seeds de classe : 0).
-- **Piste** : champ `tools` → effets `tool_proficiency` sur le porteur (lecteur déjà en place :
-  `toolProficiencies`, `useCharacterSheet.ts:293`) + backfill par migration. Les outils **au choix**
-  d'autres classes relèvent du `ChoiceKind` `'tool'`, non seedé (cf. E3) — liste à sourcer classe par
-  classe. À traiter avec B12 (même porteur).
+| Code | Issue | Bug |
+|---|---|---|
+| B12 | [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104) | Multiclasse : maîtrises d'armes et d'armures de départ accordées en entier |
+| B13 | [#105](https://github.com/kevmorpain/le-bureau-du-jdr/issues/105) | PV max figés quand le modificateur de CON change (décision requise) |
+| B14 | [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109) | Prérequis de multiclassage : seule la nouvelle classe est vérifiée |
+| B15 | [#110](https://github.com/kevmorpain/le-bureau-du-jdr/issues/110) | Maîtrises d'outils de classe jamais accordées |
 
 ## Correctifs de parcours récents (résolus, hors numérotation)
 
@@ -291,15 +245,10 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
 ## Suspects à vérifier
 - ~~Level-up en **multiclasse** hors sorts~~ — **audité (2026-09-27)** : compétences (#101) et niveau
   atteint (#102) corrigés ; a révélé B12, B14, B15.
-- Invocations **échangeables** (`replaceable`) au level-up : implémentées (`server/utils/invocations.ts`,
-  `replacedInvocationId`) mais **aucun test** ne les exerce (recherche `remplac|replacedInvocation`
-  dans `test/` : rien).
-- Choix accordés par une **sous-classe** à plusieurs niveaux : seul cas connu, le 2ᵉ style du Champion
-  (`guerrier.ts:96`, feature descriptive sans progression) → P5 de `fonctionnalites-manquantes.md`.
-- Complétude des **sorts / cantrips connus** à la création d'un caster de haut niveau : grimoire du
-  Magicien confirmé faux au builder (résidu B11).
-- Données de fiches **prod** touchées avant #102 (niveau de classe remis à 1) : correctif de code
-  seulement, les fiches éventuellement abîmées ne sont pas réparées.
+- Invocations **échangeables** au level-up, jamais testées → [#115](https://github.com/kevmorpain/le-bureau-du-jdr/issues/115).
+- Choix accordés par une **sous-classe** à plusieurs niveaux : seul cas connu, le 2ᵉ style du Champion → P5 [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175).
+- Complétude des **sorts connus** à la création d'un caster de haut niveau : grimoire du Magicien → [#111](https://github.com/kevmorpain/le-bureau-du-jdr/issues/111).
+- Fiches **prod** abîmées avant #102 → [#116](https://github.com/kevmorpain/le-bureau-du-jdr/issues/116).
 
 ## Protocole d'audit proposé (~30 min)
 Pour **chaque** classe : créer un perso **niveau 20**, dérouler le wizard, cocher que **chaque**
