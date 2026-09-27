@@ -16,7 +16,9 @@
 > **Légende de l'effort** : 🟢 local (un computed / un composant) · 🟠 transverse (moteur +
 > fiche + tests) · 🔴 structurant (schéma, migration, nouveau modèle).
 >
-> État : 2026-09-15. Dernier commit couvert : `53c43d3` (tranche 4 du style de combat incluse).
+> État : 2026-09-27. Dernier commit couvert : `0788fd1` (#102). Revérifié ce jour : E1–E10 toujours
+> sans lecteur (aucune occurrence des 10 types dans `app/` ni `shared/`, éditeur d'objet excepté),
+> R9 et P1 rectifiés ci-dessous.
 >
 > **Résolu depuis** : **U10** (montée en puissance affichée) et **U2 (c)** — voir la note sous le
 > tableau U. **O7** (caractéristiques : effets d'objets et plafond, 2026-09-26) et le volet
@@ -145,7 +147,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | **R6** | **Jets de mort** | ⚠️ | État en **localStorage** (perdu entre appareils, non synchronisé — contrairement aux PV et à la concentration). Le jet n'applique pas le **20 naturel = 1 PV** ni le **1 naturel = 2 échecs**. Pas de stabilisation, pas de mort instantanée par dégâts massifs | 🟢 → 🟠 |
 | **R7** | **Économie d'action** | ⚠️ décorative | Les toggles Action / Bonus / Réaction du Mode Combat sont **purement manuels** : rien ne consomme automatiquement une action quand on lance un sort ou attaque, et l'`actionType` des features (déjà seedé) ne gate rien | 🟢 |
 | **R8** | **Repos** | ⚠️ trous | Le repos long ne remet **pas** les PV temporaires à 0, ne réinitialise pas les jets de mort, ne réduit pas l'épuisement de 1 (R3). La **recharge partielle** des objets (`items.rechargeDice`, ex. « 1d6+4 charges à l'aube ») est lue par `characterRest` puis **explicitement exclue** — seule la recharge complète marche. Pas de règle « 1 repos long / 24 h » | 🟠 |
-| **R9** | **Prérequis de multiclassage** | ❌ | Aucune vérification des scores minimaux (FOR/DEX/CHA 13…) au level-up multiclasse, et les **maîtrises réduites** du multiclassage (on ne reçoit pas les maîtrises de départ complètes) ne sont pas appliquées aux armures/armes/outils. Volet **compétences fait** : nombre = colonne `classes.multiclass_skill_count` (migration 0103), liste = progression `skill`, validés côté serveur au level-up | 🟠 |
+| **R9** | **Prérequis de multiclassage** | ⚠️ | *(Rectifié le 2026-09-27 — la ligne disait « aucune vérification », c'était faux.)* Les scores minimaux **sont affichés**, non bloquants, mais pour la seule classe cible → bug **B14**. Les **maîtrises réduites** ne sont pas « non appliquées » : la fiche accorde les maîtrises de départ **complètes** de chaque classe → bug **B12** (`audit-completude.md`). Volet **compétences fait** : nombre = colonne `classes.multiclass_skill_count` (migration 0103), liste = progression `skill`, validés côté serveur au level-up | 🟠 |
 | **R10** | **Prérequis d'armure lourde (FOR)** | ❌ | `ArmorProperties.strength_requirement` existe dans le schéma **et** dans le Zod — **zéro lecteur**. Porter une cotte de mailles avec FOR 12 ne déclenche aucun avertissement de vitesse −3 m | 🟢 |
 
 ---
@@ -184,17 +186,17 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 
 | # | Choix | Flux concerné | Détail | Effort |
 |---|---|---|---|---|
-| **P1** | **Expertise à la création** | Création | 🔗 *documenté dans `consolidation-2014.md` §Inventaire A*. Un Roublard/Barde créé directement au niveau ≥ 1 **ne choisit jamais** son expertise (elle fonctionne au level-up). Rappelé ici parce que c'est un trou fonctionnel, pas de la dette | 🟠 |
+| **P1** | ~~**Expertise à la création**~~ | Création | ✅ **RÉSOLU** (chantier F2 expertise) : le builder exige le nombre dû à l'étape Classe (`needsExpertise`, `useCharacterBuilder.ts:360` et `:634`) et la création l'écrit en `expert`. | — |
 | **P2** | **Manœuvres du Maître de guerre** | Les deux | `ChoiceKind` `'maneuvers'` et `FeatureTag` `'maneuver'` existent **mais aucune manœuvre n'est seedée**, aucune progression posée. Le Guerrier Maître de guerre est inutilisable | 🟠 |
 | **P3** | **Sorts de domaine / de cercle / Secrets magiques** | Les deux | Aucune progression `kind:'spell'` pour le Clerc (domaine), le Druide (cercle terrestre), le Barde (Secrets magiques). Seul l'Occultiste a ses points de choix `spell` (arcanums) | 🟠 |
 | **P4** | **Ennemi juré / Explorateur-né** | Les deux | Choix du Rôdeur niveau 1 : absents (pas de progression, pas d'`optionSource`) | 🟠 |
 | **P5** | **2ᵉ style de combat du Champion (niv. 10)** | Les deux | 🔗 *résidu remonté par F2 tranche 2*. Progression possédée par une **sous-classe** (`ownerSubclassId`), cas unique non câblé | 🟠 |
 
-> **Généralisation** : sur les 17 `ChoiceKind` canoniques, seuls **6** sont réellement seedés en
-> `progression` (`subclass`, `pact_boon`, `fighting_style`, `invocations`, `metamagic`, `spell`).
-> Restent sans aucune donnée : `expertise`, `maneuvers`, `skill`, `language`, `tool`, `cantrip`,
-> `ancestry`, `lineage` (partiel), `weapon_mastery` (5.5), `ability_scores` (5.5), `asi_or_feat`
-> (traité par un chemin dédié). C'est la même racine que E3–E6 vue depuis le moteur de choix.
+> **Généralisation** (recompté le 2026-09-27) : sur les 17 `ChoiceKind` canoniques, **10** sont
+> seedés en `progression` (`subclass`, `lineage`, `pact_boon`, `fighting_style`, `expertise`,
+> `invocations`, `asi_or_feat`, `metamagic`, `skill`, `spell`). Restent sans aucune donnée :
+> `maneuvers`, `language`, `tool`, `cantrip`, `ancestry`, `weapon_mastery` (5.5), `ability_scores`
+> (5.5). C'est la même racine que E3–E6 vue depuis le moteur de choix.
 
 ---
 

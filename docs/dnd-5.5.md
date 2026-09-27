@@ -57,6 +57,28 @@ Bouleversement central : **les bonus de caractéristiques passent de l'espèce v
 > [`audit-completude.md`](./audit-completude.md). La Phase 1 étant iso-comportement, elle ne les
 > corrige pas ; ils forment des chantiers de correction 2014 dédiés.
 
+> **Où on en est (2026-09-27, `0788fd1`)**
+>
+> | Étape | État |
+> |---|---|
+> | Phase 1 — base propre (points 1 à 6) | ✅ close et en prod ; reste de 5e : 4 endpoints `/api/catalog/*` sans consommateur (F4, [`consolidation-2014.md`](./consolidation-2014.md)) |
+> | Phase 2.1 — discriminant `ruleset` | ✅ en prod (PR #25, #43, migration `0089`) ; seeds keyés `(nom, ruleset)` (#52) |
+> | Moteur 5.5 | ✅ construit, **dormant** : triade `ability_scores` validée à la création (`isValidAbilityDistribution`, `server/utils/characterCreate.ts:228`), `asi_or_feat`, lignées ([D17](./decisions.md#d17)), dérivation `weapon_mastery` servie par le GET fiche sans lecteur front (F6) |
+> | Phase 2.2 — contenu 5.5 | ❌ **0 %** : aucune donnée `'5.5'` dans les seeds (recherche `'5.5'` dans `server/`, `shared/`, `app/` : seulement les types) ; prod = 12 classes, toutes `ruleset '5'` ; aucun objet ne porte de `mastery_property` |
+>
+> **À lever avant le premier seed 5.5** :
+> 1. **Front sans `ruleset`** (recherche dans `app/` : 0 fichier) et builder adossé au blob 2014
+>    `app/data/character-builder.ts` (`CLASSES`/`RACES`/`BACKGROUNDS`) — F14.
+> 2. **Tables de règles indexées par classe sans édition** (`CLASS_PROFICIENCIES`, `CLASS_SKILL_CHOICES`,
+>    `spellsKnown.ts`, prérequis de multiclassage) — F14. Ex. `seedClass` lit `CLASS_PROFICIENCIES[className]`
+>    (`server/db/seeds/lib/seedClass.ts:20`) : une classe 2024 homonyme y trouverait les valeurs 2014.
+> 3. **F7** : colonne `dragonborn_ancestry` avant la Drakéide 5.5.
+> 4. Lien sort↔classe par nom seul (`server/db/seeds/spells.ts:11`).
+> 5. Décisions ouvertes du §4 (UI de changement de `ruleset` en cours de création…).
+>
+> Corriger d'abord B12/B15 (porteur de maîtrises de classe, [`audit-completude.md`](./audit-completude.md))
+> évite de reproduire le défaut dans les classes 2024.
+
 **Phase 1 — base propre (clean), iso-2014, test-guardée** (migration additive, cf. [D9](./decisions.md#d9), [D13](./decisions.md#d13))
 1. **Tests d'équivalence 2014** (le filet, *en premier*) — contrat de valeurs vérifiées
    (Ambroise + 1 martial + 1 caster), cf. [D12](./decisions.md#d12) et `rules-engine.md` §8.
