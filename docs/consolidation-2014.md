@@ -3,6 +3,10 @@
 > Doc de passation portable (voyage avec git). État au 2026-08-14, **tableau des constats revu le
 > 2026-09-27** (`0788fd1`, 711 tests verts ; F12–F14 ajoutés). But : pouvoir reprendre le chantier
 > « rendre le socle 2014 propre/DRY avant le contenu 5.5 » depuis n'importe quel appareil.
+>
+> **Suivi depuis le 2026-09-27** : chaque constat ouvert (F4–F19) est une issue (label `dette`) du
+> projet [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2), qui en porte le détail
+> et le statut ; ce doc garde le plan, le North Star et l'historique des chantiers.
 
 ## Où on en est
 
@@ -45,17 +49,17 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 | **F1** | ✅ **résolu (#52)** | Upserts de catalogue par NOM SEUL → un homonyme 5.5 écrasait le 2014. Passé en `(name, ruleset)`. | oui (levé) |
 | **F2** | ✅ sous-classe, style de combat, expertise, ASI | `progression`/`character_choices` généralisé aux 4 points de choix ; le front lit le catalogue partout (plus aucune table front). ASI = une progression `asi_or_feat` par palier (owner discret, `count 1`), source unique le seed [`asi.ts`](../server/db/seeds/data/asi.ts) ; expertise = `count` cumulatif ; style de combat = effets appliqués sur la fiche. | non (levé) |
 | **F3** | ✅ **résolu (#85/#86/#87)** | Compétences classe/historique + JS de classe **dérivés** à la lecture (effets `skill_proficiency`/`saving_throw_proficiency`), plus matérialisés figé. Historique = effets sur le porteur (#85) ; JS = classe **principale** seulement (#86, règle multiclasse) ; compétences de classe = choix `progression skill` + `character_choices` (#87, **migration 0099** pour éviter la fenêtre déploiement→reseed d'un CHOIX). `character_skills` ne garde que overrides joueur + expertise. | non (levé) |
-| **F4** | ✅ partiel (#52, F2) | `loadInvocations` filtré par `ruleset` (fait) ; le front lit désormais `/api/catalog/classes` (+ sous-classes, styles), `metamagic`, `progressions`, `species/[id]`. Reste (2026-09-27) : **4** endpoints catalogue sans consommateur — `backgrounds`, `feats`, `invocations`, `species` (liste) — doublés par les legacy `/api/backgrounds`, `/api/feats`, `/api/invocations`, `/api/character_species`, que le front appelle encore. | partiellement |
-| **F5** | ✅ partiel (F2 tranche 3) | `WEAPON_PROF_KEYS` (tokens EN morts `longsword`…) + le payload vestigial `armor/weaponProficiencyKeys` de `new.vue` **retirés** (`createCharacter` les ignorait, volet B). Reste `ARMOR_PROF_KEYS` (tokens corrects, référence de `classProficienciesFront.test.ts`) → part avec cette copie front (volet B étape 4). | non |
-| **F6** | moyenne | `originAbilityBonuses`/`weaponMasteries` sérialisés à chaque GET fiche mais **non lus** ; `items.mastery_property` sans consommateur. Pipeline maîtrise d'armes 5.5 **construit mais dormant**. À câbler au seed 5.5. | non |
-| **F7** | moyenne | Colonne legacy `character_sheets.dragonborn_ancestry` + souffle-par-ascendance = chemin **parallèle** au modèle lignée (Drakéide 2014 déjà migrée en lignées). Trancher avant la Drakéide 5.5. | oui (Drakéide) |
-| **F8** | basse | `spells.ts:13-36` redéfinit `enum AbilityScore`/`DamageType` (doublons de `shared/rules` + table `damage_types`). Ménage D6 non appliqué ici. | non |
-| **F9** | basse | Table `skills` (D7) référencée par **aucune FK** (`character_skills.skill_key` = `text` nu) → lookup décoratif. | non |
-| **F10** | basse | Typecheck mesuré le 2026-09-27 : **10 server / 90 app**, dont **16** `TS2307` d'imports `.vue` dans les tests (`tsc` sans vue-tsc ne les résout pas : ce chiffre croît avec chaque test de composant) → **74** app hors cet artefact (baseline documentée : 63-64). Les sites examinés (`useLevelUp.ts:338`, `useCharacterBuilder.ts:521`) sont anciens ; comparaison liste-à-liste avec un parent non faite. `createCharacter.test.ts:175` passe encore `classSavingThrows`, retiré du schéma par F3. Le « bug mort » `CreatureSize` est résolu (B7). Ni CI ni build CF ne typecheckent. | non |
+| **F4** | ✅ partiel (#52, F2) | Suivi : [#117](https://github.com/kevmorpain/le-bureau-du-jdr/issues/117) — Endpoints `/api/catalog/*` sans consommateur, doublés par les legacy | partiellement |
+| **F5** | ✅ partiel (F2 tranche 3) | Suivi : [#118](https://github.com/kevmorpain/le-bureau-du-jdr/issues/118) — `ARMOR_PROF_KEYS` : dernière copie front des maîtrises de classe | non |
+| **F6** | moyenne | Suivi : [#119](https://github.com/kevmorpain/le-bureau-du-jdr/issues/119) — Maîtrise d'armes et bonus d'origine : servis par le GET fiche mais jamais lus | non |
+| **F7** | moyenne | Suivi : [#120](https://github.com/kevmorpain/le-bureau-du-jdr/issues/120) — Colonne legacy `dragonborn_ancestry`, parallèle au modèle lignée | oui (Drakéide) |
+| **F8** | basse | Suivi : [#121](https://github.com/kevmorpain/le-bureau-du-jdr/issues/121) — `spells.ts` redéfinit `AbilityScore` et `DamageType` | non |
+| **F9** | basse | Suivi : [#122](https://github.com/kevmorpain/le-bureau-du-jdr/issues/122) — Table `skills` référencée par aucune clé étrangère | non |
+| **F10** | basse | Suivi : [#123](https://github.com/kevmorpain/le-bureau-du-jdr/issues/123) — Dette de typecheck (10 serveur / 90 app) | non |
 | **F11** | basse (by-design) | Snapshots Drizzle figés à `0039` → `db:generate` inutilisable, plus de détection auto de dérive. Garde-fou : `test/unit/migrations.test.ts` rejoue 0000→dernier sur base vierge. | non |
-| **F12** | moyenne | **Autorité serveur du level-up incomplète.** `levelUpSchema` (`characterLevelUp.ts:29-51`) : `hpGained` sans borne haute ; `asiBonuses` = `z.record(z.string(), …)` — clés non typées, ni total ≤ 2 ni palier d'ASI vérifiés, alors que `isValidAsiDistribution` existe (`shared/rules/composite.ts:42`) sans appelant serveur ; sorts non validés (résidu B11). Mono-utilisateur : pas un risque de sécurité, mais #102 a montré qu'un état client périmé suffit à abîmer une fiche. | non |
-| **F13** | moyenne | **Doublons de règles sans garde-fou.** (a) Compétences de classe : `CLASS_SKILL_CHOICES` (seed, `server/db/seeds/data/classSkills.ts:7`) ≠ source du builder `CLASSES[].skillChoices` (`StepClass.vue`, `useCharacterBuilder.ts:631`) — identiques aujourd'hui (12 classes comparées), aucun test ne le garde, le level-up lit déjà le catalogue. (b) Outils maîtrisés : `toolProficiencies` de la fiche (`useCharacterSheet.ts:293`) et `ownedTools` du level-up (`useLevelUp.ts:227`) réécrivent la même règle avec des sources d'effets différentes. (c) Détection du don Doué `featNeedsSkilled` copiée dans le builder et le level-up. (d) `LU_MULTICLASS_PROFICIENCIES` (`useLevelUp.ts:39`) : code mort (cf. B12). (e) Compétences de multiclassage écrites dans `character_skills` (`source: 'class'`), alors que F3 réserve cette table aux overrides et à l'expertise. | non |
-| **F14** | **haute pour le 5.5** | **Règles indexées par classe, sans `ruleset`.** `CLASS_PROFICIENCIES` (clé = nom, source du seed ET du builder), `CLASS_SKILL_CHOICES`, `SPELL_LEARNING` + tables de sorts connus (`shared/rules/spellsKnown.ts`, clé = slug — le commentaire l.3 note que le Rôdeur 2024 prépare), `LU_MULTICLASS_PREREQS`, et le blob `app/data/character-builder.ts` (1 563 lignes : `CLASSES`/`RACES`/`BACKGROUNDS` portent encore dé de vie, incantation, bonus d'espèce, listes de compétences). Le front n'a **aucune** notion de `ruleset` (recherche `ruleset` dans `app/` : 0 fichier). Viole aussi le North Star. | **oui** |
+| **F12** | moyenne | Suivi : [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124) — Autorité serveur du level-up incomplète | non |
+| **F13** | moyenne | Suivi : [#125](https://github.com/kevmorpain/le-bureau-du-jdr/issues/125) — Doublons de règles sans garde-fou | non |
+| **F14** | **haute pour le 5.5** | Suivi : [#106](https://github.com/kevmorpain/le-bureau-du-jdr/issues/106) — Règles indexées par classe sans ruleset, front sans ruleset | **oui** |
 
 **Crédité (propre)** : autorité serveur uniforme create/level-up/rest (`db` injecté, `db.batch()`
 atomique, garde de cohérence d'édition, slots dérivés depuis `spellSlots.ts`), `resolve.ts` pur,
@@ -85,6 +89,7 @@ par gravité — la plupart se résolvent AVEC F2 (généralisation `progression
 - **C. Envoyé mais abandonné en fallback silencieux.**
   - `inventoryItemNamesUnresolved` (création) : items non résolus en id côté client → **loggés puis
     non persistés**. Un objet custom / de la monnaie-en-texte peut disparaître sans bruit.
+    → F15, [#126](https://github.com/kevmorpain/le-bureau-du-jdr/issues/126).
 
 **Hors de cette liste** (pour lever l'ambiguïté) : les **listes d'options** de sous-classe/ASI des 10
 classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHOIX résultant
@@ -98,7 +103,7 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
   - **F1 + F4-partiel : ✅ FAIT & MERGÉ (PR #52).** Upserts `(name, ruleset)` via
     `server/db/seeds/lib/rulesetOf.ts` ; `loadInvocations` filtré. Suivi noté in-code : le lien
     sort↔classe de `spells.ts` (`classIdByName`) reste par nom → à reprendre en `(nom, ruleset)`
-    au lot des sorts 5.5.
+    au lot des sorts 5.5. → F19, [#130](https://github.com/kevmorpain/le-bureau-du-jdr/issues/130).
   - **Golden-master d'équivalence création/level-up : ✅ FAIT.** `test/nuxt/goldenMaster.test.ts`
     (+ fixture/sérialiseur `test/nuxt/fixtures/goldenMaster.ts`) fige la sortie NORMALISÉE de
     `createCharacter` + `characterLevelUp` pour **cinq** archétypes, en **16 snapshots** committés
@@ -121,7 +126,7 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
     **Filet NON négociable avant F2, posé.**
     - _Dette de couverture ASSUMÉE_ (non bloquante — chemins hors du risque F2 direct, à ajouter au
       besoin) : pactes **Lame/Tome**, multiclassage lanceur **plein+plein / plein+demi** (branche
-      `spellcasting` combinée), **demi-lanceur** (`half`). Hors périmètre : `characterRest`.
+      `spellcasting` combinée), **demi-lanceur** (`half`). Hors périmètre : `characterRest`. → F18, [#129](https://github.com/kevmorpain/le-bureau-du-jdr/issues/129).
     - _Non figeable aujourd'hui_ : le **style de combat** n'a AUCUNE sortie serveur (cf. « Inventaire
       front-only », cat. A) — ce n'est PAS « hors périmètre » mais un choix perdu à rapatrier en F2.
       Quand F2 le câblera, l'archétype **Guerrier** du golden-master devra voir apparaître son choix
@@ -151,7 +156,7 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
     `class_feature` passif l'est) + `subclassProgression.test.ts` (le catalogue le remonte malgré le type).
     Les owners VISIBLES de l'Occultiste (Faveur de pacte…) restent des `class_feature` matérialisées —
     _résidu noté_ : par symétrie ils sont eux aussi redondants avec l'option choisie ; les masquer serait
-    une décision UX SÉPARÉE (non prise ici, l'utilisateur a choisi B ciblée sous-classe).
+    une décision UX SÉPARÉE (non prise ici, l'utilisateur a choisi B ciblée sous-classe). → F17, [#128](https://github.com/kevmorpain/le-bureau-du-jdr/issues/128).
   - **F2 · sous-classe — tranche 2 (SERVEUR + backfill prod) : ✅ FAIT.** `createCharacter`/
     `characterLevelUp` résolvent la progression `subclass` de la classe et écrivent le pick en
     `character_choices.selected_subclass_id` (LA source, rules-engine.md §4) ; `character_classes.
@@ -192,7 +197,7 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       sélection d'une sous-classe même au niveau d'accès (`isStepComplete('class')` ne la vérifie pas — état
       pré-existant, inchangé par cette tranche), alors que le **level-up l'exige** (`isStepComplete('features')`).
       Le gating catalogue affiche le picker au bon niveau ; rendre le choix obligatoire à la création serait un
-      changement de comportement à décider séparément.
+      changement de comportement à décider séparément. → F16, [#127](https://github.com/kevmorpain/le-bureau-du-jdr/issues/127).
   - **F2 · style de combat — chantier en 4 tranches (décision utilisateur : appliquer AUSSI les effets).**
     Contrairement à la sous-classe, le style de combat n'existait NULLE PART comme donnée (choix **perdu**
     aux deux flux, cf. Inventaire cat. A) ET porte des effets mécaniques jamais appliqués → chantier plus gros.
@@ -221,7 +226,7 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       **Prod** : migration `0098` (auto) flippe l'owner existant → `choice_carrier` ; les options + la progression
       viennent du seed des classes → geste prod `?only=guerrier,paladin,rodeur` (idempotent, après déploiement).
       ⚠️ **Résidu remonté** : le 2e style du **Champion niv 10** (« Style de combat supplémentaire », progression
-      possédée par la sous-classe) N'EST PAS câblé — chantier séparé (owner `ownerSubclassId`, cas unique).
+      possédée par la sous-classe) N'EST PAS câblé — chantier séparé (owner `ownerSubclassId`, cas unique). → P5, [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175).
     - **Tranche 3 (APPLICATION DES EFFETS) : ✅ FAIT.** Le style choisi (feature `fighting_style`
       matérialisée) porte un effet `fighting_style_modifier` qui remonte à `allEffects` (via
       character_features → resolvedFeatures → classFeatureEffects → baseAllEffects, chemin des

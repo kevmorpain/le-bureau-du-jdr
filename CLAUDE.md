@@ -78,7 +78,7 @@ S'applique à **chaque** changement, sans qu'on ait à le demander :
 - **Vérifier avant de dire « fait ».** Relire le vrai `git diff` (pas sa mémoire), lancer la suite complète + lint, et confirmer qu'aucun snapshot / golden-master ne bouge par accident.
 - **Complétude — ne rien oublier.** Parcourir les angles morts récurrents : chemin prod/déploiement (migration auto vs seed manuel vs front — le piège du backfill), duplication vs un pattern existant qui centralise déjà (ex. `buildProficiencyCarrier`), surface non testée (`seeds hub:db`, front) et comment elle est gardée (test-contrat, garde-fou), effets de bord (read-model, features matérialisées, fixtures), cohérence avec les conventions du repo (nommage, `ruleset`, tests-contrat).
 - **La meilleure solution, pas un quick fix.** Préférer le design correct / DRY / aligné sur les patterns existants à une rustine ; réutiliser le pattern plutôt que le ré-implémenter.
-- **Zéro dette nouvelle.** Ne pas introduire de dette. Si un compromis est réellement inévitable, le remonter explicitement (dans la réponse, et dans `docs/` s'il doit être suivi) — jamais en silence.
+- **Zéro dette nouvelle.** Ne pas introduire de dette. Si un compromis est réellement inévitable, le remonter explicitement (dans la réponse, et en issue du projet s'il doit être suivi — cf. « Suivi du projet ») — jamais en silence.
 
 ## Commentaires
 
@@ -120,6 +120,29 @@ après chaque incident grossit sans qu'on voie jamais lesquelles de ses règles 
 Le registre est une **file d'attente** : une entrée en sort quand elle a produit une règle, ou
 qu'on a constaté qu'elle n'en méritait pas. Il note aussi, pour chaque erreur, si une règle
 existante aurait dû l'attraper — auquel cas en ajouter une n'est pas la réponse.
+
+## Suivi du projet
+
+Bugs, fonctionnalités manquantes, dette et chantier 5.5 se suivent en **issues**, rassemblées dans
+le projet GitHub [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2) — pas dans
+`docs/`. Les registres `audit-completude.md`, `fonctionnalites-manquantes.md` et
+`consolidation-2014.md` ne gardent que l'archive des entrées résolues et la correspondance code →
+issue ; la connaissance durable (`decisions.md`, `rules-engine.md`, `architecture.md`…) reste ici.
+
+- **Une entrée = une issue**, titre préfixé par son code (`B16 — …`) : B bug de parcours, F dette
+  du socle, E effet non appliqué, C capacité de classe, R règle générale, O objets, S sorts,
+  P parcours, D contenu, U interface, N contrôle manuel, X produit. Corps : constat, règle
+  sourcée, racine `fichier:ligne`, piste.
+- **Label de nature** : `bug` (existe mais faux), `manquant` (absent), `dette` ; `5.5` en plus pour
+  les règles 2024.
+- **Champs** : Status, Effort (🟢 / 🟠 / 🔴), Famille, Ruleset, Décision requise. La **Priorité**
+  est l'arbitrage du PM : ne la remplir que sur sa demande.
+- **Fermeture** : la PR qui corrige porte `Closes #N` ; le projet passe l'élément en Done au merge.
+
+Piège : écrire dans le projet par l'API **REST** (`gh api users/kevmorpain/projectsV2/2/fields`,
+puis `PATCH …/items/<id>` avec `{"fields":[{"id":…,"value":"<option>"}]}`). Le 2026-09-27, une
+cinquantaine d'appels `gh project item-edit --url --field` ont suffi à épuiser le quota GraphQL
+horaire du compte, bloquant tout `gh` qui passe par GraphQL pendant près d'une heure.
 
 
 ## Commands

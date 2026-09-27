@@ -192,7 +192,7 @@ Menaçant —, compétence de l'Humain variant, historique). Trois usages :
 Les effets d'espèce arrivent en asynchrone (`/api/catalog/species/[id]`) : la purge des picks
 d'expertise devenus non maîtrisés attend `effectsLoaded` (`useSpeciesLineages`), sinon un pick restauré
 sur une compétence d'espèce serait perdu avant leur arrivée. Non couverts : Polyvalence du Demi-elfe
-(`skill_proficiency_choice`, sans picker — E5 de `fonctionnalites-manquantes.md`) et compétences des dons
+(`skill_proficiency_choice`, sans picker — E5, [#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107)) et compétences des dons
 (Doué) ou des manifestations dans ces trois usages.
 
 **Validation step** :

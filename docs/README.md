@@ -10,7 +10,7 @@ Carte des documents. Commence par le sujet qui te concerne.
 | [`architecture-audit.md`](./architecture-audit.md) | **Constats** de l'audit du socle actuel (effets, dérivation, choix, API) — le « pourquoi on refactore » | instant T |
 | [`rules-engine.md`](./rules-engine.md) | **Design cible durable** : `shared/rules/`, effets, `progression`/`character_choices`, résolution, API — la spec que l'implémentation suit | durable |
 | [`decisions.md`](./decisions.md) | **Journal de décisions** (ADR) : chaque choix d'architecture + son pourquoi | durable |
-| [`consolidation-2014.md`](./consolidation-2014.md) | **Plan de nettoyage** du socle 2014 avant le contenu 5.5 : constats F1–F14, North Star | vivant |
+| [`consolidation-2014.md`](./consolidation-2014.md) | **Plan de nettoyage** du socle 2014 avant le contenu 5.5 : constats F1–F19 (ouverts suivis en issues), North Star | archive + index |
 
 **Ordre de lecture pour reprendre le chantier** : `dnd-5.5.md` (contexte + plan) → `architecture-audit.md` (constats) → `rules-engine.md` (quoi construire) → `decisions.md` (pourquoi).
 
@@ -26,17 +26,21 @@ Carte des documents. Commence par le sujet qui te concerne.
 | [`seeds.md`](./seeds.md) | Données de seed |
 | [`context.md`](./context.md) | Contexte de dev accumulé (bugs, conventions, décisions passées) |
 
-## Registres de trous
+## Suivi : le projet GitHub
 
-| Doc | Sujet | Cycle de vie |
+Bugs, fonctionnalités manquantes, dette et chantier 5.5 se suivent en issues dans le projet
+[Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2) (statut, effort, famille,
+ruleset, décision requise). Conventions : section « Suivi du projet » de [`CLAUDE.md`](../CLAUDE.md).
+
+Les anciens registres restent comme **index et archive** : correspondance code → issue, entrées
+résolues, notes de conception.
+
+| Doc | Sujet | Label des issues |
 |---|---|---|
-| [`audit-completude.md`](./audit-completude.md) | **Bugs** des parcours 2014 (le comportement existe mais il est faux) | vivant |
-| [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md) | **Fonctionnalités absentes** : effets seedés jamais appliqués, capacités de classe sans mécanique, mécaniques de règles, contenu | vivant |
-| [`torts.md`](./torts.md) | **Erreurs de méthode** relevées en session, en file jusqu'à la révision groupée des conventions | file d'attente |
-
-> Les deux sont **complémentaires** : `audit-completude.md` trace ce qui est *faux*,
-> `fonctionnalites-manquantes.md` trace ce qui *n'existe pas*. Ni l'un ni l'autre n'est une roadmap
-> (celle-ci vit dans [`dnd-5.5.md`](./dnd-5.5.md) et [`consolidation-2014.md`](./consolidation-2014.md)).
+| [`audit-completude.md`](./audit-completude.md) | **Bugs** des parcours 2014 (le comportement existe mais il est faux) | `bug` |
+| [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md) | **Fonctionnalités absentes** : effets jamais appliqués, capacités sans mécanique, règles, contenu, interface | `manquant` |
+| [`consolidation-2014.md`](./consolidation-2014.md) | **Dette** du socle 2014 (constats F1–F19), North Star | `dette` |
+| [`torts.md`](./torts.md) | **Erreurs de méthode** relevées en session, en file jusqu'à la révision groupée des conventions | — (reste un fichier) |
 
 > ⚠️ Certains docs de fonctionnalités précèdent l'audit et peuvent contenir des
 > affirmations datées (signalées inline quand repérées). En cas de conflit, `rules-engine.md`
