@@ -19,6 +19,7 @@ import {
   type MulticlassPrerequisites,
   type MulticlassSkillGrant,
 } from '~~/shared/rules/multiclass'
+import { proficiencyLabels } from '~~/shared/utils/item'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
@@ -247,7 +248,14 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   // Choix résolus aux niveaux d'ARRIVÉE et de DÉPART : le delta pilote le nombre de nouvelles
   // invocations et compétences d'expertise.
   const { catalog, choicesForClassLevel } = useCatalog()
-  const { resolveClassId, subclassCatalogFor, multiclassSkillCountFor, multiclassPrerequisitesFor } = useBuilderEntities()
+  const {
+    resolveClassId,
+    subclassCatalogFor,
+    multiclassSkillCountFor,
+    multiclassPrerequisitesFor,
+    classProficienciesFor,
+  } = useBuilderEntities()
+  const classDbIdOf = (classSlug: string) => resolveClassId(CLASSES.find(c => c.id === classSlug)?.dbName)
   const luClassDbId = computed(() =>
     charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId
     ?? resolveClassId(pickedClass.value?.dbName),
@@ -269,11 +277,21 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     prerequisites: multiclassPrerequisitesFor(c.dbClassId),
   })))
   const multiclassPrerequisitesOf = (classSlug: string): MulticlassPrerequisites =>
-    multiclassPrerequisitesFor(resolveClassId(CLASSES.find(c => c.id === classSlug)?.dbName))
+    multiclassPrerequisitesFor(classDbIdOf(classSlug))
   const meetsCurrentClassesPrerequisites = computed(() =>
     currentClassesPrerequisites.value.every(c => meetsMulticlassPrerequisites(c.prerequisites, finalAbilities.value)))
   const meetsTargetPrerequisites = (classSlug: string): boolean =>
     meetsMulticlassPrerequisites(multiclassPrerequisitesOf(classSlug), finalAbilities.value)
+
+  // Ce que rejoindre une classe accorde (AideDD, tableau des maîtrises du multiclassage) : son porteur de
+  // multiclassage et son nombre de compétences, lus dans le catalogue comme les prérequis.
+  const multiclassGainsOf = (classSlug: string): { proficiencies: string[], skillCount: number } => {
+    const dbId = classDbIdOf(classSlug)
+    return {
+      proficiencies: proficiencyLabels(classProficienciesFor(dbId).multiclass),
+      skillCount: multiclassSkillCountFor(dbId),
+    }
+  }
 
   // ── Pact Boon availability (Warlock level 3) ──────────────────────────────
 
@@ -672,6 +690,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     meetsCurrentClassesPrerequisites,
     multiclassPrerequisitesOf,
     meetsTargetPrerequisites,
+    multiclassGainsOf,
     hasSpellcasting,
     spellLearning,
     cantripsToLearn,

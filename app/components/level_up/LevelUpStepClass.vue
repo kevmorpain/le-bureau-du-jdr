@@ -129,6 +129,10 @@
         >
           ⚠️ Prérequis non remplis
         </div>
+        <p class="text-xs text-muted leading-snug mt-1.5">
+          <span class="font-semibold text-(--ui-text)">Maîtrises :</span>
+          {{ multiclassGainsText(cls.id) }}
+        </p>
       </button>
     </div>
   </div>
@@ -144,6 +148,7 @@ const {
   meetsCurrentClassesPrerequisites,
   multiclassPrerequisitesOf,
   meetsTargetPrerequisites,
+  multiclassGainsOf,
   subclassLevelFor,
   fightingStyleLevelFor,
   expertiseDueForClassLevel,
@@ -177,6 +182,12 @@ function isFightingStyleDue(classId: string, level: number): boolean {
 
 function isExpertiseDue(classId: string, level: number): boolean {
   return expertiseDueForClassLevel(classId, level)
+}
+
+function multiclassGainsText(classId: string): string {
+  const { proficiencies, skillCount } = multiclassGainsOf(classId)
+  const skills = skillCount ? [`${skillCount} compétence${skillCount > 1 ? 's' : ''}`] : []
+  return [...proficiencies, ...skills].join(', ') || 'aucune'
 }
 
 function isPickedContinue(classId: string) {

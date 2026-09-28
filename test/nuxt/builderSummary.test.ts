@@ -3,6 +3,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import BuilderSummary from '../../app/components/character_builder/BuilderSummary.vue'
 import BuilderPreview from '../../app/components/character_builder/BuilderPreview.vue'
 import { useCharacterBuilder, type BuilderState } from '../../app/composables/useCharacterBuilder'
+import { catalogClasses } from '../fixtures/catalogClasses'
 
 // Le récapitulatif (et l'aperçu) doivent afficher ce que la fiche créée affichera : chaque source de
 // maîtrise que la fiche dérive (expertise, espèce, historique perso, Humain variant, dons, manifestations)
@@ -36,6 +37,8 @@ registerEndpoint('/api/invocations', () => [{
     { type: 'skill_proficiency', value: { skill: 'persuasion' } },
   ],
 }])
+// Les JS de classe viennent du catalogue (porteurs en base), comme sur la fiche.
+registerEndpoint('/api/catalog/classes', catalogClasses)
 registerEndpoint('/api/character_species', () => [{ id: 10, name: 'Demi-orc' }, { id: 20, name: 'Elfe' }])
 registerEndpoint('/api/catalog/species/10', () => ({
   id: 10,
@@ -119,7 +122,7 @@ describe('BuilderSummary — Humain Roublard 1 (Acolyte), expertise Discrétion 
 
   it('jets de sauvegarde du Roublard : DEX et INT maîtrisés', async () => {
     const wrapper = await mountSuspended(BuilderSummary)
-    expect(rowText(wrapper, 'Dextérité')).toBe('Dextérité+5')
+    await vi.waitFor(() => expect(rowText(wrapper, 'Dextérité')).toBe('Dextérité+5'))
     expect(rowText(wrapper, 'Intelligence')).toBe('Intelligence+3')
     expect(rowText(wrapper, 'Sagesse')).toBe('Sagesse+2')
   })

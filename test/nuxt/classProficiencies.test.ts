@@ -1,13 +1,17 @@
-import { describe, it, expect } from 'vitest'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { describe, it, expect, vi } from 'vitest'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import StepClass from '../../app/components/character_builder/StepClass.vue'
 import { ABILITY_SHORT, CLASSES } from '../../app/data/character-builder'
 import { CLASS_PROFICIENCIES, type ProficiencySet } from '../../shared/rules/classProficiencies'
 import { CLASS_DB_NAMES } from '../../shared/rules/classSlugs'
 import { ALL_TOOLS } from '../../shared/rules/tools'
+import { armorProficiencyLabels, weaponProficiencyLabels } from '../../shared/utils/item'
+import { catalogClasses } from '../fixtures/catalogClasses'
 
-// Contrat de la source unique des maîtrises de classe (seed des porteurs, JS du builder). Les jetons
-// d'armure sont ceux que `useCharacterInventory.armorProficiencies` reconnaît.
+// Contrat de la source des porteurs de maîtrises de classe (seed), que le front lit via le catalogue. Les
+// jetons d'armure sont ceux que `useCharacterInventory.armorProficiencies` reconnaît.
+
+registerEndpoint('/api/catalog/classes', catalogClasses)
 
 const ARMOR_TOKENS = new Set(['light', 'medium', 'heavy', 'shield', 'all_armor'])
 // Clés EN du mapping historique du builder : elles ne matchent aucun item FR.
@@ -28,6 +32,18 @@ describe('CLASS_PROFICIENCIES — contrat', () => {
     for (const [name] of entries) {
       for (const [label, set] of setsOf(name)) {
         for (const a of set.armor) expect(ARMOR_TOKENS.has(a), `armure « ${a} » pour ${label}`).toBe(true)
+      }
+    }
+  })
+
+  it('chaque jeton d\'armure ou de catégorie d\'arme a un libellé d\'affichage', () => {
+    for (const [name] of entries) {
+      for (const [label, set] of setsOf(name)) {
+        for (const a of set.armor) expect(armorProficiencyLabels[a], `armure « ${a} » pour ${label}`).toBeDefined()
+        // Une arme précise porte déjà son nom français ; seuls les jetons snake_case demandent un libellé.
+        for (const w of set.weapon.filter(w => /^[a-z_]+$/.test(w))) {
+          expect(weaponProficiencyLabels[w], `arme « ${w} » pour ${label}`).toBeDefined()
+        }
       }
     }
   })
@@ -73,12 +89,13 @@ describe('CLASS_PROFICIENCIES — contrat', () => {
 })
 
 describe('builder — étape Classe', () => {
-  it('affiche sur chaque carte les jets de sauvegarde de la source unique', async () => {
+  it('affiche sur chaque carte les jets de sauvegarde servis par le catalogue', async () => {
     const wrapper = await mountSuspended(StepClass)
+    const cardText = (name: string) => wrapper.findAll('button').find(b => b.text().includes(name))?.text()
+    await vi.waitFor(() => expect(cardText('Barbare')).toContain('JS : FOR+CON'))
     for (const cls of CLASSES) {
-      const card = wrapper.findAll('button').find(b => b.text().includes(cls.name))
       const expected = CLASS_PROFICIENCIES[cls.dbName]!.savingThrows.map(s => ABILITY_SHORT[s]).join('+')
-      expect(card?.text(), cls.name).toContain(`JS : ${expected}`)
+      expect(cardText(cls.name), cls.name).toContain(`JS : ${expected}`)
     }
   })
 })

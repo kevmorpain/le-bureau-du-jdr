@@ -6,9 +6,10 @@ import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
-import { deriveClassGrants } from '../../server/utils/classProficiencyDerivation'
+import { deriveClassGrants, loadClassProficiencyGrants } from '../../server/utils/classProficiencyDerivation'
 import { CLASS_PROFICIENCY_CARRIER_NAME, MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
-import { CLASS_PROFICIENCIES, type ProficiencySet } from '../../shared/rules/classProficiencies'
+import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
+import { proficiencyEffects } from '../fixtures/catalogClasses'
 
 // Dérivation des maîtrises de classe, bout en bout : `deriveClassGrants` doit rendre EXACTEMENT les effets de
 // `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé) — maîtrises de départ et JS pour la classe principale,
@@ -29,17 +30,8 @@ function expectedSaves(className: string): Effect[] {
   return CLASS_PROFICIENCIES[className]!.savingThrows.map((ability): Effect => ({ type: 'saving_throw_proficiency', value: { ability } }))
 }
 
-/** Maîtrises d'armures (`proficiency`), d'armes (`weapon_proficiency`) et d'outils (`tool_proficiency`). */
-function expectedGrants(set: ProficiencySet): Effect[] {
-  return [
-    ...set.armor.map((value): Effect => ({ type: 'proficiency', value })),
-    ...set.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
-    ...set.tools.map((value): Effect => ({ type: 'tool_proficiency', value })),
-  ]
-}
-
-const expectedStart = (className: string): Effect[] => expectedGrants(CLASS_PROFICIENCIES[className]!)
-const expectedMulticlass = (className: string): Effect[] => expectedGrants(CLASS_PROFICIENCIES[className]!.multiclass)
+const expectedStart = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES[className]!)
+const expectedMulticlass = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES[className]!.multiclass)
 
 /** Classes de la fiche : la 1re nommée est la principale. */
 const sheet = (main: string, ...others: string[]) => [
@@ -85,6 +77,20 @@ beforeAll(async () => {
 
   const bare = await orm.insert(srcSchema.classes).values({ name: BARE, hitDice: '1d6' }).returning().get()
   classIdByName.set(BARE, bare.id)
+})
+
+describe('loadClassProficiencyGrants — les deux porteurs de chaque classe (source du catalogue)', () => {
+  it('rend, pour chaque classe, ses maîtrises de départ, ses JS et son sous-ensemble du multiclassage', async () => {
+    const names = Object.keys(CLASS_PROFICIENCIES)
+    const grants = await loadClassProficiencyGrants(orm, [...names.map(n => classIdByName.get(n)!), classIdByName.get(BARE)!])
+    for (const className of names) {
+      const g = grants.get(classIdByName.get(className)!)!
+      expect(norm(g.start), className).toEqual(norm(expectedStart(className)))
+      expect(norm(g.savingThrows), className).toEqual(norm(expectedSaves(className)))
+      expect(norm(g.multiclass), className).toEqual(norm(expectedMulticlass(className)))
+    }
+    expect(grants.get(classIdByName.get(BARE)!)).toEqual({ start: [], savingThrows: [], multiclass: [] })
+  })
 })
 
 describe('deriveClassGrants — classe principale : maîtrises de départ et JS', () => {

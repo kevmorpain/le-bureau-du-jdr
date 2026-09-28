@@ -366,7 +366,6 @@
 <script lang="ts" setup>
 import { type AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
-import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 
 const PACT_BOON_OPTIONS = [
   { id: 'chain' as const, name: 'Pacte de la Chaîne', hint: 'Apprend Appel de familier. Peut convoquer un familier spécial.' },
@@ -405,8 +404,10 @@ const filteredClasses = computed(() =>
   CLASSES.filter(c => !c.source || !isGatedSource(c.source) || extended.value),
 )
 
-const savingThrowsLabel = (dbName: string) =>
-  (CLASS_PROFICIENCIES[dbName]?.savingThrows ?? []).map(s => ABILITY_SHORT[s]).join('+')
+const { resolveClassId, classProficienciesFor } = useBuilderEntities()
+const savingThrowsLabel = (dbName: string) => classProficienciesFor(resolveClassId(dbName)).savingThrows
+  .flatMap(e => e.type === 'saving_throw_proficiency' ? [ABILITY_SHORT[e.value.ability]] : [])
+  .join('+')
 
 const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells', {
   query: extendedQuery,

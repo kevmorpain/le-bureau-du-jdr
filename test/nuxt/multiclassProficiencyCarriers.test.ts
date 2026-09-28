@@ -9,6 +9,7 @@ import type { Effect } from '../../server/db/schema/effects'
 import { deriveClassGrants } from '../../server/utils/classProficiencyDerivation'
 import { MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
+import { proficiencyEffects } from '../fixtures/catalogClasses'
 
 // Migration 0105 : crée sur les bases déployées les porteurs « Maîtrises de multiclassage » que le seed
 // pose pour les bases neuves (champ `multiclass` de CLASS_PROFICIENCIES). Vérifié par la dérivation réelle.
@@ -27,14 +28,7 @@ let bareClassId = 0
 
 const norm = (es: Effect[]) => es.map(e => `${e.type}:${JSON.stringify(e.value)}`).sort()
 
-function expectedMulticlass(className: string): Effect[] {
-  const set = CLASS_PROFICIENCIES[className]!.multiclass
-  return [
-    ...set.armor.map((value): Effect => ({ type: 'proficiency', value })),
-    ...set.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
-    ...set.tools.map((value): Effect => ({ type: 'tool_proficiency', value })),
-  ]
-}
+const expectedMulticlass = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES[className]!.multiclass)
 
 async function carriersOf(classId: number): Promise<string[]> {
   const res = await client.execute({

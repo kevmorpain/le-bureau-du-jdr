@@ -19,7 +19,6 @@ import {
   type SubraceData,
 } from '~/data/character-builder'
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
-import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 import type { Effect } from '~~/server/db/schema/effects'
 
@@ -260,7 +259,7 @@ export function useCharacterBuilder() {
 
   const { feats, getById: getFeatById } = useFeats()
   const { choicesForClassLevel } = useCatalog()
-  const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
+  const { resolveClassId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
 
   const featNeedsAbility = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return false
@@ -403,7 +402,9 @@ export function useCharacterBuilder() {
   // ne retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
   // dans selectedToolProficiencies) + les résolutions choisies.
   const ownedTools = computed<string[]>(() => {
-    const fromClass = CLASS_PROFICIENCIES[classData.value?.dbName ?? '']?.tools ?? []
+    const fromClass = classProficienciesFor(classDbId.value).start
+      .filter(e => e.type === 'tool_proficiency')
+      .map(e => e.value as string)
     const fixed = (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t))
     const chosen = Object.values(state.value.selectedToolProficiencies).filter(Boolean)
     return [...new Set([...fromClass, ...fixed, ...chosen])]
@@ -780,6 +781,7 @@ export function useCharacterBuilder() {
     catalogSpeciesId,
     speciesEffects,
     classData,
+    classDbId,
     backgroundData,
     alignmentData,
     raceBonuses,

@@ -1,7 +1,6 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import type { SkillKey } from '~~/shared/rules/skills'
 import { ABILITY_KEYS } from '~~/shared/rules/abilities'
-import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
 import { useCharacterAbilities, type AbilitiesSheet } from './character/useCharacterAbilities'
 import { resolveFeatEffects } from './useCharacterSheet'
 
@@ -16,7 +15,7 @@ export function useBuilderSheetProjection() {
   const {
     state,
     speciesEffects,
-    classData,
+    classDbId,
     isCustomBackground,
     backgroundSkills,
     materializedSkills,
@@ -27,6 +26,7 @@ export function useBuilderSheetProjection() {
     hpMax,
     SKILLS,
   } = useCharacterBuilder()
+  const { classProficienciesFor } = useBuilderEntities()
 
   const { extendedQuery } = useExtendedContent()
   const { data: invocations } = useFetch<BuilderInvocation[]>('/api/invocations', {
@@ -63,8 +63,7 @@ export function useBuilderSheetProjection() {
       ...selectedInvocations.value.flatMap(i => i.effects),
     ])),
     backgroundEffects: computed(() => isCustomBackground.value ? [] : skillEffects(backgroundSkills.value)),
-    classSavingThrowEffects: computed(() => (CLASS_PROFICIENCIES[classData.value?.dbName ?? '']?.savingThrows ?? [])
-      .map((ability): Effect => ({ type: 'saving_throw_proficiency', value: { ability } }))),
+    classSavingThrowEffects: computed(() => classProficienciesFor(classDbId.value).savingThrows),
     classSkillEffects: computed(() => skillEffects(state.value.skills)),
     asiEffects: computed(() => []),
     proficiencyBonus: profBonus,

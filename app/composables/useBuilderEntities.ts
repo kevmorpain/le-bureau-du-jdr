@@ -1,8 +1,19 @@
 import type { MulticlassPrerequisites } from '~~/shared/rules/multiclass'
+import type { ClassProficiencyGrants } from '~~/server/utils/classProficiencyDerivation'
 
 // Unique point de résolution « slug/name → dbId » : le reste du builder ne manipule que des ids.
 export type DbSubclass = { id: number, name: string, description?: string | null }
-export type DbClass = { id: number, name: string, subclassLevel: number, multiclassSkillCount: number, multiclassPrerequisites: MulticlassPrerequisites, subclasses: DbSubclass[] }
+export type DbClass = {
+  id: number
+  name: string
+  subclassLevel: number
+  multiclassSkillCount: number
+  multiclassPrerequisites: MulticlassPrerequisites
+  proficiencies: ClassProficiencyGrants
+  subclasses: DbSubclass[]
+}
+
+const NO_PROFICIENCIES: ClassProficiencyGrants = { start: [], savingThrows: [], multiclass: [] }
 type DbSpecies = { id: number, name: string }
 type DbBackground = { id: number, name: string }
 type DbItem = { id: number, name: string }
@@ -69,6 +80,11 @@ export function useBuilderEntities() {
     return classes.value?.find(c => c.id === classDbId)?.multiclassPrerequisites ?? []
   }
 
+  function classProficienciesFor(classDbId: number | null | undefined): ClassProficiencyGrants {
+    if (classDbId == null) return NO_PROFICIENCIES
+    return classes.value?.find(c => c.id === classDbId)?.proficiencies ?? NO_PROFICIENCIES
+  }
+
   function resolveItemIds(itemNames: string[]): { ids: number[], unresolved: string[] } {
     if (!itemNames.length || !items.value?.length) return { ids: [], unresolved: itemNames }
     const map = new Map<string, number>()
@@ -96,5 +112,6 @@ export function useBuilderEntities() {
     subclassCatalogFor,
     multiclassSkillCountFor,
     multiclassPrerequisitesFor,
+    classProficienciesFor,
   }
 }

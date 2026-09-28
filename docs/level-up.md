@@ -70,7 +70,7 @@ Toutes les étapes sont dans `ALL_LU_STEPS` mais certaines sont filtrées selon 
 **UI :**
 - Bandeau "État actuel" avec badge coloré par classe existante
 - **Section A — Continuer une classe** : cartes par classe existante, affiche le niveau actuel → suivant, les features débloquées au prochain niveau (depuis `CLASSES.levelMilestones`), et les badges : ⚡ Sous-classe / ✦ ASI / ⚔ Style de combat / ★ Expertise
-- **Section B — Nouvelle classe** : grille de toutes les classes non encore prises, avec les badges de prérequis (vert = OK, rouge = insuffisant) lus dans le catalogue (colonne `classes.multiclass_prerequisites`, migration 0106). Règle (AideDD, multiclassage) : il faut ceux de la nouvelle classe **et** de chaque classe détenue — ces derniers sont rappelés dans l'encart d'aide, avec un bandeau unique s'ils ne sont pas remplis ; chaque carte affiche « Prérequis non remplis » si sa propre classe ne l'est pas. **Non bloquants** (choix produit : le MJ a le dernier mot), donc pas de validation serveur.
+- **Section B — Nouvelle classe** : grille de toutes les classes non encore prises, avec les badges de prérequis (vert = OK, rouge = insuffisant) lus dans le catalogue (colonne `classes.multiclass_prerequisites`, migration 0106). Règle (AideDD, multiclassage) : il faut ceux de la nouvelle classe **et** de chaque classe détenue — ces derniers sont rappelés dans l'encart d'aide, avec un bandeau unique s'ils ne sont pas remplis ; chaque carte affiche « Prérequis non remplis » si sa propre classe ne l'est pas. **Non bloquants** (choix produit : le MJ a le dernier mot), donc pas de validation serveur. Chaque carte liste aussi « Maîtrises : … », ce que rejoindre la classe accorde (porteur de multiclassage + nombre de compétences, `proficiencies.multiclass` et `multiclassSkillCount` du catalogue) ; le récapitulatif les reprend dans « Acquis ce niveau ».
 
 **Validation :** `pickedClassId !== null`
 
@@ -267,7 +267,7 @@ Toutes exportées pour usage dans les composants d'étape :
 //   style de combat → `needsFightingStyle` / `fightingStyleLevelFor` + endpoint /api/catalog/classes/[name]/fighting-styles
 //   expertise       → `needsExpertise` / `expertiseDueForClassLevel` (count cumulatif)
 //   compétences de multiclassage → `multiclassSkills` / `requiredMulticlassSkillPicks`
-//   maîtrises de multiclassage   → dérivées par le GET de la fiche (`classEffects`), source CLASS_PROFICIENCIES.multiclass
+//   maîtrises de multiclassage   → `multiclassGainsOf` (catalogue) ; la fiche les dérive des porteurs (`classEffects`)
 //   prérequis de multiclassage   → `currentClassesPrerequisites` / `meetsCurrentClassesPrerequisites` / `multiclassPrerequisitesOf` / `meetsTargetPrerequisites`
 LU_FEATS                 // liste des 12 dons disponibles
 ```

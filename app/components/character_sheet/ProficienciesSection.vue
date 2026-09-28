@@ -110,10 +110,10 @@
           variant="soft"
           class="gap-1"
         >
-          {{ armorTypeLabels[prof] ?? prof }}
+          {{ armorProficiencyLabels[prof] ?? prof }}
           <button
             class="opacity-60 hover:opacity-100 transition-opacity leading-none"
-            :aria-label="`Retirer ${armorTypeLabels[prof] ?? prof}`"
+            :aria-label="`Retirer ${armorProficiencyLabels[prof] ?? prof}`"
             @click="removeProficiency('armor', prof)"
           >
             <UIcon name="i-heroicons:x-mark" class="size-3" />
@@ -245,8 +245,9 @@
 <script lang="ts" setup>
 import type { ProficiencyOverrideType } from '~~/server/db/schema/character_proficiency_overrides'
 import {
-  armorTypeLabels,
+  armorProficiencyLabels,
   languageLabels,
+  weaponProficiencyLabels,
 } from '~~/shared/utils/item'
 import { TOOL_CATEGORIES } from '~~/shared/rules/tools'
 
@@ -267,15 +268,6 @@ const {
 const isManualGrant = (type: ProficiencyOverrideType, value: string): boolean =>
   proficiencyOverrides.value.some(o => o.proficiencyType === type && o.value === value && o.action === 'grant')
 
-const weaponProficiencyLabels: Record<string, string> = {
-  simple_weapons: 'Toutes les armes simples',
-  martial_weapons: 'Toutes les armes de guerre',
-  simple_melee: 'Armes simples de mêlée',
-  simple_ranged: 'Armes simples à distance',
-  martial_melee: 'Armes de guerre de mêlée',
-  martial_ranged: 'Armes de guerre à distance',
-}
-
 const weaponProficiencyLabel = (prof: string): string =>
   weaponProficiencyLabels[prof] ?? prof
 
@@ -294,12 +286,7 @@ const removeProficiency = (type: ProficiencyOverrideType, value: string) => {
 
 const weaponAddOptions = [
   { type: 'label' as const, label: 'Catégories' },
-  { label: 'Toutes les armes simples', value: 'simple_weapons' },
-  { label: 'Toutes les armes de guerre', value: 'martial_weapons' },
-  { label: 'Armes simples de mêlée', value: 'simple_melee' },
-  { label: 'Armes simples à distance', value: 'simple_ranged' },
-  { label: 'Armes de guerre de mêlée', value: 'martial_melee' },
-  { label: 'Armes de guerre à distance', value: 'martial_ranged' },
+  ...Object.entries(weaponProficiencyLabels).map(([value, label]) => ({ label, value })),
   { type: 'separator' as const },
   { type: 'label' as const, label: 'Armes simples de mêlée' },
   { label: 'Gourdin', value: 'Gourdin' },
@@ -347,13 +334,7 @@ const weaponAddOptions = [
   { label: 'Sarbacane', value: 'Sarbacane' },
 ]
 
-const armorAddOptions = [
-  { label: 'Armure légère', value: 'light' },
-  { label: 'Armure intermédiaire', value: 'medium' },
-  { label: 'Armure lourde', value: 'heavy' },
-  { label: 'Bouclier', value: 'shield' },
-  { label: 'Toutes les armures', value: 'all_armor' },
-]
+const armorAddOptions = Object.entries(armorProficiencyLabels).map(([value, label]) => ({ label, value }))
 
 const languageAddOptions = Object.entries(languageLabels).map(([value, label]) => ({ label, value }))
 

@@ -207,6 +207,7 @@ const {
   pickedClass,
   hpGained,
   finalAbilities,
+  multiclassGainsOf,
   submit,
   ABILITIES,
   ABILITY_SHORT,
@@ -332,8 +333,16 @@ const gains = computed(() => {
     }
   }
 
+  if (s.isMulticlass && s.pickedClassId) {
+    const proficiencies = multiclassGainsOf(s.pickedClassId).proficiencies
+    if (proficiencies.length) list.push({ label: 'Maîtrises de multiclassage', detail: proficiencies.join(', ') })
+  }
+
   if (s.newSkills.length) {
-    list.push({ label: `${s.newSkills.length} compétence(s) multiclasse`, detail: '' })
+    list.push({
+      label: `${s.newSkills.length} compétence(s) multiclasse`,
+      detail: s.newSkills.map(k => SKILLS.find(sk => sk.key === k)?.label ?? k).join(', '),
+    })
   }
 
   if (cls) {

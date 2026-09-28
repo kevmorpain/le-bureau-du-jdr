@@ -6,6 +6,7 @@ import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import { CORE_SOURCE } from '~~/shared/rules/source'
 import type { AbilityKey } from '~~/shared/rules/abilities'
+import { loadClassProficiencyGrants, type ClassProficiencyGrants } from '~~/server/utils/classProficiencyDerivation'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
@@ -13,7 +14,7 @@ type Db = BaseSQLiteDatabase<'async', any, any>
 type ClassRow = typeof srcSchema.classes.$inferSelect
 type SubclassRow = typeof srcSchema.subclasses.$inferSelect
 
-export type CatalogClass = ClassRow & { subclasses: SubclassRow[] }
+export type CatalogClass = ClassRow & { subclasses: SubclassRow[], proficiencies: ClassProficiencyGrants }
 
 export async function loadClasses(db: Db, ruleset: Ruleset = '5', extended = false): Promise<CatalogClass[]> {
   const rows = await db
@@ -31,10 +32,11 @@ export async function loadClasses(db: Db, ruleset: Ruleset = '5', extended = fal
     ))
     .orderBy(asc(srcSchema.classes.id), asc(srcSchema.subclasses.name))
 
+  const proficiencies = await loadClassProficiencyGrants(db, [...new Set(rows.map(r => r.classes.id))])
   const byId = new Map<number, CatalogClass>()
   for (const r of rows) {
     const cls = r.classes
-    if (!byId.has(cls.id)) byId.set(cls.id, { ...cls, subclasses: [] })
+    if (!byId.has(cls.id)) byId.set(cls.id, { ...cls, subclasses: [], proficiencies: proficiencies.get(cls.id)! })
     if (r.subclasses) byId.get(cls.id)!.subclasses.push(r.subclasses)
   }
   return [...byId.values()]

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { Effect } from '~~/server/db/schema/effects'
 
 export const weaponPropertySchema = z.enum([
   'finesse', 'light', 'heavy', 'two_handed', 'thrown',
@@ -127,6 +128,44 @@ export const armorTypeLabels: Record<string, string> = {
   medium: 'Armure intermédiaire',
   heavy: 'Armure lourde',
   shield: 'Bouclier',
+}
+
+// Maîtrises : jetons d'armure et de catégorie d'arme ; une arme ou un outil précis porte déjà son nom.
+export const armorProficiencyLabels: Record<string, string> = {
+  ...armorTypeLabels,
+  all_armor: 'Toutes les armures',
+}
+
+export const weaponProficiencyLabels: Record<string, string> = {
+  simple_weapons: 'Toutes les armes simples',
+  martial_weapons: 'Toutes les armes de guerre',
+  simple_melee: 'Armes simples de mêlée',
+  simple_ranged: 'Armes simples à distance',
+  martial_melee: 'Armes de guerre de mêlée',
+  martial_ranged: 'Armes de guerre à distance',
+}
+
+export function proficiencyEffectLabel(effect: Effect): string | null {
+  if (effect.type === 'proficiency') return armorProficiencyLabels[effect.value] ?? effect.value
+  if (effect.type === 'weapon_proficiency') return weaponProficiencyLabels[effect.value] ?? effect.value
+  if (effect.type === 'tool_proficiency') return effect.value
+  return null
+}
+
+const PROFICIENCY_ORDER: Effect['type'][] = ['proficiency', 'weapon_proficiency', 'tool_proficiency']
+
+const isCategoryToken = (effect: Effect): boolean =>
+  (effect.type === 'proficiency' && effect.value in armorProficiencyLabels)
+  || (effect.type === 'weapon_proficiency' && effect.value in weaponProficiencyLabels)
+
+// L'ordre des effets lus en base n'est pas garanti : armures, armes puis outils, catégories avant les noms.
+export function proficiencyLabels(effects: Effect[]): string[] {
+  const rank = (effect: Effect) => PROFICIENCY_ORDER.indexOf(effect.type) * 2 + (isCategoryToken(effect) ? 0 : 1)
+  return effects
+    .filter(e => PROFICIENCY_ORDER.includes(e.type))
+    .sort((a, b) => rank(a) - rank(b))
+    .map(proficiencyEffectLabel)
+    .filter((label): label is string => label != null)
 }
 
 export const toolTypeLabels: Record<string, string> = {
