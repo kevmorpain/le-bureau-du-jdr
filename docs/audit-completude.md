@@ -228,7 +228,7 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   départ (Barbare : boucliers et armes, aucune armure ; Druide : armures, aucune arme ; Ensorceleur et
   Magicien : rien).
 - **Correctif** : champ `multiclass` de `CLASS_PROFICIENCIES` → porteur « Maîtrises de multiclassage »
-  (`multiclass_proficiency_grant`) ; `deriveClassProficiencies` lit le porteur de départ de la classe
+  (`multiclass_proficiency_grant`) ; `deriveClassGrants` lit le porteur de départ de la classe
   principale et celui de multiclassage des autres. Bases déployées : migration `0105`. Suivi :
   [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104).
 

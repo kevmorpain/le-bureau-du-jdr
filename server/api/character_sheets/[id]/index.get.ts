@@ -5,7 +5,7 @@ import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
 import { deriveBackgroundProficiencies } from '~~/server/utils/backgroundProficiencyDerivation'
-import { deriveClassProficiencies, deriveMainClassSavingThrows, deriveClassSkills } from '~~/server/utils/classProficiencyDerivation'
+import { deriveClassGrants, deriveClassSkills } from '~~/server/utils/classProficiencyDerivation'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -188,13 +188,8 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const backgroundEffects = await deriveBackgroundProficiencies(db as any, characterSheet.backgroundId)
 
-  // La classe PRINCIPALE accorde ses maîtrises de départ et ses JS ; les autres, le sous-ensemble du multiclassage.
-  const mainClassId = characterSheet.classes.find(c => c.isMain)?.classId ?? characterSheet.classes[0]?.classId ?? null
-  const otherClassIds = characterSheet.classes.map(c => c.classId).filter(classId => classId !== mainClassId)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const classEffects = await deriveClassProficiencies(db as any, mainClassId, otherClassIds)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const classSavingThrowEffects = await deriveMainClassSavingThrows(db as any, mainClassId)
+  const { proficiencies: classEffects, savingThrows: classSavingThrowEffects } = await deriveClassGrants(db as any, characterSheet.classes)
 
   // Compétences de classe dérivées du choix (character_choices, progression skill).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

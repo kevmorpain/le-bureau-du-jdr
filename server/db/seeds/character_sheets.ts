@@ -43,8 +43,8 @@ export default async function seed() {
           where: and(
             eq(schema.features.classId, cls.id),
             lte(schema.features.levelRequired, classLevel ?? 20),
-            // Les features porteuses des maîtrises (volet B) ne sont JAMAIS matérialisées : la fiche les
-            // dérive de l'origine (sinon elles apparaîtraient comme des aptitudes vides sur les démos).
+            // Les features porteuses des maîtrises ne sont JAMAIS matérialisées : la fiche les dérive de
+            // l'origine (sinon elles apparaîtraient comme des aptitudes vides sur les démos).
             notInArray(schema.features.featureType, ['proficiency_grant', 'multiclass_proficiency_grant']),
           ),
         })

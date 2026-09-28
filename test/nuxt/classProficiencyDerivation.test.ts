@@ -6,27 +6,21 @@ import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
-import { deriveClassProficiencies, deriveMainClassSavingThrows } from '../../server/utils/classProficiencyDerivation'
+import { deriveClassGrants } from '../../server/utils/classProficiencyDerivation'
+import { CLASS_PROFICIENCY_CARRIER_NAME, MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
 import { CLASS_PROFICIENCIES, type ProficiencySet } from '../../shared/rules/classProficiencies'
 
-// Noms des porteurs (littéraux, sans importer seedClass qui dépend de hub:db). La dérivation filtre par
-// featureType + classId, pas par nom → leur valeur exacte est indifférente ici.
-const CARRIER_NAME = 'Maîtrises de la classe'
-const MULTICLASS_CARRIER_NAME = 'Maîtrises de multiclassage'
-
-// Dérivation des maîtrises de classe, bout en bout : `deriveClassProficiencies` doit rendre EXACTEMENT les
-// effets de `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé) — maîtrises de départ pour la classe
-// principale, sous-ensemble `multiclass` pour les autres —, `[]` sans porteur ; `deriveMainClassSavingThrows`
-// ne rend QUE les JS de la classe visée (règle PHB : le multiclassage n'accorde pas de JS).
+// Dérivation des maîtrises de classe, bout en bout : `deriveClassGrants` doit rendre EXACTEMENT les effets de
+// `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé) — maîtrises de départ et JS pour la classe principale,
+// sous-ensemble `multiclass` sans JS pour les autres (règle PHB) —, `[]` sans porteur.
 
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
+const BARE = 'ClasseSansPorteur'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let orm: any
 const classIdByName = new Map<string, number>()
-// Classe seedée SANS porteur → doit dériver [].
-let bareClassId = 0
 
 const norm = (es: Effect[]) => es.map(e => `${e.type}:${JSON.stringify(e.value)}`).sort()
 
@@ -44,12 +38,14 @@ function expectedGrants(set: ProficiencySet): Effect[] {
   ]
 }
 
-/** Tous les effets du porteur de départ d'une classe. */
-function expectedEffects(className: string): Effect[] {
-  return [...expectedSaves(className), ...expectedGrants(CLASS_PROFICIENCIES[className]!)]
-}
-
+const expectedStart = (className: string): Effect[] => expectedGrants(CLASS_PROFICIENCIES[className]!)
 const expectedMulticlass = (className: string): Effect[] => expectedGrants(CLASS_PROFICIENCIES[className]!.multiclass)
+
+/** Classes de la fiche : la 1re nommée est la principale. */
+const sheet = (main: string, ...others: string[]) => [
+  { classId: classIdByName.get(main)!, isMain: true },
+  ...others.map(name => ({ classId: classIdByName.get(name)!, isMain: false })),
+]
 
 beforeAll(async () => {
   const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
@@ -81,79 +77,79 @@ beforeAll(async () => {
       .values({ name: className, hitDice: '1d8' }).returning().get()
     classIdByName.set(className, cls.id)
 
-    await carrier(cls.id, CARRIER_NAME, 'proficiency_grant', expectedEffects(className))
+    await carrier(cls.id, CLASS_PROFICIENCY_CARRIER_NAME, 'proficiency_grant', [...expectedSaves(className), ...expectedStart(className)])
     if (expectedMulticlass(className).length) {
-      await carrier(cls.id, MULTICLASS_CARRIER_NAME, 'multiclass_proficiency_grant', expectedMulticlass(className))
+      await carrier(cls.id, MULTICLASS_PROFICIENCY_CARRIER_NAME, 'multiclass_proficiency_grant', expectedMulticlass(className))
     }
   }
 
-  // Classe sans porteur (aucune feature proficiency_grant) → cas [].
-  const bare = await orm.insert(srcSchema.classes)
-    .values({ name: 'ClasseSansPorteur', hitDice: '1d6' }).returning().get()
-  bareClassId = bare.id
+  const bare = await orm.insert(srcSchema.classes).values({ name: BARE, hitDice: '1d6' }).returning().get()
+  classIdByName.set(BARE, bare.id)
 })
 
-describe('deriveClassProficiencies — classe principale : maîtrises de départ', () => {
+describe('deriveClassGrants — classe principale : maîtrises de départ et JS', () => {
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    it(`${className} : dérive exactement ses maîtrises de base (JS + armes/armures/outils)`, async () => {
-      const effects = await deriveClassProficiencies(orm, classIdByName.get(className)!, [])
-      expect(norm(effects)).toEqual(norm(expectedEffects(className)))
+    it(`${className} : dérive exactement ses maîtrises de départ (armes/armures/outils) et ses JS`, async () => {
+      const grants = await deriveClassGrants(orm, sheet(className))
+      expect(norm(grants.proficiencies)).toEqual(norm(expectedStart(className)))
+      expect(norm(grants.savingThrows)).toEqual(norm(expectedSaves(className)))
     })
   }
 })
 
-describe('deriveClassProficiencies — classe rejointe : sous-ensemble du multiclassage', () => {
+describe('deriveClassGrants — classe rejointe : sous-ensemble du multiclassage, sans JS', () => {
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    it(`${className} : dérive exactement ses maîtrises de multiclassage, sans JS`, async () => {
-      const effects = await deriveClassProficiencies(orm, bareClassId, [classIdByName.get(className)!])
-      expect(norm(effects)).toEqual(norm(expectedMulticlass(className)))
+    it(`${className} : dérive exactement ses maîtrises de multiclassage`, async () => {
+      const grants = await deriveClassGrants(orm, sheet(BARE, className))
+      expect(norm(grants.proficiencies)).toEqual(norm(expectedMulticlass(className)))
+      expect(grants.savingThrows).toEqual([])
     })
   }
 
   it('Magicien qui rejoint Guerrier : armures légères et intermédiaires, pas les lourdes', async () => {
-    const effects = await deriveClassProficiencies(orm, classIdByName.get('Magicien')!, [classIdByName.get('Guerrier')!])
-    expect(norm(effects)).toEqual(norm([...expectedEffects('Magicien'), ...expectedMulticlass('Guerrier')]))
-    const armor = effects.filter(e => e.type === 'proficiency').map(e => e.value).sort()
-    expect(armor).toEqual(['light', 'medium', 'shield'])
+    const grants = await deriveClassGrants(orm, sheet('Magicien', 'Guerrier'))
+    expect(norm(grants.proficiencies)).toEqual(norm([...expectedStart('Magicien'), ...expectedMulticlass('Guerrier')]))
+    expect(grants.proficiencies.filter(e => e.type === 'proficiency').map(e => e.value).sort()).toEqual(['light', 'medium', 'shield'])
   })
 
   it('Guerrier qui rejoint Roublard puis Magicien : outils de voleur, rien du Magicien', async () => {
-    const effects = await deriveClassProficiencies(orm, classIdByName.get('Guerrier')!, [
-      classIdByName.get('Roublard')!,
-      classIdByName.get('Magicien')!,
-    ])
-    expect(norm(effects)).toEqual(norm([...expectedEffects('Guerrier'), ...expectedMulticlass('Roublard')]))
+    const grants = await deriveClassGrants(orm, sheet('Guerrier', 'Roublard', 'Magicien'))
+    expect(norm(grants.proficiencies)).toEqual(norm([...expectedStart('Guerrier'), ...expectedMulticlass('Roublard')]))
+  })
+
+  it('n\'accorde QUE les JS de la classe principale, pas ceux de la classe rejointe', async () => {
+    const grants = await deriveClassGrants(orm, sheet('Guerrier', 'Occultiste'))
+    expect(norm(grants.savingThrows)).toEqual(norm(expectedSaves('Guerrier')))
   })
 })
 
-describe('deriveClassProficiencies — cas vides', () => {
+describe('deriveClassGrants — choix de la classe principale', () => {
+  const byId = (name: string) => classIdByName.get(name)!
+
+  it('suit `isMain`, quel que soit l\'ordre des classes', async () => {
+    const grants = await deriveClassGrants(orm, [
+      { classId: byId('Guerrier'), isMain: false },
+      { classId: byId('Magicien'), isMain: true },
+    ])
+    expect(norm(grants.proficiencies)).toEqual(norm([...expectedStart('Magicien'), ...expectedMulticlass('Guerrier')]))
+    expect(norm(grants.savingThrows)).toEqual(norm(expectedSaves('Magicien')))
+  })
+
+  it('sans classe marquée principale, retient la première', async () => {
+    const grants = await deriveClassGrants(orm, [
+      { classId: byId('Magicien'), isMain: false },
+      { classId: byId('Guerrier'), isMain: false },
+    ])
+    expect(norm(grants.proficiencies)).toEqual(norm([...expectedStart('Magicien'), ...expectedMulticlass('Guerrier')]))
+  })
+})
+
+describe('deriveClassGrants — cas vides', () => {
   it('rend [] sans classe', async () => {
-    expect(await deriveClassProficiencies(orm, null, [])).toEqual([])
+    expect(await deriveClassGrants(orm, [])).toEqual({ proficiencies: [], savingThrows: [] })
   })
 
   it('rend [] pour une classe sans porteur (aucune régression pré-seed)', async () => {
-    expect(await deriveClassProficiencies(orm, bareClassId, [bareClassId])).toEqual([])
-  })
-})
-
-describe('deriveMainClassSavingThrows — JS de la classe PRINCIPALE seulement', () => {
-  it('rend exactement les 2 JS de la classe visée (et rien d\'autre)', async () => {
-    const guerrier = classIdByName.get('Guerrier')!
-    const effects = await deriveMainClassSavingThrows(orm, guerrier)
-    expect(norm(effects)).toEqual(norm(expectedSaves('Guerrier'))) // str, con — pas d'armes/armures
-  })
-
-  it('multiclasse : n\'accorde QUE les JS de la classe principale, pas ceux de la 2e classe (PHB)', async () => {
-    // On dérive avec l'id de la classe PRINCIPALE (Guerrier) ; la 2e classe (Occultiste : wis/cha) ne doit
-    // PAS apparaître, même si le perso en a un porteur.
-    const guerrier = classIdByName.get('Guerrier')!
-    const effects = await deriveMainClassSavingThrows(orm, guerrier)
-    const abilities = effects.map(e => (e.value as { ability: string }).ability).sort()
-    expect(abilities).toEqual(['con', 'str']) // JS Guerrier uniquement, pas wis/cha de l'Occultiste
-  })
-
-  it('rend [] pour une classe sans porteur ou mainClassId null', async () => {
-    expect(await deriveMainClassSavingThrows(orm, bareClassId)).toEqual([])
-    expect(await deriveMainClassSavingThrows(orm, null)).toEqual([])
+    expect(await deriveClassGrants(orm, sheet(BARE))).toEqual({ proficiencies: [], savingThrows: [] })
   })
 })

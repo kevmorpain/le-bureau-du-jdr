@@ -6,7 +6,8 @@ import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
-import { deriveClassProficiencies } from '../../server/utils/classProficiencyDerivation'
+import { deriveClassGrants } from '../../server/utils/classProficiencyDerivation'
+import { MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 
 // Migration 0105 : crée sur les bases déployées les porteurs « Maîtrises de multiclassage » que le seed
@@ -15,14 +16,14 @@ import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
 const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const MIGRATION = '0105_multiclass_proficiency_carriers.sql'
-// Nom du seed (MULTICLASS_PROFICIENCY_CARRIER_NAME) : un reseed retrouve le porteur par ce nom.
-const CARRIER_NAME = 'Maîtrises de multiclassage'
 
 let client: Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let orm: any
 const classIdByName = new Map<string, number>()
 let homonymId = 0
+// Classe principale sans porteur : seul le porteur de multiclassage de la classe rejointe contribue.
+let bareClassId = 0
 
 const norm = (es: Effect[]) => es.map(e => `${e.type}:${JSON.stringify(e.value)}`).sort()
 
@@ -61,6 +62,7 @@ beforeAll(async () => {
     classIdByName.set(className, cls.id)
   }
   homonymId = (await orm.insert(srcSchema.classes).values({ name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' }).returning().get()).id
+  bareClassId = (await orm.insert(srcSchema.classes).values({ name: 'ClasseSansPorteur', hitDice: '1d6' }).returning().get()).id
 
   // Effets déjà en base (porteurs de départ en prod) : la migration doit les réutiliser.
   for (const effect of [
@@ -82,8 +84,9 @@ describe('migration 0105 — porteurs de maîtrises de multiclassage', () => {
     it(`${className} : la dérivation rend exactement le sous-ensemble du seed, même rejouée`, async () => {
       const classId = classIdByName.get(className)!
       const expected = expectedMulticlass(className)
-      expect(await carriersOf(classId)).toEqual(expected.length ? [CARRIER_NAME] : [])
-      expect(norm(await deriveClassProficiencies(orm, null, [classId]))).toEqual(norm(expected))
+      expect(await carriersOf(classId)).toEqual(expected.length ? [MULTICLASS_PROFICIENCY_CARRIER_NAME] : [])
+      const grants = await deriveClassGrants(orm, [{ classId: bareClassId, isMain: true }, { classId, isMain: false }])
+      expect(norm(grants.proficiencies)).toEqual(norm(expected))
     })
   }
 

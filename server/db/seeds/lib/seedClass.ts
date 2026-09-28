@@ -12,10 +12,7 @@ import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../data/su
 import { fightingStyleOptionFeatures } from '../data/fightingStyles'
 import { classSkillChoiceFeature } from '../data/classSkills'
 import { CLASS_PROFICIENCIES, type ProficiencySet } from '~~/shared/rules/classProficiencies'
-
-/** Feature porteuse des maîtrises de base d'une classe : jamais affichée ni matérialisée. */
-export const CLASS_PROFICIENCY_CARRIER_NAME = 'Maîtrises de la classe'
-export const MULTICLASS_PROFICIENCY_CARRIER_NAME = 'Maîtrises de multiclassage'
+import { CLASS_PROFICIENCY_CARRIER_NAME, MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../data/proficiencyCarriers'
 
 function proficiencyEffects(set: ProficiencySet): Effect[] {
   return [

@@ -7,24 +7,37 @@ import type { SkillKey } from '~~/shared/rules/skills'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-// PHB (multiclassage) : seule la 1re classe accorde ses maîtrises de départ, une classe rejointe n'en donne
-// qu'un sous-ensemble — porté par un porteur distinct, `multiclass_proficiency_grant`.
-export async function deriveClassProficiencies(db: Db, mainClassId: number | null | undefined, otherClassIds: number[]): Promise<Effect[]> {
-  const owners: SQL[] = []
-  if (mainClassId != null) {
-    owners.push(and(eq(srcSchema.features.classId, mainClassId), eq(srcSchema.features.featureType, 'proficiency_grant'))!)
-  }
+export interface ClassGrants {
+  proficiencies: Effect[]
+  savingThrows: Effect[]
+}
+
+// PHB (multiclassage) : la 1re classe accorde ses maîtrises de départ et ses JS ; une classe rejointe, un
+// sous-ensemble de ses maîtrises (porteur `multiclass_proficiency_grant`) et aucun JS. Classe principale =
+// celle marquée `isMain`, à défaut la première.
+export async function deriveClassGrants(db: Db, classes: Array<{ classId: number, isMain: boolean }>): Promise<ClassGrants> {
+  const mainClassId = classes.find(c => c.isMain)?.classId ?? classes[0]?.classId
+  if (mainClassId == null) return { proficiencies: [], savingThrows: [] }
+  const otherClassIds = classes.map(c => c.classId).filter(classId => classId !== mainClassId)
+
+  const owners: SQL[] = [and(eq(srcSchema.features.classId, mainClassId), eq(srcSchema.features.featureType, 'proficiency_grant'))!]
   if (otherClassIds.length) {
     owners.push(and(inArray(srcSchema.features.classId, otherClassIds), eq(srcSchema.features.featureType, 'multiclass_proficiency_grant'))!)
   }
-  if (!owners.length) return []
   const rows = await db
-    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
+    .select({ featureType: srcSchema.features.featureType, type: srcSchema.effects.type, value: srcSchema.effects.value })
     .from(srcSchema.features)
     .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
     .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
     .where(or(...owners))
-  return rows.map(r => ({ type: r.type, value: r.value }) as Effect)
+
+  const grants: ClassGrants = { proficiencies: [], savingThrows: [] }
+  for (const r of rows) {
+    const effect = { type: r.type, value: r.value } as Effect
+    if (effect.type !== 'saving_throw_proficiency') grants.proficiencies.push(effect)
+    else if (r.featureType === 'proficiency_grant') grants.savingThrows.push(effect)
+  }
+  return grants
 }
 
 // Compétences de classe CHOISIES → dérivées du pick stocké en character_choices (progression `skill`),
@@ -41,20 +54,4 @@ export async function deriveClassSkills(db: Db, characterSheetId: number): Promi
   return rows
     .filter((r): r is { value: string } => r.value != null)
     .map(r => ({ type: 'skill_proficiency', value: { skill: r.value as SkillKey } }) as Effect)
-}
-
-// Les JS ne sont accordés que par la 1re classe (PHB) : dérivation scopée à la classe PRINCIPALE.
-export async function deriveMainClassSavingThrows(db: Db, mainClassId: number | null | undefined): Promise<Effect[]> {
-  if (mainClassId == null) return []
-  const rows = await db
-    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
-    .from(srcSchema.features)
-    .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
-    .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
-    .where(and(
-      eq(srcSchema.features.classId, mainClassId),
-      eq(srcSchema.features.featureType, 'proficiency_grant'),
-      eq(srcSchema.effects.type, 'saving_throw_proficiency'),
-    ))
-  return rows.map(r => ({ type: r.type, value: r.value }) as Effect)
 }

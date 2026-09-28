@@ -22,7 +22,7 @@ export interface ClassProficiencies extends ProficiencySet {
 
 // Clé = nom de classe en base (`classes.name`), tel que passé à `seedClass`.
 // `savingThrows` : les 2 JS maîtrisés (PHB 2014) — accordés par la 1re classe SEULEMENT (le multiclassage
-// n'en donne pas), d'où une dérivation scopée à la classe principale (cf. deriveMainClassSavingThrows).
+// n'en donne pas), d'où une dérivation scopée à la classe principale (cf. deriveClassGrants).
 export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
   Barbare: {
     savingThrows: ['str', 'con'],
