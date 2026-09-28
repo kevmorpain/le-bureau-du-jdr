@@ -88,6 +88,12 @@
           :scores="finalAbilities"
         />
       </div>
+      <div
+        v-if="!meetsCurrentClassesPrerequisites"
+        class="mt-2 text-red-400"
+      >
+        ⚠️ Vos classes actuelles ne remplissent pas leurs propres prérequis : les règles ne permettent aucun multi-classage.
+      </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -118,7 +124,7 @@
           :scores="finalAbilities"
         />
         <div
-          v-if="!canMulticlassInto(cls.id)"
+          v-if="!meetsTargetPrerequisites(cls.id)"
           class="text-xs text-red-400 mt-1.5"
         >
           ⚠️ Prérequis non remplis
@@ -135,8 +141,9 @@ const {
   totalLevel,
   finalAbilities,
   currentClassesPrerequisites,
+  meetsCurrentClassesPrerequisites,
   multiclassPrerequisitesOf,
-  canMulticlassInto,
+  meetsTargetPrerequisites,
   subclassLevelFor,
   fightingStyleLevelFor,
   expertiseDueForClassLevel,

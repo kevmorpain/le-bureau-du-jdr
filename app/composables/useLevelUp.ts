@@ -272,8 +272,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     multiclassPrerequisitesFor(resolveClassId(CLASSES.find(c => c.id === classSlug)?.dbName))
   const meetsCurrentClassesPrerequisites = computed(() =>
     currentClassesPrerequisites.value.every(c => meetsMulticlassPrerequisites(c.prerequisites, finalAbilities.value)))
-  const canMulticlassInto = (classSlug: string): boolean =>
-    meetsCurrentClassesPrerequisites.value && meetsMulticlassPrerequisites(multiclassPrerequisitesOf(classSlug), finalAbilities.value)
+  const meetsTargetPrerequisites = (classSlug: string): boolean =>
+    meetsMulticlassPrerequisites(multiclassPrerequisitesOf(classSlug), finalAbilities.value)
 
   // ── Pact Boon availability (Warlock level 3) ──────────────────────────────
 
@@ -669,8 +669,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     multiclassSkills,
     requiredMulticlassSkillPicks,
     currentClassesPrerequisites,
+    meetsCurrentClassesPrerequisites,
     multiclassPrerequisitesOf,
-    canMulticlassInto,
+    meetsTargetPrerequisites,
     hasSpellcasting,
     spellLearning,
     cantripsToLearn,

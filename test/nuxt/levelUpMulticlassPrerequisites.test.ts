@@ -57,8 +57,10 @@ async function mountClassStep(cha: number) {
     await new Promise(r => setTimeout(r, 10))
   }
   const card = (name: string) => wrapper.findAll('button').find(b => b.text().includes(name))!
-  return { levelUp, card, compactText: () => wrapper.text().replace(/\s+/g, '') }
+  return { levelUp, card, text: () => wrapper.text(), compactText: () => wrapper.text().replace(/\s+/g, '') }
 }
+
+const CURRENT_CLASSES_WARNING = 'Vos classes actuelles ne remplissent pas leurs propres prérequis'
 
 describe('Étape Classe du level-up — prérequis de multiclassage', () => {
   it('rappelle les prérequis de la classe actuelle', async () => {
@@ -66,18 +68,22 @@ describe('Étape Classe du level-up — prérequis de multiclassage', () => {
     expect(compactText()).toContain('Paladin:FOR≥13(15)CHA≥13(12)')
   })
 
-  it('classe actuelle insuffisante : la nouvelle classe est signalée même si ses propres prérequis sont remplis', async () => {
-    const { levelUp, card } = await mountClassStep(12)
-    expect(levelUp.canMulticlassInto('fighter')).toBe(false)
+  it('classe actuelle insuffisante : un seul bandeau, les cartes ne jugent que la classe visée', async () => {
+    const { levelUp, card, text } = await mountClassStep(12)
+    expect(levelUp.meetsCurrentClassesPrerequisites.value).toBe(false)
+    expect(text().split(CURRENT_CLASSES_WARNING)).toHaveLength(2)
+    expect(levelUp.meetsTargetPrerequisites('fighter')).toBe(true)
     expect(card('Guerrier').text()).toContain('FOR ≥13 (15)')
-    expect(card('Guerrier').text()).toContain('Prérequis non remplis')
+    expect(card('Guerrier').text()).not.toContain('Prérequis non remplis')
+    expect(card('Magicien').text()).toContain('Prérequis non remplis')
   })
 
-  it('classe actuelle remplie : seule la nouvelle classe décide', async () => {
-    const { levelUp, card } = await mountClassStep(13)
-    expect(levelUp.canMulticlassInto('fighter')).toBe(true)
+  it('classe actuelle remplie : pas de bandeau, seule la classe visée décide', async () => {
+    const { levelUp, card, text } = await mountClassStep(13)
+    expect(levelUp.meetsCurrentClassesPrerequisites.value).toBe(true)
+    expect(text()).not.toContain(CURRENT_CLASSES_WARNING)
     expect(card('Guerrier').text()).not.toContain('Prérequis non remplis')
-    expect(levelUp.canMulticlassInto('wizard')).toBe(false)
+    expect(levelUp.meetsTargetPrerequisites('wizard')).toBe(false)
     expect(card('Magicien').text()).toContain('INT ≥13 (8)')
     expect(card('Magicien').text()).toContain('Prérequis non remplis')
   })

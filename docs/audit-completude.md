@@ -238,8 +238,9 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   chaque classe détenue (lecture retenue : aucun multiclassé en prod au moment du choix).
 - **Correctif** : prérequis en colonne d'identité `classes.multiclass_prerequisites` (alternatives de
   minimums, migration `0106` + seed, contrat `classIdentity.ts`) au lieu de la table front par slug
-  `LU_MULTICLASS_PREREQS` ; l'étape Classe du level-up rappelle ceux des classes détenues et signale une
-  carte dont l'un des deux n'est pas rempli. **Non bloquants** (décision du PM, 2026-09-27). Suivi :
+  `LU_MULTICLASS_PREREQS` ; l'étape Classe du level-up rappelle ceux des classes détenues (bandeau s'ils
+  ne sont pas remplis) et signale chaque carte dont la classe visée ne les remplit pas. **Non bloquants**
+  (décision du PM, 2026-09-27). Suivi :
   [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109).
 
 ### B15 — Maîtrises d'outils de classe jamais accordées · seed + migration — ✅ RÉSOLU
