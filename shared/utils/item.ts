@@ -174,22 +174,3 @@ export const toolTypeLabels: Record<string, string> = {
   musical: 'Instrument de musique',
   other: 'Outil spécial',
 }
-
-export const languageLabels: Record<string, string> = {
-  common: 'Commun',
-  elvish: 'Elfique',
-  dwarvish: 'Nain',
-  halfling: 'Halfelin',
-  gnomish: 'Gnome',
-  orcish: 'Orque',
-  draconic: 'Draconique',
-  abyssal: 'Abyssal',
-  celestial: 'Céleste',
-  infernal: 'Infernal',
-  giant: 'Géant',
-  goblin: 'Gobelin',
-  sylvan: 'Sylvain',
-  undercommon: 'Langue des profondeurs',
-  primordial: 'Primordial',
-  deep_speech: 'Langage des profondeurs',
-}

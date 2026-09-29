@@ -18,13 +18,25 @@ export interface ResolvedOption {
   levelRequired?: number
 }
 
-export interface CatalogProgression {
-  progressionId: number
+// Porteur de maîtrises d'une classe qui porte le choix : celui de la 1re classe (`start`) ou celui reçu en
+// rejoignant la classe par multiclassage (`multiclass`).
+export type ClassGrant = 'start' | 'multiclass'
+
+// Propriétaire d'un point de choix : au plus un de classe (précisée par `ownerSubclassId` / `classGrant`),
+// espèce, lignée ou historique. Aucun pour une règle générale (`global`), due à tout personnage.
+export interface ProgressionOwner {
   ownerFeatureId?: number
-  /** Exactement un de `ownerClassId` / `ownerSpeciesId` est renseigné (D17). */
   ownerClassId?: number
   ownerSpeciesId?: number
+  ownerLineageId?: number
+  ownerBackgroundId?: number
   ownerSubclassId?: number
+  classGrant?: ClassGrant
+  global?: boolean
+}
+
+export interface CatalogProgression extends ProgressionOwner {
+  progressionId: number
   ownerLevelRequired: number
   kind: ChoiceKind
   count: Formula
@@ -40,8 +52,14 @@ export interface Catalog {
 
 export interface CharacterProjection {
   classLevels: Record<number, number>
+  /** Absent : chaque classe est traitée comme la 1re (création, une seule classe). */
+  mainClassId?: number
   speciesId?: number
+  lineageId?: number
+  backgroundId?: number
   subclassIds?: number[]
+  /** Maîtrises reçues en double de deux sources fixes, à remplacer (cf. `duplicateGrants`). */
+  duplicates?: { skills: number, tools: number }
   proficientSkills?: SkillKey[]
   proficientWeapons?: string[]
   picks?: Array<{ progressionId: number }>
@@ -54,15 +72,11 @@ export interface CharacterProjection {
   hasSpellcasting?: boolean
 }
 
-export interface ResolvedChoice {
+export interface ResolvedChoice extends ProgressionOwner {
   progressionId: number
-  ownerFeatureId?: number
-  ownerClassId?: number
-  ownerSpeciesId?: number
-  ownerSubclassId?: number
   ownerLevelRequired: number
   kind: ChoiceKind
-  /** Niveau de la classe propriétaire (≠ niveau total en multiclasse) ; niveau total pour un choix d'espèce. */
+  /** Niveau de la classe propriétaire (≠ niveau total en multiclasse) ; niveau total (au moins 1) sinon. */
   classLevel: number
   count: number
   made: number
@@ -109,14 +123,19 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
   const choices: ResolvedChoice[] = []
 
   for (const p of catalog.progressions) {
-    // Choix d'espèce (lignée) : gaté sur la possession ; `count` évalué au niveau total faute de niveau de classe.
     let ownerLevel: number
-    if (p.ownerSpeciesId != null) {
-      if (projection.speciesId !== p.ownerSpeciesId) continue
-      ownerLevel = totalLevel
+    if (p.ownerClassId != null) {
+      const isMain = projection.mainClassId == null || projection.mainClassId === p.ownerClassId
+      if (p.classGrant === 'start' && !isMain) continue
+      if (p.classGrant === 'multiclass' && isMain) continue
+      ownerLevel = classLevels[p.ownerClassId] ?? 0
     }
     else {
-      ownerLevel = classLevels[p.ownerClassId!] ?? 0
+      if (p.ownerSpeciesId != null && projection.speciesId !== p.ownerSpeciesId) continue
+      if (p.ownerLineageId != null && projection.lineageId !== p.ownerLineageId) continue
+      if (p.ownerBackgroundId != null && projection.backgroundId !== p.ownerBackgroundId) continue
+      // Acquis dès la création, sans classe propriétaire : niveau total, au moins 1 (builder avant la classe).
+      ownerLevel = Math.max(1, totalLevel)
     }
     if (ownerLevel < p.ownerLevelRequired) continue
     if (p.ownerSubclassId != null && !subclassIds.includes(p.ownerSubclassId)) continue
@@ -131,6 +150,8 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
       int_mod: mods.int ?? 0,
       wis_mod: mods.wis ?? 0,
       cha_mod: mods.cha ?? 0,
+      duplicate_skills: projection.duplicates?.skills ?? 0,
+      duplicate_tools: projection.duplicates?.tools ?? 0,
     }
     const count = evaluate(p.count, ctx)
     if (count <= 0) continue
@@ -150,7 +171,11 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
       ownerFeatureId: p.ownerFeatureId,
       ownerClassId: p.ownerClassId,
       ownerSpeciesId: p.ownerSpeciesId,
+      ownerLineageId: p.ownerLineageId,
+      ownerBackgroundId: p.ownerBackgroundId,
       ownerSubclassId: p.ownerSubclassId,
+      classGrant: p.classGrant,
+      global: p.global,
       ownerLevelRequired: p.ownerLevelRequired,
       kind: p.kind,
       classLevel: ownerLevel,

@@ -204,6 +204,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       ...abilityInputs.speciesEffects.value,
       ...abilityInputs.featureEffects.value,
       ...abilityInputs.backgroundEffects.value,
+      ...abilityInputs.choiceEffects.value,
       ...classEffects,
     ].filter(e => e.type === 'tool_proficiency').map(e => e.value as string)
     const ov = proficiencyOverridesData.value ?? []

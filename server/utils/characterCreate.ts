@@ -6,12 +6,12 @@ import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
-import { resolveClassSkillProgressionId, classSkillChoiceWriteStmts } from '~~/server/utils/classSkillChoice'
+import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
 import { ALL_TOOLS } from '~~/shared/rules/tools'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
-import { resolveChoices } from '~~/shared/rules/resolve'
+import { resolveChoices, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
@@ -131,6 +131,8 @@ export const createCharacterSchema = z.object({
     }))
     .optional()
     .default([]),
+  // Maîtrises et sorts mineurs choisis sur un point de choix d'espèce, de lignée, d'historique ou de classe.
+  choicePicks: z.array(choicePickSchema).optional().default([]),
   weaponMasteryChoices: z
     .array(z.object({
       progressionId: z.number().int().positive(),
@@ -193,8 +195,14 @@ async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset
   }
 }
 
+interface ValidatedPicks {
+  picks: ChoicePick[]
+  choices: ResolvedChoice[]
+}
+
 // Conservatrice : ne rejette que les violations non ambiguës, pour ne jamais recaler une création légitime.
-async function validateChoices(db: Db, d: CreateCharacterInput, classId: number, subclassId: number | null): Promise<void> {
+// Renvoie les picks génériques à enregistrer (compétences de classe comprises).
+async function validateChoices(db: Db, d: CreateCharacterInput, classId: number, subclassId: number | null, backgroundId: number | null): Promise<ValidatedPicks> {
   if (subclassId != null) {
     const [sub] = await db
       .select({ classId: schema.subclasses.classId })
@@ -243,11 +251,25 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   const metamagicIds = d.metamagicIds ?? []
   const expertiseSkills = d.expertiseSkills ?? []
   const classSkills = d.classSkills ?? []
-  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0 || classSkills.length > 0
-  if (!needsCatalog) return
+  const choicePicks = d.choicePicks ?? []
+  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0 || classSkills.length > 0 || choicePicks.length > 0
+  if (!needsCatalog) return { picks: [], choices: [] }
 
-  const catalog = await buildCatalog(db, { classIds: [classId] })
-  const { choices } = resolveChoices({ classLevels: { [classId]: d.level }, subclassIds: subclassId != null ? [subclassId] : [] }, catalog)
+  const speciesId = d.speciesId ?? undefined
+  const lineageId = d.selectedLineageId ?? undefined
+  const catalog = await buildCatalog(db, {
+    classIds: [classId],
+    speciesIds: speciesId != null ? [speciesId] : [],
+    lineageIds: lineageId != null ? [lineageId] : [],
+    backgroundIds: backgroundId != null ? [backgroundId] : [],
+  })
+  const { choices } = resolveChoices({
+    classLevels: { [classId]: d.level },
+    subclassIds: subclassId != null ? [subclassId] : [],
+    speciesId,
+    lineageId,
+    backgroundId: backgroundId ?? undefined,
+  }, catalog)
 
   if (invocationIds.length > 0) {
     const invChoice = choices.find(c => c.kind === 'invocations')
@@ -293,16 +315,18 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (expertiseSkills.length > expChoice.count) throw new CharacterValidationError(`Trop de compétences d'expertise (${expertiseSkills.length} pour un maximum de ${expChoice.count}).`)
   }
 
-  // Compétences de classe : count + appartenance à la liste de la classe (autoritaire serveur). Les
-  // options viennent du catalogue (from-list, ou toutes pour le Barde).
+  // Compétences de classe : un pick sur le point de choix `skill` de la classe, validé comme les autres.
+  const classSkillPicks: ChoicePick[] = []
   if (classSkills.length > 0) {
-    const skillChoice = choices.find(c => c.kind === 'skill')
+    const skillChoice = choices.find(c => c.kind === 'skill' && c.ownerClassId === classId)
     if (!skillChoice) throw new CharacterValidationError(`Cette classe ne définit pas de choix de compétences.`)
-    if (classSkills.length > skillChoice.count) throw new CharacterValidationError(`Trop de compétences de classe (${classSkills.length} pour un maximum de ${skillChoice.count}).`)
-    const allowed = new Set(skillChoice.options.map(o => o.value))
-    const bad = classSkills.find(s => !allowed.has(s))
-    if (bad) throw new CharacterValidationError(`La compétence de classe « ${bad} » n'est pas dans la liste de la classe.`)
+    classSkillPicks.push(...classSkills.map(value => ({ progressionId: skillChoice.progressionId, value })))
   }
+
+  const picks = [...classSkillPicks, ...choicePicks]
+  const error = choicePicksError(picks, choices)
+  if (error) throw new CharacterValidationError(error)
+  return { picks, choices }
 }
 
 export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: number): Promise<{ id: number }> {
@@ -339,7 +363,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   // 2. Validation serveur (autorité) — AVANT toute écriture
   const ruleset: Ruleset = cls.ruleset
   await validateRulesetCoherence(db, d, ruleset)
-  await validateChoices(db, d, cls.id, subclassId)
+  const validated = await validateChoices(db, d, cls.id, subclassId, backgroundId)
 
   // ── 3. Lectures dépendantes (features passifs, sorts octroyés) — avant le batch ──
   const classFeatureRows = await db
@@ -667,7 +691,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
 
   // Sont DÉRIVÉS (effets/choix, cf. maîtrises) et ne sont plus matérialisés ici : JS de la 1re classe,
   // compétences d'historique SEEDÉ, et le CHOIX de compétences de classe (stocké en character_choices,
-  // dérivé par deriveClassSkills). Reste matérialisé : `backgroundSkills` non-dérivables (historique
+  // dérivé par deriveChoiceProficiencies). Reste matérialisé : `backgroundSkills` non-dérivables (historique
   // custom + Humain variant).
   const skillRows = [
     ...d.backgroundSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'background' as const, isOverride: false })),
@@ -676,11 +700,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     stmts.push(db.insert(schema.characterSkills).values(skillRows))
   }
 
-  // Choix de compétences de classe → character_choices (la maîtrise est dérivée à la lecture).
-  const classSkillProgressionId = await resolveClassSkillProgressionId(db, cls.id)
-  if (d.classSkills.length > 0 && classSkillProgressionId != null) {
-    stmts.push(...classSkillChoiceWriteStmts(db, sheetId, classSkillProgressionId, d.classSkills))
-  }
+  // Picks génériques (compétences de classe comprises) → character_choices ; les maîtrises sont dérivées à la lecture.
+  stmts.push(...choicePickWriteStmts(db, sheetId, validated.picks))
 
   // L'expertise matérialise sa propre ligne 'expert' (upsert, sans dépendre d'une 'proficient' préalable).
   if (d.expertiseSkills?.length) {
@@ -751,9 +772,15 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  if (speciesGrantSpellIds.length) {
+  // Sort mineur choisi par un trait d'espèce ou de lignée (Haut-elfe) : rangé avec les sorts innés.
+  const speciesChoiceSpellIds = validated.picks
+    .filter(p => p.spellId != null && validated.choices.some(c =>
+      c.progressionId === p.progressionId && (c.ownerSpeciesId != null || c.ownerLineageId != null)))
+    .map(p => p.spellId!)
+  const speciesSpellIds = [...new Set([...speciesGrantSpellIds, ...speciesChoiceSpellIds])]
+  if (speciesSpellIds.length) {
     stmts.push(db.insert(schema.characterSpells)
-      .values(speciesGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'species' as const })))
+      .values(speciesSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'species' as const })))
       .onConflictDoNothing())
   }
 

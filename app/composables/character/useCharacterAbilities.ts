@@ -30,7 +30,7 @@ export const useCharacterAbilities = (
     featureEffects: ComputedRef<Effect[]>
     backgroundEffects?: ComputedRef<Effect[]>
     classSavingThrowEffects?: ComputedRef<Effect[]>
-    classSkillEffects?: ComputedRef<Effect[]>
+    choiceEffects?: ComputedRef<Effect[]>
     asiEffects: ComputedRef<Effect[]>
     // Objets actifs (équipés, et liés quand l'objet l'exige) : appliqués au-delà du score naturel.
     itemEffects?: ComputedRef<Effect[]>
@@ -147,13 +147,13 @@ export const useCharacterAbilities = (
     }
     // `saving_throw_proficiency` est projeté sur la même map via la convention `<carac>_save`.
     // Dérivés (plus matérialisés) : compétences d'historique (`backgroundEffects`), JS de la 1re classe
-    // (`classSavingThrowEffects`), compétences de classe choisies (`classSkillEffects`).
+    // (`classSavingThrowEffects`), maîtrises choisies sur un point de choix (`choiceEffects`).
     const effectSources = [
       ...(deps?.speciesEffects.value ?? []),
       ...(deps?.featureEffects.value ?? []),
       ...(deps?.backgroundEffects?.value ?? []),
       ...(deps?.classSavingThrowEffects?.value ?? []),
-      ...(deps?.classSkillEffects?.value ?? []),
+      ...(deps?.choiceEffects?.value ?? []),
     ]
     for (const e of effectSources) {
       let key: string | null = null

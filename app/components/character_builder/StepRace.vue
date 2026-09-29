@@ -206,6 +206,22 @@
 
     <!-- Drakéide : l'ascendance draconique est désormais une lignée « Dragon <couleur> » (D17, lot 6),
          rendue par le picker de sous-race générique ci-dessus — plus de bloc dédié. -->
+
+    <template v-if="speciesChoices.length">
+      <USeparator class="my-6" />
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Choix de l'espèce
+      </p>
+      <div class="space-y-3">
+        <ChoicePointPicker
+          v-for="choice in speciesChoices"
+          :key="choice.progressionId"
+          v-model="state.choicePicks[choice.progressionId]"
+          :choice="choice"
+          :owned="ownedFor(choice)"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -221,6 +237,8 @@ const {
   ABILITY_SHORT,
   ABILITIES,
   SKILLS,
+  speciesChoices,
+  ownedFor,
 } = useCharacterBuilder()
 
 // Gating : les races d'extension (source gatée) ne sont visibles qu'avec le toggle « Étendu ».

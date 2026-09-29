@@ -72,6 +72,20 @@
         </button>
       </p>
 
+      <p
+        v-if="speciesSkillConflicts.length"
+        class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-300"
+      >
+        ⚠️ Doublon avec les compétences choisies pour ton espèce : <strong>{{ speciesSkillConflictLabels }}</strong>. Ce choix d'espèce est gaspillé.
+        <button
+          type="button"
+          class="underline font-semibold ml-1 hover:text-amber-200"
+          @click="goTo('race')"
+        >
+          Revenir aux choix de l'espèce
+        </button>
+      </p>
+
       <div v-if="state.backgroundId === 'custom'" class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 flex flex-col gap-4">
         <div>
           <label class="block text-xs font-bold uppercase tracking-widest text-muted mb-2">Nom de l'historique</label>
@@ -264,6 +278,8 @@ const {
   TOOL_CHOICE_MAP,
   classSkillConflicts,
   classSkillConflictLabels,
+  speciesSkillConflicts,
+  speciesSkillConflictLabels,
   goTo,
 } = useCharacterBuilder()
 

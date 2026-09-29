@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm'
 import * as schema from '../../schema'
 import type { CreatureSize } from '../../schema/character_species'
 import type { Effect } from '../../schema/effects'
+import { ensureFeatureChoice, type FeatureChoice } from './featureChoice'
 
 // Moteur générique du modèle « espèce = base + lignées » (D17) : ajouter une espèce = 1 fichier de
 // données + 1 ligne de registre, sans toucher au moteur. Idempotent (re-run sûr) et additif.
@@ -14,6 +15,7 @@ export interface SpeciesTraitData {
   name: string
   description: string
   effects?: Effect[]
+  choice?: FeatureChoice
 }
 
 export interface LineageData {
@@ -68,7 +70,7 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
   if (!existingBase) speciesInserted++
 
   for (const trait of baseTraits) {
-    const { effects, ...traitData } = trait
+    const { effects, choice, ...traitData } = trait
     const exists = await db
       .select({ id: schema.features.id })
       .from(schema.features)
@@ -76,11 +78,15 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
       .where(and(eq(schema.speciesFeatures.speciesId, base.id), eq(schema.features.name, traitData.name)))
       .limit(1)
       .get()
-    if (exists) continue
-    const feature = await db.insert(schema.features).values({ ...traitData, featureType: 'species_trait', ruleset }).returning().get()
-    featuresInserted++
-    await linkEffects(db, feature.id, effects ?? [])
-    await db.insert(schema.speciesFeatures).values({ speciesId: base.id, featureId: feature.id }).onConflictDoNothing()
+    let featureId = exists?.id
+    if (featureId == null) {
+      const feature = await db.insert(schema.features).values({ ...traitData, featureType: 'species_trait', ruleset }).returning().get()
+      featuresInserted++
+      await linkEffects(db, feature.id, effects ?? [])
+      await db.insert(schema.speciesFeatures).values({ speciesId: base.id, featureId: feature.id }).onConflictDoNothing()
+      featureId = feature.id
+    }
+    if (choice) await ensureFeatureChoice(db, featureId, choice)
   }
 
   const existingChoice = await db
@@ -116,17 +122,21 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
     if (!existingLineage) lineagesInserted++
 
     for (const trait of lineage.traits) {
-      const { effects, ...traitData } = trait
+      const { effects, choice, ...traitData } = trait
       const exists = await db
         .select({ id: schema.features.id })
         .from(schema.features)
         .where(and(eq(schema.features.lineageId, lineageRow.id), eq(schema.features.name, traitData.name)))
         .limit(1)
         .get()
-      if (exists) continue
-      const feature = await db.insert(schema.features).values({ ...traitData, featureType: 'lineage_feature', ruleset, lineageId: lineageRow.id, levelRequired: 1 }).returning().get()
-      featuresInserted++
-      await linkEffects(db, feature.id, effects ?? [])
+      let featureId = exists?.id
+      if (featureId == null) {
+        const feature = await db.insert(schema.features).values({ ...traitData, featureType: 'lineage_feature', ruleset, lineageId: lineageRow.id, levelRequired: 1 }).returning().get()
+        featuresInserted++
+        await linkEffects(db, feature.id, effects ?? [])
+        featureId = feature.id
+      }
+      if (choice) await ensureFeatureChoice(db, featureId, choice)
     }
   }
 

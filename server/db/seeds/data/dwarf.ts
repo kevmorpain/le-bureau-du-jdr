@@ -1,5 +1,6 @@
 import { CreatureSize } from '../../schema/character_species'
 import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
+import { dwarfToolChoice } from './speciesChoices'
 
 // ⚠️ Effets copiés à l'identique des anciennes espèces `hillDwarf`/`mountainDwarf` : c'est ce qui fait
 // tenir le test d'équivalence (D12).
@@ -44,7 +45,8 @@ const baseTraits: SpeciesTraitData[] = [
   {
     name: `Maîtrise des outils`,
     description: `Vous recevez la maîtrise des outils d'artisan de votre choix parmi : outils de forgeron, matériel de brasseur, outils de maçon.`,
-    effects: [{ type: 'tool_proficiency_choice', value: ['artisan_tools', 'brewer_tools', 'mason_tools'] }],
+    effects: [],
+    choice: dwarfToolChoice,
   },
   {
     name: 'Connaissance de la pierre',

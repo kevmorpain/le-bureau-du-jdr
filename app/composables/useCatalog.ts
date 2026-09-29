@@ -16,5 +16,9 @@ export function useCatalog() {
     return resolveChoices(projection, catalog.value).choices
   }
 
-  return { catalog, choicesForClassLevel }
+  function choicesFor(projection: CharacterProjection): ResolvedChoice[] {
+    return resolveChoices(projection, catalog.value).choices
+  }
+
+  return { catalog, choicesForClassLevel, choicesFor }
 }

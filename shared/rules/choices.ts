@@ -31,6 +31,12 @@ export type ChoiceKind = (typeof CHOICE_KINDS)[number]
 
 export const choiceKindEnum = z.enum(CHOICE_KINDS)
 
+// Choix dont chaque pick est une maîtrise (valeur typée sans table) ou un sort mineur : ils passent par un
+// chemin générique (`choicePicks`). Les autres ont chacun leur champ dédié.
+export const VALUE_CHOICE_KINDS = ['skill', 'tool', 'language'] as const satisfies readonly ChoiceKind[]
+export const SPELL_CHOICE_KINDS = ['cantrip'] as const satisfies readonly ChoiceKind[]
+export const PICK_CHOICE_KINDS: readonly ChoiceKind[] = [...VALUE_CHOICE_KINDS, ...SPELL_CHOICE_KINDS]
+
 // `proficient_skills` / `proficient_weapons` se résolvent contre l'état du perso (non cachables) ; le reste via le catalogue.
 export type OptionSource =
   | { type: 'enum', values: string[] }
