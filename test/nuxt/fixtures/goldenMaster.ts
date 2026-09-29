@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
@@ -9,6 +6,7 @@ import { seedElfLineages } from '../../../server/db/seeds/lib/seedElfLineages'
 import { expertiseProgression } from '../../../server/db/seeds/data/expertise'
 import { CLASS_SKILL_CHOICES } from '../../../server/db/seeds/data/classSkills'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../../fixtures/warlockProgression'
+import { replayMigrations } from '../../fixtures/migrations'
 
 // GOLDEN-MASTER — socle du filet d'équivalence création / level-up. Fournit une base libsql (chaîne
 // de migrations de prod rejouée) + un catalogue 2014 représentatif hand-seedé, des identifiants
@@ -80,24 +78,14 @@ export const SPELL = {
   shield: 512, // niv 1 de Magicien
 } as const
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any
 
 /** Rejoue toute la chaîne de migrations (schéma de prod) sur une base libsql en mémoire. */
-async function replayMigrations(): Promise<{ client: Client, db: Db }> {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
+async function migratedDb(): Promise<{ client: Client, db: Db }> {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   const db = drizzle(client, { schema, casing: 'snake_case' })
   return { client, db }
 }
@@ -260,7 +248,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
 
 /** Base + catalogue prêts à l'emploi. */
 export async function bootstrapGoldenDb(): Promise<{ client: Client, db: Db, ids: GoldenIds }> {
-  const { client, db } = await replayMigrations()
+  const { client, db } = await migratedDb()
   const ids = await seedGoldenCatalog(db)
   return { client, db, ids }
 }

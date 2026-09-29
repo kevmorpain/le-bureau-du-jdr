@@ -1,5 +1,4 @@
-import { db, schema } from 'hub:db'
-// `progression` s'écrit via le schéma SOURCE : le cache de `hub:db` peut l'ignorer au démarrage.
+import { db, schema } from '~~/server/utils/db'
 import * as srcSchema from '../../schema'
 import { eq, and, sql } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
@@ -237,7 +236,6 @@ export async function seedClass(
   return { featuresInserted, subclassesInserted }
 }
 
-/** Écriture par `sql` brut : robuste au cache de schéma `hub:db`, périmé après l'ajout de la colonne. */
 async function _syncFeatureTag(featureId: number, tag: FeatureTag | null | undefined) {
   if (tag === undefined) return
   await db.run(sql`UPDATE features SET tag = ${tag ?? null} WHERE id = ${featureId}`)

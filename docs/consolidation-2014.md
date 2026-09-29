@@ -270,5 +270,5 @@ disjointe se parallélisent.
 - **Seeds** : idempotents ; désormais keyés `(name, ruleset)` (cf. `lib/rulesetOf.ts`). Seed prod via
   `POST /api/admin/seed?only=<seeds>` (secret dans `.env`). Déploiement CF **auto au push sur `main`**.
 - **Docs de référence** : `docs/architecture.md`, `docs/rules-engine.md`, `docs/dnd-5.5.md`,
-  `docs/decisions.md`, `docs/audit-completude.md`, `CLAUDE.md` (gotchas hub:db / nuxt dev).
+  `docs/decisions.md`, `docs/audit-completude.md`, `CLAUDE.md` (gotchas nuxt dev).
 - **Historique du chantier** : PR #48–#51 (volet B), #52 (P0). Messages de commit auto-documentés.

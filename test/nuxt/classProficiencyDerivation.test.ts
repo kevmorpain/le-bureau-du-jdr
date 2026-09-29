@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -10,13 +7,12 @@ import { deriveClassGrants, loadClassProficiencyGrants } from '../../server/util
 import { CLASS_PROFICIENCY_CARRIER_NAME, MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 import { proficiencyEffects } from '../fixtures/catalogClasses'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Dérivation des maîtrises de classe, bout en bout : `deriveClassGrants` doit rendre EXACTEMENT les effets de
 // `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé) — maîtrises de départ et JS pour la classe principale,
 // sous-ensemble `multiclass` sans JS pour les autres (règle PHB) —, `[]` sans porteur.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const BARE = 'ClasseSansPorteur'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,16 +36,9 @@ const sheet = (main: string, ...others: string[]) => [
 ]
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   const carrier = async (classId: number, name: string, featureType: string, effects: Effect[]) => {

@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -13,14 +10,13 @@ import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '../../server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '../../server/utils/weaponMasteryDerivation'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
+import { replayMigrations } from '../fixtures/migrations'
 
 // La logique de création extraite est testée contre libsql, SANS la barrière d'auth (DI du `db`) :
 // round-trip d'une création valide, dérivation serveur des emplacements de sorts, et VALIDATION
 // serveur qui rejette les choix illégaux avant toute écriture.
 // FK désactivées : on teste la création, pas l'intégrité référentielle (couverte par migrations.test.ts).
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const WARLOCK = 1
 const FIGHTER = 2
 const FIGHTER_SUBCLASS = 10 // appartient au Guerrier
@@ -53,16 +49,9 @@ function baseInput(over: Partial<Parameters<typeof createCharacter>[1]> = {}) {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   db = drizzle(client, { schema, casing: 'snake_case' })
 
   // Référentiels (cibles de FK — libsql applique les FK) : école de magie, propriétaire,

@@ -1,35 +1,23 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
 import * as srcSchema from '../../server/db/schema'
+import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
 // Backfill du choix de sous-classe (0093) sur base PEUPLÉE — migrations.test.ts ne rejoue la chaîne
 // que sur base vierge. L'owner `choice_carrier` et sa progression doivent être créés, et un 2ᵉ passage
 // ne rien dupliquer.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const FIGHTER = 2
 
 let client: Client
 let orm: ReturnType<typeof drizzle>
-let migration0093: string[]
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   // Base « déployée » : la classe + ses sous-classes existent (le backfill ne crée QUE le point
@@ -39,12 +27,10 @@ beforeAll(async () => {
     { id: 10, classId: FIGHTER, name: 'Champion' },
     { id: 11, classId: FIGHTER, name: 'Maître de guerre' },
   ])
-
-  migration0093 = splitSqlQueries(await readFile(MIGRATIONS_DIR + '0093_subclass_choice_carriers.sql', 'utf8'))
 })
 
 async function apply0093() {
-  for (const stmt of migration0093) await client.execute(stmt)
+  await applyMigration(client, '0093_subclass_choice_carriers.sql')
 }
 
 describe('migration 0093 — backfill du choix de sous-classe (base peuplée)', () => {

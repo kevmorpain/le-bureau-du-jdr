@@ -1,19 +1,15 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { deriveWeaponMasteries } from '../../server/utils/weaponMasteryDerivation'
+import { replayMigrations } from '../fixtures/migrations'
 
 // C4 — dérivation des maîtrises d'armes. La fiche liste les armes choisies aux points de choix
 // `weapon_mastery` (une ligne character_choices.selected_value par arme). No-op ([]) sans pick,
 // ignore les autres kinds. FK OFF APRÈS migrations (patron abilityScoreDerivation) : test de
 // logique de jointure, pas d'intégrité référentielle.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const SHEET = 1
 const OTHER_SHEET = 2
 
@@ -21,15 +17,8 @@ const OTHER_SHEET = 2
 let orm: any
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   await client.execute('PRAGMA foreign_keys = OFF')
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 

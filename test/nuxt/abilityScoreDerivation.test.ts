@@ -1,17 +1,13 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { deriveAbilityScoreChoices } from '../../server/utils/abilityScoreDerivation'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Dérivation de la triade d'origine 2024 : somme des `character_choices.payload` des points de
 // choix `ability_scores`. Map vide sans pick.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const SHEET = 1
 const OTHER_SHEET = 2
 
@@ -19,15 +15,8 @@ const OTHER_SHEET = 2
 let orm: any
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   // FK OFF APRÈS les migrations (certaines, patron recreate-table, remettent le PRAGMA ON) : test
   // de LOGIQUE (jointure character_choices→progression + somme), pas d'intégrité référentielle →
   // évite de seeder une fiche/users/features complets pour de simples picks.

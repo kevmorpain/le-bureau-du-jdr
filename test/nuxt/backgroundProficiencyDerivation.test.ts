@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -10,12 +7,10 @@ import { seedBackgroundProficiencies } from '../../server/db/seeds/lib/seedBackg
 import { deriveBackgroundProficiencies } from '../../server/utils/backgroundProficiencyDerivation'
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
 import { fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Seed des porteurs de maîtrises d'historique + dérivation, bout en bout : la fiche doit dériver
 // exactement les maîtrises FIXES — compétences, outils, langues (== ce que createCharacter matérialisait).
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let orm: any
@@ -30,16 +25,9 @@ const fixedCount = (b: typeof backgroundsData[number]) =>
 const withFixed = backgroundsData.filter(b => fixedCount(b) > 0)
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   // Les historiques doivent exister avant le seed des porteurs (comme en prod).

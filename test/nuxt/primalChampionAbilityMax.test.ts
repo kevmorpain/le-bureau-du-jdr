@@ -1,17 +1,13 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { barbareFeatures } from '../../server/db/seeds/data/barbare'
+import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
 // Migration 0102 : pose sur les bases déployées le relèvement du maximum de FOR/CON de « Champion
 // primitif » (Barbare, niv. 20), que le seed porte pour les bases neuves.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const MIGRATION = '0102_primal_champion_ability_max.sql'
 
 const seedMaxEffects = (barbareFeatures.find(f => f.name === 'Champion primitif')?.effects ?? [])
@@ -30,16 +26,9 @@ async function linkedMaxEffects(featureId: number): Promise<{ type: string, valu
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   await client.execute('PRAGMA foreign_keys = OFF')
   const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
@@ -51,10 +40,7 @@ beforeAll(async () => {
   championFeatureId = (await feature(barbarian.id)).id
   decoyFeatureId = (await feature(fighter.id)).id
 
-  const migration = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-  for (let pass = 0; pass < 2; pass++) {
-    for (const statement of splitSqlQueries(migration)) await client.execute(statement)
-  }
+  for (let pass = 0; pass < 2; pass++) await applyMigration(client, MIGRATION)
 })
 
 describe('migration 0102 — Champion primitif', () => {

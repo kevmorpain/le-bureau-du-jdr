@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -13,12 +10,10 @@ import { dwarf } from '../../server/db/seeds/data/dwarf'
 import { halfling } from '../../server/db/seeds/data/halfling'
 import { gnome } from '../../server/db/seeds/data/gnome'
 import { tiefling } from '../../server/db/seeds/data/tiefling'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Seed + dérivation pour Nain/Halfelin/Gnome/Tieffelin : base ⊕ lignée dérive exactement les effets
 // de l'ancienne espèce séparée. « Vitesse » est portée par la BASE → aucune surcharge attendue.
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 interface Eff { type: string, value: unknown }
 function stable(v: unknown): string {
@@ -37,15 +32,9 @@ let orm: ReturnType<typeof drizzle>
 const info: Record<string, { baseId: number, baseEffects: Eff[], sheetByLineage: Record<string, number> }> = {}
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   for (const sp of ROLLOUT) {

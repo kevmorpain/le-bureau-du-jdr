@@ -1,34 +1,23 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import { loadFeats } from '../../server/utils/catalogSources'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Un `optionSource:{feats, category}` ne doit proposer QUE les dons de cette catégorie (composé avec
 // le filtre d'édition) ; sans catégorie, tous les dons de l'édition.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const CLASS_2024 = 1
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let orm: any
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   await orm.insert(srcSchema.classes).values({ id: CLASS_2024, name: 'Classe 2024', hitDice: '1d8', ruleset: '5.5' })

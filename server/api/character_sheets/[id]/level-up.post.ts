@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import { characterLevelUp, levelUpSchema } from '~~/server/utils/characterLevelUp'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 

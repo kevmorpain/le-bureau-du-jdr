@@ -1,6 +1,5 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
-// Schéma importé de la source : le cache ESM de hub:db peut dropper des colonnes récentes en silence.
 import * as srcSchema from '~~/server/db/schema'
 import { spells } from './data/spells'
 import { spellClassMappings } from './data/spell_class_mappings'

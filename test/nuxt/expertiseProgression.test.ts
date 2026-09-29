@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -9,9 +6,8 @@ import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 import type { SkillKey } from '../../shared/rules/skills'
 import { expertiseProgression, EXPERTISE_OWNER_NAME } from '../../server/db/seeds/data/expertise'
+import { replayMigrations } from '../fixtures/migrations'
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const ROUBLARD = 4
 const BARDE = 5
 const PROFICIENT: SkillKey[] = ['stealth', 'perception', 'acrobatics', 'deception']
@@ -20,16 +16,9 @@ let catalog: Catalog
 const progIdByClass = new Map<number, number>()
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   await orm.insert(srcSchema.classes).values([

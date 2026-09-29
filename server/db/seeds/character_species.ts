@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { eq, and } from 'drizzle-orm'
 import * as srcSchema from '~~/server/db/schema'
 import { characterSpecies } from './data/character_species'
@@ -20,7 +20,6 @@ export default async function seed() {
       ),
     })
 
-    // srcSchema (schéma frais) : le cache hub:db peut dropper la colonne `source` en silence.
     const insertedSpecies = existingSpecies ?? await db
       .insert(srcSchema.characterSpecies)
       .values(speciesData)

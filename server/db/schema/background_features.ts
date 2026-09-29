@@ -2,8 +2,7 @@ import { integer, primaryKey, sqliteTable } from 'drizzle-orm/sqlite-core'
 import backgrounds from './backgrounds'
 import features from './features'
 
-// Jointure historique ⇄ feature, calquée sur `species_features`. Pas de `relations()` : déclarer une
-// relation neuve peut faire planter l'init du cache `hub:db` (`referencedTable`, cf. CLAUDE.md).
+// Jointure historique ⇄ feature, calquée sur `species_features`.
 const backgroundFeatures = sqliteTable(
   'background_features',
   {

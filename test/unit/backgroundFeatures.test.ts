@@ -1,23 +1,11 @@
-import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
+import { applyMigration } from '../fixtures/migrations'
 
 // Rien ne seede encore `background_features` : on vérifie le SCHÉMA que pose la migration 0083
 // (création, cascade FK, clef primaire composite) sur une base peuplée façon prod.
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
-const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
 const MIGRATION = '0083_backgrounds_features_items_mastery.sql'
-
-async function applyMigration(db: ReturnType<typeof createClient>) {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const sql = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-  for (const statement of splitSqlQueries(sql)) {
-    await db.execute(statement)
-  }
-}
 
 async function setup() {
   const db = createClient({ url: ':memory:' })
@@ -28,7 +16,7 @@ async function setup() {
   await db.execute('CREATE TABLE items (id integer PRIMARY KEY NOT NULL, name text NOT NULL, item_type text NOT NULL)')
   await db.execute({ sql: 'INSERT INTO backgrounds (id, name) VALUES (?, ?)', args: [1, 'Acolyte'] })
   await db.execute({ sql: 'INSERT INTO features (id, name) VALUES (?, ?)', args: [1, 'Trait d\'historique'] })
-  await applyMigration(db)
+  await applyMigration(db, MIGRATION)
   return db
 }
 

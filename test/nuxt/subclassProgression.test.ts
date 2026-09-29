@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -8,29 +5,21 @@ import * as srcSchema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 import { subclassChoiceFeature } from '../../server/db/seeds/data/subclassChoice'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Point de choix de SOUS-CLASSE : `buildCatalog` doit résoudre `optionSource:{subclasses}` aux
 // sous-classes de la classe, et `resolveChoices`/`dueChoices` rendre le choix DÛ au niveau d'accès,
 // pas avant.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const FIGHTER = 2
 const SUBCLASS_LEVEL = 3 // Guerrier — niveau d'accès à la sous-classe (contrat CLASS_IDENTITY)
 
 let catalog: Catalog
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   await orm.insert(srcSchema.classes).values({ id: FIGHTER, name: 'Guerrier', hitDice: '1d10', subclassLevel: SUBCLASS_LEVEL })

@@ -1,5 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
 import { INVOCATIONS_KNOWN, warlockPactBoonFeatures, warlockProgressionByOwner } from '../../server/db/seeds/data/warlock_progression'
@@ -9,6 +7,7 @@ import {
   WARLOCK_PACT_BOON_OPTIONS,
   WARLOCK_PROGRESSION_CONTRACT,
 } from '../fixtures/warlockProgression'
+import { applyMigration, migrationFiles, replayMigrations } from '../fixtures/migrations'
 
 // Le catalogue de choix de l'Occultiste (lot 4c) a deux chemins d'arrivée en base : la
 // MIGRATION 0082 pour les bases déjà déployées (on ne re-seede pas la prod) et le SEED
@@ -17,8 +16,6 @@ import {
 // local ne verraient pas les mêmes options de choix. On vérifie aussi que chaque
 // optionSource:{feature_group} résout un ensemble d'options non vide.
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
-const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
 const MIGRATION = '0082_progression_character_choices.sql'
 
 describe('catalogue de choix Occultiste — seed (module propre)', () => {
@@ -56,20 +53,13 @@ describe('catalogue de choix Occultiste — seed (module propre)', () => {
 
 describe('catalogue de choix Occultiste — migration 0082 sur base peuplée', () => {
   it('crée les tables, les 3 options de pacte et les 6 progressions du contrat', async () => {
-    const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
-    const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-
-    const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-    expect(files).toContain(MIGRATION)
+    expect(await migrationFiles()).toContain(MIGRATION)
 
     const db = createClient({ url: ':memory:' })
     await db.execute('PRAGMA foreign_keys = ON')
 
     // 1. Rejouer la chaîne JUSQU'AVANT 0082 → état du schéma de production.
-    for (const file of files.filter(f => f < MIGRATION)) {
-      const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-      for (const statement of splitSqlQueries(sql)) await db.execute(statement)
-    }
+    await replayMigrations(db, { before: MIGRATION })
 
     // 2. Peupler comme la prod : la classe Occultiste, ses features PROPRIÉTAIRES (celles
     //    que la migration retrouve par nom + niveau) et ses 41 invocations déjà taguées
@@ -91,8 +81,7 @@ describe('catalogue de choix Occultiste — migration 0082 sur base peuplée', (
     }
 
     // 3. La migration doit se suffire à elle-même : tables + backfill du catalogue.
-    const sql = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await db.execute(statement)
+    await applyMigration(db, MIGRATION)
 
     // ── 3 options de pacte, taguées, rattachées à l'Occultiste ──
     const pactRows = await db.execute('SELECT name, level_required, feature_type, tag, class_id FROM features WHERE tag = \'pact_boon\'')

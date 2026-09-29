@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import { characterRest, restSchema } from '~~/server/utils/characterRest'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 

@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import { createCharacter, createCharacterSchema, CharacterValidationError } from '~~/server/utils/characterCreate'
 
 export default defineEventHandler(async (event) => {

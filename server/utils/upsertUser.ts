@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import * as schema from '~~/server/db/schema'
 import type { AuthProvider } from '~~/server/db/schema/users'
 

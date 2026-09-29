@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import * as srcSchema from '~~/server/db/schema'
 import { SKILLS } from '~~/shared/rules/skills'
 

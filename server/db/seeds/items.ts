@@ -1,10 +1,9 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
 import * as srcSchema from '~~/server/db/schema'
 import { itemsData } from './data/items'
 
 export default async function seed() {
-  // srcSchema (schéma frais) : le cache hub:db peut dropper les colonnes récentes en silence.
   const existing = await db
     .select({
       id: srcSchema.items.id,
