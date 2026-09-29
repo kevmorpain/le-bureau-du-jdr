@@ -216,6 +216,8 @@ describe('createCharacter — don Doué (choix compétences/outils)', () => {
   it('rejette un outil ou une compétence inconnus (validation de membership)', () => {
     expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { tools: ['Bâton magique'] } })).toThrow()
     expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { skills: ['voler'] } })).toThrow()
+    expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { languages: ['Elfique'] } })).toThrow()
+    expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { languages: ['elvish'] } })).not.toThrow()
   })
 })
 

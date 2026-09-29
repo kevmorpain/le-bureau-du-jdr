@@ -4,7 +4,7 @@ import { z } from 'zod'
 import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 import { PICK_CHOICE_KINDS, SPELL_CHOICE_KINDS, VALUE_CHOICE_KINDS, type ChoiceKind } from '~~/shared/rules/choices'
-import type { ResolvedChoice } from '~~/shared/rules/resolve'
+import { optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import type { SkillKey } from '~~/shared/rules/skills'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,7 +32,7 @@ export function choicePicksError(picks: ChoicePick[], choices: ResolvedChoice[])
     const picked = group.map(p => isSpell ? p.spellId : p.value)
     if (picked.some(v => v == null)) return `Le point de choix (id=${progressionId}) attend ${isSpell ? 'un sort' : 'une valeur'}.`
     if (new Set(picked).size !== picked.length) return `Le même choix est fait deux fois (point de choix id=${progressionId}).`
-    const allowed = new Set(choice.options.map(o => isSpell ? o.spellId : o.value))
+    const allowed = new Set(choice.options.map(optionPickValue))
     const bad = picked.find(v => !allowed.has(v))
     if (bad != null) return `« ${bad} » n'est pas une option du point de choix (id=${progressionId}).`
   }

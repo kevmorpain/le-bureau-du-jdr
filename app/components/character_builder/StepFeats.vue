@@ -77,6 +77,16 @@
         :owned-tools="ownedTools"
       />
 
+      <ChoicePointPicker
+        v-if="state.bonusFeatureId != null && featLanguageCount(state.bonusFeatureId) > 0"
+        v-model="featLanguages"
+        kind="language"
+        :count="featLanguageCount(state.bonusFeatureId)"
+        :options="LANGUAGE_KEYS"
+        :owned="ownedLanguagesForFeat(state.bonusFeatureId)"
+        title="Langues au choix"
+      />
+
       <button
         v-if="state.bonusFeatureId != null"
         type="button"
@@ -91,8 +101,9 @@
 
 <script lang="ts" setup>
 import type { AbilityKey } from '~/data/character-builder'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
-const { state, featNeedsAbility, featNeedsSkilled, proficientSkills, ownedTools } = useCharacterBuilder()
+const { state, featNeedsAbility, featNeedsSkilled, featLanguageCount, ownedLanguagesForFeat, proficientSkills, ownedTools } = useCharacterBuilder()
 const { feats, pending, getById } = useFeats()
 
 const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [
@@ -120,7 +131,7 @@ function setAbility(featureId: number, ability: AbilityKey) {
   }
 }
 
-function skilledModel(key: 'skills' | 'tools') {
+function featChoiceModel(key: 'skills' | 'tools' | 'languages') {
   return computed<string[]>({
     get: () => (state.value.bonusFeatureId != null ? state.value.featChoices[state.value.bonusFeatureId]?.[key] ?? [] : []),
     set: (val) => {
@@ -133,8 +144,9 @@ function skilledModel(key: 'skills' | 'tools') {
     },
   })
 }
-const skilledSkills = skilledModel('skills')
-const skilledTools = skilledModel('tools')
+const skilledSkills = featChoiceModel('skills')
+const skilledTools = featChoiceModel('tools')
+const featLanguages = featChoiceModel('languages')
 
 function toggle(featId: number) {
   state.value.bonusFeatureId = state.value.bonusFeatureId === featId ? null : featId

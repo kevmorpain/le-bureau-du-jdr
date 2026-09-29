@@ -217,7 +217,9 @@
           v-for="choice in speciesChoices"
           :key="choice.progressionId"
           v-model="state.choicePicks[choice.progressionId]"
-          :choice="choice"
+          :kind="choice.kind"
+          :count="choice.count"
+          :options="optionValuesOf(choice)"
           :owned="ownedFor(choice)"
         />
       </div>
@@ -239,6 +241,7 @@ const {
   SKILLS,
   speciesChoices,
   ownedFor,
+  optionValuesOf,
 } = useCharacterBuilder()
 
 // Gating : les races d'extension (source gatée) ne sont visibles qu'avec le toggle « Étendu ».

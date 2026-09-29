@@ -21,7 +21,8 @@ import {
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 import { PICK_CHOICE_KINDS, type ChoiceKind } from '~~/shared/rules/choices'
-import type { ResolvedChoice } from '~~/shared/rules/resolve'
+import { optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { featLanguageChoiceCount } from './useCharacterSheet'
 import type { Effect } from '~~/server/db/schema/effects'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -131,7 +132,7 @@ export interface BuilderState {
 
   // Choix résolus des dons (ex : caractéristique +1 d'Observateur), indexés par
   // features.id du don. Vaut pour le don bonus ET les dons d'ASI.
-  featChoices: Record<number, { ability?: AbilityKey, spellId?: number, skills?: string[], tools?: string[] }>
+  featChoices: Record<number, { ability?: AbilityKey, spellId?: number, skills?: string[], tools?: string[], languages?: string[] }>
 
   // Arcanums mystiques (Occultiste niv 11/13/15/17). À la création d'un perso de haut
   // niveau, TOUS les arcanums débloqués (≤ niveau) sont configurables → map niveau de
@@ -289,6 +290,10 @@ export function useCharacterBuilder() {
     return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'skilled_choice')
   }
 
+  // Le don Linguiste accorde des langues au choix (`language_proficiency_choice`).
+  const featLanguageCount = (featureId: number | null | undefined): number =>
+    featureId == null ? 0 : featLanguageChoiceCount(getFeatById(featureId)?.effects ?? [])
+
   const featChoiceComplete = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return true
     if (featNeedsAbility(featureId) && !state.value.featChoices[featureId]?.ability) return false
@@ -297,6 +302,7 @@ export function useCharacterBuilder() {
       const c = state.value.featChoices[featureId]
       if (((c?.skills?.length ?? 0) + (c?.tools?.length ?? 0)) !== SKILLED_FEAT_COUNT) return false
     }
+    if ((state.value.featChoices[featureId]?.languages?.length ?? 0) !== featLanguageCount(featureId)) return false
     return true
   }
 
@@ -461,17 +467,24 @@ export function useCharacterBuilder() {
   const speciesLanguages = computed<string[]>(() =>
     speciesEffects.value.flatMap(e => e.type === 'language_proficiency' ? [e.value] : []),
   )
+  const featLanguages = (exceptFeatureId?: number): string[] => chosenFeatIds.value
+    .filter(id => id !== exceptFeatureId)
+    .flatMap(id => state.value.featChoices[id]?.languages ?? [])
   // Acquis par une AUTRE source que ce point de choix : masqué de ses options pour ne pas gaspiller le choix.
   function ownedFor(choice: ResolvedChoice): Array<string | number> {
     const others = (kind: ChoiceKind) => chosenValues(kind, choice.progressionId)
     switch (choice.kind) {
       case 'skill': return [...speciesSkills.value, ...variantHumanSkills.value, ...backgroundSkills.value, ...state.value.skills, ...others('skill')]
       case 'tool': return [...grantedTools.value, ...others('tool')]
-      case 'language': return [...speciesLanguages.value, ...others('language')]
+      case 'language': return [...speciesLanguages.value, ...state.value.selectedLanguages, ...featLanguages(), ...others('language')]
       case 'cantrip': return [...state.value.selectedCantrips]
       default: return []
     }
   }
+  const ownedLanguagesForFeat = (featureId: number): string[] =>
+    [...speciesLanguages.value, ...state.value.selectedLanguages, ...chosenValues('language'), ...featLanguages(featureId)]
+  const optionValuesOf = (choice: ResolvedChoice): Array<string | number> =>
+    choice.options.map(optionPickValue).filter((v): v is string | number => v != null)
   // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
   // sans expertise (changement de classe) ne doit pas survivre. Purge différée tant que les compétences
   // d'espèce arrivent (état restauré, changement de race) : un pick sur l'une d'elles serait perdu.
@@ -910,6 +923,8 @@ export function useCharacterBuilder() {
     speciesSkillConflictLabels,
     ownedTools,
     ownedFor,
+    optionValuesOf,
+    ownedLanguagesForFeat,
     // Points de choix génériques
     speciesDbId,
     backgroundDbId,
@@ -938,6 +953,7 @@ export function useCharacterBuilder() {
     featNeedsAbility,
     featNeedsSpell,
     featNeedsSkilled,
+    featLanguageCount,
     featChoiceComplete,
     // Arcanums / Livre des secrets
     needsArcaneMysterium,

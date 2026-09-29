@@ -35,6 +35,9 @@ export interface ProgressionOwner {
   global?: boolean
 }
 
+/** Ce qu'un pick enregistre pour cette option : l'id d'un sort, sinon la valeur (compétence, outil, langue…). */
+export const optionPickValue = (o: ResolvedOption): string | number | undefined => o.spellId ?? o.value
+
 export interface CatalogProgression extends ProgressionOwner {
   progressionId: number
   ownerLevelRequired: number

@@ -32,6 +32,26 @@ describe('resolveFeatEffects — don Résilient', () => {
   })
 })
 
+describe('resolveFeatEffects — don Linguiste', () => {
+  const linguist: Effect[] = [
+    { type: 'ability_increase', value: { ability: 'int', amount: 1 } },
+    { type: 'language_proficiency_choice', value: { count: 3 } },
+  ]
+
+  it('une maîtrise de langue par langue choisie, dans la limite du don', () => {
+    expect(resolveFeatEffects(linguist, { languages: ['draconic', 'giant', 'sylvan', 'orcish'] })).toEqual([
+      { type: 'ability_increase', value: { ability: 'int', amount: 1 } },
+      { type: 'language_proficiency', value: 'draconic' },
+      { type: 'language_proficiency', value: 'giant' },
+      { type: 'language_proficiency', value: 'sylvan' },
+    ])
+  })
+
+  it('n\'accorde aucune langue tant qu\'elles ne sont pas choisies', () => {
+    expect(resolveFeatEffects(linguist, null)).toEqual([{ type: 'ability_increase', value: { ability: 'int', amount: 1 } }])
+  })
+})
+
 describe('resolveFeatEffects — effets sans choix', () => {
   it('les laisse passer inchangés (Vigilant : initiative +5)', () => {
     const alert: Effect[] = [

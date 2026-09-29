@@ -189,8 +189,19 @@
           :tools="state.featChoices[state.asiFeats[lvl]!]?.tools ?? []"
           :owned-skills="proficientSkills"
           :owned-tools="ownedTools"
-          @update:skills="setFeatSkilled(state.asiFeats[lvl]!, 'skills', $event)"
-          @update:tools="setFeatSkilled(state.asiFeats[lvl]!, 'tools', $event)"
+          @update:skills="setFeatChoiceList(state.asiFeats[lvl]!, 'skills', $event)"
+          @update:tools="setFeatChoiceList(state.asiFeats[lvl]!, 'tools', $event)"
+        />
+
+        <ChoicePointPicker
+          v-if="state.asiFeats[lvl] != null && featLanguageCount(state.asiFeats[lvl]) > 0"
+          :model-value="state.featChoices[state.asiFeats[lvl]!]?.languages ?? []"
+          kind="language"
+          :count="featLanguageCount(state.asiFeats[lvl])"
+          :options="LANGUAGE_KEYS"
+          :owned="ownedLanguagesForFeat(state.asiFeats[lvl]!)"
+          title="Langues au choix"
+          @update:model-value="setFeatChoiceList(state.asiFeats[lvl]!, 'languages', $event as string[])"
         />
       </div>
 
@@ -213,6 +224,7 @@
 
 <script lang="ts" setup>
 import { ABILITIES, ABILITY_SHORT, ABILITY_LABELS, type AbilityKey } from '~/data/character-builder'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
 const {
   state,
@@ -225,6 +237,8 @@ const {
   featNeedsAbility,
   featNeedsSpell,
   featNeedsSkilled,
+  featLanguageCount,
+  ownedLanguagesForFeat,
   featChoiceComplete,
   proficientSkills,
   ownedTools,
@@ -254,7 +268,7 @@ function setFeatSpell(featureId: number, spellId: number) {
   }
 }
 
-function setFeatSkilled(featureId: number, key: 'skills' | 'tools', val: string[]) {
+function setFeatChoiceList(featureId: number, key: 'skills' | 'tools' | 'languages', val: string[]) {
   state.value.featChoices = {
     ...state.value.featChoices,
     [featureId]: { ...state.value.featChoices[featureId], [key]: val },

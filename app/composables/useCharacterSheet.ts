@@ -13,16 +13,23 @@ import { useCharacterBackground } from './character/useCharacterBackground'
 import { useCharacterIdentity } from './character/useCharacterIdentity'
 import { sheetTextField } from './character/sheetField'
 
-export type FeatChoices = { ability?: string, spellId?: number, skills?: string[], tools?: string[] } | null
+export type FeatChoices = { ability?: string, spellId?: number, skills?: string[], tools?: string[], languages?: string[] } | null
+
+export const featLanguageChoiceCount = (effects: Effect[]): number =>
+  effects.reduce((n, e) => e.type === 'language_proficiency_choice' ? n + e.value.count : n, 0)
 
 /**
  * Résout les effets « à choix » d'un don selon les choix enregistrés (`character_features.choices`).
  * Sans choix enregistré, l'effet n'accorde rien. `ability_increase_choice`/`saving_throw_proficiency_choice`
  * lisent `choices.ability` (count 1) ; le marqueur `skilled_choice` (don Doué) lit `choices.skills`/`tools`
- * → une maîtrise de compétence/outil par entrée.
+ * et `language_proficiency_choice` (Linguiste) `choices.languages` → une maîtrise par entrée.
  */
 export const resolveFeatEffects = (effects: Effect[], choices: FeatChoices): Effect[] =>
   effects.flatMap((e) => {
+    if (e.type === 'language_proficiency_choice') {
+      return (choices?.languages ?? []).slice(0, e.value.count)
+        .map((language): Effect => ({ type: 'language_proficiency', value: language }))
+    }
     if (e.type === 'ability_increase_choice') {
       const ability = choices?.ability
       if (!ability) return []

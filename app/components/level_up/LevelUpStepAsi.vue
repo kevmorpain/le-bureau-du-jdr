@@ -137,6 +137,17 @@
         :owned-tools="ownedTools"
         class="mt-4"
       />
+
+      <ChoicePointPicker
+        v-if="state.featureId != null && featLanguageCount(state.featureId) > 0"
+        v-model="state.featLanguages"
+        kind="language"
+        :count="featLanguageCount(state.featureId)"
+        :options="LANGUAGE_KEYS"
+        :owned="knownLanguages"
+        title="Langues au choix"
+        class="mt-4"
+      />
     </div>
 
     <div
@@ -151,6 +162,7 @@
 <script lang="ts" setup>
 import type { AbilityBonuses } from '~/composables/useLevelUp'
 import type { AbilityKey } from '~/data/character-builder'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
 const {
   state,
@@ -158,6 +170,8 @@ const {
   finalAbilities,
   featNeedsAbility,
   featNeedsSkilled,
+  featLanguageCount,
+  knownLanguages,
   proficientSkills,
   ownedTools,
   ABILITIES,
@@ -177,6 +191,7 @@ function pickFeat(featureId: number) {
   state.value.featAbility = null
   state.value.featSkills = []
   state.value.featTools = []
+  state.value.featLanguages = []
 }
 
 const remaining = computed(() =>

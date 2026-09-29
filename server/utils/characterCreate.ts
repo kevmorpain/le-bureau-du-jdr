@@ -10,6 +10,7 @@ import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePi
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
 import { ALL_TOOLS } from '~~/shared/rules/tools'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
 import { resolveChoices, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
@@ -37,14 +38,15 @@ const ARCANUM_SPELL_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 
   9: 'arcanum_9',
 }
 
-// Choix portés par un don : caractéristique (demi-don), sort (Faveur des fées), ou maîtrises au
-// choix (Doué → compétences + outils). Membership validée ici ; le compte reste front-autoritaire,
-// comme pour les autres choix de don.
+// Choix portés par un don : caractéristique (demi-don), sort (Faveur des fées), maîtrises au choix
+// (Doué → compétences + outils) ou langues (Linguiste). Membership validée ici ; le compte reste
+// front-autoritaire, comme pour les autres choix de don.
 export const featChoicesSchema = z.object({
   ability: abilityEnum.optional(),
   spellId: z.number().int().positive().optional(),
   skills: z.array(skillEnum).optional(),
   tools: z.array(z.string()).refine(arr => arr.every(t => ALL_TOOLS.includes(t)), 'Outil inconnu').optional(),
+  languages: z.array(z.string()).refine(arr => arr.every(l => LANGUAGE_KEYS.includes(l)), 'Langue inconnue').optional(),
 }).nullable().optional()
 
 export const createCharacterSchema = z.object({
