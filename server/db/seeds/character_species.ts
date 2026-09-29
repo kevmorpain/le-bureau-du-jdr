@@ -1,6 +1,5 @@
 import { db, schema } from '~~/server/utils/db'
 import { eq, and } from 'drizzle-orm'
-import * as srcSchema from '~~/server/db/schema'
 import { characterSpecies } from './data/character_species'
 import { rulesetOf } from './lib/rulesetOf'
 
@@ -21,7 +20,7 @@ export default async function seed() {
     })
 
     const insertedSpecies = existingSpecies ?? await db
-      .insert(srcSchema.characterSpecies)
+      .insert(schema.characterSpecies)
       .values(speciesData)
       .returning()
       .get()

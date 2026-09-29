@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { id } = await createCharacter(db as any, result.data, (user as any).id)
+    const { id } = await createCharacter(db, result.data, (user as any).id)
     setResponseStatus(event, 201)
     return { id }
   }

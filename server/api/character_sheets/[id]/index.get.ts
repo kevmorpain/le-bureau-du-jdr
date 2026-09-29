@@ -1,5 +1,4 @@
 import { db, schema } from '~~/server/utils/db'
-import * as srcSchema from '~~/server/db/schema'
 import { eq, inArray } from 'drizzle-orm'
 import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
@@ -53,10 +52,12 @@ export default defineEventHandler(async (event) => {
         classes: {
           with: {
             class: true,
+            subclass: true,
           },
         },
         spellSlots: true,
         baseAbilityScores: true,
+        abilityScoreImprovements: true,
         skills: true,
         spells: {
           with: {
@@ -70,75 +71,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
   }
 
-  const classesWithSubclass = await db
-    .select()
-    .from(srcSchema.characterClasses)
-    .where(eq(srcSchema.characterClasses.characterSheetId, Number(id)))
-  const subclassIds = classesWithSubclass
-    .map(c => c.subclassId)
-    .filter((v): v is number => v !== null && v !== undefined)
-  const subclasses = subclassIds.length
-    ? await db
-        .select()
-        .from(srcSchema.subclasses)
-        .where(inArray(srcSchema.subclasses.id, subclassIds))
-    : []
-  const subclassById = new Map(subclasses.map(s => [s.id, s]))
-  const subclassIdByClassId = new Map(classesWithSubclass.map(c => [c.classId, c.subclassId]))
-  const pactBoonByClassId = new Map(classesWithSubclass.map(c => [c.classId, (c as any).pactBoon ?? null]))
-
-  const enrichedClasses = characterSheet.classes.map((cc) => {
-    const subclassId = subclassIdByClassId.get(cc.classId) ?? null
-    return {
-      ...cc,
-      subclassId,
-      subclass: subclassId !== null ? (subclassById.get(subclassId) ?? null) : null,
-      pactBoon: pactBoonByClassId.get(cc.classId) ?? null,
-    }
-  })
-
-  const abilityScoreImprovements = await db
-    .select()
-    .from(srcSchema.characterAbilityScoreImprovements)
-    .where(eq(srcSchema.characterAbilityScoreImprovements.characterSheetId, Number(id)))
-
-  const charFeatureMeta = await db
-    .select({
-      featureId: srcSchema.characterFeatures.featureId,
-      source: srcSchema.characterFeatures.source,
-      classLevel: srcSchema.characterFeatures.classLevel,
-      choices: srcSchema.characterFeatures.choices,
-    })
-    .from(srcSchema.characterFeatures)
-    .where(eq(srcSchema.characterFeatures.characterSheetId, Number(id)))
-  const featureMetaById = new Map(charFeatureMeta.map(m => [m.featureId, m]))
-  const enrichedFeatures = characterSheet.features.map((cf) => {
-    const meta = featureMetaById.get(cf.featureId)
-    return {
-      ...cf,
-      source: meta?.source ?? null,
-      classLevel: meta?.classLevel ?? null,
-      choices: meta?.choices ?? null,
-    }
-  })
-
-
   const inventoryRows = await db
-    .select({ inventory: srcSchema.characterInventory, item: srcSchema.items })
-    .from(srcSchema.characterInventory)
-    .innerJoin(srcSchema.items, eq(srcSchema.characterInventory.itemId, srcSchema.items.id))
-    .where(eq(srcSchema.characterInventory.characterSheetId, Number(id)))
+    .select({ inventory: schema.characterInventory, item: schema.items })
+    .from(schema.characterInventory)
+    .innerJoin(schema.items, eq(schema.characterInventory.itemId, schema.items.id))
+    .where(eq(schema.characterInventory.characterSheetId, Number(id)))
 
   const inventoryItemIds = inventoryRows.map(r => r.item.id)
   const itemEffectsRows = inventoryItemIds.length
     ? await db
-        .select({ itemId: srcSchema.itemEffects.itemId, effect: srcSchema.effects })
-        .from(srcSchema.itemEffects)
-        .innerJoin(srcSchema.effects, eq(srcSchema.itemEffects.effectId, srcSchema.effects.id))
-        .where(inArray(srcSchema.itemEffects.itemId, inventoryItemIds))
+        .select({ itemId: schema.itemEffects.itemId, effect: schema.effects })
+        .from(schema.itemEffects)
+        .innerJoin(schema.effects, eq(schema.itemEffects.effectId, schema.effects.id))
+        .where(inArray(schema.itemEffects.itemId, inventoryItemIds))
     : []
 
-  const effectsByItem = new Map<number, typeof srcSchema.effects.$inferSelect[]>()
+  const effectsByItem = new Map<number, typeof schema.effects.$inferSelect[]>()
   for (const link of itemEffectsRows) {
     if (!effectsByItem.has(link.itemId)) effectsByItem.set(link.itemId, [])
     effectsByItem.get(link.itemId)!.push(link.effect)
@@ -150,13 +98,12 @@ export default defineEventHandler(async (event) => {
   }))
 
   // Lignée choisie (D17) : ses features sont fusionnées dans les traits d'espèce.
-  const totalLevel = characterSheet.classes.reduce((sum, c) => sum + ((c as { level?: number }).level ?? 0), 0)
+  const totalLevel = characterSheet.classes.reduce((sum, c) => sum + c.level, 0)
   const species = characterSheet.species
   let speciesWithLineage = species
   let lineageName: string | null = null
   if (species) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const derived = await deriveChosenLineage(db as any, Number(id), species.id, totalLevel)
+    const derived = await deriveChosenLineage(db, Number(id), species.id, totalLevel)
     lineageName = derived.lineageName
 
     // Les features portant une `progression` (ex. « Lignage elfique ») sont des points de choix, pas des traits à afficher.
@@ -165,9 +112,9 @@ export default defineEventHandler(async (event) => {
       .filter((v): v is number => typeof v === 'number')
     const choicePointIds = baseFeatureIds.length
       ? new Set((await db
-          .select({ fid: srcSchema.progression.featureId })
-          .from(srcSchema.progression)
-          .where(inArray(srcSchema.progression.featureId, baseFeatureIds))).map(r => r.fid))
+          .select({ fid: schema.progression.featureId })
+          .from(schema.progression)
+          .where(inArray(schema.progression.featureId, baseFeatureIds))).map(r => r.fid))
       : new Set<number>()
     const visibleBaseFeatures = species.speciesFeatures.filter(sf => !choicePointIds.has(sf.feature?.id as number))
 
@@ -178,28 +125,23 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const originAbilityBonuses = await deriveAbilityScoreChoices(db as any, Number(id))
+  const originAbilityBonuses = await deriveAbilityScoreChoices(db, Number(id))
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const weaponMasteries = await deriveWeaponMasteries(db as any, Number(id))
+  const weaponMasteries = await deriveWeaponMasteries(db, Number(id))
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const backgroundEffects = await deriveBackgroundProficiencies(db as any, characterSheet.backgroundId)
+  const backgroundEffects = await deriveBackgroundProficiencies(db, characterSheet.backgroundId)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { proficiencies: classEffects, savingThrows: classSavingThrowEffects } = await deriveClassGrants(db as any, characterSheet.classes)
+  const { proficiencies: classEffects, savingThrows: classSavingThrowEffects } = await deriveClassGrants(db, characterSheet.classes)
 
   // Compétences de classe dérivées du choix (character_choices, progression skill).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const classSkillEffects = await deriveClassSkills(db as any, Number(id))
+  const classSkillEffects = await deriveClassSkills(db, Number(id))
 
   // Le propriétaire est le joueur ; on n'expose que `{ id, name }` (ni e-mail ni provider).
   const [owner] = characterSheet.ownerId != null
     ? await db
-        .select({ id: srcSchema.users.id, name: srcSchema.users.name })
-        .from(srcSchema.users)
-        .where(eq(srcSchema.users.id, characterSheet.ownerId))
+        .select({ id: schema.users.id, name: schema.users.name })
+        .from(schema.users)
+        .where(eq(schema.users.id, characterSheet.ownerId))
     : []
 
   return {
@@ -207,9 +149,6 @@ export default defineEventHandler(async (event) => {
     owner: owner ?? null,
     // `lineageName` ajouté ici (littéral frais → pas de contrôle d'excès sur le type de `species`).
     species: speciesWithLineage ? { ...speciesWithLineage, lineageName } : speciesWithLineage,
-    features: enrichedFeatures,
-    classes: enrichedClasses,
-    abilityScoreImprovements,
     inventory: inventoryWithItems,
     originAbilityBonuses,
     weaponMasteries,

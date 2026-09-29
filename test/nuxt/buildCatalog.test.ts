@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
@@ -20,28 +20,28 @@ beforeAll(async () => {
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
 
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  await orm.insert(srcSchema.classes).values({ id: WARLOCK_ID, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' })
+  await orm.insert(schema.classes).values({ id: WARLOCK_ID, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' })
 
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
-    await orm.insert(srcSchema.features).values({ id: 10 + i, name: c.ownerName, featureType: 'class_feature', classId: WARLOCK_ID, levelRequired: c.ownerLevelRequired })
-    await orm.insert(srcSchema.progression).values({ featureId: 10 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
+    await orm.insert(schema.features).values({ id: 10 + i, name: c.ownerName, featureType: 'class_feature', classId: WARLOCK_ID, levelRequired: c.ownerLevelRequired })
+    await orm.insert(schema.progression).values({ featureId: 10 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
   }
 
   const pacts = ['Pacte de la Chaîne', 'Pacte de la Lame', 'Pacte du Tome']
   for (let j = 0; j < pacts.length; j++)
-    await orm.insert(srcSchema.features).values({ id: 20 + j, name: pacts[j]!, featureType: 'class_feature', classId: WARLOCK_ID, levelRequired: 3, tag: 'pact_boon' })
+    await orm.insert(schema.features).values({ id: 20 + j, name: pacts[j]!, featureType: 'class_feature', classId: WARLOCK_ID, levelRequired: 3, tag: 'pact_boon' })
 
   // 2 invocations (tag invocation) : l'une avec `levelRequired`, l'autre avec un prérequis de pacte
-  await orm.insert(srcSchema.features).values({ id: 30, name: 'Manifestation niv.5', featureType: 'eldritch_invocation', classId: WARLOCK_ID, levelRequired: 5, tag: 'invocation' })
-  await orm.insert(srcSchema.features).values({ id: 31, name: 'Manifestation Lame', featureType: 'eldritch_invocation', classId: WARLOCK_ID, levelRequired: 1, tag: 'invocation', prerequisites: { requiredPactBoon: 'blade' } })
+  await orm.insert(schema.features).values({ id: 30, name: 'Manifestation niv.5', featureType: 'eldritch_invocation', classId: WARLOCK_ID, levelRequired: 5, tag: 'invocation' })
+  await orm.insert(schema.features).values({ id: 31, name: 'Manifestation Lame', featureType: 'eldritch_invocation', classId: WARLOCK_ID, levelRequired: 1, tag: 'invocation', prerequisites: { requiredPactBoon: 'blade' } })
 
-  await orm.insert(srcSchema.magicSchools).values({ id: 1, name: 'Invocation' })
-  await orm.insert(srcSchema.spells).values({ id: 100, name: 'Sort niv.6', level: 6, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 })
-  await orm.insert(srcSchema.spells).values({ id: 101, name: 'Sort niv.9', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 })
-  await orm.insert(srcSchema.spellClasses).values([{ spellId: 100, classId: WARLOCK_ID }, { spellId: 101, classId: WARLOCK_ID }])
+  await orm.insert(schema.magicSchools).values({ id: 1, name: 'Invocation' })
+  await orm.insert(schema.spells).values({ id: 100, name: 'Sort niv.6', level: 6, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 })
+  await orm.insert(schema.spells).values({ id: 101, name: 'Sort niv.9', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 })
+  await orm.insert(schema.spellClasses).values([{ spellId: 100, classId: WARLOCK_ID }, { spellId: 101, classId: WARLOCK_ID }])
 
   catalog = await buildCatalog(orm, { classIds: [WARLOCK_ID] })
 })

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 import {
@@ -24,9 +24,9 @@ beforeAll(async () => {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  await orm.insert(srcSchema.classes).values([
+  await orm.insert(schema.classes).values([
     { id: GUERRIER, name: 'Guerrier', hitDice: '1d10' },
     { id: PALADIN, name: 'Paladin', hitDice: '1d10' },
   ])
@@ -36,14 +36,14 @@ beforeAll(async () => {
   let progressionOwnerCount = 0
   for (const [className, classId] of [['Guerrier', GUERRIER], ['Paladin', PALADIN]] as const) {
     const ownerId = featureId++
-    await orm.insert(srcSchema.features).values({
+    await orm.insert(schema.features).values({
       id: ownerId,
       name: 'Style de combat',
       featureType: 'class_feature',
       classId,
       levelRequired: FIGHTING_STYLE_LEVEL_BY_CLASS[className],
     })
-    await orm.insert(srcSchema.progression).values({
+    await orm.insert(schema.progression).values({
       featureId: ownerId,
       kind: fightingStyleProgression.kind,
       count: fightingStyleProgression.count,
@@ -53,7 +53,7 @@ beforeAll(async () => {
     progressionOwnerCount++
 
     for (const opt of fightingStyleOptionFeatures(className)) {
-      await orm.insert(srcSchema.features).values({
+      await orm.insert(schema.features).values({
         id: featureId++,
         name: opt.name,
         featureType: opt.featureType,

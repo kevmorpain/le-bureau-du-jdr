@@ -10,7 +10,7 @@ import type { RechargeType } from '~~/server/db/schema/features'
 // lue au début et écrase le plein soin. Comportement historique, reproduit par l'ordre du batch.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+type Db = BaseSQLiteDatabase<'async', any, typeof schema>
 
 export const restSchema = z.object({
   type: z.enum(REST_TYPES),
@@ -26,9 +26,7 @@ export type RestInput = z.infer<typeof restSchema>
 export async function characterRest(db: Db, characterSheetId: number, input: RestInput): Promise<{ success: true, restType: string }> {
   const { type, hitDiceSpent } = input
 
-  // `.query` (API relationnelle) n'est pas typé sur le `Db` générique (schéma `any`) → cast.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const characterSheet = await (db as any).query.characterSheets.findFirst({
+  const characterSheet = await db.query.characterSheets.findFirst({
     where: eq(schema.characterSheets.id, characterSheetId),
     with: {
       features: { with: { feature: true } },

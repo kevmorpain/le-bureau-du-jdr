@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { seedLineages } from '../../server/db/seeds/lib/seedLineages'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
@@ -35,35 +35,35 @@ beforeAll(async () => {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   for (const sp of ROLLOUT) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await seedLineages(orm as any, sp)
 
-    const baseId = (await orm.select({ id: srcSchema.characterSpecies.id }).from(srcSchema.characterSpecies)
-      .where(and(eq(srcSchema.characterSpecies.name, sp.name), eq(srcSchema.characterSpecies.ruleset, '5'))))[0]!.id
+    const baseId = (await orm.select({ id: schema.characterSpecies.id }).from(schema.characterSpecies)
+      .where(and(eq(schema.characterSpecies.name, sp.name), eq(schema.characterSpecies.ruleset, '5'))))[0]!.id
 
     // Progression de CETTE base (une feature d'espèce de la base porte la progression lignée).
-    const baseFeatureIds = (await orm.select({ featureId: srcSchema.speciesFeatures.featureId })
-      .from(srcSchema.speciesFeatures).where(eq(srcSchema.speciesFeatures.speciesId, baseId))).map(r => r.featureId)
-    const prog = (await orm.select().from(srcSchema.progression).where(eq(srcSchema.progression.kind, 'lineage')))
+    const baseFeatureIds = (await orm.select({ featureId: schema.speciesFeatures.featureId })
+      .from(schema.speciesFeatures).where(eq(schema.speciesFeatures.speciesId, baseId))).map(r => r.featureId)
+    const prog = (await orm.select().from(schema.progression).where(eq(schema.progression.kind, 'lineage')))
       .find(p => baseFeatureIds.includes(p.featureId))!
 
     const baseEffects = (await orm
-      .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
-      .from(srcSchema.speciesFeatures)
-      .innerJoin(srcSchema.features, eq(srcSchema.speciesFeatures.featureId, srcSchema.features.id))
-      .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
-      .innerJoin(srcSchema.effects, eq(srcSchema.featureEffects.effectId, srcSchema.effects.id))
-      .where(eq(srcSchema.speciesFeatures.speciesId, baseId)))
+      .select({ type: schema.effects.type, value: schema.effects.value })
+      .from(schema.speciesFeatures)
+      .innerJoin(schema.features, eq(schema.speciesFeatures.featureId, schema.features.id))
+      .innerJoin(schema.featureEffects, eq(schema.featureEffects.featureId, schema.features.id))
+      .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+      .where(eq(schema.speciesFeatures.speciesId, baseId)))
       .map(r => ({ type: r.type, value: r.value }))
 
     const sheetByLineage: Record<string, number> = {}
-    const lineages = await orm.select().from(srcSchema.speciesLineages).where(eq(srcSchema.speciesLineages.speciesId, baseId))
+    const lineages = await orm.select().from(schema.speciesLineages).where(eq(schema.speciesLineages.speciesId, baseId))
     for (const lin of lineages) {
-      const sheet = await orm.insert(srcSchema.characterSheets).values({ name: `Test ${lin.name}`, speciesId: baseId }).returning().get()
-      await orm.insert(srcSchema.characterChoices).values({ characterSheetId: sheet.id, progressionId: prog.id, selectedLineageId: lin.id })
+      const sheet = await orm.insert(schema.characterSheets).values({ name: `Test ${lin.name}`, speciesId: baseId }).returning().get()
+      await orm.insert(schema.characterChoices).values({ characterSheetId: sheet.id, progressionId: prog.id, selectedLineageId: lin.id })
       sheetByLineage[lin.name] = sheet.id
     }
     info[sp.name] = { baseId, baseEffects, sheetByLineage }

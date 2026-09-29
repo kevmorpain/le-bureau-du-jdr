@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { barbareFeatures } from '../../server/db/seeds/data/barbare'
 import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
@@ -30,11 +30,11 @@ beforeAll(async () => {
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
   await client.execute('PRAGMA foreign_keys = OFF')
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  const barbarian = await orm.insert(srcSchema.classes).values({ name: 'Barbare', hitDice: '1d12' }).returning().get()
-  const fighter = await orm.insert(srcSchema.classes).values({ name: 'Guerrier', hitDice: '1d10' }).returning().get()
-  const feature = (classId: number) => orm.insert(srcSchema.features)
+  const barbarian = await orm.insert(schema.classes).values({ name: 'Barbare', hitDice: '1d12' }).returning().get()
+  const fighter = await orm.insert(schema.classes).values({ name: 'Guerrier', hitDice: '1d10' }).returning().get()
+  const feature = (classId: number) => orm.insert(schema.features)
     .values({ name: 'Champion primitif', featureType: 'class_feature', classId, levelRequired: 20 })
     .returning().get()
   championFeatureId = (await feature(barbarian.id)).id

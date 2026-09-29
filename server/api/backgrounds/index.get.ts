@@ -7,6 +7,5 @@ export default defineEventHandler(async (event) => {
   const { characterSheetId } = getQuery(event)
   const charId = characterSheetId ? Number(characterSheetId) : undefined
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return await loadBackgrounds(db as any, charId, '5', isExtendedRequested(event))
+  return await loadBackgrounds(db, charId, '5', isExtendedRequested(event))
 })

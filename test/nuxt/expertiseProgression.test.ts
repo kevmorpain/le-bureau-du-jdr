@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 import type { SkillKey } from '../../shared/rules/skills'
@@ -19,9 +19,9 @@ beforeAll(async () => {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  await orm.insert(srcSchema.classes).values([
+  await orm.insert(schema.classes).values([
     { id: ROUBLARD, name: 'Roublard', hitDice: '1d8' },
     { id: BARDE, name: 'Barde', hitDice: '1d8' },
   ])
@@ -32,7 +32,7 @@ beforeAll(async () => {
     ['Barde', BARDE, 3],
   ] as const) {
     const ownerId = featureId++
-    await orm.insert(srcSchema.features).values({
+    await orm.insert(schema.features).values({
       id: ownerId,
       name: EXPERTISE_OWNER_NAME,
       featureType: 'class_feature',
@@ -40,13 +40,13 @@ beforeAll(async () => {
       levelRequired,
     })
     const prog = expertiseProgression(className)!
-    const [row] = await orm.insert(srcSchema.progression).values({
+    const [row] = await orm.insert(schema.progression).values({
       featureId: ownerId,
       kind: prog.kind,
       count: prog.count,
       optionSource: prog.optionSource,
       replaceable: prog.replaceable ?? false,
-    }).returning({ id: srcSchema.progression.id })
+    }).returning({ id: schema.progression.id })
     progIdByClass.set(classId, row!.id)
   }
 

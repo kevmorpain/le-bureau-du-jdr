@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
 import { deriveClassGrants } from '../../server/utils/classProficiencyDerivation'
 import { MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
@@ -38,14 +38,14 @@ beforeAll(async () => {
   client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    const cls = await orm.insert(srcSchema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
+    const cls = await orm.insert(schema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
     classIdByName.set(className, cls.id)
   }
-  homonymId = (await orm.insert(srcSchema.classes).values({ name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' }).returning().get()).id
-  bareClassId = (await orm.insert(srcSchema.classes).values({ name: 'ClasseSansPorteur', hitDice: '1d6' }).returning().get()).id
+  homonymId = (await orm.insert(schema.classes).values({ name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' }).returning().get()).id
+  bareClassId = (await orm.insert(schema.classes).values({ name: 'ClasseSansPorteur', hitDice: '1d6' }).returning().get()).id
 
   // Effets déjà en base (porteurs de départ en prod) : la migration doit les réutiliser.
   for (const effect of [
@@ -53,7 +53,7 @@ beforeAll(async () => {
     { type: 'weapon_proficiency', value: 'Épée courte' },
     { type: 'tool_proficiency', value: 'Outils de voleur' },
   ] as Effect[]) {
-    await orm.insert(srcSchema.effects).values(effect)
+    await orm.insert(schema.effects).values(effect)
   }
 
   for (let pass = 0; pass < 2; pass++) await applyMigration(client, MIGRATION)

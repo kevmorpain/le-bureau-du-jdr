@@ -25,8 +25,7 @@ export default async function seed() {
     backgroundsData,
   )
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const proficiencies = await seedBackgroundProficiencies(db as any, backgroundsData)
+  const proficiencies = await seedBackgroundProficiencies(db, backgroundsData)
 
   return { ...report, proficiencies }
 }

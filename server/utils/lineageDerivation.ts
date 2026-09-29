@@ -1,13 +1,13 @@
 import { and, eq, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
-import * as srcSchema from '~~/server/db/schema'
+import * as schema from '~~/server/db/schema'
 
 // Gating par `level_required` comparé au niveau TOTAL (un trait d'espèce n'est pas lié à une classe).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-type EffectRow = typeof srcSchema.effects.$inferSelect
-type FeatureRow = typeof srcSchema.features.$inferSelect
+type EffectRow = typeof schema.effects.$inferSelect
+type FeatureRow = typeof schema.features.$inferSelect
 
 export interface DerivedLineageFeature {
   speciesId: number
@@ -31,29 +31,29 @@ export async function deriveChosenLineage(
   const empty: DerivedLineage = { features: [], speedOverride: null, lineageName: null }
 
   const pick = await db
-    .select({ lineageId: srcSchema.characterChoices.selectedLineageId })
-    .from(srcSchema.characterChoices)
+    .select({ lineageId: schema.characterChoices.selectedLineageId })
+    .from(schema.characterChoices)
     .where(and(
-      eq(srcSchema.characterChoices.characterSheetId, characterSheetId),
-      isNotNull(srcSchema.characterChoices.selectedLineageId),
+      eq(schema.characterChoices.characterSheetId, characterSheetId),
+      isNotNull(schema.characterChoices.selectedLineageId),
     ))
     .limit(1)
   const lineageId = pick[0]?.lineageId
   if (lineageId == null) return empty
 
   const lineageRow = await db
-    .select({ name: srcSchema.speciesLineages.name })
-    .from(srcSchema.speciesLineages)
-    .where(eq(srcSchema.speciesLineages.id, lineageId))
+    .select({ name: schema.speciesLineages.name })
+    .from(schema.speciesLineages)
+    .where(eq(schema.speciesLineages.id, lineageId))
     .limit(1)
   const lineageName = lineageRow[0]?.name ?? null
 
   const features = await db
     .select()
-    .from(srcSchema.features)
+    .from(schema.features)
     .where(and(
-      eq(srcSchema.features.lineageId, lineageId),
-      or(isNull(srcSchema.features.levelRequired), lte(srcSchema.features.levelRequired, totalLevel)),
+      eq(schema.features.lineageId, lineageId),
+      or(isNull(schema.features.levelRequired), lte(schema.features.levelRequired, totalLevel)),
     ))
   // Lignée choisie mais aucune feature active (toutes gated au-dessus du niveau) → on garde quand
   // même le nom pour l'affichage de l'identité de lignée.
@@ -61,10 +61,10 @@ export async function deriveChosenLineage(
 
   const ids = features.map(f => f.id)
   const effectRows = await db
-    .select({ featureId: srcSchema.featureEffects.featureId, effect: srcSchema.effects })
-    .from(srcSchema.featureEffects)
-    .innerJoin(srcSchema.effects, eq(srcSchema.featureEffects.effectId, srcSchema.effects.id))
-    .where(inArray(srcSchema.featureEffects.featureId, ids))
+    .select({ featureId: schema.featureEffects.featureId, effect: schema.effects })
+    .from(schema.featureEffects)
+    .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+    .where(inArray(schema.featureEffects.featureId, ids))
 
   const effectsByFeature = new Map<number, EffectRow[]>()
   for (const row of effectRows) {

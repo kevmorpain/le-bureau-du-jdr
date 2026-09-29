@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { buildCatalog } from '../../server/utils/catalog'
 import { replayMigrations } from '../fixtures/migrations'
@@ -17,23 +17,23 @@ beforeAll(async () => {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await seedElfLineages(orm as any)
 
-  const base = await orm.select({ id: srcSchema.characterSpecies.id }).from(srcSchema.characterSpecies)
-    .where(and(eq(srcSchema.characterSpecies.name, 'Elfe'), eq(srcSchema.characterSpecies.ruleset, '5')))
+  const base = await orm.select({ id: schema.characterSpecies.id }).from(schema.characterSpecies)
+    .where(and(eq(schema.characterSpecies.name, 'Elfe'), eq(schema.characterSpecies.ruleset, '5')))
   baseId = base[0]!.id
 })
 
 describe('seedElfLineages — structure', () => {
   it('insère l\'Elfe base (ruleset \'5\') + exactement 3 lignées', async () => {
-    const species = await orm.select().from(srcSchema.characterSpecies).where(eq(srcSchema.characterSpecies.name, 'Elfe'))
+    const species = await orm.select().from(schema.characterSpecies).where(eq(schema.characterSpecies.name, 'Elfe'))
     expect(species).toHaveLength(1)
     expect(species[0]!.ruleset).toBe('5')
 
-    const lineages = await orm.select().from(srcSchema.speciesLineages).where(eq(srcSchema.speciesLineages.speciesId, baseId))
+    const lineages = await orm.select().from(schema.speciesLineages).where(eq(schema.speciesLineages.speciesId, baseId))
     expect(lineages.map(l => l.name).sort()).toEqual(['Drow', 'Elfe des bois', 'Haut-elfe'])
   })
 
@@ -48,10 +48,10 @@ describe('seedElfLineages — structure', () => {
 
   it('les features de base sont des species_trait liées à la base (dont la feature de choix)', async () => {
     const rows = await orm
-      .select({ name: srcSchema.features.name, type: srcSchema.features.featureType })
-      .from(srcSchema.features)
-      .innerJoin(srcSchema.speciesFeatures, eq(srcSchema.speciesFeatures.featureId, srcSchema.features.id))
-      .where(eq(srcSchema.speciesFeatures.speciesId, baseId))
+      .select({ name: schema.features.name, type: schema.features.featureType })
+      .from(schema.features)
+      .innerJoin(schema.speciesFeatures, eq(schema.speciesFeatures.featureId, schema.features.id))
+      .where(eq(schema.speciesFeatures.speciesId, baseId))
     const names = rows.map(r => r.name)
     expect(names).toContain('Sens aiguisés')
     expect(names).toContain('Ascendance féerique')
@@ -60,23 +60,23 @@ describe('seedElfLineages — structure', () => {
   })
 
   it('les features de lignée portent lineage_id + feature_type \'lineage_feature\'', async () => {
-    const lineages = await orm.select().from(srcSchema.speciesLineages).where(eq(srcSchema.speciesLineages.speciesId, baseId))
+    const lineages = await orm.select().from(schema.speciesLineages).where(eq(schema.speciesLineages.speciesId, baseId))
     const haut = lineages.find(l => l.name === 'Haut-elfe')!
     const feats = await orm
-      .select({ name: srcSchema.features.name, type: srcSchema.features.featureType })
-      .from(srcSchema.features)
-      .where(eq(srcSchema.features.lineageId, haut.id))
+      .select({ name: schema.features.name, type: schema.features.featureType })
+      .from(schema.features)
+      .where(eq(schema.features.lineageId, haut.id))
     expect(feats.length).toBeGreaterThan(0)
     for (const f of feats) expect(f.type).toBe('lineage_feature')
     expect(feats.map(f => f.name)).toContain('Sort mineur') // trait propre du haut-elfe
   })
 
   it('idempotent : relancer le seed n\'insère rien de plus', async () => {
-    const before = await orm.select().from(srcSchema.speciesLineages).where(eq(srcSchema.speciesLineages.speciesId, baseId))
+    const before = await orm.select().from(schema.speciesLineages).where(eq(schema.speciesLineages.speciesId, baseId))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = await seedElfLineages(orm as any)
     expect(r).toEqual({ speciesInserted: 0, lineagesInserted: 0, featuresInserted: 0 })
-    const after = await orm.select().from(srcSchema.speciesLineages).where(eq(srcSchema.speciesLineages.speciesId, baseId))
+    const after = await orm.select().from(schema.speciesLineages).where(eq(schema.speciesLineages.speciesId, baseId))
     expect(after).toHaveLength(before.length)
   })
 })

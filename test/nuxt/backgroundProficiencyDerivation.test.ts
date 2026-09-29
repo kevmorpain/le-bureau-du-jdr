@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { eq } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { seedBackgroundProficiencies } from '../../server/db/seeds/lib/seedBackgroundProficiencies'
 import { deriveBackgroundProficiencies } from '../../server/utils/backgroundProficiencyDerivation'
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
@@ -28,11 +28,11 @@ beforeAll(async () => {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   // Les historiques doivent exister avant le seed des porteurs (comme en prod).
   for (const bg of backgroundsData) {
-    const row = await orm.insert(srcSchema.backgrounds).values({
+    const row = await orm.insert(schema.backgrounds).values({
       name: bg.name,
       description: bg.description,
       skillProficiencies: bg.skillProficiencies,
@@ -58,9 +58,9 @@ describe('seedBackgroundProficiencies — structure', () => {
   })
 
   it('le porteur est une feature proficiency_grant (jamais matérialisée ni affichée)', async () => {
-    const carriers = await orm.select({ type: srcSchema.features.featureType })
-      .from(srcSchema.features)
-      .innerJoin(srcSchema.backgroundFeatures, eq(srcSchema.backgroundFeatures.featureId, srcSchema.features.id))
+    const carriers = await orm.select({ type: schema.features.featureType })
+      .from(schema.features)
+      .innerJoin(schema.backgroundFeatures, eq(schema.backgroundFeatures.featureId, schema.features.id))
     expect(carriers.length).toBe(withFixed.length)
     expect(carriers.every((c: { type: string }) => c.type === 'proficiency_grant')).toBe(true)
   })

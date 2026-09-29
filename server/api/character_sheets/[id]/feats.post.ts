@@ -1,6 +1,5 @@
 import { db } from '~~/server/utils/db'
 import * as schema from '~~/server/db/schema'
-import * as srcSchema from '~~/server/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { abilityEnum } from '~~/shared/rules/abilities'
@@ -32,7 +31,7 @@ export default defineEventHandler(async (event) => {
   if (!feat) throw createError({ statusCode: 404, statusMessage: 'Don introuvable' })
 
   await db
-    .insert(srcSchema.characterFeatures)
+    .insert(schema.characterFeatures)
     .values({
       characterSheetId,
       featureId,
@@ -42,7 +41,7 @@ export default defineEventHandler(async (event) => {
       choices: choices ?? null,
     } as any)
     .onConflictDoUpdate({
-      target: [srcSchema.characterFeatures.characterSheetId, srcSchema.characterFeatures.featureId],
+      target: [schema.characterFeatures.characterSheetId, schema.characterFeatures.featureId],
       set: { choices: choices ?? null },
     })
 

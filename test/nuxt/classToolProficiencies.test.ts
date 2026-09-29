@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
@@ -26,20 +26,20 @@ beforeAll(async () => {
   client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  const carrier = (classId: number) => orm.insert(srcSchema.features)
+  const carrier = (classId: number) => orm.insert(schema.features)
     .values({ name: 'Maîtrises de la classe', featureType: 'proficiency_grant', classId, levelRequired: 1 })
     .returning().get()
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    const cls = await orm.insert(srcSchema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
+    const cls = await orm.insert(schema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
     carrierIdByClass.set(className, (await carrier(cls.id)).id)
   }
-  const homonym = await orm.insert(srcSchema.classes).values({ name: 'Roublard', hitDice: '1d8', ruleset: '5.5' }).returning().get()
+  const homonym = await orm.insert(schema.classes).values({ name: 'Roublard', hitDice: '1d8', ruleset: '5.5' }).returning().get()
   homonymCarrierId = (await carrier(homonym.id)).id
 
   // Effet déjà en base (porteur d'historique Criminel) : la migration doit le réutiliser.
-  await orm.insert(srcSchema.effects).values({ type: 'tool_proficiency', value: 'Outils de voleur' })
+  await orm.insert(schema.effects).values({ type: 'tool_proficiency', value: 'Outils de voleur' })
 
   for (let pass = 0; pass < 2; pass++) await applyMigration(client, MIGRATION)
 })

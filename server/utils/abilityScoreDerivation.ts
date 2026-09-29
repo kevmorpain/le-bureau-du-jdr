@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
-import * as srcSchema from '~~/server/db/schema'
+import * as schema from '~~/server/db/schema'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -8,12 +8,12 @@ type Db = BaseSQLiteDatabase<'async', any, any>
 
 export async function deriveAbilityScoreChoices(db: Db, characterSheetId: number): Promise<Partial<Record<AbilityKey, number>>> {
   const rows = await db
-    .select({ payload: srcSchema.characterChoices.payload })
-    .from(srcSchema.characterChoices)
-    .innerJoin(srcSchema.progression, eq(srcSchema.progression.id, srcSchema.characterChoices.progressionId))
+    .select({ payload: schema.characterChoices.payload })
+    .from(schema.characterChoices)
+    .innerJoin(schema.progression, eq(schema.progression.id, schema.characterChoices.progressionId))
     .where(and(
-      eq(srcSchema.characterChoices.characterSheetId, characterSheetId),
-      eq(srcSchema.progression.kind, 'ability_scores'),
+      eq(schema.characterChoices.characterSheetId, characterSheetId),
+      eq(schema.progression.kind, 'ability_scores'),
     ))
 
   const bonuses: Partial<Record<AbilityKey, number>> = {}
