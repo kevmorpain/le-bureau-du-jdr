@@ -21,7 +21,7 @@
 | [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, concentration, encombrement… |
 | [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S6 | Rituel, limite de préparation, zone d'effet |
-| [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P5 | Choix jamais proposés |
+| [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P7 | Choix jamais proposés |
 | [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 118 sorts sur ~360, dons, objets magiques |
 | [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U10 | Lecture des sorts, ~~montée en puissance~~, historique de jets |
 | [N — Contrôle manuel & préférences](#n--contrôle-manuel--préférences) | N1–N6 | L'app décide tout, le joueur ne peut rien reprendre |
@@ -109,7 +109,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | **R6** | [#154](https://github.com/kevmorpain/le-bureau-du-jdr/issues/154) | Jets de mort : stockés en localStorage, 20 et 1 naturels, stabilisation |
 | **R7** | [#155](https://github.com/kevmorpain/le-bureau-du-jdr/issues/155) | Économie d'action décorative en Mode Combat |
 | **R8** | [#156](https://github.com/kevmorpain/le-bureau-du-jdr/issues/156) | Repos long : PV temporaires, jets de mort, épuisement, recharges partielles |
-| **R9** | ↪ B12 [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104), B14 [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109) ; volet compétences fait (#101) | Prérequis et maîtrises de multiclassage |
+| **R9** | ✅ résolu : maîtrises (B12 [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104)), prérequis non bloquants (B14 [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109)), compétences (#101) | Prérequis et maîtrises de multiclassage |
 | **R10** | [#157](https://github.com/kevmorpain/le-bureau-du-jdr/issues/157) | Force requise des armures lourdes jamais vérifiée |
 
 ---
@@ -153,6 +153,8 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 | **P3** | [#173](https://github.com/kevmorpain/le-bureau-du-jdr/issues/173) | Sorts de domaine, de cercle et Secrets magiques |
 | **P4** | [#174](https://github.com/kevmorpain/le-bureau-du-jdr/issues/174) | Ennemi juré et Explorateur-né (Rôdeur) |
 | **P5** | [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175) | 2ᵉ style de combat du Champion (niveau 10) |
+| **P6** | [#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204) | Outils au choix de classe jamais proposés (Barde, Moine) |
+| **P7** | [#205](https://github.com/kevmorpain/le-bureau-du-jdr/issues/205) | Doublon de maîtrise d'outil (classe et historique) ni signalé ni remplaçable |
 
 > **Généralisation** (recompté le 2026-09-27) : sur les 17 `ChoiceKind` canoniques, **10** sont
 > seedés en `progression` (`subclass`, `lineage`, `pact_boon`, `fighting_style`, `expertise`,

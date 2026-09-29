@@ -13,43 +13,17 @@ import {
 import { SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsKnown'
 import { maxSpellLevelForLevel } from '~~/shared/rules/spellSlots'
-import { multiclassSkillGrant, type MulticlassSkillGrant } from '~~/shared/rules/multiclass'
+import {
+  meetsMulticlassPrerequisites,
+  multiclassSkillGrant,
+  type MulticlassPrerequisites,
+  type MulticlassSkillGrant,
+} from '~~/shared/rules/multiclass'
+import { proficiencyLabels } from '~~/shared/utils/item'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
 import { useAbilityEffectInputs } from './useCharacterSheet'
-
-// ─── D&D 5e 2014 Rule Data ────────────────────────────────────────────────────
-
-export const LU_MULTICLASS_PREREQS: Record<string, { or?: Array<Partial<Record<AbilityKey, number>>>, [key: string]: any }> = {
-  barbarian: { str: 13 },
-  bard: { cha: 13 },
-  cleric: { wis: 13 },
-  druid: { wis: 13 },
-  fighter: { or: [{ str: 13 }, { dex: 13 }] },
-  monk: { dex: 13, wis: 13 },
-  paladin: { str: 13, cha: 13 },
-  ranger: { dex: 13, wis: 13 },
-  rogue: { dex: 13 },
-  sorcerer: { cha: 13 },
-  warlock: { cha: 13 },
-  wizard: { int: 13 },
-}
-
-export const LU_MULTICLASS_PROFICIENCIES: Record<string, string[]> = {
-  barbarian: ['Boucliers', 'Armes courantes', 'Armes de guerre'],
-  bard: ['Armures légères', '1 compétence au choix', '1 instrument de musique'],
-  cleric: ['Armures légères', 'Armures intermédiaires', 'Boucliers'],
-  druid: ['Armures légères', 'Armures intermédiaires (non-métal)', 'Boucliers (non-métal)'],
-  fighter: ['Armures légères', 'Armures intermédiaires', 'Boucliers', 'Armes courantes', 'Armes de guerre'],
-  monk: ['Armes courantes', 'Épées courtes'],
-  paladin: ['Armures légères', 'Armures intermédiaires', 'Boucliers', 'Armes courantes', 'Armes de guerre'],
-  ranger: ['Armures légères', 'Armures intermédiaires', 'Boucliers', 'Armes courantes', 'Armes de guerre', '1 compétence'],
-  rogue: ['Armures légères', '1 compétence au choix', 'Outils de voleur'],
-  sorcerer: [],
-  warlock: ['Armures légères', 'Armes courantes'],
-  wizard: [],
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -274,7 +248,14 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   // Choix résolus aux niveaux d'ARRIVÉE et de DÉPART : le delta pilote le nombre de nouvelles
   // invocations et compétences d'expertise.
   const { catalog, choicesForClassLevel } = useCatalog()
-  const { resolveClassId, subclassCatalogFor, multiclassSkillCountFor } = useBuilderEntities()
+  const {
+    resolveClassId,
+    subclassCatalogFor,
+    multiclassSkillCountFor,
+    multiclassPrerequisitesFor,
+    classProficienciesFor,
+  } = useBuilderEntities()
+  const classDbIdOf = (classSlug: string) => resolveClassId(CLASSES.find(c => c.id === classSlug)?.dbName)
   const luClassDbId = computed(() =>
     charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId
     ?? resolveClassId(pickedClass.value?.dbName),
@@ -287,6 +268,30 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     if (!state.value.isMulticlass || dbId == null) return { count: 0, options: [] }
     return multiclassSkillGrant(dbId, multiclassSkillCountFor(dbId), catalog.value)
   })
+
+  // Prérequis de multiclassage, affichés sans bloquer. AideDD : « les valeurs de caractéristiques requises
+  // par votre classe actuelle et par la nouvelle classe » — pour un personnage déjà multiclassé, chaque
+  // classe détenue.
+  const currentClassesPrerequisites = computed(() => charClasses.value.map(c => ({
+    className: c.className,
+    prerequisites: multiclassPrerequisitesFor(c.dbClassId),
+  })))
+  const multiclassPrerequisitesOf = (classSlug: string): MulticlassPrerequisites =>
+    multiclassPrerequisitesFor(classDbIdOf(classSlug))
+  const meetsCurrentClassesPrerequisites = computed(() =>
+    currentClassesPrerequisites.value.every(c => meetsMulticlassPrerequisites(c.prerequisites, finalAbilities.value)))
+  const meetsTargetPrerequisites = (classSlug: string): boolean =>
+    meetsMulticlassPrerequisites(multiclassPrerequisitesOf(classSlug), finalAbilities.value)
+
+  // Ce que rejoindre une classe accorde (AideDD, tableau des maîtrises du multiclassage) : son porteur de
+  // multiclassage et son nombre de compétences, lus dans le catalogue comme les prérequis.
+  const multiclassGainsOf = (classSlug: string): { proficiencies: string[], skillCount: number } => {
+    const dbId = classDbIdOf(classSlug)
+    return {
+      proficiencies: proficiencyLabels(classProficienciesFor(dbId).multiclass),
+      skillCount: multiclassSkillCountFor(dbId),
+    }
+  }
 
   // ── Pact Boon availability (Warlock level 3) ──────────────────────────────
 
@@ -681,6 +686,11 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     needsMulticlassSkills,
     multiclassSkills,
     requiredMulticlassSkillPicks,
+    currentClassesPrerequisites,
+    meetsCurrentClassesPrerequisites,
+    multiclassPrerequisitesOf,
+    meetsTargetPrerequisites,
+    multiclassGainsOf,
     hasSpellcasting,
     spellLearning,
     cantripsToLearn,

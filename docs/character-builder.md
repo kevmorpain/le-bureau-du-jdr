@@ -346,7 +346,7 @@ produit :
 |---|---|
 | `skills` (lignes `character_skills`) | `materializedSkills` (historique perso + Humain variant, = payload `backgroundSkills`) en `proficient`, `expertiseSkills` en `expert` |
 | `classSkillEffects` | `state.skills` |
-| `classSavingThrowEffects` | `CLASS_PROFICIENCIES[classe].savingThrows` (source du seed) |
+| `classSavingThrowEffects` | `proficiencies.savingThrows` de la classe dans `/api/catalog/classes` (porteurs en base, comme la fiche) |
 | `backgroundEffects` | compétences de l'historique seedé |
 | `speciesEffects` | effets du catalogue (`/api/catalog/species/[id]`, base + lignée choisie) ; aucun pour l'Humain variant |
 | `featureEffects` | dons persistés (`chosenFeatIds`, résolus par `resolveFeatEffects`) + manifestations |
@@ -484,7 +484,7 @@ Corps accepté :
 | Table | Colonnes manquantes |
 |---|---|
 | `character_species` | parentId, abilityBonuses, traits, darkvision — compensé par `app/data/` |
-| `classes` | savingThrows, skillChoiceCount, skillChoiceOptions, armorProf, weaponProf, role — compensé par `app/data/`. `subclass_level` et `spellcasting_type` sont **en base** depuis la migration 0080 ; le builder garde sa copie jusqu'au recâblage front (roadmap `dnd-5.5.md` §3, point 6), sous garde-fou `test/nuxt/classesIdentityFront.test.ts` |
+| `classes` | skillChoiceCount, skillChoiceOptions, role — compensé par `app/data/`. JS et maîtrises d'armes/armures/outils : porteurs `proficiency_grant` / `multiclass_proficiency_grant` en base (seedés depuis `shared/rules/classProficiencies.ts`), lus par le builder via `/api/catalog/classes` (`proficiencies`). `subclass_level` et `spellcasting_type` sont **en base** depuis la migration 0080 ; le builder garde sa copie jusqu'au recâblage front (roadmap `dnd-5.5.md` §3, point 6), sous garde-fou `test/nuxt/classesIdentityFront.test.ts` |
 | `backgrounds` | equipment JSON, suggestions personnalité/idéaux/liens/défauts — compensé par `app/data/` |
 | `character_sheets` | fightingStyle — stocker comme feature à la création ou ignorer V1 |
 | `character_species` | Drow (Elfe Noir) absent de la DB — mapping vers null ou 'Elfe des bois' |

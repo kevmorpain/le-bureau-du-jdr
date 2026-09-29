@@ -7,18 +7,61 @@ import type { SkillKey } from '~~/shared/rules/skills'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
 
-export async function deriveClassProficiencies(db: Db, classIds: number[]): Promise<Effect[]> {
-  if (!classIds.length) return []
+// Maîtrises d'une classe lues sur ses porteurs : de départ (armes, armures, outils) et JS pour la 1re classe
+// (`proficiency_grant`), sous-ensemble reçu en la rejoignant par multiclassage (`multiclass_proficiency_grant`).
+export interface ClassProficiencyGrants {
+  start: Effect[]
+  savingThrows: Effect[]
+  multiclass: Effect[]
+}
+
+export async function loadClassProficiencyGrants(db: Db, classIds: number[]): Promise<Map<number, ClassProficiencyGrants>> {
+  const grants = new Map<number, ClassProficiencyGrants>(classIds.map(id => [id, { start: [], savingThrows: [], multiclass: [] }]))
+  if (!classIds.length) return grants
   const rows = await db
-    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
+    .select({
+      classId: srcSchema.features.classId,
+      featureType: srcSchema.features.featureType,
+      type: srcSchema.effects.type,
+      value: srcSchema.effects.value,
+    })
     .from(srcSchema.features)
     .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
     .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
     .where(and(
       inArray(srcSchema.features.classId, classIds),
-      eq(srcSchema.features.featureType, 'proficiency_grant'),
+      inArray(srcSchema.features.featureType, ['proficiency_grant', 'multiclass_proficiency_grant']),
     ))
-  return rows.map(r => ({ type: r.type, value: r.value }) as Effect)
+
+  for (const r of rows) {
+    const classGrants = grants.get(r.classId!)!
+    const effect = { type: r.type, value: r.value } as Effect
+    if (r.featureType === 'multiclass_proficiency_grant') classGrants.multiclass.push(effect)
+    else if (effect.type === 'saving_throw_proficiency') classGrants.savingThrows.push(effect)
+    else classGrants.start.push(effect)
+  }
+  return grants
+}
+
+export interface ClassGrants {
+  proficiencies: Effect[]
+  savingThrows: Effect[]
+}
+
+// PHB (multiclassage) : la 1re classe accorde ses maîtrises de départ et ses JS ; une classe rejointe, son
+// sous-ensemble de multiclassage et aucun JS. Classe principale = celle marquée `isMain`, à défaut la première.
+export async function deriveClassGrants(db: Db, classes: Array<{ classId: number, isMain: boolean }>): Promise<ClassGrants> {
+  const mainClassId = classes.find(c => c.isMain)?.classId ?? classes[0]?.classId
+  if (mainClassId == null) return { proficiencies: [], savingThrows: [] }
+  const carriers = await loadClassProficiencyGrants(db, classes.map(c => c.classId))
+  const main = carriers.get(mainClassId)!
+  return {
+    proficiencies: [
+      ...main.start,
+      ...classes.filter(c => c.classId !== mainClassId).flatMap(c => carriers.get(c.classId)!.multiclass),
+    ],
+    savingThrows: main.savingThrows,
+  }
 }
 
 // Compétences de classe CHOISIES → dérivées du pick stocké en character_choices (progression `skill`),
@@ -35,21 +78,4 @@ export async function deriveClassSkills(db: Db, characterSheetId: number): Promi
   return rows
     .filter((r): r is { value: string } => r.value != null)
     .map(r => ({ type: 'skill_proficiency', value: { skill: r.value as SkillKey } }) as Effect)
-}
-
-// Les JS ne sont accordés que par la 1re classe (PHB) : dérivation scopée à la classe PRINCIPALE, pas
-// à toutes (deriveClassProficiencies), pour ne pas donner les JS d'une classe multiclassée.
-export async function deriveMainClassSavingThrows(db: Db, mainClassId: number | null | undefined): Promise<Effect[]> {
-  if (mainClassId == null) return []
-  const rows = await db
-    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
-    .from(srcSchema.features)
-    .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
-    .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
-    .where(and(
-      eq(srcSchema.features.classId, mainClassId),
-      eq(srcSchema.features.featureType, 'proficiency_grant'),
-      eq(srcSchema.effects.type, 'saving_throw_proficiency'),
-    ))
-  return rows.map(r => ({ type: r.type, value: r.value }) as Effect)
 }

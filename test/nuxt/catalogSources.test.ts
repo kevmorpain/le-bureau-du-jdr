@@ -73,6 +73,22 @@ beforeAll(async () => {
   ])
   await orm.insert(srcSchema.featureEffects).values({ featureId: 100, effectId: 1 })
 
+  // Porteurs de maîtrises du Guerrier : départ (JS + armure) et multiclassage. L'Occultiste n'en a pas.
+  await orm.insert(srcSchema.effects).values([
+    { id: 10, type: 'saving_throw_proficiency', value: { ability: 'str' } },
+    { id: 11, type: 'proficiency', value: 'all_armor' },
+    { id: 12, type: 'proficiency', value: 'light' },
+  ])
+  await orm.insert(srcSchema.features).values([
+    { id: 300, name: 'Maîtrises de la classe', featureType: 'proficiency_grant', classId: FIGHTER, levelRequired: 1 },
+    { id: 301, name: 'Maîtrises de multiclassage', featureType: 'multiclass_proficiency_grant', classId: FIGHTER, levelRequired: 1 },
+  ])
+  await orm.insert(srcSchema.featureEffects).values([
+    { featureId: 300, effectId: 10 },
+    { featureId: 300, effectId: 11 },
+    { featureId: 301, effectId: 12 },
+  ])
+
   // Invocations (feature_type='eldritch_invocation') — l'une avec levelRequired, l'autre null
   // (→ défaut 1) + prérequis de pacte + un effet.
   await orm.insert(srcSchema.features).values([
@@ -145,6 +161,16 @@ describe('loadClasses', () => {
 
     const warlock = classes[1]!
     expect(warlock.subclasses).toEqual([])
+  })
+
+  it('maîtrises de chaque classe lues sur ses porteurs : départ, JS, multiclassage', async () => {
+    const [fighter, warlock] = await loadClasses(orm)
+    expect(fighter!.proficiencies).toEqual({
+      start: [{ type: 'proficiency', value: 'all_armor' }],
+      savingThrows: [{ type: 'saving_throw_proficiency', value: { ability: 'str' } }],
+      multiclass: [{ type: 'proficiency', value: 'light' }],
+    })
+    expect(warlock!.proficiencies).toEqual({ start: [], savingThrows: [], multiclass: [] })
   })
 })
 

@@ -220,16 +220,46 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   tiers [#113](https://github.com/kevmorpain/le-bureau-du-jdr/issues/113), `character_spells` sans classe [#114](https://github.com/kevmorpain/le-bureau-du-jdr/issues/114) ; validation serveur des sorts dans F12 [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124).
 - Découvert : signalé par l'utilisateur (2026-09-23). **✅ RÉSOLU.**
 
+### B12 — Multiclasse : maîtrises de départ accordées en entier · serveur + migration — ✅ RÉSOLU
+- **Symptôme** : un Magicien qui prenait un niveau de Guerrier ou de Paladin recevait les armures
+  lourdes ; la fiche affichait l'union des maîtrises **de départ** de toutes les classes.
+- **Règle** (AideDD, [multiclassage](https://www.aidedd.org/regles/personnalisation/multiclassage/),
+  tableau des maîtrises) : une classe autre que la première n'accorde qu'une partie de ses maîtrises de
+  départ (Barbare : boucliers et armes, aucune armure ; Druide : armures, aucune arme ; Ensorceleur et
+  Magicien : rien).
+- **Correctif** : champ `multiclass` de `CLASS_PROFICIENCIES` → porteur « Maîtrises de multiclassage »
+  (`multiclass_proficiency_grant`) ; `deriveClassGrants` lit le porteur de départ de la classe
+  principale et celui de multiclassage des autres. Bases déployées : migration `0105`. Suivi :
+  [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104).
+
+### B14 — Prérequis de multiclassage : seule la nouvelle classe était vérifiée · front + migration — ✅ RÉSOLU
+- **Règle** (AideDD, multiclassage) : « vous devez posséder les valeurs de caractéristiques requises par
+  votre classe actuelle et par la nouvelle classe ». Pour un personnage déjà multiclassé, on évalue
+  chaque classe détenue (lecture retenue : aucun multiclassé en prod au moment du choix).
+- **Correctif** : prérequis en colonne d'identité `classes.multiclass_prerequisites` (alternatives de
+  minimums, migration `0106` + seed, contrat `classIdentity.ts`) au lieu de la table front par slug
+  `LU_MULTICLASS_PREREQS` ; l'étape Classe du level-up rappelle ceux des classes détenues (bandeau s'ils
+  ne sont pas remplis) et signale chaque carte dont la classe visée ne les remplit pas. **Non bloquants**
+  (décision du PM, 2026-09-27). Suivi :
+  [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109).
+
+### B15 — Maîtrises d'outils de classe jamais accordées · seed + migration — ✅ RÉSOLU
+- **Symptôme** : un Roublard n'avait pas les outils de voleur, un Druide pas le kit d'herboriste,
+  sauf si leur historique les donnait.
+- **Règle** (AideDD, ligne « Outils » des pages de classe) : seuls le Roublard (outils de voleur) et le
+  Druide (kit d'herboriste) ont un outil **fixe** ; le Barde et le Moine en choisissent (ChoiceKind
+  `tool`, [#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133)).
+- **Correctif** : champ `tools` de `CLASS_PROFICIENCIES` → effets `tool_proficiency` du porteur
+  « Maîtrises de la classe » ; bases déployées complétées par la migration `0104`. Le picker Doué du
+  builder exclut ces outils, comme celui du level-up. Suivi : [#110](https://github.com/kevmorpain/le-bureau-du-jdr/issues/110).
+
 ## Bugs ouverts à la migration
 
 Détail (symptôme, règle sourcée, racine, piste) dans chaque issue.
 
 | Code | Issue | Bug |
 |---|---|---|
-| B12 | [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104) | Multiclasse : maîtrises d'armes et d'armures de départ accordées en entier |
 | B13 | [#105](https://github.com/kevmorpain/le-bureau-du-jdr/issues/105) | PV max figés quand le modificateur de CON change (décision requise) |
-| B14 | [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109) | Prérequis de multiclassage : seule la nouvelle classe est vérifiée |
-| B15 | [#110](https://github.com/kevmorpain/le-bureau-du-jdr/issues/110) | Maîtrises d'outils de classe jamais accordées |
 
 ## Correctifs de parcours récents (résolus, hors numérotation)
 

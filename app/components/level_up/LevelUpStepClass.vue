@@ -76,7 +76,24 @@
     </div>
 
     <div class="text-xs text-muted mb-3 px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated)">
-      Le multi-classage nécessite une caractéristique minimale de 13 dans l'aptitude principale de la nouvelle classe. Les prérequis sont affichés mais non bloquants.
+      Le multi-classage exige les valeurs minimales de vos classes actuelles <strong>et</strong> de la nouvelle classe. Les prérequis sont affichés mais non bloquants.
+      <div
+        v-for="cc in currentClassesPrerequisites"
+        :key="cc.className"
+        class="flex flex-wrap items-center gap-1.5 mt-2"
+      >
+        <span class="font-semibold text-(--ui-text)">{{ cc.className }} :</span>
+        <LevelUpPrerequisiteBadges
+          :prerequisites="cc.prerequisites"
+          :scores="finalAbilities"
+        />
+      </div>
+      <div
+        v-if="!meetsCurrentClassesPrerequisites"
+        class="mt-2 text-red-400"
+      >
+        ⚠️ Vos classes actuelles ne remplissent pas leurs propres prérequis : les règles ne permettent aucun multi-classage.
+      </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -102,31 +119,36 @@
           <UBadge color="warning" variant="subtle" size="md">⚡ Sous-classe dès le niv.1</UBadge>
         </div>
 
-        <div v-if="getPrereqs(cls.id)" class="flex flex-wrap gap-1">
-          <template v-for="(req, idx) in getPrereqs(cls.id)" :key="idx">
-            <span
-              class="text-xs px-1.5 py-0.5 rounded font-mono font-bold"
-              :class="req.ok ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'"
-            >
-              {{ req.label }}
-            </span>
-          </template>
+        <LevelUpPrerequisiteBadges
+          :prerequisites="multiclassPrerequisitesOf(cls.id)"
+          :scores="finalAbilities"
+        />
+        <div
+          v-if="!meetsTargetPrerequisites(cls.id)"
+          class="text-xs text-red-400 mt-1.5"
+        >
+          ⚠️ Prérequis non remplis
         </div>
+        <p class="text-xs text-muted leading-snug mt-1.5">
+          <span class="font-semibold text-(--ui-text)">Maîtrises :</span>
+          {{ multiclassGainsText(cls.id) }}
+        </p>
       </button>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { LU_MULTICLASS_PREREQS } from '~/composables/useLevelUp'
-import { ABILITY_SHORT, type AbilityKey } from '~/data/character-builder'
-
 const {
   state,
   charClasses,
   totalLevel,
   finalAbilities,
-  pickedClass,
+  currentClassesPrerequisites,
+  meetsCurrentClassesPrerequisites,
+  multiclassPrerequisitesOf,
+  meetsTargetPrerequisites,
+  multiclassGainsOf,
   subclassLevelFor,
   fightingStyleLevelFor,
   expertiseDueForClassLevel,
@@ -162,26 +184,10 @@ function isExpertiseDue(classId: string, level: number): boolean {
   return expertiseDueForClassLevel(classId, level)
 }
 
-function getPrereqs(classId: string): Array<{ label: string, ok: boolean }> | null {
-  const req = LU_MULTICLASS_PREREQS[classId]
-  if (!req) return null
-  const abilities = finalAbilities.value
-
-  if (req.or) {
-    return (req.or as Array<Partial<Record<AbilityKey, number>>>).flatMap(group =>
-      Object.entries(group).map(([ab, min]) => ({
-        label: `${ABILITY_SHORT[ab as AbilityKey]} ≥${min} (${abilities[ab as AbilityKey]})`,
-        ok: (abilities[ab as AbilityKey] ?? 0) >= (min as number),
-      })),
-    )
-  }
-
-  return Object.entries(req)
-    .filter(([k]) => k !== 'or')
-    .map(([ab, min]) => ({
-      label: `${ABILITY_SHORT[ab as AbilityKey]} ≥${min} (${abilities[ab as AbilityKey]})`,
-      ok: (abilities[ab as AbilityKey] ?? 0) >= (min as number),
-    }))
+function multiclassGainsText(classId: string): string {
+  const { proficiencies, skillCount } = multiclassGainsOf(classId)
+  const skills = skillCount ? [`${skillCount} compétence${skillCount > 1 ? 's' : ''}`] : []
+  return [...proficiencies, ...skills].join(', ') || 'aucune'
 }
 
 function isPickedContinue(classId: string) {

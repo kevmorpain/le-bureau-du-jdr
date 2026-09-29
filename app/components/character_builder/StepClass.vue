@@ -32,7 +32,7 @@
         <div class="text-xs text-muted leading-relaxed mb-2">{{ cls.description }}</div>
         <div class="flex gap-3 text-xs">
           <span class="text-muted">
-            JS : <span :style="`color: ${cls.color}`">{{ cls.savingThrows.map(s => ABILITY_SHORT[s as AbilityKey]).join('+') }}</span>
+            JS : <span :style="`color: ${cls.color}`">{{ savingThrowsLabel(cls.dbName) }}</span>
           </span>
           <span v-if="cls.spellcasting" class="text-violet-400">
             Sorts {{ ABILITY_SHORT[cls.spellcasting.ability as AbilityKey] }}
@@ -403,6 +403,11 @@ const { extended, extendedQuery } = useExtendedContent()
 const filteredClasses = computed(() =>
   CLASSES.filter(c => !c.source || !isGatedSource(c.source) || extended.value),
 )
+
+const { resolveClassId, classProficienciesFor } = useBuilderEntities()
+const savingThrowsLabel = (dbName: string) => classProficienciesFor(resolveClassId(dbName)).savingThrows
+  .flatMap(e => e.type === 'saving_throw_proficiency' ? [ABILITY_SHORT[e.value.ability]] : [])
+  .join('+')
 
 const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells', {
   query: extendedQuery,

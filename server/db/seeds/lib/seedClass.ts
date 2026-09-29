@@ -11,10 +11,16 @@ import type { Ruleset } from '~~/shared/rules/ruleset'
 import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../data/subclassChoice'
 import { fightingStyleOptionFeatures } from '../data/fightingStyles'
 import { classSkillChoiceFeature } from '../data/classSkills'
-import { CLASS_PROFICIENCIES } from '~~/shared/rules/classProficiencies'
+import { CLASS_PROFICIENCIES, type ProficiencySet } from '~~/shared/rules/classProficiencies'
+import { CLASS_PROFICIENCY_CARRIER_NAME, MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../data/proficiencyCarriers'
 
-/** Feature porteuse des maîtrises de base d'une classe : jamais affichée ni matérialisée. */
-export const CLASS_PROFICIENCY_CARRIER_NAME = 'Maîtrises de la classe'
+function proficiencyEffects(set: ProficiencySet): Effect[] {
+  return [
+    ...set.armor.map((value): Effect => ({ type: 'proficiency', value })),
+    ...set.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
+    ...set.tools.map((value): Effect => ({ type: 'tool_proficiency', value })),
+  ]
+}
 
 function buildProficiencyCarrier(className: string): FeatureDef | null {
   const prof = CLASS_PROFICIENCIES[className]
@@ -26,9 +32,21 @@ function buildProficiencyCarrier(className: string): FeatureDef | null {
     levelRequired: 1,
     effects: [
       ...prof.savingThrows.map((value): Effect => ({ type: 'saving_throw_proficiency', value: { ability: value } })),
-      ...prof.armor.map((value): Effect => ({ type: 'proficiency', value })),
-      ...prof.weapon.map((value): Effect => ({ type: 'weapon_proficiency', value })),
+      ...proficiencyEffects(prof),
     ],
+  }
+}
+
+function buildMulticlassProficiencyCarrier(className: string): FeatureDef | null {
+  const multiclass = CLASS_PROFICIENCIES[className]?.multiclass
+  const effects = multiclass ? proficiencyEffects(multiclass) : []
+  if (!effects.length) return null
+  return {
+    name: MULTICLASS_PROFICIENCY_CARRIER_NAME,
+    description: null,
+    featureType: 'multiclass_proficiency_grant',
+    levelRequired: 1,
+    effects,
   }
 }
 
@@ -81,6 +99,7 @@ export async function seedClass(
   }
 
   const carrier = buildProficiencyCarrier(className)
+  const multiclassCarrier = buildMulticlassProficiencyCarrier(className)
 
   // Feature « choix de sous-classe » injectée à la volée depuis la source unique (niveau =
   // `classes.subclass_level`) : pas de câblage dupliqué dans les 12 wrappers.
@@ -94,6 +113,7 @@ export async function seedClass(
   const allBaseFeatures = [
     ...baseFeatures,
     ...(carrier ? [carrier] : []),
+    ...(multiclassCarrier ? [multiclassCarrier] : []),
     ...(subclassChoice ? [subclassChoice] : []),
     ...(classSkillChoice ? [classSkillChoice] : []),
     ...fightingStyleOptions,

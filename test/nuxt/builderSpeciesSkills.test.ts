@@ -5,6 +5,7 @@ import StepClass from '../../app/components/character_builder/StepClass.vue'
 import StepAsi from '../../app/components/character_builder/StepAsi.vue'
 import { useCharacterBuilder, type BuilderState } from '../../app/composables/useCharacterBuilder'
 import type { Catalog } from '../../shared/rules/resolve'
+import { catalogClasses } from '../fixtures/catalogClasses'
 
 // Les compétences d'espèce comptent comme maîtrisées dans le builder : éligibles à l'expertise (AideDD,
 // Roublard : « choisissez deux des compétences que vous maîtrisez »), signalées en doublon d'un choix de
@@ -57,7 +58,13 @@ registerEndpoint('/api/catalog/species/30', () => ({
   effects: [{ type: 'ability_increase', value: { ability: 'str', amount: 1 } }],
   lineages: [],
 }))
-registerEndpoint('/api/catalog/classes', () => [{ id: ROUBLARD, name: 'Roublard', subclassLevel: 3, subclasses: [] }])
+registerEndpoint('/api/catalog/classes', () => [{
+  id: ROUBLARD,
+  name: 'Roublard',
+  subclassLevel: 3,
+  subclasses: [],
+  proficiencies: catalogClasses().find(c => c.name === 'Roublard')!.proficiencies,
+}])
 registerEndpoint('/api/catalog/progressions', (): Catalog => ({
   progressions: [
     {
@@ -202,6 +209,14 @@ describe('picker Doué (palier d\'ASI)', () => {
     await vi.waitFor(() => expect(skilledButtons(wrapper)).not.toContain('Intimidation'))
     expect(skilledButtons(wrapper)).not.toContain('Perception')
     expect(skilledButtons(wrapper)).not.toContain('Religion')
+  })
+
+  it('n\'offre pas l\'outil fixe de la classe (Roublard : outils de voleur)', async () => {
+    const { ownedTools } = rogue4([])
+    await vi.waitFor(() => expect(ownedTools.value).toEqual(['Outils de voleur']))
+    const wrapper = await mountSuspended(StepAsi)
+    await vi.waitFor(() => expect(skilledButtons(wrapper)).toContain('Kit d\'herboriste'))
+    expect(skilledButtons(wrapper)).not.toContain('Outils de voleur')
   })
 
   it('un choix devenu doublon reste affiché (désélectionnable) et signalé', async () => {

@@ -259,7 +259,7 @@ export function useCharacterBuilder() {
 
   const { feats, getById: getFeatById } = useFeats()
   const { choicesForClassLevel } = useCatalog()
-  const { resolveClassId, subclassCatalogFor } = useBuilderEntities()
+  const { resolveClassId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
 
   const featNeedsAbility = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return false
@@ -398,13 +398,16 @@ export function useCharacterBuilder() {
   const classSkillConflictLabels = computed(() => classSkillConflicts.value
     .map(k => `${SKILLS.find(s => s.key === k)?.label ?? k} (${grantedSkillSources.value.get(k)})`)
     .join(', '))
-  // Outils déjà maîtrisés (historique) : exclus du picker Doué pour ne pas gaspiller un choix. On ne
-  // retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
+  // Outils déjà maîtrisés (classe, historique) : exclus du picker Doué pour ne pas gaspiller un choix. On
+  // ne retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
   // dans selectedToolProficiencies) + les résolutions choisies.
   const ownedTools = computed<string[]>(() => {
+    const fromClass = classProficienciesFor(classDbId.value).start
+      .filter(e => e.type === 'tool_proficiency')
+      .map(e => e.value as string)
     const fixed = (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t))
     const chosen = Object.values(state.value.selectedToolProficiencies).filter(Boolean)
-    return [...new Set([...fixed, ...chosen])]
+    return [...new Set([...fromClass, ...fixed, ...chosen])]
   })
   // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
   // sans expertise (changement de classe) ne doit pas survivre. Purge différée tant que les compétences
@@ -778,6 +781,7 @@ export function useCharacterBuilder() {
     catalogSpeciesId,
     speciesEffects,
     classData,
+    classDbId,
     backgroundData,
     alignmentData,
     raceBonuses,
