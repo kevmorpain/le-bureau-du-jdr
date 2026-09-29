@@ -24,9 +24,9 @@ jobs:
       # pour le CI (≥ 32 car.) — aucun secret réel : les tests ne touchent ni prod ni données.
       NUXT_SESSION_PASSWORD: ci_only_dummy_session_password_do_not_use
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # Version lue dans `.nvmrc`, source unique partagée avec Cloudflare Workers Builds
           # (qui lit ce même fichier). Ne pas remettre de version en dur ici : c'est la double
