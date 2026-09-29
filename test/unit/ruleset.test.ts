@@ -1,15 +1,12 @@
-import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
 import { RULESETS, rulesetEnum } from '../../shared/rules/ruleset'
+import { applyMigration } from '../fixtures/migrations'
 
 // Le discriminant d'édition a une seule source de vérité, dont les colonnes `ruleset` dérivent. On
 // vérifie l'ensemble et l'ordre (valeurs écrites à la main), la validation Zod, et que la migration
 // 0084 pose la colonne (NOT NULL DEFAULT '5', donc backfill) sur les 6 tables ciblées.
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
-const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
 const MIGRATION = '0084_ruleset_discriminant.sql'
 const MIGRATION_SPELLS = '0089_spells_ruleset.sql'
 
@@ -45,9 +42,6 @@ describe('ruleset — const canonique', () => {
 
 describe('ruleset — migration 0084', () => {
   it('ajoute la colonne ruleset (DEFAULT \'5\' NOT NULL) et backfille les lignes existantes', async () => {
-    const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
-    const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-
     const db = createClient({ url: ':memory:' })
     await db.execute('PRAGMA foreign_keys = ON')
 
@@ -67,10 +61,7 @@ describe('ruleset — migration 0084', () => {
     await db.execute('INSERT INTO features (id, name) VALUES (1, \'Vision dans le noir\')')
     await db.execute('INSERT INTO spell_classes (spell_id, class_id) VALUES (1, 1)')
 
-    const sql = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-    for (const statement of splitSqlQueries(sql)) {
-      await db.execute(statement)
-    }
+    await applyMigration(db, MIGRATION)
 
     // Chaque table a la colonne, et la ligne préexistante a été backfillée à '5'.
     for (const table of TARGET_TABLES) {
@@ -87,18 +78,12 @@ describe('ruleset — migration 0084', () => {
 
 describe('ruleset — migration 0089 (spells)', () => {
   it('pose spells.ruleset (DEFAULT \'5\' NOT NULL), backfille l\'existant, accepte \'5.5\'', async () => {
-    const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
-    const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-
     const db = createClient({ url: ':memory:' })
     // État d'avant 0089 : la table spells sans la colonne, avec un sort 2014 existant.
     await db.execute('CREATE TABLE spells (id integer PRIMARY KEY NOT NULL, name text NOT NULL)')
     await db.execute('INSERT INTO spells (id, name) VALUES (1, \'Boule de feu\')')
 
-    const sql = await readFile(MIGRATIONS_DIR + MIGRATION_SPELLS, 'utf8')
-    for (const statement of splitSqlQueries(sql)) {
-      await db.execute(statement)
-    }
+    await applyMigration(db, MIGRATION_SPELLS)
 
     const backfilled = await db.execute('SELECT ruleset FROM spells WHERE id = 1')
     expect(backfilled.rows[0]!.ruleset, 'spells.ruleset backfillé à 5').toBe('5')

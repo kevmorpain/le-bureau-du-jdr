@@ -1,17 +1,12 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { eq } from 'drizzle-orm'
 import * as srcSchema from '../../server/db/schema'
+import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
 // Logique de la migration de strip 0092 : sur un scénario complet, seuls les grants de BASE
 // (dérivables du porteur) et les tokens EN morts doivent partir — les vrais deltas du joueur restent.
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let orm: any
@@ -28,16 +23,9 @@ async function remaining(sheetId: number): Promise<string[]> {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   // Test de LOGIQUE : couper les FK APRÈS le replay (le driver libsql les applique, et une
   // migration recreate-table remet foreign_keys=ON) pour insérer un scénario minimal.
   await client.execute('PRAGMA foreign_keys = OFF')
@@ -95,8 +83,7 @@ beforeAll(async () => {
   ])
 
   // Ré-exécute le DELETE de la migration 0092 sur le scénario.
-  const stripSql = await readFile(MIGRATIONS_DIR + '0092_strip_base_proficiency_grants.sql', 'utf8')
-  for (const statement of splitSqlQueries(stripSql)) await client.execute(statement)
+  await applyMigration(client, '0092_strip_base_proficiency_grants.sql')
 })
 
 describe('0092 strip — fiche avec porteurs de classe + historique', () => {

@@ -1,23 +1,13 @@
-import { drizzle } from 'drizzle-orm/d1'
 import type {
   ExtractTablesWithRelations,
   Many,
   InferSelectModel,
 } from 'drizzle-orm'
 import * as schema from '../db/schema'
-import { db } from 'hub:db'
 
 export { sql, eq, and, or } from 'drizzle-orm'
 
 export const tables = schema
-
-/**
- * @deprecated Casse à l'appel (`this.client.prepare is not a function`) : le `db` de `hub:db` est déjà une
- * instance drizzle, le re-wrapper échoue. Utiliser `import { db } from 'hub:db'`.
- */
-export function useDrizzle() {
-  return drizzle(db, { schema, casing: 'snake_case' })
-}
 
 type Schema = typeof schema
 type TSchema = ExtractTablesWithRelations<Schema>

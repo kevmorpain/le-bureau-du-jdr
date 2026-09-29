@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { proficiencyOverrideSchema } from '~~/shared/utils/item'
 
 export default defineEventHandler(async (event) => {

@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import { seedLineages } from './lib/seedLineages'
 import { LINEAGE_SPECIES } from './data/lineageSpecies'
 

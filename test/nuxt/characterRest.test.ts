@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -9,12 +6,11 @@ import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
 import { characterRest } from '../../server/utils/characterRest'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Repos testé contre libsql : recharge (features + emplacements) ET préservation de la dépendance
 // d'ORDRE sur currentHp (repos long puis soin par dés de vie).
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const WARLOCK = 1
 const OWNER = 1
 const RECHARGE_FEATURE = 210 // feature passive rechargeable (short_rest)
@@ -36,15 +32,9 @@ async function create() {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   db = drizzle(client, { schema, casing: 'snake_case' })
 
   await db.insert(schema.magicSchools).values({ id: 1, name: 'Invocation' })

@@ -1,5 +1,5 @@
-import { blob, ensureBlob } from 'hub:blob'
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
+import { useBinding } from '~~/server/utils/bindings'
 import * as schema from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'uncrypto'
@@ -24,11 +24,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Aucun fichier reçu' })
   }
 
-  ensureBlob(file, { maxSize: PORTRAIT_MAX_SIZE, types: Object.keys(PORTRAIT_TYPES) })
-
   const ext = PORTRAIT_TYPES[file.type]
   if (!ext) {
     throw createError({ statusCode: 400, statusMessage: 'Format d\'image non pris en charge' })
+  }
+  if (file.size > PORTRAIT_MAX_SIZE) {
+    throw createError({ statusCode: 400, statusMessage: `Image trop volumineuse (${PORTRAIT_MAX_SIZE / 1024 / 1024} Mo maximum)` })
   }
 
   const [current] = await db
@@ -38,7 +39,8 @@ export default defineEventHandler(async (event) => {
     .limit(1)
 
   const key = portraitKey(sheetId, randomUUID(), ext)
-  await blob.put(key, file, { contentType: file.type })
+  const bucket = useBinding('BLOB')
+  await bucket.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } })
 
   const portraitUrl = portraitUrlFromKey(key)
   await db
@@ -51,7 +53,7 @@ export default defineEventHandler(async (event) => {
   const previousKey = ownedPortraitKey(current?.portraitUrl, sheetId)
   if (previousKey && previousKey !== key) {
     try {
-      await blob.del(previousKey)
+      await bucket.delete(previousKey)
     } catch (e) {
       console.error('[portrait] suppression de l\'ancien objet impossible:', previousKey, e)
     }

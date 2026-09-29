@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -8,28 +5,20 @@ import * as srcSchema from '../../server/db/schema'
 import { CreatureSize } from '../../server/db/schema/character_species'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices } from '../../shared/rules/resolve'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Point de choix possédé par une ESPÈCE : `buildCatalog` doit résoudre l'espèce propriétaire via
 // `species_features` et n'énumérer que SES lignées.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const ELF = 3
 const LINEAGE_FEATURE = 200
 
 let orm: ReturnType<typeof drizzle>
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   // Espèce de base + ses 3 lignées (insérées dans le désordre — l'ordre du résultat suit l'id).

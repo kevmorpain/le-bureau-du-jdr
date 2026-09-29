@@ -1,5 +1,5 @@
-import { db, schema } from 'hub:db'
-import { blob } from 'hub:blob'
+import { db, schema } from '~~/server/utils/db'
+import { useBinding } from '~~/server/utils/bindings'
 import { portraitPrefix } from '~~/server/utils/portraits'
 
 export default defineEventHandler(async (event) => {
@@ -13,9 +13,10 @@ export default defineEventHandler(async (event) => {
 
   // R2 n'a pas de cascade. Purge après le DELETE : un échec ne doit pas bloquer la suppression.
   try {
-    const { blobs } = await blob.list({ prefix: portraitPrefix(Number(id)) })
-    if (blobs.length) {
-      await blob.del(blobs.map(b => b.pathname))
+    const bucket = useBinding('BLOB')
+    const { objects } = await bucket.list({ prefix: portraitPrefix(Number(id)) })
+    if (objects.length) {
+      await bucket.delete(objects.map(o => o.key))
     }
   } catch (e) {
     console.error('[character_sheet delete] purge des portraits impossible:', id, e)

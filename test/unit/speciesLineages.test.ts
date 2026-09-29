@@ -1,7 +1,6 @@
-import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
+import { applyMigration } from '../fixtures/migrations'
 
 // Lot 1 du chantier « lignée » (cf. decisions.md D17) : `species_lineages` (sous-entité
 // symétrique de `subclasses`) + `features.lineage_id` + `character_choices.selected_lineage_id`.
@@ -9,14 +8,9 @@ import { createClient } from '@libsql/client'
 // façon prod — création, intégrité FK (cascade espèce→lignée, set null lignée→feature), et
 // l'index d'unicité étendu (deux picks de lignée identiques rejetés).
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
-const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
 const MIGRATION = '0085_species_lineages.sql'
 
 async function setup() {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-
   const db = createClient({ url: ':memory:' })
   await db.execute('PRAGMA foreign_keys = ON')
 
@@ -38,8 +32,7 @@ async function setup() {
   )
   await db.execute({ sql: 'INSERT INTO character_species (id, name) VALUES (?, ?)', args: [1, 'Elfe'] })
 
-  const sql = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-  for (const statement of splitSqlQueries(sql)) await db.execute(statement)
+  await applyMigration(db, MIGRATION)
   return db
 }
 

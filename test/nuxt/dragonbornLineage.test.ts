@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -10,12 +7,10 @@ import { seedLineages } from '../../server/db/seeds/lib/seedLineages'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { dragonborn, DRAGONBORN_LINEAGE_BY_ANCESTRY } from '../../server/db/seeds/data/dragonborn'
 import { dragonbornAncestryDamageType, allDragonbornAncestries } from '../../shared/utils/draconic_ancestry'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Seed base + 10 lignées et dérivation : la résistance dérivée est CONCRÈTE et vaut ce que
 // l'ancienne colonne `dragonbornAncestry` résolvait à l'affichage.
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 let orm: ReturnType<typeof drizzle>
 let baseId: number
@@ -32,15 +27,9 @@ function resistanceOf(derived: Awaited<ReturnType<typeof deriveChosenLineage>>):
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

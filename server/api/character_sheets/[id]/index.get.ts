@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import * as srcSchema from '~~/server/db/schema'
 import { eq, inArray } from 'drizzle-orm'
 import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
@@ -70,7 +70,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
   }
 
-  // Relations absentes du schéma cached de hub:db → requêtes séparées (idem ci-dessous).
   const classesWithSubclass = await db
     .select()
     .from(srcSchema.characterClasses)

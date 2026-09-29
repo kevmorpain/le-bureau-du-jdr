@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { isExtendedRequested } from '~~/server/utils/catalogRequest'
 

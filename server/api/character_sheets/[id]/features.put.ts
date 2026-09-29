@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { z } from 'zod'
 
 const featureUsageSchema = z.array(z.object({

@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import * as schema from '~~/server/db/schema'
 import * as srcSchema from '~~/server/db/schema'
 import { and, eq, sql } from 'drizzle-orm'

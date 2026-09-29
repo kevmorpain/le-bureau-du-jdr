@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -12,29 +9,21 @@ import {
   fightingStyleProgression,
   FIGHTING_STYLE_LEVEL_BY_CLASS,
 } from '../../server/db/seeds/data/fightingStyles'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Point de choix de STYLE DE COMBAT. Vérifie surtout le FILTRE PAR CLASSE de `buildCatalog` sur
 // `feature_group` : les styles sont dupliqués par classe, donc le Paladin ne doit PAS se voir
 // proposer Archerie.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const GUERRIER = 2
 const PALADIN = 3
 
 let catalog: Catalog
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   await orm.insert(srcSchema.classes).values([

@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { and, eq } from 'drizzle-orm'
 import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '../schema/effects'
@@ -36,7 +36,6 @@ export default async function seed() {
       }
     }
     else {
-      // srcSchema (schéma frais) : le cache hub:db peut dropper la colonne `source` en silence.
       feature = await db
         .insert(srcSchema.features)
         .values({

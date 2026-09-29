@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import magicSchools from './data/magic_schools.json'
 
 export default async function seed() {

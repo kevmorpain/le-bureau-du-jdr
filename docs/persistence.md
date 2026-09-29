@@ -10,7 +10,7 @@
 | `spellSlots` | DB (`character_spell_slots`) | Persistance cross-session |
 | `notes` (notes de session) | DB (`character_sheets`) | Persistance cross-device, cross-session |
 | Identité & description (`age`, `height`, `weight`, `eyes`, `hair`, `skin`, `deity`, `backstory`, `allies`, `portraitUrl`) | DB (`character_sheets`) | Description du personnage, saisie à la création ou sur la fiche |
-| Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, via `hub:blob`) | Binaire : la fiche n'en garde que l'URL |
+| Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, binding `BLOB`) | Binaire : la fiche n'en garde que l'URL |
 | `armorClass` | localStorage | Dépend du futur système d'équipement |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
 | `deathSavingThrows` | localStorage | État d'encounter, remis à zéro entre sessions |
@@ -86,7 +86,7 @@ watch(spellSlots, () => {
 
 Ne pas utiliser le deep watch de `[id].vue` pour ces données — elles ont leur propre endpoint.
 
-### 3. Fichiers — R2 (`hub:blob`)
+### 3. Fichiers — R2 (binding `BLOB`)
 
 Le seul binaire de l'app aujourd'hui : le **portrait** de personnage.
 
@@ -107,9 +107,9 @@ Fonctions pures testées dans `test/unit/portraits.test.ts`.
 change à chaque remplacement — d'où le `Cache-Control: immutable` et le portrait
 disponible hors-ligne. Aucune énumération n'est exposée.
 
-**Dev vs prod** (`nuxt.config.ts`) : `hub.hosting` vaut toujours « cloudflare » (preset
-nitro), donc le driver R2 serait choisi même en dev, où aucun binding n'existe. Le bloc
-`$development` bascule sur le driver `fs` (`.data/blob`), à l'image de la base.
+**Dev vs prod** : aucune différence de code. `useBinding('BLOB')` lit le même binding R2 en
+prod et en dev, où l'émulation `cloudflare-dev` de Nitro le fournit (Miniflare, état dans
+`.wrangler/state/v3/r2`).
 
 ⚠️ Un envoi de fichier **ne passe pas par la file de synchro hors-ligne** (elle rejoue du
 JSON, pas du binaire) : téléverser exige le réseau, coller une URL non.

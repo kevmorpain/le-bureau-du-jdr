@@ -1,18 +1,13 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import type { Catalog } from '../../shared/rules/resolve'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Gating `source` dans la résolution : le contenu d'extension ne remonte que si `extended: true`.
 // Pendant de buildCatalogRuleset.test.ts pour l'axe `source`.
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 const WARLOCK = 1
 
@@ -20,16 +15,9 @@ let catalogDefault: Catalog
 let catalogExtended: Catalog
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
 
   await orm.insert(srcSchema.classes).values({ id: WARLOCK, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' })

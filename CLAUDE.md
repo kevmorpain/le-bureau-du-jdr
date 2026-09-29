@@ -76,7 +76,7 @@ elles filtrent le design, là elles contrôlent le résultat.
 S'applique à **chaque** changement, sans qu'on ait à le demander :
 
 - **Vérifier avant de dire « fait ».** Relire le vrai `git diff` (pas sa mémoire), lancer la suite complète + lint, et confirmer qu'aucun snapshot / golden-master ne bouge par accident.
-- **Complétude — ne rien oublier.** Parcourir les angles morts récurrents : chemin prod/déploiement (migration auto vs seed manuel vs front — le piège du backfill), duplication vs un pattern existant qui centralise déjà (ex. `buildProficiencyCarrier`), surface non testée (`seeds hub:db`, front) et comment elle est gardée (test-contrat, garde-fou), effets de bord (read-model, features matérialisées, fixtures), cohérence avec les conventions du repo (nommage, `ruleset`, tests-contrat).
+- **Complétude — ne rien oublier.** Parcourir les angles morts récurrents : chemin prod/déploiement (migration auto vs seed manuel vs front — le piège du backfill), duplication vs un pattern existant qui centralise déjà (ex. `buildProficiencyCarrier`), surface non testée (seeds, front) et comment elle est gardée (test-contrat, garde-fou), effets de bord (read-model, features matérialisées, fixtures), cohérence avec les conventions du repo (nommage, `ruleset`, tests-contrat).
 - **La meilleure solution, pas un quick fix.** Préférer le design correct / DRY / aligné sur les patterns existants à une rustine ; réutiliser le pattern plutôt que le ré-implémenter.
 - **Zéro dette nouvelle.** Ne pas introduire de dette. Si un compromis est réellement inévitable, le remonter explicitement (dans la réponse, et en issue du projet s'il doit être suivi — cf. « Suivi du projet ») — jamais en silence.
 
@@ -87,8 +87,8 @@ commentaire qui redit *ce que fait* le code est du bruit, et il se désynchronis
 
 N'en écrire un que pour le **pourquoi non-évident** :
 
-- **piège / contournement** : pas de `db.transaction()` sur D1, cache de schéma `hub:db`,
-  dépendance d'ordre dans un `db.batch()`, `useDrizzle()` cassé ;
+- **piège / contournement** : pas de `db.transaction()` sur D1, dépendance d'ordre dans un
+  `db.batch()` ;
 - **intention de sécurité** et menace précise contrée (`sanitizeRedirect`, clés de portrait R2,
   middleware default-deny) ;
 - **nombre magique** (`maxAge: 60 * 10 // durée du flux OAuth`) ;
@@ -185,7 +185,7 @@ Notes :
 - `NUXT_SESSION_PASSWORD` (≥ 32 car., factice) est requis par `nuxt-auth-utils` au boot —
   même valeur que `.github/workflows/tests.yml`.
 - `deploy --dry-run` est le seul contrôle qui couvre l'étape **après** `nuxt build` : il
-  résout `wrangler.jsonc`, vérifie les bindings (`DB`, `KV`, `BLOB`, `ASSETS`) et la taille
+  résout `wrangler.jsonc`, vérifie les bindings (`DB`, `BLOB`, `ASSETS`) et la taille
   du bundle. C'est ce qui rattrape une erreur de déploiement sans toucher la prod.
 - `deploy --dry-run` ne couvre que le *bundling*. Pour exercer le Worker et ses bindings,
   voir la section suivante.
@@ -221,7 +221,7 @@ lisible. Le cas échéant, suivre la commande que l'avertissement imprime lui-m�
 renommée en cours de route (`npm install-scripts approve <pkg>` en npm 11.19, le CI actuel ;
 `npm approve-scripts <pkg>` dans les 11.x antérieurs).
 
-### Instancier Cloudflare en local (workerd + D1/KV/R2 émulés)
+### Instancier Cloudflare en local (workerd + D1/R2 émulés)
 
 Wrangler embarque `workerd` (le vrai runtime des Workers) et Miniflare (émulation des
 bindings). **Aucun compte ni credential Cloudflare n'est requis** — tout tourne hors ligne
@@ -235,8 +235,8 @@ npx wrangler dev --port 8787 --ip 127.0.0.1 \
   --var NUXT_SESSION_PASSWORD:local_dev_dummy_session_password_32c
 ```
 
-Au démarrage, Wrangler doit lister les 4 bindings en mode `local` :
-`KV`, `DB`, `BLOB`, `ASSETS`. Ensuite, le seed et l'API répondent pour de vrai :
+Au démarrage, Wrangler doit lister les 3 bindings en mode `local` :
+`DB`, `BLOB`, `ASSETS`. Ensuite, le seed et l'API répondent pour de vrai :
 
 ```bash
 curl -X POST -H "x-seed-secret: localdev" \
@@ -251,9 +251,12 @@ migration qui casse, un seed non idempotent, un handler qui plante au runtime Wo
 (et non sous Node/Vitest).
 
 Gotchas :
-- Lancer `wrangler dev` **depuis la racine**, pas `--cwd .output` : le `migrations_dir`
-  généré (`.output/server/db/migrations/`) est relatif à la racine. Wrangler suit tout seul
-  la redirection `.wrangler/deploy/config.json` → `.output/server/wrangler.json`.
+- Lancer `wrangler dev` **depuis la racine**, pas `--cwd .output` : Wrangler suit tout seul
+  la redirection `.wrangler/deploy/config.json` → `.output/server/wrangler.json`, et l'état
+  local (`.wrangler/state/v3`) est alors le même que celui de `nuxt dev`.
+- Les commandes `wrangler d1 …` ne suivent **pas** cette redirection : elles lisent le
+  `wrangler.jsonc` racine (`migrations_dir: server/db/migrations/`), donc un `.output`
+  périmé ne les fausse pas.
 - Passer les secrets par `--var` plutôt que de créer un fichier `.dev.vars`.
 - Deux avertissements au boot sont **bénins** : `Unable to fetch the Request.cf object`
   (pas de réseau sortant vers Cloudflare → placeholder) et `Duplicate key "provider"`
@@ -279,7 +282,7 @@ wsl -d Ubuntu -- bash -ic "until grep -qE '(Local:|listening|ready|Error|migrati
 Gotchas:
 - `bash -ic` (interactive) **breaks** `$(…)` command substitutions in some cases (e.g. `SECRET=$(grep … | cut …)` returns empty). Use `bash -c` for scripts that read variables that way.
 - The server runs in whatever directory you `cd` to. To test a worktree, start it from the worktree path, not `/home/kmorpain/le-bureau-du-jdr` (main checkout).
-- Migration auto-application logs `[nuxt:hub] ✔ Database migration .data/db/migrations/00XX_…sql applied` — handy readiness signal after a schema change.
+- `npm run dev` applies pending migrations first (`predev` → `npm run db:migrate`) to the local D1 that `nuxt dev` then serves (Nitro's `cloudflare-dev` emulation, state in `.wrangler/state/v3`). `npx wrangler d1 execute DB --local --command "…"` inspects that same database.
 
 ### Drizzle migrations: `db:generate` fails non-interactively
 
@@ -291,34 +294,20 @@ Workaround: write the SQL by hand.
    ```json
    { "idx": <next>, "version": "6", "when": <timestamp_ms>, "tag": "0XXX_<name>", "breakpoints": true }
    ```
-3. Restart `nuxt dev` — NuxtHub applies the migration automatically.
+3. `npm run db:migrate` (or restart `npm run dev`, whose `predev` runs it).
 
 No need to write the matching snapshot `.json` by hand; the next successful `db:generate` will regenerate it.
 
-### NuxtHub `hub:db` schema cache
-
-The `hub:db` module exposes a schema cached at startup that may **not** reflect recently added tables/columns (ESM cache of `node_modules/@nuxthub/db/schema.mjs`). Symptoms:
-- `drizzle.set()` silently drops new fields → empty SQL → error.
-- New relations → `Cannot read properties of undefined (reading 'referencedTable')`.
-
-Fix: import the schema from source for anything new.
-```ts
-import { db } from 'hub:db'                       // db is fine
-import * as schema from '~~/server/db/schema'     // fresh schema
-```
-
-For new relations, avoid `db.query.X.findFirst({ with: { newRelation: true } })` — instead run a separate `db.select().from(srcSchema.newTable).where(...)` and merge in JS.
-
 ## Architecture
 
-**Le Bureau du JDR** is a D&D 5e (2014) character sheet and spell database app. Full-stack Nuxt 4 app deployed to Cloudflare Workers (Wrangler), with NuxtHub modules providing the D1/KV bindings during local dev.
+**Le Bureau du JDR** is a D&D 5e (2014) character sheet and spell database app. Full-stack Nuxt 4 app deployed to Cloudflare Workers (Wrangler); in local dev, Nitro's `cloudflare-dev` emulation (Miniflare) provides the D1/R2 bindings.
 
 **Stack:** Nuxt 4 + Nitro (cloudflare_module preset) + Vue 3 + TypeScript + Drizzle ORM + Cloudflare D1 (SQLite) + Nuxt UI
 
 ### Data flow
 
 ```
-Vue pages/components → composables (useFetch) → Nitro server routes → Drizzle ORM → SQLite (NuxtHub)
+Vue pages/components → composables (useFetch) → Nitro server routes → Drizzle ORM → Cloudflare D1 (SQLite)
 ```
 
 ### Key directories
@@ -343,7 +332,7 @@ Tables: `character_sheets`, `character_species`, `character_classes`, `character
 
 ### State management
 
-- Persistent data: SQLite via NuxtHub — see `docs/persistence.md` for the full matrix and sync patterns
+- Persistent data: Cloudflare D1 (SQLite) — see `docs/persistence.md` for the full matrix and sync patterns
 - Encounter state (active conditions, death saves, armor class): `useStorage()` (localStorage)
 - Derived values (ability modifiers, proficiency bonus, spell save DC): computed properties — never stored
 
@@ -367,11 +356,11 @@ See `docs/context.md` for accumulated development context: dashboard v2 architec
 
 ### Deployment
 
-Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, KV binding `KV`, R2 binding `BLOB` → bucket `le-bureau-du-jdr-media`, portraits de personnage).
+Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, R2 binding `BLOB` → bucket `le-bureau-du-jdr-media`, portraits de personnage).
 
-**Deployment is automatic via Cloudflare Workers Builds (CI) on `git push`** to the default branch — the build runs `nuxt build`, deploys the worker, and **applies pending D1 migrations** (from `.output/server/db/migrations/`, tracked in the `_hub_migrations` table per wrangler.jsonc). Deployment is configured on Cloudflare's side via the Git integration — not in GitHub Actions. The only GitHub Actions workflow is [.github/workflows/tests.yml](.github/workflows/tests.yml), which runs the Vitest suite (`unit` + `nuxt` projects) on push to `main` and on every PR; it does **not** build or deploy. `npm run deploy` (`nuxt build` + `wrangler deploy`) remains available as a manual fallback.
+**Deployment is automatic via Cloudflare Workers Builds (CI) on `git push`** to the default branch — configured on Cloudflare's side via the Git integration, not in the repo nor in GitHub Actions. Build command: `npm run build && npx wrangler d1 migrations apply DB --remote` — it **applies pending D1 migrations** from `server/db/migrations/`, tracked by file name in the `_hub_migrations` table (a name inherited from NuxtHub: renaming it would replay every migration). Deploy command: `npx wrangler deploy`. The only GitHub Actions workflow is [.github/workflows/tests.yml](.github/workflows/tests.yml), which runs the Vitest suite (`unit` + `nuxt` projects) on push to `main` and on every PR; it does **not** build or deploy. `npm run deploy` (`nuxt build` + `wrangler deploy`) remains available as a manual fallback.
 
-NuxtHub's role is limited to dev: the `@nuxthub/core` module wires up the local D1 emulation and the `hub:db` schema cache (see gotchas below). The deployed worker uses the native Cloudflare D1 binding directly via Drizzle.
+Server code reaches the bindings through `server/utils/`: `db` (`db.ts`, Drizzle over D1) and `useBinding('BLOB')` (`bindings.ts`, R2). Both read `globalThis.__env__`, which Nitro sets per request in production and at boot in dev.
 
 **Seeding prod:** the full seed (`POST /api/admin/seed`) can exceed D1's per-invocation query limit. Pass `?only=<seed>[,<seed>]` (e.g. `?only=feats`) to run only a subset sequentially — see `server/db/seeds/run.ts`. Seeds are idempotent.
 

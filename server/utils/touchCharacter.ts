@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
 
 /** À appeler après toute mutation de sous-ressource : fiabilise le garde-fou anti-écrasement de la synchro hors-ligne. */

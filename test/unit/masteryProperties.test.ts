@@ -1,17 +1,14 @@
-import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
 import { MASTERY_PROPERTIES, masteryPropertyEnum } from '../../shared/rules/masteryProperties'
 import { MASTERY_PROPERTY_CONTRACT } from '../fixtures/masteryProperties'
+import { applyMigration } from '../fixtures/migrations'
 
 // La maîtrise d'armes 2024 a une seule source de vérité (la const
 // shared/rules/masteryProperties.ts) dont la colonne `items.mastery_property` dérive.
 // On vérifie l'ensemble/l'ordre contre le contrat, la validation Zod, et que la
 // migration 0083 pose bien la colonne (nullable) sur une base peuplée.
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
-const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
 const MIGRATION = '0083_backgrounds_features_items_mastery.sql'
 
 describe('maîtrise d\'armes — const canonique', () => {
@@ -33,9 +30,6 @@ describe('maîtrise d\'armes — const canonique', () => {
 
 describe('maîtrise d\'armes — migration 0083', () => {
   it('ajoute la colonne mastery_property (nullable) à items sur une base peuplée', async () => {
-    const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
-    const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-
     const db = createClient({ url: ':memory:' })
     await db.execute('PRAGMA foreign_keys = ON')
     // État d'avant 0083 : `items` sans la colonne + les parents FK de background_features
@@ -45,10 +39,7 @@ describe('maîtrise d\'armes — migration 0083', () => {
     await db.execute('CREATE TABLE features (id integer PRIMARY KEY NOT NULL, name text NOT NULL)')
     await db.execute({ sql: 'INSERT INTO items (id, name, item_type) VALUES (?, ?, ?)', args: [1, 'Épée longue', 'weapon'] })
 
-    const sql = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-    for (const statement of splitSqlQueries(sql)) {
-      await db.execute(statement)
-    }
+    await applyMigration(db, MIGRATION)
 
     // La colonne existe et vaut NULL par défaut (pas de backfill) pour les armes 2014.
     const before = await db.execute('SELECT mastery_property FROM items WHERE id = 1')

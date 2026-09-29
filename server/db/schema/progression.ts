@@ -3,8 +3,7 @@ import type { Formula } from '~~/shared/utils/formula'
 import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
 import features from './features'
 
-// Référence d'un point de choix ; owner = une `feature` (D4). Pas de `relations()` : déclarer une
-// relation neuve peut faire planter l'init du cache `hub:db` (cf. CLAUDE.md).
+// Référence d'un point de choix ; owner = une `feature` (D4).
 const progression = sqliteTable(
   'progression',
   {

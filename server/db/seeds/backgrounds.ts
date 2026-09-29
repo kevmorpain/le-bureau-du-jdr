@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { and, eq } from 'drizzle-orm'
 import { upsertByName } from './lib/upsertByName'
 import { rulesetOf } from './lib/rulesetOf'

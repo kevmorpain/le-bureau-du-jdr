@@ -1,5 +1,4 @@
-import { db } from 'hub:db'
-// Schéma importé de la source : le cache hub:db peut être périmé et dropper les colonnes neuves en silence.
+import { db } from '~~/server/utils/db'
 import * as schema from '~~/server/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { classesData } from './data/classes'

@@ -3,7 +3,7 @@ import type { Source } from '~~/shared/rules/source'
 import characterSpecies from './character_species'
 
 // Variante d'une espèce de base (sous-race 2014 / lignée 2024) — symétrique de `subclasses` (D17).
-// Pas de colonne `ruleset` : parent-gated par l'espèce. Pas de `relations()` (init du cache `hub:db`).
+// Pas de colonne `ruleset` : parent-gated par l'espèce.
 const speciesLineages = sqliteTable('species_lineages', {
   id: integer().primaryKey().notNull(),
   speciesId: integer('species_id').notNull().references(() => characterSpecies.id, { onDelete: 'cascade' }),
