@@ -1,5 +1,4 @@
 import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
 import { classNameFromSlug } from '~~/shared/rules/classSlugs'
 import { SKILL_KEYS } from '~~/shared/rules/skills'
@@ -9,10 +8,9 @@ import type { OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
 import type { Catalog, CatalogProgression, ResolvedOption } from '~~/shared/rules/resolve'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
+import type { Db } from '~~/server/utils/db'
 
 // Génériques `any` : D1 et libsql ont des TRunResult/TFullSchema différents.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 export interface BuildCatalogOptions {
   classIds?: number[]

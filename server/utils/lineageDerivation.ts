@@ -1,10 +1,8 @@
 import { and, eq, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
+import type { Db } from '~~/server/utils/db'
 
 // Gating par `level_required` comparé au niveau TOTAL (un trait d'espèce n'est pas lié à une classe).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 type EffectRow = typeof schema.effects.$inferSelect
 type FeatureRow = typeof schema.features.$inferSelect

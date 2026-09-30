@@ -1,9 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 // ⚠️ Pas de BEGIN TRANSACTION sur D1 : statements séquentiels + onConflictDoNothing pour l'idempotence.
 export async function applyInvocationChanges(

@@ -1,6 +1,5 @@
-import { db } from '~~/server/utils/db'
+import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
-import * as schema from '~~/server/db/schema'
 import { itemsData } from './data/items'
 
 export default async function seed() {

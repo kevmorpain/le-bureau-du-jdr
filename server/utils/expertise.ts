@@ -1,11 +1,8 @@
 import { and, eq, sql } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveChoices } from '~~/shared/rules/resolve'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 // Le count est CUMULATIF : seul le delta niveau précédent → `newLevel` est dû. Même projection que le
 // level-up front (useCatalog.choicesForClassLevel), niveau 0 inclus pour une classe multiclassée.

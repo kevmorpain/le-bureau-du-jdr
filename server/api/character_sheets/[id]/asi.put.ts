@@ -1,5 +1,4 @@
-import { db } from '~~/server/utils/db'
-import * as schema from '~~/server/db/schema'
+import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
 import { setASISchema } from '~~/shared/utils/character_sheet'
 

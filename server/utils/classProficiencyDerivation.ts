@@ -1,11 +1,8 @@
 import { and, eq, inArray } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 import type { SkillKey } from '~~/shared/rules/skills'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 // Maîtrises d'une classe lues sur ses porteurs : de départ (armes, armures, outils) et JS pour la 1re classe
 // (`proficiency_grant`), sous-ensemble reçu en la rejoignant par multiclassage (`multiclass_proficiency_grant`).

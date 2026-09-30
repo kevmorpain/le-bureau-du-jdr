@@ -172,11 +172,11 @@ export async function seedClass(
       subclass = existingSubclass
       const seedDesc = subclassDef.description ?? null
       if (existingSubclass.description !== seedDesc) {
-        await db.run(sql`UPDATE subclasses SET description = ${seedDesc} WHERE id = ${existingSubclass.id}`)
+        await db.update(schema.subclasses).set({ description: seedDesc }).where(eq(schema.subclasses.id, existingSubclass.id))
       }
       const seedAbility = subclassDef.spellcastingAbility ?? null
       if (seedAbility !== null && existingSubclass.spellcastingAbility !== seedAbility) {
-        await db.run(sql`UPDATE subclasses SET spellcasting_ability = ${seedAbility} WHERE id = ${existingSubclass.id}`)
+        await db.update(schema.subclasses).set({ spellcastingAbility: seedAbility }).where(eq(schema.subclasses.id, existingSubclass.id))
       }
     }
     else {

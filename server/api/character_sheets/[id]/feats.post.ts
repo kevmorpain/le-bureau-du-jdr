@@ -1,5 +1,4 @@
-import { db } from '~~/server/utils/db'
-import * as schema from '~~/server/db/schema'
+import { db, schema } from '~~/server/utils/db'
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { abilityEnum } from '~~/shared/rules/abilities'

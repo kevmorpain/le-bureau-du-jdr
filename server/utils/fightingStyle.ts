@@ -1,9 +1,6 @@
 import { and, eq } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 // `null` (choix non persisté) si la classe n'a pas de style, nom inconnu, ou niveau sous le palier d'accès.
 export async function resolveFightingStylePick(

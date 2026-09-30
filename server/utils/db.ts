@@ -1,4 +1,5 @@
 import { drizzle } from 'drizzle-orm/d1'
+import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '../db/schema'
 import { useBinding } from './bindings'
 
@@ -12,3 +13,7 @@ export const db = new Proxy({} as Database, {
 })
 
 export { schema }
+
+// Contrat des utilitaires à `db` injecté : le client D1, comme un client libsql sans schéma (tests).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Db = BaseSQLiteDatabase<'async', any, any>

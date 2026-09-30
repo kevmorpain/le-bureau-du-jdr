@@ -3,11 +3,9 @@ import type {
   Many,
   InferSelectModel,
 } from 'drizzle-orm'
-import * as schema from '../db/schema'
+import type * as schema from '../db/schema'
 
 export { sql, eq, and, or } from 'drizzle-orm'
-
-export const tables = schema
 
 type Schema = typeof schema
 type TSchema = ExtractTablesWithRelations<Schema>

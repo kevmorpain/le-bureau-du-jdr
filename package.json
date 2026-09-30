@@ -17,7 +17,6 @@
     "test:nuxt": "vitest --project nuxt"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.0",
     "@nuxt/eslint": "^1.13.0",
     "@nuxt/image": "^2.0.0",
     "@nuxt/test-utils": "^4.0.2",
@@ -36,6 +35,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260702.1",
+    "@libsql/client": "^0.17.0",
     "@vue/test-utils": "^2.4.6",
     "drizzle-kit": "^0.31.8",
     "happy-dom": "^20.11.1",

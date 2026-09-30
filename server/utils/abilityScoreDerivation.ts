@@ -1,10 +1,7 @@
 import { and, eq } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
 import type { AbilityKey } from '~~/shared/rules/abilities'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 export async function deriveAbilityScoreChoices(db: Db, characterSheetId: number): Promise<Partial<Record<AbilityKey, number>>> {
   const rows = await db

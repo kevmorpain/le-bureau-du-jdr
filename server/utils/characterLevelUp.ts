@@ -1,5 +1,4 @@
 import { and, eq, inArray, lte, sql } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
@@ -13,11 +12,9 @@ import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
 import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { Db } from '~~/server/utils/db'
 
 // maxHp/hpGained restent fournis par le client (formule PV front-only).
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcanum_8' | 'arcanum_9'> = {
   11: 'arcanum_6',

@@ -1,5 +1,4 @@
-import { db } from '~~/server/utils/db'
-import * as schema from '~~/server/db/schema'
+import { db, schema } from '~~/server/utils/db'
 import { and, eq, sql } from 'drizzle-orm'
 import { createItemSchema } from '~~/shared/utils/item'
 import { z } from 'zod'

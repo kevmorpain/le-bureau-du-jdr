@@ -1,9 +1,6 @@
 import { and, eq } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 export async function deriveWeaponMasteries(db: Db, characterSheetId: number): Promise<string[]> {
   const rows = await db

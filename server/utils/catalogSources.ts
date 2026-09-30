@@ -1,5 +1,4 @@
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
@@ -7,9 +6,7 @@ import type { Ruleset } from '~~/shared/rules/ruleset'
 import { CORE_SOURCE } from '~~/shared/rules/source'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 import { loadClassProficiencyGrants, type ClassProficiencyGrants } from '~~/server/utils/classProficiencyDerivation'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 type ClassRow = typeof schema.classes.$inferSelect
 type SubclassRow = typeof schema.subclasses.$inferSelect
