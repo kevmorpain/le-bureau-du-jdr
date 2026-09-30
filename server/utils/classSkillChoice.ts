@@ -1,9 +1,6 @@
 import { and, eq } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from '~~/server/db/schema'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 /** Progression `skill` (choix de compétences) de la classe, si seedée. Créée par migration 0099 en prod. */
 export async function resolveClassSkillProgressionId(db: Db, classId: number): Promise<number | null> {

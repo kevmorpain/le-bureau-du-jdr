@@ -6,8 +6,7 @@ import { LINEAGE_SPECIES } from './data/lineageSpecies'
 export default async function seed() {
   const summary: Record<string, unknown> = {}
   for (const s of LINEAGE_SPECIES) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    summary[s.name] = await seedLineages(db as any, s)
+    summary[s.name] = await seedLineages(db, s)
   }
   return summary
 }

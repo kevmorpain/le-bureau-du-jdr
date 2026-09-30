@@ -1,36 +1,33 @@
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
-import * as srcSchema from '~~/server/db/schema'
+import * as schema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import { CORE_SOURCE } from '~~/shared/rules/source'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 import { loadClassProficiencyGrants, type ClassProficiencyGrants } from '~~/server/utils/classProficiencyDerivation'
+import type { Db } from '~~/server/utils/db'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
-
-type ClassRow = typeof srcSchema.classes.$inferSelect
-type SubclassRow = typeof srcSchema.subclasses.$inferSelect
+type ClassRow = typeof schema.classes.$inferSelect
+type SubclassRow = typeof schema.subclasses.$inferSelect
 
 export type CatalogClass = ClassRow & { subclasses: SubclassRow[], proficiencies: ClassProficiencyGrants }
 
 export async function loadClasses(db: Db, ruleset: Ruleset = '5', extended = false): Promise<CatalogClass[]> {
   const rows = await db
     .select()
-    .from(srcSchema.classes)
+    .from(schema.classes)
     // Le filtre `source` des sous-classes va dans le ON (pas le WHERE) : une classe socle
     // n'ayant que des sous-classes gatées doit remonter quand même (leftJoin), sa liste vide.
-    .leftJoin(srcSchema.subclasses, and(
-      eq(srcSchema.subclasses.classId, srcSchema.classes.id),
-      ...(extended ? [] : [eq(srcSchema.subclasses.source, CORE_SOURCE)]),
+    .leftJoin(schema.subclasses, and(
+      eq(schema.subclasses.classId, schema.classes.id),
+      ...(extended ? [] : [eq(schema.subclasses.source, CORE_SOURCE)]),
     ))
     .where(and(
-      eq(srcSchema.classes.ruleset, ruleset),
-      ...(extended ? [] : [eq(srcSchema.classes.source, CORE_SOURCE)]),
+      eq(schema.classes.ruleset, ruleset),
+      ...(extended ? [] : [eq(schema.classes.source, CORE_SOURCE)]),
     ))
-    .orderBy(asc(srcSchema.classes.id), asc(srcSchema.subclasses.name))
+    .orderBy(asc(schema.classes.id), asc(schema.subclasses.name))
 
   const proficiencies = await loadClassProficiencyGrants(db, [...new Set(rows.map(r => r.classes.id))])
   const byId = new Map<number, CatalogClass>()
@@ -44,34 +41,34 @@ export async function loadClasses(db: Db, ruleset: Ruleset = '5', extended = fal
 
 export async function loadSpecies(db: Db, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string }[]> {
   return await db
-    .select({ id: srcSchema.characterSpecies.id, name: srcSchema.characterSpecies.name })
-    .from(srcSchema.characterSpecies)
+    .select({ id: schema.characterSpecies.id, name: schema.characterSpecies.name })
+    .from(schema.characterSpecies)
     .where(and(
-      eq(srcSchema.characterSpecies.ruleset, ruleset),
-      ...(extended ? [] : [eq(srcSchema.characterSpecies.source, CORE_SOURCE)]),
+      eq(schema.characterSpecies.ruleset, ruleset),
+      ...(extended ? [] : [eq(schema.characterSpecies.source, CORE_SOURCE)]),
     ))
-    .orderBy(asc(srcSchema.characterSpecies.name))
+    .orderBy(asc(schema.characterSpecies.name))
 }
 
 // Classe résolue par `(name, ruleset)` : `subclasses` n'a pas de `ruleset` et les noms de classe seront partagés en 5.5.
 export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string, description: string | null }[]> {
   const [cls] = await db
-    .select({ id: srcSchema.classes.id })
-    .from(srcSchema.classes)
-    .where(and(eq(srcSchema.classes.name, className), eq(srcSchema.classes.ruleset, ruleset)))
+    .select({ id: schema.classes.id })
+    .from(schema.classes)
+    .where(and(eq(schema.classes.name, className), eq(schema.classes.ruleset, ruleset)))
     .limit(1)
   if (!cls) return []
 
   return await db
     .select({
-      id: srcSchema.subclasses.id,
-      name: srcSchema.subclasses.name,
-      description: srcSchema.subclasses.description,
+      id: schema.subclasses.id,
+      name: schema.subclasses.name,
+      description: schema.subclasses.description,
     })
-    .from(srcSchema.subclasses)
+    .from(schema.subclasses)
     .where(and(
-      eq(srcSchema.subclasses.classId, cls.id),
-      ...(extended ? [] : [eq(srcSchema.subclasses.source, CORE_SOURCE)]),
+      eq(schema.subclasses.classId, cls.id),
+      ...(extended ? [] : [eq(schema.subclasses.source, CORE_SOURCE)]),
     ))
 }
 
@@ -81,54 +78,54 @@ export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset
  */
 export async function loadFightingStyles(db: Db, className: string, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string, description: string | null }[]> {
   const [cls] = await db
-    .select({ id: srcSchema.classes.id })
-    .from(srcSchema.classes)
-    .where(and(eq(srcSchema.classes.name, className), eq(srcSchema.classes.ruleset, ruleset)))
+    .select({ id: schema.classes.id })
+    .from(schema.classes)
+    .where(and(eq(schema.classes.name, className), eq(schema.classes.ruleset, ruleset)))
     .limit(1)
   if (!cls) return []
 
   return await db
     .select({
-      id: srcSchema.features.id,
-      name: srcSchema.features.name,
-      description: srcSchema.features.description,
+      id: schema.features.id,
+      name: schema.features.name,
+      description: schema.features.description,
     })
-    .from(srcSchema.features)
+    .from(schema.features)
     .where(and(
-      eq(srcSchema.features.classId, cls.id),
-      eq(srcSchema.features.tag, 'fighting_style'),
-      eq(srcSchema.features.ruleset, ruleset),
-      ...(extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
+      eq(schema.features.classId, cls.id),
+      eq(schema.features.tag, 'fighting_style'),
+      eq(schema.features.ruleset, ruleset),
+      ...(extended ? [] : [eq(schema.features.source, CORE_SOURCE)]),
     ))
-    .orderBy(asc(srcSchema.features.id))
+    .orderBy(asc(schema.features.id))
 }
 
 export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false) {
   const feats = await db
     .select({
-      id: srcSchema.features.id,
-      name: srcSchema.features.name,
-      description: srcSchema.features.description,
-      prerequisites: srcSchema.features.prerequisites,
-      featCategory: srcSchema.features.featCategory, // catégorie 2024 (null pour les dons 2014)
+      id: schema.features.id,
+      name: schema.features.name,
+      description: schema.features.description,
+      prerequisites: schema.features.prerequisites,
+      featCategory: schema.features.featCategory, // catégorie 2024 (null pour les dons 2014)
     })
-    .from(srcSchema.features)
+    .from(schema.features)
     .where(and(
-      eq(srcSchema.features.featureType, 'feat'),
-      eq(srcSchema.features.ruleset, ruleset),
-      ...(extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
+      eq(schema.features.featureType, 'feat'),
+      eq(schema.features.ruleset, ruleset),
+      ...(extended ? [] : [eq(schema.features.source, CORE_SOURCE)]),
     ))
 
   if (feats.length === 0) return []
 
   const featIds = feats.map(f => f.id)
   const links = await db
-    .select({ featureId: srcSchema.featureEffects.featureId, effect: srcSchema.effects })
-    .from(srcSchema.featureEffects)
-    .innerJoin(srcSchema.effects, eq(srcSchema.featureEffects.effectId, srcSchema.effects.id))
-    .where(inArray(srcSchema.featureEffects.featureId, featIds))
+    .select({ featureId: schema.featureEffects.featureId, effect: schema.effects })
+    .from(schema.featureEffects)
+    .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+    .where(inArray(schema.featureEffects.featureId, featIds))
 
-  const effectsByFeat = new Map<number, (typeof srcSchema.effects.$inferSelect)[]>()
+  const effectsByFeat = new Map<number, (typeof schema.effects.$inferSelect)[]>()
   for (const link of links) {
     if (!effectsByFeat.has(link.featureId)) effectsByFeat.set(link.featureId, [])
     effectsByFeat.get(link.featureId)!.push(link.effect)
@@ -142,17 +139,17 @@ export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false
 export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended = false) {
   const features = await db
     .select({
-      id: srcSchema.features.id,
-      name: srcSchema.features.name,
-      description: srcSchema.features.description,
-      levelRequired: srcSchema.features.levelRequired,
-      prerequisites: srcSchema.features.prerequisites,
+      id: schema.features.id,
+      name: schema.features.name,
+      description: schema.features.description,
+      levelRequired: schema.features.levelRequired,
+      prerequisites: schema.features.prerequisites,
     })
-    .from(srcSchema.features)
+    .from(schema.features)
     .where(and(
-      eq(srcSchema.features.featureType, 'eldritch_invocation'),
-      eq(srcSchema.features.ruleset, ruleset),
-      ...(extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
+      eq(schema.features.featureType, 'eldritch_invocation'),
+      eq(schema.features.ruleset, ruleset),
+      ...(extended ? [] : [eq(schema.features.source, CORE_SOURCE)]),
     ))
 
   if (features.length === 0) return []
@@ -160,13 +157,13 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended =
   const featureIds = features.map(f => f.id)
   const effectRows = await db
     .select({
-      featureId: srcSchema.featureEffects.featureId,
-      type: srcSchema.effects.type,
-      value: srcSchema.effects.value,
+      featureId: schema.featureEffects.featureId,
+      type: schema.effects.type,
+      value: schema.effects.value,
     })
-    .from(srcSchema.featureEffects)
-    .innerJoin(srcSchema.effects, eq(srcSchema.featureEffects.effectId, srcSchema.effects.id))
-    .where(inArray(srcSchema.featureEffects.featureId, featureIds))
+    .from(schema.featureEffects)
+    .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+    .where(inArray(schema.featureEffects.featureId, featureIds))
 
   const effectsByFeature = new Map<number, Effect[]>()
   for (const row of effectRows) {
@@ -189,68 +186,68 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended =
 export async function loadMetamagic(db: Db, ruleset: Ruleset = '5', extended = false) {
   return await db
     .select({
-      id: srcSchema.features.id,
-      name: srcSchema.features.name,
-      description: srcSchema.features.description,
+      id: schema.features.id,
+      name: schema.features.name,
+      description: schema.features.description,
     })
-    .from(srcSchema.features)
+    .from(schema.features)
     .where(and(
-      eq(srcSchema.features.tag, 'metamagic'),
-      eq(srcSchema.features.ruleset, ruleset),
-      ...(extended ? [] : [eq(srcSchema.features.source, CORE_SOURCE)]),
+      eq(schema.features.tag, 'metamagic'),
+      eq(schema.features.ruleset, ruleset),
+      ...(extended ? [] : [eq(schema.features.source, CORE_SOURCE)]),
     ))
-    .orderBy(asc(srcSchema.features.name))
+    .orderBy(asc(schema.features.name))
 }
 
 // Avec `characterSheetId`, ajoute les historiques homebrew de la fiche (non cachable).
 export async function loadBackgrounds(db: Db, characterSheetId?: number, ruleset: Ruleset = '5', extended = false) {
   return await db
     .select()
-    .from(srcSchema.backgrounds)
+    .from(schema.backgrounds)
     .where(
       and(
-        eq(srcSchema.backgrounds.ruleset, ruleset),
+        eq(schema.backgrounds.ruleset, ruleset),
         characterSheetId
-          ? or(isNull(srcSchema.backgrounds.characterSheetId), eq(srcSchema.backgrounds.characterSheetId, characterSheetId))
-          : isNull(srcSchema.backgrounds.characterSheetId),
-        ...(extended ? [] : [eq(srcSchema.backgrounds.source, CORE_SOURCE)]),
+          ? or(isNull(schema.backgrounds.characterSheetId), eq(schema.backgrounds.characterSheetId, characterSheetId))
+          : isNull(schema.backgrounds.characterSheetId),
+        ...(extended ? [] : [eq(schema.backgrounds.source, CORE_SOURCE)]),
       ),
     )
-    .orderBy(srcSchema.backgrounds.name)
+    .orderBy(schema.backgrounds.name)
 }
 
 // Un sort porte son propre `ruleset` (description/effets divergent entre 2014 et 2024).
 export async function loadSpells(db: Db, opts: { className?: string, ruleset?: Ruleset, extended?: boolean } = {}) {
   const ruleset = opts.ruleset ?? '5'
-  const sourceFilter = opts.extended ? [] : [eq(srcSchema.spells.source, CORE_SOURCE)]
+  const sourceFilter = opts.extended ? [] : [eq(schema.spells.source, CORE_SOURCE)]
 
   if (opts.className) {
     const rows = await db
-      .select({ spell: srcSchema.spells, school: srcSchema.magicSchools })
-      .from(srcSchema.spells)
-      .leftJoin(srcSchema.magicSchools, eq(srcSchema.spells.schoolId, srcSchema.magicSchools.id))
-      .leftJoin(srcSchema.spellClasses, eq(srcSchema.spellClasses.spellId, srcSchema.spells.id))
-      .leftJoin(srcSchema.classes, eq(srcSchema.spellClasses.classId, srcSchema.classes.id))
+      .select({ spell: schema.spells, school: schema.magicSchools })
+      .from(schema.spells)
+      .leftJoin(schema.magicSchools, eq(schema.spells.schoolId, schema.magicSchools.id))
+      .leftJoin(schema.spellClasses, eq(schema.spellClasses.spellId, schema.spells.id))
+      .leftJoin(schema.classes, eq(schema.spellClasses.classId, schema.classes.id))
       .where(and(
-        eq(srcSchema.classes.name, opts.className),
-        eq(srcSchema.classes.ruleset, ruleset),
-        eq(srcSchema.spellClasses.ruleset, ruleset),
-        eq(srcSchema.spells.ruleset, ruleset),
+        eq(schema.classes.name, opts.className),
+        eq(schema.classes.ruleset, ruleset),
+        eq(schema.spellClasses.ruleset, ruleset),
+        eq(schema.spells.ruleset, ruleset),
         ...sourceFilter,
       ))
-      .orderBy(asc(srcSchema.spells.level), asc(srcSchema.spells.name))
+      .orderBy(asc(schema.spells.level), asc(schema.spells.name))
     return rows.map(r => ({ ...r.spell, school: r.school }))
   }
 
   const rows = await db
-    .select({ spell: srcSchema.spells, school: srcSchema.magicSchools })
-    .from(srcSchema.spells)
-    .leftJoin(srcSchema.magicSchools, eq(srcSchema.spells.schoolId, srcSchema.magicSchools.id))
+    .select({ spell: schema.spells, school: schema.magicSchools })
+    .from(schema.spells)
+    .leftJoin(schema.magicSchools, eq(schema.spells.schoolId, schema.magicSchools.id))
     .where(and(
-      eq(srcSchema.spells.ruleset, ruleset),
+      eq(schema.spells.ruleset, ruleset),
       ...sourceFilter,
     ))
-    .orderBy(asc(srcSchema.spells.level), asc(srcSchema.spells.name))
+    .orderBy(asc(schema.spells.level), asc(schema.spells.name))
   return rows.map(r => ({ ...r.spell, school: r.school }))
 }
 
@@ -289,43 +286,43 @@ function abilityBonusesFrom(effects: { type: string, value: unknown }[]): Partia
 // `lineages: []` pour une espèce sans lignée (le builder retombe alors sur son blob `RaceData`).
 export async function loadSpeciesLineages(db: Db, speciesId: number, extended = false): Promise<CatalogSpeciesRich | null> {
   const [base] = await db
-    .select({ id: srcSchema.characterSpecies.id, name: srcSchema.characterSpecies.name, speed: srcSchema.characterSpecies.speed, size: srcSchema.characterSpecies.size })
-    .from(srcSchema.characterSpecies)
-    .where(eq(srcSchema.characterSpecies.id, speciesId))
+    .select({ id: schema.characterSpecies.id, name: schema.characterSpecies.name, speed: schema.characterSpecies.speed, size: schema.characterSpecies.size })
+    .from(schema.characterSpecies)
+    .where(eq(schema.characterSpecies.id, speciesId))
     .limit(1)
   if (!base) return null
 
   const baseEffects = await db
-    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
-    .from(srcSchema.speciesFeatures)
-    .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.speciesFeatures.featureId))
-    .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
-    .where(eq(srcSchema.speciesFeatures.speciesId, speciesId))
+    .select({ type: schema.effects.type, value: schema.effects.value })
+    .from(schema.speciesFeatures)
+    .innerJoin(schema.featureEffects, eq(schema.featureEffects.featureId, schema.speciesFeatures.featureId))
+    .innerJoin(schema.effects, eq(schema.effects.id, schema.featureEffects.effectId))
+    .where(eq(schema.speciesFeatures.speciesId, speciesId))
   const baseAbilityBonuses = abilityBonusesFrom(baseEffects)
 
   const lineages = await db
-    .select({ id: srcSchema.speciesLineages.id, name: srcSchema.speciesLineages.name, description: srcSchema.speciesLineages.description })
-    .from(srcSchema.speciesLineages)
+    .select({ id: schema.speciesLineages.id, name: schema.speciesLineages.name, description: schema.speciesLineages.description })
+    .from(schema.speciesLineages)
     .where(and(
-      eq(srcSchema.speciesLineages.speciesId, speciesId),
-      ...(extended ? [] : [eq(srcSchema.speciesLineages.source, CORE_SOURCE)]),
+      eq(schema.speciesLineages.speciesId, speciesId),
+      ...(extended ? [] : [eq(schema.speciesLineages.source, CORE_SOURCE)]),
     ))
-    .orderBy(asc(srcSchema.speciesLineages.id))
+    .orderBy(asc(schema.speciesLineages.id))
   const meta = { id: base.id, name: base.name, speed: base.speed, size: base.size, effects: baseEffects as Effect[] }
   if (!lineages.length) return { ...meta, lineages: [] }
 
   const lineageIds = lineages.map(l => l.id)
   const featRows = await db
-    .select({ id: srcSchema.features.id, name: srcSchema.features.name, lineageId: srcSchema.features.lineageId })
-    .from(srcSchema.features)
-    .where(inArray(srcSchema.features.lineageId, lineageIds))
+    .select({ id: schema.features.id, name: schema.features.name, lineageId: schema.features.lineageId })
+    .from(schema.features)
+    .where(inArray(schema.features.lineageId, lineageIds))
   const featIds = featRows.map(f => f.id)
   const effRows = featIds.length
     ? await db
-        .select({ featureId: srcSchema.featureEffects.featureId, type: srcSchema.effects.type, value: srcSchema.effects.value })
-        .from(srcSchema.featureEffects)
-        .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
-        .where(inArray(srcSchema.featureEffects.featureId, featIds))
+        .select({ featureId: schema.featureEffects.featureId, type: schema.effects.type, value: schema.effects.value })
+        .from(schema.featureEffects)
+        .innerJoin(schema.effects, eq(schema.effects.id, schema.featureEffects.effectId))
+        .where(inArray(schema.featureEffects.featureId, featIds))
     : []
 
   const effectsByFeat = new Map<number, { type: string, value: unknown }[]>()

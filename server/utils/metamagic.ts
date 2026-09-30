@@ -1,8 +1,5 @@
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
-import * as srcSchema from '~~/server/db/schema'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import * as schema from '~~/server/db/schema'
+import type { Db } from '~~/server/utils/db'
 
 // Métamagie 2014 non remplaçable à la montée de niveau (contrairement aux invocations) : ajout seul.
 export async function applyMetamagicChanges(
@@ -13,7 +10,7 @@ export async function applyMetamagicChanges(
   if (!newMetamagicIds.length) return
 
   await db
-    .insert(srcSchema.characterFeatures)
+    .insert(schema.characterFeatures)
     .values(newMetamagicIds.map(featureId => ({ characterSheetId, featureId, currentUses: 0 })))
     .onConflictDoNothing()
 }

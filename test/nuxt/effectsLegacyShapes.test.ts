@@ -4,7 +4,7 @@ import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { inArray } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
 import { useCharacterConditions } from '../../app/composables/character/useCharacterConditions'
@@ -52,7 +52,7 @@ async function rawValues(): Promise<Map<number, string>> {
 }
 
 async function legacyEffects(): Promise<Effect[]> {
-  const rows = await orm.select().from(srcSchema.effects).where(inArray(srcSchema.effects.id, LEGACY_IDS))
+  const rows = await orm.select().from(schema.effects).where(inArray(schema.effects.id, LEGACY_IDS))
   return rows.map((r: { type: string, value: unknown }) => ({ type: r.type, value: r.value }) as Effect)
 }
 
@@ -68,7 +68,7 @@ function seedEffect(c: (typeof LEGACY)[number]) {
 beforeAll(async () => {
   client = createClient({ url: ':memory:' })
   await replayMigrations(client)
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   for (const row of [...LEGACY, ...UNTOUCHED]) {
     await client.execute({ sql: 'INSERT INTO effects (id, type, value) VALUES (?, ?, ?)', args: [row.id, row.type, row.value] })

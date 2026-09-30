@@ -1,5 +1,4 @@
 import { db, schema } from '~~/server/utils/db'
-import * as srcSchema from '../../schema'
 import { eq, and, sql } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
 import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequisite } from '../../schema/features'
@@ -173,11 +172,11 @@ export async function seedClass(
       subclass = existingSubclass
       const seedDesc = subclassDef.description ?? null
       if (existingSubclass.description !== seedDesc) {
-        await db.run(sql`UPDATE subclasses SET description = ${seedDesc} WHERE id = ${existingSubclass.id}`)
+        await db.update(schema.subclasses).set({ description: seedDesc }).where(eq(schema.subclasses.id, existingSubclass.id))
       }
       const seedAbility = subclassDef.spellcastingAbility ?? null
       if (seedAbility !== null && existingSubclass.spellcastingAbility !== seedAbility) {
-        await db.run(sql`UPDATE subclasses SET spellcasting_ability = ${seedAbility} WHERE id = ${existingSubclass.id}`)
+        await db.update(schema.subclasses).set({ spellcastingAbility: seedAbility }).where(eq(schema.subclasses.id, existingSubclass.id))
       }
     }
     else {
@@ -238,16 +237,16 @@ export async function seedClass(
 
 async function _syncFeatureTag(featureId: number, tag: FeatureTag | null | undefined) {
   if (tag === undefined) return
-  await db.run(sql`UPDATE features SET tag = ${tag ?? null} WHERE id = ${featureId}`)
+  await db.update(schema.features).set({ tag }).where(eq(schema.features.id, featureId))
 }
 
 /** Idempotent : une feature porte au plus une progression par `kind`. */
 async function _syncProgression(featureId: number, prog: ProgressionDef | null | undefined) {
   if (!prog) return
   const existing = await db
-    .select({ id: srcSchema.progression.id })
-    .from(srcSchema.progression)
-    .where(and(eq(srcSchema.progression.featureId, featureId), eq(srcSchema.progression.kind, prog.kind)))
+    .select({ id: schema.progression.id })
+    .from(schema.progression)
+    .where(and(eq(schema.progression.featureId, featureId), eq(schema.progression.kind, prog.kind)))
     .limit(1)
     .get()
   const values = {
@@ -256,10 +255,10 @@ async function _syncProgression(featureId: number, prog: ProgressionDef | null |
     replaceable: prog.replaceable ?? false,
   }
   if (existing) {
-    await db.update(srcSchema.progression).set(values).where(eq(srcSchema.progression.id, existing.id))
+    await db.update(schema.progression).set(values).where(eq(schema.progression.id, existing.id))
   }
   else {
-    await db.insert(srcSchema.progression).values({ featureId, kind: prog.kind, ...values })
+    await db.insert(schema.progression).values({ featureId, kind: prog.kind, ...values })
   }
 }
 

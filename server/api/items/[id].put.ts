@@ -1,6 +1,4 @@
-import { db } from '~~/server/utils/db'
-import * as schema from '~~/server/db/schema'
-import * as srcSchema from '~~/server/db/schema'
+import { db, schema } from '~~/server/utils/db'
 import { and, eq, sql } from 'drizzle-orm'
 import { createItemSchema } from '~~/shared/utils/item'
 import { z } from 'zod'
@@ -48,28 +46,28 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.items.id, itemId))
 
   // Statements séquentiels : pas de db.transaction() sur D1.
-  await db.delete(srcSchema.itemEffects).where(eq(srcSchema.itemEffects.itemId, itemId))
+  await db.delete(schema.itemEffects).where(eq(schema.itemEffects.itemId, itemId))
 
   for (const effect of body.effects) {
     const existingEffect = await db
-      .select({ id: srcSchema.effects.id })
-      .from(srcSchema.effects)
+      .select({ id: schema.effects.id })
+      .from(schema.effects)
       .where(and(
-        eq(srcSchema.effects.type, effect.type as any),
-        sql`${srcSchema.effects.value} = ${JSON.stringify(effect.value)}`,
+        eq(schema.effects.type, effect.type as any),
+        sql`${schema.effects.value} = ${JSON.stringify(effect.value)}`,
       ))
       .limit(1)
       .get()
 
     const effectId = existingEffect?.id ?? await db
-      .insert(srcSchema.effects)
+      .insert(schema.effects)
       .values({ type: effect.type as any, value: effect.value as any })
       .returning()
       .get()
       .then(r => r.id)
 
     await db
-      .insert(srcSchema.itemEffects)
+      .insert(schema.itemEffects)
       .values({ itemId, effectId })
       .onConflictDoNothing()
   }

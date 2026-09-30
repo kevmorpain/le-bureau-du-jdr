@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, type Catalog } from '../../shared/rules/resolve'
 import { asiFeatures } from '../../server/db/seeds/data/asi'
@@ -21,9 +21,9 @@ beforeAll(async () => {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  await orm.insert(srcSchema.classes).values([
+  await orm.insert(schema.classes).values([
     { id: GUERRIER, name: 'Guerrier', hitDice: '1d10' },
     { id: MAGICIEN, name: 'Magicien', hitDice: '1d6' },
   ])
@@ -32,11 +32,11 @@ beforeAll(async () => {
   for (const [className, classId] of [['Guerrier', GUERRIER], ['Magicien', MAGICIEN]] as const) {
     for (const def of asiFeatures(className)) {
       const id = featureId++
-      await orm.insert(srcSchema.features).values({
+      await orm.insert(schema.features).values({
         id, name: def.name, featureType: def.featureType, classId, levelRequired: def.levelRequired,
       })
       const prog = def.progression!
-      await orm.insert(srcSchema.progression).values({
+      await orm.insert(schema.progression).values({
         featureId: id, kind: prog.kind, count: prog.count, optionSource: prog.optionSource, replaceable: prog.replaceable ?? false,
       })
     }

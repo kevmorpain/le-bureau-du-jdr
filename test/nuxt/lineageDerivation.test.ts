@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
@@ -29,30 +29,30 @@ beforeAll(async () => {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  orm = drizzle(client, { schema, casing: 'snake_case' })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await seedElfLineages(orm as any)
 
-  baseId = (await orm.select({ id: srcSchema.characterSpecies.id }).from(srcSchema.characterSpecies)
-    .where(and(eq(srcSchema.characterSpecies.name, 'Elfe'), eq(srcSchema.characterSpecies.ruleset, '5'))))[0]!.id
-  const lineageProg = (await orm.select({ id: srcSchema.progression.id }).from(srcSchema.progression)
-    .where(eq(srcSchema.progression.kind, 'lineage')))[0]!
+  baseId = (await orm.select({ id: schema.characterSpecies.id }).from(schema.characterSpecies)
+    .where(and(eq(schema.characterSpecies.name, 'Elfe'), eq(schema.characterSpecies.ruleset, '5'))))[0]!.id
+  const lineageProg = (await orm.select({ id: schema.progression.id }).from(schema.progression)
+    .where(eq(schema.progression.kind, 'lineage')))[0]!
 
   // Effets des traits de BASE (species_features de l'Elfe base) — communs à toutes les lignées.
   baseEffects = (await orm
-    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
-    .from(srcSchema.speciesFeatures)
-    .innerJoin(srcSchema.features, eq(srcSchema.speciesFeatures.featureId, srcSchema.features.id))
-    .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
-    .innerJoin(srcSchema.effects, eq(srcSchema.featureEffects.effectId, srcSchema.effects.id))
-    .where(eq(srcSchema.speciesFeatures.speciesId, baseId)))
+    .select({ type: schema.effects.type, value: schema.effects.value })
+    .from(schema.speciesFeatures)
+    .innerJoin(schema.features, eq(schema.speciesFeatures.featureId, schema.features.id))
+    .innerJoin(schema.featureEffects, eq(schema.featureEffects.featureId, schema.features.id))
+    .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+    .where(eq(schema.speciesFeatures.speciesId, baseId)))
     .map(r => ({ type: r.type, value: r.value }))
 
   // Une fiche « Elfe base + lignée L » par lignée.
-  const lineages = await orm.select().from(srcSchema.speciesLineages).where(eq(srcSchema.speciesLineages.speciesId, baseId))
+  const lineages = await orm.select().from(schema.speciesLineages).where(eq(schema.speciesLineages.speciesId, baseId))
   for (const lin of lineages) {
-    const sheet = await orm.insert(srcSchema.characterSheets).values({ name: `Test ${lin.name}`, speciesId: baseId }).returning().get()
-    await orm.insert(srcSchema.characterChoices).values({ characterSheetId: sheet.id, progressionId: lineageProg.id, selectedLineageId: lin.id })
+    const sheet = await orm.insert(schema.characterSheets).values({ name: `Test ${lin.name}`, speciesId: baseId }).returning().get()
+    await orm.insert(schema.characterChoices).values({ characterSheetId: sheet.id, progressionId: lineageProg.id, selectedLineageId: lin.id })
     charByLineage[lin.name] = sheet.id
   }
 })
@@ -80,7 +80,7 @@ describe('dérivation lignée — équivalence bout en bout (D17)', () => {
   }
 
   it('sans lignée choisie → dérivation vide (no-op pour les fiches existantes)', async () => {
-    const sheet = await orm.insert(srcSchema.characterSheets).values({ name: 'Sans lignée', speciesId: baseId }).returning().get()
+    const sheet = await orm.insert(schema.characterSheets).values({ name: 'Sans lignée', speciesId: baseId }).returning().get()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const derived = await deriveChosenLineage(orm as any, sheet.id, baseId, 20)
     expect(derived).toEqual({ features: [], speedOverride: null, lineageName: null })

@@ -1,5 +1,4 @@
 import { and, eq, inArray, lte, sql } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
@@ -16,9 +15,7 @@ import { isValidAbilityDistribution } from '~~/shared/rules/composite'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 import { alignmentCodeFromBuilderId } from '~~/shared/rules/alignments'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 export class CharacterValidationError extends Error {
   constructor(message: string) {

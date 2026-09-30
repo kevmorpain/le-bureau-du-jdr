@@ -1,6 +1,5 @@
-import { db } from '~~/server/utils/db'
+import { db, schema } from '~~/server/utils/db'
 import { useBinding } from '~~/server/utils/bindings'
-import * as schema from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'uncrypto'
 import {

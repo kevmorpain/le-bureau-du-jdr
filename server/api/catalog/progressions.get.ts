@@ -9,8 +9,7 @@ export default defineEventHandler(async (event) => {
     ? String(raw).split(',').map(s => Number(s.trim())).filter(n => Number.isInteger(n))
     : undefined
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return await buildCatalog(db as any, {
+  return await buildCatalog(db, {
     ...(classIds && classIds.length ? { classIds } : {}),
     extended: isExtendedRequested(event),
   })

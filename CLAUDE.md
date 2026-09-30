@@ -158,6 +158,7 @@ npm run test:unit    # Unit tests only
 npm run test:nuxt    # Nuxt integration tests only
 
 npm run db:generate  # Generate Drizzle migrations
+npm run db:migrate   # Apply pending migrations to the local D1 (also run by `predev`)
 ```
 
 ESLint runs automatically via Nuxt's ESLint module — no separate lint command needed.

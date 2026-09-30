@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { CreatureSize } from '../../server/db/schema/character_species'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { loadSpeciesLineages } from '../../server/utils/catalogSources'
@@ -19,12 +19,12 @@ beforeAll(async () => {
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  orm = drizzle(client, { schema, casing: 'snake_case' })
   await seedElfLineages(orm)
-  await orm.insert(srcSchema.characterSpecies).values({ name: 'Humain', ruleset: '5', size: CreatureSize.Medium, speed: 9 })
+  await orm.insert(schema.characterSpecies).values({ name: 'Humain', ruleset: '5', size: CreatureSize.Medium, speed: 9 })
 
-  const [base] = await orm.select().from(srcSchema.characterSpecies)
-    .where(and(eq(srcSchema.characterSpecies.name, 'Elfe'), eq(srcSchema.characterSpecies.ruleset, '5')))
+  const [base] = await orm.select().from(schema.characterSpecies)
+    .where(and(eq(schema.characterSpecies.name, 'Elfe'), eq(schema.characterSpecies.ruleset, '5')))
   elfBaseId = base.id
 }, 60000)
 
@@ -78,7 +78,7 @@ describe('loadSpeciesLineages (D17, lot 5b)', () => {
   })
 
   it('espèce sans lignée → lineages: []', async () => {
-    const [humain] = await orm.select().from(srcSchema.characterSpecies).where(eq(srcSchema.characterSpecies.name, 'Humain'))
+    const [humain] = await orm.select().from(schema.characterSpecies).where(eq(schema.characterSpecies.name, 'Humain'))
     const rich = await loadSpeciesLineages(orm, humain.id)
     expect(rich).not.toBeNull()
     expect(rich!.lineages).toEqual([])

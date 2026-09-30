@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { warlockSubclasses } from '../../server/db/seeds/data/warlock'
 import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
@@ -32,12 +32,12 @@ beforeAll(async () => {
   await client.execute('PRAGMA foreign_keys = ON')
   await replayMigrations(client)
   await client.execute('PRAGMA foreign_keys = OFF')
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  const warlock = await orm.insert(srcSchema.classes).values({ name: 'Occultiste', hitDice: '1d8' }).returning().get()
-  const archfey = await orm.insert(srcSchema.subclasses).values({ classId: warlock.id, name: 'L\'Archifée' }).returning().get()
-  const fiend = await orm.insert(srcSchema.subclasses).values({ classId: warlock.id, name: 'Le Fiélon' }).returning().get()
-  const feature = (subclassId: number) => orm.insert(srcSchema.features)
+  const warlock = await orm.insert(schema.classes).values({ name: 'Occultiste', hitDice: '1d8' }).returning().get()
+  const archfey = await orm.insert(schema.subclasses).values({ classId: warlock.id, name: 'L\'Archifée' }).returning().get()
+  const fiend = await orm.insert(schema.subclasses).values({ classId: warlock.id, name: 'Le Fiélon' }).returning().get()
+  const feature = (subclassId: number) => orm.insert(schema.features)
     .values({ name: 'Défenses captivantes', featureType: 'subclass_feature', subclassId, levelRequired: 10 })
     .returning().get()
   archfeyFeatureId = (await feature(archfey.id)).id

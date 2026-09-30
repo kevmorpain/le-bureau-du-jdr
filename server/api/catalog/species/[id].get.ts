@@ -7,8 +7,7 @@ export default defineEventHandler(async (event) => {
   if (!Number.isInteger(id) || id <= 0) {
     throw createError({ statusCode: 400, statusMessage: 'id d\'espèce invalide' })
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data = await loadSpeciesLineages(db as any, id, isExtendedRequested(event))
+  const data = await loadSpeciesLineages(db, id, isExtendedRequested(event))
   if (!data) throw createError({ statusCode: 404, statusMessage: 'Espèce introuvable' })
   return data
 })

@@ -1,16 +1,13 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
 import type { RechargeType } from '~~/server/db/schema/features'
+import type { Db } from '~~/server/utils/db'
 
 // ⚠️ Ordre : sur un repos long, `currentHp = maxHp` PUIS le soin par dés de vie recalcule depuis la valeur
 // lue au début et écrase le plein soin. Comportement historique, reproduit par l'ordre du batch.
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 export const restSchema = z.object({
   type: z.enum(REST_TYPES),
