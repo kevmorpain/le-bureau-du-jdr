@@ -1,6 +1,7 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import { hasHeavyWeaponDisadvantage } from '~~/shared/rules/creatureSize'
 import { archeryAttackBonus, defenseAcBonus, duelingDamageBonus, twoWeaponOffhandUsesAbilityMod } from '~~/shared/rules/fightingStyleEffects'
+import { armorClassBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -76,6 +77,7 @@ export const useCharacterInventory = (
     abilityModifiers: ComputedRef<Record<string, number>>
     proficiencyBonus: ComputedRef<number>
     spellcastingAbility: ComputedRef<string | null>
+    temporaryEffectSources?: ComputedRef<EffectSource[]>
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
@@ -134,10 +136,10 @@ export const useCharacterInventory = (
 
   // DMG : « Une créature qui ne se lie pas à un objet qui nécessite un lien obtient uniquement les
   // avantages non magiques de celui-ci » → aucun effet sans lien.
-  const inventoryEffects = computed<Effect[]>(() =>
+  const activeItemSources = computed<EffectSource[]>(() =>
     inventory.value
-      .filter(e => e.equipped && (!e.item?.requiresAttunement || e.attuned))
-      .flatMap(e => e.item?.effects ?? []),
+      .filter(e => e.equipped && (!e.item?.requiresAttunement || e.attuned) && e.item?.effects?.length)
+      .map(e => ({ label: e.item!.name, effects: e.item!.effects })),
   )
 
   // ─── Proficiencies ────────────────────────────────────────────────────────
@@ -210,16 +212,24 @@ export const useCharacterInventory = (
 
   // ─── Armor class ──────────────────────────────────────────────────────────
 
+  const acBonusParts = computed(() => armorClassBonusParts([
+    { label: 'Capacités', effects: deps?.allEffects.value ?? [] },
+    ...activeItemSources.value,
+    ...(deps?.temporaryEffectSources?.value ?? []),
+  ]))
+
   const computedAC = computed<ArmorClassBreakdown>(() => {
     const dexMod = deps?.abilityModifiers.value.dex ?? 0
     const shieldBonus = equippedShield.value ? 2 + (equippedShield.value.magicBonus ?? 0) : 0
+    const effectsBonus = sumBonusParts(acBonusParts.value)
+    const effectsDetail = acBonusParts.value.map(p => ` + ${p.label} ${formatModifier(p.amount)}`).join('')
 
     if (!equippedBodyArmor.value) {
       const base = 10 + dexMod
-      const total = base + shieldBonus
+      const total = base + shieldBonus + effectsBonus
       return {
         total,
-        detail: `10 + DEX ${dexMod >= 0 ? '+' : ''}${dexMod}${shieldBonus ? ` + bouclier +${shieldBonus}` : ''}`,
+        detail: `10 + DEX ${dexMod >= 0 ? '+' : ''}${dexMod}${shieldBonus ? ` + bouclier +${shieldBonus}` : ''}${effectsDetail}`,
         hasShield: !!equippedShield.value,
       }
     }
@@ -244,14 +254,14 @@ export const useCharacterInventory = (
 
     const defenseBonus = defenseAcBonus(fightingStyleKinds.value, true)
 
-    const total = acFromArmor + shieldBonus + defenseBonus
+    const total = acFromArmor + shieldBonus + defenseBonus + effectsBonus
     const shieldDetail = shieldBonus ? ` + bouclier +${shieldBonus}` : ''
     const magicDetail = magicAC > 0 ? ` +${magicAC}` : ''
     const defenseDetail = defenseBonus ? ' + Défense +1' : ''
 
     return {
       total,
-      detail: `${armor.item!.name} ${props.base_ac}${magicDetail}${dexDetail}${shieldDetail}${defenseDetail}`,
+      detail: `${armor.item!.name} ${props.base_ac}${magicDetail}${dexDetail}${shieldDetail}${defenseDetail}${effectsDetail}`,
       armorName: armor.item!.name,
       hasShield: !!equippedShield.value,
     }
@@ -521,7 +531,7 @@ export const useCharacterInventory = (
     equippedWeapons,
     equippedBodyArmor,
     equippedShield,
-    inventoryEffects,
+    activeItemSources,
     weaponProficiencies,
     armorProficiencies,
     isWeaponProficient,

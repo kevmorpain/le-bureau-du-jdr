@@ -10,12 +10,14 @@ useAbilityEffectInputs     → effets d'entrée de la couche 2 (espèce, aptitud
                              maîtrises dérivées par le GET) — sans fetch ni stockage
   ↓
 useCharacterAbilities      → scores (plafond : shared/rules/abilityScores), modificateurs, compétences,
-                             jets de sauvegarde ; + `itemEffects` des objets actifs (fiche seulement)
+                             jets de sauvegarde ; + `activeEffectSources` (objets actifs + effets
+                             temporaires, fiche seulement)
   ↓ (formulaContext construit ici pour éviter les dépendances circulaires)
 useCharacterConditions     → états, épuisement, défenses, vitesse, PV max
 useCharacterSpellcasting   → caractéristique d'incantation, DD, emplacements de sort
 useCharacterSpells         → liste des sorts du personnage, filtres, actions (fetch séparé)
-useCharacterInventory      → inventaire, équipement, maîtrises, effets magiques (fetch séparé)
+useCharacterInventory      → inventaire, équipement, maîtrises, effets magiques, CA (fetch séparé)
+useCharacterTemporaryEffects → effets temporaires de la fiche (colonne JSON, sans fetch)
 ```
 
 `useCharacterSpells` et `useCharacterInventory` sont des domaines **indépendants** : ils ont leur propre `useFetch` et ne dépendent pas des couches précédentes (sauf `spellSlots` passé en `deps` à `useCharacterSpells`). Ils sont instanciés dans le coordinateur pour exposer leurs actions via l'API publique de `useCharacterSheet`.
@@ -48,8 +50,9 @@ De même, `resolvedFeatures`, `classFeatureEffects` et `allEffects` sont constru
 - Hors de la fiche (level-up, lentille de sorts), ne jamais reconstruire maîtrises ou caractéristiques à
   la main : instancier `useCharacterAbilities` avec `useAbilityEffectInputs`. `character_skills` ne porte
   que les overrides et l'expertise ; le lire seul donne un résultat faux (cf. `audit-completude.md` B9).
-  Les effets d'objets n'y sont pas (l'inventaire a son propre fetch) : seule la fiche les passe en
-  `itemEffects`, via une forward-declaration car l'inventaire est instancié après la couche 2.
+  Les effets d'objets n'y sont pas (l'inventaire a son propre fetch) : seule la fiche les passe, avec les
+  effets temporaires, en `activeEffectSources`, via une forward-declaration car l'inventaire est instancié
+  après la couche 2.
 - Les constantes module-level (listes, maps) vont en tête de fichier, avant le composable.
 - Les types privés au fichier (ex. `DefenseEntry`, `SaveStatus`) ne sont pas exportés.
 - Les constantes utiles à l'extérieur (ex. `binaryConditions`, `abilitySkillKeys`) sont exportées directement depuis le fichier, pas via le `return` du composable.

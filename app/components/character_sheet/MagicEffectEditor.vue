@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-3">
     <div class="flex items-center justify-between">
-      <h3 class="text-sm font-medium">Effets magiques</h3>
+      <h3 class="text-sm font-medium">{{ title }}</h3>
       <UButton
         icon="i-heroicons:plus"
         size="xs"
@@ -16,7 +16,7 @@
       v-if="localEffects.length === 0"
       class="text-sm text-muted text-center py-2"
     >
-      Aucun effet magique
+      Aucun effet
     </div>
 
     <div
@@ -167,10 +167,29 @@
         </UFormField>
       </div>
 
+      <div v-else-if="effect.type === 'saving_throw_bonus'" class="grid grid-cols-2 gap-2">
+        <UFormField label="Jets de sauvegarde">
+          <USelect
+            v-model="(effect.value as SavingThrowBonusValue).ability"
+            :items="savingThrowAbilityOptions"
+            size="sm"
+          />
+        </UFormField>
+        <UFormField label="Bonus" hint="négatif = malus">
+          <UInput
+            v-model.number="(effect.value as SavingThrowBonusValue).amount"
+            type="number"
+            :min="-10"
+            :max="10"
+            size="sm"
+          />
+        </UFormField>
+      </div>
+
       <div
-        v-else-if="['spell_save_dc_bonus', 'spell_attack_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
+        v-else-if="['armor_class_bonus', 'spell_save_dc_bonus', 'spell_attack_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
       >
-        <UFormField label="Bonus">
+        <UFormField label="Bonus" hint="négatif = malus">
           <UInput
             v-model.number="(effect.value as { amount: number }).amount"
             type="number"
@@ -204,7 +223,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { Effect, ExtractEffect } from '~~/server/db/schema/effects'
+import type { Effect, EffectType, ExtractEffect } from '~~/server/db/schema/effects'
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 
 interface ExtraDamageValue {
@@ -214,16 +233,23 @@ interface ExtraDamageValue {
 
 type AbilityIncreaseValue = ExtractEffect<'ability_increase'>['value']
 type AbilityScoreSetValue = ExtractEffect<'ability_score_set'>['value']
+type SavingThrowBonusValue = ExtractEffect<'saving_throw_bonus'>['value']
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: Effect[]
-}>()
+  title?: string
+  // Restreint les types proposés (effets temporaires : seuls ceux que la fiche applique).
+  types?: readonly EffectType[]
+}>(), {
+  title: 'Effets magiques',
+  types: undefined,
+})
 
 const emit = defineEmits<{
   'update:modelValue': [value: Effect[]]
 }>()
 
-const localEffects = ref<Array<{ type: string, value: unknown }>>(
+const localEffects = ref<Array<{ type: EffectType, value: unknown }>>(
   (props.modelValue ?? []).map(e => ({ type: e.type, value: e.value })),
 )
 
@@ -242,7 +268,9 @@ watch(() => props.modelValue, (val) => {
   localEffects.value = (val ?? []).map(e => ({ type: e.type, value: e.value }))
 })
 
-const effectTypeOptions = [
+const allEffectTypeOptions: { label: string, value: EffectType }[] = [
+  { label: 'Bonus à la CA', value: 'armor_class_bonus' },
+  { label: 'Bonus aux jets de sauvegarde', value: 'saving_throw_bonus' },
   { label: 'Dégâts supplémentaires', value: 'extra_damage' },
   { label: 'Résistance aux dégâts', value: 'damage_resistance' },
   { label: 'Immunité aux dégâts', value: 'damage_immunity' },
@@ -259,6 +287,10 @@ const effectTypeOptions = [
   { label: 'PV par niveau', value: 'hp_per_level' },
   { label: 'Bonus à une compétence passive', value: 'passive_skill_bonus' },
 ]
+
+const effectTypeOptions = computed(() =>
+  props.types ? allEffectTypeOptions.filter(o => props.types!.includes(o.value)) : allEffectTypeOptions,
+)
 
 const passiveSkillOptions = [
   { label: 'Perception passive', value: 'perception' },
@@ -290,6 +322,11 @@ const abilityOptions = [
   { label: 'Charisme', value: 'cha' },
 ]
 
+const savingThrowAbilityOptions = [
+  { label: 'Tous', value: 'all' },
+  ...abilityOptions,
+]
+
 const defaultValueForType = (type: string): unknown => {
   switch (type) {
     case 'extra_damage': return { die_count_notation: '1d6', damage_type: 'fire' }
@@ -302,6 +339,8 @@ const defaultValueForType = (type: string): unknown => {
     case 'darkvision': return { range: 18 }
     case 'weapon_proficiency': return 'simple_weapons'
     case 'proficiency': return 'light'
+    case 'saving_throw_bonus': return { ability: 'all', amount: 1 }
+    case 'armor_class_bonus':
     case 'spell_save_dc_bonus':
     case 'spell_attack_bonus':
     case 'initiative_bonus':
@@ -319,7 +358,8 @@ const onTypeChange = (index: number) => {
 }
 
 const addEffect = () => {
-  localEffects.value.push({ type: 'extra_damage', value: defaultValueForType('extra_damage') })
+  const type = effectTypeOptions.value[0]!.value
+  localEffects.value.push({ type, value: defaultValueForType(type) })
 }
 
 const removeEffect = (index: number) => {

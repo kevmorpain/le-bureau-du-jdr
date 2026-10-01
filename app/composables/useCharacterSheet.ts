@@ -3,6 +3,7 @@ import { evaluate } from '~~/shared/utils/formula'
 import type { FormulaContext } from '~~/shared/utils/formula'
 import type { AbilityScoreKey, Effect } from '~~/server/db/schema/effects'
 import type { SkillKey } from '~~/shared/rules/skills'
+import type { EffectSource } from '~~/shared/rules/effectBonuses'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
 import { useCharacterConditions, binaryConditions } from './character/useCharacterConditions'
@@ -11,6 +12,7 @@ import { useCharacterSpells } from './character/useCharacterSpells'
 import { useCharacterInventory } from './character/useCharacterInventory'
 import { useCharacterBackground } from './character/useCharacterBackground'
 import { useCharacterIdentity } from './character/useCharacterIdentity'
+import { useCharacterTemporaryEffects } from './character/useCharacterTemporaryEffects'
 import { sheetTextField } from './character/sheetField'
 
 export type FeatChoices = { ability?: string, spellId?: number, skills?: string[], tools?: string[] } | null
@@ -116,14 +118,20 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const abilityInputs = useAbilityEffectInputs(characterSheet)
   const { speciesEffects, backgroundEffects } = abilityInputs
 
+  const temporary = useCharacterTemporaryEffects(characterSheet)
+
   // Forward-declaration : caractéristiques et incantation lisent les effets des objets actifs, alors que
   // l'inventaire est créé après elles (il lui faut leurs modificateurs et spellcastingAbility).
-  const inventoryEffectsRef = shallowRef<ComputedRef<Effect[]> | null>(null)
-  const inventoryEffects = computed<Effect[]>(() => inventoryEffectsRef.value?.value ?? [])
+  const itemSourcesRef = shallowRef<ComputedRef<EffectSource[]> | null>(null)
+  const activeEffectSources = computed<EffectSource[]>(() => [
+    ...(itemSourcesRef.value?.value ?? []),
+    ...temporary.temporaryEffectSources.value,
+  ])
+  const activeEffects = computed<Effect[]>(() => activeEffectSources.value.flatMap(s => s.effects))
 
   const abilities = useCharacterAbilities(characterSheet, {
     ...abilityInputs,
-    itemEffects: inventoryEffects,
+    activeEffectSources,
     proficiencyBonus: classes.proficiencyBonus,
   })
 
@@ -228,7 +236,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   const allEffectsForSpellcasting = computed<Effect[]>(() => [
     ...baseAllEffects.value,
-    ...inventoryEffects.value,
+    ...activeEffects.value,
   ])
 
   // ─── Couche 4 : incantation ───────────────────────────────────────────────
@@ -262,9 +270,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     abilityModifiers: abilities.abilityModifiers,
     proficiencyBonus: classes.proficiencyBonus,
     spellcastingAbility: spellcasting.spellcastingAbility,
+    temporaryEffectSources: temporary.temporaryEffectSources,
   })
 
-  inventoryEffectsRef.value = inventoryLayer.inventoryEffects
+  itemSourcesRef.value = inventoryLayer.activeItemSources
 
   const allEffects = allEffectsForSpellcasting
 
@@ -358,6 +367,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     getEffectiveProficiency: abilities.getEffectiveProficiency,
     getSkillModifier: abilities.getSkillModifier,
     savingThrows: abilities.savingThrows,
+    savingThrowBonuses: abilities.savingThrowBonuses,
     passivePerception: abilities.passivePerception,
     passiveInvestigation: abilities.passiveInvestigation,
     initiativeBonus: abilities.initiativeBonus,
@@ -380,6 +390,11 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     effectiveMaxHp: conditions.effectiveMaxHp,
     skillDisadvantageReasons: conditions.skillDisadvantageReasons,
     saveStatuses: conditions.saveStatuses,
+    // Effets temporaires
+    temporaryEffects: temporary.temporaryEffects,
+    saveTemporaryEffect: temporary.saveTemporaryEffect,
+    toggleTemporaryEffect: temporary.toggleTemporaryEffect,
+    removeTemporaryEffect: temporary.removeTemporaryEffect,
     // Incantation
     spellcastingAbility: spellcasting.spellcastingAbility,
     spellcastingModifier: spellcasting.spellcastingModifier,

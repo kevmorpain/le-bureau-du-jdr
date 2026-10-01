@@ -9,6 +9,7 @@
 | `spellcastingAbility` | DB (`character_classes`) | Dérivé de la classe, voir [architecture.md](architecture.md) |
 | `spellSlots` | DB (`character_spell_slots`) | Persistance cross-session |
 | `notes` (notes de session) | DB (`character_sheets`) | Persistance cross-device, cross-session |
+| `temporaryEffects` (bénédictions, malédictions…) | DB (`character_sheets`, JSON) | Peut durer plusieurs séances : cross-device, contrairement aux états d'encounter |
 | Identité & description (`age`, `height`, `weight`, `eyes`, `hair`, `skin`, `deity`, `backstory`, `allies`, `portraitUrl`) | DB (`character_sheets`) | Description du personnage, saisie à la création ou sur la fiche |
 | Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, binding `BLOB`) | Binaire : la fiche n'en garde que l'URL |
 | `armorClass` | localStorage | Dépend du futur système d'équipement |

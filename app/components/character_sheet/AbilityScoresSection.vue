@@ -61,7 +61,7 @@
                 </tr>
                 <tr v-if="score.items">
                   <td class="text-muted pr-4 py-0.5">
-                    Objets
+                    Objets & effets
                   </td>
                   <td class="text-right font-mono">
                     +{{ score.items }}
@@ -140,6 +140,16 @@
             v-if="saveStatuses[key]?.autoFail || saveStatuses[key]?.disadvantage"
             :lines="saveStatuses[key]!.reasons"
           />
+          <UTooltip
+            v-if="savingThrowBonuses[key]?.length"
+            :text="savingThrowBonuses[key]!.map(b => `${b.label} ${formatModifier(b.amount)}`).join('\n')"
+            :ui="{ text: 'whitespace-pre-line', content: 'h-auto' }"
+          >
+            <UIcon
+              name="i-heroicons:sparkles-16-solid"
+              class="size-3 text-primary shrink-0"
+            />
+          </UTooltip>
           <span
             class="text-xs font-mono cursor-pointer hover:text-primary transition-colors"
             :class="savingThrows[key]!.proficiency !== 'none' ? 'text-primary' : 'text-muted'"
@@ -210,6 +220,7 @@ const {
   getEffectiveProficiency,
   getSkillModifier,
   savingThrows,
+  savingThrowBonuses,
   saveStatuses,
   skillDisadvantageReasons,
   armorStealthDisadvantage,
