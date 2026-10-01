@@ -1,20 +1,15 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Équivalence bout en bout de la dérivation : un perso « Elfe base + lignée » doit dériver EXACTEMENT
 // les effets de l'ancienne espèce séparée, plus la surcharge de vitesse (Elfe des bois 10,5 m).
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 interface Eff { type: string, value: unknown }
 function stable(v: unknown): string {
@@ -31,39 +26,33 @@ let baseEffects: Eff[]
 const charByLineage: Record<string, number> = {}
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  orm = drizzle(client, { schema, casing: 'snake_case' })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await seedElfLineages(orm as any)
 
-  baseId = (await orm.select({ id: srcSchema.characterSpecies.id }).from(srcSchema.characterSpecies)
-    .where(and(eq(srcSchema.characterSpecies.name, 'Elfe'), eq(srcSchema.characterSpecies.ruleset, '5'))))[0]!.id
-  const lineageProg = (await orm.select({ id: srcSchema.progression.id }).from(srcSchema.progression)
-    .where(eq(srcSchema.progression.kind, 'lineage')))[0]!
+  baseId = (await orm.select({ id: schema.characterSpecies.id }).from(schema.characterSpecies)
+    .where(and(eq(schema.characterSpecies.name, 'Elfe'), eq(schema.characterSpecies.ruleset, '5'))))[0]!.id
+  const lineageProg = (await orm.select({ id: schema.progression.id }).from(schema.progression)
+    .where(eq(schema.progression.kind, 'lineage')))[0]!
 
   // Effets des traits de BASE (species_features de l'Elfe base) — communs à toutes les lignées.
   baseEffects = (await orm
-    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
-    .from(srcSchema.speciesFeatures)
-    .innerJoin(srcSchema.features, eq(srcSchema.speciesFeatures.featureId, srcSchema.features.id))
-    .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
-    .innerJoin(srcSchema.effects, eq(srcSchema.featureEffects.effectId, srcSchema.effects.id))
-    .where(eq(srcSchema.speciesFeatures.speciesId, baseId)))
+    .select({ type: schema.effects.type, value: schema.effects.value })
+    .from(schema.speciesFeatures)
+    .innerJoin(schema.features, eq(schema.speciesFeatures.featureId, schema.features.id))
+    .innerJoin(schema.featureEffects, eq(schema.featureEffects.featureId, schema.features.id))
+    .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+    .where(eq(schema.speciesFeatures.speciesId, baseId)))
     .map(r => ({ type: r.type, value: r.value }))
 
   // Une fiche « Elfe base + lignée L » par lignée.
-  const lineages = await orm.select().from(srcSchema.speciesLineages).where(eq(srcSchema.speciesLineages.speciesId, baseId))
+  const lineages = await orm.select().from(schema.speciesLineages).where(eq(schema.speciesLineages.speciesId, baseId))
   for (const lin of lineages) {
-    const sheet = await orm.insert(srcSchema.characterSheets).values({ name: `Test ${lin.name}`, speciesId: baseId }).returning().get()
-    await orm.insert(srcSchema.characterChoices).values({ characterSheetId: sheet.id, progressionId: lineageProg.id, selectedLineageId: lin.id })
+    const sheet = await orm.insert(schema.characterSheets).values({ name: `Test ${lin.name}`, speciesId: baseId }).returning().get()
+    await orm.insert(schema.characterChoices).values({ characterSheetId: sheet.id, progressionId: lineageProg.id, selectedLineageId: lin.id })
     charByLineage[lin.name] = sheet.id
   }
 })
@@ -91,7 +80,7 @@ describe('dérivation lignée — équivalence bout en bout (D17)', () => {
   }
 
   it('sans lignée choisie → dérivation vide (no-op pour les fiches existantes)', async () => {
-    const sheet = await orm.insert(srcSchema.characterSheets).values({ name: 'Sans lignée', speciesId: baseId }).returning().get()
+    const sheet = await orm.insert(schema.characterSheets).values({ name: 'Sans lignée', speciesId: baseId }).returning().get()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const derived = await deriveChosenLineage(orm as any, sheet.id, baseId, 20)
     expect(derived).toEqual({ features: [], speedOverride: null, lineageName: null })

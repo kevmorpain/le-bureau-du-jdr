@@ -8,10 +8,11 @@
 | `dragonbornAncestry` | DB (`character_sheets`) | Persistance cross-session |
 | `spellcastingAbility` | DB (`character_classes`) | Dérivé de la classe, voir [architecture.md](architecture.md) |
 | `spellSlots` | DB (`character_spell_slots`) | Persistance cross-session |
+| `currentHitDie` (dés de vie restants) | DB (`character_sheets`, JSON) | Persistance cross-session ; rendus par le repos long (`shared/rules/hitDice.ts`) |
 | `notes` (notes de session) | DB (`character_sheets`) | Persistance cross-device, cross-session |
+| `temporaryEffects` (bénédictions, malédictions…) | DB (`character_sheets`, JSON) | Peut durer plusieurs séances : cross-device, contrairement aux états d'encounter |
 | Identité & description (`age`, `height`, `weight`, `eyes`, `hair`, `skin`, `deity`, `backstory`, `allies`, `portraitUrl`) | DB (`character_sheets`) | Description du personnage, saisie à la création ou sur la fiche |
-| Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, via `hub:blob`) | Binaire : la fiche n'en garde que l'URL |
-| `armorClass` | localStorage | Dépend du futur système d'équipement |
+| Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, binding `BLOB`) | Binaire : la fiche n'en garde que l'URL |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
 | `deathSavingThrows` | localStorage | État d'encounter, remis à zéro entre sessions |
 | Modificateurs de caractéristique | computed | Dérivés des scores, jamais stockés |
@@ -52,7 +53,11 @@ de `[id].vue` se déclenche dans les deux cas.
 
 Pour exposer un nouveau champ via ce pattern :
 1. Ajouter la colonne dans `server/db/schema/character_sheets.ts` + une migration
-2. Ajouter le champ dans `updateCharacterSheetSchema` (`shared/utils/character_sheet.ts`)
+2. Ajouter le champ dans `updateCharacterSheetSchema` (`shared/utils/character_sheet.ts`).
+   ⚠️ **Oubli silencieux** : Zod retire les clés inconnues, donc le PUT répond 200 (toast « Fiche
+   sauvegardée ») sans rien écrire — c'est ce qui laissait les dés de vie à fond après rechargement.
+   Une colonne nullable doit y être `.nullable().optional()` : le client renvoie la fiche brute, un
+   simple `.optional()` ferait 422 à chaque auto-save des fiches où elle vaut `NULL`.
 3. Exposer un `sheetTextField(...)` depuis le composable de domaine
 4. Si le champ est saisissable à la création : l'ajouter aussi à `createCharacterSchema` et à
    l'insert de `server/utils/characterCreate.ts` (sinon il n'existe que sur la fiche)
@@ -86,7 +91,7 @@ watch(spellSlots, () => {
 
 Ne pas utiliser le deep watch de `[id].vue` pour ces données — elles ont leur propre endpoint.
 
-### 3. Fichiers — R2 (`hub:blob`)
+### 3. Fichiers — R2 (binding `BLOB`)
 
 Le seul binaire de l'app aujourd'hui : le **portrait** de personnage.
 
@@ -107,9 +112,9 @@ Fonctions pures testées dans `test/unit/portraits.test.ts`.
 change à chaque remplacement — d'où le `Cache-Control: immutable` et le portrait
 disponible hors-ligne. Aucune énumération n'est exposée.
 
-**Dev vs prod** (`nuxt.config.ts`) : `hub.hosting` vaut toujours « cloudflare » (preset
-nitro), donc le driver R2 serait choisi même en dev, où aucun binding n'existe. Le bloc
-`$development` bascule sur le driver `fs` (`.data/blob`), à l'image de la base.
+**Dev vs prod** : aucune différence de code. `useBinding('BLOB')` lit le même binding R2 en
+prod et en dev, où l'émulation `cloudflare-dev` de Nitro le fournit (Miniflare, état dans
+`.wrangler/state/v3/r2`).
 
 ⚠️ Un envoi de fichier **ne passe pas par la file de synchro hors-ligne** (elle rejoue du
 JSON, pas du binaire) : téléverser exige le réseau, coller une URL non.

@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import { characterRest, restSchema } from '~~/server/utils/characterRest'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 
@@ -12,8 +12,7 @@ export default defineEventHandler(async (event) => {
   const input = await readValidatedBody(event, restSchema.parse)
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return await characterRest(db as any, characterSheetId, input)
+    return await characterRest(db, characterSheetId, input)
   }
   catch (e) {
     if (e instanceof CharacterValidationError) {

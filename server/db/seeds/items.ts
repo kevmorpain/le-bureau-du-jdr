@@ -1,20 +1,18 @@
-import { db } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
-import * as srcSchema from '~~/server/db/schema'
 import { itemsData } from './data/items'
 
 export default async function seed() {
-  // srcSchema (schéma frais) : le cache hub:db peut dropper les colonnes récentes en silence.
   const existing = await db
     .select({
-      id: srcSchema.items.id,
-      description: srcSchema.items.description,
-      source: srcSchema.items.source,
-      rarity: srcSchema.items.rarity,
-      requiresAttunement: srcSchema.items.requiresAttunement,
-      attunementNote: srcSchema.items.attunementNote,
+      id: schema.items.id,
+      description: schema.items.description,
+      source: schema.items.source,
+      rarity: schema.items.rarity,
+      requiresAttunement: schema.items.requiresAttunement,
+      attunementNote: schema.items.attunementNote,
     })
-    .from(srcSchema.items)
+    .from(schema.items)
   const byId = new Map(existing.map(i => [i.id, i]))
 
   let inserted = 0
@@ -40,14 +38,14 @@ export default async function seed() {
         || cur.requiresAttunement !== content.requiresAttunement
         || cur.attunementNote !== content.attunementNote
       if (changed) {
-        await db.update(srcSchema.items).set(content).where(eq(srcSchema.items.id, item.id))
+        await db.update(schema.items).set(content).where(eq(schema.items.id, item.id))
         updated++
       }
       continue
     }
 
     await db
-      .insert(srcSchema.items)
+      .insert(schema.items)
       .values({
         id: item.id,
         name: item.name,

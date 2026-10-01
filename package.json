@@ -5,10 +5,11 @@
   "scripts": {
     "build": "NODE_OPTIONS=--max-old-space-size=4096 nuxt build",
     "dev": "nuxt dev",
-    "predev": "nuxt prepare",
+    "predev": "nuxt prepare && npm run db:migrate",
     "preview": "npm run build && wrangler dev",
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate && nuxt prepare",
+    "db:migrate": "wrangler d1 migrations apply DB --local",
     "deploy": "npm run build && wrangler deploy",
     "test": "vitest",
     "test:watch": "vitest --watch",
@@ -16,12 +17,10 @@
     "test:nuxt": "vitest --project nuxt"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.0",
     "@nuxt/eslint": "^1.13.0",
     "@nuxt/image": "^2.0.0",
     "@nuxt/test-utils": "^4.0.2",
     "@nuxt/ui": "^4.4.0",
-    "@nuxthub/core": "^0.10.6",
     "@nuxtjs/i18n": "^10.2.1",
     "@vite-pwa/nuxt": "^1.1.0",
     "drizzle-orm": "^0.45.1",
@@ -35,6 +34,8 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "@libsql/client": "^0.17.0",
     "@vue/test-utils": "^2.4.6",
     "drizzle-kit": "^0.31.8",
     "happy-dom": "^20.11.1",

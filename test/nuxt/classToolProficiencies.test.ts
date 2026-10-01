@@ -1,17 +1,13 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
+import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
 // Migration 0104 : pose sur les bases déployées les outils FIXES de classe que le seed porte pour les
 // bases neuves (champ `tools` de CLASS_PROFICIENCIES → porteur « Maîtrises de la classe »).
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const MIGRATION = '0104_class_tool_proficiencies.sql'
 
 let client: Client
@@ -27,35 +23,25 @@ async function linkedTools(featureId: number): Promise<string[]> {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  const carrier = (classId: number) => orm.insert(srcSchema.features)
+  const carrier = (classId: number) => orm.insert(schema.features)
     .values({ name: 'Maîtrises de la classe', featureType: 'proficiency_grant', classId, levelRequired: 1 })
     .returning().get()
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    const cls = await orm.insert(srcSchema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
+    const cls = await orm.insert(schema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
     carrierIdByClass.set(className, (await carrier(cls.id)).id)
   }
-  const homonym = await orm.insert(srcSchema.classes).values({ name: 'Roublard', hitDice: '1d8', ruleset: '5.5' }).returning().get()
+  const homonym = await orm.insert(schema.classes).values({ name: 'Roublard', hitDice: '1d8', ruleset: '5.5' }).returning().get()
   homonymCarrierId = (await carrier(homonym.id)).id
 
   // Effet déjà en base (porteur d'historique Criminel) : la migration doit le réutiliser.
-  await orm.insert(srcSchema.effects).values({ type: 'tool_proficiency', value: 'Outils de voleur' })
+  await orm.insert(schema.effects).values({ type: 'tool_proficiency', value: 'Outils de voleur' })
 
-  const migration = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-  for (let pass = 0; pass < 2; pass++) {
-    for (const statement of splitSqlQueries(migration)) await client.execute(statement)
-  }
+  for (let pass = 0; pass < 2; pass++) await applyMigration(client, MIGRATION)
 })
 
 describe('migration 0104 — outils de classe sur les porteurs déployés', () => {

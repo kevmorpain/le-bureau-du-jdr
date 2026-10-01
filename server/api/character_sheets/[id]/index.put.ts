@@ -1,5 +1,4 @@
-import { db } from 'hub:db'
-import * as schema from '~~/server/db/schema'
+import { db, schema } from '~~/server/utils/db'
 import { sql, eq, and, notInArray } from 'drizzle-orm'
 import { updateCharacterSheetSchema } from '~~/shared/utils/character_sheet'
 

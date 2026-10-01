@@ -1,21 +1,17 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { CreatureSize } from '../../server/db/schema/character_species'
 import type { FeatureChoice } from '../../shared/rules/choices'
 import { dwarfToolChoice, oneLanguageChoice, twoSkillsChoice, wizardCantripChoice } from '../../server/db/seeds/data/speciesChoices'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
+import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
-// Migration 0107 : sur une base déployée, l'effet « au choix » d'un trait d'espèce devient le point de choix
+// Migration 0109 : sur une base déployée, l'effet « au choix » d'un trait d'espèce devient le point de choix
 // que le seed déclare (`choice`), et la Fadette reçoit son trait « Langues ».
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
-const MIGRATION = '0107_species_trait_choices.sql'
+const MIGRATION = '0109_species_trait_choices.sql'
 
 let client: Client
 const featureIds: Record<string, number> = {}
@@ -46,40 +42,30 @@ async function linkedEffectTypes(featureId: number): Promise<string[]> {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  const halfElf = await orm.insert(srcSchema.characterSpecies).values({ name: 'Demi-elfe', size: CreatureSize.Medium, speed: 9 }).returning().get()
-  const fadette = await orm.insert(srcSchema.characterSpecies).values({ name: 'Fadette', size: CreatureSize.Small, speed: 9 }).returning().get()
+  const halfElf = await orm.insert(schema.characterSpecies).values({ name: 'Demi-elfe', size: CreatureSize.Medium, speed: 9 }).returning().get()
+  const fadette = await orm.insert(schema.characterSpecies).values({ name: 'Fadette', size: CreatureSize.Small, speed: 9 }).returning().get()
   fadetteId = fadette.id
-  const commonEffect = await orm.insert(srcSchema.effects).values({ type: 'language_proficiency', value: 'common' }).returning().get()
+  const commonEffect = await orm.insert(schema.effects).values({ type: 'language_proficiency', value: 'common' }).returning().get()
 
   for (const trait of LEGACY_TRAITS) {
-    const feature = await orm.insert(srcSchema.features).values({ name: trait.key, featureType: trait.type as 'species_trait' }).returning().get()
+    const feature = await orm.insert(schema.features).values({ name: trait.key, featureType: trait.type as 'species_trait' }).returning().get()
     featureIds[trait.key] = feature.id
-    if (trait.type === 'species_trait') await orm.insert(srcSchema.speciesFeatures).values({ speciesId: halfElf.id, featureId: feature.id })
+    if (trait.type === 'species_trait') await orm.insert(schema.speciesFeatures).values({ speciesId: halfElf.id, featureId: feature.id })
     const effect = await client.execute({ sql: 'INSERT INTO effects (type, value) VALUES (?, ?) RETURNING id', args: [trait.effect.type, trait.effect.value] })
-    await orm.insert(srcSchema.featureEffects).values({ featureId: feature.id, effectId: Number(effect.rows[0]!.id) })
+    await orm.insert(schema.featureEffects).values({ featureId: feature.id, effectId: Number(effect.rows[0]!.id) })
   }
   // L'Humain garde son commun à côté du choix.
-  await orm.insert(srcSchema.featureEffects).values({ featureId: featureIds.humanLanguages!, effectId: commonEffect.id })
+  await orm.insert(schema.featureEffects).values({ featureId: featureIds.humanLanguages!, effectId: commonEffect.id })
 
-  const migration = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-  for (let pass = 0; pass < 2; pass++) {
-    for (const statement of splitSqlQueries(migration)) await client.execute(statement)
-  }
+  for (let pass = 0; pass < 2; pass++) await applyMigration(client, MIGRATION)
 })
 
-describe('migration 0107 — choix des traits d\'espèce', () => {
+describe('migration 0109 — choix des traits d\'espèce', () => {
   it.each([
     ['polyvalence', twoSkillsChoice],
     ['humanLanguages', oneLanguageChoice],

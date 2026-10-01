@@ -11,6 +11,7 @@ const SEED_REGISTRY: Record<string, () => Promise<unknown>> = {
   skills: _seed.skills,
   damageTypes: _seed.damageTypes,
   magicSchools: _seed.magicSchools,
+  rollTables: _seed.rollTables, // avant les classes : leurs capacités y renvoient
   characterSpecies: _seed.characterSpecies,
   elfLineage: _seed.elfLineage, // compat elfe-seul ; le rollout complet passe par `lineages`
   lineages: _seed.lineages, // toutes les espèces base+lignées (D17 — Elfe, Nain, Halfelin, Gnome, Tieffelin, Drakéide)
@@ -59,11 +60,12 @@ export async function runSeeds(only?: string[]) {
     return buildResult(start, summary)
   }
 
-  const [abilityScores, skills, damageTypes, magicSchools, characterSpecies, classes, backgrounds] = await Promise.all([
+  const [abilityScores, skills, damageTypes, magicSchools, rollTables, characterSpecies, classes, backgrounds] = await Promise.all([
     settle(_seed.abilityScores()),
     settle(_seed.skills()),
     settle(_seed.damageTypes()),
     settle(_seed.magicSchools()),
+    settle(_seed.rollTables()),
     settle(_seed.characterSpecies()),
     settle(_seed.classes()),
     settle(_seed.backgrounds()),
@@ -94,7 +96,7 @@ export async function runSeeds(only?: string[]) {
   // await _seed.characterSheets()
 
   const summary = {
-    abilityScores, skills, damageTypes, magicSchools, characterSpecies, classes, backgrounds,
+    abilityScores, skills, damageTypes, magicSchools, rollTables, characterSpecies, classes, backgrounds,
     barbare, barde, clerc, druide, guerrier, magicien, moine, paladin, rodeur, roublard, ensorceleur, warlock,
     spells, items, feats, lineages,
   }

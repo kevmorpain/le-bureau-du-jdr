@@ -1,10 +1,7 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { CreatureSize } from '../../server/db/schema/character_species'
 import {
   loadClasses,
@@ -16,12 +13,10 @@ import {
   loadBackgrounds,
   loadSpells,
 } from '../../server/utils/catalogSources'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Contrat des loaders de listes de référence : la FORME exacte dont dépendent le builder, la fiche
 // et les endpoints `/api/catalog/*`. `db` injecté (libsql ici, D1 en prod).
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 const FIGHTER = 1
 const WARLOCK = 2
@@ -29,61 +24,54 @@ const WARLOCK = 2
 let orm: ReturnType<typeof drizzle>
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   // Classes (Guerrier id 1, Occultiste id 2) — loadClasses trie par id de classe.
-  await orm.insert(srcSchema.classes).values([
+  await orm.insert(schema.classes).values([
     { id: FIGHTER, name: 'Guerrier', hitDice: '1d10' },
     { id: WARLOCK, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' },
   ])
 
   // Sous-classes du Guerrier — insérées dans le désordre pour vérifier le tri par nom asc.
   // L'Occultiste n'en a AUCUNE (vérifie subclasses: []).
-  await orm.insert(srcSchema.subclasses).values([
+  await orm.insert(schema.subclasses).values([
     { id: 11, classId: FIGHTER, name: 'Chevalier occulte', description: 'desc CO' },
     { id: 10, classId: FIGHTER, name: 'Champion', description: 'desc Champ' },
   ])
 
   // Espèces — insérées dans le désordre, loadSpecies trie par nom asc (Aasimar < Elfe < Nain).
-  await orm.insert(srcSchema.characterSpecies).values([
+  await orm.insert(schema.characterSpecies).values([
     { id: 1, name: 'Elfe', size: CreatureSize.Medium, speed: 30 },
     { id: 2, name: 'Nain', size: CreatureSize.Medium, speed: 25 },
     { id: 3, name: 'Aasimar', size: CreatureSize.Medium, speed: 30 },
   ])
 
-  await orm.insert(srcSchema.effects).values([
+  await orm.insert(schema.effects).values([
     { id: 1, type: 'skill_proficiency', value: { skill: 'perception' } },
     { id: 2, type: 'proficiency', value: 'armes de guerre' },
   ])
 
   // Dons (feature_type='feat') — insérés dans le désordre, loadFeats trie par nom (fr).
-  await orm.insert(srcSchema.features).values([
+  await orm.insert(schema.features).values([
     { id: 100, name: 'Chanceux', featureType: 'feat', description: 'desc Chanceux' },
     { id: 101, name: 'Alerte', featureType: 'feat', description: 'desc Alerte', prerequisites: { minAbilityScore: { abilities: ['dex'], score: 13 } } },
   ])
-  await orm.insert(srcSchema.featureEffects).values({ featureId: 100, effectId: 1 })
+  await orm.insert(schema.featureEffects).values({ featureId: 100, effectId: 1 })
 
   // Porteurs de maîtrises du Guerrier : départ (JS + armure) et multiclassage. L'Occultiste n'en a pas.
-  await orm.insert(srcSchema.effects).values([
+  await orm.insert(schema.effects).values([
     { id: 10, type: 'saving_throw_proficiency', value: { ability: 'str' } },
     { id: 11, type: 'proficiency', value: 'all_armor' },
     { id: 12, type: 'proficiency', value: 'light' },
   ])
-  await orm.insert(srcSchema.features).values([
+  await orm.insert(schema.features).values([
     { id: 300, name: 'Maîtrises de la classe', featureType: 'proficiency_grant', classId: FIGHTER, levelRequired: 1 },
     { id: 301, name: 'Maîtrises de multiclassage', featureType: 'multiclass_proficiency_grant', classId: FIGHTER, levelRequired: 1 },
   ])
-  await orm.insert(srcSchema.featureEffects).values([
+  await orm.insert(schema.featureEffects).values([
     { featureId: 300, effectId: 10 },
     { featureId: 300, effectId: 11 },
     { featureId: 301, effectId: 12 },
@@ -91,21 +79,21 @@ beforeAll(async () => {
 
   // Invocations (feature_type='eldritch_invocation') — l'une avec levelRequired, l'autre null
   // (→ défaut 1) + prérequis de pacte + un effet.
-  await orm.insert(srcSchema.features).values([
+  await orm.insert(schema.features).values([
     { id: 200, name: 'Manifestation niv.5', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 5, tag: 'invocation' },
     { id: 201, name: 'Manifestation Lame', featureType: 'eldritch_invocation', classId: WARLOCK, tag: 'invocation', prerequisites: { requiredPactBoon: 'blade' } },
   ])
-  await orm.insert(srcSchema.featureEffects).values({ featureId: 201, effectId: 2 })
+  await orm.insert(schema.featureEffects).values({ featureId: 201, effectId: 2 })
 
   // Styles de combat du Guerrier (tag fighting_style) — insérés dans le désordre, triés par id.
-  await orm.insert(srcSchema.features).values([
+  await orm.insert(schema.features).values([
     { id: 212, name: 'Duel', featureType: 'fighting_style', classId: FIGHTER, tag: 'fighting_style', description: 'desc Duel' },
     { id: 210, name: 'Archerie', featureType: 'fighting_style', classId: FIGHTER, tag: 'fighting_style', description: 'desc Archerie' },
     { id: 211, name: 'Défense', featureType: 'fighting_style', classId: FIGHTER, tag: 'fighting_style', description: 'desc Défense' },
   ])
 
   // Historiques : 2 globaux (character_sheet_id NULL) + 1 homebrew rattaché à la fiche 42.
-  await orm.insert(srcSchema.backgrounds).values([
+  await orm.insert(schema.backgrounds).values([
     { id: 1, name: 'Sage' },
     { id: 2, name: 'Acolyte' },
     { id: 3, name: 'Passé mystérieux', characterSheetId: 42 },
@@ -113,25 +101,25 @@ beforeAll(async () => {
 
   // Contenu 5.5 (ruleset '5.5') — DOIT rester invisible aux loaders par défaut (ruleset '5'),
   // le filet anti-pollution du builder 2014 (Lot A). Tout ce qui précède est en '5' par défaut.
-  await orm.insert(srcSchema.characterSpecies).values({ id: 4, name: 'Goliath', size: CreatureSize.Medium, speed: 30, ruleset: '5.5' })
-  await orm.insert(srcSchema.classes).values({ id: 3, name: 'Barde', hitDice: '1d8', ruleset: '5.5' })
-  await orm.insert(srcSchema.features).values({ id: 102, name: 'Vigilant', featureType: 'feat', description: 'don 5.5', ruleset: '5.5' })
-  await orm.insert(srcSchema.backgrounds).values({ id: 4, name: 'Guide', ruleset: '5.5' })
+  await orm.insert(schema.characterSpecies).values({ id: 4, name: 'Goliath', size: CreatureSize.Medium, speed: 30, ruleset: '5.5' })
+  await orm.insert(schema.classes).values({ id: 3, name: 'Barde', hitDice: '1d8', ruleset: '5.5' })
+  await orm.insert(schema.features).values({ id: 102, name: 'Vigilant', featureType: 'feat', description: 'don 5.5', ruleset: '5.5' })
+  await orm.insert(schema.backgrounds).values({ id: 4, name: 'Guide', ruleset: '5.5' })
 
   // Guerrier 5.5 HOMONYME (id 5) + sa sous-classe : prouve que loadSubclasses résout par
   // (nom, ruleset) — sans le filtre, `.limit(1)` sur le nom seul serait non déterministe.
-  await orm.insert(srcSchema.classes).values({ id: 5, name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' })
-  await orm.insert(srcSchema.subclasses).values({ id: 50, classId: 5, name: 'Arcaniste (2024)', description: 'desc 5.5' })
+  await orm.insert(schema.classes).values({ id: 5, name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' })
+  await orm.insert(schema.subclasses).values({ id: 50, classId: 5, name: 'Arcaniste (2024)', description: 'desc 5.5' })
 
   // Sorts : « Projectile magique » DUPLIQUÉ par édition (contenu divergent, 0089) + un cantrip
   // 2014. Listes de classe datées : Guerrier 2014 → sort '5', Guerrier 5.5 → sort '5.5'.
-  await orm.insert(srcSchema.magicSchools).values({ id: 1, name: 'Évocation' })
-  await orm.insert(srcSchema.spells).values([
+  await orm.insert(schema.magicSchools).values({ id: 1, name: 'Évocation' })
+  await orm.insert(schema.spells).values([
     { id: 1, name: 'Projectile magique', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: 1 },
     { id: 2, name: 'Projectile magique', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: 1, ruleset: '5.5' },
     { id: 3, name: 'Lumière', level: 0, castingTime: '1 action', range: 0, duration: '1 heure', schoolId: 1 },
   ])
-  await orm.insert(srcSchema.spellClasses).values([
+  await orm.insert(schema.spellClasses).values([
     { spellId: 1, classId: 1 }, // Guerrier 2014 (ruleset '5' par défaut)
     { spellId: 2, classId: 5, ruleset: '5.5' }, // Guerrier 5.5
   ])
@@ -139,15 +127,15 @@ beforeAll(async () => {
   // Contenu d'EXTENSION gaté (source 'tasha', ruleset '5') — invisible aux loaders par défaut,
   // visible seulement avec extended=true (cf. shared/rules/source.ts). Tous en '5' → ne change
   // AUCUNE assertion par défaut ci-dessus (elles filtrent implicitement source='core').
-  await orm.insert(srcSchema.characterSpecies).values({ id: 5, name: 'Fadette', size: CreatureSize.Small, speed: 30, source: 'tasha' })
-  await orm.insert(srcSchema.features).values([
+  await orm.insert(schema.characterSpecies).values({ id: 5, name: 'Fadette', size: CreatureSize.Small, speed: 30, source: 'tasha' })
+  await orm.insert(schema.features).values([
     { id: 103, name: 'Faveur des fées', featureType: 'feat', description: 'don Tasha', source: 'tasha' },
     { id: 202, name: 'Invocation gatée', featureType: 'eldritch_invocation', classId: WARLOCK, tag: 'invocation', source: 'tasha' },
   ])
-  await orm.insert(srcSchema.subclasses).values({ id: 12, classId: FIGHTER, name: 'Sous-classe gatée', description: 'desc gatée', source: 'tasha' })
-  await orm.insert(srcSchema.backgrounds).values({ id: 5, name: 'Historique gaté', source: 'tasha' })
-  await orm.insert(srcSchema.spells).values({ id: 4, name: 'Sort gaté', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: 1, source: 'tasha' })
-  await orm.insert(srcSchema.spellClasses).values({ spellId: 4, classId: FIGHTER }) // sort gaté sur la liste Guerrier 2014
+  await orm.insert(schema.subclasses).values({ id: 12, classId: FIGHTER, name: 'Sous-classe gatée', description: 'desc gatée', source: 'tasha' })
+  await orm.insert(schema.backgrounds).values({ id: 5, name: 'Historique gaté', source: 'tasha' })
+  await orm.insert(schema.spells).values({ id: 4, name: 'Sort gaté', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: 1, source: 'tasha' })
+  await orm.insert(schema.spellClasses).values({ spellId: 4, classId: FIGHTER }) // sort gaté sur la liste Guerrier 2014
 })
 
 describe('loadClasses', () => {

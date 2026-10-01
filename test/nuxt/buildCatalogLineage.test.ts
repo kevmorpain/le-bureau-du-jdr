@@ -1,53 +1,42 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { CreatureSize } from '../../server/db/schema/character_species'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices } from '../../shared/rules/resolve'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Point de choix possédé par une ESPÈCE : `buildCatalog` doit résoudre l'espèce propriétaire via
 // `species_features` et n'énumérer que SES lignées.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const ELF = 3
 const LINEAGE_FEATURE = 200
 
 let orm: ReturnType<typeof drizzle>
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   // Espèce de base + ses 3 lignées (insérées dans le désordre — l'ordre du résultat suit l'id).
-  await orm.insert(srcSchema.characterSpecies).values({ id: ELF, name: 'Elfe', size: CreatureSize.Medium, speed: 9 })
-  await orm.insert(srcSchema.speciesLineages).values([
+  await orm.insert(schema.characterSpecies).values({ id: ELF, name: 'Elfe', size: CreatureSize.Medium, speed: 9 })
+  await orm.insert(schema.speciesLineages).values([
     { id: 12, speciesId: ELF, name: 'Elfe noir' },
     { id: 10, speciesId: ELF, name: 'Haut-elfe' },
     { id: 11, speciesId: ELF, name: 'Elfe des bois' },
   ])
   // Une autre espèce + lignée, pour vérifier que le filtre est bien par espèce propriétaire.
-  await orm.insert(srcSchema.characterSpecies).values({ id: 4, name: 'Nain', size: CreatureSize.Medium, speed: 7.5 })
-  await orm.insert(srcSchema.speciesLineages).values({ id: 20, speciesId: 4, name: 'Nain des montagnes' })
+  await orm.insert(schema.characterSpecies).values({ id: 4, name: 'Nain', size: CreatureSize.Medium, speed: 7.5 })
+  await orm.insert(schema.speciesLineages).values({ id: 20, speciesId: 4, name: 'Nain des montagnes' })
 
   // Feature d'espèce « Lignage elfique » (species_trait, sans classe/sous-classe) liée à l'Elfe,
   // portant le point de choix de lignée.
-  await orm.insert(srcSchema.features).values({ id: LINEAGE_FEATURE, name: 'Lignage elfique', featureType: 'species_trait', levelRequired: 1 })
-  await orm.insert(srcSchema.speciesFeatures).values({ speciesId: ELF, featureId: LINEAGE_FEATURE })
-  await orm.insert(srcSchema.progression).values({
+  await orm.insert(schema.features).values({ id: LINEAGE_FEATURE, name: 'Lignage elfique', featureType: 'species_trait', levelRequired: 1 })
+  await orm.insert(schema.speciesFeatures).values({ speciesId: ELF, featureId: LINEAGE_FEATURE })
+  await orm.insert(schema.progression).values({
     featureId: LINEAGE_FEATURE,
     kind: 'lineage',
     count: { op: 'fixed', value: 1 },

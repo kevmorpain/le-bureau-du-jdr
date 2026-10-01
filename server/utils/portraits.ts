@@ -6,8 +6,8 @@ export const PORTRAIT_TYPES: Record<string, string> = {
   'image/png': 'png',
 }
 
-/** Taille maximale acceptée par l'endpoint (le client réduit avant d'envoyer). */
-export const PORTRAIT_MAX_SIZE = '2MB'
+/** Taille maximale acceptée par l'endpoint, en octets (le client réduit avant d'envoyer). */
+export const PORTRAIT_MAX_SIZE = 2 * 1024 * 1024
 
 /** Sert aussi de filtre de purge. */
 export const portraitPrefix = (sheetId: number): string => `portraits/${sheetId}/`

@@ -199,7 +199,7 @@ export function mountAbilities(f: AbilitiesFixture) {
     choiceEffects: computed(() => f.choiceEffects ?? []),
     featureEffects: computed(() => f.featureEffects),
     asiEffects: computed(() => f.asiEffects),
-    itemEffects: computed(() => f.itemEffects ?? []),
+    activeEffectSources: computed(() => (f.itemEffects ? [{ label: 'Objet', effects: f.itemEffects }] : [])),
     proficiencyBonus: computed(() => f.proficiencyBonus),
   })
 }

@@ -29,6 +29,8 @@ describe('requiresAuth (garde de navigation)', () => {
   it('laisse le reste public', () => {
     expect(requiresAuth('/')).toBe(false)
     expect(requiresAuth('/login')).toBe(false)
+    expect(requiresAuth('/mentions-legales')).toBe(false)
+    expect(requiresAuth('/confidentialite')).toBe(false)
     expect(requiresAuth('/spells')).toBe(false)
     expect(requiresAuth('/spells/spellbook')).toBe(false)
     expect(requiresAuth('/spells/newx')).toBe(false)

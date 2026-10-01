@@ -1,9 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
-import * as srcSchema from '~~/server/db/schema'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import * as schema from '~~/server/db/schema'
+import type { Db } from '~~/server/utils/db'
 
 // ⚠️ Pas de BEGIN TRANSACTION sur D1 : statements séquentiels + onConflictDoNothing pour l'idempotence.
 export async function applyInvocationChanges(
@@ -14,12 +11,12 @@ export async function applyInvocationChanges(
 ) {
   if (replacedInvocationId) {
     const grantedSpellNames = await db
-      .select({ value: srcSchema.effects.value })
-      .from(srcSchema.featureEffects)
-      .innerJoin(srcSchema.effects, eq(srcSchema.featureEffects.effectId, srcSchema.effects.id))
+      .select({ value: schema.effects.value })
+      .from(schema.featureEffects)
+      .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
       .where(and(
-        eq(srcSchema.featureEffects.featureId, replacedInvocationId),
-        eq(srcSchema.effects.type, 'spell_grant'),
+        eq(schema.featureEffects.featureId, replacedInvocationId),
+        eq(schema.effects.type, 'spell_grant'),
       ))
 
     const spellNamesToRemove = grantedSpellNames
@@ -28,33 +25,33 @@ export async function applyInvocationChanges(
 
     if (spellNamesToRemove.length) {
       const spellsToDelete = await db
-        .select({ id: srcSchema.spells.id })
-        .from(srcSchema.spells)
-        .where(inArray(srcSchema.spells.name, spellNamesToRemove))
+        .select({ id: schema.spells.id })
+        .from(schema.spells)
+        .where(inArray(schema.spells.name, spellNamesToRemove))
 
       if (spellsToDelete.length) {
         await db
-          .delete(srcSchema.characterSpells)
+          .delete(schema.characterSpells)
           .where(and(
-            eq(srcSchema.characterSpells.characterSheetId, characterSheetId),
-            eq(srcSchema.characterSpells.source, 'invocation'),
-            inArray(srcSchema.characterSpells.spellId, spellsToDelete.map(s => s.id)),
+            eq(schema.characterSpells.characterSheetId, characterSheetId),
+            eq(schema.characterSpells.source, 'invocation'),
+            inArray(schema.characterSpells.spellId, spellsToDelete.map(s => s.id)),
           ))
       }
     }
 
     await db
-      .delete(srcSchema.characterFeatures)
+      .delete(schema.characterFeatures)
       .where(and(
-        eq(srcSchema.characterFeatures.characterSheetId, characterSheetId),
-        eq(srcSchema.characterFeatures.featureId, replacedInvocationId),
+        eq(schema.characterFeatures.characterSheetId, characterSheetId),
+        eq(schema.characterFeatures.featureId, replacedInvocationId),
       ))
   }
 
   if (!newInvocationIds.length) return
 
   await db
-    .insert(srcSchema.characterFeatures)
+    .insert(schema.characterFeatures)
     .values(newInvocationIds.map(featureId => ({
       characterSheetId,
       featureId,
@@ -64,14 +61,14 @@ export async function applyInvocationChanges(
 
   const grantRows = await db
     .select({
-      featureId: srcSchema.featureEffects.featureId,
-      value: srcSchema.effects.value,
+      featureId: schema.featureEffects.featureId,
+      value: schema.effects.value,
     })
-    .from(srcSchema.featureEffects)
-    .innerJoin(srcSchema.effects, eq(srcSchema.featureEffects.effectId, srcSchema.effects.id))
+    .from(schema.featureEffects)
+    .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
     .where(and(
-      inArray(srcSchema.featureEffects.featureId, newInvocationIds),
-      eq(srcSchema.effects.type, 'spell_grant'),
+      inArray(schema.featureEffects.featureId, newInvocationIds),
+      eq(schema.effects.type, 'spell_grant'),
     ))
 
   const spellNames = grantRows
@@ -81,14 +78,14 @@ export async function applyInvocationChanges(
   if (!spellNames.length) return
 
   const spellRows = await db
-    .select({ id: srcSchema.spells.id, name: srcSchema.spells.name })
-    .from(srcSchema.spells)
-    .where(inArray(srcSchema.spells.name, spellNames))
+    .select({ id: schema.spells.id, name: schema.spells.name })
+    .from(schema.spells)
+    .where(inArray(schema.spells.name, spellNames))
 
   if (!spellRows.length) return
 
   await db
-    .insert(srcSchema.characterSpells)
+    .insert(schema.characterSpells)
     .values(spellRows.map(s => ({
       characterSheetId,
       spellId: s.id,

@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -10,13 +7,12 @@ import { createCharacter, createCharacterSchema } from '../../server/utils/chara
 import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLevelUp'
 import { CharacterValidationError } from '../../server/utils/characterCreate'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Montée de niveau testée contre libsql (migrations rejouées), sans auth : bump de niveau, recalcul
 // et PURGE des emplacements de pacte, features débloquées, faveur de pacte, manifestation ajoutée,
 // plus un rejet.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const WARLOCK = 1
 const FIGHTER = 2
 const FIGHTER_SUBCLASS = 10
@@ -37,15 +33,9 @@ function luInput(over: Record<string, unknown> = {}) {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   db = drizzle(client, { schema, casing: 'snake_case' })
 
   await db.insert(schema.magicSchools).values({ id: 1, name: 'Invocation' })

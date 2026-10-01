@@ -1,5 +1,4 @@
-import { db } from 'hub:db'
-import * as schema from '~~/server/db/schema'
+import { db, schema } from '~~/server/utils/db'
 import { asc, eq, inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {

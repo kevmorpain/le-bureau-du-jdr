@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 
 export default defineEventHandler(async (event) => {
   await requireUserSession(event)
@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const response = await db.insert(tables.spells).values(result.data).returning().get()
+  const response = await db.insert(schema.spells).values(result.data).returning().get()
 
   setResponseStatus(event, 201)
   return response

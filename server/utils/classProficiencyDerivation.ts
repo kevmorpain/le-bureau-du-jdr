@@ -1,10 +1,7 @@
 import { and, eq, inArray } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
-import * as srcSchema from '~~/server/db/schema'
+import * as schema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 // Maîtrises d'une classe lues sur ses porteurs : de départ (armes, armures, outils) et JS pour la 1re classe
 // (`proficiency_grant`), sous-ensemble reçu en la rejoignant par multiclassage (`multiclass_proficiency_grant`).
@@ -19,17 +16,17 @@ export async function loadClassProficiencyGrants(db: Db, classIds: number[]): Pr
   if (!classIds.length) return grants
   const rows = await db
     .select({
-      classId: srcSchema.features.classId,
-      featureType: srcSchema.features.featureType,
-      type: srcSchema.effects.type,
-      value: srcSchema.effects.value,
+      classId: schema.features.classId,
+      featureType: schema.features.featureType,
+      type: schema.effects.type,
+      value: schema.effects.value,
     })
-    .from(srcSchema.features)
-    .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
-    .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
+    .from(schema.features)
+    .innerJoin(schema.featureEffects, eq(schema.featureEffects.featureId, schema.features.id))
+    .innerJoin(schema.effects, eq(schema.effects.id, schema.featureEffects.effectId))
     .where(and(
-      inArray(srcSchema.features.classId, classIds),
-      inArray(srcSchema.features.featureType, ['proficiency_grant', 'multiclass_proficiency_grant']),
+      inArray(schema.features.classId, classIds),
+      inArray(schema.features.featureType, ['proficiency_grant', 'multiclass_proficiency_grant']),
     ))
 
   for (const r of rows) {

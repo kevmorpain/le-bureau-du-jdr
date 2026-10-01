@@ -1,6 +1,5 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { and, eq } from 'drizzle-orm'
-import * as srcSchema from '~~/server/db/schema'
 import type { Effect } from '../schema/effects'
 import { featsData } from './data/feats'
 import { rulesetOf } from './lib/rulesetOf'
@@ -36,9 +35,8 @@ export default async function seed() {
       }
     }
     else {
-      // srcSchema (schéma frais) : le cache hub:db peut dropper la colonne `source` en silence.
       feature = await db
-        .insert(srcSchema.features)
+        .insert(schema.features)
         .values({
           name: feat.name,
           ruleset: rulesetOf(feat),
@@ -68,20 +66,20 @@ export default async function seed() {
 async function _seedEffects(featureId: number, effects: Effect[]) {
   // On efface d'abord les liens : sinon une valeur d'effet modifiée crée un nouvel effet ET garde
   // l'ancien lien → doublon.
-  await db.delete(srcSchema.featureEffects).where(eq(srcSchema.featureEffects.featureId, featureId))
+  await db.delete(schema.featureEffects).where(eq(schema.featureEffects.featureId, featureId))
   for (const effect of effects) {
     const existing = await db
       .select()
-      .from(srcSchema.effects)
-      .where(and(eq(srcSchema.effects.type, effect.type), eq(srcSchema.effects.value, effect.value)))
+      .from(schema.effects)
+      .where(and(eq(schema.effects.type, effect.type), eq(schema.effects.value, effect.value)))
       .limit(1)
       .get()
     const effectId = existing?.id ?? await db
-      .insert(srcSchema.effects)
+      .insert(schema.effects)
       .values({ type: effect.type, value: effect.value })
       .returning()
       .get()
       .then(r => r.id)
-    await db.insert(srcSchema.featureEffects).values({ featureId, effectId }).onConflictDoNothing()
+    await db.insert(schema.featureEffects).values({ featureId, effectId }).onConflictDoNothing()
   }
 }

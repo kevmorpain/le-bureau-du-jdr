@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -13,13 +10,12 @@ import { seedBackgroundProficiencies } from '../../server/db/seeds/lib/seedBackg
 import { DUPLICATE_REPLACEMENT_CHOICES } from '../../server/db/seeds/lib/seedDuplicateReplacement'
 import { DUPLICATE_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
+import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
 // Remplacement d'une maîtrise reçue de deux sources fixes (AideDD, Historiques) : point de choix général dont
-// le nombre dû vient du personnage. Migration 0110 + validation à la création + purge au changement d'historique.
+// le nombre dû vient du personnage. Migration 0112 + validation à la création + purge au changement d'historique.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
-const MIGRATION = '0110_duplicate_proficiency_replacement.sql'
+const MIGRATION = '0112_duplicate_proficiency_replacement.sql'
 const OWNER = 1
 const ROGUE = 1
 const FIGHTER = 2
@@ -40,12 +36,8 @@ const create = (classId: number, speciesId: number, background: string, choicePi
   }), OWNER)
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
   client = createClient({ url: ':memory:' })
-  for (const file of (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()) {
-    for (const statement of splitSqlQueries(await readFile(MIGRATIONS_DIR + file, 'utf8'))) await client.execute(statement)
-  }
+  await replayMigrations(client)
   db = drizzle(client, { schema, casing: 'snake_case' })
 
   await db.insert(schema.users).values({ id: OWNER, provider: 'discord', providerUserId: 'x', name: 'Testeur' })
@@ -69,10 +61,7 @@ beforeAll(async () => {
   for (const bg of seeded) backgroundId[bg.name] = (await db.insert(schema.backgrounds).values({ name: bg.name }).returning().get()).id
   await seedBackgroundProficiencies(db, seeded)
 
-  const migration = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-  for (let pass = 0; pass < 2; pass++) {
-    for (const statement of splitSqlQueries(migration)) await client.execute(statement)
-  }
+  for (let pass = 0; pass < 2; pass++) await applyMigration(client, MIGRATION)
   const progressions = await client.execute({
     sql: 'SELECT p.id, p.kind FROM progression p JOIN features f ON f.id = p.feature_id WHERE f.name = ?',
     args: [DUPLICATE_PROFICIENCY_CARRIER_NAME],
@@ -81,7 +70,7 @@ beforeAll(async () => {
   toolReplacement = Number(progressions.rows.find(r => r.kind === 'tool')!.id)
 })
 
-describe('migration 0110 — porteur du remplacement', () => {
+describe('migration 0112 — porteur du remplacement', () => {
   it('un seul porteur, sans propriétaire, et les progressions du seed, même rejouée', async () => {
     const carriers = await client.execute({ sql: 'SELECT id, feature_type, class_id FROM features WHERE name = ?', args: [DUPLICATE_PROFICIENCY_CARRIER_NAME] })
     expect(carriers.rows).toHaveLength(1)

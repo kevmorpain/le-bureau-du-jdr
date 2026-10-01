@@ -60,6 +60,16 @@
 
             <div class="flex items-center gap-2 shrink-0">
               <UButton
+                v-if="feature.rollTableId"
+                variant="soft"
+                size="sm"
+                icon="i-heroicons:table-cells"
+                @click.stop="openRollTable(feature.rollTableId)"
+              >
+                Table
+              </UButton>
+
+              <UButton
                 v-if="isASIFeature(feature)"
                 variant="soft"
                 size="sm"
@@ -175,6 +185,13 @@
       @saved="onASISaved"
     />
 
+    <RollTableSlideover
+      v-if="rollTable.id !== null"
+      :key="rollTable.id"
+      v-model:open="rollTable.open"
+      :roll-table-id="rollTable.id"
+    />
+
     <AddFeatSlideover
       v-model:open="addFeatOpen"
       :character-sheet-id="characterSheet.id"
@@ -282,6 +299,16 @@ const removeFeat = async (featureId: number) => {
   } catch {
     toaster.add({ title: 'Erreur lors du retrait du don', color: 'error' })
   }
+}
+
+const rollTable = reactive({
+  open: false,
+  id: null as number | null,
+})
+
+const openRollTable = (id: number) => {
+  rollTable.id = id
+  rollTable.open = true
 }
 
 // ASI modal state

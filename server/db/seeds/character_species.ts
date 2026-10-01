@@ -1,6 +1,5 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { eq, and } from 'drizzle-orm'
-import * as srcSchema from '~~/server/db/schema'
 import { characterSpecies } from './data/character_species'
 import { rulesetOf } from './lib/rulesetOf'
 import { ensureFeatureChoice } from './lib/featureChoice'
@@ -21,9 +20,8 @@ export default async function seed() {
       ),
     })
 
-    // srcSchema (schéma frais) : le cache hub:db peut dropper la colonne `source` en silence.
     const insertedSpecies = existingSpecies ?? await db
-      .insert(srcSchema.characterSpecies)
+      .insert(schema.characterSpecies)
       .values(speciesData)
       .returning()
       .get()
@@ -50,8 +48,7 @@ export default async function seed() {
         .get()
 
       if (existingFeature) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (choice) await ensureFeatureChoice(db as any, existingFeature.id, choice)
+        if (choice) await ensureFeatureChoice(db, existingFeature.id, choice)
         continue
       }
 
@@ -94,8 +91,7 @@ export default async function seed() {
         .values({ speciesId: insertedSpecies.id, featureId: insertedFeature.id })
         .onConflictDoNothing()
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (choice) await ensureFeatureChoice(db as any, insertedFeature.id, choice)
+      if (choice) await ensureFeatureChoice(db, insertedFeature.id, choice)
     }
   }
 

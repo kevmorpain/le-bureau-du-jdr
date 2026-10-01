@@ -1,21 +1,17 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
 import { deriveClassGrants } from '../../server/utils/classProficiencyDerivation'
 import { MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 import { proficiencyEffects } from '../fixtures/catalogClasses'
+import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
 // Migration 0105 : crée sur les bases déployées les porteurs « Maîtrises de multiclassage » que le seed
 // pose pour les bases neuves (champ `multiclass` de CLASS_PROFICIENCIES). Vérifié par la dérivation réelle.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const MIGRATION = '0105_multiclass_proficiency_carriers.sql'
 
 let client: Client
@@ -39,24 +35,17 @@ async function carriersOf(classId: number): Promise<string[]> {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    const cls = await orm.insert(srcSchema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
+    const cls = await orm.insert(schema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
     classIdByName.set(className, cls.id)
   }
-  homonymId = (await orm.insert(srcSchema.classes).values({ name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' }).returning().get()).id
-  bareClassId = (await orm.insert(srcSchema.classes).values({ name: 'ClasseSansPorteur', hitDice: '1d6' }).returning().get()).id
+  homonymId = (await orm.insert(schema.classes).values({ name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' }).returning().get()).id
+  bareClassId = (await orm.insert(schema.classes).values({ name: 'ClasseSansPorteur', hitDice: '1d6' }).returning().get()).id
 
   // Effets déjà en base (porteurs de départ en prod) : la migration doit les réutiliser.
   for (const effect of [
@@ -64,13 +53,10 @@ beforeAll(async () => {
     { type: 'weapon_proficiency', value: 'Épée courte' },
     { type: 'tool_proficiency', value: 'Outils de voleur' },
   ] as Effect[]) {
-    await orm.insert(srcSchema.effects).values(effect)
+    await orm.insert(schema.effects).values(effect)
   }
 
-  const migration = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-  for (let pass = 0; pass < 2; pass++) {
-    for (const statement of splitSqlQueries(migration)) await client.execute(statement)
-  }
+  for (let pass = 0; pass < 2; pass++) await applyMigration(client, MIGRATION)
 })
 
 describe('migration 0105 — porteurs de maîtrises de multiclassage', () => {

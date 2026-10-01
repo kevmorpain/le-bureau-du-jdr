@@ -1,12 +1,9 @@
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { and, eq, isNull } from 'drizzle-orm'
 import * as schema from '../../schema'
+import type { Db } from '~~/server/utils/db'
 import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
 import { DUPLICATE_PROFICIENCY_CARRIER_NAME } from '../data/proficiencyCarriers'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 // Règle générale, sans propriétaire : le nombre de remplacements dus vient du personnage (`duplicate_skills`,
 // `duplicate_tools`, cf. `resolveChoices` et `duplicateCount`).

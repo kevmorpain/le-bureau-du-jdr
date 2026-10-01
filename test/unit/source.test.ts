@@ -1,16 +1,13 @@
-import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
 import { SOURCES, sourceEnum, CORE_SOURCE, isGatedSource } from '../../shared/rules/source'
+import { applyMigration } from '../fixtures/migrations'
 
 // Le discriminant de provenance/visibilité a une seule source de vérité (la const
 // shared/rules/source.ts) dont les colonnes `source` dérivent. On vérifie l'ensemble,
 // la validation Zod, la dérivation de gating (isGatedSource), et que la migration 0096
 // pose bien la colonne (NOT NULL DEFAULT 'core', donc backfill) sur les 8 tables ciblées.
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
-const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
 const MIGRATION = '0096_source_discriminant.sql'
 
 // Les 8 tables d'entités du catalogue recevant `source`. État minimal d'AVANT 0093 : la
@@ -56,9 +53,6 @@ describe('source — const canonique', () => {
 
 describe('source — migration 0096', () => {
   it('ajoute la colonne source (DEFAULT \'core\' NOT NULL) et backfille les lignes existantes', async () => {
-    const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
-    const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-
     const db = createClient({ url: ':memory:' })
     await db.execute('PRAGMA foreign_keys = ON')
 
@@ -69,10 +63,7 @@ describe('source — migration 0096', () => {
       await db.execute(`INSERT INTO ${table} (id, name) VALUES (1, 'x')`)
     }
 
-    const sql = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-    for (const statement of splitSqlQueries(sql)) {
-      await db.execute(statement)
-    }
+    await applyMigration(db, MIGRATION)
 
     // Chaque table a la colonne, et la ligne préexistante a été backfillée à 'core'.
     for (const table of TARGET_TABLES) {

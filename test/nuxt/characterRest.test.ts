@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -9,12 +6,11 @@ import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
 import { characterRest } from '../../server/utils/characterRest'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Repos testé contre libsql : recharge (features + emplacements) ET préservation de la dépendance
 // d'ORDRE sur currentHp (repos long puis soin par dés de vie).
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const WARLOCK = 1
 const OWNER = 1
 const RECHARGE_FEATURE = 210 // feature passive rechargeable (short_rest)
@@ -36,15 +32,9 @@ async function create() {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
+  await replayMigrations(client)
   db = drizzle(client, { schema, casing: 'snake_case' })
 
   await db.insert(schema.magicSchools).values({ id: 1, name: 'Invocation' })
@@ -93,6 +83,16 @@ describe('characterRest — repos long', () => {
     expect(sheet.currentHp).toBe(24) // maxHp
     const slots = await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, id))
     expect(slots.every((s: { used: number }) => s.used === 0)).toBe(true)
+  })
+
+  it('rend la moitié des dés de vie dépensés (le seed écrit « 1d8 », la fiche « 8 »)', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ currentHitDie: [{ die: '8', count: 0 }] }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'long', hitDiceSpent: [] })
+
+    const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
+    expect(sheet.currentHitDie).toEqual([{ die: '8', count: 2 }]) // niveau 3 → moitié arrondie au supérieur
   })
 
   it('PRÉSERVE la dépendance d\'ordre : long + dés de vie → min(currentHp lu + soin, maxHp), pas maxHp', async () => {

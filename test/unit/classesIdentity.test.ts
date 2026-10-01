@@ -1,9 +1,8 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { classesData } from '../../server/db/seeds/data/classes'
 import { CLASS_IDENTITY } from '../fixtures/classIdentity'
+import { applyMigration, migrationFiles, replayMigrations } from '../fixtures/migrations'
 
 // Les faits d'identité de classe (niveau de sous-classe, type d'incantation, compétences et prérequis
 // de multiclassage) ont deux chemins d'arrivée en base : une MIGRATION pour les bases déjà déployées
@@ -11,31 +10,17 @@ import { CLASS_IDENTITY } from '../fixtures/classIdentity'
 // exactement le contrat de `test/fixtures/classIdentity.ts`, sinon une fiche créée en
 // prod et la même créée en local ne reçoivent pas les mêmes emplacements de sorts.
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../../server/db/migrations/', import.meta.url))
-const NUXTHUB_UTILS = new URL('../../node_modules/@nuxthub/core/dist/db/lib/utils.mjs', import.meta.url)
 const MIGRATION = '0080_classes_identity_columns.sql'
 const MULTICLASS_MIGRATION = '0103_classes_multiclass_skill_count.sql'
 const PREREQUISITES_MIGRATION = '0106_classes_multiclass_prerequisites.sql'
 
-async function applyFile(db: Client, file: string): Promise<void> {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS.href)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-  for (const statement of splitSqlQueries(sql)) {
-    await db.execute(statement)
-  }
-}
-
 /** Rejoue la chaîne JUSQU'AVANT `migration` : l'état du schéma de prod au moment où elle s'appliquera. */
 async function dbBefore(migration: string): Promise<Client> {
-  const files = (await readdir(MIGRATIONS_DIR))
-    .filter(f => f.endsWith('.sql'))
-    .sort()
-  expect(files).toContain(migration)
+  expect(await migrationFiles()).toContain(migration)
 
   const db = createClient({ url: ':memory:' })
   await db.execute('PRAGMA foreign_keys = ON')
-  for (const file of files.filter(f => f < migration)) await applyFile(db, file)
+  await replayMigrations(db, { before: migration })
   return db
 }
 
@@ -76,7 +61,7 @@ describe('faits d\'identité de classe — migration 0080', () => {
     }
 
     // La migration doit se suffire à elle-même : colonnes + backfill.
-    await applyFile(db, MIGRATION)
+    await applyMigration(db, MIGRATION)
 
     const rows = await db.execute('SELECT name, subclass_level, spellcasting_type FROM classes ORDER BY id')
     const byName = new Map(rows.rows.map(r => [r.name as string, r]))
@@ -103,7 +88,7 @@ describe('faits d\'identité de classe — migration 0080', () => {
       args: [1, 'Artificier', '1d8'],
     })
 
-    await applyFile(db, MIGRATION)
+    await applyMigration(db, MIGRATION)
 
     // Une classe hors PHB 2014 ne doit pas se voir accorder d'emplacements de sorts
     // par accident ; le niveau de sous-classe retombe sur 3 (règle unique en 5.5).
@@ -128,7 +113,7 @@ describe('faits d\'identité de classe — migration 0103 (compétences de multi
       args: [100, 'Barde', '1d8', '5.5'],
     })
 
-    await applyFile(db, MULTICLASS_MIGRATION)
+    await applyMigration(db, MULTICLASS_MIGRATION)
 
     const rows = await db.execute('SELECT name, multiclass_skill_count FROM classes WHERE ruleset = \'5\' ORDER BY id')
     const byName = new Map(rows.rows.map(r => [r.name as string, Number(r.multiclass_skill_count)]))
@@ -157,7 +142,7 @@ describe('faits d\'identité de classe — migration 0106 (prérequis de multicl
       args: [100, 'Guerrier', '1d10', '5.5'],
     })
 
-    await applyFile(db, PREREQUISITES_MIGRATION)
+    await applyMigration(db, PREREQUISITES_MIGRATION)
 
     const rows = await db.execute('SELECT name, multiclass_prerequisites FROM classes WHERE ruleset = \'5\' ORDER BY id')
     const byName = new Map(rows.rows.map(r => [r.name as string, JSON.parse(String(r.multiclass_prerequisites))]))

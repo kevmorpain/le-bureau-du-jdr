@@ -53,7 +53,7 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 | **F5** | ✅ **résolu** ([#118](https://github.com/kevmorpain/le-bureau-du-jdr/issues/118)) | Blob front `CLASSES` mort sur les maîtrises : `WEAPON_PROF_KEYS` et le payload vestigial retirés (F2 tranche 3), puis `ARMOR_PROF_KEYS` et les champs `savingThrows`/`armorProficiencies`/`weaponProficiencies` ; l'étape Classe lit les JS dans `CLASS_PROFICIENCIES`, gardée par `classProficiencies.test.ts`. | non |
 | **F6** | moyenne | Suivi : [#119](https://github.com/kevmorpain/le-bureau-du-jdr/issues/119) — Maîtrise d'armes et bonus d'origine : servis par le GET fiche mais jamais lus | non |
 | **F7** | moyenne | Suivi : [#120](https://github.com/kevmorpain/le-bureau-du-jdr/issues/120) — Colonne legacy `dragonborn_ancestry`, parallèle au modèle lignée | oui (Drakéide) |
-| **F8** | basse | Suivi : [#121](https://github.com/kevmorpain/le-bureau-du-jdr/issues/121) — `spells.ts` redéfinit `AbilityScore` et `DamageType` | non |
+| **F8** | ✅ **résolu** ([#121](https://github.com/kevmorpain/le-bureau-du-jdr/issues/121)) | Enums `AbilityScore` / `DamageType` de `spells.ts` supprimés : `AbilityKey` (`shared/rules/abilities.ts`) et `DamageType` (`shared/rules/damageTypes.ts`), dont `DamageTypeKey` dérive | non |
 | **F9** | basse | Suivi : [#122](https://github.com/kevmorpain/le-bureau-du-jdr/issues/122) — Table `skills` référencée par aucune clé étrangère | non |
 | **F10** | basse | Suivi : [#123](https://github.com/kevmorpain/le-bureau-du-jdr/issues/123) — Dette de typecheck (10 serveur / 90 app) | non |
 | **F11** | basse (by-design) | Snapshots Drizzle figés à `0039` → `db:generate` inutilisable, plus de détection auto de dérive. Garde-fou : `test/unit/migrations.test.ts` rejoue 0000→dernier sur base vierge. | non |
@@ -94,8 +94,8 @@ par gravité — la plupart se résolvent AVEC F2 (généralisation `progression
 **Hors de cette liste** (pour lever l'ambiguïté) : les **listes d'options** de sous-classe/ASI des 10
 classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHOIX résultant
 (`subclassId`, `asiBonuses`, `asiFeats`) EST persisté — pas « perdu ». Et l'état d'encounter
-(`activeConditions`, `deathSavingThrows`, `armorClass`) est **localStorage par design**
-(cf. `docs/persistence.md`) — pas un bug (`armorClass` = dette assumée faute de système d'équipement).
+(`activeConditions`, `deathSavingThrows`) est **localStorage par design**
+(cf. `docs/persistence.md`) — pas un bug.
 
 ## Plan
 
@@ -270,5 +270,5 @@ disjointe se parallélisent.
 - **Seeds** : idempotents ; désormais keyés `(name, ruleset)` (cf. `lib/rulesetOf.ts`). Seed prod via
   `POST /api/admin/seed?only=<seeds>` (secret dans `.env`). Déploiement CF **auto au push sur `main`**.
 - **Docs de référence** : `docs/architecture.md`, `docs/rules-engine.md`, `docs/dnd-5.5.md`,
-  `docs/decisions.md`, `docs/audit-completude.md`, `CLAUDE.md` (gotchas hub:db / nuxt dev).
+  `docs/decisions.md`, `docs/audit-completude.md`, `CLAUDE.md` (gotchas nuxt dev).
 - **Historique du chantier** : PR #48–#51 (volet B), #52 (P0). Messages de commit auto-documentés.

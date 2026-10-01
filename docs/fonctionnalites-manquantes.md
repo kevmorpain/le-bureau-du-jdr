@@ -202,7 +202,7 @@ présentation/interaction.
 | **U6** | [#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184) | Pas de suivi de durée (conditions, sorts) |
 | **U7** | [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Pas de confirmation sur les actions destructrices de la fiche |
 | **U8** | [#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186) | Pas de recherche texte (sorts, inventaire) |
-| **U9** | [#187](https://github.com/kevmorpain/le-bureau-du-jdr/issues/187) | Clé localStorage `armorClass` morte |
+| **U9** | ✅ résolu (2026-10-01) | Clé localStorage `armorClass` morte — supprimée de `useCharacterClasses` ([#187](https://github.com/kevmorpain/le-bureau-du-jdr/issues/187)) |
 | **U10** | ✅ résolu (2026-09-15), voir la note plus bas | Montée en puissance des dégâts affichés |
 
 **✅ résolu — U10 + U2 (c) : montée en puissance (2026-09-15)**

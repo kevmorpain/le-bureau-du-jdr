@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { eq, and } from 'drizzle-orm'
 import { deleteBackgroundChoicePicks } from '~~/server/utils/choicePicks'
 import { z } from 'zod'
@@ -36,8 +36,7 @@ export default defineEventHandler(async (event) => {
       ),
     )
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await deleteBackgroundChoicePicks(db as any, characterSheetId)
+  await deleteBackgroundChoicePicks(db, characterSheetId)
 
   return { success: true }
 })

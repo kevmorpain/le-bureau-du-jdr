@@ -14,18 +14,14 @@
     {
       "binding": "DB",
       "database_id": "5f5feb01-abe5-48e4-bcac-7340605b2ab7",
+      // Nom hérité de NuxtHub : la D1 de prod y trace les migrations déjà appliquées,
+      // le renommer les ferait toutes rejouer.
       "migrations_table": "_hub_migrations",
-      "migrations_dir": ".output/server/db/migrations/"
-    }
-  ],
-  "kv_namespaces": [
-    {
-      "binding": "KV",
-      "id": "c00d70edde834c9998ef99d0db30d9e8"
+      "migrations_dir": "server/db/migrations/"
     }
   ],
   // Portraits de personnage (et autres médias à venir : la séparation se fait par
-  // préfixe de clé, pas par bucket). Consommé via `hub:blob` (driver cloudflare-r2).
+  // préfixe de clé, pas par bucket). Consommé via `useBinding('BLOB')`.
   "r2_buckets": [
     {
       "binding": "BLOB",

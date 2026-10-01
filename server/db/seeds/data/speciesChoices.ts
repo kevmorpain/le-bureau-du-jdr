@@ -1,7 +1,7 @@
 import type { FeatureChoice } from '~~/shared/rules/choices'
 
 // Points de choix des traits d'espèce 2014, partagés par les lignées et les anciennes espèces séparées (les
-// tests d'équivalence D12 comparent les deux). Créés en base par la migration 0107.
+// tests d'équivalence D12 comparent les deux). Créés en base par la migration 0109.
 
 export const oneLanguageChoice: FeatureChoice = { kind: 'language', count: 1, optionSource: { type: 'languages' } }
 

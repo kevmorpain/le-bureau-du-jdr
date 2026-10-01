@@ -1,15 +1,12 @@
 import { and, eq, inArray, isNotNull, isNull, or } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { z } from 'zod'
-import * as srcSchema from '~~/server/db/schema'
+import * as schema from '~~/server/db/schema'
+import type { Db } from '~~/server/utils/db'
 import type { Effect } from '~~/server/db/schema/effects'
 import { PICK_CHOICE_KINDS, SPELL_CHOICE_KINDS, VALUE_CHOICE_KINDS, type ChoiceKind } from '~~/shared/rules/choices'
 import { optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import type { SkillKey } from '~~/shared/rules/skills'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 export const choicePickSchema = z.object({
   progressionId: z.number().int().positive(),
@@ -43,7 +40,7 @@ export function choicePicksError(picks: ChoicePick[], choices: ResolvedChoice[])
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function choicePickWriteStmts(db: Db, characterSheetId: number, picks: ChoicePick[]): any[] {
   if (!picks.length) return []
-  return [db.insert(srcSchema.characterChoices)
+  return [db.insert(schema.characterChoices)
     .values(picks.map(p => ({
       characterSheetId,
       progressionId: p.progressionId,
@@ -57,26 +54,26 @@ export function choicePickWriteStmts(db: Db, characterSheetId: number, picks: Ch
 // maîtrises en double (règle générale, porteur sans propriétaire), qui dépendent de ses maîtrises fixes.
 export async function deleteBackgroundChoicePicks(db: Db, characterSheetId: number): Promise<void> {
   const backgroundProgressions = db
-    .select({ id: srcSchema.progression.id })
-    .from(srcSchema.progression)
-    .innerJoin(srcSchema.backgroundFeatures, eq(srcSchema.backgroundFeatures.featureId, srcSchema.progression.featureId))
+    .select({ id: schema.progression.id })
+    .from(schema.progression)
+    .innerJoin(schema.backgroundFeatures, eq(schema.backgroundFeatures.featureId, schema.progression.featureId))
   const generalRuleProgressions = db
-    .select({ id: srcSchema.progression.id })
-    .from(srcSchema.progression)
-    .innerJoin(srcSchema.features, eq(srcSchema.features.id, srcSchema.progression.featureId))
+    .select({ id: schema.progression.id })
+    .from(schema.progression)
+    .innerJoin(schema.features, eq(schema.features.id, schema.progression.featureId))
     .where(and(
-      eq(srcSchema.features.featureType, 'choice_carrier'),
-      isNull(srcSchema.features.classId),
-      isNull(srcSchema.features.subclassId),
-      isNull(srcSchema.features.lineageId),
+      eq(schema.features.featureType, 'choice_carrier'),
+      isNull(schema.features.classId),
+      isNull(schema.features.subclassId),
+      isNull(schema.features.lineageId),
     ))
   await db
-    .delete(srcSchema.characterChoices)
+    .delete(schema.characterChoices)
     .where(and(
-      eq(srcSchema.characterChoices.characterSheetId, characterSheetId),
+      eq(schema.characterChoices.characterSheetId, characterSheetId),
       or(
-        inArray(srcSchema.characterChoices.progressionId, backgroundProgressions),
-        inArray(srcSchema.characterChoices.progressionId, generalRuleProgressions),
+        inArray(schema.characterChoices.progressionId, backgroundProgressions),
+        inArray(schema.characterChoices.progressionId, generalRuleProgressions),
       ),
     ))
 }
@@ -91,13 +88,13 @@ const PROFICIENCY_EFFECT_BY_KIND = {
 // est la seule donnée stockée, la maîtrise est produite ici à chaque lecture.
 export async function deriveChoiceProficiencies(db: Db, characterSheetId: number): Promise<Effect[]> {
   const rows = await db
-    .select({ kind: srcSchema.progression.kind, value: srcSchema.characterChoices.selectedValue })
-    .from(srcSchema.characterChoices)
-    .innerJoin(srcSchema.progression, eq(srcSchema.progression.id, srcSchema.characterChoices.progressionId))
+    .select({ kind: schema.progression.kind, value: schema.characterChoices.selectedValue })
+    .from(schema.characterChoices)
+    .innerJoin(schema.progression, eq(schema.progression.id, schema.characterChoices.progressionId))
     .where(and(
-      eq(srcSchema.characterChoices.characterSheetId, characterSheetId),
-      inArray(srcSchema.progression.kind, [...VALUE_CHOICE_KINDS]),
-      isNotNull(srcSchema.characterChoices.selectedValue),
+      eq(schema.characterChoices.characterSheetId, characterSheetId),
+      inArray(schema.progression.kind, [...VALUE_CHOICE_KINDS]),
+      isNotNull(schema.characterChoices.selectedValue),
     ))
   // Un choix d'outil `orLanguages` peut porter une langue : clés de langue et noms d'outils ne se recoupent pas.
   return rows.map(r => r.kind === 'tool' && LANGUAGE_KEYS.includes(r.value!)

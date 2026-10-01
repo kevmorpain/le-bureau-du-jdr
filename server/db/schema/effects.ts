@@ -1,13 +1,12 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import type { AbilityKey } from '~~/shared/rules/abilities'
+import type { DamageType } from '~~/shared/rules/damageTypes'
 import type { SkillKey } from '~~/shared/rules/skills'
 
 export type AbilityScoreKey = AbilityKey
 
-export type DamageTypeKey
-  = | 'acid' | 'bludgeoning' | 'cold' | 'fire' | 'force' | 'lightning'
-    | 'necrotic' | 'piercing' | 'poison' | 'psychic' | 'radiant' | 'slashing' | 'thunder'
-    | 'draconic_ancestry' // dynamic — resolved by the character's ancestry choice
+// 'draconic_ancestry' : dynamique, résolu par le choix de lignée du personnage.
+export type DamageTypeKey = DamageType | 'draconic_ancestry'
 
 export type ConditionKey
   = | 'blinded' | 'charmed' | 'deafened' | 'exhaustion' | 'frightened' | 'grappled'
@@ -92,6 +91,9 @@ export type Effect
     | { type: 'hp_per_level', value: { amount: number } }
     // Bonus aux scores passifs (Observateur : +5 Perception passive + Investigation passive).
     | { type: 'passive_skill_bonus', value: { skill: 'perception' | 'investigation', amount: number } }
+    // Bonus fixes signés (Anneau de protection : +1 CA et JS ; un malus s'écrit en négatif).
+    | { type: 'armor_class_bonus', value: { amount: number } }
+    | { type: 'saving_throw_bonus', value: { ability: AbilityScoreKey | 'all', amount: number } }
 
 export type EffectType = Effect['type']
 export type EffectValue = Effect['value']

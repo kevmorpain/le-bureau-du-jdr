@@ -1,4 +1,4 @@
-import { db } from 'hub:db'
+import { db } from '~~/server/utils/db'
 import { characterLevelUp, levelUpSchema } from '~~/server/utils/characterLevelUp'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 
@@ -11,8 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!result.success) throw createError({ statusCode: 422, data: result.error })
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return await characterLevelUp(db as any, characterSheetId, result.data)
+    return await characterLevelUp(db, characterSheetId, result.data)
   }
   catch (e) {
     if (e instanceof CharacterValidationError) {

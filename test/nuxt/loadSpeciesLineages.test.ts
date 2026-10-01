@@ -1,41 +1,30 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { CreatureSize } from '../../server/db/schema/character_species'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { loadSpeciesLineages } from '../../server/utils/catalogSources'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Le loader expose la matière seedée sous la forme d'affichage du picker (bonus de carac. COMBINÉS
 // base ⊕ lignée, vitesse effective, vision, traits propres), équivalente aux valeurs du blob RaceData.
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let orm: any
 let elfBaseId: number
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  orm = drizzle(client, { schema, casing: 'snake_case' })
   await seedElfLineages(orm)
-  await orm.insert(srcSchema.characterSpecies).values({ name: 'Humain', ruleset: '5', size: CreatureSize.Medium, speed: 9 })
+  await orm.insert(schema.characterSpecies).values({ name: 'Humain', ruleset: '5', size: CreatureSize.Medium, speed: 9 })
 
-  const [base] = await orm.select().from(srcSchema.characterSpecies)
-    .where(and(eq(srcSchema.characterSpecies.name, 'Elfe'), eq(srcSchema.characterSpecies.ruleset, '5')))
+  const [base] = await orm.select().from(schema.characterSpecies)
+    .where(and(eq(schema.characterSpecies.name, 'Elfe'), eq(schema.characterSpecies.ruleset, '5')))
   elfBaseId = base.id
 }, 60000)
 
@@ -89,7 +78,7 @@ describe('loadSpeciesLineages (D17, lot 5b)', () => {
   })
 
   it('espèce sans lignée → lineages: []', async () => {
-    const [humain] = await orm.select().from(srcSchema.characterSpecies).where(eq(srcSchema.characterSpecies.name, 'Humain'))
+    const [humain] = await orm.select().from(schema.characterSpecies).where(eq(schema.characterSpecies.name, 'Humain'))
     const rich = await loadSpeciesLineages(orm, humain.id)
     expect(rich).not.toBeNull()
     expect(rich!.lineages).toEqual([])

@@ -9,7 +9,7 @@ import { CLASS_IDENTITY } from '../fixtures/classIdentity'
 // UNE progression `kind:'subclass'` sur une feature owner, AU MÊME niveau que `classes.subclass_level`.
 // Un désalignement (niveau recopié à la main qui dérive, classe oubliée) casse ici.
 //
-// Env `unit` : le helper n'a aucune dépendance runtime `hub:db` (import de type seul).
+// Env `unit` : le helper n'a aucune dépendance runtime à la base (import de type seul).
 
 describe('subclassChoiceFeature — contrat de sous-classe', () => {
   it('couvre EXACTEMENT les 12 classes du contrat (aucune oubliée, aucune en trop)', () => {

@@ -1,12 +1,9 @@
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { and, eq } from 'drizzle-orm'
 import * as schema from '../../schema'
+import type { Db } from '~~/server/utils/db'
 import type { FeatureChoice } from '~~/shared/rules/choices'
 
 export type { FeatureChoice } from '~~/shared/rules/choices'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 /** Idempotent : ne crée la progression que si la feature n'en porte pas déjà une de ce `kind`. */
 export async function ensureFeatureChoice(db: Db, featureId: number, choice: FeatureChoice): Promise<boolean> {

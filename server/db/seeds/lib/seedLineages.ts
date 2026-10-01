@@ -1,15 +1,12 @@
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { and, eq } from 'drizzle-orm'
 import * as schema from '../../schema'
 import type { CreatureSize } from '../../schema/character_species'
 import type { Effect } from '../../schema/effects'
+import type { Db } from '~~/server/utils/db'
 import { ensureFeatureChoice, type FeatureChoice } from './featureChoice'
 
 // Moteur générique du modèle « espèce = base + lignées » (D17) : ajouter une espèce = 1 fichier de
 // données + 1 ligne de registre, sans toucher au moteur. Idempotent (re-run sûr) et additif.
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 export interface SpeciesTraitData {
   name: string

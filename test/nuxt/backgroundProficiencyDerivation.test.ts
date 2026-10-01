@@ -1,21 +1,16 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { eq } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { seedBackgroundProficiencies } from '../../server/db/seeds/lib/seedBackgroundProficiencies'
 import { deriveBackgroundProficiencies } from '../../server/utils/backgroundProficiencyDerivation'
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
 import { backgroundChoices, fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Seed des porteurs de maîtrises d'historique + dérivation, bout en bout : la fiche doit dériver
 // exactement les maîtrises FIXES — compétences, outils, langues (== ce que createCharacter matérialisait).
-
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let orm: any
@@ -30,21 +25,14 @@ const fixedCount = (b: typeof backgroundsData[number]) =>
 const withFixed = backgroundsData.filter(b => fixedCount(b) > 0)
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   // Les historiques doivent exister avant le seed des porteurs (comme en prod).
   for (const bg of backgroundsData) {
-    const row = await orm.insert(srcSchema.backgrounds).values({
+    const row = await orm.insert(schema.backgrounds).values({
       name: bg.name,
       description: bg.description,
       skillProficiencies: bg.skillProficiencies,
@@ -72,9 +60,9 @@ describe('seedBackgroundProficiencies — structure', () => {
   })
 
   it('le porteur est une feature proficiency_grant (jamais matérialisée ni affichée)', async () => {
-    const carriers = await orm.select({ type: srcSchema.features.featureType })
-      .from(srcSchema.features)
-      .innerJoin(srcSchema.backgroundFeatures, eq(srcSchema.backgroundFeatures.featureId, srcSchema.features.id))
+    const carriers = await orm.select({ type: schema.features.featureType })
+      .from(schema.features)
+      .innerJoin(schema.backgroundFeatures, eq(schema.backgroundFeatures.featureId, schema.features.id))
     expect(carriers.length).toBe(withFixed.length)
     expect(carriers.every((c: { type: string }) => c.type === 'proficiency_grant')).toBe(true)
   })

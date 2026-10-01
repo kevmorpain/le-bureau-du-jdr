@@ -1,17 +1,14 @@
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { and, eq } from 'drizzle-orm'
 import * as schema from '../../schema'
 import type { Effect } from '../../schema/effects'
 import { skillEnum } from '~~/shared/rules/skills'
 import { backgroundChoices, fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
+import type { Db } from '~~/server/utils/db'
 import { ensureFeatureChoice } from './featureChoice'
 
 // Pose les maîtrises FIXES d'un historique (compétences, outils, langues) en effets sur une feature
 // porteuse (`proficiency_grant`, jamais matérialisée ni affichée) pour que la fiche les DÉRIVE, et ses
 // entrées « au choix » en points de choix sur ce même porteur. Idempotent et additif.
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 export const BACKGROUND_PROFICIENCY_CARRIER_NAME = 'Maîtrises d\'historique'
 

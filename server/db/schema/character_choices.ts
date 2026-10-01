@@ -10,7 +10,7 @@ import spells from './spells'
 import abilityScores from './ability_scores'
 
 // Un pick atomique par ligne ; au plus une colonne `selected_*` renseignée. `payload` porte les choix
-// composés. Pas de `relations()` (cf. progression.ts).
+// composés.
 const characterChoices = sqliteTable(
   'character_choices',
   {

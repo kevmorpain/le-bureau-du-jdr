@@ -1,14 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 
-  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@nuxthub/core', '@vite-pwa/nuxt', 'nuxt-zod-i18n', '@nuxtjs/i18n', 'nuxt-auth-utils'],
-
-  // Surcharge appliquée par `nuxt dev` uniquement (cf. hub.blob ci-dessous).
-  $development: {
-    hub: {
-      blob: { driver: 'fs', dir: '.data/blob' },
-    },
-  },
+  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/test-utils', '@nuxt/ui', '@vite-pwa/nuxt', 'nuxt-zod-i18n', '@nuxtjs/i18n', 'nuxt-auth-utils'],
 
   pages: true,
 
@@ -65,23 +58,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-12-27',
 
   nitro: {
-    experimental: {
-      tasks: true,
-    },
     preset: 'cloudflare_module',
     cloudflare: {
       deployConfig: true,
       nodeCompat: true,
     },
-  },
-
-  hub: {
-    db: 'sqlite',
-    // Médias (portraits) : R2 en production via le binding `BLOB` de wrangler.jsonc.
-    // `hub.hosting` vaut ici toujours « cloudflare » (preset nitro), donc le driver R2
-    // serait AUSSI choisi en dev, où aucun binding n'existe → `$development` bascule
-    // sur le driver fs (.data/blob), même logique d'émulation locale que la base.
-    blob: { driver: 'cloudflare-r2', binding: 'BLOB' },
   },
 
   fonts: {

@@ -1,6 +1,3 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
@@ -18,12 +15,11 @@ import { twoSkillsChoice } from '../../server/db/seeds/data/speciesChoices'
 import { resolveChoices } from '../../shared/rules/resolve'
 import { LANGUAGE_KEYS } from '../../shared/rules/languages'
 import type { ChoiceKind } from '../../shared/rules/choices'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Chemin générique des points de choix de maîtrise et de sort mineur : le pick est validé contre
 // `resolveChoices`, stocké en `character_choices`, et la maîtrise dérivée à la lecture.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const FIGHTER = 1
 const WIZARD = 2
 const OWNER = 1
@@ -60,12 +56,8 @@ function input(over: Record<string, unknown>) {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
   const client = createClient({ url: ':memory:' })
-  for (const file of (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()) {
-    for (const statement of splitSqlQueries(await readFile(MIGRATIONS_DIR + file, 'utf8'))) await client.execute(statement)
-  }
+  await replayMigrations(client)
   db = drizzle(client, { schema, casing: 'snake_case' })
 
   await db.insert(schema.users).values({ id: OWNER, provider: 'discord', providerUserId: 'x', name: 'Testeur' })

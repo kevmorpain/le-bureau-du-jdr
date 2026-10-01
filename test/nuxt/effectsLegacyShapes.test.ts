@@ -1,20 +1,16 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { computed, defineComponent, h } from 'vue'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { inArray } from 'drizzle-orm'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
 import { useCharacterConditions } from '../../app/composables/character/useCharacterConditions'
 import { blankFixture, mountAbilities } from './fixtures/characters'
+import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const MIGRATION = '0100_effects_legacy_shapes.sql'
 
 // Valeurs relevées telles quelles dans une base seedée avant le changement de forme des effets.
@@ -45,16 +41,10 @@ const UNTOUCHED = [
 const LEGACY_IDS = LEGACY.map(c => c.id)
 
 let client: Client
-let splitSqlQueries: (sql: string) => string[]
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let orm: any
 let before: Effect[] = []
 let after: Effect[] = []
-
-async function applyMigration() {
-  const sql = await readFile(MIGRATIONS_DIR + MIGRATION, 'utf8')
-  for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-}
 
 async function rawValues(): Promise<Map<number, string>> {
   const rows = await client.execute('SELECT id, value FROM effects ORDER BY id')
@@ -62,7 +52,7 @@ async function rawValues(): Promise<Map<number, string>> {
 }
 
 async function legacyEffects(): Promise<Effect[]> {
-  const rows = await orm.select().from(srcSchema.effects).where(inArray(srcSchema.effects.id, LEGACY_IDS))
+  const rows = await orm.select().from(schema.effects).where(inArray(schema.effects.id, LEGACY_IDS))
   return rows.map((r: { type: string, value: unknown }) => ({ type: r.type, value: r.value }) as Effect)
 }
 
@@ -76,23 +66,16 @@ function seedEffect(c: (typeof LEGACY)[number]) {
 }
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  splitSqlQueries = mod.splitSqlQueries
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   client = createClient({ url: ':memory:' })
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   for (const row of [...LEGACY, ...UNTOUCHED]) {
     await client.execute({ sql: 'INSERT INTO effects (id, type, value) VALUES (?, ?, ?)', args: [row.id, row.type, row.value] })
   }
 
   before = await legacyEffects()
-  await applyMigration()
+  await applyMigration(client, MIGRATION)
   after = await legacyEffects()
 })
 
@@ -113,7 +96,7 @@ describe('migration 0100 — effets d\'espèce à l\'ancienne forme', () => {
 
   it('est idempotente', async () => {
     const once = await rawValues()
-    await applyMigration()
+    await applyMigration(client, MIGRATION)
     expect(await rawValues()).toEqual(once)
   })
 })

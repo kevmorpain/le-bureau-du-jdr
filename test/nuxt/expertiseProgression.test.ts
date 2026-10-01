@@ -1,17 +1,13 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import { buildCatalog } from '../../server/utils/catalog'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 import type { SkillKey } from '../../shared/rules/skills'
 import { expertiseProgression, EXPERTISE_OWNER_NAME } from '../../server/db/seeds/data/expertise'
+import { replayMigrations } from '../fixtures/migrations'
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const ROUBLARD = 4
 const BARDE = 5
 const PROFICIENT: SkillKey[] = ['stealth', 'perception', 'acrobatics', 'deception']
@@ -20,19 +16,12 @@ let catalog: Catalog
 const progIdByClass = new Map<number, number>()
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  const orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  const orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  await orm.insert(srcSchema.classes).values([
+  await orm.insert(schema.classes).values([
     { id: ROUBLARD, name: 'Roublard', hitDice: '1d8' },
     { id: BARDE, name: 'Barde', hitDice: '1d8' },
   ])
@@ -43,7 +32,7 @@ beforeAll(async () => {
     ['Barde', BARDE, 3],
   ] as const) {
     const ownerId = featureId++
-    await orm.insert(srcSchema.features).values({
+    await orm.insert(schema.features).values({
       id: ownerId,
       name: EXPERTISE_OWNER_NAME,
       featureType: 'class_feature',
@@ -51,13 +40,13 @@ beforeAll(async () => {
       levelRequired,
     })
     const prog = expertiseProgression(className)!
-    const [row] = await orm.insert(srcSchema.progression).values({
+    const [row] = await orm.insert(schema.progression).values({
       featureId: ownerId,
       kind: prog.kind,
       count: prog.count,
       optionSource: prog.optionSource,
       replaceable: prog.replaceable ?? false,
-    }).returning({ id: srcSchema.progression.id })
+    }).returning({ id: schema.progression.id })
     progIdByClass.set(classId, row!.id)
   }
 

@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { and, eq } from 'drizzle-orm'
 import { upsertByName } from './lib/upsertByName'
 import { rulesetOf } from './lib/rulesetOf'
@@ -26,12 +26,10 @@ export default async function seed() {
     backgroundsData,
   )
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const proficiencies = await seedBackgroundProficiencies(db as any, backgroundsData)
+  const proficiencies = await seedBackgroundProficiencies(db, backgroundsData)
 
   // Remplacement d'une maîtrise reçue en double : règle du chapitre Historiques, sans propriétaire.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const duplicateReplacement = await seedDuplicateReplacement(db as any)
+  const duplicateReplacement = await seedDuplicateReplacement(db)
 
   return { ...report, proficiencies, duplicateReplacement }
 }

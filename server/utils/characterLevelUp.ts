@@ -1,5 +1,4 @@
 import { and, eq, inArray, lte, sql } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
@@ -9,17 +8,16 @@ import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { buildCatalog } from '~~/server/utils/catalog'
+import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
 import { choicesGainedAtLevelUp, isProficiencyPickChoice } from '~~/shared/rules/resolve'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { Db } from '~~/server/utils/db'
 
 // maxHp/hpGained restent fournis par le client (formule PV front-only).
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
 
 const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcanum_8' | 'arcanum_9'> = {
   11: 'arcanum_6',
@@ -306,8 +304,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   }
   const pactSlotsToDelete = existingSlots.filter(s => s.slotType === 'pact_magic' && s.slotLevel !== newPactLevel)
 
-  const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
-  const hitDieSides = hitDieMatch?.[1] as ('4' | '6' | '8' | '10' | '12') | undefined
+  const hitDieSides = hitDieSidesOf(cls.hitDice)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const currentHitDie: Array<{ die: string, count: number }> = (charSheet.currentHitDie as any) ?? []
   let updatedHitDie = [...currentHitDie]

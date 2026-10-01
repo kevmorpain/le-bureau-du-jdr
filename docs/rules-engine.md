@@ -205,15 +205,14 @@ de matérialisation sauf état runtime (`currentUses`).
 
 ## 7. API
 
-Auth/ownership **déjà correct** (middleware `character-sheets-authz`). Helper `useDrizzle()`
-**existe mais est contourné**. Améliorations priorisées :
+Auth/ownership **déjà correct** (middleware `character-sheets-authz`). Améliorations priorisées :
 
 **🔴 Robustesse**
 1. **Transactions** — `db.batch()` (atomique D1) sur create/level-up/rest ; aujourd'hui ~10 inserts non atomiques. ([D14](./decisions.md#d14))
 2. **Dériver + valider côté serveur** (sous-classe∈classe, compétences∈autorisé, sort légal) au lieu de faire confiance au client.
 
 **🟠 Cohérence / DRY**
-3. Standardiser l'accès données : encapsuler le workaround hub:db (`srcSchema` + `as any`) dans un module ; `useDrizzle()` partout.
+3. ✅ Accès données standardisé : `db` et `schema` de `server/utils/db.ts` partout ([#210](https://github.com/kevmorpain/le-bureau-du-jdr/issues/210)). Seuls restent les casts de `.batch()`, absent du type `BaseSQLiteDatabase`.
 4. Middleware d'authz **attache la sheet à `event.context`** → supprime le boilerplate `if(!id) 400`/`findFirst`/`404` (~20×).
 5. Enveloppe d'erreur cohérente + i18n (aujourd'hui mix FR/EN) sur `nuxt-zod-i18n`.
 6. Zod dérivé de `shared/rules/` (fini les `z.enum(['str',…])` recopiés).

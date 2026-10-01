@@ -1,7 +1,5 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
-// Schéma importé de la source : le cache ESM de hub:db peut dropper des colonnes récentes en silence.
-import * as srcSchema from '~~/server/db/schema'
 import { spells } from './data/spells'
 import { spellClassMappings } from './data/spell_class_mappings'
 import { nameRulesetKey } from './lib/rulesetOf'
@@ -19,7 +17,7 @@ export default async function seed() {
 
   // Préchargement en 2 requêtes (sinon le seed explose la limite de requêtes D1). Dédup keyée par
   // (name, ruleset) : un sort 5.5 homonyme doit INSÉRER, jamais réécrire la ligne 2014.
-  const existingSpells = await db.select().from(srcSchema.spells)
+  const existingSpells = await db.select().from(schema.spells)
   const spellByKey = new Map(existingSpells.map(s => [nameRulesetKey(s), s]))
 
   const existingLinks = await db
@@ -71,9 +69,9 @@ export default async function seed() {
 
       if (changed) {
         await db
-          .update(srcSchema.spells)
+          .update(schema.spells)
           .set(next)
-          .where(eq(srcSchema.spells.id, existing.id))
+          .where(eq(schema.spells.id, existing.id))
         updated++
       }
       else {
@@ -82,7 +80,7 @@ export default async function seed() {
       spellId = existing.id
     }
     else {
-      spellId = await db.insert(srcSchema.spells).values(spell).returning().get().then(r => (inserted++, r.id))
+      spellId = await db.insert(schema.spells).values(spell).returning().get().then(r => (inserted++, r.id))
     }
 
     for (const className of classesBySpellName[spell.name] ?? []) {

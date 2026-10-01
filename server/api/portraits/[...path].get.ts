@@ -1,4 +1,4 @@
-import { blob } from 'hub:blob'
+import { useBinding } from '~~/server/utils/bindings'
 import { portraitKeyFromPath } from '~~/server/utils/portraits'
 
 // Route publique : clé non devinable (uuid), jamais listée, forme stricte validée par `portraitKeyFromPath`.
@@ -6,12 +6,18 @@ import { portraitKeyFromPath } from '~~/server/utils/portraits'
 export default defineEventHandler(async (event) => {
   const path = getRouterParam(event, 'path')
   const key = path ? portraitKeyFromPath(decodeURIComponent(path)) : null
+  const object = key ? await useBinding('BLOB').get(key) : null
 
-  if (!key) {
+  if (!object) {
     throw createError({ statusCode: 404, statusMessage: 'Portrait introuvable' })
   }
 
-  setHeader(event, 'Cache-Control', 'public, max-age=31536000, immutable')
+  setHeaders(event, {
+    'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
+    'Content-Length': object.size,
+    'ETag': object.httpEtag,
+    'Cache-Control': 'public, max-age=31536000, immutable',
+  })
 
-  return blob.serve(event, key)
+  return object.body
 })

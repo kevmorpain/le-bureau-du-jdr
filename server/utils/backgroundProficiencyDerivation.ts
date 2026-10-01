@@ -1,22 +1,19 @@
 import { and, eq } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
-import * as srcSchema from '~~/server/db/schema'
+import * as schema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 export async function deriveBackgroundProficiencies(db: Db, backgroundId: number | null | undefined): Promise<Effect[]> {
   if (backgroundId == null) return []
   const rows = await db
-    .select({ type: srcSchema.effects.type, value: srcSchema.effects.value })
-    .from(srcSchema.backgroundFeatures)
-    .innerJoin(srcSchema.features, eq(srcSchema.features.id, srcSchema.backgroundFeatures.featureId))
-    .innerJoin(srcSchema.featureEffects, eq(srcSchema.featureEffects.featureId, srcSchema.features.id))
-    .innerJoin(srcSchema.effects, eq(srcSchema.effects.id, srcSchema.featureEffects.effectId))
+    .select({ type: schema.effects.type, value: schema.effects.value })
+    .from(schema.backgroundFeatures)
+    .innerJoin(schema.features, eq(schema.features.id, schema.backgroundFeatures.featureId))
+    .innerJoin(schema.featureEffects, eq(schema.featureEffects.featureId, schema.features.id))
+    .innerJoin(schema.effects, eq(schema.effects.id, schema.featureEffects.effectId))
     .where(and(
-      eq(srcSchema.backgroundFeatures.backgroundId, backgroundId),
-      eq(srcSchema.features.featureType, 'proficiency_grant'),
+      eq(schema.backgroundFeatures.backgroundId, backgroundId),
+      eq(schema.features.featureType, 'proficiency_grant'),
     ))
   return rows.map(r => ({ type: r.type, value: r.value }) as Effect)
 }

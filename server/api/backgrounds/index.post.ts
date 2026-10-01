@@ -1,5 +1,4 @@
-import { db, schema } from 'hub:db'
-import * as srcSchema from '~~/server/db/schema'
+import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -27,9 +26,9 @@ export default defineEventHandler(async (event) => {
   // à l'utilisateur connecté (cette route n'est pas couverte par le middleware
   // /api/character_sheets/<id>).
   const [sheet] = await db
-    .select({ ownerId: srcSchema.characterSheets.ownerId })
-    .from(srcSchema.characterSheets)
-    .where(eq(srcSchema.characterSheets.id, result.data.characterSheetId))
+    .select({ ownerId: schema.characterSheets.ownerId })
+    .from(schema.characterSheets)
+    .where(eq(schema.characterSheets.id, result.data.characterSheetId))
     .limit(1)
   if (!sheet) throw createError({ statusCode: 404, statusMessage: 'Character sheet not found' })
   if (sheet.ownerId !== user.id) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })

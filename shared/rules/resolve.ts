@@ -5,7 +5,7 @@ import type { AbilityKey } from './abilities'
 import type { FeaturePrerequisite } from '../../server/db/schema/features'
 
 // Pur et partagé client/serveur. Doit rester importable par le projet vitest `unit` (sans alias `~~`) :
-// aucun import de valeur `~~/…` ni `hub:db`, la base est pré-résolue dans le `Catalog` par l'appelant.
+// aucun import de valeur `~~/…`, la base est pré-résolue dans le `Catalog` par l'appelant.
 
 export interface ResolvedOption {
   featureId?: number // feature_group : pacte / invocation / style / métamagie / manœuvre / don

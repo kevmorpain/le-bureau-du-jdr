@@ -1,4 +1,4 @@
-import { db, schema } from 'hub:db'
+import { db, schema } from '~~/server/utils/db'
 import abilityScores from './data/ability_scores.json'
 
 export default async function seed() {

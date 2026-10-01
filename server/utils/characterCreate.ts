@@ -1,5 +1,4 @@
 import { and, eq, inArray, lte, sql } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
@@ -9,6 +8,7 @@ import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/ut
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { creationDuplicates } from '~~/server/utils/duplicateProficiencies'
 import { abilityEnum } from '~~/shared/rules/abilities'
+import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
 import { ALL_TOOLS } from '~~/shared/rules/tools'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
@@ -18,9 +18,7 @@ import { isValidAbilityDistribution } from '~~/shared/rules/composite'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 import { alignmentCodeFromBuilderId } from '~~/shared/rules/alignments'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Db = BaseSQLiteDatabase<'async', any, any>
+import type { Db } from '~~/server/utils/db'
 
 export class CharacterValidationError extends Error {
   constructor(message: string) {
@@ -489,8 +487,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     : null
 
   // 4. Insert de la fiche (HORS batch — id auto-incrément)
-  const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
-  const hitDieSides = hitDieMatch?.[1]
+  const hitDieSides = hitDieSidesOf(cls.hitDice)
   const currentHitDie = hitDieSides ? [{ die: hitDieSides, count: d.level }] : []
 
   const [sheet] = await db

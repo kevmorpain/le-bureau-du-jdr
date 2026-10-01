@@ -1,22 +1,18 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as srcSchema from '../../server/db/schema'
+import * as schema from '../../server/db/schema'
 import type { Effect } from '../../server/db/schema/effects'
 import { deriveClassGrants, loadClassProficiencyGrants } from '../../server/utils/classProficiencyDerivation'
 import { CLASS_PROFICIENCY_CARRIER_NAME, MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
 import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 import { proficiencyEffects } from '../fixtures/catalogClasses'
+import { replayMigrations } from '../fixtures/migrations'
 
 // Dérivation des maîtrises de classe, bout en bout : `deriveClassGrants` doit rendre EXACTEMENT les effets de
 // `CLASS_PROFICIENCIES` (équivalence source ⟺ dérivé) — maîtrises de départ et JS pour la classe principale,
 // sous-ensemble `multiclass` sans JS pour les autres (règle PHB) —, `[]` sans porteur.
 
-const MIGRATIONS_DIR = join(process.cwd(), 'server', 'db', 'migrations') + '/'
-const NUXTHUB_UTILS = pathToFileURL(join(process.cwd(), 'node_modules', '@nuxthub', 'core', 'dist', 'db', 'lib', 'utils.mjs')).href
 const BARE = 'ClasseSansPorteur'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,32 +36,25 @@ const sheet = (main: string, ...others: string[]) => [
 ]
 
 beforeAll(async () => {
-  const mod = await import(/* @vite-ignore */ NUXTHUB_UTILS)
-  const splitSqlQueries = mod.splitSqlQueries as (sql: string) => string[]
-  const files = (await readdir(MIGRATIONS_DIR)).filter(f => f.endsWith('.sql')).sort()
-
   const client = createClient({ url: ':memory:' })
   await client.execute('PRAGMA foreign_keys = ON')
-  for (const file of files) {
-    const sql = await readFile(MIGRATIONS_DIR + file, 'utf8')
-    for (const statement of splitSqlQueries(sql)) await client.execute(statement)
-  }
-  orm = drizzle(client, { schema: srcSchema, casing: 'snake_case' })
+  await replayMigrations(client)
+  orm = drizzle(client, { schema, casing: 'snake_case' })
 
   const carrier = async (classId: number, name: string, featureType: string, effects: Effect[]) => {
-    const feature = await orm.insert(srcSchema.features)
+    const feature = await orm.insert(schema.features)
       .values({ name, featureType, classId, levelRequired: 1 })
       .returning().get()
     for (const effect of effects) {
-      const eff = await orm.insert(srcSchema.effects).values(effect).returning().get()
-      await orm.insert(srcSchema.featureEffects).values({ featureId: feature.id, effectId: eff.id })
+      const eff = await orm.insert(schema.effects).values(effect).returning().get()
+      await orm.insert(schema.featureEffects).values({ featureId: feature.id, effectId: eff.id })
     }
   }
 
   // Une classe + ses porteurs par entrée de CLASS_PROFICIENCIES (celui de multiclassage seulement s'il
   // accorde quelque chose, comme le seed).
   for (const className of Object.keys(CLASS_PROFICIENCIES)) {
-    const cls = await orm.insert(srcSchema.classes)
+    const cls = await orm.insert(schema.classes)
       .values({ name: className, hitDice: '1d8' }).returning().get()
     classIdByName.set(className, cls.id)
 
@@ -75,7 +64,7 @@ beforeAll(async () => {
     }
   }
 
-  const bare = await orm.insert(srcSchema.classes).values({ name: BARE, hitDice: '1d6' }).returning().get()
+  const bare = await orm.insert(schema.classes).values({ name: BARE, hitDice: '1d6' }).returning().get()
   classIdByName.set(BARE, bare.id)
 })
 
