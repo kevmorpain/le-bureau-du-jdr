@@ -1,11 +1,12 @@
 import { db, schema } from '~~/server/utils/db'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, inArray } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
 import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequisite } from '../../schema/features'
 import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { RollTableKey } from '~~/shared/rules/rollTables'
 import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../data/subclassChoice'
 import { fightingStyleOptionFeatures } from '../data/fightingStyles'
 import { classSkillChoiceFeature } from '../data/classSkills'
@@ -68,6 +69,7 @@ export type FeatureDef = {
   prerequisites?: FeaturePrerequisite | null
   tag?: FeatureTag | null
   progression?: ProgressionDef | null
+  rollTable?: RollTableKey | null
 }
 
 export type SubclassDef = {
@@ -117,8 +119,13 @@ export async function seedClass(
     ...fightingStyleOptions,
   ]
 
+  const rollTableIds = await _resolveRollTables(
+    [...allBaseFeatures, ...subclassDefs.flatMap(s => s.features)],
+    ruleset,
+  )
+
   for (const featureDef of allBaseFeatures) {
-    const { effects = [], meta, prerequisites, tag, progression: progressionDef, ...data } = featureDef
+    const { effects = [], meta, prerequisites, tag, progression: progressionDef, rollTable, ...data } = featureDef
     // Important : on inclut `levelRequired` dans la clef d'unicité, sinon
     // les features récurrentes au même nom (ex. « Amélioration de caractéristiques »
     // gagnée à 4/8/12/16/19) sont fusionnées en une seule ligne en base et seul
@@ -159,6 +166,7 @@ export async function seedClass(
       featuresInserted++
     }
     await _syncFeatureTag(feature.id, tag)
+    await _syncRollTable(feature.id, rollTable, rollTableIds)
     await _syncProgression(feature.id, progressionDef)
     await _seedEffects(feature.id, effects)
   }
@@ -194,7 +202,7 @@ export async function seedClass(
     }
 
     for (const featureDef of subclassDef.features) {
-      const { effects = [], meta, tag, progression: progressionDef, ...data } = featureDef
+      const { effects = [], meta, tag, progression: progressionDef, rollTable, ...data } = featureDef
       // Idem : scoper par niveau pour éviter la fusion des features homonymes.
       const existing = await db.query.features.findFirst({
         where: and(
@@ -227,6 +235,7 @@ export async function seedClass(
         featuresInserted++
       }
       await _syncFeatureTag(feature.id, tag)
+      await _syncRollTable(feature.id, rollTable, rollTableIds)
       await _syncProgression(feature.id, progressionDef)
       await _seedEffects(feature.id, effects)
     }
@@ -238,6 +247,28 @@ export async function seedClass(
 async function _syncFeatureTag(featureId: number, tag: FeatureTag | null | undefined) {
   if (tag === undefined) return
   await db.update(schema.features).set({ tag }).where(eq(schema.features.id, featureId))
+}
+
+// Résolues avant toute écriture : une table absente fait échouer le seed sans le laisser à moitié appliqué.
+async function _resolveRollTables(featureDefs: FeatureDef[], ruleset: Ruleset): Promise<Map<RollTableKey, number>> {
+  const keys = [...new Set(featureDefs.map(f => f.rollTable).filter((k): k is RollTableKey => k != null))]
+  if (!keys.length) return new Map()
+  const rows = await db
+    .select({ id: schema.rollTables.id, key: schema.rollTables.key })
+    .from(schema.rollTables)
+    .where(and(inArray(schema.rollTables.key, keys), eq(schema.rollTables.ruleset, ruleset)))
+  const ids = new Map(rows.map(r => [r.key, r.id]))
+  const missing = keys.filter(k => !ids.has(k))
+  if (missing.length) {
+    throw new Error(`[seedClass] table(s) ${missing.join(', ')} (${ruleset}) introuvable(s) : lancer le seed rollTables d'abord`)
+  }
+  return ids
+}
+
+async function _syncRollTable(featureId: number, key: RollTableKey | null | undefined, ids: Map<RollTableKey, number>) {
+  if (key === undefined) return
+  const rollTableId = key === null ? null : ids.get(key)!
+  await db.update(schema.features).set({ rollTableId }).where(eq(schema.features.id, featureId))
 }
 
 /** Idempotent : une feature porte au plus une progression par `kind`. */

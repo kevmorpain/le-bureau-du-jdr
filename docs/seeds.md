@@ -27,6 +27,7 @@ Toutes les seeds de référence sont idempotentes — elles peuvent être relanc
 | `abilityScores` | `ability_scores.ts` | `onConflictDoNothing` | |
 | `damageTypes` | `damage_types.ts` | `onConflictDoNothing` | |
 | `magicSchools` | `magic_schools.ts` | `onConflictDoNothing` | |
+| `rollTables` | `roll_tables.ts` | Par (key, ruleset), resynchronisé | Tables à lancer (Pic de magie sauvage). **Avant les classes** : leurs capacités y renvoient |
 | `characterSpecies` | `character_species.ts` | Vérification par nom | 13 entrées (9 espèces + 4 sous-espèces) |
 | `classes` | `classes.ts` | Select + update/insert | |
 | `backgrounds` | `backgrounds.ts` | `upsertByName` | |
@@ -44,7 +45,7 @@ Toutes les seeds de référence sont idempotentes — elles peuvent être relanc
 ## Ordre d'exécution
 
 ```
-Étape 1 (parallèle) : abilityScores, damageTypes, magicSchools, characterSpecies, classes, backgrounds
+Étape 1 (parallèle) : abilityScores, damageTypes, magicSchools, rollTables, characterSpecies, classes, backgrounds
 Étape 2 (parallèle) : barbare, barde, clerc, druide, guerrier, magicien,
                        moine, paladin, rôdeur, roublard, ensorceleur, warlock
 Étape 3 (séquentiel): spells → items
@@ -73,6 +74,8 @@ Le helper gère :
 3. Upsert les sous-classes (idempotent par `classId + name`)
 4. Insérer les features de sous-classe (idempotent par `subclassId + name`)
 5. Lier les effets via `feature_effects` (`onConflictDoNothing`)
+6. Lier la table à lancer d'une feature (`rollTable: 'wild_magic_surge'` → `features.roll_table_id`). Les
+   clés sont résolues avant toute écriture : si `rollTables` n'a pas tourné, le seed échoue sans rien écrire
 
 Retourne `{ featuresInserted, subclassesInserted }`.
 
@@ -117,9 +120,32 @@ Le seed insère automatiquement les liens `spell_classes` (table de jointure `sp
 | `warlock_invocations.ts` | 33 manifestations occultes (PHB 2014 + TCoE) avec prérequis et effets (`spell_grant`, `eldritch_blast_modifier`, `pact_weapon_modifier`, `sight_modifier`, `skill_proficiency`, `advantage`…) |
 | `spells.ts` | ~62 sorts avec composantes, dégâts/soins, DC, concentration, rituel |
 | `spell_class_mappings.ts` | Associations sorts↔classes |
+| `rollTables.ts` | Tables à lancer, clé canonique dans `shared/rules/rollTables.ts` ; texte repris d'AideDD |
 | `items.ts` | Objets (armes, armures, équipement, outils) |
 
 Ces fichiers font autorité sur les valeurs de référence — en cas de divergence avec la DB, la DB a tort.
+
+---
+
+## Rédaction du contenu seedé
+
+Descriptions de capacités, sorts et tables s'affichent telles quelles sur la fiche. Le texte vient
+d'AideDD ([D16](./decisions.md#d16), méthode : [`dnd-5.5.md`](./dnd-5.5.md) §4), avec ces conventions :
+
+- **Quantités de ressources en chiffres** : « 1 action », « 1 action bonus », « 2 points de
+  sorcellerie ». Une action ou un point se dépense : le chiffre dit d'un coup d'œil combien il en
+  faut. Pas d'élision devant un chiffre : « est **de** 1 action », jamais « d'1 action » (précédent :
+  `ensorceleur_metamagic.ts`, « Sort accéléré »). Ne vise que les quantités : « votre réaction »,
+  « un emplacement de sort de niveau 1 » restent en toutes lettres.
+- **Corriger les fautes, pas la règle** : on corrige l'orthographe et la grammaire du texte repris
+  (accords, conjugaison, « œil »), pas une tournure correcte, même maladroite. Une reformulation peut
+  déplacer la règle ; elle se propose, elle ne s'applique pas au passage.
+- **Chercher la convention avant de réécrire** : avant de changer une tournure, regarder comment les
+  seeds l'écrivent déjà, par exemple :
+  `grep -rhoE "(1|une) action( bonus)?" server/db/seeds/data/ | sort | uniq -c`.
+
+Le stock n'est pas encore uniforme (des « une action » subsistent) : la convention s'applique au
+contenu neuf ou retouché, l'harmonisation du reste est un chantier à part.
 
 ---
 

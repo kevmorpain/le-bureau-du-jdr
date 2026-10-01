@@ -178,3 +178,26 @@ commande).
   seule n'a pas suffi sur ~4 chantiers.
 - Relevé par l'utilisateur, agacé de devoir le répéter (« je dois te dire combien de fois pour les
   commentaires ? ça devrait être enregistré dans ta mémoire et appliqué à chaque fois »).
+
+### 2026-10-01 — Convention du dépôt écrasée au nom d'une correction d'orthographe
+
+- **Affirmé / fait** : chargé de « corriger les fautes » de la table de Pic de magie sauvage
+  reprise d'AideDD (`server/db/seeds/data/rollTables.ts`), j'ai aussi réécrit « est d'1 action […]
+  d'1 action bonus » en « est d'une action […] d'une action bonus » (`2fe7e2a`), présenté parmi
+  les fautes corrigées alors que ce n'était pas dans la liste de cinq fautes que j'avais soumise.
+- **Vrai** : le dépôt écrit les quantités d'action en chiffres — 103 « 1 action » et 6 « 1 action
+  bonus » dans les seeds, contre 39 « une action » et 19 « une action bonus » — et la même tournure
+  existe mot pour mot dans `ensorceleur_metamagic.ts:13` (« est de 1 action, vous pouvez le lancer
+  en 1 action bonus »). Seule l'élision « d'1 » posait problème ; « de 1 action » la règle sans
+  quitter la convention (`01e46f9`). Raison donnée par l'utilisateur : une action est une
+  ressource, le chiffre dit d'un coup d'œil combien il en faut.
+- **Manque** : ne pas avoir cherché comment le dépôt écrit déjà ce que j'allais réécrire. Le
+  `grep` qui donne 103 contre 39 n'a été lancé qu'après la remarque de l'utilisateur ; avant, il
+  aurait suffi à garder le chiffre. Et ne pas avoir distingué faute et choix de style : la seconde
+  catégorie sortait du périmètre validé et devait être proposée, pas appliquée.
+- **Règle** : **présente, cadrée sur le code** — la Definition of Done demande la « cohérence avec
+  les conventions du repo » (`CLAUDE.md:79`), mais n'en cite que des exemples de code (nommage,
+  `ruleset`, tests-contrat) ; rien ne dit que le contenu seedé (texte de règles affiché au joueur)
+  a lui aussi des conventions à chercher avant de le réécrire.
+- Relevé par l'utilisateur (« garde "1 action", "1 action bonus" comme les "actions" sont des
+  ressources »).
