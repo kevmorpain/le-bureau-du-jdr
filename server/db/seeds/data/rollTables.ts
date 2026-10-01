@@ -26,7 +26,7 @@ export const rollTables: RollTableDef[] = [
       { min: 21, max: 22, text: 'Les créatures ont un désavantage à leurs jets de sauvegarde contre le prochain sort que vous lancez dans la minute qui suit.' },
       { min: 23, max: 24, text: 'Votre peau devient bleue. Un sort de délivrance des malédictions peut mettre fin à cet effet.' },
       { min: 25, max: 26, text: 'Un œil apparaît sur votre front pendant une minute. Pendant cette durée, vous avez un avantage à vos jets de Sagesse (Perception) qui se basent sur la vue.' },
-      { min: 27, max: 28, text: 'Pendant une minute, tous vos sorts dont le temps d\'incantation est d\'une action ont un temps d\'incantation d\'une action bonus.' },
+      { min: 27, max: 28, text: 'Pendant une minute, tous vos sorts dont le temps d\'incantation est de 1 action ont un temps d\'incantation de 1 action bonus.' },
       { min: 29, max: 30, text: 'Vous vous téléportez à 18 mètres dans un espace inoccupé que vous pouvez voir.' },
       { min: 31, max: 32, text: 'Vous êtes transporté dans le Plan Astral jusqu\'à la fin de votre prochain tour, après quoi vous retournez à votre position d\'origine, dans l\'espace inoccupé le plus proche.' },
       { min: 33, max: 34, text: 'Le prochain sort que vous lancez dans la minute qui suit fait le maximum de dégâts.' },
