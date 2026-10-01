@@ -1,5 +1,6 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
+import type { CurrentHitDie } from '~~/shared/rules/hitDice'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { TemporaryEffect } from '~~/shared/utils/temporary_effects'
 import characterSpecies from './character_species'
@@ -26,13 +27,6 @@ export enum Alignment {
   LawfulEvil = 'LE',
   NeutralEvil = 'NE',
   ChaoticEvil = 'CE',
-}
-
-type HitDie = '4' | '6' | '8' | '10' | '12'
-
-interface CurrentHitDie {
-  die: HitDie
-  count: number
 }
 
 const characterSheets = sqliteTable('character_sheets', {

@@ -85,6 +85,16 @@ describe('characterRest — repos long', () => {
     expect(slots.every((s: { used: number }) => s.used === 0)).toBe(true)
   })
 
+  it('rend la moitié des dés de vie dépensés (le seed écrit « 1d8 », la fiche « 8 »)', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ currentHitDie: [{ die: '8', count: 0 }] }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'long', hitDiceSpent: [] })
+
+    const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
+    expect(sheet.currentHitDie).toEqual([{ die: '8', count: 2 }]) // niveau 3 → moitié arrondie au supérieur
+  })
+
   it('PRÉSERVE la dépendance d\'ordre : long + dés de vie → min(currentHp lu + soin, maxHp), pas maxHp', async () => {
     const id = await create()
     await db.update(schema.characterSheets).set({ currentHp: 5 }).where(eq(schema.characterSheets.id, id))

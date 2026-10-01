@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { ALIGNMENT_CODES } from '~~/shared/rules/alignments'
+import { currentHitDieSchema } from '~~/shared/rules/hitDice'
 import { temporaryEffectsSchema } from '~~/shared/utils/temporary_effects'
 
 const classInputSchema = z.object({
@@ -24,6 +25,8 @@ export const updateCharacterSheetSchema = z.object({
   maxHp: z.number().int().min(0).optional(),
   currentHp: z.number().int().min(0).optional(),
   temporaryHp: z.number().int().min(0).optional(),
+  // `null` : fiche antérieure à la colonne — le client renvoie la fiche telle quelle.
+  currentHitDie: currentHitDieSchema.nullable().optional(),
   inspiration: z.boolean().optional(),
   exhaustionLevel: z.number().int().min(0).max(6).optional(),
   dragonbornAncestry: z.string().nullable().optional(),

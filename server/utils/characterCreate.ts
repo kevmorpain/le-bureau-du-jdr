@@ -7,6 +7,7 @@ import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { resolveClassSkillProgressionId, classSkillChoiceWriteStmts } from '~~/server/utils/classSkillChoice'
 import { abilityEnum } from '~~/shared/rules/abilities'
+import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
 import { ALL_TOOLS } from '~~/shared/rules/tools'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
@@ -459,8 +460,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     : null
 
   // 4. Insert de la fiche (HORS batch — id auto-incrément)
-  const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
-  const hitDieSides = hitDieMatch?.[1]
+  const hitDieSides = hitDieSidesOf(cls.hitDice)
   const currentHitDie = hitDieSides ? [{ die: hitDieSides, count: d.level }] : []
 
   const [sheet] = await db
