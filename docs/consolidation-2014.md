@@ -94,8 +94,8 @@ par gravité — la plupart se résolvent AVEC F2 (généralisation `progression
 **Hors de cette liste** (pour lever l'ambiguïté) : les **listes d'options** de sous-classe/ASI des 10
 classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHOIX résultant
 (`subclassId`, `asiBonuses`, `asiFeats`) EST persisté — pas « perdu ». Et l'état d'encounter
-(`activeConditions`, `deathSavingThrows`, `armorClass`) est **localStorage par design**
-(cf. `docs/persistence.md`) — pas un bug (`armorClass` = dette assumée faute de système d'équipement).
+(`activeConditions`, `deathSavingThrows`) est **localStorage par design**
+(cf. `docs/persistence.md`) — pas un bug.
 
 ## Plan
 

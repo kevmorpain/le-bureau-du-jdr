@@ -12,7 +12,6 @@
 | `temporaryEffects` (bénédictions, malédictions…) | DB (`character_sheets`, JSON) | Peut durer plusieurs séances : cross-device, contrairement aux états d'encounter |
 | Identité & description (`age`, `height`, `weight`, `eyes`, `hair`, `skin`, `deity`, `backstory`, `allies`, `portraitUrl`) | DB (`character_sheets`) | Description du personnage, saisie à la création ou sur la fiche |
 | Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, binding `BLOB`) | Binaire : la fiche n'en garde que l'URL |
-| `armorClass` | localStorage | Dépend du futur système d'équipement |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
 | `deathSavingThrows` | localStorage | État d'encounter, remis à zéro entre sessions |
 | Modificateurs de caractéristique | computed | Dérivés des scores, jamais stockés |
