@@ -3,6 +3,8 @@ import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
 import * as schema from '../../../server/db/schema'
 import { seedElfLineages } from '../../../server/db/seeds/lib/seedElfLineages'
+import { seedBackgroundProficiencies } from '../../../server/db/seeds/lib/seedBackgroundProficiencies'
+import { backgroundsData } from '../../../server/db/seeds/data/backgrounds'
 import { expertiseProgression } from '../../../server/db/seeds/data/expertise'
 import { CLASS_SKILL_CHOICES } from '../../../server/db/seeds/data/classSkills'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../../fixtures/warlockProgression'
@@ -90,10 +92,11 @@ async function migratedDb(): Promise<{ client: Client, db: Db }> {
   return { client, db }
 }
 
-/** Identifiants dérivés à l'exécution (auto-incrément) — l'espèce Elfe base+lignées (D17). */
+/** Identifiants dérivés à l'exécution (auto-incrément) — l'espèce Elfe base+lignées (D17), le choix de jeu du Soldat. */
 export interface GoldenIds {
   elfBaseId: number
   highElfLineageId: number
+  soldierGameProgressionId: number
 }
 
 /**
@@ -206,7 +209,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
 
   // ── Choix de COMPÉTENCES DE CLASSE (F3 tranche 3) — owner choice_carrier + progression `skill` ──
   // Le pick est enregistré en character_choices (progression skill) ; la maîtrise est dérivée à la
-  // lecture (deriveClassSkills), plus matérialisée en character_skills. Ids auto : le snapshot résout par nom.
+  // lecture (deriveChoiceProficiencies), plus matérialisée en character_skills. Ids auto : le snapshot résout par nom.
   for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin]] as const) {
     const choice = CLASS_SKILL_CHOICES[className]!
     const [f] = await db.insert(schema.features).values({ name: 'Compétences de classe', featureType: 'choice_carrier', classId, levelRequired: 1 }).returning()
@@ -243,7 +246,13 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     .where(and(eq(schema.characterSpecies.name, 'Elfe'), eq(schema.characterSpecies.ruleset, '5')))
   const [highElf] = await db.select({ id: schema.speciesLineages.id }).from(schema.speciesLineages)
     .where(and(eq(schema.speciesLineages.speciesId, elfBase.id), eq(schema.speciesLineages.name, 'Haut-elfe')))
-  return { elfBaseId: elfBase.id, highElfLineageId: highElf.id }
+
+  // Porteur réel du Soldat : maîtrises fixes + point de choix « un jeu au choix ».
+  await seedBackgroundProficiencies(db, backgroundsData.filter(b => b.name === 'Soldat'))
+  const [soldierGame] = await db.select({ id: schema.progression.id }).from(schema.progression)
+    .innerJoin(schema.backgroundFeatures, eq(schema.backgroundFeatures.featureId, schema.progression.featureId))
+    .where(and(eq(schema.backgroundFeatures.backgroundId, BACKGROUND.soldier), eq(schema.progression.kind, 'tool')))
+  return { elfBaseId: elfBase.id, highElfLineageId: highElf.id, soldierGameProgressionId: soldierGame.id }
 }
 
 /** Base + catalogue prêts à l'emploi. */

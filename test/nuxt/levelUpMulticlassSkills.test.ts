@@ -44,7 +44,7 @@ const sheet = (derivedSkills: SkillKey[]) => ({
   baseAbilityScores: [],
   skills: [],
   spells: [],
-  classSkillEffects: derivedSkills.map(skill => ({ type: 'skill_proficiency', value: { skill } })),
+  choiceEffects: derivedSkills.map(skill => ({ type: 'skill_proficiency', value: { skill } })),
 })
 
 async function mountSkillsStep(pickedClassId: string, derivedSkills: SkillKey[] = ['athletics']) {

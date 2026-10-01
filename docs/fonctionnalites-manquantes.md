@@ -16,12 +16,12 @@
 
 | Famille | Entrées | En un mot |
 |---|---|---|
-| [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E11 | La donnée est seedée, le type existe, **personne ne la lit** |
+| [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E12 | La donnée est seedée, le type existe, **personne ne la lit** |
 | [C — Capacités de classe sans mécanique](#c--capacités-de-classe-sans-mécanique) | C1–C9 | ~340 features n'ont qu'une `description` |
 | [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, concentration, encombrement… |
 | [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S6 | Rituel, limite de préparation, zone d'effet |
-| [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P7 | Choix jamais proposés |
+| [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P9 | Choix jamais proposés |
 | [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 118 sorts sur ~360, dons, objets magiques |
 | [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U10 | Lecture des sorts, ~~montée en puissance~~, historique de jets |
 | [N — Contrôle manuel & préférences](#n--contrôle-manuel--préférences) | N1–N6 | L'app décide tout, le joueur ne peut rien reprendre |
@@ -40,15 +40,16 @@ donnée est déjà là, il ne manque que la projection.
 |---|---|---|
 | **E1** | [#131](https://github.com/kevmorpain/le-bureau-du-jdr/issues/131) | Bonus de compétence conditionnel (`skill_bonus`, Nain/Gnome) jamais appliqué |
 | **E2** | [#132](https://github.com/kevmorpain/le-bureau-du-jdr/issues/132) | Relance du 1 naturel (`reroll`, Halfelin Chanceux) jamais appliquée |
-| **E3** | [#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133) | Choix de maîtrise d'outil d'espèce jamais proposé (`tool_proficiency_choice`) |
-| **E4** | [#134](https://github.com/kevmorpain/le-bureau-du-jdr/issues/134) | Choix de langues d'espèce et de dons jamais proposé (`language_proficiency_choice`) |
-| **E5** | [#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107) | Choix de compétences d'espèce jamais proposé (Polyvalence du Demi-elfe) |
-| **E6** | [#135](https://github.com/kevmorpain/le-bureau-du-jdr/issues/135) | Choix de sort d'espèce jamais proposé (`spell_choice`, Haut-elfe) |
+| **E3** | ✅ résolu ([#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133), lot 2) | Choix de maîtrise d'outil d'espèce jamais proposé : point de choix `tool` du Nain |
+| **E4** | ✅ résolu ([#134](https://github.com/kevmorpain/le-bureau-du-jdr/issues/134), lot 2) | Choix de langues d'espèce et de dons jamais proposé : points de choix `language` (Humain, Demi-elfe, Haut-elfe, Fadette), langues du don Linguiste |
+| **E5** | ✅ résolu ([#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107), lot 2) | Choix de compétences d'espèce jamais proposé : point de choix `skill` (Polyvalence du Demi-elfe) |
+| **E6** | ✅ résolu ([#135](https://github.com/kevmorpain/le-bureau-du-jdr/issues/135), lot 2) | Choix de sort d'espèce jamais proposé : point de choix `cantrip` du Haut-elfe |
 | **E7** | [#136](https://github.com/kevmorpain/le-bureau-du-jdr/issues/136) | Neutralisation de la pénalité d'armure lourde du Nain (`equipment_penalty`) sans effet |
 | **E8** | [#137](https://github.com/kevmorpain/le-bureau-du-jdr/issues/137) | Vision étendue des manifestations (`sight_modifier`) jamais affichée |
 | **E9** | [#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138) | Modificateurs d'arme de pacte (`pact_weapon_modifier`) jamais appliqués |
 | **E10** | [#139](https://github.com/kevmorpain/le-bureau-du-jdr/issues/139) | `extra_damage` jamais appliqué, et écrit sous une autre forme par l'éditeur d'objet |
 | **E11** | [#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140) | Types d'effet absents de l'union (CA, JS, attaque, vitesses, avantage structuré) |
+| **E12** | [#227](https://github.com/kevmorpain/le-bureau-du-jdr/issues/227) | Fadette : caractéristique d'incantation de la Magie des fées figée au Charisme |
 
 **✅ résolu pendant la rédaction** — `fighting_style_modifier` : la **tranche 3** du chantier F2
 (PR #63, mergée le 2026-09-14) applique désormais les bonus statiques sur la fiche — Défense +1 CA,
@@ -153,14 +154,17 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 | **P3** | [#173](https://github.com/kevmorpain/le-bureau-du-jdr/issues/173) | Sorts de domaine, de cercle et Secrets magiques |
 | **P4** | [#174](https://github.com/kevmorpain/le-bureau-du-jdr/issues/174) | Ennemi juré et Explorateur-né (Rôdeur) |
 | **P5** | [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175) | 2ᵉ style de combat du Champion (niveau 10) |
-| **P6** | [#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204) | Outils au choix de classe jamais proposés (Barde, Moine) |
-| **P7** | [#205](https://github.com/kevmorpain/le-bureau-du-jdr/issues/205) | Doublon de maîtrise d'outil (classe et historique) ni signalé ni remplaçable |
+| **P6** | ✅ résolu ([#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204), lot 2) | Outils au choix de classe jamais proposés (Barde, Moine, Barde rejoint en multiclasse) |
+| **P7** | ✅ résolu ([#205](https://github.com/kevmorpain/le-bureau-du-jdr/issues/205), lot 2) | Maîtrise reçue en double (outil ou compétence) ni signalée ni remplaçable — à la création |
+| **P8** | ✅ résolu ([#225](https://github.com/kevmorpain/le-bureau-du-jdr/issues/225), lot 2) | Choix d'historique (langues, outils) enregistrés comme ajouts manuels |
+| **P9** | [#226](https://github.com/kevmorpain/le-bureau-du-jdr/issues/226) | Maîtrise reçue en double au level-up (multiclassage) ni signalée ni remplaçable |
 
-> **Généralisation** (recompté le 2026-09-27) : sur les 17 `ChoiceKind` canoniques, **10** sont
-> seedés en `progression` (`subclass`, `lineage`, `pact_boon`, `fighting_style`, `expertise`,
-> `invocations`, `asi_or_feat`, `metamagic`, `skill`, `spell`). Restent sans aucune donnée :
-> `maneuvers`, `language`, `tool`, `cantrip`, `ancestry`, `weapon_mastery` (5.5), `ability_scores`
-> (5.5). C'est la même racine que E3–E6 vue depuis le moteur de choix.
+> **Généralisation** (recompté au lot 2) : sur les 17 `ChoiceKind` canoniques, **13** sont seedés en
+> `progression` (`subclass`, `lineage`, `pact_boon`, `fighting_style`, `expertise`, `invocations`,
+> `asi_or_feat`, `metamagic`, `skill`, `spell`, `language`, `tool`, `cantrip`). Restent sans aucune
+> donnée : `maneuvers`, `ancestry`, `weapon_mastery` (5.5), `ability_scores` (5.5). Un point de choix
+> appartient à une classe (porteur de départ ou de multiclassage), une espèce, une lignée, un historique
+> ou une règle générale (maîtrise en double) : cf. [`rules-engine.md`](./rules-engine.md).
 
 ---
 

@@ -142,6 +142,16 @@
             {{ skill.label }}
           </button>
         </div>
+
+        <ChoicePointPicker
+          v-if="variantHumanLanguageCount > 0"
+          v-model="state.selectedLanguages"
+          kind="language"
+          :count="variantHumanLanguageCount"
+          :options="LANGUAGE_KEYS"
+          :owned="['common']"
+          class="mt-4"
+        />
       </template>
     </template>
 
@@ -206,12 +216,31 @@
 
     <!-- Drakéide : l'ascendance draconique est désormais une lignée « Dragon <couleur> » (D17, lot 6),
          rendue par le picker de sous-race générique ci-dessus — plus de bloc dédié. -->
+
+    <template v-if="speciesChoices.length">
+      <USeparator class="my-6" />
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Choix de l'espèce
+      </p>
+      <div class="space-y-3">
+        <ChoicePointPicker
+          v-for="choice in speciesChoices"
+          :key="choice.progressionId"
+          v-model="state.choicePicks[choice.progressionId]"
+          :kind="choice.kind"
+          :count="choice.count"
+          :options="optionValuesOf(choice)"
+          :owned="ownedFor(choice)"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
 const {
   state,
@@ -221,6 +250,10 @@ const {
   ABILITY_SHORT,
   ABILITIES,
   SKILLS,
+  speciesChoices,
+  variantHumanLanguageCount,
+  ownedFor,
+  optionValuesOf,
 } = useCharacterBuilder()
 
 // Gating : les races d'extension (source gatée) ne sont visibles qu'avec le toggle « Étendu ».
@@ -243,6 +276,7 @@ function selectRace(id: string) {
   state.value.halfElfBonuses = []
   state.value.variantHumanBonuses = []
   state.value.variantHumanSkill = null
+  state.value.selectedLanguages = []
   state.value.isVariantHuman = false
   state.value.fairyAsiBonuses = {}
 }

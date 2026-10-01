@@ -2,6 +2,7 @@ import { db, schema } from '~~/server/utils/db'
 import { eq, and } from 'drizzle-orm'
 import { characterSpecies } from './data/character_species'
 import { rulesetOf } from './lib/rulesetOf'
+import { ensureFeatureChoice } from './lib/featureChoice'
 
 export default async function seed() {
   let speciesInserted = 0
@@ -31,7 +32,7 @@ export default async function seed() {
     if (!traits?.length) continue
 
     for (const trait of traits) {
-      const { effects, ...traitData } = trait
+      const { effects, choice, ...traitData } = trait
 
       const existingFeature = await db
         .select({ id: schema.features.id })
@@ -46,7 +47,10 @@ export default async function seed() {
         .limit(1)
         .get()
 
-      if (existingFeature) continue
+      if (existingFeature) {
+        if (choice) await ensureFeatureChoice(db, existingFeature.id, choice)
+        continue
+      }
 
       featuresInserted++
 
@@ -86,6 +90,8 @@ export default async function seed() {
         .insert(schema.speciesFeatures)
         .values({ speciesId: insertedSpecies.id, featureId: insertedFeature.id })
         .onConflictDoNothing()
+
+      if (choice) await ensureFeatureChoice(db, insertedFeature.id, choice)
     }
   }
 

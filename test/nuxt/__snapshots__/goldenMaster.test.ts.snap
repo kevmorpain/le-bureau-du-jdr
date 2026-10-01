@@ -63,6 +63,17 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "selectedSubclass": null,
       "selectedValue": "intimidation",
     },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "tool:Maîtrises d'historique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "Jeu de cartes",
+    },
   ],
   "classes": [
     {
@@ -100,11 +111,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "action": "grant",
       "type": "language",
       "value": "Orc",
-    },
-    {
-      "action": "grant",
-      "type": "tool",
-      "value": "Jeu de cartes",
     },
   ],
   "sheet": {
@@ -215,6 +221,17 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "selectedSubclass": null,
       "selectedValue": "intimidation",
     },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "tool:Maîtrises d'historique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "Jeu de cartes",
+    },
   ],
   "classes": [
     {
@@ -258,11 +275,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "action": "grant",
       "type": "language",
       "value": "Orc",
-    },
-    {
-      "action": "grant",
-      "type": "tool",
-      "value": "Jeu de cartes",
     },
   ],
   "sheet": {
@@ -384,6 +396,17 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "selectedSubclass": "Champion",
       "selectedValue": null,
     },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "tool:Maîtrises d'historique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "Jeu de cartes",
+    },
   ],
   "classes": [
     {
@@ -433,11 +456,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "action": "grant",
       "type": "language",
       "value": "Orc",
-    },
-    {
-      "action": "grant",
-      "type": "tool",
-      "value": "Jeu de cartes",
     },
   ],
   "sheet": {
@@ -566,6 +584,17 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "selectedSubclass": "Champion",
       "selectedValue": null,
     },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "tool:Maîtrises d'historique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "Jeu de cartes",
+    },
   ],
   "classes": [
     {
@@ -615,11 +644,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "action": "grant",
       "type": "language",
       "value": "Orc",
-    },
-    {
-      "action": "grant",
-      "type": "tool",
-      "value": "Jeu de cartes",
     },
   ],
   "sheet": {
@@ -748,6 +772,17 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "selectedSubclass": "Champion",
       "selectedValue": null,
     },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "tool:Maîtrises d'historique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "Jeu de cartes",
+    },
   ],
   "classes": [
     {
@@ -803,11 +838,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
       "action": "grant",
       "type": "language",
       "value": "Orc",
-    },
-    {
-      "action": "grant",
-      "type": "tool",
-      "value": "Jeu de cartes",
     },
   ],
   "sheet": {

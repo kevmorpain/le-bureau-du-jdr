@@ -1,6 +1,7 @@
 import { CreatureSize } from '../../schema/character_species'
 import type * as schema from '../../schema'
 import type { SpeciesTraitData } from '../lib/seedLineages'
+import { dwarfToolChoice, oneLanguageChoice, twoSkillsChoice, wizardCantripChoice } from './speciesChoices'
 
 type SpeciesSeed = typeof schema.characterSpecies.$inferInsert & { traits: SpeciesTraitData[] }
 
@@ -122,29 +123,14 @@ const highElf: SpeciesSeed = {
     {
       name: 'Sort mineur',
       description: `Vous connaissez un sort mineur de la liste de sorts du magicien (au choix). L'Intelligence est la caractéristique d'incantation correspondante.`,
-      effects: [
-        {
-          type: 'spell_choice',
-          value: {
-            class: 'wizard',
-            level: 0,
-            spellcastingAbility: 'int',
-            count: 1,
-          },
-        },
-      ],
+      effects: [],
+      choice: wizardCantripChoice,
     },
     {
       name: 'Langue supplémentaire',
       description: `Vous parlez, lisez et écrivez une langue supplémentaire de votre choix.`,
-      effects: [
-        {
-          type: 'language_proficiency_choice',
-          value: {
-            count: 1,
-          },
-        },
-      ],
+      effects: [],
+      choice: oneLanguageChoice,
     },
   ],
 }
@@ -315,16 +301,8 @@ const hillDwarf: SpeciesSeed = {
     {
       name: `Maîtrise des outils`,
       description: `Vous recevez la maîtrise des outils d'artisan de votre choix parmi : outils de forgeron, matériel de brasseur, outils de maçon.`,
-      effects: [
-        {
-          type: 'tool_proficiency_choice',
-          value: [
-            'artisan_tools',
-            'brewer_tools',
-            'mason_tools',
-          ],
-        },
-      ],
+      effects: [],
+      choice: dwarfToolChoice,
     },
     {
       name: 'Connaissance de la pierre',
@@ -410,16 +388,8 @@ const mountainDwarf: SpeciesSeed = {
     {
       name: `Maîtrise des outils`,
       description: `Vous recevez la maîtrise des outils d'artisan de votre choix parmi : outils de forgeron, matériel de brasseur, outils de maçon.`,
-      effects: [
-        {
-          type: 'tool_proficiency_choice',
-          value: [
-            'artisan_tools',
-            'brewer_tools',
-            'mason_tools',
-          ],
-        },
-      ],
+      effects: [],
+      choice: dwarfToolChoice,
     },
     {
       name: 'Formation au port des armures naines',
@@ -669,11 +639,8 @@ const human: SpeciesSeed = {
           type: 'language_proficiency',
           value: 'common',
         },
-        {
-          type: 'language_proficiency_choice',
-          value: { count: 1 },
-        },
       ],
+      choice: oneLanguageChoice,
     },
   ],
 }
@@ -1012,14 +979,8 @@ const halfElf: SpeciesSeed = {
     {
       name: 'Polyvalence',
       description: `Vous recevez la maîtrise de deux compétences de votre choix.`,
-      effects: [
-        {
-          type: 'skill_proficiency_choice',
-          value: {
-            count: 2,
-          },
-        },
-      ],
+      effects: [],
+      choice: twoSkillsChoice,
     },
     {
       name: 'Langues',
@@ -1033,11 +994,8 @@ const halfElf: SpeciesSeed = {
           type: 'language_proficiency',
           value: 'elvish',
         },
-        {
-          type: 'language_proficiency_choice',
-          value: { count: 1 },
-        },
       ],
+      choice: oneLanguageChoice,
     },
   ],
 }
@@ -1387,6 +1345,13 @@ const fadette: SpeciesSeed = {
         { type: 'spell_grant', value: { level: 1, spellcastingAbility: 'cha', spellName: 'Lueurs féeriques', countPerLongRest: 1, unlockLevel: 3 } },
         { type: 'spell_grant', value: { level: 2, spellcastingAbility: 'cha', spellName: 'Agrandissement/rapetissement', countPerLongRest: 1, unlockLevel: 5 } },
       ],
+    },
+    {
+      // AideDD, UA « Peuples de la Féerie », section « Créer votre personnage ».
+      name: 'Langues',
+      description: `Vous parlez, lisez et écrivez le commun et une autre langue que vous et votre MD reconnaissez comme appropriée pour le personnage.`,
+      effects: [{ type: 'language_proficiency', value: 'common' }],
+      choice: oneLanguageChoice,
     },
   ],
 }

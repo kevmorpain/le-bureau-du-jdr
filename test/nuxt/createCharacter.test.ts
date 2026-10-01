@@ -205,6 +205,8 @@ describe('createCharacter — don Doué (choix compétences/outils)', () => {
   it('rejette un outil ou une compétence inconnus (validation de membership)', () => {
     expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { tools: ['Bâton magique'] } })).toThrow()
     expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { skills: ['voler'] } })).toThrow()
+    expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { languages: ['Elfique'] } })).toThrow()
+    expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { languages: ['elvish'] } })).not.toThrow()
   })
 })
 
@@ -271,20 +273,19 @@ describe('createCharacter — pick de sous-classe → character_choices (F2, tra
 })
 
 describe('createCharacter — maîtrises (volet B étape 3)', () => {
-  it('ne matérialise PLUS les maîtrises de BASE (armes/armures de classe), garde les outils/langues CHOISIS', async () => {
+  it('ne matérialise PLUS les maîtrises de BASE (armes/armures de classe), garde les langues de l\'Humain variant', async () => {
     const { id } = await createCharacter(db, baseInput({
       classId: FIGHTER, level: 1,
       armorProficiencyKeys: ['all_armor', 'shield'],
       weaponProficiencyKeys: ['simple_weapons', 'martial_weapons'],
-      toolProficiencyChoices: ['Outils de voleur'],
-      selectedLanguages: ['Elfique'],
+      selectedLanguages: ['elvish'],
     }), OWNER)
 
-    // Plus AUCUNE ligne d'arme/armure : dérivées du porteur de classe (étape 4). Seuls restent
-    // les deltas du joueur (outils/langues choisis).
+    // Plus AUCUNE ligne d'arme/armure : dérivées du porteur de classe (étape 4). Seules restent les
+    // langues de l'Humain variant, faute d'espèce liée qui porte son choix.
     const overrides = await db.select().from(schema.characterProficiencyOverrides).where(eq(schema.characterProficiencyOverrides.characterSheetId, id))
     expect(overrides.map((o: { proficiencyType: string, value: string }) => `${o.proficiencyType}:${o.value}`).sort())
-      .toEqual(['language:Elfique', 'tool:Outils de voleur'])
+      .toEqual(['language:elvish'])
   })
 })
 

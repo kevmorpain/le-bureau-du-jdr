@@ -1,7 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm'
 import * as schema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
-import type { SkillKey } from '~~/shared/rules/skills'
 import type { Db } from '~~/server/utils/db'
 
 // Maîtrises d'une classe lues sur ses porteurs : de départ (armes, armures, outils) et JS pour la 1re classe
@@ -59,20 +58,4 @@ export async function deriveClassGrants(db: Db, classes: Array<{ classId: number
     ],
     savingThrows: main.savingThrows,
   }
-}
-
-// Compétences de classe CHOISIES → dérivées du pick stocké en character_choices (progression `skill`),
-// F3 tranche 3. Le choix est enregistré à la création ; la maîtrise 'proficient' est produite ici.
-export async function deriveClassSkills(db: Db, characterSheetId: number): Promise<Effect[]> {
-  const rows = await db
-    .select({ value: schema.characterChoices.selectedValue })
-    .from(schema.characterChoices)
-    .innerJoin(schema.progression, eq(schema.progression.id, schema.characterChoices.progressionId))
-    .where(and(
-      eq(schema.characterChoices.characterSheetId, characterSheetId),
-      eq(schema.progression.kind, 'skill'),
-    ))
-  return rows
-    .filter((r): r is { value: string } => r.value != null)
-    .map(r => ({ type: 'skill_proficiency', value: { skill: r.value as SkillKey } }) as Effect)
 }

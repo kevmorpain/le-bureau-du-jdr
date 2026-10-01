@@ -7,12 +7,13 @@ import type { AbilityScoreKey } from './effects'
 export type CharacterFeatureSource = 'asi' | 'bonus' | 'class' | 'subclass' | 'species' | 'invocation'
 
 // Choix enregistrés d'un don : caractéristique (demi-don, Résilient), sort de niveau 1 (Faveur des
-// fées), ou maîtrises au choix (Doué → compétences + outils). Miroir de `featChoicesSchema` côté serveur.
+// fées), maîtrises au choix (Doué → compétences + outils) ou langues (Linguiste). Miroir de `featChoicesSchema`.
 export interface FeatChoices {
   ability?: AbilityScoreKey
   spellId?: number
   skills?: string[]
   tools?: string[]
+  languages?: string[]
 }
 
 const characterFeatures = sqliteTable(

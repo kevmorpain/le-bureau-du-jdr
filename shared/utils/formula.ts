@@ -8,6 +8,8 @@ export type FormulaVar =
   | 'int_mod'
   | 'wis_mod'
   | 'cha_mod'
+  | 'duplicate_skills'
+  | 'duplicate_tools'
 
 export type Formula =
   | { op: 'fixed'; value: number }
@@ -27,6 +29,9 @@ export interface FormulaContext {
   int_mod: number
   wis_mod: number
   cha_mod: number
+  // Renseignés par le résolveur de choix seulement (remplacement d'une maîtrise reçue en double).
+  duplicate_skills?: number
+  duplicate_tools?: number
 }
 
 export function evaluate(formula: Formula, ctx: FormulaContext): number {
@@ -35,7 +40,7 @@ export function evaluate(formula: Formula, ctx: FormulaContext): number {
       return formula.value
 
     case 'var':
-      return ctx[formula.name]
+      return ctx[formula.name] ?? 0
 
     case 'add':
       return evaluate(formula.left, ctx) + evaluate(formula.right, ctx)

@@ -9,7 +9,7 @@ type BuilderInvocation = { id: number, name: string, effects: Effect[] }
 /**
  * Ce que la fiche créée affichera, calculé par SON calculateur (`useCharacterAbilities`) : l'état du
  * builder est projeté dans les canaux que le GET de la fiche lui fournit (lignes `character_skills`
- * matérialisées, effets d'espèce, de classe, d'historique, de dons et de manifestations).
+ * matérialisées, effets d'espèce, de classe, d'historique, de dons, de manifestations et maîtrises choisies).
  */
 export function useBuilderSheetProjection() {
   const {
@@ -19,6 +19,7 @@ export function useBuilderSheetProjection() {
     isCustomBackground,
     backgroundSkills,
     materializedSkills,
+    chosenValues,
     chosenFeatIds,
     getFeatById,
     finalAbilities,
@@ -64,7 +65,7 @@ export function useBuilderSheetProjection() {
     ])),
     backgroundEffects: computed(() => isCustomBackground.value ? [] : skillEffects(backgroundSkills.value)),
     classSavingThrowEffects: computed(() => classProficienciesFor(classDbId.value).savingThrows),
-    classSkillEffects: computed(() => skillEffects(state.value.skills)),
+    choiceEffects: computed(() => skillEffects([...state.value.skills, ...chosenValues('skill')])),
     asiEffects: computed(() => []),
     proficiencyBonus: profBonus,
   })

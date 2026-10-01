@@ -2,20 +2,30 @@ import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm'
 import * as schema from '~~/server/db/schema'
 import { classNameFromSlug } from '~~/shared/rules/classSlugs'
 import { SKILL_KEYS } from '~~/shared/rules/skills'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
+import { ALL_TOOLS } from '~~/shared/rules/tools'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import { CORE_SOURCE } from '~~/shared/rules/source'
 import type { OptionSource } from '~~/shared/rules/choices'
 import type { Formula } from '~~/shared/utils/formula'
-import type { Catalog, CatalogProgression, ResolvedOption } from '~~/shared/rules/resolve'
-import type { FeaturePrerequisite } from '~~/server/db/schema/features'
+import type { Catalog, CatalogProgression, ClassGrant, ResolvedOption } from '~~/shared/rules/resolve'
+import type { FeaturePrerequisite, FeatureType } from '~~/server/db/schema/features'
 import type { Db } from '~~/server/utils/db'
 
 // Génériques `any` : D1 et libsql ont des TRunResult/TFullSchema différents.
 
+// Filtres par propriétaire ; une règle générale (`global`) est toujours incluse.
 export interface BuildCatalogOptions {
   classIds?: number[]
   speciesIds?: number[]
+  lineageIds?: number[]
+  backgroundIds?: number[]
   extended?: boolean
+}
+
+const CLASS_GRANT_BY_FEATURE_TYPE: Partial<Record<FeatureType, ClassGrant>> = {
+  proficiency_grant: 'start',
+  multiclass_proficiency_grant: 'multiclass',
 }
 
 export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Promise<Catalog> {
@@ -29,6 +39,8 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
       replaceable: schema.progression.replaceable,
       ownerClassId: schema.features.classId,
       ownerSubclassId: schema.features.subclassId,
+      ownerLineageId: schema.features.lineageId,
+      ownerFeatureType: schema.features.featureType,
       ownerLevelRequired: schema.features.levelRequired,
       // Édition du propriétaire de la progression : filtre les options cachables (feats /
       // feature_group / spells) sur la même édition → aucune fuite 5.5 dans un parcours 2014.
@@ -50,34 +62,52 @@ export async function buildCatalog(db: Db, opts: BuildCatalogOptions = {}): Prom
   }
 
   const orphanFeatureIds = [...new Set(
-    rows.filter(r => r.ownerClassId == null && r.ownerSubclassId == null).map(r => r.featureId),
+    rows.filter(r => r.ownerClassId == null && r.ownerSubclassId == null && r.ownerLineageId == null).map(r => r.featureId),
   )]
   const speciesIdByFeature = new Map<number, number>()
+  const backgroundIdByFeature = new Map<number, number>()
   if (orphanFeatureIds.length) {
-    const links = await db
+    const speciesLinks = await db
       .select({ featureId: schema.speciesFeatures.featureId, speciesId: schema.speciesFeatures.speciesId })
       .from(schema.speciesFeatures)
       .where(inArray(schema.speciesFeatures.featureId, orphanFeatureIds))
-    for (const l of links) speciesIdByFeature.set(l.featureId, l.speciesId)
+    for (const l of speciesLinks) speciesIdByFeature.set(l.featureId, l.speciesId)
+    const backgroundLinks = await db
+      .select({ featureId: schema.backgroundFeatures.featureId, backgroundId: schema.backgroundFeatures.backgroundId })
+      .from(schema.backgroundFeatures)
+      .where(inArray(schema.backgroundFeatures.featureId, orphanFeatureIds))
+    for (const l of backgroundLinks) backgroundIdByFeature.set(l.featureId, l.backgroundId)
   }
 
   const progressions: CatalogProgression[] = []
   for (const r of rows) {
     const ownerClassId = r.ownerClassId
       ?? (r.ownerSubclassId != null ? classIdBySubclass.get(r.ownerSubclassId) : undefined)
-    const ownerSpeciesId = ownerClassId == null ? speciesIdByFeature.get(r.featureId) : undefined
-    if (ownerClassId == null && ownerSpeciesId == null) continue // owner non résoluble → on ignore
+    const ownerLineageId = ownerClassId == null ? r.ownerLineageId ?? undefined : undefined
+    const isOrphan = ownerClassId == null && ownerLineageId == null
+    const ownerSpeciesId = isOrphan ? speciesIdByFeature.get(r.featureId) : undefined
+    const ownerBackgroundId = isOrphan && ownerSpeciesId == null ? backgroundIdByFeature.get(r.featureId) : undefined
+    // Porteur sans propriétaire : règle générale, due à tout personnage (remplacement d'une maîtrise en double).
+    const global = isOrphan && ownerSpeciesId == null && ownerBackgroundId == null && r.ownerFeatureType === 'choice_carrier'
+    if (ownerClassId == null && ownerLineageId == null && ownerSpeciesId == null && ownerBackgroundId == null && !global) continue
     if (ownerClassId != null && opts.classIds && !opts.classIds.includes(ownerClassId)) continue
     if (ownerSpeciesId != null && opts.speciesIds && !opts.speciesIds.includes(ownerSpeciesId)) continue
+    if (ownerLineageId != null && opts.lineageIds && !opts.lineageIds.includes(ownerLineageId)) continue
+    if (ownerBackgroundId != null && opts.backgroundIds && !opts.backgroundIds.includes(ownerBackgroundId)) continue
 
     const optionSource = r.optionSource as OptionSource
     const options = await resolveOptions(db, optionSource, { ownerClassId, ownerSpeciesId, ruleset: r.ownerRuleset, extended: opts.extended ?? false })
+    const classGrant = ownerClassId != null ? CLASS_GRANT_BY_FEATURE_TYPE[r.ownerFeatureType] : undefined
 
     progressions.push({
       progressionId: r.progressionId,
       ownerFeatureId: r.featureId,
       ...(ownerClassId != null ? { ownerClassId } : {}),
       ...(ownerSpeciesId != null ? { ownerSpeciesId } : {}),
+      ...(ownerLineageId != null ? { ownerLineageId } : {}),
+      ...(ownerBackgroundId != null ? { ownerBackgroundId } : {}),
+      ...(classGrant ? { classGrant } : {}),
+      ...(global ? { global } : {}),
       ownerSubclassId: r.ownerSubclassId ?? undefined,
       ownerLevelRequired: r.ownerLevelRequired ?? 1,
       kind: r.kind,
@@ -188,9 +218,13 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
       return keys.map(value => ({ value }))
     }
 
-    case 'proficient_skills': // résolu live dans resolveChoices contre projection.proficientSkills
     case 'languages':
+      return (source.from ?? LANGUAGE_KEYS).map(value => ({ value }))
+
     case 'tools':
+      return [...(source.from ?? ALL_TOOLS), ...(source.orLanguages ? LANGUAGE_KEYS : [])].map(value => ({ value }))
+
+    case 'proficient_skills': // résolu live dans resolveChoices contre projection.proficientSkills
     case 'abilities':
     default:
       return undefined

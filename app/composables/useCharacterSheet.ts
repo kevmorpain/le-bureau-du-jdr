@@ -15,16 +15,23 @@ import { useCharacterIdentity } from './character/useCharacterIdentity'
 import { useCharacterTemporaryEffects } from './character/useCharacterTemporaryEffects'
 import { sheetTextField } from './character/sheetField'
 
-export type FeatChoices = { ability?: string, spellId?: number, skills?: string[], tools?: string[] } | null
+export type FeatChoices = { ability?: string, spellId?: number, skills?: string[], tools?: string[], languages?: string[] } | null
+
+export const featLanguageChoiceCount = (effects: Effect[]): number =>
+  effects.reduce((n, e) => e.type === 'language_proficiency_choice' ? n + e.value.count : n, 0)
 
 /**
  * Résout les effets « à choix » d'un don selon les choix enregistrés (`character_features.choices`).
  * Sans choix enregistré, l'effet n'accorde rien. `ability_increase_choice`/`saving_throw_proficiency_choice`
  * lisent `choices.ability` (count 1) ; le marqueur `skilled_choice` (don Doué) lit `choices.skills`/`tools`
- * → une maîtrise de compétence/outil par entrée.
+ * et `language_proficiency_choice` (Linguiste) `choices.languages` → une maîtrise par entrée.
  */
 export const resolveFeatEffects = (effects: Effect[], choices: FeatChoices): Effect[] =>
   effects.flatMap((e) => {
+    if (e.type === 'language_proficiency_choice') {
+      return (choices?.languages ?? []).slice(0, e.value.count)
+        .map((language): Effect => ({ type: 'language_proficiency', value: language }))
+    }
     if (e.type === 'ability_increase_choice') {
       const ability = choices?.ability
       if (!ability) return []
@@ -93,19 +100,19 @@ export const useAbilityEffectInputs = (characterSheet?: Ref<CharacterSheet | nul
       }))
   })
 
-  // Maîtrises dérivées par le GET (historique, JS de la classe principale, compétences de classe
-  // choisies) : champs hors du type de relations Drizzle → accès casté.
+  // Maîtrises dérivées par le GET (historique, JS de la classe principale, maîtrises choisies sur un point
+  // de choix) : champs hors du type de relations Drizzle → accès casté.
   const backgroundEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { backgroundEffects?: Effect[] } | null | undefined)?.backgroundEffects ?? [],
   )
   const classSavingThrowEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { classSavingThrowEffects?: Effect[] } | null | undefined)?.classSavingThrowEffects ?? [],
   )
-  const classSkillEffects = computed<Effect[]>(() =>
-    (characterSheet?.value as { classSkillEffects?: Effect[] } | null | undefined)?.classSkillEffects ?? [],
+  const choiceEffects = computed<Effect[]>(() =>
+    (characterSheet?.value as { choiceEffects?: Effect[] } | null | undefined)?.choiceEffects ?? [],
   )
 
-  return { speciesEffects, featureEffects, asiEffects, backgroundEffects, classSavingThrowEffects, classSkillEffects }
+  return { speciesEffects, featureEffects, asiEffects, backgroundEffects, classSavingThrowEffects, choiceEffects }
 }
 
 export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
@@ -116,7 +123,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   // ─── Couche 2 : scores de caractéristiques ────────────────────────────────
 
   const abilityInputs = useAbilityEffectInputs(characterSheet)
-  const { speciesEffects, backgroundEffects } = abilityInputs
+  const { speciesEffects, backgroundEffects, choiceEffects } = abilityInputs
 
   const temporary = useCharacterTemporaryEffects(characterSheet)
 
@@ -222,8 +229,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     return [...speciesItems, ...classItems]
   })
 
-  // Effets de base (espèce + classe + historique), hors objets magiques. `backgroundEffects` vient des
-  // entrées de la couche abilities (qui en dérive les compétences). Champs hors du type de relations → casté.
+  // Effets de base (espèce + classe + historique + choix), hors objets magiques. `backgroundEffects` et
+  // `choiceEffects` viennent des entrées de la couche abilities (qui en dérive les compétences). Champs hors
+  // du type de relations → casté.
   const classEffects = computed<Effect[]>(() =>
     (characterSheet?.value as { classEffects?: Effect[] } | undefined)?.classEffects ?? [],
   )
@@ -232,6 +240,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     ...classFeatureEffects.value,
     ...backgroundEffects.value,
     ...classEffects.value,
+    ...choiceEffects.value,
   ])
 
   const allEffectsForSpellcasting = computed<Effect[]>(() => [

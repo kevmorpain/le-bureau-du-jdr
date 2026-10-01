@@ -1,5 +1,6 @@
 import { CreatureSize } from '../../schema/character_species'
 import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
+import { oneLanguageChoice, wizardCantripChoice } from './speciesChoices'
 
 // ⚠️ Effets copiés à l'identique des anciennes espèces `highElf`/`woodElf`/`drow` : c'est ce qui fait
 // tenir le test d'équivalence (D12). Additif : les anciennes espèces ne sont pas supprimées.
@@ -72,12 +73,14 @@ const highElfLineage: LineageData = {
     {
       name: 'Sort mineur',
       description: `Vous connaissez un sort mineur de la liste de sorts du magicien (au choix). L'Intelligence est la caractéristique d'incantation correspondante.`,
-      effects: [{ type: 'spell_choice', value: { class: 'wizard', level: 0, spellcastingAbility: 'int', count: 1 } }],
+      effects: [],
+      choice: wizardCantripChoice,
     },
     {
       name: 'Langue supplémentaire',
       description: `Vous parlez, lisez et écrivez une langue supplémentaire de votre choix.`,
-      effects: [{ type: 'language_proficiency_choice', value: { count: 1 } }],
+      effects: [],
+      choice: oneLanguageChoice,
     },
   ],
 }

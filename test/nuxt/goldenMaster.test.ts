@@ -52,7 +52,7 @@ describe('golden-master · A. Guerrier Champion (martial)', () => {
       // Maîtrises d'armes/armures : champs vestigiaux (volet B) — ne doivent PAS se matérialiser.
       weaponProficiencyKeys: ['simple_weapons', 'martial_weapons'],
       armorProficiencyKeys: ['all_armor', 'shield'],
-      toolProficiencyChoices: ['Jeu de cartes'],
+      choicePicks: [{ progressionId: ids.soldierGameProgressionId, value: 'Jeu de cartes' }],
       selectedLanguages: ['Orc'],
       inventoryItemIds: [ITEM.longsword],
     })

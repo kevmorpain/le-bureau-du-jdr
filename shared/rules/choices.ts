@@ -31,6 +31,20 @@ export type ChoiceKind = (typeof CHOICE_KINDS)[number]
 
 export const choiceKindEnum = z.enum(CHOICE_KINDS)
 
+// Point de choix déclaré par un seed sur une feature (trait d'espèce ou de lignée, porteur de classe ou
+// d'historique), `count` fixe.
+export interface FeatureChoice {
+  kind: ChoiceKind
+  count: number
+  optionSource: OptionSource
+}
+
+// Choix dont chaque pick est une maîtrise (valeur typée sans table) ou un sort mineur : ils passent par un
+// chemin générique (`choicePicks`). Les autres ont chacun leur champ dédié.
+export const VALUE_CHOICE_KINDS = ['skill', 'tool', 'language'] as const satisfies readonly ChoiceKind[]
+export const SPELL_CHOICE_KINDS = ['cantrip'] as const satisfies readonly ChoiceKind[]
+export const PICK_CHOICE_KINDS: readonly ChoiceKind[] = [...VALUE_CHOICE_KINDS, ...SPELL_CHOICE_KINDS]
+
 // `proficient_skills` / `proficient_weapons` se résolvent contre l'état du perso (non cachables) ; le reste via le catalogue.
 export type OptionSource =
   | { type: 'enum', values: string[] }
@@ -41,7 +55,8 @@ export type OptionSource =
   | { type: 'proficient_skills' }
   | { type: 'proficient_weapons' } // maîtrise d'armes 5.5 : N armes parmi celles déjà maîtrisées
   | { type: 'languages', from?: string[] }
-  | { type: 'tools', from?: string[] }
+  // `orLanguages` : une langue au choix peut remplacer l'outil (Marchand de guilde, AideDD).
+  | { type: 'tools', from?: string[], orLanguages?: boolean }
   | { type: 'abilities', from: AbilityKey[], distributions: ('2+1' | '1+1+1')[] }
   | { type: 'spells', spellClass: string, maxLevel?: number, cantripsOnly?: boolean }
   | { type: 'feats', category?: FeatCategory }

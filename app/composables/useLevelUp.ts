@@ -20,10 +20,11 @@ import {
   type MulticlassSkillGrant,
 } from '~~/shared/rules/multiclass'
 import { proficiencyLabels } from '~~/shared/utils/item'
+import { choicesGainedAtLevelUp, isProficiencyPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
-import { useAbilityEffectInputs } from './useCharacterSheet'
+import { featLanguageChoiceCount, useAbilityEffectInputs } from './useCharacterSheet'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,7 +49,11 @@ export interface LevelUpState {
   // Don Doué : 3 maîtrises au choix (compétences + outils, total = SKILLED_FEAT_COUNT).
   featSkills: string[]
   featTools: string[]
+  // Don Linguiste : langues au choix.
+  featLanguages: string[]
   newSkills: string[]
+  // Picks des points de choix gagnés à ce niveau (instrument du Barde rejoint), par id de progression.
+  choicePicks: Record<number, Array<string | number>>
   newCantripIds: number[]
   newSpellIds: number[]
   pactBoon: 'chain' | 'blade' | 'tome' | null
@@ -87,7 +92,9 @@ const INIT_STATE: LevelUpState = {
   featAbility: null,
   featSkills: [],
   featTools: [],
+  featLanguages: [],
   newSkills: [],
+  choicePicks: {},
   newCantripIds: [],
   newSpellIds: [],
   pactBoon: null,
@@ -116,7 +123,7 @@ const ALL_LU_STEPS: LUStep[] = [
   { id: 'hp', label: 'Points de vie', icon: 'i-heroicons:heart' },
   { id: 'features', label: 'Aptitudes', icon: 'i-heroicons:sparkles' },
   { id: 'asi', label: 'Carac. / Don', icon: 'i-heroicons:arrow-trending-up' },
-  { id: 'skills', label: 'Compétences', icon: 'i-heroicons:academic-cap' },
+  { id: 'skills', label: 'Maîtrises', icon: 'i-heroicons:academic-cap' },
   { id: 'spells', label: 'Magie', icon: 'i-game-icons:spell-book' },
 ]
 
@@ -141,9 +148,12 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     if (featureId == null) return false
     return (getFeatById(featureId)?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'skilled_choice')
   }
-  const buildFeatChoices = (s: LevelUpState): { ability?: AbilityKey, skills?: string[], tools?: string[] } | null => {
+  const featLanguageCount = (featureId: number | null): number =>
+    featureId == null ? 0 : featLanguageChoiceCount((getFeatById(featureId)?.effects ?? []) as Effect[])
+  const buildFeatChoices = (s: LevelUpState): { ability?: AbilityKey, skills?: string[], tools?: string[], languages?: string[] } | null => {
     if (s.featureId == null) return null
     if (featNeedsSkilled(s.featureId)) return { skills: s.featSkills, tools: s.featTools }
+    if (featLanguageCount(s.featureId) > 0) return { languages: s.featLanguages }
     if (s.featAbility) return { ability: s.featAbility }
     return null
   }
@@ -191,26 +201,31 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const proficientSkills = computed<string[]>(() => skillsWhere(l => l !== 'none').map(s => s.key))
   const eligibleExpertiseSkills = computed(() => skillsWhere(l => l === 'proficient'))
 
-  // Outils choisis (ex. « Outils de voleur » d'un historique) : stockés en overrides, ABSENTS du payload
-  // GET → fetch dédié (comme la fiche). Sert à exclure du picker Doué.
+  // Outils et langues ajoutés à la main : stockés en overrides, ABSENTS du payload
+  // GET → fetch dédié (comme la fiche). Sert à exclure des pickers de Doué et de Linguiste.
   const { data: proficiencyOverridesData } = useFetch<Array<{ proficiencyType: string, value: string, action: string }>>(
     () => (charSheet.value?.id != null ? `/api/character_sheets/${charSheet.value.id}/proficiency-overrides` : null),
     { default: () => [] },
   )
 
-  const ownedTools = computed<string[]>(() => {
+  // Maîtrises d'outils ou de langues de la fiche (effets + ajouts manuels), comme la fiche les calcule.
+  const ownedProficiencies = (type: 'tool' | 'language') => {
+    const effectType = type === 'tool' ? 'tool_proficiency' : 'language_proficiency'
     const classEffects = (charSheet.value as { classEffects?: Effect[] } | null)?.classEffects ?? []
     const fromEffects = [
       ...abilityInputs.speciesEffects.value,
       ...abilityInputs.featureEffects.value,
       ...abilityInputs.backgroundEffects.value,
+      ...abilityInputs.choiceEffects.value,
       ...classEffects,
-    ].filter(e => e.type === 'tool_proficiency').map(e => e.value as string)
+    ].filter(e => e.type === effectType).map(e => e.value as string)
     const ov = proficiencyOverridesData.value ?? []
-    const grants = ov.filter(o => o.proficiencyType === 'tool' && o.action === 'grant').map(o => o.value)
-    const revokes = new Set(ov.filter(o => o.proficiencyType === 'tool' && o.action === 'revoke').map(o => o.value))
+    const grants = ov.filter(o => o.proficiencyType === type && o.action === 'grant').map(o => o.value)
+    const revokes = new Set(ov.filter(o => o.proficiencyType === type && o.action === 'revoke').map(o => o.value))
     return [...new Set([...fromEffects, ...grants])].filter(t => !revokes.has(t))
-  })
+  }
+  const ownedTools = computed<string[]>(() => ownedProficiencies('tool'))
+  const knownLanguages = computed<string[]>(() => ownedProficiencies('language'))
 
   const currentSpellIds = computed<number[]>(() => {
     return (charSheet.value?.spells ?? []).map((s: any) => s.spellId ?? s.id)
@@ -430,6 +445,26 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return at - prev > 0
   }
 
+  // Points de choix de maîtrise que ce niveau de classe rend dus : porteur de multiclassage d'une classe
+  // rejointe (instrument du Barde)…
+  const mainClassDbId = computed(() => charClasses.value.find(c => c.isMain)?.dbClassId ?? charClasses.value[0]?.dbClassId)
+  const newPickChoices = computed<ResolvedChoice[]>(() => {
+    const classId = luClassDbId.value
+    if (classId == null) return []
+    return choicesGainedAtLevelUp(catalog.value, {
+      classId,
+      fromLevel: state.value.fromLevel,
+      toLevel: state.value.toLevel,
+      mainClassId: mainClassDbId.value ?? classId,
+    }).filter(isProficiencyPickChoice)
+  })
+  const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
+  const ownedFor = (choice: ResolvedChoice): string[] => {
+    if (choice.kind === 'skill') return proficientSkills.value
+    if (choice.kind === 'language') return knownLanguages.value
+    return [...ownedTools.value, ...knownLanguages.value]
+  }
+
   const needsMulticlassSkills = computed(() => multiclassSkills.value.count > 0)
   // Plafonné aux compétences pas encore maîtrisées, comme les sorts : une liste épuisée ne bloque pas l'étape.
   const requiredMulticlassSkillPicks = computed(() => {
@@ -491,7 +526,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   const activeSteps = computed(() => ALL_LU_STEPS.filter(s => {
     if (s.id === 'asi') return isAsiLevel.value
-    if (s.id === 'skills') return needsMulticlassSkills.value
+    if (s.id === 'skills') return needsMulticlassSkills.value || newPickChoices.value.length > 0
     if (s.id === 'spells') return hasSpellcasting.value
     return true
   }))
@@ -532,6 +567,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
           if (s.featureId == null) return false
           if (featNeedsAbility(s.featureId) && !s.featAbility) return false
           if (featNeedsSkilled(s.featureId) && (s.featSkills.length + s.featTools.length) !== SKILLED_FEAT_COUNT) return false
+          if (s.featLanguages.length !== featLanguageCount(s.featureId)) return false
           return true
         }
         if (s.asiChoice !== 'asi') return false
@@ -541,6 +577,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
       case 'skills':
         return s.newSkills.length >= requiredMulticlassSkillPicks.value
+          && newPickChoices.value.every(c => picksOf(c.progressionId).length === c.count)
 
       case 'spells':
         if (s.newCantripIds.length < requiredCantripPicks.value) return false
@@ -640,6 +677,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         featureId: s.asiChoice === 'feat' ? s.featureId : null,
         featChoices: s.asiChoice === 'feat' ? buildFeatChoices(s) : null,
         newSkills: s.newSkills,
+        choicePicks: newPickChoices.value.flatMap(c => picksOf(c.progressionId).map(v =>
+          c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string })),
         newCantripIds: s.newCantripIds,
         newSpellIds: s.newSpellIds,
         pactBoon: s.pactBoon,
@@ -666,6 +705,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     proficientSkills,
     eligibleExpertiseSkills,
     ownedTools,
+    knownLanguages,
     currentSpellIds,
     // Picked class
     pickedClass,
@@ -686,6 +726,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     needsMulticlassSkills,
     multiclassSkills,
     requiredMulticlassSkillPicks,
+    newPickChoices,
+    ownedFor,
     currentClassesPrerequisites,
     meetsCurrentClassesPrerequisites,
     multiclassPrerequisitesOf,
@@ -733,6 +775,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     submit,
     featNeedsAbility,
     featNeedsSkilled,
+    featLanguageCount,
     // Re-exports for step components
     CLASSES,
     ABILITIES,

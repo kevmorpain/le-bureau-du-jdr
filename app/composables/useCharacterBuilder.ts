@@ -6,9 +6,6 @@ import {
   ABILITIES,
   ABILITY_SHORT,
   SKILLS,
-  LANGUAGES,
-  TOOL_CHOICE_MAP,
-  extraLanguagesFromToolChoices,
   abilityMod,
   formatMod,
   profBonusAtLevel,
@@ -20,6 +17,11 @@ import {
 } from '~/data/character-builder'
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
+import type { ChoiceKind } from '~~/shared/rules/choices'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
+import { duplicateCount, duplicatedValues } from '~~/shared/rules/duplicateProficiencies'
+import { isProficiencyPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { featLanguageChoiceCount } from './useCharacterSheet'
 import type { Effect } from '~~/server/db/schema/effects'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -78,11 +80,12 @@ export interface BuilderState {
   allies: string
   portraitUrl: string
 
-  // Langues choisies
-  selectedLanguages: string[]
+  // Picks des points de choix d'espèce, de lignée, d'historique ou de classe (compétence, outil, langue :
+  // valeur ; sort mineur : id), par id de progression.
+  choicePicks: Record<number, Array<string | number>>
 
-  // Maîtrises d'outils à choix (background)
-  selectedToolProficiencies: Record<string, string>
+  // Langues de l'Humain variant (clés de langue), faute d'espèce liée qui porte son choix
+  selectedLanguages: string[]
 
   // Étape 5 — Background personnalisé
   customBackgroundName: string
@@ -125,7 +128,7 @@ export interface BuilderState {
 
   // Choix résolus des dons (ex : caractéristique +1 d'Observateur), indexés par
   // features.id du don. Vaut pour le don bonus ET les dons d'ASI.
-  featChoices: Record<number, { ability?: AbilityKey, spellId?: number, skills?: string[], tools?: string[] }>
+  featChoices: Record<number, { ability?: AbilityKey, spellId?: number, skills?: string[], tools?: string[], languages?: string[] }>
 
   // Arcanums mystiques (Occultiste niv 11/13/15/17). À la création d'un perso de haut
   // niveau, TOUS les arcanums débloqués (≤ niveau) sont configurables → map niveau de
@@ -181,8 +184,8 @@ const INIT_STATE: BuilderState = {
   backstory: '',
   allies: '',
   portraitUrl: '',
+  choicePicks: {},
   selectedLanguages: [],
-  selectedToolProficiencies: {},
   customBackgroundName: '',
   customBackgroundSkills: [],
   equipChoices: [],
@@ -258,8 +261,8 @@ export function useCharacterBuilder() {
   // ─── Dons (liste + helpers pour les choix) ────────────────────────────────────
 
   const { feats, getById: getFeatById } = useFeats()
-  const { choicesForClassLevel } = useCatalog()
-  const { resolveClassId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
+  const { choicesForClassLevel, choicesFor } = useCatalog()
+  const { resolveClassId, resolveSpeciesId, resolveBackgroundId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
 
   const featNeedsAbility = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return false
@@ -282,6 +285,10 @@ export function useCharacterBuilder() {
     return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'skilled_choice')
   }
 
+  // Le don Linguiste accorde des langues au choix (`language_proficiency_choice`).
+  const featLanguageCount = (featureId: number | null | undefined): number =>
+    featureId == null ? 0 : featLanguageChoiceCount(getFeatById(featureId)?.effects ?? [])
+
   const featChoiceComplete = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return true
     if (featNeedsAbility(featureId) && !state.value.featChoices[featureId]?.ability) return false
@@ -290,6 +297,7 @@ export function useCharacterBuilder() {
       const c = state.value.featChoices[featureId]
       if (((c?.skills?.length ?? 0) + (c?.tools?.length ?? 0)) !== SKILLED_FEAT_COUNT) return false
     }
+    if ((state.value.featChoices[featureId]?.languages?.length ?? 0) !== featLanguageCount(featureId)) return false
     return true
   }
 
@@ -362,7 +370,7 @@ export function useCharacterBuilder() {
   // Humain variant : la création ne lie aucune espèce.
   const speciesEffects = computed<Effect[]>(() => isVariantHuman.value ? [] : effectsFor(selectedLineageId.value))
   const speciesSkillsLoaded = computed(() => isVariantHuman.value || speciesEffectsLoaded.value)
-  // Octrois FIXES seulement : `skill_proficiency_choice` (Demi-elfe) n'a pas de picker.
+  // Octrois FIXES seulement ; les compétences au choix (Polyvalence) sont des picks (`chosenValues`).
   const speciesSkills = computed<string[]>(() =>
     speciesEffects.value.flatMap(e => e.type === 'skill_proficiency' ? [e.value.skill] : []),
   )
@@ -370,6 +378,55 @@ export function useCharacterBuilder() {
   const backgroundSkills = computed<string[]>(() =>
     isCustomBackground.value ? state.value.customBackgroundSkills : (backgroundData.value?.skillProficiencies ?? []),
   )
+
+  // ─── Points de choix génériques (maîtrises au choix, sort mineur) ─────────
+  // Espèce en base : l'Humain variant n'en lie aucune ; une sous-race du catalogue passe par l'espèce de base.
+  const speciesDbId = computed<number | null>(() => {
+    if (isVariantHuman.value) return null
+    if (selectedLineageId.value != null) return catalogSpeciesId.value ?? null
+    return resolveSpeciesId(subraceData.value?.dbName ?? raceData.value?.dbName ?? null)
+  })
+  const backgroundDbId = computed<number | null>(() =>
+    isCustomBackground.value ? null : resolveBackgroundId(backgroundData.value?.dbName ?? null),
+  )
+  // Maîtrises FIXES par source : une maîtrise reçue de deux d'entre elles ouvre un remplacement. Les compétences
+  // d'un historique personnalisé sont des choix, pas des maîtrises fixes.
+  const classFixedTools = computed<string[]>(() => classProficienciesFor(classDbId.value).start
+    .flatMap(e => e.type === 'tool_proficiency' ? [e.value] : []))
+  const backgroundFixedTools = computed<string[]>(() =>
+    (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t)))
+  const backgroundFixedSkills = computed<string[]>(() => isCustomBackground.value ? [] : backgroundSkills.value)
+  const duplicateSkills = computed(() => duplicatedValues(speciesSkills.value, backgroundFixedSkills.value))
+  const duplicateTools = computed(() => duplicatedValues(classFixedTools.value, backgroundFixedTools.value))
+
+  // Les compétences de classe gardent leur propre étape (`state.skills`).
+  const genericChoices = computed<ResolvedChoice[]>(() => choicesFor({
+    classLevels: classDbId.value != null ? { [classDbId.value]: state.value.level } : {},
+    speciesId: speciesDbId.value ?? undefined,
+    lineageId: selectedLineageId.value ?? undefined,
+    backgroundId: backgroundDbId.value ?? undefined,
+    duplicates: {
+      skills: duplicateCount(speciesSkills.value, backgroundFixedSkills.value),
+      tools: duplicateCount(classFixedTools.value, backgroundFixedTools.value),
+    },
+  }).filter(isProficiencyPickChoice))
+  const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
+  const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
+  const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))
+  // Remplacements de maîtrises reçues en double : facultatifs (« il peut choisir », AideDD).
+  const replacementChoices = computed(() => genericChoices.value.filter(c => c.global))
+
+  const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
+  const choicesComplete = (choices: ResolvedChoice[]) => choices.every(c => picksOf(c.progressionId).length === c.count)
+  const valuesOf = (choices: ResolvedChoice[], kind: ChoiceKind, exceptProgressionId?: number): string[] => choices
+    .filter(c => c.kind === kind && c.progressionId !== exceptProgressionId)
+    .flatMap(c => picksOf(c.progressionId) as string[])
+  /** Valeurs choisies d'un type de maîtrise, sauf celles du point de choix `exceptProgressionId`. */
+  const chosenValues = (kind: ChoiceKind, exceptProgressionId?: number) => valuesOf(genericChoices.value, kind, exceptProgressionId)
+  // Un nombre dû peut baisser après coup (doublon disparu en changeant d'historique) : l'excédent ne part pas.
+  const choicePicksPayload = computed(() => genericChoices.value.flatMap(c => picksOf(c.progressionId).slice(0, c.count).map(v =>
+    c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string })))
+
   const variantHumanSkills = computed<string[]>(() =>
     isVariantHuman.value && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : [],
   )
@@ -379,15 +436,16 @@ export function useCharacterBuilder() {
     ...(isCustomBackground.value ? state.value.customBackgroundSkills : []),
     ...variantHumanSkills.value,
   ])
-  // Maîtrises FIXES hors classe, avec leur source (la compétence de l'Humain variant est un trait d'espèce).
+  // Maîtrises hors classe, avec leur source (la compétence de l'Humain variant et celles de Polyvalence sont
+  // des traits d'espèce).
   const grantedSkillSources = computed(() => {
     const sources = new Map<string, 'espèce' | 'historique'>()
-    for (const skill of [...speciesSkills.value, ...variantHumanSkills.value]) sources.set(skill, 'espèce')
+    for (const skill of [...speciesSkills.value, ...variantHumanSkills.value, ...valuesOf(speciesChoices.value, 'skill')]) sources.set(skill, 'espèce')
     for (const skill of backgroundSkills.value) if (!sources.has(skill)) sources.set(skill, 'historique')
     return sources
   })
   const proficientSkills = computed<string[]>(() =>
-    [...new Set([...state.value.skills, ...grantedSkillSources.value.keys()])],
+    [...new Set([...state.value.skills, ...grantedSkillSources.value.keys(), ...valuesOf(replacementChoices.value, 'skill')])],
   )
   // Compétences de classe CHOISIES en doublon avec une source FIXE : le doublon est gaspillé (F3). On
   // l'INDIQUE (StepClass/StepDescription) pour que le joueur change son choix de classe — non bloquant.
@@ -398,17 +456,47 @@ export function useCharacterBuilder() {
   const classSkillConflictLabels = computed(() => classSkillConflicts.value
     .map(k => `${SKILLS.find(s => s.key === k)?.label ?? k} (${grantedSkillSources.value.get(k)})`)
     .join(', '))
-  // Outils déjà maîtrisés (classe, historique) : exclus du picker Doué pour ne pas gaspiller un choix. On
-  // ne retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
-  // dans selectedToolProficiencies) + les résolutions choisies.
-  const ownedTools = computed<string[]>(() => {
-    const fromClass = classProficienciesFor(classDbId.value).start
-      .filter(e => e.type === 'tool_proficiency')
-      .map(e => e.value as string)
-    const fixed = (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t))
-    const chosen = Object.values(state.value.selectedToolProficiencies).filter(Boolean)
-    return [...new Set([...fromClass, ...fixed, ...chosen])]
-  })
+  // Compétences d'espèce CHOISIES (Polyvalence) que l'historique, choisi après, accorde aussi : même
+  // traitement que ci-dessus, le joueur revient changer son choix d'espèce.
+  const speciesSkillConflicts = computed<string[]>(() =>
+    valuesOf(speciesChoices.value, 'skill').filter(s => backgroundSkills.value.includes(s)),
+  )
+  const speciesSkillConflictLabels = computed(() => speciesSkillConflicts.value
+    .map(k => SKILLS.find(s => s.key === k)?.label ?? k)
+    .join(', '))
+  // Outils accordés d'office (classe, historique) : exclus des pickers pour ne pas gaspiller un choix. On ne
+  // retient que les entrées CONCRÈTES de l'historique : ses « … au choix » sont des points de choix.
+  const grantedTools = computed<string[]>(() => [...new Set([...classFixedTools.value, ...backgroundFixedTools.value])])
+  const ownedTools = computed<string[]>(() => [...new Set([...grantedTools.value, ...chosenValues('tool')])])
+  const speciesLanguages = computed<string[]>(() =>
+    speciesEffects.value.flatMap(e => e.type === 'language_proficiency' ? [e.value] : []),
+  )
+  const featLanguages = (exceptFeatureId?: number): string[] => chosenFeatIds.value
+    .filter(id => id !== exceptFeatureId)
+    .flatMap(id => state.value.featChoices[id]?.languages ?? [])
+  // Langues connues, hors celles du point de choix ou du don exclus. Un choix d'outil `orLanguages`
+  // (Marchand de guilde) peut porter une langue.
+  const knownLanguages = (except: { progressionId?: number, featureId?: number } = {}): string[] => [
+    ...speciesLanguages.value,
+    ...state.value.selectedLanguages,
+    ...featLanguages(except.featureId),
+    ...chosenValues('language', except.progressionId),
+    ...chosenValues('tool', except.progressionId).filter(v => LANGUAGE_KEYS.includes(v)),
+  ]
+  // Acquis par une AUTRE source que ce point de choix : masqué de ses options pour ne pas gaspiller le choix.
+  function ownedFor(choice: ResolvedChoice): Array<string | number> {
+    const except = { progressionId: choice.progressionId }
+    switch (choice.kind) {
+      case 'skill': return [...speciesSkills.value, ...variantHumanSkills.value, ...backgroundSkills.value, ...state.value.skills, ...chosenValues('skill', choice.progressionId)]
+      case 'tool': return [...grantedTools.value, ...chosenValues('tool', choice.progressionId), ...knownLanguages(except)]
+      case 'language': return knownLanguages(except)
+      case 'cantrip': return [...state.value.selectedCantrips]
+      default: return []
+    }
+  }
+  const ownedLanguagesForFeat = (featureId: number): string[] => knownLanguages({ featureId })
+  const optionValuesOf = (choice: ResolvedChoice): Array<string | number> =>
+    choice.options.map(optionPickValue).filter((v): v is string | number => v != null)
   // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
   // sans expertise (changement de classe) ne doit pas survivre. Purge différée tant que les compétences
   // d'espèce arrivent (état restauré, changement de race) : un pick sur l'une d'elles serait perdu.
@@ -512,19 +600,11 @@ export function useCharacterBuilder() {
     if (!spellcastingInfo.value) return 0
     return maxSpellLevelAtLevel(spellcastingInfo.value.type, level.value)
   })
-  const languageChoiceCount = computed(() => {
-    let count = 0
-    const countChoices = (langs: string[]) => {
-      for (const l of langs) {
-        const m = l.match(/\+(\d+)\s+au choix/i)
-        if (m) count += parseInt(m[1])
-      }
-    }
-    countChoices(raceData.value?.languages ?? [])
-    countChoices(subraceData.value?.languages ?? [])
-    count += backgroundData.value?.languages ?? 0
-    count += extraLanguagesFromToolChoices(state.value.selectedToolProficiencies)
-    return count
+  // Langues au choix de l'Humain variant : l'espèce n'étant pas liée, son point de choix ne s'applique pas.
+  const variantHumanLanguageCount = computed(() => {
+    if (!isVariantHuman.value) return 0
+    return (raceData.value?.languages ?? [])
+      .reduce((n, l) => n + Number(/\+(\d+)\s+au choix/i.exec(l)?.[1] ?? 0), 0)
   })
 
   const cantripsNeeded = computed(() => {
@@ -622,10 +702,11 @@ export function useCharacterBuilder() {
         if (s.raceId === 'half-elf' && s.halfElfBonuses.length < 2) return false
         if (s.raceId === 'human' && s.isVariantHuman) {
           if (s.variantHumanBonuses.length < 2 || !s.variantHumanSkill) return false
+          if (s.selectedLanguages.length !== variantHumanLanguageCount.value) return false
         }
         // Fadette : les bonus flexibles doivent totaliser exactement 3 (+2/+1 ou +1/+1/+1).
         if (s.raceId === 'fairy' && Object.values(s.fairyAsiBonuses).reduce((a, b) => a + (b ?? 0), 0) !== 3) return false
-        return true
+        return choicesComplete(speciesChoices.value)
       }
       case 'class': {
         if (!s.classId) return false
@@ -638,7 +719,7 @@ export function useCharacterBuilder() {
         if (needsPactBoon.value && !s.pactBoon) return false
         if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
         if (needsMetamagic.value && s.metamagicIds.length < metamagicExpected.value) return false
-        return true
+        return choicesComplete(classChoices.value)
       }
       case 'abilities': {
         return ABILITIES.every(ab => s.abilities[ab] != null)
@@ -687,7 +768,7 @@ export function useCharacterBuilder() {
           if (!s.customBackgroundName.trim()) return false
           if (s.customBackgroundSkills.length < 2) return false
         }
-        return true
+        return choicesComplete(backgroundChoices.value)
       }
       case 'equipment': {
         return s.equipment.length > 0
@@ -798,9 +879,7 @@ export function useCharacterBuilder() {
     spellSlots,
     maxSpellLevel,
     cantripsNeeded,
-    languageChoiceCount,
-    LANGUAGES,
-    TOOL_CHOICE_MAP,
+    variantHumanLanguageCount,
     // Navigation
     activeSteps,
     currentStepId,
@@ -844,7 +923,25 @@ export function useCharacterBuilder() {
     proficientSkills,
     classSkillConflicts,
     classSkillConflictLabels,
+    speciesSkillConflicts,
+    speciesSkillConflictLabels,
     ownedTools,
+    ownedFor,
+    optionValuesOf,
+    ownedLanguagesForFeat,
+    // Points de choix génériques
+    speciesDbId,
+    backgroundDbId,
+    genericChoices,
+    speciesChoices,
+    backgroundChoices,
+    classChoices,
+    replacementChoices,
+    duplicateSkills,
+    duplicateTools,
+    picksOf,
+    chosenValues,
+    choicePicksPayload,
     // Pacte
     needsPactBoon,
     // Invocations
@@ -865,6 +962,7 @@ export function useCharacterBuilder() {
     featNeedsAbility,
     featNeedsSpell,
     featNeedsSkilled,
+    featLanguageCount,
     featChoiceComplete,
     // Arcanums / Livre des secrets
     needsArcaneMysterium,

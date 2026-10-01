@@ -39,11 +39,19 @@ describe('seedElfLineages — structure', () => {
 
   it('pose la feature de choix + une progression kind:\'lineage\' → 3 options (bout en bout buildCatalog)', async () => {
     const catalog = await buildCatalog(orm, { speciesIds: [baseId] })
-    expect(catalog.progressions).toHaveLength(1)
-    const p = catalog.progressions[0]!
+    const speciesOwned = catalog.progressions.filter(p => p.ownerSpeciesId != null)
+    expect(speciesOwned).toHaveLength(1)
+    const p = speciesOwned[0]!
     expect(p.kind).toBe('lineage')
     expect(p.ownerSpeciesId).toBe(baseId)
     expect(p.options!.map(o => o.lineageId)).toHaveLength(3)
+  })
+
+  it('le Haut-elfe porte ses choix de lignée : un sort mineur et une langue', async () => {
+    const [highElf] = await orm.select().from(schema.speciesLineages).where(eq(schema.speciesLineages.name, 'Haut-elfe'))
+    const catalog = await buildCatalog(orm, { speciesIds: [baseId], lineageIds: [highElf!.id] })
+    const kinds = catalog.progressions.filter(p => p.ownerLineageId === highElf!.id).map(p => p.kind).sort()
+    expect(kinds).toEqual(['cantrip', 'language'])
   })
 
   it('les features de base sont des species_trait liées à la base (dont la feature de choix)', async () => {

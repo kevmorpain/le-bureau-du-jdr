@@ -1,4 +1,5 @@
 import type { AbilityKey } from './abilities'
+import { TOOL_CATEGORIES } from './tools'
 
 // Convention : catégorie d'arme = token EN (`simple_weapons`/`martial_weapons`), arme précise = nom FR de l'item
 // (comparé par nom) ; armures = tokens EN (`light`/`medium`/`heavy`/`shield`/`all_armor`) ; outils = nom du
@@ -7,16 +8,16 @@ import type { AbilityKey } from './abilities'
 export interface ProficiencySet {
   armor: string[]
   weapon: string[]
-  // Outils FIXES seulement (ligne « Outils » des pages de classe AideDD) : ceux AU CHOIX (Barde, Moine)
-  // relèvent du ChoiceKind `tool`.
+  // Outils FIXES (ligne « Outils » des pages de classe AideDD).
   tools: string[]
+  // Outils AU CHOIX (Barde, Moine) : point de choix `tool` sur le porteur.
+  toolChoice?: { count: number, from: string[] }
 }
 
 export interface ClassProficiencies extends ProficiencySet {
   savingThrows: AbilityKey[]
   // Sous-ensemble reçu en REJOIGNANT la classe par multiclassage (AideDD, tableau des maîtrises du
-  // multiclassage). La compétence éventuelle est `classes.multiclass_skill_count` ; l'instrument du Barde,
-  // un choix `tool`.
+  // multiclassage). La compétence éventuelle est `classes.multiclass_skill_count`.
   multiclass: ProficiencySet
 }
 
@@ -37,7 +38,8 @@ export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
     armor: ['light'],
     weapon: ['simple_weapons', 'Arbalète de poing', 'Épée longue', 'Rapière', 'Épée courte'],
     tools: [],
-    multiclass: { armor: ['light'], weapon: [], tools: [] },
+    toolChoice: { count: 3, from: TOOL_CATEGORIES['Instruments de musique']! },
+    multiclass: { armor: ['light'], weapon: [], tools: [], toolChoice: { count: 1, from: TOOL_CATEGORIES['Instruments de musique']! } },
   },
   Clerc: {
     savingThrows: ['wis', 'cha'],
@@ -65,6 +67,7 @@ export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
     armor: [],
     weapon: ['simple_weapons', 'Épée courte'],
     tools: [],
+    toolChoice: { count: 1, from: [...TOOL_CATEGORIES['Outils d\'artisan']!, ...TOOL_CATEGORIES['Instruments de musique']!] },
     multiclass: { armor: [], weapon: ['simple_weapons', 'Épée courte'], tools: [] },
   },
   Paladin: {

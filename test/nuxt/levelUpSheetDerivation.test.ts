@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
-import { deriveClassSkills } from '../../server/utils/classProficiencyDerivation'
+import { deriveChoiceProficiencies } from '../../server/utils/choicePicks'
 import { useLevelUp } from '../../app/composables/useLevelUp'
 import { useCharacterSheet } from '../../app/composables/useCharacterSheet'
 import { ABILITIES, SKILLS } from '../../app/data/character-builder'
@@ -36,7 +36,7 @@ const payload = (over: Record<string, unknown> = {}) => ref({
   backgroundEffects: [],
   classEffects: [],
   classSavingThrowEffects: [],
-  classSkillEffects: [],
+  choiceEffects: [],
   species: null,
   classes: [{ classId: ROGUE, level: 5, isMain: true, class: { name: 'Roublard' }, subclass: null }],
   ...over,
@@ -71,11 +71,11 @@ describe('level-up — maîtrises de compétences lues comme la fiche', () => {
       backgroundSkills: [], spellIds: [], expertiseSkills: ['stealth', 'perception'],
     }), OWNER)
     const skills = await db.select().from(schema.characterSkills).where(eq(schema.characterSkills.characterSheetId, id))
-    const classSkillEffects = await deriveClassSkills(db, id)
+    const choiceEffects = await deriveChoiceProficiencies(db, id)
     // Le stocké seul ne contient plus que les deux expertises.
     expect(skills.map((s: { skillKey: string }) => s.skillKey).sort()).toEqual(['perception', 'stealth'])
 
-    const { expertSkills, proficientSkills, eligibleExpertiseSkills } = useLevelUp(payload({ skills, classSkillEffects }))
+    const { expertSkills, proficientSkills, eligibleExpertiseSkills } = useLevelUp(payload({ skills, choiceEffects }))
 
     expect([...expertSkills.value].sort()).toEqual(['perception', 'stealth'])
     expect([...proficientSkills.value].sort()).toEqual(['acrobatics', 'deception', 'perception', 'stealth'])
@@ -112,7 +112,7 @@ describe('level-up — maîtrises de compétences lues comme la fiche', () => {
         { skillKey: 'survival', proficiencyLevel: 'proficient', source: 'class', isOverride: false },
       ],
       backgroundEffects: [skill('athletics'), skill('intimidation')],
-      classSkillEffects: [skill('stealth'), skill('acrobatics')],
+      choiceEffects: [skill('stealth'), skill('acrobatics')],
       classSavingThrowEffects: [{ type: 'saving_throw_proficiency', value: { ability: 'dex' } }],
     })
     const { getEffectiveProficiency } = useCharacterSheet(sheet)

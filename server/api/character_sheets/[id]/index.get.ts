@@ -1,10 +1,11 @@
 import { db, schema } from '~~/server/utils/db'
-import { eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { deriveChosenLineage } from '~~/server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '~~/server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
 import { deriveBackgroundProficiencies } from '~~/server/utils/backgroundProficiencyDerivation'
-import { deriveClassGrants, deriveClassSkills } from '~~/server/utils/classProficiencyDerivation'
+import { deriveClassGrants } from '~~/server/utils/classProficiencyDerivation'
+import { deriveChoiceProficiencies } from '~~/server/utils/choicePicks'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)
@@ -106,7 +107,8 @@ export default defineEventHandler(async (event) => {
     const derived = await deriveChosenLineage(db, Number(id), species.id, totalLevel)
     lineageName = derived.lineageName
 
-    // Les features portant une `progression` (ex. « Lignage elfique ») sont des points de choix, pas des traits à afficher.
+    // Le point de choix de lignée (« Lignage elfique ») n'est pas un trait à afficher ; un trait qui porte un
+    // choix de maîtrise (« Polyvalence ») en est un.
     const baseFeatureIds = species.speciesFeatures
       .map(sf => sf.feature?.id)
       .filter((v): v is number => typeof v === 'number')
@@ -114,7 +116,7 @@ export default defineEventHandler(async (event) => {
       ? new Set((await db
           .select({ fid: schema.progression.featureId })
           .from(schema.progression)
-          .where(inArray(schema.progression.featureId, baseFeatureIds))).map(r => r.fid))
+          .where(and(inArray(schema.progression.featureId, baseFeatureIds), eq(schema.progression.kind, 'lineage')))).map(r => r.fid))
       : new Set<number>()
     const visibleBaseFeatures = species.speciesFeatures.filter(sf => !choicePointIds.has(sf.feature?.id as number))
 
@@ -133,8 +135,8 @@ export default defineEventHandler(async (event) => {
 
   const { proficiencies: classEffects, savingThrows: classSavingThrowEffects } = await deriveClassGrants(db, characterSheet.classes)
 
-  // Compétences de classe dérivées du choix (character_choices, progression skill).
-  const classSkillEffects = await deriveClassSkills(db, Number(id))
+  // Maîtrises choisies (compétences, outils, langues) dérivées des picks en character_choices.
+  const choiceEffects = await deriveChoiceProficiencies(db, Number(id))
 
   // Le propriétaire est le joueur ; on n'expose que `{ id, name }` (ni e-mail ni provider).
   const [owner] = characterSheet.ownerId != null
@@ -155,6 +157,6 @@ export default defineEventHandler(async (event) => {
     backgroundEffects,
     classEffects,
     classSavingThrowEffects,
-    classSkillEffects,
+    choiceEffects,
   }
 })

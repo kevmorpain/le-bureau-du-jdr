@@ -11,6 +11,8 @@ import { buildCatalog } from '~~/server/utils/catalog'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
+import { choicesGainedAtLevelUp, isProficiencyPickChoice } from '~~/shared/rules/resolve'
+import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Db } from '~~/server/utils/db'
@@ -36,6 +38,8 @@ export const levelUpSchema = z.object({
   featureId: z.number().int().positive().nullable().optional(),
   featChoices: featChoicesSchema,
   newSkills: uniqueSkillKeysSchema.optional(),
+  // Maîtrises au choix gagnées à ce niveau (instrument du Barde rejoint par multiclassage).
+  choicePicks: z.array(choicePickSchema).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
   pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
@@ -118,6 +122,16 @@ async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSki
   if (bad) throw new CharacterValidationError(`La compétence « ${bad} » n'est pas dans la liste de la classe.`)
 }
 
+// Les picks portent sur les points de choix que CE niveau de classe rend dus (porteur de multiclassage d'une
+// classe rejointe compris), validés comme à la création.
+async function validateLevelUpChoicePicks(db: Db, classId: number, newLevel: number, mainClassId: number, picks: ChoicePick[]): Promise<void> {
+  if (!picks.length) return
+  const gained = choicesGainedAtLevelUp(await buildCatalog(db, { classIds: [classId] }), { classId, fromLevel: newLevel - 1, toLevel: newLevel, mainClassId })
+    .filter(isProficiencyPickChoice)
+  const error = choicePicksError(picks, gained)
+  if (error) throw new CharacterValidationError(error)
+}
+
 async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset: Ruleset): Promise<void> {
   const featureIds = [
     ...(d.featureId != null ? [d.featureId] : []),
@@ -190,6 +204,8 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   await validateLevelUp(db, d, cls.id, subclassId)
   await validateLevelUpExpertise(db, characterSheetId, cls.id, newLevel, d.expertiseSkills ?? [])
   await validateMulticlassSkills(db, cls, existingClass == null && currentClasses.length > 0, d.newSkills ?? [])
+  const mainClassId = currentClasses.find(c => c.isMain)?.classId ?? currentClasses[0]?.classId ?? cls.id
+  await validateLevelUpChoicePicks(db, cls.id, newLevel, mainClassId, d.choicePicks ?? [])
 
   // 4. Lectures dépendantes (features débloquées, familier, slots)
   const newClassFeatures = await db
@@ -416,6 +432,8 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .values(d.newSkills.map(skillKey => ({ characterSheetId, skillKey, proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })))
       .onConflictDoNothing())
   }
+
+  stmts.push(...choicePickWriteStmts(db, characterSheetId, d.choicePicks ?? []))
 
   if (d.expertiseSkills?.length) {
     stmts.push(...expertiseWriteStmts(db, characterSheetId, expertiseProgressionId, d.expertiseSkills))

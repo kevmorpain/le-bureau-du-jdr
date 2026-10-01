@@ -51,6 +51,8 @@ interface BuilderState {
   halfElfBonuses: string[]        // 2 carac. choisies (pas CHA) ex: ['str','dex']
   variantHumanBonuses: string[]   // 2 carac. choisies (toutes 6) ex: ['int','wis']
   variantHumanSkill: string | null // compétence bonus ex: 'arcana'
+  selectedLanguages: string[]     // langue au choix de l'Humain variant (clé : 'elvish'…)
+  choicePicks: Record<number, Array<string | number>> // picks des points de choix (espèce, lignée, historique, classe, règle générale), par id de progression
   dragonAncestry: string | null   // ex: 'red', 'gold'
 
   // Étape 2 — Classe
@@ -126,6 +128,12 @@ interface BuilderState {
 - **Humain Variante** : picker +1+1 (6 boutons, max 2) + select compétence bonus
 - **Demi-Elfe** : picker +1+1 (5 boutons STR/DEX/CON/INT/WIS uniquement, max 2)
 - **Drakéide** : picker ascendance draconique (grille 10 types), obligatoire pour valider
+- **Choix de l'espèce** : un sélecteur (`ChoicePointPicker`) par point de choix de l'espèce ou de la lignée,
+  lu dans le catalogue — Polyvalence du Demi-elfe, outil du Nain, langue de l'Humain, du Demi-elfe, du
+  Haut-elfe et de la Fadette, sort mineur du Haut-elfe. Les valeurs déjà acquises ailleurs sont masquées.
+  Obligatoires pour passer l'étape ; envoyés en `choicePicks`.
+- **Humain Variante** : aucune espèce liée, donc pas de point de choix : sa langue au choix passe par
+  `selectedLanguages` et part en ajout manuel (avec le commun).
 
 **Validation step** :
 ```ts
@@ -173,10 +181,11 @@ raceId !== null
   1. **Sélecteur de niveau** (1–20, grille de boutons 4×5) avec jalons surlignés
   2. **Capacités de classe** (liste des features de départ)
   3. **Compétences** (X au choix parmi N) : toggle buttons
-  4. **Style de combat** si applicable (Guerrier/Paladin/Rôdeur) : cartes radio
-  5. **Sous-classe** si niveau atteint : cartes radio
-  6. **Faveur du Pacte** (Occultiste niveau ≥ 3) : cartes radio Chaîne / Lame / Tome → `state.pactBoon`
-  7. **Manifestations occultes** (Occultiste niveau ≥ 2) : `InvocationPicker` partagé avec le level-up, max = `WARLOCK_INVOCATIONS_KNOWN[level - 1]` (2 au niv.2, 3 au niv.5, etc.), filtre par pacte + sorts connus → `state.invocationIds`
+  4. **Outils au choix** (Barde, Moine) : point de choix du porteur de maîtrises de la classe, obligatoire
+  5. **Style de combat** si applicable (Guerrier/Paladin/Rôdeur) : cartes radio
+  6. **Sous-classe** si niveau atteint : cartes radio
+  7. **Faveur du Pacte** (Occultiste niveau ≥ 3) : cartes radio Chaîne / Lame / Tome → `state.pactBoon`
+  8. **Manifestations occultes** (Occultiste niveau ≥ 2) : `InvocationPicker` partagé avec le level-up, max = `WARLOCK_INVOCATIONS_KNOWN[level - 1]` (2 au niv.2, 3 au niv.5, etc.), filtre par pacte + sorts connus → `state.invocationIds`
 
 **Compétences maîtrisées** (`useCharacterBuilder`) : `proficientSkills` = compétences de classe choisies +
 sources fixes (`grantedSkillSources` : octrois `skill_proficiency` de l'espèce — ex. Sens aiguisés,
@@ -191,9 +200,9 @@ Menaçant —, compétence de l'Humain variant, historique). Trois usages :
 
 Les effets d'espèce arrivent en asynchrone (`/api/catalog/species/[id]`) : la purge des picks
 d'expertise devenus non maîtrisés attend `effectsLoaded` (`useSpeciesLineages`), sinon un pick restauré
-sur une compétence d'espèce serait perdu avant leur arrivée. Non couverts : Polyvalence du Demi-elfe
-(`skill_proficiency_choice`, sans picker — E5, [#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107)) et compétences des dons
-(Doué) ou des manifestations dans ces trois usages.
+sur une compétence d'espèce serait perdu avant leur arrivée. Les compétences de Polyvalence (point de choix
+d'espèce) comptent comme d'espèce ; non couvertes : celles des dons (Doué) ou des manifestations dans ces
+trois usages.
 
 **Validation step** :
 ```ts
@@ -280,10 +289,12 @@ cantripsOk && spellsOk
   - Carte sélectionnée : affiche bonus de compétences + feature de l'historique
   - Les variantes PHB d'un historique sont des historiques à part entière (ex. **Marchand de guilde**,
     variante de l'Artisan de guilde) : une variante ne fait que substituer des valeurs
-- **Maîtrises d'outils** : un choix par placeholder « … au choix » de l'historique (`TOOL_CHOICE_MAP`).
-  L'option `EXTRA_LANGUAGE_OPTION` (« outils de navigateur OU langue » du Marchand de guilde) n'est pas
-  une maîtrise d'outil : elle ajoute une langue à choisir
-- **Langues supplémentaires** : l'excédent est retiré si le nombre de langues baisse
+- **Choix de l'historique** : un sélecteur par point de choix de l'historique (langues, outil « au choix »),
+  lus dans le catalogue ; le Marchand de guilde prend les outils de navigateur OU une langue (`orLanguages`).
+  Obligatoires pour passer l'étape.
+- **Maîtrise en double** : une compétence d'espèce que l'historique accorde aussi, ou un outil de classe
+  aussi accordé par l'historique, est signalé ; un remplacement de même nature est proposé, facultatif
+  (AideDD : « il peut choisir »).
 - **Alignement** : grille 3×3 (code court LB/NB/CB…, nom complet, description)
 - **Traits de personnalité** : 4 textareas (Personnalité, Idéaux, Liens, Défauts)
   - Chaque textarea a un bouton "+ Suggestions" qui affiche les suggestions de l'historique
@@ -345,7 +356,7 @@ produit :
 | Canal de la fiche | Projection du builder |
 |---|---|
 | `skills` (lignes `character_skills`) | `materializedSkills` (historique perso + Humain variant, = payload `backgroundSkills`) en `proficient`, `expertiseSkills` en `expert` |
-| `classSkillEffects` | `state.skills` |
+| `choiceEffects` | `state.skills` + compétences des points de choix (Polyvalence, remplacements) |
 | `classSavingThrowEffects` | `proficiencies.savingThrows` de la classe dans `/api/catalog/classes` (porteurs en base, comme la fiche) |
 | `backgroundEffects` | compétences de l'historique seedé |
 | `speciesEffects` | effets du catalogue (`/api/catalog/species/[id]`, base + lignée choisie) ; aucun pour l'Humain variant |

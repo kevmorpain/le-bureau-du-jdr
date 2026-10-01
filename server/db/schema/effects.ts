@@ -74,11 +74,8 @@ export type Effect
     | { type: 'saving_throw_proficiency_choice', value: { count: number, from?: ChoiceFrom<AbilityScoreKey> } }
     | { type: 'skill_bonus', value: { skill: string, bonusType: string, multiplier: number, condition: string } }
     | { type: 'skill_proficiency', value: { skill: SkillKey } }
-    | { type: 'skill_proficiency_choice', value: { count: number, from?: ChoiceFrom<SkillKey> } }
-    | { type: 'spell_choice', value: { class: string, level: number, spellcastingAbility: AbilityScoreKey, count: number } }
     | { type: 'spell_grant', value: { level: number, spellcastingAbility: AbilityScoreKey, spellName: string, countPerLongRest: number, unlockLevel?: number } }
     | { type: 'tool_proficiency', value: string }
-    | { type: 'tool_proficiency_choice', value: string[] }
     | { type: 'vulnerability', value: { damageType: DamageTypeKey } }
     | { type: 'walking_speed', value: number }
     | { type: 'flying_speed', value: number }

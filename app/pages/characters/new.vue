@@ -46,7 +46,6 @@
 
 <script lang="ts" setup>
 import { useOnline } from '@vueuse/core'
-import { chosenToolProficiencies } from '~/data/character-builder'
 
 definePageMeta({ layout: 'blank' })
 
@@ -54,11 +53,10 @@ const {
   currentStepId,
   state,
   classData,
-  subraceData,
-  raceData,
   selectedLineageId,
-  catalogSpeciesId,
-  backgroundData,
+  speciesDbId,
+  backgroundDbId,
+  choicePicksPayload,
   finalAbilities,
   hpMax,
   resetBuilder,
@@ -72,8 +70,6 @@ const {
 const {
   resolveClassId,
   resolveSubclassId,
-  resolveSpeciesId,
-  resolveBackgroundId,
   resolveItemIds,
 } = useBuilderEntities()
 
@@ -106,11 +102,6 @@ async function handleSubmit() {
   submitting.value = true
 
   try {
-    // Résolution du nom de l'espèce — Humain variant : pas de lien espèce pour éviter le cumul +1 universel
-    const speciesDbName = isVariantHuman.value
-      ? null
-      : (subraceData.value?.dbName ?? raceData.value?.dbName ?? null)
-
     const CURRENCY_RE = /^(\d+)\s*(pp|po|pe|pa|pc)$/i
     const CURRENCY_FIELDS: Record<string, string> = { pp: 'pp', po: 'po', pe: 'pe', pa: 'pa', pc: 'pc' }
     const currency: Record<string, number> = {}
@@ -145,12 +136,11 @@ async function handleSubmit() {
       submitting.value = false
       return
     }
-    // Espèce « base + lignée » (D17, lot 5b) : si la sous-race choisie vient du catalogue (elle
-    // porte un lineageId), on envoie l'Elfe BASE + le choix de lignée (chemin serveur du lot 5a),
-    // au lieu de résoudre l'ancienne espèce séparée par nom.
+    // Espèce « base + lignée » (D17) : une sous-race du catalogue envoie l'espèce de base + le choix de
+    // lignée ; l'Humain variant n'envoie aucune espèce (pas de cumul du +1 universel).
     const lineageId = selectedLineageId.value
-    const speciesId = lineageId != null ? catalogSpeciesId.value : resolveSpeciesId(speciesDbName)
-    const backgroundId = isCustomBackground.value ? null : resolveBackgroundId(backgroundData.value?.dbName ?? null)
+    const speciesId = speciesDbId.value
+    const backgroundId = backgroundDbId.value
     const { ids: inventoryItemIds, unresolved: inventoryItemNamesUnresolved } = resolveItemIds(itemNames)
     const pactWeaponItemId = needsPactBoon.value && state.value.pactBoon === 'blade' && state.value.pactWeaponItemName
       ? resolveItemIds([state.value.pactWeaponItemName]).ids[0] ?? null
@@ -195,17 +185,14 @@ async function handleSubmit() {
         return scores
       })(),
       classSkills: state.value.skills,
+      choicePicks: choicePicksPayload.value,
       // classSavingThrows retiré : les JS sont DÉRIVÉS du porteur de la classe principale (F3 tranche 2).
       // F5 : plus de `armorProficiencyKeys`/`weaponProficiencyKeys` — les maîtrises de base de
       // classe sont DÉRIVÉES côté serveur du porteur de classe (volet B), ces champs étaient
       // vestigiaux (acceptés puis ignorés par createCharacter). Le schéma les garde optionnels.
       backgroundSkills: materializedSkills.value,
-      selectedLanguages: [
-        ...state.value.selectedLanguages,
-        // Humain variant : 'Commun' n'est plus apporté par les effets d'espèce (lien espèce absent)
-        ...(isVariantHuman.value ? ['Commun'] : []),
-      ],
-      toolProficiencyChoices: chosenToolProficiencies(state.value.selectedToolProficiencies),
+      // Humain variant seulement : sans espèce liée, ni son commun ni sa langue au choix ne sont dérivés.
+      selectedLanguages: isVariantHuman.value ? ['common', ...state.value.selectedLanguages] : [],
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],
       pactBoon: needsPactBoon.value ? state.value.pactBoon : null,
       pactWeaponItemId,

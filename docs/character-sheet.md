@@ -77,7 +77,11 @@ Maîtrises d'armes, d'armures, de langues et d'outils.
 Les effets de classe (`classEffects`, dérivés par le GET) sont les maîtrises **de départ** de la classe
 principale et le **sous-ensemble du multiclassage** des autres classes (porteurs `proficiency_grant` /
 `multiclass_proficiency_grant`, seedés depuis `shared/rules/classProficiencies.ts`), lus par `deriveClassGrants`.
-Libellés (jetons d'armure et de catégorie d'arme) : `proficiencyEffectLabel` et les tables de `shared/utils/item.ts`.
+Les maîtrises **choisies** sur un point de choix (langue, outil ou compétence d'espèce, de lignée, d'historique ou
+de classe, remplacement d'une maîtrise en double) arrivent dérivées dans `choiceEffects` (`deriveChoiceProficiencies`).
+Libellés (jetons d'armure et de catégorie d'arme) : `proficiencyEffectLabel` et les tables de `shared/utils/item.ts` ;
+langues : `languageLabel` (`shared/rules/languages.ts`, libellés AideDD), qui affiche tel quel un ancien ajout
+manuel stocké par son libellé.
 **API overrides :** `GET/PUT/DELETE /api/character_sheets/{id}/proficiency-overrides`
 
 ---

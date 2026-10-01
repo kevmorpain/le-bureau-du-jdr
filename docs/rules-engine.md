@@ -138,9 +138,35 @@ character_choices {
 | Manifestations occultes | `invocations` | `lookup:[0,2,2,3,…]` | `{feature_group:'invocation'}` | N × `selectedFeatureId` |
 | Expertise (Roublard L1) | `expertise` | fixed 2 | `{proficient_skills}` | 2 × `selectedValue` |
 | Bonus de carac. (Historique 5.5) | `ability_scores` | fixed 1 | `{abilities,distributions}` | `payload={str:2,dex:1}` |
+| Polyvalence (trait du Demi-elfe) | `skill` | fixed 2 | `{skills, from:'all'}` | 2 × `selectedValue` |
+| Sort mineur (trait de la lignée Haut-elfe) | `cantrip` | fixed 1 | `{spells, spellClass:'wizard', cantripsOnly}` | `selectedSpellId` |
+| Maîtrises d'historique (Acolyte) | `language` | fixed 2 | `{languages}` | 2 × `selectedValue` |
+| Maîtrises de la classe (Barde) / de multiclassage | `tool` | fixed 3 / 1 | `{tools, from:[instruments]}` | N × `selectedValue` |
+| Maîtrise en double (règle générale) | `skill` / `tool` | `var:duplicate_skills` / `duplicate_tools` | `{skills}` / `{tools}` | N × `selectedValue` |
 
 `character_choices` devient **LA source des décisions** ; `character_classes.subclassId`/
 `pactBoon` et la matérialisation des invocations en dérivent (migration additive, [D8](./decisions.md#d8)).
+
+### Propriétaire d'un point de choix
+
+`buildCatalog` le déduit de la feature porteuse : **classe** (`class_id`, ou la classe de la sous-classe),
+**lignée** (`lineage_id`), **espèce** ou **historique** (liens `species_features` / `background_features`),
+ou **règle générale** (`choice_carrier` sans aucun propriétaire, `global`). `resolveChoices` ne propose un
+choix qu'au personnage qui détient ce propriétaire ; un choix hors classe se résout au niveau total (au
+moins 1, pour le builder avant la classe). Pour une classe, le porteur de maîtrises de départ
+(`proficiency_grant`, `classGrant:'start'`) ne vaut que pour la 1re classe, celui de multiclassage
+(`classGrant:'multiclass'`) que pour une classe rejointe (`projection.mainClassId`). Le nombre dû d'une
+règle générale vient du personnage (`projection.duplicates`, variables de formule `duplicate_*`).
+
+### Chemin générique des picks de maîtrise
+
+Les choix `skill` / `tool` / `language` (une valeur par pick) et `cantrip` (un sort) passent tous par le
+même chemin (`server/utils/choicePicks.ts`) : payload `choicePicks` à la création et au level-up, validé
+contre `resolveChoices` (`choicePicksError` : point de choix proposé, nombre, options), stocké en
+`character_choices`, et la maîtrise **dérivée** à chaque lecture (`deriveChoiceProficiencies` → champ
+`choiceEffects` du GET de la fiche). Les compétences de classe y passent aussi ; seules les étapes du
+builder leur restent propres. Un changement d'historique purge les picks de ses points de choix et ceux
+des remplacements de maîtrises en double.
 
 ---
 

@@ -193,6 +193,7 @@
 <script lang="ts" setup>
 import { useOnline } from '@vueuse/core'
 import type { AbilityKey } from '~/data/character-builder'
+import { languageLabel } from '~~/shared/rules/languages'
 
 defineEmits<{ back: [] }>()
 
@@ -217,6 +218,7 @@ const {
   toast,
   CLASSES,
   SKILLS,
+  newPickChoices,
 } = useLevelUp(charSheet)
 
 const { getById: getFeatById } = useFeats()
@@ -343,6 +345,11 @@ const gains = computed(() => {
       label: `${s.newSkills.length} compétence(s) multiclasse`,
       detail: s.newSkills.map(k => SKILLS.find(sk => sk.key === k)?.label ?? k).join(', '),
     })
+  }
+
+  const chosen = newPickChoices.value.flatMap(c => (s.choicePicks[c.progressionId] ?? []).map(String))
+  if (chosen.length) {
+    list.push({ label: 'Maîtrises au choix', detail: chosen.map(v => SKILLS.find(sk => sk.key === v)?.label ?? languageLabel(v)).join(', ') })
   }
 
   if (cls) {

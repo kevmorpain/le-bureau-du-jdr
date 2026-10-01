@@ -267,7 +267,7 @@ describe('useCharacterAbilities — dérivation par canal', () => {
       ...blankFixture,
       baseAbilityScores: [{ abilityId: 'str', value: 14 }], // mod +2
       // La compétence de classe choisie est dérivée de character_choices (plus matérialisée).
-      classSkillEffects: [{ type: 'skill_proficiency', value: { skill: 'athletics' } }],
+      choiceEffects: [{ type: 'skill_proficiency', value: { skill: 'athletics' } }],
       proficiencyBonus: 3,
     }
     const { getEffectiveProficiency, getSkillModifier } = mountAbilities(f)

@@ -169,10 +169,10 @@
           variant="soft"
           class="gap-1"
         >
-          {{ languageLabels[lang] ?? lang }}
+          {{ languageLabel(lang) }}
           <button
             class="opacity-60 hover:opacity-100 transition-opacity leading-none"
-            :aria-label="`Retirer ${languageLabels[lang] ?? lang}`"
+            :aria-label="`Retirer ${languageLabel(lang)}`"
             @click="removeProficiency('language', lang)"
           >
             <UIcon name="i-heroicons:x-mark" class="size-3" />
@@ -246,10 +246,10 @@
 import type { ProficiencyOverrideType } from '~~/server/db/schema/character_proficiency_overrides'
 import {
   armorProficiencyLabels,
-  languageLabels,
   weaponProficiencyLabels,
 } from '~~/shared/utils/item'
 import { TOOL_CATEGORIES } from '~~/shared/rules/tools'
+import { LANGUAGE_LABELS, languageLabel } from '~~/shared/rules/languages'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
@@ -336,7 +336,7 @@ const weaponAddOptions = [
 
 const armorAddOptions = Object.entries(armorProficiencyLabels).map(([value, label]) => ({ label, value }))
 
-const languageAddOptions = Object.entries(languageLabels).map(([value, label]) => ({ label, value }))
+const languageAddOptions = Object.entries(LANGUAGE_LABELS).map(([value, label]) => ({ label, value }))
 
 const toolAddOptions = Object.entries(TOOL_CATEGORIES).flatMap(([category, tools], i) => [
   ...(i > 0 ? [{ type: 'separator' as const }] : []),
