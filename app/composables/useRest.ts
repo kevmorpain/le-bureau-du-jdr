@@ -1,3 +1,5 @@
+import { hitDiceTotals, recoverHitDice } from '~~/shared/rules/hitDice'
+
 type SlotState = { max: number, current: number }
 type SlotsByType = {
   spellcasting: Record<number, SlotState>
@@ -82,23 +84,10 @@ export const useRest = (
       }
       characterSheet.value.spellSlots?.forEach((slot) => { slot.used = 0 })
 
-      // Récupère la moitié des dés de vie (arrondi au supérieur) — règle D&D 5e 2014
-      const hitDiceMax: Record<string, number> = {}
-      for (const cls of characterSheet.value.classes ?? []) {
-        const die = (cls.class as { hitDice?: string } | undefined)?.hitDice?.slice(1)
-        if (die) hitDiceMax[die] = (hitDiceMax[die] ?? 0) + cls.level
-      }
-
-      const current = characterSheet.value.currentHitDie
-        ?? Object.entries(hitDiceMax).map(([die, count]) => ({ die, count }))
-
-      characterSheet.value.currentHitDie = current.map(entry => ({
-        die: entry.die,
-        count: Math.min(
-          hitDiceMax[entry.die] ?? entry.count,
-          entry.count + Math.ceil((hitDiceMax[entry.die] ?? 0) / 2),
-        ),
-      }))
+      characterSheet.value.currentHitDie = recoverHitDice(
+        characterSheet.value.currentHitDie,
+        hitDiceTotals((characterSheet.value.classes ?? []).map(cls => ({ level: cls.level, hitDice: cls.class?.hitDice }))),
+      )
 
       toaster.add({ title: 'Repos long terminé — PV restaurés', color: 'success' })
     }

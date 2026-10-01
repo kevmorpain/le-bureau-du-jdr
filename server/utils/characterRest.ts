@@ -2,6 +2,7 @@ import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
+import { hitDiceTotals, recoverHitDice } from '~~/shared/rules/hitDice'
 import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
 import type { RechargeType } from '~~/server/db/schema/features'
 import type { Db } from '~~/server/utils/db'
@@ -80,17 +81,10 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
   }
 
   if (type === 'long') {
-    const hitDiceMax: Record<string, number> = {}
-    for (const cls of characterSheet.classes ?? []) {
-      const die = (cls.class as { hitDice?: string } | undefined)?.hitDice?.slice(1)
-      if (die) hitDiceMax[die] = (hitDiceMax[die] ?? 0) + cls.level
-    }
-    const currentHitDie = characterSheet.currentHitDie
-      ?? Object.entries(hitDiceMax).map(([die, count]) => ({ die, count }))
-    const newHitDie = currentHitDie.map((entry: { die: string, count: number }) => ({
-      die: entry.die,
-      count: Math.min(hitDiceMax[entry.die] ?? entry.count, entry.count + Math.ceil((hitDiceMax[entry.die] ?? 0) / 2)),
-    }))
+    const newHitDie = recoverHitDice(
+      characterSheet.currentHitDie,
+      hitDiceTotals((characterSheet.classes ?? []).map((cls: { level: number, class?: { hitDice?: string } }) => ({ level: cls.level, hitDice: cls.class?.hitDice }))),
+    )
 
     stmts.push(db.update(schema.characterSheets)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

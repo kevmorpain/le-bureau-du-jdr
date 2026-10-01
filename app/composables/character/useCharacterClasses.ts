@@ -1,4 +1,5 @@
 import { useStorage } from '@vueuse/core'
+import { hitDiceTotals } from '~~/shared/rules/hitDice'
 
 export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
   const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
@@ -36,12 +37,7 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
   const multiClass = computed(() => characterClasses.value.filter(cls => !cls.isMain))
 
   const hitDice = computed(() =>
-    Object.entries(
-      characterClasses.value.reduce<Record<string, number>>((acc, cls) => {
-        acc[cls.hitDice!] = (acc[cls.hitDice!] ?? 0) + cls.level
-        return acc
-      }, {}),
-    ).map(([hitDie, count]) => ({ hitDie: hitDie.split('d')[1] ?? hitDie, count })),
+    hitDiceTotals(characterClasses.value).map(({ die, count }) => ({ hitDie: die, count })),
   )
 
   const proficiencyBonus = computed<number>(() => Math.floor((characterLevel.value - 1) / 4) + 2)

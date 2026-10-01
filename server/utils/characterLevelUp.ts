@@ -8,6 +8,7 @@ import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { buildCatalog } from '~~/server/utils/catalog'
+import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
 import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
@@ -287,8 +288,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   }
   const pactSlotsToDelete = existingSlots.filter(s => s.slotType === 'pact_magic' && s.slotLevel !== newPactLevel)
 
-  const hitDieMatch = cls.hitDice?.match(/\d+d(\d+)/)
-  const hitDieSides = hitDieMatch?.[1] as ('4' | '6' | '8' | '10' | '12') | undefined
+  const hitDieSides = hitDieSidesOf(cls.hitDice)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const currentHitDie: Array<{ die: string, count: number }> = (charSheet.currentHitDie as any) ?? []
   let updatedHitDie = [...currentHitDie]

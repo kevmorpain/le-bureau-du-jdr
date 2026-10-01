@@ -226,8 +226,9 @@ Jets de sauvegarde contre la mort (succès/échecs). Bouton "Récupérer" qui re
 ### Dés de vie (`HitDiceSection`)
 
 Dés de vie restants par classe, utilisation pendant un repos court.
-**Source :** `character_sheets.currentHitDie` (JSON).
-**Persistence :** deep watch → PUT.
+**Source :** `character_sheets.currentHitDie` (JSON, `[{ die: '10', count }]` — les côtés, pas « 1d10 »).
+**Persistence :** deep watch → PUT (la clé doit figurer dans `updateCharacterSheetSchema`). Le repos long
+rend la moitié des dés (`recoverHitDice`, `shared/rules/hitDice.ts`, partagé client/serveur).
 
 ### Résistances & Défenses (`DefensesSection`)
 
