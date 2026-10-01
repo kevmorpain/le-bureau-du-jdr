@@ -1,5 +1,7 @@
 import { index, sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { relations, sql } from 'drizzle-orm'
+import type { AbilityKey } from '~~/shared/rules/abilities'
+import type { DamageType } from '~~/shared/rules/damageTypes'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Source } from '~~/shared/rules/source'
 import magicSchools from './magic_schools'
@@ -9,31 +11,6 @@ export enum SpellComponent {
   Vocal = 'V',
   Somatic = 'S',
   Material = 'M',
-}
-
-export enum AbilityScore {
-  Strength = 'str',
-  Dexterity = 'dex',
-  Constitution = 'con',
-  Intelligence = 'int',
-  Wisdom = 'wis',
-  Charisma = 'cha',
-}
-
-export enum DamageType {
-  Acid = 'acid',
-  Bludgeoning = 'bludgeoning',
-  Cold = 'cold',
-  Fire = 'fire',
-  Force = 'force',
-  Lightning = 'lightning',
-  Necrotic = 'necrotic',
-  Piercing = 'piercing',
-  Poison = 'poison',
-  Psychic = 'psychic',
-  Radiant = 'radiant',
-  Slashing = 'slashing',
-  Thunder = 'thunder',
 }
 
 type DcSuccessEffect = string // e.g., "half", "none"
@@ -98,7 +75,7 @@ const spells = sqliteTable('spells', {
   schoolId: integer('school_id').references(() => magicSchools.id).notNull(),
 
   dc: text('dc', { mode: 'json' })
-    .$type<{ ability: AbilityScore, success?: DcSuccessEffect }>(),
+    .$type<{ ability: AbilityKey, success?: DcSuccessEffect }>(),
 
   damages: text('damages', { mode: 'json' })
     .$type<DamageEntry[]>(),

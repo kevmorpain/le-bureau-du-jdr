@@ -165,7 +165,8 @@
 
 <script lang="ts" setup>
 import type { InsertSpell, MagicSchool } from '~~/server/utils/drizzle'
-import { AbilityScore, DamageType, SpellComponent } from '~~/server/db/schema/spells'
+import { SpellComponent } from '~~/server/db/schema/spells'
+import type { AbilityKey } from '~~/shared/rules/abilities'
 import { FetchError } from 'ofetch'
 import type { core } from 'zod/v4'
 
@@ -193,10 +194,10 @@ const magicSchoolsItems = computed<{
 
 const abilityScores = computed<{
   label: string
-  id: AbilityScore
+  id: AbilityKey
 }[]>(() => Object.entries(tm('ability_scores')).map(([value, label]) => ({
   label: rt(label),
-  id: value as AbilityScore,
+  id: value as AbilityKey,
 })))
 
 const successEffectOptions = computed<{
@@ -237,7 +238,7 @@ const isDcVisible = ref(false)
 const initDc = () => {
   isDcVisible.value = true
   spell.value.dc = {
-    ability: AbilityScore.Strength,
+    ability: 'str',
     success: undefined,
   }
 }
@@ -254,7 +255,7 @@ const damageLevelKind = ref<typeof damageLevelKinds[number]>(damageLevelKinds[0]
 const initDamage = () => {
   isDamageCollapsibleVisible.value = true
   spell.value.damages = [{
-    damage_type: DamageType.Acid,
+    damage_type: 'acid',
     damage_at_character_level: {},
   }]
 }
