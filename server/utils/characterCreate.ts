@@ -7,6 +7,7 @@ import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
+import { creationDuplicates } from '~~/server/utils/duplicateProficiencies'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
 import { ALL_TOOLS } from '~~/shared/rules/tools'
@@ -270,6 +271,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     speciesId,
     lineageId,
     backgroundId: backgroundId ?? undefined,
+    duplicates: await creationDuplicates(db, { classId, speciesId: speciesId ?? null, lineageId: lineageId ?? null, backgroundId }),
   }, catalog)
 
   if (invocationIds.length > 0) {

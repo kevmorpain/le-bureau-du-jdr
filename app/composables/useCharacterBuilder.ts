@@ -19,6 +19,7 @@ import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
+import { duplicateCount, duplicatedValues } from '~~/shared/rules/duplicateProficiencies'
 import { isProficiencyPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { featLanguageChoiceCount } from './useCharacterSheet'
 import type { Effect } from '~~/server/db/schema/effects'
@@ -388,16 +389,32 @@ export function useCharacterBuilder() {
   const backgroundDbId = computed<number | null>(() =>
     isCustomBackground.value ? null : resolveBackgroundId(backgroundData.value?.dbName ?? null),
   )
+  // Maîtrises FIXES par source : une maîtrise reçue de deux d'entre elles ouvre un remplacement. Les compétences
+  // d'un historique personnalisé sont des choix, pas des maîtrises fixes.
+  const classFixedTools = computed<string[]>(() => classProficienciesFor(classDbId.value).start
+    .flatMap(e => e.type === 'tool_proficiency' ? [e.value] : []))
+  const backgroundFixedTools = computed<string[]>(() =>
+    (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t)))
+  const backgroundFixedSkills = computed<string[]>(() => isCustomBackground.value ? [] : backgroundSkills.value)
+  const duplicateSkills = computed(() => duplicatedValues(speciesSkills.value, backgroundFixedSkills.value))
+  const duplicateTools = computed(() => duplicatedValues(classFixedTools.value, backgroundFixedTools.value))
+
   // Les compétences de classe gardent leur propre étape (`state.skills`).
   const genericChoices = computed<ResolvedChoice[]>(() => choicesFor({
     classLevels: classDbId.value != null ? { [classDbId.value]: state.value.level } : {},
     speciesId: speciesDbId.value ?? undefined,
     lineageId: selectedLineageId.value ?? undefined,
     backgroundId: backgroundDbId.value ?? undefined,
+    duplicates: {
+      skills: duplicateCount(speciesSkills.value, backgroundFixedSkills.value),
+      tools: duplicateCount(classFixedTools.value, backgroundFixedTools.value),
+    },
   }).filter(isProficiencyPickChoice))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
   const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))
+  // Remplacements de maîtrises reçues en double : facultatifs (« il peut choisir », AideDD).
+  const replacementChoices = computed(() => genericChoices.value.filter(c => c.global))
 
   const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
   const choicesComplete = (choices: ResolvedChoice[]) => choices.every(c => picksOf(c.progressionId).length === c.count)
@@ -406,7 +423,8 @@ export function useCharacterBuilder() {
     .flatMap(c => picksOf(c.progressionId) as string[])
   /** Valeurs choisies d'un type de maîtrise, sauf celles du point de choix `exceptProgressionId`. */
   const chosenValues = (kind: ChoiceKind, exceptProgressionId?: number) => valuesOf(genericChoices.value, kind, exceptProgressionId)
-  const choicePicksPayload = computed(() => genericChoices.value.flatMap(c => picksOf(c.progressionId).map(v =>
+  // Un nombre dû peut baisser après coup (doublon disparu en changeant d'historique) : l'excédent ne part pas.
+  const choicePicksPayload = computed(() => genericChoices.value.flatMap(c => picksOf(c.progressionId).slice(0, c.count).map(v =>
     c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string })))
 
   const variantHumanSkills = computed<string[]>(() =>
@@ -427,7 +445,7 @@ export function useCharacterBuilder() {
     return sources
   })
   const proficientSkills = computed<string[]>(() =>
-    [...new Set([...state.value.skills, ...grantedSkillSources.value.keys()])],
+    [...new Set([...state.value.skills, ...grantedSkillSources.value.keys(), ...valuesOf(replacementChoices.value, 'skill')])],
   )
   // Compétences de classe CHOISIES en doublon avec une source FIXE : le doublon est gaspillé (F3). On
   // l'INDIQUE (StepClass/StepDescription) pour que le joueur change son choix de classe — non bloquant.
@@ -448,13 +466,7 @@ export function useCharacterBuilder() {
     .join(', '))
   // Outils accordés d'office (classe, historique) : exclus des pickers pour ne pas gaspiller un choix. On ne
   // retient que les entrées CONCRÈTES de l'historique : ses « … au choix » sont des points de choix.
-  const grantedTools = computed<string[]>(() => {
-    const fromClass = classProficienciesFor(classDbId.value).start
-      .filter(e => e.type === 'tool_proficiency')
-      .map(e => e.value as string)
-    const fixed = (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t))
-    return [...new Set([...fromClass, ...fixed])]
-  })
+  const grantedTools = computed<string[]>(() => [...new Set([...classFixedTools.value, ...backgroundFixedTools.value])])
   const ownedTools = computed<string[]>(() => [...new Set([...grantedTools.value, ...chosenValues('tool')])])
   const speciesLanguages = computed<string[]>(() =>
     speciesEffects.value.flatMap(e => e.type === 'language_proficiency' ? [e.value] : []),
@@ -924,6 +936,9 @@ export function useCharacterBuilder() {
     speciesChoices,
     backgroundChoices,
     classChoices,
+    replacementChoices,
+    duplicateSkills,
+    duplicateTools,
     picksOf,
     chosenValues,
     choicePicksPayload,

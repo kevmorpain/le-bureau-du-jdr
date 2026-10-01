@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull } from 'drizzle-orm'
+import { and, eq, inArray, isNotNull, isNull, or } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import { z } from 'zod'
 import * as srcSchema from '~~/server/db/schema'
@@ -53,17 +53,31 @@ export function choicePickWriteStmts(db: Db, characterSheetId: number, picks: Ch
     .onConflictDoNothing()]
 }
 
-// Au changement d'historique : les choix faits sur les points de choix d'un historique ne valent plus.
+// Au changement d'historique : les choix faits sur ses points de choix ne valent plus, ni les remplacements de
+// maîtrises en double (règle générale, porteur sans propriétaire), qui dépendent de ses maîtrises fixes.
 export async function deleteBackgroundChoicePicks(db: Db, characterSheetId: number): Promise<void> {
   const backgroundProgressions = db
     .select({ id: srcSchema.progression.id })
     .from(srcSchema.progression)
     .innerJoin(srcSchema.backgroundFeatures, eq(srcSchema.backgroundFeatures.featureId, srcSchema.progression.featureId))
+  const generalRuleProgressions = db
+    .select({ id: srcSchema.progression.id })
+    .from(srcSchema.progression)
+    .innerJoin(srcSchema.features, eq(srcSchema.features.id, srcSchema.progression.featureId))
+    .where(and(
+      eq(srcSchema.features.featureType, 'choice_carrier'),
+      isNull(srcSchema.features.classId),
+      isNull(srcSchema.features.subclassId),
+      isNull(srcSchema.features.lineageId),
+    ))
   await db
     .delete(srcSchema.characterChoices)
     .where(and(
       eq(srcSchema.characterChoices.characterSheetId, characterSheetId),
-      inArray(srcSchema.characterChoices.progressionId, backgroundProgressions),
+      or(
+        inArray(srcSchema.characterChoices.progressionId, backgroundProgressions),
+        inArray(srcSchema.characterChoices.progressionId, generalRuleProgressions),
+      ),
     ))
 }
 

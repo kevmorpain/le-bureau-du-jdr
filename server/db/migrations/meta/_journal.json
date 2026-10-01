@@ -771,6 +771,13 @@
       "when": 1747872067000,
       "tag": "0109_class_tool_choices",
       "breakpoints": true
+    },
+    {
+      "idx": 110,
+      "version": "6",
+      "when": 1747872068000,
+      "tag": "0110_duplicate_proficiency_replacement",
+      "breakpoints": true
     }
   ]
 }

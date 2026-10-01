@@ -137,6 +137,28 @@
       </div>
     </div>
 
+    <div v-if="replacementChoices.length" class="mb-6">
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-1">
+        Maîtrise en double
+      </p>
+      <p class="text-xs text-muted mb-3">
+        Reçue de deux sources : <strong class="text-(--ui-text)">{{ duplicateLabels }}</strong>. Vous pouvez choisir
+        une autre maîtrise de même nature à la place.
+      </p>
+      <div class="space-y-3">
+        <ChoicePointPicker
+          v-for="choice in replacementChoices"
+          :key="choice.progressionId"
+          v-model="state.choicePicks[choice.progressionId]"
+          :kind="choice.kind"
+          :count="choice.count"
+          :options="optionValuesOf(choice)"
+          :owned="ownedFor(choice)"
+          :title="choice.kind === 'skill' ? 'Compétence de remplacement' : 'Outil de remplacement'"
+        />
+      </div>
+    </div>
+
     <div class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Alignement</p>
       <div class="grid grid-cols-3 gap-2">
@@ -247,6 +269,9 @@ const {
   ALIGNMENTS,
   SKILLS,
   backgroundChoices,
+  replacementChoices,
+  duplicateSkills,
+  duplicateTools,
   ownedFor,
   optionValuesOf,
   classSkillConflicts,
@@ -261,6 +286,11 @@ const { extended } = useExtendedContent()
 const filteredBackgrounds = computed(() =>
   BACKGROUNDS.filter(b => !b.source || !isGatedSource(b.source) || extended.value),
 )
+
+const duplicateLabels = computed(() => [
+  ...duplicateSkills.value.map(k => SKILLS.find(s => s.key === k)?.label ?? k),
+  ...duplicateTools.value,
+].join(', '))
 
 const traitFields: { key: TraitKey, label: string, placeholder: string }[] = [
   { key: 'personality', label: 'Personnalité', placeholder: 'Je suis…' },

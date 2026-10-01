@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm'
 import { upsertByName } from './lib/upsertByName'
 import { rulesetOf } from './lib/rulesetOf'
 import { seedBackgroundProficiencies } from './lib/seedBackgroundProficiencies'
+import { seedDuplicateReplacement } from './lib/seedDuplicateReplacement'
 import { backgroundsData } from './data/backgrounds'
 
 export default async function seed() {
@@ -28,5 +29,9 @@ export default async function seed() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const proficiencies = await seedBackgroundProficiencies(db as any, backgroundsData)
 
-  return { ...report, proficiencies }
+  // Remplacement d'une maîtrise reçue en double : règle du chapitre Historiques, sans propriétaire.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const duplicateReplacement = await seedDuplicateReplacement(db as any)
+
+  return { ...report, proficiencies, duplicateReplacement }
 }
