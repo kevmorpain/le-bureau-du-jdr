@@ -48,8 +48,10 @@ interface LevelUpState {
   asiBonuses: Record<AbilityKey, number>  // valeurs de 0 à 2, total = 2
   featureId: number | null           // id DB du don
 
-  // Multiclassage (step skills)
+  // Maîtrises (step skills)
   newSkills: string[]                // compétences gagnées via multiclassage
+  featLanguages: string[]            // langues du don Linguiste (step asi)
+  choicePicks: Record<number, Array<string | number>> // points de choix gagnés à ce niveau (instrument du Barde rejoint)
 
   // Magie (step spells)
   newCantripIds: number[]            // IDs sorts DB
@@ -148,9 +150,12 @@ Guerrier `[4,6,8,12,14,16,19]` ; Roublard `[4,8,10,12,16,19]`) viennent du seed
 
 ---
 
-### Étape 5 — Compétences (`LevelUpStepSkills.vue`) — conditionnelle
+### Étape 5 — Maîtrises (`LevelUpStepSkills.vue`) — conditionnelle
 
-**Affiché uniquement si** `needsMulticlassSkills` (multiclassage dans une classe qui octroie des compétences).
+**Affiché uniquement si** `needsMulticlassSkills` (multiclassage dans une classe qui octroie des compétences)
+ou si ce niveau de classe rend dus des points de choix de maîtrise (`newPickChoices` = `choicesGainedAtLevelUp`,
+`shared/rules/resolve.ts` : porteur de multiclassage d'une classe rejointe — instrument du Barde, AideDD).
+Ces choix passent par le sélecteur générique et partent en `choicePicks`.
 Règle PHB 2014 ([AideDD, multiclassage](https://www.aidedd.org/regles/personnalisation/multiclassage/)) :
 Barde 1 « au choix », Rôdeur et Roublard 1 « dans la liste de la classe », aucune ailleurs.
 
@@ -161,7 +166,7 @@ Barde 1 « au choix », Rôdeur et Roublard 1 « dans la liste de la classe », 
 Les compétences déjà maîtrisées (`proficientSkills`, lu dans la couche de la fiche) sont grisées.
 
 **Validation :** `newSkills.length >= requiredMulticlassSkillPicks` (le nombre dû, plafonné aux compétences
-de la liste encore non maîtrisées).
+de la liste encore non maîtrisées), et chaque point de choix de `newPickChoices` complet.
 
 **Serveur :** `newSkills` (clés `skillEnum`, sans doublon) n'est accepté que si la classe est **nouvellement
 rejointe** (déduit de `character_classes`, pas du flag client), en nombre ≤ au dû et dans la liste de la
@@ -223,8 +228,9 @@ Corps :
   asiChoice?: 'asi' | 'feat' | null
   asiBonuses?: Record<string, number> | null
   featureId?: number | null         // don choisi (asiChoice 'feat')
-  featChoices?: { ability?, spellId?, skills?, tools? } | null
+  featChoices?: { ability?, spellId?, skills?, tools?, languages? } | null
   newSkills?: SkillKey[]            // multiclassage uniquement ; sans doublon (Zod → 422)
+  choicePicks?: { progressionId, value? | spellId? }[]  // points de choix gagnés à ce niveau
   newCantripIds?: number[]
   newSpellIds?: number[]
   pactBoon?: 'chain' | 'blade' | 'tome' | null
@@ -250,6 +256,8 @@ Corps :
 9. Gérer les effets du Pact Boon (chain → Appel de familier, tome → sorts mineurs, blade → isPactWeapon)
 10. **Manifestations occultes** : `applyInvocationChanges` (cf. `server/utils/invocations.ts`) — si `replacedInvocationId`, DELETE le `character_features` correspondant + purge des `character_spells` source='invocation' liés aux `spell_grant` de cette invocation. Puis INSERT des `newInvocationIds` dans `character_features`, et matérialisation des `spell_grant` en `character_spells` avec `source: 'invocation'` (idempotent via `onConflictDoNothing`).
 11. Insérer les nouvelles compétences de multiclassage (validées au préalable : classe rejointe, nombre, liste)
+    puis les `choicePicks` en `character_choices`, validés contre les points de choix que ce niveau de classe rend dus
+    (`validateLevelUpChoicePicks`, porteur de multiclassage d'une classe rejointe compris)
 12. Upserter les compétences en expertise (`proficiencyLevel: 'expert'`). Validées **avant** toute écriture (`validateLevelUpExpertise`) : au plus le delta du `count` cumulatif de la progression `expertise` entre `newLevel − 1` et `newLevel` (`expertiseGainedAtLevel`, même projection que le front), et aucune compétence déjà `expert` dans `character_skills` (toutes sources). La maîtrise préalable de la compétence reste **front-autoritaire** : la fiche permet déjà de poser `expert` à la main sur n'importe quelle compétence (`PUT /skills`), et le set maîtrisé complet n'est composé que côté front.
 13. Recalculer les emplacements de sort (full=niveau, half=⌊niveau/2⌋ si ≥2, pact=séparé) — **particularité Pact Magic** : tous les emplacements occultistes sont du même niveau, et ce niveau change avec le niveau d'occultiste (niv. 3 → slots niv. 2, niv. 5 → niv. 3, etc.). Le handler DELETE explicitement les anciens `pact_magic` slots aux autres niveaux avant l'upsert, avec préservation du compteur `used` du précédent niveau.
 

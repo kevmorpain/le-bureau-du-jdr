@@ -248,7 +248,7 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   sauf si leur historique les donnait.
 - **Règle** (AideDD, ligne « Outils » des pages de classe) : seuls le Roublard (outils de voleur) et le
   Druide (kit d'herboriste) ont un outil **fixe** ; le Barde et le Moine en choisissent (ChoiceKind
-  `tool`, [#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133)).
+  `tool`, [#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204), résolu au lot 2).
 - **Correctif** : champ `tools` de `CLASS_PROFICIENCIES` → effets `tool_proficiency` du porteur
   « Maîtrises de la classe » ; bases déployées complétées par la migration `0104`. Le picker Doué du
   builder exclut ces outils, comme celui du level-up. Suivi : [#110](https://github.com/kevmorpain/le-bureau-du-jdr/issues/110).

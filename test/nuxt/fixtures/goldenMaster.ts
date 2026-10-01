@@ -221,7 +221,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
 
   // ── Choix de COMPÉTENCES DE CLASSE (F3 tranche 3) — owner choice_carrier + progression `skill` ──
   // Le pick est enregistré en character_choices (progression skill) ; la maîtrise est dérivée à la
-  // lecture (deriveClassSkills), plus matérialisée en character_skills. Ids auto : le snapshot résout par nom.
+  // lecture (deriveChoiceProficiencies), plus matérialisée en character_skills. Ids auto : le snapshot résout par nom.
   for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin]] as const) {
     const choice = CLASS_SKILL_CHOICES[className]!
     const [f] = await db.insert(schema.features).values({ name: 'Compétences de classe', featureType: 'choice_carrier', classId, levelRequired: 1 }).returning()
