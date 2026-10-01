@@ -1,5 +1,4 @@
-// Placeholder volontairement invalide (TLD réservé `.invalid`) : à remplacer par l'adresse de contact réelle avant mise en ligne.
-export const CONTACT_EMAIL = 'a-renseigner@bureau-du-jdr.invalid'
+export const CONTACT_EMAIL = 'support.lebureaudujdr@gmail.com'
 
 export const LEGAL_UPDATED_AT = '1er octobre 2026'
 
