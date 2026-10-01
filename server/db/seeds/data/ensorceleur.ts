@@ -131,23 +131,29 @@ Types et dégâts associés : Airain/Or/Rouge (feu), Argent/Blanc (froid), Bleu/
     features: [
       {
         name: 'Pic de magie sauvage',
-        description: `À partir du niveau 1, votre lien avec le chaos peut provoquer des effets imprévisibles. Chaque fois que vous lancez un sort d'ensorceleur de niveau 1 ou supérieur, le MD peut vous demander de lancer un d20. Sur un 1, lancez sur la table de Pic de magie sauvage pour déclencher un effet magique aléatoire.`,
+        description: `À partir du niveau 1, vos sorts peuvent déclencher des poussées de magie incontrôlables. Une fois par tour, immédiatement après que vous avez lancé un sort d'ensorceleur de niveau 1 ou plus, le MD peut vous demander de lancer un d20. Sur un 1, vous déclenchez un effet magique aléatoire : lancez un d100 sur la table de Pic de magie sauvage.
+
+Si l'effet est un sort, il est trop violent pour être affecté par votre métamagie. S'il demande normalement de la concentration, il n'en demande pas : le sort persiste pour sa durée totale.`,
         featureType: 'subclass_feature',
         levelRequired: 1,
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        rollTable: 'wild_magic_surge',
       },
       {
         name: 'Marée du chaos',
-        description: `À partir du niveau 1, vous pouvez puiser dans le chaos pour gagner un avantage à un jet d'attaque, un test de caractéristique ou un jet de sauvegarde de votre choix. Une fois cette faculté utilisée, vous devez terminer un repos long avant de pouvoir vous en resservir — sauf si le MD vous fait lancer sur la table de Pic de magie sauvage, ce qui la recharge immédiatement.`,
+        description: `À partir du niveau 1, vous pouvez manipuler les forces du hasard et du chaos pour gagner un avantage à un jet d'attaque, un test de caractéristique ou un jet de sauvegarde. Vous devez ensuite terminer un repos long avant de pouvoir l'utiliser à nouveau.
+
+Tant que vous n'avez pas récupéré cette capacité, si vous lancez un sort d'ensorceleur de niveau 1 ou plus, le MD peut vous demander de faire un jet sur la table de Pic de magie sauvage (d100). Quel qu'en soit le résultat, vous récupérez ensuite cette capacité.`,
         featureType: 'subclass_feature',
         levelRequired: 1,
         actionType: null,
         rechargeType: 'long_rest',
         maxUsesFormula: null,
         effects: [],
+        rollTable: 'wild_magic_surge',
       },
       {
         name: 'Chance forcée',
@@ -168,6 +174,7 @@ Types et dégâts associés : Airain/Or/Rouge (feu), Argent/Blanc (froid), Bleu/
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        rollTable: 'wild_magic_surge',
       },
       {
         name: 'Bombardement de sort',

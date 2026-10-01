@@ -116,6 +116,12 @@ d'aptitudes encore disponibles (utilisations restantes).
 `character_sheets.features` + `species.speciesFeatures` (chargés dans le GET principal).
 **Persistence des utilisations :** `PUT /api/character_sheets/{id}/features` (via deep watch).
 
+**Tables à lancer :** une capacité qui renvoie à une table (`features.roll_table_id` — Pic de magie
+sauvage, Marée du chaos, Chaos contrôlé) affiche un bouton « Table ». Il ouvre `RollTableSlideover`, qui
+charge la table via `GET /api/catalog/roll-tables/{id}` (cache edge + service worker, donc consultable
+hors-ligne une fois ouverte). `RollTablePanel` lance le dé et surligne les deux derniers jets (Chaos
+contrôlé fait lancer deux fois puis choisir) ; ces jets ne sont pas persistés.
+
 ### Magie (`MagicSection`)
 
 Section unifiée : stats d'incantation + liste des sorts.

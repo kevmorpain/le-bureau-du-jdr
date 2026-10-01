@@ -9,6 +9,7 @@ import type { AbilityScoreKey } from './effects'
 import classes from './classes'
 import subclasses from './subclasses'
 import speciesLineages from './species_lineages'
+import rollTables from './roll_tables'
 import featureEffects from './feature_effects'
 import speciesFeatures from './species_features'
 import characterFeatures from './character_features'
@@ -55,6 +56,8 @@ const features = sqliteTable(
     subclassId: integer('subclass_id').references(() => subclasses.id, { onDelete: 'set null' }),
     // Lignée propriétaire, symétrique de `subclass_id` (D17).
     lineageId: integer('lineage_id').references(() => speciesLineages.id, { onDelete: 'set null' }),
+    // Table à lancer que la capacité consulte ; plusieurs capacités peuvent partager la même.
+    rollTableId: integer('roll_table_id').references(() => rollTables.id, { onDelete: 'set null' }),
     levelRequired: integer('level_required'),
     // Groupe d'options auquel la feature appartient. Indexé : résout `optionSource:{feature_group}`.
     tag: text('tag').$type<FeatureTag>(),

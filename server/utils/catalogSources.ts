@@ -5,6 +5,7 @@ import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import { CORE_SOURCE } from '~~/shared/rules/source'
 import type { AbilityKey } from '~~/shared/rules/abilities'
+import type { RollTable } from '~~/shared/rules/rollTables'
 import { loadClassProficiencyGrants, type ClassProficiencyGrants } from '~~/server/utils/classProficiencyDerivation'
 import type { Db } from '~~/server/utils/db'
 
@@ -363,4 +364,13 @@ export async function loadSpeciesLineages(db: Db, speciesId: number, extended = 
   })
 
   return { ...meta, lineages: derived }
+}
+
+export async function loadRollTable(db: Db, id: number): Promise<RollTable | null> {
+  const [row] = await db
+    .select({ name: schema.rollTables.name, die: schema.rollTables.die, entries: schema.rollTables.entries })
+    .from(schema.rollTables)
+    .where(eq(schema.rollTables.id, id))
+    .limit(1)
+  return row ?? null
 }
