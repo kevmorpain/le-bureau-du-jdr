@@ -1,5 +1,5 @@
 import { evaluate, type Formula, type FormulaContext } from '../utils/formula'
-import type { ChoiceKind, OptionSource } from './choices'
+import { PICK_CHOICE_KINDS, type ChoiceKind, type OptionSource } from './choices'
 import type { SkillKey } from './skills'
 import type { AbilityKey } from './abilities'
 import type { FeaturePrerequisite } from '../../server/db/schema/features'
@@ -197,4 +197,21 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
 // Les choix `replaceable` déjà complets ne sont pas « dus ».
 export function dueChoices(result: { choices: ResolvedChoice[] }): ResolvedChoice[] {
   return result.choices.filter(c => c.remaining > 0)
+}
+
+// Choix de maîtrise ou de sort mineur passant par le chemin générique des picks. Les compétences de classe
+// ont leur propre étape (création) et leur propre règle de multiclassage (`multiclassSkillGrant`).
+export function isProficiencyPickChoice(c: ResolvedChoice): boolean {
+  return PICK_CHOICE_KINDS.includes(c.kind) && !(c.kind === 'skill' && c.ownerClassId != null)
+}
+
+// Points de choix d'une classe devenus dus en la passant de `fromLevel` à `toLevel` (level-up). Une classe
+// rejointe (`fromLevel` 0, autre que `mainClassId`) reçoit ceux de son porteur de multiclassage.
+export function choicesGainedAtLevelUp(
+  catalog: Catalog,
+  { classId, fromLevel, toLevel, mainClassId }: { classId: number, fromLevel: number, toLevel: number, mainClassId: number },
+): ResolvedChoice[] {
+  const at = (level: number) => level > 0 ? resolveChoices({ classLevels: { [classId]: level }, mainClassId }, catalog).choices : []
+  const before = new Set(at(fromLevel).map(c => c.progressionId))
+  return at(toLevel).filter(c => c.ownerClassId === classId && !before.has(c.progressionId))
 }

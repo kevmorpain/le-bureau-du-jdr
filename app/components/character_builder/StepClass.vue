@@ -141,6 +141,21 @@
         </p>
       </div>
 
+      <template v-if="classChoices.length">
+        <USeparator class="my-6" />
+        <div class="space-y-3">
+          <ChoicePointPicker
+            v-for="choice in classChoices"
+            :key="choice.progressionId"
+            v-model="state.choicePicks[choice.progressionId]"
+            :kind="choice.kind"
+            :count="choice.count"
+            :options="optionValuesOf(choice)"
+            :owned="ownedFor(choice)"
+          />
+        </div>
+      </template>
+
       <template v-if="needsFightingStyle && fightingStyleOptions.length">
         <USeparator class="my-6" />
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
@@ -388,6 +403,9 @@ const {
   proficientSkills,
   classSkillConflicts,
   classSkillConflictLabels,
+  classChoices,
+  ownedFor,
+  optionValuesOf,
   needsPactBoon,
   needsInvocations,
   invocationsExpected,

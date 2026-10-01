@@ -6,7 +6,7 @@ import type { Effect } from '../../schema/effects'
 import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequisite } from '../../schema/features'
 import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { ChoiceKind, OptionSource } from '~~/shared/rules/choices'
-import type { Formula } from '~~/shared/utils/formula'
+import { fixed, type Formula } from '~~/shared/utils/formula'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import { subclassChoiceFeature, SUBCLASS_CHOICE_FEATURE_NAMES } from '../data/subclassChoice'
 import { fightingStyleOptionFeatures } from '../data/fightingStyles'
@@ -22,6 +22,11 @@ function proficiencyEffects(set: ProficiencySet): Effect[] {
   ]
 }
 
+function toolChoiceProgression(set: ProficiencySet): ProgressionDef | null {
+  if (!set.toolChoice) return null
+  return { kind: 'tool', count: fixed(set.toolChoice.count), optionSource: { type: 'tools', from: set.toolChoice.from } }
+}
+
 function buildProficiencyCarrier(className: string): FeatureDef | null {
   const prof = CLASS_PROFICIENCIES[className]
   if (!prof) return null
@@ -34,19 +39,22 @@ function buildProficiencyCarrier(className: string): FeatureDef | null {
       ...prof.savingThrows.map((value): Effect => ({ type: 'saving_throw_proficiency', value: { ability: value } })),
       ...proficiencyEffects(prof),
     ],
+    progression: toolChoiceProgression(prof),
   }
 }
 
 function buildMulticlassProficiencyCarrier(className: string): FeatureDef | null {
   const multiclass = CLASS_PROFICIENCIES[className]?.multiclass
   const effects = multiclass ? proficiencyEffects(multiclass) : []
-  if (!effects.length) return null
+  const progression = multiclass ? toolChoiceProgression(multiclass) : null
+  if (!effects.length && !progression) return null
   return {
     name: MULTICLASS_PROFICIENCY_CARRIER_NAME,
     description: null,
     featureType: 'multiclass_proficiency_grant',
     levelRequired: 1,
     effects,
+    progression,
   }
 }
 

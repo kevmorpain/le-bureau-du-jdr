@@ -17,9 +17,9 @@ import {
 } from '~/data/character-builder'
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
-import { PICK_CHOICE_KINDS, type ChoiceKind } from '~~/shared/rules/choices'
+import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
-import { optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { isProficiencyPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { featLanguageChoiceCount } from './useCharacterSheet'
 import type { Effect } from '~~/server/db/schema/effects'
 
@@ -389,16 +389,15 @@ export function useCharacterBuilder() {
     isCustomBackground.value ? null : resolveBackgroundId(backgroundData.value?.dbName ?? null),
   )
   // Les compétences de classe gardent leur propre étape (`state.skills`).
-  const isGenericChoice = (c: ResolvedChoice) =>
-    PICK_CHOICE_KINDS.includes(c.kind) && !(c.kind === 'skill' && c.ownerClassId != null)
   const genericChoices = computed<ResolvedChoice[]>(() => choicesFor({
     classLevels: classDbId.value != null ? { [classDbId.value]: state.value.level } : {},
     speciesId: speciesDbId.value ?? undefined,
     lineageId: selectedLineageId.value ?? undefined,
     backgroundId: backgroundDbId.value ?? undefined,
-  }).filter(isGenericChoice))
+  }).filter(isProficiencyPickChoice))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
+  const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))
 
   const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
   const choicesComplete = (choices: ResolvedChoice[]) => choices.every(c => picksOf(c.progressionId).length === c.count)
@@ -708,7 +707,7 @@ export function useCharacterBuilder() {
         if (needsPactBoon.value && !s.pactBoon) return false
         if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
         if (needsMetamagic.value && s.metamagicIds.length < metamagicExpected.value) return false
-        return true
+        return choicesComplete(classChoices.value)
       }
       case 'abilities': {
         return ABILITIES.every(ab => s.abilities[ab] != null)
@@ -924,6 +923,7 @@ export function useCharacterBuilder() {
     genericChoices,
     speciesChoices,
     backgroundChoices,
+    classChoices,
     picksOf,
     chosenValues,
     choicePicksPayload,
