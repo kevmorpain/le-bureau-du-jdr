@@ -120,47 +120,20 @@
       </div>
     </div>
 
-    <div v-if="toolChoices.length > 0" class="mb-6">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Maîtrises d'outils</p>
-      <div v-for="tc in toolChoices" :key="tc.label" class="mb-4">
-        <p class="text-xs text-muted mb-2">{{ tc.label }}</p>
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-for="opt in tc.options"
-            :key="opt"
-            type="button"
-            class="px-2.5 py-1 rounded-lg border text-xs transition-colors cursor-pointer"
-            :class="state.selectedToolProficiencies[tc.label] === opt
-              ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-medium'
-              : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-amber-500/40'"
-            @click="state.selectedToolProficiencies[tc.label] = opt"
-          >
-            {{ opt }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="languageChoiceCount > 0" class="mb-6">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-1">
-        Langues supplémentaires
-        <span class="text-amber-400 ml-1.5">{{ state.selectedLanguages.length }}/{{ languageChoiceCount }} choix</span>
+    <div v-if="backgroundChoices.length" class="mb-6">
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Choix de l'historique
       </p>
-      <p class="text-xs text-muted mb-3">Votre race ou historique vous permet d'apprendre {{ languageChoiceCount === 1 ? 'une langue' : `${languageChoiceCount} langues` }} supplémentaire{{ languageChoiceCount > 1 ? 's' : '' }}.</p>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="lang in LANGUAGES"
-          :key="lang"
-          type="button"
-          class="px-2.5 py-1 rounded-lg border text-xs transition-colors cursor-pointer"
-          :class="state.selectedLanguages.includes(lang)
-            ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-medium'
-            : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-amber-500/40'"
-          :disabled="!state.selectedLanguages.includes(lang) && state.selectedLanguages.length >= languageChoiceCount"
-          @click="toggleLanguage(lang)"
-        >
-          {{ lang }}
-        </button>
+      <div class="space-y-3">
+        <ChoicePointPicker
+          v-for="choice in backgroundChoices"
+          :key="choice.progressionId"
+          v-model="state.choicePicks[choice.progressionId]"
+          :kind="choice.kind"
+          :count="choice.count"
+          :options="optionValuesOf(choice)"
+          :owned="ownedFor(choice)"
+        />
       </div>
     </div>
 
@@ -273,9 +246,9 @@ const {
   BACKGROUNDS,
   ALIGNMENTS,
   SKILLS,
-  LANGUAGES,
-  languageChoiceCount,
-  TOOL_CHOICE_MAP,
+  backgroundChoices,
+  ownedFor,
+  optionValuesOf,
   classSkillConflicts,
   classSkillConflictLabels,
   speciesSkillConflicts,
@@ -287,12 +260,6 @@ const {
 const { extended } = useExtendedContent()
 const filteredBackgrounds = computed(() =>
   BACKGROUNDS.filter(b => !b.source || !isGatedSource(b.source) || extended.value),
-)
-
-const toolChoices = computed(() =>
-  (backgroundData.value?.toolProficiencies ?? [])
-    .filter(p => TOOL_CHOICE_MAP[p])
-    .map(p => ({ label: p, options: TOOL_CHOICE_MAP[p]! })),
 )
 
 const traitFields: { key: TraitKey, label: string, placeholder: string }[] = [
@@ -319,16 +286,6 @@ const storyFields: { key: StoryKey, label: string, placeholder: string, rows: nu
   { key: 'allies', label: 'Alliés & organisations', placeholder: 'Factions, mentors, contacts, dettes…', rows: 3 },
 ]
 
-function toggleLanguage(lang: string) {
-  const idx = state.value.selectedLanguages.indexOf(lang)
-  if (idx >= 0) {
-    state.value.selectedLanguages.splice(idx, 1)
-  }
-  else if (state.value.selectedLanguages.length < languageChoiceCount.value) {
-    state.value.selectedLanguages.push(lang)
-  }
-}
-
 function toggleCustomSkill(key: string) {
   const idx = state.value.customBackgroundSkills.indexOf(key)
   if (idx >= 0) {
@@ -344,12 +301,5 @@ watch(() => state.value.backgroundId, (id) => {
     state.value.customBackgroundName = ''
     state.value.customBackgroundSkills = []
   }
-  state.value.selectedToolProficiencies = {}
-})
-
-// Le nombre de langues peut baisser (changement d'historique, « langue supplémentaire » désélectionnée) :
-// on retire l'excédent, sinon il partirait quand même à la création.
-watch(languageChoiceCount, (count) => {
-  if (state.value.selectedLanguages.length > count) state.value.selectedLanguages.splice(count)
 })
 </script>

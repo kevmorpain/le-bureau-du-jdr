@@ -1,40 +1,36 @@
 import { describe, it, expect } from 'vitest'
-import {
-  BACKGROUNDS,
-  EXTRA_LANGUAGE_OPTION,
-  TOOL_CHOICE_MAP,
-  chosenToolProficiencies,
-  extraLanguagesFromToolChoices,
-} from '../../app/data/character-builder'
+import { BACKGROUNDS } from '../../app/data/character-builder'
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
-import { fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
+import { backgroundChoices, fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
+import { TOOL_CATEGORIES } from '../../shared/rules/tools'
 
-// Choix d'outil « outils OU langue » (Marchand de guilde) : l'option langue ne doit jamais partir
-// en maîtrise d'outil, et doit ouvrir un choix de langue supplémentaire.
+// Entrées « au choix » des historiques → points de choix. Marchand de guilde : outils de navigateur OU
+// une langue (AideDD, Artisan de guilde, variante), en plus de sa langue au choix.
 
 const MERCHANT_CHOICE = 'Outils de navigateur ou langue au choix'
 
-describe('choix d\'outil « outils de navigateur OU langue »', () => {
-  it('propose les deux options', () => {
-    expect(TOOL_CHOICE_MAP[MERCHANT_CHOICE]).toEqual(['Outils de navigateur', EXTRA_LANGUAGE_OPTION])
+describe('backgroundChoices — entrées « au choix » des historiques', () => {
+  it('reconnaît chaque entrée « au choix » des historiques seedés', () => {
+    for (const bg of backgroundsData) expect(() => backgroundChoices(bg), bg.name).not.toThrow()
   })
 
-  it('option outils → maîtrise d\'outil, aucune langue en plus', () => {
-    const selected = { [MERCHANT_CHOICE]: 'Outils de navigateur' }
-    expect(chosenToolProficiencies(selected)).toEqual(['Outils de navigateur'])
-    expect(extraLanguagesFromToolChoices(selected)).toBe(0)
+  it('Marchand de guilde : outils de navigateur ou une langue, plus une langue', () => {
+    const merchant = backgroundsData.find(b => b.name === 'Marchand de guilde')!
+    expect(backgroundChoices(merchant)).toEqual([
+      { kind: 'tool', count: 1, optionSource: { type: 'tools', from: ['Outils de navigateur'], orLanguages: true } },
+      { kind: 'language', count: 1, optionSource: { type: 'languages' } },
+    ])
   })
 
-  it('option langue → aucune maîtrise d\'outil, une langue en plus', () => {
-    const selected = { [MERCHANT_CHOICE]: EXTRA_LANGUAGE_OPTION }
-    expect(chosenToolProficiencies(selected)).toEqual([])
-    expect(extraLanguagesFromToolChoices(selected)).toBe(1)
+  it('Artiste : un instrument de musique au choix', () => {
+    const artiste = backgroundsData.find(b => b.name === 'Artiste')!
+    expect(backgroundChoices(artiste)).toEqual([
+      { kind: 'tool', count: 1, optionSource: { type: 'tools', from: TOOL_CATEGORIES['Instruments de musique'] } },
+    ])
   })
 
-  it('laisse passer les choix d\'outils ordinaires et ignore les vides', () => {
-    const selected = { 'Un jeu au choix': 'Jeu de cartes', 'Outil d\'artisan au choix': '' }
-    expect(chosenToolProficiencies(selected)).toEqual(['Jeu de cartes'])
-    expect(extraLanguagesFromToolChoices(selected)).toBe(0)
+  it('refuse une entrée « au choix » inconnue plutôt que de la perdre', () => {
+    expect(() => backgroundChoices({ name: 'X', toolProficiencies: ['Arme au choix'] })).toThrow(/non reconnu/)
   })
 })
 

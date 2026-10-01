@@ -82,7 +82,6 @@ export const createCharacterSchema = z.object({
   // classSavingThrows retiré : les JS sont dérivés du porteur de la classe principale (F3 tranche 2).
   armorProficiencyKeys: z.array(z.string()).optional().default([]),
   weaponProficiencyKeys: z.array(z.string()).optional().default([]),
-  toolProficiencyChoices: z.array(z.string()).optional().default([]),
   // Compétences d'historique SEEDÉ : dérivées (F3), plus envoyées. Ne restent ici que les non-dérivables :
   // compétences d'un historique custom (sans porteur en base) + compétence d'Humain variant.
   backgroundSkills: z.array(z.string()).optional().default([]),
@@ -710,14 +709,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     stmts.push(...expertiseWriteStmts(db, sheetId, expertiseProgressionId, d.expertiseSkills))
   }
 
-  // Seuls les outils/langues choisis sont stockés ; les maîtrises de base sont dérivées par la fiche.
+  // Langues de l'Humain variant, faute d'espèce liée qui porte son choix : stockées comme des ajouts.
   // `armorProficiencyKeys` / `weaponProficiencyKeys` sont vestigiaux (acceptés, ignorés).
-  const proficiencyRows = [
-    ...d.toolProficiencyChoices.map(value => ({ characterSheetId: sheetId, proficiencyType: 'tool' as const, value, action: 'grant' as const })),
-    ...d.selectedLanguages.map(value => ({ characterSheetId: sheetId, proficiencyType: 'language' as const, value, action: 'grant' as const })),
-  ]
-  if (proficiencyRows.length) {
-    stmts.push(db.insert(schema.characterProficiencyOverrides).values(proficiencyRows))
+  if (d.selectedLanguages.length) {
+    stmts.push(db.insert(schema.characterProficiencyOverrides).values(
+      d.selectedLanguages.map(value => ({ characterSheetId: sheetId, proficiencyType: 'language' as const, value, action: 'grant' as const })),
+    ))
   }
 
   const casterType = cls.spellcastingType

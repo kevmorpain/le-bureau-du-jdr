@@ -6,7 +6,7 @@ import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as srcSchema from '../../server/db/schema'
 import { CreatureSize } from '../../server/db/schema/character_species'
-import type { FeatureChoice } from '../../server/db/seeds/lib/featureChoice'
+import type { FeatureChoice } from '../../shared/rules/choices'
 import { dwarfToolChoice, oneLanguageChoice, twoSkillsChoice, wizardCantripChoice } from '../../server/db/seeds/data/speciesChoices'
 import { characterSpecies } from '../../server/db/seeds/data/character_species'
 

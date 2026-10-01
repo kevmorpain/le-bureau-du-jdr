@@ -1,5 +1,6 @@
 import { db, schema } from 'hub:db'
 import { eq, and } from 'drizzle-orm'
+import { deleteBackgroundChoicePicks } from '~~/server/utils/choicePicks'
 import { z } from 'zod'
 
 const bodySchema = z.object({
@@ -34,6 +35,9 @@ export default defineEventHandler(async (event) => {
         eq(schema.characterSkills.isOverride, false),
       ),
     )
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await deleteBackgroundChoicePicks(db as any, characterSheetId)
 
   return { success: true }
 })

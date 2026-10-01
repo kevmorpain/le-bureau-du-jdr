@@ -9,7 +9,7 @@ import * as srcSchema from '../../server/db/schema'
 import { seedBackgroundProficiencies } from '../../server/db/seeds/lib/seedBackgroundProficiencies'
 import { deriveBackgroundProficiencies } from '../../server/utils/backgroundProficiencyDerivation'
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
-import { fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
+import { backgroundChoices, fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
 
 // Seed des porteurs de maîtrises d'historique + dérivation, bout en bout : la fiche doit dériver
 // exactement les maîtrises FIXES — compétences, outils, langues (== ce que createCharacter matérialisait).
@@ -67,6 +67,8 @@ describe('seedBackgroundProficiencies — structure', () => {
     // réutilise la même ligne `effects` mais crée bien un lien par porteur.
     const expectedEffects = backgroundsData.reduce((n, b) => n + fixedCount(b), 0)
     expect(report.effectsLinked).toBe(expectedEffects)
+    // Les entrées « au choix » deviennent des points de choix sur le même porteur.
+    expect(report.choicesInserted).toBe(backgroundsData.reduce((n, b) => n + backgroundChoices(b).length, 0))
   })
 
   it('le porteur est une feature proficiency_grant (jamais matérialisée ni affichée)', async () => {
@@ -103,7 +105,7 @@ describe('deriveBackgroundProficiencies — équivalence dérivé == fixe', () =
 describe('seedBackgroundProficiencies — idempotence', () => {
   it('un second passage ne crée ni porteur ni lien, et la dérivation est inchangée', async () => {
     const report = await seedBackgroundProficiencies(orm, backgroundsData)
-    expect(report).toEqual({ carriersInserted: 0, effectsLinked: 0 })
+    expect(report).toEqual({ carriersInserted: 0, effectsLinked: 0, choicesInserted: 0 })
 
     // Exemple : Marin garde ses 2 outils fixes après re-seed.
     const marin = await deriveBackgroundProficiencies(orm, bgIdByName.get('Marin')!)

@@ -8,10 +8,12 @@ import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { CreatureSize } from '../../server/db/schema/character_species'
 import { createCharacter, createCharacterSchema, CharacterValidationError } from '../../server/utils/characterCreate'
-import { deriveChoiceProficiencies } from '../../server/utils/choicePicks'
+import { deleteBackgroundChoicePicks, deriveChoiceProficiencies } from '../../server/utils/choicePicks'
 import { buildCatalog } from '../../server/utils/catalog'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { ensureFeatureChoice } from '../../server/db/seeds/lib/featureChoice'
+import { seedBackgroundProficiencies } from '../../server/db/seeds/lib/seedBackgroundProficiencies'
+import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
 import { twoSkillsChoice } from '../../server/db/seeds/data/speciesChoices'
 import { resolveChoices } from '../../shared/rules/resolve'
 import { LANGUAGE_KEYS } from '../../shared/rules/languages'
@@ -33,6 +35,7 @@ let db: any
 let elfId: number
 let highElfId: number
 let halfElfId: number
+let merchantId: number
 
 async function progressionOf(featureName: string, kind: ChoiceKind): Promise<number> {
   const [row] = await db.select({ id: schema.progression.id })
@@ -89,6 +92,10 @@ beforeAll(async () => {
   const polyvalence = await db.insert(schema.features).values({ name: 'Polyvalence', featureType: 'species_trait' }).returning().get()
   await db.insert(schema.speciesFeatures).values({ speciesId: halfElfId, featureId: polyvalence.id })
   await ensureFeatureChoice(db, polyvalence.id, twoSkillsChoice)
+
+  const merchant = await db.insert(schema.backgrounds).values({ name: 'Marchand de guilde' }).returning().get()
+  merchantId = merchant.id
+  await seedBackgroundProficiencies(db, backgroundsData.filter(b => b.name === 'Marchand de guilde'))
 })
 
 describe('catalogue — options des choix de langue, d\'outil et de sort mineur', () => {
@@ -146,5 +153,37 @@ describe('createCharacter — picks génériques', () => {
     await expect(halfElf([{ progressionId: skills, value: 'voler' }])).rejects.toThrow(/n'est pas une option/)
     await expect(highElf([{ progressionId: cantrip, spellId: LEVEL_1_SPELL }])).rejects.toThrow(/n'est pas une option/)
     await expect(highElf([{ progressionId: cantrip, value: 'Trait de feu' }])).rejects.toThrow(/attend un sort/)
+  })
+})
+
+describe('choix d\'historique — Marchand de guilde', () => {
+  it('une langue prise à la place des outils de navigateur devient une maîtrise de langue', async () => {
+    const tool = await progressionOf('Maîtrises d\'historique', 'tool')
+    const language = await progressionOf('Maîtrises d\'historique', 'language')
+    const { id } = await createCharacter(db, input({
+      speciesId: halfElfId,
+      backgroundId: merchantId,
+      choicePicks: [{ progressionId: tool, value: 'giant' }, { progressionId: language, value: 'draconic' }],
+    }), OWNER)
+    const effects = await deriveChoiceProficiencies(db, id)
+    expect(effects.filter(e => e.type === 'language_proficiency').map(e => e.value).sort()).toEqual(['draconic', 'giant'])
+    expect(effects.some(e => e.type === 'tool_proficiency')).toBe(false)
+  })
+
+  it('changer d\'historique retire ses choix, pas ceux de l\'espèce', async () => {
+    const tool = await progressionOf('Maîtrises d\'historique', 'tool')
+    const polyvalence = await progressionOf('Polyvalence', 'skill')
+    const { id } = await createCharacter(db, input({
+      speciesId: halfElfId,
+      backgroundId: merchantId,
+      choicePicks: [
+        { progressionId: tool, value: 'Outils de navigateur' },
+        { progressionId: polyvalence, value: 'stealth' },
+        { progressionId: polyvalence, value: 'arcana' },
+      ],
+    }), OWNER)
+    await deleteBackgroundChoicePicks(db, id)
+    const effects = await deriveChoiceProficiencies(db, id)
+    expect(effects.map(e => e.type)).toEqual(['skill_proficiency', 'skill_proficiency'])
   })
 })

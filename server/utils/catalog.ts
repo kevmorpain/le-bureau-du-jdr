@@ -224,7 +224,7 @@ async function resolveOptions(db: Db, source: OptionSource, owner: { ownerClassI
       return (source.from ?? LANGUAGE_KEYS).map(value => ({ value }))
 
     case 'tools':
-      return (source.from ?? ALL_TOOLS).map(value => ({ value }))
+      return [...(source.from ?? ALL_TOOLS), ...(source.orLanguages ? LANGUAGE_KEYS : [])].map(value => ({ value }))
 
     case 'proficient_skills': // résolu live dans resolveChoices contre projection.proficientSkills
     case 'abilities':

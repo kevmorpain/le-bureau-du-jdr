@@ -6,6 +6,7 @@ import type { Effect } from '~~/server/db/schema/effects'
 import { PICK_CHOICE_KINDS, SPELL_CHOICE_KINDS, VALUE_CHOICE_KINDS, type ChoiceKind } from '~~/shared/rules/choices'
 import { optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import type { SkillKey } from '~~/shared/rules/skills'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
@@ -52,6 +53,20 @@ export function choicePickWriteStmts(db: Db, characterSheetId: number, picks: Ch
     .onConflictDoNothing()]
 }
 
+// Au changement d'historique : les choix faits sur les points de choix d'un historique ne valent plus.
+export async function deleteBackgroundChoicePicks(db: Db, characterSheetId: number): Promise<void> {
+  const backgroundProgressions = db
+    .select({ id: srcSchema.progression.id })
+    .from(srcSchema.progression)
+    .innerJoin(srcSchema.backgroundFeatures, eq(srcSchema.backgroundFeatures.featureId, srcSchema.progression.featureId))
+  await db
+    .delete(srcSchema.characterChoices)
+    .where(and(
+      eq(srcSchema.characterChoices.characterSheetId, characterSheetId),
+      inArray(srcSchema.characterChoices.progressionId, backgroundProgressions),
+    ))
+}
+
 const PROFICIENCY_EFFECT_BY_KIND = {
   skill: (value: string): Effect => ({ type: 'skill_proficiency', value: { skill: value as SkillKey } }),
   tool: (value: string): Effect => ({ type: 'tool_proficiency', value }),
@@ -70,5 +85,8 @@ export async function deriveChoiceProficiencies(db: Db, characterSheetId: number
       inArray(srcSchema.progression.kind, [...VALUE_CHOICE_KINDS]),
       isNotNull(srcSchema.characterChoices.selectedValue),
     ))
-  return rows.map(r => PROFICIENCY_EFFECT_BY_KIND[r.kind as keyof typeof PROFICIENCY_EFFECT_BY_KIND](r.value!))
+  // Un choix d'outil `orLanguages` peut porter une langue : clés de langue et noms d'outils ne se recoupent pas.
+  return rows.map(r => r.kind === 'tool' && LANGUAGE_KEYS.includes(r.value!)
+    ? PROFICIENCY_EFFECT_BY_KIND.language(r.value!)
+    : PROFICIENCY_EFFECT_BY_KIND[r.kind as keyof typeof PROFICIENCY_EFFECT_BY_KIND](r.value!))
 }

@@ -6,9 +6,6 @@ import {
   ABILITIES,
   ABILITY_SHORT,
   SKILLS,
-  LANGUAGES,
-  TOOL_CHOICE_MAP,
-  extraLanguagesFromToolChoices,
   abilityMod,
   formatMod,
   profBonusAtLevel,
@@ -21,6 +18,7 @@ import {
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 import { PICK_CHOICE_KINDS, type ChoiceKind } from '~~/shared/rules/choices'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { featLanguageChoiceCount } from './useCharacterSheet'
 import type { Effect } from '~~/server/db/schema/effects'
@@ -85,11 +83,8 @@ export interface BuilderState {
   // valeur ; sort mineur : id), par id de progression.
   choicePicks: Record<number, Array<string | number>>
 
-  // Langues choisies
+  // Langues de l'Humain variant (clés de langue), faute d'espèce liée qui porte son choix
   selectedLanguages: string[]
-
-  // Maîtrises d'outils à choix (background)
-  selectedToolProficiencies: Record<string, string>
 
   // Étape 5 — Background personnalisé
   customBackgroundName: string
@@ -190,7 +185,6 @@ const INIT_STATE: BuilderState = {
   portraitUrl: '',
   choicePicks: {},
   selectedLanguages: [],
-  selectedToolProficiencies: {},
   customBackgroundName: '',
   customBackgroundSkills: [],
   equipChoices: [],
@@ -404,6 +398,7 @@ export function useCharacterBuilder() {
     backgroundId: backgroundDbId.value ?? undefined,
   }).filter(isGenericChoice))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
+  const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
 
   const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
   const choicesComplete = (choices: ResolvedChoice[]) => choices.every(c => picksOf(c.progressionId).length === c.count)
@@ -452,16 +447,14 @@ export function useCharacterBuilder() {
   const speciesSkillConflictLabels = computed(() => speciesSkillConflicts.value
     .map(k => SKILLS.find(s => s.key === k)?.label ?? k)
     .join(', '))
-  // Outils déjà maîtrisés (classe, historique) : exclus du picker Doué pour ne pas gaspiller un choix. On
-  // ne retient que les entrées CONCRÈTES de l'historique (les placeholders « … au choix » sont résolus
-  // dans selectedToolProficiencies) + les résolutions choisies.
+  // Outils accordés d'office (classe, historique) : exclus des pickers pour ne pas gaspiller un choix. On ne
+  // retient que les entrées CONCRÈTES de l'historique : ses « … au choix » sont des points de choix.
   const grantedTools = computed<string[]>(() => {
     const fromClass = classProficienciesFor(classDbId.value).start
       .filter(e => e.type === 'tool_proficiency')
       .map(e => e.value as string)
     const fixed = (backgroundData.value?.toolProficiencies ?? []).filter(t => ALL_TOOLS.includes(t))
-    const chosen = Object.values(state.value.selectedToolProficiencies).filter(Boolean)
-    return [...new Set([...fromClass, ...fixed, ...chosen])]
+    return [...new Set([...fromClass, ...fixed])]
   })
   const ownedTools = computed<string[]>(() => [...new Set([...grantedTools.value, ...chosenValues('tool')])])
   const speciesLanguages = computed<string[]>(() =>
@@ -470,19 +463,27 @@ export function useCharacterBuilder() {
   const featLanguages = (exceptFeatureId?: number): string[] => chosenFeatIds.value
     .filter(id => id !== exceptFeatureId)
     .flatMap(id => state.value.featChoices[id]?.languages ?? [])
+  // Langues connues, hors celles du point de choix ou du don exclus. Un choix d'outil `orLanguages`
+  // (Marchand de guilde) peut porter une langue.
+  const knownLanguages = (except: { progressionId?: number, featureId?: number } = {}): string[] => [
+    ...speciesLanguages.value,
+    ...state.value.selectedLanguages,
+    ...featLanguages(except.featureId),
+    ...chosenValues('language', except.progressionId),
+    ...chosenValues('tool', except.progressionId).filter(v => LANGUAGE_KEYS.includes(v)),
+  ]
   // Acquis par une AUTRE source que ce point de choix : masqué de ses options pour ne pas gaspiller le choix.
   function ownedFor(choice: ResolvedChoice): Array<string | number> {
-    const others = (kind: ChoiceKind) => chosenValues(kind, choice.progressionId)
+    const except = { progressionId: choice.progressionId }
     switch (choice.kind) {
-      case 'skill': return [...speciesSkills.value, ...variantHumanSkills.value, ...backgroundSkills.value, ...state.value.skills, ...others('skill')]
-      case 'tool': return [...grantedTools.value, ...others('tool')]
-      case 'language': return [...speciesLanguages.value, ...state.value.selectedLanguages, ...featLanguages(), ...others('language')]
+      case 'skill': return [...speciesSkills.value, ...variantHumanSkills.value, ...backgroundSkills.value, ...state.value.skills, ...chosenValues('skill', choice.progressionId)]
+      case 'tool': return [...grantedTools.value, ...chosenValues('tool', choice.progressionId), ...knownLanguages(except)]
+      case 'language': return knownLanguages(except)
       case 'cantrip': return [...state.value.selectedCantrips]
       default: return []
     }
   }
-  const ownedLanguagesForFeat = (featureId: number): string[] =>
-    [...speciesLanguages.value, ...state.value.selectedLanguages, ...chosenValues('language'), ...featLanguages(featureId)]
+  const ownedLanguagesForFeat = (featureId: number): string[] => knownLanguages({ featureId })
   const optionValuesOf = (choice: ResolvedChoice): Array<string | number> =>
     choice.options.map(optionPickValue).filter((v): v is string | number => v != null)
   // Un pick d'expertise sur une compétence qu'on ne maîtrise plus (désélection) ou d'une classe
@@ -588,18 +589,11 @@ export function useCharacterBuilder() {
     if (!spellcastingInfo.value) return 0
     return maxSpellLevelAtLevel(spellcastingInfo.value.type, level.value)
   })
-  // Langue d'espèce au choix : point de choix de l'espèce, sauf pour l'Humain variant qui n'en lie aucune.
-  const languageChoiceCount = computed(() => {
-    let count = 0
-    if (isVariantHuman.value) {
-      for (const l of raceData.value?.languages ?? []) {
-        const m = l.match(/\+(\d+)\s+au choix/i)
-        if (m) count += parseInt(m[1]!)
-      }
-    }
-    count += backgroundData.value?.languages ?? 0
-    count += extraLanguagesFromToolChoices(state.value.selectedToolProficiencies)
-    return count
+  // Langues au choix de l'Humain variant : l'espèce n'étant pas liée, son point de choix ne s'applique pas.
+  const variantHumanLanguageCount = computed(() => {
+    if (!isVariantHuman.value) return 0
+    return (raceData.value?.languages ?? [])
+      .reduce((n, l) => n + Number(/\+(\d+)\s+au choix/i.exec(l)?.[1] ?? 0), 0)
   })
 
   const cantripsNeeded = computed(() => {
@@ -697,6 +691,7 @@ export function useCharacterBuilder() {
         if (s.raceId === 'half-elf' && s.halfElfBonuses.length < 2) return false
         if (s.raceId === 'human' && s.isVariantHuman) {
           if (s.variantHumanBonuses.length < 2 || !s.variantHumanSkill) return false
+          if (s.selectedLanguages.length !== variantHumanLanguageCount.value) return false
         }
         // Fadette : les bonus flexibles doivent totaliser exactement 3 (+2/+1 ou +1/+1/+1).
         if (s.raceId === 'fairy' && Object.values(s.fairyAsiBonuses).reduce((a, b) => a + (b ?? 0), 0) !== 3) return false
@@ -762,7 +757,7 @@ export function useCharacterBuilder() {
           if (!s.customBackgroundName.trim()) return false
           if (s.customBackgroundSkills.length < 2) return false
         }
-        return true
+        return choicesComplete(backgroundChoices.value)
       }
       case 'equipment': {
         return s.equipment.length > 0
@@ -873,9 +868,7 @@ export function useCharacterBuilder() {
     spellSlots,
     maxSpellLevel,
     cantripsNeeded,
-    languageChoiceCount,
-    LANGUAGES,
-    TOOL_CHOICE_MAP,
+    variantHumanLanguageCount,
     // Navigation
     activeSteps,
     currentStepId,
@@ -930,6 +923,7 @@ export function useCharacterBuilder() {
     backgroundDbId,
     genericChoices,
     speciesChoices,
+    backgroundChoices,
     picksOf,
     chosenValues,
     choicePicksPayload,

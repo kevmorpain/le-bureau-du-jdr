@@ -12,13 +12,6 @@ export type { CasterType }
 
 export const ABILITIES: AbilityKey[] = [...ABILITY_KEYS]
 
-// Langues D&D 5e disponibles pour les choix de langue
-export const LANGUAGES = [
-  'Abyssal', 'Céleste', 'Commun', 'Commun des profondeurs', 'Draconique',
-  'Druidique', 'Elfique', 'Géant', 'Gnome', 'Gobelin', 'Halfelin',
-  'Infernal', 'Nain', 'Orque', 'Primordial', 'Sylvain',
-] as const
-
 // Options génériques d'équipement → liste d'items spécifiques disponibles en DB
 export const GENERIC_ITEM_OPTIONS: Record<string, string[]> = {
   'Arme courante': ['Gourdin', 'Dague', 'Massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Serpe', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
@@ -32,28 +25,6 @@ export const GENERIC_ITEM_OPTIONS: Record<string, string[]> = {
   'Outil d\'artisan au choix': ['Outils de forgeron', 'Outils de charpentier', 'Outils de cordonnier', 'Ustensiles de cuisinier', 'Outils de bijoutier', 'Outils de maçon', 'Matériel de peintre', 'Outils de potier', 'Outils de tanneur', 'Outils de tisserand', 'Outils de souffleur de verre', "Matériel d'alchimiste", 'Matériel de brasseur', 'Matériel de calligraphe', 'Outils de cartographe', 'Outils de bricoleur', 'Outils de menuisier'],
   'Jeux au choix': ['Jeu de dés', 'Jeu de cartes', "Jeu d'échecs draconiques", 'Jeu des Dragons'],
   'Un jeu au choix': ['Jeu de dés', 'Jeu de cartes', "Jeu d'échecs draconiques", 'Jeu des Dragons'],
-}
-
-// Option d'un choix d'outil qui n'est PAS une maîtrise d'outil : elle ajoute une langue à choisir
-// (Marchand de guilde : outils de navigateur OU une langue supplémentaire).
-export const EXTRA_LANGUAGE_OPTION = 'Langue supplémentaire'
-
-// Maîtrises d'outils avec choix : strings exacts utilisés dans BackgroundData.toolProficiencies → liste d'options
-export const TOOL_CHOICE_MAP: Record<string, string[]> = {
-  'Un jeu au choix': GENERIC_ITEM_OPTIONS['Un jeu au choix']!,
-  'Outil d\'artisan au choix': GENERIC_ITEM_OPTIONS["Outil d'artisan au choix"]!,
-  'Instrument de musique au choix': GENERIC_ITEM_OPTIONS['Instrument de musique au choix']!,
-  'Outils de navigateur ou langue au choix': ['Outils de navigateur', EXTRA_LANGUAGE_OPTION],
-}
-
-/** Maîtrises d'outils réellement choisies (sans l'option « langue supplémentaire »). */
-export function chosenToolProficiencies(selected: Record<string, string>): string[] {
-  return Object.values(selected).filter(v => v && v !== EXTRA_LANGUAGE_OPTION)
-}
-
-/** Langues supplémentaires débloquées par des choix d'outils. */
-export function extraLanguagesFromToolChoices(selected: Record<string, string>): number {
-  return Object.values(selected).filter(v => v === EXTRA_LANGUAGE_OPTION).length
 }
 
 export const ABILITY_LABELS: Record<AbilityKey, string> = {

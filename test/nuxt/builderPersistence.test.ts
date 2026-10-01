@@ -67,7 +67,7 @@ describe('Builder — brouillon persisté en localStorage', () => {
     builder.resetBuilder()
     builder.state.value.selectedLanguages.push('Elfique')
     builder.state.value.customBackgroundSkills.push('athletics')
-    builder.state.value.selectedToolProficiencies['Instrument de musique'] = 'Luth'
+    builder.state.value.choicePicks[42] = ['Luth']
     builder.state.value.abilities.str = 15
     builder.state.value.pbScores.dex = 14
 
@@ -75,7 +75,7 @@ describe('Builder — brouillon persisté en localStorage', () => {
 
     expect(builder.state.value.selectedLanguages).toEqual([])
     expect(builder.state.value.customBackgroundSkills).toEqual([])
-    expect(builder.state.value.selectedToolProficiencies).toEqual({})
+    expect(builder.state.value.choicePicks).toEqual({})
     expect(builder.state.value.abilities.str).toBeNull()
     expect(builder.state.value.pbScores.dex).toBe(10)
 

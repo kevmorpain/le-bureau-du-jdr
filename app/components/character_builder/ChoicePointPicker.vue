@@ -2,7 +2,7 @@
   <div class="rounded-xl border border-amber-500/40 bg-(--ui-bg-elevated) p-4">
     <div class="flex items-center gap-2 mb-3">
       <p class="text-xs font-semibold text-amber-400">
-        {{ title ?? DEFAULT_TITLES[kind] }}
+        {{ title ?? defaultTitle }}
       </p>
       <span
         class="text-xs font-semibold"
@@ -38,7 +38,7 @@
 
 <script lang="ts" setup>
 import type { ChoiceKind } from '~~/shared/rules/choices'
-import { languageLabel } from '~~/shared/rules/languages'
+import { LANGUAGE_LABELS, languageLabel } from '~~/shared/rules/languages'
 import { SKILLS } from '~/data/character-builder'
 
 // Un choix de maîtrise (compétence, outil, langue) ou de sort mineur : point de choix ou choix d'un don. Les
@@ -68,13 +68,15 @@ const { data: spells } = useFetch<Array<{ id: number, name: string }>>('/api/spe
   immediate: props.kind === 'cantrip',
 })
 
+// Un choix d'outil peut proposer des langues à la place (`orLanguages`, Marchand de guilde).
+const isLanguageKey = (value: string | number) => typeof value === 'string' && value in LANGUAGE_LABELS
+const defaultTitle = computed(() =>
+  props.kind === 'tool' && props.options.some(isLanguageKey) ? 'Outil ou langue au choix' : DEFAULT_TITLES[props.kind])
+
 function labelOf(value: string | number): string {
-  switch (props.kind) {
-    case 'skill': return SKILLS.find(s => s.key === value)?.label ?? String(value)
-    case 'language': return languageLabel(String(value))
-    case 'cantrip': return spells.value?.find(s => s.id === value)?.name ?? '…'
-    default: return String(value)
-  }
+  if (props.kind === 'skill') return SKILLS.find(s => s.key === value)?.label ?? String(value)
+  if (props.kind === 'cantrip') return spells.value?.find(s => s.id === value)?.name ?? '…'
+  return isLanguageKey(value) ? languageLabel(String(value)) : String(value)
 }
 
 const sortedOptions = computed(() => props.options

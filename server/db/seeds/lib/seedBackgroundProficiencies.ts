@@ -3,11 +3,12 @@ import { and, eq } from 'drizzle-orm'
 import * as schema from '../../schema'
 import type { Effect } from '../../schema/effects'
 import { skillEnum } from '~~/shared/rules/skills'
-import { fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
+import { backgroundChoices, fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
+import { ensureFeatureChoice } from './featureChoice'
 
 // Pose les maîtrises FIXES d'un historique (compétences, outils, langues) en effets sur une feature
-// porteuse (`proficiency_grant`, jamais matérialisée ni affichée) pour que la fiche les DÉRIVE. Les
-// entrées « au choix » restent des deltas du joueur (grants). Idempotent et additif.
+// porteuse (`proficiency_grant`, jamais matérialisée ni affichée) pour que la fiche les DÉRIVE, et ses
+// entrées « au choix » en points de choix sur ce même porteur. Idempotent et additif.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = BaseSQLiteDatabase<'async', any, any>
@@ -24,6 +25,7 @@ export interface BackgroundProficiencyData {
 export interface BackgroundProficiencySeedReport {
   carriersInserted: number
   effectsLinked: number
+  choicesInserted: number
 }
 
 async function linkEffect(db: Db, featureId: number, effect: Effect): Promise<boolean> {
@@ -53,12 +55,14 @@ export async function seedBackgroundProficiencies(
 ): Promise<BackgroundProficiencySeedReport> {
   let carriersInserted = 0
   let effectsLinked = 0
+  let choicesInserted = 0
 
   for (const bg of data) {
     const fixedSkills = fixedProficiencies(bg.skillProficiencies ?? [])
     const fixedTools = fixedProficiencies(bg.toolProficiencies ?? [])
     const fixedLangs = fixedProficiencies(bg.languageProficiencies ?? [])
-    if (fixedSkills.length === 0 && fixedTools.length === 0 && fixedLangs.length === 0) continue // rien de fixe → pas de porteur
+    const choices = backgroundChoices(bg)
+    if (fixedSkills.length === 0 && fixedTools.length === 0 && fixedLangs.length === 0 && choices.length === 0) continue // rien → pas de porteur
 
     const background = await db
       .select({ id: schema.backgrounds.id })
@@ -102,7 +106,10 @@ export async function seedBackgroundProficiencies(
     for (const effect of effects) {
       if (await linkEffect(db, carrierId, effect)) effectsLinked++
     }
+    for (const choice of choices) {
+      if (await ensureFeatureChoice(db, carrierId, choice)) choicesInserted++
+    }
   }
 
-  return { carriersInserted, effectsLinked }
+  return { carriersInserted, effectsLinked, choicesInserted }
 }

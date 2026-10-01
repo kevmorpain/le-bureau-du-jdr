@@ -1,4 +1,4 @@
-import type { FeatureChoice } from '../lib/featureChoice'
+import type { FeatureChoice } from '~~/shared/rules/choices'
 
 // Points de choix des traits d'espèce 2014, partagés par les lignées et les anciennes espèces séparées (les
 // tests d'équivalence D12 comparent les deux). Créés en base par la migration 0107.

@@ -142,6 +142,16 @@
             {{ skill.label }}
           </button>
         </div>
+
+        <ChoicePointPicker
+          v-if="variantHumanLanguageCount > 0"
+          v-model="state.selectedLanguages"
+          kind="language"
+          :count="variantHumanLanguageCount"
+          :options="LANGUAGE_KEYS"
+          :owned="['common']"
+          class="mt-4"
+        />
       </template>
     </template>
 
@@ -230,6 +240,7 @@
 <script lang="ts" setup>
 import type { AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
+import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
 const {
   state,
@@ -240,6 +251,7 @@ const {
   ABILITIES,
   SKILLS,
   speciesChoices,
+  variantHumanLanguageCount,
   ownedFor,
   optionValuesOf,
 } = useCharacterBuilder()
@@ -264,6 +276,7 @@ function selectRace(id: string) {
   state.value.halfElfBonuses = []
   state.value.variantHumanBonuses = []
   state.value.variantHumanSkill = null
+  state.value.selectedLanguages = []
   state.value.isVariantHuman = false
   state.value.fairyAsiBonuses = {}
 }
