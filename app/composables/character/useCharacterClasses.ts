@@ -48,7 +48,6 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
 
   // ─── Combat stats (storage) ───────────────────────────────────────────────
 
-  const armorClass = useStorage<number>(storageKey('armorClass'), 10)
   const deathSavingThrows = useStorage(storageKey('deathSavingThrows'), { success: 0, failure: 0 })
 
   return {
@@ -61,7 +60,6 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
     multiClass,
     hitDice,
     proficiencyBonus,
-    armorClass,
     deathSavingThrows,
   }
 }
