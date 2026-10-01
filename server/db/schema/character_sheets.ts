@@ -1,6 +1,7 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { TemporaryEffect } from '~~/shared/utils/temporary_effects'
 import characterSpecies from './character_species'
 import characterClasses from './character_classes'
 import characterAbilityScores from './character_ability_scores'
@@ -73,6 +74,7 @@ const characterSheets = sqliteTable('character_sheets', {
   pc: integer('pc').default(0).notNull(),
   concentratingSpellId: integer('concentrating_spell_id').references(() => spells.id, { onDelete: 'set null' }),
   notes: text('notes').default('').notNull(),
+  temporaryEffects: text('temporary_effects', { mode: 'json' }).$type<TemporaryEffect[]>().default([]).notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at'),
 }, table => [

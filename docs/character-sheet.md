@@ -51,7 +51,8 @@ Barre sticky sous la nav principale. Affiche :
 Affiche les 6 scores (FOR/DEX/CON/INT/SAG/CHA) avec :
 - Score de base (éditable) + bonus d'espèce (automatique depuis les effets)
 - Modificateur calculé
-- Jets de sauvegarde (maîtrise depuis `character_ability_scores`)
+- Jets de sauvegarde (maîtrise depuis `character_ability_scores`) + effets `saving_throw_bonus` (signés, une
+  caractéristique ou `all`) des capacités, objets actifs et effets temporaires ; l'icône ✨ détaille les sources
 - Compétences regroupées par caractéristique (maîtrise + expertise depuis `character_skills`)
 
 **Source :** `character_ability_scores` pour les scores de base, effets d'espèce/classe pour les bonus, `character_skills` pour les maîtrises.
@@ -65,7 +66,8 @@ Affiche les 6 scores (FOR/DEX/CON/INT/SAG/CHA) avec :
    Ioun : 20), ou à défaut le maximum du personnage ; puis `ability_score_set` relève le score à sa valeur
    s'il est inférieur (Gantelets de puissance d'ogre : 19).
 
-La décomposition au survol du modificateur affiche les lignes « Plafond » (points perdus) et « Objets ».
+La décomposition au survol du modificateur affiche les lignes « Plafond » (points perdus) et « Objets & effets ».
+Les effets temporaires de la fiche (cf. colonne droite) suivent la même règle que les objets actifs (étape 3).
 
 ### Maîtrises (`ProficienciesSection`)
 
@@ -85,8 +87,8 @@ Libellés (jetons d'armure et de catégorie d'arme) : `proficiencyEffectLabel` e
 ### Statistiques (`QuickStatsSection`)
 
 Bandeau horizontal compact avec 6 StatCards :
-- **CA** : computed depuis armure équipée + modificateur DEX + bouclier + `magicBonus` de l'armure/du bouclier + le style de combat **Défense** (+1 avec une armure de corps, depuis la PR #63). ⚠️ C'est le **seul** effet qui alimente la CA, en dur : il n'existe pas de type d'effet **générique** « +N CA », donc un Anneau de protection reste non modélisable (cf. E11, [#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140))
-- **Initiative** : modificateur DEX ± effets (clic → lancer le dé)
+- **CA** : computed depuis armure équipée + modificateur DEX + bouclier + `magicBonus` de l'armure/du bouclier + le style de combat **Défense** (+1 avec une armure de corps) + les effets `armor_class_bonus` (signés) des capacités, des objets actifs et des effets temporaires actifs (`shared/rules/effectBonuses.ts`). Le détail au survol nomme chaque source (« + Anneau de protection +1 »)
+- **Initiative** : modificateur DEX + effets `initiative_bonus` (dons, objets actifs, effets temporaires) (clic → lancer le dé)
 - **Vitesse** : espèce + conditions (entrave, paralysie…) en mètres (tooltip en cases)
 - **Perception passive** : 10 + modificateur Perception
 - **Maîtrise** : bonus de maîtrise purement computed depuis le niveau total
@@ -159,7 +161,7 @@ Liste tous les objets du personnage avec quantité, état équipé, bonus magiqu
 **Équiper/déséquiper :** `PUT /api/character_sheets/{id}/inventory/{entryId}`
 **Supprimer :** `DELETE /api/character_sheets/{id}/inventory/{entryId}`
 
-Les effets des objets **actifs** — équipés, et **liés** quand l'objet exige un lien (`requiresAttunement`) — (`item_effects` → `effects`, exposés par le GET inventaire) sont injectés dans `allEffects` et dans le calcul des caractéristiques ; ils peuvent modifier résistances, vitesse, DD/attaque de sort, scores de caractéristique, etc. ⚠️ **Pas la CA** hors style de combat Défense (cf. ci-dessus). La limite de 3 objets liés reste un avertissement non bloquant (cf. O1, [#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158)).
+Les effets des objets **actifs** — équipés, et **liés** quand l'objet exige un lien (`requiresAttunement`) — (`item_effects` → `effects`, exposés par le GET inventaire) sont injectés dans `allEffects` et dans le calcul des caractéristiques ; ils modifient résistances/immunités/vulnérabilités, DD/attaque de sort, scores de caractéristique, CA, jets de sauvegarde, initiative et scores passifs. ⚠️ L'éditeur d'objet propose encore des types que la fiche ne lit pas depuis un objet (vitesse, vision dans le noir, maîtrises d'arme/armure, PV par niveau, dégâts supplémentaires). La limite de 3 objets liés reste un avertissement non bloquant (cf. O1, [#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158)).
 
 ### Identité (`IdentitySection`)
 
@@ -238,6 +240,24 @@ Résistances, immunités, vulnérabilités calculées depuis `allEffects`. Visib
 Conditions actives et niveau d'épuisement. Toggle de chaque condition. *(L'alignement est
 affiché et modifié dans la section Identité, pas ici.)*
 **Source :** conditions via `useStorage()` (localStorage).
+
+### Effets temporaires (`TemporaryEffectsSection`)
+
+Bénédiction, malédiction, sort reçu : effets nommés saisis par le joueur, chacun activable/désactivable
+(interrupteur) sans être supprimé. Ils passent par le **même canal que les objets actifs**
+(`activeEffectSources`) : CA, JS, scores, résistances, DD/attaque de sort, initiative. L'éditeur est
+`MagicEffectEditor`, restreint aux types que la fiche applique (`TEMPORARY_EFFECT_TYPES`). Une
+**description** libre, facultative, porte ce que la fiche ne sait pas chiffrer (« ne peut répondre que par
+oui ou par non », la Bénédiction du sort qui est un d4) ; une entrée peut n'avoir qu'elle.
+
+Affichage : une pastille par effet (`effectLabel`), **rouge** pour un malus (montant négatif ou
+vulnérabilité, `isEffectMalus` — même règle pour les pastilles d'objets de l'inventaire), grise et ligne
+estompée quand l'effet est désactivé.
+
+**Source :** `character_sheets.temporary_effects` (JSON `{ id, name, description?, active, effects }[]`).
+**Persistence :** mutation en place → deep watch → PUT ; validé par `temporaryEffectsSchema`
+(`shared/utils/temporary_effects.ts`), le même schéma que la modale applique avant d'écrire — une entrée
+invalide ferait sinon échouer toute la sauvegarde de la fiche. Pas de durée ni d'expiration (cf. U6).
 
 ### Emplacements de sort (`SpellSlotsSection`)
 

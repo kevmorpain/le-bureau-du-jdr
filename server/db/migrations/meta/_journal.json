@@ -754,8 +754,15 @@
     {
       "idx": 107,
       "version": "6",
+      "when": 1747872065000,
+      "tag": "0107_character_sheets_temporary_effects",
+      "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "6",
       "when": 1790860002155,
-      "tag": "0107_roll_tables",
+      "tag": "0108_roll_tables",
       "breakpoints": true
     }
   ]

@@ -99,6 +99,7 @@
         />
         <DefensesSection :character-sheet="characterSheet" />
         <StatusSection :character-sheet="characterSheet" />
+        <TemporaryEffectsSection :character-sheet="characterSheet" />
         <SpellSlotsSection :character-sheet="characterSheet" />
         <ConcentrationSection :character-sheet="characterSheet" />
         <QuickNotesSection :character-sheet="characterSheet" />

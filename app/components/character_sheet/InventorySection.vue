@@ -186,9 +186,9 @@
                     <li
                       v-for="(eff, idx) in entry.item.effects"
                       :key="idx"
-                      class="font-mono text-xs text-muted"
+                      class="text-xs text-muted"
                     >
-                      {{ eff.type }} : {{ JSON.stringify(eff.value) }}
+                      {{ effectLabel(eff) }}
                     </li>
                   </ul>
                 </div>
@@ -452,8 +452,8 @@
               :key="idx"
             >
               <UBadge
-                :label="magicEffectLabel(eff)"
-                :color="entry.equipped ? 'primary' : 'neutral'"
+                :label="effectLabel(eff)"
+                :color="entry.equipped ? (isEffectMalus(eff) ? 'error' : 'primary') : 'neutral'"
                 variant="soft"
                 size="md"
               />
@@ -554,8 +554,8 @@
               :key="idx"
             >
               <UBadge
-                :label="magicEffectLabel(eff)"
-                :color="entry.equipped ? 'primary' : 'neutral'"
+                :label="effectLabel(eff)"
+                :color="entry.equipped ? (isEffectMalus(eff) ? 'error' : 'primary') : 'neutral'"
                 variant="soft"
                 size="md"
               />
@@ -586,7 +586,6 @@ import type {
   InventoryItem,
 } from '~/composables/character/useCharacterInventory'
 import type { WeaponProperties, ArmorProperties, ToolProperties } from '~~/server/db/schema/items'
-import type { Effect } from '~~/server/db/schema/effects'
 import { toolTypeLabels, weaponPropertyLabels, weaponPropertyTooltips } from '~~/shared/utils/item'
 
 const props = defineProps<{
@@ -614,28 +613,6 @@ const {
 
 const hasMagicEffects = (entry: InventoryEntry): boolean =>
   (entry.item?.effects?.length ?? 0) > 0
-
-const magicEffectLabel = (effect: Effect): string => {
-  const v = effect.value as any
-  switch (effect.type) {
-    case 'spell_save_dc_bonus': return `+${v.amount} DD des sorts`
-    case 'spell_attack_bonus': return `+${v.amount} attaque des sorts`
-    case 'initiative_bonus': return `+${v.amount} initiative`
-    case 'hp_per_level': return `+${v.amount} PV/niveau`
-    case 'passive_skill_bonus': {
-      const skill = v.skill === 'investigation' ? 'Investigation' : 'Perception'
-      return `+${v.amount} ${skill} passive`
-    }
-    case 'walking_speed': return `+${v} m de vitesse`
-    case 'darkvision': return `Vision dans le noir ${v.range} m`
-    case 'ability_increase': return `+${v.amount} ${v.ability?.toUpperCase()}${typeof v.max === 'number' ? ` (max ${v.max})` : ''}`
-    case 'ability_score_set': return `${v.ability?.toUpperCase()} ${v.score}`
-    case 'damage_resistance': return `Résistance ${damageTypeLabels[v.damageType] ?? v.damageType}`
-    case 'damage_immunity': return `Immunité ${damageTypeLabels[v.damageType] ?? v.damageType}`
-    case 'vulnerability': return `Vulnérabilité ${damageTypeLabels[v.damageType] ?? v.damageType}`
-    default: return effect.type
-  }
-}
 
 const weaponStatsByEntry = computed(() => {
   const map = new Map<number, typeof equippedWeaponStats.value[number]>()
