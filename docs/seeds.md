@@ -127,6 +127,28 @@ Ces fichiers font autorité sur les valeurs de référence — en cas de diverge
 
 ---
 
+## Rédaction du contenu seedé
+
+Descriptions de capacités, sorts et tables s'affichent telles quelles sur la fiche. Le texte vient
+d'AideDD ([D16](./decisions.md#d16), méthode : [`dnd-5.5.md`](./dnd-5.5.md) §4), avec ces conventions :
+
+- **Quantités de ressources en chiffres** : « 1 action », « 1 action bonus », « 2 points de
+  sorcellerie ». Une action ou un point se dépense : le chiffre dit d'un coup d'œil combien il en
+  faut. Pas d'élision devant un chiffre : « est **de** 1 action », jamais « d'1 action » (précédent :
+  `ensorceleur_metamagic.ts`, « Sort accéléré »). Ne vise que les quantités : « votre réaction »,
+  « un emplacement de sort de niveau 1 » restent en toutes lettres.
+- **Corriger les fautes, pas la règle** : on corrige l'orthographe et la grammaire du texte repris
+  (accords, conjugaison, « œil »), pas une tournure correcte, même maladroite. Une reformulation peut
+  déplacer la règle ; elle se propose, elle ne s'applique pas au passage.
+- **Chercher la convention avant de réécrire** : avant de changer une tournure, regarder comment les
+  seeds l'écrivent déjà, par exemple :
+  `grep -rhoE "(1|une) action( bonus)?" server/db/seeds/data/ | sort | uniq -c`.
+
+Le stock n'est pas encore uniforme (des « une action » subsistent) : la convention s'applique au
+contenu neuf ou retouché, l'harmonisation du reste est un chantier à part.
+
+---
+
 ## `classes.spellcastingAbility` : valeurs de référence
 
 | Classe | Caractéristique |
