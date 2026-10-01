@@ -12,13 +12,12 @@ import {
   upcastRows,
 } from '../../shared/rules/spellScaling'
 import type { ScalableSpell } from '../../shared/rules/spellScaling'
-import { DamageType } from '../../server/db/schema/spells'
 
 // Projectile magique — le cas de U10 : l'affichage restait à 3d4+3 pendant que le jet roulait 5d4+5.
 const magicMissile: ScalableSpell = {
   level: 1,
   damages: [{
-    damage_type: DamageType.Force,
+    damage_type: 'force',
     damage_at_slot_level: { 1: '3d4+3', 2: '4d4+4', 3: '5d4+5', 4: '6d4+6', 5: '7d4+7' },
   }],
 }
@@ -27,7 +26,7 @@ const magicMissile: ScalableSpell = {
 const spiritualWeapon: ScalableSpell = {
   level: 2,
   damages: [{
-    damage_type: DamageType.Force,
+    damage_type: 'force',
     damage_at_slot_level: { 2: '1d8', 4: '2d8', 6: '3d8', 8: '4d8' },
     isSpellcastingModifierAdded: true,
   }],
@@ -37,7 +36,7 @@ const spiritualWeapon: ScalableSpell = {
 const eldritchBlast: ScalableSpell = {
   level: 0,
   damages: [{
-    damage_type: DamageType.Force,
+    damage_type: 'force',
     damage_at_character_level: { 1: '1d10', 5: '2d10', 11: '3d10', 17: '4d10' },
   }],
   multiAttack: { label: 'Rayon', count_at_character_level: { 1: 1, 5: 2, 11: 3, 17: 4 } },
@@ -164,7 +163,7 @@ describe('upcastRows — encart « Aux niveaux supérieurs »', () => {
   })
 
   it('est vide pour un sort qui ne monte pas en puissance', () => {
-    expect(upcastRows({ level: 1, damages: [{ damage_type: DamageType.Necrotic, damage_at_slot_level: { 1: '1d6' } }] }))
+    expect(upcastRows({ level: 1, damages: [{ damage_type: 'necrotic', damage_at_slot_level: { 1: '1d6' } }] }))
       .toEqual([])
   })
 
