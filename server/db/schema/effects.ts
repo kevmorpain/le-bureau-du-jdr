@@ -95,6 +95,9 @@ export type Effect
     | { type: 'hp_per_level', value: { amount: number } }
     // Bonus aux scores passifs (Observateur : +5 Perception passive + Investigation passive).
     | { type: 'passive_skill_bonus', value: { skill: 'perception' | 'investigation', amount: number } }
+    // Bonus fixes signés (Anneau de protection : +1 CA et JS ; un malus s'écrit en négatif).
+    | { type: 'armor_class_bonus', value: { amount: number } }
+    | { type: 'saving_throw_bonus', value: { ability: AbilityScoreKey | 'all', amount: number } }
 
 export type EffectType = Effect['type']
 export type EffectValue = Effect['value']

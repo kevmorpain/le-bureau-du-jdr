@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { ALIGNMENT_CODES } from '~~/shared/rules/alignments'
+import { temporaryEffectsSchema } from '~~/shared/utils/temporary_effects'
 
 const classInputSchema = z.object({
   classId: z.number().int().positive(),
@@ -50,6 +51,7 @@ export const updateCharacterSheetSchema = z.object({
   portraitUrl: z.string().max(2000).optional(),
   concentratingSpellId: z.number().int().positive().nullable().optional(),
   notes: z.string().max(5000).optional(),
+  temporaryEffects: temporaryEffectsSchema.optional(),
 })
 
 export const setASISchema = z.object({
