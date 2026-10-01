@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { Effect } from '../../server/db/schema/effects'
 import { TEMPORARY_EFFECT_TYPES, temporaryEffectSchema } from '../../shared/utils/temporary_effects'
 import { updateCharacterSheetSchema } from '../../shared/utils/character_sheet'
-import { effectLabel } from '../../app/utils/effectLabel'
+import { effectLabel, isEffectMalus } from '../../app/utils/effectLabel'
 
 const blessing = {
   id: 1,
@@ -18,8 +18,14 @@ describe('effets temporaires — schéma partagé client/serveur', () => {
     expect(temporaryEffectSchema.parse(curse)).toEqual(curse)
   })
 
-  it('accepte un simple rappel sans effet chiffré', () => {
-    expect(temporaryEffectSchema.safeParse({ id: 3, name: 'Bénédiction (sort) : +1d4', active: true, effects: [] }).success).toBe(true)
+  it('accepte un effet purement textuel, sans mécanique chiffrée', () => {
+    const curse = { id: 3, name: 'Malédiction', description: 'Ne peut répondre que par oui ou par non', active: true, effects: [] }
+    expect(temporaryEffectSchema.parse(curse)).toEqual(curse)
+  })
+
+  it('une description vide ou blanche vaut absence ; trop longue, elle est refusée', () => {
+    expect(temporaryEffectSchema.parse({ ...blessing, description: '  ' })).toEqual(blessing)
+    expect(temporaryEffectSchema.safeParse({ ...blessing, description: 'x'.repeat(1001) }).success).toBe(false)
   })
 
   it('refuse un type que la fiche n\'appliquerait pas, et un nom vide', () => {
@@ -58,6 +64,21 @@ describe('effets temporaires — schéma partagé client/serveur', () => {
     for (const type of TEMPORARY_EFFECT_TYPES) {
       expect(effectLabel({ type, value: samples[type] } as Effect)).not.toContain(type)
     }
+  })
+})
+
+describe('isEffectMalus — pastille rouge', () => {
+  it('un bonus chiffré négatif ou une vulnérabilité est un malus', () => {
+    expect(isEffectMalus({ type: 'armor_class_bonus', value: { amount: -2 } })).toBe(true)
+    expect(isEffectMalus({ type: 'saving_throw_bonus', value: { ability: 'all', amount: -1 } })).toBe(true)
+    expect(isEffectMalus({ type: 'vulnerability', value: { damageType: 'fire' } })).toBe(true)
+  })
+
+  it('un bonus positif, une résistance ou un effet sans montant ne l\'est pas', () => {
+    expect(isEffectMalus({ type: 'armor_class_bonus', value: { amount: 1 } })).toBe(false)
+    expect(isEffectMalus({ type: 'damage_resistance', value: { damageType: 'fire' } })).toBe(false)
+    expect(isEffectMalus({ type: 'walking_speed', value: 3 })).toBe(false)
+    expect(isEffectMalus({ type: 'proficiency', value: 'light' })).toBe(false)
   })
 })
 

@@ -50,6 +50,12 @@
             @click="removeTemporaryEffect(entry.id)"
           />
         </div>
+        <p
+          v-if="entry.description"
+          class="text-xs text-muted italic whitespace-pre-line pl-9"
+        >
+          {{ entry.description }}
+        </p>
         <div
           v-if="entry.effects.length"
           class="flex flex-wrap gap-1 pl-9"
@@ -58,7 +64,7 @@
             v-for="(eff, idx) in entry.effects"
             :key="idx"
             :label="effectLabel(eff)"
-            :color="entry.active ? 'primary' : 'neutral'"
+            :color="entry.active ? (isEffectMalus(eff) ? 'error' : 'primary') : 'neutral'"
             variant="subtle"
             size="sm"
           />
@@ -86,6 +92,19 @@
               <UInput
                 v-model="draft.name"
                 placeholder="ex. Bénédiction d'Ilmater"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField
+              label="Description"
+              hint="facultatif"
+            >
+              <UTextarea
+                v-model="draft.description"
+                placeholder="Effet sans mécanique, ex. ne peut répondre que par oui ou par non"
+                :rows="2"
+                autoresize
                 class="w-full"
               />
             </UFormField>
@@ -146,19 +165,20 @@ const {
 const draftSchema = temporaryEffectSchema.omit({ id: true })
 
 const modalOpen = ref(false)
-const draft = ref<{ id?: number, name: string, active: boolean, effects: Effect[] }>({ name: '', active: true, effects: [] })
+const emptyDraft = () => ({ name: '', description: '', active: true, effects: [] as Effect[] })
+const draft = ref<{ id?: number, name: string, description: string, active: boolean, effects: Effect[] }>(emptyDraft())
 
 // Même schéma que le PUT de la fiche : une entrée invalide ferait échouer toute la sauvegarde.
 const parsedDraft = computed(() => draftSchema.safeParse(draft.value))
 
 const openCreate = () => {
-  draft.value = { name: '', active: true, effects: [] }
+  draft.value = emptyDraft()
   modalOpen.value = true
 }
 
 const openEdit = (entry: TemporaryEffect) => {
   // Copie profonde : annuler l'édition ne doit pas muter la fiche.
-  draft.value = JSON.parse(JSON.stringify(entry))
+  draft.value = { ...emptyDraft(), ...JSON.parse(JSON.stringify(entry)) }
   modalOpen.value = true
 }
 

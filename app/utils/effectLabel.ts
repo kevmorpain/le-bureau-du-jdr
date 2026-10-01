@@ -7,6 +7,13 @@ import { formatModifier } from './format'
 const ability = (key: AbilityScoreKey) => ABILITY_SHORT[key] ?? key
 const damage = (key: DamageTypeKey) => damageTypeLabels[key] ?? key
 
+// Malus : un bonus chiffré négatif, ou une vulnérabilité.
+export const isEffectMalus = (effect: Effect): boolean => {
+  if (effect.type === 'vulnerability') return true
+  const v = effect.value
+  return typeof v === 'object' && 'amount' in v && typeof v.amount === 'number' && v.amount < 0
+}
+
 export const effectLabel = (effect: Effect): string => {
   switch (effect.type) {
     case 'armor_class_bonus': return `${formatModifier(effect.value.amount)} CA`

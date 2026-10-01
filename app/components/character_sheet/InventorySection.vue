@@ -453,7 +453,7 @@
             >
               <UBadge
                 :label="effectLabel(eff)"
-                :color="entry.equipped ? 'primary' : 'neutral'"
+                :color="entry.equipped ? (isEffectMalus(eff) ? 'error' : 'primary') : 'neutral'"
                 variant="soft"
                 size="md"
               />
@@ -555,7 +555,7 @@
             >
               <UBadge
                 :label="effectLabel(eff)"
-                :color="entry.equipped ? 'primary' : 'neutral'"
+                :color="entry.equipped ? (isEffectMalus(eff) ? 'error' : 'primary') : 'neutral'"
                 variant="soft"
                 size="md"
               />

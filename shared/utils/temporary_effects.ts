@@ -30,7 +30,9 @@ export const temporaryEffectSchema = z.object({
   id: z.number().int().positive(),
   name: z.string().trim().min(1).max(100),
   active: z.boolean(),
-  // Vide permis : simple rappel nommé pour ce qui n'est pas un bonus fixe (Bénédiction : +1d4).
+  // Texte libre pour ce que la fiche ne sait pas chiffrer (« ne peut répondre que par oui ou par non »).
+  description: z.string().trim().max(1000).optional().transform(v => v || undefined),
+  // Vide permis : l'entrée peut n'être qu'un nom et une description.
   effects: z.array(temporaryEffectEntrySchema).max(20),
 })
 

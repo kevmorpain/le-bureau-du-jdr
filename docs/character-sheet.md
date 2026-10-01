@@ -240,10 +240,15 @@ affiché et modifié dans la section Identité, pas ici.)*
 Bénédiction, malédiction, sort reçu : effets nommés saisis par le joueur, chacun activable/désactivable
 (interrupteur) sans être supprimé. Ils passent par le **même canal que les objets actifs**
 (`activeEffectSources`) : CA, JS, scores, résistances, DD/attaque de sort, initiative. L'éditeur est
-`MagicEffectEditor`, restreint aux types que la fiche applique (`TEMPORARY_EFFECT_TYPES`). Une entrée sans
-effet chiffré est permise : simple rappel (la Bénédiction du sort est un d4, pas un bonus fixe).
+`MagicEffectEditor`, restreint aux types que la fiche applique (`TEMPORARY_EFFECT_TYPES`). Une
+**description** libre, facultative, porte ce que la fiche ne sait pas chiffrer (« ne peut répondre que par
+oui ou par non », la Bénédiction du sort qui est un d4) ; une entrée peut n'avoir qu'elle.
 
-**Source :** `character_sheets.temporary_effects` (JSON `{ id, name, active, effects }[]`).
+Affichage : une pastille par effet (`effectLabel`), **rouge** pour un malus (montant négatif ou
+vulnérabilité, `isEffectMalus` — même règle pour les pastilles d'objets de l'inventaire), grise et ligne
+estompée quand l'effet est désactivé.
+
+**Source :** `character_sheets.temporary_effects` (JSON `{ id, name, description?, active, effects }[]`).
 **Persistence :** mutation en place → deep watch → PUT ; validé par `temporaryEffectsSchema`
 (`shared/utils/temporary_effects.ts`), le même schéma que la modale applique avant d'écrire — une entrée
 invalide ferait sinon échouer toute la sauvegarde de la fiche. Pas de durée ni d'expiration (cf. U6).
