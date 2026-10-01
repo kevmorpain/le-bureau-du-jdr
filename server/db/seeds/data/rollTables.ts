@@ -8,25 +8,25 @@ export type RollTableDef = RollTable & {
 
 export const rollTables: RollTableDef[] = [
   {
-    // https://www.aidedd.org/regles/classes/ensorceleur/ — texte repris tel quel.
+    // https://www.aidedd.org/regles/classes/ensorceleur/ — texte repris, orthographe corrigée.
     key: 'wild_magic_surge',
     name: 'Pic de magie sauvage',
     die: 100,
     entries: [
       { min: 1, max: 2, text: 'Au début de vos prochains tours, refaites un jet de Pic de magie sauvage (ignorez ce résultat sur des jets consécutifs). Cet effet dure une minute.' },
-      { min: 3, max: 4, text: 'Pendant une minute, vous pouvez voir toutes les créatures invisibles tant qu\'elles sont dans votre champs de vision.' },
+      { min: 3, max: 4, text: 'Pendant une minute, vous pouvez voir toutes les créatures invisibles tant qu\'elles sont dans votre champ de vision.' },
       { min: 5, max: 6, text: 'Un modron (créature artificielle) choisi et contrôlé par le MD apparaît dans un espace inoccupé à 1,50 mètre de vous. Il disparaît une minute plus tard.' },
       { min: 7, max: 8, text: 'Vous lancez le sort boule de feu de niveau 3 centré sur vous.' },
       { min: 9, max: 10, text: 'Vous lancez un sort projectile magique de niveau 5.' },
-      { min: 11, max: 12, text: 'Lancez un d10. Votre taille varie de 2,50 cm x le résultat du jet. Si le résultat est paire vous grandissez, s\'il est impair, vous rapetissez.' },
+      { min: 11, max: 12, text: 'Lancez un d10. Votre taille varie de 2,50 cm x le résultat du jet. Si le résultat est pair, vous grandissez ; s\'il est impair, vous rapetissez.' },
       { min: 13, max: 14, text: 'Vous lancez le sort confusion centré sur vous-même.' },
       { min: 15, max: 16, text: 'Pendant une minute, vous regagnez 5 points de vie au début de chacun de vos tours.' },
       { min: 17, max: 18, text: 'Une longue barbe faite de plumes vous pousse soudainement. Celle-ci s\'évanouit dans un nuage de plumes lorsque vous éternuez.' },
       { min: 19, max: 20, text: 'Vous lancez le sort graisse centré sur vous-même.' },
-      { min: 21, max: 22, text: 'Les créatures ont un désavantage à leur jets de sauvegarde contre le prochain sort que vous lancez dans la minute qui suit.' },
-      { min: 23, max: 24, text: 'Votre peau devient bleu. Un sort de délivrance des malédictions peut mettre fin à cet effet.' },
-      { min: 25, max: 26, text: 'Un oeil apparaît sur votre front pendant une minute. Pendant cette durée, vous avez un avantage à vos jets de Sagesse (Perception) qui se basent sur la vue.' },
-      { min: 27, max: 28, text: 'Pendant une minute, tout vos sorts dont le temps d\'incantation est d\'1 action ont un temps d\'incantation d\'1 action bonus.' },
+      { min: 21, max: 22, text: 'Les créatures ont un désavantage à leurs jets de sauvegarde contre le prochain sort que vous lancez dans la minute qui suit.' },
+      { min: 23, max: 24, text: 'Votre peau devient bleue. Un sort de délivrance des malédictions peut mettre fin à cet effet.' },
+      { min: 25, max: 26, text: 'Un œil apparaît sur votre front pendant une minute. Pendant cette durée, vous avez un avantage à vos jets de Sagesse (Perception) qui se basent sur la vue.' },
+      { min: 27, max: 28, text: 'Pendant une minute, tous vos sorts dont le temps d\'incantation est d\'une action ont un temps d\'incantation d\'une action bonus.' },
       { min: 29, max: 30, text: 'Vous vous téléportez à 18 mètres dans un espace inoccupé que vous pouvez voir.' },
       { min: 31, max: 32, text: 'Vous êtes transporté dans le Plan Astral jusqu\'à la fin de votre prochain tour, après quoi vous retournez à votre position d\'origine, dans l\'espace inoccupé le plus proche.' },
       { min: 33, max: 34, text: 'Le prochain sort que vous lancez dans la minute qui suit fait le maximum de dégâts.' },
@@ -58,7 +58,7 @@ export const rollTables: RollTableDef[] = [
       { min: 85, max: 86, text: 'Vous lancez le sort image miroir.' },
       { min: 87, max: 88, text: 'Vous lancez le sort vol sur une créature aléatoire dans un rayon de 18 mètres.' },
       { min: 89, max: 90, text: 'Vous devenez invisible pendant une minute. Pendant ce temps, les autres créatures ne peuvent pas vous entendre. L\'invisibilité prend fin lorsque vous attaquez ou lancez un sort.' },
-      { min: 91, max: 92, text: 'Si vous mourrez dans la minute qui suit, vous revenez immédiatement à la vie comme si vous étiez touché par le sort résurrection.' },
+      { min: 91, max: 92, text: 'Si vous mourez dans la minute qui suit, vous revenez immédiatement à la vie comme si vous étiez touché par le sort résurrection.' },
       { min: 93, max: 94, text: 'Votre taille augmente d\'une catégorie pendant une minute.' },
       { min: 95, max: 96, text: 'Vous et toutes les créatures dans un rayon de 9 mètres obtenez la vulnérabilité aux dégâts perforants pendant une minute.' },
       { min: 97, max: 98, text: 'Vous êtes entouré d\'une faible musique éthérée pendant une minute.' },
