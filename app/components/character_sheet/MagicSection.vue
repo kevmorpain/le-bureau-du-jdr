@@ -419,7 +419,7 @@ const {
   armorSpellcastingWarning,
   characterLevel,
   activeConditions,
-  setConcentration,
+  startConcentration,
   characterSpells,
   spellsByLevel,
   showPreparedOnly,
@@ -719,13 +719,7 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
     return
   }
 
-  if (cs.spell.concentration) {
-    setConcentration(cs.spellId)
-    useToast().add({
-      title: `Concentration active — ${cs.spell.name}`,
-      color: 'info',
-    })
-  }
+  if (cs.spell.concentration) startConcentration(cs.spellId, cs.spell.name)
 
   // Sort d'attaque → jet pour toucher ; sinon effet direct (Arcanum lancé au niveau de base).
   rememberCastLevel(cs.spellId, cs.spell.level || lvl)
@@ -736,13 +730,7 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
 const isArcanumSpell = (cs: CharacterSpellWithSpell) => arcanumLevelFromSource(cs.source) !== null
 
 const castCantripDirect = (cs: CharacterSpellWithSpell) => {
-  if (cs.spell.concentration) {
-    setConcentration(cs.spellId)
-    useToast().add({
-      title: `Concentration active — ${cs.spell.name}`,
-      color: 'info',
-    })
-  }
+  if (cs.spell.concentration) startConcentration(cs.spellId, cs.spell.name)
   if (isAttackSpell(cs)) rollSpellAttack(cs)
   else rollSpellEffect(cs, cs.spell.level || 0)
 }
@@ -762,13 +750,7 @@ const castArcanumFromSlideover = () => {
 const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number | null) => {
   castSpell(slotLevel, slotType)
   if (casterClassId !== null) setSelectedCaster(casterClassId)
-  if (selectedSpell.value?.spell.concentration) {
-    setConcentration(selectedSpell.value.spellId)
-    useToast().add({
-      title: `Concentration active — ${selectedSpell.value.spell.name}`,
-      color: 'info',
-    })
-  }
+  if (selectedSpell.value?.spell.concentration) startConcentration(selectedSpell.value.spellId, selectedSpell.value.spell.name)
   if (selectedSpell.value) {
     // Avant de jeter : le bouton « Dégâts » doit retrouver CET emplacement, pas le niveau de base.
     rememberCastLevel(selectedSpell.value.spellId, slotLevel)

@@ -31,6 +31,11 @@ export const useRest = (
   const isResting = ref(false)
   const { offlineMutate } = useOfflineMutation(() => characterSheet.value.id)
 
+  const resetDeathSaves = () => {
+    characterSheet.value.deathSaveSuccesses = 0
+    characterSheet.value.deathSaveFailures = 0
+  }
+
   const shortRest = async (hitDiceSpent: { die: string, count: number, healAmount: number }[] = []) => {
     isResting.value = true
     let summary: string | undefined
@@ -60,6 +65,7 @@ export const useRest = (
           characterSheet.value.currentHp + totalHeal,
           maxHpAt(characterSheet.value.exhaustionLevel),
         )
+        if (totalHeal > 0) resetDeathSaves()
       }
 
       toaster.add({ title: 'Repos court terminé', description: summary, color: 'success' })
@@ -94,6 +100,7 @@ export const useRest = (
       if (fedAndWatered) characterSheet.value.exhaustionLevel = Math.max(0, characterSheet.value.exhaustionLevel - 1)
       characterSheet.value.currentHp = maxHpAt(characterSheet.value.exhaustionLevel)
       characterSheet.value.temporaryHp = 0
+      resetDeathSaves()
 
       if (spellSlots?.value) {
         refillSlots(spellSlots.value.spellcasting)

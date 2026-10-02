@@ -128,8 +128,11 @@ function buildDiffs(local: Record<string, unknown>, server: Record<string, unkno
     { key: 'hpBase', label: 'PV de base' },
     { key: 'temporaryHp', label: 'PV temporaires' },
     { key: 'exhaustionLevel', label: 'Épuisement' },
+    { key: 'deathSaveSuccesses', label: 'Jets de mort réussis' },
+    { key: 'deathSaveFailures', label: 'Jets de mort ratés' },
     { key: 'inspiration', label: 'Inspiration', fmt: yn },
     { key: 'concentratingSpellId', label: 'Concentration', fmt: v => (v ? 'En cours' : 'Aucune') },
+    { key: 'concentratingOn', label: 'Concentration libre', fmt: v => (v ? String(v) : 'Aucune') },
   ]
 
   for (const { key, label, fmt } of scalars) {

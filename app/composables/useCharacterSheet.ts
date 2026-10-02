@@ -7,6 +7,7 @@ import type { EffectSource } from '~~/shared/rules/effectBonuses'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
 import { useCharacterConditions, binaryConditions } from './character/useCharacterConditions'
+import { useCharacterVitals } from './character/useCharacterVitals'
 import { useCharacterSpellcasting } from './character/useCharacterSpellcasting'
 import { useCharacterSpells } from './character/useCharacterSpells'
 import { useCharacterInventory } from './character/useCharacterInventory'
@@ -265,6 +266,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     hpPerLevelBonus: abilities.hpPerLevelBonus,
   })
 
+  const vitals = useCharacterVitals(characterSheet)
+
   // ─── Sort en concentration (résolu via characterSpells) ──────────────────
 
   const concentratingSpell = computed(() => {
@@ -272,6 +275,23 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     if (id === null) return null
     return spells.characterSpells.value?.find(cs => cs.spellId === id)?.spell ?? null
   })
+
+  // Nom affiché : le sort du catalogue, sinon le libellé libre ; un sort que la fiche ne connaît plus reste « inconnu ».
+  const concentrationName = computed<string | null>(() => {
+    if (!conditions.isConcentrating.value) return null
+    return concentratingSpell.value?.name ?? conditions.concentratingOn.value ?? 'Sort inconnu'
+  })
+
+  // Lancer un sort à concentration met fin à la concentration en cours (AideDD, Concentration) : on le dit.
+  const startConcentration = (spellId: number, spellName: string) => {
+    const lost = conditions.concentratingSpellId.value === spellId ? null : concentrationName.value
+    conditions.setConcentration(spellId)
+    useToast().add({
+      title: `Concentration active — ${spellName}`,
+      description: lost ? `Vous perdez la concentration sur ${lost}.` : undefined,
+      color: 'info',
+    })
+  }
 
   // ─── API publique ─────────────────────────────────────────────────────────
 
@@ -288,7 +308,6 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     hitDice: classes.hitDice,
     proficiencyBonus: classes.proficiencyBonus,
     armorClass: inventoryLayer.computedAC,
-    deathSavingThrows: classes.deathSavingThrows,
     // Features & effets
     resolvedFeatures,
     allCharacterFeatures,
@@ -306,14 +325,24 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     passiveInvestigation: abilities.passiveInvestigation,
     initiativeBonus: abilities.initiativeBonus,
     hpPerLevelBonus: abilities.hpPerLevelBonus,
+    // PV, jets contre la mort
+    hitPointState: vitals.hitPointState,
+    setHitPointState: vitals.setHitPointState,
+    isDead: vitals.isDead,
+    isDying: vitals.isDying,
+    isStable: vitals.isStable,
     // Conditions & états
     binaryConditions,
     activeConditions: conditions.activeConditions,
     toggleCondition: conditions.toggleCondition,
     concentratingSpellId: conditions.concentratingSpellId,
+    concentratingOn: conditions.concentratingOn,
     isConcentrating: conditions.isConcentrating,
     setConcentration: conditions.setConcentration,
+    setFreeConcentration: conditions.setFreeConcentration,
+    startConcentration,
     concentratingSpell,
+    concentrationName,
     exhaustionLevel: conditions.exhaustionLevel,
     exhaustionTooltip: conditions.exhaustionTooltip,
     hasDraconicAncestry: conditions.hasDraconicAncestry,

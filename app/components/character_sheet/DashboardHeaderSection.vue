@@ -80,7 +80,7 @@
           variant="outline"
           size="sm"
           :loading="isResting"
-          @click="$emit('longRest')"
+          @click="askLongRest"
         >
           Repos long
         </UButton>
@@ -105,6 +105,24 @@
       </div>
     </div>
   </header>
+
+  <ConfirmActionModal
+    v-model:open="confirmingLongRest"
+    title="Terminer un repos long ?"
+    confirm-label="Terminer le repos long"
+    confirm-icon="i-game-icons:night-sleep"
+    @confirm="$emit('longRest', fedAndWatered)"
+  >
+    <p class="text-muted">
+      Rend les points de vie, les emplacements de sorts, les aptitudes et les dés de vie ; les PV temporaires disparaissent.
+      Cette action n'a pas d'annulation.
+    </p>
+    <UCheckbox
+      v-if="exhaustionLevel > 0"
+      v-model="fedAndWatered"
+      :label="`Le personnage a mangé et bu : l'épuisement passe du niveau ${exhaustionLevel} au niveau ${exhaustionLevel - 1}`"
+    />
+  </ConfirmActionModal>
 </template>
 
 <script lang="ts" setup>
@@ -120,7 +138,7 @@ defineProps<{
 
 defineEmits<{
   shortRest: []
-  longRest: []
+  longRest: [fedAndWatered: boolean]
   dawn: []
   toggleCombat: []
 }>()
@@ -129,12 +147,21 @@ const {
   characterLevel,
   activeConditions,
   toggleCondition,
+  exhaustionLevel,
   mainClass,
   multiClass,
   species,
   selectedBackground,
   portraitSrc,
 } = useCharacterSheet(characterSheet)
+
+const confirmingLongRest = ref(false)
+// AideDD, Conditions : l'épuisement ne baisse « qu'à condition que la créature ait aussi mangé et bu ».
+const fedAndWatered = ref(true)
+const askLongRest = () => {
+  fedAndWatered.value = true
+  confirmingLongRest.value = true
+}
 
 // Une URL injoignable ne laisse pas d'icône d'image cassée dans la barre : on masque.
 // Le retour à l'utilisateur se fait là où il saisit l'URL (EditIdentitySlideover).

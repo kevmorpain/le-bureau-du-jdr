@@ -1,9 +1,6 @@
-import { useStorage } from '@vueuse/core'
 import { hitDiceTotals } from '~~/shared/rules/hitDice'
 
 export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
-  const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
-
   // ─── Species ──────────────────────────────────────────────────────────────
 
   const species = computed(() => characterSheet?.value?.species)
@@ -42,10 +39,6 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
 
   const proficiencyBonus = computed<number>(() => Math.floor((characterLevel.value - 1) / 4) + 2)
 
-  // ─── Combat stats (storage) ───────────────────────────────────────────────
-
-  const deathSavingThrows = useStorage(storageKey('deathSavingThrows'), { success: 0, failure: 0 })
-
   return {
     species,
     speed,
@@ -56,6 +49,5 @@ export const useCharacterClasses = (characterSheet?: Ref<CharacterSheet>) => {
     multiClass,
     hitDice,
     proficiencyBonus,
-    deathSavingThrows,
   }
 }

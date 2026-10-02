@@ -108,7 +108,7 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
 
     stmts.push(db.update(schema.characterSheets)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .set({ currentHp: maxHp, temporaryHp: 0, exhaustionLevel, currentHitDie: newHitDie } as any)
+      .set({ currentHp: maxHp, temporaryHp: 0, exhaustionLevel, deathSaveSuccesses: 0, deathSaveFailures: 0, currentHitDie: newHitDie } as any)
       .where(eq(schema.characterSheets.id, characterSheetId)))
     stmts.push(db.update(schema.characterSpellSlots)
       .set({ used: 0 })
@@ -120,8 +120,9 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
     const totalHeal = hitDiceSpent.reduce((sum, d) => sum + d.healAmount, 0)
     const { maxHp } = sheetHitPointsOf({ ...characterSheet, exhaustionLevel })
     const newHp = Math.min(characterSheet.currentHp + totalHeal, maxHp)
+    // Regagner des PV remet les jets contre la mort à zéro.
     stmts.push(db.update(schema.characterSheets)
-      .set({ currentHp: newHp })
+      .set(totalHeal > 0 ? { currentHp: newHp, deathSaveSuccesses: 0, deathSaveFailures: 0 } : { currentHp: newHp })
       .where(eq(schema.characterSheets.id, characterSheetId)))
   }
 

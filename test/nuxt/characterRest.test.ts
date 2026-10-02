@@ -188,6 +188,28 @@ describe('characterRest — maximum effectif', () => {
     expect(row.exhaustionLevel).toBe(2)
   })
 
+  it('regagner des PV remet les jets contre la mort à zéro : repos long, ou soin par dés de vie', async () => {
+    const dying = { currentHp: 0, deathSaveSuccesses: 2, deathSaveFailures: 2 }
+    const long = await create()
+    await db.update(schema.characterSheets).set(dying).where(eq(schema.characterSheets.id, long))
+    await characterRest(db, long, { type: 'long' })
+    expect(await sheetOf(long)).toMatchObject({ currentHp: 24, deathSaveSuccesses: 0, deathSaveFailures: 0 })
+
+    const short = await create()
+    await db.update(schema.characterSheets).set(dying).where(eq(schema.characterSheets.id, short))
+    await characterRest(db, short, { type: 'short', hitDiceSpent: [{ die: 'd8', count: 1, healAmount: 5 }] })
+    expect(await sheetOf(short)).toMatchObject({ currentHp: 5, deathSaveSuccesses: 0, deathSaveFailures: 0 })
+  })
+
+  it('un repos court sans soin laisse les jets contre la mort', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ currentHp: 0, deathSaveSuccesses: 1, deathSaveFailures: 2 }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'short' })
+
+    expect(await sheetOf(id)).toMatchObject({ deathSaveSuccesses: 1, deathSaveFailures: 2 })
+  })
+
   it('soin par dés de vie : plafonné au maximum effectif, Robuste compris', async () => {
     const id = await withTough()
     await db.update(schema.characterSheets).set({ currentHp: 28 }).where(eq(schema.characterSheets.id, id))

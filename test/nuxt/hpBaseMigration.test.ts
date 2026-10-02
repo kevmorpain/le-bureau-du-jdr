@@ -3,7 +3,7 @@ import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as schema from '../../server/db/schema'
 import { loadSheetRelations, sheetHitPointsOf } from '../../server/utils/characterSheetLoader'
-import { applyMigration, replayMigrations } from '../fixtures/migrations'
+import { applyMigration, migrationFiles, replayMigrations } from '../fixtures/migrations'
 
 // Migration 0117 : `max_hp` stockait une somme qui incluait le modificateur de CON ; `hp_base` n'en garde que la part
 // « dés ». Chaque fiche doit garder le MÊME maximum affiché : ce que le serveur dérive (CON actuelle × niveau) après la
@@ -94,6 +94,8 @@ beforeAll(async () => {
   await sheet(13, { max: 1, con: 20, level: 5 })
 
   await applyMigration(client, MIGRATION)
+  // Le schéma Drizzle lit les colonnes des migrations suivantes : l'équivalence charge la fiche par lui.
+  for (const file of (await migrationFiles()).filter(f => f > MIGRATION)) await applyMigration(client, file)
 })
 
 describe('migration 0117 — PV de base', () => {

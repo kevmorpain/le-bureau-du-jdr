@@ -39,7 +39,8 @@ export const useCharacterConditions = (
 
   const storedActiveConditions = useStorage<ConditionKey[]>(storageKey('activeConditions'), [])
 
-  // Concentration is persisted via DB (concentratingSpellId). The 'concentrating'
+  // Concentration is persisted via DB : un sort du catalogue (concentratingSpellId) ou un libellé libre
+  // (concentratingOn : effet de monstre, sort non seedé, homebrew), jamais les deux. The 'concentrating'
   // condition is derived; we never store it in localStorage.
   const concentratingSpellId = computed<number | null>({
     get: () => characterSheet?.value?.concentratingSpellId ?? null,
@@ -47,11 +48,23 @@ export const useCharacterConditions = (
       if (characterSheet?.value) characterSheet.value.concentratingSpellId = v
     },
   })
+  const concentratingOn = computed<string | null>({
+    get: () => characterSheet?.value?.concentratingOn ?? null,
+    set: (v) => {
+      if (characterSheet?.value) characterSheet.value.concentratingOn = v
+    },
+  })
 
-  const isConcentrating = computed(() => concentratingSpellId.value !== null)
+  const isConcentrating = computed(() => concentratingSpellId.value !== null || concentratingOn.value !== null)
 
   const setConcentration = (spellId: number | null) => {
     concentratingSpellId.value = spellId
+    concentratingOn.value = null
+  }
+
+  const setFreeConcentration = (label: string) => {
+    concentratingSpellId.value = null
+    concentratingOn.value = label.trim() || null
   }
 
   if (import.meta.client) {
@@ -66,8 +79,16 @@ export const useCharacterConditions = (
 
   const toggleCondition = (condition: ConditionKey) => {
     const idx = storedActiveConditions.value.indexOf(condition)
-    if (idx === -1) storedActiveConditions.value.push(condition)
-    else storedActiveConditions.value.splice(idx, 1)
+    if (idx !== -1) {
+      storedActiveConditions.value.splice(idx, 1)
+      return
+    }
+    storedActiveConditions.value.push(condition)
+    // AideDD, Concentration : « Vous perdez automatiquement la concentration de votre sort si vous êtes incapable d'agir ».
+    if (isConcentrating.value && conditionMechanics[condition]?.incapacitating) {
+      setConcentration(null)
+      useToast().add({ title: 'Concentration perdue', description: `${conditionLabels[condition]} : vous ne pouvez plus agir.`, color: 'error' })
+    }
   }
 
   const exhaustionLevel = computed({
@@ -229,8 +250,10 @@ export const useCharacterConditions = (
     activeConditions,
     toggleCondition,
     concentratingSpellId,
+    concentratingOn,
     isConcentrating,
     setConcentration,
+    setFreeConcentration,
     exhaustionLevel,
     exhaustionTooltip,
     hasDraconicAncestry,

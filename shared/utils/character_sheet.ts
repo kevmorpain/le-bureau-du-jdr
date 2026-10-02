@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { ALIGNMENT_CODES } from '~~/shared/rules/alignments'
+import { DEATH_SAVE_LIMIT } from '~~/shared/rules/damage'
 import { currentHitDieSchema } from '~~/shared/rules/hitDice'
 import { temporaryEffectsSchema } from '~~/shared/utils/temporary_effects'
 
@@ -29,6 +30,8 @@ export const updateCharacterSheetSchema = z.object({
   currentHitDie: currentHitDieSchema.nullable().optional(),
   inspiration: z.boolean().optional(),
   exhaustionLevel: z.number().int().min(0).max(6).optional(),
+  deathSaveSuccesses: z.number().int().min(0).max(DEATH_SAVE_LIMIT).optional(),
+  deathSaveFailures: z.number().int().min(0).max(DEATH_SAVE_LIMIT).optional(),
   dragonbornAncestry: z.string().nullable().optional(),
   pp: z.number().int().min(0).optional(),
   po: z.number().int().min(0).optional(),
@@ -53,6 +56,7 @@ export const updateCharacterSheetSchema = z.object({
   // relatifs (cf. IdentitySection.vue).
   portraitUrl: z.string().max(2000).optional(),
   concentratingSpellId: z.number().int().positive().nullable().optional(),
+  concentratingOn: z.string().trim().min(1).max(100).nullable().optional(),
   notes: z.string().max(5000).optional(),
   temporaryEffects: temporaryEffectsSchema.optional(),
 })

@@ -10,6 +10,8 @@ export type ConditionMechanics = {
   saveAutoFail?: SaveKey[]
   resistAllDamage?: boolean
   immunePoison?: boolean
+  // Incapable d'agir : la concentration s'arrête d'elle-même.
+  incapacitating?: boolean
 }
 
 export const conditionMechanics: Record<ConditionKey, ConditionMechanics> = {
@@ -21,12 +23,12 @@ export const conditionMechanics: Record<ConditionKey, ConditionMechanics> = {
   frightened: { skillDisadvantage: true, attackDisadvantage: true },
   poisoned: { skillDisadvantage: true, attackDisadvantage: true },
   restrained: { speedZero: true, attackDisadvantage: true, saveDisadvantage: ['dex'] },
-  stunned: { speedZero: true, saveAutoFail: ['str', 'dex'] },
-  incapacitated: {},
-  unconscious: { speedZero: true, saveAutoFail: ['str', 'dex'] },
+  stunned: { speedZero: true, saveAutoFail: ['str', 'dex'], incapacitating: true },
+  incapacitated: { incapacitating: true },
+  unconscious: { speedZero: true, saveAutoFail: ['str', 'dex'], incapacitating: true },
   invisible: {},
-  paralyzed: { speedZero: true, saveAutoFail: ['str', 'dex'] },
-  petrified: { speedZero: true, saveAutoFail: ['str', 'dex'], resistAllDamage: true, immunePoison: true },
+  paralyzed: { speedZero: true, saveAutoFail: ['str', 'dex'], incapacitating: true },
+  petrified: { speedZero: true, saveAutoFail: ['str', 'dex'], resistAllDamage: true, immunePoison: true, incapacitating: true },
   exhaustion: {},
 }
 

@@ -9,7 +9,7 @@
       :combat-mode
       :roll
       @short-rest="shortRest()"
-      @long-rest="longRest()"
+      @long-rest="longRest"
       @dawn="dawn()"
       @toggle-combat="toggleCombat"
     />
@@ -91,7 +91,6 @@
         <DeathSavingThrowSection
           :character-sheet="characterSheet"
           :roll="roll"
-          @recover="(hp) => (characterSheet.currentHp = hp)"
         />
         <HitDiceSection
           :character-sheet="characterSheet"
@@ -184,7 +183,7 @@ function reconcileAfterConflict() {
 // L'inventaire est un useFetch séparé → on le rafraîchit après chaque repos.
 const { shortRest: _shortRest, longRest: _longRest, dawn: _dawn, isResting } = useRest(characterSheet, spellSlots, maxHitPointsFor)
 const shortRest = async (...args: Parameters<typeof _shortRest>) => { await _shortRest(...args); await refreshInventory() }
-const longRest = async () => { await _longRest(); await refreshInventory() }
+const longRest = async (fedAndWatered?: boolean) => { await _longRest(fedAndWatered); await refreshInventory() }
 const dawn = async () => { await _dawn(); await refreshInventory() }
 
 const combatMode = ref(false)
