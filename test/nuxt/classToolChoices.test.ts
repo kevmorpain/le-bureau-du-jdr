@@ -33,10 +33,10 @@ beforeAll(async () => {
 }, 60000)
 
 const create = (classId: number, choicePicks: unknown[] = []) => createCharacter(db, createCharacterSchema.parse({
-  name: 'X', maxHp: 10, classId, level: 1, speciesId: SPECIES.human,
+  name: 'X', hpBase: 8, classId, level: 1, speciesId: SPECIES.human,
   abilityScores: {}, classSkills: [], backgroundSkills: [], spellIds: [], choicePicks,
 }), OWNER)
-const levelUp = (id: number, over: Record<string, unknown>) => characterLevelUp(db, id, levelUpSchema.parse({ hpGained: 5, ...over }))
+const levelUp = (id: number, over: Record<string, unknown>) => characterLevelUp(db, id, levelUpSchema.parse({ hpDie: 5, ...over }))
 const tools = async (id: number) => (await deriveChoiceProficiencies(db, id)).map(e => e.value).sort()
 
 describe('outils au choix de classe — création', () => {

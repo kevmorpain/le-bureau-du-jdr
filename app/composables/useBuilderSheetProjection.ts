@@ -3,6 +3,7 @@ import type { SkillKey } from '~~/shared/rules/skills'
 import { ABILITY_KEYS } from '~~/shared/rules/abilities'
 import { useCharacterAbilities, type AbilitiesSheet } from './character/useCharacterAbilities'
 import { resolveFeatEffects } from '~~/shared/rules/characterEffects'
+import { maxHitPoints } from '~~/shared/rules/hitPoints'
 
 type BuilderInvocation = { id: number, name: string, effects: Effect[] }
 
@@ -24,7 +25,7 @@ export function useBuilderSheetProjection() {
     getFeatById,
     finalAbilities,
     profBonus,
-    hpMax,
+    hpBase,
     SKILLS,
   } = useCharacterBuilder()
   const { classProficienciesFor } = useBuilderEntities()
@@ -51,7 +52,6 @@ export function useBuilderSheetProjection() {
       ...materializedSkills.value.map(skillKey => ({ skillKey, proficiencyLevel: 'proficient' })),
       ...state.value.expertiseSkills.map(skillKey => ({ skillKey, proficiencyLevel: 'expert' })),
     ],
-    classes: [{ level: state.value.level }],
   }))
   const withoutAbilityIncreases = (effects: Effect[]) => effects.filter(e => e.type !== 'ability_increase')
   const skillEffects = (skills: string[]): Effect[] =>
@@ -78,8 +78,16 @@ export function useBuilderSheetProjection() {
     }))
     .filter(sk => sk.proficiency !== 'none'))
 
-  // Bonus rétroactif des dons (Robuste) : ajouté par la fiche au `maxHp` stocké, jamais persisté.
-  const maxHp = computed(() => hpMax.value != null ? hpMax.value + abilities.hpBonusFromFeats.value : null)
+  // Ce que la fiche affichera : la part « dés » plus la CON et les bonus par niveau, ajoutés à la lecture.
+  const maxHp = computed(() => hpBase.value == null
+    ? null
+    : maxHitPoints({
+        hpBase: hpBase.value,
+        totalLevel: state.value.level,
+        conMod: abilities.abilityModifiers.value.con ?? 0,
+        perLevelBonus: abilities.hpPerLevelBonus.value,
+        exhaustionLevel: 0,
+      }))
 
   return {
     masteredSkills,

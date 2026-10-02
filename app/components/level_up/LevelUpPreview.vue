@@ -124,6 +124,7 @@ const {
   totalLevel,
   pickedClass,
   hpGained,
+  currentHpMax,
   finalAbilities,
   activeSteps,
   isStepComplete,
@@ -138,7 +139,6 @@ const completedCount = computed(() =>
   activeSteps.value.filter(s => isStepComplete.value(s.id)).length,
 )
 
-const currentHpMax = computed(() => charSheet?.value?.maxHp ?? 0)
 
 const oldProfBonus = computed(() => profBonusAtLevel(totalLevel.value))
 const newProfBonus = computed(() => profBonusAtLevel(totalLevel.value + 1))

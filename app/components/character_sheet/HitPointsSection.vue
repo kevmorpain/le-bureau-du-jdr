@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between">
       <span class="text-xs font-bold uppercase tracking-widest text-muted">Points de vie</span>
       <span class="font-mono font-bold text-sm">
-        {{ characterSheet.currentHp }}<span class="text-muted">/{{ characterSheet.maxHp }}</span>
+        {{ characterSheet.currentHp }}<span class="text-muted">/{{ fullMaxHp }}</span>
         <span
           v-if="characterSheet.temporaryHp > 0"
           class="text-blue-400 ml-1"
@@ -19,7 +19,7 @@
     </div>
 
     <UTooltip
-      v-if="effectiveMaxHp !== characterSheet.maxHp"
+      v-if="effectiveMaxHp !== fullMaxHp"
       text="Épuisement niv. 4 : PV max ÷ 2"
     >
       <span class="text-xs text-rose-400 font-semibold">→ Max effectif : {{ effectiveMaxHp }}</span>
@@ -124,7 +124,7 @@
           <UInputNumber
             v-model="characterSheet.currentHp"
             :min="0"
-            :max="characterSheet.maxHp"
+            :max="effectiveMaxHp"
             :increment="false"
             :decrement="false"
             variant="none"
@@ -132,8 +132,8 @@
           />
           /
           <UInputNumber
-            v-model="characterSheet.maxHp"
-            :min="0"
+            v-model="maxHpInput"
+            :min="1"
             :increment="false"
             :decrement="false"
             variant="none"
@@ -208,6 +208,7 @@
 
 <script lang="ts" setup>
 import { damageTypeLabels } from '~~/shared/utils/labels'
+import { hpBaseFromTotal } from '~~/shared/rules/hitPoints'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
@@ -215,7 +216,18 @@ const props = defineProps<{
   roll?: (label: string, modifier: number, sides?: number, count?: number) => number
 }>()
 
-const { effectiveMaxHp, defenseEntries, isConcentrating, concentratingSpell, setConcentration, savingThrows } = useCharacterSheet(characterSheet)
+const {
+  fullMaxHp, effectiveMaxHp, defenseEntries, isConcentrating, concentratingSpell, setConcentration, savingThrows,
+  characterLevel, abilityModifiers, hpPerLevelBonus,
+} = useCharacterSheet(characterSheet)
+
+// On saisit le maximum affiché ; la fiche ne stocke que ce qui reste hors CON et hors bonus par niveau.
+const maxHpInput = computed({
+  get: () => fullMaxHp.value,
+  set: (total: number | null | undefined) => {
+    characterSheet.value.hpBase = Math.max(0, hpBaseFromTotal(total ?? 1, characterLevel.value, abilityModifiers.value.con ?? 0, hpPerLevelBonus.value))
+  },
+})
 
 const hpPercent = computed(() => {
   const max = effectiveMaxHp.value || 1

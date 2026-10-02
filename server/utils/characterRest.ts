@@ -1,8 +1,10 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
+import { loadSheetRelations, sheetHitPointsOf } from '~~/server/utils/characterSheetLoader'
 import { hitDiceTotals, recoverHitDice } from '~~/shared/rules/hitDice'
+import { rollDice } from '~~/shared/rules/dice'
 import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
 import type { RechargeType } from '~~/server/db/schema/features'
 import type { Db } from '~~/server/utils/db'
@@ -17,22 +19,23 @@ export const restSchema = z.object({
     count: z.number().int().min(0),
     healAmount: z.number().int().min(0),
   })).optional().default([]),
+  // AideDD, Conditions : un repos long réduit l'épuisement de 1 « à condition que la créature ait aussi mangé et bu ».
+  fedAndWatered: z.boolean().optional().default(true),
 })
 
-export type RestInput = z.infer<typeof restSchema>
+export type RestInput = z.input<typeof restSchema>
 
-export async function characterRest(db: Db, characterSheetId: number, input: RestInput): Promise<{ success: true, restType: string }> {
-  const { type, hitDiceSpent } = input
+export interface RestResult {
+  success: true
+  restType: string
+  exhaustionLevel: number
+  rechargedItems: { inventoryId: number, name: string, rolled: number }[]
+}
 
-  // `.query` (API relationnelle) n'est pas typé sur le `Db` générique (schéma `any`) → cast.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const characterSheet = await (db as any).query.characterSheets.findFirst({
-    where: eq(schema.characterSheets.id, characterSheetId),
-    with: {
-      features: { with: { feature: true } },
-      classes: { with: { class: true } },
-    },
-  })
+export async function characterRest(db: Db, characterSheetId: number, input: RestInput, rng: () => number = Math.random): Promise<RestResult> {
+  const { type, hitDiceSpent = [], fedAndWatered = true } = input
+
+  const characterSheet = await loadSheetRelations(db, characterSheetId)
   if (!characterSheet) throw new CharacterValidationError('Personnage introuvable.')
 
   const rechargingTypes = REST_RECHARGE_MAP[type]
@@ -42,16 +45,17 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
       cf.feature?.rechargeType && rechargingTypes.includes(cf.feature.rechargeType as RechargeType))
     .map((cf: { featureId: number }) => cf.featureId)
 
-  const invToRecharge = await db
-    .select({ invId: schema.characterInventory.id })
+  const rechargeable = await db
+    .select({ invId: schema.characterInventory.id, name: schema.items.name, rechargeDice: schema.items.rechargeDice })
     .from(schema.characterInventory)
     .innerJoin(schema.items, eq(schema.characterInventory.itemId, schema.items.id))
     .where(and(
       eq(schema.characterInventory.characterSheetId, characterSheetId),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       inArray(schema.items.rechargeType, rechargingTypes as any),
-      isNull(schema.items.rechargeDice),
     ))
+  const invToRecharge = rechargeable.filter(r => r.rechargeDice === null)
+  const invPartiallyRecharged = rechargeable.filter(r => r.rechargeDice !== null)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stmts: any[] = []
@@ -71,6 +75,16 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
       .where(inArray(schema.characterInventory.id, invToRecharge.map((r: { invId: number }) => r.invId))))
   }
 
+  // Recharge partielle (« 1d6+4 charges à l'aube ») : les charges rendues se tirent au repos, jamais sous zéro dépensée.
+  const rechargedItems: RestResult['rechargedItems'] = []
+  for (const row of invPartiallyRecharged) {
+    const rolled = rollDice(row.rechargeDice!, rng)
+    rechargedItems.push({ inventoryId: row.invId, name: row.name, rolled })
+    stmts.push(db.update(schema.characterInventory)
+      .set({ currentUses: sql`MAX(0, ${schema.characterInventory.currentUses} - ${rolled})` })
+      .where(eq(schema.characterInventory.id, row.invId)))
+  }
+
   if (type === 'short') {
     stmts.push(db.update(schema.characterSpellSlots)
       .set({ used: 0 })
@@ -80,15 +94,21 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
       )))
   }
 
+  let exhaustionLevel: number = characterSheet.exhaustionLevel
   if (type === 'long') {
+    if (fedAndWatered) exhaustionLevel = Math.max(0, exhaustionLevel - 1)
+
     const newHitDie = recoverHitDice(
       characterSheet.currentHitDie,
       hitDiceTotals((characterSheet.classes ?? []).map((cls: { level: number, class?: { hitDice?: string } }) => ({ level: cls.level, hitDice: cls.class?.hitDice }))),
     )
 
+    // Le maximum se lit après la baisse d'épuisement : au niveau 4 il est divisé par deux.
+    const { maxHp } = sheetHitPointsOf({ ...characterSheet, exhaustionLevel })
+
     stmts.push(db.update(schema.characterSheets)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .set({ currentHp: characterSheet.maxHp, currentHitDie: newHitDie } as any)
+      .set({ currentHp: maxHp, temporaryHp: 0, exhaustionLevel, currentHitDie: newHitDie } as any)
       .where(eq(schema.characterSheets.id, characterSheetId)))
     stmts.push(db.update(schema.characterSpellSlots)
       .set({ used: 0 })
@@ -98,7 +118,8 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
   // Soin par dés de vie — DOIT rester APRÈS le repos long (cf. dépendance d'ordre en tête).
   if (hitDiceSpent.length > 0) {
     const totalHeal = hitDiceSpent.reduce((sum, d) => sum + d.healAmount, 0)
-    const newHp = Math.min(characterSheet.currentHp + totalHeal, characterSheet.maxHp)
+    const { maxHp } = sheetHitPointsOf({ ...characterSheet, exhaustionLevel })
+    const newHp = Math.min(characterSheet.currentHp + totalHeal, maxHp)
     stmts.push(db.update(schema.characterSheets)
       .set({ currentHp: newHp })
       .where(eq(schema.characterSheets.id, characterSheetId)))
@@ -109,5 +130,5 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
     await (db as any).batch(stmts as [any, ...any[]])
   }
 
-  return { success: true, restType: type }
+  return { success: true, restType: type, exhaustionLevel, rechargedItems }
 }

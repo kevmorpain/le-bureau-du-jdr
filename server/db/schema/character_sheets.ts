@@ -38,7 +38,9 @@ const characterSheets = sqliteTable('character_sheets', {
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
   speciesId: integer('species_id').references(() => characterSpecies.id).notNull(),
   alignment: text().$type<Alignment>().default(Alignment.TrueNeutral).notNull(),
-  maxHp: integer('max_hp').default(0).notNull(),
+  // Part « dés » des PV max (dés lancés ou valeurs fixes) : le modificateur de CON et les bonus par niveau
+  // s'ajoutent à la lecture (`shared/rules/hitPoints.ts`, ADR D19).
+  hpBase: integer('hp_base').default(0).notNull(),
   currentHp: integer('current_hp').default(0).notNull(),
   temporaryHp: integer('temporary_hp').default(0).notNull(),
   backgroundId: integer('background_id').references(() => backgrounds.id),

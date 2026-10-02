@@ -262,7 +262,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     allEffects,
     speed: classes.speed,
     abilityModifiers: abilities.abilityModifiers,
-    maxHpBonus: abilities.hpBonusFromFeats,
+    hpPerLevelBonus: abilities.hpPerLevelBonus,
   })
 
   // ─── Sort en concentration (résolu via characterSpells) ──────────────────
@@ -305,7 +305,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     passivePerception: abilities.passivePerception,
     passiveInvestigation: abilities.passiveInvestigation,
     initiativeBonus: abilities.initiativeBonus,
-    hpBonusFromFeats: abilities.hpBonusFromFeats,
+    hpPerLevelBonus: abilities.hpPerLevelBonus,
     // Conditions & états
     binaryConditions,
     activeConditions: conditions.activeConditions,
@@ -321,7 +321,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     defenseEntries: conditions.defenseEntries,
     effectiveSpeed: conditions.effectiveSpeed,
     speedModifiers: conditions.speedModifiers,
+    fullMaxHp: conditions.fullMaxHp,
     effectiveMaxHp: conditions.effectiveMaxHp,
+    maxHitPointsFor: conditions.maxHitPointsFor,
     skillDisadvantageReasons: conditions.skillDisadvantageReasons,
     saveStatuses: conditions.saveStatuses,
     // Effets temporaires

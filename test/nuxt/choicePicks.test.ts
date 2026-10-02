@@ -44,7 +44,7 @@ async function progressionOf(featureName: string, kind: ChoiceKind): Promise<num
 function input(over: Record<string, unknown>) {
   return createCharacterSchema.parse({
     name: 'Choix',
-    maxHp: 10,
+    hpBase: 10,
     classId: FIGHTER,
     level: 1,
     abilityScores: { str: 15 },

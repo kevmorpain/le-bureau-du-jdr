@@ -24,7 +24,7 @@ beforeAll(async () => {
 
 const create = (classId: number, classSkills: string[]) =>
   createCharacter(db, createCharacterSchema.parse({
-    name: 'X', maxHp: 10, classId, level: 1, speciesId: SPECIES.human,
+    name: 'X', hpBase: 8, classId, level: 1, speciesId: SPECIES.human,
     abilityScores: { str: 14, dex: 14, con: 12, int: 10, wis: 10, cha: 14 },
     classSkills, classSavingThrows: [], backgroundSkills: [], spellIds: [],
   }), OWNER)
@@ -32,7 +32,7 @@ const createFighter = () => create(CLASS.fighter, ['athletics', 'intimidation'])
 const createRogue = () => create(CLASS.rogue, ['stealth', 'perception'])
 
 const levelUp = (id: number, over: Record<string, unknown>) => characterLevelUp(db, id, levelUpSchema.parse({
-  isMulticlass: true, hpGained: 5, ...over,
+  isMulticlass: true, hpDie: 5, ...over,
 }))
 
 const skillRows = async (sheetId: number) =>
@@ -47,11 +47,11 @@ const classLevels = async (sheetId: number) =>
 
 describe('compétences de multiclassage — schéma', () => {
   it('refuse une clé hors SKILL_KEYS', () => {
-    expect(levelUpSchema.safeParse({ classId: 1, isMulticlass: true, hpGained: 5, newSkills: ['Acrobaties'] }).success).toBe(false)
+    expect(levelUpSchema.safeParse({ classId: 1, isMulticlass: true, hpDie: 5, newSkills: ['Acrobaties'] }).success).toBe(false)
   })
 
   it('refuse un doublon', () => {
-    expect(levelUpSchema.safeParse({ classId: 1, isMulticlass: true, hpGained: 5, newSkills: ['stealth', 'stealth'] }).success).toBe(false)
+    expect(levelUpSchema.safeParse({ classId: 1, isMulticlass: true, hpDie: 5, newSkills: ['stealth', 'stealth'] }).success).toBe(false)
   })
 })
 

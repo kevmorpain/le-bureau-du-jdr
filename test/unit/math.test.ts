@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { profBonusAtLevel, abilityMod, formatMod, hpAtLevel } from '../../shared/rules/math'
+import { profBonusAtLevel, abilityMod, formatMod } from '../../shared/rules/math'
 
 // Helpers de calcul purs : on verrouille les formules 2014 contre les valeurs de référence du PHB —
 // toute dérive casserait l'affichage builder / level-up / fiche.
@@ -37,20 +37,5 @@ describe('formatMod', () => {
   it('conserve le signe des valeurs négatives', () => {
     expect(formatMod(-1)).toBe('-1')
     expect(formatMod(-4)).toBe('-4')
-  })
-})
-
-describe('hpAtLevel', () => {
-  it('renvoie 0 pour un niveau ≤ 0', () => {
-    expect(hpAtLevel(10, 0, 2)).toBe(0)
-    expect(hpAtLevel(10, -1, 2)).toBe(0)
-  })
-
-  it('max au niveau 1, puis PV moyens fixes (⌈dé/2⌉ + 1 + mod CON) par niveau', () => {
-    expect(hpAtLevel(10, 1, 2)).toBe(12) // d10 + 2
-    expect(hpAtLevel(10, 5, 2)).toBe(44) // 12 + 4×8
-    expect(hpAtLevel(6, 3, 0)).toBe(14) // d6 : 6 + 2×4
-    expect(hpAtLevel(8, 1, -1)).toBe(7) // CON négatif
-    expect(hpAtLevel(12, 20, 3)).toBe(205) // barbare d12 +3 CON au niv. 20
   })
 })

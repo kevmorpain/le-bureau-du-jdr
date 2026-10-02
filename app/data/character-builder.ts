@@ -1481,5 +1481,4 @@ export {
   profBonusAtLevel,
   abilityMod,
   formatMod,
-  hpAtLevel,
 } from '~~/shared/rules/math'

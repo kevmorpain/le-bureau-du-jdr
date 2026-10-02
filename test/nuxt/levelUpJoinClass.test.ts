@@ -25,7 +25,7 @@ beforeAll(() => {
 async function mount(component: Component, cha: number, state: Partial<LevelUpState> = {}) {
   const charSheet = ref({
     id: 1,
-    maxHp: 28,
+    hpBase: 28,
     classes: [{ classId: PALADIN, level: 3, isMain: true, class: { name: 'Paladin' } }],
     baseAbilityScores: [
       { abilityId: 'str', value: 15 },

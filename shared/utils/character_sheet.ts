@@ -22,7 +22,7 @@ export const updateCharacterSheetSchema = z.object({
   speciesId: z.number().int().positive().optional(),
   classes: z.array(classInputSchema).optional(),
   alignment: z.enum(ALIGNMENT_CODES).optional(),
-  maxHp: z.number().int().min(0).optional(),
+  hpBase: z.number().int().min(0).optional(),
   currentHp: z.number().int().min(0).optional(),
   temporaryHp: z.number().int().min(0).optional(),
   // `null` : fiche antérieure à la colonne — le client renvoie la fiche telle quelle.

@@ -125,7 +125,7 @@ function buildDiffs(local: Record<string, unknown>, server: Record<string, unkno
 
   const scalars: Array<{ key: string, label: string, fmt?: (v: unknown) => string }> = [
     { key: 'currentHp', label: 'PV actuels' },
-    { key: 'maxHp', label: 'PV max' },
+    { key: 'hpBase', label: 'PV de base' },
     { key: 'temporaryHp', label: 'PV temporaires' },
     { key: 'exhaustionLevel', label: 'Épuisement' },
     { key: 'inspiration', label: 'Inspiration', fmt: yn },

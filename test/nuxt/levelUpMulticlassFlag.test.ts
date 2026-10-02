@@ -12,13 +12,13 @@ beforeAll(async () => {
 
 const create = (classId: number, level: number, classSkills: string[]) =>
   createCharacter(db, createCharacterSchema.parse({
-    name: 'X', maxHp: 10 * level, classId, level, speciesId: SPECIES.human,
+    name: 'X', hpBase: level, classId, level, speciesId: SPECIES.human,
     abilityScores: { str: 14, dex: 14, con: 12, int: 10, wis: 10, cha: 14 },
     classSkills, classSavingThrows: [], backgroundSkills: [], spellIds: [],
   }), OWNER)
 
 const levelUp = (id: number, over: Record<string, unknown>) => characterLevelUp(db, id, levelUpSchema.parse({
-  hpGained: 5, ...over,
+  hpDie: 5, ...over,
 }))
 
 describe('level-up — `isMulticlass` confronté à l\'état de la fiche', () => {

@@ -13,6 +13,8 @@ import { classSlugFromName } from '~~/shared/rules/classSlugs'
 import { effectiveCasterType } from '~~/shared/rules/subclassCasting'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
+import { baseHitPointsBounds } from '~~/shared/rules/hitPoints'
+import { loadSheetRelations, sheetHitPointsOf } from '~~/server/utils/characterSheetLoader'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
 import { ALL_TOOLS } from '~~/shared/rules/tools'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
@@ -56,7 +58,8 @@ export const createCharacterSchema = z.object({
   name: z.string().min(1).max(100),
   alignment: z.string().optional(),
   dragonbornAncestry: z.string().nullable().optional(),
-  maxHp: z.number().int().positive(),
+  // Part « dés » des PV max (hors CON et bonus par niveau) : bornée par les dés de la classe à la création.
+  hpBase: z.number().int().positive(),
   classId: z.number().int().positive(),
   subclassId: z.number().int().positive().nullable().optional(),
   fightingStyle: z.string().nullable().optional(),
@@ -371,6 +374,11 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   const ruleset: Ruleset = cls.ruleset
   await validateRulesetCoherence(db, d, ruleset)
   const validated = await validateChoices(db, d, cls.id, subclassId, backgroundId)
+  const hitDieSides = hitDieSidesOf(cls.hitDice)
+  if (hitDieSides) {
+    const { min, max } = baseHitPointsBounds(Number(hitDieSides), d.level)
+    if (d.hpBase < min || d.hpBase > max) throw new CharacterValidationError(`Les PV de base (${d.hpBase}) sortent de ce que permettent les dés de la classe au niveau ${d.level} (${min} à ${max}).`)
+  }
   const spellsError = await learnedSpellsError(db, { cls, fromLevel: 0, toLevel: d.level, spellIds: d.spellIds, alreadyKnownIds: [], atCreation: true, subclassId })
   if (spellsError) throw new CharacterValidationError(spellsError)
   const notChosen = (d.preparedSpellIds ?? []).find(id => !d.spellIds.includes(id))
@@ -497,7 +505,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     : null
 
   // 4. Insert de la fiche (HORS batch — id auto-incrément)
-  const hitDieSides = hitDieSidesOf(cls.hitDice)
   const currentHitDie = hitDieSides ? [{ die: hitDieSides, count: d.level }] : []
 
   const [sheet] = await db
@@ -510,8 +517,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       backgroundId: backgroundId ?? undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       alignment: alignmentCodeFromBuilderId(d.alignment) as any,
-      maxHp: d.maxHp,
-      currentHp: d.maxHp,
+      hpBase: d.hpBase,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       currentHitDie: currentHitDie as any,
       dragonbornAncestry: d.dragonbornAncestry ?? null,
@@ -820,6 +826,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (db as any).batch(stmts as [any, ...any[]])
   }
+
+  // Les PV courants partent du maximum dérivé : la CON (espèce, ASI, dons) n'est lisible qu'une fois la fiche écrite.
+  const written = await loadSheetRelations(db, sheetId)
+  await db.update(schema.characterSheets)
+    .set({ currentHp: sheetHitPointsOf(written).maxHp })
+    .where(eq(schema.characterSheets.id, sheetId))
 
   return { id: sheetId }
 }

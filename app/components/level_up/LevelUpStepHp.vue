@@ -117,6 +117,10 @@
       </div>
     </div>
 
+    <p v-if="hpPerLevelBonus > 0" class="mt-3 text-xs text-muted text-center">
+      Le total comprend +{{ hpPerLevelBonus }} PV par niveau accordés par vos dons.
+    </p>
+
     <div v-if="hpGained" class="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm">
       <span class="text-muted">PV max :</span>
       <span class="font-mono font-bold text-(--ui-text)">{{ currentHpMax }}</span>
@@ -129,10 +133,7 @@
 
 <script lang="ts" setup>
 const lu = useLevelUp(inject('charSheet') as any)
-const { state, pickedClass, conMod, averageHpGain, hpGained, formatMod } = lu
-
-const charSheet = inject('charSheet') as any
-const currentHpMax = computed(() => charSheet?.value?.maxHp ?? 0)
+const { state, pickedClass, conMod, averageHpGain, hpGained, hpPerLevelBonus, currentHpMax, formatMod } = lu
 
 const methods = [
   { id: 'average', label: 'Moyenne' },

@@ -4,6 +4,7 @@ import { damageTypeLabels, conditionLabels, immunityLabels, allConditions } from
 import { dragonbornAncestryDamageType } from '~~/shared/utils/draconic_ancestry'
 import type { DragonbornAncestry } from '~~/shared/utils/draconic_ancestry'
 import { conditionMechanics, exhaustionImpactLines } from '~~/shared/utils/condition-effects'
+import { maxHitPoints } from '~~/shared/rules/hitPoints'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
@@ -29,8 +30,7 @@ export const useCharacterConditions = (
     allEffects: ComputedRef<Effect[]>
     speed: ComputedRef<number>
     abilityModifiers: ComputedRef<Record<string, number>>
-    // Bonus rétroactif aux PV max (don Robuste), ajouté au maxHp DB pour le calcul d'épuisement.
-    maxHpBonus?: ComputedRef<number>
+    hpPerLevelBonus?: ComputedRef<number>
   },
 ) => {
   const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
@@ -172,10 +172,17 @@ export const useCharacterConditions = (
 
   // ─── HP impact ────────────────────────────────────────────────────────────
 
-  const effectiveMaxHp = computed(() => {
-    const maxHp = (characterSheet?.value?.maxHp ?? 0) + (deps?.maxHpBonus?.value ?? 0)
-    return exhaustionLevel.value >= 4 ? Math.floor(maxHp / 2) : maxHp
+  const maxHitPointsFor = (exhaustionLevel: number) => maxHitPoints({
+    hpBase: characterSheet?.value?.hpBase ?? 0,
+    totalLevel: (characterSheet?.value?.classes ?? []).reduce((sum, c) => sum + c.level, 0),
+    conMod: deps?.abilityModifiers.value.con ?? 0,
+    perLevelBonus: deps?.hpPerLevelBonus?.value ?? 0,
+    exhaustionLevel,
   })
+
+  // Maximum affiché sur la fiche, avant l'épuisement ; le maximum effectif en tient compte (niveau 4 : moitié).
+  const fullMaxHp = computed(() => maxHitPointsFor(0))
+  const effectiveMaxHp = computed(() => maxHitPointsFor(exhaustionLevel.value))
 
   // ─── Skill & save impacts ─────────────────────────────────────────────────
 
@@ -231,7 +238,9 @@ export const useCharacterConditions = (
     defenseEntries,
     effectiveSpeed,
     speedModifiers,
+    fullMaxHp,
     effectiveMaxHp,
+    maxHitPointsFor,
     skillDisadvantageReasons,
     saveStatuses,
   }

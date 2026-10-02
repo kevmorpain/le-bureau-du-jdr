@@ -106,3 +106,7 @@ export const activeTemporaryEffectSources = (temporaryEffects: readonly Temporar
   temporaryEffects
     .filter(t => t.active)
     .map(t => ({ label: t.name, effects: t.effects }))
+
+// Le GET de la fiche porte l'inventaire en `{ inventory, item }` ; les effets lisent une entrée à plat.
+export const inventoryEntriesOf = (rows: readonly { inventory: object, item: object | null }[]): InventoryEntryEffects[] =>
+  rows.map(row => ({ ...row.inventory, item: row.item }) as InventoryEntryEffects)

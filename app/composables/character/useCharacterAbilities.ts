@@ -2,6 +2,7 @@ import type { Effect } from '~~/server/db/schema/effects'
 import { ABILITY_KEYS, savingThrowKey } from '~~/shared/rules/abilities'
 import { computeAbilityScores } from '~~/shared/rules/abilityScores'
 import { abilityMod } from '~~/shared/rules/math'
+import { hitPointsPerLevelBonus } from '~~/shared/rules/hitPoints'
 import { savingThrowBonusParts, sumBonusParts, type BonusPart, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { ABILITY_SKILLS } from '~~/shared/rules/skills'
 
@@ -20,7 +21,6 @@ const proficiencyPriority: Record<ProficiencyLevel, number> = { none: 0, profici
 export interface AbilitiesSheet {
   baseAbilityScores?: { abilityId: string, value: number }[]
   skills?: { skillKey: string, proficiencyLevel: string }[]
-  classes?: { level: number }[]
 }
 
 // ─── Composable ──────────────────────────────────────────────────────────────
@@ -166,17 +166,12 @@ export const useCharacterAbilities = (
     return total
   })
 
-  // Bonus rétroactif aux PV max (don Robuste : +2 PV par niveau de personnage).
-  // Indépendant des autres calculs de PV — n'est pas persisté dans character_sheets.maxHp.
-  const hpBonusFromFeats = computed<number>(() => {
-    let perLevel = 0
-    for (const e of deps?.featureEffects.value ?? []) {
-      if (e.type === 'hp_per_level') perLevel += (e.value as { amount: number }).amount
-    }
-    if (perLevel === 0) return 0
-    const totalLevel = (characterSheet?.value?.classes ?? []).reduce((s, cc) => s + cc.level, 0)
-    return perLevel * totalLevel
-  })
+  // PV par niveau des dons, de l'espèce et des objets (Robuste : +2) : s'ajoutent au maximum à la lecture.
+  const hpPerLevelBonus = computed<number>(() => hitPointsPerLevelBonus([
+    ...(deps?.speciesEffects.value ?? []),
+    ...(deps?.featureEffects.value ?? []),
+    ...activeEffects.value,
+  ]))
 
   const passivePerception = computed(() =>
     10 + getSkillModifier('wis', 'perception') + sumPassiveBonus('perception'),
@@ -200,6 +195,6 @@ export const useCharacterAbilities = (
     passivePerception,
     passiveInvestigation,
     initiativeBonus,
-    hpBonusFromFeats,
+    hpPerLevelBonus,
   }
 }

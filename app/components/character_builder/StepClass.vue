@@ -331,7 +331,7 @@
           </div>
           <template v-else>
             <p class="text-xs text-muted mb-3">
-              Niveau 1 : {{ classData.hitDie }} (max). Lancez 1d{{ classData.hitDie }} pour chaque niveau suivant.
+              Niveau 1 : {{ classData.hitDie }} (max). Lancez 1d{{ classData.hitDie }} pour chaque niveau suivant ; un niveau non lancé compte pour la valeur moyenne ({{ Math.ceil(classData.hitDie / 2) + 1 }}).
             </p>
             <div class="flex flex-wrap gap-2">
               <div
@@ -381,6 +381,7 @@
 <script lang="ts" setup>
 import { type AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
+import { averageBaseHitPoints } from '~~/shared/rules/hitPoints'
 
 const PACT_BOON_OPTIONS = [
   { id: 'chain' as const, name: 'Pacte de la Chaîne', hint: 'Apprend Appel de familier. Peut convoquer un familier spécial.' },
@@ -391,6 +392,7 @@ const PACT_BOON_OPTIONS = [
 const {
   state,
   classData,
+  conMod,
   hpMax,
   profBonus,
   needsSubclass,
@@ -475,10 +477,10 @@ const HP_MODES = [
   { id: 'manual', label: 'Manuel' },
 ] as const
 
+// Maximum obtenu avec les valeurs fixes, CON comprise : ce que le mode manuel propose au départ.
 const hpAverage = computed(() => {
   if (!classData.value) return 0
-  const hitDie = classData.value.hitDie
-  return hitDie + (state.value.level - 1) * (Math.ceil(hitDie / 2) + 1)
+  return averageBaseHitPoints(classData.value.hitDie, state.value.level, conMod.value) + conMod.value * state.value.level
 })
 
 function switchHpMode(mode: 'average' | 'roll' | 'manual') {
