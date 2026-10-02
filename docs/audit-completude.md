@@ -211,13 +211,17 @@ de sort`, **un par attaque** (un par rayon pour les multi-attaques comme la Déc
   niveau max (`maxSpellLevelForLevel` de la classe) et la validation, plafonnée aux candidats encore
   inconnus du catalogue (un catalogue incomplet — 4 sorts mineurs de Clerc seedés — ne bloque pas).
   Tests : `test/unit/spellsKnown.test.ts`, `test/nuxt/levelUpSpells.test.ts` (composant monté).
-- **Hors périmètre, à suivre** : aucune validation **serveur** des sorts (nombre, liste de classe,
-  niveau) ni à la création ni au level-up ; `character_spells` ne rattache pas un sort à sa classe
-  (la fiche choisit une classe lanceuse « active ») ; pas de **remplacement** d'un sort connu au
-  level-up ; le **builder** compte le grimoire du Magicien comme des sorts préparés (mod + niveau au
-  lieu de 6 + 2/niveau) ; lanceurs de tiers (Chevalier occulte, Filou ésotérique) sans étape Magie.
-  **Suivi** : grimoire du builder [#111](https://github.com/kevmorpain/le-bureau-du-jdr/issues/111), remplacement d'un sort connu [#112](https://github.com/kevmorpain/le-bureau-du-jdr/issues/112), lanceurs de
-  tiers [#113](https://github.com/kevmorpain/le-bureau-du-jdr/issues/113), `character_spells` sans classe [#114](https://github.com/kevmorpain/le-bureau-du-jdr/issues/114) ; validation serveur des sorts dans F12 [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124).
+- **Restes, tous résolus au lot 3** :
+  - **B11a** [#111](https://github.com/kevmorpain/le-bureau-du-jdr/issues/111) — le builder comptait le grimoire du Magicien comme des sorts préparés (mod + niveau au lieu de
+    6 + 2/niveau) : `spellsKnownAt`, les sorts préparés se choisissent ensuite dans le grimoire (`preparedSpellIds`).
+  - **B11b** [#112](https://github.com/kevmorpain/le-bureau-du-jdr/issues/112) — pas de remplacement d'un sort connu au level-up : `replacedSpellId` (Barde, Ensorceleur,
+    Occultiste, Rôdeur, Chevalier occulte, Escroc arcanique).
+  - **B11c** [#113](https://github.com/kevmorpain/le-bureau-du-jdr/issues/113) — Chevalier occulte et Escroc arcanique sans emplacements ni étape Magie : lanceur du tiers,
+    `shared/rules/subclassCasting.ts`, migration 0116 pour les fiches existantes.
+  - **B11d** [#114](https://github.com/kevmorpain/le-bureau-du-jdr/issues/114) — `character_spells` ne rattachait pas un sort à sa classe : colonne `class_id` (migration 0113),
+    DD et bonus d'attaque propres à chaque sort en multiclasse lanceur.
+  - Validation **serveur** des sorts (liste de classe, niveau, nombre, écoles) et de l'ASI à la création et au level-up :
+    volets sorts et ASI de F12 [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124) ; le volet PV de F12 reste ouvert (lot 6).
 - Découvert : signalé par l'utilisateur (2026-09-23). **✅ RÉSOLU.**
 
 ### B12 — Multiclasse : maîtrises de départ accordées en entier · serveur + migration — ✅ RÉSOLU
@@ -277,7 +281,7 @@ Détail (symptôme, règle sourcée, racine, piste) dans chaque issue.
   atteint (#102) corrigés ; a révélé B12, B14, B15.
 - Invocations **échangeables** au level-up, jamais testées → [#115](https://github.com/kevmorpain/le-bureau-du-jdr/issues/115).
 - Choix accordés par une **sous-classe** à plusieurs niveaux : seul cas connu, le 2ᵉ style du Champion → P5 [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175).
-- Complétude des **sorts connus** à la création d'un caster de haut niveau : grimoire du Magicien → [#111](https://github.com/kevmorpain/le-bureau-du-jdr/issues/111).
+- ~~Complétude des **sorts connus** à la création d'un caster de haut niveau : grimoire du Magicien~~ → [#111](https://github.com/kevmorpain/le-bureau-du-jdr/issues/111), résolu (lot 3).
 - Fiches **prod** abîmées avant #102 → [#116](https://github.com/kevmorpain/le-bureau-du-jdr/issues/116).
 
 ## Protocole d'audit proposé (~30 min)

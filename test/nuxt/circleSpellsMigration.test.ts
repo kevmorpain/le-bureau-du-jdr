@@ -70,6 +70,14 @@ describe('migration 0115 — Cercle de la terre', () => {
     expect(actual).toHaveLength(DRUID_TERRAINS.length * 8)
   })
 
+  it('écrit le JSON exactement comme le seed : relancer le seed ne duplique aucun effet', async () => {
+    const raw = await client.execute({
+      sql: 'SELECT e.value FROM feature_effects fe JOIN effects e ON e.id = fe.effect_id WHERE fe.feature_id = 100',
+      args: [],
+    })
+    expect(raw.rows.map(r => String(r.value)).sort()).toEqual(circleSpellEffects().map(e => JSON.stringify(e.value)).sort())
+  })
+
   it('corrige la description de « Sorts de cercle »', async () => {
     const [feature] = await featureOf(EARTH, CIRCLE_SPELLS_FEATURE_NAME)
     expect(feature!.description).toBe(circleSpellsDescription())

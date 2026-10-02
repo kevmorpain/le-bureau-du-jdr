@@ -84,6 +84,17 @@ describe('migration 0114 — sorts toujours préparés', () => {
     })
   }
 
+  it('écrit le JSON exactement comme le seed : relancer le seed ne duplique aucun effet', async () => {
+    for (const c of CARRIERS) {
+      const raw = await client.execute({
+        sql: 'SELECT e.value FROM feature_effects fe JOIN effects e ON e.id = fe.effect_id WHERE fe.feature_id = ?',
+        args: [featureIds.get(c.subclass)!],
+      })
+      const expectedRaw = alwaysPreparedEffects(c.table).map(e => JSON.stringify(e.value)).sort()
+      expect(raw.rows.map(r => String(r.value)).sort(), c.subclass).toEqual(expectedRaw)
+    }
+  })
+
   it('ignore l\'homonyme 5.5', async () => {
     expect(await effectsOf(homonymFeatureId)).toEqual([])
   })

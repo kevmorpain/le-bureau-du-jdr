@@ -57,7 +57,7 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 | **F9** | basse | Suivi : [#122](https://github.com/kevmorpain/le-bureau-du-jdr/issues/122) — Table `skills` référencée par aucune clé étrangère | non |
 | **F10** | basse | Suivi : [#123](https://github.com/kevmorpain/le-bureau-du-jdr/issues/123) — Dette de typecheck (10 serveur / 90 app) | non |
 | **F11** | basse (by-design) | Snapshots Drizzle figés à `0039` → `db:generate` inutilisable, plus de détection auto de dérive. Garde-fou : `test/unit/migrations.test.ts` rejoue 0000→dernier sur base vierge. | non |
-| **F12** | moyenne | Suivi : [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124) — Autorité serveur du level-up incomplète | non |
+| **F12** | moyenne | Suivi : [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124) — Autorité serveur du level-up incomplète. **Sorts et ASI faits (lot 3)** : `server/utils/spellLearning.ts`, `validateLevelUpAsi`. Reste le volet PV (`hpGained` sans borne haute), au lot 6 avec [#105](https://github.com/kevmorpain/le-bureau-du-jdr/issues/105) | non |
 | **F13** | moyenne | Suivi : [#125](https://github.com/kevmorpain/le-bureau-du-jdr/issues/125) — Doublons de règles sans garde-fou | non |
 | **F14** | **haute pour le 5.5** | Suivi : [#106](https://github.com/kevmorpain/le-bureau-du-jdr/issues/106) — Règles indexées par classe sans ruleset, front sans ruleset | **oui** |
 

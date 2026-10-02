@@ -133,14 +133,20 @@ contrôlé fait lancer deux fois puis choisir) ; ces jets ne sont pas persistés
 Section unifiée : stats d'incantation + liste des sorts.
 
 #### Stats d'incantation
-- Caractéristique d'incantation (sélectable, surcharge `character_classes.spellcastingAbility`)
+- Caractéristique d'incantation (celle de la sous-classe, sinon de la classe ; en multiclasse lanceur, une liste « Lance comme » choisit la classe affichée)
 - DD de sauvegarde : 8 + bonus de maîtrise + modificateur
 - Bonus d'attaque avec un sort : bonus de maîtrise + modificateur
+- Sorts préparés : « n / limite » pour un lanceur qui prépare (Clerc, Druide, Magicien : mod + niveau ; Paladin : mod + niveau/2). Non bloquant :
+  un dépassement est signalé. Les sorts mineurs, les sorts toujours préparés et ceux d'une autre source n'y comptent pas.
 
 #### Liste des sorts
 Sorts groupés par niveau. Chaque ligne affiche : nom, temps d'incantation, portée, durée, DC (si applicable), concentration, rituel, composantes V/S/M, dégâts/soins calculés avec le vrai modificateur du personnage.
 
-**API :** `GET /api/character_sheets/{id}/spells` (fetch séparé — **non inclus** dans le GET principal).
+Chaque sort est calculé avec la caractéristique de SA classe (`character_spells.class_id`) ; un sort sans classe retombe sur la classe active.
+Les sorts de domaine (Clerc), de serment (Paladin) et de cercle (Druide, selon le terrain choisi) s'ajoutent à la liste, marqués
+« Toujours préparé » : ils sont dérivés de la sous-classe et du niveau, jamais stockés, et n'ont ni case « Préparé » ni bouton de retrait.
+
+**API :** `GET /api/character_sheets/{id}/spells` (fetch séparé — **non inclus** dans le GET principal) : sorts stockés + sorts toujours préparés (`alwaysPrepared`).
 
 **Filtres :** "Préparés seulement" / "Disponibles seulement" (état local, non persisté).
 

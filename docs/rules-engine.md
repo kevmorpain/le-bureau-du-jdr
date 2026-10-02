@@ -158,9 +158,18 @@ moins 1, pour le builder avant la classe). Pour une classe, le porteur de maîtr
 (`classGrant:'multiclass'`) que pour une classe rejointe (`projection.mainClassId`). Le nombre dû d'une
 règle générale vient du personnage (`projection.duplicates`, variables de formule `duplicate_*`).
 
+### Sorts toujours préparés (domaine, serment, cercle)
+
+Les sorts de domaine du Clerc, de serment du Paladin et de cercle du Druide sont des effets `always_prepared_spell
+{ spellName, unlockLevel, terrain? }` posés sur la feature de sous-classe qui les décrit (`alwaysPreparedSpells.ts`, seed et
+migrations 0114-0115). Ils ne sont **pas stockés** : `loadAlwaysPreparedSpells` les dérive à la lecture de la sous-classe et
+du niveau de classe, et le GET `/spells` les ajoute avec `alwaysPrepared: true`. Un sort que le catalogue n'a pas encore
+n'apparaît pas, et apparaît de lui-même une fois seedé. Le `terrain` du Cercle de la terre est un point de choix `terrain`
+(`LABEL_CHOICE_KINDS`) porté par la sous-classe : une valeur, sans effet dérivé, que lit seulement cette dérivation.
+
 ### Chemin générique des picks de maîtrise
 
-Les choix `skill` / `tool` / `language` (une valeur par pick) et `cantrip` (un sort) passent tous par le
+Les choix `skill` / `tool` / `language` (une valeur par pick), `cantrip` (un sort) et `terrain` (un libellé) passent tous par le
 même chemin (`server/utils/choicePicks.ts`) : payload `choicePicks` à la création et au level-up, validé
 contre `resolveChoices` (`choicePicksError` : point de choix proposé, nombre, options), stocké en
 `character_choices`, et la maîtrise **dérivée** à chaque lecture (`deriveChoiceProficiencies` → champ

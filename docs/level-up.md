@@ -254,6 +254,10 @@ Corps :
 7. Insérer les ASI dans `character_ability_score_improvements`
 8. Insérer les nouveaux sorts (`isKnown: true, isPrepared: false`)
 9. Gérer les effets du Pact Boon (chain → Appel de familier, tome → sorts mineurs, blade → isPactWeapon)
+9b. **Sorts appris** : `learnedSpellsError` (`server/utils/spellLearning.ts`) borne les sorts choisis — liste de la classe (ou du Magicien pour
+    un Chevalier occulte / Escroc arcanique), niveau de sort accessible, nombre au plus égal à ce que les tables accordent,
+    Secrets magiques du Barde, écoles de la sous-classe — et `replacedSpellError` le remplacement d'un sort connu
+    (`replacedSpellId`). Les emplacements se recalculent avec le type d'incantation effectif de chaque classe (sous-classe comprise).
 10. **Manifestations occultes** : `applyInvocationChanges` (cf. `server/utils/invocations.ts`) — si `replacedInvocationId`, DELETE le `character_features` correspondant + purge des `character_spells` source='invocation' liés aux `spell_grant` de cette invocation. Puis INSERT des `newInvocationIds` dans `character_features`, et matérialisation des `spell_grant` en `character_spells` avec `source: 'invocation'` (idempotent via `onConflictDoNothing`).
 11. Insérer les nouvelles compétences de multiclassage (validées au préalable : classe rejointe, nombre, liste)
     puis les `choicePicks` en `character_choices`, validés contre les points de choix que ce niveau de classe rend dus
