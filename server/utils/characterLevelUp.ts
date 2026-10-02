@@ -12,7 +12,7 @@ import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
 import { choicesGainedAtLevelUp, isProficiencyPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
-import { learnedSpellsError } from '~~/server/utils/spellLearning'
+import { learnedSpellsError, replacedSpellError } from '~~/server/utils/spellLearning'
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import { isValidAsiDistribution } from '~~/shared/rules/composite'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
@@ -45,6 +45,7 @@ export const levelUpSchema = z.object({
   choicePicks: z.array(choicePickSchema).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
+  replacedSpellId: z.number().int().positive().nullable().optional(),
   pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
   pactWeaponInventoryId: z.number().int().nullable().optional(),
   pactBoonCantripIds: z.array(z.number().int()).optional(),
@@ -144,12 +145,18 @@ async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelU
     .where(eq(schema.characterSpells.characterSheetId, characterSheetId))
   const alreadyKnownIds = known.map(k => k.spellId)
 
+  if (d.replacedSpellId != null) {
+    const replaceError = await replacedSpellError(db, { cls, characterSheetId, fromLevel: newLevel - 1, replacedSpellId: d.replacedSpellId })
+    if (replaceError) throw new CharacterValidationError(replaceError)
+  }
+
   const error = await learnedSpellsError(db, {
     cls,
     fromLevel: newLevel - 1,
     toLevel: newLevel,
     spellIds: [...(d.newCantripIds ?? []), ...(d.newSpellIds ?? [])],
     alreadyKnownIds,
+    replacing: d.replacedSpellId != null,
   })
   if (error) throw new CharacterValidationError(error)
 
@@ -448,6 +455,13 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .values({ characterSheetId, featureId: d.featureId, currentUses: 0, source: 'asi', classLevel: newLevel, choices: d.featChoices ?? null } as any)
       .onConflictDoNothing())
+  }
+
+  if (d.replacedSpellId != null) {
+    stmts.push(db.delete(schema.characterSpells).where(and(
+      eq(schema.characterSpells.characterSheetId, characterSheetId),
+      eq(schema.characterSpells.spellId, d.replacedSpellId),
+    )))
   }
 
   const allNewSpellIds = [...(d.newCantripIds ?? []), ...(d.newSpellIds ?? [])]

@@ -17,6 +17,8 @@ export interface LearnedSpellsInput {
   alreadyKnownIds: number[]
   /** Le builder range les sorts préparés d'un Clerc, Druide ou Paladin dans la même liste que les sorts appris. */
   atCreation?: boolean
+  /** Un sort connu est échangé : un sort de plus que le niveau n'en accorde, et au moins un. */
+  replacing?: boolean
 }
 
 // Bornes hautes seulement, comme les autres choix : le nombre exact est imposé par l'assistant. Les tables
@@ -24,7 +26,8 @@ export interface LearnedSpellsInput {
 export async function learnedSpellsError(db: Db, input: LearnedSpellsInput): Promise<string | null> {
   const { cls, fromLevel, toLevel, spellIds } = input
   const slug = classSlugFromName(cls.name)
-  if (!spellIds.length || !slug || cls.ruleset !== '5') return null
+  if (!slug || cls.ruleset !== '5') return null
+  if (!spellIds.length) return input.replacing ? 'Un sort est remplacé sans sort pour le remplacer.' : null
 
   if (new Set(spellIds).size !== spellIds.length) return 'Un sort est choisi plusieurs fois.'
   const rows = await db
@@ -56,12 +59,40 @@ export async function learnedSpellsError(db: Db, input: LearnedSpellsInput): Pro
 
   const leveled = rows.filter(r => r.level > 0)
   const preparedAtCreation = input.atCreation && spellLearningOf(slug) === 'prepared'
-  if (!preparedAtCreation && leveled.length > learned.spells) {
-    return `Trop de sorts (${leveled.length} pour ${learned.spells} appris au niveau ${toLevel} de la classe).`
+  const allowed = learned.spells + (input.replacing ? 1 : 0)
+  if (!preparedAtCreation && leveled.length > allowed) {
+    return `Trop de sorts (${leveled.length} pour ${allowed} appris au niveau ${toLevel} de la classe).`
   }
+  if (input.replacing && !leveled.length) return 'Un sort est remplacé sans sort de niveau 1 ou plus pour le remplacer.'
 
   const maxLevel = cls.spellcastingType === 'none' ? 0 : maxSpellLevelForLevel(cls.spellcastingType, toLevel)
   const tooHigh = leveled.find(r => r.level > maxLevel)
   if (tooHigh) return `Le sort « ${tooHigh.name} » (niveau ${tooHigh.level}) dépasse le niveau ${maxLevel} accessible à ce niveau de la classe.`
+  return null
+}
+
+// AideDD (Barde, Ensorceleur, Occultiste, Rôdeur) : en gagnant un niveau dans la classe, on peut remplacer un
+// sort connu de la classe par un autre de sa liste. Les sorts mineurs et les sorts octroyés par autre chose
+// (pacte, espèce, don) n'en font pas partie.
+export async function replacedSpellError(
+  db: Db,
+  input: { cls: LearnedSpellsInput['cls'], characterSheetId: number, fromLevel: number, replacedSpellId: number },
+): Promise<string | null> {
+  const { cls, characterSheetId, fromLevel, replacedSpellId } = input
+  const slug = classSlugFromName(cls.name)
+  if (cls.ruleset !== '5' || !slug) return null
+  if (spellLearningOf(slug) !== 'known') return `La classe ${cls.name} ne remplace pas ses sorts connus.`
+  if (fromLevel < 1) return `Aucun sort de la classe ${cls.name} à remplacer : elle est rejointe à ce niveau.`
+
+  const [row] = await db
+    .select({ level: schema.spells.level, source: schema.characterSpells.source, classId: schema.characterSpells.classId })
+    .from(schema.characterSpells)
+    .innerJoin(schema.spells, eq(schema.spells.id, schema.characterSpells.spellId))
+    .where(and(eq(schema.characterSpells.characterSheetId, characterSheetId), eq(schema.characterSpells.spellId, replacedSpellId)))
+    .limit(1)
+  if (!row) return `Le sort remplacé n'est pas sur la fiche.`
+  if (row.level < 1 || row.source != null || (row.classId != null && row.classId !== cls.id)) {
+    return `Le sort remplacé n'est pas un sort connu de la classe ${cls.name}.`
+  }
   return null
 }

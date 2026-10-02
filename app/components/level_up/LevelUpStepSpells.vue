@@ -194,7 +194,38 @@
       <p v-if="!pactCantripsPending && filteredPactCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
     </div>
 
-    <div v-if="cantripsToLearn > 0 || spellsToLearn > 0" class="flex flex-wrap items-center gap-2 mb-4">
+    <div v-if="replaceableSpells.length" class="mb-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">Remplacer un sort connu (facultatif)</p>
+        <button
+          v-if="state.replacedSpellId != null"
+          type="button"
+          class="text-xs text-muted hover:text-(--ui-text) cursor-pointer"
+          @click="selectReplacedSpell(null)"
+        >
+          Annuler
+        </button>
+      </div>
+      <p class="text-xs text-muted mb-2">
+        En gagnant ce niveau, vous pouvez échanger un sort que vous connaissez contre un autre de la liste de {{ pickedClass?.name }}.
+      </p>
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          v-for="spell in replaceableSpells"
+          :key="spell.id"
+          type="button"
+          class="px-2.5 py-1 rounded-md border text-xs transition-colors cursor-pointer"
+          :class="state.replacedSpellId === spell.id
+            ? 'border-rose-500 bg-rose-500/10 text-rose-400 line-through'
+            : 'border-(--ui-border) text-muted hover:border-amber-500/40'"
+          @click="selectReplacedSpell(spell.id)"
+        >
+          {{ spell.name }} <span class="opacity-60">niv. {{ spell.level }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="cantripsToLearn > 0 || showSpellPicker" class="flex flex-wrap items-center gap-2 mb-4">
       <input
         v-model="filterText"
         type="text"
@@ -202,7 +233,7 @@
         class="w-48 px-3 py-1.5 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-(--ui-text) placeholder-muted focus:border-amber-500/60 focus:outline-none"
       >
       <USelect
-        v-if="spellsToLearn > 0"
+        v-if="showSpellPicker"
         v-model="filterSchool"
         :items="schoolOptions"
         size="sm"
@@ -256,15 +287,15 @@
       <p v-if="!pending && filteredCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
     </div>
 
-    <div v-if="spellsToLearn > 0" class="mb-5">
+    <div v-if="showSpellPicker" class="mb-5">
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">{{ spellsTabLabel }}</p>
         <span
           class="text-xs font-semibold"
           :class="state.newSpellIds.length >= requiredSpellPicks ? 'text-green-400' : 'text-amber-400'"
-        >{{ state.newSpellIds.length }}/{{ spellsToLearn }}</span>
+        >{{ state.newSpellIds.length }}/{{ spellPicksDue }}</span>
       </div>
-      <p v-if="!pending && requiredSpellPicks < spellsToLearn" class="text-xs text-muted mb-2">
+      <p v-if="!pending && requiredSpellPicks < spellPicksDue" class="text-xs text-muted mb-2">
         Seulement {{ requiredSpellPicks }} sort(s) encore disponible(s) dans le catalogue.
       </p>
       <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
@@ -307,7 +338,7 @@
     </div>
 
     <div
-      v-if="cantripsToLearn === 0 && spellsToLearn === 0 && !isPreparedCaster"
+      v-if="cantripsToLearn === 0 && !showSpellPicker && !isPreparedCaster"
       class="px-4 py-4 rounded-xl border text-sm text-muted"
       style="border-color: rgba(96,165,250,0.2); background: rgba(96,165,250,0.06)"
     >
@@ -342,6 +373,8 @@ const {
   learnableSpells,
   requiredCantripPicks,
   requiredSpellPicks,
+  replaceableSpells,
+  spellPicksDue,
 } = useLevelUp(inject('charSheet') as any)
 
 const { t } = useI18n()
@@ -399,6 +432,8 @@ const spellCastStats = computed(() => {
     { label: 'Caractéristique', value: ABILITY_SHORT[ab] },
   ]
 })
+
+const showSpellPicker = computed(() => spellsToLearn.value > 0 || replaceableSpells.value.length > 0)
 
 const isPreparedCaster = computed(() => spellLearning.value === 'prepared' || spellLearning.value === 'spellbook')
 const isGrimoire = computed(() => spellLearning.value === 'spellbook')
@@ -566,6 +601,11 @@ function toggleSpell(id: number) {
   if (currentSpellIds.value.includes(id)) return
   const idx = state.value.newSpellIds.indexOf(id)
   if (idx >= 0) state.value.newSpellIds.splice(idx, 1)
-  else if (state.value.newSpellIds.length < spellsToLearn.value) state.value.newSpellIds.push(id)
+  else if (state.value.newSpellIds.length < spellPicksDue.value) state.value.newSpellIds.push(id)
+}
+
+function selectReplacedSpell(id: number | null) {
+  state.value.replacedSpellId = state.value.replacedSpellId === id ? null : id
+  state.value.newSpellIds.splice(spellPicksDue.value)
 }
 </script>

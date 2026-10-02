@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as schema from '../../server/db/schema'
-import { learnedSpellsError, type LearnedSpellsInput } from '../../server/utils/spellLearning'
+import { learnedSpellsError, replacedSpellError, type LearnedSpellsInput } from '../../server/utils/spellLearning'
 import { replayMigrations } from '../fixtures/migrations'
 
 // Sorts appris (création et level-up) : bornes du PHB 2014 vérifiées par le serveur, sans lui faire
@@ -12,6 +12,7 @@ const WIZARD = 1
 const CLERIC = 2
 const FIGHTER = 3
 const WIZARD_5_5 = 4
+const SORCERER = 5
 
 const SPELL = { fireBolt: 10, light: 11, mageHand: 12, magicMissile: 20, shield: 21, sleep: 22, fireball: 30, cureWounds: 40, bless: 41 }
 
@@ -128,5 +129,49 @@ describe('learnedSpellsError — classes hors champ', () => {
 
   it('une classe 5.5 n\'est pas contrôlée : les tables sont celles de 2014', async () => {
     expect(await check({ cls: { ...wizard, id: WIZARD_5_5, ruleset: '5.5' }, spellIds: [SPELL.fireball] })).toBeNull()
+  })
+})
+
+describe('replacedSpellError — remplacement d\'un sort connu', () => {
+  const sorcerer: Cls = { id: SORCERER, name: 'Ensorceleur', ruleset: '5', spellcastingType: 'full' }
+  const replace = (over: Partial<Parameters<typeof replacedSpellError>[1]>) =>
+    replacedSpellError(db, { cls: sorcerer, characterSheetId: 1, fromLevel: 4, replacedSpellId: SPELL.magicMissile, ...over })
+
+  beforeAll(async () => {
+    await db.insert(schema.classes).values({ id: SORCERER, name: 'Ensorceleur', hitDice: '1d6', spellcastingType: 'full' })
+    await db.insert(schema.users).values({ id: 1, provider: 'discord', providerUserId: 'x', name: 'T' })
+    await db.insert(schema.characterSpecies).values({ id: 1, name: 'Humain', size: 'medium', speed: 30 })
+    await db.insert(schema.characterSheets).values({ id: 1, ownerId: 1, name: 'Fiche', speciesId: 1 })
+    await db.insert(schema.characterSpells).values([
+      { characterSheetId: 1, spellId: SPELL.magicMissile, classId: SORCERER, isKnown: true },
+      { characterSheetId: 1, spellId: SPELL.fireBolt, classId: SORCERER, isKnown: true },
+      { characterSheetId: 1, spellId: SPELL.shield, classId: SORCERER, isKnown: true, source: 'species' },
+      { characterSheetId: 1, spellId: SPELL.sleep, classId: WIZARD, isKnown: true },
+    ])
+  })
+
+  it('un sort connu de la classe : remplaçable', async () => {
+    expect(await replace({})).toBeNull()
+  })
+
+  it('une classe qui prépare (Magicien) ne remplace pas ses sorts', async () => {
+    expect(await replace({ cls: wizard })).toMatch(/ne remplace pas ses sorts connus/)
+  })
+
+  it('classe rejointe à ce niveau : rien à remplacer', async () => {
+    expect(await replace({ fromLevel: 0 })).toMatch(/rejointe à ce niveau/)
+  })
+
+  it('un sort mineur n\'est pas remplaçable', async () => {
+    expect(await replace({ replacedSpellId: SPELL.fireBolt })).toMatch(/n'est pas un sort connu/)
+  })
+
+  it('un sort venu d\'ailleurs (espèce) ou d\'une autre classe : refusé', async () => {
+    expect(await replace({ replacedSpellId: SPELL.shield })).toMatch(/n'est pas un sort connu/)
+    expect(await replace({ replacedSpellId: SPELL.sleep })).toMatch(/n'est pas un sort connu/)
+  })
+
+  it('un sort absent de la fiche : refusé', async () => {
+    expect(await replace({ replacedSpellId: SPELL.fireball })).toMatch(/n'est pas sur la fiche/)
   })
 })

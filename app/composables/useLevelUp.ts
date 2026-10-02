@@ -56,6 +56,8 @@ export interface LevelUpState {
   choicePicks: Record<number, Array<string | number>>
   newCantripIds: number[]
   newSpellIds: number[]
+  // Sort connu (Barde, Ensorceleur, Occultiste, Rôdeur) échangé contre un nouveau : ce dernier s'ajoute aux sorts dus.
+  replacedSpellId: number | null
   pactBoon: 'chain' | 'blade' | 'tome' | null
   pactWeaponInventoryId: number | null
   pactBoonCantripIds: number[]
@@ -97,6 +99,7 @@ const INIT_STATE: LevelUpState = {
   choicePicks: {},
   newCantripIds: [],
   newSpellIds: [],
+  replacedSpellId: null,
   pactBoon: null,
   pactWeaponInventoryId: null,
   pactBoonCantripIds: [],
@@ -520,7 +523,17 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return Math.min(due, available)
   }
   const requiredCantripPicks = computed(() => requiredPicks(cantripsToLearn.value, learnableCantrips.value))
-  const requiredSpellPicks = computed(() => requiredPicks(spellsToLearn.value, learnableSpells.value))
+  // Remplacement (AideDD, Barde, Ensorceleur, Occultiste, Rôdeur) : à chaque niveau gagné dans une classe qu'on
+  // possède déjà, un sort connu de la classe peut être échangé contre un autre de sa liste.
+  const replaceableSpells = computed(() => {
+    const classId = charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId
+    if (spellLearning.value !== 'known' || state.value.isMulticlass || !hasSpellcasting.value || classId == null) return []
+    return ((charSheet.value?.spells ?? []) as any[])
+      .filter(cs => cs.spell?.level >= 1 && cs.source == null && (cs.classId === classId || cs.classId == null))
+      .map(cs => ({ id: cs.spellId as number, name: cs.spell.name as string, level: cs.spell.level as number }))
+  })
+  const spellPicksDue = computed(() => spellsToLearn.value + (state.value.replacedSpellId != null ? 1 : 0))
+  const requiredSpellPicks = computed(() => requiredPicks(spellPicksDue.value, learnableSpells.value))
 
   // ── Active steps ───────────────────────────────────────────────────────────
 
@@ -685,6 +698,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         pactWeaponInventoryId: s.pactWeaponInventoryId,
         pactBoonCantripIds: s.pactBoonCantripIds,
         newInvocationIds: s.newInvocationIds,
+        replacedSpellId: s.replacedSpellId,
         replacedInvocationId: s.replacedInvocationId,
         newMetamagicIds: s.newMetamagicIds,
         arcaneMysteriumSpellId: s.arcaneMysteriumSpellId,
@@ -744,6 +758,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     learnableSpells,
     requiredCantripPicks,
     requiredSpellPicks,
+    replaceableSpells,
+    spellPicksDue,
     needsPactBoon,
     needsInvocations,
     canReplaceInvocation,

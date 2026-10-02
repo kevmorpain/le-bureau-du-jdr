@@ -51,7 +51,10 @@ const sheet = (classes: ClassFixture[], knownSpellIds: number[] = []) => ({
   classes: classes.map((c, i) => ({ classId: c.id, level: c.level, isMain: i === 0, class: { name: c.name } })),
   baseAbilityScores: [{ abilityId: 'int', value: 16 }, { abilityId: 'wis', value: 16 }, { abilityId: 'cha', value: 16 }],
   skills: [],
-  spells: knownSpellIds.map(spellId => ({ spellId })),
+  spells: knownSpellIds.map((spellId) => {
+    const known = SPELLS.find(s => s.id === spellId)
+    return { spellId, classId: classes[0]!.id, source: null, spell: known && { name: known.name, level: known.level } }
+  }),
 })
 
 async function waitFor(condition: () => boolean) {
@@ -162,5 +165,32 @@ describe('Étape Magie du level-up — classe déjà possédée', () => {
     expect(levelUp.cantripsToLearn.value).toBe(1)
     expect(levelUp.requiredCantripPicks.value).toBe(0)
     expect(levelUp.isStepComplete.value('spells')).toBe(true)
+  })
+})
+
+describe('Étape Magie du level-up — remplacement d\'un sort connu', () => {
+  it('Rôdeur 3 → 4 : rien de nouveau à apprendre, mais un sort connu se remplace ; le remplaçant devient exigé', async () => {
+    const { levelUp, text } = await mountSpellsStep([{ id: 9, name: 'Rôdeur', level: 3 }], 'ranger', 3, [30])
+
+    expect(levelUp.spellsToLearn.value).toBe(0)
+    expect(levelUp.replaceableSpells.value.map(s => s.id)).toEqual([30])
+    expect(text()).toContain('Remplacer un sort connu')
+    expect(levelUp.isStepComplete.value('spells')).toBe(true)
+
+    levelUp.state.value.replacedSpellId = 30
+    expect(levelUp.spellPicksDue.value).toBe(1)
+    expect(levelUp.isStepComplete.value('spells')).toBe(false)
+    levelUp.state.value.newSpellIds = [31]
+    expect(levelUp.isStepComplete.value('spells')).toBe(true)
+  })
+
+  it('Magicien : il prépare, il ne remplace rien', async () => {
+    const { levelUp } = await mountSpellsStep([{ id: 6, name: 'Magicien', level: 3 }], 'wizard', 3, [23])
+    expect(levelUp.replaceableSpells.value).toEqual([])
+  })
+
+  it('classe rejointe par multiclassage : aucun sort à remplacer', async () => {
+    const { levelUp } = await mountSpellsStep([{ id: 5, name: 'Guerrier', level: 3 }], 'warlock', 0)
+    expect(levelUp.replaceableSpells.value).toEqual([])
   })
 })

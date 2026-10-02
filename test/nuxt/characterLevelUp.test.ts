@@ -60,10 +60,12 @@ beforeAll(async () => {
   await db.insert(schema.spells).values([
     { id: 500, name: 'Appel de familier', level: 1, castingTime: '1 action', range: 0, duration: '1 h', schoolId: 1 },
     { id: 501, name: 'Maléfice', level: 1, castingTime: '1 action', range: 0, duration: '1 h', schoolId: 1 },
+    { id: 502, name: 'Sommeil', level: 1, castingTime: '1 action', range: 0, duration: '1 min', schoolId: 1 },
+    { id: 503, name: 'Hypnose', level: 1, castingTime: '1 action', range: 0, duration: '1 min', schoolId: 1 },
     { id: 600, name: 'Cercle de mort', level: 6, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
     { id: 601, name: 'Portail', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
   ])
-  await db.insert(schema.spellClasses).values([501, 600, 601].map(spellId => ({ spellId, classId: WARLOCK })))
+  await db.insert(schema.spellClasses).values([501, 502, 503, 600, 601].map(spellId => ({ spellId, classId: WARLOCK })))
   const [asiOwner] = await db.insert(schema.features).values({ name: 'Amélioration de caractéristiques', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 4 }).returning()
   await db.insert(schema.progression).values({ featureId: asiOwner.id, kind: 'asi_or_feat', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feats' }, replaceable: false })
   // Manifestation 5.5 (tag invocation VALIDE) — sert la garde de cohérence d'édition (Lot A) :
@@ -210,6 +212,47 @@ describe('characterLevelUp — autorité serveur sur l\'amélioration de caract�
     const { id } = await fighterAt(3)
     await expect(characterLevelUp(db, id, fighterLu({ asiChoice: 'feat' }))).rejects.toThrow(/Aucun don/)
     await expect(characterLevelUp(db, id, fighterLu({ asiBonuses: { str: 2 } }))).rejects.toThrow(/sans choix d'ASI/)
+  })
+})
+
+describe('characterLevelUp — remplacement d\'un sort connu (B11b)', () => {
+  const knownIds = async (sheetId: number) =>
+    (await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, sheetId)))
+      .map((r: { spellId: number }) => r.spellId)
+
+  it('échange un sort connu contre un autre : l\'ancien disparaît, le nouveau s\'ajoute au sort dû', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    await characterLevelUp(db, id, luInput({ replacedSpellId: 501, newSpellIds: [502, 503] }))
+
+    const ids = await knownIds(id)
+    expect(ids).not.toContain(501)
+    expect(ids).toEqual(expect.arrayContaining([502, 503]))
+  })
+
+  it('le remplaçant est compté en plus : sans lui, le remplacement est refusé', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 501 })))
+      .rejects.toThrow(/sans sort pour le remplacer/)
+  })
+
+  it('un troisième sort malgré le remplacement : trop de sorts', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 501, newSpellIds: [502, 503, 600] })))
+      .rejects.toThrow(/Trop de sorts \(3 pour 2/)
+  })
+
+  it('un sort qui n\'est pas sur la fiche, ou octroyé par autre chose que la classe : refusé', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 3, pactBoon: 'chain', invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 503, newSpellIds: [502] })))
+      .rejects.toThrow(/n'est pas sur la fiche/)
+    await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 500, newSpellIds: [502] })))
+      .rejects.toThrow(/n'est pas un sort connu/)
+  })
+
+  it('un refus ne retire rien de la fiche', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 501 }))).rejects.toThrow(CharacterValidationError)
+    expect(await knownIds(id)).toContain(501)
   })
 })
 
