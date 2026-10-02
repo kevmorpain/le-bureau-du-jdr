@@ -196,7 +196,8 @@
       >
         <template v-if="isGrimoire">
           Votre grimoire contient <strong class="text-(--ui-text)">{{ spellsNeeded }}</strong> {{ $t('sort', spellsNeeded) }} au niveau {{ state.level }}.
-          Vous pouvez préparer mod {{ ABILITY_SHORT[spellcastingInfo.ability] }} + niveau sorts par jour.
+          Vous en préparez chaque jour <strong class="text-(--ui-text)">{{ preparedLimit }}</strong>
+          (mod {{ ABILITY_SHORT[spellcastingInfo.ability] }} + niveau).
         </template>
         <template v-else>
           En tant que {{ classData!.name }}, vous préparez vos sorts chaque matin. Vous pouvez préparer
@@ -204,6 +205,33 @@
           (mod {{ ABILITY_SHORT[spellcastingInfo.ability] }} + niveau{{ isHalfCaster ? '/2' : '' }}).
           Vous avez accès à toute la liste jusqu'au niveau {{ maxSpellLevel }}.
         </template>
+      </div>
+
+      <div
+        v-if="activeTab === 'spells' && isGrimoire && state.selectedSpells.length"
+        class="mb-4 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts préparés</p>
+          <span
+            class="text-xs font-semibold"
+            :class="state.preparedSpells.length >= (preparedLimit ?? 0) ? 'text-green-400' : 'text-amber-400'"
+          >{{ state.preparedSpells.length }}/{{ preparedLimit }}</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="id in state.selectedSpells"
+            :key="id"
+            type="button"
+            class="px-2.5 py-1 rounded-md border text-xs transition-colors cursor-pointer"
+            :class="state.preparedSpells.includes(id)
+              ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+              : 'border-(--ui-border) text-muted hover:border-amber-500/40'"
+            @click="togglePreparedSpell(id)"
+          >
+            {{ spellNamesById[id] ?? id }}
+          </button>
+        </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 mb-4">
@@ -313,7 +341,7 @@
 </template>
 
 <script lang="ts" setup>
-import { spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
+import { preparedSpellsLimit, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 
 const {
   state,
@@ -444,16 +472,15 @@ const spellsTabLabel = computed(() => {
   return 'Sorts connus'
 })
 
+const preparedLimit = computed(() => {
+  const ab = spellcastingInfo.value?.ability
+  const mod = ab ? abilityMod(finalAbilities.value[ab] ?? 10) : 0
+  return preparedSpellsLimit(state.value.classId ?? '', state.value.level, mod)
+})
+
 const spellsNeeded = computed(() => {
-  const cls = state.value.classId ?? ''
-  if (spellLearning.value === 'known') return spellsKnownAt(cls, state.value.level)
-  if (isPrepared.value) {
-    const ab = spellcastingInfo.value?.ability
-    const mod = ab ? abilityMod(finalAbilities.value[ab] ?? 10) : 0
-    const levelVal = isHalfCaster.value ? Math.floor(state.value.level / 2) : state.value.level
-    return Math.max(1, mod + levelVal)
-  }
-  return 0
+  if (spellLearning.value === 'known' || isGrimoire.value) return spellsKnownAt(state.value.classId ?? '', state.value.level)
+  return preparedLimit.value ?? 0
 })
 
 const spellcastingMod = computed(() => {
@@ -500,8 +527,18 @@ function togglePactBoonCantrip(id: number) {
 function toggleSpell(id: number) {
   const list = state.value.selectedSpells
   const idx = list.indexOf(id)
-  if (idx >= 0) list.splice(idx, 1)
+  if (idx >= 0) {
+    list.splice(idx, 1)
+    state.value.preparedSpells = state.value.preparedSpells.filter(p => p !== id)
+  }
   else if (list.length < spellsNeeded.value) list.push(id)
+}
+
+function togglePreparedSpell(id: number) {
+  const list = state.value.preparedSpells
+  const idx = list.indexOf(id)
+  if (idx >= 0) list.splice(idx, 1)
+  else if (list.length < (preparedLimit.value ?? 0)) list.push(id)
 }
 
 function arcanumCandidates(level: number) {

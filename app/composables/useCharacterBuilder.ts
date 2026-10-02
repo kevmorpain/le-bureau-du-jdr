@@ -59,6 +59,8 @@ export interface BuilderState {
   // Étape 4 — Sorts
   selectedCantrips: number[]
   selectedSpells: number[]
+  // Grimoire du Magicien : le sous-ensemble préparé de `selectedSpells`.
+  preparedSpells: number[]
 
   // Étape 5 — Description
   name: string
@@ -167,6 +169,7 @@ const INIT_STATE: BuilderState = {
   rolledSets: null,
   selectedCantrips: [],
   selectedSpells: [],
+  preparedSpells: [],
   name: '',
   backgroundId: null,
   alignment: null,
@@ -756,7 +759,8 @@ export function useCharacterBuilder() {
         // Livre des secrets anciens : 2 sorts rituels obligatoires si l'invocation est choisie.
         // (Flag positionné par le composant via watchEffect — cf. StepSpells.)
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
-        if (spellLearningOf(s.classId ?? '') !== 'known') return cantripsDone
+        const learning = spellLearningOf(s.classId ?? '')
+        if (learning !== 'known' && learning !== 'spellbook') return cantripsDone
         const spellsNeeded = spellsKnownAt(s.classId ?? '', level.value)
         const spellsDone = spellsNeeded === 0 || s.selectedSpells.length >= spellsNeeded
         if (needsPactBoon.value && s.pactBoon === 'tome' && s.selectedPactBoonCantripIds.length < 3) return false

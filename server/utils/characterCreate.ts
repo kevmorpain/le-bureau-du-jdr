@@ -132,6 +132,8 @@ export const createCharacterSchema = z.object({
     }))
     .optional()
     .default([]),
+  // Absent : tous les sorts choisis sont préparés. Présent (grimoire du Magicien) : seuls ceux-ci le sont.
+  preparedSpellIds: z.array(z.number().int()).optional(),
   // Maîtrises et sorts mineurs choisis sur un point de choix d'espèce, de lignée, d'historique ou de classe.
   choicePicks: z.array(choicePickSchema).optional().default([]),
   weaponMasteryChoices: z
@@ -368,6 +370,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   const validated = await validateChoices(db, d, cls.id, subclassId, backgroundId)
   const spellsError = await learnedSpellsError(db, { cls, fromLevel: 0, toLevel: d.level, spellIds: d.spellIds, alreadyKnownIds: [], atCreation: true })
   if (spellsError) throw new CharacterValidationError(spellsError)
+  const notChosen = (d.preparedSpellIds ?? []).find(id => !d.spellIds.includes(id))
+  if (notChosen != null) throw new CharacterValidationError(`Le sort préparé (id=${notChosen}) ne fait pas partie des sorts choisis.`)
 
   // ── 3. Lectures dépendantes (features passifs, sorts octroyés) — avant le batch ──
   const classFeatureRows = await db
@@ -734,7 +738,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
 
   if (d.spellIds.length) {
     stmts.push(db.insert(schema.characterSpells).values(
-      d.spellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: true })),
+      d.spellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: d.preparedSpellIds?.includes(spellId) ?? true })),
     ))
   }
 

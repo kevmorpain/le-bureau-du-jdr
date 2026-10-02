@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cantripsKnownAt, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
+import { cantripsKnownAt, preparedSpellsLimit, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
 
 // Valeurs vérifiées à la main sur les tables de classe AideDD (PHB 2014) et la règle de multiclassage :
 // « Vous choisissez les sorts que vous connaissez et que vous préparez pour chacune de vos classes
@@ -82,5 +82,30 @@ describe('cantripsKnownAt / spellsKnownAt', () => {
   it('lanceur à sorts préparés : aucun sort « connu »', () => {
     expect(spellsKnownAt('cleric', 5)).toBe(0)
     expect(spellsKnownAt('druid', 5)).toBe(0)
+  })
+})
+
+describe('preparedSpellsLimit — sorts préparés par jour (AideDD)', () => {
+  it('Clerc, Druide, Magicien : modificateur + niveau de classe', () => {
+    expect(preparedSpellsLimit('cleric', 5, 3)).toBe(8)
+    expect(preparedSpellsLimit('druid', 1, 2)).toBe(3)
+    expect(preparedSpellsLimit('wizard', 4, 3)).toBe(7)
+  })
+
+  it('Paladin : modificateur de Charisme + la moitié du niveau, arrondie à l\'inférieur', () => {
+    expect(preparedSpellsLimit('paladin', 5, 3)).toBe(5)
+    expect(preparedSpellsLimit('paladin', 2, 2)).toBe(3)
+  })
+
+  it('au moins un sort, même avec un modificateur négatif', () => {
+    expect(preparedSpellsLimit('wizard', 1, -2)).toBe(1)
+    expect(preparedSpellsLimit('paladin', 2, -3)).toBe(1)
+  })
+
+  it('classe qui ne prépare pas (sorts connus, non lanceuse) ou classe pas encore prise : null', () => {
+    expect(preparedSpellsLimit('sorcerer', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('ranger', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('fighter', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('wizard', 0, 3)).toBeNull()
   })
 })

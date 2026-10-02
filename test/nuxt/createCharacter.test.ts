@@ -318,6 +318,29 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
     expect(bySource.get('invocation')).toBe(501) // « Armure de mage » octroyé par la manifestation 401
   })
 
+  it('preparedSpellIds : seuls ces sorts sont préparés, les autres restent connus (grimoire)', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, spellIds: [502], preparedSpellIds: [] }), OWNER)
+    const [row] = await db.select().from(schema.characterSpells).where(and(
+      eq(schema.characterSpells.characterSheetId, id),
+      eq(schema.characterSpells.spellId, 502),
+    ))
+    expect(row).toMatchObject({ isKnown: true, isPrepared: false })
+  })
+
+  it('sans preparedSpellIds : tout est préparé, comme avant', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, spellIds: [502] }), OWNER)
+    const [row] = await db.select().from(schema.characterSpells).where(and(
+      eq(schema.characterSpells.characterSheetId, id),
+      eq(schema.characterSpells.spellId, 502),
+    ))
+    expect(row.isPrepared).toBe(true)
+  })
+
+  it('un sort préparé qui n\'est pas dans les sorts choisis → rejet', async () => {
+    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 3, spellIds: [502], preparedSpellIds: [600] }), OWNER))
+      .rejects.toThrow(/ne fait pas partie des sorts choisis/)
+  })
+
   it('rattache à l\'Occultiste chaque sort qu\'il apprend (colonne class_id)', async () => {
     const { id } = await createCharacter(db, baseInput({
       classId: WARLOCK, level: 3,

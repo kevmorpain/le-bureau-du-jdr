@@ -57,6 +57,17 @@ export function spellsKnownAt(cls: string, level: number): number {
   return 0
 }
 
+// Sorts préparés par jour (AideDD) : modificateur d'incantation + niveau de classe (Clerc, Druide, Magicien),
+// ou + la moitié du niveau arrondie à l'inférieur (Paladin) ; minimum un sort.
+const PREPARED_LEVEL_DIVISOR: Partial<Record<ClassSlug, number>> = { cleric: 1, druid: 1, wizard: 1, paladin: 2 }
+
+/** `null` pour une classe qui ne prépare pas (sorts connus, ou pas d'incantation). */
+export function preparedSpellsLimit(cls: string, level: number, spellcastingMod: number): number | null {
+  const divisor = PREPARED_LEVEL_DIVISOR[cls as ClassSlug]
+  if (!divisor || level < 1) return null
+  return Math.max(1, spellcastingMod + Math.floor(level / divisor))
+}
+
 // Multiclassage (PHB 2014 p.164) : sorts connus et préparés déterminés classe par classe, comme un
 // personnage mono-classé — seul le niveau DANS la classe montée compte, jamais le niveau total.
 export function spellsLearnedOnLevelUp(cls: string, fromLevel: number, toLevel: number): { cantrips: number, spells: number } {
