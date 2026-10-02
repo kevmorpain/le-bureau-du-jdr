@@ -16,6 +16,8 @@ const SPELLS = [
   spell(30, 'Marque du chasseur', 1, 'Rôdeur'),
   spell(31, 'Soins', 1, 'Rôdeur'),
   spell(33, 'Grande foulée', 1, 'Rôdeur'),
+  spell(60, 'Sommeil', 1, 'Barde'),
+  spell(61, 'Soins', 1, 'Barde'),
   spell(40, 'Bénédiction', 1, 'Paladin'),
   spell(41, 'Châtiment divin', 1, 'Paladin'),
   ...['Projectile magique', 'Bouclier', 'Sommeil', 'Armure de mage', 'Détection de la magie', 'Mains brûlantes', 'Image silencieuse']
@@ -38,13 +40,13 @@ async function waitFor(condition: () => boolean) {
   expect(condition()).toBe(true)
 }
 
-async function mountBuilderSpells(classId: string, level: number, firstSpellName: string) {
+async function mountBuilderSpells(classId: string, level: number, firstSpellName: string, extraState: Record<string, unknown> = {}) {
   let builder!: ReturnType<typeof useCharacterBuilder>
   const Host = defineComponent({
     setup() {
       builder = useCharacterBuilder()
       builder.resetBuilder()
-      Object.assign(builder.state.value, { classId, level, selectedCantrips: [], selectedSpells: [] })
+      Object.assign(builder.state.value, { classId, level, selectedCantrips: [], selectedSpells: [], ...extraState })
       return () => h(StepSpells)
     },
   })
@@ -85,6 +87,35 @@ describe('Builder, étape Sorts — grimoire du Magicien', () => {
     const { preparedSpells } = builder.state.value
     preparedSpells.push(50)
     await waitFor(() => /Sorts préparés ?1\/1/.test(text()))
+  })
+})
+
+describe('Builder, étape Sorts — Secrets magiques du Barde', () => {
+  it('Barde 10 : 14 sorts connus, dont deux de n\'importe quelle classe, exigés pour valider l\'étape', async () => {
+    const { builder, text } = await mountBuilderSpells('bard', 10, 'Sorts connus')
+
+    expect(text()).toMatch(/Sorts connus ?0\/14/)
+    expect(builder.freeListPicks.value).toBe(2)
+    builder.state.value.selectedCantrips = [1, 2, 3, 4]
+    builder.state.value.selectedSpells = Array.from({ length: 13 }, (_, i) => i + 100)
+    expect(builder.isStepComplete.value('spells')).toBe(false)
+    builder.state.value.selectedSpells = Array.from({ length: 14 }, (_, i) => i + 100)
+    expect(builder.isStepComplete.value('spells')).toBe(true)
+  })
+
+  it('Barde 9 : 12 sorts connus, aucun Secrets magiques', async () => {
+    const { builder, text } = await mountBuilderSpells('bard', 9, 'Sorts connus')
+    expect(text()).toMatch(/Sorts connus ?0\/12/)
+    expect(builder.freeListPicks.value).toBe(0)
+  })
+
+  it('Collège du savoir, niveau 6 : deux sorts de plus que le décompte', async () => {
+    const { builder, text } = await mountBuilderSpells('bard', 6, 'Sorts connus', { subclass: 'Collège du savoir' })
+    expect(text()).toMatch(/Sorts connus ?0\/11/)
+    expect(builder.freeListPicks.value).toBe(2)
+
+    const other = await mountBuilderSpells('bard', 6, 'Sorts connus', { subclass: 'Collège de la vaillance' })
+    expect(other.text()).toMatch(/Sorts connus ?0\/9/)
   })
 })
 

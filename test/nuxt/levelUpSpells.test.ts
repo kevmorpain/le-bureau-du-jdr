@@ -31,6 +31,8 @@ const SPELLS = [
   spell(24, 'Bouclier', 1, 'Magicien'),
   spell(25, 'Invisibilité', 2, 'Magicien'),
   spell(26, 'Boule de feu', 3, 'Magicien'),
+  spell(40, 'Sommeil', 1, 'Barde'),
+  spell(41, 'Soins', 1, 'Barde'),
   spell(30, 'Marque du chasseur', 1, 'Rôdeur'),
   spell(31, 'Soins', 1, 'Rôdeur'),
   spell(32, 'Passage sans trace', 2, 'Rôdeur'),
@@ -192,5 +194,39 @@ describe('Étape Magie du level-up — remplacement d\'un sort connu', () => {
   it('classe rejointe par multiclassage : aucun sort à remplacer', async () => {
     const { levelUp } = await mountSpellsStep([{ id: 5, name: 'Guerrier', level: 3 }], 'warlock', 0)
     expect(levelUp.replaceableSpells.value).toEqual([])
+  })
+})
+
+describe('Étape Magie du level-up — Secrets magiques du Barde', () => {
+  it('Barde 9 → 10 : deux sorts de n\'importe quelle classe, jamais plus de deux hors de la liste du barde', async () => {
+    const { levelUp } = await mountSpellsStep([{ id: 7, name: 'Barde', level: 9 }], 'bard', 9)
+
+    expect(levelUp.spellsToLearn.value).toBe(2)
+    expect(levelUp.freeListPicks.value).toBe(2)
+    const names = levelUp.learnableSpells.value.map(s => s.name)
+    expect(names).toContain('Projectile magique')
+    expect(names).toContain('Sommeil')
+    expect(levelUp.isOutsideClassList(23)).toBe(true)
+    expect(levelUp.isOutsideClassList(40)).toBe(false)
+
+    levelUp.state.value.newSpellIds = [23, 24]
+    expect(levelUp.canPickOutsideClassList.value).toBe(false)
+    levelUp.state.value.newSpellIds = [23, 40]
+    expect(levelUp.canPickOutsideClassList.value).toBe(true)
+  })
+
+  it('Barde 10 → 11 : pas de Secrets magiques, la liste de la classe seulement', async () => {
+    const { levelUp } = await mountSpellsStep([{ id: 7, name: 'Barde', level: 10 }], 'bard', 10)
+
+    expect(levelUp.freeListPicks.value).toBe(0)
+    expect(levelUp.learnableSpells.value.map(s => s.name).sort()).toEqual(['Soins', 'Sommeil'])
+  })
+
+  it('Collège du savoir, niveau 5 → 6 : deux sorts de plus que le décompte', async () => {
+    const { levelUp } = await mountSpellsStep([{ id: 7, name: 'Barde', level: 5 }], 'bard', 5)
+    levelUp.state.value.newSubclassName = 'Collège du savoir'
+
+    expect(levelUp.freeListPicks.value).toBe(2)
+    expect(levelUp.spellPicksDue.value).toBe(levelUp.spellsToLearn.value + 2)
   })
 })

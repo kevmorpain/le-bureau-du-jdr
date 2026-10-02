@@ -77,6 +77,28 @@ export function spellsLearnedOnLevelUp(cls: string, fromLevel: number, toLevel: 
   }
 }
 
+// AideDD, Barde. « Secrets magiques » (niveaux 10, 14, 18) : deux sorts de n'importe quelle classe, qui comptent comme
+// des sorts de barde et sont déjà dans la colonne « sorts connus » de la table. Collège du savoir, « Secrets magiques
+// supplémentaires » (niveau 6) : deux de plus, de n'importe quelle classe, HORS de ce décompte. Dans les deux cas : un
+// niveau de sort qu'on peut lancer (ou un sort mineur).
+export const LORE_COLLEGE_NAME = 'Collège du savoir'
+const BARD_SECRETS_LEVELS = [10, 14, 18]
+const LORE_EXTRA_SECRETS_LEVEL = 6
+const SECRETS_PER_GAIN = 2
+
+/**
+ * `anyList` : sorts gagnés dans le décompte normal qui peuvent venir de n'importe quelle liste ; `extra` : sorts
+ * supplémentaires hors décompte, eux aussi de n'importe quelle liste.
+ */
+export function magicalSecretsGained(cls: string, fromLevel: number, toLevel: number, subclassName?: string | null): { anyList: number, extra: number } {
+  if (cls !== 'bard') return { anyList: 0, extra: 0 }
+  const crossed = (level: number) => fromLevel < level && level <= toLevel
+  return {
+    anyList: BARD_SECRETS_LEVELS.filter(crossed).length * SECRETS_PER_GAIN,
+    extra: subclassName === LORE_COLLEGE_NAME && crossed(LORE_EXTRA_SECRETS_LEVEL) ? SECRETS_PER_GAIN : 0,
+  }
+}
+
 export interface PreparedSpellRow {
   isPrepared: boolean
   alwaysPrepared?: boolean

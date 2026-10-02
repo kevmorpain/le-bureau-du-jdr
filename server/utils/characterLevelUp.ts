@@ -138,7 +138,7 @@ type LevelUpClass = Parameters<typeof learnedSpellsError>[1]['cls']
 
 const ARCANUM_SPELL_LEVEL: Record<number, number> = { 11: 6, 13: 7, 15: 8, 17: 9 }
 
-async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelUpInput, cls: LevelUpClass, newLevel: number, gained: ResolvedChoice[]): Promise<void> {
+async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelUpInput, cls: LevelUpClass, newLevel: number, subclassId: number | null, gained: ResolvedChoice[]): Promise<void> {
   const known = await db
     .select({ spellId: schema.characterSpells.spellId })
     .from(schema.characterSpells)
@@ -157,6 +157,7 @@ async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelU
     spellIds: [...(d.newCantripIds ?? []), ...(d.newSpellIds ?? [])],
     alreadyKnownIds,
     replacing: d.replacedSpellId != null,
+    subclassId,
   })
   if (error) throw new CharacterValidationError(error)
 
@@ -290,7 +291,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     subclassIdsAfter: subclassAfter != null ? [subclassAfter] : [],
   })
   await validateLevelUpChoicePicks(gained, d.choicePicks ?? [])
-  await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, gained)
+  await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, subclassAfter ?? null, gained)
   validateLevelUpAsi(d, newLevel, gained)
 
   // 4. Lectures dépendantes (features débloquées, familier, slots)

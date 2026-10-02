@@ -5,7 +5,7 @@ import { classSlugFromName } from '~~/shared/rules/classSlugs'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { SpellcastingType } from '~~/shared/rules/spellcasting'
 import { maxSpellLevelForLevel } from '~~/shared/rules/spellSlots'
-import { spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsKnown'
+import { magicalSecretsGained, spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsKnown'
 
 export interface LearnedSpellsInput {
   cls: { id: number, name: string, ruleset: Ruleset, spellcastingType: SpellcastingType }
@@ -19,6 +19,14 @@ export interface LearnedSpellsInput {
   atCreation?: boolean
   /** Un sort connu est échangé : un sort de plus que le niveau n'en accorde, et au moins un. */
   replacing?: boolean
+  /** Sous-classe de la classe, pour les Secrets magiques supplémentaires du Collège du savoir. */
+  subclassId?: number | null
+}
+
+async function subclassNameOf(db: Db, subclassId: number | null | undefined): Promise<string | null> {
+  if (subclassId == null) return null
+  const [row] = await db.select({ name: schema.subclasses.name }).from(schema.subclasses).where(eq(schema.subclasses.id, subclassId)).limit(1)
+  return row?.name ?? null
 }
 
 // Bornes hautes seulement, comme les autres choix : le nombre exact est imposé par l'assistant. Les tables
@@ -48,8 +56,10 @@ export async function learnedSpellsError(db: Db, input: LearnedSpellsInput): Pro
       eq(schema.spellClasses.ruleset, cls.ruleset),
       inArray(schema.spellClasses.spellId, spellIds),
     ))).map(r => r.spellId))
-  const unlisted = rows.find(r => !listed.has(r.id))
-  if (unlisted) return `Le sort « ${unlisted.name} » n'est pas dans la liste de la classe ${cls.name}.`
+  const secrets = magicalSecretsGained(slug, fromLevel, toLevel, await subclassNameOf(db, input.subclassId))
+  const unlisted = rows.filter(r => !listed.has(r.id))
+  const outsideList = unlisted.find(r => r.level === 0) ?? unlisted[secrets.anyList + secrets.extra]
+  if (outsideList) return `Le sort « ${outsideList.name} » n'est pas dans la liste de la classe ${cls.name}.`
 
   const learned = spellsLearnedOnLevelUp(slug, fromLevel, toLevel)
   const cantrips = rows.filter(r => r.level === 0)
@@ -59,7 +69,7 @@ export async function learnedSpellsError(db: Db, input: LearnedSpellsInput): Pro
 
   const leveled = rows.filter(r => r.level > 0)
   const preparedAtCreation = input.atCreation && spellLearningOf(slug) === 'prepared'
-  const allowed = learned.spells + (input.replacing ? 1 : 0)
+  const allowed = learned.spells + secrets.extra + (input.replacing ? 1 : 0)
   if (!preparedAtCreation && leveled.length > allowed) {
     return `Trop de sorts (${leveled.length} pour ${allowed} appris au niveau ${toLevel} de la classe).`
   }

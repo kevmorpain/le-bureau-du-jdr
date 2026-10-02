@@ -302,6 +302,9 @@
       </template>
 
       <template v-if="activeTab === 'spells' && !pending">
+        <p v-if="freeListPicks > 0" class="text-xs text-muted mb-3">
+          Secrets magiques : jusqu'à {{ freeListPicks }} de ces sorts peuvent venir de la liste de n'importe quelle classe.
+        </p>
         <div class="text-xs text-muted mb-3">
           Sélectionnez {{ spellsNeeded }} {{ $t('sort', spellsNeeded) }}
           <span
@@ -322,15 +325,19 @@
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              <SpellCardBuilder
+              <div
                 v-for="spell in list"
                 :key="spell.id"
-                :spell="spell"
-                :selected="state.selectedSpells.includes(spell.id)"
-                :character-level="state.level"
-                :spellcasting-mod="spellcastingMod"
-                @click="toggleSpell(spell.id)"
-              />
+                :class="isOutsideBlocked(spell.id) ? 'opacity-50 pointer-events-none' : ''"
+              >
+                <SpellCardBuilder
+                  :spell="spell"
+                  :selected="state.selectedSpells.includes(spell.id)"
+                  :character-level="state.level"
+                  :spellcasting-mod="spellcastingMod"
+                  @click="toggleSpell(spell.id)"
+                />
+              </div>
             </div>
           </div>
         </template>
@@ -341,7 +348,7 @@
 </template>
 
 <script lang="ts" setup>
-import { preparedSpellsLimit, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
+import { spellLearningOf } from '~~/shared/rules/spellsKnown'
 
 const {
   state,
@@ -352,6 +359,9 @@ const {
   spellSlots,
   maxSpellLevel,
   cantripsNeeded,
+  spellsNeeded,
+  preparedLimit,
+  freeListPicks,
   needsPactBoon,
   ABILITY_SHORT,
   abilityMod,
@@ -415,7 +425,7 @@ const cantrips = computed(() => (allSpells.value ?? []).filter((s: any) => s.lev
 const spellsByLevel = computed(() => {
   const max = maxSpellLevel.value
   const result: Record<number, any[]> = {}
-  for (const spell of allSpells.value ?? []) {
+  for (const spell of (freeListPicks.value > 0 ? allCantripsData.value : allSpells.value) ?? []) {
     if (spell.level >= 1 && spell.level <= max) {
       if (!result[spell.level]) result[spell.level] = []
       result[spell.level].push(spell)
@@ -472,16 +482,11 @@ const spellsTabLabel = computed(() => {
   return 'Sorts connus'
 })
 
-const preparedLimit = computed(() => {
-  const ab = spellcastingInfo.value?.ability
-  const mod = ab ? abilityMod(finalAbilities.value[ab] ?? 10) : 0
-  return preparedSpellsLimit(state.value.classId ?? '', state.value.level, mod)
-})
-
-const spellsNeeded = computed(() => {
-  if (spellLearning.value === 'known' || isGrimoire.value) return spellsKnownAt(state.value.classId ?? '', state.value.level)
-  return preparedLimit.value ?? 0
-})
+const classSpellIds = computed(() => new Set((allSpells.value ?? []).map((s: any) => s.id as number)))
+const isOutsideClassList = (id: number) => freeListPicks.value > 0 && !classSpellIds.value.has(id)
+const canPickOutsideClassList = computed(() => state.value.selectedSpells.filter(isOutsideClassList).length < freeListPicks.value)
+const isOutsideBlocked = (id: number) =>
+  isOutsideClassList(id) && !state.value.selectedSpells.includes(id) && !canPickOutsideClassList.value
 
 const spellcastingMod = computed(() => {
   const ab = spellcastingInfo.value?.ability
@@ -531,7 +536,7 @@ function toggleSpell(id: number) {
     list.splice(idx, 1)
     state.value.preparedSpells = state.value.preparedSpells.filter(p => p !== id)
   }
-  else if (list.length < spellsNeeded.value) list.push(id)
+  else if (list.length < spellsNeeded.value && !isOutsideBlocked(id)) list.push(id)
 }
 
 function togglePreparedSpell(id: number) {

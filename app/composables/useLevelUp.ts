@@ -11,7 +11,7 @@ import {
   type AbilityKey,
 } from '~/data/character-builder'
 import { SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
-import { spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsKnown'
+import { magicalSecretsGained, spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsKnown'
 import { maxSpellLevelForLevel } from '~~/shared/rules/spellSlots'
 import {
   meetsMulticlassPrerequisites,
@@ -494,6 +494,14 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const cantripsToLearn = computed(() => spellsLearned.value.cantrips)
   const spellsToLearn = computed(() => spellsLearned.value.spells)
 
+  // Secrets magiques du Barde : des sorts de n'importe quelle classe, dont deux de plus, hors décompte, au Collège du savoir.
+  const subclassNameAfter = computed(() =>
+    state.value.newSubclassName ?? charClasses.value.find(c => c.classId === state.value.pickedClassId)?.subclassName ?? null)
+  const secrets = computed(() => hasSpellcasting.value
+    ? magicalSecretsGained(state.value.pickedClassId ?? '', state.value.fromLevel, state.value.toLevel, subclassNameAfter.value)
+    : { anyList: 0, extra: 0 })
+  const freeListPicks = computed(() => secrets.value.anyList + secrets.value.extra)
+
   // Plafonné par le niveau DANS la classe montée, pas par les emplacements combinés du multiclassage.
   const maxLearnableSpellLevel = computed(() => {
     const type = pickedClass.value?.spellcasting?.type
@@ -514,15 +522,26 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   )
   const classSpells = computed<Spell[]>(() => classSpellsData.value ?? [])
 
+  const { data: anySpellsData, pending: anySpellsPending } = useAsyncData<Spell[]>(
+    () => `level-up-any-spells:${freeListPicks.value > 0}:${JSON.stringify(extendedQuery.value)}`,
+    () => (freeListPicks.value > 0 ? $fetch<Spell[]>('/api/spells', { query: extendedQuery.value }) : Promise.resolve([])),
+    { default: () => [] },
+  )
+  const classSpellIds = computed(() => new Set(classSpells.value.map(s => s.id)))
+  const isOutsideClassList = (id: number) => freeListPicks.value > 0 && !classSpellIds.value.has(id)
+  const outsidePicks = computed(() => state.value.newSpellIds.filter(isOutsideClassList).length)
+  const canPickOutsideClassList = computed(() => outsidePicks.value < freeListPicks.value)
+
   const learnableCantrips = computed(() => classSpells.value.filter(s => s.level === 0))
   const learnableSpells = computed(() =>
-    classSpells.value.filter(s => s.level >= 1 && s.level <= maxLearnableSpellLevel.value),
+    (freeListPicks.value > 0 ? anySpellsData.value ?? [] : classSpells.value)
+      .filter(s => s.level >= 1 && s.level <= maxLearnableSpellLevel.value),
   )
 
   // Choix exigés = dû, plafonné aux candidats encore inconnus : un catalogue incomplet ne doit pas
   // bloquer l'étape. Pendant le chargement, on exige le dû entier.
   const requiredPicks = (due: number, candidates: Spell[]) => {
-    if (classSpellsPending.value) return due
+    if (classSpellsPending.value || anySpellsPending.value) return due
     const available = candidates.filter(s => !currentSpellIds.value.includes(s.id)).length
     return Math.min(due, available)
   }
@@ -536,7 +555,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       .filter(cs => cs.spell?.level >= 1 && cs.source == null && (cs.classId === classId || cs.classId == null))
       .map(cs => ({ id: cs.spellId as number, name: cs.spell.name as string, level: cs.spell.level as number }))
   })
-  const spellPicksDue = computed(() => spellsToLearn.value + (state.value.replacedSpellId != null ? 1 : 0))
+  const spellPicksDue = computed(() => spellsToLearn.value + secrets.value.extra + (state.value.replacedSpellId != null ? 1 : 0))
   const requiredSpellPicks = computed(() => requiredPicks(spellPicksDue.value, learnableSpells.value))
 
   // ── Active steps ───────────────────────────────────────────────────────────
@@ -764,6 +783,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     requiredSpellPicks,
     replaceableSpells,
     spellPicksDue,
+    freeListPicks,
+    isOutsideClassList,
+    canPickOutsideClassList,
     needsPactBoon,
     needsInvocations,
     canReplaceInvocation,

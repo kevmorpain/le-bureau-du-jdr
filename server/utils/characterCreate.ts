@@ -368,7 +368,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   const ruleset: Ruleset = cls.ruleset
   await validateRulesetCoherence(db, d, ruleset)
   const validated = await validateChoices(db, d, cls.id, subclassId, backgroundId)
-  const spellsError = await learnedSpellsError(db, { cls, fromLevel: 0, toLevel: d.level, spellIds: d.spellIds, alreadyKnownIds: [], atCreation: true })
+  const spellsError = await learnedSpellsError(db, { cls, fromLevel: 0, toLevel: d.level, spellIds: d.spellIds, alreadyKnownIds: [], atCreation: true, subclassId })
   if (spellsError) throw new CharacterValidationError(spellsError)
   const notChosen = (d.preparedSpellIds ?? []).find(id => !d.spellIds.includes(id))
   if (notChosen != null) throw new CharacterValidationError(`Le sort préparé (id=${notChosen}) ne fait pas partie des sorts choisis.`)

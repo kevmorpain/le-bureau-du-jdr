@@ -295,6 +295,9 @@
           :class="state.newSpellIds.length >= requiredSpellPicks ? 'text-green-400' : 'text-amber-400'"
         >{{ state.newSpellIds.length }}/{{ spellPicksDue }}</span>
       </div>
+      <p v-if="freeListPicks > 0" class="text-xs text-muted mb-2">
+        Secrets magiques : jusqu'à {{ freeListPicks }} de ces sorts peuvent venir de la liste de n'importe quelle classe.
+      </p>
       <p v-if="!pending && requiredSpellPicks < spellPicksDue" class="text-xs text-muted mb-2">
         Seulement {{ requiredSpellPicks }} sort(s) encore disponible(s) dans le catalogue.
       </p>
@@ -319,9 +322,9 @@
             <UTooltip
               v-for="spell in list"
               :key="spell.id"
-              :text="currentSpellIds.includes(spell.id) ? 'Vous connaissez déjà ce sort' : ''"
+              :text="currentSpellIds.includes(spell.id) ? 'Vous connaissez déjà ce sort' : isOutsideBlocked(spell.id) ? 'Secrets magiques : tous les sorts hors de la liste de classe sont déjà choisis' : ''"
             >
-              <div :class="currentSpellIds.includes(spell.id) ? 'opacity-50 pointer-events-none' : ''">
+              <div :class="currentSpellIds.includes(spell.id) || isOutsideBlocked(spell.id) ? 'opacity-50 pointer-events-none' : ''">
                 <SpellCardBuilder
                   :spell="spell"
                   :selected="state.newSpellIds.includes(spell.id) || currentSpellIds.includes(spell.id)"
@@ -375,6 +378,9 @@ const {
   requiredSpellPicks,
   replaceableSpells,
   spellPicksDue,
+  freeListPicks,
+  isOutsideClassList,
+  canPickOutsideClassList,
 } = useLevelUp(inject('charSheet') as any)
 
 const { t } = useI18n()
@@ -433,7 +439,10 @@ const spellCastStats = computed(() => {
   ]
 })
 
-const showSpellPicker = computed(() => spellsToLearn.value > 0 || replaceableSpells.value.length > 0)
+const showSpellPicker = computed(() => spellsToLearn.value > 0 || spellPicksDue.value > 0 || replaceableSpells.value.length > 0)
+
+const isOutsideBlocked = (id: number) =>
+  isOutsideClassList(id) && !state.value.newSpellIds.includes(id) && !canPickOutsideClassList.value
 
 const isPreparedCaster = computed(() => spellLearning.value === 'prepared' || spellLearning.value === 'spellbook')
 const isGrimoire = computed(() => spellLearning.value === 'spellbook')
@@ -598,7 +607,7 @@ function togglePactBoonCantrip(id: number) {
 }
 
 function toggleSpell(id: number) {
-  if (currentSpellIds.value.includes(id)) return
+  if (currentSpellIds.value.includes(id) || isOutsideBlocked(id)) return
   const idx = state.value.newSpellIds.indexOf(id)
   if (idx >= 0) state.value.newSpellIds.splice(idx, 1)
   else if (state.value.newSpellIds.length < spellPicksDue.value) state.value.newSpellIds.push(id)

@@ -16,7 +16,7 @@ import {
   type SubraceData,
 } from '~/data/character-builder'
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
-import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
+import { cantripsKnownAt, magicalSecretsGained, preparedSpellsLimit, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicateCount, duplicatedValues } from '~~/shared/rules/duplicateProficiencies'
@@ -617,6 +617,22 @@ export function useCharacterBuilder() {
     return cantripsKnownAt(classData.value.id, level.value)
   })
 
+  const preparedLimit = computed(() => {
+    const ability = spellcastingInfo.value?.ability
+    const mod = ability ? abilityMod(finalAbilities.value[ability] ?? 10) : 0
+    return preparedSpellsLimit(state.value.classId ?? '', level.value, mod)
+  })
+  // Secrets magiques du Barde : des sorts de n'importe quelle classe, dont deux de plus hors décompte au Collège du savoir.
+  const magicalSecrets = computed(() => magicalSecretsGained(state.value.classId ?? '', 0, level.value, state.value.subclass))
+  const freeListPicks = computed(() => magicalSecrets.value.anyList + magicalSecrets.value.extra)
+  // Sorts à choisir : sorts connus (grimoire compris) ou sorts préparés.
+  const spellsNeeded = computed(() => {
+    const cls = state.value.classId ?? ''
+    const learning = spellLearningOf(cls)
+    if (learning === 'known' || learning === 'spellbook') return spellsKnownAt(cls, level.value) + magicalSecrets.value.extra
+    return preparedLimit.value ?? 0
+  })
+
   // ─── Arcanums mystiques (Occultiste niv 11/13/15/17) ──────────────────────
   // Tous les paliers débloqués (≤ niveau), pas seulement celui du niveau exact.
   const arcaneMysteriumSpellLevels = computed<number[]>(() =>
@@ -763,8 +779,7 @@ export function useCharacterBuilder() {
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
         const learning = spellLearningOf(s.classId ?? '')
         if (learning !== 'known' && learning !== 'spellbook') return cantripsDone
-        const spellsNeeded = spellsKnownAt(s.classId ?? '', level.value)
-        const spellsDone = spellsNeeded === 0 || s.selectedSpells.length >= spellsNeeded
+        const spellsDone = spellsNeeded.value === 0 || s.selectedSpells.length >= spellsNeeded.value
         if (needsPactBoon.value && s.pactBoon === 'tome' && s.selectedPactBoonCantripIds.length < 3) return false
         return cantripsDone && spellsDone
       }
@@ -885,6 +900,9 @@ export function useCharacterBuilder() {
     spellSlots,
     maxSpellLevel,
     cantripsNeeded,
+    spellsNeeded,
+    preparedLimit,
+    freeListPicks,
     variantHumanLanguageCount,
     // Navigation
     activeSteps,
