@@ -116,8 +116,9 @@ beforeAll(async () => {
     { id: 501, name: 'Armure de mage', level: 1, castingTime: '1 action', range: 0, duration: '8 heures', schoolId: 1 },
     { id: 600, name: 'Cercle de mort', level: 6, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
     { id: 601, name: 'Portail', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
+    { id: 502, name: 'Maléfice', level: 1, castingTime: '1 action', range: 0, duration: '1 heure', schoolId: 1 },
   ])
-  await db.insert(schema.spellClasses).values([{ spellId: 600, classId: WARLOCK }, { spellId: 601, classId: WARLOCK }])
+  await db.insert(schema.spellClasses).values([{ spellId: 600, classId: WARLOCK }, { spellId: 601, classId: WARLOCK }, { spellId: 502, classId: WARLOCK }])
 
   // Progression `ability_scores` (triade d'origine 2024) — pour tester le pick composite C3.
   await db.insert(schema.features).values({ id: 700, name: 'Bonus d\'origine', featureType: 'background_feature', levelRequired: 1 })
@@ -322,7 +323,7 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
       classId: WARLOCK, level: 3,
       pactBoon: 'chain',
       invocationIds: [401],
-      spellIds: [600],
+      spellIds: [502],
     }), OWNER)
 
     const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))

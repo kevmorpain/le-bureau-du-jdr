@@ -7,6 +7,7 @@ import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { creationDuplicates } from '~~/server/utils/duplicateProficiencies'
+import { learnedSpellsError } from '~~/server/utils/spellLearning'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
@@ -333,7 +334,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
 export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: number): Promise<{ id: number }> {
   // 1. Lectures des entités résolues côté client
   const [cls] = await db
-    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, spellcastingType: schema.classes.spellcastingType, ruleset: schema.classes.ruleset })
+    .select({ id: schema.classes.id, name: schema.classes.name, hitDice: schema.classes.hitDice, spellcastingType: schema.classes.spellcastingType, ruleset: schema.classes.ruleset })
     .from(schema.classes)
     .where(eq(schema.classes.id, d.classId))
     .limit(1)
@@ -365,6 +366,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   const ruleset: Ruleset = cls.ruleset
   await validateRulesetCoherence(db, d, ruleset)
   const validated = await validateChoices(db, d, cls.id, subclassId, backgroundId)
+  const spellsError = await learnedSpellsError(db, { cls, fromLevel: 0, toLevel: d.level, spellIds: d.spellIds, alreadyKnownIds: [], atCreation: true })
+  if (spellsError) throw new CharacterValidationError(spellsError)
 
   // ── 3. Lectures dépendantes (features passifs, sorts octroyés) — avant le batch ──
   const classFeatureRows = await db

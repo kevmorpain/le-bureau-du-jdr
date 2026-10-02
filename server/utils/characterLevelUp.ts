@@ -11,7 +11,10 @@ import { buildCatalog } from '~~/server/utils/catalog'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
-import { choicesGainedAtLevelUp, isProficiencyPickChoice } from '~~/shared/rules/resolve'
+import { choicesGainedAtLevelUp, isProficiencyPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { learnedSpellsError } from '~~/server/utils/spellLearning'
+import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
+import { isValidAsiDistribution } from '~~/shared/rules/composite'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
@@ -124,12 +127,76 @@ async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSki
 
 // Les picks portent sur les points de choix que CE niveau de classe rend dus (porteur de multiclassage d'une
 // classe rejointe compris), validés comme à la création.
-async function validateLevelUpChoicePicks(db: Db, classId: number, newLevel: number, mainClassId: number, picks: ChoicePick[]): Promise<void> {
+async function validateLevelUpChoicePicks(gained: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
   if (!picks.length) return
-  const gained = choicesGainedAtLevelUp(await buildCatalog(db, { classIds: [classId] }), { classId, fromLevel: newLevel - 1, toLevel: newLevel, mainClassId })
-    .filter(isProficiencyPickChoice)
-  const error = choicePicksError(picks, gained)
+  const error = choicePicksError(picks, gained.filter(isProficiencyPickChoice))
   if (error) throw new CharacterValidationError(error)
+}
+
+type LevelUpClass = Parameters<typeof learnedSpellsError>[1]['cls']
+
+const ARCANUM_SPELL_LEVEL: Record<number, number> = { 11: 6, 13: 7, 15: 8, 17: 9 }
+
+async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelUpInput, cls: LevelUpClass, newLevel: number, gained: ResolvedChoice[]): Promise<void> {
+  const known = await db
+    .select({ spellId: schema.characterSpells.spellId })
+    .from(schema.characterSpells)
+    .where(eq(schema.characterSpells.characterSheetId, characterSheetId))
+  const alreadyKnownIds = known.map(k => k.spellId)
+
+  const error = await learnedSpellsError(db, {
+    cls,
+    fromLevel: newLevel - 1,
+    toLevel: newLevel,
+    spellIds: [...(d.newCantripIds ?? []), ...(d.newSpellIds ?? [])],
+    alreadyKnownIds,
+  })
+  if (error) throw new CharacterValidationError(error)
+
+  if (d.arcaneMysteriumSpellId != null) {
+    const spellLevel = ARCANUM_SPELL_LEVEL[newLevel]
+    const legal = spellLevel != null && gained.some(c =>
+      c.kind === 'spell'
+      && c.optionSource.type === 'spells'
+      && c.optionSource.maxLevel === spellLevel
+      && c.options.some(o => o.spellId === d.arcaneMysteriumSpellId))
+    if (!legal) throw new CharacterValidationError(`Le sort d'arcanum mystique (id=${d.arcaneMysteriumSpellId}) n'est pas un choix légal au niveau ${newLevel}.`)
+  }
+
+  const pactCantrips = d.pactBoonCantripIds ?? []
+  if (pactCantrips.length && (d.pactBoon !== 'tome' || pactCantrips.length > 3)) {
+    throw new CharacterValidationError(`Les sorts mineurs du Pacte du grimoire ne se choisissent qu'avec cette faveur, au nombre de 3 au plus.`)
+  }
+  const ritualIds = d.bookOfAncientSecretsSpellIds ?? []
+  const featureSpells = await (pactCantrips.length || ritualIds.length
+    ? db.select({ id: schema.spells.id, name: schema.spells.name, level: schema.spells.level, ritual: schema.spells.ritual })
+        .from(schema.spells)
+        .where(inArray(schema.spells.id, [...pactCantrips, ...ritualIds]))
+    : Promise.resolve([]))
+  const notCantrip = featureSpells.find(s => pactCantrips.includes(s.id) && s.level !== 0)
+  if (notCantrip) throw new CharacterValidationError(`Le sort « ${notCantrip.name} » n'est pas un sort mineur.`)
+  const notRitual = featureSpells.find(s => ritualIds.includes(s.id) && (s.level !== 1 || !s.ritual))
+  if (notRitual) throw new CharacterValidationError(`Le sort « ${notRitual.name} » n'est pas un sort rituel de niveau 1.`)
+}
+
+// `asiBonuses` arrive avec ses six clés, zéros compris.
+function validateLevelUpAsi(d: LevelUpInput, newLevel: number, gained: ResolvedChoice[]): void {
+  const bonuses = Object.entries(d.asiBonuses ?? {}).filter(([, amount]) => amount > 0)
+  if (!d.asiChoice) {
+    if (bonuses.length || d.featureId != null) throw new CharacterValidationError(`Une amélioration de caractéristiques ou un don est envoyé sans choix d'ASI.`)
+    return
+  }
+  if (!gained.some(c => c.kind === 'asi_or_feat')) {
+    throw new CharacterValidationError(`Le niveau ${newLevel} de cette classe n'accorde pas d'amélioration de caractéristiques.`)
+  }
+  if (d.asiChoice === 'feat') {
+    if (d.featureId == null) throw new CharacterValidationError('Aucun don sélectionné.')
+    return
+  }
+  const unknown = bonuses.find(([ability]) => !(ABILITY_KEYS as readonly string[]).includes(ability))
+  if (unknown) throw new CharacterValidationError(`Caractéristique inconnue : « ${unknown[0]} ».`)
+  const check = isValidAsiDistribution(Object.fromEntries(bonuses) as Partial<Record<AbilityKey, number>>)
+  if (!check.ok) throw new CharacterValidationError(check.reason ?? 'Répartition d\'ASI invalide.')
 }
 
 async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset: Ruleset): Promise<void> {
@@ -167,7 +234,7 @@ async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset:
 export async function characterLevelUp(db: Db, characterSheetId: number, d: LevelUpInput): Promise<{ success: true, newLevel: number, hpGained: number }> {
   // 1. Classe (hitDice pour les PV)
   const [cls] = await db
-    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, ruleset: schema.classes.ruleset, multiclassSkillCount: schema.classes.multiclassSkillCount })
+    .select({ id: schema.classes.id, name: schema.classes.name, hitDice: schema.classes.hitDice, ruleset: schema.classes.ruleset, spellcastingType: schema.classes.spellcastingType, multiclassSkillCount: schema.classes.multiclassSkillCount })
     .from(schema.classes)
     .where(eq(schema.classes.id, d.classId))
     .limit(1)
@@ -205,7 +272,10 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   await validateLevelUpExpertise(db, characterSheetId, cls.id, newLevel, d.expertiseSkills ?? [])
   await validateMulticlassSkills(db, cls, existingClass == null && currentClasses.length > 0, d.newSkills ?? [])
   const mainClassId = currentClasses.find(c => c.isMain)?.classId ?? currentClasses[0]?.classId ?? cls.id
-  await validateLevelUpChoicePicks(db, cls.id, newLevel, mainClassId, d.choicePicks ?? [])
+  const gained = choicesGainedAtLevelUp(await buildCatalog(db, { classIds: [cls.id] }), { classId: cls.id, fromLevel: newLevel - 1, toLevel: newLevel, mainClassId })
+  await validateLevelUpChoicePicks(gained, d.choicePicks ?? [])
+  await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, gained)
+  validateLevelUpAsi(d, newLevel, gained)
 
   // 4. Lectures dépendantes (features débloquées, familier, slots)
   const newClassFeatures = await db
