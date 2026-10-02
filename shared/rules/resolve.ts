@@ -199,19 +199,30 @@ export function dueChoices(result: { choices: ResolvedChoice[] }): ResolvedChoic
   return result.choices.filter(c => c.remaining > 0)
 }
 
-// Choix de maîtrise ou de sort mineur passant par le chemin générique des picks. Les compétences de classe
-// ont leur propre étape (création) et leur propre règle de multiclassage (`multiclassSkillGrant`).
-export function isProficiencyPickChoice(c: ResolvedChoice): boolean {
+// Choix de maîtrise, de sort mineur ou de libellé (terrain) passant par le chemin générique des picks. Les
+// compétences de classe ont leur propre étape (création) et leur propre règle de multiclassage
+// (`multiclassSkillGrant`).
+export function isPickChoice(c: ResolvedChoice): boolean {
   return PICK_CHOICE_KINDS.includes(c.kind) && !(c.kind === 'skill' && c.ownerClassId != null)
 }
 
 // Points de choix d'une classe devenus dus en la passant de `fromLevel` à `toLevel` (level-up). Une classe
-// rejointe (`fromLevel` 0, autre que `mainClassId`) reçoit ceux de son porteur de multiclassage.
+// rejointe (`fromLevel` 0, autre que `mainClassId`) reçoit ceux de son porteur de multiclassage. Les choix d'une
+// sous-classe ne se résolvent qu'une fois la sous-classe connue : celle d'avant le level-up pour l'état de départ,
+// celle d'après (peut-être choisie à ce niveau) pour l'état d'arrivée.
 export function choicesGainedAtLevelUp(
   catalog: Catalog,
-  { classId, fromLevel, toLevel, mainClassId }: { classId: number, fromLevel: number, toLevel: number, mainClassId: number },
+  { classId, fromLevel, toLevel, mainClassId, subclassIdsBefore = [], subclassIdsAfter = [] }: {
+    classId: number
+    fromLevel: number
+    toLevel: number
+    mainClassId: number
+    subclassIdsBefore?: number[]
+    subclassIdsAfter?: number[]
+  },
 ): ResolvedChoice[] {
-  const at = (level: number) => level > 0 ? resolveChoices({ classLevels: { [classId]: level }, mainClassId }, catalog).choices : []
-  const before = new Set(at(fromLevel).map(c => c.progressionId))
-  return at(toLevel).filter(c => c.ownerClassId === classId && !before.has(c.progressionId))
+  const at = (level: number, subclassIds: number[]) =>
+    level > 0 ? resolveChoices({ classLevels: { [classId]: level }, mainClassId, subclassIds }, catalog).choices : []
+  const before = new Set(at(fromLevel, subclassIdsBefore).map(c => c.progressionId))
+  return at(toLevel, subclassIdsAfter).filter(c => c.ownerClassId === classId && !before.has(c.progressionId))
 }

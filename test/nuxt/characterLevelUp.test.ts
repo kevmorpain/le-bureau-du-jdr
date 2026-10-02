@@ -16,10 +16,14 @@ import { replayMigrations } from '../fixtures/migrations'
 const WARLOCK = 1
 const FIGHTER = 2
 const FIGHTER_SUBCLASS = 10
+const DRUID = 3
+const EARTH_CIRCLE = 20
+const MOON_CIRCLE = 21
 const OWNER = 1
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
+let terrainProgressionId = 0
 
 function createInput(over: Record<string, unknown> = {}) {
   return createCharacterSchema.parse({
@@ -45,8 +49,18 @@ beforeAll(async () => {
   await db.insert(schema.classes).values([
     { id: WARLOCK, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' },
     { id: FIGHTER, name: 'Guerrier', hitDice: '1d10', spellcastingType: 'none' },
+    { id: DRUID, name: 'Druide', hitDice: '1d8', spellcastingType: 'full' },
   ])
-  await db.insert(schema.subclasses).values({ id: FIGHTER_SUBCLASS, classId: FIGHTER, name: 'Champion' })
+  await db.insert(schema.subclasses).values([
+    { id: FIGHTER_SUBCLASS, classId: FIGHTER, name: 'Champion' },
+    { id: EARTH_CIRCLE, classId: DRUID, name: 'Cercle de la terre' },
+    { id: MOON_CIRCLE, classId: DRUID, name: 'Cercle de la lune' },
+  ])
+  const [terrainOwner] = await db.insert(schema.features).values({ name: 'Terrain du cercle', featureType: 'choice_carrier', subclassId: EARTH_CIRCLE, levelRequired: 2 }).returning()
+  const [terrainProgression] = await db.insert(schema.progression).values({
+    featureId: terrainOwner.id, kind: 'terrain', count: { op: 'fixed', value: 1 }, optionSource: { type: 'enum', values: ['Forêt', 'Désert'] }, replaceable: false,
+  }).returning()
+  terrainProgressionId = terrainProgression.id
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
     await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: 'class_feature', classId: WARLOCK, levelRequired: c.ownerLevelRequired })
@@ -253,6 +267,43 @@ describe('characterLevelUp — remplacement d\'un sort connu (B11b)', () => {
     const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 501 }))).rejects.toThrow(CharacterValidationError)
     expect(await knownIds(id)).toContain(501)
+  })
+})
+
+describe('characterLevelUp — terrain du Cercle de la terre', () => {
+  const druidAt = (level: number) => createCharacter(db, createInput({ classId: DRUID, level, abilityScores: { wis: 15 } }), OWNER)
+  const druidLu = (over: Record<string, unknown>) => luInput({ classId: DRUID, ...over })
+  const picksOf = async (sheetId: number) =>
+    (await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, sheetId)))
+      .filter((c: { progressionId: number }) => c.progressionId === terrainProgressionId)
+      .map((c: { selectedValue: string }) => c.selectedValue)
+
+  it('en choisissant le Cercle de la terre au niveau 2, le terrain est enregistré', async () => {
+    const { id } = await druidAt(1)
+    await characterLevelUp(db, id, druidLu({ subclassId: EARTH_CIRCLE, choicePicks: [{ progressionId: terrainProgressionId, value: 'Forêt' }] }))
+    expect(await picksOf(id)).toEqual(['Forêt'])
+  })
+
+  it('un terrain hors de la liste : refusé', async () => {
+    const { id } = await druidAt(1)
+    await expect(characterLevelUp(db, id, druidLu({ subclassId: EARTH_CIRCLE, choicePicks: [{ progressionId: terrainProgressionId, value: 'Lune' }] })))
+      .rejects.toThrow(/n'est pas une option/)
+  })
+
+  it('un autre cercle, ou aucun : le terrain n\'est pas proposé', async () => {
+    const { id } = await druidAt(1)
+    await expect(characterLevelUp(db, id, druidLu({ subclassId: MOON_CIRCLE, choicePicks: [{ progressionId: terrainProgressionId, value: 'Forêt' }] })))
+      .rejects.toThrow(/n'est pas proposé/)
+    await expect(characterLevelUp(db, id, druidLu({ choicePicks: [{ progressionId: terrainProgressionId, value: 'Forêt' }] })))
+      .rejects.toThrow(/n'est pas proposé/)
+  })
+
+  it('plus tard, le terrain déjà choisi n\'est pas redemandé', async () => {
+    const { id } = await druidAt(1)
+    await characterLevelUp(db, id, druidLu({ subclassId: EARTH_CIRCLE, choicePicks: [{ progressionId: terrainProgressionId, value: 'Désert' }] }))
+    await expect(characterLevelUp(db, id, druidLu({ choicePicks: [{ progressionId: terrainProgressionId, value: 'Forêt' }] })))
+      .rejects.toThrow(/n'est pas proposé/)
+    expect(await picksOf(id)).toEqual(['Désert'])
   })
 })
 

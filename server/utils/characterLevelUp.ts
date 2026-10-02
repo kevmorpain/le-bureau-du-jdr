@@ -11,7 +11,7 @@ import { buildCatalog } from '~~/server/utils/catalog'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
-import { choicesGainedAtLevelUp, isProficiencyPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { learnedSpellsError, replacedSpellError } from '~~/server/utils/spellLearning'
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import { isValidAsiDistribution } from '~~/shared/rules/composite'
@@ -41,7 +41,7 @@ export const levelUpSchema = z.object({
   featureId: z.number().int().positive().nullable().optional(),
   featChoices: featChoicesSchema,
   newSkills: uniqueSkillKeysSchema.optional(),
-  // Maîtrises au choix gagnées à ce niveau (instrument du Barde rejoint par multiclassage).
+  // Maîtrises, sorts mineurs et terrain du cercle choisis à ce niveau (instrument du Barde rejoint par multiclassage).
   choicePicks: z.array(choicePickSchema).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
@@ -130,7 +130,7 @@ async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSki
 // classe rejointe compris), validés comme à la création.
 async function validateLevelUpChoicePicks(gained: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
   if (!picks.length) return
-  const error = choicePicksError(picks, gained.filter(isProficiencyPickChoice))
+  const error = choicePicksError(picks, gained.filter(isPickChoice))
   if (error) throw new CharacterValidationError(error)
 }
 
@@ -279,7 +279,16 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   await validateLevelUpExpertise(db, characterSheetId, cls.id, newLevel, d.expertiseSkills ?? [])
   await validateMulticlassSkills(db, cls, existingClass == null && currentClasses.length > 0, d.newSkills ?? [])
   const mainClassId = currentClasses.find(c => c.isMain)?.classId ?? currentClasses[0]?.classId ?? cls.id
-  const gained = choicesGainedAtLevelUp(await buildCatalog(db, { classIds: [cls.id] }), { classId: cls.id, fromLevel: newLevel - 1, toLevel: newLevel, mainClassId })
+  const subclassIdsBefore = existingClass?.subclassId != null ? [existingClass.subclassId] : []
+  const subclassAfter = subclassId ?? existingClass?.subclassId
+  const gained = choicesGainedAtLevelUp(await buildCatalog(db, { classIds: [cls.id] }), {
+    classId: cls.id,
+    fromLevel: newLevel - 1,
+    toLevel: newLevel,
+    mainClassId,
+    subclassIdsBefore,
+    subclassIdsAfter: subclassAfter != null ? [subclassAfter] : [],
+  })
   await validateLevelUpChoicePicks(gained, d.choicePicks ?? [])
   await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, gained)
   validateLevelUpAsi(d, newLevel, gained)

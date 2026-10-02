@@ -20,7 +20,7 @@ import {
   type MulticlassSkillGrant,
 } from '~~/shared/rules/multiclass'
 import { proficiencyLabels } from '~~/shared/utils/item'
-import { choicesGainedAtLevelUp, isProficiencyPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
@@ -454,12 +454,16 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const newPickChoices = computed<ResolvedChoice[]>(() => {
     const classId = luClassDbId.value
     if (classId == null) return []
+    const subclassBefore = charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbSubclassId
+    const subclassAfter = state.value.newSubclassId ?? subclassBefore
     return choicesGainedAtLevelUp(catalog.value, {
       classId,
       fromLevel: state.value.fromLevel,
       toLevel: state.value.toLevel,
       mainClassId: mainClassDbId.value ?? classId,
-    }).filter(isProficiencyPickChoice)
+      subclassIdsBefore: subclassBefore != null ? [subclassBefore] : [],
+      subclassIdsAfter: subclassAfter != null ? [subclassAfter] : [],
+    }).filter(isPickChoice)
   })
   const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
   const ownedFor = (choice: ResolvedChoice): string[] => {

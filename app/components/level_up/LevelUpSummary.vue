@@ -347,10 +347,13 @@ const gains = computed(() => {
     })
   }
 
-  const chosen = newPickChoices.value.flatMap(c => (s.choicePicks[c.progressionId] ?? []).map(String))
+  const picksOf = (choices: typeof newPickChoices.value) => choices.flatMap(c => (s.choicePicks[c.progressionId] ?? []).map(String))
+  const chosen = picksOf(newPickChoices.value.filter(c => c.kind !== 'terrain'))
   if (chosen.length) {
     list.push({ label: 'Maîtrises au choix', detail: chosen.map(v => SKILLS.find(sk => sk.key === v)?.label ?? languageLabel(v)).join(', ') })
   }
+  const terrain = picksOf(newPickChoices.value.filter(c => c.kind === 'terrain'))
+  if (terrain.length) list.push({ label: 'Terrain du cercle', detail: terrain.join(', ') })
 
   if (cls) {
     list.push({ label: `+1 dé de vie`, detail: `d${cls.hitDie}` })

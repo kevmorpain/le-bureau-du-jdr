@@ -81,7 +81,79 @@ export const PALADIN_OATH_SPELLS: Record<string, AlwaysPreparedTable> = {
   },
 }
 
-export function alwaysPreparedEffects(table: AlwaysPreparedTable): Effect[] {
+// Cercle de la terre du Druide (AideDD, « sorts de cercle ») : les sorts dépendent du terrain choisi en rejoignant le
+// cercle. Les clés du tableau sont les valeurs du choix `terrain`.
+export const DRUID_CIRCLE_SPELLS = {
+  Arctique: {
+    3: ['Croissance d\'épines', 'Immobilisation de personne'],
+    5: ['Lenteur', 'Tempête de neige'],
+    7: ['Liberté de mouvement', 'Tempête de grêle'],
+    9: ['Communion avec la nature', 'Cône de froid'],
+  },
+  Désert: {
+    3: ['Flou', 'Silence'],
+    5: ['Création de nourriture et d\'eau', 'Protection contre une énergie'],
+    7: ['Flétrissement', 'Terrain hallucinatoire'],
+    9: ['Fléau d\'insectes', 'Mur de pierre'],
+  },
+  Forêt: {
+    3: ['Pattes d\'araignée', 'Peau d\'écorce'],
+    5: ['Appel de la foudre', 'Croissance végétale'],
+    7: ['Divination', 'Liberté de mouvement'],
+    9: ['Communion avec la nature', 'Passage par les arbres'],
+  },
+  Littoral: {
+    3: ['Foulée brumeuse', 'Image miroir'],
+    5: ['Marche sur l\'eau', 'Respiration aquatique'],
+    7: ['Contrôle de l\'eau', 'Liberté de mouvement'],
+    9: ['Invocation d\'élémentaire', 'Scrutation'],
+  },
+  Marais: {
+    3: ['Flèche acide de Melf', 'Ténèbres'],
+    5: ['Marche sur l\'eau', 'Nuage nauséabond'],
+    7: ['Liberté de mouvement', 'Localisation de créature'],
+    9: ['Fléau d\'insectes', 'Scrutation'],
+  },
+  Montagne: {
+    3: ['Croissance d\'épines', 'Pattes d\'araignée'],
+    5: ['Éclair', 'Fusion dans la pierre'],
+    7: ['Façonnage de la pierre', 'Peau de pierre'],
+    9: ['Mur de pierre', 'Passe-muraille'],
+  },
+  Outreterre: {
+    3: ['Pattes d\'araignée', 'Toile d\'araignée'],
+    5: ['Forme gazeuse', 'Nuage nauséabond'],
+    7: ['Façonnage de la pierre', 'Invisibilité supérieure'],
+    9: ['Brume mortelle', 'Fléau d\'insectes'],
+  },
+  Plaine: {
+    3: ['Invisibilité', 'Passage sans trace'],
+    5: ['Hâte', 'Lumière du jour'],
+    7: ['Divination', 'Liberté de mouvement'],
+    9: ['Fléau d\'insectes', 'Songe'],
+  },
+} as const satisfies Record<string, AlwaysPreparedTable>
+
+export const DRUID_TERRAINS = Object.keys(DRUID_CIRCLE_SPELLS) as Array<keyof typeof DRUID_CIRCLE_SPELLS>
+
+/** `terrain` : l'effet ne vaut que pour le personnage qui a choisi ce terrain. */
+export function alwaysPreparedEffects(table: AlwaysPreparedTable, terrain?: string): Effect[] {
   return Object.entries(table).flatMap(([level, spells]) =>
-    spells.map(spellName => ({ type: 'always_prepared_spell', value: { spellName, unlockLevel: Number(level) } }) satisfies Effect))
+    spells.map(spellName => ({
+      type: 'always_prepared_spell',
+      value: { spellName, unlockLevel: Number(level), ...(terrain ? { terrain } : {}) },
+    }) satisfies Effect))
+}
+
+export const CIRCLE_CARRIER_NAME = 'Terrain du cercle'
+export const CIRCLE_SPELLS_FEATURE_NAME = 'Sorts de cercle'
+
+export function circleSpellsDescription(): string {
+  const lines = DRUID_TERRAINS.map(terrain =>
+    `- ${terrain} : ${Object.entries(DRUID_CIRCLE_SPELLS[terrain]).map(([level, spells]) => `niv ${level} ${spells.join(', ')}`).join(' ; ')}`)
+  return `Votre connexion à la terre vous apporte des sorts supplémentaires selon le terrain que vous avez choisi en rejoignant le cercle (toujours préparés, ils ne comptent pas dans votre limite) :\n\n${lines.join('\n')}`
+}
+
+export function circleSpellEffects(): Effect[] {
+  return DRUID_TERRAINS.flatMap(terrain => alwaysPreparedEffects(DRUID_CIRCLE_SPELLS[terrain], terrain))
 }

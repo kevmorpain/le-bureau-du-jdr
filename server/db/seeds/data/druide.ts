@@ -1,5 +1,6 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
+import { CIRCLE_CARRIER_NAME, CIRCLE_SPELLS_FEATURE_NAME, circleSpellEffects, circleSpellsDescription, DRUID_TERRAINS } from './alwaysPreparedSpells'
 
 export const druideName = 'Druide'
 
@@ -106,16 +107,26 @@ export const druideSubclasses: SubclassDef[] = [
         effects: [],
       },
       {
-        name: 'Sorts de cercle',
-        description: `Votre connexion à la terre vous permet d'apprendre des sorts supplémentaires selon votre terrain favori (toujours préparés, ne comptent pas dans votre limite) :
-
-Par exemple pour la forêt : Croissance d'épines, Peau d'écorce (niv 3), Croissance végétale, Mur d'épines (niv 5), Localisation de créature, Passage par les arbres (niv 7), Communion avec la nature, Infestation d'insectes (niv 9).`,
+        name: CIRCLE_SPELLS_FEATURE_NAME,
+        description: circleSpellsDescription(),
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
+        effects: circleSpellEffects(),
+      },
+      {
+        name: CIRCLE_CARRIER_NAME,
+        description: 'Terrain choisi en rejoignant le cercle : il décide des sorts de cercle.',
+        featureType: 'choice_carrier',
+        levelRequired: 2,
         effects: [],
+        progression: {
+          kind: 'terrain',
+          count: { op: 'fixed', value: 1 },
+          optionSource: { type: 'enum', values: [...DRUID_TERRAINS] },
+        },
       },
       {
         name: 'Foulée tellurique',

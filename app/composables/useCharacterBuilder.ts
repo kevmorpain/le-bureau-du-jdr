@@ -20,7 +20,7 @@ import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules
 import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicateCount, duplicatedValues } from '~~/shared/rules/duplicateProficiencies'
-import { isProficiencyPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { featLanguageChoiceCount } from './useCharacterSheet'
 import type { Effect } from '~~/server/db/schema/effects'
 
@@ -265,7 +265,7 @@ export function useCharacterBuilder() {
 
   const { feats, getById: getFeatById } = useFeats()
   const { choicesForClassLevel, choicesFor } = useCatalog()
-  const { resolveClassId, resolveSpeciesId, resolveBackgroundId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
+  const { resolveClassId, resolveSpeciesId, resolveBackgroundId, resolveSubclassId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
 
   const featNeedsAbility = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return false
@@ -340,6 +340,7 @@ export function useCharacterBuilder() {
   const needsPactBoon = computed(() => catalogChoices.value.some(c => c.kind === 'pact_boon'))
 
   // ─── Sous-classe (lue dans le CATALOGUE) ───────────────────────────────────
+  const subclassDbId = computed(() => resolveSubclassId(classData.value?.dbName, state.value.subclass))
   const subclassCatalog = computed(() => subclassCatalogFor(classDbId.value))
   const subclassLevel = computed(() => subclassCatalog.value?.subclassLevel ?? null)
   const subclassOptions = computed(() => subclassCatalog.value?.subclasses ?? [])
@@ -405,6 +406,7 @@ export function useCharacterBuilder() {
   // Les compétences de classe gardent leur propre étape (`state.skills`).
   const genericChoices = computed<ResolvedChoice[]>(() => choicesFor({
     classLevels: classDbId.value != null ? { [classDbId.value]: state.value.level } : {},
+    subclassIds: subclassDbId.value != null ? [subclassDbId.value] : [],
     speciesId: speciesDbId.value ?? undefined,
     lineageId: selectedLineageId.value ?? undefined,
     backgroundId: backgroundDbId.value ?? undefined,
@@ -412,7 +414,7 @@ export function useCharacterBuilder() {
       skills: duplicateCount(speciesSkills.value, backgroundFixedSkills.value),
       tools: duplicateCount(classFixedTools.value, backgroundFixedTools.value),
     },
-  }).filter(isProficiencyPickChoice))
+  }).filter(isPickChoice))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
   const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))

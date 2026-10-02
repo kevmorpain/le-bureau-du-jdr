@@ -27,10 +27,18 @@ export async function loadAlwaysPreparedSpells(db: Db, characterSheetId: number)
       eq(schema.effects.type, 'always_prepared_spell'),
     ))
 
+  const terrainPicks = await db
+    .select({ subclassId: schema.features.subclassId, terrain: schema.characterChoices.selectedValue })
+    .from(schema.characterChoices)
+    .innerJoin(schema.progression, eq(schema.progression.id, schema.characterChoices.progressionId))
+    .innerJoin(schema.features, eq(schema.features.id, schema.progression.featureId))
+    .where(and(eq(schema.characterChoices.characterSheetId, characterSheetId), eq(schema.progression.kind, 'terrain')))
+
   const unlocked = classes.flatMap(cls => grants
     .filter(g => g.subclassId === cls.subclassId)
-    .map(g => g.value as { spellName: string, unlockLevel: number })
+    .map(g => g.value as { spellName: string, unlockLevel: number, terrain?: string })
     .filter(v => v.unlockLevel <= cls.level)
+    .filter(v => v.terrain == null || terrainPicks.some(t => t.subclassId === cls.subclassId && t.terrain === v.terrain))
     .map(v => ({ classId: cls.classId, ruleset: cls.ruleset, spellName: v.spellName })))
   if (!unlocked.length) return []
 
