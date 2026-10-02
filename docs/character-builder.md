@@ -379,10 +379,10 @@ const raceBonuses = computed(() => { /* from RACES data */ })
 const finalAbility = (ab: string) => (state.abilities[ab] ?? 0) + (raceBonuses.value[ab] ?? 0)
 const mod = (score: number) => Math.floor((score - 10) / 2)
 
-// PV max
-const hpMax = level * Math.ceil((hitDie + 1) / 2) + (level - 1) * mod(finalAbility('con')) + mod(finalAbility('con'))
-// (niv 1 = max hitDie, niveaux suivants = moyenne arrondie sup)
-// Formule exacte : hitDie + (level-1) * (Math.ceil(hitDie/2) + 1) + level * mod(con)
+// PV : part « dés » (stockée) puis maximum affiché (dérivé) — shared/rules/hitPoints.ts, voir D19
+const hpBase = averageBaseHitPoints(hitDie, level, mod(finalAbility('con')))   // ou jets / saisie manuelle
+// niv 1 = dé au maximum, niveaux suivants = ⌈dé/2⌉ + 1 ; minimum 1 PV par niveau (hitPointGain)
+const hpMax = hpBase + level * mod(finalAbility('con'))   // + bonus par niveau des dons, ajoutés par la projection
 
 // CA sans armure
 const baseAC = 10 + mod(finalAbility('dex'))
@@ -395,7 +395,9 @@ const profBonus = Math.ceil(level / 4) + 1
 ```
 
 PV max affichés, initiative, perception passive et compétences : `useBuilderSheetProjection` (voir
-« Récap ≡ fiche » ci-dessus).
+« Récap ≡ fiche » ci-dessus). Le builder n'envoie que `hpBase` (la part « dés ») ; un dé non lancé compte pour sa
+valeur moyenne, et la saisie manuelle d'un total se convertit en `hpBase` (borné à `[niveau, niveau × dé]`, comme
+le contrôle du serveur).
 
 ---
 
@@ -476,6 +478,7 @@ Corps accepté :
 ```ts
 {
   name: string
+  hpBase: number                             // part « dés » des PV max, bornée par le dé de la classe (D19)
   speciesId?: number
   alignment?: string
   backgroundId?: number

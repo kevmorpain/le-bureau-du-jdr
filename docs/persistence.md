@@ -4,7 +4,10 @@
 
 | Donnée | Stockage | Raison |
 |---|---|---|
-| `exhaustionLevel` | DB (`character_sheets`) | Persistance cross-session |
+| `exhaustionLevel` | DB (`character_sheets`) | Persistance cross-session ; réduit de 1 par le repos long (si le personnage a mangé et bu) |
+| `hpBase` (part « dés » des PV max) | DB (`character_sheets`) | Le maximum est dérivé à la lecture (CON × niveau, bonus par niveau, épuisement) : [D19](decisions.md#d19) |
+| `deathSaveSuccesses`, `deathSaveFailures` | DB (`character_sheets`) | Suivent le personnage d'un appareil à l'autre ; remis à zéro par les soins et le repos long (`shared/rules/damage.ts`) |
+| `concentratingSpellId`, `concentratingOn` | DB (`character_sheets`) | Sort du catalogue (clé étrangère) ou libellé libre, jamais les deux |
 | `dragonbornAncestry` | DB (`character_sheets`) | Persistance cross-session |
 | `spellcastingAbility` | DB (`character_classes`) | Dérivé de la classe, voir [architecture.md](architecture.md) |
 | `spellSlots` | DB (`character_spell_slots`) | Persistance cross-session |
@@ -14,7 +17,6 @@
 | Identité & description (`age`, `height`, `weight`, `eyes`, `hair`, `skin`, `deity`, `backstory`, `allies`, `portraitUrl`) | DB (`character_sheets`) | Description du personnage, saisie à la création ou sur la fiche |
 | Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, binding `BLOB`) | Binaire : la fiche n'en garde que l'URL |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
-| `deathSavingThrows` | localStorage | État d'encounter, remis à zéro entre sessions |
 | Modificateurs de caractéristique | computed | Dérivés des scores, jamais stockés |
 | Bonus de maîtrise | computed | Dérivé du niveau, jamais stocké |
 | DD de sort, modificateur d'attaque | computed | Dérivés, jamais stockés |

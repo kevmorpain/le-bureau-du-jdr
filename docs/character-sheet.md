@@ -224,14 +224,14 @@ listés avec les autres aptitudes dans `FeaturesSection`, badgés « espèce ».
 
 ### PV (`HitPointsSection`)
 
-PV actuels / PV max / PV temporaires.
-**Source :** `character_sheets.{currentHp, maxHp, temporaryHp}`.
-**Persistence :** `v-model` → deep watch.
+PV actuels / PV max / PV temporaires. Le maximum affiché est **dérivé** (`fullMaxHp` : `hpBase` + (mod CON + bonus par niveau) × niveau) ; l'épuisement 4 le divise par deux (`effectiveMaxHp`, plafond des soins). Soins et dégâts passent par `shared/rules/damage.ts` : les PV temporaires absorbent d'abord, des dégâts à 0 PV valent un échec aux jets contre la mort (deux sur un coup critique, case affichée à 0 PV), les dégâts restants qui atteignent le maximum tuent sur le coup, un soin remet les jets à zéro. Tomber à 0 PV rompt la concentration ; sinon un jet de Constitution est proposé (DD = max(10, ½ dégâts)).
+**Source :** `character_sheets.{currentHp, hpBase, temporaryHp}` (voir [D19](decisions.md#d19)).
+**Persistence :** deep watch. « Édition directe » du maximum : on saisit le total affiché, la fiche stocke `hpBase`.
 
 ### Jets de mort (`DeathSavingThrowSection`)
 
-Jets de sauvegarde contre la mort (succès/échecs). Bouton "Récupérer" qui restaure 1 PV.
-**Source :** `useStorage()` (localStorage).
+Jets de sauvegarde contre la mort (succès/échecs), visibles à 0 PV ou si le personnage est mort (trois échecs, mort instantanée, ou épuisement de niveau 6). 20 naturel : 1 PV et jets remis à zéro ; 1 naturel : deux échecs ; trois succès : stable. Le repos long et le soin par dés de vie les remettent à zéro.
+**Source :** `character_sheets.{deathSaveSuccesses, deathSaveFailures}` (lus et écrits par `useCharacterVitals`).
 
 ### Dés de vie (`HitDiceSection`)
 
@@ -280,9 +280,9 @@ Affiche aussi DD de sauvegarde et bonus d'attaque de sort.
 
 ### Concentration (`ConcentrationSection`)
 
-Visible uniquement si la condition `concentrating` est active. Permet de noter le nom du sort concentré (localStorage) et de rompre la concentration.
+Toujours affichée. Se concentrer sur un sort du catalogue (pastilles des sorts à concentration de la fiche) ou sur **autre chose** (libellé libre : effet de monstre, sort hors catalogue, homebrew) ; rompre. La concentration s'arrête d'elle-même à 0 PV, quand un état rend incapable d'agir (`incapacitating` dans `conditionMechanics`) et au lancement d'un autre sort à concentration (message qui nomme celui qu'on perd).
 
-**Source :** condition `concentrating` (localStorage) + `localStorage.getItem('cs-concentration-spell')`.
+**Source :** `character_sheets.{concentratingSpellId, concentratingOn}`.
 
 ### Notes de session (`QuickNotesSection`)
 

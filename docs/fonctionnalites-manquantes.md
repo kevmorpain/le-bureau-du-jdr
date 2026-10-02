@@ -104,12 +104,12 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 |---|---|---|
 | **R1** | [#108](https://github.com/kevmorpain/le-bureau-du-jdr/issues/108) | Avantage / désavantage jamais appliqué au jet |
 | **R2** | [#150](https://github.com/kevmorpain/le-bureau-du-jdr/issues/150) | Coup critique : dés non doublés, plage de critique fixe |
-| **R3** | [#151](https://github.com/kevmorpain/le-bureau-du-jdr/issues/151) | Épuisement : niveau 6 et réduction au repos long |
-| **R4** | [#152](https://github.com/kevmorpain/le-bureau-du-jdr/issues/152) | Concentration : JS de CON, rupture automatique, rupture à 0 PV |
+| **R3** | ✅ résolu (2026-10-02) — [#151](https://github.com/kevmorpain/le-bureau-du-jdr/issues/151) | Épuisement : niveau 6 (mort, affiché) et réduction de 1 au repos long, si le personnage a mangé et bu (case de la confirmation) |
+| **R4** | ✅ résolu (2026-10-02) — [#152](https://github.com/kevmorpain/le-bureau-du-jdr/issues/152) | Concentration : le JS de CON existait ; rupture à 0 PV, sur un état d'incapacité et au lancement d'un autre sort à concentration, annoncée par un message |
 | **R5** | [#153](https://github.com/kevmorpain/le-bureau-du-jdr/issues/153) | Encombrement et capacité de charge |
-| **R6** | [#154](https://github.com/kevmorpain/le-bureau-du-jdr/issues/154) | Jets de mort : stockés en localStorage, 20 et 1 naturels, stabilisation |
+| **R6** | ✅ résolu (2026-10-02) — [#154](https://github.com/kevmorpain/le-bureau-du-jdr/issues/154) | Jets de mort portés par la fiche (`death_save_*`, migration 0118) ; 20 et 1 naturels, stabilisation, dégâts à 0 PV (critique : deux échecs) et mort instantanée dans `shared/rules/damage.ts` |
 | **R7** | [#155](https://github.com/kevmorpain/le-bureau-du-jdr/issues/155) | Économie d'action décorative en Mode Combat |
-| **R8** | [#156](https://github.com/kevmorpain/le-bureau-du-jdr/issues/156) | Repos long : PV temporaires, jets de mort, épuisement, recharges partielles |
+| **R8** | ✅ résolu (2026-10-02), sauf une limite — [#156](https://github.com/kevmorpain/le-bureau-du-jdr/issues/156) | Repos long : PV temporaires vidés, jets de mort remis à zéro, épuisement réduit, charges d'objets à dés tirées au repos. **Non porté** : un seul repos long par période de 24 h (l'app n'a pas d'horloge de jeu) |
 | **R9** | ✅ résolu : maîtrises (B12 [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104)), prérequis non bloquants (B14 [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109)), compétences (#101) | Prérequis et maîtrises de multiclassage |
 | **R10** | [#157](https://github.com/kevmorpain/le-bureau-du-jdr/issues/157) | Force requise des armures lourdes jamais vérifiée |
 
@@ -200,7 +200,7 @@ présentation/interaction.
 | **U4** | [#182](https://github.com/kevmorpain/le-bureau-du-jdr/issues/182) | Aucun historique de jets |
 | **U5** | [#183](https://github.com/kevmorpain/le-bureau-du-jdr/issues/183) | Initiative non conservée |
 | **U6** | [#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184) | Pas de suivi de durée (conditions, sorts) |
-| **U7** | [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Pas de confirmation sur les actions destructrices de la fiche |
+| **U7** | ✅ résolu (2026-10-02) — [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Confirmation avant un repos long et avant la suppression d'un objet (`ConfirmActionModal`) ; l'annulation d'un repos reste sans objet (pas d'historique, U4) |
 | **U8** | [#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186) | Pas de recherche texte (sorts, inventaire) |
 | **U9** | ✅ résolu (2026-10-01) | Clé localStorage `armorClass` morte — supprimée de `useCharacterClasses` ([#187](https://github.com/kevmorpain/le-bureau-du-jdr/issues/187)) |
 | **U10** | ✅ résolu (2026-09-15), voir la note plus bas | Montée en puissance des dégâts affichés |
@@ -235,7 +235,7 @@ emplacement de niveau 3, c'est précisément à ce niveau qu'il faut pouvoir jet
 
 **Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
 *à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),
-R2 (le critique ne colore qu'un toast), R6 (les jets de mort ne suivent pas l'appareil),
+R2 (le critique ne colore qu'un toast), R6 (résolu : les jets de mort suivent l'appareil),
 R7 (l'économie d'action du Mode Combat est purement manuelle).
 
 ---
@@ -255,7 +255,7 @@ réglage. Toute entrée ci-dessous suppose de trancher d'abord **où vit une pr�
 |---|---|---|
 | **N1** | [#188](https://github.com/kevmorpain/le-bureau-du-jdr/issues/188) | Préférence : désactiver les jets de dés |
 | **N2** | [#189](https://github.com/kevmorpain/le-bureau-du-jdr/issues/189) | Saisir soi-même le résultat d'un jet |
-| **N3** | [#190](https://github.com/kevmorpain/le-bureau-du-jdr/issues/190) | Concentration libre, hors lancement de sort |
+| **N3** | ✅ résolu (2026-10-02) — [#190](https://github.com/kevmorpain/le-bureau-du-jdr/issues/190) | Concentration libre : libellé `concentrating_on` à côté de la clé étrangère (migration 0119) |
 | **N4** | [#191](https://github.com/kevmorpain/le-bureau-du-jdr/issues/191) | Surcharges manuelles des valeurs dérivées (CA, vitesse, initiative, DD) |
 | **N5** | [#192](https://github.com/kevmorpain/le-bureau-du-jdr/issues/192) | Encart d'effet mécanique sur les capacités |
 | **N6** | ✅ tranché → [D18](./decisions.md#d18), voir plus bas | Où vit une préférence ? |

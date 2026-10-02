@@ -9,11 +9,12 @@ useCharacterClasses        → espèce, classes, level, proficiencyBonus
 useAbilityEffectInputs     → effets d'entrée de la couche 2 (espèce, aptitudes débloquées, dons, ASI,
                              maîtrises dérivées par le GET) — sans fetch ni stockage
   ↓
-useCharacterAbilities      → scores (plafond : shared/rules/abilityScores), modificateurs, compétences,
+useCharacterAbilities      → scores (`computeAbilityScores`, shared/rules/abilityScores), modificateurs, compétences,
                              jets de sauvegarde ; + `activeEffectSources` (objets actifs + effets
                              temporaires, fiche seulement)
   ↓ (formulaContext construit ici pour éviter les dépendances circulaires)
-useCharacterConditions     → états, épuisement, défenses, vitesse, PV max
+useCharacterConditions     → états, épuisement, défenses, vitesse, PV max (shared/rules/hitPoints)
+useCharacterVitals         → PV, PV temporaires et jets contre la mort comme l'état de shared/rules/damage
 useCharacterSpellcasting   → caractéristique d'incantation, DD, emplacements de sort
 useCharacterSpells         → liste des sorts du personnage, filtres, actions (fetch séparé)
 useCharacterInventory      → inventaire, équipement, maîtrises, effets magiques, CA (fetch séparé)
@@ -53,6 +54,11 @@ De même, `resolvedFeatures`, `classFeatureEffects` et `allEffects` sont constru
   Les effets d'objets n'y sont pas (l'inventaire a son propre fetch) : seule la fiche les passe, avec les
   effets temporaires, en `activeEffectSources`, via une forward-declaration car l'inventaire est instancié
   après la couche 2.
+- Ce que le serveur doit lire **comme la fiche** (PV max au repos, au level-up, à la création) vit dans `shared/rules/`,
+  pas dans un composable : `computeAbilityScores` et `shared/rules/characterEffects.ts` (effets d'espèce, de capacités,
+  d'ASI, objets actifs, effets temporaires) sont appelés par les composables **et** par `sheetHitPoints`
+  (`shared/rules/hitPoints.ts`), alimenté côté serveur par `server/utils/characterSheetLoader.ts` — le chargement du GET,
+  partagé avec `characterRest`, `characterLevelUp` et `createCharacter` (cf. [D19](decisions.md#d19)).
 - Les constantes module-level (listes, maps) vont en tête de fichier, avant le composable.
 - Les types privés au fichier (ex. `DefenseEntry`, `SaveStatus`) ne sont pas exportés.
 - Les constantes utiles à l'extérieur (ex. `binaryConditions`, `abilitySkillKeys`) sont exportées directement depuis le fichier, pas via le `return` du composable.
