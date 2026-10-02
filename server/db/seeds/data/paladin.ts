@@ -1,6 +1,7 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
 import { asiFeatures } from './asi'
+import { alwaysPreparedEffects, PALADIN_OATH_SPELLS } from './alwaysPreparedSpells'
 
 export const paladinName = 'Paladin'
 
@@ -162,7 +163,7 @@ export const paladinSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(PALADIN_OATH_SPELLS['Serment de dévotion']!),
       },
       {
         name: 'Conduit divin : Arme sacrée',
@@ -233,7 +234,7 @@ export const paladinSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(PALADIN_OATH_SPELLS['Serment des anciens']!),
       },
       {
         name: 'Conduit divin : Courroux de la nature',
@@ -304,7 +305,7 @@ export const paladinSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(PALADIN_OATH_SPELLS['Serment de vengeance']!),
       },
       {
         name: 'Conduit divin : Conspuer l\'ennemi',

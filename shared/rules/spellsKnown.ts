@@ -76,3 +76,16 @@ export function spellsLearnedOnLevelUp(cls: string, fromLevel: number, toLevel: 
     spells: Math.max(0, spellsKnownAt(cls, toLevel) - spellsKnownAt(cls, fromLevel)),
   }
 }
+
+export interface PreparedSpellRow {
+  isPrepared: boolean
+  alwaysPrepared?: boolean
+  source?: string | null
+  classId?: number | null
+  level: number
+}
+
+/** Sorts qui consomment la limite quotidienne : les sorts de la classe qu'on a préparés, hors sorts mineurs et sorts toujours préparés. */
+export function countPreparedSpells(spells: PreparedSpellRow[], classId: number): number {
+  return spells.filter(s => s.isPrepared && !s.alwaysPrepared && s.source == null && s.level >= 1 && (s.classId ?? classId) === classId).length
+}

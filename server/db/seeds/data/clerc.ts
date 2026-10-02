@@ -1,5 +1,6 @@
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
+import { alwaysPreparedEffects, CLERIC_DOMAIN_SPELLS } from './alwaysPreparedSpells'
 
 export const clercName = 'Clerc'
 
@@ -77,7 +78,7 @@ export const clercSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(CLERIC_DOMAIN_SPELLS['Domaine de la vie']!),
       },
       {
         name: 'Maîtrise supplémentaire (Vie)',
@@ -153,7 +154,7 @@ export const clercSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(CLERIC_DOMAIN_SPELLS['Domaine de la lumière']!),
       },
       {
         name: 'Sort mineur supplémentaire (Lumière)',
@@ -229,7 +230,7 @@ export const clercSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(CLERIC_DOMAIN_SPELLS['Domaine de la guerre']!),
       },
       {
         name: 'Maîtrises supplémentaires (Guerre)',
@@ -305,7 +306,7 @@ export const clercSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(CLERIC_DOMAIN_SPELLS['Domaine de la tempête']!),
       },
       {
         name: 'Maîtrises supplémentaires (Tempête)',
@@ -381,7 +382,7 @@ export const clercSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(CLERIC_DOMAIN_SPELLS['Domaine de la nature']!),
       },
       {
         name: 'Acolyte de la nature',
@@ -457,7 +458,7 @@ export const clercSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(CLERIC_DOMAIN_SPELLS['Domaine de la duperie']!),
       },
       {
         name: 'Bénédiction de l\'escroc',
@@ -523,7 +524,7 @@ export const clercSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: alwaysPreparedEffects(CLERIC_DOMAIN_SPELLS['Domaine du savoir']!),
       },
       {
         name: 'Bénédictions du savoir',

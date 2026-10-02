@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cantripsKnownAt, preparedSpellsLimit, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
+import { cantripsKnownAt, countPreparedSpells, preparedSpellsLimit, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
 
 // Valeurs vérifiées à la main sur les tables de classe AideDD (PHB 2014) et la règle de multiclassage :
 // « Vous choisissez les sorts que vous connaissez et que vous préparez pour chacune de vos classes
@@ -107,5 +107,28 @@ describe('preparedSpellsLimit — sorts préparés par jour (AideDD)', () => {
     expect(preparedSpellsLimit('ranger', 5, 3)).toBeNull()
     expect(preparedSpellsLimit('fighter', 5, 3)).toBeNull()
     expect(preparedSpellsLimit('wizard', 0, 3)).toBeNull()
+  })
+})
+
+describe('countPreparedSpells — consommation de la limite quotidienne', () => {
+  const row = (over: Partial<Parameters<typeof countPreparedSpells>[0][number]> = {}) =>
+    ({ isPrepared: true, level: 1, classId: 7, source: null, ...over })
+
+  it('compte les sorts préparés de la classe', () => {
+    expect(countPreparedSpells([row(), row(), row({ isPrepared: false })], 7)).toBe(2)
+  })
+
+  it('ignore les sorts mineurs, les sorts toujours préparés et les sorts venus d\'ailleurs', () => {
+    expect(countPreparedSpells([
+      row({ level: 0 }),
+      row({ alwaysPrepared: true }),
+      row({ source: 'species' }),
+      row({ source: 'arcanum_6' }),
+      row(),
+    ], 7)).toBe(1)
+  })
+
+  it('un sort d\'une autre classe n\'entre pas dans le compte ; un sort sans classe va à la classe demandée', () => {
+    expect(countPreparedSpells([row({ classId: 8 }), row({ classId: null }), row()], 7)).toBe(2)
   })
 })

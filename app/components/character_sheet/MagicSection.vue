@@ -53,6 +53,19 @@
     </div>
 
     <div
+      v-if="preparedLimit !== null"
+      class="flex items-center gap-2 text-sm"
+    >
+      <span class="text-muted">Sorts préparés</span>
+      <span class="font-semibold" :class="preparedCount > preparedLimit ? 'text-warning' : ''">
+        {{ preparedCount }} / {{ preparedLimit }}
+      </span>
+      <span v-if="preparedCount > preparedLimit" class="text-xs text-warning">
+        au-dessus de la limite du jour
+      </span>
+    </div>
+
+    <div
       v-if="pactMagicStats"
       class="flex gap-x-6 rounded-lg border border-violet-500/30 bg-violet-500/5 p-2"
     >
@@ -219,6 +232,7 @@
               class="flex-1 min-w-0"
               :spell="cs.spell"
               :is-prepared="cs.isPrepared"
+              :always-prepared="cs.alwaysPrepared"
               :has-somatic-warning="isIncapacitated && cs.spell.components.includes(SpellComponent.Somatic)"
               :character-level="characterLevel"
               :spellcasting-modifier="casterStatsOf(cs)?.modifier ?? null"
@@ -362,6 +376,8 @@
 
 <script lang="ts" setup>
 import { SpellComponent } from '~~/server/db/schema/spells'
+import { classSlugFromName } from '~~/shared/rules/classSlugs'
+import { countPreparedSpells, preparedSpellsLimit } from '~~/shared/rules/spellsKnown'
 import type { CharacterSpellWithSpell } from '~/composables/character/useCharacterSpells'
 import {
   baseSlotLevel,
@@ -417,6 +433,20 @@ const abilityShortLabels: Record<string, string> = {
 }
 
 const casterStatsOf = (cs: CharacterSpellWithSpell) => statsForCasterClass(cs.classId)
+
+const preparedLimit = computed<number | null>(() => {
+  const caster = activeCasterClass.value
+  const slug = caster ? classSlugFromName(caster.className) : undefined
+  const classLevel = characterSheetRef.value.classes?.find(c => c.classId === caster?.classId)?.level
+  if (!caster || !slug || !classLevel) return null
+  return preparedSpellsLimit(slug, classLevel, statsForCasterClass(caster.classId)?.modifier ?? 0)
+})
+
+const preparedCount = computed(() => {
+  const caster = activeCasterClass.value
+  if (!caster) return 0
+  return countPreparedSpells((characterSpells.value ?? []).map(cs => ({ ...cs, level: cs.spell.level })), caster.classId)
+})
 
 const casterClassItems = computed(() =>
   spellcasterClasses.value.map(c => ({

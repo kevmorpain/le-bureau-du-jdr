@@ -121,7 +121,14 @@
     </span>
 
     <div class="ml-auto flex items-center gap-2">
-      <div @click.stop>
+      <UTooltip
+        v-if="alwaysPrepared"
+        :delay-duration="0"
+        text="Toujours préparé : ne compte pas dans votre limite de sorts préparés"
+      >
+        <UBadge color="primary" variant="subtle" size="md">Toujours préparé</UBadge>
+      </UTooltip>
+      <div v-else @click.stop>
         <UCheckbox
           v-model="prepared"
           label="Préparé"
@@ -129,6 +136,7 @@
       </div>
 
       <UButton
+        v-if="!alwaysPrepared"
         icon="i-heroicons:trash"
         variant="ghost"
         color="error"
@@ -149,6 +157,7 @@ import { baseCastLevels, resolveDamageDie, resolveHealDie } from '~~/shared/rule
 const props = defineProps<{
   spell: Spell
   isPrepared: boolean
+  alwaysPrepared?: boolean
   hasSomaticWarning: boolean
   characterLevel: number
   spellcastingModifier: number | null

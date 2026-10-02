@@ -75,6 +75,8 @@ export type Effect
     | { type: 'skill_bonus', value: { skill: string, bonusType: string, multiplier: number, condition: string } }
     | { type: 'skill_proficiency', value: { skill: SkillKey } }
     | { type: 'spell_grant', value: { level: number, spellcastingAbility: AbilityScoreKey, spellName: string, countPerLongRest: number, unlockLevel?: number } }
+    // Sort de domaine / de serment : toujours préparé, hors de la limite quotidienne ; `unlockLevel` = niveau de classe.
+    | { type: 'always_prepared_spell', value: { spellName: string, unlockLevel: number } }
     | { type: 'tool_proficiency', value: string }
     | { type: 'vulnerability', value: { damageType: DamageTypeKey } }
     | { type: 'walking_speed', value: number }
