@@ -16,11 +16,13 @@ import {
   type SubraceData,
 } from '~/data/character-builder'
 import { ALL_TOOLS, SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
-import { cantripsKnownAt, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
+import { classNameFromSlug } from '~~/shared/rules/classSlugs'
+import { anySchoolSpellsGained, subclassCastingOf } from '~~/shared/rules/subclassCasting'
+import { cantripsKnownAt, magicalSecretsGained, preparedSpellsLimit, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicateCount, duplicatedValues } from '~~/shared/rules/duplicateProficiencies'
-import { isProficiencyPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { featLanguageChoiceCount } from './useCharacterSheet'
 import type { Effect } from '~~/server/db/schema/effects'
 
@@ -59,6 +61,8 @@ export interface BuilderState {
   // Étape 4 — Sorts
   selectedCantrips: number[]
   selectedSpells: number[]
+  // Grimoire du Magicien : le sous-ensemble préparé de `selectedSpells`.
+  preparedSpells: number[]
 
   // Étape 5 — Description
   name: string
@@ -167,6 +171,7 @@ const INIT_STATE: BuilderState = {
   rolledSets: null,
   selectedCantrips: [],
   selectedSpells: [],
+  preparedSpells: [],
   name: '',
   backgroundId: null,
   alignment: null,
@@ -262,7 +267,7 @@ export function useCharacterBuilder() {
 
   const { feats, getById: getFeatById } = useFeats()
   const { choicesForClassLevel, choicesFor } = useCatalog()
-  const { resolveClassId, resolveSpeciesId, resolveBackgroundId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
+  const { resolveClassId, resolveSpeciesId, resolveBackgroundId, resolveSubclassId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
 
   const featNeedsAbility = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return false
@@ -337,6 +342,7 @@ export function useCharacterBuilder() {
   const needsPactBoon = computed(() => catalogChoices.value.some(c => c.kind === 'pact_boon'))
 
   // ─── Sous-classe (lue dans le CATALOGUE) ───────────────────────────────────
+  const subclassDbId = computed(() => resolveSubclassId(classData.value?.dbName, state.value.subclass))
   const subclassCatalog = computed(() => subclassCatalogFor(classDbId.value))
   const subclassLevel = computed(() => subclassCatalog.value?.subclassLevel ?? null)
   const subclassOptions = computed(() => subclassCatalog.value?.subclasses ?? [])
@@ -402,6 +408,7 @@ export function useCharacterBuilder() {
   // Les compétences de classe gardent leur propre étape (`state.skills`).
   const genericChoices = computed<ResolvedChoice[]>(() => choicesFor({
     classLevels: classDbId.value != null ? { [classDbId.value]: state.value.level } : {},
+    subclassIds: subclassDbId.value != null ? [subclassDbId.value] : [],
     speciesId: speciesDbId.value ?? undefined,
     lineageId: selectedLineageId.value ?? undefined,
     backgroundId: backgroundDbId.value ?? undefined,
@@ -409,7 +416,7 @@ export function useCharacterBuilder() {
       skills: duplicateCount(speciesSkills.value, backgroundFixedSkills.value),
       tools: duplicateCount(classFixedTools.value, backgroundFixedTools.value),
     },
-  }).filter(isProficiencyPickChoice))
+  }).filter(isPickChoice))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
   const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))
@@ -591,7 +598,23 @@ export function useCharacterBuilder() {
     return 10 + (dex != null ? abilityMod(dex) : 0)
   })
 
-  const spellcastingInfo = computed(() => classData.value?.spellcasting ?? null)
+  // Chevalier occulte, Escroc arcanique : le Guerrier et le Roublard n'incantent qu'à travers leur sous-classe.
+  const subclassCasting = computed(() => {
+    const casting = subclassCastingOf(state.value.classId ?? '', state.value.subclass)
+    return casting && level.value >= casting.startsAtLevel ? casting : null
+  })
+  // Clé des tables de sorts connus : celle de la sous-classe lanceuse, sinon celle de la classe.
+  const casterSlug = computed(() => subclassCasting.value?.slug ?? state.value.classId ?? '')
+  const spellListClassName = computed(() => subclassCasting.value
+    ? classNameFromSlug(subclassCasting.value.listClass) ?? ''
+    : classData.value?.dbName ?? '')
+  const spellcastingInfo = computed(() => classData.value?.spellcasting
+    ?? (subclassCasting.value
+      ? { ability: subclassCasting.value.ability, type: subclassCasting.value.type, startsAtLevel: subclassCasting.value.startsAtLevel }
+      : null))
+  const schoolRestriction = computed(() => subclassCasting.value
+    ? { schools: subclassCasting.value.schools, freePicks: anySchoolSpellsGained(0, level.value) }
+    : null)
   const spellSlots = computed(() => {
     if (!spellcastingInfo.value) return null
     return spellSlotsAtLevel(spellcastingInfo.value.type, level.value)
@@ -609,7 +632,23 @@ export function useCharacterBuilder() {
 
   const cantripsNeeded = computed(() => {
     if (!classData.value?.id) return 0
-    return cantripsKnownAt(classData.value.id, level.value)
+    return cantripsKnownAt(casterSlug.value, level.value)
+  })
+
+  const preparedLimit = computed(() => {
+    const ability = spellcastingInfo.value?.ability
+    const mod = ability ? abilityMod(finalAbilities.value[ability] ?? 10) : 0
+    return preparedSpellsLimit(state.value.classId ?? '', level.value, mod)
+  })
+  // Secrets magiques du Barde : des sorts de n'importe quelle classe, dont deux de plus hors décompte au Collège du savoir.
+  const magicalSecrets = computed(() => magicalSecretsGained(state.value.classId ?? '', 0, level.value, state.value.subclass))
+  const freeListPicks = computed(() => magicalSecrets.value.anyList + magicalSecrets.value.extra)
+  // Sorts à choisir : sorts connus (grimoire compris) ou sorts préparés.
+  const spellsNeeded = computed(() => {
+    const cls = casterSlug.value
+    const learning = spellLearningOf(cls)
+    if (learning === 'known' || learning === 'spellbook') return spellsKnownAt(cls, level.value) + magicalSecrets.value.extra
+    return preparedLimit.value ?? 0
   })
 
   // ─── Arcanums mystiques (Occultiste niv 11/13/15/17) ──────────────────────
@@ -685,7 +724,7 @@ export function useCharacterBuilder() {
 
   const activeSteps = computed<BuilderStep[]>(() => {
     return ALL_STEPS.filter(s => {
-      if (s.id === 'spells') return !!classData.value?.spellcasting
+      if (s.id === 'spells') return !!spellcastingInfo.value
       if (s.id === 'asi') return needsAsi.value
       return true
     })
@@ -748,17 +787,16 @@ export function useCharacterBuilder() {
         return true
       }
       case 'spells': {
-        const cls = classData.value
-        if (!cls?.spellcasting) return true
+        if (!spellcastingInfo.value) return true
         const cantripsDone = cantripsNeeded.value === 0 || s.selectedCantrips.length >= cantripsNeeded.value
         // Arcanums mystiques : un sort obligatoire par palier débloqué (≤ niveau)
         if (arcaneMysteriumSpellLevels.value.some(lvl => s.arcaneMysteriumSpellIds[lvl] == null)) return false
         // Livre des secrets anciens : 2 sorts rituels obligatoires si l'invocation est choisie.
         // (Flag positionné par le composant via watchEffect — cf. StepSpells.)
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
-        if (spellLearningOf(s.classId ?? '') !== 'known') return cantripsDone
-        const spellsNeeded = spellsKnownAt(s.classId ?? '', level.value)
-        const spellsDone = spellsNeeded === 0 || s.selectedSpells.length >= spellsNeeded
+        const learning = spellLearningOf(casterSlug.value)
+        if (learning !== 'known' && learning !== 'spellbook') return cantripsDone
+        const spellsDone = spellsNeeded.value === 0 || s.selectedSpells.length >= spellsNeeded.value
         if (needsPactBoon.value && s.pactBoon === 'tome' && s.selectedPactBoonCantripIds.length < 3) return false
         return cantripsDone && spellsDone
       }
@@ -876,9 +914,15 @@ export function useCharacterBuilder() {
     baseAC,
     // Sorts
     spellcastingInfo,
+    subclassCasting,
+    spellListClassName,
+    schoolRestriction,
     spellSlots,
     maxSpellLevel,
     cantripsNeeded,
+    spellsNeeded,
+    preparedLimit,
+    freeListPicks,
     variantHumanLanguageCount,
     // Navigation
     activeSteps,

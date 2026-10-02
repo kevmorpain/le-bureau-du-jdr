@@ -116,8 +116,9 @@ beforeAll(async () => {
     { id: 501, name: 'Armure de mage', level: 1, castingTime: '1 action', range: 0, duration: '8 heures', schoolId: 1 },
     { id: 600, name: 'Cercle de mort', level: 6, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
     { id: 601, name: 'Portail', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
+    { id: 502, name: 'Maléfice', level: 1, castingTime: '1 action', range: 0, duration: '1 heure', schoolId: 1 },
   ])
-  await db.insert(schema.spellClasses).values([{ spellId: 600, classId: WARLOCK }, { spellId: 601, classId: WARLOCK }])
+  await db.insert(schema.spellClasses).values([{ spellId: 600, classId: WARLOCK }, { spellId: 601, classId: WARLOCK }, { spellId: 502, classId: WARLOCK }])
 
   // Progression `ability_scores` (triade d'origine 2024) — pour tester le pick composite C3.
   await db.insert(schema.features).values({ id: 700, name: 'Bonus d\'origine', featureType: 'background_feature', levelRequired: 1 })
@@ -315,6 +316,42 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
     const bySource = new Map(spells.map((s: { source: string | null, spellId: number }) => [s.source, s.spellId]))
     expect(bySource.get('pact_chain')).toBe(500) // familier (Pacte de la Chaîne)
     expect(bySource.get('invocation')).toBe(501) // « Armure de mage » octroyé par la manifestation 401
+  })
+
+  it('preparedSpellIds : seuls ces sorts sont préparés, les autres restent connus (grimoire)', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, spellIds: [502], preparedSpellIds: [] }), OWNER)
+    const [row] = await db.select().from(schema.characterSpells).where(and(
+      eq(schema.characterSpells.characterSheetId, id),
+      eq(schema.characterSpells.spellId, 502),
+    ))
+    expect(row).toMatchObject({ isKnown: true, isPrepared: false })
+  })
+
+  it('sans preparedSpellIds : tout est préparé, comme avant', async () => {
+    const { id } = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, spellIds: [502] }), OWNER)
+    const [row] = await db.select().from(schema.characterSpells).where(and(
+      eq(schema.characterSpells.characterSheetId, id),
+      eq(schema.characterSpells.spellId, 502),
+    ))
+    expect(row.isPrepared).toBe(true)
+  })
+
+  it('un sort préparé qui n\'est pas dans les sorts choisis → rejet', async () => {
+    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 3, spellIds: [502], preparedSpellIds: [600] }), OWNER))
+      .rejects.toThrow(/ne fait pas partie des sorts choisis/)
+  })
+
+  it('rattache à l\'Occultiste chaque sort qu\'il apprend (colonne class_id)', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      classId: WARLOCK, level: 3,
+      pactBoon: 'chain',
+      invocationIds: [401],
+      spellIds: [502],
+    }), OWNER)
+
+    const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))
+    expect(spells.length).toBeGreaterThanOrEqual(3)
+    expect(spells.map((s: { classId: number | null }) => s.classId)).toEqual(spells.map(() => WARLOCK))
   })
 })
 

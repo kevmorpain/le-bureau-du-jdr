@@ -92,13 +92,13 @@ export const useCharacterSpells = (
     }
   }
 
-  const addSpell = async (spellId: number) => {
+  const addSpell = async (spellId: number, classId: number | null = null) => {
     // Pas d'objet Spell complet ici pour un insert optimiste → en ligne on refresh, hors-ligne
     // le sort apparaît à la réconciliation post-synchro (le slideover n'émet que l'id).
     const outcome = await offlineMutate({
       endpoint: `/api/character_sheets/${characterId.value}/spells`,
       method: 'PUT',
-      body: [{ spellId, isKnown: true, isPrepared: false }],
+      body: [{ spellId, classId, isKnown: true, isPrepared: false }],
       dedupeKey: `spell:${spellId}`,
       label: 'Sort ajouté',
     })

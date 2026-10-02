@@ -8,6 +8,7 @@ export async function applyInvocationChanges(
   characterSheetId: number,
   newInvocationIds: number[],
   replacedInvocationId: number | null,
+  classId: number,
 ) {
   if (replacedInvocationId) {
     const grantedSpellNames = await db
@@ -89,6 +90,7 @@ export async function applyInvocationChanges(
     .values(spellRows.map(s => ({
       characterSheetId,
       spellId: s.id,
+      classId,
       isKnown: true,
       isPrepared: false,
       source: 'invocation' as const,

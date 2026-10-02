@@ -412,6 +412,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     spellcastingStats: spellcasting.spellcastingStats,
     pactMagicStats: spellcasting.pactMagicStats,
     pactMagicAbility: spellcasting.pactMagicAbility,
+    statsForCasterClass: spellcasting.statsForCasterClass,
     spellcasterClasses: spellcasting.spellcasterClasses,
     activeCasterClass: spellcasting.activeCasterClass,
     selectedCasterClassId,

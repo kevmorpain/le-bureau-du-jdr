@@ -82,13 +82,22 @@ La caractéristique d'incantation est stockée à **deux niveaux** :
 
 1. **`classes.spellcastingAbility`** — valeur par défaut fixe par classe D&D 5e (ex. Magicien = `'int'`, Clerc = `'wis'`). `null` pour les classes non-lanceurs par défaut (Barbare, Guerrier, Moine, Roublard).
 
-2. **`character_classes.spellcastingAbility`** — surcharge optionnelle par personnage-classe. Utilisée pour les subclasses lanceurs de sorts sur des classes de base non-magie (Chevalier mystique → `'int'`, Filou ésotérique → `'int'`, Voie des quatre éléments → `'wis'`).
+2. **`subclasses.spellcastingAbility`** — surcharge par sous-classe, pour les sous-classes lanceuses de sorts d'une classe qui n'incante pas (Chevalier occulte → `'int'`, Escroc arcanique → `'int'`).
 
 **Dérivation dans le composable :**
 ```ts
-// surcharge character_classes ?? défaut classes ?? null
-return mainClass.spellcastingAbility ?? mainClass.class?.spellcastingAbility ?? null
+// sous-classe ?? défaut de la classe ?? null
+const ability = subclass?.spellcastingAbility ?? cls?.spellcastingAbility ?? null
 ```
+
+En multiclasse lanceur, chaque sort porte sa classe (`character_spells.class_id`, migration 0113) : le DD, le bonus d'attaque
+et les dégâts d'un sort se calculent avec la caractéristique de SA classe (`statsForCasterClass`), la classe « active »
+choisie sur la fiche ne servant que de repli (sort d'espèce, de don, ou antérieur à la colonne).
+
+**Lanceurs du tiers** (`shared/rules/subclassCasting.ts`) : le Chevalier occulte et l'Escroc arcanique incantent à partir du
+niveau 3 de leur classe alors que `classes.spellcasting_type` reste `none`. Leurs faits (table de sorts, école, liste du
+Magicien) sont indexés par nom de sous-classe, comme `CLASS_DB_NAMES` l'est pour les classes ; le type d'incantation effectif
+d'une classe s'obtient par `effectiveCasterType`, utilisé partout où le serveur calcule les emplacements.
 
 Le setter du computed writable écrit sur `character_classes.spellcastingAbility` de la classe principale. Le deep watch de `[id].vue` persiste via `PUT /api/character_sheets/{id}`.
 

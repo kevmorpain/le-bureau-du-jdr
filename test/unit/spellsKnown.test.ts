@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cantripsKnownAt, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
+import { cantripsKnownAt, countPreparedSpells, LORE_COLLEGE_NAME, magicalSecretsGained, preparedSpellsLimit, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
 
 // Valeurs vérifiées à la main sur les tables de classe AideDD (PHB 2014) et la règle de multiclassage :
 // « Vous choisissez les sorts que vous connaissez et que vous préparez pour chacune de vos classes
@@ -82,5 +82,81 @@ describe('cantripsKnownAt / spellsKnownAt', () => {
   it('lanceur à sorts préparés : aucun sort « connu »', () => {
     expect(spellsKnownAt('cleric', 5)).toBe(0)
     expect(spellsKnownAt('druid', 5)).toBe(0)
+  })
+})
+
+describe('preparedSpellsLimit — sorts préparés par jour (AideDD)', () => {
+  it('Clerc, Druide, Magicien : modificateur + niveau de classe', () => {
+    expect(preparedSpellsLimit('cleric', 5, 3)).toBe(8)
+    expect(preparedSpellsLimit('druid', 1, 2)).toBe(3)
+    expect(preparedSpellsLimit('wizard', 4, 3)).toBe(7)
+  })
+
+  it('Paladin : modificateur de Charisme + la moitié du niveau, arrondie à l\'inférieur', () => {
+    expect(preparedSpellsLimit('paladin', 5, 3)).toBe(5)
+    expect(preparedSpellsLimit('paladin', 2, 2)).toBe(3)
+  })
+
+  it('au moins un sort, même avec un modificateur négatif', () => {
+    expect(preparedSpellsLimit('wizard', 1, -2)).toBe(1)
+    expect(preparedSpellsLimit('paladin', 2, -3)).toBe(1)
+  })
+
+  it('classe qui ne prépare pas (sorts connus, non lanceuse) ou classe pas encore prise : null', () => {
+    expect(preparedSpellsLimit('sorcerer', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('ranger', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('fighter', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('wizard', 0, 3)).toBeNull()
+  })
+})
+
+describe('countPreparedSpells — consommation de la limite quotidienne', () => {
+  const row = (over: Partial<Parameters<typeof countPreparedSpells>[0][number]> = {}) =>
+    ({ isPrepared: true, level: 1, classId: 7, source: null, ...over })
+
+  it('compte les sorts préparés de la classe', () => {
+    expect(countPreparedSpells([row(), row(), row({ isPrepared: false })], 7)).toBe(2)
+  })
+
+  it('ignore les sorts mineurs, les sorts toujours préparés et les sorts venus d\'ailleurs', () => {
+    expect(countPreparedSpells([
+      row({ level: 0 }),
+      row({ alwaysPrepared: true }),
+      row({ source: 'species' }),
+      row({ source: 'arcanum_6' }),
+      row(),
+    ], 7)).toBe(1)
+  })
+
+  it('un sort d\'une autre classe n\'entre pas dans le compte ; un sort sans classe va à la classe demandée', () => {
+    expect(countPreparedSpells([row({ classId: 8 }), row({ classId: null }), row()], 7)).toBe(2)
+  })
+})
+
+describe('magicalSecretsGained — Secrets magiques du Barde (AideDD)', () => {
+  it('niveaux 10, 14 et 18 : deux sorts de n\'importe quelle liste, déjà dans le décompte des sorts connus', () => {
+    expect(magicalSecretsGained('bard', 9, 10)).toEqual({ anyList: 2, extra: 0 })
+    expect(magicalSecretsGained('bard', 13, 14)).toEqual({ anyList: 2, extra: 0 })
+    expect(magicalSecretsGained('bard', 17, 18)).toEqual({ anyList: 2, extra: 0 })
+    expect(spellsLearnedOnLevelUp('bard', 9, 10).spells).toBe(2)
+  })
+
+  it('les autres niveaux : rien', () => {
+    expect(magicalSecretsGained('bard', 10, 11)).toEqual({ anyList: 0, extra: 0 })
+    expect(magicalSecretsGained('bard', 5, 6)).toEqual({ anyList: 0, extra: 0 })
+  })
+
+  it('Collège du savoir, niveau 6 : deux sorts de plus, hors décompte', () => {
+    expect(magicalSecretsGained('bard', 5, 6, LORE_COLLEGE_NAME)).toEqual({ anyList: 0, extra: 2 })
+    expect(magicalSecretsGained('bard', 5, 6, 'Collège de la vaillance')).toEqual({ anyList: 0, extra: 0 })
+  })
+
+  it('une création à un niveau élevé cumule les paliers franchis', () => {
+    expect(magicalSecretsGained('bard', 0, 14, LORE_COLLEGE_NAME)).toEqual({ anyList: 4, extra: 2 })
+    expect(magicalSecretsGained('bard', 0, 20)).toEqual({ anyList: 6, extra: 0 })
+  })
+
+  it('une autre classe : rien', () => {
+    expect(magicalSecretsGained('wizard', 0, 20, LORE_COLLEGE_NAME)).toEqual({ anyList: 0, extra: 0 })
   })
 })

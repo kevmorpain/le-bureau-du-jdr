@@ -469,7 +469,7 @@ Mobile (<lg) :
 2. `character_classes` insert (classId, level, isMain, subclassId)
 3. `character_ability_scores` × 6 insert (scores de **base** — les bonus d'espèce sont dérivés sur la fiche via les `effects`, PAS stockés ici ; voir `docs/architecture-audit.md` §2. Seuls les bonus de *choix* demi-elfe / humain variant sont cuits dans la base.)
 4. `character_skills` insert (source: 'class' ou 'background')
-5. `character_spells` insert (isKnown: true, isPrepared: true)
+5. `character_spells` insert (isKnown: true, `classId` = la classe créée ; isPrepared: true, sauf grimoire du Magicien où seuls les sorts de `preparedSpellIds` le sont) — après `learnedSpellsError` (liste, niveau, nombre, écoles)
 6. `character_inventory` insert (résolution nom → itemId via lookup, ignore silencieusement si non trouvé)
 
 Corps accepté :

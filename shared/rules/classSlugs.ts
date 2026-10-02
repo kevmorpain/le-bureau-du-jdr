@@ -18,3 +18,7 @@ export type ClassSlug = keyof typeof CLASS_DB_NAMES
 export function classNameFromSlug(slug: string): string | undefined {
   return (CLASS_DB_NAMES as Record<string, string>)[slug]
 }
+
+export function classSlugFromName(name: string): ClassSlug | undefined {
+  return (Object.keys(CLASS_DB_NAMES) as ClassSlug[]).find(slug => CLASS_DB_NAMES[slug] === name)
+}

@@ -46,6 +46,7 @@
 
 <script lang="ts" setup>
 import { useOnline } from '@vueuse/core'
+import { spellLearningOf } from '~~/shared/rules/spellsKnown'
 
 definePageMeta({ layout: 'blank' })
 
@@ -146,6 +147,7 @@ async function handleSubmit() {
       ? resolveItemIds([state.value.pactWeaponItemName]).ids[0] ?? null
       : null
 
+    const isGrimoire = spellLearningOf(state.value.classId ?? '') === 'spellbook'
     const payload = {
       name: state.value.name,
       alignment: state.value.alignment ?? undefined,
@@ -194,6 +196,10 @@ async function handleSubmit() {
       // Humain variant seulement : sans espèce liée, ni son commun ni sa langue au choix ne sont dérivés.
       selectedLanguages: isVariantHuman.value ? ['common', ...state.value.selectedLanguages] : [],
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],
+      // Grimoire : seuls les sorts préparés (et les sorts mineurs) le sont ; les autres restent dans le grimoire.
+      preparedSpellIds: isGrimoire
+        ? [...state.value.selectedCantrips, ...state.value.preparedSpells.filter(id => state.value.selectedSpells.includes(id))]
+        : undefined,
       pactBoon: needsPactBoon.value ? state.value.pactBoon : null,
       pactWeaponItemId,
       pactBoonCantripIds: needsPactBoon.value && state.value.pactBoon === 'tome' ? state.value.selectedPactBoonCantripIds : [],

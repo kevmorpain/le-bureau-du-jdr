@@ -7,6 +7,7 @@ import { seedBackgroundProficiencies } from '../../../server/db/seeds/lib/seedBa
 import { backgroundsData } from '../../../server/db/seeds/data/backgrounds'
 import { expertiseProgression } from '../../../server/db/seeds/data/expertise'
 import { CLASS_SKILL_CHOICES } from '../../../server/db/seeds/data/classSkills'
+import { asiLevels } from '../../../server/db/seeds/data/asi'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../../fixtures/warlockProgression'
 import { replayMigrations } from '../../fixtures/migrations'
 
@@ -216,6 +217,15 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     await db.insert(schema.progression).values({ featureId: f!.id, kind: 'skill', count: { op: 'fixed', value: choice.count }, optionSource: { type: 'skills', from: choice.from }, replaceable: false })
   }
 
+  // ── Paliers d'ASI — owners invisibles (choice_carrier) : le serveur les lit pour valider l'ASI du level-up
+  // sans qu'ils soient matérialisés sur la fiche (les snapshots ne bougent pas).
+  for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin]] as const) {
+    for (const level of asiLevels(className)) {
+      const [f] = await db.insert(schema.features).values({ name: 'Amélioration de caractéristiques', featureType: 'choice_carrier', classId, levelRequired: level }).returning()
+      await db.insert(schema.progression).values({ featureId: f!.id, kind: 'asi_or_feat', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feats' }, replaceable: false })
+    }
+  }
+
   // ── Dons (feature_type 'feat', sans classe ni palier de sweep) — ASI/dons à la création ──
   await db.insert(schema.features).values([
     { id: FEATURE.featTough, name: 'Robuste', featureType: 'feat', levelRequired: 1 },
@@ -231,10 +241,13 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { id: SPELL.magicMissile, name: 'Projectile magique', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: MAGIC_SCHOOL.evocation },
     { id: SPELL.shield, name: 'Bouclier', level: 1, castingTime: '1 réaction', range: 0, duration: '1 round', schoolId: MAGIC_SCHOOL.evocation },
   ])
-  // Sorts d'Occultiste pour les arcanums mystiques (filtrés par slug de classe « warlock »).
+  // Sorts d'Occultiste pour les arcanums mystiques (filtrés par slug de classe « warlock »), sorts de Magicien.
   await db.insert(schema.spellClasses).values([
     { spellId: SPELL.circleOfDeath, classId: CLASS.warlock },
     { spellId: SPELL.gate, classId: CLASS.warlock },
+    { spellId: SPELL.fireBolt, classId: CLASS.wizard },
+    { spellId: SPELL.magicMissile, classId: CLASS.wizard },
+    { spellId: SPELL.shield, classId: CLASS.wizard },
   ])
 
   // ── Espèce Elfe base + lignées (D17) — seed réel injectable, pour le chemin `character_choices`

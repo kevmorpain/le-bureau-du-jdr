@@ -41,7 +41,7 @@ import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_LABELS, languageLabel } from '~~/shared/rules/languages'
 import { SKILLS } from '~/data/character-builder'
 
-// Un choix de maîtrise (compétence, outil, langue) ou de sort mineur : point de choix ou choix d'un don. Les
+// Un choix de maîtrise (compétence, outil, langue), de sort mineur ou de terrain : point de choix ou choix d'un don. Les
 // options sont des valeurs de pick (`optionPickValue`). Les valeurs déjà acquises
 // ailleurs (`owned`) sont masquées pour ne pas gaspiller le choix ; un pick devenu doublon après coup reste
 // affiché (masqué, il ne serait plus désélectionnable) et signalé.
@@ -59,6 +59,7 @@ const DEFAULT_TITLES: Partial<Record<ChoiceKind, string>> = {
   tool: 'Maîtrise d\'outil au choix',
   language: 'Langue au choix',
   cantrip: 'Sort mineur au choix',
+  terrain: 'Terrain du cercle',
 }
 
 const { extendedQuery } = useExtendedContent()

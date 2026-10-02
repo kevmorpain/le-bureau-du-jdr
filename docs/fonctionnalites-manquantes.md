@@ -133,7 +133,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 
 | Code | Suivi | Sujet |
 |---|---|---|
-| **S1** | [#166](https://github.com/kevmorpain/le-bureau-du-jdr/issues/166) | Limite de sorts préparés et sorts de domaine toujours préparés |
+| **S1** | ✅ résolu ([#166](https://github.com/kevmorpain/le-bureau-du-jdr/issues/166), lot 3) | Limite de sorts préparés (compteur non bloquant) et sorts de domaine / de serment toujours préparés, dérivés de la sous-classe (`always_prepared_spell`, migration 0114) |
 | **S2** | [#167](https://github.com/kevmorpain/le-bureau-du-jdr/issues/167) | Incantation rituelle |
 | **S3** | [#168](https://github.com/kevmorpain/le-bureau-du-jdr/issues/168) | Zone d'effet des sorts |
 | **S4** | [#169](https://github.com/kevmorpain/le-bureau-du-jdr/issues/169) | Type d'attaque du sort explicite (corps à corps / distance) |
@@ -151,7 +151,7 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 |---|---|---|
 | **P1** | ✅ résolu (F2 expertise) | Expertise à la création |
 | **P2** | [#172](https://github.com/kevmorpain/le-bureau-du-jdr/issues/172) | Manœuvres du Maître de guerre |
-| **P3** | [#173](https://github.com/kevmorpain/le-bureau-du-jdr/issues/173) | Sorts de domaine, de cercle et Secrets magiques |
+| **P3** | ✅ résolu ([#173](https://github.com/kevmorpain/le-bureau-du-jdr/issues/173), lot 3) | Sorts de domaine (Clerc), de serment (Paladin) et de cercle (Druide : point de choix `terrain`, migration 0115), Secrets magiques du Barde (sorts de n'importe quelle liste) |
 | **P4** | [#174](https://github.com/kevmorpain/le-bureau-du-jdr/issues/174) | Ennemi juré et Explorateur-né (Rôdeur) |
 | **P5** | [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175) | 2ᵉ style de combat du Champion (niveau 10) |
 | **P6** | ✅ résolu ([#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204), lot 2) | Outils au choix de classe jamais proposés (Barde, Moine, Barde rejoint en multiclasse) |

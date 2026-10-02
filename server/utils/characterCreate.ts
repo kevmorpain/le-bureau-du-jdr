@@ -7,6 +7,10 @@ import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { creationDuplicates } from '~~/server/utils/duplicateProficiencies'
+import { learnedSpellsError } from '~~/server/utils/spellLearning'
+import { subclassNamesById } from '~~/server/utils/subclassNames'
+import { classSlugFromName } from '~~/shared/rules/classSlugs'
+import { effectiveCasterType } from '~~/shared/rules/subclassCasting'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
@@ -131,6 +135,8 @@ export const createCharacterSchema = z.object({
     }))
     .optional()
     .default([]),
+  // Absent : tous les sorts choisis sont préparés. Présent (grimoire du Magicien) : seuls ceux-ci le sont.
+  preparedSpellIds: z.array(z.number().int()).optional(),
   // Maîtrises et sorts mineurs choisis sur un point de choix d'espèce, de lignée, d'historique ou de classe.
   choicePicks: z.array(choicePickSchema).optional().default([]),
   weaponMasteryChoices: z
@@ -333,7 +339,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
 export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: number): Promise<{ id: number }> {
   // 1. Lectures des entités résolues côté client
   const [cls] = await db
-    .select({ id: schema.classes.id, hitDice: schema.classes.hitDice, spellcastingType: schema.classes.spellcastingType, ruleset: schema.classes.ruleset })
+    .select({ id: schema.classes.id, name: schema.classes.name, hitDice: schema.classes.hitDice, spellcastingType: schema.classes.spellcastingType, ruleset: schema.classes.ruleset })
     .from(schema.classes)
     .where(eq(schema.classes.id, d.classId))
     .limit(1)
@@ -365,6 +371,10 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   const ruleset: Ruleset = cls.ruleset
   await validateRulesetCoherence(db, d, ruleset)
   const validated = await validateChoices(db, d, cls.id, subclassId, backgroundId)
+  const spellsError = await learnedSpellsError(db, { cls, fromLevel: 0, toLevel: d.level, spellIds: d.spellIds, alreadyKnownIds: [], atCreation: true, subclassId })
+  if (spellsError) throw new CharacterValidationError(spellsError)
+  const notChosen = (d.preparedSpellIds ?? []).find(id => !d.spellIds.includes(id))
+  if (notChosen != null) throw new CharacterValidationError(`Le sort préparé (id=${notChosen}) ne fait pas partie des sorts choisis.`)
 
   // ── 3. Lectures dépendantes (features passifs, sorts octroyés) — avant le batch ──
   const classFeatureRows = await db
@@ -716,7 +726,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  const casterType = cls.spellcastingType
+  const subclassName = (await subclassNamesById(db, [subclassId])).get(subclassId ?? -1) ?? null
+  const casterType = effectiveCasterType(cls.spellcastingType, classSlugFromName(cls.name) ?? '', subclassName)
   if (casterType !== 'none') {
     const slots = slotsForLevel(casterType, d.level)
     const slotType = casterType === 'pact' ? 'pact_magic' : 'spellcasting'
@@ -731,7 +742,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
 
   if (d.spellIds.length) {
     stmts.push(db.insert(schema.characterSpells).values(
-      d.spellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: true })),
+      d.spellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: d.preparedSpellIds?.includes(spellId) ?? true })),
     ))
   }
 
@@ -750,12 +761,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   if (d.pactBoon === 'chain' && familiarSpellId != null) {
     stmts.push(db.insert(schema.characterSpells)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .values({ characterSheetId: sheetId, spellId: familiarSpellId, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
+      .values({ characterSheetId: sheetId, spellId: familiarSpellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
       .onConflictDoNothing())
   }
   else if (d.pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
-      .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
+      .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
       .onConflictDoNothing())
   }
 
@@ -765,7 +776,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       .onConflictDoNothing())
     if (invocationGrantSpellIds.length) {
       stmts.push(db.insert(schema.characterSpells)
-        .values(invocationGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'invocation' as const })))
+        .values(invocationGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'invocation' as const })))
         .onConflictDoNothing())
     }
   }
@@ -793,14 +804,14 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     if (source) {
       stmts.push(db.insert(schema.characterSpells)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .values({ characterSheetId: sheetId, spellId: arc.spellId, isKnown: true, isPrepared: false, source } as any)
+        .values({ characterSheetId: sheetId, spellId: arc.spellId, classId: cls.id, isKnown: true, isPrepared: false, source } as any)
         .onConflictDoNothing())
     }
   }
 
   if (d.bookOfAncientSecretsSpellIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
-      .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'book_of_ancient_secrets' as const })))
+      .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'book_of_ancient_secrets' as const })))
       .onConflictDoNothing())
   }
 

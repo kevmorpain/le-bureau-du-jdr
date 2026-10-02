@@ -196,7 +196,8 @@
       >
         <template v-if="isGrimoire">
           Votre grimoire contient <strong class="text-(--ui-text)">{{ spellsNeeded }}</strong> {{ $t('sort', spellsNeeded) }} au niveau {{ state.level }}.
-          Vous pouvez préparer mod {{ ABILITY_SHORT[spellcastingInfo.ability] }} + niveau sorts par jour.
+          Vous en préparez chaque jour <strong class="text-(--ui-text)">{{ preparedLimit }}</strong>
+          (mod {{ ABILITY_SHORT[spellcastingInfo.ability] }} + niveau).
         </template>
         <template v-else>
           En tant que {{ classData!.name }}, vous préparez vos sorts chaque matin. Vous pouvez préparer
@@ -204,6 +205,33 @@
           (mod {{ ABILITY_SHORT[spellcastingInfo.ability] }} + niveau{{ isHalfCaster ? '/2' : '' }}).
           Vous avez accès à toute la liste jusqu'au niveau {{ maxSpellLevel }}.
         </template>
+      </div>
+
+      <div
+        v-if="activeTab === 'spells' && isGrimoire && state.selectedSpells.length"
+        class="mb-4 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts préparés</p>
+          <span
+            class="text-xs font-semibold"
+            :class="state.preparedSpells.length >= (preparedLimit ?? 0) ? 'text-green-400' : 'text-amber-400'"
+          >{{ state.preparedSpells.length }}/{{ preparedLimit }}</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="id in state.selectedSpells"
+            :key="id"
+            type="button"
+            class="px-2.5 py-1 rounded-md border text-xs transition-colors cursor-pointer"
+            :class="state.preparedSpells.includes(id)
+              ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+              : 'border-(--ui-border) text-muted hover:border-amber-500/40'"
+            @click="togglePreparedSpell(id)"
+          >
+            {{ spellNamesById[id] ?? id }}
+          </button>
+        </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 mb-4">
@@ -274,6 +302,16 @@
       </template>
 
       <template v-if="activeTab === 'spells' && !pending">
+        <p v-if="schoolRestriction" class="text-xs text-muted mb-3">
+          Les sorts viennent de la liste du Magicien, des écoles
+          {{ schoolRestriction.schools.map(school => $t(`schools.${school}`, school)).join(' et ') }}.
+          <template v-if="schoolRestriction.freePicks > 0">
+            {{ schoolRestriction.freePicks }} {{ $t('sort', schoolRestriction.freePicks) }} peu{{ schoolRestriction.freePicks > 1 ? 'vent' : 't' }} venir d'une autre école ({{ outsideSchoolPicks }}/{{ schoolRestriction.freePicks }}).
+          </template>
+        </p>
+        <p v-if="freeListPicks > 0" class="text-xs text-muted mb-3">
+          Secrets magiques : jusqu'à {{ freeListPicks }} de ces sorts peuvent venir de la liste de n'importe quelle classe.
+        </p>
         <div class="text-xs text-muted mb-3">
           Sélectionnez {{ spellsNeeded }} {{ $t('sort', spellsNeeded) }}
           <span
@@ -294,15 +332,19 @@
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              <SpellCardBuilder
+              <div
                 v-for="spell in list"
                 :key="spell.id"
-                :spell="spell"
-                :selected="state.selectedSpells.includes(spell.id)"
-                :character-level="state.level"
-                :spellcasting-mod="spellcastingMod"
-                @click="toggleSpell(spell.id)"
-              />
+                :class="isBlocked(spell) ? 'opacity-50 pointer-events-none' : ''"
+              >
+                <SpellCardBuilder
+                  :spell="spell"
+                  :selected="state.selectedSpells.includes(spell.id)"
+                  :character-level="state.level"
+                  :spellcasting-mod="spellcastingMod"
+                  @click="toggleSpell(spell.id)"
+                />
+              </div>
             </div>
           </div>
         </template>
@@ -313,7 +355,7 @@
 </template>
 
 <script lang="ts" setup>
-import { spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
+import { spellLearningOf } from '~~/shared/rules/spellsKnown'
 
 const {
   state,
@@ -324,6 +366,11 @@ const {
   spellSlots,
   maxSpellLevel,
   cantripsNeeded,
+  spellsNeeded,
+  preparedLimit,
+  freeListPicks,
+  spellListClassName,
+  schoolRestriction,
   needsPactBoon,
   ABILITY_SHORT,
   abilityMod,
@@ -340,7 +387,7 @@ const filterRitual = ref(false)
 const { extendedQuery } = useExtendedContent()
 
 const { data: allSpells, pending } = useFetch('/api/spells', {
-  query: computed(() => ({ className: classData.value?.dbName ?? '', ...extendedQuery.value })),
+  query: computed(() => ({ className: spellListClassName.value, ...extendedQuery.value })),
   immediate: true,
 })
 
@@ -387,7 +434,7 @@ const cantrips = computed(() => (allSpells.value ?? []).filter((s: any) => s.lev
 const spellsByLevel = computed(() => {
   const max = maxSpellLevel.value
   const result: Record<number, any[]> = {}
-  for (const spell of allSpells.value ?? []) {
+  for (const spell of (freeListPicks.value > 0 ? allCantripsData.value : allSpells.value) ?? []) {
     if (spell.level >= 1 && spell.level <= max) {
       if (!result[spell.level]) result[spell.level] = []
       result[spell.level].push(spell)
@@ -444,17 +491,19 @@ const spellsTabLabel = computed(() => {
   return 'Sorts connus'
 })
 
-const spellsNeeded = computed(() => {
-  const cls = state.value.classId ?? ''
-  if (spellLearning.value === 'known') return spellsKnownAt(cls, state.value.level)
-  if (isPrepared.value) {
-    const ab = spellcastingInfo.value?.ability
-    const mod = ab ? abilityMod(finalAbilities.value[ab] ?? 10) : 0
-    const levelVal = isHalfCaster.value ? Math.floor(state.value.level / 2) : state.value.level
-    return Math.max(1, mod + levelVal)
-  }
-  return 0
-})
+const classSpellIds = computed(() => new Set((allSpells.value ?? []).map((s: any) => s.id as number)))
+const isOutsideClassList = (id: number) => freeListPicks.value > 0 && !classSpellIds.value.has(id)
+const canPickOutsideClassList = computed(() => state.value.selectedSpells.filter(isOutsideClassList).length < freeListPicks.value)
+const isOutsideBlocked = (id: number) =>
+  isOutsideClassList(id) && !state.value.selectedSpells.includes(id) && !canPickOutsideClassList.value
+
+// Chevalier occulte, Escroc arcanique : la plupart des sorts viennent de deux écoles ; quelques-uns sont d'école libre.
+const isOutsideSchool = (spell: any) => !!schoolRestriction.value && !schoolRestriction.value.schools.includes(spell.school?.name)
+const outsideSchoolPicks = computed(() => state.value.selectedSpells
+  .filter(id => (allSpells.value ?? []).some((s: any) => s.id === id && isOutsideSchool(s))).length)
+const isSchoolBlocked = (spell: any) =>
+  isOutsideSchool(spell) && !state.value.selectedSpells.includes(spell.id) && outsideSchoolPicks.value >= (schoolRestriction.value?.freePicks ?? 0)
+const isBlocked = (spell: any) => isOutsideBlocked(spell.id) || isSchoolBlocked(spell)
 
 const spellcastingMod = computed(() => {
   const ab = spellcastingInfo.value?.ability
@@ -500,8 +549,21 @@ function togglePactBoonCantrip(id: number) {
 function toggleSpell(id: number) {
   const list = state.value.selectedSpells
   const idx = list.indexOf(id)
+  if (idx >= 0) {
+    list.splice(idx, 1)
+    state.value.preparedSpells = state.value.preparedSpells.filter(p => p !== id)
+  }
+  else if (list.length < spellsNeeded.value && !isOutsideBlocked(id)) {
+    const spell = (allSpells.value ?? []).find((s: any) => s.id === id)
+    if (!spell || !isSchoolBlocked(spell)) list.push(id)
+  }
+}
+
+function togglePreparedSpell(id: number) {
+  const list = state.value.preparedSpells
+  const idx = list.indexOf(id)
   if (idx >= 0) list.splice(idx, 1)
-  else if (list.length < spellsNeeded.value) list.push(id)
+  else if (list.length < (preparedLimit.value ?? 0)) list.push(id)
 }
 
 function arcanumCandidates(level: number) {
