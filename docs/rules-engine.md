@@ -179,6 +179,34 @@ des remplacements de maîtrises en double.
 
 ---
 
+### Ressources de classe
+
+Ki, points de sorcellerie, rages, Inspiration bardique, Conduit divin, Forme sauvage, Imposition des mains : **un compteur**,
+pas un concept à part. `features.maxUsesFormula` (maximum) + `rechargeType` + `character_features.currentUses` (**dépensé**).
+Ce qui s'y ajoute vit dans `features.meta` (`FeatureMeta`) et dans des effets typés, **sans règle par classe dans le code** :
+
+| Donnée | Rôle |
+|---|---|
+| `meta.resource` | clé de la réserve (`RESOURCE_KEYS`) ; deux features de même clé **partagent** le compteur (Conduit divin Clerc/Paladin, AideDD Multiclassage : maximum le plus haut, lu au plus haut des membres, écrit sur tous) |
+| `meta.pool` | réserve dépensée par paquets : « n / N » avec Dépenser / Regagner plutôt qu'une pastille par point |
+| `meta.unlimitedFromClassLevel` | plus de limite (Rage 20) |
+| `meta.whileActive` + `character_features.active` | effets en vigueur tant que la capacité est active (Rage) ; `suspendedByHeavyArmor` ; un repos (court ou long) y met fin |
+| `meta.spends` / `meta.cost` | usages décrits en texte et payés par la réserve (ki) / capacités d'une autre feature payées par elle (Métamagie, `spell_level` = niveau du sort) |
+| `meta.saveDcAbility` | DD de la réserve (DD de ki) |
+
+**Formules au niveau de la classe propriétaire** : `featureFormulaContext` remplace `class_level` par le niveau de la classe qui
+porte la feature (`class_feature` → sa classe, `subclass_feature` → la classe de la sous-classe). Un Moine 5 / Barbare 3 compte
+ses rages sur 3 et son ki sur 5. Les `Formula` des effets ci-dessous s'évaluent de même.
+
+Effets : `extra_attack` (maximum, jamais cumulé), `weapon_damage_dice` (Attaque sournoise, Châtiment divin amélioré),
+`melee_strength_damage_bonus` (Rage, en `whileActive`), `resource_die` (dé d'Inspiration), `resource_regain` (regain au repos,
+partiel ou total), `slot_damage_dice` (Châtiment divin), `beast_shape` / `beast_shape_challenge` (Forme sauvage, Cercle de la lune).
+Les dérivations pures — `deriveClassTraits`, `resourceGroups`, `restRecovery` — sont dans `shared/rules/classResources.ts`
+(client **et** serveur : le repos lit la même règle) ; conversion de points de sorcellerie et coûts dans `shared/rules/sorcery.ts`.
+
+Le seed et la migration 0120 portent les mêmes données ; `test/fixtures/classResourcePatches.ts` énumère les features concernées
+et `test/nuxt/classResourcesMigration.test.ts` garde l'égalité.
+
 ## 5. Résolution
 
 Deux couches ([D10](./decisions.md#d10)) :

@@ -106,10 +106,28 @@ Section de gestion du tour de combat :
 - **Économie d'action** : boutons Action / Bonus / Réaction (toggle barré/disponible), reset à chaque nouveau tour
 - **Déplacement** : jauge de progression, boutons +1,5m / −1,5m / reset, affichage mètres restants
 - **Actions disponibles** : armes équipées (boutons Attaque + Dégâts), aptitudes de classe avec type d'action, sorts préparés
+- **Attaques par action** : badge « N attaques par action Attaquer » (effet `extra_attack`, maximum entre classes)
+- **Dés supplémentaires** : un bouton par arme concernée (Attaque sournoise 3d6 sur une arme à finesse ou à distance, Châtiment divin amélioré 1d8 en mêlée), jetés à part
+- **Rage** : le bouton « Activer » dépense une utilisation ; le bonus de dégâts s'ajoute aux armes de mêlée maniées avec la Force (suspendu en armure lourde)
+- **Châtiment divin** : un bouton par niveau d'emplacement disponible (dés selon le niveau, case mort-vivant / fiélon), l'emplacement est dépensé au jet
 
 État local (non persisté), remis à zéro via "Nouveau tour".
 
 > Les stats détaillées des armes (attaque, dégâts, propriétés, warnings, toggle "à 2 mains" pour versatile, bouton main secondaire pour les armes légères) sont affichées dans `InventorySection` (onglet Armes). `CombatModeSection` reprend les boutons d'action en compact pour le tour en cours.
+
+### Ressources de classe (`ClassResourcesSection`) *(affichée si le personnage porte une réserve)*
+
+Une carte par réserve (`resourceGroups`) : ki, points de sorcellerie, Rage, Inspiration bardique, Conduit divin,
+Forme sauvage, Imposition des mains. Réserve par paquets (`meta.pool`) : « restant / maximum », quantité, Dépenser /
+Regagner ; sinon pastilles. Badge de recharge (court dès le niveau 5 pour l'Inspiration bardique), dé de la réserve, DD de
+ki. Rage : bouton Activer / Mettre fin. Points de sorcellerie : coûts de la Métamagie choisie (niveau du sort pour le
+Sort jumeau), conversion emplacement → points, création d'un emplacement (niveau 5 au plus, disparaît au repos long).
+Forme sauvage : FP maximum, vol, nage, durée.
+
+**Source :** `resourceGroups` et `classTraits` (`useCharacterSheet`), dérivés par `shared/rules/classResources.ts`
+([`rules-engine.md`](./rules-engine.md#ressources-de-classe)).
+**Persistence :** `PUT /api/character_sheets/{id}/features` (`currentUses`, `active`), file hors-ligne, valeurs absolues ;
+emplacements créés via `PUT …/spell-slots` (`created`). Les capacités qui portent une réserve n'affichent plus de compteur dans « Capacités ».
 
 ### Capacités (`FeaturesSection`)
 

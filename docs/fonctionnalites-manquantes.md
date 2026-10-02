@@ -16,8 +16,8 @@
 
 | Famille | Entrées | En un mot |
 |---|---|---|
-| [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E12 | La donnée est seedée, le type existe, **personne ne la lit** |
-| [C — Capacités de classe sans mécanique](#c--capacités-de-classe-sans-mécanique) | C1–C9 | ~340 features n'ont qu'une `description` |
+| [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E13 | La donnée est seedée, le type existe, **personne ne la lit** |
+| [C — Capacités de classe sans mécanique](#c--capacités-de-classe-sans-mécanique) | C1–C13 | ~340 features n'ont qu'une `description` |
 | [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, concentration, encombrement… |
 | [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S6 | Rituel, limite de préparation, zone d'effet |
@@ -50,6 +50,7 @@ donnée est déjà là, il ne manque que la projection.
 | **E10** | [#139](https://github.com/kevmorpain/le-bureau-du-jdr/issues/139) | `extra_damage` jamais appliqué, et écrit sous une autre forme par l'éditeur d'objet |
 | **E11** | [#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140) | Types d'effet absents de l'union (CA, JS, attaque, vitesses, avantage structuré) |
 | **E12** | [#227](https://github.com/kevmorpain/le-bureau-du-jdr/issues/227) | Fadette : caractéristique d'incantation de la Magie des fées figée au Charisme |
+| **E13** | [#235](https://github.com/kevmorpain/le-bureau-du-jdr/issues/235) | Ténacité naine (Nain des collines) : effet `hp_per_level` absent, PV max trop bas |
 
 **✅ résolu pendant la rédaction** — `fighting_style_modifier` : la **tranche 3** du chantier F2
 (PR #63, mergée le 2026-09-14) applique désormais les bonus statiques sur la fiche — Défense +1 CA,
@@ -80,14 +81,18 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | Code | Suivi | Sujet |
 |---|---|---|
 | **C1** | [#141](https://github.com/kevmorpain/le-bureau-du-jdr/issues/141) | Défense sans armure (Barbare, Moine) : CA fausse |
-| **C2** | [#142](https://github.com/kevmorpain/le-bureau-du-jdr/issues/142) | Attaque supplémentaire : nombre d'attaques affiché nulle part |
-| **C3** | [#143](https://github.com/kevmorpain/le-bureau-du-jdr/issues/143) | Attaque sournoise : dés ni affichés ni jetés |
-| **C4** | [#144](https://github.com/kevmorpain/le-bureau-du-jdr/issues/144) | Rage : compteur, bonus de dégâts et résistances absents |
-| **C5** | [#145](https://github.com/kevmorpain/le-bureau-du-jdr/issues/145) | Points de ki : ressource inexistante |
-| **C6** | [#146](https://github.com/kevmorpain/le-bureau-du-jdr/issues/146) | Points de sorcellerie : métamagie choisie mais non activable |
-| **C7** | [#147](https://github.com/kevmorpain/le-bureau-du-jdr/issues/147) | Inspiration bardique, Conduit divin, Forme sauvage, Châtiment divin : non modélisés |
+| **C2** | ✅ résolu ([#142](https://github.com/kevmorpain/le-bureau-du-jdr/issues/142), lot 11) | Attaque supplémentaire : effet `extra_attack` (Guerrier 2/3/4, Barbare, Moine, Paladin, Rôdeur, Collège de la vaillance), maximum entre classes (pas de cumul), affiché en Mode Combat |
+| **C3** | ✅ résolu ([#143](https://github.com/kevmorpain/le-bureau-du-jdr/issues/143), lot 11) | Attaque sournoise : effet `weapon_damage_dice` (niveau ÷ 2, arrondi au supérieur, d6), proposé sur les armes à finesse ou à distance, jeté à part ; même effet pour le Châtiment divin amélioré |
+| **C4** | ✅ résolu ([#144](https://github.com/kevmorpain/le-bureau-du-jdr/issues/144), lot 11) | Rage : compteur par niveau de barbare (illimité au 20), état « actif » (`character_features.active`), résistances et bonus de dégâts en vigueur tant qu'elle dure, suspendus par une armure lourde ; tout repos y met fin |
+| **C5** | ✅ résolu ([#145](https://github.com/kevmorpain/le-bureau-du-jdr/issues/145), lot 11) | Points de ki : réserve = niveau de moine, DD de ki, usages (Défense patiente, Déluge de coups, Déplacement aérien, Parade, Frappe étourdissante) |
+| **C6** | ✅ résolu ([#146](https://github.com/kevmorpain/le-bureau-du-jdr/issues/146), lot 11) | Points de sorcellerie : réserve = niveau d'ensorceleur, coûts de la Métamagie, conversion emplacement ⇄ points, emplacements créés (`character_spell_slots.created`, disparaissent au repos long), regain de 4 points au niveau 20 |
+| **C7** | ✅ résolu ([#147](https://github.com/kevmorpain/le-bureau-du-jdr/issues/147), lot 11) | Inspiration bardique (utilisations, dé d6→d12, repos court dès le 5), Conduit divin (réserve partagée Clerc/Paladin), Forme sauvage (utilisations, FP et durée, Cercle de la lune), Châtiment divin (dés par niveau d'emplacement), Imposition des mains (réserve), Fougue / Second souffle / Inflexible |
 | **C8** | [#148](https://github.com/kevmorpain/le-bureau-du-jdr/issues/148) | Déplacement rapide / sans armure : vitesse non augmentée |
 | **C9** | [#149](https://github.com/kevmorpain/le-bureau-du-jdr/issues/149) | Touche-à-tout, Talent fiable, Critique brutal, Esquive instinctive : non appliqués |
+| **C10** | [#231](https://github.com/kevmorpain/le-bureau-du-jdr/issues/231) | Capacités à repos déclaré mais sans compteur (~45 features) |
+| **C11** | [#232](https://github.com/kevmorpain/le-bureau-du-jdr/issues/232) | Options de Conduit divin et usages de ki de sous-classe : payés hors réserve |
+| **C12** | [#233](https://github.com/kevmorpain/le-bureau-du-jdr/issues/233) | Forme sauvage : PV de la bête et retour à la forme normale |
+| **C13** | [#234](https://github.com/kevmorpain/le-bureau-du-jdr/issues/234) | Rage : fin automatique (inconscience, tour sans attaque) et sorts interdits |
 
 > **Note de conception** : le North Star du repo (`consolidation-2014.md`) interdit le code bespoke
 > par classe. Ces entrées demandent donc d'abord de **nommer les effets manquants** dans l'union
@@ -304,9 +309,13 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
 3. **C1 (Défense sans armure) rend une valeur affichée fausse**, pas juste incomplète : la CA d'un
    Barbare ou d'un Moine sans armure est fausse aujourd'hui. À traiter comme un bug si on veut
    être strict.
-4. **C5–C7 (pools de ressources) réclament un concept neuf** dans le schéma. `currentUses` compte
-   des usages unitaires ; ki, points de sorcellerie et châtiment se dépensent **par paquets
-   variables**. Concevoir le pool une fois, pas trois.
+4. ~~**C5–C7 (pools de ressources) réclament un concept neuf** dans le schéma.~~ ✅ **Résolu au lot 11** : pas de
+   concept neuf — `currentUses` (dépensé) + `maxUsesFormula` portent déjà une réserve ; le manque était les formules
+   seedées, le niveau de la classe propriétaire et l'affichage par paquets. Voir [D20](./decisions.md#d20) et
+   [`rules-engine.md`](./rules-engine.md#ressources-de-classe).
+   **Restes** : suivis en C10 ([#231](https://github.com/kevmorpain/le-bureau-du-jdr/issues/231), features à `rechargeType` sans compteur), C11 ([#232](https://github.com/kevmorpain/le-bureau-du-jdr/issues/232), options de
+   Conduit divin et ki de sous-classe), C12 ([#233](https://github.com/kevmorpain/le-bureau-du-jdr/issues/233), PV de la bête en Forme sauvage), C13 ([#234](https://github.com/kevmorpain/le-bureau-du-jdr/issues/234), fin de la Rage)
+   et E13 ([#235](https://github.com/kevmorpain/le-bureau-du-jdr/issues/235), Ténacité naine). La Lame assoiffée (attaque d'arme de pacte) relève de E9 ([#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138)).
 5. **Respecter le North Star** (`consolidation-2014.md`) : aucune règle spécifique à une classe
    dans le code. Toute entrée C ci-dessus se traduit d'abord par « quel effet manque à l'union »,
    puis par du seed — jamais par un `if (className === 'Barbare')`.
