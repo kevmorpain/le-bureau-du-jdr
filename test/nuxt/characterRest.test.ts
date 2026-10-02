@@ -269,3 +269,94 @@ describe('characterRest — recharge des objets', () => {
     expect((await entryOf(id, STAFF)).currentUses).toBe(10)
   })
 })
+
+// Ressources de classe (lot 11) : regains partiels et élargissements de recharge portés par des effets, fin de ce qui dure
+// une minute, emplacements créés par les points de sorcellerie.
+describe('characterRest — ressources de classe', () => {
+  const POOL = 900
+  const RESTORATION = 901
+  const INSPIRATION = 902
+  const SOURCE = 903
+  const RAGE = 904
+
+  const featureOf = async (id: number, featureId: number) =>
+    (await db.select().from(schema.characterFeatures).where(and(eq(schema.characterFeatures.characterSheetId, id), eq(schema.characterFeatures.featureId, featureId))))[0]
+
+  beforeAll(async () => {
+    await db.insert(schema.features).values([
+      { id: POOL, name: 'Réserve', featureType: 'class_feature', classId: WARLOCK, levelRequired: 1, rechargeType: 'long_rest', meta: { resource: 'sorcery_points' } },
+      { id: RESTORATION, name: 'Restauration', featureType: 'class_feature', classId: WARLOCK, levelRequired: 1 },
+      { id: INSPIRATION, name: 'Inspiration', featureType: 'class_feature', classId: WARLOCK, levelRequired: 1, rechargeType: 'long_rest', meta: { resource: 'bardic_inspiration' } },
+      { id: SOURCE, name: 'Source', featureType: 'class_feature', classId: WARLOCK, levelRequired: 1 },
+      { id: RAGE, name: 'Rage', featureType: 'class_feature', classId: WARLOCK, levelRequired: 1, rechargeType: 'long_rest', meta: { resource: 'rage' } },
+    ])
+    const [regain4] = await db.insert(schema.effects).values({ type: 'resource_regain', value: { resource: 'sorcery_points', amount: 4, on: 'short_rest' } }).returning()
+    const [refill] = await db.insert(schema.effects).values({ type: 'resource_regain', value: { resource: 'bardic_inspiration', amount: 'all', on: 'short_rest' } }).returning()
+    await db.insert(schema.featureEffects).values([
+      { featureId: RESTORATION, effectId: regain4.id },
+      { featureId: SOURCE, effectId: refill.id },
+    ])
+  })
+
+  const withResources = async () => {
+    // createCharacter matérialise déjà ces capacités de classe : on règle leur état.
+    const id = await create()
+    const set = (featureId: number, values: { currentUses: number, active?: boolean }) =>
+      db.update(schema.characterFeatures).set(values).where(and(eq(schema.characterFeatures.characterSheetId, id), eq(schema.characterFeatures.featureId, featureId)))
+    await set(POOL, { currentUses: 7 })
+    await set(INSPIRATION, { currentUses: 3 })
+    await set(RAGE, { currentUses: 2, active: true })
+    return id
+  }
+
+  it('repos court : le regain de 4 points est partiel, jamais une remise à zéro', async () => {
+    const id = await withResources()
+    await characterRest(db, id, { type: 'short' })
+    expect((await featureOf(id, POOL)).currentUses).toBe(3)
+  })
+
+  it('le regain ne descend pas sous zéro dépensé', async () => {
+    const id = await withResources()
+    await db.update(schema.characterFeatures).set({ currentUses: 2 }).where(and(eq(schema.characterFeatures.characterSheetId, id), eq(schema.characterFeatures.featureId, POOL)))
+    await characterRest(db, id, { type: 'short' })
+    expect((await featureOf(id, POOL)).currentUses).toBe(0)
+  })
+
+  it('repos court : une réserve élargie au repos court par un effet (Source d\'inspiration) revient entièrement', async () => {
+    const id = await withResources()
+    await characterRest(db, id, { type: 'short' })
+    expect((await featureOf(id, INSPIRATION)).currentUses).toBe(0)
+    expect((await featureOf(id, RAGE)).currentUses).toBe(2)
+  })
+
+  it('repos long : toutes les réserves reviennent', async () => {
+    const id = await withResources()
+    await characterRest(db, id, { type: 'long' })
+    for (const featureId of [POOL, INSPIRATION, RAGE]) expect((await featureOf(id, featureId)).currentUses).toBe(0)
+  })
+
+  it('un repos, court ou long, met fin à la rage ; l\'aube non', async () => {
+    const dawn = await withResources()
+    await characterRest(db, dawn, { type: 'dawn' })
+    expect((await featureOf(dawn, RAGE)).active).toBe(true)
+
+    for (const type of ['short', 'long'] as const) {
+      const id = await withResources()
+      await characterRest(db, id, { type })
+      expect((await featureOf(id, RAGE)).active).toBe(false)
+    }
+  })
+
+  it('repos long : les emplacements créés disparaissent ; repos court : ils restent', async () => {
+    const id = await create()
+    await db.insert(schema.characterSpellSlots).values({ characterSheetId: id, slotLevel: 2, slotType: 'spellcasting', total: 3, used: 1, created: 1 })
+
+    await characterRest(db, id, { type: 'short' })
+    const afterShort = (await db.select().from(schema.characterSpellSlots).where(and(eq(schema.characterSpellSlots.characterSheetId, id), eq(schema.characterSpellSlots.slotType, 'spellcasting'))))[0]
+    expect(afterShort).toMatchObject({ used: 1, created: 1 })
+
+    await characterRest(db, id, { type: 'long' })
+    const afterLong = (await db.select().from(schema.characterSpellSlots).where(and(eq(schema.characterSpellSlots.characterSheetId, id), eq(schema.characterSpellSlots.slotType, 'spellcasting'))))[0]
+    expect(afterLong).toMatchObject({ used: 0, created: 0, total: 3 })
+  })
+})

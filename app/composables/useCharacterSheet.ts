@@ -1,9 +1,11 @@
 import { useStorage } from '@vueuse/core'
-import { evaluate } from '~~/shared/utils/formula'
 import type { FormulaContext } from '~~/shared/utils/formula'
 import type { Effect } from '~~/server/db/schema/effects'
 import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, type FeatChoices } from '~~/shared/rules/characterEffects'
 import type { EffectSource } from '~~/shared/rules/effectBonuses'
+import { deriveClassTraits, featureUses, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
+import type { OwnerClass } from '~~/shared/rules/classResources'
+import type { ArmorProperties } from '~~/server/db/schema/items'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
 import { useCharacterConditions, binaryConditions } from './character/useCharacterConditions'
@@ -56,9 +58,12 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   // Forward-declaration : caractéristiques et incantation lisent les effets des objets actifs, alors que
   // l'inventaire est créé après elles (il lui faut leurs modificateurs et spellcastingAbility).
   const itemSourcesRef = shallowRef<ComputedRef<EffectSource[]> | null>(null)
+  const heavyArmorRef = shallowRef<ComputedRef<boolean> | null>(null)
+  const featureSourcesRef = shallowRef<ComputedRef<EffectSource[]> | null>(null)
   const activeEffectSources = computed<EffectSource[]>(() => [
     ...(itemSourcesRef.value?.value ?? []),
     ...temporary.temporaryEffectSources.value,
+    ...(featureSourcesRef.value?.value ?? []),
   ])
   const activeEffects = computed<Effect[]>(() => activeEffectSources.value.flatMap(s => s.effects))
 
@@ -82,16 +87,24 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     cha_mod: abilities.abilityModifiers.value.cha ?? 0,
   }))
 
+  // Les formules d'une feature de classe s'évaluent au niveau de SA classe (multiclasse), pas de la classe principale.
+  const ownerClasses = computed<OwnerClass[]>(() => characterSheet?.value?.classes ?? [])
+  const resourceFeatures = computed(() => resourceFeaturesOf(characterSheet?.value?.features ?? []))
+
   const resolvedFeatures = computed(() =>
     (characterSheet?.value?.features ?? []).map((cf) => {
       const feature = cf.feature!
-      const maxUses = feature.maxUsesFormula
-        ? evaluate(feature.maxUsesFormula, formulaContext.value)
-        : null
+      const { maxUses, unlimited } = featureUses(
+        resourceFeatures.value.find(f => f.id === cf.featureId)!,
+        formulaContext.value,
+        ownerClasses.value,
+      )
       return {
         ...feature,
         currentUses: cf.currentUses,
+        active: cf.active ?? false,
         maxUses,
+        unlimited,
         source: (cf as any).source as string | null ?? null,
         classLevel: (cf as any).classLevel as number | null ?? null,
         choices: (cf as any).choices as FeatChoices ?? null,
@@ -108,6 +121,24 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       f.featureType === 'feat'
         ? resolveFeatEffects(f.effects as Effect[], f.choices)
         : (f.effects as Effect[])),
+  )
+
+  // ─── Ressources de classe : traits dérivés (attaques, dés, Rage) et réserves ──────────
+
+  const classTraits = computed(() =>
+    deriveClassTraits(resourceFeatures.value, formulaContext.value, ownerClasses.value, { heavyArmor: heavyArmorRef.value?.value ?? false }),
+  )
+
+  const resourceGroups = computed(() =>
+    deriveResourceGroups(resourceFeatures.value, formulaContext.value, ownerClasses.value),
+  )
+
+  // Effets en vigueur tant qu'une capacité est active (Rage : résistances) ; suspendus par une armure lourde.
+  featureSourcesRef.value = computed<EffectSource[]>(() =>
+    resourceFeatures.value.flatMap(f =>
+      f.active && f.meta?.whileActive && !(f.meta.suspendedByHeavyArmor && heavyArmorRef.value?.value)
+        ? [{ label: f.name, effects: f.meta.whileActive }]
+        : []),
   )
 
   // ─── Liste unifiée des capacités (espèce + classe + sous-classe) ──────────
@@ -206,9 +237,13 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     proficiencyBonus: classes.proficiencyBonus,
     spellcastingAbility: spellcasting.spellcastingAbility,
     temporaryEffectSources: temporary.temporaryEffectSources,
+    classTraits,
   })
 
   itemSourcesRef.value = inventoryLayer.activeItemSources
+  heavyArmorRef.value = computed(() =>
+    (inventoryLayer.equippedBodyArmor.value?.item?.properties as ArmorProperties | undefined)?.armor_type === 'heavy',
+  )
 
   const allEffects = allEffectsForSpellcasting
 
@@ -311,6 +346,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     // Features & effets
     resolvedFeatures,
     allCharacterFeatures,
+    classTraits,
+    resourceGroups,
+    wearsHeavyArmor: computed(() => heavyArmorRef.value?.value ?? false),
     allEffects,
     // Caractéristiques
     abilityScores: abilities.abilityScores,

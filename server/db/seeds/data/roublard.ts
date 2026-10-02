@@ -1,3 +1,4 @@
+import { ceil, div, fixed, variable } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { expertiseProgression } from './expertise'
 import { asiFeatures } from './asi'
@@ -30,7 +31,18 @@ Les dégâts augmentent avec le niveau : 1d6 (niv 1), 2d6 (niv 3), 3d6 (niv 5), 
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{
+      type: 'weapon_damage_dice',
+      value: {
+        name: 'Attaque sournoise',
+        // AideDD, Roublard : 1d6 au niveau 1, +1d6 tous les deux niveaux (10d6 au niveau 19).
+        dice: ceil(div(variable('class_level'), fixed(2))),
+        sides: 6,
+        weapons: 'finesse_or_ranged',
+        limit: 'once_per_turn',
+        condition: 'Avantage au jet d\'attaque, ou un ennemi de la cible à 1,50 m ou moins (non incapable d\'agir) sans désavantage',
+      },
+    }],
   },
   {
     name: 'Jargon des voleurs',

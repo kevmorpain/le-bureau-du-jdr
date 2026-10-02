@@ -5,8 +5,8 @@ import { CharacterValidationError } from '~~/server/utils/characterCreate'
 import { loadSheetRelations, sheetHitPointsOf } from '~~/server/utils/characterSheetLoader'
 import { hitDiceTotals, recoverHitDice } from '~~/shared/rules/hitDice'
 import { rollDice } from '~~/shared/rules/dice'
+import { resourceFeaturesOf, restRecovery } from '~~/shared/rules/classResources'
 import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
-import type { RechargeType } from '~~/server/db/schema/features'
 import type { Db } from '~~/server/utils/db'
 
 // ⚠️ Ordre : sur un repos long, `currentHp = maxHp` PUIS le soin par dés de vie recalcule depuis la valeur
@@ -40,10 +40,8 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
 
   const rechargingTypes = REST_RECHARGE_MAP[type]
 
-  const rechargingFeatureIds = characterSheet.features
-    .filter((cf: { feature?: { rechargeType?: string | null } | null, featureId: number }) =>
-      cf.feature?.rechargeType && rechargingTypes.includes(cf.feature.rechargeType as RechargeType))
-    .map((cf: { featureId: number }) => cf.featureId)
+  const resourceFeatures = resourceFeaturesOf(characterSheet.features)
+  const recovery = restRecovery(resourceFeatures, characterSheet.classes ?? [], type)
 
   const rechargeable = await db
     .select({ invId: schema.characterInventory.id, name: schema.items.name, rechargeDice: schema.items.rechargeDice })
@@ -60,13 +58,29 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stmts: any[] = []
 
-  if (rechargingFeatureIds.length) {
+  if (recovery.reset.length) {
     stmts.push(db.update(schema.characterFeatures)
       .set({ currentUses: 0 })
       .where(and(
         eq(schema.characterFeatures.characterSheetId, characterSheetId),
-        inArray(schema.characterFeatures.featureId, rechargingFeatureIds),
+        inArray(schema.characterFeatures.featureId, recovery.reset),
       )))
+  }
+
+  for (const { featureId, amount } of recovery.regain) {
+    stmts.push(db.update(schema.characterFeatures)
+      .set({ currentUses: sql`MAX(0, ${schema.characterFeatures.currentUses} - ${amount})` })
+      .where(and(
+        eq(schema.characterFeatures.characterSheetId, characterSheetId),
+        eq(schema.characterFeatures.featureId, featureId),
+      )))
+  }
+
+  // Un repos met fin à ce qui dure une minute (Rage).
+  if (type !== 'dawn' && resourceFeatures.some(f => f.active)) {
+    stmts.push(db.update(schema.characterFeatures)
+      .set({ active: false })
+      .where(eq(schema.characterFeatures.characterSheetId, characterSheetId)))
   }
 
   if (invToRecharge.length) {
@@ -111,7 +125,7 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
       .set({ currentHp: maxHp, temporaryHp: 0, exhaustionLevel, deathSaveSuccesses: 0, deathSaveFailures: 0, currentHitDie: newHitDie } as any)
       .where(eq(schema.characterSheets.id, characterSheetId)))
     stmts.push(db.update(schema.characterSpellSlots)
-      .set({ used: 0 })
+      .set({ used: 0, created: 0 })
       .where(eq(schema.characterSpellSlots.characterSheetId, characterSheetId)))
   }
 

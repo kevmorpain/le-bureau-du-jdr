@@ -1,7 +1,12 @@
+import { fixed, lookup } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
 export const barbareName = 'Barbare'
+
+// AideDD, Barbare — colonnes « Rages » et « Dégâts » (index = niveau - 1) ; illimitées au niveau 20 (Champion primitif).
+export const RAGES_PER_LONG_REST = lookup([2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6])
+export const RAGE_DAMAGE_BONUS = lookup([2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4])
 
 export const barbareFeatures: FeatureDef[] = [
   {
@@ -18,8 +23,19 @@ La rage se termine si vous êtes inconscient ou si votre tour se termine et que 
     levelRequired: 1,
     actionType: 'bonus_action',
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
+    maxUsesFormula: RAGES_PER_LONG_REST,
     effects: [],
+    meta: {
+      resource: 'rage',
+      unlimitedFromClassLevel: 20,
+      suspendedByHeavyArmor: true,
+      whileActive: [
+        { type: 'damage_resistance', value: { damageType: 'bludgeoning' } },
+        { type: 'damage_resistance', value: { damageType: 'piercing' } },
+        { type: 'damage_resistance', value: { damageType: 'slashing' } },
+        { type: 'melee_strength_damage_bonus', value: { amount: RAGE_DAMAGE_BONUS } },
+      ],
+    },
   },
   {
     name: 'Défense sans armure',
@@ -61,7 +77,7 @@ Vous avez l'avantage aux jets de sauvegarde de Dextérité contre les effets que
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'extra_attack', value: { attacks: fixed(2) } }],
   },
   {
     name: 'Déplacement rapide',

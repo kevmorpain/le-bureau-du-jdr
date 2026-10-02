@@ -1,3 +1,4 @@
+import { lookup } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 import { alwaysPreparedEffects, CLERIC_DOMAIN_SPELLS } from './alwaysPreparedSpells'
@@ -29,8 +30,10 @@ Vous devez terminer un repos court ou long pour pouvoir l'utiliser Ã  nouveau. Ã
     levelRequired: 2,
     actionType: 'action',
     rechargeType: 'short_rest',
-    maxUsesFormula: null,
+    // AideDD, Clerc : 1 utilisation, 2 au niveau 6, 3 au niveau 18.
+    maxUsesFormula: lookup([1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3]),
     effects: [],
+    meta: { resource: 'channel_divinity' },
   },
   {
     name: 'Renvoi des morts-vivants',

@@ -1,3 +1,4 @@
+import { fixed } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
 import { asiFeatures } from './asi'
@@ -80,7 +81,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Sagesse.`,
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'extra_attack', value: { attacks: fixed(2) } }],
   },
   {
     name: 'Foulée tellurique',

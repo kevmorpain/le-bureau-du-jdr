@@ -2,6 +2,9 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 import type { DamageType } from '~~/shared/rules/damageTypes'
 import type { SkillKey } from '~~/shared/rules/skills'
+import type { ResourceKey } from '~~/shared/rules/classResources'
+import type { Formula } from '~~/shared/utils/formula'
+import type { RechargeType } from './features'
 
 export type AbilityScoreKey = AbilityKey
 
@@ -97,6 +100,25 @@ export type Effect
     // Bonus fixes signés (Anneau de protection : +1 CA et JS ; un malus s'écrit en négatif).
     | { type: 'armor_class_bonus', value: { amount: number } }
     | { type: 'saving_throw_bonus', value: { ability: AbilityScoreKey | 'all', amount: number } }
+    // Les `Formula` des effets ci-dessous s'évaluent au niveau de la classe qui porte la feature
+    // (`shared/rules/classResources.ts`), jamais à celui de la classe principale.
+    // Attaques par action Attaquer ; les sources ne se cumulent pas (AideDD, Multiclassage).
+    | { type: 'extra_attack', value: { attacks: Formula } }
+    // Dés de dégâts ajoutés à une attaque d'arme (Attaque sournoise, Châtiment divin amélioré).
+    | { type: 'weapon_damage_dice', value: { name: string, dice: Formula, sides: number, damageType?: DamageType, weapons: 'melee' | 'finesse_or_ranged', limit: 'once_per_turn' | 'each_hit', condition?: string } }
+    // Bonus fixe aux dégâts d'une attaque d'arme de corps à corps menée avec la Force (Rage).
+    | { type: 'melee_strength_damage_bonus', value: { amount: Formula } }
+    // Taille du dé de la réserve (Inspiration bardique : d6 → d12).
+    | { type: 'resource_die', value: { sides: Formula } }
+    // À chaque repos du type indiqué, la réserve regagne `amount` points dépensés (ou tous).
+    | { type: 'resource_regain', value: { resource: ResourceKey, amount: number | 'all', on: RechargeType } }
+    // Dégâts bonus payés par un emplacement de sort (Châtiment divin) : `baseDice` pour un emplacement de
+    // niveau 1, +1 dé par niveau au-delà, plafonné à `maxDice` ; `bonus` : dé supplémentaire contre une cible donnée.
+    | { type: 'slot_damage_dice', value: { name: string, sides: number, damageType: DamageType, baseDice: number, maxDice: number, bonus?: { when: string, dice: number, maxDice: number } } }
+    // Forme sauvage : paliers de FP / restrictions par niveau de la classe, durée = niveau ÷ `hoursDivisor`.
+    | { type: 'beast_shape', value: { tiers: { fromClassLevel: number, maxChallenge: number, flying: boolean, swimming: boolean }[], hoursDivisor: number } }
+    // Remplace la colonne FP du tableau des paliers (Cercle de la lune) ; les autres restrictions demeurent.
+    | { type: 'beast_shape_challenge', value: { maxChallenge: Formula } }
 
 export type EffectType = Effect['type']
 export type EffectValue = Effect['value']

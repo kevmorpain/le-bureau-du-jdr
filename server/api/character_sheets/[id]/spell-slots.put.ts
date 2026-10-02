@@ -5,6 +5,7 @@ interface SpellSlotInput {
   slotType: 'spellcasting' | 'pact_magic'
   total: number
   used: number
+  created?: number
 }
 
 export default defineEventHandler(async (event) => {
@@ -28,6 +29,7 @@ export default defineEventHandler(async (event) => {
       set: {
         total: sql`excluded.total`,
         used: sql`excluded.used`,
+        created: sql`excluded.created`,
       },
     })
 

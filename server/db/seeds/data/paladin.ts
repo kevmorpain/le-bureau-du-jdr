@@ -1,3 +1,4 @@
+import { fixed, mul, variable } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
 import { asiFeatures } from './asi'
@@ -27,8 +28,14 @@ Cette réserve se restaure après un repos long. Elle est sans effet sur les mor
     levelRequired: 1,
     actionType: 'action',
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
+    // AideDD, Paladin : une réserve de points de vie égale à cinq fois le niveau de paladin.
+    maxUsesFormula: mul(variable('class_level'), fixed(5)),
     effects: [],
+    meta: {
+      resource: 'lay_on_hands',
+      pool: true,
+      spends: [{ label: 'Guérir une maladie ou neutraliser un poison', amount: 5 }],
+    },
   },
   {
     name: 'Style de combat',
@@ -60,13 +67,23 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
   },
   {
     name: 'Châtiment divin',
-    description: `À partir du niveau 2, quand vous touchez une créature avec une arme de corps à corps, vous pouvez dépenser un emplacement de sort pour causer des dégâts radiants supplémentaires : 2d8 pour un emplacement de niveau 1, +1d8 par niveau au-delà du 1er (max 5d8). +1d8 supplémentaire si la cible est un mort-vivant ou un fiélon (max 6d8). Décision avant le jet d'attaque, une seule fois par tour.`,
+    description: `À partir du niveau 2, quand vous touchez une créature avec une arme de corps à corps, vous pouvez utiliser n'importe quel emplacement de sort (de paladin ou autre) pour châtier cette créature et lui infliger des dégâts radiants supplémentaires : 2d8 pour un emplacement de niveau 1, plus 1d8 pour chaque niveau d'emplacement au-delà du 1er, jusqu'à un maximum de 5d8. Si la créature est un mort-vivant ou un fiélon, les dégâts augmentent de 1d8, jusqu'à un maximum de 6d8.`,
     featureType: 'class_feature',
     levelRequired: 2,
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{
+      type: 'slot_damage_dice',
+      value: {
+        name: 'Châtiment divin',
+        sides: 8,
+        damageType: 'radiant',
+        baseDice: 2,
+        maxDice: 5,
+        bonus: { when: 'Mort-vivant ou fiélon', dice: 1, maxDice: 6 },
+      },
+    }],
   },
   {
     name: 'Santé divine',
@@ -85,8 +102,10 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     levelRequired: 3,
     actionType: 'action',
     rechargeType: 'short_rest',
-    maxUsesFormula: null,
+    // Le Paladin n'a qu'une utilisation ; AideDD, Multiclassage : la réserve est partagée avec celle du Clerc.
+    maxUsesFormula: fixed(1),
     effects: [],
+    meta: { resource: 'channel_divinity' },
   },
   ...asiFeatures('Paladin'),
   {
@@ -97,7 +116,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'extra_attack', value: { attacks: fixed(2) } }],
   },
   {
     name: 'Aura de protection',
@@ -131,7 +150,10 @@ Au niveau 18, le rayon passe à 9 mètres.`,
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{
+      type: 'weapon_damage_dice',
+      value: { name: 'Châtiment divin amélioré', dice: fixed(1), sides: 8, damageType: 'radiant', weapons: 'melee', limit: 'each_hit' },
+    }],
   },
   {
     name: 'Contact purifiant',

@@ -14,6 +14,14 @@ export const formatRange = (range: number): string => {
   return new Intl.NumberFormat('fr-FR', { style: 'unit', unit: 'meter' }).format(range)
 }
 
+// Facteur de puissance : les quarts et demis s'écrivent en fraction, comme dans les blocs de statistiques.
+export const formatChallenge = (challenge: number): string => {
+  if (challenge === 0.125) return '1/8'
+  if (challenge === 0.25) return '1/4'
+  if (challenge === 0.5) return '1/2'
+  return String(challenge)
+}
+
 export const toSnakeCase = (str: string): string => {
   // Source - https://stackoverflow.com/a
   // Posted by ZPiDER

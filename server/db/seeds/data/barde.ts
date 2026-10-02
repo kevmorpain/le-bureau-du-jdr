@@ -1,8 +1,13 @@
+import { fixed, lookup, max, variable } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { expertiseProgression } from './expertise'
 import { asiFeatures } from './asi'
 
 export const bardeName = 'Barde'
+
+// AideDD, Barde : « un nombre de fois égal à votre modificateur de Charisme (minimum une fois) » ; dé d6, d8 au 5, d10 au 10, d12 au 15.
+const BARDIC_INSPIRATION_USES = max(fixed(1), variable('cha_mod'))
+const BARDIC_INSPIRATION_DIE = lookup([6, 6, 6, 6, 8, 8, 8, 8, 8, 10, 10, 10, 10, 10, 12, 12, 12, 12, 12, 12])
 
 export const bardeFeatures: FeatureDef[] = [
   {
@@ -33,8 +38,9 @@ Le dé évolue : d8 au niveau 5, d10 au niveau 10, d12 au niveau 15.`,
     levelRequired: 1,
     actionType: 'bonus_action',
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
-    effects: [],
+    maxUsesFormula: BARDIC_INSPIRATION_USES,
+    effects: [{ type: 'resource_die', value: { sides: BARDIC_INSPIRATION_DIE } }],
+    meta: { resource: 'bardic_inspiration' },
   },
   {
     name: 'Touche-à-tout',
@@ -79,7 +85,7 @@ Au niveau 10, vous pouvez choisir deux autres maîtrises de compétence à amél
     actionType: null,
     rechargeType: 'short_rest',
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'resource_regain', value: { resource: 'bardic_inspiration', amount: 'all', on: 'short_rest' } }],
   },
   {
     name: 'Contre-charme',
@@ -195,7 +201,7 @@ export const bardeSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: [{ type: 'extra_attack', value: { attacks: fixed(2) } }],
       },
       {
         name: 'Magie de combat',

@@ -22,6 +22,8 @@ const characterFeatures = sqliteTable(
     characterSheetId: integer('character_sheet_id').notNull().references(() => characterSheets.id, { onDelete: 'cascade' }),
     featureId: integer('feature_id').notNull().references(() => features.id, { onDelete: 'cascade' }),
     currentUses: integer('current_uses').default(0).notNull(),
+    // Capacité en cours d'effet (Rage) ; tout repos y met fin.
+    active: integer('active', { mode: 'boolean' }).default(false).notNull(),
     // Dérivable de `feature.featureType` sauf pour les dons (asi vs bonus MJ).
     source: text('source').$type<CharacterFeatureSource>(),
     classLevel: integer('class_level'),

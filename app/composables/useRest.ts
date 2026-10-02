@@ -1,15 +1,22 @@
 import { hitDiceTotals, recoverHitDice } from '~~/shared/rules/hitDice'
+import { resourceFeaturesOf, restRecovery } from '~~/shared/rules/classResources'
+import type { RestType } from '~~/shared/utils/rest'
 
-type SlotState = { max: number, current: number }
+type SlotState = { max: number, current: number, created?: number }
 type SlotsByType = {
   spellcasting: Record<number, SlotState>
   pact_magic: Record<number, SlotState>
 }
 
-const refillSlots = (slots: Record<number, SlotState>) => {
+// Les emplacements créés par les points de sorcellerie disparaissent au repos long.
+const refillSlots = (slots: Record<number, SlotState>, { dropCreated = false } = {}) => {
   for (const lvl in slots) {
     const s = slots[lvl]!
-    if (s.max > 0) s.current = s.max
+    if (dropCreated && s.created) {
+      s.max -= s.created
+      s.created = 0
+    }
+    s.current = s.max > 0 ? s.max : 0
   }
 }
 
@@ -31,6 +38,18 @@ export const useRest = (
   const isResting = ref(false)
   const { offlineMutate } = useOfflineMutation(() => characterSheet.value.id)
 
+  // Même règle que le serveur (`characterRest`) : remises à zéro, regains partiels, fin de ce qui dure une minute.
+  const recoverFeatures = (rest: RestType) => {
+    const features = characterSheet.value.features ?? []
+    const recovery = restRecovery(resourceFeaturesOf(features), characterSheet.value.classes ?? [], rest)
+    for (const cf of features) {
+      if (recovery.reset.includes(cf.featureId)) cf.currentUses = 0
+      const regain = recovery.regain.find(r => r.featureId === cf.featureId)
+      if (regain) cf.currentUses = Math.max(0, cf.currentUses - regain.amount)
+      if (rest !== 'dawn') cf.active = false
+    }
+  }
+
   const resetDeathSaves = () => {
     characterSheet.value.deathSaveSuccesses = 0
     characterSheet.value.deathSaveFailures = 0
@@ -48,11 +67,7 @@ export const useRest = (
         label: 'Repos court',
       })
 
-      characterSheet.value.features?.forEach((cf) => {
-        if (cf.feature?.rechargeType === 'short_rest') {
-          cf.currentUses = 0
-        }
-      })
+      recoverFeatures('short')
 
       if (spellSlots?.value) refillSlots(spellSlots.value.pact_magic)
       characterSheet.value.spellSlots
@@ -90,11 +105,7 @@ export const useRest = (
         label: 'Repos long',
       })
 
-      characterSheet.value.features?.forEach((cf) => {
-        if (cf.feature?.rechargeType === 'short_rest' || cf.feature?.rechargeType === 'long_rest') {
-          cf.currentUses = 0
-        }
-      })
+      recoverFeatures('long')
 
       // Le maximum se lit après la baisse d'épuisement : au niveau 4 il est divisé par deux.
       if (fedAndWatered) characterSheet.value.exhaustionLevel = Math.max(0, characterSheet.value.exhaustionLevel - 1)
@@ -103,10 +114,13 @@ export const useRest = (
       resetDeathSaves()
 
       if (spellSlots?.value) {
-        refillSlots(spellSlots.value.spellcasting)
+        refillSlots(spellSlots.value.spellcasting, { dropCreated: true })
         refillSlots(spellSlots.value.pact_magic)
       }
-      characterSheet.value.spellSlots?.forEach((slot) => { slot.used = 0 })
+      characterSheet.value.spellSlots?.forEach((slot) => {
+        slot.used = 0
+        slot.created = 0
+      })
 
       characterSheet.value.currentHitDie = recoverHitDice(
         characterSheet.value.currentHitDie,
@@ -135,11 +149,7 @@ export const useRest = (
         label: 'Aube',
       })
 
-      characterSheet.value.features?.forEach((cf) => {
-        if (cf.feature?.rechargeType === 'dawn') {
-          cf.currentUses = 0
-        }
-      })
+      recoverFeatures('dawn')
 
       toaster.add({ title: 'Nouvelle aube — aptitudes rechargées', description: summary, color: 'success' })
     }

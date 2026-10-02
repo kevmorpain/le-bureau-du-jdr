@@ -841,6 +841,20 @@
       "when": 1790946402165,
       "tag": "0119_free_concentration",
       "breakpoints": true
+    },
+    {
+      "idx": 120,
+      "version": "6",
+      "when": 1790946402166,
+      "tag": "0120_class_resources",
+      "breakpoints": true
+    },
+    {
+      "idx": 121,
+      "version": "6",
+      "when": 1790946402167,
+      "tag": "0121_feature_active_and_created_slots",
+      "breakpoints": true
     }
   ]
 }

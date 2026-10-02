@@ -66,9 +66,18 @@
     </div>
 
     <div class="space-y-2">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted">
-        Actions disponibles
-      </p>
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">
+          Actions disponibles
+        </p>
+        <UBadge
+          v-if="classTraits.attacksPerAction > 1"
+          :label="`${classTraits.attacksPerAction} attaques par action Attaquer`"
+          color="primary"
+          variant="soft"
+          size="md"
+        />
+      </div>
 
       <div
         v-for="weapon in equippedWeaponStats"
@@ -106,14 +115,34 @@
             >
               Attaque {{ formatModifier(weapon.attackBonus) }}
             </UButton>
-            <UButton
-              size="sm"
-              variant="soft"
-              color="neutral"
-              @click="rollDamage(weapon)"
+            <UTooltip
+              :text="weapon.rageBonus ? `dont ${formatModifier(weapon.rageBonus)} de Rage` : ''"
+              :disabled="!weapon.rageBonus"
             >
-              Dégâts {{ weapon.damageDice }}{{ weapon.damageBonus !== 0 ? formatModifier(weapon.damageBonus) : '' }} {{ damageTypeLabels[weapon.damageType] ?? weapon.damageType }}
-            </UButton>
+              <UButton
+                size="sm"
+                variant="soft"
+                color="neutral"
+                @click="rollDamage(weapon)"
+              >
+                Dégâts {{ weapon.damageDice }}{{ weapon.damageBonus !== 0 ? formatModifier(weapon.damageBonus) : '' }} {{ damageTypeLabels[weapon.damageType] ?? weapon.damageType }}
+              </UButton>
+            </UTooltip>
+            <UTooltip
+              v-for="dice in weapon.extraDamageDice"
+              :key="dice.name"
+              :text="[dice.condition, dice.limit === 'once_per_turn' ? 'Une fois par tour' : 'À chaque attaque'].filter(Boolean).join(' — ')"
+              :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
+            >
+              <UButton
+                size="sm"
+                variant="soft"
+                color="warning"
+                @click="rollExtraDice(weapon, dice)"
+              >
+                + {{ dice.name }} {{ dice.count }}d{{ dice.sides }}{{ dice.damageType ? ` ${damageTypeLabels[dice.damageType] ?? dice.damageType}` : '' }}
+              </UButton>
+            </UTooltip>
             <UTooltip
               v-if="weapon.isLight"
               text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
@@ -142,14 +171,56 @@
         >
           <ActionTypeIcon :type="(actionType as 'action' | 'bonus_action' | 'reaction' | 'free')" />
           <span class="flex-1 text-sm">{{ feature.name }}</span>
+          <UButton
+            v-if="feature.meta?.whileActive"
+            size="xs"
+            :color="feature.active ? 'error' : 'primary'"
+            :variant="feature.active ? 'soft' : 'solid'"
+            @click="setActive(feature.id, !feature.active, groupOf(feature))"
+          >
+            {{ feature.active ? 'Mettre fin' : 'Activer' }}
+          </UButton>
           <span
-            v-if="feature.maxUses !== null"
+            v-if="usesLeft(feature) !== null"
             class="text-xs text-muted"
           >
-            {{ (feature.maxUses ?? 0) - feature.currentUses }} restant{{ (feature.maxUses ?? 0) - feature.currentUses > 1 ? 's' : '' }}
+            {{ usesLeft(feature) }} restant{{ usesLeft(feature)! > 1 ? 's' : '' }}
           </span>
         </div>
       </template>
+
+      <div
+        v-for="smite in classTraits.slotDamage"
+        :key="smite.name"
+        class="p-2 rounded-lg border border-default space-y-1"
+      >
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="flex-1 text-sm font-medium">{{ smite.name }}</span>
+          <label
+            v-if="smite.bonus"
+            class="flex items-center gap-1 text-xs text-muted"
+          >
+            <UCheckbox v-model="smiteBonus" />
+            {{ smite.bonus.when }}
+          </label>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <UButton
+            v-for="level in smiteLevels"
+            :key="level"
+            size="xs"
+            variant="soft"
+            color="warning"
+            @click="rollSmite(smite, level)"
+          >
+            Niv. {{ level }} · {{ slotDamageDiceCount(smite, level, smiteBonus) }}d{{ smite.sides }}
+          </UButton>
+          <span
+            v-if="!smiteLevels.length"
+            class="text-xs text-muted italic"
+          >aucun emplacement disponible</span>
+        </div>
+      </div>
 
       <div
         v-if="preparedSpells.length"
@@ -177,6 +248,8 @@
 
 <script lang="ts" setup>
 import { weaponPropertyLabels } from '~~/shared/utils/item'
+import { slotDamageDiceCount, type SlotDamage } from '~~/shared/rules/classResources'
+import { useClassResources } from '~/composables/character/useClassResources'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
@@ -190,7 +263,19 @@ const damageTypeLabels: Record<string, string> = {
 }
 
 const csRef = toRef(props, 'characterSheet')
-const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells } = useCharacterSheet(csRef)
+const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups } = useCharacterSheet(csRef)
+
+const slots = inject<Ref<{ spellcasting: Record<number, { max: number, current: number, created?: number }>, pact_magic: Record<number, { max: number, current: number }> }>>('spellSlots')
+const { setActive } = useClassResources(csRef, slots)
+
+const groupOf = (feature: { id: number }) => resourceGroups.value.find(g => g.featureIds.includes(feature.id))
+
+// Reste d'une capacité à usages : celui de sa réserve partagée s'il y en a une, sinon son propre compteur.
+const usesLeft = (feature: { id: number, maxUses: number | null, currentUses: number }): number | null => {
+  const group = groupOf(feature)
+  if (group) return group.unlimited || group.max === null ? null : Math.max(0, group.max - group.spent)
+  return feature.maxUses === null ? null : Math.max(0, feature.maxUses - feature.currentUses)
+}
 
 const actionTypes = [
   { key: 'action' as const, label: 'Action', color: '#22c55e' },
@@ -222,13 +307,13 @@ const featuresByActionType = computed(() => {
   const map: Record<string, typeof resolvedFeatures.value> = {}
   for (const f of resolvedFeatures.value) {
     if (!f.actionType) continue
-    if (f.maxUses !== null && f.currentUses >= (f.maxUses ?? 0)) continue
+    if (usesLeft(f) === 0) continue
     ;(map[f.actionType] ??= []).push(f)
   }
   return map
 })
 
-const preparedSpells = computed(() => characterSpells.value.filter(s => s.prepared))
+const preparedSpells = computed(() => (characterSpells.value ?? []).filter(s => s.prepared))
 
 // Roll dégâts arme
 type WeaponStat = typeof equippedWeaponStats.value[number]
@@ -242,6 +327,24 @@ const rollDamage = (weapon: WeaponStat) => {
   const { count, sides } = parseDice(weapon.damageDice)
   const label = weapon.usingTwoHanded ? `Dégâts (2 mains) — ${weapon.name}` : `Dégâts — ${weapon.name}`
   props.roll?.(label, weapon.damageBonus, sides, count)
+}
+
+const rollExtraDice = (weapon: WeaponStat, dice: WeaponStat['extraDamageDice'][number]) => {
+  props.roll?.(`${dice.name} — ${weapon.name}`, 0, dice.sides, dice.count)
+}
+
+// Châtiment divin : emplacements de sort de n'importe quel niveau (paladin ou autre) ; l'emplacement est dépensé au jet.
+const smiteBonus = ref(false)
+const smiteLevels = computed(() =>
+  Object.entries(slots?.value.spellcasting ?? {})
+    .filter(([, s]) => s.current > 0)
+    .map(([level]) => Number(level)),
+)
+const rollSmite = (smite: SlotDamage, level: number) => {
+  const slot = slots?.value.spellcasting[level]
+  if (!slot || slot.current < 1) return
+  slot.current -= 1
+  props.roll?.(`${smite.name} (niv. ${level})`, 0, smite.sides, slotDamageDiceCount(smite, level, smiteBonus.value))
 }
 
 const rollOffhand = (weapon: WeaponStat) => {
