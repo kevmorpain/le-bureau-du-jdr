@@ -49,6 +49,14 @@
         </template>
 
         <CollapsibleSection
+          v-if="resourceGroups.length"
+          title="Ressources de classe"
+          storage-key="class-resources"
+        >
+          <ClassResourcesSection :character-sheet="characterSheet" />
+        </CollapsibleSection>
+
+        <CollapsibleSection
           title="Capacités"
           :badge="availableFeaturesCount"
           storage-key="features"
@@ -159,7 +167,7 @@ async function refreshSheet() {
 const toaster = useToast()
 const { roll } = useDiceRoller()
 
-const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells } = useCharacterSheet(characterSheet)
+const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)
 
 // Réconciliation : quand la file de synchro d'un perso vient d'être vidée, on re-fetch pour

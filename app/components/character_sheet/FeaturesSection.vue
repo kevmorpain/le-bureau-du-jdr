@@ -325,10 +325,11 @@ const isASIFeature = (feature: { effects?: unknown[] }) =>
 
 /**
  * Compteur masqué quand `maxUsesFormula` est purement informatif : emplacements de Magie du Pacte
- * (section dédiée) et nombre d'invocations connues (`meta.hideCounter`).
+ * (section dédiée) et nombre d'invocations connues (`meta.hideCounter`) ; et quand la capacité porte une
+ * réserve (`meta.resource`) : son compteur et ses actions vivent dans « Ressources de classe ».
  */
-const hasHiddenCounter = (feature: { meta?: { slotLevelFormula?: unknown, hideCounter?: boolean } | null }) =>
-  Boolean(feature.meta?.slotLevelFormula) || Boolean(feature.meta?.hideCounter)
+const hasHiddenCounter = (feature: { meta?: { slotLevelFormula?: unknown, hideCounter?: boolean, resource?: string } | null }) =>
+  Boolean(feature.meta?.slotLevelFormula) || Boolean(feature.meta?.hideCounter) || Boolean(feature.meta?.resource)
 
 const abilityShortLabels: Record<string, string> = {
   str: 'FOR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'SAG', cha: 'CHA',
