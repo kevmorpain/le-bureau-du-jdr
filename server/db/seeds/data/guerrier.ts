@@ -1,8 +1,15 @@
+import { fixed, lookup } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
 import { asiFeatures } from './asi'
 
 export const guerrierName = 'Guerrier'
+
+// AideDD, Guerrier (index = niveau - 1) : Fougue (1) dès le niveau 2, (2) au 17 ; Inflexible (1) au 9, (2) au 13, (3) au 17 ;
+// Attaque supplémentaire : 2 attaques au 5, 3 au 11, 4 au 20.
+const ACTION_SURGE_USES = lookup([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2])
+const INDOMITABLE_USES = lookup([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3])
+const FIGHTER_ATTACKS = lookup([1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4])
 
 export const guerrierFeatures: FeatureDef[] = [
   {
@@ -31,7 +38,7 @@ export const guerrierFeatures: FeatureDef[] = [
     levelRequired: 1,
     actionType: 'bonus_action',
     rechargeType: 'short_rest',
-    maxUsesFormula: null,
+    maxUsesFormula: fixed(1),
     effects: [],
   },
   {
@@ -41,7 +48,7 @@ export const guerrierFeatures: FeatureDef[] = [
     levelRequired: 2,
     actionType: 'action',
     rechargeType: 'short_rest',
-    maxUsesFormula: null,
+    maxUsesFormula: ACTION_SURGE_USES,
     effects: [],
   },
   ...asiFeatures('Guerrier'),
@@ -53,7 +60,7 @@ export const guerrierFeatures: FeatureDef[] = [
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'extra_attack', value: { attacks: FIGHTER_ATTACKS } }],
   },
   {
     name: 'Inflexible',
@@ -62,7 +69,7 @@ export const guerrierFeatures: FeatureDef[] = [
     levelRequired: 9,
     actionType: null,
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
+    maxUsesFormula: INDOMITABLE_USES,
     effects: [],
   },
 ]

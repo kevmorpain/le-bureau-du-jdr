@@ -1,9 +1,11 @@
 import { evaluate } from '~~/shared/utils/formula'
+import { featureFormulaContext } from '~~/shared/rules/classResources'
 import type { FormulaContext, Formula } from '~~/shared/utils/formula'
 import type { FeatureMeta } from '~~/server/db/schema/features'
 import type { Effect } from '~~/server/db/schema/effects'
 
-type SlotState = { max: number, current: number }
+// `max` inclut les emplacements `created` par les points de sorcellerie.
+type SlotState = { max: number, current: number, created?: number }
 type SlotsByType = {
   spellcasting: Record<number, SlotState>
   pact_magic: Record<number, SlotState>
@@ -172,15 +174,20 @@ export const useCharacterSpellcasting = (
       const type = slot.slotType as 'spellcasting' | 'pact_magic'
       if (next[type] && slot.slotLevel >= 1 && slot.slotLevel <= 9) {
         next[type][slot.slotLevel] = {
-          max: slot.total,
-          current: slot.total - slot.used,
+          max: slot.total + slot.created,
+          current: slot.total + slot.created - slot.used,
+          created: slot.created,
         }
       }
     }
 
     const feat = pactMagicFeature.value
     if (feat && deps?.formulaContext) {
-      const slotLevel = evaluate(feat.meta!.slotLevelFormula!, deps.formulaContext.value)
+      // Même niveau de classe que le nombre d'emplacements (`maxUses`) : celui de l'Occultiste, pas de la classe principale.
+      const slotLevel = evaluate(
+        feat.meta!.slotLevelFormula!,
+        featureFormulaContext(deps.formulaContext.value, { featureType: 'class_feature', classId: feat.classId }, characterSheet?.value?.classes ?? []),
+      )
       const slotCount = feat.maxUses!
       if (slotLevel >= 1 && slotLevel <= 9 && slotCount > 0) {
         const existing = next.pact_magic[slotLevel]!
@@ -208,7 +215,7 @@ export const useCharacterSpellcasting = (
 
   let syncTimeout: ReturnType<typeof setTimeout> | null = null
   const normalizeSlots = (
-    arr: Array<{ slotLevel: number, slotType: string, total: number, used: number }>,
+    arr: Array<{ slotLevel: number, slotType: string, total: number, used: number, created?: number }>,
   ): string =>
     JSON.stringify([...arr].sort((a, b) => a.slotType.localeCompare(b.slotType) || a.slotLevel - b.slotLevel))
 
@@ -219,20 +226,21 @@ export const useCharacterSpellcasting = (
     if (import.meta.client) writeSnapshot(id, spellSlots.value, 'slots')
     if (syncTimeout) clearTimeout(syncTimeout)
     syncTimeout = setTimeout(() => {
-      const payload: Array<{ slotLevel: number, slotType: string, total: number, used: number }> = []
+      const payload: Array<{ slotLevel: number, slotType: string, total: number, used: number, created: number }> = []
       for (const [level, slot] of Object.entries(spellSlots.value.spellcasting)) {
         if (slot.max > 0) {
-          payload.push({ slotLevel: Number(level), slotType: 'spellcasting', total: slot.max, used: slot.max - slot.current })
+          const created = slot.created ?? 0
+          payload.push({ slotLevel: Number(level), slotType: 'spellcasting', total: slot.max - created, used: slot.max - slot.current, created })
         }
       }
       for (const [level, slot] of Object.entries(spellSlots.value.pact_magic)) {
         if (slot.max > 0) {
-          payload.push({ slotLevel: Number(level), slotType: 'pact_magic', total: slot.max, used: slot.max - slot.current })
+          payload.push({ slotLevel: Number(level), slotType: 'pact_magic', total: slot.max, used: slot.max - slot.current, created: 0 })
         }
       }
       // Évite une écriture inutile (et une op en file hors-ligne) si rien n'a changé vs serveur.
       const serverPayload = (characterSheet?.value?.spellSlots ?? []).map(s => ({
-        slotLevel: s.slotLevel, slotType: s.slotType, total: s.total, used: s.used,
+        slotLevel: s.slotLevel, slotType: s.slotType, total: s.total, used: s.used, created: s.created,
       }))
       if (normalizeSlots(payload) === normalizeSlots(serverPayload)) return
       void offlineMutate({

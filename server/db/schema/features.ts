@@ -5,7 +5,8 @@ import type { FeatureTag } from '~~/shared/rules/featureTags'
 import type { FeatCategory } from '~~/shared/rules/featCategories'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Source } from '~~/shared/rules/source'
-import type { AbilityScoreKey } from './effects'
+import type { ResourceKey } from '~~/shared/rules/classResources'
+import type { AbilityScoreKey, Effect } from './effects'
 import classes from './classes'
 import subclasses from './subclasses'
 import speciesLineages from './species_lineages'
@@ -30,6 +31,22 @@ export interface FeatureMeta {
   slotLevelFormula?: Formula
   /** `maxUsesFormula` purement informatif : n'affiche pas de compteur d'utilisations sur la fiche. */
   hideCounter?: boolean
+  /** Réserve que porte la feature ; deux features de même clé en partagent le compteur (Conduit divin du Clerc et du Paladin). */
+  resource?: ResourceKey
+  /** Réserve dépensée par paquets (ki, points de sorcellerie, Imposition des mains) : « n/N » plutôt qu'une pastille par point. */
+  pool?: boolean
+  /** À partir de ce niveau de la classe propriétaire, plus de limite d'utilisations (Rage au niveau 20). */
+  unlimitedFromClassLevel?: number
+  /** Effets en vigueur tant que la feature est active (Rage). */
+  whileActive?: Effect[]
+  /** Armure lourde portée : `whileActive` est suspendu (Rage). */
+  suspendedByHeavyArmor?: boolean
+  /** DD que propose la réserve : 8 + maîtrise + modificateur (DD de ki). */
+  saveDcAbility?: AbilityScoreKey
+  /** Usages que la feature décrit en texte et qu'elle paie à même sa réserve (Défense patiente, Déluge de coups…). */
+  spends?: { label: string, amount: number, minClassLevel?: number }[]
+  /** Capacité payée par la réserve d'une AUTRE feature (options de Métamagie) ; `spell_level` : coût = niveau du sort, minimum 1. */
+  cost?: { resource: ResourceKey, amount: number | 'spell_level' }
 }
 
 export interface FeaturePrerequisite {

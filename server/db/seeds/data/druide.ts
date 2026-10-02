@@ -1,3 +1,4 @@
+import { div, fixed, floor, max, variable } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 import { CIRCLE_CARRIER_NAME, CIRCLE_SPELLS_FEATURE_NAME, circleSpellEffects, circleSpellsDescription, DRUID_TERRAINS } from './alwaysPreparedSpells'
@@ -45,8 +46,20 @@ En forme de bête : vos statistiques sont remplacées par celles de la bête (ma
     levelRequired: 2,
     actionType: 'action',
     rechargeType: 'short_rest',
-    maxUsesFormula: null,
-    effects: [],
+    maxUsesFormula: fixed(2),
+    // AideDD, Druide › Forme sauvage : paliers de FP et durée = la moitié du niveau de druide, arrondie à l'inférieur.
+    effects: [{
+      type: 'beast_shape',
+      value: {
+        hoursDivisor: 2,
+        tiers: [
+          { fromClassLevel: 2, maxChallenge: 0.25, flying: false, swimming: false },
+          { fromClassLevel: 4, maxChallenge: 0.5, flying: false, swimming: true },
+          { fromClassLevel: 8, maxChallenge: 1, flying: true, swimming: true },
+        ],
+      },
+    }],
+    meta: { resource: 'wild_shape' },
   },
   ...asiFeatures('Druide'),
   {
@@ -182,7 +195,8 @@ export const druideSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        // AideDD, Cercle de la lune : FP 1 dès le niveau 2, puis niveau de druide ÷ 3 (arrondi à l'inférieur) à partir du 6.
+        effects: [{ type: 'beast_shape_challenge', value: { maxChallenge: max(fixed(1), floor(div(variable('class_level'), fixed(3)))) } }],
       },
       {
         name: 'Frappe primitive',

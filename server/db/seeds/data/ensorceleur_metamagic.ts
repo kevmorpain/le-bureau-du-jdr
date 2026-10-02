@@ -18,6 +18,7 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: { cost: { resource: 'sorcery_points', amount: 2 } },
   },
   {
     name: 'Sort ample',
@@ -29,6 +30,7 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: { cost: { resource: 'sorcery_points', amount: 1 } },
   },
   {
     name: 'Sort étendu',
@@ -40,6 +42,7 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: { cost: { resource: 'sorcery_points', amount: 1 } },
   },
   {
     name: 'Sort intensifié',
@@ -51,6 +54,7 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: { cost: { resource: 'sorcery_points', amount: 3 } },
   },
   {
     name: 'Sort jumeau',
@@ -62,6 +66,7 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: { cost: { resource: 'sorcery_points', amount: 'spell_level' } },
   },
   {
     name: 'Sort prévenant',
@@ -73,6 +78,7 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: { cost: { resource: 'sorcery_points', amount: 1 } },
   },
   {
     name: 'Sort renforcé',
@@ -84,6 +90,7 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: { cost: { resource: 'sorcery_points', amount: 1 } },
   },
   {
     name: 'Sort subtil',
@@ -95,6 +102,7 @@ export const ensorceleurMetamagicFeatures: FeatureDef[] = [
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: { cost: { resource: 'sorcery_points', amount: 1 } },
   },
 ]
 

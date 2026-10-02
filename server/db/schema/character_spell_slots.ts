@@ -12,6 +12,8 @@ const characterSpellSlots = sqliteTable(
     slotType: text('slot_type').$type<SlotType>().notNull(),
     total: integer('total').default(0).notNull(),
     used: integer('used').default(0).notNull(),
+    // Emplacements créés à même les points de sorcellerie, en plus de `total` ; ils disparaissent au repos long.
+    created: integer('created').default(0).notNull(),
   },
   table => [primaryKey({
     columns: [table.characterSheetId, table.slotLevel, table.slotType],

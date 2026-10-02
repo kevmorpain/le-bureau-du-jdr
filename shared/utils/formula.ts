@@ -80,3 +80,5 @@ export const add = (left: Formula, right: Formula): Formula => ({ op: 'add', lef
 export const mul = (left: Formula, right: Formula): Formula => ({ op: 'mul', left, right })
 export const max = (left: Formula, right: Formula): Formula => ({ op: 'max', left, right })
 export const floor = (value: Formula): Formula => ({ op: 'floor', value })
+export const ceil = (value: Formula): Formula => ({ op: 'ceil', value })
+export const div = (left: Formula, right: Formula): Formula => ({ op: 'div', left, right })

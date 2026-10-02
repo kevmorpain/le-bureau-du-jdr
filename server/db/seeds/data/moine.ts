@@ -1,3 +1,4 @@
+import { fixed, variable } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
@@ -42,8 +43,21 @@ DD de sauvegarde de ki = 8 + votre bonus de maîtrise + votre modificateur de Sa
     levelRequired: 2,
     actionType: null,
     rechargeType: 'short_rest',
-    maxUsesFormula: null,
+    // AideDD, Moine : « votre niveau de moine détermine le nombre de points ki » (colonne Ki = niveau).
+    maxUsesFormula: variable('class_level'),
     effects: [],
+    meta: {
+      resource: 'ki',
+      pool: true,
+      saveDcAbility: 'wis',
+      spends: [
+        { label: 'Défense patiente', amount: 1 },
+        { label: 'Déluge de coups', amount: 1 },
+        { label: 'Déplacement aérien', amount: 1 },
+        { label: 'Parade de projectiles (renvoi)', amount: 1, minClassLevel: 3 },
+        { label: 'Frappe étourdissante', amount: 1, minClassLevel: 5 },
+      ],
+    },
   },
   {
     name: 'Déplacement sans armure',
@@ -88,7 +102,7 @@ Si vous réduisez les dégâts à 0, vous pouvez attraper le projectile et dépe
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'extra_attack', value: { attacks: fixed(2) } }],
   },
   {
     name: 'Frappe étourdissante',

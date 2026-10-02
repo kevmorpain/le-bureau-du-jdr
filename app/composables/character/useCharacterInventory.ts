@@ -3,6 +3,8 @@ import { hasHeavyWeaponDisadvantage } from '~~/shared/rules/creatureSize'
 import { archeryAttackBonus, defenseAcBonus, duelingDamageBonus, twoWeaponOffhandUsesAbilityMod } from '~~/shared/rules/fightingStyleEffects'
 import { armorClassBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { activeItemEffectSources } from '~~/shared/rules/characterEffects'
+import { damageDiceAppliesToWeapon } from '~~/shared/rules/classResources'
+import type { ClassTraits } from '~~/shared/rules/classResources'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -60,6 +62,10 @@ export interface WeaponStats {
   rangeText: string | null
   magicBonus: number
   isProficient: boolean
+  // Part de `damageBonus` due à la Rage (arme de corps à corps maniée avec la Force).
+  rageBonus: number
+  // Dés ajoutés à l'attaque (Attaque sournoise, Châtiment divin amélioré) : jetés à part.
+  extraDamageDice: ClassTraits['weaponDamageDice']
 }
 
 export interface ArmorClassBreakdown {
@@ -79,6 +85,7 @@ export const useCharacterInventory = (
     proficiencyBonus: ComputedRef<number>
     spellcastingAbility: ComputedRef<string | null>
     temporaryEffectSources?: ComputedRef<EffectSource[]>
+    classTraits?: ComputedRef<ClassTraits>
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
@@ -329,11 +336,14 @@ export const useCharacterInventory = (
         })
 
         const attackBonus = abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0) + archeryBonus
-        const damageBonus = abilityMod + (entry.magicBonus ?? 0) + duelingBonus
+        // AideDD, Rage : le bonus vaut pour une attaque de corps à corps avec une arme utilisant la Force.
+        const usesStrength = !isRanged && strMod >= (isFinesse ? dexMod : strMod)
+        const rageBonus = usesStrength ? deps?.classTraits?.value.meleeStrengthDamageBonus ?? 0 : 0
+        const damageBonus = abilityMod + (entry.magicBonus ?? 0) + duelingBonus + rageBonus
         // Dégâts main secondaire : normalement sans modificateur (sauf négatif, règle PHB) ; le
         // style Combat à deux armes ajoute le modificateur de caractéristique.
         const offhandMod = twoWeaponOffhandUsesAbilityMod(styles) ? abilityMod : (abilityMod < 0 ? abilityMod : 0)
-        const damageBonusOffhand = offhandMod + (entry.magicBonus ?? 0)
+        const damageBonusOffhand = offhandMod + (entry.magicBonus ?? 0) + rageBonus
 
         const damageDice = isVersatile && entry.usingTwoHanded
           ? props.versatile_damage ?? props.damage_dice
@@ -373,6 +383,9 @@ export const useCharacterInventory = (
           rangeText,
           magicBonus: entry.magicBonus ?? 0,
           isProficient: proficient,
+          rageBonus,
+          extraDamageDice: (deps?.classTraits?.value.weaponDamageDice ?? [])
+            .filter(d => damageDiceAppliesToWeapon(d.weapons, { isRanged, isFinesse })),
         }
       }),
   )

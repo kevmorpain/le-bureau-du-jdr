@@ -1,3 +1,4 @@
+import { variable } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
@@ -31,8 +32,10 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     levelRequired: 2,
     actionType: 'bonus_action',
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
+    // AideDD, Ensorceleur : la colonne Points de sorcellerie égale le niveau (dès le niveau 2).
+    maxUsesFormula: variable('class_level'),
     effects: [],
+    meta: { resource: 'sorcery_points', pool: true },
   },
   {
     name: 'Métamagie',
@@ -62,7 +65,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     actionType: null,
     rechargeType: 'short_rest',
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'resource_regain', value: { resource: 'sorcery_points', amount: 4, on: 'short_rest' } }],
   },
 ]
 
@@ -102,6 +105,7 @@ Types et dégâts associés : Airain/Or/Rouge (feu), Argent/Blanc (froid), Bleu/
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        meta: { cost: { resource: 'sorcery_points', amount: 1 } },
       },
       {
         name: 'Ailes draconiques',
@@ -122,6 +126,7 @@ Types et dégâts associés : Airain/Or/Rouge (feu), Argent/Blanc (froid), Bleu/
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        meta: { cost: { resource: 'sorcery_points', amount: 5 } },
       },
     ],
   },
@@ -164,6 +169,7 @@ Tant que vous n'avez pas récupéré cette capacité, si vous lancez un sort d'e
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        meta: { cost: { resource: 'sorcery_points', amount: 2 } },
       },
       {
         name: 'Chaos contrôlé',
