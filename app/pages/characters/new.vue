@@ -82,7 +82,7 @@ const toast = useToast()
 
 const FIELD_LABELS: Record<string, string> = {
   name: 'Nom du personnage',
-  maxHp: 'Points de vie',
+  hpBase: 'Points de vie',
   classId: 'Classe',
   abilityScores: 'Caractéristiques',
   classSkills: 'Compétences de classe',
