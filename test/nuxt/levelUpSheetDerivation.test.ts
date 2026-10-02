@@ -65,7 +65,7 @@ const lockedClassFeature = {
 describe('level-up — maîtrises de compétences lues comme la fiche', () => {
   it('Roublard 5 créé par le serveur : ses compétences de classe dérivées sont éligibles à l\'expertise', async () => {
     const { id } = await createCharacter(db, createCharacterSchema.parse({
-      name: 'Sly', maxHp: 33, classId: ROGUE, level: 5, speciesId: SPECIES.human,
+      name: 'Sly', hpBase: 33, classId: ROGUE, level: 5, speciesId: SPECIES.human,
       abilityScores: { str: 10, dex: 16, con: 12, int: 13, wis: 11, cha: 14 },
       classSkills: ['stealth', 'perception', 'acrobatics', 'deception'], classSavingThrows: ['dex', 'int'],
       backgroundSkills: [], spellIds: [], expertiseSkills: ['stealth', 'perception'],

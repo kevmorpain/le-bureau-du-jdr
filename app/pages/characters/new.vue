@@ -59,7 +59,7 @@ const {
   backgroundDbId,
   choicePicksPayload,
   finalAbilities,
-  hpMax,
+  hpBase,
   resetBuilder,
   needsPactBoon,
   asiLevelsForCharacter,
@@ -82,7 +82,7 @@ const toast = useToast()
 
 const FIELD_LABELS: Record<string, string> = {
   name: 'Nom du personnage',
-  maxHp: 'Points de vie',
+  hpBase: 'Points de vie',
   classId: 'Classe',
   abilityScores: 'Caractéristiques',
   classSkills: 'Compétences de classe',
@@ -95,7 +95,7 @@ const FIELD_LABELS: Record<string, string> = {
 }
 
 async function handleSubmit() {
-  if (!classData.value || !hpMax.value) return
+  if (!classData.value || !hpBase.value) return
   if (!online.value) {
     toast.add({ title: 'Création indisponible hors-ligne', description: 'Reconnecte-toi pour créer le personnage.', color: 'warning' })
     return
@@ -151,7 +151,7 @@ async function handleSubmit() {
     const payload = {
       name: state.value.name,
       alignment: state.value.alignment ?? undefined,
-      maxHp: hpMax.value,
+      hpBase: hpBase.value,
       classId,
       subclassId,
       // Style de combat choisi (F2 tranche 2) : envoyé au serveur, qui le résout + matérialise (le

@@ -18,7 +18,7 @@ beforeAll(async () => {
 
 const createPaladin = (level: number, over: Record<string, unknown> = {}) =>
   createCharacter(db, createCharacterSchema.parse({
-    name: 'Pal', maxHp: 10, classId: CLASS.paladin, level, speciesId: SPECIES.human,
+    name: 'Pal', hpBase: 10, classId: CLASS.paladin, level, speciesId: SPECIES.human,
     abilityScores: { str: 15, dex: 10, con: 14, int: 8, wis: 10, cha: 14 },
     classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
     ...over,
@@ -45,7 +45,7 @@ const materializedFeatureIds = async (sheetId: number): Promise<number[]> => {
 describe('style de combat — autorité serveur (F2 tranche 2)', () => {
   it('création Guerrier niv 1 : « Archerie » persisté en character_choices + matérialisé', async () => {
     const { id } = await createCharacter(db, createCharacterSchema.parse({
-      name: 'Gonzo', maxHp: 12, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
+      name: 'Gonzo', hpBase: 10, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
       abilityScores: { str: 16, dex: 14, con: 14, int: 8, wis: 10, cha: 10 },
       classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
       fightingStyle: 'Archerie',
@@ -68,7 +68,7 @@ describe('style de combat — autorité serveur (F2 tranche 2)', () => {
     expect(await fightingStyleChoices(id)).toHaveLength(0) // rien au niv 1
 
     await characterLevelUp(db, id, levelUpSchema.parse({
-      classId: CLASS.paladin, isMulticlass: false, hpGained: 6, fightingStyle: 'Défense',
+      classId: CLASS.paladin, isMulticlass: false, hpDie: 6, fightingStyle: 'Défense',
     }))
 
     const choices = await fightingStyleChoices(id)
@@ -79,7 +79,7 @@ describe('style de combat — autorité serveur (F2 tranche 2)', () => {
 
   it('classe non martiale (Magicien) : un style envoyé est ignoré (pas de progression)', async () => {
     const { id } = await createCharacter(db, createCharacterSchema.parse({
-      name: 'Merlin', maxHp: 8, classId: CLASS.wizard, level: 1, speciesId: SPECIES.human,
+      name: 'Merlin', hpBase: 6, classId: CLASS.wizard, level: 1, speciesId: SPECIES.human,
       abilityScores: { str: 8, dex: 14, con: 12, int: 16, wis: 10, cha: 10 },
       classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
       fightingStyle: 'Défense',

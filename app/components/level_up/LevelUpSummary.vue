@@ -207,6 +207,7 @@ const {
   totalLevel,
   pickedClass,
   hpGained,
+  currentHpMax,
   finalAbilities,
   multiclassGainsOf,
   submit,
@@ -238,7 +239,6 @@ const invocationNamesById = computed(() => {
   return map
 })
 
-const currentHpMax = computed(() => charSheet?.value?.maxHp ?? 0)
 const oldProfBonus = computed(() => profBonusAtLevel(totalLevel.value))
 const newProfBonus = computed(() => profBonusAtLevel(totalLevel.value + 1))
 

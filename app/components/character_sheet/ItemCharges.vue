@@ -101,6 +101,7 @@
 
 <script lang="ts" setup>
 import type { InventoryEntry } from '~/composables/character/useCharacterInventory'
+import { parseDice } from '~~/shared/rules/dice'
 
 const props = defineProps<{
   entry: InventoryEntry
@@ -142,15 +143,9 @@ function applyRecharge(amount: number) {
   popoverOpen.value = false
 }
 
-function parseDice(expr: string): { count: number, sides: number, modifier: number } {
-  const m = expr.match(/^(\d+)d(\d+)([+-]\d+)?$/)
-  if (!m) return { count: 1, sides: 6, modifier: 0 }
-  return { count: Number(m[1]), sides: Number(m[2]), modifier: m[3] ? Number(m[3]) : 0 }
-}
-
 function rollRecharge() {
   if (!rechargeDice.value) return
-  const { count, sides, modifier } = parseDice(rechargeDice.value)
+  const { count, sides, modifier } = parseDice(rechargeDice.value) ?? { count: 1, sides: 6, modifier: 0 }
   const label = `Recharge — ${props.entry.item?.name ?? 'objet'}`
   let total: number
   if (props.roll) {

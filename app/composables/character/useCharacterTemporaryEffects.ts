@@ -1,4 +1,5 @@
 import type { EffectSource } from '~~/shared/rules/effectBonuses'
+import { activeTemporaryEffectSources } from '~~/shared/rules/characterEffects'
 import type { TemporaryEffect } from '~~/shared/utils/temporary_effects'
 
 export type TemporaryEffectDraft = Omit<TemporaryEffect, 'id'> & { id?: number }
@@ -6,11 +7,7 @@ export type TemporaryEffectDraft = Omit<TemporaryEffect, 'id'> & { id?: number }
 export const useCharacterTemporaryEffects = (characterSheet?: Ref<CharacterSheet>) => {
   const temporaryEffects = computed<TemporaryEffect[]>(() => characterSheet?.value?.temporaryEffects ?? [])
 
-  const temporaryEffectSources = computed<EffectSource[]>(() =>
-    temporaryEffects.value
-      .filter(t => t.active)
-      .map(t => ({ label: t.name, effects: t.effects })),
-  )
+  const temporaryEffectSources = computed<EffectSource[]>(() => activeTemporaryEffectSources(temporaryEffects.value))
 
   // Mutation en place de la fiche (pas de réassignation de `.value`), comme `sheetTextField` : les
   // sections qui reçoivent la fiche en prop en lecture seule restent persistées par le deep watch.

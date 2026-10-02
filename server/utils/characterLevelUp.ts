@@ -9,6 +9,8 @@ import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLe
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
+import { hitPointGain } from '~~/shared/rules/hitPoints'
+import { loadSheetRelations, sheetHitPointsOf } from '~~/server/utils/characterSheetLoader'
 import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
 import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
@@ -23,8 +25,6 @@ import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Db } from '~~/server/utils/db'
 
-// maxHp/hpGained restent fournis par le client (formule PV front-only).
-
 const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcanum_8' | 'arcanum_9'> = {
   11: 'arcanum_6',
   13: 'arcanum_7',
@@ -35,7 +35,8 @@ const ARCANUM_LEVEL_TO_SOURCE: Record<number, 'arcanum_6' | 'arcanum_7' | 'arcan
 export const levelUpSchema = z.object({
   classId: z.number().int().positive(),
   isMulticlass: z.boolean(),
-  hpGained: z.number().int().min(1),
+  // Valeur du dé de vie (lancé, saisi ou fixe) : le serveur la borne par le dé de la classe et en tire le gain.
+  hpDie: z.number().int().min(1).max(12),
   subclassId: z.number().int().positive().nullable().optional(),
   fightingStyle: z.string().nullable().optional(),
   expertiseSkills: uniqueSkillKeysSchema.optional(),
@@ -262,7 +263,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   const newLevel = (existingClass?.level ?? 0) + 1
 
   const [charSheet] = await db
-    .select({ maxHp: schema.characterSheets.maxHp, currentHitDie: schema.characterSheets.currentHitDie, ruleset: schema.characterSheets.ruleset })
+    .select({ hpBase: schema.characterSheets.hpBase, currentHitDie: schema.characterSheets.currentHitDie, ruleset: schema.characterSheets.ruleset })
     .from(schema.characterSheets)
     .where(eq(schema.characterSheets.id, characterSheetId))
     .limit(1)
@@ -276,6 +277,9 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       ? `La classe (id=${cls.id}) est déjà au niveau ${existingClass.level} sur la fiche : ce n'est pas un multiclassage.`
       : `La classe (id=${cls.id}) n'est pas sur la fiche : seul un multiclassage peut l'ajouter.`)
   }
+  const hitDieSides = hitDieSidesOf(cls.hitDice)
+  if (hitDieSides && d.hpDie > Number(hitDieSides)) throw new CharacterValidationError(`Le dé de vie (${d.hpDie}) dépasse le d${hitDieSides} de la classe.`)
+  const hpGained = hitPointGain(d.hpDie, sheetHitPointsOf(await loadSheetRelations(db, characterSheetId)).naturalConMod)
   const ruleset: Ruleset = charSheet.ruleset
   if (cls.ruleset !== ruleset) throw new CharacterValidationError(`La classe (id=${cls.id}, éd. ${cls.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
   await validateLevelUpRulesetCoherence(db, d, ruleset)
@@ -400,7 +404,6 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   }
   const pactSlotsToDelete = existingSlots.filter(s => s.slotType === 'pact_magic' && s.slotLevel !== newPactLevel)
 
-  const hitDieSides = hitDieSidesOf(cls.hitDice)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const currentHitDie: Array<{ die: string, count: number }> = (charSheet.currentHitDie as any) ?? []
   let updatedHitDie = [...currentHitDie]
@@ -458,7 +461,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   }
 
   stmts.push(db.update(schema.characterSheets)
-    .set({ maxHp: charSheet.maxHp + d.hpGained, currentHitDie: updatedHitDie as unknown as typeof charSheet.currentHitDie, updatedAt: new Date().toISOString() })
+    .set({ hpBase: charSheet.hpBase + hpGained, currentHitDie: updatedHitDie as unknown as typeof charSheet.currentHitDie, updatedAt: new Date().toISOString() })
     .where(eq(schema.characterSheets.id, characterSheetId)))
 
   if (d.asiChoice === 'asi' && d.asiBonuses) {
@@ -572,5 +575,5 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     await applyMetamagicChanges(db, characterSheetId, d.newMetamagicIds)
   }
 
-  return { success: true, newLevel, hpGained: d.hpGained }
+  return { success: true, newLevel, hpGained }
 }

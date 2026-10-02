@@ -3,13 +3,20 @@
     <div class="flex items-center justify-between">
       <span class="text-xs font-bold uppercase tracking-widest text-muted">Points de vie</span>
       <span class="font-mono font-bold text-sm">
-        {{ characterSheet.currentHp }}<span class="text-muted">/{{ characterSheet.maxHp }}</span>
+        {{ characterSheet.currentHp }}<span class="text-muted">/{{ fullMaxHp }}</span>
         <span
           v-if="characterSheet.temporaryHp > 0"
           class="text-blue-400 ml-1"
         >+{{ characterSheet.temporaryHp }}</span>
       </span>
     </div>
+
+    <p
+      v-if="isDead"
+      class="text-xs font-bold text-red-400"
+    >
+      ☠ Mort
+    </p>
 
     <div class="h-1.5 rounded-full bg-elevated overflow-hidden">
       <div
@@ -19,7 +26,7 @@
     </div>
 
     <UTooltip
-      v-if="effectiveMaxHp !== characterSheet.maxHp"
+      v-if="effectiveMaxHp !== fullMaxHp"
       text="Épuisement niv. 4 : PV max ÷ 2"
     >
       <span class="text-xs text-rose-400 font-semibold">→ Max effectif : {{ effectiveMaxHp }}</span>
@@ -81,6 +88,12 @@
         >
           {{ resistanceLabel }}
         </p>
+        <UCheckbox
+          v-if="isDying"
+          v-model="isCritical"
+          label="Coup critique (2 échecs aux jets contre la mort)"
+          size="sm"
+        />
       </template>
 
       <div
@@ -124,7 +137,7 @@
           <UInputNumber
             v-model="characterSheet.currentHp"
             :min="0"
-            :max="characterSheet.maxHp"
+            :max="effectiveMaxHp"
             :increment="false"
             :decrement="false"
             variant="none"
@@ -132,8 +145,8 @@
           />
           /
           <UInputNumber
-            v-model="characterSheet.maxHp"
-            :min="0"
+            v-model="maxHpInput"
+            :min="1"
             :increment="false"
             :decrement="false"
             variant="none"
@@ -168,7 +181,7 @@
         </div>
         <p class="text-sm text-muted">
           Vous maintenez la concentration sur
-          <strong class="text-default">{{ concentrationSpellName || 'un sort' }}</strong>.
+          <strong class="text-default">{{ concentrationName }}</strong>.
           Les dégâts reçus ({{ concentrationDamage }}) nécessitent un jet de sauvegarde.
         </p>
         <div class="bg-elevated rounded-lg p-3 text-sm space-y-1">
@@ -208,6 +221,8 @@
 
 <script lang="ts" setup>
 import { damageTypeLabels } from '~~/shared/utils/labels'
+import { hpBaseFromTotal } from '~~/shared/rules/hitPoints'
+import { applyDamage, applyHealing, concentrationSaveDc, gainTemporaryHp } from '~~/shared/rules/damage'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
@@ -215,7 +230,18 @@ const props = defineProps<{
   roll?: (label: string, modifier: number, sides?: number, count?: number) => number
 }>()
 
-const { effectiveMaxHp, defenseEntries, isConcentrating, concentratingSpell, setConcentration, savingThrows } = useCharacterSheet(characterSheet)
+const {
+  fullMaxHp, effectiveMaxHp, defenseEntries, isConcentrating, concentrationName, setConcentration, savingThrows,
+  characterLevel, abilityModifiers, hpPerLevelBonus, hitPointState, setHitPointState, isDying, isDead,
+} = useCharacterSheet(characterSheet)
+
+// On saisit le maximum affiché ; la fiche ne stocke que ce qui reste hors CON et hors bonus par niveau.
+const maxHpInput = computed({
+  get: () => fullMaxHp.value,
+  set: (total: number | null | undefined) => {
+    characterSheet.value.hpBase = Math.max(0, hpBaseFromTotal(total ?? 1, characterLevel.value, abilityModifiers.value.con ?? 0, hpPerLevelBonus.value))
+  },
+})
 
 const hpPercent = computed(() => {
   const max = effectiveMaxHp.value || 1
@@ -233,6 +259,7 @@ const mode = ref<'heal' | 'damage' | null>(null)
 const amount = ref('')
 const damageType = ref('none')
 const isTemporary = ref(false)
+const isCritical = ref(false)
 const flashResult = ref<string | null>(null)
 const inputRef = ref()
 
@@ -241,6 +268,7 @@ const toggleMode = (m: 'heal' | 'damage') => {
   amount.value = ''
   damageType.value = 'none'
   isTemporary.value = false
+  isCritical.value = false
   nextTick(() => inputRef.value?.input?.focus())
 }
 
@@ -276,8 +304,6 @@ const showConcentrationCheck = ref(false)
 const concentrationDamage = ref(0)
 const concentrationDC = ref(10)
 
-const concentrationSpellName = computed(() => concentratingSpell.value?.name ?? '')
-
 const conSaveMod = computed(() => savingThrows.value.con?.modifier ?? 0)
 
 const rollConcentrationSave = () => {
@@ -291,16 +317,18 @@ const concentrationSuccess = () => {
   useToast().add({ title: 'Concentration maintenue', color: 'success' })
 }
 
-const concentrationFail = () => {
-  const spellName = concentrationSpellName.value
+const breakConcentration = (reason?: string) => {
+  const name = concentrationName.value
   setConcentration(null)
   showConcentrationCheck.value = false
   useToast().add({
     title: 'Concentration perdue',
-    description: spellName ? `Vous n'êtes plus concentré sur ${spellName}.` : undefined,
+    description: [name ? `Vous n'êtes plus concentré sur ${name}.` : null, reason].filter(Boolean).join(' ') || undefined,
     color: 'error',
   })
 }
+
+const concentrationFail = () => breakConcentration()
 
 // Commit action soins / dégâts
 const commit = () => {
@@ -309,13 +337,14 @@ const commit = () => {
     mode.value = null
     return
   }
+  const maxHp = effectiveMaxHp.value
 
   if (mode.value === 'heal') {
     if (isTemporary.value) {
-      characterSheet.value.temporaryHp = Math.max(characterSheet.value.temporaryHp, raw)
+      setHitPointState(gainTemporaryHp(hitPointState.value, raw))
       showFlash(`+${raw} PV temp`)
     } else {
-      characterSheet.value.currentHp = Math.min(effectiveMaxHp.value, characterSheet.value.currentHp + raw)
+      setHitPointState(applyHealing(hitPointState.value, raw, { maxHp }))
       showFlash(`+${raw} PV`)
     }
   } else if (mode.value === 'damage') {
@@ -325,16 +354,24 @@ const commit = () => {
     else if (d?.level === 'resistance') final = Math.floor(raw / 2)
     else if (d?.level === 'vulnerability') final = raw * 2
 
-    const absorbedByTemp = Math.min(characterSheet.value.temporaryHp, final)
-    characterSheet.value.temporaryHp -= absorbedByTemp
-    characterSheet.value.currentHp = Math.max(0, characterSheet.value.currentHp - (final - absorbedByTemp))
+    const result = applyDamage(hitPointState.value, final, { maxHp, critical: isCritical.value })
+    setHitPointState(result.state)
 
     const suffix = d?.level === 'immunity' ? ' (immunité)' : d?.level === 'resistance' ? ' (résistance)' : d?.level === 'vulnerability' ? ' (vulnérabilité)' : ''
     showFlash(`−${final} PV${suffix}`)
 
-    if (isConcentrating.value && final > 0) {
-      concentrationDamage.value = final
-      concentrationDC.value = Math.max(10, Math.floor(final / 2))
+    if (result.instantDeath) {
+      useToast().add({ title: 'Mort instantanée', description: 'Les dégâts restants atteignent le maximum de PV.', color: 'error' })
+    } else if (result.deathSaveFailuresAdded > 0) {
+      useToast().add({ title: `${result.deathSaveFailuresAdded} échec${result.deathSaveFailuresAdded > 1 ? 's' : ''} aux jets contre la mort`, color: 'error' })
+    }
+
+    // Inconscient ou mort : la concentration s'arrête d'elle-même (AideDD, Concentration) ; sinon, un jet de CON.
+    if (isConcentrating.value && (result.droppedToZero || result.instantDeath || result.state.currentHp === 0)) {
+      breakConcentration('Vous êtes tombé à 0 PV.')
+    } else if (isConcentrating.value && final - result.absorbedByTemporary > 0) {
+      concentrationDamage.value = final - result.absorbedByTemporary
+      concentrationDC.value = concentrationSaveDc(concentrationDamage.value)
       showConcentrationCheck.value = true
     }
   }
@@ -342,6 +379,7 @@ const commit = () => {
   amount.value = ''
   mode.value = null
   damageType.value = 'none'
+  isCritical.value = false
 }
 
 const showFlash = (msg: string) => {

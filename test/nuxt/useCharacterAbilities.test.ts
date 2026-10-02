@@ -76,7 +76,7 @@ describe('useCharacterAbilities — Ambroise (Nain des collines · Occultiste 10
     })
 
     it('aucun bonus de PV : « Ténacité naine » n\'émet pas d\'effet et Ambroise n\'a pas de don', () => {
-      expect(a.hpBonusFromFeats.value).toBe(0)
+      expect(a.hpPerLevelBonus.value).toBe(0)
     })
   })
 })
@@ -120,7 +120,7 @@ describe('useCharacterAbilities — Lixek (Drakéide d\'or · Guerrier Champion 
     expect(l.initiativeBonus.value).toBe(6) // DEX +1 + 5 (Alerte)
     expect(l.passivePerception.value).toBe(11) // 10 + SAG +1 (non maîtrisé)
     expect(l.passiveInvestigation.value).toBe(9) // 10 + INT −1
-    expect(l.hpBonusFromFeats.value).toBe(0) // Alerte n'accorde pas de PV
+    expect(l.hpPerLevelBonus.value).toBe(0) // Alerte n'accorde pas de PV
   })
 })
 
@@ -172,7 +172,7 @@ describe('useCharacterAbilities — Uka (Demi-orc · Barde Collège du savoir 10
     expect(u.passivePerception.value).toBe(15) // 10 + Perception maîtrisée (SAG +1 + 4)
     expect(u.passiveInvestigation.value).toBe(9) // 10 + INT −1 (non maîtrisée)
     expect(u.initiativeBonus.value).toBe(2) // DEX +2 seul — pas de +½PB de Touche-à-tout
-    expect(u.hpBonusFromFeats.value).toBe(0)
+    expect(u.hpPerLevelBonus.value).toBe(0)
   })
 })
 
@@ -349,12 +349,12 @@ describe('useCharacterAbilities — dérivation par canal', () => {
       ],
       proficiencyBonus: 4,
     }
-    const { passivePerception, passiveInvestigation, initiativeBonus, hpBonusFromFeats } = mountAbilities(f)
+    const { passivePerception, passiveInvestigation, initiativeBonus, hpPerLevelBonus } = mountAbilities(f)
 
     expect(passivePerception.value).toBe(17) // 10 + mod SAG 2 + 5
     expect(passiveInvestigation.value).toBe(16) // 10 + mod INT 1 + 5
     expect(initiativeBonus.value).toBe(8) // mod DEX 3 + 5
-    expect(hpBonusFromFeats.value).toBe(20) // 2 × 10 niveaux
+    expect(hpPerLevelBonus.value).toBe(2) // Robuste : +2 PV par niveau (× 10 niveaux ajoutés au maximum)
   })
 })
 

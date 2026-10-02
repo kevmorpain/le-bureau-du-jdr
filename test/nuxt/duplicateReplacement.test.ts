@@ -31,7 +31,7 @@ let toolReplacement: number
 
 const create = (classId: number, speciesId: number, background: string, choicePicks: unknown[]) =>
   createCharacter(db, createCharacterSchema.parse({
-    name: 'X', maxHp: 10, classId, level: 1, speciesId, backgroundId: backgroundId[background],
+    name: 'X', hpBase: 8, classId, level: 1, speciesId, backgroundId: backgroundId[background],
     abilityScores: { str: 10 }, classSkills: [], backgroundSkills: [], spellIds: [], choicePicks,
   }), OWNER)
 

@@ -38,7 +38,9 @@ const characterSheets = sqliteTable('character_sheets', {
   ruleset: text('ruleset').$type<Ruleset>().notNull().default('5'),
   speciesId: integer('species_id').references(() => characterSpecies.id).notNull(),
   alignment: text().$type<Alignment>().default(Alignment.TrueNeutral).notNull(),
-  maxHp: integer('max_hp').default(0).notNull(),
+  // Part « dés » des PV max (dés lancés ou valeurs fixes) : le modificateur de CON et les bonus par niveau
+  // s'ajoutent à la lecture (`shared/rules/hitPoints.ts`, ADR D19).
+  hpBase: integer('hp_base').default(0).notNull(),
   currentHp: integer('current_hp').default(0).notNull(),
   temporaryHp: integer('temporary_hp').default(0).notNull(),
   backgroundId: integer('background_id').references(() => backgrounds.id),
@@ -60,6 +62,8 @@ const characterSheets = sqliteTable('character_sheets', {
   currentHitDie: text('current_hit_die', { mode: 'json' }).$type<CurrentHitDie[]>(),
   inspiration: integer({ mode: 'boolean' }).default(false).notNull(),
   exhaustionLevel: integer('exhaustion_level').default(0).notNull(),
+  deathSaveSuccesses: integer('death_save_successes').default(0).notNull(),
+  deathSaveFailures: integer('death_save_failures').default(0).notNull(),
   dragonbornAncestry: text('dragonborn_ancestry'),
   pp: integer('pp').default(0).notNull(),
   po: integer('po').default(0).notNull(),
@@ -67,6 +71,8 @@ const characterSheets = sqliteTable('character_sheets', {
   pa: integer('pa').default(0).notNull(),
   pc: integer('pc').default(0).notNull(),
   concentratingSpellId: integer('concentrating_spell_id').references(() => spells.id, { onDelete: 'set null' }),
+  // Concentration sur autre chose qu'un sort du catalogue (effet de monstre, sort non seedé, homebrew) : exclusif de la clé étrangère.
+  concentratingOn: text('concentrating_on'),
   notes: text('notes').default('').notNull(),
   temporaryEffects: text('temporary_effects', { mode: 'json' }).$type<TemporaryEffect[]>().default([]).notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),

@@ -135,7 +135,7 @@
                 variant="ghost"
                 color="error"
                 class="shrink-0"
-                @click.stop="removeItem(entry.id)"
+                @click.stop="askRemove(entry)"
               />
             </div>
 
@@ -345,7 +345,7 @@
               variant="ghost"
               color="error"
               class="shrink-0"
-              @click="removeItem(entry.id)"
+              @click="askRemove(entry)"
             />
           </div>
 
@@ -434,7 +434,7 @@
               size="xs"
               variant="ghost"
               color="error"
-              @click="removeItem(entry.id)"
+              @click="askRemove(entry)"
             />
           </div>
           <p
@@ -536,7 +536,7 @@
               size="xs"
               variant="ghost"
               color="error"
-              @click="removeItem(entry.id)"
+              @click="askRemove(entry)"
             />
           </div>
           <p
@@ -573,6 +573,19 @@
     </template>
   </div>
 
+  <ConfirmActionModal
+    v-model:open="confirmingRemoval"
+    title="Supprimer cet objet ?"
+    confirm-label="Supprimer"
+    confirm-color="error"
+    confirm-icon="i-heroicons:trash"
+    @confirm="confirmRemoval"
+  >
+    <p class="text-muted">
+      {{ entryToRemove?.item?.name ?? 'Cet objet' }} quitte l'inventaire, avec ses charges et ses notes. Cette action n'a pas d'annulation.
+    </p>
+  </ConfirmActionModal>
+
   <AddItemSlideover
     v-model:open="slideoverOpen"
     :character-sheet="characterSheet"
@@ -608,6 +621,17 @@ const {
   attunedCount,
   setUsingTwoHanded,
 } = useCharacterSheet(characterSheetModel)
+
+const entryToRemove = ref<InventoryEntry | null>(null)
+const confirmingRemoval = ref(false)
+const askRemove = (entry: InventoryEntry) => {
+  entryToRemove.value = entry
+  confirmingRemoval.value = true
+}
+const confirmRemoval = () => {
+  if (entryToRemove.value) removeItem(entryToRemove.value.id)
+  entryToRemove.value = null
+}
 
 // Objets magiques (effets via item_effects)
 

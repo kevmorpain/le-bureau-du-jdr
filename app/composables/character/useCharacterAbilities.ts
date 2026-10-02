@@ -1,6 +1,8 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import { ABILITY_KEYS, savingThrowKey } from '~~/shared/rules/abilities'
-import { resolveAbilityScore } from '~~/shared/rules/abilityScores'
+import { computeAbilityScores } from '~~/shared/rules/abilityScores'
+import { abilityMod } from '~~/shared/rules/math'
+import { hitPointsPerLevelBonus } from '~~/shared/rules/hitPoints'
 import { savingThrowBonusParts, sumBonusParts, type BonusPart, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { ABILITY_SKILLS } from '~~/shared/rules/skills'
 
@@ -19,7 +21,6 @@ const proficiencyPriority: Record<ProficiencyLevel, number> = { none: 0, profici
 export interface AbilitiesSheet {
   baseAbilityScores?: { abilityId: string, value: number }[]
   skills?: { skillKey: string, proficiencyLevel: string }[]
-  classes?: { level: number }[]
 }
 
 // ─── Composable ──────────────────────────────────────────────────────────────
@@ -48,9 +49,6 @@ export const useCharacterAbilities = (
     }, {}) || {},
   )
 
-  const getAbilityScore = (abilityId: string): number =>
-    characterAbilityScores.value[abilityId] || 10
-
   const activeEffects = computed<Effect[]>(() =>
     (deps?.activeEffectSources?.value ?? []).flatMap(s => s.effects),
   )
@@ -61,77 +59,15 @@ export const useCharacterAbilities = (
   ])
   const bonusEffects = computed<Effect[]>(() => bonusSources.value.flatMap(s => s.effects))
 
-  // ─── Ability bonuses par source ───────────────────────────────────────────
-
-  const sumAbilityIncreases = (effects: Effect[] | undefined): Record<string, number> => {
-    const out: Record<string, number> = {}
-    for (const e of effects ?? []) {
-      if (e.type === 'ability_increase') {
-        out[e.value.ability] = (out[e.value.ability] ?? 0) + e.value.amount
-      }
-    }
-    return out
-  }
-
-  const speciesBonuses = computed(() => sumAbilityIncreases(deps?.speciesEffects.value))
-  const featureBonuses = computed(() => sumAbilityIncreases(deps?.featureEffects.value))
-  const asiBonuses = computed(() => sumAbilityIncreases(deps?.asiEffects.value))
-
-  const maxIncreases = computed(() => {
-    const out: Record<string, number> = {}
-    const sources = [deps?.speciesEffects, deps?.featureEffects, deps?.asiEffects, activeEffects]
-    for (const e of sources.flatMap(s => s?.value ?? [])) {
-      if (e.type === 'ability_max_increase') out[e.value.ability] = (out[e.value.ability] ?? 0) + e.value.amount
-    }
-    return out
-  })
-
-  const activeAbilityEffects = computed(() => {
-    const out: Record<string, { increases: { amount: number, max?: number }[], sets: number[] }> = {}
-    for (const e of activeEffects.value) {
-      if (e.type !== 'ability_increase' && e.type !== 'ability_score_set') continue
-      const entry = (out[e.value.ability] ??= { increases: [], sets: [] })
-      if (e.type === 'ability_score_set') entry.sets.push(e.value.score)
-      // Champ « Maximum » vidé dans l'éditeur d'objet → '' : retombe sur le maximum du personnage.
-      else entry.increases.push({ amount: e.value.amount, max: typeof e.value.max === 'number' ? e.value.max : undefined })
-    }
-    return out
-  })
-
   // ─── Computed scores & modifiers ──────────────────────────────────────────
 
-  // `capped` : points de `bonus` perdus au plafond ; `items` : apport des effets actifs (objets, effets temporaires)
-  // au-delà du score naturel.
-  type AbilityScore = {
-    base: number
-    species: number
-    feature: number
-    asi: number
-    bonus: number
-    maximum: number
-    capped: number
-    items: number
-    total: number
-  }
-
-  const abilityScores = computed<Record<string, AbilityScore>>(() =>
-    abilityScoreOrder.reduce<Record<string, AbilityScore>>((acc, abilityId) => {
-      const base = getAbilityScore(abilityId)
-      const species = speciesBonuses.value[abilityId] ?? 0
-      const feature = featureBonuses.value[abilityId] ?? 0
-      const asi = asiBonuses.value[abilityId] ?? 0
-      const bonus = species + feature + asi
-      const { maximum, natural, total } = resolveAbilityScore({
-        base,
-        naturalBonus: bonus,
-        maxIncrease: maxIncreases.value[abilityId] ?? 0,
-        itemIncreases: activeAbilityEffects.value[abilityId]?.increases ?? [],
-        itemSets: activeAbilityEffects.value[abilityId]?.sets ?? [],
-      })
-      acc[abilityId] = { base, species, feature, asi, bonus, maximum, capped: base + bonus - natural, items: total - natural, total }
-      return acc
-    }, {}),
-  )
+  const abilityScores = computed(() => computeAbilityScores({
+    base: characterAbilityScores.value,
+    speciesEffects: deps?.speciesEffects.value ?? [],
+    featureEffects: deps?.featureEffects.value ?? [],
+    asiEffects: deps?.asiEffects.value ?? [],
+    activeEffects: activeEffects.value,
+  }))
 
   const abilityScoreBonuses = computed(() => {
     const out: Record<string, number> = {}
@@ -141,7 +77,7 @@ export const useCharacterAbilities = (
 
   const abilityModifiers = computed<Record<string, number>>(() =>
     Object.entries(abilityScores.value).reduce<Record<string, number>>((acc, [key, abilityScore]) => {
-      acc[key] = Math.floor((abilityScore.total - 10) / 2)
+      acc[key] = abilityMod(abilityScore.total)
       return acc
     }, {}),
   )
@@ -230,17 +166,12 @@ export const useCharacterAbilities = (
     return total
   })
 
-  // Bonus rétroactif aux PV max (don Robuste : +2 PV par niveau de personnage).
-  // Indépendant des autres calculs de PV — n'est pas persisté dans character_sheets.maxHp.
-  const hpBonusFromFeats = computed<number>(() => {
-    let perLevel = 0
-    for (const e of deps?.featureEffects.value ?? []) {
-      if (e.type === 'hp_per_level') perLevel += (e.value as { amount: number }).amount
-    }
-    if (perLevel === 0) return 0
-    const totalLevel = (characterSheet?.value?.classes ?? []).reduce((s, cc) => s + cc.level, 0)
-    return perLevel * totalLevel
-  })
+  // PV par niveau des dons, de l'espèce et des objets (Robuste : +2) : s'ajoutent au maximum à la lecture.
+  const hpPerLevelBonus = computed<number>(() => hitPointsPerLevelBonus([
+    ...(deps?.speciesEffects.value ?? []),
+    ...(deps?.featureEffects.value ?? []),
+    ...activeEffects.value,
+  ]))
 
   const passivePerception = computed(() =>
     10 + getSkillModifier('wis', 'perception') + sumPassiveBonus('perception'),
@@ -264,6 +195,6 @@ export const useCharacterAbilities = (
     passivePerception,
     passiveInvestigation,
     initiativeBonus,
-    hpBonusFromFeats,
+    hpPerLevelBonus,
   }
 }

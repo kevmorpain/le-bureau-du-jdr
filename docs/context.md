@@ -23,7 +23,7 @@ grid-template-columns: 240px 1fr 240px; gap: 12px; padding: 16px 20px
 - `StatCard.vue` — carte stat réutilisable en Tailwind pur (pas de scoped CSS)
 - `DefensesSection.vue` — résistances/immunités/vulnérabilités extraites de StatusSection
 - `SpellSlotsSection.vue` — dots violets par niveau, injecte `spellSlots` via provide/inject
-- `ConcentrationSection.vue` — condition 'concentrating', nom du sort en localStorage
+- `ConcentrationSection.vue` — concentration sur un sort du catalogue ou un libellé libre (DB, `concentrating_on`)
 - `CombatModeSection.vue` — économie d'action + déplacement (+/-1,5m) + actions disponibles
 - `QuickNotesSection.vue` — textarea, persisté en DB (colonne `character_sheets.notes`)
 - `IdentitySection.vue` + `EditIdentitySlideover.vue` — identité & description (nom, alignement,

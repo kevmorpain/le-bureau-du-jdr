@@ -20,7 +20,7 @@ let db: any
 
 function newWarlock(over: Record<string, unknown> = {}) {
   return createCharacterSchema.parse({
-    name: 'Occ', maxHp: 24, classId: WARLOCK, level: 3, speciesId: 1, pactBoon: 'chain',
+    name: 'Occ', hpBase: 24, classId: WARLOCK, level: 3, speciesId: 1, pactBoon: 'chain',
     abilityScores: { cha: 16 }, classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
     invocationIds: [401, 402], ...over,
   })
@@ -104,5 +104,168 @@ describe('characterRest — repos long', () => {
 
     const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
     expect(sheet.currentHp).toBe(8) // comportement historique préservé (le soin par dés de vie l'emporte)
+  })
+})
+
+// PV max dérivés (ADR D19) : le repos remet les PV au maximum EFFECTIF — Robuste compris, moitié à l'épuisement 4 —
+// et non à la part stockée.
+describe('characterRest — maximum effectif', () => {
+  const TOUGH = 700
+  const sheetOf = async (id: number) => (await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id)))[0]
+
+  beforeAll(async () => {
+    await db.insert(schema.features).values({ id: TOUGH, name: 'Robuste', featureType: 'feat', levelRequired: 1 })
+    const [perLevel] = await db.insert(schema.effects).values({ type: 'hp_per_level', value: { amount: 2 } }).returning()
+    await db.insert(schema.featureEffects).values({ featureId: TOUGH, effectId: perLevel.id })
+  })
+
+  const withTough = async () => {
+    const id = await create()
+    await db.insert(schema.characterFeatures).values({ characterSheetId: id, featureId: TOUGH, currentUses: 0 })
+    return id
+  }
+
+  it('repos long : Robuste (+2 PV par niveau) compte dans le maximum rétabli', async () => {
+    const id = await withTough()
+    await db.update(schema.characterSheets).set({ currentHp: 3 }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'long' })
+
+    expect((await sheetOf(id)).currentHp).toBe(24 + 2 * 3)
+  })
+
+  it('repos long à l\'épuisement 5 : PV rétablis à la moitié du maximum, épuisement réduit à 4', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ currentHp: 1, exhaustionLevel: 5 }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'long' })
+
+    const row = await sheetOf(id)
+    expect(row.exhaustionLevel).toBe(4)
+    expect(row.currentHp).toBe(12) // épuisement 4 : la moitié de 24
+  })
+
+  it('repos long à l\'épuisement 4 : le maximum est celui de l\'épuisement 3, plein', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ currentHp: 1, exhaustionLevel: 4 }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'long' })
+
+    const row = await sheetOf(id)
+    expect(row.exhaustionLevel).toBe(3)
+    expect(row.currentHp).toBe(24)
+  })
+
+  it('sans avoir mangé ni bu, l\'épuisement ne baisse pas (AideDD, Conditions)', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ currentHp: 1, exhaustionLevel: 4 }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'long', fedAndWatered: false })
+
+    const row = await sheetOf(id)
+    expect(row.exhaustionLevel).toBe(4)
+    expect(row.currentHp).toBe(12)
+  })
+
+  it('l\'épuisement ne descend pas sous 0, et un repos long vide les PV temporaires', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ temporaryHp: 9 }).where(eq(schema.characterSheets.id, id))
+
+    const res = await characterRest(db, id, { type: 'long' })
+
+    expect(res.exhaustionLevel).toBe(0)
+    expect((await sheetOf(id)).temporaryHp).toBe(0)
+  })
+
+  it('repos court : ni PV temporaires ni épuisement ne bougent', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ temporaryHp: 9, exhaustionLevel: 2 }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'short' })
+
+    const row = await sheetOf(id)
+    expect(row.temporaryHp).toBe(9)
+    expect(row.exhaustionLevel).toBe(2)
+  })
+
+  it('regagner des PV remet les jets contre la mort à zéro : repos long, ou soin par dés de vie', async () => {
+    const dying = { currentHp: 0, deathSaveSuccesses: 2, deathSaveFailures: 2 }
+    const long = await create()
+    await db.update(schema.characterSheets).set(dying).where(eq(schema.characterSheets.id, long))
+    await characterRest(db, long, { type: 'long' })
+    expect(await sheetOf(long)).toMatchObject({ currentHp: 24, deathSaveSuccesses: 0, deathSaveFailures: 0 })
+
+    const short = await create()
+    await db.update(schema.characterSheets).set(dying).where(eq(schema.characterSheets.id, short))
+    await characterRest(db, short, { type: 'short', hitDiceSpent: [{ die: 'd8', count: 1, healAmount: 5 }] })
+    expect(await sheetOf(short)).toMatchObject({ currentHp: 5, deathSaveSuccesses: 0, deathSaveFailures: 0 })
+  })
+
+  it('un repos court sans soin laisse les jets contre la mort', async () => {
+    const id = await create()
+    await db.update(schema.characterSheets).set({ currentHp: 0, deathSaveSuccesses: 1, deathSaveFailures: 2 }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'short' })
+
+    expect(await sheetOf(id)).toMatchObject({ deathSaveSuccesses: 1, deathSaveFailures: 2 })
+  })
+
+  it('soin par dés de vie : plafonné au maximum effectif, Robuste compris', async () => {
+    const id = await withTough()
+    await db.update(schema.characterSheets).set({ currentHp: 28 }).where(eq(schema.characterSheets.id, id))
+
+    await characterRest(db, id, { type: 'short', hitDiceSpent: [{ die: 'd8', count: 1, healAmount: 10 }] })
+
+    expect((await sheetOf(id)).currentHp).toBe(30)
+  })
+})
+
+describe('characterRest — recharge des objets', () => {
+  const STAFF = 800
+  const WAND = 801
+  const entryOf = async (id: number, itemId: number) =>
+    (await db.select().from(schema.characterInventory).where(and(eq(schema.characterInventory.characterSheetId, id), eq(schema.characterInventory.itemId, itemId))))[0]
+
+  beforeAll(async () => {
+    await db.insert(schema.items).values([
+      { id: STAFF, name: 'Bâton', itemType: 'equipment', properties: { category: 'wondrous' }, maxUses: 10, rechargeType: 'dawn', rechargeDice: '1d6+4' },
+      { id: WAND, name: 'Baguette', itemType: 'equipment', properties: { category: 'wondrous' }, maxUses: 3, rechargeType: 'dawn' },
+    ])
+  })
+
+  const withItems = async (staffUsed: number) => {
+    const id = await create()
+    await db.insert(schema.characterInventory).values([
+      { characterSheetId: id, itemId: STAFF, currentUses: staffUsed },
+      { characterSheetId: id, itemId: WAND, currentUses: 3 },
+    ])
+    return id
+  }
+
+  it('à l\'aube : les dés rendent des charges (1d6+4), la recharge complète les rend toutes', async () => {
+    const id = await withItems(10)
+
+    const res = await characterRest(db, id, { type: 'dawn' }, () => 0.5) // 1d6 → 4, +4 = 8
+
+    expect(res.rechargedItems).toEqual([{ inventoryId: (await entryOf(id, STAFF)).id, name: 'Bâton', rolled: 8 }])
+    expect((await entryOf(id, STAFF)).currentUses).toBe(2)
+    expect((await entryOf(id, WAND)).currentUses).toBe(0)
+  })
+
+  it('jamais plus de charges que dépensées', async () => {
+    const id = await withItems(3)
+
+    await characterRest(db, id, { type: 'dawn' }, () => 0.99) // 1d6 → 6, +4 = 10
+
+    expect((await entryOf(id, STAFF)).currentUses).toBe(0)
+  })
+
+  it('un repos qui ne correspond pas au type de recharge ne touche pas l\'objet', async () => {
+    const id = await withItems(10)
+
+    const res = await characterRest(db, id, { type: 'long' })
+
+    expect(res.rechargedItems).toEqual([])
+    expect((await entryOf(id, STAFF)).currentUses).toBe(10)
   })
 })

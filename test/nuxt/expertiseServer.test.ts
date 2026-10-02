@@ -14,7 +14,7 @@ beforeAll(async () => {
 
 const createRogue = (level: number, over: Record<string, unknown> = {}) =>
   createCharacter(db, createCharacterSchema.parse({
-    name: 'Sly', maxHp: 9, classId: CLASS.rogue, level, speciesId: SPECIES.human,
+    name: 'Sly', hpBase: 8, classId: CLASS.rogue, level, speciesId: SPECIES.human,
     abilityScores: { str: 10, dex: 16, con: 12, int: 13, wis: 11, cha: 14 },
     classSkills: ['stealth', 'perception'], classSavingThrows: ['dex', 'int'], backgroundSkills: ['insight', 'deception'], spellIds: [],
     ...over,
@@ -60,7 +60,7 @@ describe('expertise — autorité serveur', () => {
 
   it('création : une classe sans expertise (Guerrier) qui envoie des expertises → rejet', async () => {
     await expect(createCharacter(db, createCharacterSchema.parse({
-      name: 'Gonzo', maxHp: 12, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
+      name: 'Gonzo', hpBase: 10, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
       abilityScores: { str: 16, dex: 14, con: 14, int: 8, wis: 10, cha: 10 },
       classSkills: ['athletics'], classSavingThrows: [], backgroundSkills: [], spellIds: [],
       expertiseSkills: ['athletics'],
@@ -72,7 +72,7 @@ describe('expertise — autorité serveur', () => {
     expect(await expertiseChoices(id)).toHaveLength(0)
 
     await characterLevelUp(db, id, levelUpSchema.parse({
-      classId: CLASS.rogue, isMulticlass: false, hpGained: 6, expertiseSkills: ['stealth', 'perception'],
+      classId: CLASS.rogue, isMulticlass: false, hpDie: 6, expertiseSkills: ['stealth', 'perception'],
     }))
 
     expect(await expertiseChoices(id)).toEqual(['perception', 'stealth'])
@@ -88,7 +88,7 @@ const rogueLevel = async (sheetId: number): Promise<number | undefined> => {
 }
 
 const levelUpRogue = (sheetId: number, expertiseSkills: string[]) =>
-  characterLevelUp(db, sheetId, levelUpSchema.parse({ classId: CLASS.rogue, isMulticlass: false, hpGained: 6, expertiseSkills }))
+  characterLevelUp(db, sheetId, levelUpSchema.parse({ classId: CLASS.rogue, isMulticlass: false, hpDie: 6, expertiseSkills }))
 
 describe('expertise — validation serveur du level-up', () => {
   it('niveau sans palier d\'expertise (Roublard 1→2) → rejet, rien n\'est écrit', async () => {
@@ -131,13 +131,13 @@ describe('expertise — validation serveur du level-up', () => {
 
   it('multiclassage vers Roublard (0→1) : les 2 expertises du niveau 1 sont dues', async () => {
     const { id } = await createCharacter(db, createCharacterSchema.parse({
-      name: 'Gonzo', maxHp: 12, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
+      name: 'Gonzo', hpBase: 10, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
       abilityScores: { str: 16, dex: 14, con: 14, int: 8, wis: 10, cha: 10 },
       classSkills: ['athletics'], backgroundSkills: [], spellIds: [],
     }), OWNER)
 
     await characterLevelUp(db, id, levelUpSchema.parse({
-      classId: CLASS.rogue, isMulticlass: true, hpGained: 5, expertiseSkills: ['athletics', 'perception'],
+      classId: CLASS.rogue, isMulticlass: true, hpDie: 5, expertiseSkills: ['athletics', 'perception'],
     }))
 
     expect(await expertSkills(id)).toEqual(['athletics', 'perception'])
@@ -145,24 +145,24 @@ describe('expertise — validation serveur du level-up', () => {
 
   it('classe sans expertise (Guerrier 1→2) → rejet', async () => {
     const { id } = await createCharacter(db, createCharacterSchema.parse({
-      name: 'Gonzo', maxHp: 12, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
+      name: 'Gonzo', hpBase: 10, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
       abilityScores: { str: 16, dex: 14, con: 14, int: 8, wis: 10, cha: 10 },
       classSkills: ['athletics'], backgroundSkills: [], spellIds: [],
     }), OWNER)
 
     await expect(characterLevelUp(db, id, levelUpSchema.parse({
-      classId: CLASS.fighter, isMulticlass: false, hpGained: 7, expertiseSkills: ['athletics'],
+      classId: CLASS.fighter, isMulticlass: false, hpDie: 7, expertiseSkills: ['athletics'],
     }))).rejects.toThrow(CharacterValidationError)
   })
 
   it('schéma : clé de compétence inconnue ou en double → refusée (level-up et création)', () => {
-    const base = { classId: CLASS.rogue, isMulticlass: false, hpGained: 6 }
+    const base = { classId: CLASS.rogue, isMulticlass: false, hpDie: 6 }
     expect(levelUpSchema.safeParse({ ...base, expertiseSkills: ['discretion'] }).success).toBe(false)
     expect(levelUpSchema.safeParse({ ...base, expertiseSkills: ['stealth', 'stealth'] }).success).toBe(false)
     expect(levelUpSchema.safeParse({ ...base, expertiseSkills: ['stealth', 'insight'] }).success).toBe(true)
 
     const creation = {
-      name: 'Sly', maxHp: 9, classId: CLASS.rogue, level: 1,
+      name: 'Sly', hpBase: 8, classId: CLASS.rogue, level: 1,
       abilityScores: {}, classSkills: [], spellIds: [],
     }
     expect(createCharacterSchema.safeParse({ ...creation, expertiseSkills: ['discretion'] }).success).toBe(false)

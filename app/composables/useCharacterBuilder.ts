@@ -9,7 +9,6 @@ import {
   abilityMod,
   formatMod,
   profBonusAtLevel,
-  hpAtLevel,
   spellSlotsAtLevel,
   maxSpellLevelAtLevel,
   type AbilityKey,
@@ -23,7 +22,8 @@ import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicateCount, duplicatedValues } from '~~/shared/rules/duplicateProficiencies'
 import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
-import { featLanguageChoiceCount } from './useCharacterSheet'
+import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
+import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
 import type { Effect } from '~~/server/db/schema/effects'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -576,22 +576,31 @@ export function useCharacterBuilder() {
     return raceData.value?.speed ?? 9
   })
 
-  const hpMax = computed(() => {
-    if (!classData.value) return null
+  const conMod = computed(() => {
     const con = finalAbilities.value.con
-    const conMod = con != null ? abilityMod(con) : 0
+    return con != null ? abilityMod(con) : 0
+  })
+
+  // Part « dés » des PV, la seule que le serveur stocke ; un dé non lancé compte pour sa valeur moyenne.
+  const hpBase = computed(() => {
+    if (!classData.value) return null
     const { hitDie } = classData.value
     const s = state.value
 
-    if (s.hpMode === 'manual' && s.hpManual != null) return s.hpManual
-
-    if (s.hpMode === 'roll' && s.hpRolled != null) {
-      const rolled = s.hpRolled.slice(0, level.value - 1)
-      return hitDie + conMod + rolled.reduce((sum, v) => sum + v + conMod, 0)
+    if (s.hpMode === 'manual' && s.hpManual != null) {
+      const { min, max } = baseHitPointsBounds(hitDie, level.value)
+      return Math.min(max, Math.max(min, s.hpManual - conMod.value * level.value))
     }
 
-    return hpAtLevel(hitDie, level.value, conMod)
+    if (s.hpMode === 'roll' && s.hpRolled != null) {
+      const rolled = Array.from({ length: level.value - 1 }, (_, i) => s.hpRolled?.[i] ?? averageHitDieValue(hitDie))
+      return baseHitPoints(hitDie, rolled, conMod.value)
+    }
+
+    return averageBaseHitPoints(hitDie, level.value, conMod.value)
   })
+
+  const hpMax = computed(() => hpBase.value == null ? null : hpBase.value + conMod.value * level.value)
 
   const baseAC = computed(() => {
     const dex = finalAbilities.value.dex
@@ -910,6 +919,8 @@ export function useCharacterBuilder() {
     level,
     profBonus,
     speed,
+    conMod,
+    hpBase,
     hpMax,
     baseAC,
     // Sorts

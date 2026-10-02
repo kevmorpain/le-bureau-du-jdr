@@ -333,7 +333,7 @@ export async function serializeCharacter(db: Db, sheetId: number) {
       species: nullableName(speciesName, sheet.speciesId),
       background: nullableName(backgroundName, sheet.backgroundId),
       alignment: sheet.alignment,
-      maxHp: sheet.maxHp,
+      hpBase: sheet.hpBase,
       currentHp: sheet.currentHp,
       temporaryHp: sheet.temporaryHp,
       currentHitDie: sheet.currentHitDie,

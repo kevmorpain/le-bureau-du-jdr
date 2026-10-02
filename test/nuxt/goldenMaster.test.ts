@@ -29,19 +29,19 @@ beforeAll(async () => {
 
 // Helpers — valident l'entrée par les schémas Zod de prod (mêmes portes que les handlers).
 const create = (over: Record<string, unknown>) => createCharacter(db, createCharacterSchema.parse({
-  name: 'X', maxHp: 10, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
+  name: 'X', hpBase: 10, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
   abilityScores: {}, classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
   ...over,
 }), OWNER)
 const levelUp = (id: number, over: Record<string, unknown>) => characterLevelUp(db, id, levelUpSchema.parse({
-  classId: CLASS.fighter, isMulticlass: false, hpGained: 1, ...over,
+  classId: CLASS.fighter, isMulticlass: false, hpDie: 1, ...over,
 }))
 
 // A. Martial — Guerrier → Champion (niv 1 → 5)
 describe('golden-master · A. Guerrier Champion (martial)', () => {
   it('création niv 1 puis montée 1→5 (Fougue, sous-classe niv 3, ASI niv 4, Attaque suppl. niv 5)', async () => {
     const { id } = await create({
-      name: 'Aldric', maxHp: 12, classId: CLASS.fighter, level: 1,
+      name: 'Aldric', hpBase: 10, classId: CLASS.fighter, level: 1,
       backgroundId: BACKGROUND.soldier,
       abilityScores: { str: 16, dex: 13, con: 14, int: 8, wis: 12, cha: 10 },
       classSkills: ['athletics', 'intimidation'],
@@ -58,16 +58,16 @@ describe('golden-master · A. Guerrier Champion (martial)', () => {
     })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('A1 · création niv 1')
 
-    await levelUp(id, { classId: CLASS.fighter, hpGained: 7 })
+    await levelUp(id, { classId: CLASS.fighter, hpDie: 7 })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('A2 · niv 2 (Fougue)')
 
-    await levelUp(id, { classId: CLASS.fighter, hpGained: 6, subclassId: SUBCLASS.champion })
+    await levelUp(id, { classId: CLASS.fighter, hpDie: 6, subclassId: SUBCLASS.champion })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('A3 · niv 3 (sous-classe Champion)')
 
-    await levelUp(id, { classId: CLASS.fighter, hpGained: 6, asiChoice: 'asi', asiBonuses: { str: 2 } })
+    await levelUp(id, { classId: CLASS.fighter, hpDie: 6, asiChoice: 'asi', asiBonuses: { str: 2 } })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('A4 · niv 4 (ASI +2 FOR)')
 
-    await levelUp(id, { classId: CLASS.fighter, hpGained: 6 })
+    await levelUp(id, { classId: CLASS.fighter, hpDie: 6 })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('A5 · niv 5 (Attaque supplémentaire)')
   })
 })
@@ -78,7 +78,7 @@ describe('golden-master · A. Guerrier Champion (martial)', () => {
 describe('golden-master · B. Magicien Elfe (lanceur complet, lignée)', () => {
   it('création niv 2 (lignée → character_choices, sous-classe, emplacements) puis montée 2→4 (sort appris, ASI)', async () => {
     const { id } = await create({
-      name: 'Elyndra', maxHp: 8, classId: CLASS.wizard, level: 2,
+      name: 'Elyndra', hpBase: 8, classId: CLASS.wizard, level: 2,
       speciesId: ids.elfBaseId, selectedLineageId: ids.highElfLineageId,
       customBackgroundName: 'Sage de la tour',
       abilityScores: { str: 8, dex: 14, con: 13, int: 16, wis: 12, cha: 10 },
@@ -90,10 +90,10 @@ describe('golden-master · B. Magicien Elfe (lanceur complet, lignée)', () => {
     })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('B1 · création niv 2 (lignée Haut-elfe)')
 
-    await levelUp(id, { classId: CLASS.wizard, hpGained: 5, newSpellIds: [SPELL.shield] })
+    await levelUp(id, { classId: CLASS.wizard, hpDie: 5, newSpellIds: [SPELL.shield] })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('B2 · niv 3 (Bouclier appris, emplacements recalculés)')
 
-    await levelUp(id, { classId: CLASS.wizard, hpGained: 5, asiChoice: 'asi', asiBonuses: { int: 2 } })
+    await levelUp(id, { classId: CLASS.wizard, hpDie: 5, asiChoice: 'asi', asiBonuses: { int: 2 } })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('B3 · niv 4 (ASI +2 INT)')
   })
 })
@@ -105,7 +105,7 @@ describe('golden-master · B. Magicien Elfe (lanceur complet, lignée)', () => {
 describe('golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/dons création)', () => {
   it('création niv 10 (pacte + manifestations + ASI niv 4, don niv 8, don bonus) puis montée 10→11 (arcanum niv 6)', async () => {
     const { id } = await create({
-      name: 'Vex', maxHp: 60, classId: CLASS.warlock, level: 10,
+      name: 'Vex', hpBase: 60, classId: CLASS.warlock, level: 10,
       abilityScores: { str: 8, dex: 14, con: 14, int: 10, wis: 11, cha: 17 },
       classSkills: ['arcana', 'deception'],
       classSavingThrows: ['wis', 'cha'],
@@ -120,7 +120,7 @@ describe('golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/do
     expect(await serializeCharacter(db, id)).toMatchSnapshot('C1 · création niv 10 (pacte + manifestations + ASI/dons)')
 
     await levelUp(id, {
-      classId: CLASS.warlock, hpGained: 6,
+      classId: CLASS.warlock, hpDie: 6,
       newInvocationIds: [132], // Maître des masques (niv 5)
       arcaneMysteriumSpellId: SPELL.circleOfDeath, // arcanum niveau 6
     })
@@ -132,7 +132,7 @@ describe('golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/do
 describe('golden-master · D. Multiclasse Guerrier/Occultiste', () => {
   it('création Guerrier 3 (Champion) puis multiclassage Occultiste (emplacements de pacte combinés)', async () => {
     const { id } = await create({
-      name: 'Kael', maxHp: 28, classId: CLASS.fighter, level: 3,
+      name: 'Kael', hpBase: 28, classId: CLASS.fighter, level: 3,
       backgroundId: BACKGROUND.soldier,
       abilityScores: { str: 15, dex: 13, con: 14, int: 10, wis: 12, cha: 14 },
       classSkills: ['athletics', 'acrobatics'],
@@ -143,11 +143,11 @@ describe('golden-master · D. Multiclasse Guerrier/Occultiste', () => {
     expect(await serializeCharacter(db, id)).toMatchSnapshot('D1 · création Guerrier 3 (Champion)')
 
     // Multiclassage : nouvelle classe Occultiste au niveau 1 (isMain=false).
-    await levelUp(id, { classId: CLASS.warlock, isMulticlass: true, hpGained: 5 })
+    await levelUp(id, { classId: CLASS.warlock, isMulticlass: true, hpDie: 5 })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('D2 · Occultiste 1 (multiclassage, pacte combiné)')
 
     // Occultiste 1 → 2 : « Manifestations occultes » débloquées, emplacement de pacte agrandi.
-    await levelUp(id, { classId: CLASS.warlock, hpGained: 5, newInvocationIds: [130] })
+    await levelUp(id, { classId: CLASS.warlock, hpDie: 5, newInvocationIds: [130] })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('D3 · Occultiste 2 (manifestation)')
   })
 })
@@ -161,7 +161,7 @@ describe('golden-master · D. Multiclasse Guerrier/Occultiste', () => {
 describe('golden-master · E. Roublard (expertise, sous-classe)', () => {
   it('création niv 1 (expertise) puis montée 1→3 (Ruse niv 2, sous-classe niv 3)', async () => {
     const { id } = await create({
-      name: 'Sly', maxHp: 9, classId: CLASS.rogue, level: 1,
+      name: 'Sly', hpBase: 8, classId: CLASS.rogue, level: 1,
       abilityScores: { str: 10, dex: 16, con: 12, int: 13, wis: 11, cha: 14 },
       classSkills: ['stealth', 'perception'],
       classSavingThrows: ['dex', 'int'],
@@ -170,10 +170,10 @@ describe('golden-master · E. Roublard (expertise, sous-classe)', () => {
     })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('E1 · création niv 1')
 
-    await levelUp(id, { classId: CLASS.rogue, hpGained: 6 })
+    await levelUp(id, { classId: CLASS.rogue, hpDie: 6 })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('E2 · niv 2 (Ruse)')
 
-    await levelUp(id, { classId: CLASS.rogue, hpGained: 6, subclassId: SUBCLASS.thief })
+    await levelUp(id, { classId: CLASS.rogue, hpDie: 6, subclassId: SUBCLASS.thief })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('E3 · niv 3 (Voleur)')
   })
 })

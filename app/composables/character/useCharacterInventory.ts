@@ -2,6 +2,7 @@ import type { Effect } from '~~/server/db/schema/effects'
 import { hasHeavyWeaponDisadvantage } from '~~/shared/rules/creatureSize'
 import { archeryAttackBonus, defenseAcBonus, duelingDamageBonus, twoWeaponOffhandUsesAbilityMod } from '~~/shared/rules/fightingStyleEffects'
 import { armorClassBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
+import { activeItemEffectSources } from '~~/shared/rules/characterEffects'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -134,13 +135,7 @@ export const useCharacterInventory = (
 
   // ─── Magic item effects → merged into allEffects upstream ─────────────────
 
-  // DMG : « Une créature qui ne se lie pas à un objet qui nécessite un lien obtient uniquement les
-  // avantages non magiques de celui-ci » → aucun effet sans lien.
-  const activeItemSources = computed<EffectSource[]>(() =>
-    inventory.value
-      .filter(e => e.equipped && (!e.item?.requiresAttunement || e.attuned) && e.item?.effects?.length)
-      .map(e => ({ label: e.item!.name, effects: e.item!.effects })),
-  )
+  const activeItemSources = computed<EffectSource[]>(() => activeItemEffectSources(inventory.value))
 
   // ─── Proficiencies ────────────────────────────────────────────────────────
 

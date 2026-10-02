@@ -4,6 +4,7 @@ import { damageTypeLabels, conditionLabels, immunityLabels, allConditions } from
 import { dragonbornAncestryDamageType } from '~~/shared/utils/draconic_ancestry'
 import type { DragonbornAncestry } from '~~/shared/utils/draconic_ancestry'
 import { conditionMechanics, exhaustionImpactLines } from '~~/shared/utils/condition-effects'
+import { maxHitPoints } from '~~/shared/rules/hitPoints'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
@@ -29,8 +30,7 @@ export const useCharacterConditions = (
     allEffects: ComputedRef<Effect[]>
     speed: ComputedRef<number>
     abilityModifiers: ComputedRef<Record<string, number>>
-    // Bonus rétroactif aux PV max (don Robuste), ajouté au maxHp DB pour le calcul d'épuisement.
-    maxHpBonus?: ComputedRef<number>
+    hpPerLevelBonus?: ComputedRef<number>
   },
 ) => {
   const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
@@ -39,7 +39,8 @@ export const useCharacterConditions = (
 
   const storedActiveConditions = useStorage<ConditionKey[]>(storageKey('activeConditions'), [])
 
-  // Concentration is persisted via DB (concentratingSpellId). The 'concentrating'
+  // Concentration is persisted via DB : un sort du catalogue (concentratingSpellId) ou un libellé libre
+  // (concentratingOn : effet de monstre, sort non seedé, homebrew), jamais les deux. The 'concentrating'
   // condition is derived; we never store it in localStorage.
   const concentratingSpellId = computed<number | null>({
     get: () => characterSheet?.value?.concentratingSpellId ?? null,
@@ -47,11 +48,23 @@ export const useCharacterConditions = (
       if (characterSheet?.value) characterSheet.value.concentratingSpellId = v
     },
   })
+  const concentratingOn = computed<string | null>({
+    get: () => characterSheet?.value?.concentratingOn ?? null,
+    set: (v) => {
+      if (characterSheet?.value) characterSheet.value.concentratingOn = v
+    },
+  })
 
-  const isConcentrating = computed(() => concentratingSpellId.value !== null)
+  const isConcentrating = computed(() => concentratingSpellId.value !== null || concentratingOn.value !== null)
 
   const setConcentration = (spellId: number | null) => {
     concentratingSpellId.value = spellId
+    concentratingOn.value = null
+  }
+
+  const setFreeConcentration = (label: string) => {
+    concentratingSpellId.value = null
+    concentratingOn.value = label.trim() || null
   }
 
   if (import.meta.client) {
@@ -66,8 +79,16 @@ export const useCharacterConditions = (
 
   const toggleCondition = (condition: ConditionKey) => {
     const idx = storedActiveConditions.value.indexOf(condition)
-    if (idx === -1) storedActiveConditions.value.push(condition)
-    else storedActiveConditions.value.splice(idx, 1)
+    if (idx !== -1) {
+      storedActiveConditions.value.splice(idx, 1)
+      return
+    }
+    storedActiveConditions.value.push(condition)
+    // AideDD, Concentration : « Vous perdez automatiquement la concentration de votre sort si vous êtes incapable d'agir ».
+    if (isConcentrating.value && conditionMechanics[condition]?.incapacitating) {
+      setConcentration(null)
+      useToast().add({ title: 'Concentration perdue', description: `${conditionLabels[condition]} : vous ne pouvez plus agir.`, color: 'error' })
+    }
   }
 
   const exhaustionLevel = computed({
@@ -172,10 +193,17 @@ export const useCharacterConditions = (
 
   // ─── HP impact ────────────────────────────────────────────────────────────
 
-  const effectiveMaxHp = computed(() => {
-    const maxHp = (characterSheet?.value?.maxHp ?? 0) + (deps?.maxHpBonus?.value ?? 0)
-    return exhaustionLevel.value >= 4 ? Math.floor(maxHp / 2) : maxHp
+  const maxHitPointsFor = (exhaustionLevel: number) => maxHitPoints({
+    hpBase: characterSheet?.value?.hpBase ?? 0,
+    totalLevel: (characterSheet?.value?.classes ?? []).reduce((sum, c) => sum + c.level, 0),
+    conMod: deps?.abilityModifiers.value.con ?? 0,
+    perLevelBonus: deps?.hpPerLevelBonus?.value ?? 0,
+    exhaustionLevel,
   })
+
+  // Maximum affiché sur la fiche, avant l'épuisement ; le maximum effectif en tient compte (niveau 4 : moitié).
+  const fullMaxHp = computed(() => maxHitPointsFor(0))
+  const effectiveMaxHp = computed(() => maxHitPointsFor(exhaustionLevel.value))
 
   // ─── Skill & save impacts ─────────────────────────────────────────────────
 
@@ -222,8 +250,10 @@ export const useCharacterConditions = (
     activeConditions,
     toggleCondition,
     concentratingSpellId,
+    concentratingOn,
     isConcentrating,
     setConcentration,
+    setFreeConcentration,
     exhaustionLevel,
     exhaustionTooltip,
     hasDraconicAncestry,
@@ -231,7 +261,9 @@ export const useCharacterConditions = (
     defenseEntries,
     effectiveSpeed,
     speedModifiers,
+    fullMaxHp,
     effectiveMaxHp,
+    maxHitPointsFor,
     skillDisadvantageReasons,
     saveStatuses,
   }

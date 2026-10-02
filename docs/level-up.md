@@ -30,7 +30,7 @@ interface LevelUpState {
   hpMethod: 'average' | 'roll' | 'manual'
   hpRolled: number | null            // résultat du jet brut (sans CON)
   hpManual: number | null            // saisie manuelle brute (sans CON)
-  // PV gagnés (avec CON) : pas dans l'état, computed `hpGained` exposé par useLevelUp
+  // Dé de vie envoyé (`hpDie`) et augmentation du maximum affiché (`hpGained`) : pas dans l'état, computeds exposés par useLevelUp
 
   // Aptitudes (step features)
   newSubclassId: number | null       // DB id de la sous-classe choisie
@@ -88,12 +88,15 @@ de la classe. Re-sélectionner la classe déjà choisie ne change rien.
 
 **Méthodes (3 onglets) :**
 - **Moyenne** : ⌈dX/2⌉ + 1 + CON — automatique, affiché en gros
-- **Jet de dé** : bouton "🎲 Lancer 1dX" → `hpRolled` = random(1..hitDie) ; `hpGained` = max(1, hpRolled + conMod) — `null` tant que le dé n'est pas lancé
-- **Saisie manuelle** : input brut → `hpGained` = max(1, hpManual + conMod)
+- **Jet de dé** : bouton "🎲 Lancer 1dX" → `hpRolled` = random(1..hitDie) — `hpDie` est `null` tant que le dé n'est pas lancé
+- **Saisie manuelle** : input brut → `hpDie` = `hpManual` (borné par le dé de la classe)
+- **Moyenne** : `hpDie` = ⌈dé/2⌉ + 1
 
-**Aperçu** : si `hpGained` défini, affiche `PV max : N → N+hpGained`
+Le client n'envoie que `hpDie` ; le serveur le borne par le dé de la classe et en tire le gain stocké (`hitPointGain` : minimum 1 PV par niveau compris). `hpGained` n'est qu'un aperçu : la différence entre le maximum dérivé après et avant (dé + CON + bonus par niveau du niveau gagné).
 
-**Validation :** `hpGained != null && hpGained > 0`
+**Aperçu** : si `hpGained` défini, affiche `PV max : N → N+hpGained` (`currentHpMax` est dérivé comme sur la fiche, objets compris)
+
+**Validation :** `hpDie` entre 1 et le dé de la classe
 
 ---
 
@@ -221,7 +224,7 @@ Corps :
 {
   classId: number                   // id DB de la classe
   isMulticlass: boolean             // doit refléter la fiche : true ⇔ classe absente de character_classes
-  hpGained: number                  // PV finaux (avec CON) — toujours > 0
+  hpDie: number                     // valeur du dé de vie (1..dé de la classe) ; le serveur en tire le gain
   subclassId?: number | null
   fightingStyle?: string | null
   expertiseSkills?: SkillKey[]      // clés de SKILL_KEYS, sans doublon (Zod → 422)
@@ -250,7 +253,7 @@ Corps :
 3. Rejeter (422) un `isMulticlass` qui contredit la fiche — `true` sur une classe déjà possédée, `false` sur une classe absente : le reste du payload a été composé pour un autre état (onglet périmé, multiclassage rejoué)
 4. Upsert `character_classes` avec le nouveau niveau + subclassId + pactBoon
 5. Insérer les features de classe au nouveau niveau + features de sous-classe ≤ nouveau niveau
-6. Mettre à jour `character_sheets.maxHp` (+hpGained) et `currentHitDie` (+1 dé de vie)
+6. Mettre à jour `character_sheets.hpBase` (+ gain tiré de `hpDie`) et `currentHitDie` (+1 dé de vie)
 7. Insérer les ASI dans `character_ability_score_improvements`
 8. Insérer les nouveaux sorts (`isKnown: true, isPrepared: false`)
 9. Gérer les effets du Pact Boon (chain → Appel de familier, tome → sorts mineurs, blade → isPactWeapon)
@@ -265,7 +268,7 @@ Corps :
 12. Upserter les compétences en expertise (`proficiencyLevel: 'expert'`). Validées **avant** toute écriture (`validateLevelUpExpertise`) : au plus le delta du `count` cumulatif de la progression `expertise` entre `newLevel − 1` et `newLevel` (`expertiseGainedAtLevel`, même projection que le front), et aucune compétence déjà `expert` dans `character_skills` (toutes sources). La maîtrise préalable de la compétence reste **front-autoritaire** : la fiche permet déjà de poser `expert` à la main sur n'importe quelle compétence (`PUT /skills`), et le set maîtrisé complet n'est composé que côté front.
 13. Recalculer les emplacements de sort (full=niveau, half=⌊niveau/2⌋ si ≥2, pact=séparé) — **particularité Pact Magic** : tous les emplacements occultistes sont du même niveau, et ce niveau change avec le niveau d'occultiste (niv. 3 → slots niv. 2, niv. 5 → niv. 3, etc.). Le handler DELETE explicitement les anciens `pact_magic` slots aux autres niveaux avant l'upsert, avec préservation du compteur `used` du précédent niveau.
 
-**Retour :** `{ success: true, newLevel, hpGained }`
+**Retour :** `{ success: true, newLevel, hpGained }` (`hpGained` = part stockée ajoutée à `hpBase`)
 
 ---
 

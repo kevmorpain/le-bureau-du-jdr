@@ -30,13 +30,13 @@ let terrainProgressionId = 0
 
 function createInput(over: Record<string, unknown> = {}) {
   return createCharacterSchema.parse({
-    name: 'Occ', maxHp: 16, classId: WARLOCK, level: 2, speciesId: 1,
+    name: 'Occ', hpBase: 16, classId: WARLOCK, level: 2, speciesId: 1,
     abilityScores: { cha: 16 }, classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
     ...over,
   })
 }
 function luInput(over: Record<string, unknown> = {}) {
-  return levelUpSchema.parse({ classId: WARLOCK, isMulticlass: false, hpGained: 5, ...over })
+  return levelUpSchema.parse({ classId: WARLOCK, isMulticlass: false, hpDie: 5, ...over })
 }
 
 beforeAll(async () => {
@@ -115,7 +115,7 @@ describe('characterLevelUp — Occultiste 2 → 3 (pacte + recalc des emplacemen
     expect(slots[0].slotLevel).toBe(1)
     expect(slots[0].total).toBe(2)
 
-    const res = await characterLevelUp(db, id, luInput({ pactBoon: 'chain', hpGained: 6 }))
+    const res = await characterLevelUp(db, id, luInput({ pactBoon: 'chain', hpDie: 6 }))
     expect(res.newLevel).toBe(3)
 
     const [cc] = await db.select().from(schema.characterClasses).where(eq(schema.characterClasses.characterSheetId, id))
@@ -352,7 +352,7 @@ describe('Chevalier occulte — lanceur du tiers', () => {
 })
 
 describe('characterLevelUp — terrain du Cercle de la terre', () => {
-  const druidAt = (level: number) => createCharacter(db, createInput({ classId: DRUID, level, abilityScores: { wis: 15 } }), OWNER)
+  const druidAt = (level: number) => createCharacter(db, createInput({ classId: DRUID, level, hpBase: 8 * level, abilityScores: { wis: 15 } }), OWNER)
   const druidLu = (over: Record<string, unknown>) => luInput({ classId: DRUID, ...over })
   const picksOf = async (sheetId: number) =>
     (await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, sheetId)))

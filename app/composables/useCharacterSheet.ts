@@ -1,12 +1,13 @@
 import { useStorage } from '@vueuse/core'
 import { evaluate } from '~~/shared/utils/formula'
 import type { FormulaContext } from '~~/shared/utils/formula'
-import type { AbilityScoreKey, Effect } from '~~/server/db/schema/effects'
-import type { SkillKey } from '~~/shared/rules/skills'
+import type { Effect } from '~~/server/db/schema/effects'
+import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, type FeatChoices } from '~~/shared/rules/characterEffects'
 import type { EffectSource } from '~~/shared/rules/effectBonuses'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
 import { useCharacterConditions, binaryConditions } from './character/useCharacterConditions'
+import { useCharacterVitals } from './character/useCharacterVitals'
 import { useCharacterSpellcasting } from './character/useCharacterSpellcasting'
 import { useCharacterSpells } from './character/useCharacterSpells'
 import { useCharacterInventory } from './character/useCharacterInventory'
@@ -15,90 +16,15 @@ import { useCharacterIdentity } from './character/useCharacterIdentity'
 import { useCharacterTemporaryEffects } from './character/useCharacterTemporaryEffects'
 import { sheetTextField } from './character/sheetField'
 
-export type FeatChoices = { ability?: string, spellId?: number, skills?: string[], tools?: string[], languages?: string[] } | null
-
-export const featLanguageChoiceCount = (effects: Effect[]): number =>
-  effects.reduce((n, e) => e.type === 'language_proficiency_choice' ? n + e.value.count : n, 0)
-
-/**
- * Résout les effets « à choix » d'un don selon les choix enregistrés (`character_features.choices`).
- * Sans choix enregistré, l'effet n'accorde rien. `ability_increase_choice`/`saving_throw_proficiency_choice`
- * lisent `choices.ability` (count 1) ; le marqueur `skilled_choice` (don Doué) lit `choices.skills`/`tools`
- * et `language_proficiency_choice` (Linguiste) `choices.languages` → une maîtrise par entrée.
- */
-export const resolveFeatEffects = (effects: Effect[], choices: FeatChoices): Effect[] =>
-  effects.flatMap((e) => {
-    if (e.type === 'language_proficiency_choice') {
-      return (choices?.languages ?? []).slice(0, e.value.count)
-        .map((language): Effect => ({ type: 'language_proficiency', value: language }))
-    }
-    if (e.type === 'ability_increase_choice') {
-      const ability = choices?.ability
-      if (!ability) return []
-      return [{
-        type: 'ability_increase' as const,
-        value: { ability: ability as AbilityScoreKey, amount: e.value.amount },
-      }]
-    }
-    if (e.type === 'saving_throw_proficiency_choice') {
-      const ability = choices?.ability
-      if (!ability || e.value.count !== 1) return []
-      return [{
-        type: 'saving_throw_proficiency' as const,
-        value: { ability: ability as AbilityScoreKey },
-      }]
-    }
-    if (e.type === 'other' && (e.value as { kind?: string }).kind === 'skilled_choice') {
-      return [
-        ...(choices?.skills ?? []).map((skill): Effect => ({ type: 'skill_proficiency', value: { skill: skill as SkillKey } })),
-        ...(choices?.tools ?? []).map((tool): Effect => ({ type: 'tool_proficiency', value: tool })),
-      ]
-    }
-    return [e]
-  })
-
 /**
  * Effets alimentant la couche abilities, dérivés du seul payload GET (ni fetch ni stockage). Fiche,
  * level-up et lentille de sorts doivent tous passer par ici : une reconstruction partielle fait diverger
  * maîtrises et caractéristiques d'un écran à l'autre.
  */
 export const useAbilityEffectInputs = (characterSheet?: Ref<CharacterSheet | null | undefined>) => {
-  const sheetClasses = computed(() => characterSheet?.value?.classes ?? [])
-
-  const speciesEffects = computed<Effect[]>(() =>
-    (characterSheet?.value?.species?.speciesFeatures ?? []).flatMap(sf =>
-      (sf.feature?.featureEffects ?? []).map(fe => fe.effect).filter(Boolean),
-    ) as Effect[],
-  )
-
-  const featureEffects = computed<Effect[]>(() => {
-    const ccs = sheetClasses.value
-    return (characterSheet?.value?.features ?? []).flatMap((cf) => {
-      const feature = cf.feature!
-      const effects = (feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[]
-      if (feature.featureType === 'species_trait') return effects
-      if (feature.featureType === 'eldritch_invocation') return effects
-      if (feature.featureType === 'feat') return resolveFeatEffects(effects, (cf as { choices?: FeatChoices }).choices ?? null)
-      const lvlReq = feature.levelRequired ?? 1
-      const owner = feature.featureType === 'class_feature'
-        ? ccs.find(c => c.classId === feature.classId)
-        : ccs.find(c => c.subclass?.id === feature.subclassId)
-      return owner && owner.level >= lvlReq ? effects : []
-    })
-  })
-
-  const asiEffects = computed<Effect[]>(() => {
-    const ccs = sheetClasses.value
-    return (characterSheet?.value?.abilityScoreImprovements ?? [])
-      .filter((asi) => {
-        const c = ccs.find(cc => cc.classId === asi.classId)
-        return c && c.level >= asi.classLevel
-      })
-      .map(asi => ({
-        type: 'ability_increase' as const,
-        value: { ability: asi.ability, amount: asi.amount },
-      }))
-  })
+  const speciesEffects = computed<Effect[]>(() => speciesEffectsOf(characterSheet?.value))
+  const featureEffects = computed<Effect[]>(() => featureEffectsOf(characterSheet?.value))
+  const asiEffects = computed<Effect[]>(() => asiEffectsOf(characterSheet?.value))
 
   // Maîtrises dérivées par le GET (historique, JS de la classe principale, maîtrises choisies sur un point
   // de choix) : champs hors du type de relations Drizzle → accès casté.
@@ -337,8 +263,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     allEffects,
     speed: classes.speed,
     abilityModifiers: abilities.abilityModifiers,
-    maxHpBonus: abilities.hpBonusFromFeats,
+    hpPerLevelBonus: abilities.hpPerLevelBonus,
   })
+
+  const vitals = useCharacterVitals(characterSheet)
 
   // ─── Sort en concentration (résolu via characterSpells) ──────────────────
 
@@ -347,6 +275,23 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     if (id === null) return null
     return spells.characterSpells.value?.find(cs => cs.spellId === id)?.spell ?? null
   })
+
+  // Nom affiché : le sort du catalogue, sinon le libellé libre ; un sort que la fiche ne connaît plus reste « inconnu ».
+  const concentrationName = computed<string | null>(() => {
+    if (!conditions.isConcentrating.value) return null
+    return concentratingSpell.value?.name ?? conditions.concentratingOn.value ?? 'Sort inconnu'
+  })
+
+  // Lancer un sort à concentration met fin à la concentration en cours (AideDD, Concentration) : on le dit.
+  const startConcentration = (spellId: number, spellName: string) => {
+    const lost = conditions.concentratingSpellId.value === spellId ? null : concentrationName.value
+    conditions.setConcentration(spellId)
+    useToast().add({
+      title: `Concentration active — ${spellName}`,
+      description: lost ? `Vous perdez la concentration sur ${lost}.` : undefined,
+      color: 'info',
+    })
+  }
 
   // ─── API publique ─────────────────────────────────────────────────────────
 
@@ -363,7 +308,6 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     hitDice: classes.hitDice,
     proficiencyBonus: classes.proficiencyBonus,
     armorClass: inventoryLayer.computedAC,
-    deathSavingThrows: classes.deathSavingThrows,
     // Features & effets
     resolvedFeatures,
     allCharacterFeatures,
@@ -380,15 +324,25 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     passivePerception: abilities.passivePerception,
     passiveInvestigation: abilities.passiveInvestigation,
     initiativeBonus: abilities.initiativeBonus,
-    hpBonusFromFeats: abilities.hpBonusFromFeats,
+    hpPerLevelBonus: abilities.hpPerLevelBonus,
+    // PV, jets contre la mort
+    hitPointState: vitals.hitPointState,
+    setHitPointState: vitals.setHitPointState,
+    isDead: vitals.isDead,
+    isDying: vitals.isDying,
+    isStable: vitals.isStable,
     // Conditions & états
     binaryConditions,
     activeConditions: conditions.activeConditions,
     toggleCondition: conditions.toggleCondition,
     concentratingSpellId: conditions.concentratingSpellId,
+    concentratingOn: conditions.concentratingOn,
     isConcentrating: conditions.isConcentrating,
     setConcentration: conditions.setConcentration,
+    setFreeConcentration: conditions.setFreeConcentration,
+    startConcentration,
     concentratingSpell,
+    concentrationName,
     exhaustionLevel: conditions.exhaustionLevel,
     exhaustionTooltip: conditions.exhaustionTooltip,
     hasDraconicAncestry: conditions.hasDraconicAncestry,
@@ -396,7 +350,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     defenseEntries: conditions.defenseEntries,
     effectiveSpeed: conditions.effectiveSpeed,
     speedModifiers: conditions.speedModifiers,
+    fullMaxHp: conditions.fullMaxHp,
     effectiveMaxHp: conditions.effectiveMaxHp,
+    maxHitPointsFor: conditions.maxHitPointsFor,
     skillDisadvantageReasons: conditions.skillDisadvantageReasons,
     saveStatuses: conditions.saveStatuses,
     // Effets temporaires

@@ -26,7 +26,9 @@ import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/sh
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
-import { featLanguageChoiceCount, useAbilityEffectInputs } from './useCharacterSheet'
+import { activeItemEffectSources, activeTemporaryEffectSources, featLanguageChoiceCount, inventoryEntriesOf } from '~~/shared/rules/characterEffects'
+import { averageHitDieValue, hitPointGain, maxHitPoints } from '~~/shared/rules/hitPoints'
+import { useAbilityEffectInputs } from './useCharacterSheet'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -255,21 +257,44 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return charClasses.value.find(c => c.classId === state.value.pickedClassId) ?? null
   })
 
+  // Modificateur de CON naturel : celui du gain de PV, que ni les objets ni les effets temporaires ne rendent permanent.
   const conMod = computed(() => abilityMod(finalAbilities.value.con))
 
-  const averageHpGain = computed(() => {
-    if (!pickedClass.value) return 0
-    const die = pickedClass.value.hitDie
-    return Math.ceil(die / 2) + 1 + conMod.value
+  // La fiche affiche le maximum avec ses objets et effets temporaires : le même calcul, pour que « avant → après » le soit aussi.
+  const liveAbilities = useCharacterAbilities(charSheet, {
+    ...abilityInputs,
+    activeEffectSources: computed(() => [
+      ...activeItemEffectSources(inventoryEntriesOf((charSheet.value as unknown as { inventory?: Parameters<typeof inventoryEntriesOf>[0] } | null)?.inventory ?? [])),
+      ...activeTemporaryEffectSources(charSheet.value?.temporaryEffects ?? []),
+    ]),
+    proficiencyBonus: computed(() => profBonusAtLevel(totalLevel.value)),
   })
 
-  const hpGained = computed(() => {
-    const s = state.value
-    if (s.hpMethod === 'average') return averageHpGain.value
-    if (s.hpMethod === 'manual' && s.hpManual != null) return Math.max(1, s.hpManual + conMod.value)
-    if (s.hpMethod === 'roll' && s.hpRolled != null) return Math.max(1, s.hpRolled + conMod.value)
-    return null
+  const maxHpAtLevel = (level: number, hpBase: number) => maxHitPoints({
+    hpBase,
+    totalLevel: level,
+    conMod: liveAbilities.abilityModifiers.value.con ?? 0,
+    perLevelBonus: liveAbilities.hpPerLevelBonus.value,
+    exhaustionLevel: 0,
   })
+  const currentHpMax = computed(() => maxHpAtLevel(totalLevel.value, charSheet.value?.hpBase ?? 0))
+
+  // Valeur du dé de vie envoyée au serveur, qui en tire le gain (minimum 1 PV par niveau compris).
+  const hpDie = computed<number | null>(() => {
+    const s = state.value
+    if (s.hpMethod === 'average') return pickedClass.value ? averageHitDieValue(pickedClass.value.hitDie) : null
+    return s.hpMethod === 'manual' ? s.hpManual : s.hpRolled
+  })
+
+  const hpIncreaseFor = (die: number | null): number | null =>
+    die == null
+      ? null
+      : maxHpAtLevel(totalLevel.value + 1, (charSheet.value?.hpBase ?? 0) + hitPointGain(die, conMod.value)) - currentHpMax.value
+
+  const averageHpGain = computed(() => pickedClass.value ? hpIncreaseFor(averageHitDieValue(pickedClass.value.hitDie)) ?? 0 : 0)
+
+  // Augmentation du maximum affiché : dé, CON et bonus par niveau du niveau gagné.
+  const hpGained = computed(() => hpIncreaseFor(hpDie.value))
 
   // ── Choix de progression lus dans le CATALOGUE (/api/catalog, lot 6a) ──────
   // Choix résolus aux niveaux d'ARRIVÉE et de DÉPART : le delta pilote le nombre de nouvelles
@@ -616,7 +641,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         return !!s.pickedClassId
 
       case 'hp':
-        return hpGained.value != null && hpGained.value > 0
+        return hpDie.value != null && hpDie.value >= 1 && hpDie.value <= (pickedClass.value?.hitDie ?? 12)
 
       case 'features': {
         if (isSubclassLevel.value && !s.newSubclassId) return false
@@ -735,7 +760,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       body: {
         classId,
         isMulticlass: s.isMulticlass,
-        hpGained: hpGained.value,
+        hpDie: hpDie.value,
         subclassId: s.newSubclassId,
         fightingStyle: s.fightingStyle,
         expertiseSkills: s.expertiseSkills,
@@ -781,6 +806,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     // HP
     averageHpGain,
     hpGained,
+    hpDie,
+    hpPerLevelBonus: liveAbilities.hpPerLevelBonus,
+    currentHpMax,
     // Step conditions
     isSubclassLevel,
     subclassLevelFor,

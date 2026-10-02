@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="isDying"
+    v-if="isDying || isDead"
     class="rounded-xl border p-3 space-y-2 transition-all"
     :class="isDead
       ? 'border-red-600/50 bg-red-500/10'
@@ -30,7 +30,7 @@
             v-for="n in [3, 2, 1]"
             :key="n"
             class="size-4 rounded-full border-2 transition-all"
-            :class="n <= deathSavingThrows.success
+            :class="n <= successes
               ? 'bg-green-500/60 border-green-500 hover:bg-green-500/80'
               : 'border-green-500/40 hover:border-green-500'"
             @click="toggleSave('success', n)"
@@ -45,7 +45,7 @@
             v-for="n in 3"
             :key="n"
             class="size-4 rounded-full border-2 transition-all"
-            :class="n <= deathSavingThrows.failure
+            :class="n <= failures
               ? 'bg-red-500/60 border-red-500 hover:bg-red-500/80'
               : 'border-red-500/40 hover:border-red-500'"
             @click="toggleSave('failure', n)"
@@ -62,7 +62,7 @@
       v-if="isDead"
       class="text-xs font-bold text-red-400"
     >
-      ☠ Mort — 3 échecs
+      ☠ Mort — {{ failures >= DEATH_SAVE_LIMIT ? '3 échecs' : 'épuisement de niveau 6' }}
     </p>
     <p
       v-else-if="isStable"
@@ -76,7 +76,7 @@
       variant="outline"
       color="neutral"
       class="w-full"
-      @click="rollDeathSave"
+      @click="rollSave"
     >
       Lancer un jet de mort
     </UButton>
@@ -84,42 +84,31 @@
 </template>
 
 <script lang="ts" setup>
+import { DEATH_SAVE_LIMIT, rollDeathSave } from '~~/shared/rules/damage'
+
 const props = defineProps<{
   characterSheet: CharacterSheet
   roll?: (label: string, modifier: number, sides?: number, count?: number) => number
 }>()
 
-const emit = defineEmits<{
-  recover: [hp: number]
-}>()
+const { hitPointState, setHitPointState, isDead, isDying, isStable } = useCharacterSheet(toRef(props, 'characterSheet'))
 
-const { deathSavingThrows } = useCharacterSheet(toRef(props, 'characterSheet'))
-
-const isDying = computed(() => props.characterSheet.currentHp === 0)
-const isDead = computed(() => deathSavingThrows.value.failure >= 3)
-const isStable = computed(() => deathSavingThrows.value.success >= 3)
+const successes = computed(() => hitPointState.value.deathSaveSuccesses)
+const failures = computed(() => hitPointState.value.deathSaveFailures)
 
 const toggleSave = (type: 'success' | 'failure', n: number) => {
-  const current = deathSavingThrows.value[type]
-  deathSavingThrows.value = { ...deathSavingThrows.value, [type]: current === n ? n - 1 : n }
+  const key = type === 'success' ? 'deathSaveSuccesses' : 'deathSaveFailures'
+  const current = hitPointState.value[key]
+  setHitPointState({ ...hitPointState.value, [key]: current === n ? n - 1 : n })
 }
 
 const toaster = useToast()
 
-const rollDeathSave = () => {
+const rollSave = () => {
   const natural = props.roll?.('Jet de mort', 0) ?? 0
-
-  if (natural === 20) {
-    emit('recover', 1)
-    deathSavingThrows.value = { success: 0, failure: 0 }
-    toaster.add({ title: '20 naturel — récupéré à 1 PV !', color: 'success' })
-  } else if (natural === 1) {
-    deathSavingThrows.value = { ...deathSavingThrows.value, failure: Math.min(3, deathSavingThrows.value.failure + 2) }
-    toaster.add({ title: '1 naturel — 2 échecs !', color: 'error' })
-  } else if (natural >= 10) {
-    deathSavingThrows.value = { ...deathSavingThrows.value, success: Math.min(3, deathSavingThrows.value.success + 1) }
-  } else {
-    deathSavingThrows.value = { ...deathSavingThrows.value, failure: Math.min(3, deathSavingThrows.value.failure + 1) }
-  }
+  const { state, outcome } = rollDeathSave(hitPointState.value, natural)
+  setHitPointState(state)
+  if (outcome === 'recovered') toaster.add({ title: '20 naturel — récupéré à 1 PV !', color: 'success' })
+  else if (outcome === 'two-failures') toaster.add({ title: '1 naturel — 2 échecs !', color: 'error' })
 }
 </script>

@@ -263,7 +263,8 @@ Détail (symptôme, règle sourcée, racine, piste) dans chaque issue.
 
 | Code | Issue | Bug |
 |---|---|---|
-| B13 | [#105](https://github.com/kevmorpain/le-bureau-du-jdr/issues/105) | PV max figés quand le modificateur de CON change (décision requise) |
+| B13 | ✅ résolu (2026-10-02) — [#105](https://github.com/kevmorpain/le-bureau-du-jdr/issues/105) | PV max figés quand le modificateur de CON change : `max_hp` → `hp_base`, maximum dérivé à la lecture ([D19](./decisions.md#d19), migration 0117) |
+| B16 | ✅ résolu (2026-10-02) — [#203](https://github.com/kevmorpain/le-bureau-du-jdr/issues/203) | Repos : PV remis au maximum stocké, sans Robuste ni épuisement : le serveur lit la fiche comme le client (`server/utils/characterSheetLoader.ts`) |
 
 ## Correctifs de parcours récents (résolus, hors numérotation)
 

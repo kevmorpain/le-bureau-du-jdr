@@ -32,10 +32,11 @@ let elfLineageProgId: number
 let triadeProgId: number
 let weaponMasteryProgId: number
 
+// 1 PV par niveau : la borne basse, valable pour toute classe.
 function baseInput(over: Partial<Parameters<typeof createCharacter>[1]> = {}) {
   return createCharacterSchema.parse({
     name: 'Test',
-    maxHp: 10,
+    hpBase: over.level ?? 1,
     classId: FIGHTER,
     level: 1,
     speciesId: 1,
@@ -161,13 +162,13 @@ beforeAll(async () => {
 describe('createCharacter — round-trip Guerrier niveau 1', () => {
   it('persiste fiche, classe, feature passive, caracs, compétences ; pas d\'emplacement de sort', async () => {
     const { id } = await createCharacter(db, baseInput({
-      classId: FIGHTER, level: 1,
+      classId: FIGHTER, level: 1, hpBase: 10,
       classSkills: ['athletics'], classSavingThrows: ['str'],
     }), OWNER)
 
     const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
     expect(sheet.ownerId).toBe(OWNER)
-    expect(sheet.maxHp).toBe(10)
+    expect(sheet.hpBase).toBe(10)
 
     const classes = await db.select().from(schema.characterClasses).where(eq(schema.characterClasses.characterSheetId, id))
     expect(classes).toHaveLength(1)
