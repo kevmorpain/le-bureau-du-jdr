@@ -17,6 +17,9 @@ const WARLOCK = 1
 const FIGHTER = 2
 const FIGHTER_SUBCLASS = 10
 const DRUID = 3
+const WIZARD = 4
+const ELDRITCH_KNIGHT = 22
+const SPELL = { fireBolt: 700, mageHand: 701, shield: 710, magicMissile: 711, sleep: 712, rayOfSickness: 713, mageArmor: 714 }
 const EARTH_CIRCLE = 20
 const MOON_CIRCLE = 21
 const OWNER = 1
@@ -50,9 +53,11 @@ beforeAll(async () => {
     { id: WARLOCK, name: 'Occultiste', hitDice: '1d8', spellcastingType: 'pact' },
     { id: FIGHTER, name: 'Guerrier', hitDice: '1d10', spellcastingType: 'none' },
     { id: DRUID, name: 'Druide', hitDice: '1d8', spellcastingType: 'full' },
+    { id: WIZARD, name: 'Magicien', hitDice: '1d6', spellcastingType: 'full' },
   ])
   await db.insert(schema.subclasses).values([
     { id: FIGHTER_SUBCLASS, classId: FIGHTER, name: 'Champion' },
+    { id: ELDRITCH_KNIGHT, classId: FIGHTER, name: 'Chevalier occulte' },
     { id: EARTH_CIRCLE, classId: DRUID, name: 'Cercle de la terre' },
     { id: MOON_CIRCLE, classId: DRUID, name: 'Cercle de la lune' },
   ])
@@ -80,6 +85,19 @@ beforeAll(async () => {
     { id: 601, name: 'Portail', level: 9, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId: 1 },
   ])
   await db.insert(schema.spellClasses).values([501, 502, 503, 600, 601].map(spellId => ({ spellId, classId: WARLOCK })))
+  // Sorts de Magicien dont dépend le Chevalier occulte : écoles variées.
+  await db.insert(schema.magicSchools).values([
+    { id: 2, name: 'Abjuration' }, { id: 3, name: 'Evocation' }, { id: 4, name: 'Enchantment' }, { id: 5, name: 'Necromancy' }, { id: 6, name: 'Transmutation' },
+  ])
+  const wizardSpell = (id: number, name: string, level: number, schoolId: number) =>
+    ({ id, name, level, castingTime: '1 action', range: 0, duration: 'Instantané', schoolId })
+  await db.insert(schema.spells).values([
+    wizardSpell(SPELL.fireBolt, 'Trait de feu', 0, 3), wizardSpell(SPELL.mageHand, 'Main de mage', 0, 6),
+    wizardSpell(SPELL.shield, 'Bouclier', 1, 2), wizardSpell(SPELL.magicMissile, 'Projectile magique', 1, 3),
+    wizardSpell(SPELL.sleep, 'Sommeil', 1, 4), wizardSpell(SPELL.rayOfSickness, 'Rayon empoisonné', 1, 5),
+    wizardSpell(SPELL.mageArmor, 'Armure de mage', 1, 2),
+  ])
+  await db.insert(schema.spellClasses).values(Object.values(SPELL).map(spellId => ({ spellId, classId: WIZARD })))
   const [asiOwner] = await db.insert(schema.features).values({ name: 'Amélioration de caractéristiques', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 4 }).returning()
   await db.insert(schema.progression).values({ featureId: asiOwner.id, kind: 'asi_or_feat', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feats' }, replaceable: false })
   // Manifestation 5.5 (tag invocation VALIDE) — sert la garde de cohérence d'édition (Lot A) :
@@ -267,6 +285,69 @@ describe('characterLevelUp — remplacement d\'un sort connu (B11b)', () => {
     const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 501 }))).rejects.toThrow(CharacterValidationError)
     expect(await knownIds(id)).toContain(501)
+  })
+})
+
+describe('Chevalier occulte — lanceur du tiers', () => {
+  const fighterAt = (level: number, over: Record<string, unknown> = {}) =>
+    createCharacter(db, createInput({ classId: FIGHTER, level, abilityScores: { str: 15 }, ...over }), OWNER)
+  const slotsOf = async (sheetId: number) =>
+    (await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, sheetId)))
+      .map((s: { slotLevel: number, total: number }) => [s.slotLevel, s.total])
+  const eldritchLu = (over: Record<string, unknown>) => luInput({ classId: FIGHTER, ...over })
+
+  it('créé au niveau 3, il a ses sorts (deux d\'école libre au plus un), le Magicien pour liste, et ses emplacements du tiers', async () => {
+    const { id } = await fighterAt(3, {
+      subclassId: ELDRITCH_KNIGHT,
+      spellIds: [SPELL.fireBolt, SPELL.mageHand, SPELL.shield, SPELL.magicMissile, SPELL.sleep],
+    })
+    expect(await slotsOf(id)).toEqual([[1, 2]])
+    const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))
+    expect(spells).toHaveLength(5)
+    expect(spells.every((s: { classId: number }) => s.classId === FIGHTER)).toBe(true)
+  })
+
+  it('au niveau 3, un seul des trois sorts de niveau 1 peut sortir des écoles d\'abjuration et d\'évocation', async () => {
+    await expect(fighterAt(3, { subclassId: ELDRITCH_KNIGHT, spellIds: [SPELL.shield, SPELL.sleep, SPELL.rayOfSickness] }))
+      .rejects.toThrow(/n'est pas d'une école/)
+  })
+
+  it('trop de sorts mineurs ou de sorts pour le niveau : refusé', async () => {
+    await expect(fighterAt(3, { subclassId: ELDRITCH_KNIGHT, spellIds: [SPELL.fireBolt, SPELL.mageHand, SPELL.shield, SPELL.magicMissile, SPELL.mageArmor, SPELL.sleep] }))
+      .rejects.toThrow(/Trop de sorts/)
+  })
+
+  it('un Guerrier d\'une autre sous-classe n\'a aucun sort, ni emplacement', async () => {
+    await expect(fighterAt(3, { subclassId: FIGHTER_SUBCLASS, spellIds: [SPELL.shield] })).rejects.toThrow(/n'est pas dans la liste de la classe Guerrier/)
+    const { id } = await fighterAt(3, { subclassId: FIGHTER_SUBCLASS })
+    expect(await slotsOf(id)).toEqual([])
+  })
+
+  it('en choisissant la sous-classe au niveau 3, il apprend ses sorts et reçoit ses emplacements', async () => {
+    const { id } = await fighterAt(2)
+    await characterLevelUp(db, id, eldritchLu({
+      subclassId: ELDRITCH_KNIGHT,
+      newCantripIds: [SPELL.fireBolt, SPELL.mageHand],
+      newSpellIds: [SPELL.shield, SPELL.magicMissile, SPELL.sleep],
+    }))
+    expect(await slotsOf(id)).toEqual([[1, 2]])
+  })
+
+  it('les emplacements suivent la table du tiers : trois au niveau 4, puis quatre et deux au niveau 7', async () => {
+    const { id } = await fighterAt(3, { subclassId: ELDRITCH_KNIGHT })
+    await characterLevelUp(db, id, eldritchLu({ newSpellIds: [SPELL.shield] }))
+    expect(await slotsOf(id)).toEqual([[1, 3]])
+  })
+
+  it('au niveau 4, le nouveau sort doit être d\'abjuration ou d\'évocation, pas d\'une autre école', async () => {
+    const { id } = await fighterAt(3, { subclassId: ELDRITCH_KNIGHT })
+    await expect(characterLevelUp(db, id, eldritchLu({ newSpellIds: [SPELL.rayOfSickness] }))).rejects.toThrow(/n'est pas d'une école/)
+    await characterLevelUp(db, id, eldritchLu({ newSpellIds: [SPELL.mageArmor] }))
+  })
+
+  it('niveau 4 → 5 : aucun sort de plus, la table n\'avance pas', async () => {
+    const { id } = await fighterAt(4, { subclassId: ELDRITCH_KNIGHT })
+    await expect(characterLevelUp(db, id, eldritchLu({ newSpellIds: [SPELL.shield] }))).rejects.toThrow(/Trop de sorts/)
   })
 })
 

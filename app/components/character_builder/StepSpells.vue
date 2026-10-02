@@ -302,6 +302,13 @@
       </template>
 
       <template v-if="activeTab === 'spells' && !pending">
+        <p v-if="schoolRestriction" class="text-xs text-muted mb-3">
+          Les sorts viennent de la liste du Magicien, des écoles
+          {{ schoolRestriction.schools.map(school => $t(`schools.${school}`, school)).join(' et ') }}.
+          <template v-if="schoolRestriction.freePicks > 0">
+            {{ schoolRestriction.freePicks }} {{ $t('sort', schoolRestriction.freePicks) }} peu{{ schoolRestriction.freePicks > 1 ? 'vent' : 't' }} venir d'une autre école ({{ outsideSchoolPicks }}/{{ schoolRestriction.freePicks }}).
+          </template>
+        </p>
         <p v-if="freeListPicks > 0" class="text-xs text-muted mb-3">
           Secrets magiques : jusqu'à {{ freeListPicks }} de ces sorts peuvent venir de la liste de n'importe quelle classe.
         </p>
@@ -328,7 +335,7 @@
               <div
                 v-for="spell in list"
                 :key="spell.id"
-                :class="isOutsideBlocked(spell.id) ? 'opacity-50 pointer-events-none' : ''"
+                :class="isBlocked(spell) ? 'opacity-50 pointer-events-none' : ''"
               >
                 <SpellCardBuilder
                   :spell="spell"
@@ -362,6 +369,8 @@ const {
   spellsNeeded,
   preparedLimit,
   freeListPicks,
+  spellListClassName,
+  schoolRestriction,
   needsPactBoon,
   ABILITY_SHORT,
   abilityMod,
@@ -378,7 +387,7 @@ const filterRitual = ref(false)
 const { extendedQuery } = useExtendedContent()
 
 const { data: allSpells, pending } = useFetch('/api/spells', {
-  query: computed(() => ({ className: classData.value?.dbName ?? '', ...extendedQuery.value })),
+  query: computed(() => ({ className: spellListClassName.value, ...extendedQuery.value })),
   immediate: true,
 })
 
@@ -488,6 +497,14 @@ const canPickOutsideClassList = computed(() => state.value.selectedSpells.filter
 const isOutsideBlocked = (id: number) =>
   isOutsideClassList(id) && !state.value.selectedSpells.includes(id) && !canPickOutsideClassList.value
 
+// Chevalier occulte, Escroc arcanique : la plupart des sorts viennent de deux écoles ; quelques-uns sont d'école libre.
+const isOutsideSchool = (spell: any) => !!schoolRestriction.value && !schoolRestriction.value.schools.includes(spell.school?.name)
+const outsideSchoolPicks = computed(() => state.value.selectedSpells
+  .filter(id => (allSpells.value ?? []).some((s: any) => s.id === id && isOutsideSchool(s))).length)
+const isSchoolBlocked = (spell: any) =>
+  isOutsideSchool(spell) && !state.value.selectedSpells.includes(spell.id) && outsideSchoolPicks.value >= (schoolRestriction.value?.freePicks ?? 0)
+const isBlocked = (spell: any) => isOutsideBlocked(spell.id) || isSchoolBlocked(spell)
+
 const spellcastingMod = computed(() => {
   const ab = spellcastingInfo.value?.ability
   if (!ab) return null
@@ -536,7 +553,10 @@ function toggleSpell(id: number) {
     list.splice(idx, 1)
     state.value.preparedSpells = state.value.preparedSpells.filter(p => p !== id)
   }
-  else if (list.length < spellsNeeded.value && !isOutsideBlocked(id)) list.push(id)
+  else if (list.length < spellsNeeded.value && !isOutsideBlocked(id)) {
+    const spell = (allSpells.value ?? []).find((s: any) => s.id === id)
+    if (!spell || !isSchoolBlocked(spell)) list.push(id)
+  }
 }
 
 function togglePreparedSpell(id: number) {

@@ -12,6 +12,8 @@ import {
 } from '~/data/character-builder'
 import { SKILLED_FEAT_COUNT } from '~~/shared/rules/tools'
 import { magicalSecretsGained, spellLearningOf, spellsLearnedOnLevelUp } from '~~/shared/rules/spellsKnown'
+import { classNameFromSlug } from '~~/shared/rules/classSlugs'
+import { anySchoolSpellsGained, subclassCastingOf } from '~~/shared/rules/subclassCasting'
 import { maxSpellLevelForLevel } from '~~/shared/rules/spellSlots'
 import {
   meetsMulticlassPrerequisites,
@@ -163,6 +165,12 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Derived character data ─────────────────────────────────────────────────
 
+  // Chevalier occulte, Escroc arcanique : le Guerrier et le Roublard n'incantent qu'à travers leur sous-classe.
+  const castingOfSubclass = (classSlug: string, subclassName: string | null | undefined) => {
+    const casting = subclassCastingOf(classSlug, subclassName)
+    return casting ? { ability: casting.ability, type: casting.type, startsAtLevel: casting.startsAtLevel } : null
+  }
+
   const charClasses = computed(() => {
     return (charSheet.value?.classes ?? []).map((cc) => {
       const cls = CLASSES.find(c => c.dbName === (cc as any).class?.name)
@@ -179,6 +187,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         color: cls?.color ?? '#a1a1aa',
         emoji: cls?.emoji ?? '⚔️',
         data: cls ?? null,
+        spellcasting: cls?.spellcasting ?? castingOfSubclass(cls?.id ?? '', (cc as any).subclass?.name),
       }
     })
   })
@@ -479,24 +488,31 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return Math.min(multiclassSkills.value.count, multiclassSkills.value.options.filter(k => !owned.has(k)).length)
   })
 
+  const subclassNameAfter = computed(() =>
+    state.value.newSubclassName ?? charClasses.value.find(c => c.classId === state.value.pickedClassId)?.subclassName ?? null)
+  const subclassCasting = computed(() => subclassCastingOf(state.value.pickedClassId ?? '', subclassNameAfter.value))
+  // Incantation de la classe montée, ou de sa sous-classe lanceuse (la sous-classe peut être choisie à ce niveau).
+  const levelUpSpellcasting = computed(() => pickedClass.value?.spellcasting
+    ?? castingOfSubclass(state.value.pickedClassId ?? '', subclassNameAfter.value))
+  // Clé des tables de sorts connus : celle de la sous-classe lanceuse, sinon celle de la classe.
+  const casterSlug = computed(() => subclassCasting.value?.slug ?? state.value.pickedClassId ?? '')
+
   const hasSpellcasting = computed(() => {
-    if (!pickedClass.value?.spellcasting) return false
-    const startsAt = pickedClass.value.spellcasting.startsAtLevel ?? 1
+    if (!levelUpSpellcasting.value) return false
+    const startsAt = levelUpSpellcasting.value.startsAtLevel ?? 1
     return state.value.toLevel >= startsAt
   })
 
   // ── Nouveaux sorts (étape Magie) ──────────────────────────────────────────
 
-  const spellLearning = computed(() => spellLearningOf(state.value.pickedClassId ?? ''))
+  const spellLearning = computed(() => spellLearningOf(casterSlug.value))
   const spellsLearned = computed(() => hasSpellcasting.value
-    ? spellsLearnedOnLevelUp(state.value.pickedClassId ?? '', state.value.fromLevel, state.value.toLevel)
+    ? spellsLearnedOnLevelUp(casterSlug.value, state.value.fromLevel, state.value.toLevel)
     : { cantrips: 0, spells: 0 })
   const cantripsToLearn = computed(() => spellsLearned.value.cantrips)
   const spellsToLearn = computed(() => spellsLearned.value.spells)
 
   // Secrets magiques du Barde : des sorts de n'importe quelle classe, dont deux de plus, hors décompte, au Collège du savoir.
-  const subclassNameAfter = computed(() =>
-    state.value.newSubclassName ?? charClasses.value.find(c => c.classId === state.value.pickedClassId)?.subclassName ?? null)
   const secrets = computed(() => hasSpellcasting.value
     ? magicalSecretsGained(state.value.pickedClassId ?? '', state.value.fromLevel, state.value.toLevel, subclassNameAfter.value)
     : { anyList: 0, extra: 0 })
@@ -504,13 +520,15 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // Plafonné par le niveau DANS la classe montée, pas par les emplacements combinés du multiclassage.
   const maxLearnableSpellLevel = computed(() => {
-    const type = pickedClass.value?.spellcasting?.type
+    const type = levelUpSpellcasting.value?.type
     return type && hasSpellcasting.value ? maxSpellLevelForLevel(type, state.value.toLevel) : 0
   })
 
   const { extendedQuery } = useExtendedContent()
   const classSpellsQuery = computed(() => ({
-    className: hasSpellcasting.value ? pickedClass.value?.dbName ?? '' : '',
+    className: hasSpellcasting.value
+      ? subclassCasting.value ? classNameFromSlug(subclassCasting.value.listClass) ?? '' : pickedClass.value?.dbName ?? ''
+      : '',
     ...extendedQuery.value,
   }))
   const { data: classSpellsData, pending: classSpellsPending } = useAsyncData<Spell[]>(
@@ -531,6 +549,19 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const isOutsideClassList = (id: number) => freeListPicks.value > 0 && !classSpellIds.value.has(id)
   const outsidePicks = computed(() => state.value.newSpellIds.filter(isOutsideClassList).length)
   const canPickOutsideClassList = computed(() => outsidePicks.value < freeListPicks.value)
+
+  // Chevalier occulte, Escroc arcanique : la plupart des sorts viennent de deux écoles ; quelques-uns sont d'école libre.
+  const schoolRestriction = computed(() => subclassCasting.value
+    ? {
+        schools: subclassCasting.value.schools,
+        freePicks: anySchoolSpellsGained(state.value.fromLevel, state.value.toLevel) + (state.value.replacedSpellId != null ? 1 : 0),
+      }
+    : null)
+  const isOutsideSchool = (spell: Spell) => !!schoolRestriction.value && !schoolRestriction.value.schools.includes(spell.school?.name ?? '')
+  const outsideSchoolPicks = computed(() => state.value.newSpellIds
+    .filter(id => classSpells.value.some(s => s.id === id && isOutsideSchool(s))).length)
+  const isSchoolBlocked = (spell: Spell) =>
+    isOutsideSchool(spell) && !state.value.newSpellIds.includes(spell.id) && outsideSchoolPicks.value >= (schoolRestriction.value?.freePicks ?? 0)
 
   const learnableCantrips = computed(() => classSpells.value.filter(s => s.level === 0))
   const learnableSpells = computed(() =>
@@ -786,6 +817,10 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     freeListPicks,
     isOutsideClassList,
     canPickOutsideClassList,
+    schoolRestriction,
+    outsideSchoolPicks,
+    isSchoolBlocked,
+    levelUpSpellcasting,
     needsPactBoon,
     needsInvocations,
     canReplaceInvocation,

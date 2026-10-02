@@ -16,6 +16,8 @@ const SPELLS = [
   spell(30, 'Marque du chasseur', 1, 'Rôdeur'),
   spell(31, 'Soins', 1, 'Rôdeur'),
   spell(33, 'Grande foulée', 1, 'Rôdeur'),
+  spell(70, 'Bouclier', 1, 'Magicien'),
+  spell(71, 'Sommeil', 1, 'Magicien'),
   spell(60, 'Sommeil', 1, 'Barde'),
   spell(61, 'Soins', 1, 'Barde'),
   spell(40, 'Bénédiction', 1, 'Paladin'),
@@ -116,6 +118,42 @@ describe('Builder, étape Sorts — Secrets magiques du Barde', () => {
 
     const other = await mountBuilderSpells('bard', 6, 'Sorts connus', { subclass: 'Collège de la vaillance' })
     expect(other.text()).toMatch(/Sorts connus ?0\/9/)
+  })
+})
+
+describe('Builder, étape Sorts — Chevalier occulte (lanceur du tiers)', () => {
+  it('Guerrier 3 du Chevalier occulte : l\'étape Sorts existe, 2 sorts mineurs et 3 sorts, un sort d\'école libre', async () => {
+    const { builder } = await mountBuilderSpells('fighter', 3, 'Sorts mineurs', { subclass: 'Chevalier occulte' })
+
+    expect(builder.activeSteps.value.some(step => step.id === 'spells')).toBe(true)
+    expect(builder.spellcastingInfo.value).toMatchObject({ type: 'third', ability: 'int' })
+    expect(builder.cantripsNeeded.value).toBe(2)
+    expect(builder.spellsNeeded.value).toBe(3)
+    expect(builder.spellListClassName.value).toBe('Magicien')
+    expect(builder.schoolRestriction.value).toMatchObject({ schools: ['Abjuration', 'Evocation'], freePicks: 1 })
+    expect(builder.spellSlots.value).toEqual([2, 0, 0, 0, 0, 0, 0, 0, 0])
+  })
+
+  it('exige ses sorts pour valider l\'étape', async () => {
+    const { builder } = await mountBuilderSpells('fighter', 3, 'Sorts mineurs', { subclass: 'Chevalier occulte' })
+    builder.state.value.selectedCantrips = [1, 2]
+    expect(builder.isStepComplete.value('spells')).toBe(false)
+    builder.state.value.selectedSpells = [70, 71, 72]
+    expect(builder.isStepComplete.value('spells')).toBe(true)
+  })
+
+  it('Escroc arcanique : trois sorts mineurs (dont Main de mage)', async () => {
+    const { builder } = await mountBuilderSpells('rogue', 3, 'Sorts mineurs', { subclass: 'Escroc arcanique' })
+    expect(builder.cantripsNeeded.value).toBe(3)
+  })
+
+  it('un Guerrier d\'une autre sous-classe, ou avant le niveau 3, n\'a pas d\'étape Sorts', async () => {
+    const champion = await mountBuilderSpells('fighter', 3, 'Sorts', { subclass: 'Champion' })
+    expect(champion.builder.spellcastingInfo.value).toBeNull()
+    expect(champion.builder.activeSteps.value.some(step => step.id === 'spells')).toBe(false)
+
+    const early = await mountBuilderSpells('fighter', 2, 'Sorts', { subclass: 'Chevalier occulte' })
+    expect(early.builder.spellcastingInfo.value).toBeNull()
   })
 })
 

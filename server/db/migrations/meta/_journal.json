@@ -813,6 +813,13 @@
       "when": 1790860002162,
       "tag": "0115_druid_circle_spells",
       "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "6",
+      "when": 1790860002163,
+      "tag": "0116_third_caster_slots",
+      "breakpoints": true
     }
   ]
 }

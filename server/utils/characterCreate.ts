@@ -8,6 +8,9 @@ import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/ut
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { creationDuplicates } from '~~/server/utils/duplicateProficiencies'
 import { learnedSpellsError } from '~~/server/utils/spellLearning'
+import { subclassNamesById } from '~~/server/utils/subclassNames'
+import { classSlugFromName } from '~~/shared/rules/classSlugs'
+import { effectiveCasterType } from '~~/shared/rules/subclassCasting'
 import { abilityEnum } from '~~/shared/rules/abilities'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
@@ -723,7 +726,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  const casterType = cls.spellcastingType
+  const subclassName = (await subclassNamesById(db, [subclassId])).get(subclassId ?? -1) ?? null
+  const casterType = effectiveCasterType(cls.spellcastingType, classSlugFromName(cls.name) ?? '', subclassName)
   if (casterType !== 'none') {
     const slots = slotsForLevel(casterType, d.level)
     const slotType = casterType === 'pact' ? 'pact_magic' : 'spellcasting'

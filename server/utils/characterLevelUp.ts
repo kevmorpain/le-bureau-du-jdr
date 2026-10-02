@@ -13,6 +13,9 @@ import { combinedSpellSlots } from '~~/shared/rules/spellSlots'
 import { multiclassSkillGrant } from '~~/shared/rules/multiclass'
 import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { learnedSpellsError, replacedSpellError } from '~~/server/utils/spellLearning'
+import { subclassNamesById } from '~~/server/utils/subclassNames'
+import { classSlugFromName } from '~~/shared/rules/classSlugs'
+import { effectiveCasterType } from '~~/shared/rules/subclassCasting'
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import { isValidAsiDistribution } from '~~/shared/rules/composite'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
@@ -146,7 +149,7 @@ async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelU
   const alreadyKnownIds = known.map(k => k.spellId)
 
   if (d.replacedSpellId != null) {
-    const replaceError = await replacedSpellError(db, { cls, characterSheetId, fromLevel: newLevel - 1, replacedSpellId: d.replacedSpellId })
+    const replaceError = await replacedSpellError(db, { cls, characterSheetId, fromLevel: newLevel - 1, replacedSpellId: d.replacedSpellId, subclassId })
     if (replaceError) throw new CharacterValidationError(replaceError)
   }
 
@@ -354,11 +357,17 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   newClassesList.push({ classId: cls.id, level: newLevel })
 
   const classRows = await db
-    .select({ id: schema.classes.id, spellcastingType: schema.classes.spellcastingType })
+    .select({ id: schema.classes.id, name: schema.classes.name, spellcastingType: schema.classes.spellcastingType })
     .from(schema.classes)
     .where(inArray(schema.classes.id, newClassesList.map(c => c.classId)))
-  const casterTypeById = new Map(classRows.map(c => [c.id, c.spellcastingType]))
-  const classesForSlots = newClassesList.map(c => ({ casterType: casterTypeById.get(c.classId) ?? 'none', level: c.level }))
+  const subclassOfClass = new Map<number, number | null>(currentClasses.map(c => [c.classId, c.subclassId]))
+  subclassOfClass.set(cls.id, subclassAfter ?? null)
+  const subclassNames = await subclassNamesById(db, [...subclassOfClass.values()])
+  const classesForSlots = newClassesList.map((c) => {
+    const row = classRows.find(r => r.id === c.classId)
+    const subclassName = subclassNames.get(subclassOfClass.get(c.classId) ?? -1) ?? null
+    return { casterType: row ? effectiveCasterType(row.spellcastingType, classSlugFromName(row.name) ?? '', subclassName) : 'none' as const, level: c.level }
+  })
   const { regular: regSlots, pact: pactSlots } = combinedSpellSlots(classesForSlots)
 
   const existingSlots = await db

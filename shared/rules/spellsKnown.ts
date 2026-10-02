@@ -1,9 +1,13 @@
 import type { ClassSlug } from './classSlugs'
+import type { SubclassCasterSlug } from './subclassCasting'
+
+// Une classe, ou une sous-classe lanceuse du tiers (Chevalier occulte, Escroc arcanique) dont les tables lui sont propres.
+type CasterSlug = ClassSlug | SubclassCasterSlug
 
 // Rôdeur 2014 : sorts CONNUS (il ne prépare pas, contrairement au Rôdeur 2024).
 export type SpellLearning = 'known' | 'prepared' | 'spellbook'
 
-export const SPELL_LEARNING: Partial<Record<ClassSlug, SpellLearning>> = {
+export const SPELL_LEARNING: Partial<Record<CasterSlug, SpellLearning>> = {
   bard: 'known',
   ranger: 'known',
   sorcerer: 'known',
@@ -12,23 +16,29 @@ export const SPELL_LEARNING: Partial<Record<ClassSlug, SpellLearning>> = {
   druid: 'prepared',
   paladin: 'prepared',
   wizard: 'spellbook',
+  eldritch_knight: 'known',
+  arcane_trickster: 'known',
 }
 
 // Index = niveau DE CLASSE − 1 (tables PHB 2014, vérifiées sur AideDD).
-const CANTRIPS_KNOWN: Partial<Record<ClassSlug, number[]>> = {
+const CANTRIPS_KNOWN: Partial<Record<CasterSlug, number[]>> = {
   bard: [2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
   cleric: [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
   druid: [2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
   sorcerer: [4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
   warlock: [2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
   wizard: [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  eldritch_knight: [0, 0, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+  arcane_trickster: [0, 0, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
 }
 
-const SPELLS_KNOWN: Partial<Record<ClassSlug, number[]>> = {
+const SPELLS_KNOWN: Partial<Record<CasterSlug, number[]>> = {
   bard: [4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 15, 16, 18, 19, 19, 20, 22, 22, 22],
   ranger: [0, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11],
   sorcerer: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 13, 14, 14, 15, 15, 15, 15],
   warlock: [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15],
+  eldritch_knight: [0, 0, 3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13],
+  arcane_trickster: [0, 0, 3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13],
 }
 
 // Grimoire du Magicien : six sorts de niveau 1 au niveau 1, puis deux par niveau de magicien.
@@ -42,17 +52,17 @@ function atLevel(table: number[] | undefined, level: number): number {
 }
 
 export function spellLearningOf(cls: string): SpellLearning | null {
-  return SPELL_LEARNING[cls as ClassSlug] ?? null
+  return SPELL_LEARNING[cls as CasterSlug] ?? null
 }
 
 export function cantripsKnownAt(cls: string, level: number): number {
-  return atLevel(CANTRIPS_KNOWN[cls as ClassSlug], level)
+  return atLevel(CANTRIPS_KNOWN[cls as CasterSlug], level)
 }
 
 /** Sorts connus (lanceur à sorts connus) ou contenus dans le grimoire ; 0 pour un lanceur à sorts préparés. */
 export function spellsKnownAt(cls: string, level: number): number {
   const learning = spellLearningOf(cls)
-  if (learning === 'known') return atLevel(SPELLS_KNOWN[cls as ClassSlug], level)
+  if (learning === 'known') return atLevel(SPELLS_KNOWN[cls as CasterSlug], level)
   if (learning === 'spellbook') return level < 1 ? 0 : SPELLBOOK_AT_FIRST_LEVEL + SPELLBOOK_PER_LEVEL * (Math.min(level, 20) - 1)
   return 0
 }

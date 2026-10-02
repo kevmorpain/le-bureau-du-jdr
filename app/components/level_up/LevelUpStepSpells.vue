@@ -295,6 +295,12 @@
           :class="state.newSpellIds.length >= requiredSpellPicks ? 'text-green-400' : 'text-amber-400'"
         >{{ state.newSpellIds.length }}/{{ spellPicksDue }}</span>
       </div>
+      <p v-if="schoolRestriction" class="text-xs text-muted mb-2">
+        Liste du Magicien, écoles {{ schoolRestriction.schools.map(school => $t(`schools.${school}`, school)).join(' et ') }}.
+        <template v-if="schoolRestriction.freePicks > 0">
+          {{ schoolRestriction.freePicks }} {{ $t('sort', schoolRestriction.freePicks) }} peu{{ schoolRestriction.freePicks > 1 ? 'vent' : 't' }} venir d'une autre école ({{ outsideSchoolPicks }}/{{ schoolRestriction.freePicks }}).
+        </template>
+      </p>
       <p v-if="freeListPicks > 0" class="text-xs text-muted mb-2">
         Secrets magiques : jusqu'à {{ freeListPicks }} de ces sorts peuvent venir de la liste de n'importe quelle classe.
       </p>
@@ -322,9 +328,9 @@
             <UTooltip
               v-for="spell in list"
               :key="spell.id"
-              :text="currentSpellIds.includes(spell.id) ? 'Vous connaissez déjà ce sort' : isOutsideBlocked(spell.id) ? 'Secrets magiques : tous les sorts hors de la liste de classe sont déjà choisis' : ''"
+              :text="currentSpellIds.includes(spell.id) ? 'Vous connaissez déjà ce sort' : isOutsideBlocked(spell.id) ? 'Secrets magiques : tous les sorts hors de la liste de classe sont déjà choisis' : isSchoolBlocked(spell) ? 'Les sorts d\'école libre sont déjà choisis' : ''"
             >
-              <div :class="currentSpellIds.includes(spell.id) || isOutsideBlocked(spell.id) ? 'opacity-50 pointer-events-none' : ''">
+              <div :class="currentSpellIds.includes(spell.id) || isBlocked(spell) ? 'opacity-50 pointer-events-none' : ''">
                 <SpellCardBuilder
                   :spell="spell"
                   :selected="state.newSpellIds.includes(spell.id) || currentSpellIds.includes(spell.id)"
@@ -381,6 +387,10 @@ const {
   freeListPicks,
   isOutsideClassList,
   canPickOutsideClassList,
+  schoolRestriction,
+  outsideSchoolPicks,
+  isSchoolBlocked,
+  levelUpSpellcasting,
 } = useLevelUp(inject('charSheet') as any)
 
 const { t } = useI18n()
@@ -395,33 +405,35 @@ const filterRitual = ref(false)
 // Classes lanceuses actuelles du perso (type de lanceur + niveau), base du calcul combiné.
 const casterClasses = computed(() =>
   charClasses.value
-    .filter(c => c.data?.spellcasting?.type)
-    .map(c => ({ classId: c.classId, casterType: c.data!.spellcasting!.type, level: c.level })),
+    .filter(c => c.spellcasting?.type)
+    .map(c => ({ classId: c.classId, casterType: c.spellcasting!.type, level: c.level })),
 )
 
 // Le pool affiché suit la classe qu'on monte : la magie de pacte ne se combine pas au régulier.
 const slotPool = computed<'regular' | 'pact'>(() =>
-  pickedClass.value?.spellcasting?.type === 'pact' ? 'pact' : 'regular',
+  levelUpSpellcasting.value?.type === 'pact' ? 'pact' : 'regular',
 )
 
 // Emplacements COMBINÉS du multiclassage (PHB 2014 p.164 — même calcul que la fiche, côté serveur,
 // via combinedSpellSlots) : l'aperçu doit refléter TOUTES les classes lanceuses, pas seulement celle
 // qu'on monte, sinon il est faux en multiclasse (bug B6). Mono-classe : résultat identique à avant.
 const oldSlots = computed((): number[] => {
-  if (!pickedClass.value?.spellcasting) return Array(9).fill(0)
+  if (!levelUpSpellcasting.value) return Array(9).fill(0)
   return combinedSpellSlots(casterClasses.value)[slotPool.value] ?? Array(9).fill(0)
 })
 
 const newSlots = computed((): number[] => {
-  const pc = pickedClass.value
-  if (!pc?.spellcasting) return Array(9).fill(0)
-  const after = state.value.isMulticlass
-    ? [...casterClasses.value, { classId: pc.id, casterType: pc.spellcasting.type, level: state.value.toLevel }]
-    : casterClasses.value.map(c => (c.classId === state.value.pickedClassId ? { ...c, level: state.value.toLevel } : c))
+  const casting = levelUpSpellcasting.value
+  const pickedId = state.value.pickedClassId
+  if (!casting || !pickedId) return Array(9).fill(0)
+  const after = [
+    ...casterClasses.value.filter(c => c.classId !== pickedId),
+    { classId: pickedId, casterType: casting.type, level: state.value.toLevel },
+  ]
   return combinedSpellSlots(after)[slotPool.value] ?? Array(9).fill(0)
 })
 
-const spellcastingAbility = computed(() => pickedClass.value?.spellcasting?.ability ?? null)
+const spellcastingAbility = computed(() => levelUpSpellcasting.value?.ability ?? null)
 const spellcastingMod = computed(() => {
   const ab = spellcastingAbility.value
   return ab ? abilityMod(finalAbilities.value[ab]) : null
@@ -443,6 +455,7 @@ const showSpellPicker = computed(() => spellsToLearn.value > 0 || spellPicksDue.
 
 const isOutsideBlocked = (id: number) =>
   isOutsideClassList(id) && !state.value.newSpellIds.includes(id) && !canPickOutsideClassList.value
+const isBlocked = (spell: Spell) => isOutsideBlocked(spell.id) || isSchoolBlocked(spell)
 
 const isPreparedCaster = computed(() => spellLearning.value === 'prepared' || spellLearning.value === 'spellbook')
 const isGrimoire = computed(() => spellLearning.value === 'spellbook')
@@ -607,7 +620,8 @@ function togglePactBoonCantrip(id: number) {
 }
 
 function toggleSpell(id: number) {
-  if (currentSpellIds.value.includes(id) || isOutsideBlocked(id)) return
+  const spell = learnableSpells.value.find(s => s.id === id)
+  if (currentSpellIds.value.includes(id) || isOutsideBlocked(id) || (spell && isSchoolBlocked(spell))) return
   const idx = state.value.newSpellIds.indexOf(id)
   if (idx >= 0) state.value.newSpellIds.splice(idx, 1)
   else if (state.value.newSpellIds.length < spellPicksDue.value) state.value.newSpellIds.push(id)

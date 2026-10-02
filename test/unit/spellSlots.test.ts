@@ -101,3 +101,62 @@ describe('combinedSpellSlots — multiclassage', () => {
     expect(pact).toBeNull()
   })
 })
+
+describe('slotsForLevel — lanceur du tiers (Chevalier occulte, Escroc arcanique ; AideDD)', () => {
+  it('niveaux 1 et 2 : aucun emplacement, incantation au niveau 3', () => {
+    expect(slotsForLevel('third', 2)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0])
+    expect(slotsForLevel('third', 3)).toEqual([2, 0, 0, 0, 0, 0, 0, 0, 0])
+  })
+
+  it('les paliers de la table', () => {
+    expect(slotsForLevel('third', 4)).toEqual([3, 0, 0, 0, 0, 0, 0, 0, 0])
+    expect(slotsForLevel('third', 7)).toEqual([4, 2, 0, 0, 0, 0, 0, 0, 0])
+    expect(slotsForLevel('third', 10)).toEqual([4, 3, 0, 0, 0, 0, 0, 0, 0])
+    expect(slotsForLevel('third', 13)).toEqual([4, 3, 2, 0, 0, 0, 0, 0, 0])
+    expect(slotsForLevel('third', 16)).toEqual([4, 3, 3, 0, 0, 0, 0, 0, 0])
+    expect(slotsForLevel('third', 19)).toEqual([4, 3, 3, 1, 0, 0, 0, 0, 0])
+    expect(slotsForLevel('third', 20)).toEqual([4, 3, 3, 1, 0, 0, 0, 0, 0])
+  })
+
+  it('niveau maximal de sort : 1 au niveau 3, 2 au 7, 4 au 19', () => {
+    expect(maxSpellLevelForLevel('third', 3)).toBe(1)
+    expect(maxSpellLevelForLevel('third', 7)).toBe(2)
+    expect(maxSpellLevelForLevel('third', 19)).toBe(4)
+  })
+})
+
+describe('combinedSpellSlots — une seule classe lanceuse (AideDD : « utilisez les règles de votre classe »)', () => {
+  it('un Paladin seul lit sa table : niveau 5 → 4/2, et non la table multiclassée du niveau 2', () => {
+    expect(combinedSpellSlots([{ casterType: 'half', level: 5 }]).regular).toEqual(slotsForLevel('half', 5))
+    expect(combinedSpellSlots([{ casterType: 'half', level: 5 }]).regular).toEqual([4, 2, 0, 0, 0, 0, 0, 0, 0])
+  })
+
+  it('même chose pour un Rôdeur, et à côté d\'une classe qui n\'incante pas', () => {
+    expect(combinedSpellSlots([{ casterType: 'half', level: 9 }, { casterType: 'none', level: 3 }]).regular).toEqual(slotsForLevel('half', 9))
+  })
+
+  it('un Chevalier occulte seul lit la table du tiers', () => {
+    expect(combinedSpellSlots([{ casterType: 'third', level: 7 }, { casterType: 'none', level: 0 }]).regular).toEqual([4, 2, 0, 0, 0, 0, 0, 0, 0])
+  })
+
+  it('un demi-lanceur de niveau 1 ne compte pas : le lanceur complet reste seul', () => {
+    expect(combinedSpellSlots([{ casterType: 'full', level: 3 }, { casterType: 'half', level: 1 }]).regular).toEqual(slotsForLevel('full', 3))
+  })
+})
+
+describe('combinedSpellSlots — lanceur du tiers multiclassé', () => {
+  it('lanceur complet 5 + tiers 6 : 5 + floor(6/3) = 7', () => {
+    const { regular } = combinedSpellSlots([{ casterType: 'full', level: 5 }, { casterType: 'third', level: 6 }])
+    expect(regular).toEqual(slotsForLevel('full', 7))
+  })
+
+  it('tiers 5 + demi 4 : floor(5/3) + floor(4/2) = 3', () => {
+    const { regular } = combinedSpellSlots([{ casterType: 'third', level: 5 }, { casterType: 'half', level: 4 }])
+    expect(regular).toEqual(slotsForLevel('full', 3))
+  })
+
+  it('une sous-classe du tiers de niveau 2 ne contribue rien', () => {
+    const { regular } = combinedSpellSlots([{ casterType: 'full', level: 3 }, { casterType: 'third', level: 2 }])
+    expect(regular).toEqual(slotsForLevel('full', 3))
+  })
+})

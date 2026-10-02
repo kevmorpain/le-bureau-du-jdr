@@ -9,8 +9,8 @@ import { useLevelUp, type CharacterSheetWithASI } from '../../app/composables/us
 // Garde-fou du bug « multiclasser vers un lanceur ne propose aucun sort » : en multiclasse la classe
 // part du niveau 0, et les sorts se choisissent classe par classe (règle de multiclassage PHB 2014).
 
-const spell = (id: number, name: string, level: number, className: string) =>
-  ({ id, name, level, className, school: { name: 'Evocation' } })
+const spell = (id: number, name: string, level: number, className: string, school = 'Evocation') =>
+  ({ id, name, level, className, school: { name: school } })
 
 const SPELLS = [
   spell(1, 'Décharge occulte', 0, 'Occultiste'),
@@ -31,6 +31,8 @@ const SPELLS = [
   spell(24, 'Bouclier', 1, 'Magicien'),
   spell(25, 'Invisibilité', 2, 'Magicien'),
   spell(26, 'Boule de feu', 3, 'Magicien'),
+  spell(27, 'Rayon empoisonné', 1, 'Magicien', 'Necromancy'),
+  spell(28, 'Sommeil', 1, 'Magicien', 'Enchantment'),
   spell(40, 'Sommeil', 1, 'Barde'),
   spell(41, 'Soins', 1, 'Barde'),
   spell(30, 'Marque du chasseur', 1, 'Rôdeur'),
@@ -67,7 +69,7 @@ async function waitFor(condition: () => boolean) {
   expect(condition()).toBe(true)
 }
 
-async function mountSpellsStep(classes: ClassFixture[], pickedClassId: string, fromLevel: number, knownSpellIds: number[] = []) {
+async function mountSpellsStep(classes: ClassFixture[], pickedClassId: string, fromLevel: number, knownSpellIds: number[] = [], extraState: Record<string, unknown> = {}) {
   const charSheet = ref(sheet(classes, knownSpellIds))
   let levelUp!: ReturnType<typeof useLevelUp>
   const Host = defineComponent({
@@ -86,6 +88,7 @@ async function mountSpellsStep(classes: ClassFixture[], pickedClassId: string, f
         pactBoonCantripIds: [],
         newInvocationIds: [],
         bookOfAncientSecretsSpellIds: [],
+        ...extraState,
       })
       return () => h(LevelUpStepSpells)
     },
@@ -121,9 +124,9 @@ describe('Étape Magie du level-up — multiclassage vers un lanceur', () => {
     expect(text()).toContain('Projectile magique')
     expect(text()).not.toContain('Invisibilité')
     expect(text()).not.toContain('Boule de feu')
-    // Deux sorts de niveau 1 au catalogue : le dû est plafonné, et la raison est affichée.
-    expect(levelUp.requiredSpellPicks.value).toBe(2)
-    expect(text()).toContain('Seulement 2 sort(s) encore disponible(s)')
+    // Quatre sorts de niveau 1 au catalogue : le dû est plafonné, et la raison est affichée.
+    expect(levelUp.requiredSpellPicks.value).toBe(4)
+    expect(text()).toContain('Seulement 4 sort(s) encore disponible(s)')
   })
 
   it('Clerc 5 → Magicien 1 : « Avant » montre les emplacements déjà possédés', async () => {
@@ -228,5 +231,69 @@ describe('Étape Magie du level-up — Secrets magiques du Barde', () => {
 
     expect(levelUp.freeListPicks.value).toBe(2)
     expect(levelUp.spellPicksDue.value).toBe(levelUp.spellsToLearn.value + 2)
+  })
+})
+
+describe('Étape Magie du level-up — Chevalier occulte (lanceur du tiers)', () => {
+  const eldritchKnight = (fromLevel: number) =>
+    mountSpellsStep([{ id: 5, name: 'Guerrier', level: fromLevel }], 'fighter', fromLevel, [], { newSubclassName: 'Chevalier occulte' })
+
+  it('Guerrier 2 → 3 en choisissant le Chevalier occulte : l\'étape Magie s\'ouvre, avec la liste du Magicien', async () => {
+    const { levelUp } = await eldritchKnight(2)
+
+    expect(levelUp.hasSpellcasting.value).toBe(true)
+    expect(levelUp.activeSteps.value.some(step => step.id === 'spells')).toBe(true)
+    expect(levelUp.cantripsToLearn.value).toBe(2)
+    expect(levelUp.spellsToLearn.value).toBe(3)
+    expect(levelUp.maxLearnableSpellLevel.value).toBe(1)
+    expect(levelUp.learnableSpells.value.map(s => s.name)).toContain('Projectile magique')
+    expect(levelUp.learnableSpells.value.map(s => s.name)).not.toContain('Boule de feu')
+  })
+
+  it('un Guerrier d\'une autre sous-classe n\'a pas d\'étape Magie', async () => {
+    const charSheet = ref(sheet([{ id: 5, name: 'Guerrier', level: 2 }]))
+    let levelUp!: ReturnType<typeof useLevelUp>
+    const Host = defineComponent({
+      setup() {
+        levelUp = useLevelUp(charSheet as unknown as Ref<CharacterSheetWithASI | null>)
+        levelUp.resetWizard()
+        Object.assign(levelUp.state.value, { pickedClassId: 'fighter', fromLevel: 2, toLevel: 3, newSubclassName: 'Champion' })
+        return () => h('div')
+      },
+    })
+    await mountSuspended(Host)
+    expect(levelUp.hasSpellcasting.value).toBe(false)
+  })
+
+  it('deux écoles pour la plupart des sorts, une école libre au niveau 3', async () => {
+    const { levelUp } = await eldritchKnight(2)
+    const necromancy = levelUp.learnableSpells.value.find(s => s.name === 'Rayon empoisonné')!
+    const enchantment = levelUp.learnableSpells.value.find(s => s.name === 'Sommeil')!
+
+    expect(levelUp.schoolRestriction.value).toMatchObject({ schools: ['Abjuration', 'Evocation'], freePicks: 1 })
+    expect(levelUp.isSchoolBlocked(necromancy)).toBe(false)
+    levelUp.state.value.newSpellIds = [necromancy.id]
+    expect(levelUp.outsideSchoolPicks.value).toBe(1)
+    expect(levelUp.isSchoolBlocked(enchantment)).toBe(true)
+    expect(levelUp.isSchoolBlocked(necromancy)).toBe(false)
+  })
+
+  it('niveau 3 → 4 : aucune école libre, un seul sort', async () => {
+    const charSheet = ref({ ...sheet([{ id: 5, name: 'Guerrier', level: 3 }]), classes: [{ classId: 5, level: 3, isMain: true, class: { name: 'Guerrier' }, subclass: { name: 'Chevalier occulte' } }] })
+    let levelUp!: ReturnType<typeof useLevelUp>
+    const Host = defineComponent({
+      setup() {
+        levelUp = useLevelUp(charSheet as unknown as Ref<CharacterSheetWithASI | null>)
+        levelUp.resetWizard()
+        Object.assign(levelUp.state.value, { pickedClassId: 'fighter', fromLevel: 3, toLevel: 4 })
+        return () => h('div')
+      },
+    })
+    await mountSuspended(Host)
+    await waitFor(() => levelUp.classSpells.value.length > 0 && !levelUp.classSpellsPending.value)
+
+    expect(levelUp.spellsToLearn.value).toBe(1)
+    expect(levelUp.cantripsToLearn.value).toBe(0)
+    expect(levelUp.schoolRestriction.value?.freePicks).toBe(0)
   })
 })
