@@ -383,19 +383,19 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   const allNewSpellIds = [...(d.newCantripIds ?? []), ...(d.newSpellIds ?? [])]
   if (allNewSpellIds.length) {
     stmts.push(db.insert(schema.characterSpells)
-      .values(allNewSpellIds.map(spellId => ({ characterSheetId, spellId, isKnown: true, isPrepared: false })))
+      .values(allNewSpellIds.map(spellId => ({ characterSheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false })))
       .onConflictDoNothing())
   }
 
   if (d.pactBoon === 'chain' && familiarSpellId != null) {
     stmts.push(db.insert(schema.characterSpells)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .values({ characterSheetId, spellId: familiarSpellId, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
+      .values({ characterSheetId, spellId: familiarSpellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
       .onConflictDoNothing())
   }
   else if (d.pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
-      .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId, spellId, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
+      .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
       .onConflictDoNothing())
   }
   else if (d.pactBoon === 'blade' && d.pactWeaponInventoryId) {
@@ -416,14 +416,14 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       )))
       stmts.push(db.insert(schema.characterSpells)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .values({ characterSheetId, spellId: d.arcaneMysteriumSpellId, isKnown: true, isPrepared: false, source } as any)
+        .values({ characterSheetId, spellId: d.arcaneMysteriumSpellId, classId: cls.id, isKnown: true, isPrepared: false, source } as any)
         .onConflictDoNothing())
     }
   }
 
   if (d.bookOfAncientSecretsSpellIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
-      .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({ characterSheetId, spellId, isKnown: true, isPrepared: false, source: 'book_of_ancient_secrets' as const })))
+      .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({ characterSheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'book_of_ancient_secrets' as const })))
       .onConflictDoNothing())
   }
 
@@ -461,7 +461,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
 
   // ── 6. Manifestations occultes (remplacement + ajouts) — util DI, idempotent ──
   if (d.replacedInvocationId || (d.newInvocationIds && d.newInvocationIds.length)) {
-    await applyInvocationChanges(db, characterSheetId, d.newInvocationIds ?? [], d.replacedInvocationId ?? null)
+    await applyInvocationChanges(db, characterSheetId, d.newInvocationIds ?? [], d.replacedInvocationId ?? null, cls.id)
   }
 
   // ── 7. Métamagie (ajouts uniquement — non remplaçable en 2014, contrairement aux invocations) ──

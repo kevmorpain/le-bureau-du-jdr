@@ -1,6 +1,7 @@
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import characterSheets from './character_sheets'
+import classes from './classes'
 import spells from './spells'
 
 const characterSpells = sqliteTable(
@@ -8,6 +9,7 @@ const characterSpells = sqliteTable(
   {
     characterSheetId: integer('character_sheet_id').notNull().references(() => characterSheets.id, { onDelete: 'cascade' }),
     spellId: integer('spell_id').notNull().references(() => spells.id, { onDelete: 'cascade' }),
+    classId: integer('class_id').references(() => classes.id, { onDelete: 'set null' }),
     isKnown: integer('is_known', { mode: 'boolean' }).default(false).notNull(),
     isPrepared: integer('is_prepared', { mode: 'boolean' }).default(false).notNull(),
     source: text('source').$type<

@@ -316,6 +316,19 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
     expect(bySource.get('pact_chain')).toBe(500) // familier (Pacte de la Chaîne)
     expect(bySource.get('invocation')).toBe(501) // « Armure de mage » octroyé par la manifestation 401
   })
+
+  it('rattache à l\'Occultiste chaque sort qu\'il apprend (colonne class_id)', async () => {
+    const { id } = await createCharacter(db, baseInput({
+      classId: WARLOCK, level: 3,
+      pactBoon: 'chain',
+      invocationIds: [401],
+      spellIds: [600],
+    }), OWNER)
+
+    const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))
+    expect(spells.length).toBeGreaterThanOrEqual(3)
+    expect(spells.map((s: { classId: number | null }) => s.classId)).toEqual(spells.map(() => WARLOCK))
+  })
 })
 
 // Validation serveur : rejets

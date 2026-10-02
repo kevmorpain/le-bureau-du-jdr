@@ -221,7 +221,7 @@
               :is-prepared="cs.isPrepared"
               :has-somatic-warning="isIncapacitated && cs.spell.components.includes(SpellComponent.Somatic)"
               :character-level="characterLevel"
-              :spellcasting-modifier="spellcastingModifier"
+              :spellcasting-modifier="casterStatsOf(cs)?.modifier ?? null"
               :source="cs.source"
               :eldritch-blast-agonizing="eldritchBlastMods.agonizing"
               :eldritch-blast-repelling="eldritchBlastMods.repelling"
@@ -355,7 +355,7 @@
     <AddSpellSlideover
       v-model:open="showAddSpell"
       :already-added-ids
-      @add="addSpell"
+      @add="spellId => addSpell(spellId, activeCasterClass?.classId ?? null)"
     />
   </div>
 </template>
@@ -395,6 +395,7 @@ const {
   spellcastingModifier,
   spellcastingStats,
   pactMagicStats,
+  statsForCasterClass,
   spellcasterClasses,
   activeCasterClass,
   selectedCasterClassId,
@@ -414,6 +415,8 @@ const {
 const abilityShortLabels: Record<string, string> = {
   str: 'FOR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'SAG', cha: 'CHA',
 }
+
+const casterStatsOf = (cs: CharacterSpellWithSpell) => statsForCasterClass(cs.classId)
 
 const casterClassItems = computed(() =>
   spellcasterClasses.value.map(c => ({
@@ -553,6 +556,7 @@ const handleRollDamage = (slotLevel: number) => {
 
 function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
   const spell = cs.spell
+  const spellcastingMod = casterStatsOf(cs)?.modifier ?? null
   // Niveaux de résolution : l'emplacement RÉELLEMENT dépensé pilote la montée en puissance
   // (c'est ce que l'encart « Aux niveaux supérieurs » et CastSpellModal affichent).
   const levels: CastLevels = { characterLevel: characterLevel.value, slotLevel: castAtLevel }
@@ -577,8 +581,8 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
         const diePerAttack = Math.max(1, Math.floor(parsed.count / multi.count))
         const flatPerAttack = Math.floor(parsed.flat / multi.count)
         let perAttackBonus = flatPerAttack
-        if (dmg.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
-          perAttackBonus += spellcastingModifier.value
+        if (dmg.isSpellcastingModifierAdded && spellcastingMod !== null) {
+          perAttackBonus += spellcastingMod
         }
         // Coup éldritique agonisant — appliqué par rayon de Décharge occulte
         if (spell.name === 'Décharge occulte' && eldritchBlastMods.value.agonizing) {
@@ -591,8 +595,8 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
       }
 
       let bonus = parsed.flat
-      if (dmg.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
-        bonus += spellcastingModifier.value
+      if (dmg.isSpellcastingModifierAdded && spellcastingMod !== null) {
+        bonus += spellcastingMod
       }
       const label = dmg.label
         ? `${spell.name} · ${dmg.label} (${dmg.damage_type})`
@@ -610,8 +614,8 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
     if (!parsed || parsed.count === 0) return // valeur plate : rien à jeter (cf. ci-dessus)
 
     let bonus = parsed.flat
-    if (heal.isSpellcastingModifierAdded && spellcastingModifier.value !== null) {
-      bonus += spellcastingModifier.value
+    if (heal.isSpellcastingModifierAdded && spellcastingMod !== null) {
+      bonus += spellcastingMod
     }
     roll(`${spell.name} · soin`, bonus, parsed.sides, parsed.count)
   }
@@ -624,7 +628,7 @@ const isAttackSpell = (cs: CharacterSpellWithSpell): boolean =>
 
 // Jet pour toucher : un d20 + bonus d'attaque PAR attaque (un par rayon pour les multi-attaques).
 function rollSpellAttack(cs: CharacterSpellWithSpell) {
-  const atk = spellcastingStats.value?.attackBonus
+  const atk = casterStatsOf(cs)?.attackBonus
   if (atk == null) return
   const n = resolveAttackCount(cs.spell.multiAttack, castLevelsFor(cs))?.count ?? 1
   for (let r = 1; r <= n; r++) {

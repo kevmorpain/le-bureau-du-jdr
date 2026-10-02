@@ -143,6 +143,12 @@ export const useCharacterSpellcasting = (
   const spellcastingStats = computed(() => computeStats(spellcastingAbility.value))
   const pactMagicStats = computed(() => computeStats(pactMagicAbility.value))
 
+  // Sort sans classe (espèce, don, ajout antérieur) : repli sur la classe active, comme avant `class_id`.
+  const statsForCasterClass = (classId: number | null | undefined): SpellStats | null => {
+    const caster = spellcasterClasses.value.find(c => c.classId === classId)
+    return caster ? computeStats(caster.ability) : spellcastingStats.value
+  }
+
   const spellcastingModifier = computed<number | null>(() => spellcastingStats.value?.modifier ?? null)
   const spellSaveDC = computed<number | null>(() => spellcastingStats.value?.dc ?? null)
   const spellAttackModifier = computed<number | null>(() => spellcastingStats.value?.attackBonus ?? null)
@@ -260,6 +266,7 @@ export const useCharacterSpellcasting = (
     spellcastingStats,
     pactMagicStats,
     pactMagicAbility,
+    statsForCasterClass,
     spellSlots,
     availableSpellSlots,
     spellcasterClasses,

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
 import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLevelUp'
@@ -57,7 +57,10 @@ beforeAll(async () => {
     { id: 402, name: 'Manif B', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
     { id: 403, name: 'Manif C', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
   ])
-  await db.insert(schema.spells).values({ id: 500, name: 'Appel de familier', level: 1, castingTime: '1 action', range: 0, duration: '1 h', schoolId: 1 })
+  await db.insert(schema.spells).values([
+    { id: 500, name: 'Appel de familier', level: 1, castingTime: '1 action', range: 0, duration: '1 h', schoolId: 1 },
+    { id: 501, name: 'Maléfice', level: 1, castingTime: '1 action', range: 0, duration: '1 h', schoolId: 1 },
+  ])
   // Manifestation 5.5 (tag invocation VALIDE) — sert la garde de cohérence d'édition (Lot A) :
   // elle passe le contrôle de groupe mais est rejetée car incompatible avec une fiche 2014.
   await db.insert(schema.features).values({ id: 950, name: 'Manif 2024', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation', ruleset: '5.5' })
@@ -103,6 +106,31 @@ describe('characterLevelUp — ajout d\'une manifestation (applyInvocationChange
 
     const feats = await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id))
     expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(403)
+  })
+})
+
+describe('characterLevelUp — classe des sorts appris (character_spells.class_id)', () => {
+  const classOfSpell = async (sheetId: number, spellId: number) => {
+    const [row] = await db.select().from(schema.characterSpells).where(and(
+      eq(schema.characterSpells.characterSheetId, sheetId),
+      eq(schema.characterSpells.spellId, spellId),
+    ))
+    return row?.classId
+  }
+
+  it('le sort appris au level-up porte la classe montée, et le familier de pacte aussi', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402] }), OWNER)
+    await characterLevelUp(db, id, luInput({ pactBoon: 'chain', newSpellIds: [501] }))
+
+    expect(await classOfSpell(id, 501)).toBe(WARLOCK)
+    expect(await classOfSpell(id, 500)).toBe(WARLOCK)
+  })
+
+  it('multiclassage : les sorts de la classe rejointe portent cette classe, pas la principale', async () => {
+    const { id } = await createCharacter(db, createInput({ classId: FIGHTER, level: 3, abilityScores: { str: 15 } }), OWNER)
+    await characterLevelUp(db, id, luInput({ isMulticlass: true, newSpellIds: [501] }))
+
+    expect(await classOfSpell(id, 501)).toBe(WARLOCK)
   })
 })
 

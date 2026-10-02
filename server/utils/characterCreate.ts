@@ -731,7 +731,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
 
   if (d.spellIds.length) {
     stmts.push(db.insert(schema.characterSpells).values(
-      d.spellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: true })),
+      d.spellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: true })),
     ))
   }
 
@@ -750,12 +750,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   if (d.pactBoon === 'chain' && familiarSpellId != null) {
     stmts.push(db.insert(schema.characterSpells)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .values({ characterSheetId: sheetId, spellId: familiarSpellId, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
+      .values({ characterSheetId: sheetId, spellId: familiarSpellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
       .onConflictDoNothing())
   }
   else if (d.pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
-      .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
+      .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
       .onConflictDoNothing())
   }
 
@@ -765,7 +765,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       .onConflictDoNothing())
     if (invocationGrantSpellIds.length) {
       stmts.push(db.insert(schema.characterSpells)
-        .values(invocationGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'invocation' as const })))
+        .values(invocationGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'invocation' as const })))
         .onConflictDoNothing())
     }
   }
@@ -793,14 +793,14 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     if (source) {
       stmts.push(db.insert(schema.characterSpells)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .values({ characterSheetId: sheetId, spellId: arc.spellId, isKnown: true, isPrepared: false, source } as any)
+        .values({ characterSheetId: sheetId, spellId: arc.spellId, classId: cls.id, isKnown: true, isPrepared: false, source } as any)
         .onConflictDoNothing())
     }
   }
 
   if (d.bookOfAncientSecretsSpellIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
-      .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'book_of_ancient_secrets' as const })))
+      .values(d.bookOfAncientSecretsSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'book_of_ancient_secrets' as const })))
       .onConflictDoNothing())
   }
 
