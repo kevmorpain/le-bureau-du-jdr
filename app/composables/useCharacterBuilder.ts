@@ -23,7 +23,7 @@ import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicateCount, duplicatedValues } from '~~/shared/rules/duplicateProficiencies'
 import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
-import { featLanguageChoiceCount } from './useCharacterSheet'
+import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
 import type { Effect } from '~~/server/db/schema/effects'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

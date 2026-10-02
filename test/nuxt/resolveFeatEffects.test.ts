@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Effect } from '../../server/db/schema/effects'
-import { resolveFeatEffects } from '../../app/composables/useCharacterSheet'
+import { resolveFeatEffects } from '../../shared/rules/characterEffects'
 import { blankFixture, mountAbilities, type AbilitiesFixture } from './fixtures/characters'
 
 // Résolution des effets « à choix » d'un don. Cas de référence : Résilient (PHB 2014) — +1 dans une

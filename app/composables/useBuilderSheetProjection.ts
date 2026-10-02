@@ -2,7 +2,7 @@ import type { Effect } from '~~/server/db/schema/effects'
 import type { SkillKey } from '~~/shared/rules/skills'
 import { ABILITY_KEYS } from '~~/shared/rules/abilities'
 import { useCharacterAbilities, type AbilitiesSheet } from './character/useCharacterAbilities'
-import { resolveFeatEffects } from './useCharacterSheet'
+import { resolveFeatEffects } from '~~/shared/rules/characterEffects'
 
 type BuilderInvocation = { id: number, name: string, effects: Effect[] }
 

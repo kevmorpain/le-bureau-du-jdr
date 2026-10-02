@@ -26,7 +26,8 @@ import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/sh
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
-import { featLanguageChoiceCount, useAbilityEffectInputs } from './useCharacterSheet'
+import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
+import { useAbilityEffectInputs } from './useCharacterSheet'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
