@@ -220,6 +220,7 @@ const {
   CLASSES,
   SKILLS,
   newPickChoices,
+  replacementChoices,
 } = useLevelUp(charSheet)
 
 const { getById: getFeatById } = useFeats()
@@ -351,6 +352,10 @@ const gains = computed(() => {
   const chosen = picksOf(newPickChoices.value.filter(c => c.kind !== 'terrain'))
   if (chosen.length) {
     list.push({ label: 'Maîtrises au choix', detail: chosen.map(v => SKILLS.find(sk => sk.key === v)?.label ?? languageLabel(v)).join(', ') })
+  }
+  const replacements = picksOf(replacementChoices.value)
+  if (replacements.length) {
+    list.push({ label: 'Maîtrises de remplacement', detail: replacements.map(v => SKILLS.find(sk => sk.key === v)?.label ?? v).join(', ') })
   }
   const terrain = picksOf(newPickChoices.value.filter(c => c.kind === 'terrain'))
   if (terrain.length) list.push({ label: 'Terrain du cercle', detail: terrain.join(', ') })

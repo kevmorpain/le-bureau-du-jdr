@@ -130,7 +130,8 @@ interface BuilderState {
 - **Drakéide** : picker ascendance draconique (grille 10 types), obligatoire pour valider
 - **Choix de l'espèce** : un sélecteur (`ChoicePointPicker`) par point de choix de l'espèce ou de la lignée,
   lu dans le catalogue — Polyvalence du Demi-elfe, outil du Nain, langue de l'Humain, du Demi-elfe, du
-  Haut-elfe et de la Fadette, sort mineur du Haut-elfe. Les valeurs déjà acquises ailleurs sont masquées.
+  Haut-elfe et de la Fadette, sort mineur du Haut-elfe, caractéristique d'incantation de la Fadette
+  (Intelligence, Sagesse ou Charisme). Les valeurs déjà acquises ailleurs sont masquées.
   Obligatoires pour passer l'étape ; envoyés en `choicePicks`.
 - **Humain Variante** : aucune espèce liée, donc pas de point de choix : sa langue au choix passe par
   `selectedLanguages` et part en ajout manuel (avec le commun).

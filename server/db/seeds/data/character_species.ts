@@ -1,7 +1,7 @@
 import { CreatureSize } from '../../schema/character_species'
 import type * as schema from '../../schema'
 import type { SpeciesTraitData } from '../lib/seedLineages'
-import { dwarfToolChoice, oneLanguageChoice, twoSkillsChoice, wizardCantripChoice } from './speciesChoices'
+import { dwarfToolChoice, fairyCastingAbilityChoice, oneLanguageChoice, twoSkillsChoice, wizardCantripChoice } from './speciesChoices'
 
 type SpeciesSeed = typeof schema.characterSpecies.$inferInsert & { traits: SpeciesTraitData[] }
 
@@ -1339,12 +1339,14 @@ const fadette: SpeciesSeed = {
     },
     {
       name: 'Magie des fées',
-      description: `Vous connaissez le sort mineur Druidisme. À partir du niveau 3, vous pouvez lancer Lueurs féeriques ; à partir du niveau 5, Agrandissement/rapetissement. Vous lancez chacun de ces deux sorts une fois par l'intermédiaire de ce trait et récupérez cette faculté en terminant un repos long ; vous pouvez aussi les lancer normalement avec vos emplacements de sort. La caractéristique d'incantation est l'Intelligence, la Sagesse ou le Charisme (choisie à la création — ici le Charisme).`,
+      description: `Vous connaissez le sort mineur Druidisme. À partir du niveau 3, vous pouvez lancer Lueurs féeriques ; à partir du niveau 5, Agrandissement/rapetissement. Vous lancez chacun de ces deux sorts une fois par l'intermédiaire de ce trait et récupérez cette faculté en terminant un repos long ; vous pouvez aussi les lancer normalement avec vos emplacements de sort. La caractéristique d'incantation est l'Intelligence, la Sagesse ou le Charisme, au choix.`,
+      // `cha` : valeur par défaut des effets, remplacée par le choix `spellcasting_ability` à la lecture de la fiche.
       effects: [
         { type: 'spell_grant', value: { level: 0, spellcastingAbility: 'cha', spellName: 'Druidisme', countPerLongRest: Infinity } },
         { type: 'spell_grant', value: { level: 1, spellcastingAbility: 'cha', spellName: 'Lueurs féeriques', countPerLongRest: 1, unlockLevel: 3 } },
         { type: 'spell_grant', value: { level: 2, spellcastingAbility: 'cha', spellName: 'Agrandissement/rapetissement', countPerLongRest: 1, unlockLevel: 5 } },
       ],
+      choice: fairyCastingAbilityChoice,
     },
     {
       // AideDD, UA « Peuples de la Féerie », section « Créer votre personnage ».

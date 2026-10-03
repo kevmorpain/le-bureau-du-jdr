@@ -6,6 +6,7 @@ import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
 import { deriveBackgroundProficiencies } from '~~/server/utils/backgroundProficiencyDerivation'
 import { deriveClassGrants } from '~~/server/utils/classProficiencyDerivation'
 import { deriveChoiceProficiencies } from '~~/server/utils/choicePicks'
+import { applySpellcastingAbilityPicks } from '~~/server/utils/spellcastingAbilityPicks'
 import { sheetHitPoints, type SheetHitPoints } from '~~/shared/rules/hitPoints'
 import { inventoryEntriesOf } from '~~/shared/rules/characterEffects'
 import type { Db } from '~~/server/utils/db'
@@ -88,7 +89,7 @@ export async function loadSheetRelations(db: Db, id: number): Promise<Loaded | n
     speciesWithLineage = {
       ...species,
       speed: derived.speedOverride ?? species.speed,
-      speciesFeatures: [...visibleBaseFeatures, ...derived.features],
+      speciesFeatures: await applySpellcastingAbilityPicks(db, id, [...visibleBaseFeatures, ...derived.features]),
     }
   }
 

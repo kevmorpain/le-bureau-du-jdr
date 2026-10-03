@@ -8,6 +8,7 @@ import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { buildCatalog } from '~~/server/utils/catalog'
+import { levelUpReplacements } from '~~/server/utils/duplicateProficiencies'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { hitPointGain } from '~~/shared/rules/hitPoints'
 import { loadSheetRelations, sheetHitPointsOf } from '~~/server/utils/characterSheetLoader'
@@ -131,10 +132,10 @@ async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSki
 }
 
 // Les picks portent sur les points de choix que CE niveau de classe rend dus (porteur de multiclassage d'une
-// classe rejointe compris), validés comme à la création.
-async function validateLevelUpChoicePicks(gained: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
+// classe rejointe compris) et sur les remplacements de maîtrises qu'elle double, validés comme à la création.
+async function validateLevelUpChoicePicks(gained: ResolvedChoice[], replacements: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
   if (!picks.length) return
-  const error = choicePicksError(picks, gained.filter(isPickChoice))
+  const error = choicePicksError(picks, [...gained.filter(isPickChoice), ...replacements])
   if (error) throw new CharacterValidationError(error)
 }
 
@@ -297,7 +298,10 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     subclassIdsBefore,
     subclassIdsAfter: subclassAfter != null ? [subclassAfter] : [],
   })
-  await validateLevelUpChoicePicks(gained, d.choicePicks ?? [])
+  const replacements = existingClass == null && currentClasses.length > 0
+    ? (await levelUpReplacements(db, characterSheetId, cls.id)).choices
+    : []
+  await validateLevelUpChoicePicks(gained, replacements, d.choicePicks ?? [])
   await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, subclassAfter ?? null, gained)
   validateLevelUpAsi(d, newLevel, gained)
 

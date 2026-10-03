@@ -26,6 +26,7 @@ export const CHOICE_KINDS = [
   'ancestry',
   'weapon_mastery',
   'terrain',
+  'spellcasting_ability',
 ] as const
 
 export type ChoiceKind = (typeof CHOICE_KINDS)[number]
@@ -41,11 +42,12 @@ export interface FeatureChoice {
 }
 
 // Choix dont chaque pick est une maîtrise (valeur typée sans table), un sort mineur ou un simple libellé (terrain
-// du Cercle de la terre) : ils passent par un chemin générique (`choicePicks`). Les autres ont chacun leur champ
-// dédié. Seules les maîtrises se dérivent en effets ; un libellé est lu tel quel par ce qui en dépend.
+// du Cercle de la terre, caractéristique d'incantation de la Fadette) : ils passent par un chemin générique
+// (`choicePicks`). Les autres ont chacun leur champ dédié. Seules les maîtrises se dérivent en effets ; un
+// libellé est lu tel quel par ce qui en dépend.
 export const VALUE_CHOICE_KINDS = ['skill', 'tool', 'language'] as const satisfies readonly ChoiceKind[]
 export const SPELL_CHOICE_KINDS = ['cantrip'] as const satisfies readonly ChoiceKind[]
-export const LABEL_CHOICE_KINDS = ['terrain'] as const satisfies readonly ChoiceKind[]
+export const LABEL_CHOICE_KINDS = ['terrain', 'spellcasting_ability'] as const satisfies readonly ChoiceKind[]
 export const PICK_CHOICE_KINDS: readonly ChoiceKind[] = [...VALUE_CHOICE_KINDS, ...SPELL_CHOICE_KINDS, ...LABEL_CHOICE_KINDS]
 
 // `proficient_skills` / `proficient_weapons` se résolvent contre l'état du perso (non cachables) ; le reste via le catalogue.

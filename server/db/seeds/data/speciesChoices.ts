@@ -15,6 +15,13 @@ export const dwarfToolChoice: FeatureChoice = {
   optionSource: { type: 'tools', from: ['Outils de forgeron', 'Matériel de brasseur', 'Outils de maçon'] },
 }
 
+// AideDD, UA « Peuples de la Féerie », Fadette, Magie des fées : l'Intelligence, la Sagesse ou le Charisme.
+export const fairyCastingAbilityChoice: FeatureChoice = {
+  kind: 'spellcasting_ability',
+  count: 1,
+  optionSource: { type: 'enum', values: ['int', 'wis', 'cha'] },
+}
+
 // Haut-elfe, Sort mineur : un sort mineur de la liste du magicien.
 export const wizardCantripChoice: FeatureChoice = {
   kind: 'cantrip',
