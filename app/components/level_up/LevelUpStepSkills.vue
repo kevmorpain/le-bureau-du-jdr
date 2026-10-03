@@ -62,6 +62,31 @@
         :owned="ownedFor(choice)"
       />
     </div>
+
+    <div
+      v-if="replacementChoices.length"
+      class="mt-6"
+    >
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-1">
+        Maîtrise en double
+      </p>
+      <p class="text-xs text-muted mb-3">
+        Reçue de deux sources : <strong class="text-(--ui-text)">{{ duplicatedProficiencies.join(', ') }}</strong>. Vous pouvez choisir
+        une autre maîtrise de même nature à la place.
+      </p>
+      <div class="space-y-3">
+        <ChoicePointPicker
+          v-for="choice in replacementChoices"
+          :key="choice.progressionId"
+          v-model="state.choicePicks[choice.progressionId]"
+          :kind="choice.kind"
+          :count="choice.count"
+          :options="choice.options.map(optionPickValue).filter((v): v is string | number => v != null)"
+          :owned="ownedFor(choice)"
+          :title="choice.kind === 'skill' ? 'Compétence de remplacement' : 'Outil de remplacement'"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -76,6 +101,8 @@ const {
   multiclassSkills,
   requiredMulticlassSkillPicks,
   newPickChoices,
+  replacementChoices,
+  duplicatedProficiencies,
   ownedFor,
   SKILLS,
 } = useLevelUp(inject('charSheet') as any)

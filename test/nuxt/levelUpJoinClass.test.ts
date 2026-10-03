@@ -3,6 +3,7 @@ import { defineComponent, h, provide, ref, type Component, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import LevelUpStepClass from '../../app/components/level_up/LevelUpStepClass.vue'
+import LevelUpStepSkills from '../../app/components/level_up/LevelUpStepSkills.vue'
 import LevelUpSummary from '../../app/components/level_up/LevelUpSummary.vue'
 import { useLevelUp, type CharacterSheetWithASI, type LevelUpState } from '../../app/composables/useLevelUp'
 import { catalogClasses } from '../fixtures/catalogClasses'
@@ -19,6 +20,22 @@ beforeAll(() => {
   registerEndpoint('/api/character_sheets/1/proficiency-overrides', () => [])
   registerEndpoint('/api/feats', () => [])
   registerEndpoint('/api/invocations', () => [])
+  registerEndpoint('/api/character_sheets/1/level-up-replacements', () => ({
+    choices: [{
+      progressionId: 42,
+      ownerLevelRequired: 1,
+      kind: 'tool',
+      classLevel: 1,
+      count: 1,
+      made: 0,
+      remaining: 1,
+      replaceable: false,
+      global: true,
+      optionSource: { type: 'tools' },
+      options: [{ value: 'Kit de déguisement' }, { value: 'Outils de voleur' }],
+    }],
+    duplicated: { skills: [], tools: ['Outils de voleur'] },
+  }))
 })
 
 // Paladin 3 (FOR 15) : `cha` décide si SES prérequis (FOR 13 et CHA 13) sont remplis.
@@ -111,5 +128,34 @@ describe('Récapitulatif du level-up — classe rejointe', () => {
     })
     expect(compactText()).toContain('Maîtrisesdemulticlassage' + 'Armurelégère,Outilsdevoleur')
     expect(compactText()).toContain('1compétence(s)multiclasse' + 'Discrétion')
+  })
+})
+
+describe('Étape Maîtrises du level-up — maîtrise doublée par la classe rejointe', () => {
+  const joinRogue = { pickedClassId: 'rogue', isMulticlass: true, fromLevel: 0, toLevel: 1 }
+
+  async function mountJoiningRogue(component: Component) {
+    const mounted = await mount(component, 13, joinRogue)
+    for (let i = 0; i < 50 && mounted.levelUp.replacementChoices.value.length === 0; i++) {
+      await flushPromises()
+      await new Promise(r => setTimeout(r, 10))
+    }
+    return mounted
+  }
+
+  it('nomme la maîtrise doublée et propose un outil de remplacement, facultatif', async () => {
+    const { levelUp, text } = await mountJoiningRogue(LevelUpStepSkills)
+    expect(text()).toContain('Maîtrise en double')
+    expect(text()).toContain('Outils de voleur')
+    expect(text()).toContain('Outil de remplacement')
+    expect(levelUp.isStepComplete.value('skills')).toBe(true)
+  })
+
+  it('l\'étape Maîtrises existe même sans autre choix, et le récapitulatif nomme le remplacement', async () => {
+    const { levelUp, compactText } = await mountJoiningRogue(LevelUpSummary)
+    expect(levelUp.activeSteps.value.map(s => s.id)).toContain('skills')
+    levelUp.state.value.choicePicks[42] = ['Kit de déguisement']
+    await flushPromises()
+    expect(compactText()).toContain('Maîtrisesderemplacement' + 'Kitdedéguisement')
   })
 })

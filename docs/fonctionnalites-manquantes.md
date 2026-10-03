@@ -49,7 +49,7 @@ donnée est déjà là, il ne manque que la projection.
 | **E9** | [#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138) | Modificateurs d'arme de pacte (`pact_weapon_modifier`) jamais appliqués |
 | **E10** | [#139](https://github.com/kevmorpain/le-bureau-du-jdr/issues/139) | `extra_damage` jamais appliqué, et écrit sous une autre forme par l'éditeur d'objet |
 | **E11** | [#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140) | Types d'effet absents de l'union (CA, JS, attaque, vitesses, avantage structuré) |
-| **E12** | [#227](https://github.com/kevmorpain/le-bureau-du-jdr/issues/227) | Fadette : caractéristique d'incantation de la Magie des fées figée au Charisme |
+| **E12** | ✅ résolu ([#227](https://github.com/kevmorpain/le-bureau-du-jdr/issues/227), suite du lot 2) | Fadette : caractéristique d'incantation de la Magie des fées figée au Charisme — point de choix `spellcasting_ability` (migration 0122), lu sur la fiche pour les sorts d'espèce |
 | **E13** | [#235](https://github.com/kevmorpain/le-bureau-du-jdr/issues/235) | Ténacité naine (Nain des collines) : effet `hp_per_level` absent, PV max trop bas |
 
 **✅ résolu pendant la rédaction** — `fighting_style_modifier` : la **tranche 3** du chantier F2
@@ -162,11 +162,12 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 | **P6** | ✅ résolu ([#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204), lot 2) | Outils au choix de classe jamais proposés (Barde, Moine, Barde rejoint en multiclasse) |
 | **P7** | ✅ résolu ([#205](https://github.com/kevmorpain/le-bureau-du-jdr/issues/205), lot 2) | Maîtrise reçue en double (outil ou compétence) ni signalée ni remplaçable — à la création |
 | **P8** | ✅ résolu ([#225](https://github.com/kevmorpain/le-bureau-du-jdr/issues/225), lot 2) | Choix d'historique (langues, outils) enregistrés comme ajouts manuels |
-| **P9** | [#226](https://github.com/kevmorpain/le-bureau-du-jdr/issues/226) | Maîtrise reçue en double au level-up (multiclassage) ni signalée ni remplaçable |
+| **P9** | ✅ résolu ([#226](https://github.com/kevmorpain/le-bureau-du-jdr/issues/226), suite du lot 2) | Maîtrise reçue en double au level-up (multiclassage) ni signalée ni remplaçable |
 
-> **Généralisation** (recompté au lot 2) : sur les 17 `ChoiceKind` canoniques, **13** sont seedés en
+> **Généralisation** (recompté pour #227) : sur les 19 `ChoiceKind` canoniques, **15** sont seedés en
 > `progression` (`subclass`, `lineage`, `pact_boon`, `fighting_style`, `expertise`, `invocations`,
-> `asi_or_feat`, `metamagic`, `skill`, `spell`, `language`, `tool`, `cantrip`). Restent sans aucune
+> `asi_or_feat`, `metamagic`, `skill`, `spell`, `language`, `tool`, `cantrip`, `terrain`,
+> `spellcasting_ability`). Restent sans aucune
 > donnée : `maneuvers`, `ancestry`, `weapon_mastery` (5.5), `ability_scores` (5.5). Un point de choix
 > appartient à une classe (porteur de départ ou de multiclassage), une espèce, une lignée, un historique
 > ou une règle générale (maîtrise en double) : cf. [`rules-engine.md`](./rules-engine.md).

@@ -855,6 +855,13 @@
       "when": 1790946402167,
       "tag": "0121_feature_active_and_created_slots",
       "breakpoints": true
+    },
+    {
+      "idx": 122,
+      "version": "6",
+      "when": 1790946402168,
+      "tag": "0122_fairy_spellcasting_ability",
+      "breakpoints": true
     }
   ]
 }

@@ -20,7 +20,7 @@ import { anySchoolSpellsGained, subclassCastingOf } from '~~/shared/rules/subcla
 import { cantripsKnownAt, magicalSecretsGained, preparedSpellsLimit, spellLearningOf, spellsKnownAt } from '~~/shared/rules/spellsKnown'
 import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
-import { duplicateCount, duplicatedValues } from '~~/shared/rules/duplicateProficiencies'
+import { duplicatedValues, proficiencyDuplicates } from '~~/shared/rules/duplicateProficiencies'
 import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
 import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
@@ -412,10 +412,12 @@ export function useCharacterBuilder() {
     speciesId: speciesDbId.value ?? undefined,
     lineageId: selectedLineageId.value ?? undefined,
     backgroundId: backgroundDbId.value ?? undefined,
-    duplicates: {
-      skills: duplicateCount(speciesSkills.value, backgroundFixedSkills.value),
-      tools: duplicateCount(classFixedTools.value, backgroundFixedTools.value),
-    },
+    duplicates: proficiencyDuplicates({
+      speciesSkills: speciesSkills.value,
+      backgroundSkills: backgroundFixedSkills.value,
+      classTools: [classFixedTools.value],
+      backgroundTools: backgroundFixedTools.value,
+    }),
   }).filter(isPickChoice))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))

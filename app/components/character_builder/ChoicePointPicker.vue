@@ -39,9 +39,9 @@
 <script lang="ts" setup>
 import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_LABELS, languageLabel } from '~~/shared/rules/languages'
-import { SKILLS } from '~/data/character-builder'
+import { ABILITY_LABELS, SKILLS, type AbilityKey } from '~/data/character-builder'
 
-// Un choix de maîtrise (compétence, outil, langue), de sort mineur ou de terrain : point de choix ou choix d'un don. Les
+// Un choix de maîtrise (compétence, outil, langue), de sort mineur, de terrain ou de caractéristique d'incantation : point de choix ou choix d'un don. Les
 // options sont des valeurs de pick (`optionPickValue`). Les valeurs déjà acquises
 // ailleurs (`owned`) sont masquées pour ne pas gaspiller le choix ; un pick devenu doublon après coup reste
 // affiché (masqué, il ne serait plus désélectionnable) et signalé.
@@ -60,6 +60,7 @@ const DEFAULT_TITLES: Partial<Record<ChoiceKind, string>> = {
   language: 'Langue au choix',
   cantrip: 'Sort mineur au choix',
   terrain: 'Terrain du cercle',
+  spellcasting_ability: 'Caractéristique d\'incantation',
 }
 
 const { extendedQuery } = useExtendedContent()
@@ -77,6 +78,7 @@ const defaultTitle = computed(() =>
 function labelOf(value: string | number): string {
   if (props.kind === 'skill') return SKILLS.find(s => s.key === value)?.label ?? String(value)
   if (props.kind === 'cantrip') return spells.value?.find(s => s.id === value)?.name ?? '…'
+  if (props.kind === 'spellcasting_ability') return ABILITY_LABELS[value as AbilityKey] ?? String(value)
   return isLanguageKey(value) ? languageLabel(String(value)) : String(value)
 }
 
