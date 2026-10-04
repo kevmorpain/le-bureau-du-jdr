@@ -3,6 +3,7 @@ import { featureFormulaContext } from '~~/shared/rules/classResources'
 import type { FormulaContext, Formula } from '~~/shared/utils/formula'
 import type { FeatureMeta } from '~~/server/db/schema/features'
 import type { Effect } from '~~/server/db/schema/effects'
+import { speciesSpellcastingAbility } from '~~/shared/rules/speciesSpellcasting'
 
 // `max` inclut les emplacements `created` par les points de sorcellerie.
 type SlotState = { max: number, current: number, created?: number }
@@ -54,6 +55,7 @@ export const useCharacterSpellcasting = (
     selectedCasterClassId?: Ref<number | null>
     // Lazy : peut être créée après ce composable (Vue résout la dépendance à l'accès).
     allEffects?: ComputedRef<Effect[]>
+    speciesEffects?: ComputedRef<Effect[]>
   },
 ) => {
   // ─── Liste des classes spellcasters du perso ─────────────────────────────
@@ -150,6 +152,11 @@ export const useCharacterSpellcasting = (
     const caster = spellcasterClasses.value.find(c => c.classId === classId)
     return caster ? computeStats(caster.ability) : spellcastingStats.value
   }
+
+  // Un sort d'espèce s'incante avec la caractéristique que l'espèce déclare, pas celle d'une classe.
+  const speciesAbility = computed(() => speciesSpellcastingAbility(deps?.speciesEffects?.value ?? []))
+  const statsForSpell = (spell: { classId?: number | null, source?: string | null }): SpellStats | null =>
+    spell.source === 'species' && speciesAbility.value ? computeStats(speciesAbility.value) : statsForCasterClass(spell.classId)
 
   const spellcastingModifier = computed<number | null>(() => spellcastingStats.value?.modifier ?? null)
   const spellSaveDC = computed<number | null>(() => spellcastingStats.value?.dc ?? null)
@@ -275,6 +282,7 @@ export const useCharacterSpellcasting = (
     pactMagicStats,
     pactMagicAbility,
     statsForCasterClass,
+    statsForSpell,
     spellSlots,
     availableSpellSlots,
     spellcasterClasses,

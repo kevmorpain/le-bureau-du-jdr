@@ -412,6 +412,7 @@ const {
   spellcastingStats,
   pactMagicStats,
   statsForCasterClass,
+  statsForSpell,
   spellcasterClasses,
   activeCasterClass,
   selectedCasterClassId,
@@ -432,7 +433,7 @@ const abilityShortLabels: Record<string, string> = {
   str: 'FOR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'SAG', cha: 'CHA',
 }
 
-const casterStatsOf = (cs: CharacterSpellWithSpell) => statsForCasterClass(cs.classId)
+const casterStatsOf = (cs: CharacterSpellWithSpell) => statsForSpell(cs)
 
 const preparedLimit = computed<number | null>(() => {
   const caster = activeCasterClass.value

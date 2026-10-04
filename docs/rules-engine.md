@@ -143,6 +143,7 @@ character_choices {
 | Maîtrises d'historique (Acolyte) | `language` | fixed 2 | `{languages}` | 2 × `selectedValue` |
 | Maîtrises de la classe (Barde) / de multiclassage | `tool` | fixed 3 / 1 | `{tools, from:[instruments]}` | N × `selectedValue` |
 | Maîtrise en double (règle générale) | `skill` / `tool` | `var:duplicate_skills` / `duplicate_tools` | `{skills}` / `{tools}` | N × `selectedValue` |
+| Magie des fées (trait de la Fadette) | `spellcasting_ability` | fixed 1 | `{enum, values:['int','wis','cha']}` | `selectedValue` |
 
 `character_choices` devient **LA source des décisions** ; `character_classes.subclassId`/
 `pactBoon` et la matérialisation des invocations en dérivent (migration additive, [D8](./decisions.md#d8)).
@@ -158,6 +159,12 @@ moins 1, pour le builder avant la classe). Pour une classe, le porteur de maîtr
 (`classGrant:'multiclass'`) que pour une classe rejointe (`projection.mainClassId`). Le nombre dû d'une
 règle générale vient du personnage (`projection.duplicates`, variables de formule `duplicate_*`).
 
+Les doublons se comptent par **source fixe** (`proficiencyDuplicates`, `shared/rules/duplicateProficiencies.ts`) : compétences
+d'espèce ∩ d'historique, outils de chaque classe (départ de la 1re, sous-ensemble de multiclassage des autres) ∩
+d'historique. Au level-up, rejoindre une classe peut en ouvrir de nouveaux : `levelUpReplacements` (serveur) compte avant et
+après, et demande `après − max(avant, remplacements déjà enregistrés)` — un doublon refusé à la création ne revient pas.
+Le front lit le résultat (`GET /api/character_sheets/:id/level-up-replacements?classId=`) ; le POST du level-up le revalide.
+
 ### Sorts toujours préparés (domaine, serment, cercle)
 
 Les sorts de domaine du Clerc, de serment du Paladin et de cercle du Druide sont des effets `always_prepared_spell
@@ -167,9 +174,17 @@ du niveau de classe, et le GET `/spells` les ajoute avec `alwaysPrepared: true`.
 n'apparaît pas, et apparaît de lui-même une fois seedé. Le `terrain` du Cercle de la terre est un point de choix `terrain`
 (`LABEL_CHOICE_KINDS`) porté par la sous-classe : une valeur, sans effet dérivé, que lit seulement cette dérivation.
 
+### Caractéristique d'incantation d'espèce
+
+Les `spell_grant` d'un trait d'espèce déclarent leur `spellcastingAbility` (Charisme pour le Tieffelin et le Drow). Quand
+le trait porte un point de choix `spellcasting_ability` (Magie des fées de la Fadette, migration 0122), le pick remplace
+cette valeur à la lecture de la fiche (`applySpellcastingAbilityPicks`, appelé par `loadSheetRelations`) ; sans pick, la
+valeur des effets reste le défaut. Un sort de source `species` s'incante avec cette caractéristique
+(`statsForSpell`, `useCharacterSpellcasting`) et non avec celle de la classe active.
+
 ### Chemin générique des picks de maîtrise
 
-Les choix `skill` / `tool` / `language` (une valeur par pick), `cantrip` (un sort) et `terrain` (un libellé) passent tous par le
+Les choix `skill` / `tool` / `language` (une valeur par pick), `cantrip` (un sort), `terrain` et `spellcasting_ability` (un libellé) passent tous par le
 même chemin (`server/utils/choicePicks.ts`) : payload `choicePicks` à la création et au level-up, validé
 contre `resolveChoices` (`choicePicksError` : point de choix proposé, nombre, options), stocké en
 `character_choices`, et la maîtrise **dérivée** à chaque lecture (`deriveChoiceProficiencies` → champ

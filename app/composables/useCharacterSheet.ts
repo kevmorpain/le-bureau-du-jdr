@@ -223,6 +223,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     formulaContext,
     selectedCasterClassId,
     allEffects: allEffectsForSpellcasting,
+    speciesEffects,
   })
 
   const spells = useCharacterSpells(characterSheet, {
@@ -407,6 +408,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     pactMagicStats: spellcasting.pactMagicStats,
     pactMagicAbility: spellcasting.pactMagicAbility,
     statsForCasterClass: spellcasting.statsForCasterClass,
+    statsForSpell: spellcasting.statsForSpell,
     spellcasterClasses: spellcasting.spellcasterClasses,
     activeCasterClass: spellcasting.activeCasterClass,
     selectedCasterClassId,

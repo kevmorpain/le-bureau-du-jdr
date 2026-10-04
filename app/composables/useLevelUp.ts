@@ -23,6 +23,7 @@ import {
 } from '~~/shared/rules/multiclass'
 import { proficiencyLabels } from '~~/shared/utils/item'
 import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
+import type { LevelUpReplacements } from '~~/shared/rules/duplicateProficiencies'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
@@ -499,7 +500,24 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       subclassIdsAfter: subclassAfter != null ? [subclassAfter] : [],
     }).filter(isPickChoice)
   })
+  // Remplacements ouverts par une maîtrise que la classe rejointe double (AideDD, Historiques), calculés par le
+  // serveur qui seul connaît les picks déjà enregistrés. Facultatifs, comme à la création.
+  const NO_REPLACEMENTS: LevelUpReplacements = { choices: [], duplicated: { skills: [], tools: [] } }
+  const { data: replacementsData } = useAsyncData<LevelUpReplacements>(
+    () => `level-up-replacements:${charSheet.value?.id}:${state.value.isMulticlass ? luClassDbId.value : 'none'}`,
+    () => (state.value.isMulticlass && charSheet.value?.id != null && luClassDbId.value != null
+      ? $fetch<LevelUpReplacements>(`/api/character_sheets/${charSheet.value.id}/level-up-replacements`, { query: { classId: luClassDbId.value } })
+      : Promise.resolve(NO_REPLACEMENTS)),
+    { default: () => NO_REPLACEMENTS },
+  )
+  const replacementChoices = computed<ResolvedChoice[]>(() => replacementsData.value?.choices ?? [])
+  const duplicatedProficiencies = computed(() => [
+    ...(replacementsData.value?.duplicated.skills ?? []).map(k => SKILLS.find(s => s.key === k)?.label ?? k),
+    ...(replacementsData.value?.duplicated.tools ?? []),
+  ])
   const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
+  const choicePicksPayload = (choices: ResolvedChoice[]) => choices.flatMap(c => picksOf(c.progressionId).slice(0, c.count).map(v =>
+    c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string }))
   const ownedFor = (choice: ResolvedChoice): string[] => {
     if (choice.kind === 'skill') return proficientSkills.value
     if (choice.kind === 'language') return knownLanguages.value
@@ -618,7 +636,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   const activeSteps = computed(() => ALL_LU_STEPS.filter(s => {
     if (s.id === 'asi') return isAsiLevel.value
-    if (s.id === 'skills') return needsMulticlassSkills.value || newPickChoices.value.length > 0
+    if (s.id === 'skills') return needsMulticlassSkills.value || newPickChoices.value.length > 0 || replacementChoices.value.length > 0
     if (s.id === 'spells') return hasSpellcasting.value
     return true
   }))
@@ -769,8 +787,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         featureId: s.asiChoice === 'feat' ? s.featureId : null,
         featChoices: s.asiChoice === 'feat' ? buildFeatChoices(s) : null,
         newSkills: s.newSkills,
-        choicePicks: newPickChoices.value.flatMap(c => picksOf(c.progressionId).map(v =>
-          c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string })),
+        choicePicks: choicePicksPayload([...newPickChoices.value, ...replacementChoices.value]),
         newCantripIds: s.newCantripIds,
         newSpellIds: s.newSpellIds,
         pactBoon: s.pactBoon,
@@ -823,6 +840,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     multiclassSkills,
     requiredMulticlassSkillPicks,
     newPickChoices,
+    replacementChoices,
+    duplicatedProficiencies,
     ownedFor,
     currentClassesPrerequisites,
     meetsCurrentClassesPrerequisites,

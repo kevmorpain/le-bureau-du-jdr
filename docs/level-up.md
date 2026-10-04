@@ -168,6 +168,12 @@ Barde 1 « au choix », Rôdeur et Roublard 1 « dans la liste de la classe », 
 
 Les compétences déjà maîtrisées (`proficientSkills`, lu dans la couche de la fiche) sont grisées.
 
+**Maîtrise en double :** si la classe rejointe accorde une maîtrise déjà possédée (Criminel qui rejoint le Roublard :
+outils de voleur), l'étape propose en plus un remplacement de même nature (AideDD, Historiques), **facultatif**
+comme à la création. Les remplacements dus viennent du serveur (`replacementChoices`, endpoint
+`level-up-replacements`) car lui seul connaît les picks déjà enregistrés ; ils partent en `choicePicks` et sont
+revalidés par `validateLevelUpChoicePicks`. Seuls les doublons de maîtrises **fixes** comptent.
+
 **Validation :** `newSkills.length >= requiredMulticlassSkillPicks` (le nombre dû, plafonné aux compétences
 de la liste encore non maîtrisées), et chaque point de choix de `newPickChoices` complet.
 
