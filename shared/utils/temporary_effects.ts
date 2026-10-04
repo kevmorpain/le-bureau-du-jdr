@@ -6,6 +6,8 @@ import { damageTypeLabels } from '~~/shared/utils/labels'
 
 const damageType = z.enum(Object.keys(damageTypeLabels) as [DamageTypeKey, ...DamageTypeKey[]])
 const signedBonus = z.number().int().min(-10).max(10)
+// Mètres, par pas d'une case (1,5 m) : les bornes de l'éditeur d'effets.
+const speedBonus = z.number().min(-30).max(30).multipleOf(1.5)
 // Champ numérique vidé dans l'éditeur → '' : vaut absence.
 const optionalNumber = (schema: z.ZodNumber) =>
   z.preprocess(v => (v === '' || v === null ? undefined : v), schema.optional())
@@ -25,6 +27,7 @@ const temporaryEffectEntrySchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('spell_attack_bonus'), value: z.object({ amount: signedBonus }) }),
   z.object({ type: z.literal('spell_damage_bonus'), value: z.object({ amount: signedBonus }) }),
   z.object({ type: z.literal('initiative_bonus'), value: z.object({ amount: signedBonus }) }),
+  z.object({ type: z.literal('speed_bonus'), value: z.object({ amount: z.object({ op: z.literal('fixed'), value: speedBonus }) }) }),
   z.object({ type: z.literal('passive_skill_bonus'), value: z.object({ skill: z.enum(['perception', 'investigation']), amount: signedBonus }) }),
 ])
 

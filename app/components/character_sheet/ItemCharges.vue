@@ -63,6 +63,7 @@
             </p>
 
             <UButton
+              v-if="rollsEnabled"
               icon="i-game-icons:rolling-dices"
               size="sm"
               block
@@ -73,7 +74,10 @@
             </UButton>
 
             <div class="flex items-center gap-2">
-              <span class="text-xs text-muted">ou</span>
+              <span
+                v-if="rollsEnabled"
+                class="text-xs text-muted"
+              >ou</span>
               <UInput
                 v-model.number="manualAmount"
                 type="number"
@@ -123,6 +127,7 @@ const rechargeLabel = computed(() => ({
   dawn: 'À l\'aube',
 }[rechargeType.value ?? ''] ?? ''))
 
+const rollsEnabled = useRollsEnabled()
 const popoverOpen = ref(false)
 const manualAmount = ref<number | null>(null)
 

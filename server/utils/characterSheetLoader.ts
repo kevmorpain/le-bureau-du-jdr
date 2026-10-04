@@ -117,10 +117,11 @@ export async function loadCharacterSheet(db: Db, id: number): Promise<Loaded | n
   // Maîtrises choisies (compétences, outils, langues) dérivées des picks en character_choices.
   const choiceEffects = await deriveChoiceProficiencies(db, id)
 
-  // Le propriétaire est le joueur ; on n'expose que `{ id, name }` (ni e-mail ni provider).
+  // Le propriétaire est le joueur ; on n'expose que `{ id, name, preferences }` (ni e-mail ni provider) : les défauts du compte
+  // que la fiche hérite, résolus côté client avec la fonction partagée pour rester justes dès qu'elle en change un.
   const [owner] = sheet.ownerId != null
     ? await db
-        .select({ id: schema.users.id, name: schema.users.name })
+        .select({ id: schema.users.id, name: schema.users.name, preferences: schema.users.preferences })
         .from(schema.users)
         .where(eq(schema.users.id, sheet.ownerId))
     : []

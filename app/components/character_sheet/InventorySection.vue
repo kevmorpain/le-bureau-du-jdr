@@ -70,34 +70,34 @@
                   class="flex items-center gap-1 flex-wrap"
                   @click.stop
                 >
-                  <UButton
+                  <RollButton
                     size="sm"
                     variant="soft"
                     color="primary"
                     @click="rollAttack(entry.id)"
                   >
                     Attaque {{ formatModifier(weaponStatsByEntry.get(entry.id)!.attackBonus) }}
-                  </UButton>
-                  <UButton
+                  </RollButton>
+                  <RollButton
                     size="sm"
                     variant="soft"
                     color="neutral"
                     @click="rollDamage(entry.id)"
                   >
                     Dégâts {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonus !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonus) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
-                  </UButton>
+                  </RollButton>
                   <UTooltip
                     v-if="weaponStatsByEntry.get(entry.id)!.isLight"
                     text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
                   >
-                    <UButton
+                    <RollButton
                       size="sm"
                       variant="soft"
                       color="neutral"
                       @click="rollOffhand(entry.id)"
                     >
                       Main secondaire {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonusOffhand !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonusOffhand) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
-                    </UButton>
+                    </RollButton>
                   </UTooltip>
                 </div>
               </template>

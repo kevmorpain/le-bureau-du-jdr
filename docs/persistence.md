@@ -16,6 +16,8 @@
 | `temporaryEffects` (bénédictions, malédictions…) | DB (`character_sheets`, JSON) | Peut durer plusieurs séances : cross-device, contrairement aux états d'encounter |
 | Identité & description (`age`, `height`, `weight`, `eyes`, `hair`, `skin`, `deity`, `backstory`, `allies`, `portraitUrl`) | DB (`character_sheets`) | Description du personnage, saisie à la création ou sur la fiche |
 | Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, binding `BLOB`) | Binaire : la fiche n'en garde que l'URL |
+| `preferences` (fiche) | DB (`character_sheets`, JSON nullable) | Réglage propre à la fiche ; clé absente = hérite du compte ([D18](decisions.md#d18), [D23](decisions.md#d23)) |
+| `preferences` (compte) | DB (`users`, JSON nullable) | Défauts du joueur, via `/api/account/preferences` |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
 | Modificateurs de caractéristique | computed | Dérivés des scores, jamais stockés |
 | Bonus de maîtrise | computed | Dérivé du niveau, jamais stocké |

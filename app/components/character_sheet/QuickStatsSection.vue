@@ -18,7 +18,31 @@
       </StatCard>
     </UTooltip>
 
+    <StatCard
+      v-if="!rollsEnabled"
+      label="Initiative"
+      class="flex-1"
+    >
+      <UIcon
+        name="i-game-icons:walking-boot"
+        class="size-4 mx-auto mb-0.5 text-muted"
+      />
+      <p class="text-xl font-bold leading-none">
+        {{ formatModifier(initiativeBonus) }}
+      </p>
+      <UInput
+        :model-value="initiative?.total ?? ''"
+        type="number"
+        size="xs"
+        placeholder="obtenu"
+        aria-label="Initiative obtenue"
+        class="mt-1 w-full"
+        @update:model-value="enterInitiative"
+      />
+    </StatCard>
+
     <UTooltip
+      v-else
       class="flex-1"
       text="Lancer l'initiative"
     >
@@ -140,6 +164,7 @@ const { roll } = defineProps<{
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
 const { initiative } = useCombatTracker(characterSheet.value.id)
+const rollsEnabled = useRollsEnabled()
 
 const {
   armorClass,
@@ -154,6 +179,14 @@ const {
   passivePerception,
   proficiencyBonus,
 } = useCharacterSheet(characterSheet)
+
+// Le total annoncé à la table : le dé naturel s'en déduit.
+const enterInitiative = (value: string | number | undefined) => {
+  const total = Number(value)
+  initiative.value = value === '' || value === undefined || !Number.isFinite(total)
+    ? null
+    : { total, natural: total - initiativeBonus.value }
+}
 
 const extraSpeeds = computed(() => [
   { label: 'vol', title: 'Vitesse de vol', speed: flyingSpeed.value },

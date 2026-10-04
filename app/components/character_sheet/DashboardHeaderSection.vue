@@ -66,6 +66,40 @@
         <ClientOnly>
           <SyncStatus />
         </ClientOnly>
+        <UPopover :content="{ side: 'bottom', align: 'end' }">
+          <UButton
+            icon="i-heroicons:cog-6-tooth"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            aria-label="Préférences"
+          />
+          <template #content>
+            <div class="w-80 p-3 space-y-3">
+              <p class="text-xs font-bold uppercase tracking-widest text-muted">
+                Préférences de cette fiche
+              </p>
+              <UFormField
+                v-for="key in PREFERENCE_KEYS"
+                :key
+                :label="PREFERENCES[key].label"
+                :description="PREFERENCES[key].description"
+              >
+                <USelect
+                  :model-value="choiceOf(key)"
+                  :items="choicesFor(key)"
+                  size="sm"
+                  class="w-full"
+                  :aria-label="PREFERENCES[key].label"
+                  @update:model-value="choice => choose(key, choice as Choice)"
+                />
+              </UFormField>
+              <p class="text-xs text-muted">
+                Les défauts valables pour toutes vos fiches se règlent depuis le menu du compte.
+              </p>
+            </div>
+          </template>
+        </UPopover>
         <UButton
           icon="i-game-icons:forest-camp"
           variant="outline"
@@ -126,6 +160,7 @@
 </template>
 
 <script lang="ts" setup>
+import { PREFERENCES, PREFERENCE_KEYS, type PreferenceKey } from '~~/shared/rules/preferences'
 import { conditionLabels } from '~~/shared/utils/labels'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
@@ -153,7 +188,24 @@ const {
   species,
   selectedBackground,
   portraitSrc,
+  ownPreferences,
+  accountPreferences,
+  setPreference,
 } = useCharacterSheet(characterSheet)
+
+type Choice = 'inherit' | 'on' | 'off'
+
+// Tri-état (D18) : « hérite » n'est pas « non ».
+const choiceOf = (key: PreferenceKey): Choice => {
+  const own = ownPreferences.value?.[key]
+  return own === undefined ? 'inherit' : own ? 'on' : 'off'
+}
+const choicesFor = (key: PreferenceKey) => [
+  { label: `Défaut du compte (${(accountPreferences.value?.[key] ?? PREFERENCES[key].default) ? 'oui' : 'non'})`, value: 'inherit' },
+  { label: 'Oui', value: 'on' },
+  { label: 'Non', value: 'off' },
+]
+const choose = (key: PreferenceKey, choice: Choice) => setPreference(key, choice === 'inherit' ? null : choice === 'on')
 
 const confirmingLongRest = ref(false)
 // AideDD, Conditions : l'épuisement ne baisse « qu'à condition que la créature ait aussi mangé et bu ».

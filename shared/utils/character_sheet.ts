@@ -3,6 +3,7 @@ import { abilityEnum } from '~~/shared/rules/abilities'
 import { ALIGNMENT_CODES } from '~~/shared/rules/alignments'
 import { DEATH_SAVE_LIMIT } from '~~/shared/rules/damage'
 import { currentHitDieSchema } from '~~/shared/rules/hitDice'
+import { preferencesSchema } from '~~/shared/rules/preferences'
 import { temporaryEffectsSchema } from '~~/shared/utils/temporary_effects'
 
 const classInputSchema = z.object({
@@ -59,6 +60,8 @@ export const updateCharacterSheetSchema = z.object({
   concentratingOn: z.string().trim().min(1).max(100).nullable().optional(),
   notes: z.string().max(5000).optional(),
   temporaryEffects: temporaryEffectsSchema.optional(),
+  // `null` : la fiche hérite des défauts du compte — le client renvoie la fiche telle quelle.
+  preferences: preferencesSchema.nullable().optional(),
 })
 
 export const setASISchema = z.object({

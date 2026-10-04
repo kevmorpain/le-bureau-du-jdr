@@ -70,16 +70,43 @@
     >
       ♥ Stabilisé — 3 succès
     </p>
-    <UButton
-      v-if="!isDead && !isStable"
-      size="xs"
-      variant="outline"
-      color="neutral"
-      class="w-full"
-      @click="rollSave"
-    >
-      Lancer un jet de mort
-    </UButton>
+    <template v-if="!isDead && !isStable">
+      <UButton
+        v-if="rollsEnabled"
+        size="xs"
+        variant="outline"
+        color="neutral"
+        class="w-full"
+        @click="rollSave"
+      >
+        Lancer un jet de mort
+      </UButton>
+      <div
+        v-else
+        class="flex items-center gap-2"
+      >
+        <UInput
+          v-model.number="enteredNatural"
+          type="number"
+          :min="1"
+          :max="20"
+          size="xs"
+          placeholder="d20 obtenu"
+          aria-label="Résultat du d20 du jet de mort"
+          class="flex-1"
+          @keydown.enter="enterSave"
+        />
+        <UButton
+          size="xs"
+          variant="outline"
+          color="neutral"
+          :disabled="!validNatural"
+          @click="enterSave"
+        >
+          Valider
+        </UButton>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -104,8 +131,20 @@ const toggleSave = (type: 'success' | 'failure', n: number) => {
 
 const toaster = useToast()
 
-const rollSave = () => {
-  const natural = props.roll?.('Jet de mort', 0) ?? 0
+const rollsEnabled = useRollsEnabled()
+const enteredNatural = ref<number | null>(null)
+const validNatural = computed(() => Number.isInteger(enteredNatural.value) && enteredNatural.value! >= 1 && enteredNatural.value! <= 20)
+
+const rollSave = () => applySave(props.roll?.('Jet de mort', 0) ?? 0)
+
+// Un d20 saisi à la table suit la même règle qu'un jet de l'application (20 : 1 PV, 1 : deux échecs).
+const enterSave = () => {
+  if (!validNatural.value) return
+  applySave(enteredNatural.value!)
+  enteredNatural.value = null
+}
+
+const applySave = (natural: number) => {
   const { state, outcome } = rollDeathSave(hitPointState.value, natural)
   setHitPointState(state)
   if (outcome === 'recovered') toaster.add({ title: '20 naturel — récupéré à 1 PV !', color: 'success' })

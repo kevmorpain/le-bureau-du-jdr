@@ -33,6 +33,15 @@ describe('effets temporaires — schéma partagé client/serveur', () => {
     expect(temporaryEffectSchema.safeParse({ ...blessing, name: '   ' }).success).toBe(false)
   })
 
+  it('un bonus de vitesse est un nombre fixe de mètres, par pas d\'une case, dans les bornes de l\'éditeur', () => {
+    const speed = (value: number) => ({ ...blessing, effects: [{ type: 'speed_bonus', value: { amount: { op: 'fixed', value } } }] })
+    expect(temporaryEffectSchema.safeParse(speed(4.5)).success).toBe(true)
+    expect(temporaryEffectSchema.safeParse(speed(-3)).success).toBe(true)
+    expect(temporaryEffectSchema.safeParse(speed(4)).success).toBe(false)
+    expect(temporaryEffectSchema.safeParse(speed(31.5)).success).toBe(false)
+    expect(temporaryEffectSchema.safeParse({ ...blessing, effects: [{ type: 'speed_bonus', value: { amount: { op: 'var', name: 'level' } } }] }).success).toBe(false)
+  })
+
   it('un maximum vidé dans l\'éditeur (\'\') vaut absence de maximum', () => {
     const parsed = temporaryEffectSchema.parse({
       ...blessing,
@@ -61,6 +70,7 @@ describe('effets temporaires — schéma partagé client/serveur', () => {
       spell_attack_bonus: { amount: 1 },
       spell_damage_bonus: { amount: 1 },
       initiative_bonus: { amount: 1 },
+      speed_bonus: { amount: { op: 'fixed', value: 3 } },
       passive_skill_bonus: { skill: 'perception', amount: 1 },
     }
     expect(Object.keys(samples).sort()).toEqual([...TEMPORARY_EFFECT_TYPES].sort())

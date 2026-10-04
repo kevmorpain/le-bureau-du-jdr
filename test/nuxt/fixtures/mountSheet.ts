@@ -2,6 +2,7 @@ import { defineComponent, h, ref } from 'vue'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { expect, vi } from 'vitest'
 import type { Effect } from '../../../server/db/schema/effects'
+import type { Preferences } from '../../../shared/rules/preferences'
 import { useCharacterSheet } from '../../../app/composables/useCharacterSheet'
 
 export const inventoryEntry = (
@@ -46,12 +47,14 @@ export const baseScores = (str: number, dex: number, con: number, wis: number) =
 
 export interface SheetScenario {
   scores: ReturnType<typeof baseScores>
-  classes?: { classId: number, level: number }[]
+  classes?: { classId: number, level: number, spellcastingAbility?: string }[]
   features?: ReturnType<typeof classFeature>[]
   speciesEffects?: Effect[]
   temporaryEffects?: { id: number, name: string, active: boolean, effects: Effect[] }[]
   worn?: (sheetId: number) => ReturnType<typeof inventoryEntry>[]
   skills?: { skillKey: string, proficiencyLevel: 'proficient' | 'expert' }[]
+  preferences?: Preferences | null
+  ownerPreferences?: Preferences | null
 }
 
 // Un identifiant de fiche par scénario : useFetch met l'inventaire en cache par URL.
@@ -68,7 +71,7 @@ export const mountSheet = async (scenario: SheetScenario) => {
   const sheet = ref({
     id,
     baseAbilityScores: scenario.scores,
-    classes: (scenario.classes ?? []).map(c => ({ ...c, isMain: true, class: { id: c.classId, name: 'Classe' }, subclass: null })),
+    classes: (scenario.classes ?? []).map(c => ({ ...c, isMain: true, class: { id: c.classId, name: 'Classe', spellcastingAbility: c.spellcastingAbility ?? null }, subclass: null })),
     features: scenario.features ?? [],
     skills: scenario.skills ?? [],
     abilityScoreImprovements: [],
@@ -78,6 +81,8 @@ export const mountSheet = async (scenario: SheetScenario) => {
       speciesFeatures: [{ feature: { featureType: 'species_trait', featureEffects: (scenario.speciesEffects ?? []).map(effect => ({ effect })) } }],
     },
     temporaryEffects: scenario.temporaryEffects ?? [],
+    preferences: scenario.preferences ?? null,
+    owner: { id: 1, name: 'Testeur', preferences: scenario.ownerPreferences ?? null },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any)
 

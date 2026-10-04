@@ -1,5 +1,8 @@
 <template>
-  <Teleport to="body">
+  <Teleport
+    v-if="rollsEnabled"
+    to="body"
+  >
     <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 pointer-events-none">
       <TransitionGroup name="dice-toast">
         <div
@@ -173,7 +176,7 @@
 import type { DiceRoll } from '~/composables/useDiceRoller'
 import { situationLabel, type RollOverride } from '~~/shared/rules/rolls'
 
-const { toasts, roll, engine, history } = useDiceRoller()
+const { toasts, roll, engine, history, rollsEnabled } = useDiceRoller()
 const pending = engine.pending
 const situations = engine.situations
 
