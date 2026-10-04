@@ -1,12 +1,39 @@
 <template>
   <div class="space-y-4">
     <div class="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 space-y-3">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
         <span class="text-sm font-bold text-primary">Ton tour</span>
+        <UBadge
+          v-if="initiative"
+          color="primary"
+          variant="soft"
+          size="md"
+          :label="`Initiative ${initiative.total}`"
+        />
+        <div class="flex items-center gap-1">
+          <UButton
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            icon="i-heroicons:minus-16-solid"
+            aria-label="Round précédent"
+            :disabled="round <= 1"
+            @click="previousRound"
+          />
+          <span class="text-xs font-mono">Round {{ round }}</span>
+          <UButton
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            icon="i-heroicons:plus-16-solid"
+            aria-label="Round suivant"
+            @click="nextRound"
+          />
+        </div>
         <UButton
           size="xs"
           variant="ghost"
-          @click="resetTurn"
+          @click="newTurn"
         >
           Nouveau tour
         </UButton>
@@ -115,7 +142,7 @@
                 size="sm"
                 variant="soft"
                 color="primary"
-                @click="roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus)"
+                @click="rollAttack(weapon)"
               >
                 Attaque {{ formatModifier(weapon.attackBonus) }}
               </UButton>
@@ -136,16 +163,16 @@
             <UTooltip
               v-for="dice in weapon.extraDamageDice"
               :key="dice.name"
-              :text="[dice.condition, dice.limit === 'once_per_turn' ? 'Une fois par tour' : 'À chaque attaque'].filter(Boolean).join(' — ')"
+              :text="[dice.condition, dice.limit === 'once_per_turn' ? 'Une fois par tour' : 'À chaque attaque', extraDiceStatus(dice)?.hint].filter(Boolean).join(' — ')"
               :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
             >
               <UButton
                 size="sm"
                 variant="soft"
-                color="warning"
+                :color="extraDiceStatus(dice)?.color ?? 'warning'"
                 @click="rollExtraDice(weapon, dice)"
               >
-                + {{ dice.name }} {{ dice.count }}d{{ dice.sides }}{{ dice.damageType ? ` ${damageTypeLabels[dice.damageType] ?? dice.damageType}` : '' }}
+                + {{ dice.name }} {{ dice.count }}d{{ dice.sides }}{{ dice.damageType ? ` ${damageTypeLabels[dice.damageType] ?? dice.damageType}` : '' }}{{ extraDiceStatus(dice)?.mark }}
               </UButton>
             </UTooltip>
             <UTooltip
@@ -255,10 +282,14 @@
 import { weaponPropertyLabels } from '~~/shared/utils/item'
 import { slotDamageDiceCount, type SlotDamage } from '~~/shared/rules/classResources'
 import { useClassResources } from '~/composables/character/useClassResources'
+import { useCombatTracker } from '~/composables/character/useCombatTracker'
+import { rollEngineKey } from '~/composables/character/useCharacterRolls'
+import { advantageEligibility } from '~~/shared/rules/rolls'
+import type { RollFn } from '~/composables/useDiceRoller'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
-  roll?: (label: string, modifier: number, sides?: number, count?: number) => number
+  roll?: RollFn
 }>()
 
 const damageTypeLabels: Record<string, string> = {
@@ -293,10 +324,26 @@ const actionTypes = [
 
 const usedActions = ref({ action: false, bonus_action: false, reaction: false })
 
-const resetTurn = () => {
+const { initiative, round, nextRound, previousRound } = useCombatTracker(props.characterSheet.id)
+
+const newTurn = () => {
   usedActions.value = { action: false, bonus_action: false, reaction: false }
   movementUsed.value = 0
+  nextRound()
+  for (const feature of resolvedFeatures.value) {
+    if (feature.active && feature.meta?.endsOnNewTurn) setActive(feature.id, false, undefined)
+  }
 }
+
+// Dés qui dépendent de l'avantage (Attaque sournoise) : le mode du dernier jet d'attaque dit si la condition est remplie.
+const rollEngine = inject(rollEngineKey, null)
+const ELIGIBILITY = {
+  eligible: { color: 'success' as const, mark: ' ✓', hint: 'Avantage au dernier jet d\'attaque : conditions remplies' },
+  blocked: { color: 'error' as const, mark: ' ✗', hint: 'Désavantage au dernier jet d\'attaque : pas d\'Attaque sournoise' },
+  unconfirmed: { color: 'warning' as const, mark: ' ?', hint: 'Pas d\'avantage au dernier jet : il faut un ennemi de la cible à 1,50 m ou moins' },
+}
+const extraDiceStatus = (dice: { needsAdvantage?: boolean }) =>
+  dice.needsAdvantage ? ELIGIBILITY[advantageEligibility(rollEngine?.pending.value.attackMode ?? null)] : null
 
 const movementUsed = ref(0)
 const remainingMovement = computed(() => Math.max(0, effectiveSpeed.value - movementUsed.value))
@@ -331,14 +378,18 @@ const parseDice = (dice: string) => {
   return { count: c || 1, sides: s || 6 }
 }
 
+const rollAttack = (weapon: WeaponStat) => {
+  props.roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, strengthMelee: weapon.usesStrength, extra: weapon.attackRollSources } })
+}
+
 const rollDamage = (weapon: WeaponStat) => {
   const { count, sides } = parseDice(weapon.damageDice)
   const label = weapon.usingTwoHanded ? `Dégâts (2 mains) — ${weapon.name}` : `Dégâts — ${weapon.name}`
-  props.roll?.(label, weapon.damageBonus, sides, count)
+  props.roll?.(label, weapon.damageBonus, sides, count, { damage: { weaponDie: { melee: !weapon.isRanged } } })
 }
 
 const rollExtraDice = (weapon: WeaponStat, dice: WeaponStat['extraDamageDice'][number]) => {
-  props.roll?.(`${dice.name} — ${weapon.name}`, 0, dice.sides, dice.count)
+  props.roll?.(`${dice.name} — ${weapon.name}`, 0, dice.sides, dice.count, { damage: {} })
 }
 
 // Châtiment divin : emplacements de sort de n'importe quel niveau (paladin ou autre) ; l'emplacement est dépensé au jet.
@@ -352,11 +403,11 @@ const rollSmite = (smite: SlotDamage, level: number) => {
   const slot = slots?.value.spellcasting[level]
   if (!slot || slot.current < 1) return
   slot.current -= 1
-  props.roll?.(`${smite.name} (niv. ${level})`, 0, smite.sides, slotDamageDiceCount(smite, level, smiteBonus.value))
+  props.roll?.(`${smite.name} (niv. ${level})`, 0, smite.sides, slotDamageDiceCount(smite, level, smiteBonus.value), { damage: {} })
 }
 
 const rollOffhand = (weapon: WeaponStat) => {
   const { count, sides } = parseDice(weapon.damageDice)
-  props.roll?.(`Dégâts main sec. — ${weapon.name}`, weapon.damageBonusOffhand, sides, count)
+  props.roll?.(`Dégâts main sec. — ${weapon.name}`, weapon.damageBonusOffhand, sides, count, { damage: { weaponDie: { melee: !weapon.isRanged } } })
 }
 </script>

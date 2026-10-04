@@ -14,8 +14,10 @@ grid-template-columns: 240px 1fr 240px; gap: 12px; padding: 16px 20px
 
 ### Nouveaux composants
 
-- `useDiceRoller.ts` — `roll(label, mod, sides?, count?)` partagé via `useState('dice-toasts')`
-- `DiceRollerSection.vue` — toasts fixes bottom-right (Teleport to body)
+- `useDiceRoller.ts` — `roll(label, mod, sides?, count?, options?)` ; `options.d20` type le jet (attaque, caractéristique, sauvegarde, initiative), `options.damage` marque les dégâts d'une attaque (critique) ; toasts via `useState('dice-toasts')`
+- `character/useCharacterRolls.ts` — le moteur que la page fournit (`provide(rollEngineKey)`) : politique de d20 par jet, état du « prochain jet » (`pending`) ; règles pures dans `shared/rules/rolls.ts` ([D22](./decisions.md#d22))
+- `character/useRollHistory.ts`, `character/useCombatTracker.ts` — historique des jets, initiative et round (`useStorage`, par fiche)
+- `DiceRollerSection.vue` — toasts fixes bottom-right (Teleport to body) et bouton « Jets » : prochain jet (mode, situation, critique) et historique
 - `CollapsibleSection.vue` — wrapper avec état localStorage
 - `ActionTypeIcon.vue` — formes CSS (cercle/triangle/losange) + UTooltip
 - `DashboardHeaderSection.vue` — header sticky `top-16` (sous UHeader), conditions actives, repos, toggle combat
@@ -42,9 +44,9 @@ Supprimés — ne pas les recréer : ajouter la stat à `QuickStatsSection`.
 
 ### Patterns clés
 
-- `roll` instancié dans `[id].vue` via `useDiceRoller()`, passé en prop optionnel
+- `roll` instancié dans `[id].vue` via `useDiceRoller(rollEngine)`, passé en prop optionnel ; les composants qui l'appellent seuls (`MagicSection`) récupèrent le moteur par `inject`
 - `spellSlots` créé une seule fois dans `[id].vue`, partagé via `provide('spellSlots', spellSlots)` — `MagicSection` et `SpellSlotsSection` l'injectent (sinon deux instances indépendantes)
-- Activation combat → `roll('Initiative', initiativeBonus.value)` auto
+- Activation combat → remet le round à 1 et lance l'initiative (`{ d20: { type: 'initiative' } }`), conservée par `useCombatTracker`
 - `DeathSavingThrowSection` émet `@recover` pour que `[id].vue` mette à jour `currentHp`
 - Check concentration : dans `HitPointsSection` lors de dégâts reçus si condition 'concentrating' active
 

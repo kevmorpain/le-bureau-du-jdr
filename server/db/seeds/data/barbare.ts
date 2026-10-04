@@ -1,5 +1,6 @@
 import { fixed, lookup } from '~~/shared/utils/formula'
-import type { AbilityScoreKey } from '../../schema/effects'
+import type { AbilityScoreKey, ConditionKey } from '../../schema/effects'
+import type { FeatureMeta } from '../../schema/features'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
@@ -12,6 +13,34 @@ export const RAGE_DAMAGE_BONUS = lookup([2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 
 // AideDD, Barbare : la Défense sans armure admet un bouclier ; le Déplacement rapide ne cède qu'à l'armure lourde.
 export const BARBARIAN_UNARMORED_DEFENSE = { base: 10, abilities: ['dex', 'con'] as AbilityScoreKey[], shield: true }
 export const BARBARIAN_QUICK_MOVEMENT = { amount: fixed(3), while: 'no_heavy_armor' as const }
+
+// AideDD, Barbare — Rage : avantage aux jets de caractéristique et de sauvegarde de Force (suspendu en armure lourde, comme le reste).
+export const RAGE_ADVANTAGES = [
+  { type: 'advantage' as const, value: { rollType: 'check' as const, ability: 'str' as AbilityScoreKey, condition: '' } },
+  { type: 'advantage' as const, value: { rollType: 'saving_throw' as const, ability: 'str' as AbilityScoreKey, condition: '' } },
+]
+
+// AideDD, Barbare — Attaque téméraire : avantage aux attaques de mêlée menées avec la Force pour le tour ; la capacité
+// s'active comme la Rage et prend fin au « Nouveau tour ». Les attaques portées contre le barbare gagnent l'avantage : le texte le dit.
+export const RECKLESS_ATTACK_ADVANTAGE = { type: 'advantage' as const, value: { rollType: 'attack' as const, ability: 'all' as const, condition: '', scope: 'strength_melee' as const } }
+export const RECKLESS_ATTACK_META: FeatureMeta = { whileActive: [RECKLESS_ATTACK_ADVANTAGE], endsOnNewTurn: true }
+export const RECKLESS_ATTACK_DESCRIPTION = `À partir du niveau 2, vous pouvez mettre de côté votre défense pour attaquer avec toute la violence du désespoir. Lorsque vous effectuez la première attaque de votre tour, vous pouvez décider d'effectuer une Attaque téméraire. Vous obtenez ainsi un avantage aux jets d'attaque au corps à corps avec une arme utilisant la Force durant ce tour, mais les attaques effectuées contre vous ont également un avantage jusqu'à votre prochain tour.`
+
+// AideDD, Barbare — Sens du danger : avantage aux sauvegardes de Dextérité contre les effets visibles, sauf aveuglé, assourdi
+// ou incapable d'agir. Que l'effet soit visible reste au joueur de le dire au jet.
+export const DANGER_SENSE_ADVANTAGE = {
+  type: 'advantage' as const,
+  value: { rollType: 'saving_throw' as const, ability: 'dex' as AbilityScoreKey, condition: 'visible_effects', unless: ['blinded', 'deafened', 'incapacitated'] as ConditionKey[] },
+}
+
+// AideDD, Barbare — Instinct sauvage : avantage aux jets d'initiative.
+export const FERAL_INSTINCT_ADVANTAGE = { type: 'advantage' as const, value: { rollType: 'initiative' as const, ability: 'all' as const, condition: '' } }
+
+// AideDD, Barbare : le bonus ne dépend pas de la rage (le seed disait « lors d'une rage »).
+export const BRUTAL_CRITICAL_DESCRIPTION = `À partir du niveau 9, vous pouvez lancer un dé de dégâts de votre arme en plus lorsque vous déterminez les dégâts supplémentaires que vous infligez sur un coup critique réussi avec une attaque au corps à corps. Ce bonus aux dégâts passe à deux dés au niveau 13 et à trois dés au niveau 17.`
+
+// AideDD, Barbare — Critique brutal : 1 dé de l'arme en plus au niveau 9, 2 au niveau 13, 3 au niveau 17.
+export const BRUTAL_CRITICAL_DICE = lookup([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3])
 
 export const barbareFeatures: FeatureDef[] = [
   {
@@ -39,6 +68,7 @@ La rage se termine si vous êtes inconscient ou si votre tour se termine et que 
         { type: 'damage_resistance', value: { damageType: 'piercing' } },
         { type: 'damage_resistance', value: { damageType: 'slashing' } },
         { type: 'melee_strength_damage_bonus', value: { amount: RAGE_DAMAGE_BONUS } },
+        ...RAGE_ADVANTAGES,
       ],
     },
   },
@@ -54,13 +84,14 @@ La rage se termine si vous êtes inconscient ou si votre tour se termine et que 
   },
   {
     name: 'Attaque téméraire',
-    description: `À partir du niveau 2, vous pouvez mettre de côté toute préoccupation pour votre défense afin d'attaquer avec une férocité désespérée. Lors de votre premier tour de chaque combat, vous pouvez décider d'attaquer avec témérité. Cela vous donne l'avantage sur vos jets d'attaque de corps à corps avec les armes de Force pour ce tour, mais les jets d'attaque contre vous ont l'avantage jusqu'à votre prochain tour.`,
+    description: RECKLESS_ATTACK_DESCRIPTION,
     featureType: 'class_feature',
     levelRequired: 2,
-    actionType: null,
+    actionType: 'free',
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: RECKLESS_ATTACK_META,
   },
   {
     name: 'Sens du danger',
@@ -72,7 +103,7 @@ Vous avez l'avantage aux jets de sauvegarde de Dextérité contre les effets que
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [DANGER_SENSE_ADVANTAGE],
   },
   {
     name: 'Attaque supplémentaire',
@@ -104,17 +135,17 @@ De plus, si vous êtes surpris au début du combat et que vous n'êtes pas incap
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [FERAL_INSTINCT_ADVANTAGE],
   },
   {
     name: 'Critique brutal',
-    description: `À partir du niveau 9, vous pouvez dépasser les limites normales de votre corps lors de combats brutaux. Lorsque vous effectuez un coup critique avec une attaque de corps à corps lors d'une rage, vous pouvez lancer un des dés de dégâts de l'attaque une fois de plus et l'ajouter aux dégâts supplémentaires du coup critique. Au niveau 13, ce bonus passe à deux dés supplémentaires, et au niveau 17, à trois dés supplémentaires.`,
+    description: BRUTAL_CRITICAL_DESCRIPTION,
     featureType: 'class_feature',
     levelRequired: 9,
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'critical_extra_dice', value: { dice: BRUTAL_CRITICAL_DICE } }],
   },
   {
     name: 'Rage implacable',

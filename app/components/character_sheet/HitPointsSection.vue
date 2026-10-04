@@ -89,6 +89,12 @@
           {{ resistanceLabel }}
         </p>
         <UCheckbox
+          v-if="canDodge"
+          v-model="dodged"
+          label="Esquive instinctive (réaction) : dégâts ÷ 2"
+          size="sm"
+        />
+        <UCheckbox
           v-if="isDying"
           v-model="isCritical"
           label="Coup critique (2 échecs aux jets contre la mort)"
@@ -220,6 +226,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { RollFn } from '~/composables/useDiceRoller'
 import { damageTypeLabels } from '~~/shared/utils/labels'
 import { hpBaseFromTotal } from '~~/shared/rules/hitPoints'
 import { applyDamage, applyHealing, concentrationSaveDc, gainTemporaryHp } from '~~/shared/rules/damage'
@@ -227,13 +234,15 @@ import { applyDamage, applyHealing, concentrationSaveDc, gainTemporaryHp } from 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
 const props = defineProps<{
-  roll?: (label: string, modifier: number, sides?: number, count?: number) => number
+  roll?: RollFn
 }>()
 
 const {
   fullMaxHp, effectiveMaxHp, defenseEntries, isConcentrating, concentrationName, setConcentration, savingThrows,
-  characterLevel, abilityModifiers, hpPerLevelBonus, hitPointState, setHitPointState, isDying, isDead,
+  characterLevel, abilityModifiers, hpPerLevelBonus, hitPointState, setHitPointState, isDying, isDead, allEffects,
 } = useCharacterSheet(characterSheet)
+
+const canDodge = computed(() => allEffects.value.some(e => e.type === 'halve_damage_reaction'))
 
 // On saisit le maximum affiché ; la fiche ne stocke que ce qui reste hors CON et hors bonus par niveau.
 const maxHpInput = computed({
@@ -260,6 +269,7 @@ const amount = ref('')
 const damageType = ref('none')
 const isTemporary = ref(false)
 const isCritical = ref(false)
+const dodged = ref(false)
 const flashResult = ref<string | null>(null)
 const inputRef = ref()
 
@@ -269,6 +279,7 @@ const toggleMode = (m: 'heal' | 'damage') => {
   damageType.value = 'none'
   isTemporary.value = false
   isCritical.value = false
+  dodged.value = false
   nextTick(() => inputRef.value?.input?.focus())
 }
 
@@ -307,7 +318,13 @@ const concentrationDC = ref(10)
 const conSaveMod = computed(() => savingThrows.value.con?.modifier ?? 0)
 
 const rollConcentrationSave = () => {
-  const result = props.roll?.(`JS Constitution — Concentration (DD ${concentrationDC.value})`, conSaveMod.value) ?? 0
+  const result = props.roll?.(
+    `JS Constitution — Concentration (DD ${concentrationDC.value})`,
+    conSaveMod.value,
+    20,
+    1,
+    { d20: { type: 'save', ability: 'con', situations: ['concentration', 'concentration_after_damage'] } },
+  ) ?? 0
   if (result >= concentrationDC.value) concentrationSuccess()
   else concentrationFail()
 }
@@ -348,16 +365,18 @@ const commit = () => {
       showFlash(`+${raw} PV`)
     }
   } else if (mode.value === 'damage') {
-    let final = raw
+    // AideDD, Combat : la résistance et la vulnérabilité s'appliquent après tout autre modificateur de dégâts.
+    let final = dodged.value ? Math.floor(raw / 2) : raw
     const d = activeDefense.value
     if (d?.level === 'immunity') final = 0
-    else if (d?.level === 'resistance') final = Math.floor(raw / 2)
-    else if (d?.level === 'vulnerability') final = raw * 2
+    else if (d?.level === 'resistance') final = Math.floor(final / 2)
+    else if (d?.level === 'vulnerability') final = final * 2
 
     const result = applyDamage(hitPointState.value, final, { maxHp, critical: isCritical.value })
     setHitPointState(result.state)
 
-    const suffix = d?.level === 'immunity' ? ' (immunité)' : d?.level === 'resistance' ? ' (résistance)' : d?.level === 'vulnerability' ? ' (vulnérabilité)' : ''
+    const defenseSuffix = d?.level === 'immunity' ? ' (immunité)' : d?.level === 'resistance' ? ' (résistance)' : d?.level === 'vulnerability' ? ' (vulnérabilité)' : ''
+    const suffix = (dodged.value ? ' (esquive)' : '') + defenseSuffix
     showFlash(`−${final} PV${suffix}`)
 
     if (result.instantDeath) {
@@ -380,6 +399,7 @@ const commit = () => {
   mode.value = null
   damageType.value = 'none'
   isCritical.value = false
+  dodged.value = false
 }
 
 const showFlash = (msg: string) => {

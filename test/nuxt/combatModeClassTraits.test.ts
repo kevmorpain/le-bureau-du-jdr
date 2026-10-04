@@ -93,7 +93,7 @@ describe('Mode combat — Attaque sournoise', () => {
     expect(button.text()).toContain('3d6')
 
     await button.trigger('click')
-    expect(roll).toHaveBeenCalledWith('Attaque sournoise — Rapière', 0, 6, 3)
+    expect(roll).toHaveBeenCalledWith('Attaque sournoise — Rapière', 0, 6, 3, { damage: {} })
   })
 
   it('propose les dés sur une arme à distance', async () => {
@@ -183,7 +183,7 @@ describe('Mode combat — Châtiment divin', () => {
     expect(buttonWith(wrapper, 'Niv. 1')!.text()).toContain('2d8')
 
     await buttonWith(wrapper, 'Niv. 1')!.trigger('click')
-    expect(roll).toHaveBeenCalledWith('Châtiment divin (niv. 1)', 0, 8, 2)
+    expect(roll).toHaveBeenCalledWith('Châtiment divin (niv. 1)', 0, 8, 2, { damage: {} })
     expect(slots.value.spellcasting[1]!.current).toBe(1)
 
     await wrapper.find('input[type="checkbox"], button[role="checkbox"]').trigger('click')
@@ -196,7 +196,7 @@ describe('Mode combat — Châtiment divin', () => {
     const button = buttonWith(wrapper, 'Châtiment divin amélioré')!
     expect(button.text()).toContain('1d8')
     await button.trigger('click')
-    expect(roll).toHaveBeenCalledWith('Châtiment divin amélioré — Épée longue', 0, 8, 1)
+    expect(roll).toHaveBeenCalledWith('Châtiment divin amélioré — Épée longue', 0, 8, 1, { damage: {} })
   })
 
   it('sans emplacement disponible, aucun niveau n\'est proposé', async () => {

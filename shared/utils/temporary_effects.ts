@@ -23,6 +23,7 @@ const temporaryEffectEntrySchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('vulnerability'), value: z.object({ damageType }) }),
   z.object({ type: z.literal('spell_save_dc_bonus'), value: z.object({ amount: signedBonus }) }),
   z.object({ type: z.literal('spell_attack_bonus'), value: z.object({ amount: signedBonus }) }),
+  z.object({ type: z.literal('spell_damage_bonus'), value: z.object({ amount: signedBonus }) }),
   z.object({ type: z.literal('initiative_bonus'), value: z.object({ amount: signedBonus }) }),
   z.object({ type: z.literal('passive_skill_bonus'), value: z.object({ skill: z.enum(['perception', 'investigation']), amount: signedBonus }) }),
 ])

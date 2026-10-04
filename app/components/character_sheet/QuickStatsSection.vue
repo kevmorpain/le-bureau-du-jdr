@@ -26,7 +26,7 @@
         tag="button"
         label="Initiative"
         class="cursor-pointer hover:border-primary hover:text-primary h-full w-full"
-        @click="roll?.('Initiative', initiativeBonus)"
+        @click="roll?.('Initiative', initiativeBonus, 20, 1, { d20: { type: 'initiative' } })"
       >
         <UIcon
           name="i-game-icons:walking-boot"
@@ -34,6 +34,12 @@
         />
         <p class="text-xl font-bold leading-none">
           {{ formatModifier(initiativeBonus) }}
+        </p>
+        <p
+          v-if="initiative"
+          class="text-xs text-primary font-mono mt-0.5"
+        >
+          obtenu : {{ initiative.total }}
         </p>
       </StatCard>
     </UTooltip>
@@ -124,11 +130,16 @@
 </template>
 
 <script lang="ts" setup>
+import type { RollFn } from '~/composables/useDiceRoller'
+import { useCombatTracker } from '~/composables/character/useCombatTracker'
+
 const { roll } = defineProps<{
-  roll?: (label: string, modifier: number, sides?: number, count?: number) => number
+  roll?: RollFn
 }>()
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
+
+const { initiative } = useCombatTracker(characterSheet.value.id)
 
 const {
   armorClass,

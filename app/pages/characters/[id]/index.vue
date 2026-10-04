@@ -125,6 +125,9 @@
 </template>
 
 <script lang="ts" setup>
+import { idlePending, rollEngineKey } from '~/composables/character/useCharacterRolls'
+import { useCombatTracker } from '~/composables/character/useCombatTracker'
+
 definePageMeta({
   layout: 'sheet',
 })
@@ -165,10 +168,12 @@ async function refreshSheet() {
 }
 
 const toaster = useToast()
-const { roll } = useDiceRoller()
 
-const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups } = useCharacterSheet(characterSheet)
+const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)
+provide(rollEngineKey, rollEngine)
+const { roll } = useDiceRoller(rollEngine)
+const combatTracker = useCombatTracker(characterSheet.value.id)
 
 // Réconciliation : quand la file de synchro d'un perso vient d'être vidée, on re-fetch pour
 // récupérer l'état serveur canonique (vrais ids des objets ajoutés, recalcul du repos…).
@@ -198,8 +203,10 @@ const combatMode = ref(false)
 
 const toggleCombat = () => {
   combatMode.value = !combatMode.value
+  rollEngine.pending.value = idlePending()
+  combatTracker.reset()
   if (combatMode.value) {
-    roll('Initiative', initiativeBonus.value)
+    roll('Initiative', initiativeBonus.value, 20, 1, { d20: { type: 'initiative' } })
   }
 }
 

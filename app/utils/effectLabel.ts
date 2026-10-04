@@ -9,6 +9,8 @@ import { formatModifier } from './format'
 const ability = (key: AbilityScoreKey) => ABILITY_SHORT[key] ?? key
 const damage = (key: DamageTypeKey) => damageTypeLabels[key] ?? key
 
+const ADVANTAGE_ROLL_LABELS: Record<string, string> = { check: 'JdC', saving_throw: 'JdS', attack: 'attaque', initiative: 'initiative' }
+
 const WEAPON_SCOPE_SUFFIX: Record<WeaponBonusScope, string> = { all: '', melee: ' (corps à corps)', ranged: ' (distance)' }
 
 // Malus : un bonus chiffré négatif, ou une vulnérabilité.
@@ -31,12 +33,21 @@ export const effectLabel = (effect: Effect): string => {
     case 'weapon_damage_bonus':
       return `${formatModifier(effect.value.amount)} dégâts${WEAPON_SCOPE_SUFFIX[effect.value.weapons]}`
     case 'advantage': {
-      const roll = effect.value.rollType === 'check' ? 'JdC' : 'JdS'
-      const target = effect.value.ability === 'all' ? '' : ` ${ability(effect.value.ability)}`
+      const roll = ADVANTAGE_ROLL_LABELS[effect.value.rollType] ?? effect.value.rollType
+      const target = effect.value.ability === 'all' || effect.value.rollType === 'initiative' ? '' : ` ${ability(effect.value.ability)}`
       return `Avantage ${roll}${target}${effect.value.condition ? ` : ${effect.value.condition}` : ''}`
     }
+    case 'half_proficiency': {
+      const target = effect.value.abilities === 'all' ? '' : ` (${effect.value.abilities.map(ability).join(', ')})`
+      return `Demi-maîtrise aux jets de caractéristique${target}`
+    }
+    case 'proficient_check_minimum': return `Jets de compétence maîtrisée : minimum ${effect.value.minimum}`
+    case 'critical_range': return `Critique dès ${effect.value.from} (armes)`
+    case 'critical_extra_dice': return 'Dés de critique supplémentaires (corps à corps)'
+    case 'halve_damage_reaction': return 'Réaction : dégâts ÷ 2'
     case 'spell_save_dc_bonus': return `${formatModifier(effect.value.amount)} DD des sorts`
     case 'spell_attack_bonus': return `${formatModifier(effect.value.amount)} attaque des sorts`
+    case 'spell_damage_bonus': return `${formatModifier(effect.value.amount)} dégâts des sorts`
     case 'initiative_bonus': return `${formatModifier(effect.value.amount)} initiative`
     case 'hp_per_level': return `${formatModifier(effect.value.amount)} PV/niveau`
     case 'passive_skill_bonus': {

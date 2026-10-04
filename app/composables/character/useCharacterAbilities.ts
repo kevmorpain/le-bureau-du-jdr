@@ -1,10 +1,11 @@
 import type { Effect } from '~~/server/db/schema/effects'
-import { ABILITY_KEYS, savingThrowKey } from '~~/shared/rules/abilities'
+import { ABILITY_KEYS, savingThrowKey, type AbilityKey } from '~~/shared/rules/abilities'
 import { computeAbilityScores } from '~~/shared/rules/abilityScores'
 import { abilityMod } from '~~/shared/rules/math'
 import { hitPointsPerLevelBonus } from '~~/shared/rules/hitPoints'
 import { savingThrowBonusParts, sumBonusParts, type BonusPart, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { ABILITY_SKILLS } from '~~/shared/rules/skills'
+import { halfProficiencyBonus } from '~~/shared/rules/rolls'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
@@ -119,13 +120,21 @@ export const useCharacterAbilities = (
   const getEffectiveProficiency = (skillKey: string): ProficiencyLevel =>
     skillProficiencies.value.get(skillKey) ?? 'none'
 
+  const halfProficiency = (abilityId: string): number =>
+    halfProficiencyBonus(bonusEffects.value, abilityId as AbilityKey, deps?.proficiencyBonus.value ?? 2)
+
+  // Jet de caractéristique sans compétence : seule la demi-maîtrise (Touche-à-tout, Athlète accompli) s'y ajoute.
+  const abilityCheckModifiers = computed<Record<string, number>>(() =>
+    Object.fromEntries(abilityScoreOrder.map(id => [id, (abilityModifiers.value[id] ?? 0) + halfProficiency(id)])),
+  )
+
   const getSkillModifier = (abilityId: string, skillKey: string): number => {
     const base = abilityModifiers.value[abilityId] ?? 0
     const proficiency = getEffectiveProficiency(skillKey)
     const prof = deps?.proficiencyBonus.value ?? 2
     if (proficiency === 'expert') return base + prof * 2
     if (proficiency === 'proficient') return base + prof
-    return base
+    return base + halfProficiency(abilityId)
   }
 
   const savingThrowBonuses = computed<Record<string, BonusPart[]>>(() =>
@@ -181,11 +190,12 @@ export const useCharacterAbilities = (
     10 + getSkillModifier('int', 'investigation') + sumPassiveBonus('investigation'),
   )
 
-  const initiativeBonus = computed<number>(() => (abilityModifiers.value.dex || 0) + initiativeFlatBonus.value)
+  const initiativeBonus = computed<number>(() => (abilityCheckModifiers.value.dex || 0) + initiativeFlatBonus.value)
 
   return {
     abilityScores,
     abilityModifiers,
+    abilityCheckModifiers,
     abilitySkillKeys,
     abilityScoreBonuses,
     getEffectiveProficiency,

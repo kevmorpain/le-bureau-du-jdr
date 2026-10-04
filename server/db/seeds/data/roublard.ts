@@ -41,6 +41,8 @@ Les dégâts augmentent avec le niveau : 1d6 (niv 1), 2d6 (niv 3), 3d6 (niv 5), 
         weapons: 'finesse_or_ranged',
         limit: 'once_per_turn',
         condition: 'Avantage au jet d\'attaque, ou un ennemi de la cible à 1,50 m ou moins (non incapable d\'agir) sans désavantage',
+        // L'avantage du dernier jet d'attaque suffit ; l'ennemi adjacent, la fiche ne le connaît pas.
+        needsAdvantage: true,
       },
     }],
   },
@@ -75,7 +77,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     actionType: 'reaction',
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'halve_damage_reaction', value: {} }],
   },
   {
     name: 'Esquive totale',
@@ -95,7 +97,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'proficient_check_minimum', value: { minimum: 10 } }],
   },
   {
     name: 'Perception aveugle',

@@ -17,6 +17,17 @@ let homonym55: number
 const key = (p: { className: string, subclass: string | null, feature: { name: string, levelRequired?: number | null } }) =>
   `${p.className}/${p.subclass ?? '-'}/${p.feature.name}/${p.feature.levelRequired}`
 
+// La Rage a gagné ses avantages (migration 0124, moteur de jets) après la 0120 : on compare ce que la 0120 pose.
+const withoutLaterEffects = <T extends { whileActive?: { type: string }[] } | null>(meta: T): T =>
+  meta?.whileActive ? { ...meta, whileActive: meta.whileActive.filter(e => e.type !== 'advantage') } : meta
+
+// L'Attaque sournoise a gagné `needsAdvantage` avec la migration 0125.
+const withoutLaterFields = <T extends { type: string, value: unknown }>(effect: T): T => {
+  if (effect.type !== 'weapon_damage_dice') return effect
+  const { needsAdvantage: _later, ...value } = effect.value as Record<string, unknown>
+  return { ...effect, value }
+}
+
 const rowOf = async (featureId: number) => {
   const res = await client.execute({ sql: 'SELECT max_uses_formula, meta, description FROM features WHERE id = ?', args: [featureId] })
   const r = res.rows[0]!
@@ -93,8 +104,8 @@ describe('migration 0120 — ressources de classe', () => {
       const fid = featureIds.get(key(p))!
       const row = await rowOf(fid)
       expect(row.maxUsesFormula).toEqual(p.feature.maxUsesFormula ?? null)
-      expect(row.meta).toEqual(p.feature.meta ?? null)
-      const expected = (p.feature.effects ?? []).filter(e => CLASS_RESOURCE_EFFECT_TYPES.includes(e.type))
+      expect(row.meta).toEqual(withoutLaterEffects(p.feature.meta ?? null))
+      const expected = (p.feature.effects ?? []).filter(e => CLASS_RESOURCE_EFFECT_TYPES.includes(e.type)).map(withoutLaterFields)
       const actual = await resourceEffectsOf(fid)
       const sortKey = (e: { type: string, value: unknown }) => `${e.type}:${JSON.stringify(e.value)}`
       expect(actual.map(sortKey).sort()).toEqual(expected.map(sortKey).sort())

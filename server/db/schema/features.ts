@@ -39,6 +39,8 @@ export interface FeatureMeta {
   unlimitedFromClassLevel?: number
   /** Effets en vigueur tant que la feature est active (Rage). */
   whileActive?: Effect[]
+  /** La capacité active prend fin d'elle-même au « Nouveau tour » du Mode Combat (Attaque téméraire). */
+  endsOnNewTurn?: boolean
   /** Armure lourde portée : `whileActive` est suspendu (Rage). */
   suspendedByHeavyArmor?: boolean
   /** DD que propose la réserve : 8 + maîtrise + modificateur (DD de ki). */

@@ -60,7 +60,11 @@ export type Effect
     | { type: 'ability_score_set', value: { ability: AbilityScoreKey, score: number } }
     | { type: 'asi_or_feat', value: Record<string, never> }
     | { type: 'action', value: BreathWeaponAction | RevivalAction }
-    | { type: 'advantage', value: { rollType: 'check' | 'saving_throw', ability: AbilityScoreKey | 'all', condition: string } }
+    // Sans `condition` : joue à tout jet visé (Rage, Instinct sauvage). Avec : seulement quand le joueur désigne la
+    // situation au jet (`shared/rules/rolls.ts`) — contre Effrayé, Poison, Magie…
+    // `unless` : ne joue pas tant qu'un de ces états est actif (Sens du danger : ni aveuglé, ni assourdi, ni incapable
+    // d'agir). `scope` : attaque de mêlée menée avec la Force (Attaque téméraire).
+    | { type: 'advantage', value: { rollType: 'check' | 'saving_throw' | 'attack' | 'initiative', ability: AbilityScoreKey | 'all', condition: string, unless?: ConditionKey[], scope?: 'strength_melee' } }
     | { type: 'choice', value: string }
     | { type: 'damage_resistance', value: { damageType: DamageTypeKey } }
     | { type: 'darkvision', value: { range: number } }
@@ -74,6 +78,17 @@ export type Effect
     | { type: 'other', value: Record<string, unknown> }
     | { type: 'proficiency', value: string }
     | { type: 'reroll', value: { rollType: 'd20', trigger: number } }
+    // Moitié du bonus de maîtrise aux jets de caractéristique qui n'y ajoutent pas déjà la maîtrise (Touche-à-tout :
+    // arrondi inférieur ; Athlète accompli : arrondi supérieur, Force / Dextérité / Constitution).
+    | { type: 'half_proficiency', value: { abilities: AbilityScoreKey[] | 'all', rounding: 'down' | 'up' } }
+    // Un résultat de d20 inférieur compte pour `minimum` aux jets de compétence maîtrisée (Savoir-faire).
+    | { type: 'proficient_check_minimum', value: { minimum: number } }
+    // Les attaques d'arme sont des coups critiques dès `from` sur le d20 (Critique amélioré : 19, supérieur : 18).
+    | { type: 'critical_range', value: { from: number } }
+    // Dés de l'arme ajoutés aux dégâts supplémentaires d'un critique au corps à corps (Critique brutal).
+    | { type: 'critical_extra_dice', value: { dice: Formula } }
+    // Réaction qui réduit de moitié les dégâts d'une attaque qui vous touche (Esquive instinctive).
+    | { type: 'halve_damage_reaction', value: Record<string, never> }
     // Accordée telle quelle (JS de classe) ou « au choix » tant que la caractéristique n'est pas décidée.
     | { type: 'saving_throw_proficiency', value: { ability: AbilityScoreKey } }
     | { type: 'saving_throw_proficiency_choice', value: { count: number, from?: ChoiceFrom<AbilityScoreKey> } }
@@ -95,6 +110,8 @@ export type Effect
     | { type: 'sight_modifier', value: { kind: 'magical_darkness_120' | 'invisible_in_dim_light' | 'true_sight_disguise' | 'read_all_writing' } }
     | { type: 'spell_save_dc_bonus', value: { amount: number } }
     | { type: 'spell_attack_bonus', value: { amount: number } }
+    // Bonus fixe signé aux dégâts de chaque jet de dégâts d'un sort.
+    | { type: 'spell_damage_bonus', value: { amount: number } }
     | { type: 'initiative_bonus', value: { amount: number } }
     | { type: 'hp_per_level', value: { amount: number } }
     // Bonus aux scores passifs (Observateur : +5 Perception passive + Investigation passive).
@@ -118,7 +135,7 @@ export type Effect
     // Attaques par action Attaquer ; les sources ne se cumulent pas (AideDD, Multiclassage).
     | { type: 'extra_attack', value: { attacks: Formula } }
     // Dés de dégâts ajoutés à une attaque d'arme (Attaque sournoise, Châtiment divin amélioré).
-    | { type: 'weapon_damage_dice', value: { name: string, dice: Formula, sides: number, damageType?: DamageType, weapons: 'melee' | 'finesse_or_ranged', limit: 'once_per_turn' | 'each_hit', condition?: string } }
+    | { type: 'weapon_damage_dice', value: { name: string, dice: Formula, sides: number, damageType?: DamageType, weapons: 'melee' | 'finesse_or_ranged', limit: 'once_per_turn' | 'each_hit', condition?: string, needsAdvantage?: boolean } }
     // Bonus fixe aux dégâts d'une attaque d'arme de corps à corps menée avec la Force (Rage).
     | { type: 'melee_strength_damage_bonus', value: { amount: Formula } }
     // Taille du dé de la réserve (Inspiration bardique : d6 → d12).

@@ -9,6 +9,9 @@ export const bardeName = 'Barde'
 const BARDIC_INSPIRATION_USES = max(fixed(1), variable('cha_mod'))
 const BARDIC_INSPIRATION_DIE = lookup([6, 6, 6, 6, 8, 8, 8, 8, 8, 10, 10, 10, 10, 10, 12, 12, 12, 12, 12, 12])
 
+// AideDD, Barde : la moitié du bonus de maîtrise, arrondie à l'inférieur, à tout jet de caractéristique.
+export const JACK_OF_ALL_TRADES = { abilities: 'all' as const, rounding: 'down' as const }
+
 export const bardeFeatures: FeatureDef[] = [
   {
     name: 'Incantation',
@@ -50,7 +53,7 @@ Le dé évolue : d8 au niveau 5, d10 au niveau 10, d12 au niveau 15.`,
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'half_proficiency', value: JACK_OF_ALL_TRADES }],
   },
   {
     name: 'Chant reposant',

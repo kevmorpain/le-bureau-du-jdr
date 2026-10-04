@@ -202,7 +202,7 @@
       </div>
 
       <div
-        v-else-if="['armor_class_bonus', 'spell_save_dc_bonus', 'spell_attack_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
+        v-else-if="['armor_class_bonus', 'spell_save_dc_bonus', 'spell_attack_bonus', 'spell_damage_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
       >
         <UFormField label="Bonus" hint="négatif = malus">
           <UInput
@@ -254,7 +254,7 @@
         </UFormField>
         <UFormField
           label="Condition"
-          hint="texte libre, affiché sur la fiche"
+          hint="vide : toujours ; sinon, à désigner au jet"
           class="col-span-2"
         >
           <UInput
@@ -348,7 +348,7 @@ const allEffectTypeOptions: { label: string, value: EffectType }[] = [
   { label: 'Caractéristique fixée', value: 'ability_score_set' },
   { label: 'Bonus aux jets d\'attaque d\'arme', value: 'weapon_attack_bonus' },
   { label: 'Bonus aux dégâts d\'arme', value: 'weapon_damage_bonus' },
-  { label: 'Avantage (jet de caractéristique ou de sauvegarde)', value: 'advantage' },
+  { label: 'Avantage (caractéristique, sauvegarde, attaque, initiative)', value: 'advantage' },
   { label: 'Bonus de vitesse', value: 'speed_bonus' },
   { label: 'Vitesse de nage', value: 'swimming_speed' },
   { label: 'Vitesse d\'escalade', value: 'climbing_speed' },
@@ -358,6 +358,7 @@ const allEffectTypeOptions: { label: string, value: EffectType }[] = [
   { label: 'Maîtrise (armure/outil)', value: 'proficiency' },
   { label: 'Bonus DD de sort', value: 'spell_save_dc_bonus' },
   { label: 'Bonus jet d\'attaque de sort', value: 'spell_attack_bonus' },
+  { label: 'Bonus aux dégâts des sorts', value: 'spell_damage_bonus' },
   { label: 'Bonus à l\'initiative', value: 'initiative_bonus' },
   { label: 'PV par niveau', value: 'hp_per_level' },
   { label: 'Bonus à une compétence passive', value: 'passive_skill_bonus' },
@@ -406,6 +407,8 @@ const weaponScopeOptions = [
 const advantageRollOptions = [
   { label: 'Jet de sauvegarde', value: 'saving_throw' },
   { label: 'Jet de caractéristique', value: 'check' },
+  { label: 'Jet d\'attaque', value: 'attack' },
+  { label: 'Initiative', value: 'initiative' },
 ]
 
 const savingThrowAbilityOptions = [
@@ -435,6 +438,7 @@ const defaultValueForType = (type: string): unknown => {
     case 'armor_class_bonus':
     case 'spell_save_dc_bonus':
     case 'spell_attack_bonus':
+    case 'spell_damage_bonus':
     case 'initiative_bonus':
     case 'hp_per_level': return { amount: 1 }
     case 'passive_skill_bonus': return { skill: 'perception', amount: 5 }

@@ -1,4 +1,5 @@
 import { fixed, lookup } from '~~/shared/utils/formula'
+import type { AbilityScoreKey } from '../../schema/effects'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
 import { asiFeatures } from './asi'
@@ -74,6 +75,9 @@ export const guerrierFeatures: FeatureDef[] = [
   },
 ]
 
+// AideDD, Champion (Athlète accompli) : la moitié du bonus de maîtrise, arrondie au SUPÉRIEUR, aux jets de Force, Dextérité et Constitution.
+export const REMARKABLE_ATHLETE = { abilities: ['str', 'dex', 'con'] as AbilityScoreKey[], rounding: 'up' as const }
+
 export const guerrierSubclasses: SubclassDef[] = [
   {
     name: 'Champion',
@@ -87,7 +91,7 @@ export const guerrierSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: [{ type: 'critical_range', value: { from: 19 } }],
       },
       {
         name: 'Athlète accompli',
@@ -97,7 +101,7 @@ export const guerrierSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: [{ type: 'half_proficiency', value: REMARKABLE_ATHLETE }],
       },
       {
         name: 'Style de combat supplémentaire',
@@ -117,7 +121,7 @@ export const guerrierSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: [{ type: 'critical_range', value: { from: 18 } }],
       },
       {
         name: 'Survivant',
