@@ -19,6 +19,7 @@ import { useCharacterBackground } from './character/useCharacterBackground'
 import { useCharacterIdentity } from './character/useCharacterIdentity'
 import { useCharacterTemporaryEffects } from './character/useCharacterTemporaryEffects'
 import { useCharacterRolls } from './character/useCharacterRolls'
+import { useCharacterPreferences } from './character/useCharacterPreferences'
 import { sheetTextField } from './character/sheetField'
 
 /**
@@ -57,6 +58,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const { speciesEffects, backgroundEffects, choiceEffects } = abilityInputs
 
   const temporary = useCharacterTemporaryEffects(characterSheet)
+  const prefs = useCharacterPreferences(characterSheet)
 
   // Forward-declaration : caractéristiques et incantation lisent les effets des objets actifs, alors que
   // l'inventaire est créé après elles (il lui faut leurs modificateurs et spellcastingAbility).
@@ -273,6 +275,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       .filter(f => isFeatureUnlocked(f, ownerClasses.value))
       .map(f => ({ label: f.name, effects: f.effects, context: featureFormulaContext(formulaContext.value, f, ownerClasses.value) })),
     ...inventoryLayer.activeItemSources.value.map(s => ({ ...s, context: formulaContext.value })),
+    ...temporary.temporaryEffectSources.value.map(s => ({ ...s, context: formulaContext.value })),
   ], wornArmor.value))
 
   const armorPenalty = computed(() => {
@@ -360,6 +363,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     allEffects: computed<Effect[]>(() => [...capabilityEffects.value, ...activeEffects.value]),
     getEffectiveProficiency: abilities.getEffectiveProficiency,
     criticalExtraDice: computed(() => classTraits.value.criticalExtraDice),
+    rollsEnabled: computed(() => prefs.preferences.value.diceRolls),
   })
 
   // ─── Sort en concentration (résolu via characterSpells) ──────────────────
@@ -462,6 +466,11 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     saveStatuses: conditions.saveStatuses,
     rollEngine,
     spellDamageBonus,
+    // Préférences (fiche, défauts du compte)
+    preferences: prefs.preferences,
+    ownPreferences: prefs.ownPreferences,
+    accountPreferences: prefs.accountPreferences,
+    setPreference: prefs.setPreference,
     // Effets temporaires
     temporaryEffects: temporary.temporaryEffects,
     saveTemporaryEffect: temporary.saveTemporaryEffect,

@@ -2,11 +2,33 @@
   <div>
     <div class="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-default bg-default px-4 py-3 sm:px-6">
       <UButton
+        v-if="rollsEnabled"
         icon="i-game-icons:rolling-dices"
         @click="rollOnTable"
       >
         Lancer le d{{ table.die }}
       </UButton>
+      <div
+        v-else
+        class="flex items-center gap-2"
+      >
+        <UInput
+          v-model.number="entered"
+          type="number"
+          :min="1"
+          :max="table.die"
+          :placeholder="`d${table.die} obtenu`"
+          :aria-label="`Résultat du d${table.die}`"
+          class="w-32"
+          @keydown.enter="enterRoll"
+        />
+        <UButton
+          :disabled="!validEntry"
+          @click="enterRoll"
+        >
+          Voir le résultat
+        </UButton>
+      </div>
       <div
         v-if="rolls.length"
         class="flex items-center gap-1 text-sm text-muted"
@@ -54,7 +76,7 @@ const props = defineProps<{
   table: RollTable
 }>()
 
-const { roll } = useDiceRoller()
+const { roll, rollsEnabled } = useDiceRoller()
 
 // Deux jets restent surlignés : Chaos contrôlé fait lancer deux fois puis choisir.
 const rolls = ref<number[]>([])
@@ -74,10 +96,20 @@ const scrollToRoll = (value: number) => {
   list.value?.querySelector(`[data-index="${index}"]`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
 }
 
-const rollOnTable = async () => {
-  const result = roll(props.table.name, 0, props.table.die)
+const showResult = async (result: number) => {
   rolls.value = [...rolls.value, result].slice(-2)
   await nextTick()
   scrollToRoll(result)
+}
+
+const rollOnTable = () => showResult(roll(props.table.name, 0, props.table.die))
+
+const entered = ref<number | null>(null)
+const validEntry = computed(() => Number.isInteger(entered.value) && entered.value! >= 1 && entered.value! <= props.table.die)
+
+const enterRoll = async () => {
+  if (!validEntry.value) return
+  await showResult(entered.value!)
+  entered.value = null
 }
 </script>

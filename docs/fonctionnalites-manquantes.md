@@ -259,10 +259,10 @@ réglage. Toute entrée ci-dessous suppose de trancher d'abord **où vit une pr�
 
 | Code | Suivi | Sujet |
 |---|---|---|
-| **N1** | [#188](https://github.com/kevmorpain/le-bureau-du-jdr/issues/188) | Préférence : désactiver les jets de dés |
-| **N2** | [#189](https://github.com/kevmorpain/le-bureau-du-jdr/issues/189) | Saisir soi-même le résultat d'un jet |
+| **N1** | ✅ résolu ([#188](https://github.com/kevmorpain/le-bureau-du-jdr/issues/188), lot 7) | Préférence « lancer les dés dans l'application » : colonne `preferences` sur la fiche et le compte (migration 0126), héritage `fiche ?? compte ?? défaut` ([D23](./decisions.md#d23)) |
+| **N2** | ✅ résolu ([#189](https://github.com/kevmorpain/le-bureau-du-jdr/issues/189), lot 7) | Saisie du résultat quand les jets sont désactivés : d20 du jet contre la mort, résultat d'une table aléatoire, total d'initiative ; concentration et recharge d'objet se tranchaient déjà à la main |
 | **N3** | ✅ résolu (2026-10-02) — [#190](https://github.com/kevmorpain/le-bureau-du-jdr/issues/190) | Concentration libre : libellé `concentrating_on` à côté de la clé étrangère (migration 0119) |
-| **N4** | [#191](https://github.com/kevmorpain/le-bureau-du-jdr/issues/191) | Surcharges manuelles des valeurs dérivées (CA, vitesse, initiative, DD) |
+| **N4** | ✅ résolu ([#191](https://github.com/kevmorpain/le-bureau-du-jdr/issues/191), lot 7) | Ajustements manuels de CA, vitesse, initiative et DD : les effets temporaires couvraient déjà CA, initiative et DD ; `speed_bonus` y est ajouté pour la vitesse ([D23](./decisions.md#d23)). Pas de surcharge absolue |
 | **N5** | [#192](https://github.com/kevmorpain/le-bureau-du-jdr/issues/192) | Encart d'effet mécanique sur les capacités |
 | **N6** | ✅ tranché → [D18](./decisions.md#d18), voir plus bas | Où vit une préférence ? |
 

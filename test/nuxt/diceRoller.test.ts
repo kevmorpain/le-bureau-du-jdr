@@ -34,6 +34,7 @@ const mountRoller = async (options: { effects?: Effect[], extraDice?: number } =
     allEffects: computed(() => options.effects ?? []),
     getEffectiveProficiency: () => 'none',
     criticalExtraDice: computed(() => options.extraDice ?? 0),
+    rollsEnabled: computed(() => true),
   })
   let api!: ReturnType<typeof useDiceRoller>
   await mountSuspended(defineComponent({

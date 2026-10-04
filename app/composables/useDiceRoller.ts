@@ -44,6 +44,7 @@ const standalone: RollEngine = {
   situations: computed(() => []),
   criticalExtraDice: computed(() => 0),
   pending: ref(idlePending()),
+  rollsEnabled: computed(() => true),
 }
 
 export const useDiceRoller = (provided?: RollEngine) => {
@@ -51,6 +52,7 @@ export const useDiceRoller = (provided?: RollEngine) => {
   const toasts = useState<DiceRoll[]>('dice-toasts', () => [])
   const history = useRollHistory(engine.characterId)
   const tracker = useCombatTracker(engine.characterId)
+  const { rollsEnabled } = engine
 
   const rollD20Check = (base: Pick<DiceRoll, 'id' | 'at' | 'label' | 'modifier' | 'replay'>, kind: D20Kind): DiceRoll => {
     const pending = engine.pending.value
@@ -106,7 +108,9 @@ export const useDiceRoller = (provided?: RollEngine) => {
     }
   }
 
+  // Jets désactivés : ni dé, ni toast, ni état touché. Un appelant qui décide d'après le résultat doit proposer une saisie à la place.
   const roll: RollFn = (label, modifier, sides = 20, count = 1, options = {}) => {
+    if (!rollsEnabled.value) return 0
     const at = Date.now()
     const base = { id: at + (rollCounter++ % 1000) / 1000, at, label, modifier, replay: { label, modifier, sides, count, options } }
     const entry = options.d20 && sides === 20 && count === 1
@@ -122,5 +126,5 @@ export const useDiceRoller = (provided?: RollEngine) => {
     return entry.result
   }
 
-  return { toasts, roll, engine, history }
+  return { toasts, roll, engine, history, rollsEnabled }
 }

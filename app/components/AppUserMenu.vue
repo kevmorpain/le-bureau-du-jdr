@@ -1,17 +1,17 @@
 <template>
-  <UDropdownMenu
-    v-if="loggedIn"
-    :items="menuItems"
-  >
-    <UButton
-      :avatar="user?.avatar ? { src: user.avatar } : undefined"
-      :icon="user?.avatar ? undefined : 'heroicons:user-circle'"
-      :label="user?.name"
-      color="neutral"
-      variant="ghost"
-      trailing-icon="heroicons:chevron-down-20-solid"
-    />
-  </UDropdownMenu>
+  <template v-if="loggedIn">
+    <UDropdownMenu :items="menuItems">
+      <UButton
+        :avatar="user?.avatar ? { src: user.avatar } : undefined"
+        :icon="user?.avatar ? undefined : 'heroicons:user-circle'"
+        :label="user?.name"
+        color="neutral"
+        variant="ghost"
+        trailing-icon="heroicons:chevron-down-20-solid"
+      />
+    </UDropdownMenu>
+    <AccountPreferencesModal v-model:open="preferencesOpen" />
+  </template>
 
   <UButton
     v-else
@@ -29,8 +29,17 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 const { loggedIn, user } = useUserSession()
 const { logout } = useLogout()
 
+const preferencesOpen = ref(false)
+
 const menuItems = computed<DropdownMenuItem[][]>(() => [
   [{ label: user.value?.name ?? 'Mon compte', type: 'label' }],
+  [{
+    label: 'Préférences',
+    icon: 'i-heroicons:cog-6-tooth',
+    onSelect: () => {
+      preferencesOpen.value = true
+    },
+  }],
   [{
     label: 'Déconnexion',
     icon: 'heroicons:arrow-left-on-rectangle',

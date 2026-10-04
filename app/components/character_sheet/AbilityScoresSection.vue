@@ -131,7 +131,8 @@
             <ProficiencyIndicator :level="savingThrows[key]!.proficiency" />
           </button>
           <span
-            class="flex-1 text-xs cursor-pointer hover:text-primary transition-colors"
+            class="flex-1 text-xs"
+            :class="rollable"
             @click="rollSave(key)"
           >
             Sauvegarde
@@ -151,8 +152,8 @@
             />
           </UTooltip>
           <span
-            class="text-xs font-mono cursor-pointer hover:text-primary transition-colors"
-            :class="savingThrows[key]!.proficiency !== 'none' ? 'text-primary' : 'text-muted'"
+            class="text-xs font-mono"
+            :class="[rollable, savingThrows[key]!.proficiency !== 'none' ? 'text-primary' : 'text-muted']"
             @click="rollSave(key)"
           >
             {{ formatModifier(savingThrows[key]!.modifier) }}
@@ -181,7 +182,8 @@
               <ProficiencyIndicator :level="getEffectiveProficiency(skillKey)" />
             </button>
             <span
-              class="flex-1 text-xs cursor-pointer hover:text-primary transition-colors truncate"
+              class="flex-1 text-xs truncate"
+              :class="rollable"
               @click="rollSkill(key, skillKey)"
             >
               {{ $t(`skills.${key}.${skillKey}`) }}
@@ -191,8 +193,8 @@
               :lines="['Armure : désavantage en Discrétion']"
             />
             <span
-              class="text-xs font-mono cursor-pointer hover:text-primary transition-colors"
-              :class="getEffectiveProficiency(skillKey) !== 'none' ? 'text-primary' : 'text-muted'"
+              class="text-xs font-mono"
+              :class="[rollable, getEffectiveProficiency(skillKey) !== 'none' ? 'text-primary' : 'text-muted']"
               @click="rollSkill(key, skillKey)"
             >
               {{ formatModifier(getSkillModifier(key, skillKey)) }}
@@ -216,6 +218,9 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+
+const rollsEnabled = useRollsEnabled()
+const rollable = computed(() => (rollsEnabled.value ? 'cursor-pointer hover:text-primary transition-colors' : ''))
 
 const {
   abilityScores,

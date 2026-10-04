@@ -271,16 +271,16 @@
               size="xs"
               class="shrink-0"
             >
-              <UButton
+              <RollButton
                 variant="soft"
                 color="warning"
                 icon="i-game-icons:blood"
                 @click.stop="rollSpellEffect(cs, castLevelFor(cs))"
               >
                 {{ damageButtonLabel(cs) }}
-              </UButton>
+              </RollButton>
               <UTooltip
-                v-if="scalingSpellIds.has(cs.spellId)"
+                v-if="rollsEnabled && scalingSpellIds.has(cs.spellId)"
                 :delay-duration="0"
                 text="Jeter à un autre niveau"
               >
@@ -527,7 +527,7 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
   showCastModal.value = true
 }
 
-const { roll } = useDiceRoller()
+const { roll, rollsEnabled } = useDiceRoller()
 
 // Niveau d'emplacement du DERNIER lancement, par sort. Pour un sort d'attaque, le jet de dégâts
 // est un second geste (bouton « Dégâts », après le jet pour toucher) : sans cette mémoire, il

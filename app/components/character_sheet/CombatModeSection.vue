@@ -138,27 +138,27 @@
               :text="bonusBreakdown(weapon.attackParts)"
               :disabled="!weapon.attackParts.length"
             >
-              <UButton
+              <RollButton
                 size="sm"
                 variant="soft"
                 color="primary"
                 @click="rollAttack(weapon)"
               >
                 Attaque {{ formatModifier(weapon.attackBonus) }}
-              </UButton>
+              </RollButton>
             </UTooltip>
             <UTooltip
               :text="bonusBreakdown([...(weapon.rageBonus ? [{ label: 'Rage', amount: weapon.rageBonus }] : []), ...weapon.damageParts])"
               :disabled="!weapon.rageBonus && !weapon.damageParts.length"
             >
-              <UButton
+              <RollButton
                 size="sm"
                 variant="soft"
                 color="neutral"
                 @click="rollDamage(weapon)"
               >
                 Dégâts {{ weapon.damageDice }}{{ weapon.damageBonus !== 0 ? formatModifier(weapon.damageBonus) : '' }} {{ damageTypeLabels[weapon.damageType] ?? weapon.damageType }}
-              </UButton>
+              </RollButton>
             </UTooltip>
             <UTooltip
               v-for="dice in weapon.extraDamageDice"
@@ -166,27 +166,27 @@
               :text="[dice.condition, dice.limit === 'once_per_turn' ? 'Une fois par tour' : 'À chaque attaque', extraDiceStatus(dice)?.hint].filter(Boolean).join(' — ')"
               :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
             >
-              <UButton
+              <RollButton
                 size="sm"
                 variant="soft"
                 :color="extraDiceStatus(dice)?.color ?? 'warning'"
                 @click="rollExtraDice(weapon, dice)"
               >
                 + {{ dice.name }} {{ dice.count }}d{{ dice.sides }}{{ dice.damageType ? ` ${damageTypeLabels[dice.damageType] ?? dice.damageType}` : '' }}{{ extraDiceStatus(dice)?.mark }}
-              </UButton>
+              </RollButton>
             </UTooltip>
             <UTooltip
               v-if="weapon.isLight"
               text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
             >
-              <UButton
+              <RollButton
                 size="sm"
                 variant="soft"
                 color="neutral"
                 @click="rollOffhand(weapon)"
               >
                 Main secondaire {{ weapon.damageDice }}{{ weapon.damageBonusOffhand !== 0 ? formatModifier(weapon.damageBonusOffhand) : '' }} {{ damageTypeLabels[weapon.damageType] ?? weapon.damageType }}
-              </UButton>
+              </RollButton>
             </UTooltip>
           </div>
         </div>
@@ -237,7 +237,7 @@
           </label>
         </div>
         <div class="flex flex-wrap gap-1">
-          <UButton
+          <RollButton
             v-for="level in smiteLevels"
             :key="level"
             size="xs"
@@ -246,7 +246,7 @@
             @click="rollSmite(smite, level)"
           >
             Niv. {{ level }} · {{ slotDamageDiceCount(smite, level, smiteBonus) }}d{{ smite.sides }}
-          </UButton>
+          </RollButton>
           <span
             v-if="!smiteLevels.length"
             class="text-xs text-muted italic"

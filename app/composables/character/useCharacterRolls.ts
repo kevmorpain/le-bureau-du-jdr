@@ -26,6 +26,8 @@ export interface RollEngine {
   situations: ComputedRef<string[]>
   criticalExtraDice: ComputedRef<number>
   pending: Ref<PendingRoll>
+  // Préférence « lancer les dés dans l'application » : désactivée, ni jet ni bouton de jet.
+  rollsEnabled: ComputedRef<boolean>
 }
 
 export const rollEngineKey: InjectionKey<RollEngine> = Symbol('roll-engine')
@@ -42,6 +44,7 @@ export const useCharacterRolls = (deps: {
   allEffects: ComputedRef<Effect[]>
   getEffectiveProficiency: (skillKey: string) => ProficiencyLevel
   criticalExtraDice: ComputedRef<number>
+  rollsEnabled: ComputedRef<boolean>
 }): RollEngine => {
   const facts = computed<RollFacts>(() => ({
     conditions: deps.activeConditions.value,
@@ -71,5 +74,6 @@ export const useCharacterRolls = (deps: {
     situations: computed(() => availableSituations(deps.effectSources.value)),
     criticalExtraDice: deps.criticalExtraDice,
     pending: ref(idlePending()),
+    rollsEnabled: deps.rollsEnabled,
   }
 }

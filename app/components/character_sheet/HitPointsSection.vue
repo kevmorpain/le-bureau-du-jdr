@@ -200,6 +200,7 @@
         </div>
         <div class="flex gap-2 flex-wrap">
           <UButton
+            v-if="rollsEnabled"
             color="primary"
             @click="rollConcentrationSave"
           >
@@ -316,6 +317,7 @@ const concentrationDamage = ref(0)
 const concentrationDC = ref(10)
 
 const conSaveMod = computed(() => savingThrows.value.con?.modifier ?? 0)
+const rollsEnabled = useRollsEnabled()
 
 const rollConcentrationSave = () => {
   const result = props.roll?.(
