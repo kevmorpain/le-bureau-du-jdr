@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { armorClassBonusParts, savingThrowBonusParts, sumBonusParts } from '../../shared/rules/effectBonuses'
+import { armorClassBonusParts, savingThrowBonusParts, sumBonusParts, weaponBonusParts } from '../../shared/rules/effectBonuses'
 
 // Anneau de protection (AideDD, objets magiques) : « Vous obtenez un bonus de +1 à la CA et aux jets de
 // sauvegarde lorsque vous portez cet anneau. » Même formulation pour la Cape de protection.
@@ -40,6 +40,22 @@ describe('effectBonuses — bonus fixes signés', () => {
       { label: 'Bénédiction', amount: 2 },
     ])
     expect(savingThrowBonusParts([ring, blessing], 'str')).toEqual([{ label: 'Anneau de protection', amount: 1 }])
+  })
+
+  it('un bonus d\'arme vise toutes les armes, le corps à corps ou la distance ; attaque et dégâts restent distincts', () => {
+    const bracers = {
+      label: 'Bracelets d\'archerie',
+      effects: [
+        { type: 'weapon_damage_bonus' as const, value: { amount: 2, weapons: 'ranged' as const } },
+        { type: 'weapon_attack_bonus' as const, value: { amount: 1, weapons: 'all' as const } },
+      ],
+    }
+    const duelist = { label: 'Duelliste', effects: [{ type: 'weapon_damage_bonus' as const, value: { amount: 1, weapons: 'melee' as const } }] }
+
+    expect(weaponBonusParts([bracers, duelist], 'damage', { isRanged: true })).toEqual([{ label: 'Bracelets d\'archerie', amount: 2 }])
+    expect(weaponBonusParts([bracers, duelist], 'damage', { isRanged: false })).toEqual([{ label: 'Duelliste', amount: 1 }])
+    expect(weaponBonusParts([bracers, duelist], 'attack', { isRanged: false })).toEqual([{ label: 'Bracelets d\'archerie', amount: 1 }])
+    expect(weaponBonusParts([{ label: 'Anneau', effects: [{ type: 'armor_class_bonus', value: { amount: 1 } }] }], 'attack', { isRanged: true })).toEqual([])
   })
 
   it('une source dont les bonus s\'annulent n\'apparaît pas', () => {

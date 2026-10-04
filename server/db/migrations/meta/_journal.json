@@ -862,6 +862,13 @@
       "when": 1790946402168,
       "tag": "0122_fairy_spellcasting_ability",
       "breakpoints": true
+    },
+    {
+      "idx": 123,
+      "version": "6",
+      "when": 1791100000000,
+      "tag": "0123_armor_class_and_speed_effects",
+      "breakpoints": true
     }
   ]
 }

@@ -50,6 +50,8 @@ describe('effets temporaires — schéma partagé client/serveur', () => {
     const samples: Record<string, Effect['value']> = {
       armor_class_bonus: { amount: 1 },
       saving_throw_bonus: { ability: 'all', amount: 1 },
+      weapon_attack_bonus: { amount: 1, weapons: 'all' },
+      weapon_damage_bonus: { amount: 1, weapons: 'melee' },
       ability_increase: { ability: 'str', amount: 2 },
       ability_score_set: { ability: 'str', score: 19 },
       damage_resistance: { damageType: 'fire' },
@@ -80,6 +82,11 @@ describe('isEffectMalus — pastille rouge', () => {
     expect(isEffectMalus({ type: 'walking_speed', value: 3 })).toBe(false)
     expect(isEffectMalus({ type: 'proficiency', value: 'light' })).toBe(false)
   })
+
+  it('un bonus de vitesse négatif en est un', () => {
+    expect(isEffectMalus({ type: 'speed_bonus', value: { amount: { op: 'fixed', value: -3 } } })).toBe(true)
+    expect(isEffectMalus({ type: 'speed_bonus', value: { amount: { op: 'fixed', value: 3 } } })).toBe(false)
+  })
 })
 
 describe('effectLabel — signe des bonus', () => {
@@ -91,5 +98,20 @@ describe('effectLabel — signe des bonus', () => {
   it('nomme la cible d\'un bonus de JS', () => {
     expect(effectLabel({ type: 'saving_throw_bonus', value: { ability: 'all', amount: 1 } })).toBe('+1 JS (tous)')
     expect(effectLabel({ type: 'saving_throw_bonus', value: { ability: 'wis', amount: 1 } })).toBe('+1 JS SAG')
+  })
+
+  it('nomme les bonus d\'arme et l\'avantage à condition libre', () => {
+    expect(effectLabel({ type: 'weapon_damage_bonus', value: { amount: 2, weapons: 'ranged' } })).toBe('+2 dégâts (distance)')
+    expect(effectLabel({ type: 'weapon_attack_bonus', value: { amount: -1, weapons: 'all' } })).toBe('-1 attaque')
+    expect(effectLabel({ type: 'advantage', value: { rollType: 'saving_throw', ability: 'wis', condition: 'contre l\'effroi' } })).toBe('Avantage JdS SAG : contre l\'effroi')
+    expect(effectLabel({ type: 'advantage', value: { rollType: 'check', ability: 'all', condition: '' } })).toBe('Avantage JdC')
+    expect(isEffectMalus({ type: 'weapon_attack_bonus', value: { amount: -1, weapons: 'all' } })).toBe(true)
+  })
+
+  it('distingue la vitesse de base (absolue) du bonus de vitesse', () => {
+    expect(effectLabel({ type: 'walking_speed', value: 9 })).toBe('Vitesse 9 m')
+    expect(effectLabel({ type: 'speed_bonus', value: { amount: { op: 'fixed', value: 3 } } })).toBe('+3 m de vitesse')
+    expect(effectLabel({ type: 'speed_bonus', value: { amount: { op: 'lookup', table: [0, 3] }, while: 'no_armor_no_shield' } })).toBe('Vitesse (selon le niveau)')
+    expect(effectLabel({ type: 'unarmored_defense', value: { base: 10, abilities: ['dex', 'con'], shield: true } })).toBe('CA sans armure 10 + DEX + CON')
   })
 })

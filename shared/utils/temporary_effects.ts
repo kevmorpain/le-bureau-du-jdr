@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { DamageTypeKey } from '~~/server/db/schema/effects'
 import { abilityEnum as ability } from '~~/shared/rules/abilities'
+import { WEAPON_BONUS_SCOPES } from '~~/shared/rules/effectBonuses'
 import { damageTypeLabels } from '~~/shared/utils/labels'
 
 const damageType = z.enum(Object.keys(damageTypeLabels) as [DamageTypeKey, ...DamageTypeKey[]])
@@ -13,6 +14,8 @@ const optionalNumber = (schema: z.ZodNumber) =>
 const temporaryEffectEntrySchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('armor_class_bonus'), value: z.object({ amount: signedBonus }) }),
   z.object({ type: z.literal('saving_throw_bonus'), value: z.object({ ability: ability.or(z.literal('all')), amount: signedBonus }) }),
+  z.object({ type: z.literal('weapon_attack_bonus'), value: z.object({ amount: signedBonus, weapons: z.enum(WEAPON_BONUS_SCOPES) }) }),
+  z.object({ type: z.literal('weapon_damage_bonus'), value: z.object({ amount: signedBonus, weapons: z.enum(WEAPON_BONUS_SCOPES) }) }),
   z.object({ type: z.literal('ability_increase'), value: z.object({ ability, amount: z.number().int().min(1).max(10), max: optionalNumber(z.number().int().min(1).max(30)) }) }),
   z.object({ type: z.literal('ability_score_set'), value: z.object({ ability, score: z.number().int().min(1).max(30) }) }),
   z.object({ type: z.literal('damage_resistance'), value: z.object({ damageType }) }),

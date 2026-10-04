@@ -1,8 +1,13 @@
 import { variable } from '~~/shared/utils/formula'
+import type { AbilityScoreKey } from '../../schema/effects'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
 export const ensorceleurName = 'Ensorceleur'
+
+// AideDD, Ensorceleur : « lorsque vous ne portez pas d'armure, votre CA est égale à 13 + votre modificateur de
+// Dextérité » ; le texte ne mentionne pas le bouclier, que le Barbare et le Moine citent à part.
+export const DRACONIC_RESILIENCE = { base: 13, abilities: ['dex'] as AbilityScoreKey[], shield: true }
 
 export const ensorceleurFeatures: FeatureDef[] = [
   {
@@ -94,7 +99,7 @@ Types et dégâts associés : Airain/Or/Rouge (feu), Argent/Blanc (froid), Bleu/
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        effects: [],
+        effects: [{ type: 'unarmored_defense', value: DRACONIC_RESILIENCE }],
       },
       {
         name: 'Affinité élémentaire',
