@@ -58,7 +58,12 @@ export const useDiceRoller = (provided?: RollEngine) => {
     const r = rollD20({ ...policy, sources: applyRollOverride(policy.sources, pending.override) }, Math.random)
     const result = r.used + base.modifier
 
-    engine.pending.value = { override: 'auto', situations: [], crit: kind.type === 'attack' ? r.isCrit : pending.crit }
+    engine.pending.value = {
+      override: 'auto',
+      situations: [],
+      crit: kind.type === 'attack' ? r.isCrit : pending.crit,
+      attackMode: kind.type === 'attack' ? r.mode : pending.attackMode,
+    }
     if (kind.type === 'initiative') tracker.initiative.value = { total: result, natural: r.used }
 
     return {

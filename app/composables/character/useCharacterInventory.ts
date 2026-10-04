@@ -62,6 +62,8 @@ export interface WeaponStats {
   usingTwoHanded: boolean
   warnings: string[]
   isRanged: boolean
+  // Mêlée menée avec la Force (Rage, Attaque téméraire).
+  usesStrength: boolean
   // Désavantages propres à l'arme, ajoutés à ceux de la fiche au jet d'attaque.
   attackRollSources: RollSource[]
   rangeText: string | null
@@ -398,6 +400,7 @@ export const useCharacterInventory = (
           usingTwoHanded: entry.usingTwoHanded ?? false,
           warnings,
           isRanged,
+          usesStrength,
           attackRollSources,
           rangeText,
           magicBonus: entry.magicBonus ?? 0,

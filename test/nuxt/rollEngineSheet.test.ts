@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Effect } from '../../server/db/schema/effects'
-import { barbareFeatures, BRUTAL_CRITICAL_DICE, FERAL_INSTINCT_ADVANTAGE, RAGE_ADVANTAGES } from '../../server/db/seeds/data/barbare'
+import { barbareFeatures, BRUTAL_CRITICAL_DICE, DANGER_SENSE_ADVANTAGE, FERAL_INSTINCT_ADVANTAGE, RAGE_ADVANTAGES, RECKLESS_ATTACK_META } from '../../server/db/seeds/data/barbare'
 import { bardeFeatures } from '../../server/db/seeds/data/barde'
 import { guerrierSubclasses } from '../../server/db/seeds/data/guerrier'
 import { roublardFeatures } from '../../server/db/seeds/data/roublard'
@@ -113,6 +113,60 @@ describe('fiche — avantage et désavantage au jet', () => {
     s.toggleCondition('stunned')
     expect(s.rollEngine.policy({ type: 'save', ability: 'dex' }, []).autoFail).toEqual(['Étourdi'])
     expect(s.rollEngine.policy({ type: 'save', ability: 'wis' }, []).autoFail).toEqual([])
+  })
+})
+
+const recklessRow = (active: boolean) => {
+  const row = classFeature(11, 'Attaque téméraire', BARBARIAN, 2, [])
+  return { ...row, active, feature: { ...row.feature, meta: RECKLESS_ATTACK_META } } as unknown as ReturnType<typeof classFeature>
+}
+
+describe('fiche — avantage conditionné (Attaque téméraire, Sens du danger)', () => {
+  const scenario = { scores: baseScores(16, 14, 14, 10), classes: [{ classId: BARBARIAN, level: 3 }] }
+  const strengthAttack = { type: 'attack', weapon: true, strengthMelee: true } as const
+
+  it('Attaque téméraire active : avantage aux attaques de mêlée avec la Force, pas aux autres', async () => {
+    const s = await mount({ ...scenario, features: [recklessRow(true)] })
+    expect(modeOf(s.rollEngine.policy(strengthAttack, []))).toBe('advantage')
+    expect(modeOf(s.rollEngine.policy({ type: 'attack', weapon: true, strengthMelee: false }, []))).toBe('normal')
+    expect(modeOf(s.rollEngine.policy({ type: 'attack', weapon: false }, []))).toBe('normal')
+    expect(modeOf(s.rollEngine.policy({ type: 'save', ability: 'str' }, []))).toBe('normal')
+  })
+
+  it('Attaque téméraire inactive : aucun avantage', async () => {
+    const s = await mount({ ...scenario, features: [recklessRow(false)] })
+    expect(modeOf(s.rollEngine.policy(strengthAttack, []))).toBe('normal')
+  })
+
+  it('Sens du danger : avantage Dextérité contre un effet visible, perdu aveuglé, assourdi ou incapable d\'agir', async () => {
+    const s = await mount({ ...scenario, features: [classFeature(12, 'Sens du danger', BARBARIAN, 2, [DANGER_SENSE_ADVANTAGE])] })
+    const dexSave = { type: 'save', ability: 'dex' } as const
+    expect(s.rollEngine.situations.value).toEqual(['visible_effects'])
+    expect(modeOf(s.rollEngine.policy(dexSave, []))).toBe('normal')
+    expect(modeOf(s.rollEngine.policy(dexSave, ['visible_effects']))).toBe('advantage')
+    expect(modeOf(s.rollEngine.policy({ type: 'save', ability: 'str' }, ['visible_effects']))).toBe('normal')
+
+    s.toggleCondition('blinded')
+    expect(modeOf(s.rollEngine.policy(dexSave, ['visible_effects']))).toBe('normal')
+    s.toggleCondition('blinded')
+    expect(modeOf(s.rollEngine.policy(dexSave, ['visible_effects']))).toBe('advantage')
+    s.toggleCondition('stunned')
+    expect(resolveRollMode(s.rollEngine.policy(dexSave, ['visible_effects']).sources).advantage).toEqual([])
+  })
+})
+
+describe('fiche — bonus aux dégâts des sorts', () => {
+  it('additionne capacités et objets équipés', async () => {
+    const s = await mount({
+      scores: baseScores(10, 10, 10, 10),
+      speciesEffects: [{ type: 'spell_damage_bonus', value: { amount: 1 } }],
+      worn: id => [entry(id, 9, 'Bâton du mage', 'equipment', { category: 'x' }, [{ type: 'spell_damage_bonus', value: { amount: 2 } }])],
+    })
+    expect(s.spellDamageBonus.value).toBe(3)
+  })
+
+  it('sans effet, aucun bonus', async () => {
+    expect((await mount({ scores: baseScores(10, 10, 10, 10) })).spellDamageBonus.value).toBe(0)
   })
 })
 

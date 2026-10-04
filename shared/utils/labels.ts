@@ -42,6 +42,7 @@ export const rollSituationLabels: Record<string, string> = {
   magic: 'Magie',
   concentration: 'Concentration',
   concentration_after_damage: 'Concentration (après des dégâts)',
+  visible_effects: 'Effets visibles',
 }
 
 export const immunityLabels: Record<ImmunityKey, string> = {

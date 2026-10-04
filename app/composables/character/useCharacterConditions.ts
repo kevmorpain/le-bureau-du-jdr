@@ -5,6 +5,7 @@ import { dragonbornAncestryDamageType } from '~~/shared/utils/draconic_ancestry'
 import type { DragonbornAncestry } from '~~/shared/utils/draconic_ancestry'
 import { conditionMechanics, exhaustionImpactLines } from '~~/shared/utils/condition-effects'
 import { maxHitPoints } from '~~/shared/rules/hitPoints'
+import { situationLabel } from '~~/shared/rules/rolls'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
@@ -155,7 +156,7 @@ export const useCharacterConditions = (
       } else if (effect.type === 'advantage' && effect.value.condition) {
         const cond = effect.value.condition
         const kind = ADVANTAGE_ROLL_KINDS[effect.value.rollType] ?? ADVANTAGE_ROLL_KINDS.check
-        const label = `${cond in conditionLabels ? conditionLabels[cond as ConditionKey] : cond} (${kind.label})`
+        const label = `${situationLabel(cond)} (${kind.label})`
         // Distinct key so it coexists with damage resistance on the same condition
         add(`${kind.key}:${cond}`, label, 'resistance')
       }

@@ -116,6 +116,7 @@ export interface WeaponDamageDice {
   weapons: EffectOf<'weapon_damage_dice'>['weapons']
   limit: EffectOf<'weapon_damage_dice'>['limit']
   condition?: string
+  needsAdvantage?: boolean
 }
 
 export interface SlotDamage {

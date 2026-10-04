@@ -21,6 +21,13 @@ const key = (p: { className: string, subclass: string | null, feature: { name: s
 const withoutLaterEffects = <T extends { whileActive?: { type: string }[] } | null>(meta: T): T =>
   meta?.whileActive ? { ...meta, whileActive: meta.whileActive.filter(e => e.type !== 'advantage') } : meta
 
+// L'Attaque sournoise a gagné `needsAdvantage` avec la migration 0125.
+const withoutLaterFields = <T extends { type: string, value: unknown }>(effect: T): T => {
+  if (effect.type !== 'weapon_damage_dice') return effect
+  const { needsAdvantage: _later, ...value } = effect.value as Record<string, unknown>
+  return { ...effect, value }
+}
+
 const rowOf = async (featureId: number) => {
   const res = await client.execute({ sql: 'SELECT max_uses_formula, meta, description FROM features WHERE id = ?', args: [featureId] })
   const r = res.rows[0]!
@@ -98,7 +105,7 @@ describe('migration 0120 — ressources de classe', () => {
       const row = await rowOf(fid)
       expect(row.maxUsesFormula).toEqual(p.feature.maxUsesFormula ?? null)
       expect(row.meta).toEqual(withoutLaterEffects(p.feature.meta ?? null))
-      const expected = (p.feature.effects ?? []).filter(e => CLASS_RESOURCE_EFFECT_TYPES.includes(e.type))
+      const expected = (p.feature.effects ?? []).filter(e => CLASS_RESOURCE_EFFECT_TYPES.includes(e.type)).map(withoutLaterFields)
       const actual = await resourceEffectsOf(fid)
       const sortKey = (e: { type: string, value: unknown }) => `${e.type}:${JSON.stringify(e.value)}`
       expect(actual.map(sortKey).sort()).toEqual(expected.map(sortKey).sort())

@@ -47,6 +47,7 @@ export const effectLabel = (effect: Effect): string => {
     case 'halve_damage_reaction': return 'Réaction : dégâts ÷ 2'
     case 'spell_save_dc_bonus': return `${formatModifier(effect.value.amount)} DD des sorts`
     case 'spell_attack_bonus': return `${formatModifier(effect.value.amount)} attaque des sorts`
+    case 'spell_damage_bonus': return `${formatModifier(effect.value.amount)} dégâts des sorts`
     case 'initiative_bonus': return `${formatModifier(effect.value.amount)} initiative`
     case 'hp_per_level': return `${formatModifier(effect.value.amount)} PV/niveau`
     case 'passive_skill_bonus': {

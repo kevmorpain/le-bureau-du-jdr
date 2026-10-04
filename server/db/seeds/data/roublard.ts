@@ -41,6 +41,8 @@ Les dégâts augmentent avec le niveau : 1d6 (niv 1), 2d6 (niv 3), 3d6 (niv 5), 
         weapons: 'finesse_or_ranged',
         limit: 'once_per_turn',
         condition: 'Avantage au jet d\'attaque, ou un ennemi de la cible à 1,50 m ou moins (non incapable d\'agir) sans désavantage',
+        // L'avantage du dernier jet d'attaque suffit ; l'ennemi adjacent, la fiche ne le connaît pas.
+        needsAdvantage: true,
       },
     }],
   },

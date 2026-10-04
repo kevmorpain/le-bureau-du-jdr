@@ -41,6 +41,10 @@ export const weaponBonusParts = (
   })
 }
 
+// Bonus fixe aux dégâts de chaque jet de dégâts d'un sort (capacité, objet porté, effet temporaire).
+export const spellDamageBonusParts = (sources: readonly EffectSource[]): BonusPart[] =>
+  bonusParts(sources, e => (e.type === 'spell_damage_bonus' ? e.value.amount : 0))
+
 export const savingThrowBonusParts = (sources: readonly EffectSource[], ability: AbilityScoreKey): BonusPart[] =>
   bonusParts(sources, e =>
     e.type === 'saving_throw_bonus' && (e.value.ability === 'all' || e.value.ability === ability) ? e.value.amount : 0)

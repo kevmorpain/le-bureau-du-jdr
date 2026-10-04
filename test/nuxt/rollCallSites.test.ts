@@ -4,7 +4,10 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import AbilityScoresSection from '../../app/components/character_sheet/AbilityScoresSection.vue'
 import CombatModeSection from '../../app/components/character_sheet/CombatModeSection.vue'
 import HitPointsSection from '../../app/components/character_sheet/HitPointsSection.vue'
-import { classSheet } from '../fixtures/classSheet'
+import { barbareFeatures } from '../../server/db/seeds/data/barbare'
+import { roublardFeatures } from '../../server/db/seeds/data/roublard'
+import { rollEngineKey, idlePending } from '../../app/composables/character/useCharacterRolls'
+import { classSheet, featureRow, named } from '../fixtures/classSheet'
 
 // Les sites d'appel du lanceur de dés : chacun doit dire de quel jet il s'agit (attaque, caractéristique, sauvegarde,
 // dégâts liés à une attaque) pour que la fiche y applique avantages, relances et critiques.
@@ -42,7 +45,13 @@ const weapon = (id: number, name: string, properties: string[], category: string
 
 const mountCombat = async (
   weapons: (sheetId: number) => ReturnType<typeof weapon>[],
-  options: { roll?: ReturnType<typeof vi.fn>, species?: unknown, storage?: Record<string, unknown> } = {},
+  options: {
+    roll?: ReturnType<typeof vi.fn>
+    species?: unknown
+    storage?: Record<string, unknown>
+    features?: ReturnType<typeof featureRow>[]
+    attackMode?: 'advantage' | 'disadvantage' | 'normal'
+  } = {},
 ) => {
   const id = ++sheetSeq
   const inventory = weapons(id)
@@ -50,14 +59,16 @@ const mountCombat = async (
   registerEndpoint(`/api/character_sheets/${id}/proficiency-overrides`, () => [])
   registerEndpoint(`/api/character_sheets/${id}/spells`, () => [])
   for (const [suffix, value] of Object.entries(options.storage ?? {})) localStorage.setItem(`char:${id}:${suffix}`, JSON.stringify(value))
-  const characterSheet = classSheet(id, 'Guerrier', 6, 5, [], options.species ? { species: options.species } : {})
+  registerEndpoint(`/api/character_sheets/${id}/features`, { method: 'PUT', handler: () => ({}) })
+  const characterSheet = classSheet(id, 'Guerrier', 6, 5, options.features ?? [], options.species ? { species: options.species } : {})
+  const engine = options.attackMode ? { pending: ref({ ...idlePending(), attackMode: options.attackMode }) } : null
   const roll = options.roll ?? vi.fn()
   const wrapper = await mountSuspended(CombatModeSection, {
     props: { characterSheet, roll },
-    global: { provide: { spellSlots: ref({ spellcasting: {}, pact_magic: {} }) }, stubs: { UTooltip: { template: '<div><slot /></div>' } } },
+    global: { provide: { spellSlots: ref({ spellcasting: {}, pact_magic: {} }), ...(engine ? { [rollEngineKey as symbol]: engine } : {}) }, stubs: { UTooltip: { template: '<div><slot /></div>' } } },
   })
   await new Promise(r => setTimeout(r, 50))
-  return { wrapper, roll }
+  return { wrapper, roll, characterSheet }
 }
 
 const buttonWith = (wrapper: Awaited<ReturnType<typeof mountCombat>>['wrapper'], text: string) =>
@@ -71,14 +82,14 @@ describe('Mode combat — jets de l\'arme', () => {
   it('l\'attaque est un jet d\'attaque d\'arme', async () => {
     const { wrapper, roll } = await mountCombat(id => [longsword(id)])
     await buttonWith(wrapper, 'Attaque +')!.trigger('click')
-    expect(roll).toHaveBeenCalledWith('Attaque — Épée longue', expect.any(Number), 20, 1, { d20: { type: 'attack', weapon: true, extra: [] } })
+    expect(roll).toHaveBeenCalledWith('Attaque — Épée longue', expect.any(Number), 20, 1, { d20: { type: 'attack', weapon: true, strengthMelee: true, extra: [] } })
   })
 
   it('arme lourde en Petite taille : le désavantage de l\'arme accompagne le jet', async () => {
     const { wrapper, roll } = await mountCombat(id => [greataxe(id)], { species: { name: 'Halfelin', size: 'S', speed: 7.5, speciesFeatures: [] } })
     await buttonWith(wrapper, 'Attaque')!.trigger('click')
     expect(roll).toHaveBeenCalledWith('Attaque — Hache à deux mains', expect.any(Number), 20, 1, {
-      d20: { type: 'attack', weapon: true, extra: [{ label: 'Arme lourde + Petite taille', mode: 'disadvantage' }] },
+      d20: { type: 'attack', weapon: true, strengthMelee: true, extra: [{ label: 'Arme lourde + Petite taille', mode: 'disadvantage' }] },
     })
   })
 
@@ -90,6 +101,55 @@ describe('Mode combat — jets de l\'arme', () => {
     const ranged = await mountCombat(id => [shortbow(id)])
     await buttonWith(ranged.wrapper, 'Dégâts')!.trigger('click')
     expect(ranged.roll).toHaveBeenCalledWith('Dégâts — Arc court', expect.any(Number), 6, 1, { damage: { weaponDie: { melee: false } } })
+  })
+})
+
+describe('Mode combat — Attaque sournoise et avantage', () => {
+  const rapier = (id: number) => weapon(5, 'Rapière', ['finesse'], 'martial_melee', '1d8', id)
+  const sneak = () => [featureRow(named(roublardFeatures, 'Attaque sournoise'), 6)]
+  const sneakButton = async (attackMode?: 'advantage' | 'disadvantage' | 'normal') => {
+    const { wrapper } = await mountCombat(id => [rapier(id)], { features: sneak(), attackMode })
+    return buttonWith(wrapper, 'Attaque sournoise')!
+  }
+
+  it('avantage au dernier jet d\'attaque : les dés sont signalés comme permis', async () => {
+    expect((await sneakButton('advantage')).text()).toContain('✓')
+  })
+
+  it('désavantage au dernier jet d\'attaque : les dés sont signalés comme refusés', async () => {
+    expect((await sneakButton('disadvantage')).text()).toContain('✗')
+  })
+
+  it('ni l\'un ni l\'autre, ou aucun jet : à confirmer (ennemi adjacent)', async () => {
+    expect((await sneakButton('normal')).text()).toContain('?')
+    expect((await sneakButton()).text()).toContain('?')
+  })
+})
+
+describe('Mode combat — Attaque téméraire', () => {
+  const reckless = (active: boolean) => [featureRow(named(barbareFeatures, 'Attaque téméraire'), 6, { active })]
+
+  it('s\'active comme la Rage, et « Nouveau tour » y met fin', async () => {
+    const { wrapper, characterSheet } = await mountCombat(() => [], { features: reckless(true) })
+    expect(buttonWith(wrapper, 'Mettre fin')).toBeDefined()
+    expect(characterSheet.features[0].active).toBe(true)
+
+    await buttonWith(wrapper, 'Nouveau tour')!.trigger('click')
+    await new Promise(r => setTimeout(r, 50))
+    expect(characterSheet.features[0].active).toBe(false)
+  })
+
+  it('« Nouveau tour » laisse en l\'état une capacité qui ne se termine pas d\'elle-même', async () => {
+    const rage = [featureRow(named(barbareFeatures, 'Rage'), 6, { active: true })]
+    const { wrapper, characterSheet } = await mountCombat(() => [], { features: rage })
+    await buttonWith(wrapper, 'Nouveau tour')!.trigger('click')
+    await new Promise(r => setTimeout(r, 50))
+    expect(characterSheet.features[0].active).toBe(true)
+  })
+
+  it('inactive, elle propose de s\'activer', async () => {
+    const { wrapper } = await mountCombat(() => [], { features: reckless(false) })
+    expect(buttonWith(wrapper, 'Activer')).toBeDefined()
   })
 })
 

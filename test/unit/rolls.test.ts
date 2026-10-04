@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Effect } from '../../server/db/schema/effects'
 import {
-  advantageEffectSources, applyRollOverride, availableSituations, criticalDamageDiceCount, criticalFrom, factRollSources,
+  advantageEffectSources, advantageEligibility, applyRollOverride, isUnderCondition, availableSituations, criticalDamageDiceCount, criticalFrom, factRollSources,
   halfProficiencyBonus, proficientCheckMinimum, rerollTrigger, resolveRollMode, rollD20, saveAutoFailSources,
   type D20Policy, type RollFacts, type RollSource,
 } from '../../shared/rules/rolls'
@@ -152,6 +152,55 @@ describe('advantageEffectSources', () => {
 
   it('liste les situations désignables, sans doublon', () => {
     expect(availableSituations([rage, traits, traits])).toEqual(['frightened', 'concentration'])
+  })
+})
+
+describe('avantage conditionné par l\'état et la portée', () => {
+  const dangerSense = { label: 'Capacités', effects: [
+    { type: 'advantage', value: { rollType: 'saving_throw', ability: 'dex', condition: 'visible_effects', unless: ['blinded', 'deafened', 'incapacitated'] } },
+  ] satisfies Effect[] }
+  const reckless = { label: 'Attaque téméraire', effects: [
+    { type: 'advantage', value: { rollType: 'attack', ability: 'all', condition: '', scope: 'strength_melee' } },
+  ] satisfies Effect[] }
+  const dexSave = { type: 'save', ability: 'dex' } as const
+
+  it('Sens du danger : joue contre un effet visible, tant que le personnage n\'est ni aveuglé, ni assourdi, ni incapable d\'agir', () => {
+    expect(labels(advantageEffectSources([dangerSense], dexSave, ['visible_effects'], []))).toHaveLength(1)
+    expect(advantageEffectSources([dangerSense], dexSave, ['visible_effects'], ['blinded'])).toEqual([])
+    expect(advantageEffectSources([dangerSense], dexSave, ['visible_effects'], ['deafened'])).toEqual([])
+    expect(advantageEffectSources([dangerSense], dexSave, ['visible_effects'], ['poisoned'])).toHaveLength(1)
+  })
+
+  it('« incapable d\'agir » couvre Étourdi, Paralysé, Inconscient et Pétrifié', () => {
+    for (const condition of ['stunned', 'paralyzed', 'unconscious', 'petrified', 'incapacitated'] as const) {
+      expect(isUnderCondition([condition], 'incapacitated'), condition).toBe(true)
+      expect(advantageEffectSources([dangerSense], dexSave, ['visible_effects'], [condition]), condition).toEqual([])
+    }
+    expect(isUnderCondition(['poisoned'], 'incapacitated')).toBe(false)
+    expect(isUnderCondition(['blinded'], 'blinded')).toBe(true)
+  })
+
+  it('Attaque téméraire : seulement une attaque de mêlée menée avec la Force', () => {
+    const strength = { type: 'attack', weapon: true, strengthMelee: true } as const
+    expect(labels(advantageEffectSources([reckless], strength, []))).toEqual(['Attaque téméraire'])
+    expect(advantageEffectSources([reckless], { type: 'attack', weapon: true, strengthMelee: false }, [])).toEqual([])
+    expect(advantageEffectSources([reckless], { type: 'attack', weapon: true }, [])).toEqual([])
+    expect(advantageEffectSources([reckless], { type: 'attack', weapon: false }, [])).toEqual([])
+    expect(advantageEffectSources([reckless], { type: 'save', ability: 'str' }, [])).toEqual([])
+  })
+
+  it('un avantage d\'attaque sans portée vaut pour toute attaque', () => {
+    const any = { label: 'Bague', effects: [{ type: 'advantage', value: { rollType: 'attack', ability: 'all', condition: '' } }] satisfies Effect[] }
+    expect(advantageEffectSources([any], { type: 'attack', weapon: false }, [])).toHaveLength(1)
+  })
+})
+
+describe('advantageEligibility — Attaque sournoise', () => {
+  it('avantage : éligible ; désavantage : refusée ; sinon, à confirmer', () => {
+    expect(advantageEligibility('advantage')).toBe('eligible')
+    expect(advantageEligibility('disadvantage')).toBe('blocked')
+    expect(advantageEligibility('normal')).toBe('unconfirmed')
+    expect(advantageEligibility(null)).toBe('unconfirmed')
   })
 })
 

@@ -163,16 +163,16 @@
             <UTooltip
               v-for="dice in weapon.extraDamageDice"
               :key="dice.name"
-              :text="[dice.condition, dice.limit === 'once_per_turn' ? 'Une fois par tour' : 'À chaque attaque'].filter(Boolean).join(' — ')"
+              :text="[dice.condition, dice.limit === 'once_per_turn' ? 'Une fois par tour' : 'À chaque attaque', extraDiceStatus(dice)?.hint].filter(Boolean).join(' — ')"
               :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
             >
               <UButton
                 size="sm"
                 variant="soft"
-                color="warning"
+                :color="extraDiceStatus(dice)?.color ?? 'warning'"
                 @click="rollExtraDice(weapon, dice)"
               >
-                + {{ dice.name }} {{ dice.count }}d{{ dice.sides }}{{ dice.damageType ? ` ${damageTypeLabels[dice.damageType] ?? dice.damageType}` : '' }}
+                + {{ dice.name }} {{ dice.count }}d{{ dice.sides }}{{ dice.damageType ? ` ${damageTypeLabels[dice.damageType] ?? dice.damageType}` : '' }}{{ extraDiceStatus(dice)?.mark }}
               </UButton>
             </UTooltip>
             <UTooltip
@@ -283,6 +283,8 @@ import { weaponPropertyLabels } from '~~/shared/utils/item'
 import { slotDamageDiceCount, type SlotDamage } from '~~/shared/rules/classResources'
 import { useClassResources } from '~/composables/character/useClassResources'
 import { useCombatTracker } from '~/composables/character/useCombatTracker'
+import { rollEngineKey } from '~/composables/character/useCharacterRolls'
+import { advantageEligibility } from '~~/shared/rules/rolls'
 import type { RollFn } from '~/composables/useDiceRoller'
 
 const props = defineProps<{
@@ -328,7 +330,20 @@ const newTurn = () => {
   usedActions.value = { action: false, bonus_action: false, reaction: false }
   movementUsed.value = 0
   nextRound()
+  for (const feature of resolvedFeatures.value) {
+    if (feature.active && feature.meta?.endsOnNewTurn) setActive(feature.id, false, undefined)
+  }
 }
+
+// Dés qui dépendent de l'avantage (Attaque sournoise) : le mode du dernier jet d'attaque dit si la condition est remplie.
+const rollEngine = inject(rollEngineKey, null)
+const ELIGIBILITY = {
+  eligible: { color: 'success' as const, mark: ' ✓', hint: 'Avantage au dernier jet d\'attaque : conditions remplies' },
+  blocked: { color: 'error' as const, mark: ' ✗', hint: 'Désavantage au dernier jet d\'attaque : pas d\'Attaque sournoise' },
+  unconfirmed: { color: 'warning' as const, mark: ' ?', hint: 'Pas d\'avantage au dernier jet : il faut un ennemi de la cible à 1,50 m ou moins' },
+}
+const extraDiceStatus = (dice: { needsAdvantage?: boolean }) =>
+  dice.needsAdvantage ? ELIGIBILITY[advantageEligibility(rollEngine?.pending.value.attackMode ?? null)] : null
 
 const movementUsed = ref(0)
 const remainingMovement = computed(() => Math.max(0, effectiveSpeed.value - movementUsed.value))
@@ -364,7 +379,7 @@ const parseDice = (dice: string) => {
 }
 
 const rollAttack = (weapon: WeaponStat) => {
-  props.roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, extra: weapon.attackRollSources } })
+  props.roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, strengthMelee: weapon.usesStrength, extra: weapon.attackRollSources } })
 }
 
 const rollDamage = (weapon: WeaponStat) => {

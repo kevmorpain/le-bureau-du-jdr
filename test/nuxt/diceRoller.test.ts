@@ -60,7 +60,7 @@ describe('useDiceRoller — jets de d20', () => {
 
   it('l\'avantage choisi lance deux dés, garde le plus haut puis retombe sur Auto', async () => {
     const r = await mountRoller()
-    r.engine.pending.value = { override: 'advantage', situations: [], crit: false }
+    r.engine.pending.value = { override: 'advantage', situations: [], crit: false, attackMode: null }
     d20(4, 17)
     expect(r.roll('Attaque', 5, 20, 1, { d20: { type: 'attack', weapon: true } })).toBe(22)
     expect(r.history.entries.value[0]).toMatchObject({ rolls: [4, 17], keptIndex: 1, mode: 'advantage', advantage: ['Choix du joueur'] })
@@ -69,7 +69,7 @@ describe('useDiceRoller — jets de d20', () => {
 
   it('le désavantage choisi garde le plus bas', async () => {
     const r = await mountRoller()
-    r.engine.pending.value = { override: 'disadvantage', situations: [], crit: false }
+    r.engine.pending.value = { override: 'disadvantage', situations: [], crit: false, attackMode: null }
     d20(17, 4)
     expect(r.roll('JS', 0, 20, 1, { d20: { type: 'save', ability: 'dex' } })).toBe(4)
   })
@@ -102,6 +102,22 @@ describe('useDiceRoller — jets de d20', () => {
     r.roll('Initiative', 2, 20, 1, { d20: { type: 'initiative' } })
     await nextTick()
     expect(tracker.initiative.value).toEqual({ total: 5, natural: 3 })
+  })
+
+  it('garde le mode du dernier jet d\'attaque, que les autres jets ne touchent pas', async () => {
+    const r = await mountRoller()
+    r.engine.pending.value = { override: 'advantage', situations: [], crit: false, attackMode: null }
+    d20(4, 17)
+    r.roll('Attaque', 5, 20, 1, { d20: { type: 'attack', weapon: true } })
+    expect(r.engine.pending.value.attackMode).toBe('advantage')
+
+    d20(8)
+    r.roll('Force', 3, 20, 1, { d20: { type: 'check', ability: 'str' } })
+    expect(r.engine.pending.value.attackMode).toBe('advantage')
+
+    d20(8)
+    r.roll('Attaque', 5, 20, 1, { d20: { type: 'attack', weapon: true } })
+    expect(r.engine.pending.value.attackMode).toBe('normal')
   })
 
   it('garde de quoi rejouer le jet à l\'identique', async () => {
@@ -177,7 +193,7 @@ describe('useDiceRoller — coups critiques', () => {
 
   it('le critique choisi à la main (cible paralysée) double les dégâts sans attaque', async () => {
     const r = await mountRoller()
-    r.engine.pending.value = { override: 'auto', situations: [], crit: true }
+    r.engine.pending.value = { override: 'auto', situations: [], crit: true, attackMode: null }
     d8(4, 5)
     r.roll('Dégâts', 0, 8, 1, { damage: { weaponDie: { melee: true } } })
     expect(r.history.entries.value[0]!.rolls).toEqual([4, 5])

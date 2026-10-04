@@ -2,7 +2,7 @@ import { useStorage } from '@vueuse/core'
 import type { FormulaContext } from '~~/shared/utils/formula'
 import type { Effect } from '~~/server/db/schema/effects'
 import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, type FeatChoices } from '~~/shared/rules/characterEffects'
-import type { EffectSource } from '~~/shared/rules/effectBonuses'
+import { spellDamageBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { deriveClassTraits, featureFormulaContext, featureUses, isFeatureUnlocked, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
 import type { OwnerClass } from '~~/shared/rules/classResources'
 import { armorSpeedPenalty, computeWalkingSpeed, speedBonusParts } from '~~/shared/rules/speed'
@@ -347,6 +347,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   // Capacités de l'espèce et des classes au niveau atteint (même garde que la couche caractéristiques), puis effets actifs.
   const capabilityEffects = computed<Effect[]>(() => [...speciesEffects.value, ...abilityInputs.featureEffects.value])
+  const spellDamageBonus = computed(() =>
+    sumBonusParts(spellDamageBonusParts([{ label: 'Capacités', effects: capabilityEffects.value }, ...activeEffectSources.value])),
+  )
   const rollEngine = useCharacterRolls({
     characterId: characterSheet?.value?.id,
     activeConditions: conditions.activeConditions,
@@ -458,6 +461,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     skillDisadvantageReasons: conditions.skillDisadvantageReasons,
     saveStatuses: conditions.saveStatuses,
     rollEngine,
+    spellDamageBonus,
     // Effets temporaires
     temporaryEffects: temporary.temporaryEffects,
     saveTemporaryEffect: temporary.saveTemporaryEffect,

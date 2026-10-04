@@ -4,7 +4,7 @@ import type { EffectSource } from '~~/shared/rules/effectBonuses'
 import {
   advantageEffectSources, availableSituations, criticalFrom, DEFAULT_CRITICAL_FROM, factRollSources, proficientCheckMinimum,
   rerollTrigger, saveAutoFailSources,
-  type D20Kind, type D20Policy, type RollFacts, type RollOverride,
+  type D20Kind, type D20Policy, type RollFacts, type RollMode, type RollOverride,
 } from '~~/shared/rules/rolls'
 import type { ProficiencyLevel } from './useCharacterAbilities'
 
@@ -13,6 +13,8 @@ export interface PendingRoll {
   situations: string[]
   // Les dégâts de l'attaque en cours sont ceux d'un coup critique (attaque critique, ou cible qui le rend automatique).
   crit: boolean
+  // Mode du dernier jet d'attaque : l'Attaque sournoise en dépend.
+  attackMode: RollMode | null
 }
 
 export type RolledPolicy = D20Policy & { autoFail: string[] }
@@ -28,7 +30,7 @@ export interface RollEngine {
 
 export const rollEngineKey: InjectionKey<RollEngine> = Symbol('roll-engine')
 
-export const idlePending = (): PendingRoll => ({ override: 'auto', situations: [], crit: false })
+export const idlePending = (): PendingRoll => ({ override: 'auto', situations: [], crit: false, attackMode: null })
 
 export const useCharacterRolls = (deps: {
   characterId: number | undefined
@@ -54,7 +56,7 @@ export const useCharacterRolls = (deps: {
     return {
       sources: [
         ...factRollSources(kind, facts.value),
-        ...advantageEffectSources(deps.effectSources.value, kind, situations),
+        ...advantageEffectSources(deps.effectSources.value, kind, situations, deps.activeConditions.value),
       ],
       rerollOn: rerollTrigger(effects),
       minimum: proficientSkill ? proficientCheckMinimum(effects) : null,

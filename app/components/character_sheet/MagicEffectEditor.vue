@@ -202,7 +202,7 @@
       </div>
 
       <div
-        v-else-if="['armor_class_bonus', 'spell_save_dc_bonus', 'spell_attack_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
+        v-else-if="['armor_class_bonus', 'spell_save_dc_bonus', 'spell_attack_bonus', 'spell_damage_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
       >
         <UFormField label="Bonus" hint="négatif = malus">
           <UInput
@@ -358,6 +358,7 @@ const allEffectTypeOptions: { label: string, value: EffectType }[] = [
   { label: 'Maîtrise (armure/outil)', value: 'proficiency' },
   { label: 'Bonus DD de sort', value: 'spell_save_dc_bonus' },
   { label: 'Bonus jet d\'attaque de sort', value: 'spell_attack_bonus' },
+  { label: 'Bonus aux dégâts des sorts', value: 'spell_damage_bonus' },
   { label: 'Bonus à l\'initiative', value: 'initiative_bonus' },
   { label: 'PV par niveau', value: 'hp_per_level' },
   { label: 'Bonus à une compétence passive', value: 'passive_skill_bonus' },
@@ -437,6 +438,7 @@ const defaultValueForType = (type: string): unknown => {
     case 'armor_class_bonus':
     case 'spell_save_dc_bonus':
     case 'spell_attack_bonus':
+    case 'spell_damage_bonus':
     case 'initiative_bonus':
     case 'hp_per_level': return { amount: 1 }
     case 'passive_skill_bonus': return { skill: 'perception', amount: 5 }

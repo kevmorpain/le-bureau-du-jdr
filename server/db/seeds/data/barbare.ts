@@ -1,5 +1,6 @@
 import { fixed, lookup } from '~~/shared/utils/formula'
-import type { AbilityScoreKey } from '../../schema/effects'
+import type { AbilityScoreKey, ConditionKey } from '../../schema/effects'
+import type { FeatureMeta } from '../../schema/features'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
@@ -18,6 +19,19 @@ export const RAGE_ADVANTAGES = [
   { type: 'advantage' as const, value: { rollType: 'check' as const, ability: 'str' as AbilityScoreKey, condition: '' } },
   { type: 'advantage' as const, value: { rollType: 'saving_throw' as const, ability: 'str' as AbilityScoreKey, condition: '' } },
 ]
+
+// AideDD, Barbare — Attaque téméraire : avantage aux attaques de mêlée menées avec la Force pour le tour ; la capacité
+// s'active comme la Rage et prend fin au « Nouveau tour ». Les attaques portées contre le barbare gagnent l'avantage : le texte le dit.
+export const RECKLESS_ATTACK_ADVANTAGE = { type: 'advantage' as const, value: { rollType: 'attack' as const, ability: 'all' as const, condition: '', scope: 'strength_melee' as const } }
+export const RECKLESS_ATTACK_META: FeatureMeta = { whileActive: [RECKLESS_ATTACK_ADVANTAGE], endsOnNewTurn: true }
+export const RECKLESS_ATTACK_DESCRIPTION = `À partir du niveau 2, vous pouvez mettre de côté votre défense pour attaquer avec toute la violence du désespoir. Lorsque vous effectuez la première attaque de votre tour, vous pouvez décider d'effectuer une Attaque téméraire. Vous obtenez ainsi un avantage aux jets d'attaque au corps à corps avec une arme utilisant la Force durant ce tour, mais les attaques effectuées contre vous ont également un avantage jusqu'à votre prochain tour.`
+
+// AideDD, Barbare — Sens du danger : avantage aux sauvegardes de Dextérité contre les effets visibles, sauf aveuglé, assourdi
+// ou incapable d'agir. Que l'effet soit visible reste au joueur de le dire au jet.
+export const DANGER_SENSE_ADVANTAGE = {
+  type: 'advantage' as const,
+  value: { rollType: 'saving_throw' as const, ability: 'dex' as AbilityScoreKey, condition: 'visible_effects', unless: ['blinded', 'deafened', 'incapacitated'] as ConditionKey[] },
+}
 
 // AideDD, Barbare — Instinct sauvage : avantage aux jets d'initiative.
 export const FERAL_INSTINCT_ADVANTAGE = { type: 'advantage' as const, value: { rollType: 'initiative' as const, ability: 'all' as const, condition: '' } }
@@ -70,13 +84,14 @@ La rage se termine si vous êtes inconscient ou si votre tour se termine et que 
   },
   {
     name: 'Attaque téméraire',
-    description: `À partir du niveau 2, vous pouvez mettre de côté toute préoccupation pour votre défense afin d'attaquer avec une férocité désespérée. Lors de votre premier tour de chaque combat, vous pouvez décider d'attaquer avec témérité. Cela vous donne l'avantage sur vos jets d'attaque de corps à corps avec les armes de Force pour ce tour, mais les jets d'attaque contre vous ont l'avantage jusqu'à votre prochain tour.`,
+    description: RECKLESS_ATTACK_DESCRIPTION,
     featureType: 'class_feature',
     levelRequired: 2,
-    actionType: null,
+    actionType: 'free',
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    meta: RECKLESS_ATTACK_META,
   },
   {
     name: 'Sens du danger',
@@ -88,7 +103,7 @@ Vous avez l'avantage aux jets de sauvegarde de Dextérité contre les effets que
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [DANGER_SENSE_ADVANTAGE],
   },
   {
     name: 'Attaque supplémentaire',

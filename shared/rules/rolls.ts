@@ -40,7 +40,7 @@ export const applyRollOverride = (sources: readonly RollSource[], override: Roll
 }
 
 export type D20Kind
-  = | { type: 'attack', weapon: boolean, extra?: RollSource[] }
+  = | { type: 'attack', weapon: boolean, strengthMelee?: boolean, extra?: RollSource[] }
     | { type: 'check', ability: AbilityKey, skill?: string }
     | { type: 'save', ability: AbilityKey, situations?: string[] }
     | { type: 'initiative' }
@@ -105,20 +105,26 @@ type AdvantageValue = Extract<Effect, { type: 'advantage' }>['value']
 // Un effet d'avantage sans `condition` joue tout le temps (Rage, Instinct sauvage) ; avec une `condition`, seulement
 // quand le joueur indique la situation (contre Effrayé, Poison, Magie…) : l'application ne connaît pas la source du jet.
 const advantageReaches = (value: AdvantageValue, kind: D20Kind): boolean => {
-  if (kind.type === 'attack') return value.rollType === 'attack'
+  if (kind.type === 'attack') return value.rollType === 'attack' && (value.scope !== 'strength_melee' || !!kind.strengthMelee)
   if (kind.type === 'initiative') return value.rollType === 'initiative' || (value.rollType === 'check' && (value.ability === 'all' || value.ability === 'dex'))
   const rollType = kind.type === 'check' ? 'check' : 'saving_throw'
   return value.rollType === rollType && (value.ability === 'all' || value.ability === kind.ability)
 }
 
+// « Incapable d'agir » couvre tous les états qui l'entraînent (Étourdi, Paralysé, Inconscient, Pétrifié…).
+export const isUnderCondition = (active: readonly ConditionKey[], condition: ConditionKey): boolean =>
+  active.some(c => c === condition || (condition === 'incapacitated' && conditionMechanics[c]?.incapacitating))
+
 export const advantageEffectSources = (
   sources: readonly EffectSource[],
   kind: D20Kind,
   situations: readonly string[],
+  conditions: readonly ConditionKey[] = [],
 ): RollSource[] => {
   const active = new Set([...situations, ...(kind.type === 'save' ? kind.situations ?? [] : [])])
   return sources.flatMap(source => source.effects.flatMap((effect) => {
     if (effect.type !== 'advantage' || !advantageReaches(effect.value, kind)) return []
+    if (effect.value.unless?.some(c => isUnderCondition(conditions, c))) return []
     if (!effect.value.condition) return [{ label: source.label, mode: 'advantage' as const }]
     return active.has(effect.value.condition)
       ? [{ label: `${source.label} — contre ${situationLabel(effect.value.condition).toLowerCase()}`, mode: 'advantage' as const }]
@@ -129,6 +135,13 @@ export const advantageEffectSources = (
 // Situations que le joueur peut désigner : celles que ses effets d'avantage conditionnent.
 export const availableSituations = (sources: readonly EffectSource[]): string[] =>
   [...new Set(sources.flatMap(s => s.effects.flatMap(e => (e.type === 'advantage' && e.value.condition ? [e.value.condition] : []))))]
+
+// Attaque sournoise : l'avantage au jet d'attaque suffit, le désavantage l'interdit ; sans l'un ni l'autre, tout dépend d'un
+// ennemi adjacent à la cible, que la fiche ne connaît pas.
+export type AdvantageEligibility = 'eligible' | 'blocked' | 'unconfirmed'
+
+export const advantageEligibility = (attackMode: RollMode | null): AdvantageEligibility =>
+  attackMode === 'advantage' ? 'eligible' : attackMode === 'disadvantage' ? 'blocked' : 'unconfirmed'
 
 // ─── Effets de capacités qui modifient le jet ────────────────────────────────
 

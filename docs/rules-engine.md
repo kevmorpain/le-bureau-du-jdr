@@ -232,7 +232,7 @@ et `test/nuxt/classResourcesMigration.test.ts` garde l'égalité.
 | `swimming_speed` / `climbing_speed` / `burrowing_speed` / `flying_speed` | vitesses de déplacement hors marche ; la plus haute l'emporte, aucun bonus ne s'y applique |
 | `equipment_penalty` `{ penalty: 'speed', armor_type, override: true }` | neutralise la pénalité de Force des armures de ce type (Nain) |
 | `weapon_attack_bonus` / `weapon_damage_bonus` `{ amount, weapons: 'all' \| 'melee' \| 'ranged' }` | bonus fixe signé aux jets d'attaque / de dégâts de chaque arme équipée, en plus de son `magicBonus` ; capacités, objets actifs et effets temporaires (`weaponBonusParts`, `shared/rules/effectBonuses.ts`) ; le Mode Combat nomme les sources au survol |
-| `advantage` `{ rollType, ability, condition }` | avantage au jet (`check`, `saving_throw`, `attack`, `initiative`) ; sans `condition` il joue toujours (Rage, Instinct sauvage), avec il attend que le joueur désigne la situation au jet (voir « Jets de d20 ») ; les conditions s'affichent aussi dans les défenses |
+| `advantage` `{ rollType, ability, condition }` | avantage au jet (`check`, `saving_throw`, `attack`, `initiative`) ; sans `condition` il joue toujours (Rage, Instinct sauvage), avec il attend que le joueur désigne la situation au jet (voir « Jets de d20 ») ; `unless` : états actifs qui le suspendent (Sens du danger) ; `scope: 'strength_melee'` : attaque de mêlée menée avec la Force (Attaque téméraire) ; les conditions s'affichent aussi dans les défenses |
 
 ### Jets de d20
 
@@ -245,6 +245,8 @@ Chaque jet de d20 de la fiche porte un type (`D20Kind` : `attack`, `check`, `sav
 | `proficient_check_minimum` `{ minimum }` | un d20 plus bas compte pour `minimum` aux jets de compétence maîtrisée (Savoir-faire) |
 | `critical_range` `{ from }` | les attaques d'arme sont des critiques dès `from` (Champion : 19, 18) ; la plus large l'emporte |
 | `critical_extra_dice` `{ dice: Formula }` | dés de l'arme ajoutés au critique en mêlée (Critique brutal : 1, 2, 3), lus par `deriveClassTraits` au niveau de la classe |
+| `spell_damage_bonus` `{ amount }` | bonus fixe signé à chaque jet de dégâts d'un sort (objets, capacités, effets temporaires) |
+| `weapon_damage_dice` `needsAdvantage` | l'avantage au dernier jet d'attaque permet les dés (Attaque sournoise) : coché si avantage, refusé si désavantage, « à confirmer » sinon |
 | `halve_damage_reaction` | case « dégâts ÷ 2 » de la saisie de dégâts (Esquive instinctive), avant résistance et vulnérabilité |
 
 Sources fixes d'un jet : états (`conditionMechanics`), épuisement (1 : caractéristique, 3 : attaque et sauvegarde), armure non maîtrisée (jets basés sur Force ou Dextérité), Discrétion en armure à Discrétion désavantageuse, arme lourde en Petite taille. Un avantage et un désavantage s'annulent quel qu'en soit le nombre. Le joueur peut forcer Avantage, Désavantage ou Normal (qui écarte toutes les sources) pour le prochain jet, désigner la situation d'un avantage conditionnel (contre Effrayé, Poison, Magie…), et marquer des dégâts critiques à la main (cible paralysée). Un critique à l'attaque double les dés des dégâts suivants jusqu'à l'attaque suivante ; les modificateurs ne doublent jamais.
@@ -253,7 +255,8 @@ Pénalité d'armure (AideDD, Armures) : une armure dont `strength_requirement` d
 (`armorSpeedPenalty`). Les fonctions pures sont dans `shared/rules/armorClass.ts` et `shared/rules/speed.ts` ; la fiche les
 assemble dans `useCharacterSheet` (base + bonus − pénalité, puis conditions). Seed et migration 0123 portent les mêmes données :
 `test/nuxt/armorClassSpeedMigration.test.ts` garde l'égalité. Même chose pour les effets de jets : migration 0124,
-`test/nuxt/rollEffectsMigration.test.ts`.
+`test/nuxt/rollEffectsMigration.test.ts` ; conditions d'avantage : migration 0125,
+`test/nuxt/advantageConditionsMigration.test.ts`.
 
 ## 5. Résolution
 

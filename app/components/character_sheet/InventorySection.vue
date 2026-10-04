@@ -653,7 +653,7 @@ const parseDice = (dice: string): { count: number, sides: number } => {
 const rollAttack = (entryId: number) => {
   const w = weaponStatsByEntry.value.get(entryId)
   if (!w) return
-  props.roll?.(`Attaque — ${w.name}`, w.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, extra: w.attackRollSources } })
+  props.roll?.(`Attaque — ${w.name}`, w.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, strengthMelee: w.usesStrength, extra: w.attackRollSources } })
 }
 
 const rollDamage = (entryId: number) => {

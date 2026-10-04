@@ -419,6 +419,7 @@ const {
   setSelectedCaster,
   armorSpellcastingWarning,
   characterLevel,
+  spellDamageBonus,
   activeConditions,
   startConcentration,
   characterSpells,
@@ -614,7 +615,7 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
       if (multi) {
         const diePerAttack = Math.max(1, Math.floor(parsed.count / multi.count))
         const flatPerAttack = Math.floor(parsed.flat / multi.count)
-        let perAttackBonus = flatPerAttack
+        let perAttackBonus = flatPerAttack + spellDamageBonus.value
         if (dmg.isSpellcastingModifierAdded && spellcastingMod !== null) {
           perAttackBonus += spellcastingMod
         }
@@ -628,7 +629,7 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
         continue
       }
 
-      let bonus = parsed.flat
+      let bonus = parsed.flat + spellDamageBonus.value
       if (dmg.isSpellcastingModifierAdded && spellcastingMod !== null) {
         bonus += spellcastingMod
       }

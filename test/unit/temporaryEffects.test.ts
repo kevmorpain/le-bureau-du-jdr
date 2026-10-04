@@ -59,6 +59,7 @@ describe('effets temporaires — schéma partagé client/serveur', () => {
       vulnerability: { damageType: 'fire' },
       spell_save_dc_bonus: { amount: 1 },
       spell_attack_bonus: { amount: 1 },
+      spell_damage_bonus: { amount: 1 },
       initiative_bonus: { amount: 1 },
       passive_skill_bonus: { skill: 'perception', amount: 1 },
     }
