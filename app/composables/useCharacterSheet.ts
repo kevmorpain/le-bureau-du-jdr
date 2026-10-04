@@ -18,6 +18,7 @@ import { useCharacterInventory } from './character/useCharacterInventory'
 import { useCharacterBackground } from './character/useCharacterBackground'
 import { useCharacterIdentity } from './character/useCharacterIdentity'
 import { useCharacterTemporaryEffects } from './character/useCharacterTemporaryEffects'
+import { useCharacterRolls } from './character/useCharacterRolls'
 import { sheetTextField } from './character/sheetField'
 
 /**
@@ -342,6 +343,22 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   const vitals = useCharacterVitals(characterSheet)
 
+  // ─── Jets : avantage, relance, critique ───────────────────────────────────
+
+  // Capacités de l'espèce et des classes au niveau atteint (même garde que la couche caractéristiques), puis effets actifs.
+  const capabilityEffects = computed<Effect[]>(() => [...speciesEffects.value, ...abilityInputs.featureEffects.value])
+  const rollEngine = useCharacterRolls({
+    characterId: characterSheet?.value?.id,
+    activeConditions: conditions.activeConditions,
+    exhaustionLevel: conditions.exhaustionLevel,
+    armorNonProficient: computed(() => inventoryLayer.equippedArmorProficiencyWarning.value !== null),
+    stealthArmor: inventoryLayer.armorStealthDisadvantage,
+    effectSources: computed<EffectSource[]>(() => [{ label: 'Capacités', effects: capabilityEffects.value }, ...activeEffectSources.value]),
+    allEffects: computed<Effect[]>(() => [...capabilityEffects.value, ...activeEffects.value]),
+    getEffectiveProficiency: abilities.getEffectiveProficiency,
+    criticalExtraDice: computed(() => classTraits.value.criticalExtraDice),
+  })
+
   // ─── Sort en concentration (résolu via characterSpells) ──────────────────
 
   const concentratingSpell = computed(() => {
@@ -395,6 +412,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     // Caractéristiques
     abilityScores: abilities.abilityScores,
     abilityModifiers: abilities.abilityModifiers,
+    abilityCheckModifiers: abilities.abilityCheckModifiers,
     abilitySkillKeys: abilities.abilitySkillKeys,
     abilityScoreBonuses: abilities.abilityScoreBonuses,
     getEffectiveProficiency: abilities.getEffectiveProficiency,
@@ -439,6 +457,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     maxHitPointsFor: conditions.maxHitPointsFor,
     skillDisadvantageReasons: conditions.skillDisadvantageReasons,
     saveStatuses: conditions.saveStatuses,
+    rollEngine,
     // Effets temporaires
     temporaryEffects: temporary.temporaryEffects,
     saveTemporaryEffect: temporary.saveTemporaryEffect,

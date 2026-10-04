@@ -592,6 +592,9 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
   // (c'est ce que l'encart « Aux niveaux supérieurs » et CastSpellModal affichent).
   const levels: CastLevels = { characterLevel: characterLevel.value, slotLevel: castAtLevel }
 
+  // Seuls les sorts d'attaque ont des dégâts doublés par un critique ; ceux d'un jet de sauvegarde n'en ont pas.
+  const attackDamage = isAttackSpell(cs) ? { damage: {} } : undefined
+
   // Un sort peut cumuler plusieurs types de dégâts (ex. Voracité de Hadar :
   // froid + acide). On jette chaque composante séparément.
   const damages = spell.damages ?? []
@@ -620,7 +623,7 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
           perAttackBonus += charismaModifier.value
         }
         for (let r = 1; r <= multi.count; r++) {
-          roll(`${spell.name} · ${multi.label} ${r}`, perAttackBonus, parsed.sides, diePerAttack)
+          roll(`${spell.name} · ${multi.label} ${r}`, perAttackBonus, parsed.sides, diePerAttack, attackDamage)
         }
         continue
       }
@@ -632,7 +635,7 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
       const label = dmg.label
         ? `${spell.name} · ${dmg.label} (${dmg.damage_type})`
         : `${spell.name} · dégâts ${dmg.damage_type}`
-      roll(label, bonus, parsed.sides, parsed.count)
+      roll(label, bonus, parsed.sides, parsed.count, attackDamage)
     }
     return
   }
@@ -663,7 +666,7 @@ function rollSpellAttack(cs: CharacterSpellWithSpell) {
   if (atk == null) return
   const n = resolveAttackCount(cs.spell.multiAttack, castLevelsFor(cs))?.count ?? 1
   for (let r = 1; r <= n; r++) {
-    roll(n > 1 ? `${cs.spell.name} · attaque ${r}` : `${cs.spell.name} · attaque`, atk, 20, 1)
+    roll(n > 1 ? `${cs.spell.name} · attaque ${r}` : `${cs.spell.name} · attaque`, atk, 20, 1, { d20: { type: 'attack', weapon: false } })
   }
 }
 

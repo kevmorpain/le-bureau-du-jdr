@@ -39,7 +39,7 @@ donnée est déjà là, il ne manque que la projection.
 | Code | Suivi | Sujet |
 |---|---|---|
 | **E1** | [#131](https://github.com/kevmorpain/le-bureau-du-jdr/issues/131) | Bonus de compétence conditionnel (`skill_bonus`, Nain/Gnome) jamais appliqué |
-| **E2** | [#132](https://github.com/kevmorpain/le-bureau-du-jdr/issues/132) | Relance du 1 naturel (`reroll`, Halfelin Chanceux) jamais appliquée |
+| **E2** | ✅ résolu ([#132](https://github.com/kevmorpain/le-bureau-du-jdr/issues/132), lot 5) | Relance du 1 naturel (`reroll`, Chanceux du Halfelin) : appliquée à tout jet d'attaque, de caractéristique et de sauvegarde, sur un seul dé avec avantage ou désavantage (AideDD, Caractéristiques) |
 | **E3** | ✅ résolu ([#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133), lot 2) | Choix de maîtrise d'outil d'espèce jamais proposé : point de choix `tool` du Nain |
 | **E4** | ✅ résolu ([#134](https://github.com/kevmorpain/le-bureau-du-jdr/issues/134), lot 2) | Choix de langues d'espèce et de dons jamais proposé : points de choix `language` (Humain, Demi-elfe, Haut-elfe, Fadette), langues du don Linguiste |
 | **E5** | ✅ résolu ([#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107), lot 2) | Choix de compétences d'espèce jamais proposé : point de choix `skill` (Polyvalence du Demi-elfe) |
@@ -48,7 +48,7 @@ donnée est déjà là, il ne manque que la projection.
 | **E8** | [#137](https://github.com/kevmorpain/le-bureau-du-jdr/issues/137) | Vision étendue des manifestations (`sight_modifier`) jamais affichée |
 | **E9** | [#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138) | Modificateurs d'arme de pacte (`pact_weapon_modifier`) jamais appliqués |
 | **E10** | [#139](https://github.com/kevmorpain/le-bureau-du-jdr/issues/139) | `extra_damage` jamais appliqué, et écrit sous une autre forme par l'éditeur d'objet |
-| **E11** | ✅ résolu pour le périmètre « effets d'objet » ([#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140), lot 4) | Types d'effet absents de l'union : bonus de CA et de JS (`armor_class_bonus`, `saving_throw_bonus`), bonus d'attaque et de dégâts d'arme hors `magicBonus` (`weapon_attack_bonus`, `weapon_damage_bonus`, par portée), vitesses de nage / d'escalade / de creusement, bonus de vitesse (`speed_bonus`) ; l'éditeur d'objets propose aussi `advantage` avec sa condition en texte libre, affichée dans les défenses. **Non porté** : un avantage *appliqué* au jet (la `condition` reste du texte, jamais interprétée) — relève du moteur de jets (R1) |
+| **E11** | ✅ résolu pour le périmètre « effets d'objet » ([#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140), lot 4) | Types d'effet absents de l'union : bonus de CA et de JS (`armor_class_bonus`, `saving_throw_bonus`), bonus d'attaque et de dégâts d'arme hors `magicBonus` (`weapon_attack_bonus`, `weapon_damage_bonus`, par portée), vitesses de nage / d'escalade / de creusement, bonus de vitesse (`speed_bonus`) ; l'éditeur d'objets propose aussi `advantage` avec sa condition en texte libre, affichée dans les défenses. **Lot 5** : l'avantage est *appliqué* au jet — sans `condition`, toujours ; avec, quand le joueur désigne la situation ([D22](./decisions.md#d22)). **Non porté** : un bonus de dégâts qui ne vient pas d'une arme portée |
 | **E12** | ✅ résolu ([#227](https://github.com/kevmorpain/le-bureau-du-jdr/issues/227), suite du lot 2) | Fadette : caractéristique d'incantation de la Magie des fées figée au Charisme — point de choix `spellcasting_ability` (migration 0122), lu sur la fiche pour les sorts d'espèce |
 | **E13** | [#235](https://github.com/kevmorpain/le-bureau-du-jdr/issues/235) | Ténacité naine (Nain des collines) : effet `hp_per_level` absent, PV max trop bas |
 
@@ -88,7 +88,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | **C6** | ✅ résolu ([#146](https://github.com/kevmorpain/le-bureau-du-jdr/issues/146), lot 11) | Points de sorcellerie : réserve = niveau d'ensorceleur, coûts de la Métamagie, conversion emplacement ⇄ points, emplacements créés (`character_spell_slots.created`, disparaissent au repos long), regain de 4 points au niveau 20 |
 | **C7** | ✅ résolu ([#147](https://github.com/kevmorpain/le-bureau-du-jdr/issues/147), lot 11) | Inspiration bardique (utilisations, dé d6→d12, repos court dès le 5), Conduit divin (réserve partagée Clerc/Paladin), Forme sauvage (utilisations, FP et durée, Cercle de la lune), Châtiment divin (dés par niveau d'emplacement), Imposition des mains (réserve), Fougue / Second souffle / Inflexible |
 | **C8** | ✅ résolu ([#148](https://github.com/kevmorpain/le-bureau-du-jdr/issues/148), lot 4) | Déplacement rapide (+3 m sans armure lourde) et Déplacement sans armure du Moine (+3 m au 2, +4,5 au 6, +6 au 10, +7,5 au 14, +9 au 18) : effet `speed_bonus`. Le don Mobile (+3 m) était lui aussi sans effet |
-| **C9** | [#149](https://github.com/kevmorpain/le-bureau-du-jdr/issues/149) | Touche-à-tout, Talent fiable, Critique brutal, Esquive instinctive : non appliqués |
+| **C9** | ✅ résolu ([#149](https://github.com/kevmorpain/le-bureau-du-jdr/issues/149), lot 5) | Touche-à-tout (`half_proficiency`, arrondi inférieur) et Athlète accompli du Champion (arrondi supérieur) ; Savoir-faire du Roublard (`proficient_check_minimum`, le « Talent fiable » du ticket) ; Critique brutal du Barbare (`critical_extra_dice`) dont la description disait « lors d'une rage », ce qu'AideDD ne dit pas ; Esquive instinctive du Roublard (`halve_damage_reaction`, case de la saisie de dégâts). **Non porté** : l'Esquive instinctive offerte par la Défense supérieure du Rôdeur (choix de capacité) |
 | **C10** | [#231](https://github.com/kevmorpain/le-bureau-du-jdr/issues/231) | Capacités à repos déclaré mais sans compteur (~45 features) |
 | **C11** | [#232](https://github.com/kevmorpain/le-bureau-du-jdr/issues/232) | Options de Conduit divin et usages de ki de sous-classe : payés hors réserve |
 | **C12** | [#233](https://github.com/kevmorpain/le-bureau-du-jdr/issues/233) | Forme sauvage : PV de la bête et retour à la forme normale |
@@ -107,8 +107,8 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 
 | Code | Suivi | Sujet |
 |---|---|---|
-| **R1** | [#108](https://github.com/kevmorpain/le-bureau-du-jdr/issues/108) | Avantage / désavantage jamais appliqué au jet |
-| **R2** | [#150](https://github.com/kevmorpain/le-bureau-du-jdr/issues/150) | Coup critique : dés non doublés, plage de critique fixe |
+| **R1** | ✅ résolu ([#108](https://github.com/kevmorpain/le-bureau-du-jdr/issues/108), lot 5) | Avantage / désavantage appliqués au jet : états, épuisement, armure non maîtrisée (Force et Dextérité seulement), armure à Discrétion désavantageuse, arme lourde en Petite taille, effets d'avantage (Rage, Instinct sauvage, Brave…), et choix du joueur pour le prochain jet ([D22](./decisions.md#d22)) |
+| **R2** | ✅ résolu ([#150](https://github.com/kevmorpain/le-bureau-du-jdr/issues/150), lot 5) | Coup critique : dés doublés (Attaque sournoise, Châtiment divin compris), plage élargie du Champion (19, puis 18), dés de Critique brutal. Critique automatique (cible paralysée) : bascule manuelle dans le panneau des jets |
 | **R3** | ✅ résolu (2026-10-02) — [#151](https://github.com/kevmorpain/le-bureau-du-jdr/issues/151) | Épuisement : niveau 6 (mort, affiché) et réduction de 1 au repos long, si le personnage a mangé et bu (case de la confirmation) |
 | **R4** | ✅ résolu (2026-10-02) — [#152](https://github.com/kevmorpain/le-bureau-du-jdr/issues/152) | Concentration : le JS de CON existait ; rupture à 0 PV, sur un état d'incapacité et au lancement d'un autre sort à concentration, annoncée par un message |
 | **R5** | [#153](https://github.com/kevmorpain/le-bureau-du-jdr/issues/153) | Encombrement et capacité de charge |
@@ -203,8 +203,8 @@ présentation/interaction.
 | **U1** | 🚫 écarté (décision du 2026-09-14) — ne pas re-proposer sans décision de design | Mise en page mobile |
 | **U2** | [#180](https://github.com/kevmorpain/le-bureau-du-jdr/issues/180) | Lecture d'un sort : accordéon et effets structurés |
 | **U3** | [#181](https://github.com/kevmorpain/le-bureau-du-jdr/issues/181) | Effets d'objet rendus en JSON brut |
-| **U4** | [#182](https://github.com/kevmorpain/le-bureau-du-jdr/issues/182) | Aucun historique de jets |
-| **U5** | [#183](https://github.com/kevmorpain/le-bureau-du-jdr/issues/183) | Initiative non conservée |
+| **U4** | ✅ résolu ([#182](https://github.com/kevmorpain/le-bureau-du-jdr/issues/182), lot 5) | Historique des 100 derniers jets par fiche (navigateur), avec relance et copie |
+| **U5** | ✅ résolu ([#183](https://github.com/kevmorpain/le-bureau-du-jdr/issues/183), lot 5) | Initiative conservée et affichée (fiche, Mode Combat), compteur de round. Pas d'ordre de tour : la fiche ne connaît pas les autres combattants |
 | **U6** | [#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184) | Pas de suivi de durée (conditions, sorts) |
 | **U7** | ✅ résolu (2026-10-02) — [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Confirmation avant un repos long et avant la suppression d'un objet (`ConfirmActionModal`) ; l'annulation d'un repos reste sans objet (pas d'historique, U4) |
 | **U8** | [#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186) | Pas de recherche texte (sorts, inventaire) |
@@ -241,7 +241,7 @@ emplacement de niveau 3, c'est précisément à ce niveau qu'il faut pouvoir jet
 
 **Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
 *à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),
-R2 (le critique ne colore qu'un toast), R6 (résolu : les jets de mort suivent l'appareil),
+R2 (résolu au lot 5 : le critique double les dégâts), R6 (résolu : les jets de mort suivent l'appareil),
 R7 (l'économie d'action du Mode Combat est purement manuelle).
 
 ---
@@ -296,7 +296,7 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
 | **X4** | [#196](https://github.com/kevmorpain/le-bureau-du-jdr/issues/196) | Groupe / campagne |
 | **X5** | [#197](https://github.com/kevmorpain/le-bureau-du-jdr/issues/197) | Initiative de rencontre multi-participants |
 | **X6** | [#198](https://github.com/kevmorpain/le-bureau-du-jdr/issues/198) | Version anglaise |
-| **X7** | [#199](https://github.com/kevmorpain/le-bureau-du-jdr/issues/199) | Journal de session |
+| **X7** | [#199](https://github.com/kevmorpain/le-bureau-du-jdr/issues/199) (partiel : l'historique des jets est livré avec U4, lot 5) | Journal de session au-delà des jets et des notes libres |
 
 ---
 
@@ -305,8 +305,8 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
 1. **E1–E10 sont les moins chers.** La donnée est seedée et typée ; il manque un lecteur. Aucun
    schéma à toucher, aucune migration. C'est aussi la famille la plus visible pour le joueur
    (« mon trait est écrit sur la fiche mais il ne fait rien »).
-2. **R1 (avantage/désavantage) est le plus gros écart perçu.** La fiche *sait déjà* quand il y a
-   désavantage et l'affiche — mais le jet n'en tient pas compte. Incohérence interne visible.
+2. ~~**R1 (avantage/désavantage) est le plus gros écart perçu.**~~ ✅ **Résolu au lot 5** : le jet applique les
+   sources que la fiche affichait ([D22](./decisions.md#d22)).
 3. ~~**C1 (Défense sans armure) rend une valeur affichée fausse**~~ ✅ **Résolu au lot 4** : la CA sans armure
    et la vitesse sont calculées par des effets nommés ([D21](./decisions.md#d21)).
 4. ~~**C5–C7 (pools de ressources) réclament un concept neuf** dans le schéma.~~ ✅ **Résolu au lot 11** : pas de

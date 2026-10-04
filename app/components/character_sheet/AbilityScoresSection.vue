@@ -12,7 +12,7 @@
         >
           <button
             class="size-10 rounded-full bg-elevated flex items-center justify-center hover:ring-1 hover:ring-primary transition-all"
-            @click="roll?.(`Jet de ${$t(`ability_scores.${key}`)}`, abilityModifiers[key]!)"
+            @click="rollCheck(key)"
           >
             <span class="text-base font-bold">{{ formatModifier(abilityModifiers[key]!) }}</span>
           </button>
@@ -132,7 +132,7 @@
           </button>
           <span
             class="flex-1 text-xs cursor-pointer hover:text-primary transition-colors"
-            @click="roll?.(`JS ${$t(`ability_scores.${key}`)}`, savingThrows[key]!.modifier)"
+            @click="rollSave(key)"
           >
             Sauvegarde
           </span>
@@ -153,7 +153,7 @@
           <span
             class="text-xs font-mono cursor-pointer hover:text-primary transition-colors"
             :class="savingThrows[key]!.proficiency !== 'none' ? 'text-primary' : 'text-muted'"
-            @click="roll?.(`JS ${$t(`ability_scores.${key}`)}`, savingThrows[key]!.modifier)"
+            @click="rollSave(key)"
           >
             {{ formatModifier(savingThrows[key]!.modifier) }}
           </span>
@@ -182,7 +182,7 @@
             </button>
             <span
               class="flex-1 text-xs cursor-pointer hover:text-primary transition-colors truncate"
-              @click="roll?.($t(`skills.${key}.${skillKey}`), getSkillModifier(key, skillKey))"
+              @click="rollSkill(key, skillKey)"
             >
               {{ $t(`skills.${key}.${skillKey}`) }}
             </span>
@@ -193,7 +193,7 @@
             <span
               class="text-xs font-mono cursor-pointer hover:text-primary transition-colors"
               :class="getEffectiveProficiency(skillKey) !== 'none' ? 'text-primary' : 'text-muted'"
-              @click="roll?.($t(`skills.${key}.${skillKey}`), getSkillModifier(key, skillKey))"
+              @click="rollSkill(key, skillKey)"
             >
               {{ formatModifier(getSkillModifier(key, skillKey)) }}
             </span>
@@ -206,16 +206,21 @@
 
 <script lang="ts" setup>
 import type { ProficiencyLevel } from '~/composables/character/useCharacterAbilities'
+import type { RollFn } from '~/composables/useDiceRoller'
+import type { AbilityKey } from '~~/shared/rules/abilities'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
-defineProps<{
-  roll?: (label: string, modifier: number, sides?: number, count?: number) => number
+const props = defineProps<{
+  roll?: RollFn
 }>()
+
+const { t } = useI18n()
 
 const {
   abilityScores,
   abilityModifiers,
+  abilityCheckModifiers,
   abilitySkillKeys,
   getEffectiveProficiency,
   getSkillModifier,
@@ -225,6 +230,15 @@ const {
   skillDisadvantageReasons,
   armorStealthDisadvantage,
 } = useCharacterSheet(characterSheet)
+
+const rollCheck = (key: AbilityKey) =>
+  props.roll?.(`Jet de ${t(`ability_scores.${key}`)}`, abilityCheckModifiers.value[key]!, 20, 1, { d20: { type: 'check', ability: key } })
+
+const rollSave = (key: AbilityKey) =>
+  props.roll?.(`JS ${t(`ability_scores.${key}`)}`, savingThrows.value[key]!.modifier, 20, 1, { d20: { type: 'save', ability: key } })
+
+const rollSkill = (key: AbilityKey, skillKey: string) =>
+  props.roll?.(t(`skills.${key}.${skillKey}`), getSkillModifier(key, skillKey), 20, 1, { d20: { type: 'check', ability: key, skill: skillKey } })
 
 // Édition du score de base
 

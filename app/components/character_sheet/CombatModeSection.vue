@@ -1,12 +1,39 @@
 <template>
   <div class="space-y-4">
     <div class="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 space-y-3">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
         <span class="text-sm font-bold text-primary">Ton tour</span>
+        <UBadge
+          v-if="initiative"
+          color="primary"
+          variant="soft"
+          size="md"
+          :label="`Initiative ${initiative.total}`"
+        />
+        <div class="flex items-center gap-1">
+          <UButton
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            icon="i-heroicons:minus-16-solid"
+            aria-label="Round précédent"
+            :disabled="round <= 1"
+            @click="previousRound"
+          />
+          <span class="text-xs font-mono">Round {{ round }}</span>
+          <UButton
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            icon="i-heroicons:plus-16-solid"
+            aria-label="Round suivant"
+            @click="nextRound"
+          />
+        </div>
         <UButton
           size="xs"
           variant="ghost"
-          @click="resetTurn"
+          @click="newTurn"
         >
           Nouveau tour
         </UButton>
@@ -115,7 +142,7 @@
                 size="sm"
                 variant="soft"
                 color="primary"
-                @click="roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus)"
+                @click="rollAttack(weapon)"
               >
                 Attaque {{ formatModifier(weapon.attackBonus) }}
               </UButton>
@@ -255,10 +282,12 @@
 import { weaponPropertyLabels } from '~~/shared/utils/item'
 import { slotDamageDiceCount, type SlotDamage } from '~~/shared/rules/classResources'
 import { useClassResources } from '~/composables/character/useClassResources'
+import { useCombatTracker } from '~/composables/character/useCombatTracker'
+import type { RollFn } from '~/composables/useDiceRoller'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
-  roll?: (label: string, modifier: number, sides?: number, count?: number) => number
+  roll?: RollFn
 }>()
 
 const damageTypeLabels: Record<string, string> = {
@@ -293,9 +322,12 @@ const actionTypes = [
 
 const usedActions = ref({ action: false, bonus_action: false, reaction: false })
 
-const resetTurn = () => {
+const { initiative, round, nextRound, previousRound } = useCombatTracker(props.characterSheet.id)
+
+const newTurn = () => {
   usedActions.value = { action: false, bonus_action: false, reaction: false }
   movementUsed.value = 0
+  nextRound()
 }
 
 const movementUsed = ref(0)
@@ -331,14 +363,18 @@ const parseDice = (dice: string) => {
   return { count: c || 1, sides: s || 6 }
 }
 
+const rollAttack = (weapon: WeaponStat) => {
+  props.roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, extra: weapon.attackRollSources } })
+}
+
 const rollDamage = (weapon: WeaponStat) => {
   const { count, sides } = parseDice(weapon.damageDice)
   const label = weapon.usingTwoHanded ? `Dégâts (2 mains) — ${weapon.name}` : `Dégâts — ${weapon.name}`
-  props.roll?.(label, weapon.damageBonus, sides, count)
+  props.roll?.(label, weapon.damageBonus, sides, count, { damage: { weaponDie: { melee: !weapon.isRanged } } })
 }
 
 const rollExtraDice = (weapon: WeaponStat, dice: WeaponStat['extraDamageDice'][number]) => {
-  props.roll?.(`${dice.name} — ${weapon.name}`, 0, dice.sides, dice.count)
+  props.roll?.(`${dice.name} — ${weapon.name}`, 0, dice.sides, dice.count, { damage: {} })
 }
 
 // Châtiment divin : emplacements de sort de n'importe quel niveau (paladin ou autre) ; l'emplacement est dépensé au jet.
@@ -352,11 +388,11 @@ const rollSmite = (smite: SlotDamage, level: number) => {
   const slot = slots?.value.spellcasting[level]
   if (!slot || slot.current < 1) return
   slot.current -= 1
-  props.roll?.(`${smite.name} (niv. ${level})`, 0, smite.sides, slotDamageDiceCount(smite, level, smiteBonus.value))
+  props.roll?.(`${smite.name} (niv. ${level})`, 0, smite.sides, slotDamageDiceCount(smite, level, smiteBonus.value), { damage: {} })
 }
 
 const rollOffhand = (weapon: WeaponStat) => {
   const { count, sides } = parseDice(weapon.damageDice)
-  props.roll?.(`Dégâts main sec. — ${weapon.name}`, weapon.damageBonusOffhand, sides, count)
+  props.roll?.(`Dégâts main sec. — ${weapon.name}`, weapon.damageBonusOffhand, sides, count, { damage: { weaponDie: { melee: !weapon.isRanged } } })
 }
 </script>

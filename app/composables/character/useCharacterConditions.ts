@@ -16,6 +16,13 @@ type DefenseLevel = 'immunity' | 'resistance' | 'vulnerability'
 type DefenseEntry = { key: string, label: string, level: DefenseLevel, temporary?: boolean }
 type SaveStatus = { disadvantage: boolean, autoFail: boolean, reasons: string[] }
 
+const ADVANTAGE_ROLL_KINDS = {
+  saving_throw: { key: 'jds', label: 'JdS' },
+  check: { key: 'jdc', label: 'JdC' },
+  attack: { key: 'jda', label: 'JdA' },
+  initiative: { key: 'init', label: 'Initiative' },
+} as const
+
 const defenseLevelPriority: Record<DefenseLevel, number> = {
   vulnerability: 0,
   resistance: 1,
@@ -147,10 +154,10 @@ export const useCharacterConditions = (
         add(`imm:${effect.value}`, immunityLabels[effect.value], 'immunity')
       } else if (effect.type === 'advantage' && effect.value.condition) {
         const cond = effect.value.condition
-        const isSave = effect.value.rollType === 'saving_throw'
-        const label = `${cond in conditionLabels ? conditionLabels[cond as ConditionKey] : cond} (${isSave ? 'JdS' : 'JdC'})`
+        const kind = ADVANTAGE_ROLL_KINDS[effect.value.rollType] ?? ADVANTAGE_ROLL_KINDS.check
+        const label = `${cond in conditionLabels ? conditionLabels[cond as ConditionKey] : cond} (${kind.label})`
         // Distinct key so it coexists with damage resistance on the same condition
-        add(`${isSave ? 'jds' : 'jdc'}:${cond}`, label, 'resistance')
+        add(`${kind.key}:${cond}`, label, 'resistance')
       }
     }
 

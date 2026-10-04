@@ -5,6 +5,7 @@ type SaveKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
 export type ConditionMechanics = {
   speedZero?: boolean
   skillDisadvantage?: boolean
+  attackAdvantage?: boolean
   attackDisadvantage?: boolean
   saveDisadvantage?: SaveKey[]
   saveAutoFail?: SaveKey[]
@@ -26,7 +27,7 @@ export const conditionMechanics: Record<ConditionKey, ConditionMechanics> = {
   stunned: { speedZero: true, saveAutoFail: ['str', 'dex'], incapacitating: true },
   incapacitated: { incapacitating: true },
   unconscious: { speedZero: true, saveAutoFail: ['str', 'dex'], incapacitating: true },
-  invisible: {},
+  invisible: { attackAdvantage: true },
   paralyzed: { speedZero: true, saveAutoFail: ['str', 'dex'], incapacitating: true },
   petrified: { speedZero: true, saveAutoFail: ['str', 'dex'], resistAllDamage: true, immunePoison: true, incapacitating: true },
   exhaustion: {},

@@ -6,6 +6,7 @@ import { armorClassBonusParts, sumBonusParts, weaponBonusParts, type BonusPart, 
 import { activeItemEffectSources } from '~~/shared/rules/characterEffects'
 import { damageDiceAppliesToWeapon } from '~~/shared/rules/classResources'
 import type { ClassTraits } from '~~/shared/rules/classResources'
+import type { RollSource } from '~~/shared/rules/rolls'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -60,6 +61,9 @@ export interface WeaponStats {
   isLight: boolean
   usingTwoHanded: boolean
   warnings: string[]
+  isRanged: boolean
+  // Désavantages propres à l'arme, ajoutés à ceux de la fiche au jet d'attaque.
+  attackRollSources: RollSource[]
   rangeText: string | null
   magicBonus: number
   isProficient: boolean
@@ -361,9 +365,11 @@ export const useCharacterInventory = (
           : props.damage_dice
 
         const warnings: string[] = []
+        const attackRollSources: RollSource[] = []
         // Codes de taille EN BASE (T/S/M/L/H/G) — les littéraux FR « P »/« TP » ne matchaient jamais.
         if (isHeavy && hasHeavyWeaponDisadvantage(speciesSize.value)) {
           warnings.push('Désavantage : arme lourde + Petite taille')
+          attackRollSources.push({ label: 'Arme lourde + Petite taille', mode: 'disadvantage' })
         }
         if (isTwoHanded && equippedShield.value) {
           warnings.push('Impossible d\'utiliser cette arme avec un bouclier équipé')
@@ -391,6 +397,8 @@ export const useCharacterInventory = (
           isLight,
           usingTwoHanded: entry.usingTwoHanded ?? false,
           warnings,
+          isRanged,
+          attackRollSources,
           rangeText,
           magicBonus: entry.magicBonus ?? 0,
           isProficient: proficient,

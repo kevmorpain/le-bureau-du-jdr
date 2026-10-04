@@ -254,7 +254,7 @@
         </UFormField>
         <UFormField
           label="Condition"
-          hint="texte libre, affiché sur la fiche"
+          hint="vide : toujours ; sinon, à désigner au jet"
           class="col-span-2"
         >
           <UInput
@@ -348,7 +348,7 @@ const allEffectTypeOptions: { label: string, value: EffectType }[] = [
   { label: 'Caractéristique fixée', value: 'ability_score_set' },
   { label: 'Bonus aux jets d\'attaque d\'arme', value: 'weapon_attack_bonus' },
   { label: 'Bonus aux dégâts d\'arme', value: 'weapon_damage_bonus' },
-  { label: 'Avantage (jet de caractéristique ou de sauvegarde)', value: 'advantage' },
+  { label: 'Avantage (caractéristique, sauvegarde, attaque, initiative)', value: 'advantage' },
   { label: 'Bonus de vitesse', value: 'speed_bonus' },
   { label: 'Vitesse de nage', value: 'swimming_speed' },
   { label: 'Vitesse d\'escalade', value: 'climbing_speed' },
@@ -406,6 +406,8 @@ const weaponScopeOptions = [
 const advantageRollOptions = [
   { label: 'Jet de sauvegarde', value: 'saving_throw' },
   { label: 'Jet de caractéristique', value: 'check' },
+  { label: 'Jet d\'attaque', value: 'attack' },
+  { label: 'Initiative', value: 'initiative' },
 ]
 
 const savingThrowAbilityOptions = [

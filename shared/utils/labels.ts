@@ -35,6 +35,15 @@ export const conditionLabels: Record<ConditionKey, string> = {
   unconscious: 'Inconscient',
 }
 
+// Situations qu'un effet d'avantage peut conditionner, au-delà des états (`conditionLabels`) ; une clé inconnue
+// (effet d'objet saisi à la main) s'affiche telle quelle.
+export const rollSituationLabels: Record<string, string> = {
+  poison: 'Poison',
+  magic: 'Magie',
+  concentration: 'Concentration',
+  concentration_after_damage: 'Concentration (après des dégâts)',
+}
+
 export const immunityLabels: Record<ImmunityKey, string> = {
   sleep_magic: 'Sommeil magique',
 }

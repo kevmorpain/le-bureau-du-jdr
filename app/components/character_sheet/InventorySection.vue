@@ -600,9 +600,10 @@ import type {
 } from '~/composables/character/useCharacterInventory'
 import type { WeaponProperties, ArmorProperties, ToolProperties } from '~~/server/db/schema/items'
 import { toolTypeLabels, weaponPropertyLabels, weaponPropertyTooltips } from '~~/shared/utils/item'
+import type { RollFn } from '~/composables/useDiceRoller'
 
 const props = defineProps<{
-  roll?: (label: string, modifier: number, sides?: number, count?: number) => number
+  roll?: RollFn
 }>()
 
 const characterSheetModel = defineModel<CharacterSheet>('characterSheet', { required: true })
@@ -652,7 +653,7 @@ const parseDice = (dice: string): { count: number, sides: number } => {
 const rollAttack = (entryId: number) => {
   const w = weaponStatsByEntry.value.get(entryId)
   if (!w) return
-  props.roll?.(`Attaque — ${w.name}`, w.attackBonus)
+  props.roll?.(`Attaque — ${w.name}`, w.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, extra: w.attackRollSources } })
 }
 
 const rollDamage = (entryId: number) => {
@@ -660,14 +661,14 @@ const rollDamage = (entryId: number) => {
   if (!w) return
   const { count, sides } = parseDice(w.damageDice)
   const label = w.usingTwoHanded ? `Dégâts (2 mains) — ${w.name}` : `Dégâts — ${w.name}`
-  props.roll?.(label, w.damageBonus, sides, count)
+  props.roll?.(label, w.damageBonus, sides, count, { damage: { weaponDie: { melee: !w.isRanged } } })
 }
 
 const rollOffhand = (entryId: number) => {
   const w = weaponStatsByEntry.value.get(entryId)
   if (!w) return
   const { count, sides } = parseDice(w.damageDice)
-  props.roll?.(`Dégâts main sec. — ${w.name}`, w.damageBonusOffhand, sides, count)
+  props.roll?.(`Dégâts main sec. — ${w.name}`, w.damageBonusOffhand, sides, count, { damage: { weaponDie: { melee: !w.isRanged } } })
 }
 
 const slideoverOpen = ref(false)

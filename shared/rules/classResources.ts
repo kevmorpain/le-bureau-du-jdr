@@ -138,6 +138,7 @@ export interface ClassTraits {
   attacksPerAction: number
   weaponDamageDice: WeaponDamageDice[]
   meleeStrengthDamageBonus: number
+  criticalExtraDice: number
   slotDamage: SlotDamage[]
   beastShape: BeastShape | null
   resourceDie: Partial<Record<ResourceKey, number>>
@@ -153,6 +154,7 @@ export const deriveClassTraits = (
     attacksPerAction: 1,
     weaponDamageDice: [],
     meleeStrengthDamageBonus: 0,
+    criticalExtraDice: 0,
     slotDamage: [],
     beastShape: null,
     resourceDie: {},
@@ -177,6 +179,9 @@ export const deriveClassTraits = (
           break
         case 'melee_strength_damage_bonus':
           traits.meleeStrengthDamageBonus += evaluate(effect.value.amount, ctx)
+          break
+        case 'critical_extra_dice':
+          traits.criticalExtraDice = Math.max(traits.criticalExtraDice, evaluate(effect.value.dice, ctx))
           break
         case 'slot_damage_dice':
           traits.slotDamage.push(effect.value)

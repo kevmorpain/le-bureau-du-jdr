@@ -13,6 +13,21 @@ export const RAGE_DAMAGE_BONUS = lookup([2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 
 export const BARBARIAN_UNARMORED_DEFENSE = { base: 10, abilities: ['dex', 'con'] as AbilityScoreKey[], shield: true }
 export const BARBARIAN_QUICK_MOVEMENT = { amount: fixed(3), while: 'no_heavy_armor' as const }
 
+// AideDD, Barbare — Rage : avantage aux jets de caractéristique et de sauvegarde de Force (suspendu en armure lourde, comme le reste).
+export const RAGE_ADVANTAGES = [
+  { type: 'advantage' as const, value: { rollType: 'check' as const, ability: 'str' as AbilityScoreKey, condition: '' } },
+  { type: 'advantage' as const, value: { rollType: 'saving_throw' as const, ability: 'str' as AbilityScoreKey, condition: '' } },
+]
+
+// AideDD, Barbare — Instinct sauvage : avantage aux jets d'initiative.
+export const FERAL_INSTINCT_ADVANTAGE = { type: 'advantage' as const, value: { rollType: 'initiative' as const, ability: 'all' as const, condition: '' } }
+
+// AideDD, Barbare : le bonus ne dépend pas de la rage (le seed disait « lors d'une rage »).
+export const BRUTAL_CRITICAL_DESCRIPTION = `À partir du niveau 9, vous pouvez lancer un dé de dégâts de votre arme en plus lorsque vous déterminez les dégâts supplémentaires que vous infligez sur un coup critique réussi avec une attaque au corps à corps. Ce bonus aux dégâts passe à deux dés au niveau 13 et à trois dés au niveau 17.`
+
+// AideDD, Barbare — Critique brutal : 1 dé de l'arme en plus au niveau 9, 2 au niveau 13, 3 au niveau 17.
+export const BRUTAL_CRITICAL_DICE = lookup([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3])
+
 export const barbareFeatures: FeatureDef[] = [
   {
     name: 'Rage',
@@ -39,6 +54,7 @@ La rage se termine si vous êtes inconscient ou si votre tour se termine et que 
         { type: 'damage_resistance', value: { damageType: 'piercing' } },
         { type: 'damage_resistance', value: { damageType: 'slashing' } },
         { type: 'melee_strength_damage_bonus', value: { amount: RAGE_DAMAGE_BONUS } },
+        ...RAGE_ADVANTAGES,
       ],
     },
   },
@@ -104,17 +120,17 @@ De plus, si vous êtes surpris au début du combat et que vous n'êtes pas incap
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [FERAL_INSTINCT_ADVANTAGE],
   },
   {
     name: 'Critique brutal',
-    description: `À partir du niveau 9, vous pouvez dépasser les limites normales de votre corps lors de combats brutaux. Lorsque vous effectuez un coup critique avec une attaque de corps à corps lors d'une rage, vous pouvez lancer un des dés de dégâts de l'attaque une fois de plus et l'ajouter aux dégâts supplémentaires du coup critique. Au niveau 13, ce bonus passe à deux dés supplémentaires, et au niveau 17, à trois dés supplémentaires.`,
+    description: BRUTAL_CRITICAL_DESCRIPTION,
     featureType: 'class_feature',
     levelRequired: 9,
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'critical_extra_dice', value: { dice: BRUTAL_CRITICAL_DICE } }],
   },
   {
     name: 'Rage implacable',

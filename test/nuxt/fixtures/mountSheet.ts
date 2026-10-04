@@ -51,6 +51,7 @@ export interface SheetScenario {
   speciesEffects?: Effect[]
   temporaryEffects?: { id: number, name: string, active: boolean, effects: Effect[] }[]
   worn?: (sheetId: number) => ReturnType<typeof inventoryEntry>[]
+  skills?: { skillKey: string, proficiencyLevel: 'proficient' | 'expert' }[]
 }
 
 // Un identifiant de fiche par scénario : useFetch met l'inventaire en cache par URL.
@@ -69,7 +70,7 @@ export const mountSheet = async (scenario: SheetScenario) => {
     baseAbilityScores: scenario.scores,
     classes: (scenario.classes ?? []).map(c => ({ ...c, isMain: true, class: { id: c.classId, name: 'Classe' }, subclass: null })),
     features: scenario.features ?? [],
-    skills: [],
+    skills: scenario.skills ?? [],
     abilityScoreImprovements: [],
     species: {
       name: 'Espèce',

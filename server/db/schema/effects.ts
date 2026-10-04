@@ -60,7 +60,9 @@ export type Effect
     | { type: 'ability_score_set', value: { ability: AbilityScoreKey, score: number } }
     | { type: 'asi_or_feat', value: Record<string, never> }
     | { type: 'action', value: BreathWeaponAction | RevivalAction }
-    | { type: 'advantage', value: { rollType: 'check' | 'saving_throw', ability: AbilityScoreKey | 'all', condition: string } }
+    // Sans `condition` : joue à tout jet visé (Rage, Instinct sauvage). Avec : seulement quand le joueur désigne la
+    // situation au jet (`shared/rules/rolls.ts`) — contre Effrayé, Poison, Magie…
+    | { type: 'advantage', value: { rollType: 'check' | 'saving_throw' | 'attack' | 'initiative', ability: AbilityScoreKey | 'all', condition: string } }
     | { type: 'choice', value: string }
     | { type: 'damage_resistance', value: { damageType: DamageTypeKey } }
     | { type: 'darkvision', value: { range: number } }
@@ -74,6 +76,17 @@ export type Effect
     | { type: 'other', value: Record<string, unknown> }
     | { type: 'proficiency', value: string }
     | { type: 'reroll', value: { rollType: 'd20', trigger: number } }
+    // Moitié du bonus de maîtrise aux jets de caractéristique qui n'y ajoutent pas déjà la maîtrise (Touche-à-tout :
+    // arrondi inférieur ; Athlète accompli : arrondi supérieur, Force / Dextérité / Constitution).
+    | { type: 'half_proficiency', value: { abilities: AbilityScoreKey[] | 'all', rounding: 'down' | 'up' } }
+    // Un résultat de d20 inférieur compte pour `minimum` aux jets de compétence maîtrisée (Savoir-faire).
+    | { type: 'proficient_check_minimum', value: { minimum: number } }
+    // Les attaques d'arme sont des coups critiques dès `from` sur le d20 (Critique amélioré : 19, supérieur : 18).
+    | { type: 'critical_range', value: { from: number } }
+    // Dés de l'arme ajoutés aux dégâts supplémentaires d'un critique au corps à corps (Critique brutal).
+    | { type: 'critical_extra_dice', value: { dice: Formula } }
+    // Réaction qui réduit de moitié les dégâts d'une attaque qui vous touche (Esquive instinctive).
+    | { type: 'halve_damage_reaction', value: Record<string, never> }
     // Accordée telle quelle (JS de classe) ou « au choix » tant que la caractéristique n'est pas décidée.
     | { type: 'saving_throw_proficiency', value: { ability: AbilityScoreKey } }
     | { type: 'saving_throw_proficiency_choice', value: { count: number, from?: ChoiceFrom<AbilityScoreKey> } }

@@ -75,7 +75,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     actionType: 'reaction',
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'halve_damage_reaction', value: {} }],
   },
   {
     name: 'Esquive totale',
@@ -95,7 +95,7 @@ En outre, vous comprenez un ensemble de signes et de symboles secrets utilisés 
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'proficient_check_minimum', value: { minimum: 10 } }],
   },
   {
     name: 'Perception aveugle',
