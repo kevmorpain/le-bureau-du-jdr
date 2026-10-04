@@ -1,4 +1,5 @@
 import { fixed, lookup } from '~~/shared/utils/formula'
+import type { AbilityScoreKey } from '../../schema/effects'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
@@ -7,6 +8,10 @@ export const barbareName = 'Barbare'
 // AideDD, Barbare — colonnes « Rages » et « Dégâts » (index = niveau - 1) ; illimitées au niveau 20 (Champion primitif).
 export const RAGES_PER_LONG_REST = lookup([2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6])
 export const RAGE_DAMAGE_BONUS = lookup([2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4])
+
+// AideDD, Barbare : la Défense sans armure admet un bouclier ; le Déplacement rapide ne cède qu'à l'armure lourde.
+export const BARBARIAN_UNARMORED_DEFENSE = { base: 10, abilities: ['dex', 'con'] as AbilityScoreKey[], shield: true }
+export const BARBARIAN_QUICK_MOVEMENT = { amount: fixed(3), while: 'no_heavy_armor' as const }
 
 export const barbareFeatures: FeatureDef[] = [
   {
@@ -45,7 +50,7 @@ La rage se termine si vous êtes inconscient ou si votre tour se termine et que 
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'unarmored_defense', value: BARBARIAN_UNARMORED_DEFENSE }],
   },
   {
     name: 'Attaque téméraire',
@@ -87,7 +92,7 @@ Vous avez l'avantage aux jets de sauvegarde de Dextérité contre les effets que
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'speed_bonus', value: BARBARIAN_QUICK_MOVEMENT }],
   },
   {
     name: 'Instinct sauvage',

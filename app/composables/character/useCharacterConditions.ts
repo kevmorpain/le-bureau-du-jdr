@@ -145,11 +145,12 @@ export const useCharacterConditions = (
         add(`cond:${cond}`, conditionLabels[cond], 'immunity')
       } else if (effect.type === 'immunity') {
         add(`imm:${effect.value}`, immunityLabels[effect.value], 'immunity')
-      } else if (effect.type === 'advantage' && effect.value.rollType === 'saving_throw') {
+      } else if (effect.type === 'advantage' && effect.value.condition) {
         const cond = effect.value.condition
-        const label = `${cond in conditionLabels ? conditionLabels[cond as ConditionKey] : cond} (JdS)`
+        const isSave = effect.value.rollType === 'saving_throw'
+        const label = `${cond in conditionLabels ? conditionLabels[cond as ConditionKey] : cond} (${isSave ? 'JdS' : 'JdC'})`
         // Distinct key so it coexists with damage resistance on the same condition
-        add(`jds:${cond}`, label, 'resistance')
+        add(`${isSave ? 'jds' : 'jdc'}:${cond}`, label, 'resistance')
       }
     }
 

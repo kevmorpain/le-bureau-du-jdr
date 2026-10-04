@@ -44,11 +44,11 @@ donnée est déjà là, il ne manque que la projection.
 | **E4** | ✅ résolu ([#134](https://github.com/kevmorpain/le-bureau-du-jdr/issues/134), lot 2) | Choix de langues d'espèce et de dons jamais proposé : points de choix `language` (Humain, Demi-elfe, Haut-elfe, Fadette), langues du don Linguiste |
 | **E5** | ✅ résolu ([#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107), lot 2) | Choix de compétences d'espèce jamais proposé : point de choix `skill` (Polyvalence du Demi-elfe) |
 | **E6** | ✅ résolu ([#135](https://github.com/kevmorpain/le-bureau-du-jdr/issues/135), lot 2) | Choix de sort d'espèce jamais proposé : point de choix `cantrip` du Haut-elfe |
-| **E7** | [#136](https://github.com/kevmorpain/le-bureau-du-jdr/issues/136) | Neutralisation de la pénalité d'armure lourde du Nain (`equipment_penalty`) sans effet |
+| **E7** | ✅ résolu ([#136](https://github.com/kevmorpain/le-bureau-du-jdr/issues/136), lot 4) | Neutralisation de la pénalité d'armure lourde du Nain (`equipment_penalty`) : lue par `armorSpeedPenalty` |
 | **E8** | [#137](https://github.com/kevmorpain/le-bureau-du-jdr/issues/137) | Vision étendue des manifestations (`sight_modifier`) jamais affichée |
 | **E9** | [#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138) | Modificateurs d'arme de pacte (`pact_weapon_modifier`) jamais appliqués |
 | **E10** | [#139](https://github.com/kevmorpain/le-bureau-du-jdr/issues/139) | `extra_damage` jamais appliqué, et écrit sous une autre forme par l'éditeur d'objet |
-| **E11** | [#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140) | Types d'effet absents de l'union (CA, JS, attaque, vitesses, avantage structuré) |
+| **E11** | ✅ résolu pour le périmètre « effets d'objet » ([#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140), lot 4) | Types d'effet absents de l'union : bonus de CA et de JS (`armor_class_bonus`, `saving_throw_bonus`), bonus d'attaque et de dégâts d'arme hors `magicBonus` (`weapon_attack_bonus`, `weapon_damage_bonus`, par portée), vitesses de nage / d'escalade / de creusement, bonus de vitesse (`speed_bonus`) ; l'éditeur d'objets propose aussi `advantage` avec sa condition en texte libre, affichée dans les défenses. **Non porté** : un avantage *appliqué* au jet (la `condition` reste du texte, jamais interprétée) — relève du moteur de jets (R1) |
 | **E12** | ✅ résolu ([#227](https://github.com/kevmorpain/le-bureau-du-jdr/issues/227), suite du lot 2) | Fadette : caractéristique d'incantation de la Magie des fées figée au Charisme — point de choix `spellcasting_ability` (migration 0122), lu sur la fiche pour les sorts d'espèce |
 | **E13** | [#235](https://github.com/kevmorpain/le-bureau-du-jdr/issues/235) | Ténacité naine (Nain des collines) : effet `hp_per_level` absent, PV max trop bas |
 
@@ -80,14 +80,14 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 
 | Code | Suivi | Sujet |
 |---|---|---|
-| **C1** | [#141](https://github.com/kevmorpain/le-bureau-du-jdr/issues/141) | Défense sans armure (Barbare, Moine) : CA fausse |
+| **C1** | ✅ résolu ([#141](https://github.com/kevmorpain/le-bureau-du-jdr/issues/141), lot 4) | Défense sans armure (Barbare, Moine) et Résistance draconique de l'Ensorceleur : effet `unarmored_defense`, meilleure source retenue ([D21](./decisions.md#d21)) |
 | **C2** | ✅ résolu ([#142](https://github.com/kevmorpain/le-bureau-du-jdr/issues/142), lot 11) | Attaque supplémentaire : effet `extra_attack` (Guerrier 2/3/4, Barbare, Moine, Paladin, Rôdeur, Collège de la vaillance), maximum entre classes (pas de cumul), affiché en Mode Combat |
 | **C3** | ✅ résolu ([#143](https://github.com/kevmorpain/le-bureau-du-jdr/issues/143), lot 11) | Attaque sournoise : effet `weapon_damage_dice` (niveau ÷ 2, arrondi au supérieur, d6), proposé sur les armes à finesse ou à distance, jeté à part ; même effet pour le Châtiment divin amélioré |
 | **C4** | ✅ résolu ([#144](https://github.com/kevmorpain/le-bureau-du-jdr/issues/144), lot 11) | Rage : compteur par niveau de barbare (illimité au 20), état « actif » (`character_features.active`), résistances et bonus de dégâts en vigueur tant qu'elle dure, suspendus par une armure lourde ; tout repos y met fin |
 | **C5** | ✅ résolu ([#145](https://github.com/kevmorpain/le-bureau-du-jdr/issues/145), lot 11) | Points de ki : réserve = niveau de moine, DD de ki, usages (Défense patiente, Déluge de coups, Déplacement aérien, Parade, Frappe étourdissante) |
 | **C6** | ✅ résolu ([#146](https://github.com/kevmorpain/le-bureau-du-jdr/issues/146), lot 11) | Points de sorcellerie : réserve = niveau d'ensorceleur, coûts de la Métamagie, conversion emplacement ⇄ points, emplacements créés (`character_spell_slots.created`, disparaissent au repos long), regain de 4 points au niveau 20 |
 | **C7** | ✅ résolu ([#147](https://github.com/kevmorpain/le-bureau-du-jdr/issues/147), lot 11) | Inspiration bardique (utilisations, dé d6→d12, repos court dès le 5), Conduit divin (réserve partagée Clerc/Paladin), Forme sauvage (utilisations, FP et durée, Cercle de la lune), Châtiment divin (dés par niveau d'emplacement), Imposition des mains (réserve), Fougue / Second souffle / Inflexible |
-| **C8** | [#148](https://github.com/kevmorpain/le-bureau-du-jdr/issues/148) | Déplacement rapide / sans armure : vitesse non augmentée |
+| **C8** | ✅ résolu ([#148](https://github.com/kevmorpain/le-bureau-du-jdr/issues/148), lot 4) | Déplacement rapide (+3 m sans armure lourde) et Déplacement sans armure du Moine (+3 m au 2, +4,5 au 6, +6 au 10, +7,5 au 14, +9 au 18) : effet `speed_bonus`. Le don Mobile (+3 m) était lui aussi sans effet |
 | **C9** | [#149](https://github.com/kevmorpain/le-bureau-du-jdr/issues/149) | Touche-à-tout, Talent fiable, Critique brutal, Esquive instinctive : non appliqués |
 | **C10** | [#231](https://github.com/kevmorpain/le-bureau-du-jdr/issues/231) | Capacités à repos déclaré mais sans compteur (~45 features) |
 | **C11** | [#232](https://github.com/kevmorpain/le-bureau-du-jdr/issues/232) | Options de Conduit divin et usages de ki de sous-classe : payés hors réserve |
@@ -116,7 +116,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | **R7** | [#155](https://github.com/kevmorpain/le-bureau-du-jdr/issues/155) | Économie d'action décorative en Mode Combat |
 | **R8** | ✅ résolu (2026-10-02), sauf une limite — [#156](https://github.com/kevmorpain/le-bureau-du-jdr/issues/156) | Repos long : PV temporaires vidés, jets de mort remis à zéro, épuisement réduit, charges d'objets à dés tirées au repos. **Non porté** : un seul repos long par période de 24 h (l'app n'a pas d'horloge de jeu) |
 | **R9** | ✅ résolu : maîtrises (B12 [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104)), prérequis non bloquants (B14 [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109)), compétences (#101) | Prérequis et maîtrises de multiclassage |
-| **R10** | [#157](https://github.com/kevmorpain/le-bureau-du-jdr/issues/157) | Force requise des armures lourdes jamais vérifiée |
+| **R10** | ✅ résolu ([#157](https://github.com/kevmorpain/le-bureau-du-jdr/issues/157), lot 4) | Force requise des armures lourdes : -3 m et avertissement au survol de la vitesse quand la Force est inférieure à la colonne Force |
 
 ---
 
@@ -126,7 +126,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 |---|---|---|
 | **O1** | [#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158) | Harmonisation : limite de 3 objets liés non bloquante |
 | **O2** | [#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159) | Poids et prix des objets |
-| **O3** | [#160](https://github.com/kevmorpain/le-bureau-du-jdr/issues/160) | Pénalité de vitesse des armures lourdes non appliquée |
+| **O3** | ✅ résolu ([#160](https://github.com/kevmorpain/le-bureau-du-jdr/issues/160), lot 4) | Pénalité de vitesse des armures lourdes : même règle que R10 (AideDD : seule une Force insuffisante réduit la vitesse) |
 | **O4** | [#161](https://github.com/kevmorpain/le-bureau-du-jdr/issues/161) | Munitions non décomptées |
 | **O5** | [#162](https://github.com/kevmorpain/le-bureau-du-jdr/issues/162) | Armes lancées et longue portée |
 | **O6** | [#163](https://github.com/kevmorpain/le-bureau-du-jdr/issues/163) | Objets magiques à effets actifs (une charge → un effet) |
@@ -307,9 +307,8 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
    (« mon trait est écrit sur la fiche mais il ne fait rien »).
 2. **R1 (avantage/désavantage) est le plus gros écart perçu.** La fiche *sait déjà* quand il y a
    désavantage et l'affiche — mais le jet n'en tient pas compte. Incohérence interne visible.
-3. **C1 (Défense sans armure) rend une valeur affichée fausse**, pas juste incomplète : la CA d'un
-   Barbare ou d'un Moine sans armure est fausse aujourd'hui. À traiter comme un bug si on veut
-   être strict.
+3. ~~**C1 (Défense sans armure) rend une valeur affichée fausse**~~ ✅ **Résolu au lot 4** : la CA sans armure
+   et la vitesse sont calculées par des effets nommés ([D21](./decisions.md#d21)).
 4. ~~**C5–C7 (pools de ressources) réclament un concept neuf** dans le schéma.~~ ✅ **Résolu au lot 11** : pas de
    concept neuf — `currentUses` (dépensé) + `maxUsesFormula` portent déjà une réserve ; le manque était les formules
    seedées, le niveau de la classe propriétaire et l'affichage par paquets. Voir [D20](./decisions.md#d20) et

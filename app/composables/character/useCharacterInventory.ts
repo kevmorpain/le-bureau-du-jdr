@@ -1,7 +1,8 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import { hasHeavyWeaponDisadvantage } from '~~/shared/rules/creatureSize'
 import { archeryAttackBonus, defenseAcBonus, duelingDamageBonus, twoWeaponOffhandUsesAbilityMod } from '~~/shared/rules/fightingStyleEffects'
-import { armorClassBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
+import { bestUnarmoredDefense } from '~~/shared/rules/armorClass'
+import { armorClassBonusParts, sumBonusParts, weaponBonusParts, type BonusPart, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { activeItemEffectSources } from '~~/shared/rules/characterEffects'
 import { damageDiceAppliesToWeapon } from '~~/shared/rules/classResources'
 import type { ClassTraits } from '~~/shared/rules/classResources'
@@ -64,6 +65,9 @@ export interface WeaponStats {
   isProficient: boolean
   // Part de `damageBonus` due à la Rage (arme de corps à corps maniée avec la Force).
   rageBonus: number
+  // Part de `attackBonus` / `damageBonus` due aux effets (capacités, objets, effets temporaires), source par source.
+  attackParts: BonusPart[]
+  damageParts: BonusPart[]
   // Dés ajoutés à l'attaque (Attaque sournoise, Châtiment divin amélioré) : jetés à part.
   extraDamageDice: ClassTraits['weaponDamageDice']
 }
@@ -214,11 +218,12 @@ export const useCharacterInventory = (
 
   // ─── Armor class ──────────────────────────────────────────────────────────
 
-  const acBonusParts = computed(() => armorClassBonusParts([
+  const bonusSources = computed<EffectSource[]>(() => [
     { label: 'Capacités', effects: deps?.allEffects.value ?? [] },
     ...activeItemSources.value,
     ...(deps?.temporaryEffectSources?.value ?? []),
-  ]))
+  ])
+  const acBonusParts = computed(() => armorClassBonusParts(bonusSources.value))
 
   const computedAC = computed<ArmorClassBreakdown>(() => {
     const dexMod = deps?.abilityModifiers.value.dex ?? 0
@@ -227,11 +232,12 @@ export const useCharacterInventory = (
     const effectsDetail = acBonusParts.value.map(p => ` + ${p.label} ${formatModifier(p.amount)}`).join('')
 
     if (!equippedBodyArmor.value) {
-      const base = 10 + dexMod
-      const total = base + shieldBonus + effectsBonus
+      const modifiers = deps?.abilityModifiers.value ?? {}
+      const unarmored = bestUnarmoredDefense(deps?.allEffects.value ?? [], modifiers, !!equippedShield.value)
+      const abilitiesDetail = unarmored.abilities.map(a => ` + ${a.toUpperCase()} ${formatModifier(modifiers[a] ?? 0)}`).join('')
       return {
-        total,
-        detail: `10 + DEX ${dexMod >= 0 ? '+' : ''}${dexMod}${shieldBonus ? ` + bouclier +${shieldBonus}` : ''}${effectsDetail}`,
+        total: unarmored.total + shieldBonus + effectsBonus,
+        detail: `${unarmored.base}${abilitiesDetail}${shieldBonus ? ` + bouclier +${shieldBonus}` : ''}${effectsDetail}`,
         hasShield: !!equippedShield.value,
       }
     }
@@ -335,15 +341,20 @@ export const useCharacterInventory = (
           equippedWeaponCount: equippedWeapons.value.length,
         })
 
-        const attackBonus = abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0) + archeryBonus
+        const attackParts = weaponBonusParts(bonusSources.value, 'attack', { isRanged })
+        const damageParts = weaponBonusParts(bonusSources.value, 'damage', { isRanged })
+        const effectAttackBonus = sumBonusParts(attackParts)
+        const effectDamageBonus = sumBonusParts(damageParts)
+
+        const attackBonus = abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0) + archeryBonus + effectAttackBonus
         // AideDD, Rage : le bonus vaut pour une attaque de corps à corps avec une arme utilisant la Force.
         const usesStrength = !isRanged && strMod >= (isFinesse ? dexMod : strMod)
         const rageBonus = usesStrength ? deps?.classTraits?.value.meleeStrengthDamageBonus ?? 0 : 0
-        const damageBonus = abilityMod + (entry.magicBonus ?? 0) + duelingBonus + rageBonus
+        const damageBonus = abilityMod + (entry.magicBonus ?? 0) + duelingBonus + rageBonus + effectDamageBonus
         // Dégâts main secondaire : normalement sans modificateur (sauf négatif, règle PHB) ; le
         // style Combat à deux armes ajoute le modificateur de caractéristique.
         const offhandMod = twoWeaponOffhandUsesAbilityMod(styles) ? abilityMod : (abilityMod < 0 ? abilityMod : 0)
-        const damageBonusOffhand = offhandMod + (entry.magicBonus ?? 0) + rageBonus
+        const damageBonusOffhand = offhandMod + (entry.magicBonus ?? 0) + rageBonus + effectDamageBonus
 
         const damageDice = isVersatile && entry.usingTwoHanded
           ? props.versatile_damage ?? props.damage_dice
@@ -384,6 +395,8 @@ export const useCharacterInventory = (
           magicBonus: entry.magicBonus ?? 0,
           isProficient: proficient,
           rageBonus,
+          attackParts,
+          damageParts,
           extraDamageDice: (deps?.classTraits?.value.weaponDamageDice ?? [])
             .filter(d => damageDiceAppliesToWeapon(d.weapons, { isRanged, isFinesse })),
         }

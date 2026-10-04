@@ -1,8 +1,18 @@
-import { fixed, variable } from '~~/shared/utils/formula'
+import { fixed, lookup, variable } from '~~/shared/utils/formula'
+import type { AbilityScoreKey } from '../../schema/effects'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
 export const moineName = 'Moine'
+
+export const MONK_UNARMORED_DEFENSE = { base: 10, abilities: ['dex', 'wis'] as AbilityScoreKey[], shield: false }
+
+// AideDD, Moine — colonne « Mouvement sans armure » (index = niveau - 1) : +3 m au niveau 2, +4,5 m au 6, +6 m au 10,
+// +7,5 m au 14, +9 m au 18 ; ni armure ni bouclier.
+export const MONK_UNARMORED_MOVEMENT = {
+  amount: lookup([0, 3, 3, 3, 3, 4.5, 4.5, 4.5, 4.5, 6, 6, 6, 6, 7.5, 7.5, 7.5, 7.5, 9, 9, 9]),
+  while: 'no_armor_no_shield' as const,
+}
 
 export const moineFeatures: FeatureDef[] = [
   {
@@ -13,7 +23,7 @@ export const moineFeatures: FeatureDef[] = [
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'unarmored_defense', value: MONK_UNARMORED_DEFENSE }],
   },
   {
     name: 'Arts martiaux',
@@ -69,7 +79,7 @@ Au niveau 9, vous pouvez vous déplacer sur les surfaces verticales et les liqui
     actionType: null,
     rechargeType: null,
     maxUsesFormula: null,
-    effects: [],
+    effects: [{ type: 'speed_bonus', value: MONK_UNARMORED_MOVEMENT }],
   },
   {
     name: 'Parade de projectiles',

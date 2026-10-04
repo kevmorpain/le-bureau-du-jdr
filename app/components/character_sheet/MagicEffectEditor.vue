@@ -121,11 +121,26 @@
         </UFormField>
       </div>
 
-      <div v-else-if="effect.type === 'walking_speed'">
-        <UFormField label="Bonus de vitesse (m)">
+      <div v-else-if="effect.type === 'speed_bonus'">
+        <UFormField label="Bonus de vitesse (m)" hint="négatif = malus">
+          <UInput
+            :model-value="fixedAmount((effect.value as SpeedBonusValue).amount)"
+            type="number"
+            :step="1.5"
+            :min="-30"
+            :max="30"
+            size="sm"
+            @update:model-value="(v) => { (effect.value as SpeedBonusValue).amount = fixed(Number(v)) }"
+          />
+        </UFormField>
+      </div>
+
+      <div v-else-if="['swimming_speed', 'climbing_speed', 'burrowing_speed'].includes(effect.type)">
+        <UFormField label="Vitesse (m)">
           <UInput
             :model-value="effect.value as number"
             type="number"
+            :step="1.5"
             :min="1"
             size="sm"
             @update:model-value="(v) => { effect.value = Number(v) }"
@@ -200,6 +215,56 @@
         </UFormField>
       </div>
 
+      <div
+        v-else-if="effect.type === 'weapon_attack_bonus' || effect.type === 'weapon_damage_bonus'"
+        class="grid grid-cols-2 gap-2"
+      >
+        <UFormField label="Armes concernées">
+          <USelect
+            v-model="(effect.value as WeaponBonusValue).weapons"
+            :items="weaponScopeOptions"
+            size="sm"
+          />
+        </UFormField>
+        <UFormField label="Bonus" hint="négatif = malus">
+          <UInput
+            v-model.number="(effect.value as WeaponBonusValue).amount"
+            type="number"
+            :min="-10"
+            :max="10"
+            size="sm"
+          />
+        </UFormField>
+      </div>
+
+      <div v-else-if="effect.type === 'advantage'" class="grid grid-cols-2 gap-2">
+        <UFormField label="Jets concernés">
+          <USelect
+            v-model="(effect.value as AdvantageValue).rollType"
+            :items="advantageRollOptions"
+            size="sm"
+          />
+        </UFormField>
+        <UFormField label="Caractéristique">
+          <USelect
+            v-model="(effect.value as AdvantageValue).ability"
+            :items="savingThrowAbilityOptions"
+            size="sm"
+          />
+        </UFormField>
+        <UFormField
+          label="Condition"
+          hint="texte libre, affiché sur la fiche"
+          class="col-span-2"
+        >
+          <UInput
+            v-model="(effect.value as AdvantageValue).condition"
+            placeholder="ex: contre l'effroi, dans le noir"
+            size="sm"
+          />
+        </UFormField>
+      </div>
+
       <div v-else-if="effect.type === 'passive_skill_bonus'" class="grid grid-cols-2 gap-2">
         <UFormField label="Compétence">
           <USelect
@@ -225,6 +290,7 @@
 <script lang="ts" setup>
 import type { Effect, EffectType, ExtractEffect } from '~~/server/db/schema/effects'
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
+import { fixed, fixedAmount } from '~~/shared/utils/formula'
 
 interface ExtraDamageValue {
   die_count_notation: string
@@ -234,6 +300,9 @@ interface ExtraDamageValue {
 type AbilityIncreaseValue = ExtractEffect<'ability_increase'>['value']
 type AbilityScoreSetValue = ExtractEffect<'ability_score_set'>['value']
 type SavingThrowBonusValue = ExtractEffect<'saving_throw_bonus'>['value']
+type SpeedBonusValue = ExtractEffect<'speed_bonus'>['value']
+type WeaponBonusValue = ExtractEffect<'weapon_attack_bonus'>['value']
+type AdvantageValue = ExtractEffect<'advantage'>['value']
 
 const props = withDefaults(defineProps<{
   modelValue: Effect[]
@@ -277,7 +346,13 @@ const allEffectTypeOptions: { label: string, value: EffectType }[] = [
   { label: 'Vulnérabilité aux dégâts', value: 'vulnerability' },
   { label: 'Augmentation de caractéristique', value: 'ability_increase' },
   { label: 'Caractéristique fixée', value: 'ability_score_set' },
-  { label: 'Bonus de vitesse', value: 'walking_speed' },
+  { label: 'Bonus aux jets d\'attaque d\'arme', value: 'weapon_attack_bonus' },
+  { label: 'Bonus aux dégâts d\'arme', value: 'weapon_damage_bonus' },
+  { label: 'Avantage (jet de caractéristique ou de sauvegarde)', value: 'advantage' },
+  { label: 'Bonus de vitesse', value: 'speed_bonus' },
+  { label: 'Vitesse de nage', value: 'swimming_speed' },
+  { label: 'Vitesse d\'escalade', value: 'climbing_speed' },
+  { label: 'Vitesse de creusement', value: 'burrowing_speed' },
   { label: 'Vision dans le noir', value: 'darkvision' },
   { label: 'Maîtrise d\'arme', value: 'weapon_proficiency' },
   { label: 'Maîtrise (armure/outil)', value: 'proficiency' },
@@ -322,6 +397,17 @@ const abilityOptions = [
   { label: 'Charisme', value: 'cha' },
 ]
 
+const weaponScopeOptions = [
+  { label: 'Toutes', value: 'all' },
+  { label: 'Corps à corps', value: 'melee' },
+  { label: 'Distance', value: 'ranged' },
+]
+
+const advantageRollOptions = [
+  { label: 'Jet de sauvegarde', value: 'saving_throw' },
+  { label: 'Jet de caractéristique', value: 'check' },
+]
+
 const savingThrowAbilityOptions = [
   { label: 'Tous', value: 'all' },
   ...abilityOptions,
@@ -335,7 +421,13 @@ const defaultValueForType = (type: string): unknown => {
     case 'vulnerability': return { damageType: 'fire' }
     case 'ability_increase': return { ability: 'str', amount: 2, max: ABILITY_SCORE_MAX }
     case 'ability_score_set': return { ability: 'str', score: 19 }
-    case 'walking_speed': return 9
+    case 'weapon_attack_bonus':
+    case 'weapon_damage_bonus': return { amount: 1, weapons: 'all' }
+    case 'advantage': return { rollType: 'saving_throw', ability: 'all', condition: '' }
+    case 'speed_bonus': return { amount: fixed(3) }
+    case 'swimming_speed':
+    case 'climbing_speed':
+    case 'burrowing_speed': return 9
     case 'darkvision': return { range: 18 }
     case 'weapon_proficiency': return 'simple_weapons'
     case 'proficiency': return 'light'

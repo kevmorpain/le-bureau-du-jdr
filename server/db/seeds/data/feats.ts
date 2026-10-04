@@ -1,6 +1,7 @@
 import type { Effect } from '../../schema/effects'
 import type { FeaturePrerequisite } from '../../schema/features'
 import type { Source } from '~~/shared/rules/source'
+import { fixed } from '~~/shared/utils/formula'
 
 export interface FeatSeed {
   name: string // Nom FR canonique (PHB 2014, trad. AideDD)
@@ -274,7 +275,7 @@ export const featsData: FeatSeed[] = [
     name: 'Mobile',
     description: 'Votre vitesse augmente de 3 m. Quand vous utilisez l\'action Foncer, le terrain difficile ne vous coûte aucun mouvement supplémentaire ce tour. Quand vous attaquez une créature en mêlée, elle ne provoque pas d\'attaque d\'opportunité de votre part ce tour.',
     effects: [
-      { type: 'walking_speed', value: 3 },
+      { type: 'speed_bonus', value: { amount: fixed(3) } },
       { type: 'other', value: { kind: 'mobile_no_opportunity_attacks' } },
     ],
   },

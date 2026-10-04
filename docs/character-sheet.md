@@ -91,9 +91,9 @@ manuel stocké par son libellé.
 ### Statistiques (`QuickStatsSection`)
 
 Bandeau horizontal compact avec 6 StatCards :
-- **CA** : computed depuis armure équipée + modificateur DEX + bouclier + `magicBonus` de l'armure/du bouclier + le style de combat **Défense** (+1 avec une armure de corps) + les effets `armor_class_bonus` (signés) des capacités, des objets actifs et des effets temporaires actifs (`shared/rules/effectBonuses.ts`). Le détail au survol nomme chaque source (« + Anneau de protection +1 »)
+- **CA** : computed depuis armure équipée (ou, sans armure de corps, la meilleure CA sans armure : `10 + DEX` ou un effet `unarmored_defense` — Barbare, Moine, Résistance draconique, `shared/rules/armorClass.ts`) + modificateur DEX + bouclier + `magicBonus` de l'armure/du bouclier + le style de combat **Défense** (+1 avec une armure de corps) + les effets `armor_class_bonus` (signés) des capacités, des objets actifs et des effets temporaires actifs (`shared/rules/effectBonuses.ts`). Le détail au survol nomme chaque source (« + Anneau de protection +1 »)
 - **Initiative** : modificateur DEX + effets `initiative_bonus` (dons, objets actifs, effets temporaires) (clic → lancer le dé)
-- **Vitesse** : espèce + conditions (entrave, paralysie…) en mètres (tooltip en cases)
+- **Vitesse** : vitesse de base de l'espèce (ou de la lignée) + effets `speed_bonus` (Déplacement rapide / sans armure, don Mobile, objets) − 3 m si l'armure lourde exige plus de Force que le personnage n'en a (sauf effet `equipment_penalty` du Nain), puis conditions (entrave, paralysie, épuisement…) ; en mètres, le détail et les cases au survol (`shared/rules/speed.ts`). Les vitesses de vol, de nage, d'escalade et de creusement (`flying_speed`, `swimming_speed`, `climbing_speed`, `burrowing_speed`) s'affichent dessous, sans s'additionner ni subir les bonus
 - **Perception passive** : 10 + modificateur Perception
 - **Maîtrise** : bonus de maîtrise purement computed depuis le niveau total
 - **Inspiration** : toggle `character_sheets.inspiration` (v-model → deep watch)

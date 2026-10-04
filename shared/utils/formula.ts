@@ -74,6 +74,7 @@ export function evaluate(formula: Formula, ctx: FormulaContext): number {
 }
 
 export const fixed = (value: number): Formula => ({ op: 'fixed', value })
+export const fixedAmount = (formula: Formula): number | undefined => (formula.op === 'fixed' ? formula.value : undefined)
 export const variable = (name: FormulaVar): Formula => ({ op: 'var', name })
 export const lookup = (table: number[]): Formula => ({ op: 'lookup', table })
 export const add = (left: Formula, right: Formula): Formula => ({ op: 'add', left, right })

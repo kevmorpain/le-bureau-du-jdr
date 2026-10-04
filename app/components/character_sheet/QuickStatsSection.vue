@@ -40,7 +40,7 @@
 
     <UTooltip
       class="flex-1"
-      :text="`${Math.round(effectiveSpeed / 1.5)} cases`"
+      :text="`${speedDetail} · ${Math.round(effectiveSpeed / 1.5)} cases`"
     >
       <StatCard
         label="Vitesse"
@@ -57,11 +57,12 @@
           {{ effectiveSpeed }}m
         </p>
         <p
-          v-if="flyingSpeed > 0"
+          v-for="extra in extraSpeeds"
+          :key="extra.label"
           class="text-[11px] font-semibold leading-none text-sky-400 mt-1"
-          title="Vitesse de vol"
+          :title="extra.title"
         >
-          {{ flyingSpeed }}m vol
+          {{ extra.speed }}m {{ extra.label }}
         </p>
         <ConditionWarning
           v-if="speedModifiers.length"
@@ -133,9 +134,20 @@ const {
   armorClass,
   initiativeBonus,
   effectiveSpeed,
+  speedDetail,
   flyingSpeed,
+  swimmingSpeed,
+  climbingSpeed,
+  burrowingSpeed,
   speedModifiers,
   passivePerception,
   proficiencyBonus,
 } = useCharacterSheet(characterSheet)
+
+const extraSpeeds = computed(() => [
+  { label: 'vol', title: 'Vitesse de vol', speed: flyingSpeed.value },
+  { label: 'nage', title: 'Vitesse de nage', speed: swimmingSpeed.value },
+  { label: 'escalade', title: 'Vitesse d\'escalade', speed: climbingSpeed.value },
+  { label: 'creusement', title: 'Vitesse de creusement', speed: burrowingSpeed.value },
+].filter(s => s.speed > 0))
 </script>

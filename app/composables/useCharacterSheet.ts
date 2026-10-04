@@ -3,8 +3,10 @@ import type { FormulaContext } from '~~/shared/utils/formula'
 import type { Effect } from '~~/server/db/schema/effects'
 import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, type FeatChoices } from '~~/shared/rules/characterEffects'
 import type { EffectSource } from '~~/shared/rules/effectBonuses'
-import { deriveClassTraits, featureUses, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
+import { deriveClassTraits, featureFormulaContext, featureUses, isFeatureUnlocked, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
 import type { OwnerClass } from '~~/shared/rules/classResources'
+import { armorSpeedPenalty, computeWalkingSpeed, speedBonusParts } from '~~/shared/rules/speed'
+import type { WornArmor } from '~~/shared/rules/speed'
 import type { ArmorProperties } from '~~/server/db/schema/items'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
@@ -248,11 +250,47 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   const allEffects = allEffectsForSpellcasting
 
-  // Vitesse de vol (ex. Fadette) — dérivée d'un effet `flying_speed` (trait d'espèce). 0 = pas de vol.
-  const flyingSpeed = computed<number>(() => {
-    const eff = allEffects.value.find(e => e.type === 'flying_speed')
-    return typeof eff?.value === 'number' ? eff.value : 0
+  // Vitesses de déplacement hors marche (vol de la Fadette, objets) : 0 = aucune ; elles ne s'additionnent pas.
+  const movementSpeed = (type: 'flying_speed' | 'swimming_speed' | 'climbing_speed' | 'burrowing_speed') =>
+    computed<number>(() => Math.max(0, ...allEffects.value.flatMap(e => (e.type === type ? [e.value] : []))))
+  const flyingSpeed = movementSpeed('flying_speed')
+  const swimmingSpeed = movementSpeed('swimming_speed')
+  const climbingSpeed = movementSpeed('climbing_speed')
+  const burrowingSpeed = movementSpeed('burrowing_speed')
+
+  // ─── Vitesse de marche : espèce + bonus − pénalité d'armure ──────────────
+
+  const wornArmor = computed<WornArmor>(() => ({
+    heavy: heavyArmorRef.value?.value ?? false,
+    body: !!inventoryLayer.equippedBodyArmor.value,
+    shield: !!inventoryLayer.equippedShield.value,
+  }))
+
+  const speedBonuses = computed(() => speedBonusParts([
+    { label: 'Espèce', effects: speciesEffects.value, context: formulaContext.value },
+    ...resourceFeatures.value
+      .filter(f => isFeatureUnlocked(f, ownerClasses.value))
+      .map(f => ({ label: f.name, effects: f.effects, context: featureFormulaContext(formulaContext.value, f, ownerClasses.value) })),
+    ...inventoryLayer.activeItemSources.value.map(s => ({ ...s, context: formulaContext.value })),
+  ], wornArmor.value))
+
+  const armorPenalty = computed(() => {
+    const armor = inventoryLayer.equippedBodyArmor.value
+    const props = armor?.item?.properties as ArmorProperties | undefined
+    return armorSpeedPenalty(
+      armor?.item && props ? { name: armor.item.name, armorType: props.armor_type, strengthRequirement: props.strength_requirement } : null,
+      abilities.abilityScores.value.str?.total ?? 10,
+      allEffects.value,
+    )
   })
+
+  const walkingSpeed = computed(() => computeWalkingSpeed(classes.speed.value, speedBonuses.value, armorPenalty.value))
+
+  const speedDetail = computed(() => [
+    `${classes.speed.value} m`,
+    ...speedBonuses.value.map(b => `${formatModifier(b.amount)} m ${b.label}`),
+    ...(armorPenalty.value ? [`-${armorPenalty.value.amount} m ${armorPenalty.value.source}`] : []),
+  ].join(' '))
 
   // ─── Maîtrises de langues et outils ──────────────────────────────────────
 
@@ -297,7 +335,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   const conditions = useCharacterConditions(characterSheet, {
     allEffects,
-    speed: classes.speed,
+    speed: walkingSpeed,
     abilityModifiers: abilities.abilityModifiers,
     hpPerLevelBonus: abilities.hpPerLevelBonus,
   })
@@ -336,6 +374,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     species: classes.species,
     speed: classes.speed,
     flyingSpeed,
+    swimmingSpeed,
+    climbingSpeed,
+    burrowingSpeed,
     speciesTraits: classes.speciesTraits,
     speciesEffects,
     characterLevel: classes.characterLevel,
@@ -388,7 +429,11 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     dragonbornAncestry: conditions.dragonbornAncestry,
     defenseEntries: conditions.defenseEntries,
     effectiveSpeed: conditions.effectiveSpeed,
-    speedModifiers: conditions.speedModifiers,
+    speedDetail,
+    speedModifiers: computed(() => [
+      ...(armorPenalty.value ? [armorPenalty.value.reason] : []),
+      ...conditions.speedModifiers.value,
+    ]),
     fullMaxHp: conditions.fullMaxHp,
     effectiveMaxHp: conditions.effectiveMaxHp,
     maxHitPointsFor: conditions.maxHitPointsFor,

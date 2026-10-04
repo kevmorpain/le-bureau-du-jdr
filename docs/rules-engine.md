@@ -222,6 +222,23 @@ Les dérivations pures — `deriveClassTraits`, `resourceGroups`, `restRecovery`
 Le seed et la migration 0120 portent les mêmes données ; `test/fixtures/classResourcePatches.ts` énumère les features concernées
 et `test/nuxt/classResourcesMigration.test.ts` garde l'égalité.
 
+### CA sans armure, vitesse et bonus fixes
+
+| Effet | Rôle |
+|---|---|
+| `unarmored_defense` `{ base, abilities, shield }` | CA sans armure de corps = `base` + modificateurs listés (Barbare 10 + DEX + CON, Moine 10 + DEX + SAG, Résistance draconique 13 + DEX) ; la meilleure source l'emporte, jamais la somme (`bestUnarmoredDefense`). `shield: false` : un bouclier la suspend (Moine) |
+| `speed_bonus` `{ amount: Formula, while? }` | bonus de vitesse de **marche** (Déplacement rapide, Déplacement sans armure, don Mobile, objets) ; `while` = `no_heavy_armor` ou `no_armor_no_shield` ; la formule se lit au niveau de la classe propriétaire |
+| `walking_speed` | vitesse de **base** absolue des traits d'espèce et de lignée ; jamais additionnée |
+| `swimming_speed` / `climbing_speed` / `burrowing_speed` / `flying_speed` | vitesses de déplacement hors marche ; la plus haute l'emporte, aucun bonus ne s'y applique |
+| `equipment_penalty` `{ penalty: 'speed', armor_type, override: true }` | neutralise la pénalité de Force des armures de ce type (Nain) |
+| `weapon_attack_bonus` / `weapon_damage_bonus` `{ amount, weapons: 'all' \| 'melee' \| 'ranged' }` | bonus fixe signé aux jets d'attaque / de dégâts de chaque arme équipée, en plus de son `magicBonus` ; capacités, objets actifs et effets temporaires (`weaponBonusParts`, `shared/rules/effectBonuses.ts`) ; le Mode Combat nomme les sources au survol |
+| `advantage` `{ rollType, ability, condition }` | `condition` est un texte libre, **jamais interprété** : l'effet s'affiche dans les défenses (JdS / JdC) sans modifier aucun jet |
+
+Pénalité d'armure (AideDD, Armures) : une armure dont `strength_requirement` dépasse le score de Force de la fiche retire 3 m
+(`armorSpeedPenalty`). Les fonctions pures sont dans `shared/rules/armorClass.ts` et `shared/rules/speed.ts` ; la fiche les
+assemble dans `useCharacterSheet` (base + bonus − pénalité, puis conditions). Seed et migration 0123 portent les mêmes données :
+`test/nuxt/armorClassSpeedMigration.test.ts` garde l'égalité.
+
 ## 5. Résolution
 
 Deux couches ([D10](./decisions.md#d10)) :

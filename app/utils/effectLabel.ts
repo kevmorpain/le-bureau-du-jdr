@@ -1,4 +1,6 @@
 import type { AbilityScoreKey, DamageTypeKey, Effect } from '~~/server/db/schema/effects'
+import type { WeaponBonusScope } from '~~/shared/rules/effectBonuses'
+import { fixedAmount } from '~~/shared/utils/formula'
 import { damageTypeLabels } from '~~/shared/utils/labels'
 import { ABILITY_SHORT } from '~~/app/data/character-builder'
 import { formatModifier } from './format'
@@ -7,9 +9,12 @@ import { formatModifier } from './format'
 const ability = (key: AbilityScoreKey) => ABILITY_SHORT[key] ?? key
 const damage = (key: DamageTypeKey) => damageTypeLabels[key] ?? key
 
+const WEAPON_SCOPE_SUFFIX: Record<WeaponBonusScope, string> = { all: '', melee: ' (corps à corps)', ranged: ' (distance)' }
+
 // Malus : un bonus chiffré négatif, ou une vulnérabilité.
 export const isEffectMalus = (effect: Effect): boolean => {
   if (effect.type === 'vulnerability') return true
+  if (effect.type === 'speed_bonus') return (fixedAmount(effect.value.amount) ?? 0) < 0
   const v = effect.value
   return typeof v === 'object' && 'amount' in v && typeof v.amount === 'number' && v.amount < 0
 }
@@ -21,6 +26,15 @@ export const effectLabel = (effect: Effect): string => {
       const target = effect.value.ability === 'all' ? '(tous)' : ability(effect.value.ability)
       return `${formatModifier(effect.value.amount)} JS ${target}`
     }
+    case 'weapon_attack_bonus':
+      return `${formatModifier(effect.value.amount)} attaque${WEAPON_SCOPE_SUFFIX[effect.value.weapons]}`
+    case 'weapon_damage_bonus':
+      return `${formatModifier(effect.value.amount)} dégâts${WEAPON_SCOPE_SUFFIX[effect.value.weapons]}`
+    case 'advantage': {
+      const roll = effect.value.rollType === 'check' ? 'JdC' : 'JdS'
+      const target = effect.value.ability === 'all' ? '' : ` ${ability(effect.value.ability)}`
+      return `Avantage ${roll}${target}${effect.value.condition ? ` : ${effect.value.condition}` : ''}`
+    }
     case 'spell_save_dc_bonus': return `${formatModifier(effect.value.amount)} DD des sorts`
     case 'spell_attack_bonus': return `${formatModifier(effect.value.amount)} attaque des sorts`
     case 'initiative_bonus': return `${formatModifier(effect.value.amount)} initiative`
@@ -29,7 +43,15 @@ export const effectLabel = (effect: Effect): string => {
       const skill = effect.value.skill === 'investigation' ? 'Investigation' : 'Perception'
       return `${formatModifier(effect.value.amount)} ${skill} passive`
     }
-    case 'walking_speed': return `+${effect.value} m de vitesse`
+    case 'walking_speed': return `Vitesse ${effect.value} m`
+    case 'speed_bonus': {
+      const amount = fixedAmount(effect.value.amount)
+      return amount === undefined ? 'Vitesse (selon le niveau)' : `${formatModifier(amount)} m de vitesse`
+    }
+    case 'swimming_speed': return `Nage ${effect.value} m`
+    case 'climbing_speed': return `Escalade ${effect.value} m`
+    case 'burrowing_speed': return `Creusement ${effect.value} m`
+    case 'unarmored_defense': return `CA sans armure ${effect.value.base} + ${effect.value.abilities.map(ability).join(' + ')}`
     case 'darkvision': return `Vision dans le noir ${effect.value.range} m`
     case 'ability_increase': {
       const max = typeof effect.value.max === 'number' ? ` (max ${effect.value.max})` : ''

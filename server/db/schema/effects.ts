@@ -3,6 +3,8 @@ import type { AbilityKey } from '~~/shared/rules/abilities'
 import type { DamageType } from '~~/shared/rules/damageTypes'
 import type { SkillKey } from '~~/shared/rules/skills'
 import type { ResourceKey } from '~~/shared/rules/classResources'
+import type { SpeedBonusCondition } from '~~/shared/rules/speed'
+import type { WeaponBonusScope } from '~~/shared/rules/effectBonuses'
 import type { Formula } from '~~/shared/utils/formula'
 import type { RechargeType } from './features'
 
@@ -100,6 +102,17 @@ export type Effect
     // Bonus fixes signés (Anneau de protection : +1 CA et JS ; un malus s'écrit en négatif).
     | { type: 'armor_class_bonus', value: { amount: number } }
     | { type: 'saving_throw_bonus', value: { ability: AbilityScoreKey | 'all', amount: number } }
+    // Bonus fixes signés aux jets d'attaque / de dégâts d'arme, hors `magicBonus` de l'arme (Bracelets d'archerie).
+    | { type: 'weapon_attack_bonus', value: { amount: number, weapons: WeaponBonusScope } }
+    | { type: 'weapon_damage_bonus', value: { amount: number, weapons: WeaponBonusScope } }
+    // CA sans armure de corps : `base` + les modificateurs listés ; la meilleure source l'emporte (Défense sans
+    // armure, Résistance draconique). `shield: false` : le bouclier la suspend (Moine).
+    | { type: 'unarmored_defense', value: { base: number, abilities: AbilityScoreKey[], shield: boolean } }
+    // Bonus de vitesse de marche (`walking_speed` est la vitesse de BASE, absolue). `while` le suspend selon l'armure portée.
+    | { type: 'speed_bonus', value: { amount: Formula, while?: SpeedBonusCondition } }
+    | { type: 'swimming_speed', value: number }
+    | { type: 'climbing_speed', value: number }
+    | { type: 'burrowing_speed', value: number }
     // Les `Formula` des effets ci-dessous s'évaluent au niveau de la classe qui porte la feature
     // (`shared/rules/classResources.ts`), jamais à celui de la classe principale.
     // Attaques par action Attaquer ; les sources ne se cumulent pas (AideDD, Multiclassage).

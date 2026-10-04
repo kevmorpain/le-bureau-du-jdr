@@ -107,17 +107,22 @@
             />
           </UTooltip>
           <div class="flex gap-1 flex-wrap">
-            <UButton
-              size="sm"
-              variant="soft"
-              color="primary"
-              @click="roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus)"
-            >
-              Attaque {{ formatModifier(weapon.attackBonus) }}
-            </UButton>
             <UTooltip
-              :text="weapon.rageBonus ? `dont ${formatModifier(weapon.rageBonus)} de Rage` : ''"
-              :disabled="!weapon.rageBonus"
+              :text="bonusBreakdown(weapon.attackParts)"
+              :disabled="!weapon.attackParts.length"
+            >
+              <UButton
+                size="sm"
+                variant="soft"
+                color="primary"
+                @click="roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus)"
+              >
+                Attaque {{ formatModifier(weapon.attackBonus) }}
+              </UButton>
+            </UTooltip>
+            <UTooltip
+              :text="bonusBreakdown([...(weapon.rageBonus ? [{ label: 'Rage', amount: weapon.rageBonus }] : []), ...weapon.damageParts])"
+              :disabled="!weapon.rageBonus && !weapon.damageParts.length"
             >
               <UButton
                 size="sm"
@@ -261,6 +266,9 @@ const damageTypeLabels: Record<string, string> = {
   lightning: 'foudre', necrotic: 'nécrotique', piercing: 'perçant', poison: 'poison',
   psychic: 'psychique', radiant: 'radiant', slashing: 'tranchant', thunder: 'tonnerre',
 }
+
+const bonusBreakdown = (parts: { label: string, amount: number }[]) =>
+  `dont ${parts.map(p => `${formatModifier(p.amount)} ${p.label}`).join(', ')}`
 
 const csRef = toRef(props, 'characterSheet')
 const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups } = useCharacterSheet(csRef)
