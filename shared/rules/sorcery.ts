@@ -1,4 +1,3 @@
-// AideDD, Ensorceleur › Source de magie › Flexibilité des sorts.
 export const SORCERY_SLOT_COST: Readonly<Record<number, number>> = { 1: 2, 2: 3, 3: 5, 4: 6, 5: 7 }
 
 export const SORCERY_MAX_CREATED_SLOT_LEVEL = 5

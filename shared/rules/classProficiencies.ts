@@ -8,7 +8,7 @@ import { TOOL_CATEGORIES } from './tools'
 export interface ProficiencySet {
   armor: string[]
   weapon: string[]
-  // Outils FIXES (ligne « Outils » des pages de classe AideDD).
+  // Outils FIXES (ligne « Outils » des pages de classe).
   tools: string[]
   // Outils AU CHOIX (Barde, Moine) : point de choix `tool` sur le porteur.
   toolChoice?: { count: number, from: string[] }
@@ -16,7 +16,7 @@ export interface ProficiencySet {
 
 export interface ClassProficiencies extends ProficiencySet {
   savingThrows: AbilityKey[]
-  // Sous-ensemble reçu en REJOIGNANT la classe par multiclassage (AideDD, tableau des maîtrises du
+  // Sous-ensemble reçu en REJOIGNANT la classe par multiclassage (tableau des maîtrises du
   // multiclassage). La compétence éventuelle est `classes.multiclass_skill_count`.
   multiclass: ProficiencySet
 }

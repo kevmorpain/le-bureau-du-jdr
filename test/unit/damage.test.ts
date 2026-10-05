@@ -10,7 +10,7 @@ import {
   type HitPointState,
 } from '../../shared/rules/damage'
 
-// Valeurs vérifiées contre AideDD, Combat : mort instantanée si les dégâts restants à 0 PV atteignent le maximum
+// Valeurs vérifiées à la main : mort instantanée si les dégâts restants à 0 PV atteignent le maximum
 // (clerc de 12 PV max à 6 PV qui subit 18 dégâts : il meurt) ; à 0 PV, des dégâts comptent un échec (deux sur un
 // critique) ; 20 naturel : 1 PV ; 1 naturel : deux échecs ; les soins ne redonnent pas de PV temporaires.
 

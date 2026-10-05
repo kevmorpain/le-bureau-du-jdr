@@ -7,7 +7,7 @@ export const moineName = 'Moine'
 
 export const MONK_UNARMORED_DEFENSE = { base: 10, abilities: ['dex', 'wis'] as AbilityScoreKey[], shield: false }
 
-// AideDD, Moine — colonne « Mouvement sans armure » (index = niveau - 1) : +3 m au niveau 2, +4,5 m au 6, +6 m au 10,
+// Moine — colonne « Mouvement sans armure » (index = niveau - 1) : +3 m au niveau 2, +4,5 m au 6, +6 m au 10,
 // +7,5 m au 14, +9 m au 18 ; ni armure ni bouclier.
 export const MONK_UNARMORED_MOVEMENT = {
   amount: lookup([0, 3, 3, 3, 3, 4.5, 4.5, 4.5, 4.5, 6, 6, 6, 6, 7.5, 7.5, 7.5, 7.5, 9, 9, 9]),
@@ -53,7 +53,7 @@ DD de sauvegarde de ki = 8 + votre bonus de maîtrise + votre modificateur de Sa
     levelRequired: 2,
     actionType: null,
     rechargeType: 'short_rest',
-    // AideDD, Moine : « votre niveau de moine détermine le nombre de points ki » (colonne Ki = niveau).
+    // Moine : « votre niveau de moine détermine le nombre de points ki » (colonne Ki = niveau).
     maxUsesFormula: variable('class_level'),
     effects: [],
     meta: {

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { anySchoolSpellsGained, casterSlugOf, effectiveCasterType, subclassCastingOf } from '../../shared/rules/subclassCasting'
 import { cantripsKnownAt, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
 
-// Chevalier occulte et Escroc arcanique : tables vérifiées sur AideDD (Guerrier, Roublard).
+// Chevalier occulte et Escroc arcanique : tables vérifiées (Guerrier, Roublard).
 
 describe('sous-classes lanceuses du tiers', () => {
   it('reconnues par nom, seulement sur leur classe', () => {

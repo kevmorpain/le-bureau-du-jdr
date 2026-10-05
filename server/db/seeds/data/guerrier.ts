@@ -6,7 +6,7 @@ import { asiFeatures } from './asi'
 
 export const guerrierName = 'Guerrier'
 
-// AideDD, Guerrier (index = niveau - 1) : Fougue (1) dès le niveau 2, (2) au 17 ; Inflexible (1) au 9, (2) au 13, (3) au 17 ;
+// Guerrier (index = niveau - 1) : Fougue (1) dès le niveau 2, (2) au 17 ; Inflexible (1) au 9, (2) au 13, (3) au 17 ;
 // Attaque supplémentaire : 2 attaques au 5, 3 au 11, 4 au 20.
 const ACTION_SURGE_USES = lookup([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2])
 const INDOMITABLE_USES = lookup([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3])
@@ -75,7 +75,7 @@ export const guerrierFeatures: FeatureDef[] = [
   },
 ]
 
-// AideDD, Champion (Athlète accompli) : la moitié du bonus de maîtrise, arrondie au SUPÉRIEUR, aux jets de Force, Dextérité et Constitution.
+// Champion (Athlète accompli) : la moitié du bonus de maîtrise, arrondie au SUPÉRIEUR, aux jets de Force, Dextérité et Constitution.
 export const REMARKABLE_ATHLETE = { abilities: ['str', 'dex', 'con'] as AbilityScoreKey[], rounding: 'up' as const }
 
 export const guerrierSubclasses: SubclassDef[] = [

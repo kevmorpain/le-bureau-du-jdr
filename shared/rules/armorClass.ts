@@ -12,7 +12,7 @@ const candidate = (base: number, abilities: AbilityScoreKey[], modifiers: Record
   total: base + abilities.reduce((sum, a) => sum + (modifiers[a] ?? 0), 0),
 })
 
-// AideDD, Barbare / Moine : on ne cumule pas plusieurs sources de CA sans armure, on retient la meilleure ;
+// Barbare / Moine : on ne cumule pas plusieurs sources de CA sans armure, on retient la meilleure ;
 // `10 + DEX` (la règle de base) reste toujours disponible.
 export const bestUnarmoredDefense = (
   effects: readonly Effect[],

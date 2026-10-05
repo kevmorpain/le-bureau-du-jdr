@@ -60,7 +60,7 @@ export type OptionSource =
   | { type: 'proficient_skills' }
   | { type: 'proficient_weapons' } // maîtrise d'armes 5.5 : N armes parmi celles déjà maîtrisées
   | { type: 'languages', from?: string[] }
-  // `orLanguages` : une langue au choix peut remplacer l'outil (Marchand de guilde, AideDD).
+  // `orLanguages` : une langue au choix peut remplacer l'outil (Marchand de guilde).
   | { type: 'tools', from?: string[], orLanguages?: boolean }
   | { type: 'abilities', from: AbilityKey[], distributions: ('2+1' | '1+1+1')[] }
   | { type: 'spells', spellClass: string, maxLevel?: number, cantripsOnly?: boolean }

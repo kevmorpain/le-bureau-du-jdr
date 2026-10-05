@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { duplicateCount, duplicatedValues, proficiencyDuplicates, replacementsDueAtLevelUp } from '../../shared/rules/duplicateProficiencies'
 import type { ResolvedChoice } from '../../shared/rules/resolve'
 
-// AideDD, Historiques : une même maîtrise reçue de deux sources ouvre le choix d'une autre de même nature.
+// Historiques : une même maîtrise reçue de deux sources ouvre le choix d'une autre de même nature.
 
 describe('maîtrises reçues en double', () => {
   it('Roublard Criminel : les outils de voleur viennent de la classe et de l\'historique', () => {

@@ -12,7 +12,7 @@ import { DUPLICATE_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/p
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
 import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
-// Remplacement d'une maîtrise reçue de deux sources fixes (AideDD, Historiques) : point de choix général dont
+// Remplacement d'une maîtrise reçue de deux sources fixes : point de choix général dont
 // le nombre dû vient du personnage. Migration 0112 + validation à la création + purge au changement d'historique.
 
 const MIGRATION = '0112_duplicate_proficiency_replacement.sql'

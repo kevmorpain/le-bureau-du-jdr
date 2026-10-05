@@ -13,7 +13,7 @@ export function fixedProficiencies(entries: string[]): string[] {
 }
 
 // Entrées d'outils « au choix » des historiques → options (noms du catalogue d'outils). Le Marchand de
-// guilde prend les outils de navigateur OU une langue (AideDD, Artisan de guilde, variante).
+// guilde prend les outils de navigateur OU une langue (Artisan de guilde, variante).
 const TOOL_CHOICE_SOURCES: Record<string, OptionSource> = {
   'Jeux au choix ×1': { type: 'tools', from: TOOL_CATEGORIES['Jeux']! },
   'Instrument de musique au choix': { type: 'tools', from: TOOL_CATEGORIES['Instruments de musique']! },

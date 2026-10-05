@@ -5,7 +5,7 @@ import DashboardHeaderSection from '../../app/components/character_sheet/Dashboa
 import InventorySection from '../../app/components/character_sheet/InventorySection.vue'
 
 // U7 : le repos long et la suppression d'un objet partaient au premier clic. Ils demandent désormais confirmation ; la
-// confirmation du repos long porte la case « mangé et bu » quand le personnage est épuisé (AideDD, Conditions).
+// confirmation du repos long porte la case « mangé et bu » quand le personnage est épuisé.
 
 const SHEET_ID = 9302
 const entry = {

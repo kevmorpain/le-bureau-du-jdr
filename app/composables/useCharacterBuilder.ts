@@ -422,7 +422,7 @@ export function useCharacterBuilder() {
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
   const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))
-  // Remplacements de maîtrises reçues en double : facultatifs (« il peut choisir », AideDD).
+  // Remplacements de maîtrises reçues en double : facultatifs (« il peut choisir »).
   const replacementChoices = computed(() => genericChoices.value.filter(c => c.global))
 
   const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []

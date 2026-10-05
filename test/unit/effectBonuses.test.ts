@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { armorClassBonusParts, savingThrowBonusParts, sumBonusParts, weaponBonusParts } from '../../shared/rules/effectBonuses'
 
-// Anneau de protection (AideDD, objets magiques) : « Vous obtenez un bonus de +1 à la CA et aux jets de
+// Anneau de protection : « Vous obtenez un bonus de +1 à la CA et aux jets de
 // sauvegarde lorsque vous portez cet anneau. » Même formulation pour la Cape de protection.
 const ring = {
   label: 'Anneau de protection',

@@ -353,7 +353,7 @@ export const useCharacterInventory = (
         const effectDamageBonus = sumBonusParts(damageParts)
 
         const attackBonus = abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0) + archeryBonus + effectAttackBonus
-        // AideDD, Rage : le bonus vaut pour une attaque de corps à corps avec une arme utilisant la Force.
+        // Rage : le bonus vaut pour une attaque de corps à corps avec une arme utilisant la Force.
         const usesStrength = !isRanged && strMod >= (isFinesse ? dexMod : strMod)
         const rageBonus = usesStrength ? deps?.classTraits?.value.meleeStrengthDamageBonus ?? 0 : 0
         const damageBonus = abilityMod + (entry.magicBonus ?? 0) + duelingBonus + rageBonus + effectDamageBonus

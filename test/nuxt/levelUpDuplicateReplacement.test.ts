@@ -10,7 +10,7 @@ import { seedDuplicateReplacement } from '../../server/db/seeds/lib/seedDuplicat
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
 import { bootstrapGoldenDb, OWNER, CLASS, SPECIES, BACKGROUND } from './fixtures/goldenMaster'
 
-// AideDD, Historiques : une maîtrise reçue de deux sources peut être remplacée. Au level-up, c'est le
+// Historiques : une maîtrise reçue de deux sources peut être remplacée. Au level-up, c'est le
 // multiclassage vers une classe dont le porteur accorde une maîtrise déjà possédée qui ouvre un remplacement :
 // seul le surplus est demandé, et le serveur le valide comme il valide la création.
 

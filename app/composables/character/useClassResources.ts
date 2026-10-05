@@ -72,7 +72,7 @@ export const useClassResources = (
     }
   }
 
-  // AideDD, Ensorceleur › Flexibilité des sorts : un emplacement sacrifié rend autant de points que son niveau.
+  // Ensorceleur › Flexibilité des sorts : un emplacement sacrifié rend autant de points que son niveau.
   const convertSlotToPoints = async (group: ResourceGroup, level: number) => {
     const slot = spellSlots?.value.spellcasting[level]
     if (!slot || slot.current < 1) return

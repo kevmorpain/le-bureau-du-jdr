@@ -35,7 +35,7 @@ Les dégâts augmentent avec le niveau : 1d6 (niv 1), 2d6 (niv 3), 3d6 (niv 5), 
       type: 'weapon_damage_dice',
       value: {
         name: 'Attaque sournoise',
-        // AideDD, Roublard : 1d6 au niveau 1, +1d6 tous les deux niveaux (10d6 au niveau 19).
+        // Roublard : 1d6 au niveau 1, +1d6 tous les deux niveaux (10d6 au niveau 19).
         dice: ceil(div(variable('class_level'), fixed(2))),
         sides: 6,
         weapons: 'finesse_or_ranged',

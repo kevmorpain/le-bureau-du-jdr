@@ -380,7 +380,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     return concentratingSpell.value?.name ?? conditions.concentratingOn.value ?? 'Sort inconnu'
   })
 
-  // Lancer un sort à concentration met fin à la concentration en cours (AideDD, Concentration) : on le dit.
+  // Lancer un sort à concentration met fin à la concentration en cours : on le dit.
   const startConcentration = (spellId: number, spellName: string) => {
     const lost = conditions.concentratingSpellId.value === spellId ? null : concentrationName.value
     conditions.setConcentration(spellId)

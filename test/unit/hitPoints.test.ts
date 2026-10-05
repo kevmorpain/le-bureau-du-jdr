@@ -10,7 +10,7 @@ import {
   maxHitPoints,
 } from '../../shared/rules/hitPoints'
 
-// Valeurs vérifiées contre AideDD, « Au-delà du niveau 1 » : le dé de vie plus le modificateur de CON s'ajoute à
+// Valeurs vérifiées à la main (« Au-delà du niveau 1 ») : le dé de vie plus le modificateur de CON s'ajoute à
 // chaque niveau (minimum 1) ; la valeur fixe est la moyenne arrondie au supérieur ; quand le modificateur de CON
 // augmente de 1, le maximum augmente de 1 par niveau atteint (Bruenor : CON 17 → 18 au niveau 8, +8 PV).
 

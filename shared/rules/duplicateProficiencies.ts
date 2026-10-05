@@ -1,6 +1,6 @@
 import type { ResolvedChoice } from './resolve'
 
-// AideDD, Historiques : « Si un personnage gagne une même maîtrise de deux sources différentes, il peut choisir
+// Historiques : « Si un personnage gagne une même maîtrise de deux sources différentes, il peut choisir
 // une autre maîtrise de même nature (compétence ou outil) à la place. » Seules comptent les sources FIXES : un
 // doublon venu d'un choix s'évite en changeant ce choix.
 

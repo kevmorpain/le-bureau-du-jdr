@@ -1,6 +1,6 @@
 import type { Effect } from '../../schema/effects'
 
-// Sorts de domaine du Clerc et de serment du Paladin (AideDD, tableaux « sorts de domaine » et « sorts de
+// Sorts de domaine du Clerc et de serment du Paladin (tableaux « sorts de domaine » et « sorts de
 // serment » de chaque sous-classe) : toujours préparés, ils ne comptent pas dans la limite quotidienne.
 // Clé = niveau DE CLASSE auquel le sort est acquis.
 export type AlwaysPreparedTable = Record<number, readonly [string, string]>
@@ -81,7 +81,7 @@ export const PALADIN_OATH_SPELLS: Record<string, AlwaysPreparedTable> = {
   },
 }
 
-// Cercle de la terre du Druide (AideDD, « sorts de cercle ») : les sorts dépendent du terrain choisi en rejoignant le
+// Cercle de la terre du Druide : les sorts dépendent du terrain choisi en rejoignant le
 // cercle. Les clés du tableau sont les valeurs du choix `terrain`.
 export const DRUID_CIRCLE_SPELLS = {
   Arctique: {

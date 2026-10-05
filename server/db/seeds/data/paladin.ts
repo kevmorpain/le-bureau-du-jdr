@@ -28,7 +28,7 @@ Cette réserve se restaure après un repos long. Elle est sans effet sur les mor
     levelRequired: 1,
     actionType: 'action',
     rechargeType: 'long_rest',
-    // AideDD, Paladin : une réserve de points de vie égale à cinq fois le niveau de paladin.
+    // Paladin : une réserve de points de vie égale à cinq fois le niveau de paladin.
     maxUsesFormula: mul(variable('class_level'), fixed(5)),
     effects: [],
     meta: {
@@ -102,7 +102,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     levelRequired: 3,
     actionType: 'action',
     rechargeType: 'short_rest',
-    // Le Paladin n'a qu'une utilisation ; AideDD, Multiclassage : la réserve est partagée avec celle du Clerc.
+    // Le Paladin n'a qu'une utilisation ; Multiclassage : la réserve est partagée avec celle du Clerc.
     maxUsesFormula: fixed(1),
     effects: [],
     meta: { resource: 'channel_divinity' },

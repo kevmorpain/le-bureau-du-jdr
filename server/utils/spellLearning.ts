@@ -102,7 +102,7 @@ export async function learnedSpellsError(db: Db, input: LearnedSpellsInput): Pro
   return null
 }
 
-// AideDD (Barde, Ensorceleur, Occultiste, Rôdeur, Chevalier occulte, Escroc arcanique) : en gagnant un niveau dans
+// Barde, Ensorceleur, Occultiste, Rôdeur, Chevalier occulte, Escroc arcanique : en gagnant un niveau dans
 // la classe, on peut remplacer un sort connu de la classe par un autre de sa liste. Les sorts mineurs et les sorts
 // octroyés par autre chose (pacte, espèce, don) n'en font pas partie.
 export async function replacedSpellError(

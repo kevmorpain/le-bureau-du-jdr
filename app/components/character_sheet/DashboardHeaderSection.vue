@@ -208,7 +208,7 @@ const choicesFor = (key: PreferenceKey) => [
 const choose = (key: PreferenceKey, choice: Choice) => setPreference(key, choice === 'inherit' ? null : choice === 'on')
 
 const confirmingLongRest = ref(false)
-// AideDD, Conditions : l'épuisement ne baisse « qu'à condition que la créature ait aussi mangé et bu ».
+// Conditions : l'épuisement ne baisse « qu'à condition que la créature ait aussi mangé et bu ».
 const fedAndWatered = ref(true)
 const askLongRest = () => {
   fedAndWatered.value = true

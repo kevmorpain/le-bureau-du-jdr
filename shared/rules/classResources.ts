@@ -172,7 +172,7 @@ export const deriveClassTraits = (
     for (const effect of effects) {
       switch (effect.type) {
         case 'extra_attack':
-          // AideDD, Multiclassage : Attaque supplémentaire ne se cumule pas entre classes.
+          // Multiclassage : Attaque supplémentaire ne se cumule pas entre classes.
           traits.attacksPerAction = Math.max(traits.attacksPerAction, evaluate(effect.value.attacks, ctx))
           break
         case 'weapon_damage_dice':
@@ -249,7 +249,7 @@ const rechargeUpgrades = (features: readonly ResourceFeature[], classes: readonl
   unlockedEffects(features, classes).flatMap(f => f.effects.flatMap(e => (e.type === 'resource_regain' ? [e.value] : [])))
 
 // Un groupe par clé de réserve. `spent` se lit au plus haut des membres et s'écrit sur tous : le Conduit divin
-// du Clerc et celui du Paladin forment une seule réserve (AideDD, Multiclassage), de maximum le plus haut des deux.
+// du Clerc et celui du Paladin forment une seule réserve, de maximum le plus haut des deux.
 export const resourceGroups = (features: readonly ResourceFeature[], base: FormulaContext, classes: readonly OwnerClass[]): ResourceGroup[] => {
   const unlocked = unlockedEffects(features, classes)
   const regains = rechargeUpgrades(features, classes)

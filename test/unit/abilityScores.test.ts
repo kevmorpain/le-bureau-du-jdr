@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { resolveAbilityScore, type AbilityScoreInput } from '../../shared/rules/abilityScores'
 
-// Valeurs vérifiées à la main contre les textes AideDD : ASI et demi-dons plafonnés à 20, Champion
+// Valeurs vérifiées à la main : ASI et demi-dons plafonnés à 20, Champion
 // primitif (+4, maximum 24), Pierre de Ioun (+2, « pour un total maximum de 20 »), Gantelets de
 // puissance d'ogre (Force 19, sans effet à 19 ou plus), Ceinturon de force de géant (21 à 29).
 

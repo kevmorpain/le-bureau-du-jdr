@@ -11,7 +11,7 @@ export interface WornArmor {
   shield: boolean
 }
 
-// AideDD, Armures : une armure dont la colonne Force n'est pas atteinte réduit la vitesse de 3 mètres.
+// Armures : une armure dont la colonne Force n'est pas atteinte réduit la vitesse de 3 mètres.
 export const ARMOR_STRENGTH_SPEED_PENALTY = 3
 
 export const speedBonusApplies = (condition: SpeedBonusCondition | undefined, worn: WornArmor): boolean => {
