@@ -107,7 +107,7 @@ export const useCharacterConditions = (
     }
     storedActiveConditions.value.push(condition)
     setConditionRounds(condition, rounds)
-    // AideDD, Concentration : « Vous perdez automatiquement la concentration de votre sort si vous êtes incapable d'agir ».
+    // Concentration : « Vous perdez automatiquement la concentration de votre sort si vous êtes incapable d'agir ».
     if (isConcentrating.value && conditionMechanics[condition]?.incapacitating) {
       setConcentration(null)
       useToast().add({ title: 'Concentration perdue', description: `${conditionLabels[condition]} : vous ne pouvez plus agir.`, color: 'error' })
