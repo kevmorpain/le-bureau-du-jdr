@@ -201,3 +201,35 @@ commande).
   a lui aussi des conventions à chercher avant de le réécrire.
 - Relevé par l'utilisateur (« garde "1 action", "1 action bonus" comme les "actions" sont des
   ressources »).
+
+### 2026-10-05 — Source écrite dans le code, règle de base attribuée à AideDD
+
+- **Affirmé / fait** : sur le lot 9 (PR #246, `6b3ab46` et `bac445f`), j'ai ajouté 12 lignes qui
+  citent AideDD — commentaires, migration 0129, tests, docs — dont
+  `// AideDD, Le combat : « Un round représente environ six secondes dans le monde du jeu. »` au-dessus
+  de `ROUNDS_PER_MINUTE = 10` (`shared/rules/durations.ts:3`). Interrogé ensuite sur les ~190 autres
+  mentions du dépôt, j'ai écrit que « `CLAUDE.md` demande de citer la source (AideDD, le seed, le
+  catalogue) » pour justifier de n'y pas toucher.
+- **Vrai** : `CLAUDE.md:39-43` demande que la règle *vienne* d'une source et non de ma mémoire ;
+  « se citent » n'y dit pas où, et rien n'y parle de commentaires. L'utilisateur a précisé
+  l'intention (non vérifiable dans le dépôt, consignée sur parole) : citer sert à ce qu'il vérifie
+  mes affirmations, dans l'échange et les PR, pas dans le code ; en commentaire, une source n'est
+  admise que pour du code obscur sans elle (code d'origine externe, valeur magique, contournement
+  de l'erreur d'un moteur). Le commentaire sur le round attribuait de plus une règle de base de D&D
+  à AideDD. Les 12 lignes sont retirées (`801270d`) ; 190 mentions préexistantes restent, non
+  balayées (`git grep -I AideDD HEAD | wc -l`).
+- **Manque** : ne pas avoir relu mes lignes de commentaire ajoutées (`git diff origin/main | grep`
+  sur les `+` en `//`) avec la question « ce commentaire est-il nécessaire à qui lit ce code ? » :
+  la relecture du diff a porté sur la justesse, pas sur ce que j'y avais écrit en commentaire. Et ne
+  pas avoir distingué où la source se dit — « j'ai vérifié sur AideDD » appartient à ma réponse et à
+  la PR, où je l'avais mis, pas au code.
+- **Règle** : **ambiguë, et lisible dans le sens de l'erreur** — ni « présente non appliquée » ni
+  « absente » franchement. Rien dans `CLAUDE.md` ne dit que la source se cite dans l'échange et non
+  dans le code ; `CLAUDE.md:95` donne en exemple un commentaire sourcé (« emplacements combinés PHB
+  p.164 ») et `CLAUDE.md:109` demande de coller à la densité du code environnant, qui contient ces
+  190 mentions. Distillation possible, d'un bloc avec la relecture : reformuler `CLAUDE.md:39` (la
+  source se cite à l'utilisateur, pas dans le code) et ajouter à « Commentaires » le critère de
+  l'utilisateur — une source en commentaire seulement si le code est incompréhensible sans elle.
+  Même section que l'entrée du 2026-09-19 : deux entrées sur dix portent sur les commentaires.
+- Relevé par l'utilisateur (« ce serait bien d'éviter d'avoir "AideDD" cité partout dans la codebase
+  en fait. Le commentaire […] est inutile »), puis précisé au tour suivant.
