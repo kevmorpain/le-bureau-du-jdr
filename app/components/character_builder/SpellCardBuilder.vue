@@ -78,7 +78,10 @@
         <span class="text-muted font-normal ml-1">{{ healDisplay.type }}</span>
       </div>
 
-      <p class="text-xs text-muted leading-relaxed">{{ spell.description ?? 'Aucune description.' }}</p>
+      <LightMarkdown
+        :source="spell.description ?? 'Aucune description.'"
+        class="text-xs text-muted leading-relaxed"
+      />
     </div>
   </div>
 </template>

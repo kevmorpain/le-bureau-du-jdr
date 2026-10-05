@@ -21,7 +21,7 @@ export const isEffectMalus = (effect: Effect): boolean => {
   return typeof v === 'object' && 'amount' in v && typeof v.amount === 'number' && v.amount < 0
 }
 
-export const effectLabel = (effect: Effect): string => {
+const labelOf = (effect: Effect): string | undefined => {
   switch (effect.type) {
     case 'armor_class_bonus': return `${formatModifier(effect.value.amount)} CA`
     case 'saving_throw_bonus': {
@@ -72,6 +72,15 @@ export const effectLabel = (effect: Effect): string => {
     case 'damage_resistance': return `Résistance ${damage(effect.value.damageType)}`
     case 'damage_immunity': return `Immunité ${damage(effect.value.damageType)}`
     case 'vulnerability': return `Vulnérabilité ${damage(effect.value.damageType)}`
-    default: return effect.type
+    default: return undefined
   }
 }
+
+export const effectLabel = (effect: Effect): string => labelOf(effect) ?? effect.type
+
+// Seuls les effets que la fiche sait nommer : un type brut (`extra_attack`) n'apprend rien au joueur.
+export const labelledEffects = (effects: readonly Effect[] | undefined): { label: string, malus: boolean }[] =>
+  (effects ?? []).flatMap((effect) => {
+    const label = labelOf(effect)
+    return label === undefined ? [] : [{ label, malus: isEffectMalus(effect) }]
+  })

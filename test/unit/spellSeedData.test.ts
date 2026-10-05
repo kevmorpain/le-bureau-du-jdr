@@ -68,3 +68,52 @@ describe('seed sorts — progressions de montée en puissance', () => {
     expect(unparsable).toEqual([])
   })
 })
+
+// Les faits de fiche (attaque, zone, coût) ne se déduisent pas de la prose à l'exécution : un sort qui les porte dans son
+// texte sans les déclarer afficherait une fiche muette sur ce que le joueur doit savoir en lançant.
+describe('seed sorts — faits de fiche déclarés', () => {
+  // Plafonds de taille d'une création ou rayons de détection, pas des zones affectées (AideDD, pages de sort).
+  const SIZE_LIMIT_NOT_AREA = [
+    'Prestidigitation', 'Image silencieuse', 'Illusion mineure', 'Invocation d\'élémentaire', 'Force fantasmagorique',
+    'Druidisme', 'Désintégration', 'Cage de force', 'Contrôle des flammes',
+  ]
+
+  it('chaque sort dont le texte décrit une zone chiffrée la déclare, ou figure parmi les plafonds de taille', () => {
+    const undeclared = spells
+      .filter(s => /\b(cône|sphère|cylindre|cube|carré)\s+(?:de|d')\s*\d/.test(s.description ?? ''))
+      .filter(s => !s.areaOfEffect && !SIZE_LIMIT_NOT_AREA.includes(s.name))
+      .map(s => s.name)
+    expect(undeclared).toEqual([])
+  })
+
+  it('chaque composante matérielle chiffrée ou consommée déclare son coût', () => {
+    const undeclared = spells
+      .filter(s => /\d\s*(?:po|pa)\b|consom/i.test(s.material ?? ''))
+      .filter(s => !s.materialCost)
+      .map(s => s.name)
+    expect(undeclared).toEqual([])
+  })
+
+  it('un coût déclaré est chiffré avec son unité, ou seulement consommé', () => {
+    for (const s of spells.filter(s => s.materialCost)) {
+      const { amount, unit, consumed } = s.materialCost!
+      expect(amount === undefined ? consumed === true : unit !== undefined && amount > 0, s.name).toBe(true)
+    }
+  })
+
+  it('chaque sort qui demande une attaque de sort la déclare', () => {
+    const undeclared = spells
+      .filter(s => /attaque (?:à distance|au corps à corps) avec un sort|attaque de sort/i.test(s.description ?? ''))
+      .filter(s => !s.attackType)
+      .map(s => s.name)
+    expect(undeclared).toEqual([])
+  })
+
+  it('une zone d\'effet a une taille positive, et une hauteur seulement pour le cylindre', () => {
+    for (const s of spells.filter(s => s.areaOfEffect)) {
+      const { shape, size, height } = s.areaOfEffect!
+      expect(size, s.name).toBeGreaterThan(0)
+      expect(height !== undefined, s.name).toBe(shape === 'cylinder')
+    }
+  })
+})

@@ -43,6 +43,9 @@ export default async function seed() {
         duration: spell.duration,
         components: spell.components ?? [],
         material: spell.material ?? null,
+        materialCost: (spell as any).materialCost ?? null,
+        attackType: (spell as any).attackType ?? null,
+        areaOfEffect: (spell as any).areaOfEffect ?? null,
         damages: (spell as any).damages ?? null,
         heal: (spell as any).heal ?? null,
         multiAttack: (spell as any).multiAttack ?? null,
@@ -59,6 +62,9 @@ export default async function seed() {
         || existing.duration !== next.duration
         || JSON.stringify(existing.components) !== JSON.stringify(next.components)
         || existing.material !== next.material
+        || JSON.stringify(existing.materialCost) !== JSON.stringify(next.materialCost)
+        || existing.attackType !== next.attackType
+        || JSON.stringify(existing.areaOfEffect) !== JSON.stringify(next.areaOfEffect)
         || JSON.stringify(existing.damages) !== JSON.stringify(next.damages)
         || JSON.stringify(existing.heal) !== JSON.stringify(next.heal)
         || JSON.stringify(existing.multiAttack) !== JSON.stringify(next.multiAttack)

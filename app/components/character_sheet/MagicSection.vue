@@ -223,77 +223,124 @@
         </div>
 
         <template v-if="!collapsedLevels.has(group.level)">
-          <div
+          <UCollapsible
             v-for="cs in filteredSpells(group.spells)"
             :key="cs.spellId"
-            class="flex items-center gap-1"
           >
-            <CharacterSpellRow
-              class="flex-1 min-w-0"
-              :spell="cs.spell"
-              :is-prepared="cs.isPrepared"
-              :always-prepared="cs.alwaysPrepared"
-              :has-somatic-warning="isIncapacitated && cs.spell.components.includes(SpellComponent.Somatic)"
-              :character-level="characterLevel"
-              :spellcasting-modifier="casterStatsOf(cs)?.modifier ?? null"
-              :source="cs.source"
-              :eldritch-blast-agonizing="eldritchBlastMods.agonizing"
-              :eldritch-blast-repelling="eldritchBlastMods.repelling"
-              :eldritch-blast-range-extended="eldritchBlastMods.rangeExtended"
-              :eldritch-blast-source-names="eldritchBlastMods.sourceNames"
-              :charisma-modifier="charismaModifier"
-              @click="openSpellDetail(cs)"
-              @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
-              @remove="removeSpell(cs.spellId)"
-            />
-            <!-- Bouton Lancer : consomme l'emplacement et fait le jet pour toucher (sorts
-                 d'attaque) ou le jet d'effet (dégâts/soin des autres sorts) -->
-            <UButton
-              v-if="cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs)"
-              size="xs"
-              variant="soft"
-              icon="i-game-icons:magic-swirl"
-              class="shrink-0"
-              @click.stop="
-                cs.spell.level === 0
-                  ? castCantripDirect(cs)
-                  : isArcanumSpell(cs)
-                    ? castArcanumSpell(cs)
-                    : openCastModalFor(cs)
-              "
-            >
-              Lancer
-            </UButton>
-            <!-- Dégâts (sorts d'attaque) : jet au niveau du lancement, sans reconsommer
-                 d'emplacement. Le chevron permet de changer ce niveau quand il y a un choix. -->
-            <UButtonGroup
-              v-if="isAttackSpell(cs) && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
-              size="xs"
-              class="shrink-0"
-            >
-              <RollButton
+            <div class="flex items-center gap-1">
+              <CharacterSpellRow
+                class="flex-1 min-w-0"
+                :spell="cs.spell"
+                :is-prepared="cs.isPrepared"
+                :always-prepared="cs.alwaysPrepared"
+                :has-somatic-warning="isIncapacitated && cs.spell.components.includes(SpellComponent.Somatic)"
+                :character-level="characterLevel"
+                :spellcasting-modifier="casterStatsOf(cs)?.modifier ?? null"
+                :source="cs.source"
+                :eldritch-blast-agonizing="eldritchBlastMods.agonizing"
+                :eldritch-blast-repelling="eldritchBlastMods.repelling"
+                :eldritch-blast-range-extended="eldritchBlastMods.rangeExtended"
+                :eldritch-blast-source-names="eldritchBlastMods.sourceNames"
+                :charisma-modifier="charismaModifier"
+                @toggle-prepared="(val) => togglePrepared(cs.spellId, val)"
+                @remove="removeSpell(cs.spellId)"
+              />
+              <!-- Bouton Lancer : consomme l'emplacement et fait le jet pour toucher (sorts
+                   d'attaque) ou le jet d'effet (dégâts/soin des autres sorts) -->
+              <UButton
+                v-if="cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs)"
+                size="xs"
                 variant="soft"
-                color="warning"
-                icon="i-game-icons:blood"
-                @click.stop="rollSpellEffect(cs, castLevelFor(cs))"
+                icon="i-game-icons:magic-swirl"
+                class="shrink-0"
+                @click.stop="
+                  cs.spell.level === 0
+                    ? castCantripDirect(cs)
+                    : isArcanumSpell(cs)
+                      ? castArcanumSpell(cs)
+                      : openCastModalFor(cs)
+                "
               >
-                {{ damageButtonLabel(cs) }}
-              </RollButton>
-              <UTooltip
-                v-if="rollsEnabled && scalingSpellIds.has(cs.spellId)"
-                :delay-duration="0"
-                text="Jeter à un autre niveau"
+                Lancer
+              </UButton>
+              <!-- Dégâts (sorts d'attaque) : jet au niveau du lancement, sans reconsommer
+                   d'emplacement. Le chevron permet de changer ce niveau quand il y a un choix. -->
+              <UButtonGroup
+                v-if="isAttackSpell(cs) && cs.spell.damages?.length && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
+                size="xs"
+                class="shrink-0"
               >
-                <UButton
+                <RollButton
                   variant="soft"
                   color="warning"
-                  icon="i-heroicons:chevron-down"
-                  :aria-label="`Jeter les dégâts de ${cs.spell.name} à un autre niveau`"
-                  @click.stop="openDamageLevelPicker(cs)"
+                  icon="i-game-icons:blood"
+                  @click.stop="rollSpellEffect(cs, castLevelFor(cs))"
+                >
+                  {{ damageButtonLabel(cs) }}
+                </RollButton>
+                <UTooltip
+                  v-if="rollsEnabled && scalingSpellIds.has(cs.spellId)"
+                  :delay-duration="0"
+                  text="Jeter à un autre niveau"
+                >
+                  <UButton
+                    variant="soft"
+                    color="warning"
+                    icon="i-heroicons:chevron-down"
+                    :aria-label="`Jeter les dégâts de ${cs.spell.name} à un autre niveau`"
+                    @click.stop="openDamageLevelPicker(cs)"
+                  />
+                </UTooltip>
+              </UButtonGroup>
+            </div>
+
+            <template #content>
+              <div class="px-2 pb-2 pt-1 space-y-3">
+                <SpellDetails
+                  :spell="cs.spell"
+                  :save-dc="casterStatsOf(cs)?.dc ?? null"
+                  :attack-bonus="casterStatsOf(cs)?.attackBonus ?? null"
                 />
-              </UTooltip>
-            </UButtonGroup>
-          </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <UButton
+                    v-if="isArcanumSpell(cs)"
+                    icon="i-game-icons:magic-swirl"
+                    @click="castArcanumSpell(cs)"
+                  >
+                    Lancer (Arcane Mystérieux — 1/repos long)
+                  </UButton>
+                  <UButton
+                    v-else-if="cs.spell.level > 0"
+                    icon="i-game-icons:magic-swirl"
+                    @click="openCastModalFor(cs)"
+                  >
+                    Lancer
+                  </UButton>
+                  <UButton
+                    v-else
+                    icon="i-game-icons:magic-swirl"
+                    @click="castCantripDirect(cs)"
+                  >
+                    Lancer (aucun emplacement requis)
+                  </UButton>
+                  <UTooltip
+                    v-if="canRitual(cs)"
+                    :delay-duration="0"
+                    text="+10 minutes d'incantation, aucun emplacement dépensé, pas de montée en puissance"
+                  >
+                    <UButton
+                      variant="soft"
+                      icon="i-heroicons:clock"
+                      @click="castAsRitual(cs)"
+                    >
+                      Lancer en rituel
+                    </UButton>
+                  </UTooltip>
+                </div>
+              </div>
+            </template>
+          </UCollapsible>
         </template>
       </div>
     </div>
@@ -304,47 +351,6 @@
     >
       Aucun sort ajouté. Cliquez sur "Ajouter un sort" pour commencer.
     </p>
-
-    <USlideover
-      v-model:open="showSpellDetail"
-      :title="selectedSpell?.spell.name"
-    >
-      <template #body>
-        <div
-          v-if="selectedSpell"
-          class="p-4 space-y-4"
-        >
-          <SpellCard :spell="selectedSpell.spell" />
-
-          <div class="flex gap-2">
-            <UButton
-              v-if="isArcanumSpell(selectedSpell)"
-              block
-              icon="i-game-icons:magic-swirl"
-              @click="castArcanumFromSlideover"
-            >
-              Lancer (Arcane Mystérieux — 1/repos long)
-            </UButton>
-            <UButton
-              v-else-if="selectedSpell.spell.level > 0"
-              block
-              icon="i-game-icons:magic-swirl"
-              @click="openCastModal"
-            >
-              Lancer
-            </UButton>
-            <UButton
-              v-else
-              block
-              icon="i-game-icons:magic-swirl"
-              @click="castCantripFromSlideover"
-            >
-              Lancer (aucun emplacement requis)
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </USlideover>
 
     <CastSpellModal
       v-if="selectedSpell"
@@ -377,6 +383,7 @@
 <script lang="ts" setup>
 import { SpellComponent } from '~~/server/db/schema/spells'
 import { classSlugFromName } from '~~/shared/rules/classSlugs'
+import { canCastAsRitual } from '~~/shared/rules/ritualCasting'
 import { countPreparedSpells, preparedSpellsLimit } from '~~/shared/rules/spellsKnown'
 import type { CharacterSpellWithSpell } from '~/composables/character/useCharacterSpells'
 import {
@@ -507,20 +514,9 @@ const filteredSpells = (spells: typeof spellsByLevel.value[number]['spells']) =>
   })
 }
 
-const showSpellDetail = ref(false)
 const selectedSpell = ref<CharacterSpellWithSpell | null>(null)
 
-const openSpellDetail = (cs: CharacterSpellWithSpell) => {
-  selectedSpell.value = cs
-  showSpellDetail.value = true
-}
-
 const showCastModal = ref(false)
-
-const openCastModal = () => {
-  showSpellDetail.value = false
-  showCastModal.value = true
-}
 
 const openCastModalFor = (cs: CharacterSpellWithSpell) => {
   selectedSpell.value = cs
@@ -656,10 +652,8 @@ function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
   }
 }
 
-// Sort à ATTAQUE = inflige des dégâts SANS jet de sauvegarde (Décharge occulte, Trait de feu…) :
-// il demande un jet pour toucher (d20 + bonus d'attaque de sort), séparé du jet de dégâts.
-const isAttackSpell = (cs: CharacterSpellWithSpell): boolean =>
-  (cs.spell.damages?.length ?? 0) > 0 && !cs.spell.dc
+// Sort à ATTAQUE (Décharge occulte, Trait de feu…) : un jet pour toucher (d20 + bonus d'attaque de sort), séparé du jet de dégâts.
+const isAttackSpell = (cs: CharacterSpellWithSpell): boolean => cs.spell.attackType != null
 
 // Jet pour toucher : un d20 + bonus d'attaque PAR attaque (un par rayon pour les multi-attaques).
 function rollSpellAttack(cs: CharacterSpellWithSpell) {
@@ -740,16 +734,22 @@ const castCantripDirect = (cs: CharacterSpellWithSpell) => {
   else rollSpellEffect(cs, cs.spell.level || 0)
 }
 
-const castCantripFromSlideover = () => {
-  if (!selectedSpell.value) return
-  showSpellDetail.value = false
-  castCantripDirect(selectedSpell.value)
+const canRitual = (cs: CharacterSpellWithSpell): boolean => {
+  const className = spellcasterClasses.value.find(c => c.classId === cs.classId)?.className
+  return canCastAsRitual(cs.spell, {
+    classSlug: className ? classSlugFromName(className) : undefined,
+    isPrepared: cs.isPrepared,
+    source: cs.source,
+  })
 }
 
-const castArcanumFromSlideover = () => {
-  if (!selectedSpell.value) return
-  showSpellDetail.value = false
-  castArcanumSpell(selectedSpell.value)
+const castAsRitual = (cs: CharacterSpellWithSpell) => {
+  const level = baseSlotLevel(cs.spell)
+  if (cs.spell.concentration) startConcentration(cs.spellId, cs.spell.name)
+  rememberCastLevel(cs.spellId, level)
+  if (isAttackSpell(cs)) rollSpellAttack(cs)
+  else rollSpellEffect(cs, level)
+  useToast().add({ title: `${cs.spell.name} lancé en rituel`, description: 'Aucun emplacement dépensé · +10 minutes d\'incantation', color: 'success' })
 }
 
 const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number | null) => {

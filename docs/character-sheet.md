@@ -160,6 +160,8 @@ Section unifiée : stats d'incantation + liste des sorts.
 #### Liste des sorts
 Sorts groupés par niveau. Chaque ligne affiche : nom, temps d'incantation, portée, durée, DC (si applicable), concentration, rituel, composantes V/S/M, dégâts/soins calculés avec le vrai modificateur du personnage.
 
+Cliquer une ligne l'ouvre en accordéon (`UCollapsible`, composant `SpellDetails`, le même corps que `SpellCard`) : composante matérielle, encart de faits (`SpellFacts` : type d'attaque et bonus, JdS et DD, zone, composante chiffrée ou consommée, concentration, rituel), dégâts, soins, montée en puissance et description. La description est en Markdown léger (paragraphes, puces, gras), rendu par `LightMarkdown` sans `v-html` ([D24](./decisions.md#d24)). Le contenu de l'accordéon porte aussi « Lancer » (y compris pour un sort non préparé) et, quand la classe lanceuse en a la capacité, « Lancer en rituel » (`canCastAsRitual`).
+
 Chaque sort est calculé avec la caractéristique de SA classe (`character_spells.class_id`) ; un sort sans classe retombe sur la classe active.
 Les sorts de domaine (Clerc), de serment (Paladin) et de cercle (Druide, selon le terrain choisi) s'ajoutent à la liste, marqués
 « Toujours préparé » : ils sont dérivés de la sous-classe et du niveau, jamais stockés, et n'ont ni case « Préparé » ni bouton de retrait.

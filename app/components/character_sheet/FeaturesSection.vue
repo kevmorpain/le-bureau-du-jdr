@@ -115,6 +115,23 @@
           </div>
 
           <template #content>
+            <div
+              v-if="sheetEffects(feature).length"
+              class="mt-2 flex flex-wrap items-center gap-1.5"
+            >
+              <span class="text-xs font-semibold uppercase tracking-wider text-muted">
+                Sur la fiche
+              </span>
+              <UBadge
+                v-for="effect in sheetEffects(feature)"
+                :key="effect.label"
+                :label="effect.label"
+                :color="effect.malus ? 'error' : 'primary'"
+                variant="soft"
+                size="md"
+              />
+            </div>
+
             <p class="text-sm text-muted mt-2 whitespace-pre-line">
               {{ feature.description }}
             </p>
@@ -268,6 +285,8 @@ const ownedFeatIds = computed(() =>
 )
 
 const isFeat = (feature: { featureType?: string }) => feature.featureType === 'feat'
+
+const sheetEffects = (feature: { effects?: unknown[] }) => labelledEffects(feature.effects as Effect[] | undefined)
 
 const needsAbility = (feature: { effects?: unknown[] }) =>
   (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'ability_increase_choice') ?? false

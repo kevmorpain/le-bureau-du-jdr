@@ -84,34 +84,12 @@
       </ul>
     </div>
 
-    <div v-if="spell.material">
-      <p class="italic">
-        ({{ spell.material }})
-      </p>
-    </div>
-
     <USeparator
       class="my-2"
       decorative
     />
 
-    <div class="space-y-2">
-      <HealSection
-        v-if="spell.heal"
-        :spell
-      />
-
-      <DamageSection
-        v-if="spell.damages?.length"
-        :spell
-      />
-
-      <UpcastSection :spell />
-
-      <p class="whitespace-pre-line leading-5">
-        {{ spell.description }}
-      </p>
-    </div>
+    <SpellDetails :spell />
   </UCard>
 </template>
 
