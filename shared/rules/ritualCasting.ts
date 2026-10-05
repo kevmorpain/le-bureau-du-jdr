@@ -6,7 +6,7 @@ type RitualContext = {
   source: string | null | undefined
 }
 
-// AideDD, pages de classe, capacité « Rituel » : le barde (sort connu) et le magicien (sort du grimoire) n'ont pas à
+// Capacité « Rituel » : le barde (sort connu) et le magicien (sort du grimoire) n'ont pas à
 // préparer le sort, le clerc et le druide si ; ensorceleur, rôdeur et roublard n'en ont pas. L'occultiste ne le peut que
 // pour les sorts du Livre des Ombres et l'Appel de familier du pacte de la chaîne.
 export function canCastAsRitual(spell: { ritual: boolean }, { classSlug, isPrepared, source }: RitualContext): boolean {

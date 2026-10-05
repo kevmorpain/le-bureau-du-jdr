@@ -17,7 +17,7 @@ export interface ResolvedMode {
   disadvantage: string[]
 }
 
-// AideDD, Caractéristiques : un avantage et un désavantage s'annulent, quel qu'en soit le nombre ; ils ne se cumulent pas.
+// Caractéristiques : un avantage et un désavantage s'annulent, quel qu'en soit le nombre ; ils ne se cumulent pas.
 export const resolveRollMode = (sources: readonly RollSource[]): ResolvedMode => {
   const advantage = sources.filter(s => s.mode === 'advantage').map(s => s.label)
   const disadvantage = sources.filter(s => s.mode === 'disadvantage').map(s => s.label)
@@ -52,7 +52,7 @@ export interface RollFacts {
   stealthArmor: boolean
 }
 
-// AideDD, Armures : sans maîtrise, désavantage aux jets de caractéristique, de sauvegarde et d'attaque basés sur la
+// Armures : sans maîtrise, désavantage aux jets de caractéristique, de sauvegarde et d'attaque basés sur la
 // Force ou la Dextérité.
 const armorPenaltyApplies = (kind: D20Kind): boolean => {
   switch (kind.type) {
@@ -64,7 +64,7 @@ const armorPenaltyApplies = (kind: D20Kind): boolean => {
 
 const isCheck = (kind: D20Kind) => kind.type === 'check' || kind.type === 'initiative'
 
-// Sources fixes d'un jet : états, épuisement (AideDD, États), armure. Les sources propres à l'arme (`extra`) et
+// Sources fixes d'un jet : états, épuisement, armure. Les sources propres à l'arme (`extra`) et
 // aux effets de capacités s'y ajoutent ailleurs.
 export const factRollSources = (kind: D20Kind, facts: RollFacts): RollSource[] => {
   const sources: RollSource[] = []
@@ -91,7 +91,7 @@ export const factRollSources = (kind: D20Kind, facts: RollFacts): RollSource[] =
   return sources
 }
 
-// AideDD, États : Étourdi, Paralysé, Inconscient et Pétrifié ratent automatiquement les sauvegardes de Force et de Dextérité.
+// États : Étourdi, Paralysé, Inconscient et Pétrifié ratent automatiquement les sauvegardes de Force et de Dextérité.
 export const saveAutoFailSources = (kind: D20Kind, conditions: readonly ConditionKey[]): string[] =>
   kind.type === 'save'
     ? conditions.filter(c => conditionMechanics[c]?.saveAutoFail?.includes(kind.ability)).map(c => conditionLabels[c])
@@ -160,7 +160,7 @@ export const DEFAULT_CRITICAL_FROM = 20
 export const criticalFrom = (effects: readonly Effect[]): number =>
   Math.min(DEFAULT_CRITICAL_FROM, ...effects.flatMap(e => (e.type === 'critical_range' ? [e.value.from] : [])))
 
-// AideDD, Touche-à-tout (arrondi inférieur) et Athlète accompli (arrondi supérieur) ne se cumulent pas : le bonus de
+// Touche-à-tout (arrondi inférieur) et Athlète accompli (arrondi supérieur) ne se cumulent pas : le bonus de
 // maîtrise « ne peut s'appliquer plus d'une fois à un même jet ».
 export const halfProficiencyBonus = (effects: readonly Effect[], ability: AbilityKey, proficiencyBonus: number): number =>
   Math.max(0, ...effects.flatMap((e) => {
@@ -194,7 +194,7 @@ export const rollD20 = (policy: D20Policy, rng: () => number): D20Result => {
   const resolved = resolveRollMode(policy.sources)
   const dice = Array.from({ length: resolved.mode === 'normal' ? 1 : 2 }, () => d20(rng))
 
-  // AideDD, Caractéristiques : avec avantage ou désavantage, la relance (Chanceux) ne vise qu'un seul des dés.
+  // Caractéristiques : avec avantage ou désavantage, la relance (Chanceux) ne vise qu'un seul des dés.
   let rerolled: D20Result['rerolled'] = null
   const index = policy.rerollOn === null ? -1 : dice.indexOf(policy.rerollOn)
   if (index !== -1) {
@@ -222,7 +222,7 @@ export const rollD20 = (policy: D20Policy, rng: () => number): D20Result => {
 
 // ─── Dégâts d'un coup critique ───────────────────────────────────────────────
 
-// AideDD, Coups critiques : on lance deux fois tous les dés de dégâts (dés d'Attaque sournoise compris), jamais les
+// Coups critiques : on lance deux fois tous les dés de dégâts (dés d'Attaque sournoise compris), jamais les
 // modificateurs. Critique brutal ajoute des dés DE L'ARME aux dégâts supplémentaires du critique.
 export const criticalDamageDiceCount = (count: number, options: { weaponDie?: boolean, extraWeaponDice?: number } = {}): number =>
   count * 2 + (options.weaponDie ? options.extraWeaponDice ?? 0 : 0)

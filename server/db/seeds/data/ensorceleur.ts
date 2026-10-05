@@ -5,7 +5,7 @@ import { asiFeatures } from './asi'
 
 export const ensorceleurName = 'Ensorceleur'
 
-// AideDD, Ensorceleur : « lorsque vous ne portez pas d'armure, votre CA est égale à 13 + votre modificateur de
+// Ensorceleur : « lorsque vous ne portez pas d'armure, votre CA est égale à 13 + votre modificateur de
 // Dextérité » ; le texte ne mentionne pas le bouclier, que le Barbare et le Moine citent à part.
 export const DRACONIC_RESILIENCE = { base: 13, abilities: ['dex'] as AbilityScoreKey[], shield: true }
 
@@ -37,7 +37,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     levelRequired: 2,
     actionType: 'bonus_action',
     rechargeType: 'long_rest',
-    // AideDD, Ensorceleur : la colonne Points de sorcellerie égale le niveau (dès le niveau 2).
+    // Ensorceleur : la colonne Points de sorcellerie égale le niveau (dès le niveau 2).
     maxUsesFormula: variable('class_level'),
     effects: [],
     meta: { resource: 'sorcery_points', pool: true },

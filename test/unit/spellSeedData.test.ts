@@ -73,7 +73,7 @@ describe('seed sorts — progressions de montée en puissance', () => {
 // Les faits de fiche (attaque, zone, coût) ne se déduisent pas de la prose à l'exécution : un sort qui les porte dans son
 // texte sans les déclarer afficherait une fiche muette sur ce que le joueur doit savoir en lançant.
 describe('seed sorts — faits de fiche déclarés', () => {
-  // Plafonds de taille d'une création ou rayons de détection, pas des zones affectées (AideDD, pages de sort).
+  // Plafonds de taille d'une création ou rayons de détection, pas des zones affectées.
   const SIZE_LIMIT_NOT_AREA = [
     'Prestidigitation', 'Image silencieuse', 'Illusion mineure', 'Invocation d\'élémentaire', 'Force fantasmagorique',
     'Druidisme', 'Désintégration', 'Cage de force', 'Contrôle des flammes',

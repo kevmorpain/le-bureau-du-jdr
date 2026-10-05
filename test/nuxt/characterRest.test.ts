@@ -156,7 +156,7 @@ describe('characterRest — maximum effectif', () => {
     expect(row.currentHp).toBe(24)
   })
 
-  it('sans avoir mangé ni bu, l\'épuisement ne baisse pas (AideDD, Conditions)', async () => {
+  it('sans avoir mangé ni bu, l\'épuisement ne baisse pas', async () => {
     const id = await create()
     await db.update(schema.characterSheets).set({ currentHp: 1, exhaustionLevel: 4 }).where(eq(schema.characterSheets.id, id))
 

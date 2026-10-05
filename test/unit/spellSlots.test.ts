@@ -102,7 +102,7 @@ describe('combinedSpellSlots — multiclassage', () => {
   })
 })
 
-describe('slotsForLevel — lanceur du tiers (Chevalier occulte, Escroc arcanique ; AideDD)', () => {
+describe('slotsForLevel — lanceur du tiers (Chevalier occulte, Escroc arcanique)', () => {
   it('niveaux 1 et 2 : aucun emplacement, incantation au niveau 3', () => {
     expect(slotsForLevel('third', 2)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0])
     expect(slotsForLevel('third', 3)).toEqual([2, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -125,7 +125,7 @@ describe('slotsForLevel — lanceur du tiers (Chevalier occulte, Escroc arcaniqu
   })
 })
 
-describe('combinedSpellSlots — une seule classe lanceuse (AideDD : « utilisez les règles de votre classe »)', () => {
+describe('combinedSpellSlots — une seule classe lanceuse (« utilisez les règles de votre classe »)', () => {
   it('un Paladin seul lit sa table : niveau 5 → 4/2, et non la table multiclassée du niveau 2', () => {
     expect(combinedSpellSlots([{ casterType: 'half', level: 5 }]).regular).toEqual(slotsForLevel('half', 5))
     expect(combinedSpellSlots([{ casterType: 'half', level: 5 }]).regular).toEqual([4, 2, 0, 0, 0, 0, 0, 0, 0])

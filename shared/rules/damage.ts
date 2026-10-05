@@ -1,4 +1,4 @@
-// AideDD, Combat : à 0 PV on tombe inconscient et on fait des jets de sauvegarde contre la mort. Trois échecs, c'est la mort ;
+// Combat : à 0 PV on tombe inconscient et on fait des jets de sauvegarde contre la mort. Trois échecs, c'est la mort ;
 // trois succès, on est stable. Une mort instantanée frappe quand les dégâts qui restent une fois à 0 PV atteignent le maximum
 // de PV. Des dégâts à 0 PV comptent un échec (deux sur un coup critique) ; les soins ne rendent pas de PV temporaires et ne
 // se cumulent pas.
@@ -89,5 +89,5 @@ export function rollDeathSave(state: HitPointState, natural: number): { state: H
   return { state: { ...state, deathSaveFailures: Math.min(DEATH_SAVE_LIMIT, state.deathSaveFailures + 1) }, outcome: 'failure' }
 }
 
-// AideDD, Concentration : « Le DD est égal à 10 ou à la moitié des dégâts que vous subissez, si ce chiffre est supérieur. »
+// Concentration : « Le DD est égal à 10 ou à la moitié des dégâts que vous subissez, si ce chiffre est supérieur. »
 export const concentrationSaveDc = (damage: number): number => Math.max(10, Math.floor(damage / 2))

@@ -2,7 +2,7 @@ import type { AbilityKey } from './abilities'
 import type { ClassSlug } from './classSlugs'
 import type { SpellcastingType } from './spellcasting'
 
-// Sous-classes lanceuses de sorts du tiers, dont la classe n'incante pas (AideDD : Chevalier occulte du Guerrier,
+// Sous-classes lanceuses de sorts du tiers, dont la classe n'incante pas (Chevalier occulte du Guerrier,
 // Escroc arcanique du Roublard). Elles incantent à partir du niveau 3 de leur classe, avec la liste du Magicien.
 // Indexées par nom en base, comme les classes (`CLASS_DB_NAMES`).
 export type SubclassCasterSlug = 'eldritch_knight' | 'arcane_trickster'
@@ -55,7 +55,7 @@ export function effectiveCasterType(classType: SpellcastingType, classSlug: stri
   return classType === 'none' && subclassCastingOf(classSlug, subclassName) ? 'third' : classType
 }
 
-// AideDD : au niveau 3, un des trois sorts de niveau 1 est de n'importe quelle école ; ceux appris aux niveaux 8, 14
+// Au niveau 3, un des trois sorts de niveau 1 est de n'importe quelle école ; ceux appris aux niveaux 8, 14
 // et 20 le sont aussi. Les autres viennent des écoles de la sous-classe.
 const ANY_SCHOOL_LEVELS = [3, 8, 14, 20]
 

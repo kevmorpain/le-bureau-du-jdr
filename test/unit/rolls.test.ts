@@ -18,7 +18,7 @@ const policy = (over: Partial<D20Policy> = {}): D20Policy => ({ sources: [], rer
 const facts = (over: Partial<RollFacts> = {}): RollFacts => ({ conditions: [], exhaustion: 0, armorNonProficient: false, stealthArmor: false, ...over })
 const labels = (sources: RollSource[]) => sources.map(s => s.label)
 
-describe('resolveRollMode — AideDD, Caractéristiques', () => {
+describe('resolveRollMode — Caractéristiques', () => {
   it('sans source : normal', () => {
     expect(resolveRollMode([]).mode).toBe('normal')
   })
@@ -71,7 +71,7 @@ describe('factRollSources — états, épuisement, armure', () => {
     expect(factRollSources({ type: 'save', ability: 'str' }, f)).toEqual([])
   })
 
-  it('épuisement : 1 → caractéristique, 3 → attaque et sauvegarde (AideDD, États)', () => {
+  it('épuisement : 1 → caractéristique, 3 → attaque et sauvegarde', () => {
     expect(factRollSources({ type: 'check', ability: 'str' }, facts({ exhaustion: 1 }))).toHaveLength(1)
     expect(factRollSources({ type: 'attack', weapon: true }, facts({ exhaustion: 1 }))).toEqual([])
     expect(factRollSources({ type: 'save', ability: 'con' }, facts({ exhaustion: 2 }))).toEqual([])
@@ -80,7 +80,7 @@ describe('factRollSources — états, épuisement, armure', () => {
     expect(factRollSources({ type: 'check', ability: 'con' }, facts({ exhaustion: 3 }))).toHaveLength(1)
   })
 
-  it('armure non maîtrisée : seulement les jets basés sur la Force ou la Dextérité (AideDD, Armures)', () => {
+  it('armure non maîtrisée : seulement les jets basés sur la Force ou la Dextérité', () => {
     const f = facts({ armorNonProficient: true })
     expect(factRollSources({ type: 'attack', weapon: true }, f)).toHaveLength(1)
     expect(factRollSources({ type: 'attack', weapon: false }, f)).toEqual([])
@@ -275,7 +275,7 @@ describe('rollD20', () => {
     expect(rollD20(policy({ rerollOn: 1 }), dice(2)).rerolled).toBeNull()
   })
 
-  it('Chanceux avec avantage : un seul dé est relancé (AideDD)', () => {
+  it('Chanceux avec avantage : un seul dé est relancé', () => {
     const r = rollD20(policy({ rerollOn: 1, sources: [adv] }), dice(1, 1, 9))
     expect(r.dice).toEqual([9, 1])
     expect(r.rerolled).toEqual({ from: 1, to: 9 })
@@ -304,7 +304,7 @@ describe('rollD20', () => {
   })
 })
 
-describe('criticalDamageDiceCount — AideDD, Coups critiques', () => {
+describe('criticalDamageDiceCount — Coups critiques', () => {
   it('double les dés', () => {
     expect(criticalDamageDiceCount(1)).toBe(2)
     expect(criticalDamageDiceCount(3)).toBe(6)

@@ -68,7 +68,7 @@ describe('CLASS_PROFICIENCIES — contrat', () => {
     for (const [name, prof] of entries) expect(new Set(prof.savingThrows).size, name).toBe(2)
   })
 
-  // AideDD (multiclassage) : « vous ne recevez qu'une partie des maîtrises de départ de cette nouvelle classe ».
+  // Multiclassage : « vous ne recevez qu'une partie des maîtrises de départ de cette nouvelle classe ».
   it('le multiclassage n\'accorde qu\'une partie des maîtrises de départ', () => {
     for (const [name, prof] of entries) {
       const { armor, weapon, tools } = prof.multiclass

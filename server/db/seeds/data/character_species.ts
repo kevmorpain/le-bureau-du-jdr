@@ -1349,7 +1349,7 @@ const fadette: SpeciesSeed = {
       choice: fairyCastingAbilityChoice,
     },
     {
-      // AideDD, UA « Peuples de la Féerie », section « Créer votre personnage ».
+      // UA « Peuples de la Féerie », section « Créer votre personnage ».
       name: 'Langues',
       description: `Vous parlez, lisez et écrivez le commun et une autre langue que vous et votre MD reconnaissez comme appropriée pour le personnage.`,
       effects: [{ type: 'language_proficiency', value: 'common' }],

@@ -8,7 +8,7 @@ import { CLASS_PROFICIENCIES } from '../../shared/rules/classProficiencies'
 import { CLASS_PROFICIENCY_CARRIER_NAME, MULTICLASS_PROFICIENCY_CARRIER_NAME } from '../../server/db/seeds/data/proficiencyCarriers'
 import { bootstrapGoldenDb, OWNER, CLASS, SPECIES } from './fixtures/goldenMaster'
 
-// Outils au choix de classe (AideDD) : Barde, trois instruments ; rejoint par multiclassage, un instrument.
+// Outils au choix de classe : Barde, trois instruments ; rejoint par multiclassage, un instrument.
 // Le porteur de départ ne vaut que pour la 1re classe, celui de multiclassage que pour une classe rejointe.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -6,40 +6,40 @@ import { asiFeatures } from './asi'
 
 export const barbareName = 'Barbare'
 
-// AideDD, Barbare — colonnes « Rages » et « Dégâts » (index = niveau - 1) ; illimitées au niveau 20 (Champion primitif).
+// Barbare — colonnes « Rages » et « Dégâts » (index = niveau - 1) ; illimitées au niveau 20 (Champion primitif).
 export const RAGES_PER_LONG_REST = lookup([2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6])
 export const RAGE_DAMAGE_BONUS = lookup([2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4])
 
-// AideDD, Barbare : la Défense sans armure admet un bouclier ; le Déplacement rapide ne cède qu'à l'armure lourde.
+// Barbare : la Défense sans armure admet un bouclier ; le Déplacement rapide ne cède qu'à l'armure lourde.
 export const BARBARIAN_UNARMORED_DEFENSE = { base: 10, abilities: ['dex', 'con'] as AbilityScoreKey[], shield: true }
 export const BARBARIAN_QUICK_MOVEMENT = { amount: fixed(3), while: 'no_heavy_armor' as const }
 
-// AideDD, Barbare — Rage : avantage aux jets de caractéristique et de sauvegarde de Force (suspendu en armure lourde, comme le reste).
+// Barbare — Rage : avantage aux jets de caractéristique et de sauvegarde de Force (suspendu en armure lourde, comme le reste).
 export const RAGE_ADVANTAGES = [
   { type: 'advantage' as const, value: { rollType: 'check' as const, ability: 'str' as AbilityScoreKey, condition: '' } },
   { type: 'advantage' as const, value: { rollType: 'saving_throw' as const, ability: 'str' as AbilityScoreKey, condition: '' } },
 ]
 
-// AideDD, Barbare — Attaque téméraire : avantage aux attaques de mêlée menées avec la Force pour le tour ; la capacité
+// Barbare — Attaque téméraire : avantage aux attaques de mêlée menées avec la Force pour le tour ; la capacité
 // s'active comme la Rage et prend fin au « Nouveau tour ». Les attaques portées contre le barbare gagnent l'avantage : le texte le dit.
 export const RECKLESS_ATTACK_ADVANTAGE = { type: 'advantage' as const, value: { rollType: 'attack' as const, ability: 'all' as const, condition: '', scope: 'strength_melee' as const } }
 export const RECKLESS_ATTACK_META: FeatureMeta = { whileActive: [RECKLESS_ATTACK_ADVANTAGE], endsOnNewTurn: true }
 export const RECKLESS_ATTACK_DESCRIPTION = `À partir du niveau 2, vous pouvez mettre de côté votre défense pour attaquer avec toute la violence du désespoir. Lorsque vous effectuez la première attaque de votre tour, vous pouvez décider d'effectuer une Attaque téméraire. Vous obtenez ainsi un avantage aux jets d'attaque au corps à corps avec une arme utilisant la Force durant ce tour, mais les attaques effectuées contre vous ont également un avantage jusqu'à votre prochain tour.`
 
-// AideDD, Barbare — Sens du danger : avantage aux sauvegardes de Dextérité contre les effets visibles, sauf aveuglé, assourdi
+// Barbare — Sens du danger : avantage aux sauvegardes de Dextérité contre les effets visibles, sauf aveuglé, assourdi
 // ou incapable d'agir. Que l'effet soit visible reste au joueur de le dire au jet.
 export const DANGER_SENSE_ADVANTAGE = {
   type: 'advantage' as const,
   value: { rollType: 'saving_throw' as const, ability: 'dex' as AbilityScoreKey, condition: 'visible_effects', unless: ['blinded', 'deafened', 'incapacitated'] as ConditionKey[] },
 }
 
-// AideDD, Barbare — Instinct sauvage : avantage aux jets d'initiative.
+// Barbare — Instinct sauvage : avantage aux jets d'initiative.
 export const FERAL_INSTINCT_ADVANTAGE = { type: 'advantage' as const, value: { rollType: 'initiative' as const, ability: 'all' as const, condition: '' } }
 
-// AideDD, Barbare : le bonus ne dépend pas de la rage (le seed disait « lors d'une rage »).
+// Barbare : le bonus ne dépend pas de la rage (le seed disait « lors d'une rage »).
 export const BRUTAL_CRITICAL_DESCRIPTION = `À partir du niveau 9, vous pouvez lancer un dé de dégâts de votre arme en plus lorsque vous déterminez les dégâts supplémentaires que vous infligez sur un coup critique réussi avec une attaque au corps à corps. Ce bonus aux dégâts passe à deux dés au niveau 13 et à trois dés au niveau 17.`
 
-// AideDD, Barbare — Critique brutal : 1 dé de l'arme en plus au niveau 9, 2 au niveau 13, 3 au niveau 17.
+// Barbare — Critique brutal : 1 dé de l'arme en plus au niveau 9, 2 au niveau 13, 3 au niveau 17.
 export const BRUTAL_CRITICAL_DICE = lookup([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3])
 
 export const barbareFeatures: FeatureDef[] = [

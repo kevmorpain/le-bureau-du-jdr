@@ -20,7 +20,7 @@ export const SPELL_LEARNING: Partial<Record<CasterSlug, SpellLearning>> = {
   arcane_trickster: 'known',
 }
 
-// Index = niveau DE CLASSE − 1 (tables PHB 2014, vérifiées sur AideDD).
+// Index = niveau DE CLASSE − 1 (tables PHB 2014).
 const CANTRIPS_KNOWN: Partial<Record<CasterSlug, number[]>> = {
   bard: [2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
   cleric: [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
@@ -67,7 +67,7 @@ export function spellsKnownAt(cls: string, level: number): number {
   return 0
 }
 
-// Sorts préparés par jour (AideDD) : modificateur d'incantation + niveau de classe (Clerc, Druide, Magicien),
+// Sorts préparés par jour : modificateur d'incantation + niveau de classe (Clerc, Druide, Magicien),
 // ou + la moitié du niveau arrondie à l'inférieur (Paladin) ; minimum un sort.
 const PREPARED_LEVEL_DIVISOR: Partial<Record<ClassSlug, number>> = { cleric: 1, druid: 1, wizard: 1, paladin: 2 }
 
@@ -87,7 +87,7 @@ export function spellsLearnedOnLevelUp(cls: string, fromLevel: number, toLevel: 
   }
 }
 
-// AideDD, Barde. « Secrets magiques » (niveaux 10, 14, 18) : deux sorts de n'importe quelle classe, qui comptent comme
+// Barde. « Secrets magiques » (niveaux 10, 14, 18) : deux sorts de n'importe quelle classe, qui comptent comme
 // des sorts de barde et sont déjà dans la colonne « sorts connus » de la table. Collège du savoir, « Secrets magiques
 // supplémentaires » (niveau 6) : deux de plus, de n'importe quelle classe, HORS de ce décompte. Dans les deux cas : un
 // niveau de sort qu'on peut lancer (ou un sort mineur).

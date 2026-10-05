@@ -4,6 +4,6 @@
 export const CLASS_PROFICIENCY_CARRIER_NAME = 'Maîtrises de la classe'
 export const MULTICLASS_PROFICIENCY_CARRIER_NAME = 'Maîtrises de multiclassage'
 
-// Porteur sans propriétaire du remplacement d'une maîtrise reçue en double (règle générale, AideDD Historiques).
+// Porteur sans propriétaire du remplacement d'une maîtrise reçue en double (règle générale).
 // La migration 0112 le crée sous ce nom.
 export const DUPLICATE_PROFICIENCY_CARRIER_NAME = 'Maîtrise en double'

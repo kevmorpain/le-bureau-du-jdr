@@ -5,11 +5,11 @@ import { asiFeatures } from './asi'
 
 export const bardeName = 'Barde'
 
-// AideDD, Barde : « un nombre de fois égal à votre modificateur de Charisme (minimum une fois) » ; dé d6, d8 au 5, d10 au 10, d12 au 15.
+// Barde : « un nombre de fois égal à votre modificateur de Charisme (minimum une fois) » ; dé d6, d8 au 5, d10 au 10, d12 au 15.
 const BARDIC_INSPIRATION_USES = max(fixed(1), variable('cha_mod'))
 const BARDIC_INSPIRATION_DIE = lookup([6, 6, 6, 6, 8, 8, 8, 8, 8, 10, 10, 10, 10, 10, 12, 12, 12, 12, 12, 12])
 
-// AideDD, Barde : la moitié du bonus de maîtrise, arrondie à l'inférieur, à tout jet de caractéristique.
+// Barde : la moitié du bonus de maîtrise, arrondie à l'inférieur, à tout jet de caractéristique.
 export const JACK_OF_ALL_TRADES = { abilities: 'all' as const, rounding: 'down' as const }
 
 export const bardeFeatures: FeatureDef[] = [

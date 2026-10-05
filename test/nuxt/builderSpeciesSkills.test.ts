@@ -7,8 +7,8 @@ import { useCharacterBuilder, type BuilderState } from '../../app/composables/us
 import type { Catalog } from '../../shared/rules/resolve'
 import { catalogClasses } from '../fixtures/catalogClasses'
 
-// Les compétences d'espèce comptent comme maîtrisées dans le builder : éligibles à l'expertise (AideDD,
-// Roublard : « choisissez deux des compétences que vous maîtrisez »), signalées en doublon d'un choix de
+// Les compétences d'espèce comptent comme maîtrisées dans le builder : éligibles à l'expertise (Roublard :
+// « choisissez deux des compétences que vous maîtrisez »), signalées en doublon d'un choix de
 // classe, exclues du picker Doué. Effets recopiés du seed (Sens aiguisés, Menaçant).
 
 const ROUBLARD = 7

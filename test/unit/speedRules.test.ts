@@ -14,7 +14,7 @@ const context = (class_level: number) => ({
 })
 const naked: WornArmor = { heavy: false, body: false, shield: false }
 
-describe('CA sans armure — meilleure source (AideDD : Barbare, Moine, Résistance draconique)', () => {
+describe('CA sans armure — meilleure source (Barbare, Moine, Résistance draconique)', () => {
   const barbarian: Effect[] = [{ type: 'unarmored_defense', value: BARBARIAN_UNARMORED_DEFENSE }]
   const monk: Effect[] = [{ type: 'unarmored_defense', value: MONK_UNARMORED_DEFENSE }]
   const mods = { dex: 2, con: 3, wis: 4 }
@@ -57,7 +57,7 @@ describe('bonus de vitesse', () => {
     expect(part(effects, 5, { heavy: true, body: true, shield: false })).toEqual([])
   })
 
-  it('Déplacement sans armure du Moine : paliers 2/6/10/14/18 (AideDD), rien avec armure ou bouclier', () => {
+  it('Déplacement sans armure du Moine : paliers 2/6/10/14/18, rien avec armure ou bouclier', () => {
     const effects: Effect[] = [{ type: 'speed_bonus', value: MONK_UNARMORED_MOVEMENT }]
     const at = (level: number) => part(effects, level, naked)[0]?.amount ?? 0
     expect([1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 20].map(at)).toEqual([0, 3, 3, 4.5, 4.5, 6, 6, 7.5, 7.5, 9, 9])
@@ -88,7 +88,7 @@ describe('walking_speed = vitesse de base', () => {
   })
 })
 
-describe('pénalité d\'armure (AideDD, Armures : colonne Force)', () => {
+describe('pénalité d\'armure', () => {
   const chainMail = { name: 'Cotte de mailles', armorType: 'heavy', strengthRequirement: 13 }
   const dwarf: Effect[] = [{ type: 'equipment_penalty', value: { penalty: 'speed', armor_type: 'heavy', modifier: 'none', override: true } }]
 

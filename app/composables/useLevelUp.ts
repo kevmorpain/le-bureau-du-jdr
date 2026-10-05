@@ -322,7 +322,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return multiclassSkillGrant(dbId, multiclassSkillCountFor(dbId), catalog.value)
   })
 
-  // Prérequis de multiclassage, affichés sans bloquer. AideDD : « les valeurs de caractéristiques requises
+  // Prérequis de multiclassage, affichés sans bloquer : « les valeurs de caractéristiques requises
   // par votre classe actuelle et par la nouvelle classe » — pour un personnage déjà multiclassé, chaque
   // classe détenue.
   const currentClassesPrerequisites = computed(() => charClasses.value.map(c => ({
@@ -336,7 +336,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const meetsTargetPrerequisites = (classSlug: string): boolean =>
     meetsMulticlassPrerequisites(multiclassPrerequisitesOf(classSlug), finalAbilities.value)
 
-  // Ce que rejoindre une classe accorde (AideDD, tableau des maîtrises du multiclassage) : son porteur de
+  // Ce que rejoindre une classe accorde : son porteur de
   // multiclassage et son nombre de compétences, lus dans le catalogue comme les prérequis.
   const multiclassGainsOf = (classSlug: string): { proficiencies: string[], skillCount: number } => {
     const dbId = classDbIdOf(classSlug)
@@ -500,7 +500,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       subclassIdsAfter: subclassAfter != null ? [subclassAfter] : [],
     }).filter(isPickChoice)
   })
-  // Remplacements ouverts par une maîtrise que la classe rejointe double (AideDD, Historiques), calculés par le
+  // Remplacements ouverts par une maîtrise que la classe rejointe double, calculés par le
   // serveur qui seul connaît les picks déjà enregistrés. Facultatifs, comme à la création.
   const NO_REPLACEMENTS: LevelUpReplacements = { choices: [], duplicated: { skills: [], tools: [] } }
   const { data: replacementsData } = useAsyncData<LevelUpReplacements>(
@@ -620,7 +620,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return Math.min(due, available)
   }
   const requiredCantripPicks = computed(() => requiredPicks(cantripsToLearn.value, learnableCantrips.value))
-  // Remplacement (AideDD, Barde, Ensorceleur, Occultiste, Rôdeur) : à chaque niveau gagné dans une classe qu'on
+  // Remplacement (Barde, Ensorceleur, Occultiste, Rôdeur) : à chaque niveau gagné dans une classe qu'on
   // possède déjà, un sort connu de la classe peut être échangé contre un autre de sa liste.
   const replaceableSpells = computed(() => {
     const classId = charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId

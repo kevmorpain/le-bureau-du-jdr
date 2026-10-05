@@ -19,7 +19,7 @@ export const restSchema = z.object({
     count: z.number().int().min(0),
     healAmount: z.number().int().min(0),
   })).optional().default([]),
-  // AideDD, Conditions : un repos long réduit l'épuisement de 1 « à condition que la créature ait aussi mangé et bu ».
+  // Conditions : un repos long réduit l'épuisement de 1 « à condition que la créature ait aussi mangé et bu ».
   fedAndWatered: z.boolean().optional().default(true),
 })
 

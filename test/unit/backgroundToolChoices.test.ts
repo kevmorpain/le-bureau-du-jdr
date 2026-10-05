@@ -5,7 +5,7 @@ import { backgroundChoices, fixedProficiencies } from '../../shared/rules/backgr
 import { TOOL_CATEGORIES } from '../../shared/rules/tools'
 
 // Entrées « au choix » des historiques → points de choix. Marchand de guilde : outils de navigateur OU
-// une langue (AideDD, Artisan de guilde, variante), en plus de sa langue au choix.
+// une langue (Artisan de guilde, variante), en plus de sa langue au choix.
 
 const MERCHANT_CHOICE = 'Outils de navigateur ou langue au choix'
 

@@ -51,7 +51,7 @@ const costLabel = ({ amount, unit, consumed }: MaterialCost): string => {
   return parts.join(' · ')
 }
 
-// AideDD, règles de la magie : un focaliseur d'incantation ne remplace pas une composante chiffrée, et une composante
+// Règles de la magie : un focaliseur d'incantation ne remplace pas une composante chiffrée, et une composante
 // consommée doit être fournie à chaque lancement ; l'attaque à distance a le désavantage à 1,50 m d'une créature hostile.
 const COST_HINT = 'Ni un focaliseur d\'incantation ni une sacoche à composantes ne la remplace.'
 const RANGED_HINT = 'Désavantage au jet d\'attaque si une créature hostile qui vous voit et n\'est pas incapable d\'agir se trouve à 1,50 m ou moins.'

@@ -47,7 +47,7 @@ En forme de bête : vos statistiques sont remplacées par celles de la bête (ma
     actionType: 'action',
     rechargeType: 'short_rest',
     maxUsesFormula: fixed(2),
-    // AideDD, Druide › Forme sauvage : paliers de FP et durée = la moitié du niveau de druide, arrondie à l'inférieur.
+    // Druide › Forme sauvage : paliers de FP et durée = la moitié du niveau de druide, arrondie à l'inférieur.
     effects: [{
       type: 'beast_shape',
       value: {
@@ -195,7 +195,7 @@ export const druideSubclasses: SubclassDef[] = [
         actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
-        // AideDD, Cercle de la lune : FP 1 dès le niveau 2, puis niveau de druide ÷ 3 (arrondi à l'inférieur) à partir du 6.
+        // Cercle de la lune : FP 1 dès le niveau 2, puis niveau de druide ÷ 3 (arrondi à l'inférieur) à partir du 6.
         effects: [{ type: 'beast_shape_challenge', value: { maxChallenge: max(fixed(1), floor(div(variable('class_level'), fixed(3)))) } }],
       },
       {

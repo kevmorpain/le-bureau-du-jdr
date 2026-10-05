@@ -22,7 +22,7 @@ const HALF_SLOTS: number[][] = [
   [4, 3, 3, 3, 2, 0, 0, 0, 0], [4, 3, 3, 3, 2, 0, 0, 0, 0],
 ]
 
-// Lanceur du tiers (Chevalier occulte, Escroc arcanique) — incantation à partir du niveau 3 (AideDD).
+// Lanceur du tiers (Chevalier occulte, Escroc arcanique) — incantation à partir du niveau 3.
 const THIRD_SLOTS: number[][] = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [2, 0, 0, 0, 0, 0, 0, 0, 0],
   [3, 0, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -64,7 +64,7 @@ export function maxSpellLevelForLevel(type: CasterType, level: number): number {
  * Emplacements combinés du multiclassage (PHB 2014 p.164) : les niveaux de lanceur complet, la
  * moitié des niveaux de demi-lanceur (à partir du niveau 2 dans cette classe) et le tiers de ceux d'une
  * sous-classe lanceuse du tiers (à partir du niveau 3), agrégés, donnent la table de lanceur complet ; la
- * magie de pacte reste séparée (elle ne se combine pas). Une seule classe lanceuse (AideDD : « seulement
+ * magie de pacte reste séparée (elle ne se combine pas). Une seule classe lanceuse (« seulement
  * grâce à une de vos classes ») : on lit la table de cette classe.
  */
 export function combinedSpellSlots(classes: Array<{ casterType: SpellcastingType, level: number }>) {

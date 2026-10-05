@@ -8,7 +8,7 @@ import LevelUpSummary from '../../app/components/level_up/LevelUpSummary.vue'
 import { useLevelUp, type CharacterSheetWithASI, type LevelUpState } from '../../app/composables/useLevelUp'
 import { catalogClasses } from '../fixtures/catalogClasses'
 
-// Rejoindre une classe par multiclassage (AideDD) : il faut les valeurs requises par la classe ACTUELLE et par
+// Rejoindre une classe par multiclassage : il faut les valeurs requises par la classe ACTUELLE et par
 // la nouvelle (non bloquant), et la classe rejointe n'accorde que son sous-ensemble de maîtrises. Prérequis et
 // maîtrises viennent du catalogue (`multiclass_prerequisites`, porteurs `multiclass_proficiency_grant`).
 

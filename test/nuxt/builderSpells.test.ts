@@ -6,7 +6,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import StepSpells from '../../app/components/character_builder/StepSpells.vue'
 import { useCharacterBuilder } from '../../app/composables/useCharacterBuilder'
 
-// Le Rôdeur 2014 CONNAÎT ses sorts (table AideDD : 2 au niveau 2, 3 au niveau 3) — il était traité
+// Le Rôdeur 2014 CONNAÎT ses sorts (2 au niveau 2, 3 au niveau 3) — il était traité
 // comme un lanceur à sorts préparés, sans nombre exigé à la création.
 
 const spell = (id: number, name: string, level: number, className: string) =>

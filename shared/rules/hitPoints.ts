@@ -12,7 +12,7 @@ import {
 } from '~~/shared/rules/characterEffects'
 import type { TemporaryEffect } from '~~/shared/utils/temporary_effects'
 
-// AideDD, « Au-delà du niveau 1 » : le dé de vie plus le modificateur de CON s'ajoute à chaque niveau
+// « Au-delà du niveau 1 » : le dé de vie plus le modificateur de CON s'ajoute à chaque niveau
 // « (minimum 1) » ; la valeur fixe est la moyenne arrondie au supérieur ; quand le modificateur de CON
 // augmente de 1, le maximum augmente de 1 par niveau atteint.
 //

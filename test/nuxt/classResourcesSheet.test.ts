@@ -73,7 +73,7 @@ describe('fiche — Rage', () => {
     expect(defenseKeys(s)).toEqual([])
   })
 
-  it('armure lourde : les résistances de la rage sont suspendues (AideDD : « si vous ne portez pas d\'armure lourde »)', async () => {
+  it('armure lourde : les résistances de la rage sont suspendues (« si vous ne portez pas d\'armure lourde »)', async () => {
     const { s } = await sheetWith(id => barbarian(id, true), [plate(9500)])
     await new Promise(r => setTimeout(r, 50))
     expect(s.wearsHeavyArmor.value).toBe(true)

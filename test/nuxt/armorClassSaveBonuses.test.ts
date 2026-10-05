@@ -4,7 +4,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import type { Effect } from '../../server/db/schema/effects'
 import { useCharacterSheet } from '../../app/composables/useCharacterSheet'
 
-// Bonus fixes de CA et de JS, portés par un objet (Anneau de protection, AideDD : « +1 à la CA et aux
+// Bonus fixes de CA et de JS, portés par un objet (Anneau de protection : « +1 à la CA et aux
 // jets de sauvegarde », lien requis) ou par un effet temporaire de la fiche. Passe par useCharacterSheet
 // pour garder le câblage objets + effets temporaires → CA, JS, initiative.
 

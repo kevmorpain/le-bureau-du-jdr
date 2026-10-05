@@ -132,7 +132,7 @@ export type Effect
     | { type: 'burrowing_speed', value: number }
     // Les `Formula` des effets ci-dessous s'évaluent au niveau de la classe qui porte la feature
     // (`shared/rules/classResources.ts`), jamais à celui de la classe principale.
-    // Attaques par action Attaquer ; les sources ne se cumulent pas (AideDD, Multiclassage).
+    // Attaques par action Attaquer ; les sources ne se cumulent pas.
     | { type: 'extra_attack', value: { attacks: Formula } }
     // Dés de dégâts ajoutés à une attaque d'arme (Attaque sournoise, Châtiment divin amélioré).
     | { type: 'weapon_damage_dice', value: { name: string, dice: Formula, sides: number, damageType?: DamageType, weapons: 'melee' | 'finesse_or_ranged', limit: 'once_per_turn' | 'each_hit', condition?: string, needsAdvantage?: boolean } }

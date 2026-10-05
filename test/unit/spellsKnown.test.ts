@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { cantripsKnownAt, countPreparedSpells, LORE_COLLEGE_NAME, magicalSecretsGained, preparedSpellsLimit, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
 
-// Valeurs vérifiées à la main sur les tables de classe AideDD (PHB 2014) et la règle de multiclassage :
+// Valeurs vérifiées à la main sur les tables de classe (PHB 2014) et la règle de multiclassage :
 // « Vous choisissez les sorts que vous connaissez et que vous préparez pour chacune de vos classes
 // individuellement ».
 
@@ -75,7 +75,7 @@ describe('cantripsKnownAt / spellsKnownAt', () => {
 
   it('grimoire : 6 au niveau 1, puis +2 par niveau', () => {
     expect(spellsKnownAt('wizard', 1)).toBe(6)
-    expect(spellsKnownAt('wizard', 3)).toBe(10) // l'exemple rôdeur 4/magicien 3 d'AideDD : dix sorts
+    expect(spellsKnownAt('wizard', 3)).toBe(10) // l'exemple rôdeur 4/magicien 3 : dix sorts
     expect(spellsKnownAt('wizard', 20)).toBe(44)
   })
 
@@ -85,7 +85,7 @@ describe('cantripsKnownAt / spellsKnownAt', () => {
   })
 })
 
-describe('preparedSpellsLimit — sorts préparés par jour (AideDD)', () => {
+describe('preparedSpellsLimit — sorts préparés par jour', () => {
   it('Clerc, Druide, Magicien : modificateur + niveau de classe', () => {
     expect(preparedSpellsLimit('cleric', 5, 3)).toBe(8)
     expect(preparedSpellsLimit('druid', 1, 2)).toBe(3)
@@ -133,7 +133,7 @@ describe('countPreparedSpells — consommation de la limite quotidienne', () => 
   })
 })
 
-describe('magicalSecretsGained — Secrets magiques du Barde (AideDD)', () => {
+describe('magicalSecretsGained — Secrets magiques du Barde', () => {
   it('niveaux 10, 14 et 18 : deux sorts de n\'importe quelle liste, déjà dans le décompte des sorts connus', () => {
     expect(magicalSecretsGained('bard', 9, 10)).toEqual({ anyList: 2, extra: 0 })
     expect(magicalSecretsGained('bard', 13, 14)).toEqual({ anyList: 2, extra: 0 })

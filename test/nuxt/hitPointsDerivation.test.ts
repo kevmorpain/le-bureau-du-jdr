@@ -130,7 +130,7 @@ describe('PV max dérivés — level-up', () => {
     expect((await sheet()).hpBase).toBe(before.hpBase)
   })
 
-  it('minimum de 1 PV par niveau (AideDD) : un dé de 1 avec CON −5 rapporte tout de même 1 PV de maximum', async () => {
+  it('minimum de 1 PV par niveau : un dé de 1 avec CON −5 rapporte tout de même 1 PV de maximum', async () => {
     const [weak] = await db.insert(schema.characterSheets).values({ name: 'Frêle', speciesId: SPECIES.human, hpBase: 6 }).returning()
     await db.insert(schema.characterClasses).values({ characterSheetId: weak.id, classId: CLASS.fighter, level: 1, isMain: true })
     await db.insert(schema.characterAbilityScores).values({ characterSheetId: weak.id, abilityId: 'con', value: 1 })

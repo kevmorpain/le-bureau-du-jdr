@@ -367,7 +367,7 @@ const commit = () => {
       showFlash(`+${raw} PV`)
     }
   } else if (mode.value === 'damage') {
-    // AideDD, Combat : la résistance et la vulnérabilité s'appliquent après tout autre modificateur de dégâts.
+    // Combat : la résistance et la vulnérabilité s'appliquent après tout autre modificateur de dégâts.
     let final = dodged.value ? Math.floor(raw / 2) : raw
     const d = activeDefense.value
     if (d?.level === 'immunity') final = 0
@@ -387,7 +387,7 @@ const commit = () => {
       useToast().add({ title: `${result.deathSaveFailuresAdded} échec${result.deathSaveFailuresAdded > 1 ? 's' : ''} aux jets contre la mort`, color: 'error' })
     }
 
-    // Inconscient ou mort : la concentration s'arrête d'elle-même (AideDD, Concentration) ; sinon, un jet de CON.
+    // Inconscient ou mort : la concentration s'arrête d'elle-même ; sinon, un jet de CON.
     if (isConcentrating.value && (result.droppedToZero || result.instantDeath || result.state.currentHp === 0)) {
       breakConcentration('Vous êtes tombé à 0 PV.')
     } else if (isConcentrating.value && final - result.absorbedByTemporary > 0) {

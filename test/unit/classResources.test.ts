@@ -52,7 +52,7 @@ const ctx = (patch: Partial<FormulaContext> = {}): FormulaContext => ({
 
 const cls = (classId: number, level: number, subclassId?: number): OwnerClass => ({ classId, level, subclass: subclassId ? { id: subclassId } : null })
 
-describe('compteurs de ressources (AideDD)', () => {
+describe('compteurs de ressources', () => {
   const rage = resource(named(barbareFeatures, 'Rage'), { classId: CLASS_IDS.barbare })
 
   it('Rage : 2 / 3 / 4 / 5 / 6 utilisations puis illimitées au niveau 20', () => {
@@ -123,7 +123,7 @@ describe('traits dérivés', () => {
     expect([4, 5, 10, 11, 19, 20].map(at)).toEqual([1, 2, 2, 3, 3, 4])
   })
 
-  it('Attaque supplémentaire ne se cumule pas entre classes (AideDD, Multiclassage)', () => {
+  it('Attaque supplémentaire ne se cumule pas entre classes', () => {
     const features = [attack(guerrierFeatures, CLASS_IDS.guerrier), attack(barbareFeatures, CLASS_IDS.barbare)]
     const traits = deriveClassTraits(features, ctx(), [cls(CLASS_IDS.guerrier, 5), cls(CLASS_IDS.barbare, 5)])
     expect(traits.attacksPerAction).toBe(2)
@@ -178,7 +178,7 @@ describe('traits dérivés', () => {
       expect(raging(9, false).meleeStrengthDamageBonus).toBe(0)
     })
 
-    it('une armure lourde suspend le bonus (AideDD : « si vous ne portez pas d\'armure lourde »)', () => {
+    it('une armure lourde suspend le bonus (« si vous ne portez pas d\'armure lourde »)', () => {
       expect(raging(9, true, true).meleeStrengthDamageBonus).toBe(0)
     })
   })
@@ -201,7 +201,7 @@ describe('traits dérivés', () => {
     const wild = resource(named(druideFeatures, 'Forme sauvage'), { classId: CLASS_IDS.druide })
     const shape = (level: number) => deriveClassTraits([wild], ctx(), [cls(CLASS_IDS.druide, level)]).beastShape
 
-    it('paliers de FP et restrictions (AideDD) ; durée = la moitié du niveau, arrondie', () => {
+    it('paliers de FP et restrictions ; durée = la moitié du niveau, arrondie', () => {
       expect(shape(2)).toEqual({ maxChallenge: 0.25, flying: false, swimming: false, hours: 1 })
       expect(shape(4)).toEqual({ maxChallenge: 0.5, flying: false, swimming: true, hours: 2 })
       expect(shape(7)).toEqual({ maxChallenge: 0.5, flying: false, swimming: true, hours: 3 })
@@ -238,7 +238,7 @@ describe('Châtiment divin', () => {
 })
 
 describe('groupes de réserves', () => {
-  it('Conduit divin du Clerc et du Paladin : une seule réserve, au maximum le plus haut (AideDD, Multiclassage)', () => {
+  it('Conduit divin du Clerc et du Paladin : une seule réserve, au maximum le plus haut', () => {
     const cleric = resource(named(clercFeatures, 'Conduit divin'), { classId: CLASS_IDS.clerc }, { currentUses: 1 })
     const paladin = resource(named(paladinFeatures, 'Conduit divin'), { classId: CLASS_IDS.paladin }, { currentUses: 0 })
     const groups = resourceGroups([cleric, paladin], ctx(), [cls(CLASS_IDS.clerc, 6), cls(CLASS_IDS.paladin, 4)])
@@ -270,7 +270,7 @@ describe('groupes de réserves', () => {
     expect(resourceGroups([insp, source], ctx(), [cls(CLASS_IDS.barde, 5)])[0]!.rechargeType).toBe('short_rest')
   })
 
-  it('Métamagie : les options choisies sont proposées avec leur coût (AideDD)', () => {
+  it('Métamagie : les options choisies sont proposées avec leur coût', () => {
     const pool = resource(named(ensorceleurFeatures, 'Source de magie'), { classId: CLASS_IDS.ensorceleur })
     const options = ensorceleurMetamagicFeatures.map(def => resource(def, { classId: CLASS_IDS.ensorceleur }))
     const [group] = resourceGroups([pool, ...options.slice(0, 2)], ctx(), [cls(CLASS_IDS.ensorceleur, 3)])
@@ -332,7 +332,7 @@ describe('repos', () => {
 })
 
 describe('points de sorcellerie', () => {
-  it('coût de création d\'un emplacement (AideDD) : 2, 3, 5, 6, 7 points, jusqu\'au niveau 5', () => {
+  it('coût de création d\'un emplacement : 2, 3, 5, 6, 7 points, jusqu\'au niveau 5', () => {
     expect(SORCERY_SLOT_COST).toEqual({ 1: 2, 2: 3, 3: 5, 4: 6, 5: 7 })
     expect(SORCERY_MAX_CREATED_SLOT_LEVEL).toBe(5)
     expect(slotCreationCost(3)).toBe(5)

@@ -1,6 +1,6 @@
 import { isDead as deadByDeathSaves, isDying as dyingAt, isStable as stableAt, type HitPointState } from '~~/shared/rules/damage'
 
-// Épuisement : niveau 6 = mort (AideDD, Conditions).
+// Épuisement : niveau 6 = mort.
 const LETHAL_EXHAUSTION = 6
 
 // PV, PV temporaires et jets contre la mort de la fiche, vus comme l'état que manipulent les règles de shared/rules/damage.
