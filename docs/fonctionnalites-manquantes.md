@@ -139,10 +139,10 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | Code | Suivi | Sujet |
 |---|---|---|
 | **S1** | ✅ résolu ([#166](https://github.com/kevmorpain/le-bureau-du-jdr/issues/166), lot 3) | Limite de sorts préparés (compteur non bloquant) et sorts de domaine / de serment toujours préparés, dérivés de la sous-classe (`always_prepared_spell`, migration 0114) |
-| **S2** | [#167](https://github.com/kevmorpain/le-bureau-du-jdr/issues/167) | Incantation rituelle |
-| **S3** | [#168](https://github.com/kevmorpain/le-bureau-du-jdr/issues/168) | Zone d'effet des sorts |
-| **S4** | [#169](https://github.com/kevmorpain/le-bureau-du-jdr/issues/169) | Type d'attaque du sort explicite (corps à corps / distance) |
-| **S5** | [#170](https://github.com/kevmorpain/le-bureau-du-jdr/issues/170) | Composantes matérielles coûteuses |
+| **S2** | ✅ résolu ([#167](https://github.com/kevmorpain/le-bureau-du-jdr/issues/167), lot 8) | Incantation rituelle : « Lancer en rituel » dans le sort ouvert, sans emplacement ni montée en puissance ; offert selon la capacité Rituel de la classe lanceuse (`shared/rules/ritualCasting.ts`, AideDD : Barde, Magicien, Clerc et Druide préparé ; Occultiste pour le Livre des Ombres et l'Appel de familier du pacte de la chaîne). Le +10 minutes est un rappel, l'app n'a pas d'horloge |
+| **S3** | ✅ résolu ([#168](https://github.com/kevmorpain/le-bureau-du-jdr/issues/168), lot 8) | Zone d'effet : colonne `spells.area_of_effect` (forme, taille en mètres, hauteur du cylindre), posée sur les 18 sorts qui affectent une zone (migration 0127). Le plafond de taille d'une création (Image silencieuse…) et les rayons de détection n'en sont pas ; la taille est celle du niveau de base (Confusion grossit à haut niveau) |
+| **S4** | ✅ résolu ([#169](https://github.com/kevmorpain/le-bureau-du-jdr/issues/169), lot 8) | Type d'attaque explicite : colonne `spells.attack_type` (`melee` / `ranged`), qui remplace l'inférence « dégâts sans DD ». Corrige Maléfice, Transfert de vie et Armure d'Agathys (faux jet pour toucher), Rayon affaiblissant, Éclair de chaos et Changement de plan (jet manquant). Lame aux flammes vertes et Lame retentissante attaquent avec l'arme, pas avec un sort : plus de jet de sort. Le désavantage à 1,50 m est un rappel (AideDD), pas un calcul : la position des créatures est inconnue |
+| **S5** | ✅ résolu ([#170](https://github.com/kevmorpain/le-bureau-du-jdr/issues/170), lot 8) | Composante chiffrée ou consommée : colonne `spells.material_cost` (montant, unité `pa`/`po`, consommée) sur 17 sorts ; rappel que le focaliseur ne la remplace pas (AideDD, règles de la magie). Quatre textes de `material` corrigés sur AideDD (Identification : « au moins » ; Création de mort-vivant : mauvais objet ; Vision suprême : « consommée » ; Changement de plan). Le lancement n'est pas bloqué faute de la composante |
 | **S6** | [#171](https://github.com/kevmorpain/le-bureau-du-jdr/issues/171) | Sorts actifs : durée et effets en cours |
 
 ---
@@ -201,7 +201,7 @@ présentation/interaction.
 | Code | Suivi | Sujet |
 |---|---|---|
 | **U1** | 🚫 écarté (décision du 2026-09-14) — ne pas re-proposer sans décision de design | Mise en page mobile |
-| **U2** | [#180](https://github.com/kevmorpain/le-bureau-du-jdr/issues/180) | Lecture d'un sort : accordéon et effets structurés |
+| **U2** | ✅ résolu ([#180](https://github.com/kevmorpain/le-bureau-du-jdr/issues/180), lot 8) | Lecture d'un sort sur la ligne (`UCollapsible`, `SpellDetails`) à la place du tiroir : encart de faits (`SpellFacts` : attaque + bonus, JdS + DD, zone, composante, concentration, rituel), description en Markdown léger, actions de lancement |
 | **U3** | [#181](https://github.com/kevmorpain/le-bureau-du-jdr/issues/181) | Effets d'objet rendus en JSON brut |
 | **U4** | ✅ résolu ([#182](https://github.com/kevmorpain/le-bureau-du-jdr/issues/182), lot 5) | Historique des 100 derniers jets par fiche (navigateur), avec relance et copie |
 | **U5** | ✅ résolu ([#183](https://github.com/kevmorpain/le-bureau-du-jdr/issues/183), lot 5) | Initiative conservée et affichée (fiche, Mode Combat), compteur de round. Pas d'ordre de tour : la fiche ne connaît pas les autres combattants |
@@ -263,7 +263,7 @@ réglage. Toute entrée ci-dessous suppose de trancher d'abord **où vit une pr�
 | **N2** | ✅ résolu ([#189](https://github.com/kevmorpain/le-bureau-du-jdr/issues/189), lot 7) | Saisie du résultat quand les jets sont désactivés : d20 du jet contre la mort, résultat d'une table aléatoire, total d'initiative ; concentration et recharge d'objet se tranchaient déjà à la main |
 | **N3** | ✅ résolu (2026-10-02) — [#190](https://github.com/kevmorpain/le-bureau-du-jdr/issues/190) | Concentration libre : libellé `concentrating_on` à côté de la clé étrangère (migration 0119) |
 | **N4** | ✅ résolu ([#191](https://github.com/kevmorpain/le-bureau-du-jdr/issues/191), lot 7) | Ajustements manuels de CA, vitesse, initiative et DD : les effets temporaires couvraient déjà CA, initiative et DD ; `speed_bonus` y est ajouté pour la vitesse ([D23](./decisions.md#d23)). Pas de surcharge absolue |
-| **N5** | [#192](https://github.com/kevmorpain/le-bureau-du-jdr/issues/192) | Encart d'effet mécanique sur les capacités |
+| **N5** | ✅ résolu ([#192](https://github.com/kevmorpain/le-bureau-du-jdr/issues/192), lot 8) | Encart « Sur la fiche » des capacités : les effets que la fiche applique, libellés par `labelledEffects`. Les effets sans libellé (`extra_attack`, `resource_die`…) et les effets « tant que la capacité est active » (`meta.whileActive`) n'y figurent pas |
 | **N6** | ✅ tranché → [D18](./decisions.md#d18), voir plus bas | Où vit une préférence ? |
 
 ### N6 — ce que la décision implique
@@ -281,8 +281,8 @@ Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le 
 > **Bonne nouvelle pour U2b / N5** (et vérifiée par U10, désormais fait) : aucun de ces encarts n'est un problème de *design*. Les
 > données structurées existent déjà (`spell.damages`, `spell.heal`, `spell.dc`,
 > `spell.concentration`, `spell.multiAttack`, `damage_at_slot_level`) — l'encart est le **rendu
-> d'un JSON déjà en base**, pas un système visuel à inventer. Sa complétude est en revanche
-> **plafonnée par S3** (pas de zone d'effet) et **S4** (type d'attaque seulement déduit).
+> d'un JSON déjà en base**, pas un système visuel à inventer. Sa complétude était en revanche
+> plafonnée par S3 (pas de zone d'effet) et S4 (type d'attaque seulement déduit) : levés au lot 8.
 
 ---
 

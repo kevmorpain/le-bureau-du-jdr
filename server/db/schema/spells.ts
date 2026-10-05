@@ -5,6 +5,7 @@ import type { DamageType } from '~~/shared/rules/damageTypes'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Source } from '~~/shared/rules/source'
 import magicSchools from './magic_schools'
+import rollTables from './roll_tables'
 import spellClasses from './spell_classes'
 
 export enum SpellComponent {
@@ -52,6 +53,23 @@ export type MultiAttack = {
   count_at_slot_level?: Record<SlotLevel, number>
 }
 
+/** Attaque de SORT (jet d'attaque + bonus d'attaque de sort) ; une attaque faite avec une arme n'en est pas une. */
+export type SpellAttackType = 'melee' | 'ranged'
+
+/** `size` en mètres : rayon (sphère, cylindre, émanation), longueur (cône), arête (cube, carré). */
+export type AreaOfEffect = {
+  shape: 'cone' | 'sphere' | 'cube' | 'square' | 'cylinder' | 'emanation'
+  size: number
+  height?: number
+}
+
+/** Composante matérielle chiffrée ou consommée : le focaliseur d'incantation ne la remplace pas. `amount` reprend le chiffre de la source (« 50 po chacun » → 50). */
+export type MaterialCost = {
+  amount?: number
+  unit?: 'pa' | 'po'
+  consumed?: boolean
+}
+
 const spells = sqliteTable('spells', {
   id: integer().primaryKey().notNull(),
   name: text('name').notNull(),
@@ -63,6 +81,8 @@ const spells = sqliteTable('spells', {
     .default(sql`(json_array())`)
     .notNull(),
   material: text('material'),
+  materialCost: text('material_cost', { mode: 'json' })
+    .$type<MaterialCost>(),
   ritual: integer('ritual', { mode: 'boolean' }).default(false).notNull(),
   duration: text('duration').notNull(),
   concentration: integer('concentration', { mode: 'boolean' }).default(false).notNull(),
@@ -76,6 +96,13 @@ const spells = sqliteTable('spells', {
 
   dc: text('dc', { mode: 'json' })
     .$type<{ ability: AbilityKey, success?: DcSuccessEffect }>(),
+
+  rollTableId: integer('roll_table_id').references(() => rollTables.id, { onDelete: 'set null' }),
+
+  attackType: text('attack_type').$type<SpellAttackType>(),
+
+  areaOfEffect: text('area_of_effect', { mode: 'json' })
+    .$type<AreaOfEffect>(),
 
   damages: text('damages', { mode: 'json' })
     .$type<DamageEntry[]>(),

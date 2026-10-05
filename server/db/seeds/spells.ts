@@ -2,7 +2,7 @@ import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
 import { spells } from './data/spells'
 import { spellClassMappings } from './data/spell_class_mappings'
-import { nameRulesetKey } from './lib/rulesetOf'
+import { nameRulesetKey, rulesetOf } from './lib/rulesetOf'
 
 export default async function seed() {
   // ⚠️ SUIVI (lot sorts 5.5) : keyé par NOM seul → quand deux « Magicien » (2014+2024) coexisteront,
@@ -19,6 +19,16 @@ export default async function seed() {
   // (name, ruleset) : un sort 5.5 homonyme doit INSÉRER, jamais réécrire la ligne 2014.
   const existingSpells = await db.select().from(schema.spells)
   const spellByKey = new Map(existingSpells.map(s => [nameRulesetKey(s), s]))
+
+  // Résolues avant toute écriture : un sort lié à une table absente ne doit pas laisser un seed à moitié fait.
+  const rollTableRows = await db.select({ id: schema.rollTables.id, key: schema.rollTables.key, ruleset: schema.rollTables.ruleset }).from(schema.rollTables)
+  const rollTableIdBySpell = new Map<string, number>()
+  for (const spell of spells.filter(s => s.rollTable)) {
+    const row = rollTableRows.find(r => r.key === spell.rollTable && r.ruleset === rulesetOf(spell))
+    if (!row) throw new Error(`[spells seed] table ${spell.rollTable} introuvable pour « ${spell.name} » : lancer le seed rollTables d'abord`)
+    rollTableIdBySpell.set(nameRulesetKey(spell), row.id)
+  }
+  const rollTableIdOf = (spell: (typeof spells)[number]): number | null => rollTableIdBySpell.get(nameRulesetKey(spell)) ?? null
 
   const existingLinks = await db
     .select({ spellId: schema.spellClasses.spellId, classId: schema.spellClasses.classId })
@@ -43,6 +53,10 @@ export default async function seed() {
         duration: spell.duration,
         components: spell.components ?? [],
         material: spell.material ?? null,
+        rollTableId: rollTableIdOf(spell),
+        materialCost: spell.materialCost ?? null,
+        attackType: spell.attackType ?? null,
+        areaOfEffect: spell.areaOfEffect ?? null,
         damages: (spell as any).damages ?? null,
         heal: (spell as any).heal ?? null,
         multiAttack: (spell as any).multiAttack ?? null,
@@ -59,6 +73,10 @@ export default async function seed() {
         || existing.duration !== next.duration
         || JSON.stringify(existing.components) !== JSON.stringify(next.components)
         || existing.material !== next.material
+        || existing.rollTableId !== next.rollTableId
+        || JSON.stringify(existing.materialCost) !== JSON.stringify(next.materialCost)
+        || existing.attackType !== next.attackType
+        || JSON.stringify(existing.areaOfEffect) !== JSON.stringify(next.areaOfEffect)
         || JSON.stringify(existing.damages) !== JSON.stringify(next.damages)
         || JSON.stringify(existing.heal) !== JSON.stringify(next.heal)
         || JSON.stringify(existing.multiAttack) !== JSON.stringify(next.multiAttack)
@@ -80,7 +98,8 @@ export default async function seed() {
       spellId = existing.id
     }
     else {
-      spellId = await db.insert(schema.spells).values(spell).returning().get().then(r => (inserted++, r.id))
+      const { rollTable: _, ...columns } = spell
+      spellId = await db.insert(schema.spells).values({ ...columns, rollTableId: rollTableIdOf(spell) }).returning().get().then(r => (inserted++, r.id))
     }
 
     for (const className of classesBySpellName[spell.name] ?? []) {

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { spells } from '../../server/db/seeds/data/spells'
 import { spellClassMappings } from '../../server/db/seeds/data/spell_class_mappings'
-import { nameRulesetKey } from '../../server/db/seeds/lib/rulesetOf'
+import { nameRulesetKey, rulesetOf } from '../../server/db/seeds/lib/rulesetOf'
+import { rollTables } from '../../server/db/seeds/data/rollTables'
 import { parseDiceNotation } from '../../shared/rules/spellScaling'
 
 // Le seed lie sorts et classes par NOM : un nom de mapping sans sort correspondant est ignoré en
@@ -66,5 +67,73 @@ describe('seed sorts — progressions de montée en puissance', () => {
       }
     }
     expect(unparsable).toEqual([])
+  })
+})
+
+// Les faits de fiche (attaque, zone, coût) ne se déduisent pas de la prose à l'exécution : un sort qui les porte dans son
+// texte sans les déclarer afficherait une fiche muette sur ce que le joueur doit savoir en lançant.
+describe('seed sorts — faits de fiche déclarés', () => {
+  // Plafonds de taille d'une création ou rayons de détection, pas des zones affectées (AideDD, pages de sort).
+  const SIZE_LIMIT_NOT_AREA = [
+    'Prestidigitation', 'Image silencieuse', 'Illusion mineure', 'Invocation d\'élémentaire', 'Force fantasmagorique',
+    'Druidisme', 'Désintégration', 'Cage de force', 'Contrôle des flammes',
+  ]
+
+  it('chaque sort dont le texte décrit une zone chiffrée la déclare, ou figure parmi les plafonds de taille', () => {
+    const undeclared = spells
+      .filter(s => /\b(cône|sphère|cylindre|cube|carré)\s+(?:de|d')\s*\d/.test(s.description ?? ''))
+      .filter(s => !s.areaOfEffect && !SIZE_LIMIT_NOT_AREA.includes(s.name))
+      .map(s => s.name)
+    expect(undeclared).toEqual([])
+  })
+
+  it('chaque composante matérielle chiffrée ou consommée déclare son coût', () => {
+    const undeclared = spells
+      .filter(s => /\d\s*(?:po|pa)\b|consom/i.test(s.material ?? ''))
+      .filter(s => !s.materialCost)
+      .map(s => s.name)
+    expect(undeclared).toEqual([])
+  })
+
+  it('un coût déclaré est chiffré avec son unité, ou seulement consommé', () => {
+    for (const s of spells.filter(s => s.materialCost)) {
+      const { amount, unit, consumed } = s.materialCost!
+      expect(amount === undefined ? consumed === true : unit !== undefined && amount > 0, s.name).toBe(true)
+    }
+  })
+
+  it('chaque sort qui demande une attaque de sort la déclare', () => {
+    const undeclared = spells
+      .filter(s => /attaque (?:à distance|au corps à corps) avec un sort|attaque de sort/i.test(s.description ?? ''))
+      .filter(s => !s.attackType)
+      .map(s => s.name)
+    expect(undeclared).toEqual([])
+  })
+
+  it('une zone d\'effet a une taille positive, et une hauteur seulement pour le cylindre', () => {
+    for (const s of spells.filter(s => s.areaOfEffect)) {
+      const { shape, size, height } = s.areaOfEffect!
+      expect(size, s.name).toBeGreaterThan(0)
+      expect(height !== undefined, s.name).toBe(shape === 'cylinder')
+    }
+  })
+})
+
+// Un lien sans table laisserait le seed échouer en prod, et une prose qui renvoie à « la table ci-dessous » sans lien
+// afficherait un renvoi dans le vide.
+describe('seed sorts — tables à lancer', () => {
+  it('chaque sort qui renvoie à une table la trouve dans le seed, pour sa propre édition', () => {
+    const missing = spells
+      .filter(s => s.rollTable)
+      .filter(s => !rollTables.some(t => t.key === s.rollTable && rulesetOf(t) === rulesetOf(s)))
+      .map(s => s.name)
+    expect(missing).toEqual([])
+  })
+
+  it('une prose qui renvoie à la table ci-dessous a une table liée, et inversement', () => {
+    const mismatched = spells
+      .filter(s => /table ci-dessous/i.test(s.description ?? '') !== Boolean(s.rollTable))
+      .map(s => s.name)
+    expect(mismatched).toEqual([])
   })
 })
