@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="flex items-center gap-x-3 gap-y-1 py-1.5 px-2 rounded-md cursor-pointer group flex-wrap hover:bg-elevated/50 transition-colors"
-    @click="$emit('click')"
-  >
+  <div class="flex items-center gap-x-3 gap-y-1 py-1.5 px-2 rounded-md cursor-pointer group flex-wrap hover:bg-elevated/50 transition-colors">
     <UTooltip
       v-if="hasSomaticWarning"
       :delay-duration="0"
@@ -182,7 +179,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'click': []
   'toggle-prepared': [value: boolean]
   'remove': []
 }>()
