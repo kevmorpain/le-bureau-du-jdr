@@ -15,7 +15,7 @@ const rowOf = async (name: string) => {
   return res.rows[0]!
 }
 
-// Ces sorts à concentration avaient un texte de durée sans « Concentration, jusqu'à » (AideDD l'inclut).
+// Ces sorts à concentration avaient un texte de durée sans « Concentration, jusqu'à ».
 const BARE_TEXT = new Map([
   ['Assistance', '1 minute'], ['Bénédiction', '1 minute'], ['Immobilisation de personne', '1 minute'],
   ['Bouclier de la foi', '10 minutes'], ['Détection de la magie', '10 minutes'], ['Détection du mal et du bien', '10 minutes'],

@@ -17,7 +17,7 @@ describe('durée structurée d\'un sort', () => {
     expect(castDuration(row({ durationUnit: 'instant', durationValue: null, duration: 'Instantanée' }))).toBeNull()
   })
 
-  it('1 minute = 10 rounds (un round ≈ six secondes, AideDD)', () => {
+  it('1 minute = 10 rounds (un round ≈ six secondes)', () => {
     expect(durationRounds({ durationUnit: 'round', durationValue: 1 })).toBe(1)
     expect(durationRounds({ durationUnit: 'minute', durationValue: 1 })).toBe(10)
     expect(durationRounds({ durationUnit: 'minute', durationValue: 10 })).toBe(100)
@@ -31,7 +31,7 @@ describe('durée structurée d\'un sort', () => {
     expect(castDuration(row({ durationUnit: 'hour', durationValue: 8, duration: '8 heures' }))).toEqual({ label: '8 heures', rounds: null })
   })
 
-  it('le libellé suit le nombre, et le texte d\'un sort concentré reprend la formulation d\'AideDD', () => {
+  it('le libellé suit le nombre, et le texte d\'un sort concentré reprend la formulation des sorts à concentration', () => {
     expect(durationLabel({ durationUnit: 'minute', durationValue: 1 })).toBe('1 minute')
     expect(durationLabel({ durationUnit: 'minute', durationValue: 10 })).toBe('10 minutes')
     expect(durationText({ durationUnit: 'minute', durationValue: 1 }, true)).toBe('Concentration, jusqu\'à 1 minute')
@@ -44,7 +44,7 @@ describe('durée structurée d\'un sort', () => {
   })
 })
 
-// Les formulations seedées d'AideDD et la structure qui les décrit : la migration 0129 en pose la même table.
+// Les formulations seedées et la structure qui les décrit : la migration 0129 en pose la même table.
 const SEEDED_FORMS: Record<string, SpellDuration> = {
   'Instantanée': { durationUnit: 'instant', durationValue: null },
   '1 round': { durationUnit: 'round', durationValue: 1 },
@@ -61,7 +61,7 @@ const SEEDED_FORMS: Record<string, SpellDuration> = {
   'Instantanée ou 1 heure': { durationUnit: 'special', durationValue: null },
 }
 
-// Formulations que le texte dérivé de la structure ne reproduit pas mot pour mot : le seed garde celle d'AideDD.
+// Formulations que le texte dérivé de la structure ne reproduit pas mot pour mot : le seed garde sa formulation d'origine.
 const VERBATIM = ['Jusqu\'à 8 heures', 'Jusqu\'à dissipation ou déclenchement', 'Instantanée ou 1 heure']
 
 describe('seed sorts — durées structurées', () => {
@@ -74,7 +74,7 @@ describe('seed sorts — durées structurées', () => {
     }
   })
 
-  it('le texte dérivé de la structure est celui du seed, hors formulations conservées d\'AideDD', () => {
+  it('le texte dérivé de la structure est celui du seed, hors formulations conservées', () => {
     for (const spell of spells.filter(s => !VERBATIM.includes(s.duration))) {
       expect(durationText({ durationUnit: spell.durationUnit!, durationValue: spell.durationValue ?? null }, !!spell.concentration), spell.name).toBe(spell.duration)
     }

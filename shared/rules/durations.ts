@@ -1,6 +1,5 @@
 import type { TemporaryEffect } from '~~/shared/utils/temporary_effects'
 
-// AideDD, Le combat : « Un round représente environ six secondes dans le monde du jeu. »
 export const ROUNDS_PER_MINUTE = 10
 
 // Au-delà de 10 minutes, personne ne compte les rounds et l'app n'a pas d'horloge de jeu : la durée
@@ -34,7 +33,7 @@ export const durationLabel = ({ durationUnit, durationValue }: SpellDuration, te
   return text.trim()
 }
 
-// Texte d'affichage d'un sort : la formulation d'AideDD pour une durée structurée.
+// Texte d'affichage d'un sort, dérivé de sa durée structurée ; pour `special`, le texte saisi.
 export const durationText = (duration: SpellDuration, concentration: boolean, text = ''): string =>
   concentration && isCounted(duration.durationUnit) ? `Concentration, jusqu'à ${durationLabel(duration)}` : durationLabel(duration, text)
 
