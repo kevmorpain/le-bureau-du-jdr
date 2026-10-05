@@ -265,7 +265,7 @@
               </UButton>
               <!-- Dégâts (sorts d'attaque) : jet au niveau du lancement, sans reconsommer
                    d'emplacement. Le chevron permet de changer ce niveau quand il y a un choix. -->
-              <UButtonGroup
+              <UFieldGroup
                 v-if="isAttackSpell(cs) && cs.spell.damages?.length && (cs.spell.level === 0 || cs.isPrepared || isArcanumSpell(cs))"
                 size="xs"
                 class="shrink-0"
@@ -291,7 +291,7 @@
                     @click.stop="openDamageLevelPicker(cs)"
                   />
                 </UTooltip>
-              </UButtonGroup>
+              </UFieldGroup>
             </div>
 
             <template #content>

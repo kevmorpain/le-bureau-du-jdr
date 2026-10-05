@@ -75,6 +75,13 @@ describe('MagicSection — accordéon de sort', () => {
     expect(wrapper.text()).toMatch(/Attaque de sort à distance \(\+\d+\)/)
   })
 
+  it('le groupe « Dégâts » d\'un sort d\'attaque est un vrai composant, avec la taille de ses boutons', async () => {
+    const wrapper = await mountFor(9307, 'Magicien', 1, false)
+    expect(wrapper.html().toLowerCase()).not.toContain('<ubuttongroup')
+    const damage = wrapper.findAll('button').find(b => b.text().includes('Dégâts'))!
+    expect(damage.classes()).toContain('text-xs')
+  })
+
   it('le magicien lance un sort rituel non préparé en rituel, pas un sort sans l\'étiquette', async () => {
     const wrapper = await mountFor(9303, 'Magicien', 1, false)
     await rowOf(wrapper, 'Détection de la magie').trigger('click')
