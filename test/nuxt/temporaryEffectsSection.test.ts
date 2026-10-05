@@ -45,4 +45,17 @@ describe('TemporaryEffectsSection — rendu', () => {
     expect(badgeClasses('+1 JS (tous)')).toContain('primary')
     expect(badgeClasses('-1 initiative')).not.toContain('error')
   })
+  it('affiche le décompte d\'un sort suivi, sa concentration, et la durée d\'un sort qui ne se compte pas', async () => {
+    const wrapper = await mountSuspended(TemporaryEffectsSection, {
+      props: { characterSheet: sheet([
+        { id: 1, name: 'Bénédiction', spellId: 7, concentration: true, active: true, effects: [], countdown: { rounds: 10, remaining: 3 } },
+        { id: 2, name: 'Armure du mage', spellId: 8, active: true, effects: [], durationLabel: '8 heures' },
+        { id: 3, name: 'Bouclier', spellId: 9, active: false, effects: [{ type: 'armor_class_bonus', value: { amount: 5 } }], countdown: { rounds: 1, remaining: 0 } },
+      ]) },
+    })
+    expect(wrapper.text()).toContain('Concentration')
+    expect(wrapper.text()).toContain('Reste 3 rounds sur 10')
+    expect(wrapper.text()).toContain('Durée : 8 heures')
+    expect(wrapper.text()).toContain('Expiré')
+  })
 })

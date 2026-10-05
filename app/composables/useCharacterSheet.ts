@@ -5,6 +5,8 @@ import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, t
 import { spellDamageBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { deriveClassTraits, featureFormulaContext, featureUses, isFeatureUnlocked, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
 import type { OwnerClass } from '~~/shared/rules/classResources'
+import { parseSpellDuration } from '~~/shared/rules/durations'
+import { conditionLabels } from '~~/shared/utils/labels'
 import { armorSpeedPenalty, computeWalkingSpeed, speedBonusParts } from '~~/shared/rules/speed'
 import type { WornArmor } from '~~/shared/rules/speed'
 import type { ArmorProperties } from '~~/server/db/schema/items'
@@ -342,6 +344,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     speed: walkingSpeed,
     abilityModifiers: abilities.abilityModifiers,
     hpPerLevelBonus: abilities.hpPerLevelBonus,
+    onConcentrationChange: spellId => temporary.endConcentration(spellId),
   })
 
   const vitals = useCharacterVitals(characterSheet)
@@ -389,6 +392,24 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       description: lost ? `Vous perdez la concentration sur ${lost}.` : undefined,
       color: 'info',
     })
+  }
+
+  // Un sort lancé devient un effet suivi : sa durée se décompte, sa concentration est liée à la sienne.
+  const activateSpell = (spell: { id: number, name: string, duration: string, concentration: boolean }) => {
+    const duration = parseSpellDuration(spell.duration)
+    if (spell.concentration) startConcentration(spell.id, spell.name)
+    if (duration) temporary.trackSpell({ spellId: spell.id, name: spell.name, ...duration })
+  }
+
+  // Un round s'écoule : « Nouveau tour » en Mode Combat.
+  const elapseDurations = () => {
+    const toaster = useToast()
+    const announce = (name: string) => toaster.add({ title: `${name} prend fin`, color: 'info' })
+    for (const effect of temporary.elapseRound()) {
+      announce(effect.name)
+      if (effect.concentration && effect.spellId === conditions.concentratingSpellId.value) conditions.setConcentration(null)
+    }
+    for (const condition of conditions.elapseConditionRound()) announce(conditionLabels[condition])
   }
 
   // ─── API publique ─────────────────────────────────────────────────────────
@@ -440,12 +461,14 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     binaryConditions,
     activeConditions: conditions.activeConditions,
     toggleCondition: conditions.toggleCondition,
+    conditionRounds: conditions.conditionRounds,
     concentratingSpellId: conditions.concentratingSpellId,
     concentratingOn: conditions.concentratingOn,
     isConcentrating: conditions.isConcentrating,
     setConcentration: conditions.setConcentration,
     setFreeConcentration: conditions.setFreeConcentration,
-    startConcentration,
+    activateSpell,
+    elapseDurations,
     concentratingSpell,
     concentrationName,
     exhaustionLevel: conditions.exhaustionLevel,

@@ -32,6 +32,12 @@
       <p class="text-sm font-medium">
         {{ concentrationName }}
       </p>
+      <p
+        v-if="concentrationCountdown"
+        class="text-xs text-amber-400"
+      >
+        {{ countdownLabel(concentrationCountdown) }}
+      </p>
 
       <p class="text-xs text-muted leading-relaxed">
         JS Constitution requis si vous prenez des dégâts (DD = max entre 10 et ½ dégâts).
@@ -61,7 +67,7 @@
           variant="soft"
           color="warning"
           type="button"
-          @click="startSpell(cs.spellId, cs.spell.name)"
+          @click="startSpell(cs.spell)"
         >
           {{ cs.spell.name }}
         </UButton>
@@ -101,7 +107,7 @@ const props = defineProps<{
 }>()
 
 const {
-  isConcentrating, concentrationName, setConcentration, setFreeConcentration, startConcentration, characterSpells,
+  isConcentrating, concentrationName, concentratingSpellId, setConcentration, setFreeConcentration, activateSpell, characterSpells, temporaryEffects,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 
 const starting = ref(false)
@@ -116,10 +122,14 @@ const cancel = () => {
   label.value = ''
 }
 
-const startSpell = (spellId: number, name: string) => {
-  startConcentration(spellId, name)
+const startSpell = (spell: Parameters<typeof activateSpell>[0]) => {
+  activateSpell(spell)
   cancel()
 }
+
+const concentrationCountdown = computed(() =>
+  temporaryEffects.value.find(e => e.concentration && e.spellId === concentratingSpellId.value)?.countdown,
+)
 
 const startFree = () => {
   if (!label.value.trim()) return

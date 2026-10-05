@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { DamageTypeKey } from '~~/server/db/schema/effects'
 import { abilityEnum as ability } from '~~/shared/rules/abilities'
+import { MAX_COUNTED_ROUNDS } from '~~/shared/rules/durations'
 import { WEAPON_BONUS_SCOPES } from '~~/shared/rules/effectBonuses'
 import { damageTypeLabels } from '~~/shared/utils/labels'
 
@@ -41,6 +42,15 @@ export const temporaryEffectSchema = z.object({
   description: z.string().trim().max(1000).optional().transform(v => v || undefined),
   // Vide permis : l'entrée peut n'être qu'un nom et une description.
   effects: z.array(temporaryEffectEntrySchema).max(20),
+  // Sort lancé depuis la fiche : le relancer réarme cette entrée au lieu d'en créer une seconde.
+  spellId: z.number().int().positive().optional(),
+  concentration: z.boolean().optional(),
+  // Durée telle que le sort la donne (« 1 heure »), affichée quand elle ne se compte pas en rounds.
+  durationLabel: z.string().trim().max(100).optional(),
+  countdown: z.object({
+    rounds: z.number().int().min(1).max(MAX_COUNTED_ROUNDS),
+    remaining: z.number().int().min(0),
+  }).refine(c => c.remaining <= c.rounds).optional(),
 })
 
 export type TemporaryEffect = z.infer<typeof temporaryEffectSchema>

@@ -20,10 +20,10 @@
 | [C — Capacités de classe sans mécanique](#c--capacités-de-classe-sans-mécanique) | C1–C13 | ~340 features n'ont qu'une `description` |
 | [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, concentration, encombrement… |
 | [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
-| [S — Sorts & incantation](#s--sorts--incantation) | S1–S6 | Rituel, limite de préparation, zone d'effet |
+| [S — Sorts & incantation](#s--sorts--incantation) | S1–S7 | Rituel, limite de préparation, zone d'effet |
 | [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P9 | Choix jamais proposés |
 | [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 118 sorts sur ~360, dons, objets magiques |
-| [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U10 | Lecture des sorts, ~~montée en puissance~~, historique de jets |
+| [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U12 | Lecture des sorts, ~~montée en puissance~~, historique de jets |
 | [N — Contrôle manuel & préférences](#n--contrôle-manuel--préférences) | N1–N6 | L'app décide tout, le joueur ne peut rien reprendre |
 | [X — Surface produit](#x--surface-produit) | X1–X7 | XP, partage, export, EN, groupe |
 
@@ -143,7 +143,8 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | **S3** | ✅ résolu ([#168](https://github.com/kevmorpain/le-bureau-du-jdr/issues/168), lot 8) | Zone d'effet : colonne `spells.area_of_effect` (forme, taille en mètres, hauteur du cylindre), posée sur les 18 sorts qui affectent une zone (migration 0127). Le plafond de taille d'une création (Image silencieuse…) et les rayons de détection n'en sont pas ; la taille est celle du niveau de base (Confusion grossit à haut niveau) |
 | **S4** | ✅ résolu ([#169](https://github.com/kevmorpain/le-bureau-du-jdr/issues/169), lot 8) | Type d'attaque explicite : colonne `spells.attack_type` (`melee` / `ranged`), qui remplace l'inférence « dégâts sans DD ». Corrige Maléfice, Transfert de vie et Armure d'Agathys (faux jet pour toucher), Rayon affaiblissant, Éclair de chaos et Changement de plan (jet manquant). Lame aux flammes vertes et Lame retentissante attaquent avec l'arme, pas avec un sort : plus de jet de sort. Le désavantage à 1,50 m est un rappel (AideDD), pas un calcul : la position des créatures est inconnue |
 | **S5** | ✅ résolu ([#170](https://github.com/kevmorpain/le-bureau-du-jdr/issues/170), lot 8) | Composante chiffrée ou consommée : colonne `spells.material_cost` (montant, unité `pa`/`po`, consommée) sur 17 sorts ; rappel que le focaliseur ne la remplace pas (AideDD, règles de la magie). Quatre textes de `material` corrigés sur AideDD (Identification : « au moins » ; Création de mort-vivant : mauvais objet ; Vision suprême : « consommée » ; Changement de plan). Le lancement n'est pas bloqué faute de la composante |
-| **S6** | [#171](https://github.com/kevmorpain/le-bureau-du-jdr/issues/171) | Sorts actifs : durée et effets en cours |
+| **S6** | ✅ résolu ([#171](https://github.com/kevmorpain/le-bureau-du-jdr/issues/171), lot 9), sauf les effets chiffrés | Sorts actifs : lancer un sort non instantané crée une entrée suivie dans les effets temporaires (durée, concentration), décomptée au « Nouveau tour » ; relancer la réarme, la fin de la concentration la retire. **Non porté** : les bonus du sort restent saisis à la main, suivis par [#245](https://github.com/kevmorpain/le-bureau-du-jdr/issues/245) (S7) |
+| **S7** | [#245](https://github.com/kevmorpain/le-bureau-du-jdr/issues/245) | Effets chiffrés des sorts actifs non préremplis (reliquat de S6) |
 
 ---
 
@@ -205,7 +206,8 @@ présentation/interaction.
 | **U3** | [#181](https://github.com/kevmorpain/le-bureau-du-jdr/issues/181) | Effets d'objet rendus en JSON brut |
 | **U4** | ✅ résolu ([#182](https://github.com/kevmorpain/le-bureau-du-jdr/issues/182), lot 5) | Historique des 100 derniers jets par fiche (navigateur), avec relance et copie |
 | **U5** | ✅ résolu ([#183](https://github.com/kevmorpain/le-bureau-du-jdr/issues/183), lot 5) | Initiative conservée et affichée (fiche, Mode Combat), compteur de round. Pas d'ordre de tour : la fiche ne connaît pas les autres combattants |
-| **U6** | [#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184) | Pas de suivi de durée (conditions, sorts) |
+| **U6** | ✅ résolu ([#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184), lot 9) | Durée en rounds des états (champ du menu « Ajouter un état », décompte au « Nouveau tour », fin signalée) et des effets temporaires (champ « Durée » de l'éditeur). Au-delà de 10 minutes rien ne se décompte : pas d'horloge de jeu, la durée du sort s'affiche et l'arrêt est manuel |
+| **U12** | ✅ résolu ([#238](https://github.com/kevmorpain/le-bureau-du-jdr/issues/238), lot 9) | Compteur de tour : il existait déjà (U5, `useCombatTracker`) — le constat de l'issue était périmé. Ce qui manquait était un consommateur : « Nouveau tour » et « Round suivant » font désormais avancer les durées (S6, U6). « Round précédent » ne les rend pas : corriger se fait dans l'éditeur de l'effet |
 | **U7** | ✅ résolu (2026-10-02) — [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Confirmation avant un repos long et avant la suppression d'un objet (`ConfirmActionModal`) ; l'annulation d'un repos reste sans objet (pas d'historique, U4) |
 | **U8** | [#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186) | Pas de recherche texte (sorts, inventaire) |
 | **U9** | ✅ résolu (2026-10-01) | Clé localStorage `armorClass` morte — supprimée de `useCharacterClasses` ([#187](https://github.com/kevmorpain/le-bureau-du-jdr/issues/187)) |

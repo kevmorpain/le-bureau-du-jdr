@@ -27,7 +27,7 @@
             color="neutral"
             icon="i-heroicons:plus-16-solid"
             aria-label="Round suivant"
-            @click="nextRound"
+            @click="advanceRound"
           />
         </div>
         <UButton
@@ -302,7 +302,7 @@ const bonusBreakdown = (parts: { label: string, amount: number }[]) =>
   `dont ${parts.map(p => `${formatModifier(p.amount)} ${p.label}`).join(', ')}`
 
 const csRef = toRef(props, 'characterSheet')
-const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups } = useCharacterSheet(csRef)
+const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, elapseDurations } = useCharacterSheet(csRef)
 
 const slots = inject<Ref<{ spellcasting: Record<number, { max: number, current: number, created?: number }>, pact_magic: Record<number, { max: number, current: number }> }>>('spellSlots')
 const { setActive } = useClassResources(csRef, slots)
@@ -326,10 +326,16 @@ const usedActions = ref({ action: false, bonus_action: false, reaction: false })
 
 const { initiative, round, nextRound, previousRound } = useCombatTracker(props.characterSheet.id)
 
+// Chaque round qui passe fait aussi avancer les durées des sorts, effets et états suivis.
+const advanceRound = () => {
+  nextRound()
+  elapseDurations()
+}
+
 const newTurn = () => {
   usedActions.value = { action: false, bonus_action: false, reaction: false }
   movementUsed.value = 0
-  nextRound()
+  advanceRound()
   for (const feature of resolvedFeatures.value) {
     if (feature.active && feature.meta?.endsOnNewTurn) setActive(feature.id, false, undefined)
   }
