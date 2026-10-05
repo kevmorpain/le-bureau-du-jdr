@@ -2,6 +2,7 @@ import { index, sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { relations, sql } from 'drizzle-orm'
 import type { AbilityKey } from '~~/shared/rules/abilities'
 import type { DamageType } from '~~/shared/rules/damageTypes'
+import type { SpellDurationUnit } from '~~/shared/rules/durations'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Source } from '~~/shared/rules/source'
 import magicSchools from './magic_schools'
@@ -85,6 +86,8 @@ const spells = sqliteTable('spells', {
     .$type<MaterialCost>(),
   ritual: integer('ritual', { mode: 'boolean' }).default(false).notNull(),
   duration: text('duration').notNull(),
+  durationUnit: text('duration_unit').$type<SpellDurationUnit>().notNull().default('special'),
+  durationValue: integer('duration_value'),
   concentration: integer('concentration', { mode: 'boolean' }).default(false).notNull(),
   description: text('description'),
 

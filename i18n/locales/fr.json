@@ -114,6 +114,17 @@
     },
     "material": "Matériel",
     "duration": "Durée",
+    "duration_value": "Quantité",
+    "duration_text": "Texte de la durée",
+    "duration_units": {
+      "instant": "Instantanée",
+      "round": "Rounds",
+      "minute": "Minutes",
+      "hour": "Heures",
+      "day": "Jours",
+      "until_dispelled": "Jusqu'à dissipation",
+      "special": "Spéciale (texte libre)"
+    },
     "ritual": "Rituel",
     "concentration": "Concentration",
     "dc": {
@@ -188,7 +199,10 @@
           "inclusive": "Doit contenir au moins {minimum} élément | Doit contenir au moins {minimum} éléments"
         }
       },
-      "missing_material_component": "Matériel : est requis lorsque la composante matérielle est sélectionnée."
+      "missing_material_component": "Matériel : est requis lorsque la composante matérielle est sélectionnée.",
+      "missing_duration_value": "Durée : une quantité est requise pour cette unité.",
+      "missing_duration_text": "Durée : le texte est requis pour une durée spéciale.",
+      "concentration_instant": "Concentration : un sort instantané ne demande pas de concentration."
     }
   }
 }

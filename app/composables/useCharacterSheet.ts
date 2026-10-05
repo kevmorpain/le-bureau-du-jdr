@@ -5,7 +5,7 @@ import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, t
 import { spellDamageBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { deriveClassTraits, featureFormulaContext, featureUses, isFeatureUnlocked, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
 import type { OwnerClass } from '~~/shared/rules/classResources'
-import { parseSpellDuration } from '~~/shared/rules/durations'
+import { castDuration, type SpellDurationRow } from '~~/shared/rules/durations'
 import { conditionLabels } from '~~/shared/utils/labels'
 import { armorSpeedPenalty, computeWalkingSpeed, speedBonusParts } from '~~/shared/rules/speed'
 import type { WornArmor } from '~~/shared/rules/speed'
@@ -395,10 +395,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   }
 
   // Un sort lancé devient un effet suivi : sa durée se décompte, sa concentration est liée à la sienne.
-  const activateSpell = (spell: { id: number, name: string, duration: string, concentration: boolean }) => {
-    const duration = parseSpellDuration(spell.duration)
+  const activateSpell = (spell: SpellDurationRow & { id: number, name: string }) => {
+    const duration = castDuration(spell)
     if (spell.concentration) startConcentration(spell.id, spell.name)
-    if (duration) temporary.trackSpell({ spellId: spell.id, name: spell.name, ...duration })
+    if (duration) temporary.trackSpell({ spellId: spell.id, name: spell.name, concentration: spell.concentration, ...duration })
   }
 
   // Un round s'écoule : « Nouveau tour » en Mode Combat.

@@ -1,45 +1,112 @@
 import { describe, it, expect } from 'vitest'
 import { spells } from '../../server/db/seeds/data/spells'
 import {
-  armSpell, elapseConditionRounds, elapseRound, endConcentrationEntries, MAX_COUNTED_ROUNDS, parseSpellDuration,
+  armSpell, castDuration, durationLabel, durationRounds, durationText, elapseConditionRounds, elapseRound, endConcentrationEntries,
+  MAX_COUNTED_ROUNDS, type SpellDuration, type SpellDurationRow,
 } from '../../shared/rules/durations'
+import { spellSchema } from '../../shared/utils/spell'
 import { temporaryEffectSchema, type TemporaryEffect } from '../../shared/utils/temporary_effects'
 
 const entry = (over: Partial<TemporaryEffect> = {}): TemporaryEffect => ({ id: 1, name: 'Effet', active: true, effects: [], ...over })
 
-describe('durées de sort — lecture du texte seedé', () => {
+const row = (over: Partial<SpellDurationRow> = {}): SpellDurationRow =>
+  ({ durationUnit: 'minute', durationValue: 1, duration: '1 minute', concentration: false, ...over })
+
+describe('durée structurée d\'un sort', () => {
   it('un sort instantané n\'est pas suivi', () => {
-    expect(parseSpellDuration('Instantanée')).toBeNull()
-    expect(parseSpellDuration('Instantanée ou 1 heure')).toBeNull()
+    expect(castDuration(row({ durationUnit: 'instant', durationValue: null, duration: 'Instantanée' }))).toBeNull()
   })
 
   it('1 minute = 10 rounds (un round ≈ six secondes, AideDD)', () => {
-    expect(parseSpellDuration('1 round')).toEqual({ label: '1 round', concentration: false, rounds: 1 })
-    expect(parseSpellDuration('1 minute')).toMatchObject({ rounds: 10, concentration: false })
-    expect(parseSpellDuration('10 minutes')).toMatchObject({ rounds: 100 })
+    expect(durationRounds({ durationUnit: 'round', durationValue: 1 })).toBe(1)
+    expect(durationRounds({ durationUnit: 'minute', durationValue: 1 })).toBe(10)
+    expect(durationRounds({ durationUnit: 'minute', durationValue: 10 })).toBe(100)
   })
 
-  it('la concentration est reconnue et son préfixe retiré du libellé', () => {
-    expect(parseSpellDuration('Concentration, jusqu\'à 1 minute')).toEqual({ label: '1 minute', concentration: true, rounds: 10 })
-    expect(parseSpellDuration('Concentration, jusqu\'à 1 heure')).toEqual({ label: '1 heure', concentration: true, rounds: null })
+  it('au-delà de 10 minutes ou sans quantité : suivi sans décompte', () => {
+    expect(durationRounds({ durationUnit: 'minute', durationValue: 11 })).toBeNull()
+    expect(durationRounds({ durationUnit: 'hour', durationValue: 1 })).toBeNull()
+    expect(durationRounds({ durationUnit: 'until_dispelled', durationValue: null })).toBeNull()
+    expect(durationRounds({ durationUnit: 'special', durationValue: null })).toBeNull()
+    expect(castDuration(row({ durationUnit: 'hour', durationValue: 8, duration: '8 heures' }))).toEqual({ label: '8 heures', rounds: null })
   })
 
-  it('au-delà de 10 minutes ou sans durée chiffrée : suivi sans décompte', () => {
-    expect(parseSpellDuration('1 heure')).toMatchObject({ rounds: null })
-    expect(parseSpellDuration('8 heures')).toMatchObject({ rounds: null })
-    expect(parseSpellDuration('Jusqu\'à 8 heures')).toEqual({ label: '8 heures', concentration: false, rounds: null })
-    expect(parseSpellDuration('Jusqu\'à dissipation ou déclenchement')).toMatchObject({ concentration: false, rounds: null })
+  it('le libellé suit le nombre, et le texte d\'un sort concentré reprend la formulation d\'AideDD', () => {
+    expect(durationLabel({ durationUnit: 'minute', durationValue: 1 })).toBe('1 minute')
+    expect(durationLabel({ durationUnit: 'minute', durationValue: 10 })).toBe('10 minutes')
+    expect(durationText({ durationUnit: 'minute', durationValue: 1 }, true)).toBe('Concentration, jusqu\'à 1 minute')
+    expect(durationText({ durationUnit: 'until_dispelled', durationValue: null }, false)).toBe('Jusqu\'à dissipation')
   })
 
-  it('toute durée du seed est classée, et aucune ne dépasse le plafond de décompte', () => {
-    const durations = [...new Set(spells.map(s => s.duration))]
-    for (const text of durations) {
-      const parsed = parseSpellDuration(text)
-      if (parsed === null) expect(text).toMatch(/^Instantanée/)
-      else expect(parsed.rounds === null || parsed.rounds <= MAX_COUNTED_ROUNDS, text).toBe(true)
+  it('la durée spéciale est le texte saisi, tel quel, sans décompte', () => {
+    const special = row({ durationUnit: 'special', durationValue: null, duration: 'Instantanée ou 1 heure' })
+    expect(castDuration(special)).toEqual({ label: 'Instantanée ou 1 heure', rounds: null })
+  })
+})
+
+// Les formulations seedées d'AideDD et la structure qui les décrit : la migration 0129 en pose la même table.
+const SEEDED_FORMS: Record<string, SpellDuration> = {
+  'Instantanée': { durationUnit: 'instant', durationValue: null },
+  '1 round': { durationUnit: 'round', durationValue: 1 },
+  '1 minute': { durationUnit: 'minute', durationValue: 1 },
+  'Concentration, jusqu\'à 1 minute': { durationUnit: 'minute', durationValue: 1 },
+  '10 minutes': { durationUnit: 'minute', durationValue: 10 },
+  'Concentration, jusqu\'à 10 minutes': { durationUnit: 'minute', durationValue: 10 },
+  '1 heure': { durationUnit: 'hour', durationValue: 1 },
+  'Concentration, jusqu\'à 1 heure': { durationUnit: 'hour', durationValue: 1 },
+  '8 heures': { durationUnit: 'hour', durationValue: 8 },
+  'Concentration, jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
+  'Jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
+  'Jusqu\'à dissipation ou déclenchement': { durationUnit: 'until_dispelled', durationValue: null },
+  'Instantanée ou 1 heure': { durationUnit: 'special', durationValue: null },
+}
+
+// Formulations que le texte dérivé de la structure ne reproduit pas mot pour mot : le seed garde celle d'AideDD.
+const VERBATIM = ['Jusqu\'à 8 heures', 'Jusqu\'à dissipation ou déclenchement', 'Instantanée ou 1 heure']
+
+describe('seed sorts — durées structurées', () => {
+  it('chaque sort déclare la structure de son texte, et la concentration suit le texte', () => {
+    for (const spell of spells) {
+      const expected = SEEDED_FORMS[spell.duration]
+      expect(expected, `forme inconnue : ${spell.duration}`).toBeDefined()
+      expect({ durationUnit: spell.durationUnit, durationValue: spell.durationValue ?? null }, spell.name).toEqual(expected)
+      expect(!!spell.concentration, spell.name).toBe(spell.duration.startsWith('Concentration'))
     }
-    const countable = durations.filter(t => /\b(round|minute)s?\b/.test(t))
-    for (const text of countable) expect(parseSpellDuration(text)?.rounds, text).not.toBeNull()
+  })
+
+  it('le texte dérivé de la structure est celui du seed, hors formulations conservées d\'AideDD', () => {
+    for (const spell of spells.filter(s => !VERBATIM.includes(s.duration))) {
+      expect(durationText({ durationUnit: spell.durationUnit!, durationValue: spell.durationValue ?? null }, !!spell.concentration), spell.name).toBe(spell.duration)
+    }
+  })
+})
+
+describe('création d\'un sort — durée', () => {
+  const base = {
+    name: 'Test', level: 1, schoolId: 1, castingTime: '1 action', range: 9, components: ['V'], ritual: false,
+    concentration: false, description: 'x', durationUnit: 'minute', durationValue: 1,
+  }
+
+  it('le texte affiché est dérivé de la structure', () => {
+    expect(spellSchema.parse(base)).toMatchObject({ duration: '1 minute', durationUnit: 'minute', durationValue: 1 })
+    expect(spellSchema.parse({ ...base, concentration: true, durationValue: 10 })).toMatchObject({ duration: 'Concentration, jusqu\'à 10 minutes' })
+  })
+
+  it('une unité chiffrée exige une quantité ; les autres l\'écartent', () => {
+    expect(spellSchema.safeParse({ ...base, durationValue: undefined }).success).toBe(false)
+    expect(spellSchema.safeParse({ ...base, durationValue: 0 }).success).toBe(false)
+    expect(spellSchema.parse({ ...base, durationUnit: 'until_dispelled', durationValue: 3 })).toMatchObject({ durationValue: null, duration: 'Jusqu\'à dissipation' })
+  })
+
+  it('le cas spécial garde le texte saisi et l\'exige', () => {
+    const special = { ...base, durationUnit: 'special', durationValue: undefined }
+    expect(spellSchema.parse({ ...special, duration: 'Jusqu\'au prochain lever du soleil' })).toMatchObject({ duration: 'Jusqu\'au prochain lever du soleil', durationValue: null })
+    expect(spellSchema.safeParse({ ...special, duration: '  ' }).success).toBe(false)
+    expect(spellSchema.safeParse(special).success).toBe(false)
+  })
+
+  it('un sort instantané ne se concentre pas', () => {
+    expect(spellSchema.safeParse({ ...base, durationUnit: 'instant', durationValue: undefined, concentration: true }).success).toBe(false)
   })
 })
 

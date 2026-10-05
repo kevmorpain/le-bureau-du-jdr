@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { baseScores, mountSheet } from './fixtures/mountSheet'
 
-const bless = { id: 1, name: 'Bénédiction', duration: 'Concentration, jusqu\'à 1 minute', concentration: true }
-const shield = { id: 2, name: 'Bouclier', duration: '1 round', concentration: false }
-const mageArmor = { id: 3, name: 'Armure du mage', duration: '8 heures', concentration: false }
-const fireBolt = { id: 4, name: 'Trait de feu', duration: 'Instantanée', concentration: false }
-const haste = { id: 5, name: 'Hâte', duration: 'Concentration, jusqu\'à 1 minute', concentration: true }
+const bless = { id: 1, name: 'Bénédiction', duration: 'Concentration, jusqu\'à 1 minute', durationUnit: 'minute', durationValue: 1, concentration: true } as const
+const shield = { id: 2, name: 'Bouclier', duration: '1 round', durationUnit: 'round', durationValue: 1, concentration: false } as const
+const mageArmor = { id: 3, name: 'Armure du mage', duration: '8 heures', durationUnit: 'hour', durationValue: 8, concentration: false } as const
+const fireBolt = { id: 4, name: 'Trait de feu', duration: 'Instantanée', durationUnit: 'instant', durationValue: null, concentration: false } as const
+const haste = { id: 5, name: 'Hâte', duration: 'Concentration, jusqu\'à 1 minute', durationUnit: 'minute', durationValue: 1, concentration: true } as const
 
 const mount = () => mountSheet({ scores: baseScores(10, 10, 10, 10) })
 

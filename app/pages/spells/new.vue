@@ -53,9 +53,35 @@
         </UFormField>
 
         <UFormField :label="$t('new_spell.duration')">
-          <UInput v-model="spell.duration" />
+          <USelect
+            v-model="spell.durationUnit"
+            :items="durationUnitItems"
+            value-key="id"
+          />
         </UFormField>
       </div>
+
+      <div
+        v-if="isCountedUnit"
+        class="grid grid-cols-2 items-center space-x-4"
+      >
+        <UFormField :label="$t('new_spell.duration_value')">
+          <UInputNumber
+            v-model="spell.durationValue"
+            :min="1"
+          />
+        </UFormField>
+      </div>
+
+      <UFormField
+        v-if="spell.durationUnit === 'special'"
+        :label="$t('new_spell.duration_text')"
+      >
+        <UInput
+          v-model="spell.duration"
+          maxlength="100"
+        />
+      </UFormField>
 
       <UFormField
         v-if="spell.components?.includes(SpellComponent.Material)"
@@ -167,6 +193,7 @@
 import type { InsertSpell, MagicSchool } from '~~/server/utils/drizzle'
 import { SpellComponent } from '~~/server/db/schema/spells'
 import type { AbilityKey } from '~~/shared/rules/abilities'
+import { COUNTED_DURATION_UNITS, SPELL_DURATION_UNITS } from '~~/shared/rules/durations'
 import { FetchError } from 'ofetch'
 import type { core } from 'zod/v4'
 
@@ -177,6 +204,11 @@ const componentItems = computed<{
   id: SpellComponent
 }[]>(() => Object.entries(SpellComponent).map(([label, id]) => ({
   label: t(`new_spell.components_options.${label}`),
+  id,
+})))
+
+const durationUnitItems = computed(() => SPELL_DURATION_UNITS.map(id => ({
+  label: t(`new_spell.duration_units.${id}`),
   id,
 })))
 
@@ -224,6 +256,8 @@ const spell = ref<InsertSpell>({
   ritual: false,
   castingTime: '',
   range: 0,
+  durationUnit: 'instant',
+  durationValue: null,
   duration: '',
   concentration: false,
   description: '',
@@ -231,6 +265,12 @@ const spell = ref<InsertSpell>({
   dc: null,
   damages: null,
   heal: null,
+})
+
+const isCountedUnit = computed(() => (COUNTED_DURATION_UNITS as readonly string[]).includes(spell.value.durationUnit ?? ''))
+
+watch(isCountedUnit, (counted) => {
+  if (counted && !spell.value.durationValue) spell.value.durationValue = 1
 })
 
 const isDcVisible = ref(false)

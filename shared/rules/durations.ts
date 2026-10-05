@@ -7,27 +7,47 @@ export const ROUNDS_PER_MINUTE = 10
 // reste affichée, la fin est manuelle.
 export const MAX_COUNTED_ROUNDS = 10 * ROUNDS_PER_MINUTE
 
-export type SpellDuration = {
-  label: string
-  concentration: boolean
-  rounds: number | null
+export const SPELL_DURATION_UNITS = ['instant', 'round', 'minute', 'hour', 'day', 'until_dispelled', 'special'] as const
+export type SpellDurationUnit = typeof SPELL_DURATION_UNITS[number]
+
+// Unités qui portent une quantité ; `special` est la saisie libre des cas que la structure n'exprime pas.
+export const COUNTED_DURATION_UNITS = ['round', 'minute', 'hour', 'day'] as const
+
+export type SpellDuration = { durationUnit: SpellDurationUnit, durationValue: number | null }
+export type SpellDurationRow = SpellDuration & { duration: string, concentration: boolean }
+
+const ROUNDS_PER_UNIT: Partial<Record<SpellDurationUnit, number>> = { round: 1, minute: ROUNDS_PER_MINUTE }
+const UNIT_LABELS: Record<typeof COUNTED_DURATION_UNITS[number], [string, string]> = {
+  round: ['round', 'rounds'], minute: ['minute', 'minutes'], hour: ['heure', 'heures'], day: ['jour', 'jours'],
 }
 
-const UNIT_ROUNDS: Record<string, number> = { round: 1, minute: ROUNDS_PER_MINUTE }
+const isCounted = (unit: SpellDurationUnit): unit is typeof COUNTED_DURATION_UNITS[number] => unit in UNIT_LABELS
+
+// Libellé de la durée seule (« 1 minute ») ; `text` n'est lu que pour `special`, où il fait foi.
+export const durationLabel = ({ durationUnit, durationValue }: SpellDuration, text = ''): string => {
+  if (durationUnit === 'instant') return 'Instantanée'
+  if (durationUnit === 'until_dispelled') return 'Jusqu\'à dissipation'
+  if (isCounted(durationUnit)) {
+    const value = durationValue ?? 1
+    return `${value} ${UNIT_LABELS[durationUnit][value > 1 ? 1 : 0]}`
+  }
+  return text.trim()
+}
+
+// Texte d'affichage d'un sort : la formulation d'AideDD pour une durée structurée.
+export const durationText = (duration: SpellDuration, concentration: boolean, text = ''): string =>
+  concentration && isCounted(duration.durationUnit) ? `Concentration, jusqu'à ${durationLabel(duration)}` : durationLabel(duration, text)
+
+// Nombre de rounds à décompter, ou null quand la durée ne s'y prête pas.
+export const durationRounds = ({ durationUnit, durationValue }: SpellDuration): number | null => {
+  const perUnit = ROUNDS_PER_UNIT[durationUnit]
+  const rounds = perUnit && durationValue ? durationValue * perUnit : null
+  return rounds !== null && rounds <= MAX_COUNTED_ROUNDS ? rounds : null
+}
 
 // null : sort instantané, rien à suivre. Toute autre durée est suivie, décomptée seulement si elle se compte en rounds.
-export const parseSpellDuration = (text: string): SpellDuration | null => {
-  const raw = text.trim()
-  if (/^instantan[ée]e/i.test(raw)) return null
-
-  const concentration = /^concentration/i.test(raw)
-  const label = raw.replace(/^concentration,?\s*/i, '').replace(/^jusqu['’]à\s+(?=\d)/i, '')
-  const match = /(\d+)\s*(round|minute|heure|jour)s?\b/i.exec(label)
-  const perUnit = match ? UNIT_ROUNDS[match[2]!.toLowerCase()] : undefined
-  const rounds = match && perUnit ? Number(match[1]) * perUnit : null
-
-  return { label, concentration, rounds: rounds !== null && rounds <= MAX_COUNTED_ROUNDS ? rounds : null }
-}
+export const castDuration = (spell: SpellDurationRow): { label: string, rounds: number | null } | null =>
+  spell.durationUnit === 'instant' ? null : { label: durationLabel(spell, spell.duration), rounds: durationRounds(spell) }
 
 export type EndedEffect = Pick<TemporaryEffect, 'id' | 'name' | 'spellId' | 'concentration'>
 
@@ -65,7 +85,7 @@ export const elapseRound = (entries: readonly TemporaryEffect[]) => {
 export const endConcentrationEntries = (entries: readonly TemporaryEffect[], keepSpellId: number | null) =>
   finish(entries, e => !!e.concentration && e.spellId !== keepSpellId)
 
-export type CastSpell = { spellId: number, name: string } & SpellDuration
+export type CastSpell = { spellId: number, name: string, label: string, concentration: boolean, rounds: number | null }
 
 // Relancer un sort déjà suivi le réarme : une seule entrée par sort, ses effets saisis par le joueur sont conservés.
 export const armSpell = (entries: readonly TemporaryEffect[], cast: CastSpell): TemporaryEffect[] => {

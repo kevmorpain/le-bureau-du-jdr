@@ -51,6 +51,8 @@ export default async function seed() {
         castingTime: spell.castingTime,
         range: spell.range,
         duration: spell.duration,
+        durationUnit: spell.durationUnit ?? 'special',
+        durationValue: spell.durationValue ?? null,
         components: spell.components ?? [],
         material: spell.material ?? null,
         rollTableId: rollTableIdOf(spell),
@@ -71,6 +73,8 @@ export default async function seed() {
         || existing.castingTime !== next.castingTime
         || existing.range !== next.range
         || existing.duration !== next.duration
+        || existing.durationUnit !== next.durationUnit
+        || existing.durationValue !== next.durationValue
         || JSON.stringify(existing.components) !== JSON.stringify(next.components)
         || existing.material !== next.material
         || existing.rollTableId !== next.rollTableId
