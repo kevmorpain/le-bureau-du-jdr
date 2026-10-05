@@ -4,6 +4,7 @@ import { damageTypeLabels, conditionLabels, immunityLabels, allConditions } from
 import { dragonbornAncestryDamageType } from '~~/shared/utils/draconic_ancestry'
 import type { DragonbornAncestry } from '~~/shared/utils/draconic_ancestry'
 import { conditionMechanics, exhaustionImpactLines } from '~~/shared/utils/condition-effects'
+import { elapseConditionRounds } from '~~/shared/rules/durations'
 import { maxHitPoints } from '~~/shared/rules/hitPoints'
 import { situationLabel } from '~~/shared/rules/rolls'
 
@@ -39,6 +40,8 @@ export const useCharacterConditions = (
     speed: ComputedRef<number>
     abilityModifiers: ComputedRef<Record<string, number>>
     hpPerLevelBonus?: ComputedRef<number>
+    // Appelé quand la concentration change : les sorts suivis qui en dépendaient prennent fin.
+    onConcentrationChange?: (spellId: number | null) => void
   },
 ) => {
   const storageKey = (suffix: string) => characterStorageKey(characterSheet?.value?.id, suffix)
@@ -68,11 +71,13 @@ export const useCharacterConditions = (
   const setConcentration = (spellId: number | null) => {
     concentratingSpellId.value = spellId
     concentratingOn.value = null
+    deps?.onConcentrationChange?.(spellId)
   }
 
   const setFreeConcentration = (label: string) => {
     concentratingSpellId.value = null
     concentratingOn.value = label.trim() || null
+    deps?.onConcentrationChange?.(null)
   }
 
   if (import.meta.client) {
@@ -85,13 +90,23 @@ export const useCharacterConditions = (
   // 'concentrating' a sa propre UI (ConcentrationSection) et reste hors des états stockés.
   const activeConditions = storedActiveConditions
 
-  const toggleCondition = (condition: ConditionKey) => {
+  // Rounds restants des états à durée (hors d'une durée, l'état reste jusqu'à ce qu'on le retire).
+  const conditionRounds = useStorage<Partial<Record<ConditionKey, number>>>(storageKey('conditionRounds'), {})
+
+  const setConditionRounds = (condition: ConditionKey, rounds?: number) => {
+    const { [condition]: _previous, ...others } = conditionRounds.value
+    conditionRounds.value = rounds ? { ...others, [condition]: rounds } : others
+  }
+
+  const toggleCondition = (condition: ConditionKey, rounds?: number) => {
     const idx = storedActiveConditions.value.indexOf(condition)
     if (idx !== -1) {
       storedActiveConditions.value.splice(idx, 1)
+      setConditionRounds(condition)
       return
     }
     storedActiveConditions.value.push(condition)
+    setConditionRounds(condition, rounds)
     // AideDD, Concentration : « Vous perdez automatiquement la concentration de votre sort si vous êtes incapable d'agir ».
     if (isConcentrating.value && conditionMechanics[condition]?.incapacitating) {
       setConcentration(null)
@@ -255,9 +270,18 @@ export const useCharacterConditions = (
     return result
   })
 
+  const elapseConditionRound = (): ConditionKey[] => {
+    const { rounds, ended } = elapseConditionRounds(conditionRounds.value, storedActiveConditions.value)
+    conditionRounds.value = rounds
+    storedActiveConditions.value = storedActiveConditions.value.filter(c => !ended.includes(c))
+    return ended
+  }
+
   return {
     activeConditions,
+    conditionRounds,
     toggleCondition,
+    elapseConditionRound,
     concentratingSpellId,
     concentratingOn,
     isConcentrating,

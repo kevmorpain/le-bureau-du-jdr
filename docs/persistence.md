@@ -19,6 +19,7 @@
 | `preferences` (fiche) | DB (`character_sheets`, JSON nullable) | Réglage propre à la fiche ; clé absente = hérite du compte ([D18](decisions.md#d18), [D23](decisions.md#d23)) |
 | `preferences` (compte) | DB (`users`, JSON nullable) | Défauts du joueur, via `/api/account/preferences` |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
+| `conditionRounds` | localStorage | Rounds restants des états à durée, décomptés au « Nouveau tour » |
 | Modificateurs de caractéristique | computed | Dérivés des scores, jamais stockés |
 | Bonus de maîtrise | computed | Dérivé du niveau, jamais stocké |
 | DD de sort, modificateur d'attaque | computed | Dérivés, jamais stockés |

@@ -14,13 +14,23 @@
             <p class="text-xs text-muted mb-1.5 font-medium">
               Ajouter un état
             </p>
+            <UInput
+              v-model.number="pendingRounds"
+              type="number"
+              :min="1"
+              :max="MAX_COUNTED_ROUNDS"
+              size="xs"
+              placeholder="Durée en rounds"
+              aria-label="Durée en rounds (facultatif)"
+              class="mb-1.5"
+            />
             <div class="flex flex-col gap-0.5">
               <button
                 v-for="condition in binaryConditions"
                 :key="condition"
                 class="text-left text-sm px-2 py-0.5 rounded hover:bg-elevated transition-colors flex items-center justify-between"
                 :class="activeConditions.includes(condition) ? 'text-primary' : ''"
-                @click="toggleCondition(condition)"
+                @click="addOrRemove(condition)"
               >
                 {{ conditionLabels[condition] }}
                 <UIcon
@@ -51,6 +61,10 @@
           size="md"
         >
           {{ conditionLabels[condition] }}
+          <span
+            v-if="conditionRounds[condition]"
+            class="font-mono text-xs opacity-80"
+          >· {{ conditionRounds[condition] }} r.</span>
           <template #trailing>
             <button
               class="flex items-center hover:opacity-70 transition-opacity"
@@ -109,6 +123,8 @@
 </template>
 
 <script lang="ts" setup>
+import type { ConditionKey } from '~~/server/db/schema/effects'
+import { MAX_COUNTED_ROUNDS } from '~~/shared/rules/durations'
 import { conditionLabels } from '~~/shared/utils/labels'
 import { conditionTooltipLines, exhaustionImpactLines } from '~~/shared/utils/condition-effects'
 
@@ -119,7 +135,16 @@ const props = defineProps<{
 const {
   activeConditions,
   toggleCondition,
+  conditionRounds,
   exhaustionLevel,
   binaryConditions,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
+
+// Le champ de durée vaut pour le prochain état ajouté ; le retirer l'ignore.
+const pendingRounds = ref<number | ''>('')
+const addOrRemove = (condition: ConditionKey) => {
+  const rounds = typeof pendingRounds.value === 'number' && pendingRounds.value > 0 ? Math.min(pendingRounds.value, MAX_COUNTED_ROUNDS) : undefined
+  toggleCondition(condition, rounds)
+  pendingRounds.value = ''
+}
 </script>

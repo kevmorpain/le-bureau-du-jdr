@@ -111,7 +111,7 @@ Section de gestion du tour de combat :
 - **Rage** : le bouton « Activer » dépense une utilisation ; le bonus de dégâts s'ajoute aux armes de mêlée maniées avec la Force (suspendu en armure lourde)
 - **Châtiment divin** : un bouton par niveau d'emplacement disponible (dés selon le niveau, case mort-vivant / fiélon), l'emplacement est dépensé au jet
 
-État local (non persisté), remis à zéro via "Nouveau tour".
+État local (non persisté), remis à zéro via "Nouveau tour". « Nouveau tour » et « Round suivant » (`+`) font aussi avancer le compteur de rounds **et les durées** (`elapseDurations` de `useCharacterSheet`) : sorts actifs, effets temporaires et états à durée perdent un round ; ceux qui arrivent à zéro prennent fin avec un message. « Round précédent » ne touche pas aux durées.
 
 > Les stats détaillées des armes (attaque, dégâts, propriétés, warnings, toggle "à 2 mains" pour versatile, bouton main secondaire pour les armes légères) sont affichées dans `InventorySection` (onglet Armes). `CombatModeSection` reprend les boutons d'action en compact pour le tour en cours.
 
@@ -268,7 +268,7 @@ Résistances, immunités, vulnérabilités calculées depuis `allEffects`. Visib
 
 ### Conditions (`StatusSection`)
 
-Conditions actives et niveau d'épuisement. Toggle de chaque condition. *(L'alignement est
+Conditions actives et niveau d'épuisement. Toggle de chaque condition ; le champ « Durée en rounds » du menu d'ajout (facultatif) donne à l'état un décompte, affiché `· N r.` sur sa pastille et stocké en `localStorage` (`conditionRounds`) comme les conditions elles-mêmes. À zéro, l'état est retiré. *(L'alignement est
 affiché et modifié dans la section Identité, pas ici.)*
 **Source :** conditions via `useStorage()` (localStorage).
 
@@ -288,7 +288,10 @@ estompée quand l'effet est désactivé.
 **Source :** `character_sheets.temporary_effects` (JSON `{ id, name, description?, active, effects }[]`).
 **Persistence :** mutation en place → deep watch → PUT ; validé par `temporaryEffectsSchema`
 (`shared/utils/temporary_effects.ts`), le même schéma que la modale applique avant d'écrire — une entrée
-invalide ferait sinon échouer toute la sauvegarde de la fiche. Pas de durée ni d'expiration (cf. U6).
+invalide ferait sinon échouer toute la sauvegarde de la fiche.
+
+**Sorts actifs et durées.** Lancer un sort non instantané (`activateSpell`, appelé par les quatre chemins de lancement de `MagicSection` et par le choix d'un sort dans `ConcentrationSection`) crée ou réarme une entrée portant `spellId`, `concentration`, `durationLabel` (la durée du sort telle que seedée) et, quand elle se compte en rounds, `countdown { rounds, remaining }`. La durée d'un sort est **structurée** : `spells.duration_unit` (`instant`, `round`, `minute`, `hour`, `day`, `until_dispelled`, `special`) et `duration_value` (migration 0129), la concentration restant sa propre colonne. `spells.duration` garde le texte affiché : dérivé de la structure à la création (`durationText`, `shared/rules/durations.ts`), saisi tel quel pour `special`, le cas que la structure n'exprime pas (« Instantanée ou 1 heure »). 1 minute = 10 rounds (un round ≈ six secondes) ; au-delà de 10 minutes, ou sans quantité (heures, jours, dissipation, spécial), la durée est suivie et affichée sans décompte, faute d'horloge de jeu. Un sort `instant` n'est pas suivi. Un test-contrat vérifie que structure, texte et concentration du seed concordent, et la migration 0129 (gardée par `spellDurationMigration.test.ts`) pose la même structure sur les sorts déjà déployés ; un sort saisi à la main dont le texte n'est pas reconnu devient `special`. Un effet saisi à la main peut aussi recevoir une durée en rounds.
+Fin de durée : une entrée qui n'est que du suivi est retirée ; si le joueur y a saisi des effets ou une description, elle est seulement désactivée (« Expiré »), et la réactiver repart pour la durée complète. Quand la concentration prend fin (rupture, 0 PV, incapacité, autre sort), les entrées qui en dépendaient prennent fin de même ; quand la durée d'un sort concentré s'épuise, la concentration est rompue. Les bonus du sort ne sont pas préremplis ([#245](https://github.com/kevmorpain/le-bureau-du-jdr/issues/245)).
 
 ### Emplacements de sort (`SpellSlotsSection`)
 
@@ -300,7 +303,7 @@ Affiche aussi DD de sauvegarde et bonus d'attaque de sort.
 
 ### Concentration (`ConcentrationSection`)
 
-Toujours affichée. Se concentrer sur un sort du catalogue (pastilles des sorts à concentration de la fiche) ou sur **autre chose** (libellé libre : effet de monstre, sort hors catalogue, homebrew) ; rompre. La concentration s'arrête d'elle-même à 0 PV, quand un état rend incapable d'agir (`incapacitating` dans `conditionMechanics`) et au lancement d'un autre sort à concentration (message qui nomme celui qu'on perd).
+Toujours affichée, avec les rounds restants du sort concentré quand ils se comptent. Se concentrer sur un sort du catalogue (pastilles des sorts à concentration de la fiche) ou sur **autre chose** (libellé libre : effet de monstre, sort hors catalogue, homebrew) ; rompre. La concentration s'arrête d'elle-même à 0 PV, quand un état rend incapable d'agir (`incapacitating` dans `conditionMechanics`) et au lancement d'un autre sort à concentration (message qui nomme celui qu'on perd).
 
 **Source :** `character_sheets.{concentratingSpellId, concentratingOn}`.
 

@@ -47,6 +47,7 @@ Supprimés — ne pas les recréer : ajouter la stat à `QuickStatsSection`.
 - `roll` instancié dans `[id].vue` via `useDiceRoller(rollEngine)`, passé en prop optionnel ; les composants qui l'appellent seuls (`MagicSection`) récupèrent le moteur par `inject`
 - `spellSlots` créé une seule fois dans `[id].vue`, partagé via `provide('spellSlots', spellSlots)` — `MagicSection` et `SpellSlotsSection` l'injectent (sinon deux instances indépendantes)
 - Activation combat → remet le round à 1 et lance l'initiative (`{ d20: { type: 'initiative' } }`), conservée par `useCombatTracker`
+- Les durées (sorts actifs, effets temporaires, états) se décomptent par l'action « Nouveau tour » / « Round suivant » (`elapseDurations`), pas par un `watch(round)` : le round se remet à 1 à l'entrée en combat et recule avec « − »
 - `DeathSavingThrowSection` émet `@recover` pour que `[id].vue` mette à jour `currentHp`
 - Check concentration : dans `HitPointsSection` lors de dégâts reçus si condition 'concentrating' active
 

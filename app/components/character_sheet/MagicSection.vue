@@ -428,7 +428,7 @@ const {
   characterLevel,
   spellDamageBonus,
   activeConditions,
-  startConcentration,
+  activateSpell,
   characterSpells,
   spellsByLevel,
   showPreparedOnly,
@@ -718,7 +718,7 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
     return
   }
 
-  if (cs.spell.concentration) startConcentration(cs.spellId, cs.spell.name)
+  activateSpell(cs.spell)
 
   // Sort d'attaque → jet pour toucher ; sinon effet direct (Arcanum lancé au niveau de base).
   rememberCastLevel(cs.spellId, cs.spell.level || lvl)
@@ -729,7 +729,7 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
 const isArcanumSpell = (cs: CharacterSpellWithSpell) => arcanumLevelFromSource(cs.source) !== null
 
 const castCantripDirect = (cs: CharacterSpellWithSpell) => {
-  if (cs.spell.concentration) startConcentration(cs.spellId, cs.spell.name)
+  activateSpell(cs.spell)
   if (isAttackSpell(cs)) rollSpellAttack(cs)
   else rollSpellEffect(cs, cs.spell.level || 0)
 }
@@ -745,7 +745,7 @@ const canRitual = (cs: CharacterSpellWithSpell): boolean => {
 
 const castAsRitual = (cs: CharacterSpellWithSpell) => {
   const level = baseSlotLevel(cs.spell)
-  if (cs.spell.concentration) startConcentration(cs.spellId, cs.spell.name)
+  activateSpell(cs.spell)
   rememberCastLevel(cs.spellId, level)
   if (isAttackSpell(cs)) rollSpellAttack(cs)
   else rollSpellEffect(cs, level)
@@ -755,8 +755,8 @@ const castAsRitual = (cs: CharacterSpellWithSpell) => {
 const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number | null) => {
   castSpell(slotLevel, slotType)
   if (casterClassId !== null) setSelectedCaster(casterClassId)
-  if (selectedSpell.value?.spell.concentration) startConcentration(selectedSpell.value.spellId, selectedSpell.value.spell.name)
   if (selectedSpell.value) {
+    activateSpell(selectedSpell.value.spell)
     // Avant de jeter : le bouton « Dégâts » doit retrouver CET emplacement, pas le niveau de base.
     rememberCastLevel(selectedSpell.value.spellId, slotLevel)
     if (isAttackSpell(selectedSpell.value)) rollSpellAttack(selectedSpell.value)

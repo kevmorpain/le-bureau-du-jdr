@@ -9,7 +9,9 @@ ce qui existe ou n'existe pas — et pas seulement aux changements qu'on vient d
 
 - **Une affirmation = une source.** Chaque affirmation sur le code cite soit `fichier:ligne` lu
   pendant *cette* réponse, soit la commande lancée et sa sortie. Sans source, ce n'est pas une
-  affirmation : c'est une hypothèse, et elle doit être présentée comme telle.
+  affirmation : c'est une hypothèse, et elle doit être présentée comme telle. Une prescription en
+  est une : « ajouter X réglera Y » dit ce que X fait *ici* — chercher qui le lit avant de le
+  recommander.
 - **Marquer ce qui n'est pas vérifié.** `⚠️ hypothèse` devant toute déduction non vérifiée.
   Tout le reste est réputé vérifié — donc ne jamais laisser passer une affirmation non sourcée
   sans ce marqueur. Le but est que le lecteur repère d'un coup d'œil ce qu'il doit challenger.
@@ -29,21 +31,31 @@ ce qui existe ou n'existe pas — et pas seulement aux changements qu'on vient d
   d'avis sans nouvelle preuve est une erreur au même titre que l'affirmation d'origine.
 - **Une vérification a une date de péremption.** Elle vaut pour l'état lu à l'instant. Après un
   edit, un `git pull`, un changement de branche : relire, ne pas recycler une lecture
-  antérieure — y compris la sienne, plus haut dans la même session.
+  antérieure — y compris la sienne, plus haut dans la même session. Une référence reprise d'un
+  document du dépôt (`fichier:ligne`) se périme aussi : la résoudre avant de la citer.
 - **« Impossible » et « indisponible » sont des affirmations comme les autres.** Un symptôme
   n'établit pas une limite : `node_modules/` vide ne signifie pas que le build est intestable ici,
   une erreur d'authentification ne signifie pas qu'un compte est requis. Avant de déclarer qu'une
   chose ne peut pas se faire dans cet environnement, l'essayer **une fois pour de vrai** et citer
   l'échec obtenu. C'est le plus coûteux des raccourcis : les autres désinforment, celui-là fait
   renoncer à du travail parfaitement faisable.
-- **Les règles D&D se citent, elles ne se restituent pas.** Un bonus, une progression, un
+- **Les règles D&D se sourcent, elles ne se restituent pas.** Un bonus, une progression, un
   prérequis viennent de la source (AideDD, le seed, le catalogue en DB) — jamais de la mémoire du
   modèle, y compris quand la règle *semble* connue. Une règle restituée de tête ne produit pas un
   détail faux : elle produit une fonctionnalité entière fausse, construite et testée autour de
-  l'erreur.
+  l'erreur. La source se cite **à l'utilisateur**, dans la réponse ou la PR, pour qu'il puisse la
+  vérifier — pas dans le code (cf. « Commentaires »).
 - **Une explication plausible n'est pas un diagnostic.** La première cause qui colle au symptôme
   est une piste à confirmer, pas une conclusion : on établit le mécanisme réel avant d'écrire le
   correctif, sinon on corrige quelque chose qui n'était pas cassé.
+- **Un identifiant se lit, il ne s'écrit pas.** SHA, id de trigger, numéro d'issue ou de PR : lu à
+  sa source (`git rev-parse`, sortie d'outil) ou passé par substitution de commande — jamais
+  complété de tête, même quand ses premiers caractères sont sourcés. Un identifiant bien formé a
+  toutes les apparences d'un identifiant exact.
+- **Relire la demande avant de répondre, et la règle avant de l'opposer.** Répondre à la question
+  posée, pas à la plus proche que le dépôt sait traiter. Une règle de ce fichier s'oppose avec son
+  déclencheur : citer sa clause de conséquence sans sa condition d'application n'est pas citer la
+  règle.
 
 ## Avant d'implémenter : challenger la solution
 
@@ -75,8 +87,8 @@ elles filtrent le design, là elles contrôlent le résultat.
 
 S'applique à **chaque** changement, sans qu'on ait à le demander :
 
-- **Vérifier avant de dire « fait ».** Relire le vrai `git diff` (pas sa mémoire), lancer la suite complète + lint, et confirmer qu'aucun snapshot / golden-master ne bouge par accident.
-- **Complétude — ne rien oublier.** Parcourir les angles morts récurrents : chemin prod/déploiement (migration auto vs seed manuel vs front — le piège du backfill), duplication vs un pattern existant qui centralise déjà (ex. `buildProficiencyCarrier`), surface non testée (seeds, front) et comment elle est gardée (test-contrat, garde-fou), effets de bord (read-model, features matérialisées, fixtures), cohérence avec les conventions du repo (nommage, `ruleset`, tests-contrat).
+- **Vérifier avant de dire « fait ».** Relire le vrai `git diff` (pas sa mémoire), lancer la suite complète + lint, et confirmer qu'aucun snapshot / golden-master ne bouge par accident. La relecture inclut ses propres commentaires : ce qui n'est pas un pourquoi non-évident (cf. « Commentaires ») se coupe **avant** le commit, pas après une relance. « Fait » ne s'écrit qu'après l'appel, au même tour : « j'annule », « la routine fonctionne », « c'est créé » exigent l'outil appelé et sa sortie lue — entre deux tours il n'y a pas de « plus tard » — et proposer à l'utilisateur de vérifier ce qu'un outil à portée vérifie soi-même, c'est livrer non vérifié en s'en donnant l'air averti.
+- **Complétude — ne rien oublier.** Parcourir les angles morts récurrents : chemin prod/déploiement (migration auto vs seed manuel vs front — le piège du backfill), duplication vs un pattern existant qui centralise déjà (ex. `buildProficiencyCarrier`), surface non testée (seeds, front) et comment elle est gardée (test-contrat, garde-fou), effets de bord (read-model, features matérialisées, fixtures), cohérence avec les conventions du repo (nommage, `ruleset`, tests-contrat, et contenu seedé affiché au joueur : chercher comment le dépôt écrit déjà ce qu'on s'apprête à réécrire avant de le retoucher ; un choix de style hors du périmètre validé se propose, il ne s'applique pas).
 - **La meilleure solution, pas un quick fix.** Préférer le design correct / DRY / aligné sur les patterns existants à une rustine ; réutiliser le pattern plutôt que le ré-implémenter.
 - **Zéro dette nouvelle.** Ne pas introduire de dette. Si un compromis est réellement inévitable, le remonter explicitement (dans la réponse, et en issue du projet s'il doit être suivi — cf. « Suivi du projet ») — jamais en silence.
 
@@ -92,21 +104,26 @@ N'en écrire un que pour le **pourquoi non-évident** :
 - **intention de sécurité** et menace précise contrée (`sanitizeRedirect`, clés de portrait R2,
   middleware default-deny) ;
 - **nombre magique** (`maxAge: 60 * 10 // durée du flux OAuth`) ;
-- **règle D&D non déductible du code** (cap d'harmonisation à 3, emplacements combinés PHB p.164)
-  ou valeur vérifiée à la main dans un test ;
+- **règle D&D non déductible du code** (cap d'harmonisation à 3, emplacements combinés) ou valeur
+  vérifiée à la main dans un test ;
 - **décision contre-intuitive** assumée, ou dette à suivre.
 
 À bannir :
 
 - **l'historique du projet** (« lot 5b », « point 6 », « F2 tranche 3 », « viendra en Phase 2 ») :
   ça ne se relit pas, et le `git log` / `docs/` le portent déjà ;
+- **la source d'une règle** (« AideDD : … », « PHB p.164 ») : elle se dit à l'utilisateur, pas dans
+  le code, et « ça vient des règles » va de soi. Une source ne se cite en commentaire que si le code
+  est incompréhensible sans elle : code d'origine externe, valeur magique, contournement de
+  l'erreur d'un moteur ;
 - les pavés JSDoc qui paraphrasent la signature, les `/** Union dérivée. */` au-dessus d'un type
   dérivé, les labels de champs évidents ;
 - dans les templates Vue, les `<!-- Libellé -->` qui répètent le titre affiché juste en dessous ;
 - les bandeaux de section (`// ─── X ───`) **sauf dans `app/composables`**, où ils découpent des
   fichiers de 400-800 lignes.
 
-Préférer **une ligne concise** à un pavé, et coller à la densité du code environnant. Les directives
+Préférer **une ligne concise** à un pavé, et coller à la densité du code environnant — hors mentions
+de source, que le code existant contient en nombre et qui ne sont pas un modèle. Les directives
 d'outillage (`eslint-disable`, `@ts-*`, `@vite-ignore`, `@vitest-environment`) ne sont pas des
 commentaires : ne jamais les retirer.
 
