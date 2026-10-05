@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div class="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-default bg-default px-4 py-3 sm:px-6">
+    <div
+      class="flex flex-wrap items-center gap-2"
+      :class="inline ? 'pb-2' : 'sticky top-0 z-10 border-b border-default bg-default px-4 py-3 sm:px-6'"
+    >
       <UButton
         v-if="rollsEnabled"
         icon="i-game-icons:rolling-dices"
@@ -48,7 +51,8 @@
 
     <ol
       ref="list"
-      class="space-y-1 p-4 sm:px-6"
+      class="space-y-1"
+      :class="{ 'p-4 sm:px-6': !inline }"
     >
       <li
         v-for="(entry, index) in table.entries"
@@ -74,6 +78,7 @@ import { rollTableEntryIndex, rollTableRangeLabel, type RollTable } from '~~/sha
 
 const props = defineProps<{
   table: RollTable
+  inline?: boolean
 }>()
 
 const { roll, rollsEnabled } = useDiceRoller()

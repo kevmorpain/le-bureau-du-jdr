@@ -12,6 +12,9 @@ const STALE = 'ancienne valeur'
 // Composantes matérielles dont le seed divergeait d'AideDD (mauvais objet, « au moins » perdu, « consommée » omise).
 const FIXED_MATERIAL = ['Identification', 'Création de mort-vivant', 'Vision suprême', 'Changement de plan']
 
+// Leur description finale est celle de la migration 0128 (tables de sort).
+const OWNED_BY_LATER_MIGRATION = ['Confusion', 'Espièglerie de nathair']
+
 // Une description restructurée porte du balisage ; les autres tenaient sur une ligne et n'ont pas bougé.
 const isStructured = (description: string | null | undefined) => /\n\n|\*\*|\n- |\n\d\. /.test(description ?? '')
 
@@ -56,7 +59,7 @@ describe('migration 0127 — fiche de sort', () => {
       expect(json(row.area_of_effect)).toEqual(s.areaOfEffect ?? null)
       expect(json(row.material_cost)).toEqual(s.materialCost ?? null)
       expect(row.material ?? null).toBe(s.material ?? null)
-      if (isStructured(s.description)) expect(row.description).toBe(s.description)
+      if (isStructured(s.description) && !OWNED_BY_LATER_MIGRATION.includes(s.name)) expect(row.description).toBe(s.description)
     })
   }
 

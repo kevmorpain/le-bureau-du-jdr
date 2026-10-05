@@ -82,6 +82,11 @@
         :source="spell.description ?? 'Aucune description.'"
         class="text-xs text-muted leading-relaxed"
       />
+
+      <SpellRollTable
+        v-if="spell.rollTableId"
+        :roll-table-id="spell.rollTableId"
+      />
     </div>
   </div>
 </template>
@@ -125,6 +130,7 @@ const props = defineProps<{
     concentration: boolean
     ritual: boolean
     description: string | null
+    rollTableId?: number | null
     dc: { ability: string, success?: string } | null
     damages: Array<{
       damage_type: string

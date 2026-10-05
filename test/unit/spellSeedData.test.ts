@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { spells } from '../../server/db/seeds/data/spells'
 import { spellClassMappings } from '../../server/db/seeds/data/spell_class_mappings'
-import { nameRulesetKey } from '../../server/db/seeds/lib/rulesetOf'
+import { nameRulesetKey, rulesetOf } from '../../server/db/seeds/lib/rulesetOf'
+import { rollTables } from '../../server/db/seeds/data/rollTables'
 import { parseDiceNotation } from '../../shared/rules/spellScaling'
 
 // Le seed lie sorts et classes par NOM : un nom de mapping sans sort correspondant est ignoré en
@@ -115,5 +116,24 @@ describe('seed sorts — faits de fiche déclarés', () => {
       expect(size, s.name).toBeGreaterThan(0)
       expect(height !== undefined, s.name).toBe(shape === 'cylinder')
     }
+  })
+})
+
+// Un lien sans table laisserait le seed échouer en prod, et une prose qui renvoie à « la table ci-dessous » sans lien
+// afficherait un renvoi dans le vide.
+describe('seed sorts — tables à lancer', () => {
+  it('chaque sort qui renvoie à une table la trouve dans le seed, pour sa propre édition', () => {
+    const missing = spells
+      .filter(s => s.rollTable)
+      .filter(s => !rollTables.some(t => t.key === s.rollTable && rulesetOf(t) === rulesetOf(s)))
+      .map(s => s.name)
+    expect(missing).toEqual([])
+  })
+
+  it('une prose qui renvoie à la table ci-dessous a une table liée, et inversement', () => {
+    const mismatched = spells
+      .filter(s => /table ci-dessous/i.test(s.description ?? '') !== Boolean(s.rollTable))
+      .map(s => s.name)
+    expect(mismatched).toEqual([])
   })
 })

@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import MagicSection from '../../app/components/character_sheet/MagicSection.vue'
+import SpellCardBuilder from '../../app/components/character_builder/SpellCardBuilder.vue'
 import { spells } from '../../server/db/seeds/data/spells'
+import { rollTables } from '../../server/db/seeds/data/rollTables'
 import { abilityScores, classSheet } from '../fixtures/classSheet'
 
 // Lire un sort se fait sur la ligne même (accordéon) : faits de fiche, description structurée, lancement et rituel.
@@ -21,6 +23,10 @@ const characterSpell = (name: string, id: number, isPrepared: boolean, classId: 
   spell: seedSpell(name, id),
 })
 
+const CONFUSION_TABLE_ID = 77
+const { name, die, entries } = rollTables.find(t => t.key === 'confusion')!
+const confusion = { name, die, entries }
+
 const slots = ref({ spellcasting: { 1: { max: 2, current: 2 }, 3: { max: 2, current: 2 } }, pact_magic: {} })
 
 const mountFor = async (sheetId: number, className: string, classId: number, isPrepared: boolean, ability = 'int') => {
@@ -28,7 +34,9 @@ const mountFor = async (sheetId: number, className: string, classId: number, isP
     characterSpell('Boule de feu', 501, true, classId),
     characterSpell('Détection de la magie', 502, isPrepared, classId),
     characterSpell('Rayon de givre', 503, true, classId),
+    { ...characterSpell('Confusion', 504, true, classId), spell: { ...seedSpell('Confusion', 504), rollTableId: CONFUSION_TABLE_ID } },
   ])
+  registerEndpoint(`/api/catalog/roll-tables/${CONFUSION_TABLE_ID}`, () => confusion)
   registerEndpoint(`/api/character_sheets/${sheetId}/inventory`, () => [])
   registerEndpoint(`/api/character_sheets/${sheetId}/proficiency-overrides`, () => [])
   registerEndpoint('/api/backgrounds', () => [])
@@ -45,6 +53,8 @@ const rowOf = (wrapper: Awaited<ReturnType<typeof mountFor>>, name: string) =>
   wrapper.findAll('span.font-medium').find(s => s.text() === name)!
 
 describe('MagicSection — accordéon de sort', () => {
+  afterEach(() => vi.restoreAllMocks())
+
   it('ouvre le sort sur la ligne : zone, DD, description en paragraphes, sans tiroir', async () => {
     const wrapper = await mountFor(9301, 'Magicien', 1, false)
     expect(wrapper.text()).not.toContain('Sphère de 6 m de rayon')
@@ -83,5 +93,32 @@ describe('MagicSection — accordéon de sort', () => {
     await rowOf(prepared, 'Détection de la magie').trigger('click')
     await nextTick()
     expect(prepared.findAll('button').filter(b => b.text().includes('Lancer en rituel'))).toHaveLength(1)
+  })
+
+  it('un sort à table affiche ses cas en tableau et jette le dé sur la table', async () => {
+    const wrapper = await mountFor(9306, 'Magicien', 1, false)
+    await rowOf(wrapper, 'Confusion').trigger('click')
+    await vi.waitFor(() => expect(wrapper.text()).toContain('La créature ne bouge pas et n\'agit pas.'))
+
+    expect(wrapper.text()).toContain('2-6')
+    const highlighted = () => wrapper.findAll('li').filter(li => li.attributes('aria-current') === 'true').map(li => li.text())
+    expect(highlighted()).toEqual([])
+
+    vi.spyOn(Math, 'random').mockReturnValue(0.75) // ceil(0.75 × 10) = 8
+    await wrapper.findAll('button').find(b => b.text().includes('Lancer le d10'))!.trigger('click')
+    expect(highlighted()).toEqual([expect.stringContaining('7-8')])
+  })
+})
+
+describe('SpellCardBuilder — sort à table', () => {
+  it('déplie le sort avec sa table, comme la fiche', async () => {
+    registerEndpoint(`/api/catalog/roll-tables/${CONFUSION_TABLE_ID}`, () => confusion)
+    const spell = { ...seedSpell('Confusion', 504), rollTableId: CONFUSION_TABLE_ID, school: { name: 'Enchantment' } }
+    const wrapper = await mountSuspended(SpellCardBuilder, {
+      props: { spell: spell as never, selected: false },
+      global: { stubs: { UTooltip: { template: '<div><slot /></div>' } } },
+    })
+    await wrapper.find('button.cursor-pointer').trigger('click')
+    await vi.waitFor(() => expect(wrapper.text()).toContain('La créature agit et se déplace normalement.'))
   })
 })

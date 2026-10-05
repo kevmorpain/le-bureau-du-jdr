@@ -65,4 +65,26 @@ export const rollTables: RollTableDef[] = [
       { min: 99, max: 100, text: 'Vous regagnez tous vos points de sorcellerie.' },
     ],
   },
+  {
+    key: 'confusion',
+    name: 'Confusion',
+    die: 10,
+    entries: [
+      { min: 1, max: 1, text: 'La créature emploie tout son mouvement à se déplacer dans une direction aléatoire (1d8) et n\'agit pas.' },
+      { min: 2, max: 6, text: 'La créature ne bouge pas et n\'agit pas.' },
+      { min: 7, max: 8, text: 'La créature attaque au corps à corps une créature à sa portée choisie au hasard, ou ne fait rien si aucune n\'est à portée.' },
+      { min: 9, max: 10, text: 'La créature agit et se déplace normalement.' },
+    ],
+  },
+  {
+    key: 'nathair_mischief',
+    name: 'Espièglerie de nathair',
+    die: 4,
+    entries: [
+      { min: 1, max: 1, text: 'Désavantage aux jets d\'attaque (fous rires).' },
+      { min: 2, max: 2, text: 'Jet de sauvegarde de Sagesse ou effrayée.' },
+      { min: 3, max: 3, text: 'Jet de sauvegarde de Constitution ou incapable de parler autrement qu\'en gloussant.' },
+      { min: 4, max: 4, text: 'Jet de sauvegarde de Sagesse ou charmée par une illusion inoffensive.' },
+    ],
+  },
 ]

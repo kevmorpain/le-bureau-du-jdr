@@ -1,4 +1,4 @@
-export const ROLL_TABLE_KEYS = ['wild_magic_surge'] as const
+export const ROLL_TABLE_KEYS = ['wild_magic_surge', 'confusion', 'nathair_mischief'] as const
 
 export type RollTableKey = (typeof ROLL_TABLE_KEYS)[number]
 

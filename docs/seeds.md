@@ -27,7 +27,7 @@ Toutes les seeds de référence sont idempotentes — elles peuvent être relanc
 | `abilityScores` | `ability_scores.ts` | `onConflictDoNothing` | |
 | `damageTypes` | `damage_types.ts` | `onConflictDoNothing` | |
 | `magicSchools` | `magic_schools.ts` | `onConflictDoNothing` | |
-| `rollTables` | `roll_tables.ts` | Par (key, ruleset), resynchronisé | Tables à lancer (Pic de magie sauvage). **Avant les classes** : leurs capacités y renvoient |
+| `rollTables` | `roll_tables.ts` | Par (key, ruleset), resynchronisé | Tables à lancer (Pic de magie sauvage, Confusion, Espièglerie de nathair). **Avant les classes et les sorts** : leurs capacités et leurs sorts y renvoient |
 | `characterSpecies` | `character_species.ts` | Vérification par nom | 13 entrées (9 espèces + 4 sous-espèces) |
 | `classes` | `classes.ts` | Select + update/insert | |
 | `backgrounds` | `backgrounds.ts` | `upsertByName` | |
@@ -120,7 +120,7 @@ Le seed insère automatiquement les liens `spell_classes` (table de jointure `sp
 | `warlock_invocations.ts` | 33 manifestations occultes (PHB 2014 + TCoE) avec prérequis et effets (`spell_grant`, `eldritch_blast_modifier`, `pact_weapon_modifier`, `sight_modifier`, `skill_proficiency`, `advantage`…) |
 | `spells.ts` | ~62 sorts avec composantes, dégâts/soins, DC, concentration, rituel |
 | `spell_class_mappings.ts` | Associations sorts↔classes |
-| `rollTables.ts` | Tables à lancer, clé canonique dans `shared/rules/rollTables.ts` ; texte repris d'AideDD |
+| `rollTables.ts` | Tables à lancer, clé canonique dans `shared/rules/rollTables.ts` ; Pic de magie sauvage repris d'AideDD, les tables de sort (Confusion, Espièglerie de nathair) écrites par nous |
 | `items.ts` | Objets (armes, armures, équipement, outils) |
 
 Ces fichiers font autorité sur les valeurs de référence — en cas de divergence avec la DB, la DB a tort.

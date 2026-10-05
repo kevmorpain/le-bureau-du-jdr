@@ -1,6 +1,9 @@
+import type { RollTableKey } from '~~/shared/rules/rollTables'
 import { SpellComponent } from '../../schema/spells'
 
-export const spells: InsertSpell[] = [
+export type SpellSeed = Omit<InsertSpell, 'rollTableId'> & { rollTable?: RollTableKey }
+
+export const spells: SpellSeed[] = [
   {
     name: 'Assistance',
     level: 0,
@@ -1433,8 +1436,9 @@ export const spells: InsertSpell[] = [
     material: 'trois coquilles de noix',
     duration: 'Concentration, jusqu\'à 1 minute',
     concentration: true,
-    description: 'Vous assaillez les esprits dans une sphère de 3 mètres de rayon centrée sur un point à portée. Chaque créature de la zone doit réussir un jet de sauvegarde de Sagesse ou être affectée.\n\nUne cible affectée ne peut plus réagir et lance 1d10 au début de chacun de ses tours pour déterminer son comportement : sur 1, elle emploie tout son mouvement à se déplacer dans une direction aléatoire (1d8) et n\'agit pas ; de 2 à 6, elle ne bouge pas et n\'agit pas ; sur 7 ou 8, elle attaque au corps à corps une créature à sa portée choisie au hasard, ou ne fait rien si aucune n\'est à portée ; sur 9 ou 10, elle agit et se déplace normalement.\n\nÀ la fin de chacun de ses tours, une cible peut refaire le jet de sauvegarde ; en cas de réussite, l\'effet cesse pour elle.\n\n**Aux niveaux supérieurs**. Lorsque vous lancez ce sort en utilisant un emplacement de sort de niveau 5 ou supérieur, le rayon de la sphère augmente de 1,50 mètre pour chaque niveau d\'emplacement au-delà du niveau 4.',
+    description: 'Vous assaillez les esprits dans une sphère de 3 mètres de rayon centrée sur un point à portée. Chaque créature de la zone doit réussir un jet de sauvegarde de Sagesse ou être affectée.\n\nUne cible affectée ne peut plus réagir et lance 1d10 au début de chacun de ses tours pour déterminer son comportement (table ci-dessous).\n\nÀ la fin de chacun de ses tours, une cible peut refaire le jet de sauvegarde ; en cas de réussite, l\'effet cesse pour elle.\n\n**Aux niveaux supérieurs**. Lorsque vous lancez ce sort en utilisant un emplacement de sort de niveau 5 ou supérieur, le rayon de la sphère augmente de 1,50 mètre pour chaque niveau d\'emplacement au-delà du niveau 4.',
     schoolId: 4,
+    rollTable: 'confusion',
     areaOfEffect: { shape: 'sphere', size: 3 },
     dc: { ability: 'wis', success: 'none' },
   },
@@ -1576,8 +1580,9 @@ export const spells: InsertSpell[] = [
     duration: 'Concentration, jusqu\'à 1 minute',
     concentration: true,
     source: 'fizban',
-    description: 'Vous invoquez la magie facétieuse des fées dans un cube de 6 mètres d\'arête à portée. Au début de chacun de vos tours, lancez un d4 pour déterminer l\'effet aléatoire qui s\'applique aux créatures de votre choix dans le cube :\n\n1. désavantage aux jets d\'attaque (fous rires)\n2. jet de sauvegarde de Sagesse ou effrayée\n3. jet de sauvegarde de Constitution ou incapable de parler autrement qu\'en gloussant\n4. jet de sauvegarde de Sagesse ou charmée par une illusion inoffensive.\n\nLes effets à jet de sauvegarde utilisent votre DD de sauvegarde des sorts et durent jusqu\'au début de votre prochain tour.',
+    description: 'Vous invoquez la magie facétieuse des fées dans un cube de 6 mètres d\'arête à portée. Au début de chacun de vos tours, lancez un d4 pour déterminer l\'effet aléatoire qui s\'applique aux créatures de votre choix dans le cube (table ci-dessous).\n\nLes effets à jet de sauvegarde utilisent votre DD de sauvegarde des sorts et durent jusqu\'au début de votre prochain tour.',
     schoolId: 4,
+    rollTable: 'nathair_mischief',
     areaOfEffect: { shape: 'cube', size: 6 },
   },
   {

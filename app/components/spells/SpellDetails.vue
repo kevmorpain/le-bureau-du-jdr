@@ -29,6 +29,11 @@
       :source="spell.description ?? ''"
       class="leading-5"
     />
+
+    <SpellRollTable
+      v-if="spell.rollTableId"
+      :roll-table-id="spell.rollTableId"
+    />
   </div>
 </template>
 

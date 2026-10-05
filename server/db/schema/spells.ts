@@ -5,6 +5,7 @@ import type { DamageType } from '~~/shared/rules/damageTypes'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Source } from '~~/shared/rules/source'
 import magicSchools from './magic_schools'
+import rollTables from './roll_tables'
 import spellClasses from './spell_classes'
 
 export enum SpellComponent {
@@ -95,6 +96,8 @@ const spells = sqliteTable('spells', {
 
   dc: text('dc', { mode: 'json' })
     .$type<{ ability: AbilityKey, success?: DcSuccessEffect }>(),
+
+  rollTableId: integer('roll_table_id').references(() => rollTables.id, { onDelete: 'set null' }),
 
   attackType: text('attack_type').$type<SpellAttackType>(),
 
