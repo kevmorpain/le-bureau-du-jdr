@@ -25,5 +25,6 @@ export default defineEventHandler(async (event) => {
       set: { value: sql`excluded.value` },
     })
 
+  await touchCharacterSheet(event, characterSheetId)
   return { success: true }
 })

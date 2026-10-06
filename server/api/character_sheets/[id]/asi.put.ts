@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
         })))
     }
 
+    await touchCharacterSheet(event, characterSheetId)
     return { success: true }
   } catch (e) {
     const message = e instanceof Error ? e.message : ''

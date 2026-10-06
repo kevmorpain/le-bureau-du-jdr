@@ -11,7 +11,9 @@ export default defineEventHandler(async (event) => {
   if (!result.success) throw createError({ statusCode: 422, data: result.error })
 
   try {
-    return await characterLevelUp(db, characterSheetId, result.data)
+    const response = await characterLevelUp(db, characterSheetId, result.data)
+    await touchCharacterSheet(event, characterSheetId)
+    return response
   }
   catch (e) {
     if (e instanceof CharacterValidationError) {

@@ -1,6 +1,6 @@
 import { db, schema } from '~~/server/utils/db'
 import { eq } from 'drizzle-orm'
-import { sheetIdFromPath } from '~~/server/utils/sheetIdFromPath'
+import { sheetIdFromPath } from '~~/shared/utils/sheetIdFromPath'
 
 // Default-deny : toute route `/api/character_sheets/<id>/**` exige une session ET la propriété de la fiche.
 // La route collection (sans id) gère sa propre session.

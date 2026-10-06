@@ -12,7 +12,9 @@ export default defineEventHandler(async (event) => {
   const input = await readValidatedBody(event, restSchema.parse)
 
   try {
-    return await characterRest(db, characterSheetId, input)
+    const summary = await characterRest(db, characterSheetId, input)
+    await touchCharacterSheet(event, characterSheetId)
+    return summary
   }
   catch (e) {
     if (e instanceof CharacterValidationError) {

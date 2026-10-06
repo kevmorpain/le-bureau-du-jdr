@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
       set: { choices: choices ?? null },
     })
 
+  await touchCharacterSheet(event, characterSheetId)
   setResponseStatus(event, 201)
   return { ok: true }
 })

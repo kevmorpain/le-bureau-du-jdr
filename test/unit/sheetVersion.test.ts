@@ -63,11 +63,29 @@ describe('contrat — toute écriture d\'updated_at annonce sa version', () => {
     return nested.flat()
   }
 
-  it('aucun handler ne pose updatedAt sans passer par stampSheetVersion', async () => {
+  const relative = (file: string) => file.slice(process.cwd().length + 1).replaceAll('\\', '/')
+
+  it('rien dans server/api ni server/utils ne pose updatedAt sans passer par stampSheetVersion', async () => {
     const offenders: string[] = []
-    for (const file of await sourceFiles(join(process.cwd(), 'server', 'api'))) {
+    for (const dir of ['api', 'utils']) {
+      for (const file of await sourceFiles(join(process.cwd(), 'server', dir))) {
+        const source = await readFile(file, 'utf8')
+        if (/updatedAt\s*:(?!\s*stampSheetVersion\(event\))/.test(source)) offenders.push(relative(file))
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
+  // La suppression de la fiche est la seule écriture qui n'a plus de version à annoncer.
+  const EXEMPT_HANDLERS = ['server/api/character_sheets/[id]/index.delete.ts']
+
+  it('chaque handler d\'écriture de la fiche annonce sa version', async () => {
+    const offenders: string[] = []
+    for (const file of await sourceFiles(join(process.cwd(), 'server', 'api', 'character_sheets', '[id]'))) {
+      const path = relative(file)
+      if (!/\.(put|post|delete)\.ts$/.test(path) || EXEMPT_HANDLERS.includes(path)) continue
       const source = await readFile(file, 'utf8')
-      if (/updatedAt\s*:(?!\s*stampSheetVersion\(event\))/.test(source)) offenders.push(file)
+      if (!/touchCharacterSheet\(event\b|stampSheetVersion\(event\)/.test(source)) offenders.push(path)
     }
     expect(offenders).toEqual([])
   })
