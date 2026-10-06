@@ -139,10 +139,10 @@ La clé est scopée par personnage via `characterStorageKey(characterSheet?.valu
 ## Auto-save dans `[id].vue`
 
 ```ts
-watch(characterSheet, () => {
-  if (saveTimeout) clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(updateCharacterSheet, 1000)
-}, { deep: true })
+const { status, schedule, flush } = useAutoSave(updateCharacterSheet, { delay: 2000, maxWait: 10_000 })
+watch(characterSheet, schedule, { deep: true })
 ```
 
-Toute mutation sur `characterSheet.value` (y compris les sous-objets) déclenche un PUT après 1 seconde d'inactivité. C'est le mécanisme central de persistance pour les données de la table `character_sheets` et ses relations directes (`classes`, etc.).
+Toute mutation sur `characterSheet.value` (y compris les sous-objets) déclenche un PUT après 2 secondes d'inactivité (au plus 10 s en saisie continue). C'est le mécanisme central de persistance pour les données de la table `character_sheets` et ses relations directes (`classes`, etc.).
+
+`useAutoSave` n'a qu'un PUT en vol à la fois (une modif arrivée pendant l'envoi en relance un autre après coup) et vide la sauvegarde en attente quand l'onglet est masqué ou la page quittée. Son `status` (`idle` / `saving` / `saved` / `error`) est fourni à `SyncStatus`, le badge de l'en-tête.
