@@ -7,7 +7,7 @@
       <template #links>
         <span
           class="text-sm"
-          :class="state === 'error' ? 'text-error' : 'text-muted'"
+          :class="status === 'error' ? 'text-error' : 'text-muted'"
         >
           {{ stateLabel }}
         </span>
@@ -51,7 +51,7 @@
 
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import type { KnSaveState } from '~/composables/useKnAutosave'
+import type { AutoSaveStatus } from '~/composables/useAutoSave'
 
 const route = useRoute()
 
@@ -59,15 +59,14 @@ const { data } = await useFetch<KnCharacter>(`/api/ker-nethalas/characters/${rou
 // `useFetch` rend `data` superficielle : on la recopie dans une ref profonde pour que l'édition soit réactive.
 const character = ref(data.value)
 
-const { state } = useKnAutosave(character)
+const { status } = useKnAutosave(character)
 const resolved = useKnResolved(character)
 
-const STATE_LABELS: Record<KnSaveState, string> = {
+const STATUS_LABELS: Record<AutoSaveStatus, string> = {
   idle: '',
-  pending: 'Modifications en attente…',
   saving: 'Enregistrement…',
   saved: 'Enregistré',
   error: 'Échec de l\'enregistrement',
 }
-const stateLabel = computed(() => STATE_LABELS[state.value])
+const stateLabel = computed(() => STATUS_LABELS[status.value])
 </script>

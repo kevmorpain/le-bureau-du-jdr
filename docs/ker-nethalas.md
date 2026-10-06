@@ -146,8 +146,8 @@ Le livre impose d'arrondir **vers le haut** (p. 70). Le moteur applique cette r�
 
 ### KN10 — Pas de hors-ligne en V1
 `useOfflineMutation` indexe sa file par id de personnage D&D (collision possible avec un id Ker Nethalas), et le cache
-PWA ne couvre que `/api/character_sheets`. Le module sauvegarde donc par simple PUT avec debounce d'une seconde
-(`useKnAutosave`).
+PWA ne couvre que `/api/character_sheets`. Le module sauvegarde donc par PUT avec debounce d'une seconde
+(`useKnAutosave`, qui s'appuie sur `useAutoSave` : un seul envoi en vol, plafond d'attente de 5 s).
 
 ### KN11 — Libellés français
 Les termes de la VF sont repris quand le concept est identique (Esquive, Furtivité, Larcin, Fouille, Robustesse, Éther,
@@ -300,6 +300,8 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   les numéros `0126` à `0129` : celles du module sont renumérotées `0126`-`0129` → `0130`-`0133`, et les numéros cités
   plus bas sont ceux d'après renumération. Les 7 commits sont regroupés en deux (code, doc), les PR étant
   fusionnées en squash.
+- `main` a gagné un `useAutoSave` générique (PR #251) : `useKnAutosave` s'y appuie désormais au lieu de garder sa
+  propre boucle de sauvegarde.
 
 ### 2026-10-06 — Retours sur la tranche 1
 - Constat : après le choix d'une condition, le sélecteur affichait la clé brute (l'élément quittait la liste), et les
