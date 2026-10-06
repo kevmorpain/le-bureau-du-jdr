@@ -26,5 +26,6 @@ export default defineEventHandler(async (event) => {
       eq(schema.characterFeatures.featureId, featId),
     ))
 
+  await touchCharacterSheet(event, characterSheetId)
   return { ok: true }
 })

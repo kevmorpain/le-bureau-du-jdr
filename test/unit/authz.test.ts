@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sheetIdFromPath } from '../../server/utils/sheetIdFromPath'
+import { sheetIdFromPath } from '../../shared/utils/sheetIdFromPath'
 import { requiresAuth } from '../../app/utils/requiresAuth'
 
 describe('sheetIdFromPath (garde serveur)', () => {

@@ -30,7 +30,6 @@ export function useOfflineMutation(characterId: MaybeRefOrGetter<number>) {
         const res = await $fetch(args.endpoint, {
           method: args.method,
           body: args.body as Record<string, unknown> | undefined,
-          ...trackSheetVersion(id),
         })
         args.onServerResponse?.(res)
         return 'sent'

@@ -8,7 +8,6 @@ import {
   totalPending,
   type QueuedMutation,
 } from '~/utils/offlineQueue'
-import { SHEET_VERSION_HEADER } from '~~/shared/utils/sheetVersion'
 
 // ── État partagé (singleton module-level) ───────────────────────────────────
 // Partagé entre l'indicateur de synchro, le wrapper offlineMutate et le plugin.
@@ -22,8 +21,8 @@ const conflicts = ref<number[]>([])
 const lastSynced = ref<{ characterId: number, ts: number } | null>(null)
 
 // character_sheets.updatedAt connu (dernier état synchronisé) par perso. Renseigné par la
-// page de la fiche au chargement et après chaque synchro/refresh, lu par offlineMutate pour
-// estampiller chaque op (garde-fou anti-écrasement).
+// page de la fiche au chargement et après chaque synchro/refresh, et par le plugin sheet-version
+// après chaque écriture ; lu par offlineMutate pour estampiller chaque op (garde-fou anti-écrasement).
 const baseVersions = reactive<Record<number, string | null>>({})
 
 export function setBaseVersion(characterId: number, updatedAt: string | null | undefined): void {
@@ -32,20 +31,6 @@ export function setBaseVersion(characterId: number, updatedAt: string | null | u
 
 export function getBaseVersion(characterId: number): string | null {
   return baseVersions[characterId] ?? null
-}
-
-/**
- * Options `$fetch` à passer à toute requête qui écrit sur la fiche : le serveur y annonce la version
- * qu'il vient de poser, et la base avance avec. Sans ça, la prochaine op hors-ligne serait estampillée
- * d'une version que nos propres écritures ont déjà dépassée, et le rejeu y verrait un conflit.
- */
-export function trackSheetVersion(characterId: number) {
-  return {
-    onResponse({ response }: { response: { headers: Headers } }) {
-      const version = response.headers.get(SHEET_VERSION_HEADER)
-      if (version) setBaseVersion(characterId, version)
-    },
-  }
 }
 
 function refreshPendingCount(): void {
@@ -85,11 +70,7 @@ async function flushCharacter(characterId: number, force = false): Promise<void>
   let replayed = 0
   for (const op of ops) {
     try {
-      await $fetch(op.endpoint, {
-        method: op.method,
-        body: op.body as Record<string, unknown>,
-        ...trackSheetVersion(characterId),
-      })
+      await $fetch(op.endpoint, { method: op.method, body: op.body as Record<string, unknown> })
       removeMutation(characterId, op.id)
       refreshPendingCount()
       replayed++

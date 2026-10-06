@@ -1,23 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { registerEndpoint } from '@nuxt/test-utils/runtime'
+import { setResponseHeader, type H3Event } from 'h3'
 import { getBaseVersion, setBaseVersion } from '../../app/composables/useOfflineSync'
 import { SHEET_VERSION_HEADER } from '../../shared/utils/sheetVersion'
 
 const CHAR_ID = 4242
-const SHEET_URL = `/api/character_sheets/${CHAR_ID}`
+const OTHER_CHAR_ID = 9999
+const sheetUrl = (id: number, sub = '') => `/api/character_sheets/${id}${sub}`
 
 let serverVersion = 'T0'
 let counter = 0
 
-type FetchOptions = { method?: string, onResponse?: (ctx: { response: { headers: Headers } }) => void }
+// Comme stampSheetVersion : l'écriture avance la version du serveur et l'annonce dans l'en-tête.
+const write = (event: H3Event) => {
+  serverVersion = `T${++counter}`
+  setResponseHeader(event, SHEET_VERSION_HEADER, serverVersion)
+  return { success: true }
+}
 
-// Même contrat qu'ofetch : l'écriture avance la version du serveur et l'annonce dans l'en-tête.
-function stubServer() {
-  vi.stubGlobal('$fetch', vi.fn(async (_url: string, opts?: FetchOptions) => {
-    if (!opts?.method || opts.method === 'GET') return { updatedAt: serverVersion }
-    serverVersion = `T${++counter}`
-    opts.onResponse?.({ response: { headers: new Headers({ [SHEET_VERSION_HEADER]: serverVersion }) } })
-    return [{ updatedAt: serverVersion }]
-  }))
+registerEndpoint(sheetUrl(CHAR_ID), { method: 'GET', handler: () => ({ updatedAt: serverVersion }) })
+for (const id of [CHAR_ID, OTHER_CHAR_ID]) {
+  for (const sub of ['', '/spells', '/spell-slots', '/skills']) {
+    registerEndpoint(sheetUrl(id, sub), { method: 'PUT', handler: write })
+  }
 }
 
 function setOnline(value: boolean) {
@@ -29,23 +34,22 @@ beforeEach(() => {
   localStorage.clear()
   serverVersion = 'T0'
   counter = 0
-  stubServer()
   setOnline(true)
   setBaseVersion(CHAR_ID, 'T0')
+  setBaseVersion(OTHER_CHAR_ID, 'T0')
   useOfflineSync().conflicts.value = []
 })
 
 afterEach(() => {
-  vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
 
 async function sendDirect() {
   const { offlineMutate } = useOfflineMutation(CHAR_ID)
-  expect(await offlineMutate({ endpoint: SHEET_URL, method: 'PUT', body: { notes: 'a' }, dedupeKey: 'sheet' })).toBe('sent')
+  expect(await offlineMutate({ endpoint: sheetUrl(CHAR_ID), method: 'PUT', body: { notes: 'a' }, dedupeKey: 'sheet' })).toBe('sent')
 }
 
-async function queueOffline(endpoint = SHEET_URL, dedupeKey?: string) {
+async function queueOffline(endpoint = sheetUrl(CHAR_ID), dedupeKey?: string) {
   setOnline(false)
   const { offlineMutate } = useOfflineMutation(CHAR_ID)
   expect(await offlineMutate({ endpoint, method: 'PUT', body: { notes: 'ab' }, dedupeKey })).toBe('queued')
@@ -57,10 +61,27 @@ describe('version de référence de la synchro hors-ligne', () => {
     expect(getBaseVersion(CHAR_ID)).toBe('T1')
   })
 
+  it('avance aussi pour un $fetch direct, hors offlineMutate', async () => {
+    await $fetch(sheetUrl(CHAR_ID, '/skills'), { method: 'PUT', body: [] })
+    expect(getBaseVersion(CHAR_ID)).toBe('T1')
+  })
+
+  it('associe la version à la fiche de l\'URL, pas aux autres', async () => {
+    await $fetch(sheetUrl(OTHER_CHAR_ID, '/skills'), { method: 'PUT', body: [] })
+    expect(getBaseVersion(OTHER_CHAR_ID)).toBe('T1')
+    expect(getBaseVersion(CHAR_ID)).toBe('T0')
+  })
+
+  it('ne bouge pas sur une réponse sans version (lecture)', async () => {
+    serverVersion = 'T9'
+    await $fetch(sheetUrl(CHAR_ID))
+    expect(getBaseVersion(CHAR_ID)).toBe('T0')
+  })
+
   it('une modif hors-ligne faite après un envoi direct ne déclenche pas de conflit au rejeu', async () => {
     const sync = useOfflineSync()
     await sendDirect()
-    await queueOffline(SHEET_URL, 'sheet')
+    await queueOffline(sheetUrl(CHAR_ID), 'sheet')
 
     setOnline(true)
     await sync.flushAll()
@@ -71,8 +92,8 @@ describe('version de référence de la synchro hors-ligne', () => {
 
   it('avance avec chaque op rejouée', async () => {
     const sync = useOfflineSync()
-    await queueOffline(`${SHEET_URL}/spells`)
-    await queueOffline(`${SHEET_URL}/spell-slots`)
+    await queueOffline(sheetUrl(CHAR_ID, '/spells'))
+    await queueOffline(sheetUrl(CHAR_ID, '/spell-slots'))
 
     setOnline(true)
     await sync.flushAll()
@@ -85,7 +106,7 @@ describe('version de référence de la synchro hors-ligne', () => {
     const sync = useOfflineSync()
     await sendDirect()
     serverVersion = 'ailleurs'
-    await queueOffline(SHEET_URL, 'sheet')
+    await queueOffline(sheetUrl(CHAR_ID), 'sheet')
 
     setOnline(true)
     await sync.flushAll()

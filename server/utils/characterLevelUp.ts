@@ -465,7 +465,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   }
 
   stmts.push(db.update(schema.characterSheets)
-    .set({ hpBase: charSheet.hpBase + hpGained, currentHitDie: updatedHitDie as unknown as typeof charSheet.currentHitDie, updatedAt: new Date().toISOString() })
+    .set({ hpBase: charSheet.hpBase + hpGained, currentHitDie: updatedHitDie as unknown as typeof charSheet.currentHitDie })
     .where(eq(schema.characterSheets.id, characterSheetId)))
 
   if (d.asiChoice === 'asi' && d.asiBonuses) {

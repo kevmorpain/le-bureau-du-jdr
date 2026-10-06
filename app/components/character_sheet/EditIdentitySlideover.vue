@@ -182,7 +182,7 @@ async function uploadPortrait(event: Event) {
 
     const { portraitUrl: uploaded } = await $fetch<{ portraitUrl: string }>(
       `/api/character_sheets/${characterSheet.value.id}/portrait`,
-      { method: 'POST', body: form, ...trackSheetVersion(characterSheet.value.id) },
+      { method: 'POST', body: form },
     )
     portraitUrl.value = uploaded
   } catch (e: unknown) {
