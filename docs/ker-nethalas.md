@@ -1,6 +1,6 @@
 # Module Ker Nethalas
 
-> **Statut** : tranches 0 (socle) et 1 (fiche effective) écrites sur la branche `feat/ker-nethalas`, pas encore fusionnées. **Issue** : [#242 — X10](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242).
+> **Statut** : tranches 0 (socle) et 1 (fiche effective) fusionnées (PR #253, 2026-10-06) ; tranche 2a (suivi de run) écrite sur `feat/ker-nethalas-run`, non fusionnée. **Issue** : [#242 — X10](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242).
 > **Dernière mise à jour** : 2026-10-06.
 
 Ce document trace le plan du module, les décisions et ce qui a été fait. Le statut GitHub (Status, Effort,
@@ -202,6 +202,54 @@ Armes, équipement et résistances/vulnérabilités aux types de dégâts sont t
 (`weapons`, `damage_affinities`, `equipment`, migration `0133`). Aucun calcul n'en est tiré ; ils rejoignent la
 modélisation de l'équipement prévue plus tard.
 
+### KN19 — Tranche 2 coupée en 2a (run) et 2b (repos)
+Pour garder des PR relisibles et fusionner entre deux : 2a porte le suivi de run, 2b le repos et les provisions.
+
+### KN20 — État du run dans une colonne JSON `run`, Domaines en liste
+- **Décision** : `kn_characters.run` (migration `0134`) : liste de Domaines et Domaine courant, lumière restante, Dé de
+  Tension. Chaque Domaine porte son nom, ses salles, ses dés de Lair et de Sortie, ses influences d'Overseer et ses
+  événements de l'Obscurité Grandissante, qui « restent en jeu pour ce Domaine » (p. 120). `status.domain` disparaît ;
+  la migration convertit les survivants existants (c'était l'étape annoncée en KN12).
+- **Alternative écartée** : une table `kn_domains`. Quelques entrées par survivant ne justifient ni routes ni
+  jointures, alors que tout le reste se sauvegarde en un seul PUT.
+
+### KN21 — Règles des dés d'usage : fonctions pures
+La chaîne D20, D12, D10, D8, D6, D4 (p. 74) : un jet de 1 ou 2 fait descendre d'un cran, et un 1-2 au D4 déclenche.
+Tension (p. 120) : départ D8, déclenchement = tirage dans la table de l'Obscurité Grandissante puis retour à D8.
+Lair (p. 98) : D10, à chaque nouvelle salle posée, jusqu'à trouver le Lair. Sortie : D8, à chaque nouvelle salle une
+fois le Lair trouvé. Revisiter une salle ne fait que le Dé de Tension et la lumière, sans rencontre ni événement
+(p. 99).
+
+### KN22 — Sources de lumière et Éther rattachés au moteur
+Entrer dans une salle retire 1 de lumière (2 avec l'événement 69-70) et recharge l'Éther au maximum effectif (p. 18).
+Sans lumière restante, le survivant est Aveuglé et doit réussir un test de Résolution par salle, sinon perdre 1 de
+Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoin de lumière (p. 87).
+
+### KN23 — Interface du run : actions guidées, dés lancés ou saisis
+- **Décision** : trois actions (nouvelle salle, nouveau couloir, retour dans une zone explorée) appliquent la lumière et
+  l'Éther, puis ouvrent une entrée où l'on fait ce qu'il reste à faire : Dé de Tension, Dé de Lair ou de Sortie,
+  rencontre de combat (D20 : 10 ou plus dans une salle, 15 ou plus dans un couloir, pas dans le Lair), table des
+  Événements si pas de rencontre (p. 98-99). Chaque dé se lance dans l'outil, ou se saisit avec « 1-2 » / « 3+ » pour
+  un dé lancé à la table : ces deux cas sont les seuls que la chaîne distingue. Un déclenchement du Dé de Tension
+  propose le tirage dans la table de l'Obscurité Grandissante ; le tirage d'un 81-100 ajoute l'influence d'Overseer.
+- **Laissé de côté** : la table des Événements et celle des Rencontres ne sont pas tirées par l'outil ; l'éditeur
+  d'influences et d'événements du Domaine reste la saisie manuelle de ce qu'on tire à la table.
+
+### KN24 — Chemin du Domaine enregistré, une entrée par salle ou couloir
+- **Décision** : chaque Domaine garde la liste de ses entrées (`visits`) : type (salle, couloir, retour), dé de Tension,
+  dé de Lair ou de Sortie attendu et lancé (dé avant, jet, dé après, déclenchement ou « trouvé »), événement de
+  l'Obscurité Grandissante tiré. La dernière entrée est celle en cours, et porte les boutons ; les autres forment le
+  chemin et s'affichent du plus récent au plus ancien, avec le dé comme il était au moment du jet. Ce qui reste à faire
+  se déduit des données : un rechargement ne perd ni le chemin ni l'entrée en cours.
+- **Pourquoi** : une version précédente gardait un journal de texte éphémère et excluait de « tenir le carnet de la
+  partie » ; le PM veut retracer le chemin, et le dé affiché dans la liste après son jet trompait (le D6 d'un dé tombé de
+  D8).
+- **Alternative écartée** : garder les blocs en mémoire. Plus simple, mais le chemin disparaît au rechargement.
+- **Limites** : 200 entrées par Domaine (les plus anciennes sont retirées au-delà) ; ni contenu des salles (monstres,
+  butin) ni réordonnancement. « Annuler cette entrée » retire la dernière entrée et rend le compte de salles, mais ni la
+  lumière, ni l'Éther, ni l'état des dés, ni l'événement tiré : ceux-là se corrigent à la main.
+- **Migration** : le champ est dans la migration `0134` elle-même (pas encore fusionnée), pas dans une `0135`.
+
 ---
 
 ## Inventaire des sources de modificateurs
@@ -241,9 +289,10 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 
 | Tranche | Contenu | Statut |
 |---|---|---|
-| **0 — Socle** | entrée dans la navigation (`app/layouts/default.vue`), route `/ker-nethalas`, tables `kn_*`, fiche en saisie libre (nom, niveau, XP, Health/Toughness/Aether/Sanity, compétences, résistances) | écrite, vérifiée, non fusionnée |
-| **1 — Fiche effective** | moteur pur ; conditions, épuisement, Rot, folies, Growing Darkness, influence d'Overseer, modificateurs libres ; scores effectifs avec détail du calcul ; tests de contrat | écrite, vérifiée, non fusionnée |
-| **2 — Suivi de run** | compteur de salles, source de lumière, Tension Die, dés de Lair et de Domain Exit, Domaine et Overseer, effets du repos | à faire |
+| **0 — Socle** | entrée dans la navigation (`app/layouts/default.vue`), route `/ker-nethalas`, tables `kn_*`, fiche en saisie libre (nom, niveau, XP, Health/Toughness/Aether/Sanity, compétences, résistances) | fusionnée (PR #253) |
+| **1 — Fiche effective** | moteur pur ; conditions, épuisement, Rot, folies, Growing Darkness, influence d'Overseer, modificateurs libres ; scores effectifs avec détail du calcul ; tests de contrat | fusionnée (PR #253) |
+| **2a — Suivi de run** | Domaines, compteur de salles, source de lumière, Dé de Tension, dés de Lair et de Sortie, actions « Nouvelle salle », « Nouveau couloir » et « Retour dans une zone explorée », tirage dans la table de l'Obscurité Grandissante, chemin du Domaine enregistré (une entrée par salle ou couloir, avec ses dés) | écrite, vérifiée, non fusionnée |
+| **2b — Repos** | Reprendre son souffle, Établir le camp (test de Camp, activités, rations), provisions | à faire |
 | **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage ; référence des conditions rédigée ici | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -260,8 +309,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
   enveloppes de départ des compétences (p. 19). Un assistant de création pourrait les tirer et les valider ; hors
   tranche 0.
 - **Amélioration des compétences** (p. 62) : les cases sont déjà stockées ; l'aide au jet d'amélioration au camp
-  relèverait de la tranche 2.
-- **Aether** : entièrement rechargé à chaque nouvelle salle (p. 18) ; à intégrer au compteur de salles (tranche 2).
+  relèverait de la tranche 2b.
 - **Hors-ligne** : à reprendre si l'outil doit servir sans réseau (voir KN10).
 
 ## Interprétations à confirmer
@@ -290,10 +338,41 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   dit pas explicitement que les effets se cumulent.
 - **Une influence par événement 81-100** : lecture de « lancez sur la table Influence de l'Overseer » à chaque
   tirage ; le livre ne précise pas le cas d'un deuxième 81-100 dans le même Domaine.
+- **Dé de Tension global ou par Domaine** : le livre le remet à D8 « à la première entrée dans un nouveau Domaine »
+  (p. 120) sans dire s'il reprend son état en revenant dans un ancien Domaine. Retenu : un seul dé pour le survivant.
+- **Règle optionnelle des 15 salles** (p. 98) : la salle suivante est le Lair. Rappelée, jamais appliquée d'office.
+- **Couloirs** : le livre parle de « salles » pour la lumière et pour la règle des 15 ; l'outil compte salles et
+  couloirs ensemble, un couloir neuf consommant de la lumière comme une salle.
+- **Lair et Sortie dans la même salle** : le dé de Sortie ne se lance qu'à partir de la salle *suivante* ; la salle
+  où le Lair est trouvé ne fait pas aussi le dé de Sortie.
+- **Événements dans le Lair** : le livre interdit le test de rencontre de combat dans le Lair et demande la table des
+  Événements quand il n'y a pas de rencontre ; l'outil rappelle donc la table des Événements dans le Lair.
+- **Lumière à 0** : l'état « sans lumière » est déduit du compteur. Si une autre source éclaire le survivant (sort,
+  équipement lumineux), remonter le compteur à la main : l'outil ne connaît pas ces sources.
 
 ---
 
 ## Journal
+
+### 2026-10-06 — Tranche 2a : cadrage
+- PR #253 fusionnée (tranches 0 et 1). Issue #242 : tranches 0 et 1 cochées.
+- Lecture des règles de la tranche 2 (salles, lumière, dés d'usage, Lair et Sortie, retour sur ses pas, repos). Décisions
+  KN19 à KN22 ; la migration `0134` convertit `status.domain` en liste de Domaines.
+
+### 2026-10-06 — Tranche 2a : réalisation
+- Moteur : `shared/ker-nethalas/run.ts` (dés d'usage, entrée dans une salle, Domaines, tirage de l'Obscurité
+  Grandissante, schéma du run) et `catalog/light.ts` (sans lumière = Aveuglé + rappel de Résolution). Migration `0134` :
+  colonne `run`, `status.domain` reversé dans le premier Domaine.
+- Interface : `KnRunSection` (Domaines, lumière, dés, actions guidées), `KnVisitBlock` (une entrée du chemin),
+  `KnDomainEditor` rattaché au Domaine courant. Vérifié dans le navigateur sur une base vierge : entrée de salle
+  (lumière −1, Éther rechargé), Dé de Tension jusqu'au déclenchement puis tirage, retour en zone explorée sans dé de
+  Lair, nouveau Domaine, lumière à 0.
+- Retour du PM sur la capture : le dé de la liste « À faire » s'affichait après son jet et le journal de texte ne
+  permettait pas de retracer le chemin. Remplacés par des entrées enregistrées (KN24).
+- Tests : suite complète verte (179 fichiers, 1971 tests), dont `knRun` (chaîne des dés, table couverte de 1 à 100,
+  injection du tirage, chemin du Domaine) et la migration `0134` sur un survivant à l'ancienne forme.
+- **Non vérifié** : le tirage 81-100 dans l'interface (couvert seulement par les tests du moteur) ; le rendu visuel, le
+  navigateur n'étant pas affiché pendant la vérification.
 
 ### 2026-10-06 — Rebase sur `main`
 - La branche avait 7 commits de retard (lots 7 à 9, nettoyages, PR #251 et #252). Les migrations de `main` prenaient

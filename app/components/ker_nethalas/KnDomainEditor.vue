@@ -1,7 +1,7 @@
 <template>
   <section class="space-y-3">
     <h3 class="font-medium">
-      Domaine en cours
+      Influences et Obscurité Grandissante
     </h3>
 
     <div class="space-y-2">
@@ -12,15 +12,15 @@
         :items="overseerItems"
         placeholder="Ajouter une influence"
         class="w-full"
-        :disabled="status.domain.overseerInfluences.length >= KN_STATUS_BOUNDS.overseerInfluences"
+        :disabled="domain.overseerInfluences.length >= KN_RUN_BOUNDS.overseerInfluences"
         @pick="addInfluence"
       />
       <ul
-        v-if="status.domain.overseerInfluences.length"
+        v-if="domain.overseerInfluences.length"
         class="space-y-2"
       >
         <li
-          v-for="(influence, index) in status.domain.overseerInfluences"
+          v-for="(influence, index) in domain.overseerInfluences"
           :key="index"
           class="flex items-center gap-3"
         >
@@ -31,7 +31,7 @@
             variant="ghost"
             size="sm"
             :aria-label="`Retirer l'influence : ${$t(`ker_nethalas.overseer.${influence}`)}`"
-            @click="status.domain.overseerInfluences.splice(index, 1)"
+            @click="domain.overseerInfluences.splice(index, 1)"
           />
         </li>
       </ul>
@@ -45,7 +45,7 @@
         :items="eventItems"
         placeholder="Ajouter un événement"
         class="w-full"
-        :disabled="status.domain.growingDarkness.length >= KN_STATUS_BOUNDS.growingDarkness"
+        :disabled="domain.growingDarkness.length >= KN_RUN_BOUNDS.growingDarkness"
         @pick="addEvent"
       />
       <p class="text-xs text-muted">
@@ -54,11 +54,11 @@
     </div>
 
     <ul
-      v-if="status.domain.growingDarkness.length"
+      v-if="domain.growingDarkness.length"
       class="space-y-3"
     >
       <li
-        v-for="(entry, index) in status.domain.growingDarkness"
+        v-for="(entry, index) in domain.growingDarkness"
         :key="index"
         class="space-y-2 rounded-md border border-default p-3"
       >
@@ -79,7 +79,7 @@
             variant="ghost"
             size="sm"
             :aria-label="`Retirer l'événement ${rangeLabel(entry.key)}`"
-            @click="status.domain.growingDarkness.splice(index, 1)"
+            @click="domain.growingDarkness.splice(index, 1)"
           />
         </div>
 
@@ -87,8 +87,8 @@
           v-if="knGrowingDarknessDef(entry.key).param === 'maxAetherLoss' || knGrowingDarknessDef(entry.key).param === 'maxToughnessLoss'"
           :model-value="entry.value ?? 0"
           label="Valeur tirée"
-          :min="KN_STATUS_BOUNDS.growingDarknessValue.min"
-          :max="KN_STATUS_BOUNDS.growingDarknessValue.max"
+          :min="KN_RUN_BOUNDS.growingDarknessValue.min"
+          :max="KN_RUN_BOUNDS.growingDarknessValue.max"
           class="w-40"
           @update:model-value="entry.value = $event"
         />
@@ -125,10 +125,10 @@ import {
   type KnGrowingDarknessKey,
 } from '~~/shared/ker-nethalas/catalog/growingDarkness'
 import { KN_OVERSEER_INFLUENCE_KEYS, type KnOverseerInfluenceKey } from '~~/shared/ker-nethalas/catalog/overseerInfluence'
+import { KN_RUN_BOUNDS, type KnDomain } from '~~/shared/ker-nethalas/run'
 import { KN_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
-import { KN_STATUS_BOUNDS, type KnStatus } from '~~/shared/ker-nethalas/status'
 
-const status = defineModel<KnStatus>('status', { required: true })
+const domain = defineModel<KnDomain>('domain', { required: true })
 
 const { t } = useI18n()
 const { labelText } = useKnLabels()
@@ -159,12 +159,12 @@ const skillItems = computed<SelectItem[]>(() =>
 )
 
 const missingInfluences = computed(() =>
-  status.value.domain.growingDarkness.filter(e => e.key === 'gd_81_100').length - status.value.domain.overseerInfluences.length,
+  domain.value.growingDarkness.filter(e => e.key === 'gd_81_100').length - domain.value.overseerInfluences.length,
 )
 
 function addInfluence(key: string | number) {
   if (KN_OVERSEER_INFLUENCE_KEYS.includes(key as KnOverseerInfluenceKey)) {
-    status.value.domain.overseerInfluences.push(key as KnOverseerInfluenceKey)
+    domain.value.overseerInfluences.push(key as KnOverseerInfluenceKey)
   }
 }
 
@@ -172,7 +172,7 @@ function addEvent(key: string | number) {
   if (!KN_GROWING_DARKNESS_KEYS.includes(key as KnGrowingDarknessKey)) return
   const event = key as KnGrowingDarknessKey
   const param = knGrowingDarknessDef(event).param
-  status.value.domain.growingDarkness.push(
+  domain.value.growingDarkness.push(
     param === 'maxAetherLoss' || param === 'maxToughnessLoss' ? { key: event, value: 0 } : { key: event },
   )
 }

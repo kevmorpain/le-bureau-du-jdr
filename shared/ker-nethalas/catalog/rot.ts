@@ -40,3 +40,6 @@ export function knRotSource(stage: number): KnActiveSource | null {
 
 // Stade 7 : immunité aux effets de l'Épuisement.
 export const KN_ROT_EXHAUSTION_IMMUNITY_STAGE = 7
+
+// Stade 3 : on voit dans le noir, plus besoin de source de lumière.
+export const KN_ROT_NO_LIGHT_STAGE = 3

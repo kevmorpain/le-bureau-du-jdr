@@ -13,6 +13,8 @@ export interface KnGrowingDarknessDef {
   // `immediate` : l'événement se résout sur le moment ; il reste compté parmi les événements actifs du Domaine.
   kind: 'ongoing' | 'immediate'
   param?: KnGrowingDarknessParam
+  // Dé tiré pour obtenir la valeur du paramètre (D4 d'Éther, D6 de Robustesse).
+  paramDie?: number
   effects?: (params: KnGrowingDarknessParams) => KnEffect[]
 }
 
@@ -26,12 +28,14 @@ export const KN_GROWING_DARKNESS = {
     range: [9, 10],
     kind: 'ongoing',
     param: 'maxAetherLoss',
+    paramDie: 4,
     effects: p => [{ type: 'maxVitalDelta', vital: 'aether', amount: -(p.value ?? 0) }],
   },
   gd_11_12: {
     range: [11, 12],
     kind: 'ongoing',
     param: 'maxToughnessLoss',
+    paramDie: 6,
     effects: p => [{ type: 'maxVitalDelta', vital: 'toughness', amount: -(p.value ?? 0) }],
   },
   gd_13_14: { range: [13, 14], kind: 'ongoing' },

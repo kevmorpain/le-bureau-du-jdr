@@ -11,6 +11,7 @@ import {
   updateKnCharacter,
 } from '../../server/utils/knCharacters'
 import { defaultKnResistances, defaultKnSkills } from '../../shared/ker-nethalas/character'
+import { emptyKnDomain, emptyKnRun } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus } from '../../shared/ker-nethalas/status'
 import { replayMigrations } from '../fixtures/migrations'
 
@@ -113,16 +114,49 @@ describe('updateKnCharacter', () => {
       conditions: [{ key: 'frightened' as const, value: 30 }],
       rotStage: 2,
       madness: { ...emptyKnStatus().madness, lostSkills: [{ skill: 'reason' as const }, {}] },
-      domain: {
-        overseerInfluences: ['skilled' as const, 'piercing' as const, 'piercing' as const],
-        growingDarkness: [{ key: 'gd_57_58' as const, skill: 'stealth' as const }],
-      },
       custom: [{ id: 'c1', name: 'Bénédiction', active: true, entries: [{ kind: 'advantage' as const, target: 'dodge' as const }] }],
     }
 
     await updateKnCharacter(db, id, { status })
 
     expect((await getKnCharacter(db, id))!.status).toEqual(status)
+  })
+
+  it('donne un run vide à un nouveau survivant et le relit à l\'identique', async () => {
+    const { id } = await createKnCharacter(db, alice, { name: 'Brisa' })
+    expect((await getKnCharacter(db, id))!.run).toEqual(emptyKnRun())
+
+    const run = {
+      domains: [
+        {
+          ...emptyKnDomain(1),
+          name: 'Les caves',
+          rooms: 7,
+          lairDie: 4 as const,
+          lairFound: true,
+          overseerInfluences: ['skilled' as const, 'piercing' as const, 'piercing' as const],
+          growingDarkness: [{ key: 'gd_57_58' as const, skill: 'stealth' as const }],
+          visits: [
+            {
+              kind: 'room' as const,
+              usageKind: 'lair' as const,
+              tension: { die: 4 as const, roll: 1, manual: true, next: 8 as const, triggered: true },
+              usage: { die: 4 as const, roll: 2, manual: false, next: 4 as const, triggered: true },
+              darkness: { roll: 90, entry: { key: 'gd_81_100' as const }, influence: { roll: 4, key: 'skilled' as const } },
+            },
+            { kind: 'revisit' as const, usageKind: null },
+          ],
+        },
+        emptyKnDomain(2),
+      ],
+      current: 1,
+      tensionDie: 6 as const,
+      lightRemaining: 11,
+    }
+
+    await updateKnCharacter(db, id, { run })
+
+    expect((await getKnCharacter(db, id))!.run).toEqual(run)
   })
 
   it('renvoie null pour un survivant inexistant', async () => {
