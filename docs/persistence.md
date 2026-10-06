@@ -139,10 +139,18 @@ La clé est scopée par personnage via `characterStorageKey(characterSheet?.valu
 ## Auto-save dans `[id].vue`
 
 ```ts
-watch(characterSheet, () => {
-  if (saveTimeout) clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(updateCharacterSheet, 1000)
-}, { deep: true })
+const { status, schedule, flush } = useAutoSave(updateCharacterSheet, { delay: 2000, maxWait: 10_000 })
+watch(characterSheet, schedule, { deep: true })
 ```
 
-Toute mutation sur `characterSheet.value` (y compris les sous-objets) déclenche un PUT après 1 seconde d'inactivité. C'est le mécanisme central de persistance pour les données de la table `character_sheets` et ses relations directes (`classes`, etc.).
+Toute mutation sur `characterSheet.value` (y compris les sous-objets) déclenche un PUT après 2 secondes d'inactivité (au plus 10 s en saisie continue). C'est le mécanisme central de persistance pour les données de la table `character_sheets` et ses relations directes (`classes`, etc.).
+
+`useAutoSave` n'a qu'un PUT en vol à la fois (une modif arrivée pendant l'envoi en relance un autre après coup) et vide la sauvegarde en attente quand l'onglet est masqué ou la page quittée. Son `status` (`idle` / `saving` / `saved` / `error`) est fourni à `SyncStatus`, le badge de l'en-tête.
+
+## Version de la fiche et garde-fou anti-écrasement
+
+`character_sheets.updated_at` sert de version : une op mise en file hors-ligne est estampillée de la dernière version connue (`baseVersion`), et le rejeu déclare un conflit si la version du serveur est différente.
+
+Pour que le client reconnaisse ses propres écritures, **toute écriture de `updated_at` passe par `stampSheetVersion(event)`** (`server/utils/touchCharacter.ts`), qui annonce la valeur dans l'en-tête de réponse `x-sheet-updated-at`. `touchCharacterSheet(event, id)` l'appelle pour les sous-ressources. Côté client, `trackSheetVersion(id)` (`useOfflineSync.ts`), passé aux options `$fetch`, fait avancer la version de référence ; l'envoi direct, le rejeu de file et l'upload de portrait l'utilisent. Sans cela, une écriture directe faisait passer la version serveur devant celle du client et le rejeu suivant levait un faux conflit. `test/unit/sheetVersion.test.ts` interdit qu'un handler de `server/api` écrive `updatedAt` autrement.
+
+⚠️ Un endpoint qui modifie la fiche sans toucher `updated_at` (ex. `features.put`, `skills.put`, `ability-scores.put`) échappe au garde-fou : un changement fait par un autre appareil via ces routes n'est pas vu comme un conflit.

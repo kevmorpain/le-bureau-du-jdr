@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   try {
     const updated = await db
       .update(schema.characterSheets)
-      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .set({ ...updates, updatedAt: stampSheetVersion(event) })
       .where(eq(schema.characterSheets.id, characterSheetId))
       .returning()
 

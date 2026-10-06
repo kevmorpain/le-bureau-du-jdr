@@ -56,6 +56,34 @@
   </UBadge>
 
   <UBadge
+    v-else-if="autoSaveStatus === 'error'"
+    color="error"
+    variant="subtle"
+    size="md"
+    class="gap-1"
+  >
+    <UIcon
+      name="i-heroicons:exclamation-circle"
+      class="size-3.5"
+    />
+    Échec de l'enregistrement
+  </UBadge>
+
+  <UBadge
+    v-else-if="autoSaveStatus === 'saving'"
+    color="info"
+    variant="subtle"
+    size="md"
+    class="gap-1"
+  >
+    <UIcon
+      name="i-heroicons:arrow-path"
+      class="size-3.5 animate-spin"
+    />
+    Enregistrement…
+  </UBadge>
+
+  <UBadge
     v-else
     color="success"
     variant="subtle"
@@ -63,13 +91,14 @@
     class="gap-1"
   >
     <UIcon
-      name="i-heroicons:cloud"
+      :name="autoSaveStatus === 'saved' ? 'i-heroicons:check-circle' : 'i-heroicons:cloud'"
       class="size-3.5"
     />
-    À jour
+    {{ autoSaveStatus === 'saved' ? 'Enregistré' : 'À jour' }}
   </UBadge>
 </template>
 
 <script lang="ts" setup>
 const { online, pendingCount, isSyncing, hasConflict } = useOfflineSync()
+const autoSaveStatus = inject(autoSaveStatusKey, ref<AutoSaveStatus>('idle'))
 </script>

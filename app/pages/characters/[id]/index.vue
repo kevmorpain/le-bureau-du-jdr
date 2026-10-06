@@ -125,6 +125,7 @@
 </template>
 
 <script lang="ts" setup>
+import { useEventListener } from '@vueuse/core'
 import { idlePending, rollEngineKey } from '~/composables/character/useCharacterRolls'
 import { useCombatTracker } from '~/composables/character/useCombatTracker'
 
@@ -219,34 +220,43 @@ const preparedSpellsCount = computed(() =>
   (characterSpells.value ?? []).filter(s => s.prepared).length || null,
 )
 
-// Auto-save avec debounce
-let saveTimeout: ReturnType<typeof setTimeout> | null = null
 const pauseAutoSave = ref(false)
+
+// Hors-ligne, le PUT est mis en file : l'indicateur de synchro prend alors le relais.
+const updateCharacterSheet = async () => {
+  if (!characterSheet.value) return
+  await offlineMutate({
+    endpoint: `/api/character_sheets/${id.value}`,
+    method: 'PUT',
+    body: characterSheet.value,
+    dedupeKey: 'sheet',
+    label: 'Fiche',
+  })
+}
+
+const { status: autoSaveStatus, schedule: scheduleSave, flush: flushSave } = useAutoSave(updateCharacterSheet, {
+  delay: 2000,
+  maxWait: 10_000,
+  onError: () => toaster.add({ title: 'Erreur lors de la sauvegarde', color: 'error' }),
+})
+provide(autoSaveStatusKey, autoSaveStatus)
 
 watch(characterSheet, () => {
   if (pauseAutoSave.value) return
   // Snapshot local immédiat pour survivre à un reload hors-ligne.
   if (import.meta.client) writeSnapshot(charId.value, characterSheet.value)
-  if (saveTimeout) clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(updateCharacterSheet, 1000)
+  scheduleSave()
 }, { deep: true })
 
-const updateCharacterSheet = async () => {
-  if (!characterSheet.value) return
-  try {
-    const outcome = await offlineMutate({
-      endpoint: `/api/character_sheets/${id.value}`,
-      method: 'PUT',
-      body: characterSheet.value,
-      dedupeKey: 'sheet',
-      label: 'Fiche',
-    })
-    // Hors-ligne : mis en file silencieusement (l'indicateur de synchro l'affiche).
-    if (outcome === 'sent') toaster.add({ title: 'Fiche sauvegardée', color: 'success' })
-  } catch {
-    toaster.add({ title: 'Erreur lors de la sauvegarde', color: 'error' })
-  }
+// Le debounce laisse une fenêtre où la modif n'est pas partie : on la vide avant de quitter la fiche.
+if (import.meta.client) {
+  useEventListener(document, 'visibilitychange', () => {
+    if (document.hidden) void flushSave()
+  })
 }
+onBeforeUnmount(() => {
+  void flushSave()
+})
 </script>
 
 <style scoped>
