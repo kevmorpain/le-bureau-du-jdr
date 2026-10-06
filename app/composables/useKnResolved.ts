@@ -14,6 +14,7 @@ export function useKnResolved(character: Ref<KnCharacter | undefined | null>) {
       exhaustion: c.exhaustion,
       maxVitals: { health: c.healthMax, toughness: c.toughnessMax, aether: c.aetherMax, sanity: c.sanityMax },
       status: c.status,
+      run: c.run,
     })
   })
 }

@@ -1,5 +1,6 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import type { KnExtraSkill, KnResistances, KnSkills } from '~~/shared/ker-nethalas/character'
+import type { KnRun } from '~~/shared/ker-nethalas/run'
 import type { KnStatus } from '~~/shared/ker-nethalas/status'
 import users from './users'
 
@@ -24,6 +25,7 @@ const knCharacters = sqliteTable('kn_characters', {
   skills: text({ mode: 'json' }).$type<KnSkills>().notNull(),
   extraSkills: text('extra_skills', { mode: 'json' }).$type<KnExtraSkill[]>().default([]).notNull(),
   status: text({ mode: 'json' }).$type<KnStatus>().notNull(),
+  run: text({ mode: 'json' }).$type<KnRun>().notNull(),
   masteries: text().default('').notNull(),
   perks: text().default('').notNull(),
   weapons: text().default('').notNull(),

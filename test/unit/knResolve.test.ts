@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { resolveKnSheet, type KnResolveInput } from '../../shared/ker-nethalas/resolve'
+import { emptyKnDomain, emptyKnRun, type KnDomain } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, type KnStatus } from '../../shared/ker-nethalas/status'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, type KnSkillKey } from '../../shared/ker-nethalas/skills'
 
@@ -28,9 +29,14 @@ function sheet(over: Partial<KnResolveInput> = {}, status: Partial<KnStatus> = {
     exhaustion: 0,
     maxVitals: { health: 15, toughness: 25, aether: 12, sanity: 14 },
     status: { ...emptyKnStatus(), ...status },
+    run: emptyKnRun(),
     ...over,
   }
 }
+
+const withDomain = (domain: Partial<KnDomain>): Partial<KnResolveInput> => ({
+  run: { ...emptyKnRun(), domains: [{ ...emptyKnDomain(1), ...domain }] },
+})
 
 const withDisadvantage = (r: ReturnType<typeof resolveKnSheet>) =>
   KN_SKILL_KEYS.filter(k => r.skills[k].rollMode === 'disadvantage')
@@ -215,7 +221,7 @@ describe('Folie (p. 91)', () => {
 
 describe('Growing Darkness (p. 120-122)', () => {
   it('73-74 : −10 aux compétences hors combat, pas à l\'Esquive ni aux armes', () => {
-    const r = resolveKnSheet(sheet({}, { domain: { overseerInfluences: [], growingDarkness: [{ key: 'gd_73_74' }] } }))
+    const r = resolveKnSheet(sheet(withDomain({ growingDarkness: [{ key: 'gd_73_74' }] })))
 
     expect(r.skills.perception.effective).toBe(30)
     expect(r.skills.athletics.effective).toBe(20)
@@ -225,22 +231,22 @@ describe('Growing Darkness (p. 120-122)', () => {
   })
 
   it('21-22 : Résistance magique −5', () => {
-    const r = resolveKnSheet(sheet({}, { domain: { overseerInfluences: [], growingDarkness: [{ key: 'gd_21_22' }] } }))
+    const r = resolveKnSheet(sheet(withDomain({ growingDarkness: [{ key: 'gd_21_22' }] })))
 
     expect(r.resistances.spellward.effective).toBe(15)
   })
 
   it('09-10 et 11-12 : retirent la valeur tirée à l\'Éther et à la Robustesse maximaux', () => {
     const growingDarkness = [{ key: 'gd_09_10' as const, value: 3 }, { key: 'gd_11_12' as const, value: 4 }]
-    const r = resolveKnSheet(sheet({}, { domain: { overseerInfluences: [], growingDarkness } }))
+    const r = resolveKnSheet(sheet(withDomain({ growingDarkness })))
 
     expect(r.maxVitals.aether.effective).toBe(9)
     expect(r.maxVitals.toughness.effective).toBe(21)
   })
 
   it('57-58 : −10 à la compétence choisie, rien tant qu\'elle n\'est pas choisie', () => {
-    const chosen = resolveKnSheet(sheet({}, { domain: { overseerInfluences: [], growingDarkness: [{ key: 'gd_57_58', skill: 'stealth' }] } }))
-    const pending = resolveKnSheet(sheet({}, { domain: { overseerInfluences: [], growingDarkness: [{ key: 'gd_57_58' }] } }))
+    const chosen = resolveKnSheet(sheet(withDomain({ growingDarkness: [{ key: 'gd_57_58', skill: 'stealth' }] })))
+    const pending = resolveKnSheet(sheet(withDomain({ growingDarkness: [{ key: 'gd_57_58' }] })))
 
     expect(chosen.skills.stealth.effective).toBe(10)
     expect(pending.skills.stealth.effective).toBe(20)
@@ -249,14 +255,14 @@ describe('Growing Darkness (p. 120-122)', () => {
 
   it('un même événement tiré deux fois cumule ses effets', () => {
     const growingDarkness = [{ key: 'gd_73_74' as const }, { key: 'gd_73_74' as const }]
-    const r = resolveKnSheet(sheet({}, { domain: { overseerInfluences: [], growingDarkness } }))
+    const r = resolveKnSheet(sheet(withDomain({ growingDarkness })))
 
     expect(r.skills.perception.effective).toBe(20)
     expect(r.skills.perception.modifiers).toHaveLength(2)
   })
 
   it('un événement immédiat reste listé, en avertissement', () => {
-    const r = resolveKnSheet(sheet({}, { domain: { overseerInfluences: [], growingDarkness: [{ key: 'gd_03_04' }] } }))
+    const r = resolveKnSheet(sheet(withDomain({ growingDarkness: [{ key: 'gd_03_04' }] })))
 
     expect(r.reminders).toEqual([expect.objectContaining({ severity: 'warning' })])
   })
@@ -264,7 +270,7 @@ describe('Growing Darkness (p. 120-122)', () => {
 
 describe('influence d\'Overseer (p. 100)', () => {
   it('ne produit que des rappels : elle modifie les adversaires, pas le survivant', () => {
-    const r = resolveKnSheet(sheet({}, { domain: { overseerInfluences: ['skilled'], growingDarkness: [] } }))
+    const r = resolveKnSheet(sheet(withDomain({ overseerInfluences: ['skilled'] })))
 
     expect(r.reminders).toEqual([expect.objectContaining({ label: { key: 'ker_nethalas.overseer.skilled' } })])
     expect(r.skills.dodge.effective).toBe(45)
@@ -272,7 +278,7 @@ describe('influence d\'Overseer (p. 100)', () => {
 
   it('garde chaque influence, doublons compris : un Overseer peut en cumuler plusieurs', () => {
     const overseerInfluences = ['skilled' as const, 'piercing' as const, 'piercing' as const]
-    const r = resolveKnSheet(sheet({}, { domain: { overseerInfluences, growingDarkness: [] } }))
+    const r = resolveKnSheet(sheet(withDomain({ overseerInfluences })))
 
     expect(r.reminders.map(x => x.label.key)).toEqual([
       'ker_nethalas.overseer.skilled',
@@ -285,11 +291,8 @@ describe('influence d\'Overseer (p. 100)', () => {
 
 describe('combinaison des sources', () => {
   it('additionne les modificateurs dans l\'ordre des sources et plancher à 0', () => {
-    const status = {
-      conditions: [{ key: 'restrained' as const }, { key: 'sickened' as const, value: 10 }],
-      domain: { overseerInfluences: [], growingDarkness: [{ key: 'gd_73_74' as const }] },
-    }
-    const r = resolveKnSheet(sheet({}, status))
+    const conditions = [{ key: 'restrained' as const }, { key: 'sickened' as const, value: 10 }]
+    const r = resolveKnSheet(sheet(withDomain({ growingDarkness: [{ key: 'gd_73_74' as const }] }), { conditions }))
 
     expect(r.skills.athletics.modifiers.map(m => [m.source.id, m.amount])).toEqual([
       ['condition:restrained', -20],
@@ -381,5 +384,38 @@ describe('compétences supplémentaires', () => {
     const r = resolveKnSheet(sheet({ extraSkills }, { conditions: [{ key: 'frightened', value: 30 }, { key: 'restrained' }] }))
 
     expect(r.extraSkills[0]!.effective).toBe(30)
+  })
+})
+
+describe('source de lumière', () => {
+  const withLight = (lightRemaining: number) => ({ run: { ...emptyKnRun(), lightRemaining } })
+
+  it('ne change rien tant qu\'il reste de la lumière', () => {
+    const r = resolveKnSheet(sheet(withLight(1)))
+
+    expect(withDisadvantage(r)).toEqual([])
+    expect(r.reminders).toEqual([])
+  })
+
+  it('sans lumière : Aveuglé (Désavantage partout sauf en Raison) et un test de Résolution par salle', () => {
+    const r = resolveKnSheet(sheet(withLight(0)))
+
+    expect(withDisadvantage(r)).toHaveLength(KN_SKILL_KEYS.length - 1)
+    expect(r.skills.reason.rollMode).toBe('normal')
+    expect(r.reminders.map(x => x.label.key)).toContain('ker_nethalas.reminders.noLight')
+    expect(r.reminders.every(x => x.source.id === 'light')).toBe(true)
+  })
+
+  it('à partir du stade 3 de la Pourriture, plus besoin de lumière', () => {
+    const r = resolveKnSheet(sheet(withLight(0), { rotStage: 3 }))
+
+    expect(r.reminders.some(x => x.source.id === 'light')).toBe(false)
+    expect(r.skills.perception.rollMode).toBe('normal')
+  })
+
+  it('le stade 2 de la Pourriture ne dispense pas encore de lumière', () => {
+    const r = resolveKnSheet(sheet(withLight(0), { rotStage: 2 }))
+
+    expect(r.reminders.some(x => x.source.id === 'light')).toBe(true)
   })
 })

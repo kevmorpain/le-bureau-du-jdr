@@ -23,6 +23,11 @@
       :resolved
     />
 
+    <KnRunSection
+      v-model:character="character"
+      :resolved
+    />
+
     <KnChecksSection
       v-model:character="character"
       :resolved

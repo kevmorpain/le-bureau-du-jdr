@@ -7,6 +7,7 @@ import {
   type CreateKnCharacterInput,
   type UpdateKnCharacterInput,
 } from '~~/shared/ker-nethalas/character'
+import { emptyKnRun } from '~~/shared/ker-nethalas/run'
 import { emptyKnStatus } from '~~/shared/ker-nethalas/status'
 
 const { knCharacters } = schema
@@ -24,6 +25,7 @@ export async function createKnCharacter(db: Db, ownerId: number, input: CreateKn
       skills: defaultKnSkills(),
       resistances: defaultKnResistances(),
       status: emptyKnStatus(),
+      run: emptyKnRun(),
     })
     .returning({ id: knCharacters.id })
 

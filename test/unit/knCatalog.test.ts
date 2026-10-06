@@ -10,6 +10,7 @@ import { KN_OVERSEER_INFLUENCE_KEYS } from '../../shared/ker-nethalas/catalog/ov
 import { KN_ROT_MAX_STAGE } from '../../shared/ker-nethalas/catalog/rot'
 import { createKnCharacterSchema, updateKnCharacterSchema } from '../../shared/ker-nethalas/character'
 import { KN_TARGET_GROUPS } from '../../shared/ker-nethalas/effects'
+import { emptyKnDomain, knDomainSchema } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, knStatusSchema } from '../../shared/ker-nethalas/status'
 import { KN_NON_COMBAT_SKILL_KEYS, KN_WEAPON_SKILL_KEYS } from '../../shared/ker-nethalas/skills'
 
@@ -90,24 +91,27 @@ describe('schéma de l\'état en cours', () => {
     expect(knStatusSchema.safeParse({ ...status, rotStage: 8 }).success).toBe(true)
   })
 
-  it('refuse un événement Growing Darkness inconnu et une cible de modificateur libre inconnue', () => {
-    const status = emptyKnStatus()
-    const badEvent = { ...status, domain: { overseerInfluences: [], growingDarkness: [{ key: 'gd_00_00' }] } }
+  it('refuse une cible de modificateur libre inconnue', () => {
     const badTarget = {
-      ...status,
+      ...emptyKnStatus(),
       custom: [{ id: 'a', name: 'X', active: true, entries: [{ kind: 'modifier', target: 'luck', amount: 5 }] }],
     }
 
-    expect(knStatusSchema.safeParse(badEvent).success).toBe(false)
     expect(knStatusSchema.safeParse(badTarget).success).toBe(false)
   })
 
-  it('accepte plusieurs influences d\'Overseer, doublons compris, mais pas une influence inconnue', () => {
-    const status = emptyKnStatus()
-    const withInfluences = (overseerInfluences: string[]) => ({ ...status, domain: { ...status.domain, overseerInfluences } })
+  it('refuse un événement Growing Darkness inconnu', () => {
+    const badEvent = { ...emptyKnDomain(1), growingDarkness: [{ key: 'gd_00_00' }] }
 
-    expect(knStatusSchema.safeParse(withInfluences(['skilled', 'piercing', 'piercing'])).success).toBe(true)
-    expect(knStatusSchema.safeParse(withInfluences(['invincible'])).success).toBe(false)
+    expect(knDomainSchema.safeParse(badEvent).success).toBe(false)
+    expect(knDomainSchema.safeParse({ ...emptyKnDomain(1), growingDarkness: [{ key: 'gd_73_74' }] }).success).toBe(true)
+  })
+
+  it('accepte plusieurs influences d\'Overseer, doublons compris, mais pas une influence inconnue', () => {
+    const withInfluences = (overseerInfluences: string[]) => ({ ...emptyKnDomain(1), overseerInfluences })
+
+    expect(knDomainSchema.safeParse(withInfluences(['skilled', 'piercing', 'piercing'])).success).toBe(true)
+    expect(knDomainSchema.safeParse(withInfluences(['invincible'])).success).toBe(false)
   })
 
   it('accepte une compétence perdue pas encore choisie, mais pas une compétence inconnue', () => {

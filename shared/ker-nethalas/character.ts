@@ -6,6 +6,7 @@ import {
   type KnResistanceKey,
   type KnSkillKey,
 } from './skills'
+import { knRunSchema } from './run'
 import { knStatusSchema } from './status'
 import { boundedInt, shapeOf } from './zodHelpers'
 
@@ -63,6 +64,7 @@ export const updateKnCharacterSchema = z.object({
   skills: knSkillsSchema,
   extraSkills: z.array(knExtraSkillSchema).max(KN_BOUNDS.extraSkills),
   status: knStatusSchema,
+  run: knRunSchema,
   masteries: z.string().max(10000),
   perks: z.string().max(5000),
   weapons: z.string().max(5000),

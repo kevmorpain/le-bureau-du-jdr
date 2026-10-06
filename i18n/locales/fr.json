@@ -64,9 +64,11 @@
     "sources": {
       "exhaustion": "Épuisement ({value})",
       "rot": "La Pourriture, stade {stage}",
-      "overseer": "Influence de l'Overseer"
+      "overseer": "Influence de l'Overseer",
+      "noLight": "Sans source de lumière"
     },
     "reminders": {
+      "noLight": "Un test de Résolution à chaque salle, sinon −1 Santé mentale.",
       "exhaustionHalfHealing": "Épuisement 11 ou plus : vous ne récupérez que la moitié des Blessures, quelle que soit la source.",
       "exhaustionDeath": "Épuisement 21 ou plus : le survivant meurt.",
       "noSkillChosen": "à choisir"

@@ -2,8 +2,9 @@ import { KN_BOUNDS, type KnExtraSkill, type KnResistances, type KnSkills } from 
 import { KN_CONDITIONS } from './catalog/conditions'
 import { knExhaustionSource } from './catalog/exhaustion'
 import { knGrowingDarknessDef } from './catalog/growingDarkness'
+import { knNoLightSource } from './catalog/light'
 import { knMadnessSources } from './catalog/madness'
-import { KN_ROT_EXHAUSTION_IMMUNITY_STAGE, knRotSource } from './catalog/rot'
+import { KN_ROT_EXHAUSTION_IMMUNITY_STAGE, KN_ROT_NO_LIGHT_STAGE, knRotSource } from './catalog/rot'
 import {
   KN_VITAL_KEYS,
   expandKnTargets,
@@ -16,6 +17,7 @@ import {
   type KnVitalKey,
 } from './effects'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, type KnResistanceKey, type KnSkillKey } from './skills'
+import { knCurrentDomain, type KnRun } from './run'
 import type { KnStatus } from './status'
 
 export interface KnResolveInput {
@@ -25,6 +27,7 @@ export interface KnResolveInput {
   exhaustion: number
   maxVitals: Record<KnVitalKey, number>
   status: KnStatus
+  run: KnRun
 }
 
 export interface KnSourceRef {
@@ -64,7 +67,8 @@ export interface KnResolvedSheet {
 const sourceRef = ({ id, label }: KnActiveSource): KnSourceRef => ({ id, label })
 
 export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
-  const { status, exhaustion } = input
+  const { status, exhaustion, run } = input
+  const domain = knCurrentDomain(run)
   const sources: KnActiveSource[] = []
 
   // Rot stade 7 : immunité aux effets de l'Épuisement (p. 87).
@@ -84,12 +88,14 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
     })
   }
 
+  if (run.lightRemaining <= 0 && status.rotStage < KN_ROT_NO_LIGHT_STAGE) sources.push(knNoLightSource())
+
   const rot = knRotSource(status.rotStage)
   if (rot) sources.push(rot)
 
   sources.push(...knMadnessSources(status.madness))
 
-  status.domain.growingDarkness.forEach((entry, index) => {
+  domain.growingDarkness.forEach((entry, index) => {
     const def = knGrowingDarknessDef(entry.key)
     const label: KnSourceLabel = {
       key: `ker_nethalas.growing_darkness.${entry.key}`,
@@ -106,12 +112,12 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
     })
   })
 
-  if (status.domain.overseerInfluences.length) {
+  if (domain.overseerInfluences.length) {
     sources.push({
       id: 'overseer',
       label: { key: 'ker_nethalas.sources.overseer' },
       effects: [],
-      reminders: status.domain.overseerInfluences.map(key => ({
+      reminders: domain.overseerInfluences.map(key => ({
         label: { key: `ker_nethalas.overseer.${key}` },
         severity: 'info' as const,
       })),
