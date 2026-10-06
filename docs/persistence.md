@@ -18,6 +18,7 @@
 | Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, binding `BLOB`) | Binaire : la fiche n'en garde que l'URL |
 | `preferences` (fiche) | DB (`character_sheets`, JSON nullable) | Réglage propre à la fiche ; clé absente = hérite du compte ([D18](decisions.md#d18), [D23](decisions.md#d23)) |
 | `preferences` (compte) | DB (`users`, JSON nullable) | Défauts du joueur, via `/api/account/preferences` |
+| Fiche d'un survivant Ker Nethalas (jauges, compétences, résistances, état en cours, textes) | DB (`kn_characters`, compétences, résistances et état en cours en JSON) | Suit le survivant d'un appareil à l'autre ; sauvegarde par PUT avec debounce d'une seconde, sans file hors-ligne : [ker-nethalas.md](ker-nethalas.md) (KN10) |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
 | `conditionRounds` | localStorage | Rounds restants des états à durée, décomptés au « Nouveau tour » |
 | Modificateurs de caractéristique | computed | Dérivés des scores, jamais stockés |

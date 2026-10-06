@@ -14,6 +14,12 @@ Carte des documents. Commence par le sujet qui te concerne.
 
 **Ordre de lecture pour reprendre le chantier** : `dnd-5.5.md` (contexte + plan) → `architecture-audit.md` (constats) → `rules-engine.md` (quoi construire) → `decisions.md` (pourquoi).
 
+## Module Ker Nethalas (autre système, hors D&D)
+
+| Doc | Rôle | Cycle de vie |
+|---|---|---|
+| [`ker-nethalas.md`](./ker-nethalas.md) | **Plan, décisions (KN1…), licence et sourcing, inventaire des modificateurs, journal** — issue [#242](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242) | vivant |
+
 ## Fonctionnalités existantes
 
 | Doc | Sujet |
