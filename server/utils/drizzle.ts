@@ -39,6 +39,7 @@ export type MagicSchool = typeof schema.magicSchools.$inferSelect
 export type Spell = TModelWithRelations<'spells'>
 export type InsertSpell = typeof schema.spells.$inferInsert
 export type CharacterSheet = TModelWithRelations<'characterSheets'>
+export type KnCharacter = typeof schema.knCharacters.$inferSelect
 export type EffectRow = typeof schema.effects.$inferSelect
 export type { Effect } from '../db/schema/effects'
 export type CharacterSpell = typeof schema.characterSpells.$inferSelect
