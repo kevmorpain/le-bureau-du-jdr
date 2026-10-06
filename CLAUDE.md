@@ -322,6 +322,8 @@ No need to write the matching snapshot `.json` by hand; the next successful `db:
 
 **Stack:** Nuxt 4 + Nitro (cloudflare_module preset) + Vue 3 + TypeScript + Drizzle ORM + Cloudflare D1 (SQLite) + Nuxt UI
 
+**Module Ker Nethalas** (JDR solo, système distinct, isolé du modèle D&D — le `ruleset` ne distingue que `'5'` / `'5.5'`) : pages `/ker-nethalas`, API `/api/ker-nethalas/**` (default-deny par `server/middleware/ker-nethalas-authz.ts`), tables `kn_*`, règles dans `shared/ker-nethalas/` (moteur de modificateurs pur `resolveKnSheet`, catalogues dans `catalog/`), composants dans `app/components/ker_nethalas/`. Plan, décisions, licence et journal : [`docs/ker-nethalas.md`](docs/ker-nethalas.md) ; suivi : issue X10. Ne pas réutiliser les types D&D (`Effect`, `ruleset`, `CharacterSheet`) pour ce module.
+
 ### Data flow
 
 ```

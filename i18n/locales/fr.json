@@ -13,6 +13,204 @@
     }
   },
 
+  "ker_nethalas": {
+    "skills": {
+      "acrobatics": "Acrobatie",
+      "athletics": "Athlétisme",
+      "bladedWeapons": "Armes tranchantes",
+      "bludgeoningWeapons": "Armes contondantes",
+      "dodge": "Esquive",
+      "medicine": "Médecine",
+      "perception": "Perception",
+      "reason": "Raison",
+      "scavenge": "Fouille",
+      "shaftedWeapons": "Armes d'hast",
+      "stealth": "Furtivité",
+      "thievery": "Larcin",
+      "unarmedCombat": "Combat à mains nues & armes de pugilat"
+    },
+    "resistances": {
+      "endurance": "Endurance",
+      "resolve": "Résolution",
+      "spellward": "Résistance magique"
+    },
+    "vitals": {
+      "health": "Santé",
+      "toughness": "Robustesse",
+      "aether": "Éther",
+      "sanity": "Santé mentale"
+    },
+    "madnessNames": {
+      "fragileMind": "Esprit fragile",
+      "physicalReactions": "Réactions physiques",
+      "darknessComing": "Les ténèbres approchent",
+      "rushing": "Fuite en avant",
+      "darkResistance": "Résistance affaiblie",
+      "forgetfulness": "Mémoire défaillante",
+      "lostSkill": "Souvenir bloqué"
+    },
+    "targets": {
+      "allSkills": "Toutes les compétences",
+      "allChecks": "Tous les tests (compétences et résistances)",
+      "weaponSkills": "Compétences d'arme",
+      "nonCombatSkills": "Compétences hors combat"
+    },
+    "customKinds": {
+      "modifier": "Modificateur",
+      "advantage": "Avantage",
+      "disadvantage": "Désavantage",
+      "maxVital": "Maximum d'une jauge"
+    },
+    "sources": {
+      "exhaustion": "Épuisement ({value})",
+      "rot": "La Pourriture, stade {stage}",
+      "overseer": "Influence de l'Overseer"
+    },
+    "reminders": {
+      "exhaustionHalfHealing": "Épuisement 11 ou plus : vous ne récupérez que la moitié des Blessures, quelle que soit la source.",
+      "exhaustionDeath": "Épuisement 21 ou plus : le survivant meurt.",
+      "noSkillChosen": "à choisir"
+    },
+    "conditions": {
+      "bleeding": {
+        "name": "Saignement",
+        "reminder": "Subit {value} dégâts par round, l'armure est ignorée ; hors combat, 1 dégât de Santé par salle. Se soigne avec 1 Bandage et un test de Médecine, hors combat."
+      },
+      "blinded": {
+        "name": "Aveuglé",
+        "reminder": "Désavantage à tous les tests de compétence sauf Raison. Attaques de mêlée simples uniquement : pas de localisation, pas de Capacités de Maîtrise."
+      },
+      "burning": {
+        "name": "Enflammé",
+        "reminder": "1 dégât de Feu par round (1 de Santé par salle hors combat), l'armure est ignorée. Non cumulatif. Se retire avec 1 Action Standard, ou +2 Épuisement hors combat."
+      },
+      "charmed": {
+        "name": "Charmé",
+        "reminder": "Ne peut ni attaquer le charmeur ni utiliser de capacités nuisibles contre lui."
+      },
+      "concealed": {
+        "name": "Dissimulé",
+        "reminder": "L'attaquer exige un test de Perception ou d'Esprit réussi. Attaquer ou être blessé fait perdre la condition."
+      },
+      "cursed": {
+        "name": "Maudit",
+        "reminder": "Subit l'effet décrit par la malédiction jusqu'à sa levée ; cumulatif si applicable."
+      },
+      "dazed": {
+        "name": "Hébété",
+        "reminder": "Ne peut pas initier d'attaque pendant {value} round(s). Une nouvelle application cumule la durée."
+      },
+      "freezing": {
+        "name": "Gelé",
+        "reminder": "Agit en dernier. Test d'Endurance après le premier round, puis à chaque round jusqu'à réussite (ce n'est pas une action). Hors combat, s'aggrave toutes les 5 salles ; un test d'Endurance par salle peut retirer la condition."
+      },
+      "hypothermia": {
+        "name": "Hypothermie",
+        "reminder": "Aggravation du Gel après 5 salles hors combat ; la mort survient après 10 salles. Un test d'Endurance par salle peut retirer la condition."
+      },
+      "frightened": {
+        "name": "Effrayé",
+        "reminder": "Toutes les compétences d'attaque physique contre la source de la peur sont réduites de {value}. La valeur baisse de 10 à la fin de chacun de vos tours. Cumulatif."
+      },
+      "paralyzed": {
+        "name": "Paralysé",
+        "reminder": "Incapable d'agir, de bouger ou de parler. Les attaques contre vous touchent automatiquement, sans test."
+      },
+      "poisoned": {
+        "name": "Empoisonné",
+        "reminder": "Subit {value} dégâts par round, l'armure est ignorée ; hors combat, 1 dégât de Poison direct sur la Santé par salle. Dès le round suivant : test d'Endurance en Action Gratuite pour résister. Cumulatif. Hors combat : 1 Bandage et un test de Médecine."
+      },
+      "prone": {
+        "name": "À terre",
+        "reminder": "Se relever est une Action Gratuite à votre tour, mais l'adversaire lance immédiatement sur la table des Manœuvres défensives. Les attaques contre vous se font avec Avantage ; vos attaques avec Désavantage, en mêlée simple seulement."
+      },
+      "restrained": {
+        "name": "Entravé",
+        "reminder": "Incapable de bouger. Se libérer : test d'Athlétisme en Action Gratuite à votre tour, ou Action Standard pour +20 à ce test."
+      },
+      "sickened": {
+        "name": "Nauséeux",
+        "reminder": "Malus de {value} à tous les tests tant que la condition dure. Cumulatif."
+      },
+      "sleeping": {
+        "name": "Endormi",
+        "reminder": "Tombe immédiatement à terre ; toute attaque contre vous touche automatiquement. Se réveille dès qu'il est touché."
+      },
+      "stunned": {
+        "name": "Étourdi",
+        "reminder": "Ne peut pas agir pendant {value} round(s) ni se défendre activement contre les attaques physiques (l'attaquant doit quand même réussir son test). Une nouvelle application cumule la durée."
+      }
+    },
+    "rot": {
+      "stage1": "Immunisé aux dégâts Nécrotiques, vulnérable aux dégâts Sacrés.",
+      "stage2": "Robustesse maximale réduite de moitié.",
+      "stage3": "Peau noire comme du charbon : vision dans le noir, plus besoin de source de lumière.",
+      "stage4": "Toujours affamé : il faut 2 Rations pour retirer 1 Épuisement.",
+      "stage5": "Les chairs se referment : +D4 Santé à chaque Camp.",
+      "stage6": "Corps engourdi : Désavantage aux compétences d'arme, à l'Esquive, à l'Athlétisme et à l'Acrobatie.",
+      "stage7": "Immunisé aux effets de l'Épuisement.",
+      "stage8": "La Pourriture prend l'esprit : le survivant devient une abomination (fin de la partie)."
+    },
+    "madness": {
+      "fragileMind": "Esprit fragile ×{count} : −{count} à vos prochains jets sur la table de Folie.",
+      "physicalReactions": "Réactions physiques ×{count} : Robustesse maximale −{count}.",
+      "darknessComing": "Les ténèbres approchent ×{count} : chaque perte de Santé mentale est aggravée de {count}.",
+      "rushing": "Fuite en avant ×{count} : Fouille en difficulté (−10 par cumul).",
+      "darkResistance": "Résistance affaiblie ×{count} : Résolution en difficulté (−10 par cumul).",
+      "forgetfulness": "Mémoire défaillante ×{count} : chaque gain d'XP est réduit de 10 par cumul.",
+      "lostSkill": "Souvenir bloqué : {skill} −10."
+    },
+    "overseer": {
+      "tough": "Robuste : insensible aux coups critiques.",
+      "vital": "Vital : +D6 Santé par tranche de 5.",
+      "frenzied": "Frénétique : +1 dégât.",
+      "skilled": "Compétent : +10 en Combat.",
+      "magebane": "Antimage : +10 en Résistance magique.",
+      "resistant": "Résistant : résiste à un type de dégâts tiré au hasard.",
+      "corrupting": "Corrupteur : à chaque attaque infligeant 5 dégâts ou plus, test de Résolution ou −1 Santé mentale.",
+      "unstable": "Instable : inflige 1 dégât Arcanique à sa mort.",
+      "alert": "Aux aguets : +20 en Esprit.",
+      "piercing": "Perforant : gagne le trait Pénétrant (1), cumulable."
+    },
+    "growing_darkness": {
+      "gd_01_02": "Hurlements : adversaires Animaux +10 en Combat.",
+      "gd_03_04": "Ombres envahissantes : test de Résolution, sinon −1 Santé mentale par événement actif.",
+      "gd_05_06": "Blessures qui résonnent : si vous n'êtes pas soigné, D6 dégâts Psychiques.",
+      "gd_07_08": "Esprit qui vacille : si la Santé mentale n'est pas au maximum, −1 automatique.",
+      "gd_09_10": "Esprit drainé : Éther maximal −{value} (D4).",
+      "gd_11_12": "Air oppressant : Robustesse maximale −{value} (D6).",
+      "gd_13_14": "Grondement : adversaires Élémentaires +10 en Combat.",
+      "gd_15_16": "Ils arrivent : à chaque fois que vous reprenez votre souffle, faites aussi un test de Dé de Tension.",
+      "gd_17_18": "Mains tremblantes : test de Camp −1.",
+      "gd_19_20": "Concentration impossible : plus d'Harmonisation au Camp.",
+      "gd_21_22": "Esprit affaibli : Résistance magique −5.",
+      "gd_23_24": "Courants astraux : adversaires Astraux +10 en Combat.",
+      "gd_25_26": "Hanche heurtée : test de Ceinture.",
+      "gd_27_28": "Le lieu vous observe : test de Résolution, sinon −D4 Santé mentale.",
+      "gd_29_30": "Paupières lourdes : à la prochaine attaque subie, l'adversaire vous surprend.",
+      "gd_31_32": "Volonté oppressante : D6 par Compagnon ou Serviteur (1 = détruit) ; sans eux, D8 dégâts Psychiques.",
+      "gd_33_34": "Crescendo de cris : écartez les autres effets ; −1 Santé mentale et −1 Santé par effet écarté.",
+      "gd_35_36": "Racines et lianes : adversaires Plantes +10 en Combat.",
+      "gd_37_50": "Embuscade : tirage sur la table des Rencontres, les adversaires vous surprennent.",
+      "gd_51_52": "Adversaires Démons +10 en Combat.",
+      "gd_53_54": "Brume suffocante : test d'Endurance, sinon 3D4 dégâts de Poison.",
+      "gd_55_56": "Faiblesse dans les os : +1 dégât à chaque dégât subi.",
+      "gd_57_58": "Confusion : une compétence baisse de 10 ({skill}).",
+      "gd_59_60": "Froid du tombeau : adversaires Morts-vivants +10 en Combat.",
+      "gd_61_62": "Blessures mentales : à chaque perte de Santé mentale, test d'Endurance, sinon D6 dégâts Psychiques.",
+      "gd_63_64": "Nuée de Hellbats : test d'une compétence d'arme ; réussi +10 XP, raté D10 dégâts Tranchants.",
+      "gd_65_66": "Ordres lointains : adversaires Humanoïdes +10 en Combat.",
+      "gd_67_68": "Regard dans le vide : source de lumière −D4.",
+      "gd_69_70": "Ténèbres épaisses : la source de lumière baisse de 2 par salle au lieu de 1.",
+      "gd_71_72": "Esprits des morts en colère : test de Résolution ; réussi +20 XP, raté −D4 Santé mentale.",
+      "gd_73_74": "Esprit engourdi : tests de compétence hors combat en difficulté (−10).",
+      "gd_75_76": "Assaut mental : D6 dégâts Psychiques par Folie.",
+      "gd_77_78": "Sol qui tremble : adversaires Constructions +10 en Combat.",
+      "gd_79_80": "Éboulement : test d'Esquive, sinon 3D6 dégâts Contondants.",
+      "gd_81_100": "Voix d'un Overseer : tirez son Influence ; les adversaires du Domaine en profitent et rapportent +10 XP."
+    }
+  },
+
   "ability_scores": {
     "str": "Force",
     "dex": "Dextérité",

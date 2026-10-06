@@ -30,3 +30,4 @@ export { default as characterProficiencyOverrides, characterProficiencyOverrides
 export { default as users, usersRelations } from './users'
 export { default as progression } from './progression'
 export { default as characterChoices } from './character_choices'
+export { default as knCharacters } from './kn_characters'

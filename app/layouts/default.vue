@@ -45,5 +45,10 @@ const items = ref<NavigationMenuItem[]>([
     icon: 'heroicons-outline:book-open',
     to: '/spells',
   },
+  {
+    label: 'Ker Nethalas',
+    icon: 'heroicons-outline:moon',
+    to: '/ker-nethalas',
+  },
 ])
 </script>

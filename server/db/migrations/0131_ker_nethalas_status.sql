@@ -1,0 +1,2 @@
+-- SQLite exige un DEFAULT pour ajouter une colonne NOT NULL : il vaut `emptyKnStatus()` (shared/ker-nethalas/status.ts).
+ALTER TABLE `kn_characters` ADD `status` text DEFAULT '{"conditions":[],"rotStage":0,"madness":{"counters":{"fragileMind":0,"physicalReactions":0,"darknessComing":0,"rushing":0,"darkResistance":0,"forgetfulness":0},"lostSkills":[]},"domain":{"overseerInfluence":null,"growingDarkness":[]},"custom":[]}' NOT NULL;
