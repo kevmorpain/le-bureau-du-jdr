@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
   const portraitUrl = portraitUrlFromKey(key)
   await db
     .update(schema.characterSheets)
-    .set({ portraitUrl, updatedAt: new Date().toISOString() })
+    .set({ portraitUrl, updatedAt: stampSheetVersion(event) })
     .where(eq(schema.characterSheets.id, sheetId))
 
   // Purge de l'ancien objet APRÈS l'écriture : si la suppression échoue, on a au pire un

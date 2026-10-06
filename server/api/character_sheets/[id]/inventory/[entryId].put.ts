@@ -45,6 +45,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Inventory entry not found' })
   }
 
-  await touchCharacterSheet(Number(id))
+  await touchCharacterSheet(event, Number(id))
   return updated
 })

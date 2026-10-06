@@ -18,6 +18,6 @@ export default defineEventHandler(async (event) => {
       ),
     )
 
-  await touchCharacterSheet(Number(id))
+  await touchCharacterSheet(event, Number(id))
   return { success: true }
 })

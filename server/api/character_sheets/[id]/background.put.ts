@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   await db
     .update(schema.characterSheets)
-    .set({ backgroundId, updatedAt: new Date().toISOString() })
+    .set({ backgroundId, updatedAt: stampSheetVersion(event) })
     .where(eq(schema.characterSheets.id, characterSheetId))
 
   // Les compétences d'historique sont DÉRIVÉES du nouvel historique (effets skill_proficiency) : rien à
