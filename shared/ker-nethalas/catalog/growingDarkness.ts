@@ -18,7 +18,7 @@ export interface KnGrowingDarknessDef {
   effects?: (params: KnGrowingDarknessParams) => KnEffect[]
 }
 
-// Gravebound p. 120-122 : table D100, 35 entrées. Les événements ne touchent qu'un Domaine mais y restent en jeu.
+// Table D100, 35 entrées. Les événements ne touchent qu'un Domaine mais y restent en jeu.
 export const KN_GROWING_DARKNESS = {
   gd_01_02: { range: [1, 2], kind: 'ongoing' },
   gd_03_04: { range: [3, 4], kind: 'immediate' },

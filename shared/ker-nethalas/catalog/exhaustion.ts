@@ -1,6 +1,6 @@
 import type { KnActiveSource } from '../effects'
 
-// Gravebound p. 90 : les effets sont cumulatifs, 21 points ou plus tuent le personnage.
+// Les effets sont cumulatifs, 21 points ou plus tuent le personnage.
 export const KN_EXHAUSTION_THRESHOLDS = { halfHealing: 11, disadvantage: 16, death: 21 } as const
 
 export function knExhaustionSource(exhaustion: number): KnActiveSource | null {

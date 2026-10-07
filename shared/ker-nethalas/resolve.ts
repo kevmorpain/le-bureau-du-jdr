@@ -71,7 +71,7 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
   const domain = knCurrentDomain(run)
   const sources: KnActiveSource[] = []
 
-  // Rot stade 7 : immunité aux effets de l'Épuisement (p. 87).
+  // Rot stade 7 : immunité aux effets de l'Épuisement.
   if (status.rotStage < KN_ROT_EXHAUSTION_IMMUNITY_STAGE) {
     const exhaustionSource = knExhaustionSource(exhaustion)
     if (exhaustionSource) sources.push(exhaustionSource)

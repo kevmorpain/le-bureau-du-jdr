@@ -9,7 +9,7 @@ import {
 } from '../../shared/ker-nethalas/character'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '../../shared/ker-nethalas/skills'
 
-// Valeurs relues sur la fiche vierge et dans Gravebound p. 19-20 : scores de départ entre parenthèses
+// Valeurs relues sur la fiche vierge et dans le livre : scores de départ entre parenthèses
 // (Acrobatics 10, Athletics 10, Dodge 10, Perception 20), Résistances à 20 avant le +20 au choix.
 
 describe('valeurs par défaut d\'un survivant', () => {

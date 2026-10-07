@@ -12,9 +12,9 @@ import { knStatusSchema } from './status'
 import { boundedInt, shapeOf } from './zodHelpers'
 
 export const KN_BOUNDS = {
-  // Pas de plafond naturel ici : les objets magiques et les bonus circonstanciels dépassent 80 (Gravebound p. 19).
+  // Pas de plafond naturel ici : les objets magiques et les bonus circonstanciels dépassent 80.
   skill: { min: 0, max: 999 },
-  // Plafond absolu, quel que soit l'équipement (Gravebound p. 20).
+  // Plafond absolu, quel que soit l'équipement.
   resistance: { min: 0, max: 80 },
   vital: { min: 0, max: 9999 },
   level: { min: 1, max: 99 },
@@ -83,6 +83,6 @@ export const defaultKnSkills = (): KnSkills =>
     KN_SKILL_KEYS.map(key => [key, { score: KN_SKILL_STARTING_SCORES[key], marked: false }]),
   ) as Record<KnSkillKey, { score: number, marked: boolean }>
 
-// Départ : 20 partout, puis +20 sur une Résistance au choix du joueur (Gravebound p. 20).
+// Départ : 20 partout, puis +20 sur une Résistance au choix du joueur.
 export const defaultKnResistances = (): KnResistances =>
   Object.fromEntries(KN_RESISTANCE_KEYS.map(key => [key, 20])) as Record<KnResistanceKey, number>
