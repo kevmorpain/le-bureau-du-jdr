@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
+import { emptyKnProvisions, knProvisionsSchema } from '../../shared/ker-nethalas/camp'
 import { emptyKnDomain, emptyKnRun, knRunSchema } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, knStatusSchema } from '../../shared/ker-nethalas/status'
 import { applyMigration, replayMigrations } from '../fixtures/migrations'
@@ -12,6 +13,7 @@ const STATUS = '0131_ker_nethalas_status.sql'
 const STATUS_SHAPE = '0132_ker_nethalas_status_shape.sql'
 const EQUIPMENT = '0133_ker_nethalas_equipment_texts.sql'
 const RUN = '0134_ker_nethalas_run.sql'
+const PROVISIONS = '0135_ker_nethalas_provisions.sql'
 
 async function clientBefore(migration: string): Promise<Client> {
   const client = createClient({ url: ':memory:' })
@@ -113,6 +115,20 @@ describe('migration 0134 (état du run)', () => {
     const status = await statusOf(client, 'Danel')
     expect(status).not.toHaveProperty('domain')
     expect(knStatusSchema.safeParse(status).success).toBe(true)
+  })
+})
+
+describe('migration 0135 (provisions)', () => {
+  it('donne des provisions vides, identiques à emptyKnProvisions(), aux survivants existants', async () => {
+    const client = await clientBefore(PROVISIONS)
+    await client.execute(`INSERT INTO kn_characters (owner_id, name, resistances, skills) VALUES (1, 'Ancien', '{}', '{}')`)
+
+    await applyMigration(client, PROVISIONS)
+
+    const { rows } = await client.execute(`SELECT provisions FROM kn_characters WHERE name = 'Ancien'`)
+    const provisions = JSON.parse(rows[0]!.provisions as string)
+    expect(provisions).toEqual(emptyKnProvisions())
+    expect(knProvisionsSchema.safeParse(provisions).success).toBe(true)
   })
 })
 

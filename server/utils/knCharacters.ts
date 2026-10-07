@@ -7,6 +7,7 @@ import {
   type CreateKnCharacterInput,
   type UpdateKnCharacterInput,
 } from '~~/shared/ker-nethalas/character'
+import { emptyKnProvisions } from '~~/shared/ker-nethalas/camp'
 import { emptyKnRun } from '~~/shared/ker-nethalas/run'
 import { emptyKnStatus } from '~~/shared/ker-nethalas/status'
 
@@ -26,6 +27,7 @@ export async function createKnCharacter(db: Db, ownerId: number, input: CreateKn
       resistances: defaultKnResistances(),
       status: emptyKnStatus(),
       run: emptyKnRun(),
+      provisions: emptyKnProvisions(),
     })
     .returning({ id: knCharacters.id })
 

@@ -946,6 +946,13 @@
       "when": 1792200000000,
       "tag": "0134_ker_nethalas_run",
       "breakpoints": true
+    },
+    {
+      "idx": 135,
+      "version": "6",
+      "when": 1792300000000,
+      "tag": "0135_ker_nethalas_provisions",
+      "breakpoints": true
     }
   ]
 }

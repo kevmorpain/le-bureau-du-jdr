@@ -73,6 +73,69 @@
       "exhaustionDeath": "Épuisement 21 ou plus : le survivant meurt.",
       "noSkillChosen": "à choisir"
     },
+    "provisions": {
+      "rations": "Rations",
+      "bandages": "Bandages",
+      "craftingSupplies": "Fournitures d'Artisanat",
+      "cookingIngredients": "Denrées",
+      "lampOil": "Huile de lampe",
+      "lockpicks": "Crochets",
+      "torches": "Torches",
+      "attunementCrystals": "Cristaux d'Harmonisation"
+    },
+    "camp": {
+      "activities": {
+        "attune": {
+          "name": "Harmoniser",
+          "unit": "objets",
+          "hint": "Un Cristal d'Harmonisation par objet magique. +1 Épuisement par objet."
+        },
+        "barricade": {
+          "name": "Barricader",
+          "unit": "Fournitures",
+          "hint": "Par Fourniture dépensée : +1 Épuisement et +5 au test de Camp."
+        },
+        "cooking": {
+          "name": "Cuisiner",
+          "unit": "Denrées",
+          "hint": "Chaque Denrée devient une Ration. Une seule fois : +1 Épuisement, −1 au test."
+        },
+        "bandages": {
+          "name": "Fabriquer des Bandages",
+          "unit": "Bandages",
+          "hint": "1 Fourniture par Bandage. Une seule fois : +1 Épuisement, −1 au test."
+        },
+        "lampOil": {
+          "name": "Fabriquer de l'Huile de lampe",
+          "unit": "Huiles",
+          "hint": "2 Fournitures par Huile. Une seule fois : +1 Épuisement, −2 au test."
+        },
+        "lockpicks": {
+          "name": "Fabriquer des Crochets",
+          "unit": "Crochets",
+          "hint": "1 Fourniture par Crochet. Une seule fois : +1 Épuisement, −2 au test."
+        },
+        "torches": {
+          "name": "Fabriquer des Torches",
+          "unit": "Torches",
+          "hint": "1 Fourniture par Torche. Une seule fois : +1 Épuisement, −2 au test."
+        },
+        "healConditions": {
+          "name": "Soigner une Condition",
+          "unit": "Conditions",
+          "hint": "1 Bandage par Condition retirée, sans test de Médecine. +1 Épuisement par Condition."
+        },
+        "repair": {
+          "name": "Réparer",
+          "unit": "pièces",
+          "hint": "2 Fournitures par pièce d'équipement. Une seule fois : +2 Épuisement, −2 au test."
+        }
+      },
+      "sleep": {
+        "name": "Dormir",
+        "hint": "Seul Barricader reste possible. −5 Épuisement, +1 Santé et +2 au test."
+      }
+    },
     "conditions": {
       "bleeding": {
         "name": "Saignement",
