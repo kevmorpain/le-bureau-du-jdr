@@ -1,6 +1,6 @@
 # Module Ker Nethalas
 
-> **Statut** : tranches 0 (socle) et 1 (fiche effective) fusionnées (PR #253, 2026-10-06) ; tranche 2a (suivi de run) fusionnée (PR #254, 2026-10-07) ; tranche 2b (repos) écrite sur `feat/ker-nethalas-repos`, non fusionnée. **Issue** : [#242 — X10](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242).
+> **Statut** : tranches 0 (socle) et 1 (fiche effective) fusionnées (PR #253, 2026-10-06) ; tranche 2a (suivi de run) fusionnée (PR #254, 2026-10-07) ; tranche 2b (repos) fusionnée (PR #255, 2026-10-07) ; tranche 3 (aide au jet, référence des conditions) écrite sur `feat/ker-nethalas-jets`, non fusionnée. **Issue** : [#242 — X10](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242).
 > **Dernière mise à jour** : 2026-10-06.
 
 Ce document trace le plan du module, les décisions et ce qui a été fait. Le statut GitHub (Status, Effort,
@@ -270,8 +270,34 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   « concentration impossible » interdit l'Harmonisation.
 - **Laissé de côté** : historique des camps ; tirage dans la table des Rencontres sur un test raté (rappelé seulement) ;
   aptitudes et objets qui touchent au camp (bonus ou malus au test de Camp, soins supplémentaires) : le modificateur
-  libre du panneau couvre le test, le reste se corrige à la main ; l'aptitude qui fait partir le Dé de Tension à D10 (le sélecteur de dé la corrige à la main) ; les
-  changements d'amulettes de Maîtrise, qui ne coûtent rien.
+  libre du panneau couvre le test, le reste se corrige à la main ; l'aptitude qui fait partir le Dé de Tension à D10
+  (le sélecteur de dé la corrige à la main) ; les changements d'amulettes de Maîtrise, qui ne coûtent rien.
+
+### KN26 — Aide au jet : D100 lu sur le score effectif, critiques et maladresses affichés
+- **Décision** : `shared/ker-nethalas/roll.ts`, pur. Un test se fait sur le **score effectif** de la fiche, plus le
+  modificateur de difficulté (Enfantin +30 à Impossible −30, ou tiré au D8), sans descendre sous 0 (p. 69). Le D100 se
+  lit en deux chiffres : l'Avantage met le plus petit chiffre en dizaines, le Désavantage le plus grand (p. 70). Réussi
+  si le dé lu est inférieur ou égal à la cible ; un double sous la cible est une réussite critique, au-dessus un échec
+  critique (p. 71). Le dé se lance dans l'outil ou se saisit.
+- **Effets** : les douze effets de critique (neuf compétences hors armes, trois résistances, p. 71-73) sont rédigés ici
+  et affichés avec le résultat. Pour une compétence d'arme, un échec critique tire une Maladresse au D10 (p. 84) et une
+  réussite critique rappelle le Coup critique ; la table des Maladresses des adversaires n'est pas reprise.
+- **Application à la fiche** : les effets *chiffrés* (Épuisement, Santé, Santé mentale, Robustesse, dégâts, dé de Lair
+  ou de Sortie) sont tirés avec le résultat, listés avec leurs dés, puis appliqués d'un clic sur « Appliquer à la
+  fiche » : jamais en silence, une seule fois par jet. Les gains s'arrêtent aux maximums effectifs, les pertes à 0,
+  l'Épuisement à son plafond. Les dégâts se retirent à la Robustesse d'abord, puis à la Santé, sans compter d'armure ;
+  une Santé tombée à 0 est signalée. Les effets *temporaires* (Avantage ou bonus à la prochaine action, Résistance
+  magique pendant D4 rounds) restent du texte à reporter ; les Maladresses d'arme aussi.
+- **Interface** : une carte « Jet de dés » (test, difficulté, lecture, jet, derniers jets non conservés) et un bouton
+  « Jet » sur chaque ligne de compétence ou de résistance, qui la présélectionne. Aucune donnée n'est enregistrée : pas
+  de migration.
+- **Référence des conditions** : la liste des seize conditions et de l'hypothermie, avec leur effet (le texte déjà
+  rédigé pour les rappels), les conditions subies étant signalées.
+- **Alternative écartée** : une fenêtre modale par ligne. Elle masque les scores effectifs qu'on regarde pour choisir le
+  test ; la carte reste sous les yeux.
+- **Laissé de côté** : les tests opposés (comparaison avec un adversaire), la résolution d'un combat (touche, défense,
+  localisation, dégâts), l'application des effets temporaires de critique et des Maladresses, l'Initiative, la table de
+  Maladresses des adversaires.
 
 ---
 
@@ -315,8 +341,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **0 — Socle** | entrée dans la navigation (`app/layouts/default.vue`), route `/ker-nethalas`, tables `kn_*`, fiche en saisie libre (nom, niveau, XP, Health/Toughness/Aether/Sanity, compétences, résistances) | fusionnée (PR #253) |
 | **1 — Fiche effective** | moteur pur ; conditions, épuisement, Rot, folies, Growing Darkness, influence d'Overseer, modificateurs libres ; scores effectifs avec détail du calcul ; tests de contrat | fusionnée (PR #253) |
 | **2a — Suivi de run** | Domaines, compteur de salles, source de lumière, Dé de Tension, dés de Lair et de Sortie, actions « Nouvelle salle », « Nouveau couloir » et « Retour dans une zone explorée », tirage dans la table de l'Obscurité Grandissante, chemin du Domaine enregistré (une entrée par salle ou couloir, avec ses dés) | fusionnée (PR #254) |
-| **2b — Repos** | Reprendre son souffle, Établir le camp (activités, test de Camp, bénéfices, Rations), provisions | écrite, vérifiée, non fusionnée |
-| **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage ; référence des conditions rédigée ici | à faire |
+| **2b — Repos** | Reprendre son souffle, Établir le camp (activités, test de Camp, bénéfices, Rations), provisions | fusionnée (PR #255) |
+| **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage, effets des critiques et maladresses ; référence des conditions rédigée ici | écrite, vérifiée, non fusionnée |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
 
@@ -389,10 +415,36 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Pourriture au repos** : le rappel du test d'Endurance s'affiche dès le stade 1 ; un survivant infecté au stade 0 n'est
   pas représenté.
 - **Ration cuisinée** : une Ration fabriquée pendant le camp peut être celle que le camp consomme.
+- **100 sur le D100** : lu « 00 », donc un double (p. 71 : « le même chiffre aux dizaines et aux unités »). Échec
+  critique avec un score inférieur à 100, réussite critique sinon.
+- **Avantage et Désavantage ensemble** : le dé est lu normalement ; le livre ne dit pas comment les combiner. La
+  lecture se choisit à la main dans la carte de jet.
+- **Difficulté et plafond des résistances** : la difficulté s'ajoute au score effectif *après* le plafond de 80 des
+  résistances (p. 69 la décrit comme un modificateur appliqué avant le jet, sans parler du plafond).
+- **Raison, échec critique** : « Increase the Lair/Domain Exit Die by 1 stage » est lu comme un dé plus grand (D10 → D12,
+  il faudra plus de salles) ; le dé touché est celui de Lair tant que le Lair n'est pas trouvé, puis celui de Sortie.
+  Sans effet au D20 ni une fois la Sortie trouvée.
+- **Dégâts d'un critique** : retirés à la Robustesse puis à la Santé, comme les Blessures, sans armure.
+- **Compétences ajoutées à la main** : doubles et criticité détectés, mais aucun effet de critique (le livre n'en
+  donne pas).
 
 ---
 
 ## Journal
+
+### 2026-10-07 — Tranche 3 : aide au jet et référence des conditions
+- PR #255 fusionnée (tranche 2b) et déployée (Workers Builds vert sur le commit de fusion, migration `0135` appliquée) ;
+  issue #242 : 2b cochée.
+- Lecture des règles du test de compétence (D100, difficulté, Avantage et Désavantage, critiques, effets par test,
+  Maladresses). Décision KN26 ; pas de migration.
+- Moteur `roll.ts` ; interface `KnRollSection` (carte de jet), boutons « Jet » dans `KnChecksSection`,
+  `KnConditionsReference`. Vérifié sur une base vierge dans le navigateur : critique et échec critique avec leurs
+  effets, Avantage (62 lu 26) et Désavantage (26 lu 62) lus sur la cible modifiée par la difficulté, échec critique d'arme
+  avec Maladresse D10, jet automatique, liste des dix-sept conditions. Sur retour du PM (« les effets sont-ils
+  appliqués ? »), bouton « Appliquer à la fiche » pour les effets chiffrés, vérifié : Santé et Épuisement d'une Endurance
+  critique, 8 dégâts d'une Médecine ratée (Robustesse 5 → 0, Santé 9 → 6), dé de Lair D10 → D12, sauvegarde serveur.
+- **Non vérifié** : l'Avantage et le Désavantage *venant de la fiche* dans la carte (lus sur le mode forcé dans mon
+  essai ; le calcul du mode de la fiche est celui de la tranche 1, testé).
 
 ### 2026-10-07 — Tranche 2b : repos et provisions
 - PR #254 fusionnée (tranche 2a), déployée : Workers Builds vert sur le commit de fusion. Issue #242 : 2a cochée, tranche 2
