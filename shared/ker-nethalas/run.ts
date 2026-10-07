@@ -273,6 +273,23 @@ export function knRecordDarkness(run: KnRun, draw: KnGrowingDarknessDraw): KnRun
   return withLastVisit(knAddGrowingDarkness(run, draw), v => ({ ...v, darkness: draw }))
 }
 
+// Le dé en cours de recherche : celui de Lair tant que le Lair n'est pas trouvé, puis celui de Sortie.
+// Augmenter d'un cran, c'est passer au dé plus grand (D8 → D10) : il faudra plus de salles pour trouver.
+export function knUsageDieRaise(run: KnRun): { which: 'lair' | 'exit', from: KnUsageDie, to: KnUsageDie } | null {
+  const domain = knCurrentDomain(run)
+  const which = !domain.lairFound ? 'lair' : !domain.exitFound ? 'exit' : null
+  if (!which) return null
+  const from = which === 'lair' ? domain.lairDie : domain.exitDie
+  const to = KN_USAGE_DICE[KN_USAGE_DICE.indexOf(from) - 1]
+  return to === undefined ? null : { which, from, to }
+}
+
+export function knRaiseUsageDie(run: KnRun): KnRun {
+  const raise = knUsageDieRaise(run)
+  if (!raise) return run
+  return withCurrentDomain(run, raise.which === 'lair' ? { lairDie: raise.to } : { exitDie: raise.to })
+}
+
 // Rend le compte de salles, pas la lumière, l'Éther, l'état des dés ni l'événement tiré : ceux-là se corrigent à la main.
 export function knUndoLastVisit(run: KnRun): KnRun {
   const domain = knCurrentDomain(run)

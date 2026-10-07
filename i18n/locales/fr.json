@@ -73,6 +73,81 @@
       "exhaustionDeath": "Épuisement 21 ou plus : le survivant meurt.",
       "noSkillChosen": "à choisir"
     },
+    "difficulties": {
+      "childsPlay": "Enfantin",
+      "effortless": "Sans effort",
+      "easy": "Facile",
+      "normal": "Normal",
+      "demanding": "Exigeant",
+      "hard": "Difficile",
+      "impossible": "Impossible"
+    },
+    "criticals": {
+      "acrobatics": {
+        "success": "Manœuvre audacieuse : +30 à la prochaine action, pendant un round.",
+        "failure": "Chute catastrophique : D6 dégâts contondants, et vous êtes À terre."
+      },
+      "athletics": {
+        "success": "Prouesse herculéenne : votre prochaine attaque réussie est un Coup critique, ou la prochaine porte ou le prochain contenant s'ouvre d'office (le premier des deux).",
+        "failure": "Surmenage : +D4 Épuisement."
+      },
+      "dodge": {
+        "success": "Esquive remarquable : +20 en Esquive pour le round suivant.",
+        "failure": "Faux pas : vous subissez le double des dégâts de ce que vous tentiez d'éviter."
+      },
+      "medicine": {
+        "success": "Guérison miraculeuse : vous récupérez D10 Robustesse.",
+        "failure": "Soin nocif : vous subissez 2D6 dégâts contondants."
+      },
+      "perception": {
+        "success": "Vigilance accrue : Avantage à votre prochain test de Perception.",
+        "failure": "Angle mort : Désavantage à votre prochain test de Perception."
+      },
+      "reason": {
+        "success": "Déduction brillante : vous identifiez un objet magique en votre possession, sans dépenser de Cristal d'Harmonisation.",
+        "failure": "Blocage : le dé de Lair ou de Sortie augmente d'un cran."
+      },
+      "scavenge": {
+        "success": "Bonne trouvaille : vous pouvez ajouter +5 au jet sur la table de Fouille.",
+        "failure": "Fouille bruyante : tirez sur la table des Rencontres de combat."
+      },
+      "stealth": {
+        "success": "Fantôme dans l'ombre : presque invisible ; si vous attaquez au round suivant, l'attaque touche automatiquement.",
+        "failure": "Pied mal assuré : Désavantage à toute action du round suivant."
+      },
+      "thievery": {
+        "success": "Voleur de maître : Avantage à votre prochain test de Larcin.",
+        "failure": "Tentative ratée : vous déclenchez un piège que vous aviez manqué ; tirez sur la table des Pièges."
+      },
+      "endurance": {
+        "success": "Résilience : +1 Santé et −D4 Épuisement.",
+        "failure": "Submergé : +D4 Épuisement."
+      },
+      "resolve": {
+        "success": "Volonté inébranlable : +D4+1 Santé mentale.",
+        "failure": "Défaillance mentale : −D4 Santé mentale."
+      },
+      "spellward": {
+        "success": "Volonté indomptable : Résistance aux dégâts magiques pendant D4 rounds.",
+        "failure": "Vulnérabilité magique : dégâts du sort doublés, ou conséquences deux fois plus longues."
+      },
+      "weapon": {
+        "success": "Coup critique : les dégâts sont doublés, modificateurs fixes compris, sans cumul. Seule une réussite critique de défense l'évite.",
+        "failure": "Maladresse : tirez D10 sur la table des Maladresses."
+      }
+    },
+    "fumbles": {
+      "f1": "Vous lâchez votre arme et passez votre prochain tour à la ramasser (ou à en dégainer une autre). Sans arme, votre prochaine attaque subit −20.",
+      "f2": "Votre arme se fiche très profondément dans un mur ou le sol : test d'Athlétisme en Action Standard pour la récupérer. Sans arme, votre prochaine attaque subit −20.",
+      "f3": "Votre arme se fracasse contre une pierre : une arme non magique se brise en deux, réparable au camp ; une arme magique se récupère en passant votre prochain tour. Sans arme, votre prochaine attaque subit −20.",
+      "f4": "Un objet de votre Ceinture, tiré au hasard, se casse : test de Ceinture. Sans Ceinture, 1 dégât perforant.",
+      "f5": "Vous vous sentez vidé : −D8 Éther. Sans Éther, 1 dégât perforant.",
+      "f6": "Vous trébuchez et perdez cette action. Vous êtes À terre et devez dépenser une Action Standard pour vous relever au round suivant.",
+      "f7": "Vous trébuchez et vous cognez la tête : À terre et Hébété (2).",
+      "f8": "Votre attaque touche un allié au hasard ; sans allié, vous vous frappez vous-même.",
+      "f9": "Vous vous frappez avec une attaque normale.",
+      "f10": "Vous vous blessez gravement avec votre propre arme : vous subissez un Coup critique."
+    },
     "provisions": {
       "rations": "Rations",
       "bandages": "Bandages",
