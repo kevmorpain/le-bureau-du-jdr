@@ -10,6 +10,7 @@ import {
   listKnCharacters,
   updateKnCharacter,
 } from '../../server/utils/knCharacters'
+import { emptyKnProvisions } from '../../shared/ker-nethalas/camp'
 import { defaultKnResistances, defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { emptyKnDomain, emptyKnRun } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus } from '../../shared/ker-nethalas/status'
@@ -157,6 +158,16 @@ describe('updateKnCharacter', () => {
     await updateKnCharacter(db, id, { run })
 
     expect((await getKnCharacter(db, id))!.run).toEqual(run)
+  })
+
+  it('donne des provisions vides à un nouveau survivant et les relit à l\'identique', async () => {
+    const { id } = await createKnCharacter(db, alice, { name: 'Kessa' })
+    expect((await getKnCharacter(db, id))!.provisions).toEqual(emptyKnProvisions())
+
+    const provisions = { ...emptyKnProvisions(), rations: 3, craftingSupplies: 12, attunementCrystals: 1 }
+    await updateKnCharacter(db, id, { provisions })
+
+    expect((await getKnCharacter(db, id))!.provisions).toEqual(provisions)
   })
 
   it('renvoie null pour un survivant inexistant', async () => {
