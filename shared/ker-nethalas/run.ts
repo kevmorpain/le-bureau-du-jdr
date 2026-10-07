@@ -239,7 +239,7 @@ function withLastVisit(run: KnRun, update: (visit: KnVisit) => KnVisit): KnRun {
 // Le dé de Lair, puis celui de Sortie une fois le Lair trouvé, se lancent à chaque nouvelle salle ou couloir.
 export function knStartVisit(run: KnRun, kind: KnVisitKind): KnRun {
   const domain = knCurrentDomain(run)
-  const usageKind = kind === 'revisit' || domain.exitFound ? null : domain.lairFound ? 'exit' : 'lair'
+  const usageKind: KnVisit['usageKind'] = kind === 'revisit' || domain.exitFound ? null : domain.lairFound ? 'exit' : 'lair'
   const entered = knEnterRoom(run, { isNew: kind !== 'revisit' })
   const visits = [...knCurrentDomain(entered).visits, { kind, usageKind }].slice(-KN_RUN_BOUNDS.visits)
   return withCurrentDomain(entered, { visits })
