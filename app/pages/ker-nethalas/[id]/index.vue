@@ -33,12 +33,21 @@
       :resolved
     />
 
-    <KnChecksSection
+    <KnRollSection
       v-model:character="character"
+      v-model:selected="rollSelection"
       :resolved
     />
 
+    <KnChecksSection
+      v-model:character="character"
+      :resolved
+      @roll="openRoll"
+    />
+
     <KnEffectsSection v-model:character="character" />
+
+    <KnConditionsReference :character />
 
     <KnEquipmentSection v-model:character="character" />
 
@@ -79,4 +88,11 @@ const STATUS_LABELS: Record<AutoSaveStatus, string> = {
   error: 'Échec de l\'enregistrement',
 }
 const stateLabel = computed(() => STATUS_LABELS[status.value])
+
+const rollSelection = ref('skill:dodge')
+
+function openRoll(selection: string) {
+  rollSelection.value = selection
+  document.getElementById('kn-roll')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
 </script>

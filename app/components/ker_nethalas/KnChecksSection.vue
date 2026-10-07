@@ -37,6 +37,14 @@
             :name="$t(`ker_nethalas.skills.${key}`)"
           />
         </div>
+        <UButton
+          size="xs"
+          variant="soft"
+          :aria-label="`Jet : ${$t(`ker_nethalas.skills.${key}`)}`"
+          @click="emit('roll', `skill:${key}`)"
+        >
+          Jet
+        </UButton>
       </div>
     </div>
 
@@ -68,6 +76,14 @@
           :name="extra.name"
         />
       </div>
+      <UButton
+        size="xs"
+        variant="soft"
+        :aria-label="`Jet : ${extra.name}`"
+        @click="emit('roll', `extra:${index}`)"
+      >
+        Jet
+      </UButton>
       <UButton
         icon="i-heroicons:trash"
         color="error"
@@ -120,6 +136,14 @@
             :name="$t(`ker_nethalas.resistances.${key}`)"
           />
         </div>
+        <UButton
+          size="xs"
+          variant="soft"
+          :aria-label="`Jet : ${$t(`ker_nethalas.resistances.${key}`)}`"
+          @click="emit('roll', `resistance:${key}`)"
+        >
+          Jet
+        </UButton>
       </div>
     </div>
   </UCard>
@@ -133,6 +157,10 @@ import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills
 
 defineProps<{
   resolved: KnResolvedSheet
+}>()
+
+const emit = defineEmits<{
+  roll: [selection: string]
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })

@@ -16,6 +16,7 @@ import {
   knLairCheck,
   knLightCost,
   knNewDomain,
+  knRaiseUsageDie,
   knRecordDarkness,
   knRecordTension,
   knRecordUsage,
@@ -26,6 +27,7 @@ import {
   knTensionCheck,
   knUndoLastVisit,
   knUsageCheck,
+  knUsageDieRaise,
   knVisitFoundLair,
   knVisitPending,
   type KnRun,
@@ -404,6 +406,35 @@ describe('chemin du Domaine', () => {
     const bad = (visit: unknown) => ({ ...emptyKnRun(), domains: [{ ...emptyKnDomain(1), visits: [visit] }] })
     expect(knRunSchema.safeParse(bad({ kind: 'cave', usageKind: null })).success).toBe(false)
     expect(knRunSchema.safeParse(bad({ kind: 'room', usageKind: 'lair', tension: { die: 7, roll: 1, manual: false, next: 6, triggered: false } })).success).toBe(false)
+  })
+})
+
+describe('hausse du dé de Lair ou de Sortie', () => {
+  const withDomain = (patch: Partial<ReturnType<typeof emptyKnDomain>>): KnRun => ({ ...emptyKnRun(), domains: [{ ...emptyKnDomain(1), ...patch }] })
+
+  it('monte le dé de Lair au dé plus grand tant que le Lair n\'est pas trouvé', () => {
+    const run = withDomain({ lairDie: 8 })
+
+    expect(knUsageDieRaise(run)).toEqual({ which: 'lair', from: 8, to: 10 })
+    expect(knCurrentDomain(knRaiseUsageDie(run)).lairDie).toBe(10)
+    expect(run.domains[0]!.lairDie).toBe(8)
+  })
+
+  it('passe au dé de Sortie une fois le Lair trouvé', () => {
+    const run = withDomain({ lairFound: true, lairDie: 4, exitDie: 6 })
+
+    expect(knUsageDieRaise(run)).toEqual({ which: 'exit', from: 6, to: 8 })
+    expect(knCurrentDomain(knRaiseUsageDie(run))).toMatchObject({ lairDie: 4, exitDie: 8 })
+  })
+
+  it('ne fait rien au D20 ni une fois la Sortie trouvée', () => {
+    const maxed = withDomain({ lairDie: 20 })
+    const done = withDomain({ lairFound: true, exitFound: true })
+
+    expect(knUsageDieRaise(maxed)).toBeNull()
+    expect(knRaiseUsageDie(maxed)).toBe(maxed)
+    expect(knUsageDieRaise(done)).toBeNull()
+    expect(knRaiseUsageDie(done)).toBe(done)
   })
 })
 
