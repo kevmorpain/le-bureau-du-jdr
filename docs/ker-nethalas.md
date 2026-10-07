@@ -1,6 +1,6 @@
 # Module Ker Nethalas
 
-> **Statut** : tranches 0 (socle) et 1 (fiche effective) fusionnées (PR #253, 2026-10-06) ; tranche 2a (suivi de run) écrite sur `feat/ker-nethalas-run`, non fusionnée. **Issue** : [#242 — X10](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242).
+> **Statut** : tranches 0 (socle) et 1 (fiche effective) fusionnées (PR #253, 2026-10-06) ; tranche 2a (suivi de run) fusionnée (PR #254, 2026-10-07) ; tranche 2b (repos) écrite sur `feat/ker-nethalas-repos`, non fusionnée. **Issue** : [#242 — X10](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242).
 > **Dernière mise à jour** : 2026-10-06.
 
 Ce document trace le plan du module, les décisions et ce qui a été fait. Le statut GitHub (Status, Effort,
@@ -248,7 +248,30 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Limites** : 200 entrées par Domaine (les plus anciennes sont retirées au-delà) ; ni contenu des salles (monstres,
   butin) ni réordonnancement. « Annuler cette entrée » retire la dernière entrée et rend le compte de salles, mais ni la
   lumière, ni l'Éther, ni l'état des dés, ni l'événement tiré : ceux-là se corrigent à la main.
-- **Migration** : le champ est dans la migration `0134` elle-même (pas encore fusionnée), pas dans une `0135`.
+- **Migration** : le champ est dans la migration `0134` elle-même (pas encore fusionnée à l'époque), pas dans une
+  `0135`.
+
+### KN25 — Repos : Reprendre son souffle et Établir le camp en fonctions pures, provisions en colonne JSON
+- **Décision** : `shared/ker-nethalas/camp.ts`, sans accès à la base ni au hasard imposé (tirage injectable).
+  *Reprendre son souffle* (p. 123) : D10+2 de Robustesse, 1 de Santé (jamais au-dessus des maximums effectifs), −2
+  d'Épuisement, −5 de lumière, Dé de Tension d'un cran vers le bas. *Établir le camp* (p. 123-125) : activités avec leur
+  coût en Épuisement, leur modificateur du test de Camp et leurs consommations (Barricader, Cuisiner, Fabriquer, Soigner
+  une Condition, Réparer, Harmoniser, Dormir) ; test de Camp D20 + modificateur, 12 ou plus ; bénéfices : toute la
+  Robustesse, 1 Santé, D4 Santé mentale, −10 Épuisement, plus D4 Santé à la Pourriture 5 ; 1 Ration consommée. Test raté ou
+  aucune Ration : bénéfices réduits de moitié, arrondis à l'inférieur. Rien n'est appliqué si une provision manque ou si
+  Dormir est combiné à autre chose que Barricader.
+- **Provisions** : colonne JSON `kn_characters.provisions` (migration `0135`), huit compteurs : Rations, Bandages,
+  Fournitures d'Artisanat, Denrées, Huile de lampe, Crochets, Torches, Cristaux d'Harmonisation. Les activités les
+  décomptent et les produisent ; le survivant peut aussi les corriger à la main.
+- **Alternative écartée** : ranger les provisions dans `run`. Elles appartiennent au survivant, pas à l'exploration en
+  cours ; un nouveau run ne les remet pas à zéro. Un inventaire détaillé (objets un par un) reste l'étape « équipement »
+  prévue plus tard.
+- **Données déduites du Domaine courant** : un événement « mains tremblantes » retire 1 au test de Camp par exemplaire ;
+  « concentration impossible » interdit l'Harmonisation.
+- **Laissé de côté** : historique des camps ; tirage dans la table des Rencontres sur un test raté (rappelé seulement) ;
+  aptitudes et objets qui touchent au camp (bonus ou malus au test de Camp, soins supplémentaires) : le modificateur
+  libre du panneau couvre le test, le reste se corrige à la main ; l'aptitude qui fait partir le Dé de Tension à D10 (le sélecteur de dé la corrige à la main) ; les
+  changements d'amulettes de Maîtrise, qui ne coûtent rien.
 
 ---
 
@@ -291,8 +314,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 |---|---|---|
 | **0 — Socle** | entrée dans la navigation (`app/layouts/default.vue`), route `/ker-nethalas`, tables `kn_*`, fiche en saisie libre (nom, niveau, XP, Health/Toughness/Aether/Sanity, compétences, résistances) | fusionnée (PR #253) |
 | **1 — Fiche effective** | moteur pur ; conditions, épuisement, Rot, folies, Growing Darkness, influence d'Overseer, modificateurs libres ; scores effectifs avec détail du calcul ; tests de contrat | fusionnée (PR #253) |
-| **2a — Suivi de run** | Domaines, compteur de salles, source de lumière, Dé de Tension, dés de Lair et de Sortie, actions « Nouvelle salle », « Nouveau couloir » et « Retour dans une zone explorée », tirage dans la table de l'Obscurité Grandissante, chemin du Domaine enregistré (une entrée par salle ou couloir, avec ses dés) | écrite, vérifiée, non fusionnée |
-| **2b — Repos** | Reprendre son souffle, Établir le camp (test de Camp, activités, rations), provisions | à faire |
+| **2a — Suivi de run** | Domaines, compteur de salles, source de lumière, Dé de Tension, dés de Lair et de Sortie, actions « Nouvelle salle », « Nouveau couloir » et « Retour dans une zone explorée », tirage dans la table de l'Obscurité Grandissante, chemin du Domaine enregistré (une entrée par salle ou couloir, avec ses dés) | fusionnée (PR #254) |
+| **2b — Repos** | Reprendre son souffle, Établir le camp (activités, test de Camp, bénéfices, Rations), provisions | écrite, vérifiée, non fusionnée |
 | **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage ; référence des conditions rédigée ici | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -349,10 +372,38 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   Événements quand il n'y a pas de rencontre ; l'outil rappelle donc la table des Événements dans le Lair.
 - **Lumière à 0** : l'état « sans lumière » est déduit du compteur. Si une autre source éclaire le survivant (sort,
   équipement lumineux), remonter le compteur à la main : l'outil ne connaît pas ces sources.
+- **Reprendre son souffle au D4** : le dé reste au D4. Le livre dit « un cran de moins » mais ne déclenche la procédure
+  que sur un jet de 1-2 au D4 (p. 74) ; descendre sous le D4 n'est pas défini.
+- **Reprendre son souffle et la Santé** : la Santé et la Robustesse se rendent toutes deux, sans attendre que la
+  Robustesse soit pleine (la règle générale des Blessures soigne d'abord la Robustesse). Le texte du souffle les cite
+  séparément.
+- **Réduction de moitié** : elle porte sur les bénéfices du camp (Robustesse rendue, Santé, Santé mentale, Épuisement
+  retiré, D4 de la Pourriture) ; la moitié de la Robustesse est celle de la Robustesse *manquante*. Les effets de Dormir
+  ne sont pas des bénéfices du camp et ne sont pas réduits.
+- **Ordre de l'Épuisement** : les coûts des activités s'ajoutent avant les retraits (−10, −5 en dormant), puis le
+  résultat est ramené à 0 au minimum.
+- **Test de Camp** : le modificateur s'ajoute au D20 et le total doit atteindre 12 ; le livre parle de réduire « le jet »,
+  sans règle de réussite ou d'échec automatique sur un 1 ou un 20.
+- **Test raté** : le livre place la rencontre avant la réduction des bénéfices ; l'outil applique d'emblée les bénéfices
+  réduits et rappelle de tirer la rencontre.
+- **Pourriture au repos** : le rappel du test d'Endurance s'affiche dès le stade 1 ; un survivant infecté au stade 0 n'est
+  pas représenté.
+- **Ration cuisinée** : une Ration fabriquée pendant le camp peut être celle que le camp consomme.
 
 ---
 
 ## Journal
+
+### 2026-10-07 — Tranche 2b : repos et provisions
+- PR #254 fusionnée (tranche 2a), déployée : Workers Builds vert sur le commit de fusion. Issue #242 : 2a cochée, tranche 2
+  coupée en 2a et 2b.
+- Lecture des règles de repos (Reprendre son souffle, Établir le camp, activités, test de Camp, bénéfices) et des
+  endroits qui y touchent (Épuisement, Pourriture, événements 15-16, 17-18 et 19-20 de l'Obscurité Grandissante).
+  Décision KN25 ; migration `0135` (colonne `provisions`).
+- Moteur `camp.ts` ; interface `KnRestSection` (souffle, provisions) et `KnCampPanel` (activités, aperçu des coûts,
+  test, bénéfices, bilan). Vérifié sur une base vierge dans le navigateur : souffle (valeurs et sauvegarde), camp complet
+  avec Ration et Fournitures décomptées, pénurie et incompatibilité de Dormir signalées.
+- **Non vérifié** : l'interface d'un camp au test raté ou sans Ration (couverte par les tests du moteur).
 
 ### 2026-10-06 — Tranche 2a : cadrage
 - PR #253 fusionnée (tranches 0 et 1). Issue #242 : tranches 0 et 1 cochées.
