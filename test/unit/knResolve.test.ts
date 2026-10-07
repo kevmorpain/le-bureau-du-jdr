@@ -5,8 +5,7 @@ import { emptyKnDomain, emptyKnRun, type KnDomain } from '../../shared/ker-netha
 import { emptyKnStatus, type KnStatus } from '../../shared/ker-nethalas/status'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, type KnSkillKey } from '../../shared/ker-nethalas/skills'
 
-// Valeurs calculées à la main d'après Gravebound : conditions p. 88-89, Rot p. 87, Épuisement p. 90, Folie p. 91,
-// Growing Darkness p. 120-122, arrondi vers le haut p. 70. Survivant de référence : Esquive 45, Armes tranchantes 70,
+// Valeurs calculées à la main d'après le livre. Survivant de référence : Esquive 45, Armes tranchantes 70,
 // Athlétisme 30, Acrobatie 30, Perception 40, Fouille 25, Raison 35 ; résistances 40 / 20 / 20.
 
 function sheet(over: Partial<KnResolveInput> = {}, status: Partial<KnStatus> = {}): KnResolveInput {
@@ -57,7 +56,7 @@ describe('survivant sans effet en cours', () => {
 })
 
 describe('conditions', () => {
-  it('Entravé : −20 à Acrobatie, Athlétisme, Esquive et aux compétences d\'arme (p. 89)', () => {
+  it('Entravé : −20 à Acrobatie, Athlétisme, Esquive et aux compétences d\'arme', () => {
     const r = resolveKnSheet(sheet({}, { conditions: [{ key: 'restrained' }] }))
 
     expect(r.skills.acrobatics.effective).toBe(10)
@@ -126,7 +125,7 @@ describe('conditions', () => {
   })
 })
 
-describe('Épuisement (p. 90)', () => {
+describe('Épuisement', () => {
   it('aucun effet jusqu\'à 10', () => {
     const r = resolveKnSheet(sheet({ exhaustion: 10 }))
 
@@ -168,7 +167,7 @@ describe('Épuisement (p. 90)', () => {
   })
 })
 
-describe('la Rot (p. 87)', () => {
+describe('la Rot', () => {
   it('stade 1 : un rappel, aucun effet chiffré', () => {
     const r = resolveKnSheet(sheet({}, { rotStage: 1 }))
 
@@ -194,7 +193,7 @@ describe('la Rot (p. 87)', () => {
   })
 })
 
-describe('Folie (p. 91)', () => {
+describe('Folie', () => {
   it('cumule les retraits de Fouille, de Résolution et de Robustesse maximale', () => {
     const counters = { fragileMind: 0, physicalReactions: 3, darknessComing: 0, rushing: 2, darkResistance: 1, forgetfulness: 0 }
     const r = resolveKnSheet(sheet({}, { madness: { counters, lostSkills: [] } }))
@@ -219,7 +218,7 @@ describe('Folie (p. 91)', () => {
   })
 })
 
-describe('Growing Darkness (p. 120-122)', () => {
+describe('Growing Darkness', () => {
   it('73-74 : −10 aux compétences hors combat, pas à l\'Esquive ni aux armes', () => {
     const r = resolveKnSheet(sheet(withDomain({ growingDarkness: [{ key: 'gd_73_74' }] })))
 
@@ -268,7 +267,7 @@ describe('Growing Darkness (p. 120-122)', () => {
   })
 })
 
-describe('influence d\'Overseer (p. 100)', () => {
+describe('influence d\'Overseer', () => {
   it('ne produit que des rappels : elle modifie les adversaires, pas le survivant', () => {
     const r = resolveKnSheet(sheet(withDomain({ overseerInfluences: ['skilled'] })))
 
@@ -331,7 +330,7 @@ describe('Avantage et Désavantage', () => {
   })
 })
 
-describe('plafond des Résistances (p. 20)', () => {
+describe('plafond des Résistances', () => {
   it('ne dépasse jamais 80, même avec un bonus', () => {
     const custom = [{ id: 'a', name: 'Amulette', active: true, entries: [{ kind: 'modifier' as const, target: 'endurance' as const, amount: 30 }] }]
     const r = resolveKnSheet(sheet({ resistances: { endurance: 60, resolve: 20, spellward: 80 } }, { custom }))
@@ -340,7 +339,7 @@ describe('plafond des Résistances (p. 20)', () => {
     expect(r.resistances.spellward.effective).toBe(80)
   })
 
-  it('une compétence peut dépasser 80 avec un bonus (p. 19)', () => {
+  it('une compétence peut dépasser 80 avec un bonus', () => {
     const custom = [{ id: 'a', name: 'Lame', active: true, entries: [{ kind: 'modifier' as const, target: 'bladedWeapons' as const, amount: 15 }] }]
     const r = resolveKnSheet(sheet({}, { custom }))
 

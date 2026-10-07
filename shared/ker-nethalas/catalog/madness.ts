@@ -1,7 +1,7 @@
 import type { KnActiveSource, KnEffect } from '../effects'
 import type { KnSkillKey } from '../skills'
 
-// Gravebound p. 91 : résultats cumulatifs du tableau de Folie (D10). Les résultats 1, 9 et 10 sont immédiats
+// Résultats cumulatifs du tableau de Folie (D10). Les résultats 1, 9 et 10 sont immédiats
 // et ne s'enregistrent pas.
 export const KN_MADNESS_COUNTER_KEYS = [
   'fragileMind',

@@ -7,7 +7,7 @@ interface KnRotStageDef {
   severity: KnReminderSeverity
 }
 
-// Gravebound p. 87. Chaque stade s'ajoute aux précédents.
+// Chaque stade s'ajoute aux précédents.
 export const KN_ROT_STAGES: Record<number, KnRotStageDef> = {
   1: { effects: [], severity: 'info' },
   2: { effects: [{ type: 'maxVitalHalf', vital: 'toughness' }], severity: 'warning' },

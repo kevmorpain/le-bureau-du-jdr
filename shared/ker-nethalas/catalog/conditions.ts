@@ -31,7 +31,7 @@ interface KnConditionDef {
 
 const none = () => []
 
-// Gravebound p. 88-89. L'hypothermie n'est pas une condition à part : c'est l'aggravation du Freezing après 5 salles (p. 88).
+// L'hypothermie n'est pas une condition à part : c'est l'aggravation du Freezing après 5 salles.
 export const KN_CONDITIONS: Record<KnConditionKey, KnConditionDef> = {
   bleeding: { value: { default: 1 }, effects: none },
   blinded: { effects: () => [{ type: 'disadvantage', targets: knSkillsExcept('reason') }] },

@@ -17,7 +17,7 @@ import { KN_NON_COMBAT_SKILL_KEYS, KN_WEAPON_SKILL_KEYS } from '../../shared/ker
 const labels = fr.ker_nethalas as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
 describe('tables du livre', () => {
-  it('Growing Darkness : 35 entrées dont les plages couvrent exactement 1 à 100 (p. 120-122)', () => {
+  it('Growing Darkness : 35 entrées dont les plages couvrent exactement 1 à 100', () => {
     const ranges = KN_GROWING_DARKNESS_KEYS.map(key => KN_GROWING_DARKNESS[key].range)
 
     expect(ranges).toHaveLength(35)
@@ -26,19 +26,19 @@ describe('tables du livre', () => {
     ranges.slice(1).forEach(([from], i) => expect(from).toBe(ranges[i]![1] + 1))
   })
 
-  it('influence d\'Overseer : 10 entrées (D10, p. 100)', () => {
+  it('influence d\'Overseer : 10 entrées (D10)', () => {
     expect(KN_OVERSEER_INFLUENCE_KEYS).toHaveLength(10)
   })
 
-  it('conditions : 16 du livre plus l\'hypothermie du Gel (p. 88-89)', () => {
+  it('conditions : 16 du livre plus l\'hypothermie du Gel', () => {
     expect(KN_CONDITION_KEYS).toHaveLength(17)
   })
 
-  it('Rot : 8 stades (p. 87)', () => {
+  it('Rot : 8 stades', () => {
     expect(KN_ROT_MAX_STAGE).toBe(8)
   })
 
-  it('compétences d\'arme : les quatre de l\'index (p. 253) ; hors combat : ni armes ni Esquive', () => {
+  it('compétences d\'arme : les quatre de l\'index ; hors combat : ni armes ni Esquive', () => {
     expect([...KN_WEAPON_SKILL_KEYS].sort()).toEqual(
       ['bladedWeapons', 'bludgeoningWeapons', 'shaftedWeapons', 'unarmedCombat'],
     )
