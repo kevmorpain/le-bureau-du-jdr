@@ -192,6 +192,7 @@ import {
   type KnUsageDie,
   type KnVisitKind,
 } from '~~/shared/ker-nethalas/run'
+import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
@@ -233,6 +234,7 @@ function newDomain() {
 
 function enter(kind: KnVisitKind) {
   character.value.run = knStartVisit(character.value.run, kind)
+  character.value.status = knResetUses(character.value.status, ['room'])
   character.value.aetherCurrent = props.resolved.maxVitals.aether.effective
 }
 

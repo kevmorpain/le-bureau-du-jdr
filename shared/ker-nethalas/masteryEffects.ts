@@ -1,12 +1,96 @@
-import { KN_BOUNDS } from './character'
-import type { KnActiveSource, KnEffect } from './effects'
-import type { KnMasteryAbility, KnMastery } from './masteries'
-import { knCustomEntryEffect } from './resolve'
 import type { KnMasteryEntry } from './amulets'
+import { KN_BOUNDS } from './character'
+import { knDiceLabel, knRollDice, type KnDiceRoll } from './dice'
+import type { KnActiveSource, KnEffect, KnVitalKey } from './effects'
+import type { KnMastery, KnMasteryAbility, KnSelfEffect } from './masteries'
+import { knCustomEntryEffect } from './resolve'
+import type { KnRng } from './run'
+import type { KnStatus, KnUseLimit } from './status'
+import { knGainTemporary, knHealWounds, knTemporaryOf } from './vitals'
 
 export const knSustainedKey = (masteryKey: string, tier: number) => `${masteryKey}:${tier}`
 
 export const knAbilityIsPassive = (ability: Pick<KnMasteryAbility, 'action'>) => ability.action.startsWith('Passif')
+
+// Un passif n'a un bouton que s'il fait quelque chose de mesurable : un effet sur soi, ou un usage limité à marquer.
+export const knAbilityIsUsable = (ability: Pick<KnMasteryAbility, 'action' | 'self' | 'limit'>) =>
+  !knAbilityIsPassive(ability) || !!ability.self?.length || !!ability.limit
+
+export const KN_COMBAT_XP = { combat: 50, overseer: 200 } as const
+
+export const knUseLimitLabel: Record<KnUseLimit, string> = {
+  combat: 'une fois par combat',
+  room: 'une fois par pièce',
+  rest: 'une fois par repos',
+  campRest: 'une fois par camp',
+}
+
+export const knIsUsedUp = (status: Pick<KnStatus, 'used'>, key: string) => !!status.used?.some(use => use.key === key)
+
+export function knMarkUsed(status: KnStatus, key: string, limit: KnUseLimit): KnStatus {
+  return knIsUsedUp(status, key) ? status : { ...status, used: [...(status.used ?? []), { key, limit }] }
+}
+
+export const knUnmarkUsed = (status: KnStatus, key: string): KnStatus =>
+  status.used ? { ...status, used: status.used.filter(use => use.key !== key) } : status
+
+export interface KnSelfState {
+  toughness: number
+  toughnessMax: number
+  health: number
+  healthMax: number
+  sanity: number
+  sanityMax: number
+  aether: number
+  aetherMax: number
+  status: KnStatus
+}
+
+export interface KnSelfOutcome {
+  effect: KnSelfEffect
+  label: string
+  roll: KnDiceRoll
+}
+
+const raise = (current: number, amount: number, max: number) => Math.max(current, Math.min(max, current + amount))
+
+// Chaque effet jette ses dés. Un gain ne ramène pas sous sa valeur une jauge déjà au-dessus de son maximum.
+export function knApplySelfEffects(
+  effects: readonly KnSelfEffect[],
+  state: KnSelfState,
+  rng: KnRng = Math.random,
+): { state: KnSelfState, outcomes: KnSelfOutcome[] } {
+  let next = { ...state }
+  const outcomes: KnSelfOutcome[] = []
+
+  for (const effect of effects) {
+    const roll = knRollDice(effect.dice, rng)
+    outcomes.push({ effect, label: knDiceLabel(effect.dice), roll })
+
+    if (effect.kind === 'woundsHeal') {
+      const healed = knHealWounds({ ...next, temporaryToughness: knTemporaryOf(next.status, 'toughness') }, roll.total)
+      next = { ...next, toughness: healed.toughness, health: healed.health }
+    } else if (effect.kind === 'temporary') {
+      next = { ...next, status: knGainTemporary(next.status, effect.vital, roll.total) }
+    } else {
+      next = recover(next, effect.vital, roll.total)
+    }
+  }
+
+  return { state: next, outcomes }
+}
+
+function recover(state: KnSelfState, vital: KnVitalKey, amount: number): KnSelfState {
+  if (vital === 'toughness') return { ...state, toughness: raise(state.toughness, amount, state.toughnessMax) }
+  if (vital === 'health') return { ...state, health: raise(state.health, amount, state.healthMax) }
+  if (vital === 'sanity') return { ...state, sanity: raise(state.sanity, amount, state.sanityMax) }
+  return { ...state, aether: raise(state.aether, amount, state.aetherMax) }
+}
+
+// Ce que chaque Maîtrise possédée donne quand un combat est remporté.
+export function knCombatWonEffects(masteries: readonly KnMastery[], entries: readonly KnMasteryEntry[]): KnSelfEffect[] {
+  return entries.flatMap(entry => masteries.find(mastery => mastery.key === entry.key)?.feature.onCombatWon ?? [])
+}
 
 const unlockedAbilities = (mastery: KnMastery, entry: KnMasteryEntry) =>
   mastery.abilities.filter(ability => ability.tier <= entry.tiers)

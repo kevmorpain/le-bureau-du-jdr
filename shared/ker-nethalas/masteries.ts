@@ -1,5 +1,7 @@
 import { z } from 'zod'
-import { KN_STATUS_BOUNDS, knCustomEntrySchema } from './status'
+import { knDiceSchema } from './dice'
+import { KN_VITAL_KEYS } from './effects'
+import { KN_STATUS_BOUNDS, KN_USE_LIMITS, knCustomEntrySchema } from './status'
 import { boundedInt } from './zodHelpers'
 
 export const KN_MASTERY_TIERS = 5
@@ -13,6 +15,20 @@ const slug = knMasteryKeySchema
 const knMasteryEffectsSchema = z.array(knCustomEntrySchema).max(KN_STATUS_BOUNDS.customEntries)
 
 const knCostSchema = boundedInt({ min: 0, max: 99 })
+
+const knVitalKeySchema = z.enum(KN_VITAL_KEYS)
+
+// Ce qu'une aptitude fait au survivant lui-même, avec un jet de dés : soigner des Blessures (Robustesse puis Santé),
+// récupérer une jauge, gagner des points temporaires.
+export const knSelfEffectSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('woundsHeal'), dice: knDiceSchema }),
+  z.object({ kind: z.literal('recover'), vital: knVitalKeySchema, dice: knDiceSchema }),
+  z.object({ kind: z.literal('temporary'), vital: knVitalKeySchema, dice: knDiceSchema }),
+])
+
+export type KnSelfEffect = z.infer<typeof knSelfEffectSchema>
+
+const knSelfEffectsSchema = z.array(knSelfEffectSchema).max(4)
 
 export const knMasteryAbilitySchema = z.object({
   tier: boundedInt({ min: 1, max: KN_MASTERY_TIERS }),
@@ -29,6 +45,9 @@ export const knMasteryAbilitySchema = z.object({
   // Tient lieu de source de lumière tant qu'elle est active.
   light: z.boolean().optional(),
   effects: knMasteryEffectsSchema.optional(),
+  // Fréquence d'utilisation, suivie par la fiche ; « une fois par cible » ou par arme reste du texte.
+  limit: z.enum(KN_USE_LIMITS).optional(),
+  self: knSelfEffectsSchema.optional(),
   text: z.string().trim().min(1).max(2000),
 })
 
@@ -39,6 +58,7 @@ const knMasteryTextSchema = z.object({
 
 const knMasteryFeatureSchema = knMasteryTextSchema.extend({
   effects: knMasteryEffectsSchema.optional(),
+  onCombatWon: knSelfEffectsSchema.optional(),
 })
 
 export const KN_MASTERY_TRAINING_COUNT = 6

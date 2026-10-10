@@ -49,6 +49,60 @@
           :max="KN_BOUNDS.damageModifier.max"
         />
       </div>
+
+      <div class="space-y-2 border-t border-default pt-3">
+        <p class="text-sm font-medium">
+          Points temporaires
+        </p>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <KnNumberField
+            v-for="vital in VITALS"
+            :key="vital"
+            :model-value="knTemporaryOf(character.status, vital)"
+            :label="$t(`ker_nethalas.vitals.${vital}`)"
+            :aria-label="`${$t(`ker_nethalas.vitals.${vital}`)} temporaire`"
+            :min="KN_STATUS_BOUNDS.temporary.min"
+            :max="KN_STATUS_BOUNDS.temporary.max"
+            @update:model-value="character.status = knSetTemporary(character.status, vital, $event)"
+          />
+        </div>
+        <p class="text-xs text-muted">
+          Ils s'ajoutent au maximum, se dépensent avant la Robustesse quand on subit des dégâts, et disparaissent au prochain
+          repos.
+        </p>
+      </div>
+
+      <div class="space-y-2 border-t border-default pt-3">
+        <p class="text-sm font-medium">
+          Dégâts et soins
+        </p>
+        <div class="flex flex-wrap items-end gap-3">
+          <KnNumberField
+            v-model="amount"
+            label="Montant"
+            :min="0"
+            :max="KN_BOUNDS.vital.max"
+            class="w-32"
+          />
+          <UButton
+            color="error"
+            variant="soft"
+            @click="hurt"
+          >
+            Subir
+          </UButton>
+          <UButton
+            variant="soft"
+            @click="healWounds"
+          >
+            Soigner des Blessures
+          </UButton>
+        </div>
+        <p class="text-xs text-muted">
+          Les dégâts retirent la Robustesse temporaire, puis la Robustesse, puis la Santé. Soigner des Blessures remplit d'abord
+          la Robustesse, puis la Santé, jusqu'à leur maximum effectif.
+        </p>
+      </div>
     </div>
   </UCard>
 </template>
@@ -57,12 +111,43 @@
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import { KN_STATUS_BOUNDS } from '~~/shared/ker-nethalas/status'
+import { knHealWounds, knSetTemporary, knTakeDamage, knTemporaryOf, type KnWoundsState } from '~~/shared/ker-nethalas/vitals'
 
-defineProps<{
+const props = defineProps<{
   resolved: KnResolvedSheet
 }>()
 
 const VITALS = ['health', 'toughness', 'aether', 'sanity'] as const
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+const toast = useToast()
+
+const amount = ref(1)
+
+const woundsState = (): KnWoundsState => ({
+  toughness: character.value.toughnessCurrent,
+  toughnessMax: props.resolved.maxVitals.toughness.effective,
+  health: character.value.healthCurrent,
+  healthMax: props.resolved.maxVitals.health.effective,
+  temporaryToughness: knTemporaryOf(character.value.status, 'toughness'),
+})
+
+function apply(next: KnWoundsState) {
+  const c = character.value
+  c.toughnessCurrent = next.toughness
+  c.healthCurrent = next.health
+  if (next.temporaryToughness !== knTemporaryOf(c.status, 'toughness')) {
+    c.status = knSetTemporary(c.status, 'toughness', next.temporaryToughness)
+  }
+}
+
+function hurt() {
+  const next = knTakeDamage(woundsState(), amount.value)
+  apply(next)
+  if (next.health === 0) toast.add({ title: 'La Santé tombe à 0 : le survivant meurt.', color: 'error' })
+}
+
+const healWounds = () => apply(knHealWounds(woundsState(), amount.value))
 </script>

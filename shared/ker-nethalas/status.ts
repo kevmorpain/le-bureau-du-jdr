@@ -6,6 +6,12 @@ import { KN_TARGET_GROUPS, KN_VITAL_KEYS } from './effects'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from './skills'
 import { boundedInt, shapeOf } from './zodHelpers'
 
+// Fréquences d'utilisation du livre (p. 123) : « par repos » vaut pour une pause comme pour un camp, « par camp » pour le
+// camp seul ; « par combat » et « par pièce » se remettent à zéro à la fin du combat et à l'entrée dans une pièce.
+export const KN_USE_LIMITS = ['combat', 'room', 'rest', 'campRest'] as const
+
+export type KnUseLimit = (typeof KN_USE_LIMITS)[number]
+
 export const KN_STATUS_BOUNDS = {
   conditionValue: { min: 0, max: 999 },
   counter: { min: 0, max: 99 },
@@ -15,6 +21,8 @@ export const KN_STATUS_BOUNDS = {
   custom: 20,
   customEntries: 20,
   sustained: 30,
+  used: 30,
+  temporary: { min: 0, max: 9999 },
 } as const
 
 const knSkill = z.enum(KN_SKILL_KEYS)
@@ -46,6 +54,25 @@ export const knCustomModifierSchema = z.object({
   note: z.string().trim().max(500).optional(),
 })
 
+const knTemporaryAmount = boundedInt(KN_STATUS_BOUNDS.temporary)
+
+// Points qui s'ajoutent au maximum, jusqu'à être dépensés ou jusqu'au prochain repos (p. 13).
+export const knTemporarySchema = z.object({
+  health: knTemporaryAmount.optional(),
+  toughness: knTemporaryAmount.optional(),
+  aether: knTemporaryAmount.optional(),
+  sanity: knTemporaryAmount.optional(),
+})
+
+export type KnTemporary = z.infer<typeof knTemporarySchema>
+
+export const knUsedAbilitySchema = z.object({
+  key: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}:[1-5]$/),
+  limit: z.enum(KN_USE_LIMITS),
+})
+
+export type KnUsedAbility = z.infer<typeof knUsedAbilitySchema>
+
 export const knStatusSchema = z.object({
   conditions: z.array(knConditionEntrySchema).max(KN_STATUS_BOUNDS.conditions)
     .refine(list => new Set(list.map(c => c.key)).size === list.length, { message: 'Condition en double' }),
@@ -54,6 +81,9 @@ export const knStatusSchema = z.object({
   custom: z.array(knCustomModifierSchema).max(KN_STATUS_BOUNDS.custom),
   // Aptitudes de Maîtrise Maintenues, actives (`<Maîtrise>:<palier>`) ; absent chez les survivants d'avant, donc optionnel.
   sustained: z.array(z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}:[1-5]$/)).max(KN_STATUS_BOUNDS.sustained).optional(),
+  // Aptitudes à usage limité déjà utilisées depuis la dernière remise à zéro de leur fréquence.
+  used: z.array(knUsedAbilitySchema).max(KN_STATUS_BOUNDS.used).optional(),
+  temporary: knTemporarySchema.optional(),
 })
 
 export type KnStatus = z.infer<typeof knStatusSchema>

@@ -403,6 +403,35 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN34 — Points temporaires, Blessures, fréquences d'usage et effets sur soi
+- **Règles sourcées** (livre v1.2) : *Temporary* (p. 13) : un bonus temporaire dure jusqu'à être dépensé ou jusqu'à ce qu'on
+  se repose, et peut dépasser le maximum ; les dégâts retirent d'abord la Robustesse, puis la Santé (p. 81) ; « récupérer X
+  Blessures » remplit d'abord toute la Robustesse, puis la Santé (p. 13 et 86) ; fréquences (p. 123) : « une fois par repos »
+  vaut pour une pause comme pour un camp, « une fois par camp » pour le camp seul ; l'expérience d'un combat vaincu est de
+  50, celle d'un Overseer de 200 (p. 62-63). Le PM confirme que le temporaire se dépense avant le reste.
+- **État** (`status`, optionnel : pas de migration) : `temporary` (`health`, `toughness`, `aether`, `sanity`), et `used`, la
+  liste des aptitudes à fréquence déjà utilisées, avec leur fréquence (`combat`, `room`, `rest`, `campRest`), pour que la
+  remise à zéro ne dépende pas du contenu chargé.
+- **Fonctions pures** : `shared/ker-nethalas/vitals.ts` (`knTakeDamage`, `knHealWounds`, gains et effacement du temporaire,
+  `knRest`, `knResetUses`), `dice.ts` (dés `{ nombre, faces, bonus }`, un montant fixe a zéro dé), `masteryEffects.ts`
+  (`knApplySelfEffects`, usage limité, gains de fin de combat). `knApplyCriticalEffects` dépense la Robustesse temporaire
+  avant la Robustesse (une seule règle de dégâts pour la fiche).
+- **Format public** (champs optionnels) : `limit` et `self` sur une aptitude ; `onCombatWon` sur un trait. `self` : soigner
+  des Blessures (`woundsHeal`), récupérer une jauge (`recover`), gagner des points temporaires (`temporary`), chacun avec ses
+  dés. Le contenu privé porte quatre aptitudes avec effet sur soi, un trait avec gain de fin de combat, et huit fréquences relevées dans les textes.
+- **Fiche** : « Points temporaires » et « Dégâts et soins » dans les Jauges (montant, « Subir », « Soigner des Blessures »,
+  avec les maxima effectifs) ; « Utiliser » jette les dés d'effet, les applique, marque l'usage et le dit dans une
+  notification ; un passif à fréquence a un bouton « Marquer utilisée » ; « Annuler » défait un marquage ; une carte « Fin de
+  combat » (combat remporté +50 XP et gains des Maîtrises, Overseer vaincu +200 XP, combat terminé sans victoire) ; un repos
+  efface le temporaire et les usages concernés, une entrée dans une pièce remet à zéro les usages « par pièce ».
+- **Interprétations** : plusieurs gains temporaires s'additionnent (le livre ne dit pas qu'on garde le meilleur) ; toute
+  entrée dans une pièce, y compris un retour dans une zone explorée, remet à zéro « une fois par pièce » ; le trait « pour
+  chaque rencontre de combat vaincue » ne se déclenche pas pour un Overseer, que la liste d'expérience traite à part.
+- **Laissé de côté** : les fréquences « par cible », « par adversaire » ou « par arme », qui restent du texte ; les soins
+  égaux aux dégâts infligés, ou par composant dépensé (variables) ; les activités de camp ajoutées par un trait ; la
+  Robustesse temporaire conditionnelle (réduire une compétence pour en gagner) ; les points temporaires de Santé, que le livre
+  ne donne qu'aux créatures.
+
 ### KN33 — Effets des Maîtrises : coûts structurés, aptitudes Maintenues et effets chiffrés dans le moteur
 - **Règles sourcées** (livre v1.2, p. 21) : une aptitude Maintenue retranche son coût en Éther de l'Éther **maximum** tant
   qu'elle dure (maximum 25 → 20 pour un coût de 5), et s'allume ou s'éteint hors combat ; les aptitudes Magiques se défendent
@@ -538,7 +567,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4d — Maîtrises (suite)** | les 18 autres Maîtrises, en quatre lots ; issue X13 (#260) | contenu écrit, validé par le schéma, vérifié par recoupement des nombres ; à relire par le PM |
 | **4e — Amulettes** | amulettes possédées, une portée, paliers communs, tirage au D20 (KN32) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
-| **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, « combat remporté », activités de camp, limites par repos ou combat | à faire |
+| **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
+| **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, modificateurs du test de camp | à proposer |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
 | **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
@@ -643,6 +673,19 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 4f-3 : points temporaires, Blessures, fréquences, effets sur soi
+- Règles précisées par le PM puis vérifiées dans le livre (voir la tranche 4e) ; le PM demande de garder la notion du
+  livre, « dépensé », pour le temporaire. Décision KN34, sans migration.
+- Vérifié sur une base vierge, survivant de niveau 6 : « Utiliser » le soin de Blessures d'une aptitude de 4 Éther et 2
+  Épuisement (Éther 20 → 16, Épuisement 2, Robustesse 10 → 11 sur un D4) ; une aptitude « par combat » utilisée puis bloquée,
+  libérée par « Combat terminé » ; « Combat remporté » : +50 XP et +1 Robustesse temporaire par le trait d'une Maîtrise ;
+  3 de Robustesse temporaire, 5 dégâts subis : le temporaire passe à 0 et la Robustesse perd 2 ; 5 Blessures soignées :
+  Robustesse +5. **Non vérifié** dans le navigateur : l'effacement du temporaire et des usages par une pause ou un camp, la remise
+  à zéro « par pièce » à l'entrée dans une pièce (couvertes par les tests des fonctions pures).
+- Le contrôle anti-fuite avant commit compare désormais le diff, lignes rejointes, à tous les noms du contenu privé : il a
+  trouvé un nom d'aptitude coupé en deux lignes dans cette doc, présent depuis la tranche 4c et corrigé ici (il reste dans
+  un commit non poussé de la branche).
 
 ### 2026-10-11 — Tranche 4f-1 et 4f-2 : coûts, aptitudes Maintenues, effets chiffrés
 - Demande du PM : appliquer les effets chiffrés des Maîtrises et pouvoir utiliser une aptitude d'un bouton, avec son coût.

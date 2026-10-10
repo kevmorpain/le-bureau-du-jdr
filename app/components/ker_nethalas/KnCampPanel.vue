@@ -162,6 +162,7 @@ import {
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCurrentDomain, knRollDie } from '~~/shared/ker-nethalas/run'
+import { knRest } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
@@ -222,6 +223,7 @@ function finish() {
   c.sanityCurrent = outcome.state.sanity
   c.exhaustion = Math.min(KN_BOUNDS.exhaustion.max, outcome.state.exhaustion)
   c.provisions = outcome.provisions
+  c.status = knRest(c.status, 'camp')
 
   const lines = [
     `Test de Camp : ${roll.value} ${signed(preview.value.checkModifier)} = ${outcome.total}, ${outcome.success ? 'réussi' : 'raté'}.`,

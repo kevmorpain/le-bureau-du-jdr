@@ -1,6 +1,7 @@
 import type { KnRollMode } from './resolve'
 import { knRollDie, type KnRng } from './run'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, KN_WEAPON_SKILL_KEYS } from './skills'
+import { knTakeDamage } from './vitals'
 
 export const KN_DIFFICULTY_KEYS = ['childsPlay', 'effortless', 'easy', 'normal', 'demanding', 'hard', 'impossible'] as const
 
@@ -139,6 +140,8 @@ export interface KnVitalsState {
   toughnessMax: number
   health: number
   healthMax: number
+  // Robustesse temporaire, dépensée avant la Robustesse ; absente tant que l'appelant ne la suit pas.
+  temporaryToughness?: number
   sanity: number
   sanityMax: number
   exhaustion: number
@@ -158,9 +161,10 @@ export function knApplyCriticalEffects(effects: KnCriticalEffect[], state: KnVit
     else if (effect.type === 'sanity') next.sanity = adjust(next.sanity, effect.amount, next.sanityMax)
     else if (effect.type === 'exhaustion') next.exhaustion = adjust(next.exhaustion, effect.amount, next.exhaustionMax)
     else if (effect.type === 'damage') {
-      const absorbed = Math.min(next.toughness, effect.amount)
-      next.toughness -= absorbed
-      next.health = Math.max(0, next.health - (effect.amount - absorbed))
+      const hit = knTakeDamage({ ...next, temporaryToughness: next.temporaryToughness ?? 0 }, effect.amount)
+      next.toughness = hit.toughness
+      next.health = hit.health
+      if (next.temporaryToughness !== undefined) next.temporaryToughness = hit.temporaryToughness
     }
   }
   return next

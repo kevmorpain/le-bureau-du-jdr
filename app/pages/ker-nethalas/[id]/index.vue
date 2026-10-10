@@ -28,6 +28,12 @@
       :resolved
     />
 
+    <KnCombatActions
+      v-model:character="character"
+      :masteries
+      :resolved
+    />
+
     <KnRestSection
       v-model:character="character"
       :resolved

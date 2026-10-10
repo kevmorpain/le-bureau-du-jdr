@@ -1,17 +1,26 @@
 import { describe, it, expect } from 'vitest'
 import { knMasteriesContentSchema } from '../../shared/ker-nethalas/masteries'
 import {
+  KN_COMBAT_XP,
   knAbilityBlockers,
   knAbilityIsPassive,
+  knAbilityIsUsable,
+  knApplySelfEffects,
+  knCombatWonEffects,
   knCostSummary,
+  knIsUsedUp,
+  knMarkUsed,
   knMasteryProvidesLight,
   knMasterySources,
   knPayAbility,
   knSustainBlockers,
   knSustainedKey,
   knToggleSustained,
+  knUnmarkUsed,
+  type KnSelfState,
 } from '../../shared/ker-nethalas/masteryEffects'
 import { knStatusSchema, emptyKnStatus } from '../../shared/ker-nethalas/status'
+import { knTemporaryOf } from '../../shared/ker-nethalas/vitals'
 import { fakeMastery } from '../fixtures/knMasteries'
 
 const withAbility = (tier: number, patch: Record<string, unknown>, feature?: Record<string, unknown>) => {
@@ -118,6 +127,93 @@ describe('lumière apportée par une aptitude', () => {
 
   it('une aptitude de lumière non Maintenue agit dès qu\'elle est débloquée', () => {
     expect(knMasteryProvidesLight([withAbility(1, { light: true })], [entry('alpha', 1)], [])).toBe(true)
+  })
+})
+
+describe('effets sur soi', () => {
+  const state = (over: Partial<KnSelfState> = {}): KnSelfState => ({
+    toughness: 10, toughnessMax: 25, health: 12, healthMax: 15, sanity: 5, sanityMax: 14, aether: 6, aetherMax: 20,
+    status: emptyKnStatus(), ...over,
+  })
+  const d4 = { count: 1, sides: 4, bonus: 0 }
+  const fixed = (bonus: number) => ({ count: 0, sides: 0, bonus })
+  const rng = () => 0.5
+
+  it('soigne des Blessures par la Robustesse puis la Santé', () => {
+    const { state: next, outcomes } = knApplySelfEffects([{ kind: 'woundsHeal', dice: { count: 2, sides: 6, bonus: 0 } }], state({ toughness: 22 }), rng)
+
+    expect(outcomes[0]).toMatchObject({ label: '2D6', roll: { rolls: [4, 4], total: 8 } })
+    expect(next).toMatchObject({ toughness: 25, health: 15 })
+  })
+
+  it('récupère une jauge sans dépasser son maximum, ni ramener en arrière une jauge au-dessus', () => {
+    const { state: next } = knApplySelfEffects([
+      { kind: 'recover', vital: 'sanity', dice: fixed(20) },
+      { kind: 'recover', vital: 'aether', dice: fixed(3) },
+    ], state({ aether: 25 }), rng)
+
+    expect(next).toMatchObject({ sanity: 14, aether: 25 })
+  })
+
+  it('ajoute des points temporaires, qui s\'additionnent', () => {
+    const { state: next } = knApplySelfEffects([
+      { kind: 'temporary', vital: 'toughness', dice: fixed(5) },
+      { kind: 'temporary', vital: 'toughness', dice: d4 },
+    ], state(), rng)
+
+    expect(knTemporaryOf(next.status, 'toughness')).toBe(8)
+    expect(next.toughness).toBe(10)
+  })
+
+  it('ne modifie pas l\'état d\'origine', () => {
+    const original = state()
+    knApplySelfEffects([{ kind: 'recover', vital: 'health', dice: fixed(2) }, { kind: 'temporary', vital: 'sanity', dice: fixed(2) }], original, rng)
+
+    expect(original).toEqual(state())
+  })
+
+  it('le format d\'une Maîtrise accepte ces effets, une fréquence et un gain de fin de combat', () => {
+    const mastery = withAbility(1, { limit: 'campRest', self: [{ kind: 'woundsHeal', dice: d4 }] }, {
+      onCombatWon: [{ kind: 'temporary', vital: 'toughness', dice: fixed(1) }],
+    })
+
+    expect(knMasteriesContentSchema.safeParse([mastery]).success).toBe(true)
+    expect(knMasteriesContentSchema.safeParse([withAbility(1, { limit: 'week' })]).success).toBe(false)
+    expect(knMasteriesContentSchema.safeParse([withAbility(1, { self: [{ kind: 'recover', vital: 'mana', dice: d4 }] })]).success).toBe(false)
+  })
+
+  it('rassemble les gains de fin de combat des Maîtrises possédées', () => {
+    const rich = withAbility(1, {}, { onCombatWon: [{ kind: 'temporary', vital: 'toughness', dice: fixed(1) }] })
+    const other = { ...fakeMastery('beta') }
+
+    expect(knCombatWonEffects([rich, other], [entry('alpha', 1), entry('beta', 1)])).toHaveLength(1)
+    expect(knCombatWonEffects([rich, other], [entry('beta', 1)])).toEqual([])
+    expect(knCombatWonEffects([rich], [entry('omega', 3)])).toEqual([])
+  })
+})
+
+describe('usage limité', () => {
+  it('une aptitude à fréquence se marque utilisée une seule fois, et se démarque', () => {
+    const marked = knMarkUsed(emptyKnStatus(), 'alpha:3', 'rest')
+
+    expect(knIsUsedUp(marked, 'alpha:3')).toBe(true)
+    expect(knIsUsedUp(marked, 'alpha:4')).toBe(false)
+    expect(knMarkUsed(marked, 'alpha:3', 'rest').used).toHaveLength(1)
+    expect(knIsUsedUp(knUnmarkUsed(marked, 'alpha:3'), 'alpha:3')).toBe(false)
+    expect(knUnmarkUsed(emptyKnStatus(), 'alpha:3')).toEqual(emptyKnStatus())
+  })
+
+  it('un passif n\'a un bouton que s\'il a un effet sur soi ou un usage limité', () => {
+    const passive = { action: 'Passif' }
+
+    expect(knAbilityIsUsable(passive)).toBe(false)
+    expect(knAbilityIsUsable({ ...passive, limit: 'campRest' })).toBe(true)
+    expect(knAbilityIsUsable({ ...passive, self: [{ kind: 'woundsHeal', dice: { count: 1, sides: 4, bonus: 0 } }] })).toBe(true)
+    expect(knAbilityIsUsable({ action: '1 Action Standard' })).toBe(true)
+  })
+
+  it('l\'expérience d\'un combat vaincu vient du livre', () => {
+    expect(KN_COMBAT_XP).toEqual({ combat: 50, overseer: 200 })
   })
 })
 
