@@ -32,6 +32,14 @@
             <h3 class="flex-1 text-lg font-semibold">
               {{ find(pick.key)!.name }}
               <UBadge
+                v-if="pick.amulet"
+                label="Amulette"
+                color="warning"
+                variant="subtle"
+                size="md"
+                class="ml-2 align-middle"
+              />
+              <UBadge
                 :label="`${pick.tiers} / ${KN_MASTERY_TIERS}`"
                 variant="subtle"
                 size="md"
@@ -49,6 +57,7 @@
               size="sm"
               variant="ghost"
               color="neutral"
+              :disabled="pick.amulet && pick.tiers === 0"
               :aria-label="`Reprendre le dernier palier de ${find(pick.key)!.name}`"
               @click="lock(pick.key)"
             >
@@ -110,7 +119,7 @@
       </article>
 
       <div
-        v-if="character.masteryPicks.length < KN_MAX_TRAINED_MASTERIES"
+        v-if="trainedCount < KN_MAX_TRAINED_MASTERIES"
         class="space-y-2"
       >
         <p class="text-sm font-medium">
@@ -130,6 +139,31 @@
           Aucun point d'Aptitude à dépenser.
         </p>
       </div>
+
+      <div class="space-y-2 rounded-md border border-default p-3">
+        <p class="text-sm font-medium">
+          Amulette
+        </p>
+        <p class="text-xs text-muted">
+          Une amulette donne accès à une troisième Maîtrise, dont le trait est actif tant qu'elle est portée. Les paliers
+          débloqués avec l'amulette restent les mêmes quand on en change, ce qui ne se fait qu'au camp.
+        </p>
+        <KnAddPicker
+          :items="amuletItems"
+          :placeholder="amulet ? 'Changer d\'amulette (au camp)' : 'Ajouter une amulette'"
+          class="w-full sm:w-96"
+          @pick="pickAmulet"
+        />
+        <UButton
+          v-if="amulet && amulet.tiers === 0"
+          size="sm"
+          variant="ghost"
+          color="neutral"
+          @click="dropAmulet"
+        >
+          Retirer l'amulette
+        </UButton>
+      </div>
     </div>
   </UCard>
 </template>
@@ -141,7 +175,12 @@ import {
   KN_MASTERY_TIERS,
   KN_MAX_TRAINED_MASTERIES,
   knAbilityPointsUnspent,
+  knAddAmulet,
+  knAmuletPick,
+  knCanWearAmulet,
+  knDropAmulet,
   knLockMastery,
+  knSwapAmulet,
   knUnlockMastery,
   type KnMastery,
 } from '~~/shared/ker-nethalas/masteries'
@@ -161,6 +200,26 @@ const availableItems = computed<SelectItem[]>(() =>
     .filter(mastery => !character.value.masteryPicks.some(pick => pick.key === mastery.key))
     .map(mastery => ({ label: mastery.name, value: mastery.key })),
 )
+
+const trainedCount = computed(() => character.value.masteryPicks.filter(pick => !pick.amulet).length)
+const amulet = computed(() => knAmuletPick(character.value.masteryPicks))
+
+const amuletItems = computed<SelectItem[]>(() =>
+  (props.masteries ?? [])
+    .filter(mastery => mastery.key !== amulet.value?.key && knCanWearAmulet(character.value.masteryPicks, mastery.key))
+    .map(mastery => ({ label: mastery.name, value: mastery.key })),
+)
+
+const dropAmulet = () => {
+  character.value.masteryPicks = knDropAmulet(character.value.masteryPicks)
+}
+
+function pickAmulet(key: string | number) {
+  if (typeof key !== 'string' || !find(key)) return
+  character.value.masteryPicks = amulet.value
+    ? knSwapAmulet(character.value.masteryPicks, key)
+    : knAddAmulet(character.value.masteryPicks, key)
+}
 
 const unlock = (key: string) => {
   character.value.masteryPicks = knUnlockMastery(character.value.masteryPicks, key, character.value.level)

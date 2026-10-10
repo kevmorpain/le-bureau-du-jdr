@@ -6,10 +6,13 @@ import {
   knAbilityPointsSpent,
   knAbilityPointsTotal,
   knAbilityPointsUnspent,
+  knAddAmulet,
+  knDropAmulet,
   knLockMastery,
   knMasteriesContentSchema,
   knMasteryPicksSchema,
   knMasteryPickIssues,
+  knSwapAmulet,
   knUnlockMastery,
   type KnMasteryPick,
 } from '../../shared/ker-nethalas/masteries'
@@ -119,6 +122,76 @@ describe('débloquer et reprendre une aptitude', () => {
     expect(knLockMastery([{ key: 'alpha', tiers: 3 }, { key: 'beta', tiers: 1 }], 'alpha')).toEqual([{ key: 'alpha', tiers: 2 }, { key: 'beta', tiers: 1 }])
     expect(knLockMastery([{ key: 'alpha', tiers: 1 }, { key: 'beta', tiers: 1 }], 'alpha')).toEqual([{ key: 'beta', tiers: 1 }])
     expect(knLockMastery([{ key: 'beta', tiers: 1 }], 'alpha')).toEqual([{ key: 'beta', tiers: 1 }])
+  })
+})
+
+describe('amulette', () => {
+  const trained = [{ key: 'alpha', tiers: 2 }, { key: 'beta', tiers: 1 }]
+  const worn = (key: string, tiers: number): KnMasteryPick => ({ key, tiers, amulet: true })
+
+  it('est une troisième entrée, marquée, avec zéro à cinq paliers', () => {
+    expect(knMasteryPicksSchema.safeParse([...trained, worn('gamma', 0)]).success).toBe(true)
+    expect(knMasteryPicksSchema.safeParse([...trained, worn('gamma', 5)]).success).toBe(true)
+    expect(knMasteryPicksSchema.safeParse([...trained, worn('gamma', 6)]).success).toBe(false)
+  })
+
+  it('refuse deux amulettes, trois Maîtrises apprises, un doublon et une Maîtrise apprise sans palier', () => {
+    expect(knMasteryPicksSchema.safeParse([...trained, worn('gamma', 0), worn('delta', 0)]).success).toBe(false)
+    expect(knMasteryPicksSchema.safeParse([...trained, { key: 'gamma', tiers: 1 }]).success).toBe(false)
+    expect(knMasteryPicksSchema.safeParse([...trained, worn('alpha', 0)]).success).toBe(false)
+    expect(knMasteryPicksSchema.safeParse([{ key: 'alpha', tiers: 0 }]).success).toBe(false)
+  })
+
+  it('est accepté par la mise à jour d\'un survivant', () => {
+    expect(updateKnCharacterSchema.safeParse({ masteryPicks: [...trained, worn('gamma', 3)] }).success).toBe(true)
+  })
+
+  it('s\'ajoute sans coûter de point, une seule fois, et pas sur une Maîtrise apprise', () => {
+    expect(knAddAmulet(trained, 'gamma')).toEqual([...trained, worn('gamma', 0)])
+    expect(knAddAmulet(trained, 'alpha')).toEqual(trained)
+    expect(knAddAmulet([...trained, worn('gamma', 0)], 'delta')).toEqual([...trained, worn('gamma', 0)])
+    expect(knAbilityPointsUnspent(3, [...trained, worn('gamma', 0)])).toBe(1)
+  })
+
+  it('ses paliers coûtent des points, et se débloquent comme les autres', () => {
+    const picks = [...trained, worn('gamma', 0)]
+    const unlocked = knUnlockMastery(picks, 'gamma', 6)
+
+    expect(unlocked).toContainEqual(worn('gamma', 1))
+    expect(knAbilityPointsSpent(unlocked)).toBe(4)
+    expect(knUnlockMastery(picks, 'gamma', 2)).toEqual(picks)
+  })
+
+  it('une Maîtrise apprise ne se débloque pas en troisième quand l\'amulette occupe la place', () => {
+    expect(knUnlockMastery([...trained, worn('gamma', 0)], 'delta', 9)).toEqual([...trained, worn('gamma', 0)])
+    expect(knUnlockMastery([{ key: 'alpha', tiers: 1 }, worn('gamma', 1)], 'delta', 9)).toHaveLength(3)
+  })
+
+  it('reprendre un palier laisse l\'amulette portée, à zéro palier', () => {
+    expect(knLockMastery([...trained, worn('gamma', 1)], 'gamma')).toEqual([...trained, worn('gamma', 0)])
+    expect(knLockMastery([...trained, worn('gamma', 0)], 'gamma')).toEqual([...trained, worn('gamma', 0)])
+  })
+
+  it('changer d\'amulette garde le nombre de paliers, sauf vers une Maîtrise apprise', () => {
+    const picks = [...trained, worn('gamma', 3)]
+
+    expect(knSwapAmulet(picks, 'delta')).toEqual([...trained, worn('delta', 3)])
+    expect(knSwapAmulet(picks, 'alpha')).toEqual(picks)
+    expect(knSwapAmulet(trained, 'delta')).toEqual(trained)
+  })
+
+  it('se retire tant qu\'aucun palier n\'y est débloqué', () => {
+    expect(knDropAmulet([...trained, worn('gamma', 0)])).toEqual(trained)
+    expect(knDropAmulet([...trained, worn('gamma', 1)])).toEqual([...trained, worn('gamma', 1)])
+  })
+
+  it('ne modifie pas la liste d\'origine', () => {
+    const original = [...trained, worn('gamma', 1)]
+    knSwapAmulet(original, 'delta')
+    knDropAmulet(original)
+    knLockMastery(original, 'gamma')
+
+    expect(original).toEqual([...trained, worn('gamma', 1)])
   })
 })
 
