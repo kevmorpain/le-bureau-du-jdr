@@ -208,6 +208,16 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.goalPicks).toEqual(goalPicks)
   })
 
+  it('crée un survivant sans amulette et relit ses amulettes, portée et paliers', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Nuit'))
+    expect((await getKnCharacter(db, id))!.amulets).toEqual({ owned: [], equipped: null, tiers: 0 })
+
+    const amulets = { owned: ['gamma', 'delta'], equipped: 'delta', tiers: 2 }
+    await updateKnCharacter(db, id, { amulets })
+
+    expect((await getKnCharacter(db, id))!.amulets).toEqual(amulets)
+  })
+
   it('crée un survivant sans objectif quand aucun n\'est choisi', async () => {
     const { id } = await createKnCharacter(db, alice, validKnCreation('Sans objectif'))
 

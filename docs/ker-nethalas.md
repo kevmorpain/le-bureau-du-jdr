@@ -403,19 +403,31 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
-### KN32 — Amulette : une entrée de plus dans `masteryPicks`
-- **Décision** : une amulette donne accès à une troisième Maîtrise (livre, « Swapping Mastery Trees Granted by
-  Amulets »). C'est une entrée de `mastery_picks` marquée `amulet: true`, avec ses paliers de 0 à 5 : pas de colonne ni de
-  migration. Ses paliers comptent dans les points d'Aptitude dépensés comme ceux des Maîtrises apprises ; son trait est
-  actif dès qu'elle est portée, sans palier. Les Maîtrises apprises restent limitées à deux, et une amulette au plus.
-- **Fiche** : « Ajouter une amulette » (aucun point dépensé) ; « Changer d'amulette », qui garde le nombre de paliers
-  débloqués et ne se fait qu'au camp (rappel affiché, pas contrôlé) ; « Reprendre un palier » laisse l'amulette à 0 ;
-  « Retirer l'amulette » corrige un ajout par erreur, tant qu'aucun palier n'y est débloqué.
-- **Alternative écartée** : une colonne `amulet` séparée, qui demande une migration et double les calculs de points.
-- ⚠️ hypothèse : la Maîtrise d'une amulette ne peut pas être une Maîtrise déjà apprise (le livre ne le dit pas) ; elle
-  évite de compter deux fois les mêmes paliers.
-- **Laissé de côté** : l'amulette comme objet d'inventaire (tranche 7), le contrôle « au camp » de l'échange, et
-  l'amulette de la récompense de l'objectif « recommandé en premier », qui reste à ajouter à la main.
+### KN32 — Amulettes : possédées, une portée, des paliers communs
+- **Règles sourcées** (livre v1.2) : une amulette donne accès à une troisième Maîtrise (p. 21 et 63) ; on en trouve en butin
+  comme objet magique, et l'on tire alors une fois sur la table « Random Mastery » (p. 222 : un D20 sur les 20 Maîtrises,
+  dans l'ordre du livre) pour savoir laquelle (p. 224) ; avec deux amulettes ou plus qui donnent des Maîtrises
+  différentes, on les échange au camp, sans coût (p. 125) ; elles ne se vendent pas (p. 127) ; l'équipement a un
+  emplacement « Amulette » (p. 206). Les aptitudes débloquées pour la Maîtrise d'une amulette restent les mêmes d'une
+  amulette à l'autre, et le trait est actif dès qu'elle est portée (p. 63).
+- **Décision** : colonne `kn_characters.amulets` (migration `0141`), `{ owned, equipped, tiers }` : les Maîtrises des
+  amulettes possédées (deux amulettes peuvent donner la même), celle de l'amulette portée (qui doit être possédée), et les
+  paliers débloqués, de 0 à 5, partagés entre toutes les amulettes. Les paliers coûtent des points d'Aptitude comme ceux des
+  Maîtrises apprises (`knAbilityPointsUnspent(niveau, apprises, paliers de l'amulette)`).
+- **Amulette sans effet** : une amulette dont la Maîtrise est déjà apprise reste possédée (elle ne se vend pas) mais n'apporte
+  rien : `knAmuletMastery` renvoie `null`, la fiche l'indique, et ses paliers ne se débloquent pas. Ce comportement vient du
+  PM, qui le tient de l'auteur sur Discord ; ⚠️ il n'est pas dans le livre. Il vaut aussi pour un supplément qui ajouterait
+  des Maîtrises.
+- **Fiche** : le panneau « Amulettes » de la section Maîtrises liste les amulettes possédées (« Porter », « Ne plus porter »,
+  « Retirer »), en ajoute une choisie ou tirée au D20 (ordre du contenu chargé, qui reprend celui du livre : ⚠️ à revoir si un
+  supplément ajoute des Maîtrises), et la section Équipement rappelle l'amulette portée. Une amulette qui arrive est portée
+  d'office si l'emplacement est libre et qu'elle apporte quelque chose ; changer d'amulette ne se fait qu'au camp, l'outil ne
+  le contrôle pas.
+- **Alternatives écartées** : (a) une entrée de plus dans `mastery_picks`, qui ne sait pas représenter plusieurs amulettes
+  possédées ; (b) une seule amulette échangeable à volonté, première version de cette tranche, trop simple.
+- **Laissé de côté** : l'amulette comme objet d'inventaire à part entière et le butin qui en génère (tranche 7) ; l'amulette
+  de la récompense de l'objectif « recommandé en premier » s'ajoute à la main ; il existe aussi des reliques de type Amulette
+  sans Maîtrise (p. 240), qui ne relèvent pas de ce modèle.
 
 ### KN31 — Objectifs personnels : liste choisie, progrès noté à la main, récompense récupérée par un bouton
 - **Décision** : même schéma que KN30. Le **format** d'un objectif est public (`shared/ker-nethalas/goals.ts`, schéma
@@ -495,7 +507,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4c — Maîtrises (pilote)** | format public, contenu privé de deux Maîtrises (Faucheur abyssal, Arcaniste), étape de création, section de la fiche, points d'Aptitude (KN30) ; issue X13 (#260) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **4c bis — Objectifs personnels** | format public, contenu privé des 39 objectifs, étape de création (liste), section de la fiche (progrès à la main, récupération de la récompense, KN31) ; rattaché à X12 (#259) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **4d — Maîtrises (suite)** | les 18 autres Maîtrises, en quatre lots ; issue X13 (#260) | contenu écrit, validé par le schéma, vérifié par recoupement des nombres ; à relire par le PM |
-| **4e — Amulette** | troisième Maîtrise portée par une amulette, échange au camp (KN32) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
+| **4e — Amulettes** | amulettes possédées, une portée, paliers communs, tirage au D20 (KN32) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f — Effets des Maîtrises** | modificateurs chiffrés des traits et aptitudes passives dans le moteur, bouton « Utiliser » avec coût et effet pour les aptitudes actives ; à cadrer avec le PM | à proposer |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
 | **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
@@ -602,15 +614,23 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 
 ## Journal
 
-### 2026-10-11 — Tranche 4e : l'amulette
-- Demande du PM. Décision KN32 ; pas de migration (la colonne `mastery_picks` est un JSON). Le schéma accepte 0 à 5 paliers
-  pour l'amulette, et au moins 1 pour une Maîtrise apprise ; les fonctions `knAddAmulet`, `knSwapAmulet`, `knDropAmulet`
-  s'ajoutent à celles de KN30, dont `knUnlockMastery` et `knLockMastery` sont adaptées.
-- Vérifié dans le navigateur : ajout (0 / 5, trait visible, « Débloquer » grisé à 0 point, « Reprendre » grisé), sauvegarde
-  côté serveur, retrait. **Non vérifié** dans le navigateur : le changement d'amulette et le déblocage de ses paliers
-  (couverts par les tests des fonctions pures).
+### 2026-10-11 — Tranche 4e : les amulettes
+- Demande du PM, puis règles précisées par lui et **vérifiées dans le livre** (couche de texte du PDF) : p. 13 et 86
+  (« recover X Wounds » soigne d'abord toute la Robustesse, puis la Santé), p. 81 (les dégâts retirent d'abord de la
+  Robustesse, puis de la Santé), p. 13 (le *Temporary* dure jusqu'à être dépensé ou jusqu'à un repos, et dépasse le maximum ;
+  on le rencontre pour la Robustesse, la Santé mentale et l'Éther des joueurs, et pour la Santé de créatures), p. 125, 127, 206, 222, 224 pour les amulettes.
+  **Non écrit dans le livre** : que le temporaire soit consommé en premier (le livre dit « dépensé ») ; je suis la règle
+  du PM, comme D&D.
+- Une première version (une entrée marquée dans `mastery_picks`, commit `6ccca4a`) a été remplacée : elle ne savait pas
+  représenter plusieurs amulettes possédées. Décision KN32 ; migration `0141` (`amulets`), `shared/ker-nethalas/amulets.ts`,
+  panneau `KnAmuletsPanel`.
+- Vérifié sur une base vierge : tirage au D20 (portée d'office la première, la seconde reste dans le sac), « Porter » d'une
+  autre amulette, ligne « Amulette portée » de l'équipement, sauvegarde côté serveur. **Non vérifié** dans le navigateur :
+  amulette dont la Maîtrise est déjà apprise, déblocage de paliers de l'amulette (couverts par les tests des fonctions pures).
 - Le PM veut aussi les effets chiffrés des Maîtrises (Robustesse temporaire après un combat, +10 Endurance, activité de camp
-  de l'Émissaire) et un bouton d'utilisation des aptitudes avec leur coût : plan 4f, à cadrer.
+  de l'Émissaire) et un bouton d'utilisation des aptitudes avec leur coût : plan 4f. Constats pour la 4f : le livre dit
+  que « Maintenu » retranche le coût de l'Éther maximum tant que l'aptitude est active (p. 21), ce qui est un modificateur de
+  maximum de jauge, déjà géré par `status.custom` ; le modèle n'a aucun point temporaire (à créer).
 
 ### 2026-10-11 — Tranche 4d : les 18 autres Maîtrises
 - Le livre compte **20 Maîtrises** (pages 22 à 61, deux pages chacune), et non 21 : il en reste 18 après les deux pilotes.

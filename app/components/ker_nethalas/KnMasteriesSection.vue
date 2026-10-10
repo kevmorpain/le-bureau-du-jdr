@@ -23,16 +23,16 @@
       class="space-y-6"
     >
       <article
-        v-for="pick in character.masteryPicks"
-        :key="pick.key"
+        v-for="entry in entries"
+        :key="entry.key"
         class="space-y-3 rounded-md border border-default p-3"
       >
-        <template v-if="find(pick.key)">
+        <template v-if="find(entry.key)">
           <header class="flex flex-wrap items-center gap-3">
             <h3 class="flex-1 text-lg font-semibold">
-              {{ find(pick.key)!.name }}
+              {{ find(entry.key)!.name }}
               <UBadge
-                v-if="pick.amulet"
+                v-if="entry.amulet"
                 label="Amulette"
                 color="warning"
                 variant="subtle"
@@ -40,7 +40,7 @@
                 class="ml-2 align-middle"
               />
               <UBadge
-                :label="`${pick.tiers} / ${KN_MASTERY_TIERS}`"
+                :label="`${entry.tiers} / ${KN_MASTERY_TIERS}`"
                 variant="subtle"
                 size="md"
                 class="ml-2 align-middle"
@@ -48,42 +48,42 @@
             </h3>
             <UButton
               size="sm"
-              :disabled="unspent < 1 || pick.tiers >= KN_MASTERY_TIERS"
-              @click="unlock(pick.key)"
+              :disabled="unspent < 1 || entry.tiers >= KN_MASTERY_TIERS"
+              @click="unlock(entry)"
             >
-              Débloquer le palier {{ pick.tiers + 1 }}
+              Débloquer le palier {{ entry.tiers + 1 }}
             </UButton>
             <UButton
               size="sm"
               variant="ghost"
               color="neutral"
-              :disabled="pick.amulet && pick.tiers === 0"
-              :aria-label="`Reprendre le dernier palier de ${find(pick.key)!.name}`"
-              @click="lock(pick.key)"
+              :disabled="entry.tiers === 0"
+              :aria-label="`Reprendre le dernier palier de ${find(entry.key)!.name}`"
+              @click="lock(entry)"
             >
               Reprendre un palier
             </UButton>
           </header>
 
           <p class="text-sm text-muted">
-            {{ find(pick.key)!.summary }}
+            {{ find(entry.key)!.summary }}
           </p>
 
           <p class="rounded-md bg-elevated p-2 text-sm">
-            <span class="font-medium">{{ find(pick.key)!.feature.name }}.</span> {{ find(pick.key)!.feature.text }}
+            <span class="font-medium">{{ find(entry.key)!.feature.name }}.</span> {{ find(entry.key)!.feature.text }}
           </p>
 
           <ul class="space-y-3">
             <li
-              v-for="ability in find(pick.key)!.abilities"
+              v-for="ability in find(entry.key)!.abilities"
               :key="ability.tier"
-              :class="ability.tier <= pick.tiers ? '' : 'opacity-50'"
+              :class="ability.tier <= entry.tiers ? '' : 'opacity-50'"
             >
               <p class="flex flex-wrap items-center gap-2 text-sm font-medium">
                 <UIcon
-                  :name="ability.tier <= pick.tiers ? 'i-heroicons:lock-open' : 'i-heroicons:lock-closed'"
+                  :name="ability.tier <= entry.tiers ? 'i-heroicons:lock-open' : 'i-heroicons:lock-closed'"
                   class="size-4"
-                  :class="ability.tier <= pick.tiers ? 'text-success' : 'text-muted'"
+                  :class="ability.tier <= entry.tiers ? 'text-success' : 'text-muted'"
                 />
                 Palier {{ ability.tier }} — {{ ability.name }}
                 <UBadge
@@ -114,12 +114,12 @@
           v-else
           class="text-sm text-warning"
         >
-          La Maîtrise « {{ pick.key }} » n'est plus dans le contenu chargé.
+          La Maîtrise « {{ entry.key }} » n'est plus dans le contenu chargé.
         </p>
       </article>
 
       <div
-        v-if="trainedCount < KN_MAX_TRAINED_MASTERIES"
+        v-if="character.masteryPicks.length < KN_MAX_TRAINED_MASTERIES"
         class="space-y-2"
       >
         <p class="text-sm font-medium">
@@ -140,30 +140,10 @@
         </p>
       </div>
 
-      <div class="space-y-2 rounded-md border border-default p-3">
-        <p class="text-sm font-medium">
-          Amulette
-        </p>
-        <p class="text-xs text-muted">
-          Une amulette donne accès à une troisième Maîtrise, dont le trait est actif tant qu'elle est portée. Les paliers
-          débloqués avec l'amulette restent les mêmes quand on en change, ce qui ne se fait qu'au camp.
-        </p>
-        <KnAddPicker
-          :items="amuletItems"
-          :placeholder="amulet ? 'Changer d\'amulette (au camp)' : 'Ajouter une amulette'"
-          class="w-full sm:w-96"
-          @pick="pickAmulet"
-        />
-        <UButton
-          v-if="amulet && amulet.tiers === 0"
-          size="sm"
-          variant="ghost"
-          color="neutral"
-          @click="dropAmulet"
-        >
-          Retirer l'amulette
-        </UButton>
-      </div>
+      <KnAmuletsPanel
+        v-model:character="character"
+        :masteries
+      />
     </div>
   </UCard>
 </template>
@@ -171,19 +151,21 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knAmuletMastery, knLockAmuletTier, knUnlockAmuletTier } from '~~/shared/ker-nethalas/amulets'
 import {
   KN_MASTERY_TIERS,
   KN_MAX_TRAINED_MASTERIES,
   knAbilityPointsUnspent,
-  knAddAmulet,
-  knAmuletPick,
-  knCanWearAmulet,
-  knDropAmulet,
   knLockMastery,
-  knSwapAmulet,
   knUnlockMastery,
   type KnMastery,
 } from '~~/shared/ker-nethalas/masteries'
+
+interface Entry {
+  key: string
+  tiers: number
+  amulet: boolean
+}
 
 const props = defineProps<{
   masteries: KnMastery[] | null
@@ -193,7 +175,15 @@ const character = defineModel<KnCharacter>('character', { required: true })
 
 const find = (key: string) => props.masteries?.find(mastery => mastery.key === key)
 
-const unspent = computed(() => knAbilityPointsUnspent(character.value.level, character.value.masteryPicks))
+const unspent = computed(() => knAbilityPointsUnspent(character.value.level, character.value.masteryPicks, character.value.amulets.tiers))
+
+const entries = computed<Entry[]>(() => {
+  const amuletKey = knAmuletMastery(character.value.amulets, character.value.masteryPicks)
+  return [
+    ...character.value.masteryPicks.map(pick => ({ key: pick.key, tiers: pick.tiers, amulet: false })),
+    ...(amuletKey === null ? [] : [{ key: amuletKey, tiers: character.value.amulets.tiers, amulet: true }]),
+  ]
+})
 
 const availableItems = computed<SelectItem[]>(() =>
   (props.masteries ?? [])
@@ -201,35 +191,18 @@ const availableItems = computed<SelectItem[]>(() =>
     .map(mastery => ({ label: mastery.name, value: mastery.key })),
 )
 
-const trainedCount = computed(() => character.value.masteryPicks.filter(pick => !pick.amulet).length)
-const amulet = computed(() => knAmuletPick(character.value.masteryPicks))
-
-const amuletItems = computed<SelectItem[]>(() =>
-  (props.masteries ?? [])
-    .filter(mastery => mastery.key !== amulet.value?.key && knCanWearAmulet(character.value.masteryPicks, mastery.key))
-    .map(mastery => ({ label: mastery.name, value: mastery.key })),
-)
-
-const dropAmulet = () => {
-  character.value.masteryPicks = knDropAmulet(character.value.masteryPicks)
+function unlock(entry: Entry) {
+  const { level, masteryPicks, amulets } = character.value
+  if (entry.amulet) character.value.amulets = knUnlockAmuletTier(amulets, masteryPicks, level)
+  else character.value.masteryPicks = knUnlockMastery(masteryPicks, entry.key, level, amulets.tiers)
 }
 
-function pickAmulet(key: string | number) {
-  if (typeof key !== 'string' || !find(key)) return
-  character.value.masteryPicks = amulet.value
-    ? knSwapAmulet(character.value.masteryPicks, key)
-    : knAddAmulet(character.value.masteryPicks, key)
-}
-
-const unlock = (key: string) => {
-  character.value.masteryPicks = knUnlockMastery(character.value.masteryPicks, key, character.value.level)
-}
-
-const lock = (key: string) => {
-  character.value.masteryPicks = knLockMastery(character.value.masteryPicks, key)
+function lock(entry: Entry) {
+  if (entry.amulet) character.value.amulets = knLockAmuletTier(character.value.amulets)
+  else character.value.masteryPicks = knLockMastery(character.value.masteryPicks, entry.key)
 }
 
 function pickMastery(key: string | number) {
-  if (typeof key === 'string' && find(key)) unlock(key)
+  if (typeof key === 'string' && find(key)) unlock({ key, tiers: 0, amulet: false })
 }
 </script>

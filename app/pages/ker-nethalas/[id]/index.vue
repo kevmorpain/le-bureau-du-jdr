@@ -59,7 +59,10 @@
 
     <KnConditionsReference :character />
 
-    <KnEquipmentSection v-model:character="character" />
+    <KnEquipmentSection
+      v-model:character="character"
+      :masteries
+    />
 
     <KnNotesSection v-model:character="character" />
   </div>
