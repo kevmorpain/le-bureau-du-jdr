@@ -1,7 +1,7 @@
 # Module Ker Nethalas
 
-> **Statut** : tranches 0 (socle) et 1 (fiche effective) fusionnées (PR #253, 2026-10-06) ; tranche 2a (suivi de run) fusionnée (PR #254, 2026-10-07) ; tranche 2b (repos) fusionnée (PR #255, 2026-10-07) ; tranche 3 (aide au jet, référence des conditions) écrite sur `feat/ker-nethalas-jets`, non fusionnée. **Issue** : [#242 — X10](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242).
-> **Dernière mise à jour** : 2026-10-06.
+> **Statut** : tranches 0 à 3 fusionnées (PR #253 à #257, 2026-10-06 et 2026-10-07) ; **issue #242 (X10) fermée**. Suite : contenu du livre, rédigé hors du dépôt (X11 à X16, U13) ; tranche 4a (chargement du contenu privé) écrite sur `feat/ker-nethalas-contenu`, non fusionnée.
+> **Dernière mise à jour** : 2026-10-07.
 
 Ce document trace le plan du module, les décisions et ce qui a été fait. Le statut GitHub (Status, Effort,
 Famille) vit dans l'issue et le projet ; ce document porte le *quoi* et le *pourquoi*, comme `decisions.md`.
@@ -19,11 +19,11 @@ temps à chercher dans les tables. Le principe : saisir la fiche de base, **acti
 
 ## Périmètre
 
-- **V1** : tranches 0 et 1.
-- **Ensuite** : tranches 2 et 3.
-- **Hors périmètre** : Masteries modélisées (texte libre + modificateurs déclarés par le joueur), équipement par
-  localisation et résolution du combat, bestiaire, textes d'ambiance (descriptions de salles et de couloirs),
-  illustrations.
+- **Livré** : tranches 0 à 3 (fiche, fiche effective, suivi de run, repos et provisions, aide au jet).
+- **Ensuite** : toute la mécanique « aléatoire » du livre, rédigée en français hors du dépôt (KN27) : création du
+  survivant et Maîtrises, boucle d'exploration (pièces, couloirs, événements, fouille, pièges, Overseer), rencontres et
+  bestiaire, inventaire, équipement et butin (voir le plan).
+- **Hors périmètre** : les illustrations du livre, qui ne sont jamais reprises.
 
 ---
 
@@ -44,6 +44,15 @@ temps à chercher dans les tables. Le principe : saisir la fiche de base, **acti
 - Le dépôt de l'app communautaire citée sur le Discord de Blackoath (`ilu2112/Midnight-Throne`) n'affiche ni
   licence ni permission de l'éditeur (vérifié le 2026-10-04). Une tolérance observée n'est pas une autorisation.
 - Le dépôt Le Bureau du JDR est **public** (`gh repo view`, 2026-10-04) : tout ce qui y est versionné est redistribué.
+
+### Accord de l'éditeur (2026-10-07)
+
+Le PM a contacté Blackoath. Ils sont d'accord pour l'**usage personnel** qu'il en fait ; il n'existe pas de traduction
+française officielle, donc il peut **formuler comme il le souhaite**, à condition de ne pas reprendre les illustrations
+telles quelles. Aucun texte écrit n'est conservé dans le dépôt. La portée de l'accord pour un **dépôt public** n'a pas été
+précisée : le PM a choisi de laisser le contenu rédigé à partir du livre **hors du dépôt** (KN27). Le bloc de licence du
+livre, de son côté, laisse réutiliser librement les mécaniques et les règles, et réserve la formulation, la
+présentation et les illustrations.
 
 ### Écarts constatés entre la VF et Gravebound
 
@@ -75,15 +84,17 @@ une avant toute reprise de texte.
    à son traducteur, **après vérification contre Gravebound**. ⚠️ hypothèse : la licence CC BY couvre bien le texte
    de l'édition antérieure ; à confirmer avec l'éditeur.
 3. Les **ajouts propres à Gravebound** sont reformulés, jamais traduits littéralement.
-4. Pas de textes d'ambiance, pas d'illustrations.
+4. Pas d'illustrations.
 5. **Aucune extraction de texte du livre dans le dépôt** : le travail se fait dans `~/ker-nethalas-sources/`
-   (hors dépôt).
-6. Chaque entrée de données porte sa **page de référence** dans Gravebound.
+   (hors dépôt). Le contenu rédigé en français (Maîtrises, bestiaire, tables, descriptions) vit lui aussi hors du
+   dépôt et se charge en base (KN27).
+6. Chaque entrée de données porte sa **page de référence** dans Gravebound ; dans le code, elle ne figure pas (voir
+   « Commentaires » dans `CLAUDE.md`).
 
 ### Action en attente
 
-Demander à Blackoath une **autorisation écrite** (`info@blackoathgames.com` ou Discord). Ce n'est pas un avis
-juridique : c'est le moyen le moins coûteux de lever la zone grise. **Statut : à faire.**
+Aucune. L'accord de Blackoath est obtenu (voir plus haut) ; reste à leur demander, si le PM le souhaite, si un dépôt
+public est couvert.
 
 ---
 
@@ -299,6 +310,45 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   localisation, dégâts), l'application des effets temporaires de critique et des Maladresses, l'Initiative, la table de
   Maladresses des adversaires.
 
+### KN27 — Contenu du livre rédigé hors du dépôt, chargé en base
+- **Décision** : tout ce qui est rédigé à partir du livre (Maîtrises, bestiaire, objets, tables d'événements,
+  descriptions de salles et de couloirs…) vit dans des **fichiers JSON privés, hors du dépôt public**, et se charge dans la
+  table `kn_content` (nom du jeu de données, JSON, date ; migration `0136`). Les moteurs, les mécaniques et les catalogues
+  déjà dans le dépôt (conditions, Obscurité Grandissante, Folie, jet…) restent publics.
+- **Pourquoi** : le dépôt est public et l'accord de l'éditeur est donné pour un usage personnel ; la portée pour un
+  dépôt public n'est pas établie (voir « Accord de l'éditeur »).
+- **Registre** : `KN_CONTENT_SCHEMAS` (`shared/ker-nethalas/content.ts`) associe chaque nom de jeu de données à son schéma
+  Zod. Il est vide tant qu'aucune tranche n'apporte de contenu ; chaque tranche y ajoute le sien. Un nom absent du
+  registre, ou qui n'a pas la forme `[a-z][a-zA-Z0-9]{0,39}`, est refusé. Un jeu de données ne dépasse pas 1,5 Mo (une
+  ligne D1 accepte 2 Mo).
+- **Chargement** : `SEED_SECRET=… npm run kn:content -- <dossier> <url de base>` envoie chaque `<nom>.json` du dossier à
+  `PUT /api/admin/ker-nethalas/content/<nom>`, protégé par le secret du seed (`x-seed-secret`). Les données sont validées
+  contre le schéma du registre ; une donnée invalide est refusée avec le chemin de chaque erreur (20 au plus) et **n'écrase
+  pas** l'existant. `GET /api/admin/ker-nethalas/content` (même secret) indique, pour chaque jeu de données, s'il est
+  absent, chargé, ou chargé mais invalide.
+- **Lecture** : `GET /api/ker-nethalas/content/<nom>`, sous la session exigée par le middleware du module ; le contenu est
+  le même pour tous les comptes. Un jeu de données absent, ou que le schéma refuse désormais, répond 404 : l'application
+  doit fonctionner sans contenu.
+- **Procédure** : les fichiers vivent hors du dépôt (par exemple `~/ker-nethalas-content/`, que le PM peut sauvegarder
+  dans un dépôt privé) ; le dossier `/ker-nethalas-content/` est ignoré par git au cas où on le placerait dans le
+  dépôt. En local : `npm run dev`, puis la commande ci-dessus vers `http://localhost:3000`. En production : après chaque
+  déploiement qui change un schéma, même commande vers l'URL du Worker.
+- **Tests** : le contenu du livre n'entre jamais dans les tests ni dans la CI : ils utilisent de fausses tables.
+- **Alternatives écartées** : (a) les tables dans `shared/ker-nethalas/catalog/` comme les catalogues actuels : simple,
+  mais publié ; (b) un dépôt privé : touche tout le reste du projet ; (c) un objet R2 plutôt qu'une ligne D1 : plus de
+  place, mais un second mécanisme à tester, et inutile tant que chaque jeu de données tient en 1,5 Mo.
+- **Laissé de côté** : un composable de lecture, ajouté avec le premier consommateur (tranche 4c) ; la découpe d'un
+  jeu de données trop gros en plusieurs lignes.
+
+### KN28 — Un seul enregistrement par survivant : fiche et partie ne sont pas séparées
+- **Décision** : `kn_characters` garde ensemble le survivant (identité, Maîtrises, scores de base) et la partie en cours
+  (jauges courantes, Épuisement, conditions, Domaines, provisions…). Dans le livre, un survivant correspond à une
+  descente : le personnage est étroitement lié à la partie, séparer les données n'apporterait pas grand-chose.
+- **Alternative écartée** : deux tables (`kn_survivors`, `kn_runs`), qui auraient permis plusieurs parties par survivant et
+  un historique, au prix d'une migration des données, des routes, du contrôle d'accès et de la sauvegarde automatique.
+- **À la place** : une séparation **visuelle** de la fiche en deux colonnes (le survivant, la partie), suivie par l'issue
+  U13.
+
 ---
 
 ## Inventaire des sources de modificateurs
@@ -342,13 +392,21 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **1 — Fiche effective** | moteur pur ; conditions, épuisement, Rot, folies, Growing Darkness, influence d'Overseer, modificateurs libres ; scores effectifs avec détail du calcul ; tests de contrat | fusionnée (PR #253) |
 | **2a — Suivi de run** | Domaines, compteur de salles, source de lumière, Dé de Tension, dés de Lair et de Sortie, actions « Nouvelle salle », « Nouveau couloir » et « Retour dans une zone explorée », tirage dans la table de l'Obscurité Grandissante, chemin du Domaine enregistré (une entrée par salle ou couloir, avec ses dés) | fusionnée (PR #254) |
 | **2b — Repos** | Reprendre son souffle, Établir le camp (activités, test de Camp, bénéfices, Rations), provisions | fusionnée (PR #255) |
-| **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage, effets des critiques et maladresses ; référence des conditions rédigée ici | écrite, vérifiée, non fusionnée |
+| **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage, effets des critiques et maladresses, application des effets chiffrés ; référence des conditions rédigée ici | fusionnée (PR #256) |
+| **4a — Contenu privé** | table `kn_content`, chargement depuis des fichiers hors du dépôt, lecture sous session (KN27) ; issue X11 (#258) | écrite, vérifiée, non fusionnée |
+| **4b — Création du survivant** | assistant : jauges tirées aux dés, enveloppes de compétences, résistances, objectifs, équipement de départ ; issue X12 (#259) | à faire |
+| **4c — Maîtrises** | les 21 Maîtrises en contenu privé ; pilote de deux validées par le PM, puis les 19 autres par lots ; choix, aptitudes, effets ; issue X13 (#260) | à faire |
+| **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
+| **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
+| **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
+| **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
 
 ## Questions ouvertes
 
-- **Permission de Blackoath** (voir plus haut).
+- **Dépôt public et accord de Blackoath** : l'accord couvre l'usage personnel ; pour un dépôt public, voir « Accord de
+  l'éditeur » (le contenu reste hors du dépôt, KN27).
 - **Interprétations à confirmer** (voir la section suivante).
 - **Serveur de dev** : une fois, le navigateur a reçu une version périmée du fichier de traduction. Cause non établie :
   un essai a montré qu'une écriture par le chemin réseau Windows est vue, alors qu'un `sed -i` depuis WSL ne l'a pas
@@ -431,6 +489,23 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-07 — Tranche 4a : contenu du livre hors du dépôt
+- Les tranches 0 à 3 sont fusionnées, déployées, et l'issue #242 est fermée avec un récapitulatif. Les références de pages
+  sont retirées des commentaires de code (PR #257).
+- Le PM annonce l'accord de Blackoath (usage personnel, formulation libre en français, pas d'illustrations reprises) et
+  veut **toute la mécanique aléatoire** : descriptions de pièces et de couloirs, événements, fouille, rencontres,
+  Maîtrises, Overseer et influence, inventaire et équipement. Il choisit de garder le contenu **hors du dépôt public** et de
+  **ne pas séparer** la fiche de la partie (deux colonnes à l'écran à la place). Les issues X11 à X16 et U13 sont créées
+  (#258 à #264). Décisions KN27 et KN28.
+- Tranche 4a : table `kn_content` (migration `0136`), registre vide de schémas, routes d'administration et de lecture,
+  script `kn:content`. Défaut trouvé par un test : un nom comme `constructor` passait la regex et touchait le prototype du
+  registre ; la recherche se fait sur propriété propre.
+- Vérifié de bout en bout sur une base vierge, avec un jeu de données factice enregistré temporairement dans le registre
+  (jamais committé) : chargement, refus d'un nom inconnu et d'une donnée invalide sans écraser l'existant, 401 sans secret
+  ou sans session, 404 sur un jeu absent, et la session seule ne suffit pas à l'administration.
+- **Non vérifié** : le chargement vers la production (aucun jeu de données n'existe encore) ; le script sur une très
+  grosse donnée, au-delà de la limite de 1,5 Mo, couvert seulement par un test.
 
 ### 2026-10-07 — Tranche 3 : aide au jet et référence des conditions
 - PR #255 fusionnée (tranche 2b) et déployée (Workers Builds vert sur le commit de fusion, migration `0135` appliquée) ;
