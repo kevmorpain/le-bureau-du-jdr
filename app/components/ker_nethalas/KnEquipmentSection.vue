@@ -10,6 +10,14 @@
     </template>
 
     <div class="grid gap-4 md:grid-cols-2">
+      <KnNumberField
+        v-model="character.coins"
+        label="Pièces"
+        :min="KN_BOUNDS.coins.min"
+        :max="KN_BOUNDS.coins.max"
+        class="md:col-span-2 md:w-48"
+      />
+
       <UFormField label="Armes">
         <UTextarea
           v-model="character.weapons"
@@ -45,6 +53,7 @@
 
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 
 const character = defineModel<KnCharacter>('character', { required: true })
 </script>

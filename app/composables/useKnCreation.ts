@@ -1,0 +1,122 @@
+import {
+  KN_CREATION_KIT,
+  KN_CREATION_VITAL_KEYS,
+  knAllotmentIssues,
+  knCreationSchema,
+  knVitalRange,
+  type KnAllotments,
+  type KnCreationVital,
+} from '~~/shared/ker-nethalas/creation'
+import type { KnResistanceKey } from '~~/shared/ker-nethalas/skills'
+
+export interface KnCreationDraft {
+  name: string
+  appearance: string
+  vitals: Record<KnCreationVital, number | null>
+  allotments: KnAllotments
+  resistanceBoost: KnResistanceKey | null
+  personalGoals: string
+  kitEnabled: boolean
+  kit: {
+    weapon: string
+    armor: string
+    cookingIngredients: number | null
+    craftingSupplies: number | null
+    coins: number | null
+  }
+}
+
+export const emptyKnCreationDraft = (): KnCreationDraft => ({
+  name: '',
+  appearance: '',
+  vitals: { health: null, toughness: null, aether: null, sanity: null },
+  allotments: {},
+  resistanceBoost: null,
+  personalGoals: '',
+  kitEnabled: false,
+  kit: { weapon: '', armor: '', cookingIngredients: null, craftingSupplies: null, coins: null },
+})
+
+export const KN_CREATION_STEPS = [
+  { id: 'identity', label: 'Identité', icon: 'i-heroicons:user' },
+  { id: 'vitals', label: 'Jauges', icon: 'i-heroicons:heart' },
+  { id: 'skills', label: 'Compétences', icon: 'i-heroicons:bolt' },
+  { id: 'resistances', label: 'Résistances', icon: 'i-heroicons:shield-check' },
+  { id: 'goals', label: 'Objectifs', icon: 'i-heroicons:flag' },
+  { id: 'kit', label: 'Équipement', icon: 'i-heroicons:briefcase' },
+  { id: 'recap', label: 'Récapitulatif', icon: 'i-heroicons:check-circle' },
+] as const
+
+export type KnCreationStepId = (typeof KN_CREATION_STEPS)[number]['id']
+
+const inRange = (value: number | null, { min, max }: { min: number, max: number }) =>
+  value !== null && Number.isInteger(value) && value >= min && value <= max
+
+export function useKnCreation() {
+  const { t } = useI18n()
+  const draft = ref(emptyKnCreationDraft())
+  const currentStepId = ref<KnCreationStepId>('identity')
+
+  const parsed = computed(() => {
+    const d = draft.value
+    return knCreationSchema.safeParse({
+      name: d.name,
+      appearance: d.appearance,
+      vitals: d.vitals,
+      allotments: d.allotments,
+      resistanceBoost: d.resistanceBoost ?? undefined,
+      personalGoals: d.personalGoals,
+      kit: d.kitEnabled ? d.kit : null,
+    })
+  })
+
+  const complete = computed<Record<KnCreationStepId, boolean>>(() => {
+    const d = draft.value
+    return {
+      identity: d.name.trim() !== '',
+      vitals: KN_CREATION_VITAL_KEYS.every(vital => inRange(d.vitals[vital], knVitalRange(vital))),
+      skills: knAllotmentIssues(d.allotments).length === 0,
+      resistances: d.resistanceBoost !== null,
+      goals: true,
+      kit: !d.kitEnabled || (
+        inRange(d.kit.cookingIngredients, KN_CREATION_KIT.cookingIngredients)
+        && inRange(d.kit.craftingSupplies, KN_CREATION_KIT.craftingSupplies)
+        && inRange(d.kit.coins, KN_CREATION_KIT.coins)
+      ),
+      recap: parsed.value.success,
+    }
+  })
+
+  const stepIndex = computed(() => KN_CREATION_STEPS.findIndex(step => step.id === currentStepId.value))
+  const isLastStep = computed(() => stepIndex.value === KN_CREATION_STEPS.length - 1)
+  const canGoPrev = computed(() => stepIndex.value > 0)
+  const canGoNext = computed(() => complete.value[currentStepId.value])
+
+  const isStepComplete = (stepId: string) => complete.value[stepId as KnCreationStepId] ?? false
+
+  const goTo = (stepId: string) => {
+    if (KN_CREATION_STEPS.some(step => step.id === stepId)) currentStepId.value = stepId as KnCreationStepId
+  }
+  const goNext = () => {
+    const next = KN_CREATION_STEPS[stepIndex.value + 1]
+    if (next && canGoNext.value) currentStepId.value = next.id
+  }
+  const goPrev = () => {
+    const previous = KN_CREATION_STEPS[stepIndex.value - 1]
+    if (previous) currentStepId.value = previous.id
+  }
+
+  const stepSummaries = computed<Record<string, string | null>>(() => {
+    const d = draft.value
+    const assigned = Object.keys(d.allotments).length
+    return {
+      identity: d.name.trim() || null,
+      vitals: complete.value.vitals ? KN_CREATION_VITAL_KEYS.map(vital => d.vitals[vital]).join(' · ') : null,
+      skills: assigned ? `${assigned}/10 enveloppes` : null,
+      resistances: d.resistanceBoost ? `40 en ${t(`ker_nethalas.resistances.${d.resistanceBoost}`)}` : null,
+      kit: d.kitEnabled ? 'Équipement de départ' : 'Première partie',
+    }
+  })
+
+  return { draft, currentStepId, parsed, complete, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev }
+}

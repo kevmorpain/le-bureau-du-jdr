@@ -1,7 +1,7 @@
 # Module Ker Nethalas
 
-> **Statut** : tranches 0 à 3 fusionnées (PR #253 à #257, 2026-10-06 et 2026-10-07) ; **issue #242 (X10) fermée**. Suite : contenu du livre, rédigé hors du dépôt (X11 à X16, U13) ; tranche 4a (chargement du contenu privé) écrite sur `feat/ker-nethalas-contenu`, non fusionnée.
-> **Dernière mise à jour** : 2026-10-07.
+> **Statut** : tranches 0 à 3 fusionnées (PR #253 à #257, 2026-10-06 et 2026-10-07) ; issue #242 (X10) fermée. Suite : contenu du livre rédigé hors du dépôt (X11 à X16, U13). Tranche 4 en cours sur `feat/ker-nethalas-tranche-4` : 4a (chargement du contenu privé, X11) et 4b (création du survivant, X12) écrites, non fusionnées ; une seule PR à la fin de la tranche 4. **Issues** : [#258 — X11](https://github.com/kevmorpain/le-bureau-du-jdr/issues/258), [#259 — X12](https://github.com/kevmorpain/le-bureau-du-jdr/issues/259), [#260 — X13](https://github.com/kevmorpain/le-bureau-du-jdr/issues/260).
+> **Dernière mise à jour** : 2026-10-10.
 
 Ce document trace le plan du module, les décisions et ce qui a été fait. Le statut GitHub (Status, Effort,
 Famille) vit dans l'issue et le projet ; ce document porte le *quoi* et le *pourquoi*, comme `decisions.md`.
@@ -349,6 +349,28 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **À la place** : une séparation **visuelle** de la fiche en deux colonnes (le survivant, la partie), suivie par l'issue
   U13.
 
+### KN29 — Création du survivant : le serveur reçoit des choix, il construit la fiche
+- **Décision** : `POST /api/ker-nethalas/characters` n'accepte plus un simple nom. Il reçoit les **choix** du joueur
+  (`knCreationSchema`, `shared/ker-nethalas/creation.ts`) : nom, apparence, jauges tirées, enveloppes de compétences,
+  Résistance à 40, objectifs, et un kit de départ (ou `null`). Le serveur les **valide** puis **construit** la fiche
+  (`knBuildCreatedSheet`) : le client n'envoie jamais de scores. Le même schéma sert à l'assistant, qui montre à chaque
+  étape ce que le serveur refuserait.
+- **Règles encodées** (chapitre « Create Your Survivor ») : Santé D6+10, Robustesse 3D6+20, Éther D6+8, Santé mentale D6+10,
+  jauges pleines, Épuisement 0 ; scores de départ imprimés sur la fiche, plus +60 et +40 à deux compétences d'arme
+  différentes, +30 à trois compétences, +20 à deux, +10 à trois, une seule enveloppe par compétence ; une Résistance à 40
+  et les deux autres à 20 ; équipement des parties suivantes : une arme au choix, une armure tirée sur la table du livre,
+  1 Torche, D10 Denrées, D10+5 Fournitures d'Artisanat et D20 pièces.
+- **Interface** : `/ker-nethalas/new`, assistant en sept étapes sur le même cadre que ceux de D&D (`WizardShell`) ;
+  les dés se lancent dans l'outil ou se saisissent ; un aperçu suit les choix. L'ancienne création par le seul nom disparaît.
+- **Nouveaux champs** (migration `0137`) : `appearance` (genre, âge, apparence, aussi modifiable sur la fiche) et `coins`
+  (pièces, avec les provisions de l'équipement).
+- **Alternatives écartées** : (a) garder la création par le nom et remplir la fiche à la main, sans aucune validation des
+  règles de départ ; (b) faire envoyer la fiche complète par le client : le serveur devrait alors deviner si les scores
+  respectent les enveloppes.
+- **Laissé de côté** : le choix des Maîtrises (tranche 4c) ; le tirage du crime reproché, la liste des objectifs
+  personnels et la table d'armures aléatoires, qui sont du contenu du livre et viendront avec le contenu privé (KN27) :
+  d'ici là, champs libres.
+
 ---
 
 ## Inventaire des sources de modificateurs
@@ -394,7 +416,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **2b — Repos** | Reprendre son souffle, Établir le camp (activités, test de Camp, bénéfices, Rations), provisions | fusionnée (PR #255) |
 | **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage, effets des critiques et maladresses, application des effets chiffrés ; référence des conditions rédigée ici | fusionnée (PR #256) |
 | **4a — Contenu privé** | table `kn_content`, chargement depuis des fichiers hors du dépôt, lecture sous session (KN27) ; issue X11 (#258) | écrite, vérifiée, non fusionnée |
-| **4b — Création du survivant** | assistant : jauges tirées aux dés, enveloppes de compétences, résistances, objectifs, équipement de départ ; issue X12 (#259) | à faire |
+| **4b — Création du survivant** | assistant en étapes (identité, jauges tirées aux dés, enveloppes de compétences, résistances, objectifs, équipement de départ), validation serveur ; issue X12 (#259) | écrite, vérifiée, non fusionnée |
 | **4c — Maîtrises** | les 21 Maîtrises en contenu privé ; pilote de deux validées par le PM, puis les 19 autres par lots ; choix, aptitudes, effets ; issue X13 (#260) | à faire |
 | **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
@@ -412,9 +434,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
   un essai a montré qu'une écriture par le chemin réseau Windows est vue, alors qu'un `sed -i` depuis WSL ne l'a pas
   été en 5 s. Redémarrer le serveur après avoir modifié un fichier de traduction.
 - **Composants communs** (fiche, pistes) : à factoriser si un troisième système arrive.
-- **Valeurs de création** : Health D6+10, Toughness 3D6+20, Aether D6+8, Sanity D6+10, Exhaustion 0 (p. 18), et les
-  enveloppes de départ des compétences (p. 19). Un assistant de création pourrait les tirer et les valider ; hors
-  tranche 0.
+- **Valeurs de création** : faites par l'assistant de création (KN29).
 - **Amélioration des compétences** (p. 62) : les cases sont déjà stockées ; l'aide au jet d'amélioration au camp
   relèverait de la tranche 2b.
 - **Hors-ligne** : à reprendre si l'outil doit servir sans réseau (voir KN10).
@@ -473,6 +493,12 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Pourriture au repos** : le rappel du test d'Endurance s'affiche dès le stade 1 ; un survivant infecté au stade 0 n'est
   pas représenté.
 - **Ration cuisinée** : une Ration fabriquée pendant le camp peut être celle que le camp consomme.
+- **Équipement de départ** : le « D20 » de la liste (l'extraction du livre a perdu son libellé) est lu comme **D20
+  pièces** ⚠️ hypothèse, la monnaie du livre étant les « Coins ». Une première partie ne prend aucun équipement : l'assistant
+  la propose par défaut, le kit est une option.
+- **Jauges de départ** : elles démarrent pleines (valeur courante = maximum), le livre donnant seulement la valeur de départ.
+- **Enveloppes de compétences** : « +60 à une compétence d'arme, +40 à une seconde » est lu comme deux compétences d'arme
+  **différentes** ; les +30, +20 et +10 vont à n'importe quelle compétence, armes comprises.
 - **100 sur le D100** : lu « 00 », donc un double (p. 71 : « le même chiffre aux dizaines et aux unités »). Échec
   critique avec un score inférieur à 100, réussite critique sinon.
 - **Avantage et Désavantage ensemble** : le dé est lu normalement ; le livre ne dit pas comment les combiner. La
@@ -489,6 +515,19 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-08 — Tranche 4b : création du survivant
+- Lecture du chapitre « Create Your Survivor » (jauges, compétences, résistances, Maîtrises, objectifs, équipement de
+  départ). Décision KN29 ; migration `0137` (`appearance`, `coins`). Cette tranche ne dépend pas de la 4a : elle a été
+  écrite dans une branche à part, depuis `main`, puis réunie avec la 4a (le PM veut une seule PR à la fin de la tranche 4).
+- Moteur `creation.ts`, schéma partagé par l'assistant et le serveur, `knBuildCreatedSheet`. Interface : `/ker-nethalas/new`
+  (sept composants d'étapes, un aperçu), index qui y mène, apparence sur la fiche, pièces dans l'équipement.
+- Vérifié sur une base vierge dans le navigateur : étapes qui se débloquent (nom, jauges dans leurs bornes, enveloppes
+  partielles signalées puis complètes, Résistance, objectif, équipement à dés), récapitulatif, création puis fiche relue côté
+  serveur ; 422 sur une enveloppe manquante, une Santé hors des dés, un +60 hors arme, l'ancienne forme (nom seul) et un
+  nom vide.
+- **Non vérifié** : le choix des enveloppes par les listes déroulantes elles-mêmes (je les ai posées par l'état du
+  composant, les listes de Nuxt UI ne se laissent pas piloter sans fenêtre dessinée) ; l'affichage de l'assistant sur téléphone.
 
 ### 2026-10-07 — Tranche 4a : contenu du livre hors du dépôt
 - Les tranches 0 à 3 sont fusionnées, déployées, et l'issue #242 est fermée avec un récapitulatif. Les références de pages
