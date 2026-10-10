@@ -1,6 +1,6 @@
 # Module Ker Nethalas
 
-> **Statut** : tranches 0 à 3 fusionnées (PR #253 à #257, 2026-10-06 et 2026-10-07) ; issue #242 (X10) fermée. Suite : contenu du livre rédigé hors du dépôt (X11 à X16, U13). Tranche 4 en cours sur `feat/ker-nethalas-tranche-4` : 4a (chargement du contenu privé, X11) et 4b (création du survivant, X12) écrites, non fusionnées ; une seule PR à la fin de la tranche 4. **Issues** : [#258 — X11](https://github.com/kevmorpain/le-bureau-du-jdr/issues/258), [#259 — X12](https://github.com/kevmorpain/le-bureau-du-jdr/issues/259), [#260 — X13](https://github.com/kevmorpain/le-bureau-du-jdr/issues/260).
+> **Statut** : tranches 0 à 3 fusionnées (PR #253 à #257, 2026-10-06 et 2026-10-07) ; issue #242 (X10) fermée. Suite : contenu du livre rédigé hors du dépôt (X11 à X16, U13). Tranche 4 en cours sur `feat/ker-nethalas-tranche-4` : 4a (chargement du contenu privé, X11), 4b (création du survivant, X12) et 4c (Maîtrises, pilote de deux, X13) écrites, non fusionnées ; une seule PR à la fin de la tranche 4. **Issues** : [#258 — X11](https://github.com/kevmorpain/le-bureau-du-jdr/issues/258), [#259 — X12](https://github.com/kevmorpain/le-bureau-du-jdr/issues/259), [#260 — X13](https://github.com/kevmorpain/le-bureau-du-jdr/issues/260).
 > **Dernière mise à jour** : 2026-10-10.
 
 Ce document trace le plan du module, les décisions et ce qui a été fait. Le statut GitHub (Status, Effort,
@@ -371,6 +371,30 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   personnels et la table d'armures aléatoires, qui sont du contenu du livre et viendront avec le contenu privé (KN27) :
   d'ici là, champs libres.
 
+### KN30 — Maîtrises : format public, contenu privé, paliers débloqués par points
+- **Décision** : le **format** d'une Maîtrise est public (`shared/ker-nethalas/masteries.ts`, schéma Zod enregistré sous
+  le nom `masteries` dans le registre de KN27) ; son **contenu** (nom, résumé, trait, cinq aptitudes, six lieux
+  d'entraînement) est rédigé en français dans `~/ker-nethalas-content/masteries.json`, hors du dépôt, et chargé par
+  `npm run kn:content`. Une aptitude porte son nom, son action, son coût (affiché, et en Éther quand il est chiffré), si
+  elle est magique ou maintenue, et son effet.
+- **État du survivant** : `kn_characters.mastery_picks` (migration `0138`), une liste de `{ clé, paliers débloqués }`, deux
+  Maîtrises au plus. Les **points d'Aptitude à dépenser** ne sont pas stockés, ils se déduisent : niveau + 1 (deux au
+  niveau 1, un de plus à chaque niveau) moins les paliers débloqués. Les paliers se débloquent dans l'ordre, du 1 au 5 ;
+  la première aptitude d'une Maîtrise en montre aussi le trait. « Reprendre un palier » corrige une erreur.
+- **Création** : une étape « Maîtrises » (deux différentes, une aptitude chacune) et un tirage optionnel du lieu
+  d'entraînement (D6) qui s'ajoute à l'apparence. Le serveur compare le choix au contenu chargé : deux Maîtrises connues
+  et différentes si le contenu est chargé, aucune sinon (elles se choisissent alors sur la fiche).
+- **Fiche** : une section « Maîtrises » qui montre le texte des aptitudes débloquées, grise les autres, et propose de
+  choisir une Maîtrise quand il en manque (survivants créés avant le contenu compris).
+- **Alternatives écartées** : (a) garder « Maîtrises » en texte libre, qui ne contrôle ni le nombre de points ni l'ordre
+  des paliers ; (b) stocker les points non dépensés, qui divergeraient du niveau.
+- **Laissé de côté** : l'**amulette** (troisième Maîtrise, échange au camp), le **choix d'avantage à la montée de niveau**,
+  l'application automatique des effets chiffrés des aptitudes (Éther dépensé, Santé mentale maximale d'une aptitude passive, immunités) : les aptitudes sont affichées, pas appliquées ; les 19 autres Maîtrises (tranche 4d).
+- **Procédure de rédaction** : les noms d'aptitudes et de traits sont en petites capitales dans le livre, que
+  l'extraction de texte perd ; les pages se rendent en image (PyMuPDF, installé hors du dépôt dans `~/tools/pymupdf`) et se
+  relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
+  (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
+
 ---
 
 ## Inventaire des sources de modificateurs
@@ -417,7 +441,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage, effets des critiques et maladresses, application des effets chiffrés ; référence des conditions rédigée ici | fusionnée (PR #256) |
 | **4a — Contenu privé** | table `kn_content`, chargement depuis des fichiers hors du dépôt, lecture sous session (KN27) ; issue X11 (#258) | écrite, vérifiée, non fusionnée |
 | **4b — Création du survivant** | assistant en étapes (identité, jauges tirées aux dés, enveloppes de compétences, résistances, objectifs, équipement de départ), validation serveur ; issue X12 (#259) | écrite, vérifiée, non fusionnée |
-| **4c — Maîtrises** | les 21 Maîtrises en contenu privé ; pilote de deux validées par le PM, puis les 19 autres par lots ; choix, aptitudes, effets ; issue X13 (#260) | à faire |
+| **4c — Maîtrises (pilote)** | format public, contenu privé de deux Maîtrises (Faucheur abyssal, Arcaniste), étape de création, section de la fiche, points d'Aptitude (KN30) ; issue X13 (#260) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
+| **4d — Maîtrises (suite)** | les 19 autres Maîtrises par lots, l'amulette, les effets chiffrés des aptitudes ; issue X13 (#260) | à faire |
 | **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
@@ -499,6 +524,12 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Jauges de départ** : elles démarrent pleines (valeur courante = maximum), le livre donnant seulement la valeur de départ.
 - **Enveloppes de compétences** : « +60 à une compétence d'arme, +40 à une seconde » est lu comme deux compétences d'arme
   **différentes** ; les +30, +20 et +10 vont à n'importe quelle compétence, armes comprises.
+- **Points d'Aptitude** : +1 par niveau et 2 au niveau 1, dépensés sur n'importe quelle aptitude des Maîtrises du
+  survivant, du palier 1 au palier 5 ; le trait d'une Maîtrise se débloque avec sa première aptitude. Deux Maîtrises
+  entraînées au plus (la troisième, par amulette, n'est pas encore gérée).
+- **Palier 1 de l'Arcaniste** : « jusqu'à /2 adversaires » (le symbole du niveau est perdu par l'extraction) est lu comme
+  la moitié du niveau, arrondie au supérieur (règle d'arrondi du livre).
+- **Coût « Spécial »** (palier 2 de l'Arcaniste) : stocké sans coût chiffré (`null`), affiché tel quel.
 - **100 sur le D100** : lu « 00 », donc un double (p. 71 : « le même chiffre aux dizaines et aux unités »). Échec
   critique avec un score inférieur à 100, réussite critique sinon.
 - **Avantage et Désavantage ensemble** : le dé est lu normalement ; le livre ne dit pas comment les combiner. La
@@ -515,6 +546,22 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-10 — Tranche 4c : Maîtrises, pilote de deux
+- Les tranches 4a et 4b sont committées puis réunies sur une seule branche, `feat/ker-nethalas-tranche-4` ; le PM veut
+  **une seule PR à la fin de la tranche 4**. Le journal des migrations passe à 0136, 0137, puis 0138.
+- Lecture de « Character Progression » et des deux premières Maîtrises sur les pages du livre rendues en image
+  (PyMuPDF, hors du dépôt). Contenu rédigé en français dans `~/ker-nethalas-content/masteries.json` : Faucheur abyssal et
+  Arcaniste, avec leur trait, leurs cinq aptitudes et leurs six lieux d'entraînement. Décision KN30 ; migration `0138`
+  (`mastery_picks`).
+- Interface : étape « Maîtrises » de l'assistant, section « Maîtrises » de la fiche. Composable `useKnContent`.
+- Vérifié sur une base vierge : le contenu rédigé passe la validation du schéma réel et se charge par le script ; les
+  étapes se débloquent (une seule Maîtrise ne suffit pas, deux oui), tirage du lieu d'entraînement, création puis fiche
+  (palier 1 visible, palier 2 grisé et masqué) ; points d'Aptitude (0 au niveau 1, 2 au niveau 3), déblocage du palier 2 puis
+  3, reprise d'un palier, sauvegarde serveur ; choix de deux Maîtrises sur la fiche d'un survivant créé sans ; le serveur
+  refuse une création sans Maîtrise, avec une seule, en double, inconnue ou à trois quand le contenu est chargé.
+- **Non vérifié** : le choix des Maîtrises par la liste déroulante de la fiche (j'ai appelé le même gestionnaire par
+  l'état du composant) ; le rendu sur téléphone ; le **texte français des deux Maîtrises**, à relire par le PM.
 
 ### 2026-10-08 — Tranche 4b : création du survivant
 - Lecture du chapitre « Create Your Survivor » (jauges, compétences, résistances, Maîtrises, objectifs, équipement de
