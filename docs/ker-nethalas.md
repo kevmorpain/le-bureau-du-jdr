@@ -360,8 +360,12 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   différentes, +30 à trois compétences, +20 à deux, +10 à trois, une seule enveloppe par compétence ; une Résistance à 40
   et les deux autres à 20 ; équipement des parties suivantes : une arme au choix, une armure tirée sur la table du livre,
   1 Torche, D10 Denrées, D10+5 Fournitures d'Artisanat et D20 pièces.
-- **Interface** : `/ker-nethalas/new`, assistant en sept étapes sur le même cadre que ceux de D&D (`WizardShell`) ;
-  les dés se lancent dans l'outil ou se saisissent ; un aperçu suit les choix. L'ancienne création par le seul nom disparaît.
+- **Interface** : `/ker-nethalas/new`, assistant en étapes sur le même cadre que ceux de D&D (`WizardShell`), puis, après
+  « Terminer » sur la dernière étape, un **écran de récapitulatif** (« ← Modifier » pour revenir, « Créer le survivant »
+  pour valider) comme le créateur D&D ; les dés se lancent dans l'outil ou se saisissent ; un aperçu suit les choix.
+  L'ancienne création par le seul nom disparaît. Les enveloppes de compétences se posent par des boutons par ligne :
+  +60 et +40 ne sont proposés qu'aux compétences d'arme, et une enveloppe dont tous les exemplaires sont pris est grisée
+  (sauf sur la compétence qui la porte, pour la reprendre).
 - **Nouveaux champs** (migration `0137`) : `appearance` (genre, âge, apparence, aussi modifiable sur la fiche) et `coins`
   (pièces, avec les provisions de l'équipement).
 - **Alternatives écartées** : (a) garder la création par le nom et remplir la fiche à la main, sans aucune validation des
@@ -381,11 +385,14 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   Maîtrises au plus. Les **points d'Aptitude à dépenser** ne sont pas stockés, ils se déduisent : niveau + 1 (deux au
   niveau 1, un de plus à chaque niveau) moins les paliers débloqués. Les paliers se débloquent dans l'ordre, du 1 au 5 ;
   la première aptitude d'une Maîtrise en montre aussi le trait. « Reprendre un palier » corrige une erreur.
-- **Création** : une étape « Maîtrises » (deux différentes, une aptitude chacune) et un tirage optionnel du lieu
-  d'entraînement (D6) qui s'ajoute à l'apparence. Le serveur compare le choix au contenu chargé : deux Maîtrises connues
-  et différentes si le contenu est chargé, aucune sinon (elles se choisissent alors sur la fiche).
-- **Fiche** : une section « Maîtrises » qui montre le texte des aptitudes débloquées, grise les autres, et propose de
-  choisir une Maîtrise quand il en manque (survivants créés avant le contenu compris).
+- **Création** : une étape « Maîtrises » (deux différentes, une aptitude chacune) qui montre, pour chaque Maîtrise, le
+  trait et **l'effet de tous les paliers**, et un tirage optionnel du lieu d'entraînement (D6) par Maîtrise choisie. Le
+  résultat s'affiche à l'étape, un nouveau tirage le remplace, et il est gardé dans un champ à part, `training`
+  (« Entraînement », migration `0139`), sans toucher à l'apparence. Le serveur compare le choix au contenu chargé : deux
+  Maîtrises connues et différentes si le contenu est chargé, aucune sinon (elles se choisissent alors sur la fiche).
+- **Fiche** : une section « Maîtrises » qui montre les aptitudes, celles des paliers à venir restant lisibles mais grisées,
+  et propose de choisir une Maîtrise quand il en manque (survivants créés avant le contenu compris) ; le champ
+  « Entraînement » est sous l'identité.
 - **Alternatives écartées** : (a) garder « Maîtrises » en texte libre, qui ne contrôle ni le nombre de points ni l'ordre
   des paliers ; (b) stocker les points non dépensés, qui divergeraient du niveau.
 - **Laissé de côté** : l'**amulette** (troisième Maîtrise, échange au camp), le **choix d'avantage à la montée de niveau**,
@@ -562,6 +569,14 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   refuse une création sans Maîtrise, avec une seule, en double, inconnue ou à trois quand le contenu est chargé.
 - **Non vérifié** : le choix des Maîtrises par la liste déroulante de la fiche (j'ai appelé le même gestionnaire par
   l'état du composant) ; le rendu sur téléphone ; le **texte français des deux Maîtrises**, à relire par le PM.
+- **Retours du PM sur le rendu** : (1) le tirage d'entraînement ne montrait rien et ajoutait une ligne à l'apparence à
+  chaque clic → résultat affiché à l'étape, remplacé à chaque tirage, champ `training` à part (migration `0139`) ;
+  (2) les effets des paliers n'étaient pas visibles à l'étape de choix → texte de tous les paliers, sur la fiche aussi
+  (grisé tant qu'ils sont verrouillés) ; (3) étape « Compétences » : consigne en double, +60 et +40 proposés hors armes →
+  une seule consigne, boutons par ligne grisés selon les enveloppes restantes et les armes ; (4) récapitulatif en écran
+  après « Terminer », comme D&D. Vérifié dans le navigateur : boutons (armes seules, épuisement d'une enveloppe, reprise),
+  tirages (remplacement, effacement si la Maîtrise est retirée), écran de récapitulatif avec retour, création et champ
+  « Entraînement » relu côté serveur.
 
 ### 2026-10-08 — Tranche 4b : création du survivant
 - Lecture du chapitre « Create Your Survivor » (jauges, compétences, résistances, Maîtrises, objectifs, équipement de
