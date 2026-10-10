@@ -396,7 +396,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Alternatives écartées** : (a) garder « Maîtrises » en texte libre, qui ne contrôle ni le nombre de points ni l'ordre
   des paliers ; (b) stocker les points non dépensés, qui divergeraient du niveau.
 - **Laissé de côté** : l'**amulette** (troisième Maîtrise, échange au camp), le **choix d'avantage à la montée de niveau**,
-  l'application automatique des effets chiffrés des aptitudes (Éther dépensé, Santé mentale maximale d'une aptitude passive, immunités) : les aptitudes sont affichées, pas appliquées ; les 19 autres Maîtrises (tranche 4d).
+  l'application automatique des effets chiffrés des aptitudes (Éther dépensé, Santé mentale maximale d'une aptitude passive, immunités) : les aptitudes sont affichées, pas appliquées. Les 18 autres Maîtrises (le livre en compte 20,
+  pas 21) sont rédigées en tranche 4d.
 - **Procédure de rédaction** : les noms d'aptitudes et de traits sont en petites capitales dans le livre, que
   l'extraction de texte perd ; les pages se rendent en image (PyMuPDF, installé hors du dépôt dans `~/tools/pymupdf`) et se
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
@@ -479,7 +480,9 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4b — Création du survivant** | assistant en étapes (identité, jauges tirées aux dés, enveloppes de compétences, résistances, objectifs, équipement de départ), validation serveur ; issue X12 (#259) | écrite, vérifiée, non fusionnée |
 | **4c — Maîtrises (pilote)** | format public, contenu privé de deux Maîtrises (Faucheur abyssal, Arcaniste), étape de création, section de la fiche, points d'Aptitude (KN30) ; issue X13 (#260) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **4c bis — Objectifs personnels** | format public, contenu privé des 39 objectifs, étape de création (liste), section de la fiche (progrès à la main, récupération de la récompense, KN31) ; rattaché à X12 (#259) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
-| **4d — Maîtrises (suite)** | les 19 autres Maîtrises par lots, l'amulette, les effets chiffrés des aptitudes ; issue X13 (#260) | à faire |
+| **4d — Maîtrises (suite)** | les 18 autres Maîtrises, en quatre lots ; issue X13 (#260) | contenu écrit, validé par le schéma, vérifié par recoupement des nombres ; à relire par le PM |
+| **4e — Amulette** | troisième Maîtrise portée par une amulette, échange au camp ; effets chiffrés des aptitudes (à trancher) ; issue X13 (#260) | à proposer |
+| **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
 | **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
@@ -583,6 +586,28 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 4d : les 18 autres Maîtrises
+- Le livre compte **20 Maîtrises** (pages 22 à 61, deux pages chacune), et non 21 : il en reste 18 après les deux pilotes.
+  Rédigées en quatre lots de quatre ou cinq, dans `~/ker-nethalas-content/masteries.json`, hors du dépôt. Les noms
+  viennent des images des pages ; les noms d'aptitudes suivent la VF quand elle concorde avec Gravebound v1.2 (KN16), le
+  livre sinon (les paliers 4 et 5 de plusieurs Maîtrises diffèrent de la VF).
+- **Le glyphe « ⅃ » est le symbole du niveau du personnage** (défini page 12) : l'extraction `pdftotext` le perd, et
+  plusieurs aptitudes l'emploient (un nombre de points égal au niveau, « jusqu'à ⅃/2 adversaires »). Je l'avais pris pour
+  une valeur manquante du livre avant de le chercher dans la couche de texte du PDF, qui le conserve (PyMuPDF `get_text`,
+  caractère U+2143) ; cette couche de texte donne aussi les ligatures « fi » et « fl » sous forme de « 7 », à nettoyer.
+- Recoupement automatique : pour chaque aptitude des 20 Maîtrises, les nombres et dés du texte français sont comparés à
+  ceux de la page du livre. Aucun nombre français n'est absent du livre ; les écarts restants viennent des ligatures et du
+  texte d'en-tête qui suit le palier 5 dans la couche de texte, et sont expliqués un par un.
+- Choix de vocabulaire à valider : « Restauré » (la créature récupère des Blessures égales aux dégâts reçus d'un type,
+  défini page 82, comme Immunisé et Résistant) ; « Sbire » (Minion) ; « Composants rituels » (le livre écrit aussi
+  « Ingrédients » dans une aptitude : même objet) ; « Nécrophage » pour le *Wight* d'une Maîtrise de nécromancie, la VF disant
+  « spectre » et appelant aussi « Spectre » une Maîtrise entière. Les créatures appelées (squelette, nécrophage,
+  élémentaires, compagnon arcanique) renvoient à la page de leurs caractéristiques dans le livre : elles viendront avec le
+  bestiaire (tranche 6).
+- Chargé par `npm run kn:content` sur la base locale : les 20 Maîtrises passent le schéma réel.
+- **Non fait** : l'amulette et les effets chiffrés (proposition au PM), l'avantage au passage de niveau (page 62 : un choix
+  parmi huit, plus 1 point d'Aptitude), l'amélioration de compétence par les doubles : voir le plan.
 
 ### 2026-10-10 — Objectifs personnels (suite de la tranche 4c)
 - Demande du PM : choisir les objectifs dans une liste plutôt que les saisir, pouvoir mettre le progrès à jour à la main et
