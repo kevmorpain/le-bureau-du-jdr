@@ -34,6 +34,11 @@
       v-else-if="currentStepId === 'resistances'"
       v-model:draft="draft"
     />
+    <KnCreationMasteries
+      v-else-if="currentStepId === 'masteries'"
+      v-model:draft="draft"
+      :masteries
+    />
     <KnCreationGoals
       v-else-if="currentStepId === 'goals'"
       v-model:draft="draft"
@@ -46,18 +51,21 @@
       v-else
       :draft
       :complete
+      :masteries
       @go-to="goTo"
     />
 
     <template #preview>
       <KnCreationSummary
         :draft
+        :masteries
         compact
       />
     </template>
     <template #preview-mobile>
       <KnCreationSummary
         :draft
+        :masteries
         compact
       />
     </template>
@@ -66,12 +74,15 @@
 
 <script lang="ts" setup>
 import { KN_CREATION_STEPS, useKnCreation } from '~/composables/useKnCreation'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 definePageMeta({ layout: 'blank' })
 
 const toast = useToast()
 
-const { draft, currentStepId, parsed, complete, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev } = useKnCreation()
+const { data: masteries } = await useKnContent<KnMastery[]>('masteries')
+
+const { draft, currentStepId, parsed, complete, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev } = useKnCreation(masteries)
 
 const creating = ref(false)
 

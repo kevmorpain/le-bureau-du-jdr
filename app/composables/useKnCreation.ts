@@ -1,3 +1,4 @@
+import type { Ref } from 'vue'
 import {
   KN_CREATION_KIT,
   KN_CREATION_VITAL_KEYS,
@@ -7,6 +8,7 @@ import {
   type KnAllotments,
   type KnCreationVital,
 } from '~~/shared/ker-nethalas/creation'
+import { knMasteryPickIssues, type KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResistanceKey } from '~~/shared/ker-nethalas/skills'
 
 export interface KnCreationDraft {
@@ -15,6 +17,7 @@ export interface KnCreationDraft {
   vitals: Record<KnCreationVital, number | null>
   allotments: KnAllotments
   resistanceBoost: KnResistanceKey | null
+  masteries: string[]
   personalGoals: string
   kitEnabled: boolean
   kit: {
@@ -32,6 +35,7 @@ export const emptyKnCreationDraft = (): KnCreationDraft => ({
   vitals: { health: null, toughness: null, aether: null, sanity: null },
   allotments: {},
   resistanceBoost: null,
+  masteries: [],
   personalGoals: '',
   kitEnabled: false,
   kit: { weapon: '', armor: '', cookingIngredients: null, craftingSupplies: null, coins: null },
@@ -42,6 +46,7 @@ export const KN_CREATION_STEPS = [
   { id: 'vitals', label: 'Jauges', icon: 'i-heroicons:heart' },
   { id: 'skills', label: 'Compétences', icon: 'i-heroicons:bolt' },
   { id: 'resistances', label: 'Résistances', icon: 'i-heroicons:shield-check' },
+  { id: 'masteries', label: 'Maîtrises', icon: 'i-heroicons:sparkles' },
   { id: 'goals', label: 'Objectifs', icon: 'i-heroicons:flag' },
   { id: 'kit', label: 'Équipement', icon: 'i-heroicons:briefcase' },
   { id: 'recap', label: 'Récapitulatif', icon: 'i-heroicons:check-circle' },
@@ -52,10 +57,13 @@ export type KnCreationStepId = (typeof KN_CREATION_STEPS)[number]['id']
 const inRange = (value: number | null, { min, max }: { min: number, max: number }) =>
   value !== null && Number.isInteger(value) && value >= min && value <= max
 
-export function useKnCreation() {
+// `masteries` : le contenu chargé, ou `null` s'il ne l'est pas (les Maîtrises se choisiront alors sur la fiche).
+export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
   const { t } = useI18n()
   const draft = ref(emptyKnCreationDraft())
   const currentStepId = ref<KnCreationStepId>('identity')
+
+  const masteryIssues = computed(() => knMasteryPickIssues(draft.value.masteries, masteries.value?.map(mastery => mastery.key) ?? null))
 
   const parsed = computed(() => {
     const d = draft.value
@@ -65,6 +73,7 @@ export function useKnCreation() {
       vitals: d.vitals,
       allotments: d.allotments,
       resistanceBoost: d.resistanceBoost ?? undefined,
+      masteries: d.masteries,
       personalGoals: d.personalGoals,
       kit: d.kitEnabled ? d.kit : null,
     })
@@ -77,13 +86,14 @@ export function useKnCreation() {
       vitals: KN_CREATION_VITAL_KEYS.every(vital => inRange(d.vitals[vital], knVitalRange(vital))),
       skills: knAllotmentIssues(d.allotments).length === 0,
       resistances: d.resistanceBoost !== null,
+      masteries: masteryIssues.value.length === 0,
       goals: true,
       kit: !d.kitEnabled || (
         inRange(d.kit.cookingIngredients, KN_CREATION_KIT.cookingIngredients)
         && inRange(d.kit.craftingSupplies, KN_CREATION_KIT.craftingSupplies)
         && inRange(d.kit.coins, KN_CREATION_KIT.coins)
       ),
-      recap: parsed.value.success,
+      recap: parsed.value.success && masteryIssues.value.length === 0,
     }
   })
 
@@ -114,6 +124,7 @@ export function useKnCreation() {
       vitals: complete.value.vitals ? KN_CREATION_VITAL_KEYS.map(vital => d.vitals[vital]).join(' · ') : null,
       skills: assigned ? `${assigned}/10 enveloppes` : null,
       resistances: d.resistanceBoost ? `40 en ${t(`ker_nethalas.resistances.${d.resistanceBoost}`)}` : null,
+      masteries: d.masteries.length ? d.masteries.map(key => masteries.value?.find(mastery => mastery.key === key)?.name ?? key).join(' · ') : null,
       kit: d.kitEnabled ? 'Équipement de départ' : 'Première partie',
     }
   })

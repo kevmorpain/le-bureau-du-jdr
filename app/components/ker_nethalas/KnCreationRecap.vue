@@ -32,15 +32,20 @@
       </ul>
     </div>
 
-    <KnCreationSummary :draft />
+    <KnCreationSummary
+      :draft
+      :masteries
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { KN_CREATION_STEPS, type KnCreationDraft, type KnCreationStepId } from '~/composables/useKnCreation'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 const props = defineProps<{
   draft: KnCreationDraft
+  masteries: KnMastery[] | null
   complete: Record<KnCreationStepId, boolean>
 }>()
 

@@ -73,6 +73,29 @@
 
     <div>
       <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+        Maîtrises
+      </p>
+      <ul
+        v-if="draft.masteries.length"
+        class="space-y-0.5"
+      >
+        <li
+          v-for="key in draft.masteries"
+          :key
+        >
+          {{ masteries?.find(mastery => mastery.key === key)?.name ?? key }}
+        </li>
+      </ul>
+      <p
+        v-else
+        class="text-muted"
+      >
+        {{ masteries ? 'Aucune choisie' : 'Contenu non chargé : à choisir sur la fiche' }}
+      </p>
+    </div>
+
+    <div>
+      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
         Équipement
       </p>
       <p
@@ -112,11 +135,13 @@
 <script lang="ts" setup>
 import type { KnCreationDraft } from '~/composables/useKnCreation'
 import { defaultKnResistances } from '~~/shared/ker-nethalas/character'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_CREATION_VITAL_KEYS, knCreationResistances, knCreationSkills } from '~~/shared/ker-nethalas/creation'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
 
 const props = defineProps<{
   draft: KnCreationDraft
+  masteries?: KnMastery[] | null
   compact?: boolean
 }>()
 

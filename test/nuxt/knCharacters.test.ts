@@ -178,6 +178,22 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.provisions).toEqual(provisions)
   })
 
+  it('crée un survivant avec ses deux Maîtrises au palier 1 et relit leurs paliers débloqués', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Mara', { masteries: ['alpha', 'beta'] }))
+    expect((await getKnCharacter(db, id))!.masteryPicks).toEqual([{ key: 'alpha', tiers: 1 }, { key: 'beta', tiers: 1 }])
+
+    const picks = [{ key: 'alpha', tiers: 3 }, { key: 'beta', tiers: 1 }]
+    await updateKnCharacter(db, id, { masteryPicks: picks })
+
+    expect((await getKnCharacter(db, id))!.masteryPicks).toEqual(picks)
+  })
+
+  it('crée un survivant sans Maîtrise quand aucune n\'est choisie', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Sans'))
+
+    expect((await getKnCharacter(db, id))!.masteryPicks).toEqual([])
+  })
+
   it('renvoie null pour un survivant inexistant', async () => {
     expect(await updateKnCharacter(db, 999999, { notes: 'x' })).toBeNull()
   })

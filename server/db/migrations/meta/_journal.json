@@ -967,6 +967,13 @@
       "when": 1792500000000,
       "tag": "0137_ker_nethalas_creation",
       "breakpoints": true
+    },
+    {
+      "idx": 138,
+      "version": "6",
+      "when": 1792600000000,
+      "tag": "0138_ker_nethalas_mastery_picks",
+      "breakpoints": true
     }
   ]
 }
