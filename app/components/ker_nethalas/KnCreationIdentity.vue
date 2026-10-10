@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl space-y-6">
+  <div class="space-y-6">
     <div>
       <h2 class="text-lg font-semibold">
         Identité

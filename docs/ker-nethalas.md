@@ -425,7 +425,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   combat de la tranche 6 pourra l'alimenter. Ce qui manquera alors dans le contenu : la **nature** de ce qui compte
   (dégâts d'un type, adversaires d'un type vaincus, coups critiques, pièces trouvées…) ; ce sera un champ optionnel
   ajouté au format, sans invalider le contenu déjà écrit. Non ajouté maintenant : sans consommateur, il se figerait sur
-  une forme devinée.
+  une forme devinée. Suivi : issue X17 ([#265](https://github.com/kevmorpain/le-bureau-du-jdr/issues/265)).
 - **Laissé de côté** : l'application des récompenses (réduction de dégâts, bonus, Atout, XP, Amulette) : elles s'affichent
   et se reportent à la main, comme les aptitudes de Maîtrise ; le gain de 100 XP d'un objectif ne s'ajoute pas tout seul.
   L'Amulette (récompense de l'objectif recommandé en premier, qui ouvre une troisième Maîtrise) n'a pas d'effet sur la
@@ -590,8 +590,13 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   migration `0140` (`goal_picks`).
 - Tableau relevé sur les pages 64 à 67 du livre rendues en image (PyMuPDF) : le texte extrait décale les récompenses
   de trois lignes de la page 66. Contenu rédigé dans `~/ker-nethalas-content/personalGoals.json`, avec
-  l'effet des Atouts (page des Atouts) dans la récompense qui les donne. Le livre appelle « Air » un objectif qui compte des
-  dégâts de **Force** : le nom suit le livre, l'objectif aussi.
+  l'effet des Atouts (page des Atouts) dans la récompense qui les donne. Le livre v1.2 appelle encore « Air » un objectif qui compte des
+  dégâts de **Force** ; sur retour du PM (le type Air a disparu des versions récentes), il est nommé « Force ». Les
+  cibles chiffrées viennent du livre anglais v1.2, pas de la VF, dont plusieurs nombres diffèrent (jusqu'à 1 000
+  adversaires contre 100 pour un objectif, 10 000 pièces contre 5 000 pour un autre).
+- Retour du PM sur le rendu : les étapes de l'assistant avaient une largeur maximale, qui laissait un grand vide à droite
+  des listes (Maîtrises, objectifs) ; elle est retirée de toutes les étapes, comme dans le créateur D&D. L'écran de
+  récapitulatif garde la sienne.
 - Vérifié sur une base vierge : le contenu rédigé passe le schéma et se charge par le script ; l'étape « Objectifs »
   (39 cartes, 2 au plus, les autres grisées, un seul « recommandé en premier ») ; sur la fiche, prise d'un objectif, bouton
   de récompense inactif à 0/1 puis actif après +1, passage dans « Récompenses récupérées », état relu côté serveur ; le
