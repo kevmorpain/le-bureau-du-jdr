@@ -1,11 +1,11 @@
 import { db } from '~~/server/utils/db'
 import { createKnCharacter } from '~~/server/utils/knCharacters'
-import { createKnCharacterSchema } from '~~/shared/ker-nethalas/character'
+import { knCreationSchema } from '~~/shared/ker-nethalas/creation'
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
 
-  const result = await readValidatedBody(event, createKnCharacterSchema.safeParse)
+  const result = await readValidatedBody(event, knCreationSchema.safeParse)
   if (!result.success) {
     throw createError({ statusCode: 422, data: result.error })
   }

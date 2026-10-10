@@ -1,13 +1,8 @@
 import { asc, eq } from 'drizzle-orm'
 import * as schema from '~~/server/db/schema'
 import type { Db } from '~~/server/utils/db'
-import {
-  defaultKnResistances,
-  defaultKnSkills,
-  type CreateKnCharacterInput,
-  type UpdateKnCharacterInput,
-} from '~~/shared/ker-nethalas/character'
-import { emptyKnProvisions } from '~~/shared/ker-nethalas/camp'
+import type { UpdateKnCharacterInput } from '~~/shared/ker-nethalas/character'
+import { knBuildCreatedSheet, type KnCreation } from '~~/shared/ker-nethalas/creation'
 import { emptyKnRun } from '~~/shared/ker-nethalas/run'
 import { emptyKnStatus } from '~~/shared/ker-nethalas/status'
 
@@ -17,17 +12,14 @@ export async function listKnCharacters(db: Db, ownerId: number) {
   return await db.select().from(knCharacters).where(eq(knCharacters.ownerId, ownerId)).orderBy(asc(knCharacters.id))
 }
 
-export async function createKnCharacter(db: Db, ownerId: number, input: CreateKnCharacterInput): Promise<{ id: number }> {
+export async function createKnCharacter(db: Db, ownerId: number, creation: KnCreation): Promise<{ id: number }> {
   const [created] = await db
     .insert(knCharacters)
     .values({
+      ...knBuildCreatedSheet(creation),
       ownerId,
-      name: input.name,
-      skills: defaultKnSkills(),
-      resistances: defaultKnResistances(),
       status: emptyKnStatus(),
       run: emptyKnRun(),
-      provisions: emptyKnProvisions(),
     })
     .returning({ id: knCharacters.id })
 

@@ -1,0 +1,126 @@
+<template>
+  <div class="space-y-4 text-sm">
+    <div>
+      <p class="font-semibold">
+        {{ draft.name.trim() || 'Sans nom' }}
+      </p>
+      <p
+        v-if="draft.appearance.trim() && !compact"
+        class="whitespace-pre-line text-muted"
+      >
+        {{ draft.appearance }}
+      </p>
+    </div>
+
+    <div>
+      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+        Jauges
+      </p>
+      <ul class="space-y-0.5">
+        <li
+          v-for="vital in KN_CREATION_VITAL_KEYS"
+          :key="vital"
+          class="flex justify-between gap-4"
+        >
+          <span>{{ $t(`ker_nethalas.vitals.${vital}`) }}</span>
+          <span class="tabular-nums">{{ draft.vitals[vital] ?? '—' }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+        Compétences
+      </p>
+      <ul class="space-y-0.5">
+        <li
+          v-for="key in skillKeys"
+          :key
+          class="flex justify-between gap-4"
+        >
+          <span>{{ $t(`ker_nethalas.skills.${key}`) }}</span>
+          <span
+            class="tabular-nums"
+            :class="draft.allotments[key] ? 'font-semibold text-success' : 'text-muted'"
+          >
+            {{ skills[key].score }}
+          </span>
+        </li>
+        <li
+          v-if="compact && !skillKeys.length"
+          class="text-muted"
+        >
+          Aucune enveloppe choisie
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+        Résistances
+      </p>
+      <ul class="space-y-0.5">
+        <li
+          v-for="key in KN_RESISTANCE_KEYS"
+          :key
+          class="flex justify-between gap-4"
+        >
+          <span>{{ $t(`ker_nethalas.resistances.${key}`) }}</span>
+          <span class="tabular-nums">{{ resistances[key] }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+        Équipement
+      </p>
+      <p
+        v-if="!draft.kitEnabled"
+        class="text-muted"
+      >
+        Première partie : l'équipement vient du Domaine d'introduction.
+      </p>
+      <ul
+        v-else
+        class="space-y-0.5"
+      >
+        <li v-if="draft.kit.weapon.trim()">
+          {{ draft.kit.weapon }}
+        </li>
+        <li v-if="draft.kit.armor.trim()">
+          Armure : {{ draft.kit.armor }}
+        </li>
+        <li>1 Torche</li>
+        <li>{{ draft.kit.cookingIngredients ?? '—' }} Denrées</li>
+        <li>{{ draft.kit.craftingSupplies ?? '—' }} Fournitures d'Artisanat</li>
+        <li>{{ draft.kit.coins ?? '—' }} Pièces</li>
+      </ul>
+    </div>
+
+    <div v-if="draft.personalGoals.trim() && !compact">
+      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+        Objectifs
+      </p>
+      <p class="whitespace-pre-line">
+        {{ draft.personalGoals }}
+      </p>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import type { KnCreationDraft } from '~/composables/useKnCreation'
+import { defaultKnResistances } from '~~/shared/ker-nethalas/character'
+import { KN_CREATION_VITAL_KEYS, knCreationResistances, knCreationSkills } from '~~/shared/ker-nethalas/creation'
+import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
+
+const props = defineProps<{
+  draft: KnCreationDraft
+  compact?: boolean
+}>()
+
+const skills = computed(() => knCreationSkills(props.draft.allotments))
+const resistances = computed(() => props.draft.resistanceBoost ? knCreationResistances(props.draft.resistanceBoost) : defaultKnResistances())
+const skillKeys = computed(() => props.compact ? KN_SKILL_KEYS.filter(key => props.draft.allotments[key]) : KN_SKILL_KEYS)
+</script>

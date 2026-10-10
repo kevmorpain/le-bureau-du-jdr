@@ -8,11 +8,13 @@ import {
 import { KN_MADNESS_COUNTER_KEYS } from '../../shared/ker-nethalas/catalog/madness'
 import { KN_OVERSEER_INFLUENCE_KEYS } from '../../shared/ker-nethalas/catalog/overseerInfluence'
 import { KN_ROT_MAX_STAGE } from '../../shared/ker-nethalas/catalog/rot'
-import { createKnCharacterSchema, updateKnCharacterSchema } from '../../shared/ker-nethalas/character'
+import { updateKnCharacterSchema } from '../../shared/ker-nethalas/character'
+import { knCreationSchema } from '../../shared/ker-nethalas/creation'
 import { KN_TARGET_GROUPS } from '../../shared/ker-nethalas/effects'
 import { emptyKnDomain, knDomainSchema } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, knStatusSchema } from '../../shared/ker-nethalas/status'
 import { KN_NON_COMBAT_SKILL_KEYS, KN_WEAPON_SKILL_KEYS } from '../../shared/ker-nethalas/skills'
+import { validKnCreation } from '../fixtures/knCreation'
 
 const labels = fr.ker_nethalas as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -140,6 +142,6 @@ describe('schéma de l\'état en cours', () => {
     expect(updateKnCharacterSchema.safeParse({ status: emptyKnStatus() }).success).toBe(true)
     expect(updateKnCharacterSchema.safeParse({ status: { ...emptyKnStatus(), rotStage: 12 } }).success).toBe(false)
     expect(updateKnCharacterSchema.safeParse({ weapons: 'Épée longue', damageAffinities: 'Résiste au Feu', equipment: 'Lampe' }).success).toBe(true)
-    expect(createKnCharacterSchema.safeParse({ name: 'X' }).success).toBe(true)
+    expect(knCreationSchema.safeParse(validKnCreation('X')).success).toBe(true)
   })
 })

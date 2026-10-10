@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import {
-  createKnCharacterSchema,
   defaultKnResistances,
   defaultKnSkills,
   knResistancesSchema,
   knSkillsSchema,
   updateKnCharacterSchema,
 } from '../../shared/ker-nethalas/character'
+import { knCreationSchema } from '../../shared/ker-nethalas/creation'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '../../shared/ker-nethalas/skills'
+import { validKnCreation } from '../fixtures/knCreation'
 
 // Valeurs relues sur la fiche vierge et dans le livre : scores de départ entre parenthèses
 // (Acrobatics 10, Athletics 10, Dodge 10, Perception 20), Résistances à 20 avant le +20 au choix.
@@ -59,9 +60,9 @@ describe('bornes des schémas', () => {
   })
 
   it('exige un nom non vide à la création, espaces ignorés', () => {
-    expect(createKnCharacterSchema.safeParse({ name: 'Arathos' }).success).toBe(true)
-    expect(createKnCharacterSchema.safeParse({ name: '   ' }).success).toBe(false)
-    expect(createKnCharacterSchema.parse({ name: '  Arathos  ' }).name).toBe('Arathos')
+    expect(knCreationSchema.safeParse(validKnCreation('Arathos')).success).toBe(true)
+    expect(knCreationSchema.safeParse(validKnCreation('   ')).success).toBe(false)
+    expect(knCreationSchema.parse(validKnCreation('  Arathos  ')).name).toBe('Arathos')
   })
 
   it('accepte une mise à jour partielle, y compris vide', () => {
