@@ -24,11 +24,11 @@
       </li>
     </ul>
 
-    <ul class="space-y-3">
+    <ul class="divide-y divide-default rounded-md border border-default">
       <li
         v-for="key in KN_SKILL_KEYS"
         :key
-        class="flex flex-wrap items-center gap-x-3 gap-y-2"
+        class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 transition-colors hover:bg-elevated"
       >
         <span class="min-w-48 flex-1">{{ $t(`ker_nethalas.skills.${key}`) }}</span>
         <span class="w-10 text-right text-sm text-muted tabular-nums">{{ KN_SKILL_STARTING_SCORES[key] }}</span>

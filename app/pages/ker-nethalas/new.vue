@@ -65,14 +65,12 @@
       <KnCreationSummary
         :draft
         :masteries
-        compact
       />
     </template>
     <template #preview-mobile>
       <KnCreationSummary
         :draft
         :masteries
-        compact
       />
     </template>
   </WizardShell>

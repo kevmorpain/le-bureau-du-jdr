@@ -15,8 +15,8 @@
       <span class="text-sm font-bold text-(--ui-text)">Récapitulatif</span>
     </header>
 
-    <div class="mx-auto w-full max-w-2xl flex-1 space-y-6 px-4 py-8">
-      <p class="text-sm text-muted">
+    <div class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 py-8">
+      <p class="text-center text-sm text-muted">
         Vérifiez le survivant. « Créer le survivant » crée la fiche ; tout reste modifiable ensuite.
       </p>
 
@@ -43,19 +43,21 @@
         </ul>
       </div>
 
-      <KnCreationSummary
+      <KnCreationReview
         :draft
         :masteries
       />
 
-      <UButton
-        size="lg"
-        :disabled="!canCreate"
-        :loading="creating"
-        @click="emit('create')"
-      >
-        Créer le survivant
-      </UButton>
+      <div class="flex justify-center">
+        <UButton
+          size="lg"
+          :disabled="!canCreate"
+          :loading="creating"
+          @click="emit('create')"
+        >
+          Créer le survivant
+        </UButton>
+      </div>
     </div>
   </div>
 </template>

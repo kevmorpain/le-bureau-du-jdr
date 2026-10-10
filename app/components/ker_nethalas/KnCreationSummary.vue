@@ -1,16 +1,8 @@
 <template>
   <div class="space-y-4 text-sm">
-    <div>
-      <p class="font-semibold">
-        {{ draft.name.trim() || 'Sans nom' }}
-      </p>
-      <p
-        v-if="draft.appearance.trim() && !compact"
-        class="whitespace-pre-line text-muted"
-      >
-        {{ draft.appearance }}
-      </p>
-    </div>
+    <p class="font-semibold">
+      {{ draft.name.trim() || 'Sans nom' }}
+    </p>
 
     <div>
       <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
@@ -34,20 +26,15 @@
       </p>
       <ul class="space-y-0.5">
         <li
-          v-for="key in skillKeys"
+          v-for="key in assignedSkills"
           :key
           class="flex justify-between gap-4"
         >
           <span>{{ $t(`ker_nethalas.skills.${key}`) }}</span>
-          <span
-            class="tabular-nums"
-            :class="draft.allotments[key] ? 'font-semibold text-success' : 'text-muted'"
-          >
-            {{ skills[key].score }}
-          </span>
+          <span class="font-semibold tabular-nums text-success">{{ skills[key].score }}</span>
         </li>
         <li
-          v-if="compact && !skillKeys.length"
+          v-if="!assignedSkills.length"
           class="text-muted"
         >
           Aucune enveloppe choisie
@@ -94,15 +81,6 @@
       </p>
     </div>
 
-    <div v-if="training && !compact">
-      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
-        Entraînement
-      </p>
-      <p class="whitespace-pre-line">
-        {{ training }}
-      </p>
-    </div>
-
     <div>
       <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
         Équipement
@@ -129,20 +107,11 @@
         <li>{{ draft.kit.coins ?? '—' }} Pièces</li>
       </ul>
     </div>
-
-    <div v-if="draft.personalGoals.trim() && !compact">
-      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
-        Objectifs
-      </p>
-      <p class="whitespace-pre-line">
-        {{ draft.personalGoals }}
-      </p>
-    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { knTrainingText, type KnCreationDraft } from '~/composables/useKnCreation'
+import type { KnCreationDraft } from '~/composables/useKnCreation'
 import { defaultKnResistances } from '~~/shared/ker-nethalas/character'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_CREATION_VITAL_KEYS, knCreationResistances, knCreationSkills } from '~~/shared/ker-nethalas/creation'
@@ -151,11 +120,9 @@ import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills
 const props = defineProps<{
   draft: KnCreationDraft
   masteries?: KnMastery[] | null
-  compact?: boolean
 }>()
 
-const training = computed(() => knTrainingText(props.draft, props.masteries ?? null))
 const skills = computed(() => knCreationSkills(props.draft.allotments))
 const resistances = computed(() => props.draft.resistanceBoost ? knCreationResistances(props.draft.resistanceBoost) : defaultKnResistances())
-const skillKeys = computed(() => props.compact ? KN_SKILL_KEYS.filter(key => props.draft.allotments[key]) : KN_SKILL_KEYS)
+const assignedSkills = computed(() => KN_SKILL_KEYS.filter(key => props.draft.allotments[key]))
 </script>

@@ -574,7 +574,9 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   (2) les effets des paliers n'étaient pas visibles à l'étape de choix → texte de tous les paliers, sur la fiche aussi
   (grisé tant qu'ils sont verrouillés) ; (3) étape « Compétences » : consigne en double, +60 et +40 proposés hors armes →
   une seule consigne, boutons par ligne grisés selon les enveloppes restantes et les armes ; (4) récapitulatif en écran
-  après « Terminer », comme D&D. Vérifié dans le navigateur : boutons (armes seules, épuisement d'une enveloppe, reprise),
+  après « Terminer », comme D&D, puis mis en cartes par section (jauges, compétences, résistances, Maîtrises, équipement,
+  entraînement, objectifs) ; lignes séparées à l'étape des compétences pour mieux associer chaque compétence à ses
+  boutons. Vérifié dans le navigateur : boutons (armes seules, épuisement d'une enveloppe, reprise),
   tirages (remplacement, effacement si la Maîtrise est retirée), écran de récapitulatif avec retour, création et champ
   « Entraînement » relu côté serveur.
 
