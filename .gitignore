@@ -24,6 +24,9 @@ logs
 .dev.vars
 .dev.vars.*
 
+# Contenu du livre Ker Nethalas : jamais dans le dépôt public (docs/ker-nethalas.md, KN27)
+/ker-nethalas-content/
+
 # Claude
 .claude/settings.local.json
 

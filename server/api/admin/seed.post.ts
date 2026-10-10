@@ -1,10 +1,8 @@
 import { runSeeds } from '../../db/seeds/run'
+import { requireSeedSecret } from '../../utils/seedSecret'
 
 export default defineEventHandler(async (event) => {
-  const secret = process.env.SEED_SECRET
-  if (!secret || getHeader(event, 'x-seed-secret') !== secret) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' })
-  }
+  requireSeedSecret(event)
 
   // `?only=feats` ou `?only=items,feats` : ne lance que ces seeds (séquentiel).
   // Indispensable en prod où le seed complet dépasse la limite de requêtes D1
