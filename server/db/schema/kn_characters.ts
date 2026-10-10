@@ -11,6 +11,7 @@ const knCharacters = sqliteTable('kn_characters', {
   ownerId: integer('owner_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: text().notNull(),
   appearance: text().default('').notNull(),
+  training: text().default('').notNull(),
   level: integer().default(1).notNull(),
   xp: integer().default(0).notNull(),
   personalGoals: text('personal_goals').default('').notNull(),

@@ -94,6 +94,15 @@
       </p>
     </div>
 
+    <div v-if="training && !compact">
+      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+        Entraînement
+      </p>
+      <p class="whitespace-pre-line">
+        {{ training }}
+      </p>
+    </div>
+
     <div>
       <p class="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
         Équipement
@@ -133,7 +142,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { KnCreationDraft } from '~/composables/useKnCreation'
+import { knTrainingText, type KnCreationDraft } from '~/composables/useKnCreation'
 import { defaultKnResistances } from '~~/shared/ker-nethalas/character'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_CREATION_VITAL_KEYS, knCreationResistances, knCreationSkills } from '~~/shared/ker-nethalas/creation'
@@ -145,6 +154,7 @@ const props = defineProps<{
   compact?: boolean
 }>()
 
+const training = computed(() => knTrainingText(props.draft, props.masteries ?? null))
 const skills = computed(() => knCreationSkills(props.draft.allotments))
 const resistances = computed(() => props.draft.resistanceBoost ? knCreationResistances(props.draft.resistanceBoost) : defaultKnResistances())
 const skillKeys = computed(() => props.compact ? KN_SKILL_KEYS.filter(key => props.draft.allotments[key]) : KN_SKILL_KEYS)

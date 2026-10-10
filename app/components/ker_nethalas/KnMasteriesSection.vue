@@ -5,8 +5,8 @@
         Maîtrises
       </h2>
       <p class="text-sm text-muted">
-        Un point d'Aptitude par niveau (deux au niveau 1) : on débloque les aptitudes d'une Maîtrise du palier 1 au palier 5.
-        Points à dépenser : <span class="font-semibold">{{ unspent }}</span>.
+        Un point d'Aptitude par niveau (deux au niveau 1) : on débloque les aptitudes d'une Maîtrise du palier 1 au palier 5 ;
+        les paliers à venir restent lisibles, grisés. Points à dépenser : <span class="font-semibold">{{ unspent }}</span>.
       </p>
     </template>
 
@@ -95,10 +95,7 @@
               <p class="text-xs text-muted">
                 {{ ability.action }}{{ ability.cost ? ` · ${ability.cost}` : '' }}
               </p>
-              <p
-                v-if="ability.tier <= pick.tiers"
-                class="text-sm"
-              >
+              <p class="text-sm">
                 {{ ability.text }}
               </p>
             </li>

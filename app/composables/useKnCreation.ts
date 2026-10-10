@@ -18,6 +18,8 @@ export interface KnCreationDraft {
   allotments: KnAllotments
   resistanceBoost: KnResistanceKey | null
   masteries: string[]
+  // Tirage D6 du lieu d'entraînement de chaque Maîtrise choisie, par clé de Maîtrise.
+  trainingRolls: Record<string, number>
   personalGoals: string
   kitEnabled: boolean
   kit: {
@@ -36,6 +38,7 @@ export const emptyKnCreationDraft = (): KnCreationDraft => ({
   allotments: {},
   resistanceBoost: null,
   masteries: [],
+  trainingRolls: {},
   personalGoals: '',
   kitEnabled: false,
   kit: { weapon: '', armor: '', cookingIngredients: null, craftingSupplies: null, coins: null },
@@ -49,13 +52,27 @@ export const KN_CREATION_STEPS = [
   { id: 'masteries', label: 'Maîtrises', icon: 'i-heroicons:sparkles' },
   { id: 'goals', label: 'Objectifs', icon: 'i-heroicons:flag' },
   { id: 'kit', label: 'Équipement', icon: 'i-heroicons:briefcase' },
-  { id: 'recap', label: 'Récapitulatif', icon: 'i-heroicons:check-circle' },
 ] as const
 
 export type KnCreationStepId = (typeof KN_CREATION_STEPS)[number]['id']
 
 const inRange = (value: number | null, { min, max }: { min: number, max: number }) =>
   value !== null && Number.isInteger(value) && value >= min && value <= max
+
+// Le lieu tiré pour une Maîtrise choisie, ou `undefined` si elle n'a pas encore de tirage.
+export const knTrainingPlace = (mastery: KnMastery, rolls: Record<string, number>) => {
+  const roll = rolls[mastery.key]
+  return roll === undefined ? undefined : mastery.training[roll - 1]
+}
+
+export const knTrainingText = (draft: KnCreationDraft, masteries: KnMastery[] | null) =>
+  (masteries ?? [])
+    .filter(mastery => draft.masteries.includes(mastery.key))
+    .flatMap((mastery) => {
+      const place = knTrainingPlace(mastery, draft.trainingRolls)
+      return place ? [`${mastery.name} : ${place.name} — ${place.text}`] : []
+    })
+    .join('\n')
 
 // `masteries` : le contenu chargé, ou `null` s'il ne l'est pas (les Maîtrises se choisiront alors sur la fiche).
 export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
@@ -70,6 +87,7 @@ export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
     return knCreationSchema.safeParse({
       name: d.name,
       appearance: d.appearance,
+      training: knTrainingText(d, masteries.value),
       vitals: d.vitals,
       allotments: d.allotments,
       resistanceBoost: d.resistanceBoost ?? undefined,
@@ -93,9 +111,11 @@ export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
         && inRange(d.kit.craftingSupplies, KN_CREATION_KIT.craftingSupplies)
         && inRange(d.kit.coins, KN_CREATION_KIT.coins)
       ),
-      recap: parsed.value.success && masteryIssues.value.length === 0,
     }
   })
+
+  const missingSteps = computed(() => KN_CREATION_STEPS.filter(step => !complete.value[step.id]))
+  const canCreate = computed(() => missingSteps.value.length === 0 && parsed.value.success)
 
   const stepIndex = computed(() => KN_CREATION_STEPS.findIndex(step => step.id === currentStepId.value))
   const isLastStep = computed(() => stepIndex.value === KN_CREATION_STEPS.length - 1)
@@ -129,5 +149,5 @@ export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
     }
   })
 
-  return { draft, currentStepId, parsed, complete, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev }
+  return { draft, currentStepId, parsed, complete, missingSteps, canCreate, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev }
 }

@@ -4,6 +4,7 @@ import type { KnCreation } from '../../shared/ker-nethalas/creation'
 export const validKnCreation = (name: string, over: Partial<KnCreation> = {}): KnCreation => ({
   name,
   appearance: '',
+  training: '',
   vitals: { health: 11, toughness: 23, aether: 9, sanity: 11 },
   allotments: {
     bladedWeapons: 60,

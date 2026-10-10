@@ -49,6 +49,7 @@ const vital = boundedInt(KN_BOUNDS.vital)
 export const updateKnCharacterSchema = z.object({
   name,
   appearance: z.string().max(2000),
+  training: z.string().max(2000),
   level: boundedInt(KN_BOUNDS.level),
   xp: boundedInt(KN_BOUNDS.xp),
   personalGoals: z.string().max(2000),

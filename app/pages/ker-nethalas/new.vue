@@ -1,12 +1,25 @@
 <template>
+  <KnCreationRecap
+    v-if="showSummary"
+    :draft
+    :masteries
+    :missing="missingSteps"
+    :can-create
+    :creating
+    @back="showSummary = false"
+    @go-to="backToStep"
+    @create="create"
+  />
+
   <WizardShell
+    v-else
     title="Nouveau survivant"
     back-to="/ker-nethalas"
     back-label="← Survivants"
     :steps="[...KN_CREATION_STEPS]"
     :current-step-id="currentStepId"
-    :can-go-next="canGoNext && !creating"
-    :can-go-prev="canGoPrev && !creating"
+    :can-go-next="canGoNext"
+    :can-go-prev="canGoPrev"
     :is-last-step="isLastStep"
     :step-summaries="stepSummaries"
     :is-step-complete="isStepComplete"
@@ -44,15 +57,8 @@
       v-model:draft="draft"
     />
     <KnCreationKit
-      v-else-if="currentStepId === 'kit'"
-      v-model:draft="draft"
-    />
-    <KnCreationRecap
       v-else
-      :draft
-      :complete
-      :masteries
-      @go-to="goTo"
+      v-model:draft="draft"
     />
 
     <template #preview>
@@ -82,13 +88,23 @@ const toast = useToast()
 
 const { data: masteries } = await useKnContent<KnMastery[]>('masteries')
 
-const { draft, currentStepId, parsed, complete, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev } = useKnCreation(masteries)
+const { draft, currentStepId, parsed, missingSteps, canCreate, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev } = useKnCreation(masteries)
 
+const showSummary = ref(false)
 const creating = ref(false)
 
-async function handleNext() {
-  if (!isLastStep.value) return goNext()
-  if (!parsed.value.success || creating.value) return
+function handleNext() {
+  if (isLastStep.value) showSummary.value = true
+  else goNext()
+}
+
+function backToStep(stepId: string) {
+  showSummary.value = false
+  goTo(stepId)
+}
+
+async function create() {
+  if (!parsed.value.success || !canCreate.value || creating.value) return
 
   creating.value = true
   try {

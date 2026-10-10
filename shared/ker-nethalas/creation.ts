@@ -90,6 +90,8 @@ const allotmentSchema = z.union([z.literal(60), z.literal(40), z.literal(30), z.
 export const knCreationSchema = z.object({
   name: z.string().trim().min(1).max(100),
   appearance: z.string().max(2000).default(''),
+  // Où chaque Maîtrise a été apprise (tirage D6 de l'assistant), à part de l'apparence.
+  training: z.string().max(2000).default(''),
   vitals: z.object({
     health: vitalSchema('health'),
     toughness: vitalSchema('toughness'),
@@ -121,6 +123,7 @@ export function knBuildCreatedSheet(creation: KnCreation) {
   return {
     name: creation.name,
     appearance: creation.appearance,
+    training: creation.training,
     personalGoals: creation.personalGoals,
     healthCurrent: vitals.health,
     healthMax: vitals.health,

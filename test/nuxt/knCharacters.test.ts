@@ -63,6 +63,7 @@ describe('createKnCharacter', () => {
       sanityMax: 11,
       coins: 0,
       appearance: '',
+      training: '',
       extraSkills: [],
       masteries: '',
       perks: '',
