@@ -14,6 +14,7 @@ export const KN_STATUS_BOUNDS = {
   lostSkills: 30,
   custom: 20,
   customEntries: 20,
+  sustained: 30,
 } as const
 
 const knSkill = z.enum(KN_SKILL_KEYS)
@@ -51,6 +52,8 @@ export const knStatusSchema = z.object({
   rotStage: boundedInt({ min: 0, max: KN_ROT_MAX_STAGE }),
   madness: knMadnessSchema,
   custom: z.array(knCustomModifierSchema).max(KN_STATUS_BOUNDS.custom),
+  // Aptitudes de Maîtrise Maintenues, actives (`<Maîtrise>:<palier>`) ; absent chez les survivants d'avant, donc optionnel.
+  sustained: z.array(z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}:[1-5]$/)).max(KN_STATUS_BOUNDS.sustained).optional(),
 })
 
 export type KnStatus = z.infer<typeof knStatusSchema>

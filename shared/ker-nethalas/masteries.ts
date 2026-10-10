@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { KN_STATUS_BOUNDS, knCustomEntrySchema } from './status'
 import { boundedInt } from './zodHelpers'
 
 export const KN_MASTERY_TIERS = 5
@@ -7,6 +8,12 @@ export const KN_MAX_TRAINED_MASTERIES = 2
 export const knMasteryKeySchema = z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/)
 const slug = knMasteryKeySchema
 
+// Effets que le moteur applique à la fiche : ceux d'un trait tant que la Maîtrise est possédée, ceux d'une aptitude tant
+// qu'elle est débloquée (et allumée, si elle est Maintenue). Le texte reste la référence pour tout le reste.
+const knMasteryEffectsSchema = z.array(knCustomEntrySchema).max(KN_STATUS_BOUNDS.customEntries)
+
+const knCostSchema = boundedInt({ min: 0, max: 99 })
+
 export const knMasteryAbilitySchema = z.object({
   tier: boundedInt({ min: 1, max: KN_MASTERY_TIERS }),
   name: z.string().trim().min(1).max(100),
@@ -14,8 +21,14 @@ export const knMasteryAbilitySchema = z.object({
   magical: z.boolean(),
   sustained: z.boolean(),
   cost: z.string().trim().max(60),
-  // Coût numérique en Éther ; `null` pour un coût spécial ou une aptitude passive.
-  aether: boundedInt({ min: 0, max: 99 }).nullable(),
+  // Coût numérique en Éther ; `null` pour un coût spécial ou une aptitude passive. Une aptitude Maintenue retranche ce
+  // coût de l'Éther maximum tant qu'elle dure, au lieu de le dépenser.
+  aether: knCostSchema.nullable(),
+  exhaustion: knCostSchema.optional(),
+  health: knCostSchema.optional(),
+  // Tient lieu de source de lumière tant qu'elle est active.
+  light: z.boolean().optional(),
+  effects: knMasteryEffectsSchema.optional(),
   text: z.string().trim().min(1).max(2000),
 })
 
@@ -24,13 +37,17 @@ const knMasteryTextSchema = z.object({
   text: z.string().trim().min(1).max(2000),
 })
 
+const knMasteryFeatureSchema = knMasteryTextSchema.extend({
+  effects: knMasteryEffectsSchema.optional(),
+})
+
 export const KN_MASTERY_TRAINING_COUNT = 6
 
 export const knMasterySchema = z.object({
   key: slug,
   name: z.string().trim().min(1).max(100),
   summary: z.string().trim().min(1).max(1000),
-  feature: knMasteryTextSchema,
+  feature: knMasteryFeatureSchema,
   abilities: z.array(knMasteryAbilitySchema).length(KN_MASTERY_TIERS).superRefine((abilities, ctx) => {
     abilities.forEach((ability, index) => {
       if (ability.tier !== index + 1) ctx.addIssue({ code: 'custom', path: [index, 'tier'], message: `le palier ${index + 1} est attendu à cette place` })

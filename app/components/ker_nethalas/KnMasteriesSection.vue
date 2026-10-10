@@ -107,6 +107,13 @@
               <p class="text-sm">
                 {{ ability.text }}
               </p>
+              <KnAbilityUse
+                v-if="ability.tier <= entry.tiers"
+                v-model:character="character"
+                :ability
+                :mastery-key="entry.key"
+                :resolved
+              />
             </li>
           </ul>
         </template>
@@ -151,7 +158,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import { knAmuletMastery, knLockAmuletTier, knUnlockAmuletTier } from '~~/shared/ker-nethalas/amulets'
+import { knLockAmuletTier, knMasteryEntries, knUnlockAmuletTier, type KnMasteryEntry } from '~~/shared/ker-nethalas/amulets'
 import {
   KN_MASTERY_TIERS,
   KN_MAX_TRAINED_MASTERIES,
@@ -160,15 +167,13 @@ import {
   knUnlockMastery,
   type KnMastery,
 } from '~~/shared/ker-nethalas/masteries'
+import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 
-interface Entry {
-  key: string
-  tiers: number
-  amulet: boolean
-}
+type Entry = KnMasteryEntry
 
 const props = defineProps<{
   masteries: KnMastery[] | null
+  resolved: KnResolvedSheet
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
@@ -177,13 +182,7 @@ const find = (key: string) => props.masteries?.find(mastery => mastery.key === k
 
 const unspent = computed(() => knAbilityPointsUnspent(character.value.level, character.value.masteryPicks, character.value.amulets.tiers))
 
-const entries = computed<Entry[]>(() => {
-  const amuletKey = knAmuletMastery(character.value.amulets, character.value.masteryPicks)
-  return [
-    ...character.value.masteryPicks.map(pick => ({ key: pick.key, tiers: pick.tiers, amulet: false })),
-    ...(amuletKey === null ? [] : [{ key: amuletKey, tiers: character.value.amulets.tiers, amulet: true }]),
-  ]
-})
+const entries = computed(() => knMasteryEntries(character.value.masteryPicks, character.value.amulets))
 
 const availableItems = computed<SelectItem[]>(() =>
   (props.masteries ?? [])

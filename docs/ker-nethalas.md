@@ -395,13 +395,42 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   « Entraînement » est sous l'identité.
 - **Alternatives écartées** : (a) garder « Maîtrises » en texte libre, qui ne contrôle ni le nombre de points ni l'ordre
   des paliers ; (b) stocker les points non dépensés, qui divergeraient du niveau.
-- **Laissé de côté** : l'**amulette** (troisième Maîtrise, échange au camp), le **choix d'avantage à la montée de niveau**,
-  l'application automatique des effets chiffrés des aptitudes (Éther dépensé, Santé mentale maximale d'une aptitude passive, immunités) : les aptitudes sont affichées, pas appliquées. Les 18 autres Maîtrises (le livre en compte 20,
-  pas 21) sont rédigées en tranche 4d.
+- **Laissé de côté** : l'**amulette** (KN32), le **choix d'avantage à la montée de niveau**, et l'application automatique
+  des effets chiffrés des aptitudes (KN33) : les aptitudes étaient affichées, pas appliquées. Les 18 autres Maîtrises (le
+  livre en compte 20, pas 21) sont rédigées en tranche 4d.
 - **Procédure de rédaction** : les noms d'aptitudes et de traits sont en petites capitales dans le livre, que
   l'extraction de texte perd ; les pages se rendent en image (PyMuPDF, installé hors du dépôt dans `~/tools/pymupdf`) et se
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
+
+### KN33 — Effets des Maîtrises : coûts structurés, aptitudes Maintenues et effets chiffrés dans le moteur
+- **Règles sourcées** (livre v1.2, p. 21) : une aptitude Maintenue retranche son coût en Éther de l'Éther **maximum** tant
+  qu'elle dure (maximum 25 → 20 pour un coût de 5), et s'allume ou s'éteint hors combat ; les aptitudes Magiques se défendent
+  par un test de Résistance magique. Une aptitude « Passif » n'a ni coût ni bouton.
+- **Format public** (`shared/ker-nethalas/masteries.ts`, tous champs optionnels, donc le contenu déjà chargé reste valide) :
+  `exhaustion` et `health` (coûts) à côté de `aether` ; `light` (tient lieu de source de lumière) ; `effects` sur un trait
+  ou une aptitude, dans le format des modificateurs libres (`knCustomEntrySchema` : bonus de score, Avantage, Désavantage,
+  maximum de jauge). Le texte reste la référence pour tout ce qui n'est pas chiffrable. Le contenu privé a reçu les coûts,
+  tirés de ses propres textes de coût, deux drapeaux de lumière et cinq effets de trait ou d'aptitude (bonus d'Endurance,
+  d'Avantage, de Résistance magique, de Santé mentale maximale).
+- **Moteur** : `knMasterySources` (pur, `shared/ker-nethalas/masteryEffects.ts`) transforme les Maîtrises possédées, leurs
+  paliers débloqués et les aptitudes allumées en sources, que `resolveKnSheet` reçoit par `extraSources` ; le trait d'une
+  Maîtrise agit dès qu'elle est possédée, une aptitude une fois son palier débloqué, et une aptitude Maintenue seulement si
+  elle est allumée. `lightProvided` supprime la pénalité d'obscurité quand une aptitude de lumière est allumée.
+- **État** : `status.sustained` (liste de `<Maîtrise>:<palier>`), optionnel pour que les survivants existants restent valides,
+  sans migration. Une aptitude allumée dont le palier est repris, ou dont l'amulette n'est plus portée, n'a plus d'effet ; sa
+  clé reste dans la liste.
+- **Fiche** : un bouton « Utiliser » par aptitude débloquée non passive (vérifie l'Éther actuel, déduit Éther et Santé, ajoute
+  l'Épuisement) et un interrupteur « Maintenir » pour les aptitudes Maintenues (vérifie que l'Éther maximum absorbe le coût ;
+  l'Éther actuel est ramené au nouveau maximum). Les effets sur la cible restent du texte.
+- **Interprétations** : une aptitude qui coûte de la Santé se paie sans plancher (on ne bloque pas le bouton) ; « +5 Santé
+  mentale » du trait d'une Maîtrise est lu comme +5 de **maximum** (⚠️ le livre ne précise pas) ; le tirage et l'application
+  de dés d'effet ne sont pas faits.
+- **Alternative écartée** : coder les effets de chaque Maîtrise dans le moteur, qui lierait du contenu du livre au dépôt
+  public ; le format public décrit seulement la forme, et les chiffres restent dans le contenu privé.
+- **Laissé de côté** (tranche 4f-3) : points temporaires (Robustesse, Santé mentale, Éther) et leur consommation en premier, soin
+  de Blessures (Robustesse puis Santé), événement « combat remporté », activités de camp ajoutées par certains traits, limites
+  « une fois par combat, pièce ou repos », bonus conditionnels et effets sur un choix du joueur (arme du Maître d'armes).
 
 ### KN32 — Amulettes : possédées, une portée, des paliers communs
 - **Règles sourcées** (livre v1.2) : une amulette donne accès à une troisième Maîtrise (p. 21 et 63) ; on en trouve en butin
@@ -508,7 +537,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4c bis — Objectifs personnels** | format public, contenu privé des 39 objectifs, étape de création (liste), section de la fiche (progrès à la main, récupération de la récompense, KN31) ; rattaché à X12 (#259) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **4d — Maîtrises (suite)** | les 18 autres Maîtrises, en quatre lots ; issue X13 (#260) | contenu écrit, validé par le schéma, vérifié par recoupement des nombres ; à relire par le PM |
 | **4e — Amulettes** | amulettes possédées, une portée, paliers communs, tirage au D20 (KN32) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
-| **4f — Effets des Maîtrises** | modificateurs chiffrés des traits et aptitudes passives dans le moteur, bouton « Utiliser » avec coût et effet pour les aptitudes actives ; à cadrer avec le PM | à proposer |
+| **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
+| **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, « combat remporté », activités de camp, limites par repos ou combat | à faire |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
 | **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
@@ -614,13 +644,24 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 
 ## Journal
 
+### 2026-10-11 — Tranche 4f-1 et 4f-2 : coûts, aptitudes Maintenues, effets chiffrés
+- Demande du PM : appliquer les effets chiffrés des Maîtrises et pouvoir utiliser une aptitude d'un bouton, avec son coût.
+  Décision KN33. Pas de migration : `status.sustained` est optionnel.
+- Vérifié sur une base vierge avec un survivant de niveau 5 : « Utiliser » déduit 4 Éther (20 → 16) ; « Maintenir » une
+  aptitude de 5 Éther ramène l'Éther maximum effectif de 20 à 15 et l'Éther actuel de 16 à 15 ; une aptitude passive de
+  −5 de Santé mentale maximale fait passer la Santé mentale maximale effective de 14 à 9 ; une aptitude passive n'a pas de bouton. Le contenu annoté passe le
+  schéma réel au chargement. **Non vérifié** dans le navigateur : la lumière d'une aptitude (couverte par les tests du moteur),
+  le blocage du bouton quand l'Éther manque.
+- Constat : le tableau des coûts a été relevé dans les textes de coût rédigés, et les chiffres recoupés avec le livre au lot
+  précédent ; seuls les coûts en Épuisement et en Santé sont nouveaux, et se lisent dans le livre à la même ligne que l'Éther.
+
 ### 2026-10-11 — Tranche 4e : les amulettes
 - Demande du PM, puis règles précisées par lui et **vérifiées dans le livre** (couche de texte du PDF) : p. 13 et 86
   (« recover X Wounds » soigne d'abord toute la Robustesse, puis la Santé), p. 81 (les dégâts retirent d'abord de la
   Robustesse, puis de la Santé), p. 13 (le *Temporary* dure jusqu'à être dépensé ou jusqu'à un repos, et dépasse le maximum ;
   on le rencontre pour la Robustesse, la Santé mentale et l'Éther des joueurs, et pour la Santé de créatures), p. 125, 127, 206, 222, 224 pour les amulettes.
-  **Non écrit dans le livre** : que le temporaire soit consommé en premier (le livre dit « dépensé ») ; je suis la règle
-  du PM, comme D&D.
+  Le livre dit « dépensé » : les points temporaires s'épuisent donc d'abord quand on subit des dégâts, ce que le PM
+  confirme ; on garde cette notion.
 - Une première version (une entrée marquée dans `mastery_picks`, commit `6ccca4a`) a été remplacée : elle ne savait pas
   représenter plusieurs amulettes possédées. Décision KN32 ; migration `0141` (`amulets`), `shared/ker-nethalas/amulets.ts`,
   panneau `KnAmuletsPanel`.

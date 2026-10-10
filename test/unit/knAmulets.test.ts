@@ -7,6 +7,7 @@ import {
   knAmuletsSchema,
   knEquipAmulet,
   knLockAmuletTier,
+  knMasteryEntries,
   knRandomMasteryKey,
   knRemoveAmulet,
   knUnequipAmulet,
@@ -47,6 +48,21 @@ describe('Maîtrise apportée par l\'amulette portée', () => {
 
   it('n\'apporte rien quand la Maîtrise est déjà apprise', () => {
     expect(knAmuletMastery(amulets({ owned: ['alpha'], equipped: 'alpha' }), trained)).toBeNull()
+  })
+})
+
+describe('Maîtrises dont le survivant a l\'usage', () => {
+  it('les apprises, puis celle de l\'amulette portée avec ses propres paliers', () => {
+    expect(knMasteryEntries(trained, amulets({ owned: ['gamma'], equipped: 'gamma', tiers: 2 }))).toEqual([
+      { key: 'alpha', tiers: 2, amulet: false },
+      { key: 'beta', tiers: 1, amulet: false },
+      { key: 'gamma', tiers: 2, amulet: true },
+    ])
+  })
+
+  it('sans amulette utile, seulement les apprises', () => {
+    expect(knMasteryEntries(trained, emptyKnAmulets())).toHaveLength(2)
+    expect(knMasteryEntries(trained, amulets({ owned: ['alpha'], equipped: 'alpha' }))).toHaveLength(2)
   })
 })
 

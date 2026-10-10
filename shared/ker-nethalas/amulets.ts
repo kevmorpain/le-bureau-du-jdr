@@ -28,6 +28,21 @@ const isTrained = (picks: readonly KnMasteryPick[], key: string) => picks.some(p
 export const knAmuletMastery = (amulets: KnAmulets, picks: readonly KnMasteryPick[]) =>
   amulets.equipped !== null && !isTrained(picks, amulets.equipped) ? amulets.equipped : null
 
+export interface KnMasteryEntry {
+  key: string
+  tiers: number
+  amulet: boolean
+}
+
+// Les Maîtrises dont le survivant a l'usage : les apprises, puis celle de l'amulette portée si elle apporte quelque chose.
+export function knMasteryEntries(picks: readonly KnMasteryPick[], amulets: KnAmulets): KnMasteryEntry[] {
+  const amuletKey = knAmuletMastery(amulets, picks)
+  return [
+    ...picks.map(pick => ({ key: pick.key, tiers: pick.tiers, amulet: false })),
+    ...(amuletKey === null ? [] : [{ key: amuletKey, tiers: amulets.tiers, amulet: true }]),
+  ]
+}
+
 // Une amulette qui arrive est portée d'office si l'emplacement est libre et qu'elle apporte quelque chose.
 export function knAddAmulet(amulets: KnAmulets, key: string, picks: readonly KnMasteryPick[]): KnAmulets {
   if (amulets.owned.length >= KN_MAX_OWNED_AMULETS) return { ...amulets, owned: [...amulets.owned] }
