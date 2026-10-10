@@ -50,6 +50,11 @@
       :masteries
     />
 
+    <KnGoalsSection
+      v-model:character="character"
+      :goals
+    />
+
     <KnEffectsSection v-model:character="character" />
 
     <KnConditionsReference :character />
@@ -76,11 +81,13 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { AutoSaveStatus } from '~/composables/useAutoSave'
+import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 const route = useRoute()
 
 const { data: masteries } = await useKnContent<KnMastery[]>('masteries')
+const { data: goals } = await useKnContent<KnPersonalGoal[]>('personalGoals')
 
 const { data } = await useFetch<KnCharacter>(`/api/ker-nethalas/characters/${route.params.id}`)
 // `useFetch` rend `data` superficielle : on la recopie dans une ref profonde pour que l'édition soit réactive.

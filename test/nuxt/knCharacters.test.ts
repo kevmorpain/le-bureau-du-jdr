@@ -195,6 +195,25 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.masteryPicks).toEqual([])
   })
 
+  it('crée un survivant avec ses deux objectifs vierges et relit leur progrès et leur récupération', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Nera', { goals: ['alpha', 'beta'] }))
+    expect((await getKnCharacter(db, id))!.goalPicks).toEqual([
+      { key: 'alpha', progress: 0, claimed: false },
+      { key: 'beta', progress: 0, claimed: false },
+    ])
+
+    const goalPicks = [{ key: 'alpha', progress: 10, claimed: true }, { key: 'beta', progress: 4, claimed: false }]
+    await updateKnCharacter(db, id, { goalPicks })
+
+    expect((await getKnCharacter(db, id))!.goalPicks).toEqual(goalPicks)
+  })
+
+  it('crée un survivant sans objectif quand aucun n\'est choisi', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Sans objectif'))
+
+    expect((await getKnCharacter(db, id))!.goalPicks).toEqual([])
+  })
+
   it('renvoie null pour un survivant inexistant', async () => {
     expect(await updateKnCharacter(db, 999999, { notes: 'x' })).toBeNull()
   })

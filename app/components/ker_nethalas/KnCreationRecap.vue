@@ -46,6 +46,7 @@
       <KnCreationReview
         :draft
         :masteries
+        :goals
       />
 
       <div class="flex justify-center">
@@ -64,11 +65,13 @@
 
 <script lang="ts" setup>
 import type { KnCreationDraft, KnCreationStepId } from '~/composables/useKnCreation'
+import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 defineProps<{
   draft: KnCreationDraft
   masteries: KnMastery[] | null
+  goals: KnPersonalGoal[] | null
   missing: readonly { id: KnCreationStepId, label: string }[]
   canCreate: boolean
   creating: boolean

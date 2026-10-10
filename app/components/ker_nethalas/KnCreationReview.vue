@@ -161,15 +161,32 @@
       </p>
     </section>
 
-    <section
-      v-if="draft.personalGoals.trim()"
-      class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
-    >
+    <section class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-muted">
         Objectifs personnels
       </h2>
-      <p class="whitespace-pre-line text-sm">
-        {{ draft.personalGoals }}
+      <ul
+        v-if="pickedGoals.length"
+        class="divide-y divide-(--ui-border) text-sm"
+      >
+        <li
+          v-for="goal in pickedGoals"
+          :key="goal.key"
+          class="space-y-0.5 py-1.5"
+        >
+          <p class="font-semibold">
+            {{ goal.name }}
+          </p>
+          <p class="text-xs text-muted">
+            {{ goal.objective }} {{ goal.reward }}
+          </p>
+        </li>
+      </ul>
+      <p
+        v-else
+        class="text-sm text-muted"
+      >
+        {{ goals ? 'Aucun choisi' : 'Contenu non chargé : à choisir sur la fiche' }}
       </p>
     </section>
   </div>
@@ -179,17 +196,20 @@
 import { knTrainingText, type KnCreationDraft } from '~/composables/useKnCreation'
 import { defaultKnResistances } from '~~/shared/ker-nethalas/character'
 import { KN_CREATION_VITAL_KEYS, knCreationResistances, knCreationSkills } from '~~/shared/ker-nethalas/creation'
+import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
 
 const props = defineProps<{
   draft: KnCreationDraft
   masteries: KnMastery[] | null
+  goals: KnPersonalGoal[] | null
 }>()
 
 const skills = computed(() => knCreationSkills(props.draft.allotments))
 const resistances = computed(() => props.draft.resistanceBoost ? knCreationResistances(props.draft.resistanceBoost) : defaultKnResistances())
 const training = computed(() => knTrainingText(props.draft, props.masteries))
 const picked = computed(() => (props.masteries ?? []).filter(mastery => props.draft.masteries.includes(mastery.key)))
+const pickedGoals = computed(() => (props.goals ?? []).filter(goal => props.draft.goals.includes(goal.key)))
 const pickedNames = computed(() => picked.value.map(mastery => mastery.name))
 </script>

@@ -8,6 +8,7 @@ import {
   type KnAllotments,
   type KnCreationVital,
 } from '~~/shared/ker-nethalas/creation'
+import { knGoalPickIssues, type KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import { knMasteryPickIssues, type KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResistanceKey } from '~~/shared/ker-nethalas/skills'
 
@@ -20,7 +21,7 @@ export interface KnCreationDraft {
   masteries: string[]
   // Tirage D6 du lieu d'entraînement de chaque Maîtrise choisie, par clé de Maîtrise.
   trainingRolls: Record<string, number>
-  personalGoals: string
+  goals: string[]
   kitEnabled: boolean
   kit: {
     weapon: string
@@ -39,7 +40,7 @@ export const emptyKnCreationDraft = (): KnCreationDraft => ({
   resistanceBoost: null,
   masteries: [],
   trainingRolls: {},
-  personalGoals: '',
+  goals: [],
   kitEnabled: false,
   kit: { weapon: '', armor: '', cookingIngredients: null, craftingSupplies: null, coins: null },
 })
@@ -74,13 +75,14 @@ export const knTrainingText = (draft: KnCreationDraft, masteries: KnMastery[] | 
     })
     .join('\n')
 
-// `masteries` : le contenu chargé, ou `null` s'il ne l'est pas (les Maîtrises se choisiront alors sur la fiche).
-export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
+// `masteries`, `goals` : le contenu chargé, ou `null` s'il ne l'est pas (ils se choisiront alors sur la fiche).
+export function useKnCreation(masteries: Ref<KnMastery[] | null>, goals: Ref<KnPersonalGoal[] | null>) {
   const { t } = useI18n()
   const draft = ref(emptyKnCreationDraft())
   const currentStepId = ref<KnCreationStepId>('identity')
 
   const masteryIssues = computed(() => knMasteryPickIssues(draft.value.masteries, masteries.value?.map(mastery => mastery.key) ?? null))
+  const goalIssues = computed(() => knGoalPickIssues(draft.value.goals, goals.value?.map(goal => goal.key) ?? null))
 
   const parsed = computed(() => {
     const d = draft.value
@@ -92,7 +94,7 @@ export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
       allotments: d.allotments,
       resistanceBoost: d.resistanceBoost ?? undefined,
       masteries: d.masteries,
-      personalGoals: d.personalGoals,
+      goals: d.goals,
       kit: d.kitEnabled ? d.kit : null,
     })
   })
@@ -105,7 +107,7 @@ export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
       skills: knAllotmentIssues(d.allotments).length === 0,
       resistances: d.resistanceBoost !== null,
       masteries: masteryIssues.value.length === 0,
-      goals: true,
+      goals: goalIssues.value.length === 0,
       kit: !d.kitEnabled || (
         inRange(d.kit.cookingIngredients, KN_CREATION_KIT.cookingIngredients)
         && inRange(d.kit.craftingSupplies, KN_CREATION_KIT.craftingSupplies)
@@ -145,6 +147,7 @@ export function useKnCreation(masteries: Ref<KnMastery[] | null>) {
       skills: assigned ? `${assigned}/10 enveloppes` : null,
       resistances: d.resistanceBoost ? `40 en ${t(`ker_nethalas.resistances.${d.resistanceBoost}`)}` : null,
       masteries: d.masteries.length ? d.masteries.map(key => masteries.value?.find(mastery => mastery.key === key)?.name ?? key).join(' · ') : null,
+      goals: d.goals.length ? d.goals.map(key => goals.value?.find(goal => goal.key === key)?.name ?? key).join(' · ') : null,
       kit: d.kitEnabled ? 'Équipement de départ' : 'Première partie',
     }
   })

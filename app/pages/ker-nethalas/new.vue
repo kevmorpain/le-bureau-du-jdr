@@ -3,6 +3,7 @@
     v-if="showSummary"
     :draft
     :masteries
+    :goals
     :missing="missingSteps"
     :can-create
     :creating
@@ -55,6 +56,7 @@
     <KnCreationGoals
       v-else-if="currentStepId === 'goals'"
       v-model:draft="draft"
+      :goals
     />
     <KnCreationKit
       v-else
@@ -65,12 +67,14 @@
       <KnCreationSummary
         :draft
         :masteries
+        :goals
       />
     </template>
     <template #preview-mobile>
       <KnCreationSummary
         :draft
         :masteries
+        :goals
       />
     </template>
   </WizardShell>
@@ -78,6 +82,7 @@
 
 <script lang="ts" setup>
 import { KN_CREATION_STEPS, useKnCreation } from '~/composables/useKnCreation'
+import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 definePageMeta({ layout: 'blank' })
@@ -85,8 +90,9 @@ definePageMeta({ layout: 'blank' })
 const toast = useToast()
 
 const { data: masteries } = await useKnContent<KnMastery[]>('masteries')
+const { data: goals } = await useKnContent<KnPersonalGoal[]>('personalGoals')
 
-const { draft, currentStepId, parsed, missingSteps, canCreate, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev } = useKnCreation(masteries)
+const { draft, currentStepId, parsed, missingSteps, canCreate, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev } = useKnCreation(masteries, goals)
 
 const showSummary = ref(false)
 const creating = ref(false)

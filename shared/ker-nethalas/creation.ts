@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { emptyKnProvisions } from './camp'
 import { defaultKnResistances, defaultKnSkills, type KnResistances, type KnSkills } from './character'
+import { KN_MAX_ACTIVE_GOALS, knNewGoalPick } from './goals'
 import { KN_MAX_TRAINED_MASTERIES } from './masteries'
 import { knRollDie, type KnRng } from './run'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, KN_WEAPON_SKILL_KEYS, type KnSkillKey } from './skills'
@@ -104,7 +105,8 @@ export const knCreationSchema = z.object({
   resistanceBoost: z.enum(KN_RESISTANCE_KEYS),
   // Clés des Maîtrises choisies : leur validité dépend du contenu chargé, vérifiée par `knMasteryPickIssues`.
   masteries: z.array(z.string().max(40)).max(KN_MAX_TRAINED_MASTERIES).default([]),
-  personalGoals: z.string().max(2000).default(''),
+  // Clés des objectifs personnels choisis, vérifiées comme les Maîtrises par `knGoalPickIssues`.
+  goals: z.array(z.string().max(40)).max(KN_MAX_ACTIVE_GOALS).default([]),
   // Équipement des runs suivants ; `null` pour une première partie, qui trouve son équipement dans le Domaine d'introduction.
   kit: z.object({
     weapon: z.string().max(200),
@@ -124,7 +126,7 @@ export function knBuildCreatedSheet(creation: KnCreation) {
     name: creation.name,
     appearance: creation.appearance,
     training: creation.training,
-    personalGoals: creation.personalGoals,
+    goalPicks: creation.goals.map(knNewGoalPick),
     healthCurrent: vitals.health,
     healthMax: vitals.health,
     toughnessCurrent: vitals.toughness,

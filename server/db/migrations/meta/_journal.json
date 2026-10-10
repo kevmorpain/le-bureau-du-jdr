@@ -981,6 +981,13 @@
       "when": 1792700000000,
       "tag": "0139_ker_nethalas_training",
       "breakpoints": true
+    },
+    {
+      "idx": 140,
+      "version": "6",
+      "when": 1792800000000,
+      "tag": "0140_ker_nethalas_goal_picks",
+      "breakpoints": true
     }
   ]
 }

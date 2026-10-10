@@ -1,7 +1,7 @@
 <template>
   <UCard>
     <div class="grid gap-4 md:grid-cols-2">
-      <UFormField label="Objectifs personnels">
+      <UFormField label="Autres objectifs">
         <UTextarea
           v-model="character.personalGoals"
           :rows="4"

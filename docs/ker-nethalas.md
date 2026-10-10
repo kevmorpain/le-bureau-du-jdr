@@ -1,6 +1,6 @@
 # Module Ker Nethalas
 
-> **Statut** : tranches 0 à 3 fusionnées (PR #253 à #257, 2026-10-06 et 2026-10-07) ; issue #242 (X10) fermée. Suite : contenu du livre rédigé hors du dépôt (X11 à X16, U13). Tranche 4 en cours sur `feat/ker-nethalas-tranche-4` : 4a (chargement du contenu privé, X11), 4b (création du survivant, X12) et 4c (Maîtrises, pilote de deux, X13) écrites, non fusionnées ; une seule PR à la fin de la tranche 4. **Issues** : [#258 — X11](https://github.com/kevmorpain/le-bureau-du-jdr/issues/258), [#259 — X12](https://github.com/kevmorpain/le-bureau-du-jdr/issues/259), [#260 — X13](https://github.com/kevmorpain/le-bureau-du-jdr/issues/260).
+> **Statut** : tranches 0 à 3 fusionnées (PR #253 à #257, 2026-10-06 et 2026-10-07) ; issue #242 (X10) fermée. Suite : contenu du livre rédigé hors du dépôt (X11 à X16, U13). Tranche 4 en cours sur `feat/ker-nethalas-tranche-4` : 4a (chargement du contenu privé, X11), 4b (création du survivant, X12) 4c (Maîtrises, pilote de deux, X13) et les objectifs personnels (KN31) écrites, non fusionnées ; une seule PR à la fin de la tranche 4. **Issues** : [#258 — X11](https://github.com/kevmorpain/le-bureau-du-jdr/issues/258), [#259 — X12](https://github.com/kevmorpain/le-bureau-du-jdr/issues/259), [#260 — X13](https://github.com/kevmorpain/le-bureau-du-jdr/issues/260).
 > **Dernière mise à jour** : 2026-10-10.
 
 Ce document trace le plan du module, les décisions et ce qui a été fait. Le statut GitHub (Status, Effort,
@@ -402,6 +402,35 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN31 — Objectifs personnels : liste choisie, progrès noté à la main, récompense récupérée par un bouton
+- **Décision** : même schéma que KN30. Le **format** d'un objectif est public (`shared/ker-nethalas/goals.ts`, schéma
+  enregistré sous le nom `personalGoals`) ; son **contenu** (nom, objectif, cible chiffrée, récompense, mention
+  « recommandé en premier » pour un seul) est rédigé en français dans `~/ker-nethalas-content/personalGoals.json`, hors du
+  dépôt : 39 objectifs, relevés dans le tableau du livre rendu en image (le texte extrait mélange les lignes). Tout
+  objectif se compte : celui qui se fait « en une fois » a pour cible 1.
+- **État du survivant** : `kn_characters.goal_picks` (migration `0140`), une liste de `{ clé, progrès, récupéré }`. **Deux
+  objectifs en cours au plus** ; un objectif récupéré ne compte plus dans les deux, mais ne se reprend pas (« chacun ne se
+  prend et ne s'accomplit qu'une fois »). Le champ texte `personal_goals` reste, relibellé « Autres objectifs » : il
+  garde les notes des survivants créés avant, et sert quand le contenu n'est pas chargé.
+- **Création** : l'étape « Objectifs » remplace le texte libre par la liste (deux différents, comme pour les Maîtrises) ;
+  le serveur compare le choix au contenu chargé (`knGoalPickIssues`) et n'en accepte aucun quand le contenu n'est pas
+  chargé (ils se choisissent alors sur la fiche).
+- **Fiche** : une section « Objectifs personnels » : progrès (champ numérique, +1, −1), barre, **bouton « Récupérer la
+  récompense »** actif quand la cible est atteinte, puis l'objectif passe dans « Récompenses récupérées », où « Annuler »
+  corrige une récupération par mégarde (s'il reste de la place). « Retirer » corrige un objectif choisi par erreur, mais
+  seulement tant que son progrès est nul : le livre veut qu'il ne se change plus.
+- **Alternative écartée** : garder le texte libre et lui ajouter un compteur, qui ne limite pas à deux objectifs, ne
+  retient pas ceux déjà accomplis et ne se laisse pas brancher à un suivi.
+- **Mise à jour automatique** (demandée, « pas urgent ») : le progrès est un compteur par objectif, donc le suivi de
+  combat de la tranche 6 pourra l'alimenter. Ce qui manquera alors dans le contenu : la **nature** de ce qui compte
+  (dégâts d'un type, adversaires d'un type vaincus, coups critiques, pièces trouvées…) ; ce sera un champ optionnel
+  ajouté au format, sans invalider le contenu déjà écrit. Non ajouté maintenant : sans consommateur, il se figerait sur
+  une forme devinée.
+- **Laissé de côté** : l'application des récompenses (réduction de dégâts, bonus, Atout, XP, Amulette) : elles s'affichent
+  et se reportent à la main, comme les aptitudes de Maîtrise ; le gain de 100 XP d'un objectif ne s'ajoute pas tout seul.
+  L'Amulette (récompense de l'objectif recommandé en premier, qui ouvre une troisième Maîtrise) n'a pas d'effet sur la
+  fiche : elle viendra avec la tranche 4d.
+
 ---
 
 ## Inventaire des sources de modificateurs
@@ -449,6 +478,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4a — Contenu privé** | table `kn_content`, chargement depuis des fichiers hors du dépôt, lecture sous session (KN27) ; issue X11 (#258) | écrite, vérifiée, non fusionnée |
 | **4b — Création du survivant** | assistant en étapes (identité, jauges tirées aux dés, enveloppes de compétences, résistances, objectifs, équipement de départ), validation serveur ; issue X12 (#259) | écrite, vérifiée, non fusionnée |
 | **4c — Maîtrises (pilote)** | format public, contenu privé de deux Maîtrises (Faucheur abyssal, Arcaniste), étape de création, section de la fiche, points d'Aptitude (KN30) ; issue X13 (#260) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
+| **4c bis — Objectifs personnels** | format public, contenu privé des 39 objectifs, étape de création (liste), section de la fiche (progrès à la main, récupération de la récompense, KN31) ; rattaché à X12 (#259) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **4d — Maîtrises (suite)** | les 19 autres Maîtrises par lots, l'amulette, les effets chiffrés des aptitudes ; issue X13 (#260) | à faire |
 | **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
@@ -553,6 +583,21 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-10 — Objectifs personnels (suite de la tranche 4c)
+- Demande du PM : choisir les objectifs dans une liste plutôt que les saisir, pouvoir mettre le progrès à jour à la main et
+  récupérer la récompense par un bouton ; la mise à jour automatique (combat, dégâts) viendra plus tard. Décision KN31 ;
+  migration `0140` (`goal_picks`).
+- Tableau relevé sur les pages 64 à 67 du livre rendues en image (PyMuPDF) : le texte extrait décale les récompenses
+  de trois lignes de la page 66. Contenu rédigé dans `~/ker-nethalas-content/personalGoals.json`, avec
+  l'effet des Atouts (page des Atouts) dans la récompense qui les donne. Le livre appelle « Air » un objectif qui compte des
+  dégâts de **Force** : le nom suit le livre, l'objectif aussi.
+- Vérifié sur une base vierge : le contenu rédigé passe le schéma et se charge par le script ; l'étape « Objectifs »
+  (39 cartes, 2 au plus, les autres grisées, un seul « recommandé en premier ») ; sur la fiche, prise d'un objectif, bouton
+  de récompense inactif à 0/1 puis actif après +1, passage dans « Récompenses récupérées », état relu côté serveur ; le
+  serveur refuse une création avec un objectif, deux identiques, un inconnu ou aucun quand le contenu est chargé.
+- **Non vérifié** : « Annuler » et « Retirer » dans le navigateur (couverts par les tests des fonctions pures) ; le rendu
+  sur téléphone ; le **texte français des 39 objectifs**, à relire par le PM.
 
 ### 2026-10-10 — Tranche 4c : Maîtrises, pilote de deux
 - Les tranches 4a et 4b sont committées puis réunies sur une seule branche, `feat/ker-nethalas-tranche-4` ; le PM veut

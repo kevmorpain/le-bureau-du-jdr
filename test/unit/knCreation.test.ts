@@ -139,12 +139,12 @@ describe('schéma de création', () => {
     }).success).toBe(false)
   })
 
-  it('remplit en texte vide l\'apparence, l\'entraînement et les objectifs', () => {
-    const { appearance, training, personalGoals, ...rest } = validKnCreation('x')
+  it('remplit en vide l\'apparence, l\'entraînement et les objectifs', () => {
+    const { appearance, training, goals, ...rest } = validKnCreation('x')
     const parsed = knCreationSchema.parse(rest)
 
-    expect([appearance, training, personalGoals]).toEqual(['', '', ''])
-    expect(parsed).toMatchObject({ appearance: '', training: '', personalGoals: '' })
+    expect([appearance, training, goals]).toEqual(['', '', []])
+    expect(parsed).toMatchObject({ appearance: '', training: '', goals: [] })
   })
 
   it('borne le texte d\'entraînement', () => {
@@ -155,13 +155,13 @@ describe('schéma de création', () => {
 
 describe('fiche construite à la création', () => {
   it('une première partie : jauges pleines, aucun équipement', () => {
-    const sheet = knBuildCreatedSheet(validKnCreation('Arathos', { appearance: 'Homme, 30 ans', training: 'Lieu fictif', personalGoals: 'Overseer Overthrown' }))
+    const sheet = knBuildCreatedSheet(validKnCreation('Arathos', { appearance: 'Homme, 30 ans', training: 'Lieu fictif' }))
 
     expect(sheet).toMatchObject({
       name: 'Arathos',
       appearance: 'Homme, 30 ans',
       training: 'Lieu fictif',
-      personalGoals: 'Overseer Overthrown',
+      goalPicks: [],
       healthCurrent: 11,
       healthMax: 11,
       toughnessCurrent: 23,

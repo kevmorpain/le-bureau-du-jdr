@@ -7,6 +7,7 @@ import {
   type KnSkillKey,
 } from './skills'
 import { knProvisionsSchema } from './camp'
+import { knGoalPicksSchema } from './goals'
 import { knMasteryPicksSchema } from './masteries'
 import { knRunSchema } from './run'
 import { knStatusSchema } from './status'
@@ -53,6 +54,7 @@ export const updateKnCharacterSchema = z.object({
   level: boundedInt(KN_BOUNDS.level),
   xp: boundedInt(KN_BOUNDS.xp),
   personalGoals: z.string().max(2000),
+  goalPicks: knGoalPicksSchema,
   healthCurrent: vital,
   healthMax: vital,
   toughnessCurrent: vital,
