@@ -454,8 +454,11 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Dans le run** : `creatures` dans une entrée (jusqu'à 4 tirages : test de combat, événement ou alarme) et `overseer` dans
   le Domaine, tous deux de simples numéros de dés ; aucune migration.
 - **Vocabulaire** : Esprit, Corps (Mind, Body) sont mon choix : la VF, d'une édition antérieure, dit Vigilance et Athlétisme.
-- **Laissé de côté** : le suivi de combat (6b) et les Overseers et sbires (6c) ; les fiches du bestiaire, hormis trois
-  pilotes (deux créatures et un Overseer) à relire avant d'écrire les autres.
+- **Sbires** : une fiche de rôle `minion` (même schéma, tableau d'actions à deux plages 1-4 / 5-6, pas d'adaptation) ; une
+  aptitude de Maîtrise l'invoque par `summons`, sa clé, et la fiche s'affiche sous l'aptitude une fois débloquée, sans
+  bouton d'engagement.
+- **Laissé de côté** : les sbires comme alliés dans le suivi de combat (le moteur ne gère que des adversaires du
+  survivant : leurs attaques et leurs dégâts se jouent à la main) ; les bonus de Maîtrise sur leur fiche.
 
 ### KN37 — Tests en ligne, conséquences automatiques, actions sur les obstacles
 - **Test en ligne** : un bouton « Tester » ouvre, dans le bloc de l'entrée, le même panneau que la carte « Jet de dés »
@@ -720,7 +723,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **6c — Overseers et sbires** | les 10 Overseers et les 5 sbires de Maîtrise | à faire |
+| **6c — Overseers et sbires** | les 53 fiches du bestiaire (43 créatures, 10 Overseers) et les 5 sbires de Maîtrise, lus sous l'aptitude qui les invoque (KN38) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
@@ -834,10 +837,31 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   remet à 0 au round suivant.
 - **Meute** : seules les créatures en vie de même fiche comptent.
 - **Surprise ratée** : la Perception de l'Initiative qui suit prend −20 (p. 76) ; on le saisit à la main dans le bonus du test.
+- **Santé d'un Overseer au niveau 10** : le livre imprime « 10 Health » sans le « + » des autres paliers ; lu
+  comme +10. Le pied de page d'un autre Overseer s'est glissé dans son palier 10 à l'extraction ; son « +10 Combat Skill »
+  est lu à la main sur l'image de la page.
+- **Actions des fiches** : un dégât « sur une touche » s'applique à la touche ; une action magique avec un test applique
+  ses dégâts à l'échec du test. Là où le livre mêle un test et des dégâts sans dire lequel conditionne l'autre (une action
+  magique qui inflige des dégâts puis demande un test d'Esquive), les dégâts suivent le test. Les dégâts qui visent la Santé
+  directement, les effets durables (aura, malus pendant D rounds, Santé temporaire, invocation de Démons mineurs ou de
+  serviteurs d'Overseer) et le test de Corps du livre (aucune compétence « Corps » sur la fiche d'un survivant) restent dans le
+  texte, à appliquer à la main.
+- **Sbires de Maîtrise** : une fiche de sbire se lit sous l'aptitude qui l'invoque ; les bonus d'une Maîtrise (le palier 5
+  d'une Maîtrise de nécromancie : +D6 nécrotiques et +2 Santé) ne sont pas appliqués à la fiche affichée.
 
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 6c : fiches du bestiaire, Overseers et sbires
+- Décision KN38 complétée ; aucune migration. Les 53 fiches (43 créatures, 10 Overseers) et les 5 sbires sont écrits hors
+  dépôt : chiffres, étiquettes, Armure, traits et adaptation lus par un script sur le livre et recoupés avec les pilotes ;
+  textes d'action en français, avec leurs dégâts, tests et conséquences quand le texte les donne.
+- Vérifié : les 58 fiches passent le schéma réel (chargement `kn:content` sur la base locale) ; dans le navigateur, une fiche
+  de sbire sous deux aptitudes d'invocation d'un survivant de test (supprimé ensuite).
+- Tests : un sbire accepté par le schéma des fiches, une aptitude qui désigne son sbire. Suite complète verte.
+- **Non vérifié** dans le navigateur : l'engagement d'une créature des lots 3 à 5, et les Overseers au-delà du pilote.
+- Texte français à relire par le PM avant tout chargement en production.
 
 ### 2026-10-11 — Tranche 6b : suivi de combat
 - Décision KN39 ; aucune migration. Moteur pur testé (jet opposé, critiques, égalités, dégâts, Armure, types de dégâts,
