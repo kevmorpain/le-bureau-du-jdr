@@ -134,7 +134,7 @@
         :level="character.level"
         :source="`Overseer du Domaine · D10 ${domain.overseer.roll}`"
         :can-engage="!run.combat"
-        @engage="creature => engage(creature, true)"
+        @engage="creature => engageAndShow(creature, true)"
       />
 
       <div class="space-y-3">
@@ -210,7 +210,7 @@
             @add-room-trap="addRoomTrap"
             @obstacle-act="obstacleAct"
             @draw-creature="drawCreature"
-            @engage="creature => engage(creature)"
+            @engage="creature => engageAndShow(creature)"
           />
         </div>
       </div>
@@ -281,6 +281,13 @@ const overseer = computed(() => {
 })
 
 const { engage } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+
+// La carte de combat est plus bas dans la page : on y emmène le joueur.
+async function engageAndShow(creature: KnCreature, overseer = false) {
+  engage(creature, overseer)
+  await nextTick()
+  document.getElementById('kn-combat')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))

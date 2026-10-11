@@ -8,13 +8,20 @@ import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knEndCombat } from '~~/shared/ker-nethalas/run'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
-// La fin d'un combat : les aptitudes « une fois par combat » se libèrent, l'état du combat disparaît, et une victoire donne
-// l'expérience du livre et les gains des Maîtrises.
+// La fin d'un combat : le survivant récupère D4 Robustesse, les aptitudes « une fois par combat » se libèrent et l'état du
+// combat disparaît. Une victoire donne en plus l'expérience du livre et les gains des Maîtrises.
 export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, masteries: () => KnMastery[] | null) {
   const toast = useToast()
+  const { applyEffects } = useKnApplyEffects(character, resolved)
 
   function endCombat() {
+    applyEffects([{ kind: 'vital', vital: 'toughness', dice: { count: 1, sides: 4, bonus: 0 }, sign: 'gain' }], 'Fin du combat')
     character.value.status = knResetUses(character.value.status, ['combat'])
+    character.value.run = knEndCombat(character.value.run)
+  }
+
+  // Un combat engagé par erreur : on retire l'état, sans rien récupérer ni libérer.
+  function cancelCombat() {
     character.value.run = knEndCombat(character.value.run)
   }
 
@@ -44,13 +51,13 @@ export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnRe
       c.status = state.status
     }
 
-    endCombat()
     toast.add({
       title: kind === 'combat' ? 'Combat remporté' : 'Overseer vaincu',
       description: `+${KN_COMBAT_XP[kind]} XP${effects.length ? ' · gains de Maîtrise appliqués' : ''}`,
       color: 'success',
     })
+    endCombat()
   }
 
-  return { win, endCombat }
+  return { win, endCombat, cancelCombat }
 }

@@ -38,7 +38,7 @@
       >
         Engager le combat
       </UButton>
-      <span class="text-xs text-muted">Crée {{ creature.number.count === 0 && creature.number.bonus === 1 ? 'la créature' : 'ses créatures (nombre tiré)' }} avec leur Santé au niveau {{ level }}.</span>
+      <span class="text-xs text-muted">{{ engageHint }}</span>
     </div>
 
     <p
@@ -170,6 +170,15 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+// Une seule créature garde « sa » Santé, plusieurs « leur » Santé.
+const engageHint = computed(() => {
+  const number = props.creature?.number
+  if (!number) return ''
+  const fixed = number.count === 0 ? number.bonus : undefined
+  const subject = fixed === 1 ? 'la créature avec sa Santé' : fixed ? `les ${fixed} créatures avec leur Santé` : 'les créatures (nombre tiré) avec leur Santé'
+  return `Crée ${subject} au niveau ${props.level}.`
+})
 
 const adapted = computed(() => props.creature ? knCreatureAtLevel(props.creature, props.level) : undefined)
 

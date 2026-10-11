@@ -161,6 +161,21 @@
         </UButton>
       </div>
     </div>
+
+    <div
+      v-if="rider && drawn"
+      class="space-y-1"
+    >
+      <p class="text-xs font-medium text-muted">
+        Effets de l'action « {{ drawn.action.name }} »
+      </p>
+      <KnOutcomePanel
+        :entry="rider"
+        :taken
+        active
+        @take="takeRider"
+      />
+    </div>
   </div>
 </template>
 
@@ -170,6 +185,7 @@ import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
 import type { KnCreature, KnCreatureAction } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import { knOutcomeAvailable, type KnRollTableEntry } from '~~/shared/ker-nethalas/tables'
 import { KN_WEAPON_SKILL_KEYS, type KnResistanceKey, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import type { KnTurnResult } from '~/composables/useKnCombat'
 
@@ -181,7 +197,8 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, drawAction, takeTurn, applyToSurvivor, moveText, survivorArmor } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, drawAction, takeTurn, applyToSurvivor, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 
 const who = ref(0)
 const defense = ref<KnSkillKey>('dodge')
@@ -189,6 +206,7 @@ const magicCheck = ref<KnSkillKey | KnResistanceKey>('spellward')
 const bonus = ref(0)
 const manualAmount = ref(0)
 const drawn = ref<{ d6: number, action: KnCreatureAction } | undefined>()
+const taken = ref<number[]>([])
 const result = ref<KnTurnResult | undefined>()
 
 const whoItems = computed<SelectItem[]>(() =>
@@ -223,13 +241,35 @@ const canAct = computed(() => whoItems.value.some(item => item.value === who.val
 
 function drawNow() {
   result.value = undefined
+  taken.value = []
   drawn.value = drawAction(who.value)
+  magicCheck.value = drawn.value?.action.checks?.[0]?.skill ?? 'spellward'
 }
 
 function resolveNow() {
   if (!drawn.value) return
   result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value, magicCheck: magicCheck.value, bonus: bonus.value })
   manualAmount.value = result.value?.amount ?? 0
+}
+
+// Ce que l'action fait en plus des dégâts : sans étiquette, tout de suite ; Physique, une fois touché ; Magique, test raté.
+// Le test d'une action Magique est déjà celui du survivant ci-dessus, le panneau ne le redemande pas.
+const rider = computed<KnRollTableEntry | undefined>(() => {
+  const action = drawn.value?.action
+  if (!action?.outcomes?.length) return undefined
+  const entry = (withChecks: boolean): KnRollTableEntry => ({ min: 1, max: 1, text: action.name, checks: withChecks ? action.checks : undefined, outcomes: action.outcomes })
+  if (!action.tag) return entry(true)
+  if (action.tag === 'physical') return result.value?.exchange?.outcome === 'hit' ? entry(true) : undefined
+  return result.value?.defense && !result.value.defense.success ? entry(false) : undefined
+})
+
+function takeRider(index: number) {
+  const action = drawn.value?.action
+  const outcome = action?.outcomes?.[index]
+  if (!action || !outcome || !knOutcomeAvailable(action.outcomes ?? [], taken.value, index)) return
+  applyEffects(outcome.effects, action.name)
+  taken.value = [...taken.value, index]
+  log(`${action.name} : effets appliqués au survivant`)
 }
 
 const canApply = computed(() => {

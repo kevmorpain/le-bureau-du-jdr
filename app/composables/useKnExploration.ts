@@ -48,12 +48,10 @@ import {
 } from '~~/shared/ker-nethalas/run'
 import {
   KN_EXPLORATION_TABLES,
-  knApplyTableEffects,
   knOutcomeAvailable,
   knTableEntry,
   type KnExplorationTableName,
   type KnRollTable,
-  type KnTableEffect,
 } from '~~/shared/ker-nethalas/tables'
 
 type Tables = Partial<Record<KnExplorationTableName, KnRollTable | null>>
@@ -71,7 +69,7 @@ const OBSTACLE_DICE = { trap: KN_TRAP_DIE, trapType: KN_EXPLORATION_TABLES.traps
 
 export function useKnExploration(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, tables: () => Tables) {
   const toast = useToast()
-  const { outcomeText } = useKnEffectText()
+  const { applyEffects } = useKnApplyEffects(character, resolved)
 
   function tableDie(name: KnVisitTable) {
     if (name === 'encounter') return KN_ENCOUNTER_DIE
@@ -86,49 +84,6 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
   function tableRoll(name: KnVisitTable, manual?: number) {
     const roll = manual ?? knRollDie(tableDie(name))
     character.value.run = TABLE_RECORDS[name](character.value.run, roll)
-  }
-
-  // Applique des gains et des pertes à la fiche et le dit dans un message ; rend rien si la liste est vide.
-  function applyEffects(effects: readonly KnTableEffect[], title: string) {
-    if (!effects.length) return
-    const c = character.value
-    const maxVitals = resolved().maxVitals
-    const before = c.healthCurrent
-    const { state, outcomes } = knApplyTableEffects(effects, {
-      coins: c.coins,
-      xp: c.xp,
-      provisions: c.provisions,
-      health: c.healthCurrent,
-      toughness: c.toughnessCurrent,
-      sanity: c.sanityCurrent,
-      aether: c.aetherCurrent,
-      exhaustion: c.exhaustion,
-      status: c.status,
-      run: c.run,
-    }, {
-      health: maxVitals.health.effective,
-      toughness: maxVitals.toughness.effective,
-      sanity: maxVitals.sanity.effective,
-      aether: maxVitals.aether.effective,
-    })
-
-    c.coins = state.coins
-    c.xp = state.xp
-    c.provisions = state.provisions
-    c.healthCurrent = state.health
-    c.toughnessCurrent = state.toughness
-    c.sanityCurrent = state.sanity
-    c.aetherCurrent = state.aether
-    c.exhaustion = state.exhaustion
-    c.status = state.status
-    c.run = state.run
-
-    const dies = before > 0 && state.health === 0
-    toast.add({
-      title,
-      description: [...outcomes.map(outcomeText), ...(dies ? ['La Santé tombe à 0 : le survivant meurt.'] : [])].join(' · '),
-      color: dies ? 'error' : 'success',
-    })
   }
 
   function applyScavenge() {

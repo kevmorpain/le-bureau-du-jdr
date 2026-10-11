@@ -31,10 +31,14 @@
         :min="0"
         :max="99"
       />
-      <UFormField label="Réserve de dégâts">
+      <UFormField
+        label="Réserve de dégâts"
+        description="Format : D6, 2D8+1 ou D6+D4+2"
+        :error="poolError"
+      >
         <UInput
           v-model="poolText"
-          placeholder="D6, D6+D4+1…"
+          placeholder="D6"
           class="w-full"
         />
       </UFormField>
@@ -62,13 +66,6 @@
         class="text-success"
       >Surprise : +{{ KN_SURPRISE_BONUS }} à cette attaque</span>
     </div>
-
-    <p
-      v-if="poolText.trim() && !pool"
-      class="text-sm text-error"
-    >
-      Réserve de dégâts illisible : écrivez par exemple D6, 2D8+1 ou D6+D4.
-    </p>
 
     <UButton
       icon="i-heroicons:cube"
@@ -187,6 +184,7 @@ watch(skill, (key) => {
 
 const pool = computed(() => knParseDicePool(poolText.value))
 const surprise = computed(() => !!combat.value?.surprise)
+const poolError = computed(() => poolText.value.trim() && !pool.value ? 'Réserve illisible : écrivez par exemple D6, 2D8+1 ou D6+D4.' : undefined)
 
 const targetItems = computed<SelectItem[]>(() =>
   (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0

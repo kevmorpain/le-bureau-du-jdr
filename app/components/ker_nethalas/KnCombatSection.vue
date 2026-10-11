@@ -24,24 +24,34 @@
             Round suivant
           </UButton>
           <UButton
-            v-if="won"
             size="sm"
+            :variant="won ? 'solid' : 'soft'"
             @click="win(combat.overseer ? 'overseer' : 'combat')"
           >
-            {{ combat.overseer ? 'Overseer vaincu' : 'Combat remporté' }}
+            {{ combat.overseer ? `Overseer vaincu (+${KN_COMBAT_XP.overseer} XP)` : `Combat remporté (+${KN_COMBAT_XP.combat} XP)` }}
+          </UButton>
+          <UButton
+            size="sm"
+            variant="outline"
+            color="neutral"
+            @click="endCombat"
+          >
+            Combat terminé sans victoire
           </UButton>
           <UButton
             size="sm"
             variant="ghost"
             color="neutral"
-            @click="endCombat"
+            @click="cancelCombat"
           >
-            Abandonner le combat
+            Annuler le combat
           </UButton>
         </div>
       </div>
       <p class="mt-1 text-sm text-muted">
         Les jets se font ici avec les dés de l'outil. À chaque résultat, les dégâts s'appliquent par un bouton, jamais d'office.
+        La fin du combat rend D4 Robustesse et libère les aptitudes « une fois par combat » ; une victoire donne aussi l'expérience
+        et les gains des Maîtrises. « Annuler » retire le combat sans rien rendre.
       </p>
     </template>
 
@@ -170,6 +180,7 @@
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker-nethalas/combat'
 import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
+import { KN_COMBAT_XP } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -184,7 +195,9 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { combat, creatureOf, opposed } = useKnCombat(character, () => props.resolved, () => props.bestiary)
-const { win, endCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
+const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
+
+provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 const ZONE_LABELS: Record<KnSurvivorArmorZone, string> = { head: 'Tête', torso: 'Torse', arms: 'Bras', legs: 'Jambes' }
 

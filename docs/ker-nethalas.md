@@ -420,9 +420,19 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   magique, dégâts). Les dégâts ne s'appliquent que par un bouton.
 - **Dégâts des actions** : champ optionnel `damage` (dé et type) sur une action de créature, ajouté à la réserve des dés de
   ses paliers de niveau. Sans lui, le joueur saisit les dégâts du texte.
+- **Effets des actions** : champs optionnels `checks` (le test demandé au survivant) et `outcomes` (états, dégâts annexes,
+  même format que les événements, KN37) sur une action. Une action sans étiquette propose son test et ses effets tout de suite ;
+  une action Physique, une fois touché ; une action Magique, après un test raté, et son `checks` donne alors le test du
+  survivant à la place de la Résistance magique. Les effets s'appliquent par bouton, par le même chemin que les événements
+  (`useKnApplyEffects`). Les dégâts d'une action sans étiquette passent par ses `outcomes`, sans Armure.
+- **Fin du combat** : le survivant récupère D4 Robustesse quand un combat se termine (p. 86), victoire ou non ; « Annuler le
+  combat » retire l'état sans rien rendre. La carte « Fin de combat » est supprimée : ses boutons (Combat remporté, Overseer
+  vaincu, Combat terminé sans victoire) sont dans la carte « Combat », qui n'existe que pendant un combat, si bien que
+  l'expérience d'une victoire ne se prend qu'une fois.
 - **Public** : les 20 textes des mouvements défensifs et des maladresses des monstres, reformulés (`ker_nethalas.combat`).
 - **Laissé de côté** : l'armure du survivant est saisie par zone à la main jusqu'à X16 (#263) ; les effets des mouvements
-  défensifs, des maladresses et des conditions restent du texte ; la fuite, le corps à corps à deux armes, le bouclier, la
+  défensifs et des maladresses restent du texte, ainsi que les effets qui se répètent à chaque tour (D4 nécrotiques par tour
+  d'une cible Entravée) ; la fuite, le corps à corps à deux armes, le bouclier, la
   réduction d'Armure par l'acide, les conditions qui donnent Avantage ou Désavantage (À terre), l'influence de l'Overseer et les
   bonus de combat de l'Obscurité Grandissante par catégorie d'adversaire.
 
@@ -837,8 +847,11 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   échec des deux côtés (1 dégât inévitable, appliqué 12 → 11) ; touche au bras gauche (D6 → 3, +1 tranchant, 4 dégâts, 11 → 7) ;
   tour de la créature : action magique ratée (Robustesse 23 → 21) puis action physique qui touche au torse (21 → 18) ; défenses
   du round comptées.
+- Retours du PM appliqués : texte « sa Santé » ou « leur Santé » selon le nombre de créatures, défilement vers la carte de
+  combat à l'engagement, format de la réserve de dégâts en sous-titre et erreur sous le champ, effets des actions (une Entrave
+  ratée donne l'état Entravé, journalisé), fin du combat qui rend D4 Robustesse (10 → 13) et retire la carte « Fin de combat ».
 - **Non vérifié** dans le navigateur : l'engagement contre l'Overseer, la surprise, le point faible visé, la saisie manuelle
-  des dés (volet masqué) et le rendu visuel.
+  des dés, le défilement animé (volet masqué, vérifié par l'appel à `scrollIntoView`) et le rendu visuel.
 
 ### 2026-10-11 — Tranche 6a : rencontres et bestiaire
 - Décision KN38 ; aucune migration. Trois pilotes privés à relire (deux créatures, un Overseer), plus les tables de tirage

@@ -9,6 +9,7 @@ import {
   type KnHitLocationKey,
 } from './catalog/hitLocations'
 import { knDiceSchema, type KnDice } from './dice'
+import { KN_CHECK_KEYS, knOutcomeSchema } from './tables'
 import { boundedInt } from './zodHelpers'
 
 const slug = z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/)
@@ -32,6 +33,10 @@ export const knCreatureActionSchema = z.object({
   tag: z.enum(['physical', 'magical']).optional(),
   // Les dégâts directs de l'action, appliqués au survivant touché (Physique) ou qui rate sa Résistance magique (Magique).
   damage: z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES) }).optional(),
+  // Le test que l'action demande au survivant (sa défense, pour une action Magique), et ce qui s'applique selon son résultat :
+  // états, dégâts annexes. Le texte garde ce qui ne s'automatise pas.
+  checks: z.array(z.object({ skill: z.enum(KN_CHECK_KEYS), group: boundedInt({ min: 0, max: 3 }).optional() })).max(3).optional(),
+  outcomes: z.array(knOutcomeSchema).max(8).optional(),
   text: z.string().trim().min(1).max(1200),
 }).refine(action => action.min <= action.max, { message: 'la plage va de min à max' })
 

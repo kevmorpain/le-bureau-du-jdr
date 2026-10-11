@@ -66,6 +66,15 @@ describe('fiche d\'une créature', () => {
     expect(knCreatureSchema.safeParse(fakeCreature({ actions: [action(1, 5)] })).success).toBe(false)
   })
 
+  it('une action porte un test du survivant et des effets selon son résultat', () => {
+    const action = (extra: object) => ({ min: 1, max: 6, name: 'A', text: 't', ...extra })
+    const failure = { when: 'failure', effects: [{ kind: 'condition', key: 'prone' }] }
+
+    expect(knCreatureSchema.safeParse(fakeCreature({ actions: [action({ checks: [{ skill: 'athletics' }], outcomes: [failure] })] })).success).toBe(true)
+    expect(knCreatureSchema.safeParse(fakeCreature({ actions: [action({ checks: [{ skill: 'luck' }] })] })).success).toBe(false)
+    expect(knCreatureSchema.safeParse(fakeCreature({ actions: [action({ outcomes: [{ when: 'failure', effects: [] }] })] })).success).toBe(false)
+  })
+
   it('un trait à valeur en porte une, les autres non', () => {
     expect(knCreatureSchema.safeParse(fakeCreature({ traits: [{ key: 'penetrating' }] })).success).toBe(false)
     expect(knCreatureSchema.safeParse(fakeCreature({ traits: [{ key: 'alert', value: 1 }] })).success).toBe(false)
