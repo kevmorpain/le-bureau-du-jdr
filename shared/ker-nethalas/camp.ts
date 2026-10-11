@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { KnCampActivity } from './masteries'
 import { KN_USAGE_DICE, knRollDie, type KnDomain, type KnRng, type KnUsageDie } from './run'
 import { boundedInt, shapeOf } from './zodHelpers'
 
@@ -11,6 +12,7 @@ export const KN_PROVISION_KEYS = [
   'lockpicks',
   'torches',
   'attunementCrystals',
+  'ritualComponents',
 ] as const
 
 export type KnProvisionKey = (typeof KN_PROVISION_KEYS)[number]
@@ -150,27 +152,44 @@ export const KN_CAMP_ACTIVITIES: Record<KnCampActivityKey, KnCampActivityDef> = 
 
 export interface KnCampPlan {
   activities: Record<KnCampActivityKey, number>
+  // Activités ajoutées par les traits des Maîtrises, par clé de Maîtrise.
+  traitActivities: Record<string, number>
   sleep: boolean
   modifier: number
 }
 
 export const emptyKnCampPlan = (): KnCampPlan => ({
   activities: Object.fromEntries(KN_CAMP_ACTIVITY_KEYS.map(key => [key, 0])) as Record<KnCampActivityKey, number>,
+  traitActivities: {},
   sleep: false,
   modifier: 0,
 })
+
+export interface KnCampTraitActivity {
+  key: string
+  activity: KnCampActivity
+}
 
 export interface KnCampContext {
   provisions: KnProvisions
   // Nombre d'événements « mains tremblantes » actifs : chacun retire 1 au test de Camp.
   checkPenalty: number
   attuneBlocked: boolean
+  traitActivities: KnCampTraitActivity[]
+  // Modificateur du test de Camp des aptitudes débloquées.
+  traitCheckBonus: number
 }
 
-export const knCampContext = (provisions: KnProvisions, domain: KnDomain): KnCampContext => ({
+export const knCampContext = (
+  provisions: KnProvisions,
+  domain: KnDomain,
+  traits: { activities?: KnCampTraitActivity[], checkBonus?: number } = {},
+): KnCampContext => ({
   provisions,
   checkPenalty: domain.growingDarkness.filter(event => event.key === 'gd_17_18').length,
   attuneBlocked: domain.growingDarkness.some(event => event.key === 'gd_19_20'),
+  traitActivities: traits.activities ?? [],
+  traitCheckBonus: traits.checkBonus ?? 0,
 })
 
 export type KnCampIssue
@@ -189,7 +208,7 @@ export interface KnCampPreview {
 export function knPreviewCamp(plan: KnCampPlan, context: KnCampContext): KnCampPreview {
   const provisions = { ...context.provisions }
   let exhaustionCost = 0
-  let checkModifier = plan.modifier - context.checkPenalty + (plan.sleep ? KN_CAMP_SLEEP.check : 0)
+  let checkModifier = plan.modifier - context.checkPenalty + context.traitCheckBonus + (plan.sleep ? KN_CAMP_SLEEP.check : 0)
 
   for (const key of KN_CAMP_ACTIVITY_KEYS) {
     const count = plan.activities[key]
@@ -200,13 +219,21 @@ export function knPreviewCamp(plan: KnCampPlan, context: KnCampContext): KnCampP
     for (const [item, amount] of Object.entries(def.produces(count)) as [KnProvisionKey, number][]) provisions[item] += amount
   }
 
+  for (const { key, activity } of context.traitActivities) {
+    const count = plan.traitActivities[key] ?? 0
+    exhaustionCost += once(count, activity.exhaustion)
+    checkModifier += once(count, activity.check)
+    for (const [item, amount] of Object.entries(activity.consumes ?? {}) as [KnProvisionKey, number][]) provisions[item] -= amount * count
+    for (const [item, amount] of Object.entries(activity.produces ?? {}) as [KnProvisionKey, number][]) provisions[item] += amount * count
+  }
+
   const issues: KnCampIssue[] = []
   for (const key of KN_PROVISION_KEYS) {
     if (provisions[key] < 0) issues.push({ type: 'shortage', key, missing: -provisions[key] })
   }
-  if (plan.sleep && KN_CAMP_ACTIVITY_KEYS.some(key => key !== 'barricade' && plan.activities[key] > 0)) {
-    issues.push({ type: 'sleepExclusive' })
-  }
+  const otherActivity = KN_CAMP_ACTIVITY_KEYS.some(key => key !== 'barricade' && plan.activities[key] > 0)
+    || context.traitActivities.some(({ key }) => (plan.traitActivities[key] ?? 0) > 0)
+  if (plan.sleep && otherActivity) issues.push({ type: 'sleepExclusive' })
   if (context.attuneBlocked && plan.activities.attune > 0) issues.push({ type: 'attuneBlocked' })
 
   const hasRation = provisions.rations >= 1

@@ -14,6 +14,7 @@ const STATUS_SHAPE = '0132_ker_nethalas_status_shape.sql'
 const EQUIPMENT = '0133_ker_nethalas_equipment_texts.sql'
 const RUN = '0134_ker_nethalas_run.sql'
 const PROVISIONS = '0135_ker_nethalas_provisions.sql'
+const RITUAL_COMPONENTS = '0142_ker_nethalas_ritual_components.sql'
 
 async function clientBefore(migration: string): Promise<Client> {
   const client = createClient({ url: ':memory:' })
@@ -124,11 +125,37 @@ describe('migration 0135 (provisions)', () => {
     await client.execute(`INSERT INTO kn_characters (owner_id, name, resistances, skills) VALUES (1, 'Ancien', '{}', '{}')`)
 
     await applyMigration(client, PROVISIONS)
+    await applyMigration(client, RITUAL_COMPONENTS)
 
     const { rows } = await client.execute(`SELECT provisions FROM kn_characters WHERE name = 'Ancien'`)
     const provisions = JSON.parse(rows[0]!.provisions as string)
     expect(provisions).toEqual(emptyKnProvisions())
     expect(knProvisionsSchema.safeParse(provisions).success).toBe(true)
+  })
+})
+
+describe('migration 0142 (composants rituels)', () => {
+  it('ajoute les composants rituels aux provisions existantes sans toucher aux autres', async () => {
+    const client = await clientBefore(RITUAL_COMPONENTS)
+    const before = { rations: 3, bandages: 1, craftingSupplies: 12, cookingIngredients: 0, lampOil: 0, lockpicks: 0, torches: 1, attunementCrystals: 2 }
+    await client.execute({
+      sql: `INSERT INTO kn_characters (owner_id, name, resistances, skills, provisions) VALUES (1, 'Existant', '{}', '{}', ?)`,
+      args: [JSON.stringify(before)],
+    })
+    await client.execute({
+      sql: `INSERT INTO kn_characters (owner_id, name, resistances, skills, provisions) VALUES (1, 'Déjà à jour', '{}', '{}', ?)`,
+      args: [JSON.stringify({ ...before, ritualComponents: 4 })],
+    })
+
+    await applyMigration(client, RITUAL_COMPONENTS)
+
+    const read = async (name: string) => {
+      const { rows } = await client.execute({ sql: 'SELECT provisions FROM kn_characters WHERE name = ?', args: [name] })
+      return JSON.parse(rows[0]!.provisions as string)
+    }
+    expect(await read('Existant')).toEqual({ ...before, ritualComponents: 0 })
+    expect(knProvisionsSchema.safeParse(await read('Existant')).success).toBe(true)
+    expect((await read('Déjà à jour')).ritualComponents).toBe(4)
   })
 })
 

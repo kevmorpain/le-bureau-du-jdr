@@ -18,7 +18,7 @@ import {
 } from './effects'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, type KnResistanceKey, type KnSkillKey } from './skills'
 import { knCurrentDomain, type KnRun } from './run'
-import type { KnStatus } from './status'
+import type { KnCustomEntry, KnStatus } from './status'
 
 export interface KnResolveInput {
   skills: KnSkills
@@ -28,6 +28,10 @@ export interface KnResolveInput {
   maxVitals: Record<KnVitalKey, number>
   status: KnStatus
   run: KnRun
+  // Sources venues du contenu du livre (Maîtrises), que le moteur ne connaît pas lui-même.
+  extraSources?: KnActiveSource[]
+  // Une aptitude tient lieu de source de lumière : plus de pénalité d'obscurité.
+  lightProvided?: boolean
 }
 
 export interface KnSourceRef {
@@ -66,6 +70,12 @@ export interface KnResolvedSheet {
 
 const sourceRef = ({ id, label }: KnActiveSource): KnSourceRef => ({ id, label })
 
+export function knCustomEntryEffect(entry: KnCustomEntry): KnEffect {
+  if (entry.kind === 'modifier') return { type: 'modifier', targets: [entry.target], amount: entry.amount }
+  if (entry.kind === 'maxVital') return { type: 'maxVitalDelta', vital: entry.vital, amount: entry.amount }
+  return { type: entry.kind, targets: [entry.target] }
+}
+
 export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
   const { status, exhaustion, run } = input
   const domain = knCurrentDomain(run)
@@ -88,7 +98,7 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
     })
   }
 
-  if (run.lightRemaining <= 0 && status.rotStage < KN_ROT_NO_LIGHT_STAGE) sources.push(knNoLightSource())
+  if (run.lightRemaining <= 0 && status.rotStage < KN_ROT_NO_LIGHT_STAGE && !input.lightProvided) sources.push(knNoLightSource())
 
   const rot = knRotSource(status.rotStage)
   if (rot) sources.push(rot)
@@ -129,14 +139,12 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
     sources.push({
       id: `custom:${custom.id}`,
       label: { text: custom.name },
-      effects: custom.entries.map((entry): KnEffect => {
-        if (entry.kind === 'modifier') return { type: 'modifier', targets: [entry.target], amount: entry.amount }
-        if (entry.kind === 'maxVital') return { type: 'maxVitalDelta', vital: entry.vital, amount: entry.amount }
-        return { type: entry.kind, targets: [entry.target] }
-      }),
+      effects: custom.entries.map(knCustomEntryEffect),
       reminders: custom.note ? [{ label: { text: custom.note }, severity: 'info' }] : [],
     })
   }
+
+  sources.push(...(input.extraSources ?? []))
 
   return sources
 }

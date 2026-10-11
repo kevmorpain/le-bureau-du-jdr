@@ -39,6 +39,7 @@
           v-if="campOpen"
           v-model:character="character"
           :resolved
+          :masteries
           @close="campOpen = false"
         />
       </div>
@@ -65,11 +66,14 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_PROVISION_BOUNDS, KN_PROVISION_KEYS, knTakeBreather } from '~~/shared/ker-nethalas/camp'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCurrentDomain } from '~~/shared/ker-nethalas/run'
+import { knRest } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
+  masteries: KnMastery[] | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
@@ -103,6 +107,7 @@ function takeBreather() {
   c.exhaustion = result.exhaustion
   c.run.lightRemaining = result.lightRemaining
   c.run.tensionDie = result.tensionDie
+  c.status = knRest(c.status, 'breather')
 
   const lines = [
     [

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
+import type { KnActiveSource } from '../../shared/ker-nethalas/effects'
 import { resolveKnSheet, type KnResolveInput } from '../../shared/ker-nethalas/resolve'
 import { emptyKnDomain, emptyKnRun, type KnDomain } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, type KnStatus } from '../../shared/ker-nethalas/status'
@@ -416,5 +417,39 @@ describe('source de lumière', () => {
     const r = resolveKnSheet(sheet(withLight(0), { rotStage: 2 }))
 
     expect(r.reminders.some(x => x.source.id === 'light')).toBe(true)
+  })
+
+  it('une aptitude qui tient lieu de lumière dispense de source de lumière', () => {
+    const r = resolveKnSheet(sheet({ ...withLight(0), lightProvided: true }))
+
+    expect(r.reminders.some(x => x.source.id === 'light')).toBe(false)
+    expect(r.skills.perception.rollMode).toBe('normal')
+  })
+})
+
+describe('sources apportées par les Maîtrises', () => {
+  const source = (id: string, effects: KnActiveSource['effects']): KnActiveSource => ({ id, label: { text: id }, effects, reminders: [] })
+
+  it('s\'ajoutent aux autres : bonus de résistance, Avantage, maximum de jauge', () => {
+    const r = resolveKnSheet(sheet({
+      extraSources: [
+        source('mastery:alpha:feature', [
+          { type: 'modifier', targets: ['endurance'], amount: 10 },
+          { type: 'advantage', targets: ['perception', 'scavenge'] },
+        ]),
+        source('mastery:alpha:2', [{ type: 'maxVitalDelta', vital: 'aether', amount: -5 }]),
+      ],
+    }))
+
+    expect(r.resistances.endurance.effective).toBe(50)
+    expect(r.skills.perception.rollMode).toBe('advantage')
+    expect(r.skills.scavenge.rollMode).toBe('advantage')
+    expect(r.skills.reason.rollMode).toBe('normal')
+    expect(r.maxVitals.aether.effective).toBe(7)
+    expect(r.maxVitals.aether.steps.map(step => step.source.id)).toEqual(['mastery:alpha:2'])
+  })
+
+  it('ne changent rien sans source', () => {
+    expect(resolveKnSheet(sheet({ extraSources: [] })).maxVitals.aether.effective).toBe(12)
   })
 })

@@ -1,7 +1,7 @@
 # Module Ker Nethalas
 
-> **Statut** : tranches 0 (socle) et 1 (fiche effective) fusionnées (PR #253, 2026-10-06) ; tranche 2a (suivi de run) fusionnée (PR #254, 2026-10-07) ; tranche 2b (repos) fusionnée (PR #255, 2026-10-07) ; tranche 3 (aide au jet, référence des conditions) écrite sur `feat/ker-nethalas-jets`, non fusionnée. **Issue** : [#242 — X10](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242).
-> **Dernière mise à jour** : 2026-10-06.
+> **Statut** : tranches 0 à 3 fusionnées (PR #253 à #257, 2026-10-06 et 2026-10-07) ; issue #242 (X10) fermée. Suite : contenu du livre rédigé hors du dépôt (X11 à X16, U13). Tranche 4 en cours sur `feat/ker-nethalas-tranche-4` : 4a (chargement du contenu privé, X11), 4b (création du survivant, X12) 4c (Maîtrises, pilote de deux, X13) et les objectifs personnels (KN31) écrites, non fusionnées ; une seule PR à la fin de la tranche 4. **Issues** : [#258 — X11](https://github.com/kevmorpain/le-bureau-du-jdr/issues/258), [#259 — X12](https://github.com/kevmorpain/le-bureau-du-jdr/issues/259), [#260 — X13](https://github.com/kevmorpain/le-bureau-du-jdr/issues/260).
+> **Dernière mise à jour** : 2026-10-10.
 
 Ce document trace le plan du module, les décisions et ce qui a été fait. Le statut GitHub (Status, Effort,
 Famille) vit dans l'issue et le projet ; ce document porte le *quoi* et le *pourquoi*, comme `decisions.md`.
@@ -19,11 +19,11 @@ temps à chercher dans les tables. Le principe : saisir la fiche de base, **acti
 
 ## Périmètre
 
-- **V1** : tranches 0 et 1.
-- **Ensuite** : tranches 2 et 3.
-- **Hors périmètre** : Masteries modélisées (texte libre + modificateurs déclarés par le joueur), équipement par
-  localisation et résolution du combat, bestiaire, textes d'ambiance (descriptions de salles et de couloirs),
-  illustrations.
+- **Livré** : tranches 0 à 3 (fiche, fiche effective, suivi de run, repos et provisions, aide au jet).
+- **Ensuite** : toute la mécanique « aléatoire » du livre, rédigée en français hors du dépôt (KN27) : création du
+  survivant et Maîtrises, boucle d'exploration (pièces, couloirs, événements, fouille, pièges, Overseer), rencontres et
+  bestiaire, inventaire, équipement et butin (voir le plan).
+- **Hors périmètre** : les illustrations du livre, qui ne sont jamais reprises.
 
 ---
 
@@ -44,6 +44,15 @@ temps à chercher dans les tables. Le principe : saisir la fiche de base, **acti
 - Le dépôt de l'app communautaire citée sur le Discord de Blackoath (`ilu2112/Midnight-Throne`) n'affiche ni
   licence ni permission de l'éditeur (vérifié le 2026-10-04). Une tolérance observée n'est pas une autorisation.
 - Le dépôt Le Bureau du JDR est **public** (`gh repo view`, 2026-10-04) : tout ce qui y est versionné est redistribué.
+
+### Accord de l'éditeur (2026-10-07)
+
+Le PM a contacté Blackoath. Ils sont d'accord pour l'**usage personnel** qu'il en fait ; il n'existe pas de traduction
+française officielle, donc il peut **formuler comme il le souhaite**, à condition de ne pas reprendre les illustrations
+telles quelles. Aucun texte écrit n'est conservé dans le dépôt. La portée de l'accord pour un **dépôt public** n'a pas été
+précisée : le PM a choisi de laisser le contenu rédigé à partir du livre **hors du dépôt** (KN27). Le bloc de licence du
+livre, de son côté, laisse réutiliser librement les mécaniques et les règles, et réserve la formulation, la
+présentation et les illustrations.
 
 ### Écarts constatés entre la VF et Gravebound
 
@@ -75,15 +84,17 @@ une avant toute reprise de texte.
    à son traducteur, **après vérification contre Gravebound**. ⚠️ hypothèse : la licence CC BY couvre bien le texte
    de l'édition antérieure ; à confirmer avec l'éditeur.
 3. Les **ajouts propres à Gravebound** sont reformulés, jamais traduits littéralement.
-4. Pas de textes d'ambiance, pas d'illustrations.
+4. Pas d'illustrations.
 5. **Aucune extraction de texte du livre dans le dépôt** : le travail se fait dans `~/ker-nethalas-sources/`
-   (hors dépôt).
-6. Chaque entrée de données porte sa **page de référence** dans Gravebound.
+   (hors dépôt). Le contenu rédigé en français (Maîtrises, bestiaire, tables, descriptions) vit lui aussi hors du
+   dépôt et se charge en base (KN27).
+6. Chaque entrée de données porte sa **page de référence** dans Gravebound ; dans le code, elle ne figure pas (voir
+   « Commentaires » dans `CLAUDE.md`).
 
 ### Action en attente
 
-Demander à Blackoath une **autorisation écrite** (`info@blackoathgames.com` ou Discord). Ce n'est pas un avis
-juridique : c'est le moyen le moins coûteux de lever la zone grise. **Statut : à faire.**
+Aucune. L'accord de Blackoath est obtenu (voir plus haut) ; reste à leur demander, si le PM le souhaite, si un dépôt
+public est couvert.
 
 ---
 
@@ -299,6 +310,237 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   localisation, dégâts), l'application des effets temporaires de critique et des Maladresses, l'Initiative, la table de
   Maladresses des adversaires.
 
+### KN27 — Contenu du livre rédigé hors du dépôt, chargé en base
+- **Décision** : tout ce qui est rédigé à partir du livre (Maîtrises, bestiaire, objets, tables d'événements,
+  descriptions de salles et de couloirs…) vit dans des **fichiers JSON privés, hors du dépôt public**, et se charge dans la
+  table `kn_content` (nom du jeu de données, JSON, date ; migration `0136`). Les moteurs, les mécaniques et les catalogues
+  déjà dans le dépôt (conditions, Obscurité Grandissante, Folie, jet…) restent publics.
+- **Pourquoi** : le dépôt est public et l'accord de l'éditeur est donné pour un usage personnel ; la portée pour un
+  dépôt public n'est pas établie (voir « Accord de l'éditeur »).
+- **Registre** : `KN_CONTENT_SCHEMAS` (`shared/ker-nethalas/content.ts`) associe chaque nom de jeu de données à son schéma
+  Zod. Il est vide tant qu'aucune tranche n'apporte de contenu ; chaque tranche y ajoute le sien. Un nom absent du
+  registre, ou qui n'a pas la forme `[a-z][a-zA-Z0-9]{0,39}`, est refusé. Un jeu de données ne dépasse pas 1,5 Mo (une
+  ligne D1 accepte 2 Mo).
+- **Chargement** : `SEED_SECRET=… npm run kn:content -- <dossier> <url de base>` envoie chaque `<nom>.json` du dossier à
+  `PUT /api/admin/ker-nethalas/content/<nom>`, protégé par le secret du seed (`x-seed-secret`). Les données sont validées
+  contre le schéma du registre ; une donnée invalide est refusée avec le chemin de chaque erreur (20 au plus) et **n'écrase
+  pas** l'existant. `GET /api/admin/ker-nethalas/content` (même secret) indique, pour chaque jeu de données, s'il est
+  absent, chargé, ou chargé mais invalide.
+- **Lecture** : `GET /api/ker-nethalas/content/<nom>`, sous la session exigée par le middleware du module ; le contenu est
+  le même pour tous les comptes. Un jeu de données absent, ou que le schéma refuse désormais, répond 404 : l'application
+  doit fonctionner sans contenu.
+- **Procédure** : les fichiers vivent hors du dépôt (par exemple `~/ker-nethalas-content/`, que le PM peut sauvegarder
+  dans un dépôt privé) ; le dossier `/ker-nethalas-content/` est ignoré par git au cas où on le placerait dans le
+  dépôt. En local : `npm run dev`, puis la commande ci-dessus vers `http://localhost:3000`. En production : après chaque
+  déploiement qui change un schéma, même commande vers l'URL du Worker.
+- **Tests** : le contenu du livre n'entre jamais dans les tests ni dans la CI : ils utilisent de fausses tables.
+- **Alternatives écartées** : (a) les tables dans `shared/ker-nethalas/catalog/` comme les catalogues actuels : simple,
+  mais publié ; (b) un dépôt privé : touche tout le reste du projet ; (c) un objet R2 plutôt qu'une ligne D1 : plus de
+  place, mais un second mécanisme à tester, et inutile tant que chaque jeu de données tient en 1,5 Mo.
+- **Laissé de côté** : un composable de lecture, ajouté avec le premier consommateur (tranche 4c) ; la découpe d'un
+  jeu de données trop gros en plusieurs lignes.
+
+### KN28 — Un seul enregistrement par survivant : fiche et partie ne sont pas séparées
+- **Décision** : `kn_characters` garde ensemble le survivant (identité, Maîtrises, scores de base) et la partie en cours
+  (jauges courantes, Épuisement, conditions, Domaines, provisions…). Dans le livre, un survivant correspond à une
+  descente : le personnage est étroitement lié à la partie, séparer les données n'apporterait pas grand-chose.
+- **Alternative écartée** : deux tables (`kn_survivors`, `kn_runs`), qui auraient permis plusieurs parties par survivant et
+  un historique, au prix d'une migration des données, des routes, du contrôle d'accès et de la sauvegarde automatique.
+- **À la place** : une séparation **visuelle** de la fiche en deux colonnes (le survivant, la partie), suivie par l'issue
+  U13.
+
+### KN29 — Création du survivant : le serveur reçoit des choix, il construit la fiche
+- **Décision** : `POST /api/ker-nethalas/characters` n'accepte plus un simple nom. Il reçoit les **choix** du joueur
+  (`knCreationSchema`, `shared/ker-nethalas/creation.ts`) : nom, apparence, jauges tirées, enveloppes de compétences,
+  Résistance à 40, objectifs, et un kit de départ (ou `null`). Le serveur les **valide** puis **construit** la fiche
+  (`knBuildCreatedSheet`) : le client n'envoie jamais de scores. Le même schéma sert à l'assistant, qui montre à chaque
+  étape ce que le serveur refuserait.
+- **Règles encodées** (chapitre « Create Your Survivor ») : Santé D6+10, Robustesse 3D6+20, Éther D6+8, Santé mentale D6+10,
+  jauges pleines, Épuisement 0 ; scores de départ imprimés sur la fiche, plus +60 et +40 à deux compétences d'arme
+  différentes, +30 à trois compétences, +20 à deux, +10 à trois, une seule enveloppe par compétence ; une Résistance à 40
+  et les deux autres à 20 ; équipement des parties suivantes : une arme au choix, une armure tirée sur la table du livre,
+  1 Torche, D10 Denrées, D10+5 Fournitures d'Artisanat et D20 pièces.
+- **Interface** : `/ker-nethalas/new`, assistant en étapes sur le même cadre que ceux de D&D (`WizardShell`), puis, après
+  « Terminer » sur la dernière étape, un **écran de récapitulatif** (« ← Modifier » pour revenir, « Créer le survivant »
+  pour valider) comme le créateur D&D ; les dés se lancent dans l'outil ou se saisissent ; un aperçu suit les choix.
+  L'ancienne création par le seul nom disparaît. Les enveloppes de compétences se posent par des boutons par ligne :
+  +60 et +40 ne sont proposés qu'aux compétences d'arme, et une enveloppe dont tous les exemplaires sont pris est grisée
+  (sauf sur la compétence qui la porte, pour la reprendre).
+- **Nouveaux champs** (migration `0137`) : `appearance` (genre, âge, apparence, aussi modifiable sur la fiche) et `coins`
+  (pièces, avec les provisions de l'équipement).
+- **Alternatives écartées** : (a) garder la création par le nom et remplir la fiche à la main, sans aucune validation des
+  règles de départ ; (b) faire envoyer la fiche complète par le client : le serveur devrait alors deviner si les scores
+  respectent les enveloppes.
+- **Laissé de côté** : le choix des Maîtrises (tranche 4c) ; le tirage du crime reproché, la liste des objectifs
+  personnels et la table d'armures aléatoires, qui sont du contenu du livre et viendront avec le contenu privé (KN27) :
+  d'ici là, champs libres.
+
+### KN30 — Maîtrises : format public, contenu privé, paliers débloqués par points
+- **Décision** : le **format** d'une Maîtrise est public (`shared/ker-nethalas/masteries.ts`, schéma Zod enregistré sous
+  le nom `masteries` dans le registre de KN27) ; son **contenu** (nom, résumé, trait, cinq aptitudes, six lieux
+  d'entraînement) est rédigé en français dans `~/ker-nethalas-content/masteries.json`, hors du dépôt, et chargé par
+  `npm run kn:content`. Une aptitude porte son nom, son action, son coût (affiché, et en Éther quand il est chiffré), si
+  elle est magique ou maintenue, et son effet.
+- **État du survivant** : `kn_characters.mastery_picks` (migration `0138`), une liste de `{ clé, paliers débloqués }`, deux
+  Maîtrises au plus. Les **points d'Aptitude à dépenser** ne sont pas stockés, ils se déduisent : niveau + 1 (deux au
+  niveau 1, un de plus à chaque niveau) moins les paliers débloqués. Les paliers se débloquent dans l'ordre, du 1 au 5 ;
+  la première aptitude d'une Maîtrise en montre aussi le trait. « Reprendre un palier » corrige une erreur.
+- **Création** : une étape « Maîtrises » (deux différentes, une aptitude chacune) qui montre, pour chaque Maîtrise, le
+  trait et **l'effet de tous les paliers**, et un tirage optionnel du lieu d'entraînement (D6) par Maîtrise choisie. Le
+  résultat s'affiche à l'étape, un nouveau tirage le remplace, et il est gardé dans un champ à part, `training`
+  (« Entraînement », migration `0139`), sans toucher à l'apparence. Le serveur compare le choix au contenu chargé : deux
+  Maîtrises connues et différentes si le contenu est chargé, aucune sinon (elles se choisissent alors sur la fiche).
+- **Fiche** : une section « Maîtrises » qui montre les aptitudes, celles des paliers à venir restant lisibles mais grisées,
+  et propose de choisir une Maîtrise quand il en manque (survivants créés avant le contenu compris) ; le champ
+  « Entraînement » est sous l'identité.
+- **Alternatives écartées** : (a) garder « Maîtrises » en texte libre, qui ne contrôle ni le nombre de points ni l'ordre
+  des paliers ; (b) stocker les points non dépensés, qui divergeraient du niveau.
+- **Laissé de côté** : l'**amulette** (KN32), le **choix d'avantage à la montée de niveau**, et l'application automatique
+  des effets chiffrés des aptitudes (KN33) : les aptitudes étaient affichées, pas appliquées. Les 18 autres Maîtrises (le
+  livre en compte 20, pas 21) sont rédigées en tranche 4d.
+- **Procédure de rédaction** : les noms d'aptitudes et de traits sont en petites capitales dans le livre, que
+  l'extraction de texte perd ; les pages se rendent en image (PyMuPDF, installé hors du dépôt dans `~/tools/pymupdf`) et se
+  relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
+  (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
+
+### KN35 — Activités de camp ajoutées par les traits, bonus au test de Camp, composants rituels
+- **Règles sourcées** (livre v1.2, p. 124-125) : les activités de camp ont chacune un coût en Épuisement et un modificateur du
+  test de Camp, payés une fois quelle que soit la quantité pour les activités de fabrication ; « Swap Mastery Amulets » est une
+  activité de camp (sans coût) : l'outil rappelle qu'on ne change d'amulette qu'au camp sans le contrôler. Les textes des
+  traits donnent les activités ajoutées et le bonus d'une aptitude de Pisteur.
+- **Format public** (optionnel) : `campActivity` sur un trait (nom, Épuisement, modificateur du test, provisions consommées et
+  produites par unité, `quantity` pour une activité à quantité, `recover` pour des effets sur soi appliqués à la fin du camp) ;
+  `campCheck` sur une aptitude. `knCampTraits` (pur) les rassemble pour les Maîtrises possédées, `knCampContext` les reçoit,
+  `knPreviewCamp` les ajoute aux activités du livre (Épuisement et test une fois, provisions par unité, Dormir interdit toute
+  autre activité, y compris celles-ci, sauf Barricader).
+- **Provisions** : `ritualComponents` rejoint les provisions ; migration `0142` (`json_set`) pour les survivants existants, car
+  chaque provision est obligatoire. Le DEFAULT SQL de la colonne, que SQLite ne permet pas de modifier, reste celui de 0135 :
+  l'application fournit toujours les provisions à l'insertion.
+- **Fiche** : le panneau du camp liste les activités de trait avec leur coût, un champ de quantité (0 ou 1 sinon), le bonus
+  d'aptitudes dans la ligne du test ; à la fin du camp, les effets sur soi des activités faites sont jetés et appliqués, et
+  dits dans le compte rendu.
+- **Interprétation** : le gain d'une activité de trait (Prier soigne la Santé mentale) n'est pas un « bénéfice du camp » : il
+  n'est pas réduit de moitié après un test raté ou sans Ration, comme les effets de l'activité Dormir : seuls le sont les
+  bénéfices de la liste du livre (Robustesse, Santé, Santé mentale, Épuisement), calculés après les activités (confirmé par
+  le PM). L'effet de Prier est donc appliqué avant ces bénéfices, pour que le plafond de la jauge joue dans le bon ordre.
+- **Contenu privé** : deux activités (le trait d'une Maîtrise de foi, celui d'une Maîtrise de rituels) et un bonus de +2.
+- **Laissé de côté** : la dépense de composants rituels dans les aptitudes du Ritualiste (quantités variables) ; ils se
+  tiennent dans les provisions et se retirent à la main.
+
+### KN34 — Points temporaires, Blessures, fréquences d'usage et effets sur soi
+- **Règles sourcées** (livre v1.2) : *Temporary* (p. 13) : un bonus temporaire dure jusqu'à être dépensé ou jusqu'à ce qu'on
+  se repose, et peut dépasser le maximum ; les dégâts retirent d'abord la Robustesse, puis la Santé (p. 81) ; « récupérer X
+  Blessures » remplit d'abord toute la Robustesse, puis la Santé (p. 13 et 86) ; fréquences (p. 123) : « une fois par repos »
+  vaut pour une pause comme pour un camp, « une fois par camp » pour le camp seul ; l'expérience d'un combat vaincu est de
+  50, celle d'un Overseer de 200 (p. 62-63). Le PM confirme que le temporaire se dépense avant le reste.
+- **État** (`status`, optionnel : pas de migration) : `temporary` (`health`, `toughness`, `aether`, `sanity`), et `used`, la
+  liste des aptitudes à fréquence déjà utilisées, avec leur fréquence (`combat`, `room`, `rest`, `campRest`), pour que la
+  remise à zéro ne dépende pas du contenu chargé.
+- **Fonctions pures** : `shared/ker-nethalas/vitals.ts` (`knTakeDamage`, `knHealWounds`, gains et effacement du temporaire,
+  `knRest`, `knResetUses`), `dice.ts` (dés `{ nombre, faces, bonus }`, un montant fixe a zéro dé), `masteryEffects.ts`
+  (`knApplySelfEffects`, usage limité, gains de fin de combat). `knApplyCriticalEffects` dépense la Robustesse temporaire
+  avant la Robustesse (une seule règle de dégâts pour la fiche).
+- **Format public** (champs optionnels) : `limit` et `self` sur une aptitude ; `onCombatWon` sur un trait. `self` : soigner
+  des Blessures (`woundsHeal`), récupérer une jauge (`recover`), gagner des points temporaires (`temporary`), chacun avec ses
+  dés. Le contenu privé porte quatre aptitudes avec effet sur soi, un trait avec gain de fin de combat, et huit fréquences relevées dans les textes.
+- **Fiche** : « Points temporaires » et « Dégâts et soins » dans les Jauges (montant, « Subir », « Soigner des Blessures »,
+  avec les maxima effectifs) ; « Utiliser » jette les dés d'effet, les applique, marque l'usage et le dit dans une
+  notification ; un passif à fréquence a un bouton « Marquer utilisée » ; « Annuler » défait un marquage ; une carte « Fin de
+  combat » (combat remporté +50 XP et gains des Maîtrises, Overseer vaincu +200 XP, combat terminé sans victoire) ; un repos
+  efface le temporaire et les usages concernés, une entrée dans une pièce remet à zéro les usages « par pièce ».
+- **Interprétations** : plusieurs gains temporaires s'additionnent (le livre ne dit pas qu'on garde le meilleur) ; toute
+  entrée dans une pièce, y compris un retour dans une zone explorée, remet à zéro « une fois par pièce » ; le trait « pour
+  chaque rencontre de combat vaincue » se déclenche aussi pour un Overseer, qui est un combat (précision du PM).
+- **Laissé de côté** : les fréquences « par cible », « par adversaire » ou « par arme », qui restent du texte ; les soins
+  égaux aux dégâts infligés, ou par composant dépensé (variables) ; les activités de camp ajoutées par un trait ; la
+  Robustesse temporaire conditionnelle (réduire une compétence pour en gagner) ; les points temporaires de Santé, que le livre
+  ne donne qu'aux créatures.
+
+### KN33 — Effets des Maîtrises : coûts structurés, aptitudes Maintenues et effets chiffrés dans le moteur
+- **Règles sourcées** (livre v1.2, p. 21) : une aptitude Maintenue retranche son coût en Éther de l'Éther **maximum** tant
+  qu'elle dure (maximum 25 → 20 pour un coût de 5), et s'allume ou s'éteint hors combat ; les aptitudes Magiques se défendent
+  par un test de Résistance magique. Une aptitude « Passif » n'a ni coût ni bouton.
+- **Format public** (`shared/ker-nethalas/masteries.ts`, tous champs optionnels, donc le contenu déjà chargé reste valide) :
+  `exhaustion` et `health` (coûts) à côté de `aether` ; `light` (tient lieu de source de lumière) ; `effects` sur un trait
+  ou une aptitude, dans le format des modificateurs libres (`knCustomEntrySchema` : bonus de score, Avantage, Désavantage,
+  maximum de jauge). Le texte reste la référence pour tout ce qui n'est pas chiffrable. Le contenu privé a reçu les coûts,
+  tirés de ses propres textes de coût, deux drapeaux de lumière et cinq effets de trait ou d'aptitude (bonus d'Endurance,
+  d'Avantage, de Résistance magique, de Santé mentale maximale).
+- **Moteur** : `knMasterySources` (pur, `shared/ker-nethalas/masteryEffects.ts`) transforme les Maîtrises possédées, leurs
+  paliers débloqués et les aptitudes allumées en sources, que `resolveKnSheet` reçoit par `extraSources` ; le trait d'une
+  Maîtrise agit dès qu'elle est possédée, une aptitude une fois son palier débloqué, et une aptitude Maintenue seulement si
+  elle est allumée. `lightProvided` supprime la pénalité d'obscurité quand une aptitude de lumière est allumée.
+- **État** : `status.sustained` (liste de `<Maîtrise>:<palier>`), optionnel pour que les survivants existants restent valides,
+  sans migration. Une aptitude allumée dont le palier est repris, ou dont l'amulette n'est plus portée, n'a plus d'effet ; sa
+  clé reste dans la liste.
+- **Fiche** : un bouton « Utiliser » par aptitude débloquée non passive (vérifie l'Éther actuel, déduit Éther et Santé, ajoute
+  l'Épuisement) et un interrupteur « Maintenir » pour les aptitudes Maintenues (vérifie que l'Éther maximum absorbe le coût ;
+  l'Éther actuel est ramené au nouveau maximum). Les effets sur la cible restent du texte.
+- **Interprétations** : une aptitude dont le coût en Éther ou en Santé dépasse la ressource actuelle est bloquée (« Éther insuffisant »,
+  « Santé insuffisante », règle du PM) ; payer jusqu'à 0 reste permis, avec une notification si la Santé tombe à 0 ; « +5 Santé
+  mentale » du trait d'une Maîtrise est lu comme +5 de **maximum** (⚠️ le livre ne précise pas) ; le tirage et l'application
+  de dés d'effet ne sont pas faits.
+- **Alternative écartée** : coder les effets de chaque Maîtrise dans le moteur, qui lierait du contenu du livre au dépôt
+  public ; le format public décrit seulement la forme, et les chiffres restent dans le contenu privé.
+- **Laissé de côté** (tranche 4f-3) : points temporaires (Robustesse, Santé mentale, Éther) et leur consommation en premier, soin
+  de Blessures (Robustesse puis Santé), événement « combat remporté », activités de camp ajoutées par certains traits, limites
+  « une fois par combat, pièce ou repos », bonus conditionnels et effets sur un choix du joueur (arme du Maître d'armes).
+
+### KN32 — Amulettes : possédées, une portée, des paliers communs
+- **Règles sourcées** (livre v1.2) : une amulette donne accès à une troisième Maîtrise (p. 21 et 63) ; on en trouve en butin
+  comme objet magique, et l'on tire alors une fois sur la table « Random Mastery » (p. 222 : un D20 sur les 20 Maîtrises,
+  dans l'ordre du livre) pour savoir laquelle (p. 224) ; avec deux amulettes ou plus qui donnent des Maîtrises
+  différentes, on les échange au camp, sans coût (p. 125) ; elles ne se vendent pas (p. 127) ; l'équipement a un
+  emplacement « Amulette » (p. 206). Les aptitudes débloquées pour la Maîtrise d'une amulette restent les mêmes d'une
+  amulette à l'autre, et le trait est actif dès qu'elle est portée (p. 63).
+- **Décision** : colonne `kn_characters.amulets` (migration `0141`), `{ owned, equipped, tiers }` : les Maîtrises des
+  amulettes possédées (deux amulettes peuvent donner la même), celle de l'amulette portée (qui doit être possédée), et les
+  paliers débloqués, de 0 à 5, partagés entre toutes les amulettes. Les paliers coûtent des points d'Aptitude comme ceux des
+  Maîtrises apprises (`knAbilityPointsUnspent(niveau, apprises, paliers de l'amulette)`).
+- **Amulette sans effet** : une amulette dont la Maîtrise est déjà apprise reste possédée (elle ne se vend pas) mais n'apporte
+  rien : `knAmuletMastery` renvoie `null`, la fiche l'indique, et ses paliers ne se débloquent pas. Ce comportement vient du
+  PM, qui le tient de l'auteur sur Discord ; ⚠️ il n'est pas dans le livre. Il vaut aussi pour un supplément qui ajouterait
+  des Maîtrises.
+- **Fiche** : le panneau « Amulettes » de la section Maîtrises liste les amulettes possédées (« Porter », « Ne plus porter »,
+  « Retirer »), en ajoute une choisie ou tirée au D20 (ordre du contenu chargé, qui reprend celui du livre : ⚠️ à revoir si un
+  supplément ajoute des Maîtrises), et la section Équipement rappelle l'amulette portée. Une amulette qui arrive est portée
+  d'office si l'emplacement est libre et qu'elle apporte quelque chose ; changer d'amulette ne se fait qu'au camp, l'outil ne
+  le contrôle pas.
+- **Alternatives écartées** : (a) une entrée de plus dans `mastery_picks`, qui ne sait pas représenter plusieurs amulettes
+  possédées ; (b) une seule amulette échangeable à volonté, première version de cette tranche, trop simple.
+- **Laissé de côté** : l'amulette comme objet d'inventaire à part entière et le butin qui en génère (tranche 7) ; l'amulette
+  de la récompense de l'objectif « recommandé en premier » s'ajoute à la main ; il existe aussi des reliques de type Amulette
+  sans Maîtrise (p. 240), qui ne relèvent pas de ce modèle.
+
+### KN31 — Objectifs personnels : liste choisie, progrès noté à la main, récompense récupérée par un bouton
+- **Décision** : même schéma que KN30. Le **format** d'un objectif est public (`shared/ker-nethalas/goals.ts`, schéma
+  enregistré sous le nom `personalGoals`) ; son **contenu** (nom, objectif, cible chiffrée, récompense, mention
+  « recommandé en premier » pour un seul) est rédigé en français dans `~/ker-nethalas-content/personalGoals.json`, hors du
+  dépôt : 39 objectifs, relevés dans le tableau du livre rendu en image (le texte extrait mélange les lignes). Tout
+  objectif se compte : celui qui se fait « en une fois » a pour cible 1.
+- **État du survivant** : `kn_characters.goal_picks` (migration `0140`), une liste de `{ clé, progrès, récupéré }`. **Deux
+  objectifs en cours au plus** ; un objectif récupéré ne compte plus dans les deux, mais ne se reprend pas (« chacun ne se
+  prend et ne s'accomplit qu'une fois »). Le champ texte `personal_goals` reste, relibellé « Autres objectifs » : il
+  garde les notes des survivants créés avant, et sert quand le contenu n'est pas chargé.
+- **Création** : l'étape « Objectifs » remplace le texte libre par la liste (deux différents, comme pour les Maîtrises) ;
+  le serveur compare le choix au contenu chargé (`knGoalPickIssues`) et n'en accepte aucun quand le contenu n'est pas
+  chargé (ils se choisissent alors sur la fiche).
+- **Fiche** : une section « Objectifs personnels » : progrès (champ numérique, +1, −1), barre, **bouton « Récupérer la
+  récompense »** actif quand la cible est atteinte, puis l'objectif passe dans « Récompenses récupérées », où « Annuler »
+  corrige une récupération par mégarde (s'il reste de la place). « Retirer » corrige un objectif choisi par erreur, mais
+  seulement tant que son progrès est nul : le livre veut qu'il ne se change plus.
+- **Alternative écartée** : garder le texte libre et lui ajouter un compteur, qui ne limite pas à deux objectifs, ne
+  retient pas ceux déjà accomplis et ne se laisse pas brancher à un suivi.
+- **Mise à jour automatique** (demandée, « pas urgent ») : le progrès est un compteur par objectif, donc le suivi de
+  combat de la tranche 6 pourra l'alimenter. Ce qui manquera alors dans le contenu : la **nature** de ce qui compte
+  (dégâts d'un type, adversaires d'un type vaincus, coups critiques, pièces trouvées…) ; ce sera un champ optionnel
+  ajouté au format, sans invalider le contenu déjà écrit. Non ajouté maintenant : sans consommateur, il se figerait sur
+  une forme devinée. Suivi : issue X17 ([#265](https://github.com/kevmorpain/le-bureau-du-jdr/issues/265)).
+- **Laissé de côté** : l'application des récompenses (réduction de dégâts, bonus, Atout, XP, Amulette) : elles s'affichent
+  et se reportent à la main, comme les aptitudes de Maîtrise ; le gain de 100 XP d'un objectif ne s'ajoute pas tout seul.
+  L'Amulette (récompense de l'objectif recommandé en premier, qui ouvre une troisième Maîtrise) n'a pas d'effet sur la
+  fiche : elle viendra avec la tranche 4d.
+
 ---
 
 ## Inventaire des sources de modificateurs
@@ -342,21 +584,34 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **1 — Fiche effective** | moteur pur ; conditions, épuisement, Rot, folies, Growing Darkness, influence d'Overseer, modificateurs libres ; scores effectifs avec détail du calcul ; tests de contrat | fusionnée (PR #253) |
 | **2a — Suivi de run** | Domaines, compteur de salles, source de lumière, Dé de Tension, dés de Lair et de Sortie, actions « Nouvelle salle », « Nouveau couloir » et « Retour dans une zone explorée », tirage dans la table de l'Obscurité Grandissante, chemin du Domaine enregistré (une entrée par salle ou couloir, avec ses dés) | fusionnée (PR #254) |
 | **2b — Repos** | Reprendre son souffle, Établir le camp (activités, test de Camp, bénéfices, Rations), provisions | fusionnée (PR #255) |
-| **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage, effets des critiques et maladresses ; référence des conditions rédigée ici | écrite, vérifiée, non fusionnée |
+| **3 — Aide au jet et référence** | jet D100 avec cible calculée, doubles, Avantage/Désavantage, effets des critiques et maladresses, application des effets chiffrés ; référence des conditions rédigée ici | fusionnée (PR #256) |
+| **4a — Contenu privé** | table `kn_content`, chargement depuis des fichiers hors du dépôt, lecture sous session (KN27) ; issue X11 (#258) | écrite, vérifiée, non fusionnée |
+| **4b — Création du survivant** | assistant en étapes (identité, jauges tirées aux dés, enveloppes de compétences, résistances, objectifs, équipement de départ), validation serveur ; issue X12 (#259) | écrite, vérifiée, non fusionnée |
+| **4c — Maîtrises (pilote)** | format public, contenu privé de deux Maîtrises (Faucheur abyssal, Arcaniste), étape de création, section de la fiche, points d'Aptitude (KN30) ; issue X13 (#260) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
+| **4c bis — Objectifs personnels** | format public, contenu privé des 39 objectifs, étape de création (liste), section de la fiche (progrès à la main, récupération de la récompense, KN31) ; rattaché à X12 (#259) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
+| **4d — Maîtrises (suite)** | les 18 autres Maîtrises, en quatre lots ; issue X13 (#260) | contenu écrit, validé par le schéma, vérifié par recoupement des nombres ; à relire par le PM |
+| **4e — Amulettes** | amulettes possédées, une portée, paliers communs, tirage au D20 (KN32) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
+| **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
+| **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
+| **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
+| **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
+| **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
+| **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
+| **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
+| **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
 
 ## Questions ouvertes
 
-- **Permission de Blackoath** (voir plus haut).
+- **Dépôt public et accord de Blackoath** : l'accord couvre l'usage personnel ; pour un dépôt public, voir « Accord de
+  l'éditeur » (le contenu reste hors du dépôt, KN27).
 - **Interprétations à confirmer** (voir la section suivante).
 - **Serveur de dev** : une fois, le navigateur a reçu une version périmée du fichier de traduction. Cause non établie :
   un essai a montré qu'une écriture par le chemin réseau Windows est vue, alors qu'un `sed -i` depuis WSL ne l'a pas
   été en 5 s. Redémarrer le serveur après avoir modifié un fichier de traduction.
 - **Composants communs** (fiche, pistes) : à factoriser si un troisième système arrive.
-- **Valeurs de création** : Health D6+10, Toughness 3D6+20, Aether D6+8, Sanity D6+10, Exhaustion 0 (p. 18), et les
-  enveloppes de départ des compétences (p. 19). Un assistant de création pourrait les tirer et les valider ; hors
-  tranche 0.
+- **Valeurs de création** : faites par l'assistant de création (KN29).
 - **Amélioration des compétences** (p. 62) : les cases sont déjà stockées ; l'aide au jet d'amélioration au camp
   relèverait de la tranche 2b.
 - **Hors-ligne** : à reprendre si l'outil doit servir sans réseau (voir KN10).
@@ -415,6 +670,18 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Pourriture au repos** : le rappel du test d'Endurance s'affiche dès le stade 1 ; un survivant infecté au stade 0 n'est
   pas représenté.
 - **Ration cuisinée** : une Ration fabriquée pendant le camp peut être celle que le camp consomme.
+- **Équipement de départ** : le « D20 » de la liste (l'extraction du livre a perdu son libellé) est lu comme **D20
+  pièces** ⚠️ hypothèse, la monnaie du livre étant les « Coins ». Une première partie ne prend aucun équipement : l'assistant
+  la propose par défaut, le kit est une option.
+- **Jauges de départ** : elles démarrent pleines (valeur courante = maximum), le livre donnant seulement la valeur de départ.
+- **Enveloppes de compétences** : « +60 à une compétence d'arme, +40 à une seconde » est lu comme deux compétences d'arme
+  **différentes** ; les +30, +20 et +10 vont à n'importe quelle compétence, armes comprises.
+- **Points d'Aptitude** : +1 par niveau et 2 au niveau 1, dépensés sur n'importe quelle aptitude des Maîtrises du
+  survivant, du palier 1 au palier 5 ; le trait d'une Maîtrise se débloque avec sa première aptitude. Deux Maîtrises
+  entraînées au plus (la troisième, par amulette, n'est pas encore gérée).
+- **Palier 1 de l'Arcaniste** : « jusqu'à /2 adversaires » (le symbole du niveau est perdu par l'extraction) est lu comme
+  la moitié du niveau, arrondie au supérieur (règle d'arrondi du livre).
+- **Coût « Spécial »** (palier 2 de l'Arcaniste) : stocké sans coût chiffré (`null`), affiché tel quel.
 - **100 sur le D100** : lu « 00 », donc un double (p. 71 : « le même chiffre aux dizaines et aux unités »). Échec
   critique avec un score inférieur à 100, réussite critique sinon.
 - **Avantage et Désavantage ensemble** : le dé est lu normalement ; le livre ne dit pas comment les combiner. La
@@ -431,6 +698,156 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 4f-4 : activités de camp des traits
+- Décision KN35 ; migration `0142` (composants rituels). Le test de contrat des migrations rejoue la chaîne depuis une base
+  vierge : il passe, avec un nouveau test de la 0142 sur des provisions existantes.
+- Vérifié sur une base vierge, survivant de niveau 6 avec deux Maîtrises et une amulette débloquée à 3 paliers : le panneau du
+  camp montre les deux activités de trait avec leurs coûts ; test de Camp D20 −3 (+2 d'une aptitude de l'amulette, −1, −4) ;
+  Épuisement des activités +2 ; 3 composants fabriqués pour 3 Fournitures (6 → 3) ; Ration consommée ; Santé mentale 4 → 8
+  (D4 du camp et D4 de l'activité, détaillés dans le compte rendu).
+- **Non vérifié** dans le navigateur : le cas d'un camp raté ou sans Ration pour ces activités, et l'activité à quantité
+  refusée faute de Fournitures (couverts par les tests des fonctions pures).
+
+### 2026-10-11 — Tranche 4f-3 : points temporaires, Blessures, fréquences, effets sur soi
+- Règles précisées par le PM puis vérifiées dans le livre (voir la tranche 4e) ; le PM demande de garder la notion du
+  livre, « dépensé », pour le temporaire. Décision KN34, sans migration.
+- Vérifié sur une base vierge, survivant de niveau 6 : « Utiliser » le soin de Blessures d'une aptitude de 4 Éther et 2
+  Épuisement (Éther 20 → 16, Épuisement 2, Robustesse 10 → 11 sur un D4) ; une aptitude « par combat » utilisée puis bloquée,
+  libérée par « Combat terminé » ; « Combat remporté » : +50 XP et +1 Robustesse temporaire par le trait d'une Maîtrise ;
+  3 de Robustesse temporaire, 5 dégâts subis : le temporaire passe à 0 et la Robustesse perd 2 ; 5 Blessures soignées :
+  Robustesse +5. **Non vérifié** dans le navigateur : l'effacement du temporaire et des usages par une pause ou un camp, la remise
+  à zéro « par pièce » à l'entrée dans une pièce (couvertes par les tests des fonctions pures).
+- Le contrôle anti-fuite avant commit compare désormais le diff, lignes rejointes, à tous les noms du contenu privé : il a
+  trouvé un nom d'aptitude coupé en deux lignes dans cette doc, présent depuis la tranche 4c et corrigé ici (il reste dans
+  un commit non poussé de la branche).
+
+### 2026-10-11 — Tranche 4f-1 et 4f-2 : coûts, aptitudes Maintenues, effets chiffrés
+- Demande du PM : appliquer les effets chiffrés des Maîtrises et pouvoir utiliser une aptitude d'un bouton, avec son coût.
+  Décision KN33. Pas de migration : `status.sustained` est optionnel.
+- Vérifié sur une base vierge avec un survivant de niveau 5 : « Utiliser » déduit 4 Éther (20 → 16) ; « Maintenir » une
+  aptitude de 5 Éther ramène l'Éther maximum effectif de 20 à 15 et l'Éther actuel de 16 à 15 ; une aptitude passive de
+  −5 de Santé mentale maximale fait passer la Santé mentale maximale effective de 14 à 9 ; une aptitude passive n'a pas de bouton. Le contenu annoté passe le
+  schéma réel au chargement. **Non vérifié** dans le navigateur : la lumière d'une aptitude (couverte par les tests du moteur),
+  le blocage du bouton quand l'Éther manque.
+- Constat : le tableau des coûts a été relevé dans les textes de coût rédigés, et les chiffres recoupés avec le livre au lot
+  précédent ; seuls les coûts en Épuisement et en Santé sont nouveaux, et se lisent dans le livre à la même ligne que l'Éther.
+
+### 2026-10-11 — Tranche 4e : les amulettes
+- Demande du PM, puis règles précisées par lui et **vérifiées dans le livre** (couche de texte du PDF) : p. 13 et 86
+  (« recover X Wounds » soigne d'abord toute la Robustesse, puis la Santé), p. 81 (les dégâts retirent d'abord de la
+  Robustesse, puis de la Santé), p. 13 (le *Temporary* dure jusqu'à être dépensé ou jusqu'à un repos, et dépasse le maximum ;
+  on le rencontre pour la Robustesse, la Santé mentale et l'Éther des joueurs, et pour la Santé de créatures), p. 125, 127, 206, 222, 224 pour les amulettes.
+  Le livre dit « dépensé » : les points temporaires s'épuisent donc d'abord quand on subit des dégâts, ce que le PM
+  confirme ; on garde cette notion.
+- Une première version (une entrée marquée dans `mastery_picks`, commit `6ccca4a`) a été remplacée : elle ne savait pas
+  représenter plusieurs amulettes possédées. Décision KN32 ; migration `0141` (`amulets`), `shared/ker-nethalas/amulets.ts`,
+  panneau `KnAmuletsPanel`.
+- Vérifié sur une base vierge : tirage au D20 (portée d'office la première, la seconde reste dans le sac), « Porter » d'une
+  autre amulette, ligne « Amulette portée » de l'équipement, sauvegarde côté serveur. **Non vérifié** dans le navigateur :
+  amulette dont la Maîtrise est déjà apprise, déblocage de paliers de l'amulette (couverts par les tests des fonctions pures).
+- Le PM veut aussi les effets chiffrés des Maîtrises (Robustesse temporaire après un combat, +10 Endurance, activité de camp
+  de l'Émissaire) et un bouton d'utilisation des aptitudes avec leur coût : plan 4f. Constats pour la 4f : le livre dit
+  que « Maintenu » retranche le coût de l'Éther maximum tant que l'aptitude est active (p. 21), ce qui est un modificateur de
+  maximum de jauge, déjà géré par `status.custom` ; le modèle n'a aucun point temporaire (à créer).
+
+### 2026-10-11 — Tranche 4d : les 18 autres Maîtrises
+- Le livre compte **20 Maîtrises** (pages 22 à 61, deux pages chacune), et non 21 : il en reste 18 après les deux pilotes.
+  Rédigées en quatre lots de quatre ou cinq, dans `~/ker-nethalas-content/masteries.json`, hors du dépôt. Les noms
+  viennent des images des pages ; les noms d'aptitudes suivent la VF quand elle concorde avec Gravebound v1.2 (KN16), le
+  livre sinon (les paliers 4 et 5 de plusieurs Maîtrises diffèrent de la VF).
+- **Le glyphe « ⅃ » est le symbole du niveau du personnage** (défini page 12) : l'extraction `pdftotext` le perd, et
+  plusieurs aptitudes l'emploient (un nombre de points égal au niveau, « jusqu'à ⅃/2 adversaires »). Je l'avais pris pour
+  une valeur manquante du livre avant de le chercher dans la couche de texte du PDF, qui le conserve (PyMuPDF `get_text`,
+  caractère U+2143) ; cette couche de texte donne aussi les ligatures « fi » et « fl » sous forme de « 7 », à nettoyer.
+- Recoupement automatique : pour chaque aptitude des 20 Maîtrises, les nombres et dés du texte français sont comparés à
+  ceux de la page du livre. Aucun nombre français n'est absent du livre ; les écarts restants viennent des ligatures et du
+  texte d'en-tête qui suit le palier 5 dans la couche de texte, et sont expliqués un par un.
+- Choix de vocabulaire à valider : « Restauré » (la créature récupère des Blessures égales aux dégâts reçus d'un type,
+  défini page 82, comme Immunisé et Résistant) ; « Sbire » (Minion) ; « Composants rituels » (le livre écrit aussi
+  « Ingrédients » dans une aptitude : même objet) ; « Nécrophage » pour le *Wight* d'une Maîtrise de nécromancie, la VF disant
+  « spectre » et appelant aussi « Spectre » une Maîtrise entière. Les créatures appelées (squelette, nécrophage,
+  élémentaires, compagnon arcanique) renvoient à la page de leurs caractéristiques dans le livre : elles viendront avec le
+  bestiaire (tranche 6).
+- Chargé par `npm run kn:content` sur la base locale : les 20 Maîtrises passent le schéma réel.
+- **Non fait** : l'amulette et les effets chiffrés (proposition au PM), l'avantage au passage de niveau (page 62 : un choix
+  parmi huit, plus 1 point d'Aptitude), l'amélioration de compétence par les doubles : voir le plan.
+
+### 2026-10-10 — Objectifs personnels (suite de la tranche 4c)
+- Demande du PM : choisir les objectifs dans une liste plutôt que les saisir, pouvoir mettre le progrès à jour à la main et
+  récupérer la récompense par un bouton ; la mise à jour automatique (combat, dégâts) viendra plus tard. Décision KN31 ;
+  migration `0140` (`goal_picks`).
+- Tableau relevé sur les pages 64 à 67 du livre rendues en image (PyMuPDF) : le texte extrait décale les récompenses
+  de trois lignes de la page 66. Contenu rédigé dans `~/ker-nethalas-content/personalGoals.json`, avec
+  l'effet des Atouts (page des Atouts) dans la récompense qui les donne. Le livre v1.2 appelle encore « Air » un objectif qui compte des
+  dégâts de **Force** ; sur retour du PM (le type Air a disparu des versions récentes), il est nommé « Force ». Les
+  cibles chiffrées viennent du livre anglais v1.2, pas de la VF, dont plusieurs nombres diffèrent (jusqu'à 1 000
+  adversaires contre 100 pour un objectif, 10 000 pièces contre 5 000 pour un autre).
+- Retour du PM sur le rendu : les étapes de l'assistant avaient une largeur maximale, qui laissait un grand vide à droite
+  des listes (Maîtrises, objectifs) ; elle est retirée de toutes les étapes, comme dans le créateur D&D. L'écran de
+  récapitulatif garde la sienne.
+- Vérifié sur une base vierge : le contenu rédigé passe le schéma et se charge par le script ; l'étape « Objectifs »
+  (39 cartes, 2 au plus, les autres grisées, un seul « recommandé en premier ») ; sur la fiche, prise d'un objectif, bouton
+  de récompense inactif à 0/1 puis actif après +1, passage dans « Récompenses récupérées », état relu côté serveur ; le
+  serveur refuse une création avec un objectif, deux identiques, un inconnu ou aucun quand le contenu est chargé.
+- **Non vérifié** : « Annuler » et « Retirer » dans le navigateur (couverts par les tests des fonctions pures) ; le rendu
+  sur téléphone ; le **texte français des 39 objectifs**, à relire par le PM.
+
+### 2026-10-10 — Tranche 4c : Maîtrises, pilote de deux
+- Les tranches 4a et 4b sont committées puis réunies sur une seule branche, `feat/ker-nethalas-tranche-4` ; le PM veut
+  **une seule PR à la fin de la tranche 4**. Le journal des migrations passe à 0136, 0137, puis 0138.
+- Lecture de « Character Progression » et des deux premières Maîtrises sur les pages du livre rendues en image
+  (PyMuPDF, hors du dépôt). Contenu rédigé en français dans `~/ker-nethalas-content/masteries.json` : Faucheur abyssal et
+  Arcaniste, avec leur trait, leurs cinq aptitudes et leurs six lieux d'entraînement. Décision KN30 ; migration `0138`
+  (`mastery_picks`).
+- Interface : étape « Maîtrises » de l'assistant, section « Maîtrises » de la fiche. Composable `useKnContent`.
+- Vérifié sur une base vierge : le contenu rédigé passe la validation du schéma réel et se charge par le script ; les
+  étapes se débloquent (une seule Maîtrise ne suffit pas, deux oui), tirage du lieu d'entraînement, création puis fiche
+  (palier 1 visible, palier 2 grisé et masqué) ; points d'Aptitude (0 au niveau 1, 2 au niveau 3), déblocage du palier 2 puis
+  3, reprise d'un palier, sauvegarde serveur ; choix de deux Maîtrises sur la fiche d'un survivant créé sans ; le serveur
+  refuse une création sans Maîtrise, avec une seule, en double, inconnue ou à trois quand le contenu est chargé.
+- **Non vérifié** : le choix des Maîtrises par la liste déroulante de la fiche (j'ai appelé le même gestionnaire par
+  l'état du composant) ; le rendu sur téléphone ; le **texte français des deux Maîtrises**, à relire par le PM.
+- **Retours du PM sur le rendu** : (1) le tirage d'entraînement ne montrait rien et ajoutait une ligne à l'apparence à
+  chaque clic → résultat affiché à l'étape, remplacé à chaque tirage, champ `training` à part (migration `0139`) ;
+  (2) les effets des paliers n'étaient pas visibles à l'étape de choix → texte de tous les paliers, sur la fiche aussi
+  (grisé tant qu'ils sont verrouillés) ; (3) étape « Compétences » : consigne en double, +60 et +40 proposés hors armes →
+  une seule consigne, boutons par ligne grisés selon les enveloppes restantes et les armes ; (4) récapitulatif en écran
+  après « Terminer », comme D&D, puis mis en cartes par section (jauges, compétences, résistances, Maîtrises, équipement,
+  entraînement, objectifs) ; lignes séparées à l'étape des compétences pour mieux associer chaque compétence à ses
+  boutons. Vérifié dans le navigateur : boutons (armes seules, épuisement d'une enveloppe, reprise),
+  tirages (remplacement, effacement si la Maîtrise est retirée), écran de récapitulatif avec retour, création et champ
+  « Entraînement » relu côté serveur.
+
+### 2026-10-08 — Tranche 4b : création du survivant
+- Lecture du chapitre « Create Your Survivor » (jauges, compétences, résistances, Maîtrises, objectifs, équipement de
+  départ). Décision KN29 ; migration `0137` (`appearance`, `coins`). Cette tranche ne dépend pas de la 4a : elle a été
+  écrite dans une branche à part, depuis `main`, puis réunie avec la 4a (le PM veut une seule PR à la fin de la tranche 4).
+- Moteur `creation.ts`, schéma partagé par l'assistant et le serveur, `knBuildCreatedSheet`. Interface : `/ker-nethalas/new`
+  (sept composants d'étapes, un aperçu), index qui y mène, apparence sur la fiche, pièces dans l'équipement.
+- Vérifié sur une base vierge dans le navigateur : étapes qui se débloquent (nom, jauges dans leurs bornes, enveloppes
+  partielles signalées puis complètes, Résistance, objectif, équipement à dés), récapitulatif, création puis fiche relue côté
+  serveur ; 422 sur une enveloppe manquante, une Santé hors des dés, un +60 hors arme, l'ancienne forme (nom seul) et un
+  nom vide.
+- **Non vérifié** : le choix des enveloppes par les listes déroulantes elles-mêmes (je les ai posées par l'état du
+  composant, les listes de Nuxt UI ne se laissent pas piloter sans fenêtre dessinée) ; l'affichage de l'assistant sur téléphone.
+
+### 2026-10-07 — Tranche 4a : contenu du livre hors du dépôt
+- Les tranches 0 à 3 sont fusionnées, déployées, et l'issue #242 est fermée avec un récapitulatif. Les références de pages
+  sont retirées des commentaires de code (PR #257).
+- Le PM annonce l'accord de Blackoath (usage personnel, formulation libre en français, pas d'illustrations reprises) et
+  veut **toute la mécanique aléatoire** : descriptions de pièces et de couloirs, événements, fouille, rencontres,
+  Maîtrises, Overseer et influence, inventaire et équipement. Il choisit de garder le contenu **hors du dépôt public** et de
+  **ne pas séparer** la fiche de la partie (deux colonnes à l'écran à la place). Les issues X11 à X16 et U13 sont créées
+  (#258 à #264). Décisions KN27 et KN28.
+- Tranche 4a : table `kn_content` (migration `0136`), registre vide de schémas, routes d'administration et de lecture,
+  script `kn:content`. Défaut trouvé par un test : un nom comme `constructor` passait la regex et touchait le prototype du
+  registre ; la recherche se fait sur propriété propre.
+- Vérifié de bout en bout sur une base vierge, avec un jeu de données factice enregistré temporairement dans le registre
+  (jamais committé) : chargement, refus d'un nom inconnu et d'une donnée invalide sans écraser l'existant, 401 sans secret
+  ou sans session, 404 sur un jeu absent, et la session seule ne suffit pas à l'administration.
+- **Non vérifié** : le chargement vers la production (aucun jeu de données n'existe encore) ; le script sur une très
+  grosse donnée, au-delà de la limite de 1,5 Mo, couvert seulement par un test.
 
 ### 2026-10-07 — Tranche 3 : aide au jet et référence des conditions
 - PR #255 fusionnée (tranche 2b) et déployée (Workers Builds vert sur le commit de fusion, migration `0135` appliquée) ;

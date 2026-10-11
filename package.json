@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate && nuxt prepare",
     "db:migrate": "wrangler d1 migrations apply DB --local",
+    "kn:content": "node scripts/kn-content.mjs",
     "deploy": "npm run build && wrangler deploy",
     "test": "vitest",
     "test:watch": "vitest --watch",

@@ -10,6 +10,20 @@
     </template>
 
     <div class="grid gap-4 md:grid-cols-2">
+      <KnNumberField
+        v-model="character.coins"
+        label="Pièces"
+        :min="KN_BOUNDS.coins.min"
+        :max="KN_BOUNDS.coins.max"
+        class="md:col-span-2 md:w-48"
+      />
+
+      <p class="text-sm md:col-span-2">
+        <span class="font-medium">Amulette portée :</span>
+        {{ amuletLabel }}
+        <span class="text-muted">(à gérer dans la section Maîtrises)</span>
+      </p>
+
       <UFormField label="Armes">
         <UTextarea
           v-model="character.weapons"
@@ -45,6 +59,19 @@
 
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+
+const props = defineProps<{
+  masteries: KnMastery[] | null
+}>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+const amuletLabel = computed(() => {
+  const key = character.value.amulets.equipped
+  if (key === null) return 'aucune'
+  const name = props.masteries?.find(mastery => mastery.key === key)?.name ?? key
+  return character.value.masteryPicks.some(pick => pick.key === key) ? `${name} (Maîtrise déjà apprise : sans effet)` : name
+})
 </script>

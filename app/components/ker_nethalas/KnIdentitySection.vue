@@ -23,6 +23,30 @@
         :min="KN_BOUNDS.xp.min"
         :max="KN_BOUNDS.xp.max"
       />
+
+      <UFormField
+        label="Genre, âge, apparence"
+        class="sm:col-span-3"
+      >
+        <UTextarea
+          v-model="character.appearance"
+          :rows="2"
+          :maxlength="2000"
+          class="w-full"
+        />
+      </UFormField>
+
+      <UFormField
+        label="Entraînement"
+        class="sm:col-span-3"
+      >
+        <UTextarea
+          v-model="character.training"
+          :rows="2"
+          :maxlength="2000"
+          class="w-full"
+        />
+      </UFormField>
     </div>
   </UCard>
 </template>

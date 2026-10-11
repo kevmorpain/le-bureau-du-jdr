@@ -205,6 +205,7 @@ import {
 } from '~~/shared/ker-nethalas/roll'
 import { knRaiseUsageDie, knRollDie, knUsageDieRaise } from '~~/shared/ker-nethalas/run'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
+import { knSetTemporary, knTemporaryOf } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
@@ -325,12 +326,16 @@ function applyEffects() {
     toughnessMax: props.resolved.maxVitals.toughness.effective,
     health: c.healthCurrent,
     healthMax: props.resolved.maxVitals.health.effective,
+    temporaryToughness: knTemporaryOf(c.status, 'toughness'),
     sanity: c.sanityCurrent,
     sanityMax: props.resolved.maxVitals.sanity.effective,
     exhaustion: c.exhaustion,
     exhaustionMax: KN_BOUNDS.exhaustion.max,
   })
   c.toughnessCurrent = next.toughness
+  if (next.temporaryToughness !== knTemporaryOf(c.status, 'toughness')) {
+    c.status = knSetTemporary(c.status, 'toughness', next.temporaryToughness ?? 0)
+  }
   c.healthCurrent = next.health
   c.sanityCurrent = next.sanity
   c.exhaustion = next.exhaustion

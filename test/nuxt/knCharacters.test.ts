@@ -11,9 +11,11 @@ import {
   updateKnCharacter,
 } from '../../server/utils/knCharacters'
 import { emptyKnProvisions } from '../../shared/ker-nethalas/camp'
+import { knCreationSkills } from '../../shared/ker-nethalas/creation'
 import { defaultKnResistances, defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { emptyKnDomain, emptyKnRun } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus } from '../../shared/ker-nethalas/status'
+import { validKnCreation } from '../fixtures/knCreation'
 import { replayMigrations } from '../fixtures/migrations'
 
 // Le CRUD est testé contre libsql, sans la barrière d'auth (DI du `db`). Les clés étrangères sont
@@ -44,7 +46,7 @@ beforeAll(async () => {
 
 describe('createKnCharacter', () => {
   it('crée un survivant avec les valeurs de départ', async () => {
-    const { id } = await createKnCharacter(db, alice, { name: 'Arathos' })
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Arathos'))
     const character = await getKnCharacter(db, id)
 
     expect(character).toMatchObject({
@@ -54,7 +56,14 @@ describe('createKnCharacter', () => {
       xp: 0,
       exhaustion: 0,
       damageModifier: 0,
-      healthCurrent: 0,
+      healthCurrent: 11,
+      healthMax: 11,
+      toughnessMax: 23,
+      aetherMax: 9,
+      sanityMax: 11,
+      coins: 0,
+      appearance: '',
+      training: '',
       extraSkills: [],
       masteries: '',
       perks: '',
@@ -64,8 +73,8 @@ describe('createKnCharacter', () => {
       notes: '',
     })
     expect(character!.status).toEqual(emptyKnStatus())
-    expect(character!.skills).toEqual(defaultKnSkills())
-    expect(character!.resistances).toEqual(defaultKnResistances())
+    expect(character!.skills).toEqual(knCreationSkills(validKnCreation('x').allotments))
+    expect(character!.resistances).toEqual({ ...defaultKnResistances(), endurance: 40 })
     expect(character!.createdAt).toBeTruthy()
     expect(character!.updatedAt).toBeNull()
   })
@@ -73,8 +82,8 @@ describe('createKnCharacter', () => {
 
 describe('listKnCharacters', () => {
   it('ne renvoie que les survivants du propriétaire, dans l\'ordre de création', async () => {
-    const first = await createKnCharacter(db, bob, { name: 'Bob 1' })
-    const second = await createKnCharacter(db, bob, { name: 'Bob 2' })
+    const first = await createKnCharacter(db, bob, validKnCreation('Bob 1'))
+    const second = await createKnCharacter(db, bob, validKnCreation('Bob 2'))
 
     const list = await listKnCharacters(db, bob)
 
@@ -85,7 +94,7 @@ describe('listKnCharacters', () => {
 
 describe('updateKnCharacter', () => {
   it('ne modifie que les champs fournis et date la mise à jour', async () => {
-    const { id } = await createKnCharacter(db, alice, { name: 'Erthos' })
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Erthos'))
 
     const updated = await updateKnCharacter(db, id, { healthCurrent: 14, healthMax: 15, notes: 'Piste de la salle 3' })
 
@@ -94,7 +103,7 @@ describe('updateKnCharacter', () => {
   })
 
   it('relit à l\'identique les compétences et résistances modifiées', async () => {
-    const { id } = await createKnCharacter(db, alice, { name: 'Jera' })
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Jera'))
     const skills = defaultKnSkills()
     skills.dodge = { score: 55, marked: true }
     const resistances = { ...defaultKnResistances(), resolve: 40 }
@@ -109,7 +118,7 @@ describe('updateKnCharacter', () => {
   })
 
   it('relit à l\'identique l\'état en cours', async () => {
-    const { id } = await createKnCharacter(db, alice, { name: 'Xara' })
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Xara'))
     const status = {
       ...emptyKnStatus(),
       conditions: [{ key: 'frightened' as const, value: 30 }],
@@ -124,7 +133,7 @@ describe('updateKnCharacter', () => {
   })
 
   it('donne un run vide à un nouveau survivant et le relit à l\'identique', async () => {
-    const { id } = await createKnCharacter(db, alice, { name: 'Brisa' })
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Brisa'))
     expect((await getKnCharacter(db, id))!.run).toEqual(emptyKnRun())
 
     const run = {
@@ -161,13 +170,58 @@ describe('updateKnCharacter', () => {
   })
 
   it('donne des provisions vides à un nouveau survivant et les relit à l\'identique', async () => {
-    const { id } = await createKnCharacter(db, alice, { name: 'Kessa' })
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Kessa'))
     expect((await getKnCharacter(db, id))!.provisions).toEqual(emptyKnProvisions())
 
     const provisions = { ...emptyKnProvisions(), rations: 3, craftingSupplies: 12, attunementCrystals: 1 }
     await updateKnCharacter(db, id, { provisions })
 
     expect((await getKnCharacter(db, id))!.provisions).toEqual(provisions)
+  })
+
+  it('crée un survivant avec ses deux Maîtrises au palier 1 et relit leurs paliers débloqués', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Mara', { masteries: ['alpha', 'beta'] }))
+    expect((await getKnCharacter(db, id))!.masteryPicks).toEqual([{ key: 'alpha', tiers: 1 }, { key: 'beta', tiers: 1 }])
+
+    const picks = [{ key: 'alpha', tiers: 3 }, { key: 'beta', tiers: 1 }]
+    await updateKnCharacter(db, id, { masteryPicks: picks })
+
+    expect((await getKnCharacter(db, id))!.masteryPicks).toEqual(picks)
+  })
+
+  it('crée un survivant sans Maîtrise quand aucune n\'est choisie', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Sans'))
+
+    expect((await getKnCharacter(db, id))!.masteryPicks).toEqual([])
+  })
+
+  it('crée un survivant avec ses deux objectifs vierges et relit leur progrès et leur récupération', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Nera', { goals: ['alpha', 'beta'] }))
+    expect((await getKnCharacter(db, id))!.goalPicks).toEqual([
+      { key: 'alpha', progress: 0, claimed: false },
+      { key: 'beta', progress: 0, claimed: false },
+    ])
+
+    const goalPicks = [{ key: 'alpha', progress: 10, claimed: true }, { key: 'beta', progress: 4, claimed: false }]
+    await updateKnCharacter(db, id, { goalPicks })
+
+    expect((await getKnCharacter(db, id))!.goalPicks).toEqual(goalPicks)
+  })
+
+  it('crée un survivant sans amulette et relit ses amulettes, portée et paliers', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Nuit'))
+    expect((await getKnCharacter(db, id))!.amulets).toEqual({ owned: [], equipped: null, tiers: 0 })
+
+    const amulets = { owned: ['gamma', 'delta'], equipped: 'delta', tiers: 2 }
+    await updateKnCharacter(db, id, { amulets })
+
+    expect((await getKnCharacter(db, id))!.amulets).toEqual(amulets)
+  })
+
+  it('crée un survivant sans objectif quand aucun n\'est choisi', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Sans objectif'))
+
+    expect((await getKnCharacter(db, id))!.goalPicks).toEqual([])
   })
 
   it('renvoie null pour un survivant inexistant', async () => {
@@ -177,8 +231,8 @@ describe('updateKnCharacter', () => {
 
 describe('suppression', () => {
   it('supprime un survivant sans toucher aux autres', async () => {
-    const keep = await createKnCharacter(db, alice, { name: 'Gardé' })
-    const drop = await createKnCharacter(db, alice, { name: 'Supprimé' })
+    const keep = await createKnCharacter(db, alice, validKnCreation('Gardé'))
+    const drop = await createKnCharacter(db, alice, validKnCreation('Supprimé'))
 
     await deleteKnCharacter(db, drop.id)
 
@@ -191,7 +245,7 @@ describe('suppression', () => {
       .insert(schema.users)
       .values({ provider: 'google', providerUserId: 'temp', name: 'Temp' })
       .returning({ id: schema.users.id })
-    await createKnCharacter(db, temp.id, { name: 'Orphelin' })
+    await createKnCharacter(db, temp.id, validKnCreation('Orphelin'))
 
     await db.delete(schema.users).where(eq(schema.users.id, temp.id))
 

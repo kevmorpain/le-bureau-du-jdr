@@ -6,7 +6,10 @@ import {
   type KnResistanceKey,
   type KnSkillKey,
 } from './skills'
+import { knAmuletsSchema } from './amulets'
 import { knProvisionsSchema } from './camp'
+import { knGoalPicksSchema } from './goals'
+import { knMasteryPicksSchema } from './masteries'
 import { knRunSchema } from './run'
 import { knStatusSchema } from './status'
 import { boundedInt, shapeOf } from './zodHelpers'
@@ -20,6 +23,7 @@ export const KN_BOUNDS = {
   level: { min: 1, max: 99 },
   xp: { min: 0, max: 999999 },
   exhaustion: { min: 0, max: 99 },
+  coins: { min: 0, max: 999999 },
   damageModifier: { min: -99, max: 99 },
   extraSkills: 5,
 } as const
@@ -44,13 +48,14 @@ export type KnResistances = z.infer<typeof knResistancesSchema>
 const name = z.string().trim().min(1).max(100)
 const vital = boundedInt(KN_BOUNDS.vital)
 
-export const createKnCharacterSchema = z.object({ name })
-
 export const updateKnCharacterSchema = z.object({
   name,
+  appearance: z.string().max(2000),
+  training: z.string().max(2000),
   level: boundedInt(KN_BOUNDS.level),
   xp: boundedInt(KN_BOUNDS.xp),
   personalGoals: z.string().max(2000),
+  goalPicks: knGoalPicksSchema,
   healthCurrent: vital,
   healthMax: vital,
   toughnessCurrent: vital,
@@ -67,6 +72,9 @@ export const updateKnCharacterSchema = z.object({
   status: knStatusSchema,
   run: knRunSchema,
   provisions: knProvisionsSchema,
+  coins: boundedInt(KN_BOUNDS.coins),
+  masteryPicks: knMasteryPicksSchema,
+  amulets: knAmuletsSchema,
   masteries: z.string().max(10000),
   perks: z.string().max(5000),
   weapons: z.string().max(5000),
@@ -75,7 +83,6 @@ export const updateKnCharacterSchema = z.object({
   notes: z.string().max(10000),
 }).partial()
 
-export type CreateKnCharacterInput = z.infer<typeof createKnCharacterSchema>
 export type UpdateKnCharacterInput = z.infer<typeof updateKnCharacterSchema>
 
 export const defaultKnSkills = (): KnSkills =>

@@ -65,8 +65,8 @@ describe('contrat — toute écriture d\'updated_at annonce sa version', () => {
 
   const relative = (file: string) => file.slice(process.cwd().length + 1).replaceAll('\\', '/')
 
-  // `kn_characters` a son propre `updated_at` et aucune synchro hors-ligne : la version annoncée n'y aurait pas de lecteur.
-  const NON_SHEET_WRITERS = ['server/utils/knCharacters.ts']
+  // `kn_characters` et `kn_content` ont leur propre `updated_at` et aucune synchro hors-ligne : la version annoncée n'y aurait pas de lecteur.
+  const NON_SHEET_WRITERS = ['server/utils/knCharacters.ts', 'server/utils/knContent.ts']
 
   it('rien dans server/api ni server/utils ne pose updatedAt sans passer par stampSheetVersion', async () => {
     const offenders: string[] = []

@@ -953,6 +953,55 @@
       "when": 1792300000000,
       "tag": "0135_ker_nethalas_provisions",
       "breakpoints": true
+    },
+    {
+      "idx": 136,
+      "version": "6",
+      "when": 1792400000000,
+      "tag": "0136_ker_nethalas_content",
+      "breakpoints": true
+    },
+    {
+      "idx": 137,
+      "version": "6",
+      "when": 1792500000000,
+      "tag": "0137_ker_nethalas_creation",
+      "breakpoints": true
+    },
+    {
+      "idx": 138,
+      "version": "6",
+      "when": 1792600000000,
+      "tag": "0138_ker_nethalas_mastery_picks",
+      "breakpoints": true
+    },
+    {
+      "idx": 139,
+      "version": "6",
+      "when": 1792700000000,
+      "tag": "0139_ker_nethalas_training",
+      "breakpoints": true
+    },
+    {
+      "idx": 140,
+      "version": "6",
+      "when": 1792800000000,
+      "tag": "0140_ker_nethalas_goal_picks",
+      "breakpoints": true
+    },
+    {
+      "idx": 141,
+      "version": "6",
+      "when": 1792900000000,
+      "tag": "0141_ker_nethalas_amulets",
+      "breakpoints": true
+    },
+    {
+      "idx": 142,
+      "version": "6",
+      "when": 1793000000000,
+      "tag": "0142_ker_nethalas_ritual_components",
+      "breakpoints": true
     }
   ]
 }
