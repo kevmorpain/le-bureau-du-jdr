@@ -419,20 +419,45 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   saisie, type, point faible visé avec Désavantage) et le tour d'une créature (action tirée, défense, test d'une action
   magique, dégâts). Les dégâts ne s'appliquent que par un bouton.
 - **Dégâts des actions** : champ optionnel `damage` (dé et type) sur une action de créature, ajouté à la réserve des dés de
-  ses paliers de niveau. Sans lui, le joueur saisit les dégâts du texte.
+  ses paliers de niveau. Sans lui, le joueur saisit les dégâts du texte. Il porte aussi, au besoin, `always` (dus que le test
+  du survivant réussisse ou non, quand il ne sert qu'aux effets annexes), `direct` (à la Santé, sans passer par la Robustesse ni
+  l'Armure) et `extra` (dés qui rejoignent la réserve). Une action sans étiquette avec des dégâts se joue comme une action
+  Magique : un test du survivant, et les dégâts à l'échec.
+- **Les adversaires retiennent le dé le plus haut** (p. 80-81, « Enemies and NPCs ») : les dégâts que les effets d'une action
+  infligent (`2D6`) suivent la même règle que sa réserve, au lieu d'une somme. Un effet de dégâts peut aussi valoir la moitié du
+  jet, arrondie au supérieur, pour « la moitié en cas de réussite ».
 - **Effets des actions** : champs optionnels `checks` (le test demandé au survivant) et `outcomes` (états, dégâts annexes,
   même format que les événements, KN37) sur une action. Une action sans étiquette propose son test et ses effets tout de suite ;
   une action Physique, une fois touché ; une action Magique, après un test raté, et son `checks` donne alors le test du
   survivant à la place de la Résistance magique. Les effets s'appliquent par bouton, par le même chemin que les événements
   (`useKnApplyEffects`). Les dégâts d'une action sans étiquette passent par ses `outcomes`, sans Armure.
+- **Effets à durée sur le survivant** : un effet `timed` (étiquette, rounds en dés ou en nombre, dégâts de début de tour,
+  modificateurs) devient un modificateur de la fiche marqué « de combat » (`combat`, `rounds`, `tick` dans `status.custom`), donc
+  compté par le calcul des scores. Reposer le même effet en remplace la durée. « Round suivant » inflige les dégâts de début
+  de tour (le dé le plus haut), puis retire un round ; les effets disparaissent à la fin du combat, et la carte de combat
+  les liste avec un bouton pour en retirer un (se libérer d'une étreinte). Aucune migration.
+- **Effets sur la créature** : `self` sur une action. Soins et Santé temporaire (en dés, ou en part des dégâts infligés, de
+  la Santé maximale ou de la Santé actuelle, arrondie au supérieur ; plafond en multiple de la Santé ; terme : prochain tour
+  ou fin du round) ; effets en cours (`buff`) : Résistant ou Vulnérable à tout (sauf certains types), Immunisé, Immunisé aux
+  dégâts non magiques, Avantage à ses attaques ou à ses défenses, bonus de Compétence de combat, dé de dégâts en plus, attaques
+  qui la visent avec Désavantage, dégâts renvoyés, usage unique. Ils durent des rounds, jusqu'au prochain tour de la créature
+  ou jusqu'à la fin du combat, et peuvent toucher toutes les créatures de la même fiche. Les attaques du survivant et les
+  tours de la créature en tiennent compte ; la riposte se subit par un bouton.
+- **Sbires alliés** : un sbire invoqué s'ajoute à l'équipe par un bouton sous l'aptitude (six au plus, `run.minions`). Les
+  sbires suivent le survivant de pièce en pièce, récupèrent toute leur Santé à la fin du combat et sont détruits à 0 Santé
+  (p. 92-93). La carte « Sbires » joue leur tour : action tirée sur leur fiche, attaque d'une créature (leur Compétence de
+  combat, sa défense et son Armure) ou sort (test de Résistance magique de la créature). Une créature peut viser un sbire :
+  il se défend avec sa fiche. Qui l'adversaire vise reste le choix du joueur ; le livre veut les PJ d'abord.
+- **Adversaires invoqués** : un effet `summon` fait entrer des créatures de plus, jusqu'à un maximum de la même fiche.
 - **Fin du combat** : le survivant récupère D4 Robustesse quand un combat se termine (p. 86), victoire ou non ; « Annuler le
   combat » retire l'état sans rien rendre. La carte « Fin de combat » est supprimée : ses boutons (Combat remporté, Overseer
   vaincu, Combat terminé sans victoire) sont dans la carte « Combat », qui n'existe que pendant un combat, si bien que
   l'expérience d'une victoire ne se prend qu'une fois.
 - **Public** : les 20 textes des mouvements défensifs et des maladresses des monstres, reformulés (`ker_nethalas.combat`).
 - **Laissé de côté** : l'armure du survivant est saisie par zone à la main jusqu'à X16 (#263) ; les effets des mouvements
-  défensifs et des maladresses restent du texte, ainsi que les effets qui se répètent à chaque tour (D4 nécrotiques par tour
-  d'une cible Entravée) ; la fuite, le corps à corps à deux armes, le bouclier, la
+  défensifs et des maladresses restent du texte ; les conditions qui touchent une créature (Entravée, Aveuglée…) ne sont pas
+  suivies ; les doubles et serviteurs invoqués que le livre décrit sans fiche complète ; la réduction de la Robustesse maximale
+  par un coup ; la fuite, le corps à corps à deux armes, le bouclier, la
   réduction d'Armure par l'acide, les conditions qui donnent Avantage ou Désavantage (À terre), l'influence de l'Overseer et les
   bonus de combat de l'Obscurité Grandissante par catégorie d'adversaire.
 
@@ -457,8 +482,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Sbires** : une fiche de rôle `minion` (même schéma, tableau d'actions à deux plages 1-4 / 5-6, pas d'adaptation) ; une
   aptitude de Maîtrise l'invoque par `summons`, sa clé, et la fiche s'affiche sous l'aptitude une fois débloquée, sans
   bouton d'engagement.
-- **Laissé de côté** : les sbires comme alliés dans le suivi de combat (le moteur ne gère que des adversaires du
-  survivant : leurs attaques et leurs dégâts se jouent à la main) ; les bonus de Maîtrise sur leur fiche.
+- **Laissé de côté** : les bonus de Maîtrise sur leur fiche, qui se saisissent en « dés de dégâts en plus » et à la main pour la
+  Santé (KN39 pour le reste).
 
 ### KN37 — Tests en ligne, conséquences automatiques, actions sur les obstacles
 - **Test en ligne** : un bouton « Tester » ouvre, dans le bloc de l'entrée, le même panneau que la carte « Jet de dés »
@@ -723,7 +748,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **6c — Overseers et sbires** | les 53 fiches du bestiaire (43 créatures, 10 Overseers) et les 5 sbires de Maîtrise, lus sous l'aptitude qui les invoque (KN38) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
+| **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
@@ -837,21 +862,39 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   remet à 0 au round suivant.
 - **Meute** : seules les créatures en vie de même fiche comptent.
 - **Surprise ratée** : la Perception de l'Initiative qui suit prend −20 (p. 76) ; on le saisit à la main dans le bonus du test.
-- **Santé d'un Overseer au niveau 10** : le livre imprime « 10 Health » sans le « + » des autres paliers ; lu
-  comme +10. Le pied de page d'un autre Overseer s'est glissé dans son palier 10 à l'extraction ; son « +10 Combat Skill »
-  est lu à la main sur l'image de la page.
-- **Actions des fiches** : un dégât « sur une touche » s'applique à la touche ; une action magique avec un test applique
-  ses dégâts à l'échec du test. Là où le livre mêle un test et des dégâts sans dire lequel conditionne l'autre (une action
-  magique qui inflige des dégâts puis demande un test d'Esquive), les dégâts suivent le test. Les dégâts qui visent la Santé
-  directement, les effets durables (aura, malus pendant D rounds, Santé temporaire, invocation de Démons mineurs ou de
-  serviteurs d'Overseer) et le test de Corps du livre (aucune compétence « Corps » sur la fiche d'un survivant) restent dans le
-  texte, à appliquer à la main.
-- **Sbires de Maîtrise** : une fiche de sbire se lit sous l'aptitude qui l'invoque ; les bonus d'une Maîtrise (le palier 5
-  d'une Maîtrise de nécromancie : +D6 nécrotiques et +2 Santé) ne sont pas appliqués à la fiche affichée.
+- **Actions des fiches** : un dégât « sur une touche » s'applique à la touche ; sur un test, à l'échec du test, sauf quand le
+  texte dit que les dégâts sont dus et que le test ne vise que l'effet annexe (`always`).
+- **Test de Corps** : le livre dit « Athletics/Body checks » (p. 88) et oppose l'Athlétisme du PJ au Corps de la créature ; un
+  test de Corps demandé à un survivant est donc son Athlétisme.
+- **Durées en rounds** : un effet de N rounds compte le round en cours ; ses dégâts de début de tour tombent à chaque
+  changement de round, sans tenir compte de l'ordre de l'Initiative. Reposer un effet qui « se cumule » en remplace la durée.
+  « Jusqu'à la fin de son prochain tour » se lit comme deux rounds, « jusqu'au début de son prochain tour » comme jusqu'à
+  ce que la créature tire son action. Une aura n'est testée qu'à sa pose : un survivant qui la rate subit ses dégâts de début
+  de tour pendant sa durée, sans nouveau test.
+- **Bonus offensifs d'un effet qui finit au début du prochain tour** : ils n'ont pas le temps de servir (l'effet tombe avant
+  l'attaque) ; ces bonus restent du texte.
+- **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
+  combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
+  se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.
 
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 6c (suite) : effets des actions et sbires alliés
+- Retour du PM sur ce qui restait en texte : les dégâts directs, la Santé temporaire des créatures, le test de Corps, les effets
+  à durée et les sbires alliés « se font quand même ». Quatre étapes, chacune commitée, sans migration (`status.custom` et
+  `run` sont des colonnes JSON dont les champs ajoutés sont optionnels).
+- Source relue avant de coder : « Enemies and NPCs always pick the highest die rolled » (les dés d'un effet de créature étaient
+  additionnés à tort) ; « Athletics/Body checks » (le test de Corps) ; les règles des sbires (p. 92-93).
+- Vérifié dans le navigateur, sur un survivant de test supprimé ensuite : une action dont les dégâts sont dus malgré un test
+  réussi ; la Santé temporaire d'une créature (+1 après 2 dégâts infligés) ; une aura de 1 dégât sur 2 rounds (Robustesse
+  23 → 21, effet disparu au troisième round) ; Résistant à tout avec Désavantage contre soi, puis la riposte (2 dégâts de
+  foudre subis) ; deux sbires ajoutés depuis leur aptitude, l'attaque d'un sbire, D4 adversaires invoqués, une créature qui
+  attaque un sbire (1 dégât inévitable).
+- Suite complète verte (192 fichiers, 2334 tests), tsc 14 serveur / 128 app comme avant.
+- **Non vérifié** dans le navigateur : les durées en dés des effets sur la créature, l'usage unique, le sort d'un sbire.
+- Le schéma des dés passe dans `diceSchema.ts` pour éviter un cycle d'import entre l'état de combat et `dice.ts`.
 
 ### 2026-10-11 — Tranche 6c : fiches du bestiaire, Overseers et sbires
 - Décision KN38 complétée ; aucune migration. Les 53 fiches (43 créatures, 10 Overseers) et les 5 sbires sont écrits hors
