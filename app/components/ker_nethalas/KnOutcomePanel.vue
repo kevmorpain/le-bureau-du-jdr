@@ -11,12 +11,19 @@
       <UButton
         v-if="active && group.check"
         size="xs"
-        variant="soft"
+        :variant="openGroup === group.id ? 'solid' : 'soft'"
         icon="i-heroicons:cube"
-        @click="emit('check', group.check)"
+        @click="toggle(group.id)"
       >
         Test : {{ $t(`ker_nethalas.${isResistance(group.check) ? 'resistances' : 'skills'}.${group.check}`) }}
       </UButton>
+
+      <KnInlineCheck
+        v-if="active && group.check && openGroup === group.id"
+        :request="{ id: knCheckId(group.check), difficulty: 'normal', note: 'Test de l\'événement' }"
+        @rolled="success => suggested[group.id] = success"
+        @close="openGroup = null"
+      />
 
       <ul class="space-y-1 text-sm">
         <li
@@ -27,10 +34,10 @@
           <UButton
             v-if="active && !taken.includes(item.index)"
             size="xs"
-            :variant="item.outcome.when === 'failure' ? 'outline' : 'soft'"
+            :variant="isSuggested(group.id, item.outcome) ? 'solid' : item.outcome.when === 'failure' ? 'outline' : 'soft'"
             :color="item.outcome.when === 'failure' ? 'error' : 'primary'"
             :disabled="!knOutcomeAvailable(outcomes, taken, item.index)"
-            @click="emit('take', item.index)"
+            @click="take(item.index)"
           >
             {{ title(item.outcome) }}
           </UButton>
@@ -51,7 +58,7 @@
 
 <script lang="ts" setup>
 import { KN_RESISTANCE_KEYS } from '~~/shared/ker-nethalas/skills'
-import { knOutcomeAvailable, knOutcomeGroup, type KnCheckKey, type KnOutcome, type KnRollTableEntry } from '~~/shared/ker-nethalas/tables'
+import { knCheckId, knOutcomeAvailable, knOutcomeGroup, type KnCheckKey, type KnOutcome, type KnRollTableEntry } from '~~/shared/ker-nethalas/tables'
 
 const props = defineProps<{
   entry?: KnRollTableEntry
@@ -60,7 +67,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  check: [key: KnCheckKey]
   take: [index: number]
 }>()
 
@@ -73,6 +79,22 @@ const outcomes = computed<readonly KnOutcome[]>(() => props.entry?.outcomes ?? [
 const TITLES = { success: 'Test réussi', failure: 'Test raté', choice: 'Choisir', always: 'Appliquer' } as const
 
 const title = (outcome: KnOutcome) => outcome.label ?? TITLES[outcome.when]
+
+// Le test ouvert dans un groupe, et son résultat : la branche qui y correspond est mise en avant.
+const openGroup = ref<number | null>(null)
+const suggested = ref<Record<number, boolean>>({})
+
+const toggle = (id: number) => {
+  openGroup.value = openGroup.value === id ? null : id
+}
+
+const isSuggested = (group: number, outcome: KnOutcome) =>
+  suggested.value[group] !== undefined && (outcome.when === 'success' || outcome.when === 'failure') && (outcome.when === 'success') === suggested.value[group]
+
+function take(index: number) {
+  openGroup.value = null
+  emit('take', index)
+}
 
 const groups = computed(() => {
   const ids = [...new Set([

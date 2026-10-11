@@ -23,7 +23,7 @@ export const knRollDifficulty = (rng: KnRng = Math.random): KnDifficultyKey => D
 export const knEasierDifficulty = (key: KnDifficultyKey, steps: number): KnDifficultyKey =>
   KN_DIFFICULTY_KEYS[Math.max(0, KN_DIFFICULTY_KEYS.indexOf(key) - Math.max(0, steps))]!
 
-// Un test que l'interface prépare dans « Jet de dés » : `difficulty` et `bonus` absents laissent le choix du joueur.
+// Un test à faire dans le bloc d'une salle : compétence ou résistance, difficulté de départ (Normal par défaut) et bonus.
 export interface KnRollRequest {
   id: string
   difficulty?: KnDifficultyKey

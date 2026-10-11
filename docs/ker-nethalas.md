@@ -403,11 +403,13 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
-### KN37 — Tests préparés, conséquences automatiques, actions sur les obstacles
-- **Test préparé** : un bouton « Tester » ne lance rien lui-même : il règle la carte « Jet de dés » (compétence ou
-  résistance, difficulté, bonus, note « Test préparé : … ») et y fait défiler. Le joueur lance le D100 là-bas, avec Avantage,
-  critiques et effets de critique, puis revient noter le résultat. La carte gagne un champ « Bonus au test », ajouté à la
-  cible. Alternative écartée : un D100 dans le bloc de l'entrée, qui aurait dupliqué toute la lecture du dé.
+### KN37 — Tests en ligne, conséquences automatiques, actions sur les obstacles
+- **Test en ligne** : un bouton « Tester » ouvre, dans le bloc de l'entrée, le même panneau que la carte « Jet de dés »
+  (`KnRollPanel`, avec le test imposé : compétence ou résistance, difficulté, bonus) : cible, D100 tiré ou saisi, Avantage et
+  Désavantage, critiques, maladresses et effets de critique. Le joueur n'a pas à changer de bloc ; le résultat met en avant le
+  bouton « réussi » ou « raté » qui lui correspond, sans le cliquer à sa place. La fiche et ses scores viennent d'un contexte
+  fourni par la section du run (`useKnCheckContext`). Première version écartée : régler la carte « Jet de dés » et y faire
+  défiler, qui obligeait à aller et venir entre deux blocs (retour du PM).
 - **Résultats d'une entrée de table** : format public optionnel `checks` (test à faire, par groupe) et `outcomes` (branche
   `success`, `failure`, `choice` ou `always`, avec ses effets). Une seule branche par groupe hors `always` ; deux tests
   indépendants dans une entrée font deux groupes. Chaque branche prise est marquée (`taken`) et ne se rejoue pas. Les effets
@@ -418,8 +420,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Ce qui reste du texte** : bonus temporisés (autels : « pendant les D10+2 prochaines pièces »), choix de l'arme, tirages
   dans les tables de Butin, de Folie et de Rencontres, la Pourriture, et tout ce qui dépend d'un
   second dé (baies, herbes), ou qui se répète à chaque visite de la pièce (massacre, flammes).
-- **Fouille** : « Test de Fouille » prépare le jet ; le premier résultat de la table (restes macabres) porte son test de
-  Résolution et sa perte de Santé mentale.
+- **Fouille** : « Test de Fouille » se fait dans le bloc ; le premier résultat de la table (restes macabres) porte son test
+  de Résolution et sa perte de Santé mentale.
 - **Obstacles** : une machine d'états par porte, contenant ou piège de la pièce (un événement 1-10 en installe un). Piège
   repéré : désamorcer (Larcin à difficulté aléatoire ; un échec le déclenche), contourner (pièce seulement, test d'évitement
   +20), ou déclencher exprès (+20). Piège déclenché : test d'évitement de la compétence de la table, +20 si repéré ; « Subi »
@@ -657,7 +659,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **5d — Tests préparés, conséquences, actions d'obstacle** | « Tester » prépare la carte Jet de dés, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
+| **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé en texte seul (KN36) | contenu écrit, validé par le schéma ; à relire par le PM |
@@ -765,16 +767,18 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 
 ## Journal
 
-### 2026-10-11 — Tranche 5d : tests préparés, conséquences, actions d'obstacle
+### 2026-10-11 — Tranche 5d : tests en ligne, conséquences, actions d'obstacle
 - Décision KN37. Retours du PM : un bouton pour tester la Fouille, les effets automatisables des événements (un piège,
-  par exemple), les actions possibles sur une porte ou un contenant. Aucune migration.
+  par exemple), les actions possibles sur une porte ou un contenant ; puis les tests directement dans le bloc de l'entrée,
+  sans changer de bloc. Aucune migration.
 - Contenu privé annoté (hors dépôt) : 42 événements avec résultats, les 10 pièges (compétence d'évitement et dégâts), le premier
   résultat de la fouille. Un événement 1-10 installe un piège de la pièce.
-- Vérifié dans le navigateur, base locale : événement 38 (« Test : Résolution » règle la carte Jet de dés sur la résistance,
-  cible 20 ; Test raté : Santé mentale 11 → 10 ; Esquive ratée : Robustesse 23 → 18 ; la réussite devient inactive) ; porte
-  piégée (désamorcer prépare Larcin à Exigeant, un échec déclenche ; test d'évitement Esquive +20 ; « Subi » : Robustesse 18 → 9,
-  piège réglé) ; forcer (+20 après un échec, test de Tension D4 enregistré) ; crocheter (difficulté retenue, Crochet brisé
-  2 → 1) ; piège de la pièce (événement 5, Perception ratée : déclenché aussitôt).
+- Vérifié dans le navigateur, base locale : événement 38 (Test raté : Santé mentale 11 → 10 ; Esquive ratée : Robustesse
+  23 → 18 ; la réussite devient inactive) ; porte piégée (désamorcer à difficulté Exigeant, un échec déclenche ; test
+  d'évitement Esquive +20 ; « Subi » : Robustesse 18 → 9, piège réglé) ; forcer (+20 après un échec, test de Tension D4
+  enregistré) ; crocheter (difficulté retenue, Crochet brisé 2 → 1) ; piège de la pièce (événement 5, Perception ratée :
+  déclenché aussitôt). Tests en ligne : Fouille (cible 10), évitement d'un piège (cible 60 avec +20, « Subi » mis en avant
+  après un raté), événement 38 (deux tests, branche correspondante mise en avant, échec critique affiché dans le bloc).
 - **Non vérifié** dans le navigateur : le tirage d'Obscurité Grandissante et le gain temporaire appliqués par une branche
   (couverts par les tests des fonctions pures) ; le rendu visuel (volet masqué).
 

@@ -50,21 +50,21 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
-            @click="emit('check', { id: 'skill:perception', difficulty: knRollDifficulty(), note: PERCEPTION_NOTES[obstacle.kind] })"
+            @click="openCheck('perception', { id: 'skill:perception', difficulty: knRollDifficulty(), note: PERCEPTION_NOTES[obstacle.kind] })"
           >
             Tester
           </UButton>
           <UButton
             size="sm"
-            variant="soft"
-            @click="emit('perception', 'passed')"
+            :variant="suggest('perception', true, 'soft')"
+            @click="perceive('passed')"
           >
             Réussi
           </UButton>
           <UButton
             size="sm"
-            variant="outline"
-            @click="emit('perception', 'failed')"
+            :variant="suggest('perception', false, 'outline')"
+            @click="perceive('failed')"
           >
             Raté
           </UButton>
@@ -113,21 +113,21 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
-            @click="emit('check', { id: 'skill:thievery', difficulty: knRollDifficulty(), note: 'Désamorcer le piège' })"
+            @click="openCheck('disarm', { id: 'skill:thievery', difficulty: knRollDifficulty(), note: 'Désamorcer le piège' })"
           >
             Tester
           </UButton>
           <UButton
             size="sm"
-            variant="soft"
-            @click="emit('act', 'disarmed')"
+            :variant="suggest('disarm', true, 'soft')"
+            @click="act('disarmed')"
           >
             Réussi
           </UButton>
           <UButton
             size="sm"
-            variant="outline"
-            @click="emit('act', 'disarmFailed')"
+            :variant="suggest('disarm', false, 'outline')"
+            @click="act('disarmFailed')"
           >
             Raté
           </UButton>
@@ -141,21 +141,21 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
-            @click="avoidCheck('Contourner le piège')"
+            @click="avoidCheck('bypass', 'Contourner le piège')"
           >
             Tester
           </UButton>
           <UButton
             size="sm"
-            variant="soft"
-            @click="emit('act', 'bypassed')"
+            :variant="suggest('bypass', true, 'soft')"
+            @click="act('bypassed')"
           >
             Réussi
           </UButton>
           <UButton
             size="sm"
-            variant="outline"
-            @click="emit('act', 'bypassFailed')"
+            :variant="suggest('bypass', false, 'outline')"
+            @click="act('bypassFailed')"
           >
             Raté
           </UButton>
@@ -166,7 +166,7 @@
             size="sm"
             variant="outline"
             color="warning"
-            @click="emit('act', 'trigger')"
+            @click="act('trigger')"
           >
             Déclencher
           </UButton>
@@ -189,22 +189,22 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
-            @click="avoidCheck('Éviter le piège')"
+            @click="avoidCheck('avoid', 'Éviter le piège')"
           >
             Tester
           </UButton>
           <UButton
             size="sm"
-            variant="soft"
-            @click="emit('act', 'avoided')"
+            :variant="suggest('avoid', true, 'soft')"
+            @click="act('avoided')"
           >
             Évité : aucune conséquence
           </UButton>
           <UButton
             size="sm"
             color="error"
-            variant="outline"
-            @click="emit('act', 'suffered')"
+            :variant="suggest('avoid', false, 'outline')"
+            @click="act('suffered')"
           >
             Subi : appliquer {{ failureEffects || 'les conséquences' }}
           </UButton>
@@ -250,17 +250,17 @@
           </UButton>
           <UButton
             size="sm"
-            variant="soft"
+            :variant="suggest('pick', true, 'soft')"
             :disabled="!obstacle.pick"
-            @click="emit('act', 'pickOpened')"
+            @click="act('pickOpened')"
           >
             Ouvert
           </UButton>
           <UButton
             size="sm"
-            variant="outline"
+            :variant="suggest('pick', false, 'outline')"
             :disabled="!obstacle.pick"
-            @click="emit('act', 'pickFailed')"
+            @click="act('pickFailed')"
           >
             Raté : Crochet brisé
           </UButton>
@@ -279,25 +279,34 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
-            @click="emit('check', { id: 'skill:athletics', difficulty: 'normal', bonus: forceBonus, note: forceBonus ? `Forcer le verrou, +${forceBonus} après les échecs` : 'Forcer le verrou' })"
+            @click="openCheck('force', { id: 'skill:athletics', difficulty: 'normal', bonus: forceBonus, note: forceBonus ? `Forcer le verrou, +${forceBonus} après les échecs` : 'Forcer le verrou' })"
           >
             Tester
           </UButton>
           <UButton
             size="sm"
-            variant="soft"
-            @click="emit('act', 'forceOpened')"
+            :variant="suggest('force', true, 'soft')"
+            @click="act('forceOpened')"
           >
             Ouvert
           </UButton>
           <UButton
             size="sm"
-            variant="outline"
-            @click="emit('act', 'forceFailed')"
+            :variant="suggest('force', false, 'outline')"
+            @click="act('forceFailed')"
           >
             Raté
           </UButton>
         </div>
+      </li>
+
+      <li v-if="active && check">
+        <KnInlineCheck
+          :key="`${check.purpose}-${check.request.difficulty}-${check.request.bonus ?? 0}`"
+          :request="check.request"
+          @rolled="success => result = { purpose: check!.purpose, success }"
+          @close="check = null"
+        />
       </li>
     </ul>
 
@@ -342,9 +351,41 @@ const emit = defineEmits<{
   trapType: [manual?: number]
   lock: [manual?: number]
   noise: [manual?: number]
-  check: [request: KnRollRequest]
   act: [action: KnObstacleAct]
 }>()
+
+type Purpose = 'perception' | 'disarm' | 'bypass' | 'avoid' | 'pick' | 'force'
+
+// Le test ouvert dans le bloc et son résultat : le bouton « réussi » ou « raté » qui y correspond est mis en avant.
+const check = ref<{ purpose: Purpose, request: KnRollRequest } | null>(null)
+const result = ref<{ purpose: Purpose, success: boolean } | null>(null)
+
+function openCheck(purpose: Purpose, request: KnRollRequest) {
+  if (check.value?.purpose === purpose) {
+    check.value = null
+    return
+  }
+  check.value = { purpose, request }
+  result.value = null
+}
+
+const suggest = (purpose: Purpose, success: boolean, fallback: 'soft' | 'outline') =>
+  result.value?.purpose === purpose && result.value.success === success ? 'solid' : fallback
+
+function settle() {
+  check.value = null
+  result.value = null
+}
+
+function act(action: KnObstacleAct) {
+  settle()
+  emit('act', action)
+}
+
+function perceive(perception: 'passed' | 'failed') {
+  settle()
+  emit('perception', perception)
+}
 
 const { t } = useI18n()
 const { effectsText } = useKnEffectText()
@@ -391,14 +432,18 @@ const pickText = computed(() => {
 })
 
 // Test d'évitement du piège : +20 si on l'a repéré, que ce soit pour le contourner, le déclencher ou l'éviter.
-function avoidCheck(note: string) {
+function avoidCheck(purpose: Purpose, note: string) {
   if (!avoidSkill.value) return
-  emit('check', { id: knCheckId(avoidSkill.value), difficulty: 'normal', bonus: state.value.spotted ? 20 : 0, note })
+  openCheck(purpose, { id: knCheckId(avoidSkill.value), difficulty: 'normal', bonus: state.value.spotted ? 20 : 0, note })
 }
 
 function pickCheck() {
+  if (check.value?.purpose === 'pick') {
+    check.value = null
+    return
+  }
   const difficulty = pickDifficulty.value ?? knRollDifficulty()
   if (!props.obstacle.pick) emit('act', `startPick:${difficulty}`)
-  emit('check', { id: 'skill:thievery', difficulty, note: 'Crocheter le verrou' })
+  openCheck('pick', { id: 'skill:thievery', difficulty, note: 'Crocheter le verrou' })
 }
 </script>

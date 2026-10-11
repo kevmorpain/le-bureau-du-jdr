@@ -203,7 +203,6 @@
               :entry="eventEntry"
               :taken="visit.event?.taken ?? []"
               :active
-              @check="key => emit('check', { id: knCheckId(key), difficulty: 'normal', note: 'Événement' })"
               @take="index => emit('take', 'event', index)"
             />
           </div>
@@ -234,21 +233,28 @@
 
       <li
         v-if="visit.kind !== 'revisit' && active && !visit.scavenge"
-        class="flex flex-wrap items-center gap-2"
+        class="space-y-2"
       >
-        <UIcon
-          name="i-heroicons:minus-circle"
-          class="size-5 text-muted"
+        <div class="flex flex-wrap items-center gap-2">
+          <UIcon
+            name="i-heroicons:minus-circle"
+            class="size-5 text-muted"
+          />
+          <span class="flex-1">Test de Fouille (une fois par salle ou couloir)</span>
+          <UButton
+            size="sm"
+            :variant="scavengeCheckOpen ? 'solid' : 'outline'"
+            icon="i-heroicons:cube"
+            @click="scavengeCheckOpen = !scavengeCheckOpen"
+          >
+            Tester
+          </UButton>
+        </div>
+        <KnInlineCheck
+          v-if="scavengeCheckOpen"
+          :request="{ id: 'skill:scavenge', difficulty: 'normal', note: 'Fouiller la pièce' }"
+          @close="scavengeCheckOpen = false"
         />
-        <span class="flex-1">Test de Fouille (une fois par salle ou couloir)</span>
-        <UButton
-          size="sm"
-          variant="outline"
-          icon="i-heroicons:cube"
-          @click="emit('check', { id: 'skill:scavenge', difficulty: 'normal', note: 'Fouiller la pièce' })"
-        >
-          Tester
-        </UButton>
       </li>
 
       <KnTableRoll
@@ -281,7 +287,6 @@
             :taken="visit.scavenge?.taken ?? []"
             :active
             class="mt-1"
-            @check="key => emit('check', { id: knCheckId(key), difficulty: 'normal', note: 'Fouille' })"
             @take="index => emit('take', 'scavenge', index)"
           />
         </template>
@@ -333,7 +338,6 @@
         @trap-type="manual => emit('obstacleRoll', index, 'trapType', manual)"
         @lock="manual => emit('obstacleRoll', index, 'lock', manual)"
         @noise="manual => emit('noise', manual)"
-        @check="request => emit('check', request)"
         @act="act => emit('obstacleAct', index, act)"
       />
 
@@ -414,8 +418,7 @@ import {
   type KnGrowingDarknessDraw,
   type KnVisit,
 } from '~~/shared/ker-nethalas/run'
-import type { KnRollRequest } from '~~/shared/ker-nethalas/roll'
-import { KN_EXPLORATION_TABLES, knCheckId, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
+import { KN_EXPLORATION_TABLES, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const props = defineProps<{
   visit: KnVisit
@@ -442,7 +445,6 @@ const emit = defineEmits<{
   obstacleRoll: [index: number, step: 'trap' | 'trapType' | 'lock', manual?: number]
   noise: [manual?: number]
   extraDraw: [index: number]
-  check: [request: KnRollRequest]
   take: [target: 'event' | 'scavenge', index: number]
   addRoomTrap: []
   obstacleAct: [index: number, act: KnObstacleAct]
@@ -459,6 +461,8 @@ const USAGE_NAMES = { lair: 'Lair', exit: 'Sortie' }
 
 const foundLair = computed(() => knVisitFoundLair(props.visit))
 const pending = computed(() => knVisitPending(props.visit))
+
+const scavengeCheckOpen = ref(false)
 
 const rollText = (result: KnDieResult) => result.manual ? (result.roll <= 2 ? '1-2' : '3+') : String(result.roll)
 

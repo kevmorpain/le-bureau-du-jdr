@@ -181,7 +181,6 @@
             @obstacle-roll="obstacleRoll"
             @noise="noise"
             @extra-draw="extraDraw"
-            @check="request => emit('roll', request)"
             @take="takeOutcome"
             @add-room-trap="addRoomTrap"
             @obstacle-act="obstacleAct"
@@ -199,7 +198,6 @@ import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
-import type { KnRollRequest } from '~~/shared/ker-nethalas/roll'
 import {
   KN_LIGHT_ROOMS,
   KN_OPTIONAL_LAIR_ROOMS,
@@ -228,9 +226,7 @@ const props = defineProps<{
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
-const emit = defineEmits<{
-  roll: [request: KnRollRequest]
-}>()
+provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 const {
   tableRoll,
