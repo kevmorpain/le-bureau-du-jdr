@@ -127,6 +127,16 @@
                   :name="ability.summons"
                   :level="character.level"
                 />
+                <UButton
+                  v-if="minion(ability.summons)"
+                  class="mt-2"
+                  size="xs"
+                  variant="soft"
+                  icon="i-heroicons:user-plus"
+                  @click="addMinion(minion(ability.summons)!)"
+                >
+                  Ajouter à l'équipe ({{ teamSize }}/6)
+                </UButton>
               </details>
             </li>
           </ul>
@@ -195,6 +205,9 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const find = (key: string) => props.masteries?.find(mastery => mastery.key === key)
+
+const { minions: team, addMinion } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const teamSize = computed(() => team.value.length)
 
 const minion = (key: string) => props.bestiary?.find(creature => creature.key === key)
 

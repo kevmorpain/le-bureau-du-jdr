@@ -12,7 +12,20 @@
           class="w-full"
         />
       </UFormField>
-      <UFormField label="Défense du survivant (contre une attaque physique)">
+      <UFormField
+        v-if="minions.length"
+        label="Cible de l'action"
+      >
+        <USelect
+          v-model="victim"
+          :items="victimItems"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField
+        v-if="onSurvivor"
+        label="Défense du survivant (contre une attaque physique)"
+      >
         <USelect
           v-model="defense"
           :items="defenseItems"
@@ -20,12 +33,16 @@
         />
       </UFormField>
       <KnNumberField
+        v-if="onSurvivor"
         v-model="bonus"
         label="Bonus ou malus à la défense"
         :min="-99"
         :max="99"
       />
-      <div class="self-end text-sm text-muted">
+      <div
+        v-if="onSurvivor"
+        class="self-end text-sm text-muted"
+      >
         Défenses déjà faites ce round : {{ combat?.reactions ?? 0 }}
         (malus de {{ knReactionPenalty(combat?.reactions ?? 0) }} à la prochaine)
       </div>
@@ -95,7 +112,7 @@
       />
       <KnCheckLine
         v-if="result.defense"
-        :label="isTest(result.action) ? 'Test du survivant' : 'Défense du survivant'"
+        :label="`${isTest(result.action) ? 'Test' : 'Défense'} ${onSurvivor ? 'du survivant' : `de ${victimName}`}`"
         :check="result.defense"
       />
       <p
@@ -158,7 +175,7 @@
           :disabled="result.applied"
           @click="apply"
         >
-          {{ result.applied ? 'Appliqué' : 'Appliquer au survivant' }}
+          {{ result.applied ? 'Appliqué' : onSurvivor ? 'Appliquer au survivant' : 'Appliquer au sbire' }}
         </UButton>
       </div>
     </div>
@@ -184,7 +201,7 @@
           >
             {{ selfTaken.includes(index) ? 'Appliqué' : 'Appliquer' }}
           </UButton>
-          <span>{{ creatureName }} {{ selfEffectText(effect) }}</span>
+          <span>{{ creatureName }} {{ selfEffectText(effect, refName) }}</span>
           <span
             v-if="!selfReady(effect) && !selfTaken.includes(index)"
             class="text-xs text-muted"
@@ -230,7 +247,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, drawAction, takeTurn, applyToSurvivor, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, minions, creatureOf, drawAction, takeTurn, applyToSurvivor, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { selfEffectText } = useKnEffectText()
 
@@ -241,6 +258,15 @@ const defense = ref<KnSkillKey>('dodge')
 const magicCheck = ref<KnSkillKey | KnResistanceKey>('spellward')
 const bonus = ref(0)
 const manualAmount = ref(0)
+const victim = ref<'survivor' | number>('survivor')
+
+const victimItems = computed<SelectItem[]>(() => [
+  { label: 'Le survivant', value: 'survivor' },
+  ...minions.value.map((minion, index) => ({ label: `Sbire : ${minion.name} (${minion.health}/${minion.maxHealth})`, value: index })),
+])
+const onSurvivor = computed(() => victim.value === 'survivor' || !minions.value[victim.value])
+const victimName = computed(() => victim.value === 'survivor' ? 'le survivant' : minions.value[victim.value]?.name ?? 'le sbire')
+const refName = (ref: string) => props.bestiary?.find(creature => creature.key === ref)?.name ?? ref
 const drawn = ref<{ d6: number, action: KnCreatureAction } | undefined>()
 const taken = ref<number[]>([])
 const selfTaken = ref<number[]>([])
@@ -268,7 +294,7 @@ const defenseItems = computed<SelectItem[]>(() =>
   ['dodge', ...(savage.value ? [] : KN_WEAPON_SKILL_KEYS)].map(key => ({ label: t(`ker_nethalas.skills.${key}`), value: key })),
 )
 
-watch([who, savage], () => {
+watch([who, savage, victim], () => {
   drawn.value = undefined
   result.value = undefined
   if (savage.value) defense.value = 'dodge'
@@ -286,7 +312,7 @@ function drawNow() {
 
 function resolveNow() {
   if (!drawn.value) return
-  result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value, magicCheck: magicCheck.value, bonus: bonus.value })
+  result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value, magicCheck: magicCheck.value, bonus: bonus.value, ...(onSurvivor.value ? {} : { minion: victim.value as number }) })
   manualAmount.value = result.value?.amount ?? 0
 }
 
@@ -297,6 +323,7 @@ const rider = computed<KnRollTableEntry | undefined>(() => {
   const action = drawn.value?.action
   if (!action?.outcomes?.length) return undefined
   const entry = (withChecks: boolean): KnRollTableEntry => ({ min: 1, max: 1, text: action.name, checks: withChecks ? action.checks : undefined, outcomes: action.outcomes })
+  if (!onSurvivor.value) return undefined
   if (isTest(action)) return result.value ? entry(false) : undefined
   if (!action.tag) return entry(true)
   return result.value?.exchange?.outcome === 'hit' ? entry(true) : undefined
@@ -305,8 +332,8 @@ const rider = computed<KnRollTableEntry | undefined>(() => {
 const riderResult = computed(() => result.value?.defense?.success)
 
 const resolveLabel = (action: KnCreatureAction) => {
-  if (!isTest(action)) return 'Se défendre'
-  return action.tag === 'magical' || action.checks?.length ? 'Faire le test du survivant' : 'Calculer les dégâts'
+  if (!isTest(action)) return onSurvivor.value ? 'Se défendre' : 'Faire défendre le sbire'
+  return action.tag === 'magical' || action.checks?.length ? `Faire le test ${onSurvivor.value ? 'du survivant' : 'du sbire'}` : 'Calculer les dégâts'
 }
 
 const testText = computed(() => {
@@ -321,7 +348,7 @@ const creatureName = computed(() => combat.value?.creatures[who.value]?.name ?? 
 
 // Une part « des dégâts infligés » n'a de sens qu'une fois ces dégâts retirés au survivant.
 const selfReady = (effect: KnCreatureSelfEffect) => {
-  if (effect.kind === 'buff') return true
+  if (effect.kind === 'buff' || effect.kind === 'summon') return true
   return !(effect.ifDamage || ('of' in effect.amount && effect.amount.of === 'damage')) || (result.value?.dealt ?? 0) > 0
 }
 
@@ -344,20 +371,23 @@ function takeRider(index: number) {
 const canApply = computed(() => {
   const r = result.value
   if (!r) return false
+  if (r.minion !== undefined) return true
   if (isTest(r.action)) return r.amount !== undefined
   return r.exchange?.outcome === 'hit' || r.exchange?.outcome === 'bothFail'
 })
 
 function apply() {
-  if (result.value) applyToSurvivor(result.value, manualAmount.value)
+  if (!result.value) return
+  if (result.value.minion === undefined) applyToSurvivor(result.value, manualAmount.value)
+  else applyToMinion(result.value, manualAmount.value)
 }
 
 const exchangeText = computed(() => {
   const exchange = result.value?.exchange
   if (!exchange) return ''
   if (exchange.outcome === 'hit') return exchange.criticalStrike ? 'La créature touche : Coup critique.' : 'La créature touche.'
-  if (exchange.outcome === 'defended') return 'Le survivant pare ou esquive.'
-  if (exchange.outcome === 'bothFail') return 'Les deux ratent : le survivant subit 1 dégât inévitable.'
+  if (exchange.outcome === 'defended') return onSurvivor.value ? 'Le survivant pare ou esquive.' : `${victimName.value} pare ou esquive.`
+  if (exchange.outcome === 'bothFail') return `Les deux ratent : ${victimName.value} subit 1 dégât inévitable.`
   return 'Égalité parfaite : relancez.'
 })
 </script>

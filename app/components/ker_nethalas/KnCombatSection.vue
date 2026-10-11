@@ -193,6 +193,12 @@
         :bestiary
       />
 
+      <KnCombatMinions
+        v-model:character="character"
+        :resolved
+        :bestiary
+      />
+
       <KnCombatTurn
         v-model:character="character"
         :resolved

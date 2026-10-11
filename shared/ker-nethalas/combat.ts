@@ -90,7 +90,7 @@ export function knCreatureDamageTarget(creature: KnCreature): KnDamageTarget {
   return {
     vulnerable: [...rules.flatMap(rule => rule.vulnerable), ...(creature.vulnerable ?? [])],
     resistant: creature.resistant ?? [],
-    restored: [...rules.flatMap(rule => rule.restored), ...affinity],
+    restored: [...rules.flatMap(rule => rule.restored), ...affinity, ...(creature.restored ?? [])],
     resistantPhysical: creature.resistantPhysical,
   }
 }

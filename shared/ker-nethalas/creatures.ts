@@ -47,6 +47,8 @@ export const knCreatureSelfEffectSchema = z.discriminatedUnion('kind', [
     cap: z.number().min(1).max(4).optional(),
     until: z.enum(['turn', 'round']).optional(),
   }),
+  // Fait entrer en combat des adversaires de plus, jusqu'à `max` de cette fiche en même temps.
+  z.object({ kind: z.literal('summon'), ref: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/), count: knDiceSchema, max: z.number().int().min(1).max(12).optional() }),
   // Un effet en cours sur la créature : `rounds` (un jet de dés ou un nombre), jusqu'à son prochain tour, ou jusqu'à la fin du
   // combat sans l'un ni l'autre. `scope` : elle seule, ou toutes les créatures de sa fiche encore en vie.
   z.object({
@@ -133,6 +135,8 @@ export const knCreatureSchema = z.object({
   resistant: z.array(z.enum(KN_DAMAGE_TYPES)).max(4).optional(),
   // Résistant à tous les dégâts physiques non magiques.
   resistantPhysical: z.boolean().optional(),
+  // Restaurée par ces types de dégâts, en plus de ceux de son type de créature.
+  restored: z.array(z.enum(KN_DAMAGE_TYPES)).max(4).optional(),
   actions: z.array(knCreatureActionSchema).min(1).max(6),
   levelAdaptation: z.array(knLevelAdaptationSchema).max(4),
 }).superRefine((creature, ctx) => {

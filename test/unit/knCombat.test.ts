@@ -22,11 +22,16 @@ import { knCombatWon, knCreatureDefeated, knReactionPenalty } from '../../shared
 import {
   emptyKnRun,
   knCombatLog,
+  knAddCombatCreatures,
   knAddCreatureBuff,
+  knAddMinion,
   knConsumeCreatureEffects,
   knDamageCombatCreature,
   knExpireCreatureTurnEffects,
+  knDamageMinion,
   knEndCombat,
+  knHealMinions,
+  knRemoveMinion,
   knExpireCombatTemporary,
   knGainCombatTemporary,
   knNextCombatRound,
@@ -647,5 +652,63 @@ describe('effets en cours sur une créature', () => {
     expect(knCreatureSelfEffectSchema.safeParse(buff).success).toBe(true)
     expect(knCreatureSelfEffectSchema.safeParse({ ...buff, advantage: 'toujours' }).success).toBe(false)
     expect(knCreatureSelfEffectSchema.safeParse({ ...buff, scope: 'tous' }).success).toBe(false)
+  })
+})
+
+describe('sbires et adversaires invoqués', () => {
+  const skeleton = { ref: 'skeleton', name: 'Sbire', health: 4, maxHealth: 4 }
+  const foes = () => knStartCombat(emptyKnRun(), [{ ref: 'imp', name: 'Démon 1', health: 2, maxHealth: 2 }])
+
+  it('un sbire rejoint l\'équipe, dans la limite de six', () => {
+    const run = knAddMinion(emptyKnRun(), skeleton)
+    const full = Array.from({ length: 7 }, () => skeleton).reduce(knAddMinion, emptyKnRun())
+
+    expect(run.minions).toEqual([skeleton])
+    expect(full.minions).toHaveLength(6)
+    expect(knRunSchema.safeParse(run).success).toBe(true)
+  })
+
+  it('un sbire qui tombe à 0 Santé est détruit, un autre est seulement blessé', () => {
+    const run = knAddMinion(knAddMinion(emptyKnRun(), skeleton), { ...skeleton, name: 'Sbire 2' })
+    const hurt = knDamageMinion(run, 1, 3)
+    const dead = knDamageMinion(run, 0, 9)
+
+    expect(hurt.destroyed).toBe(false)
+    expect(hurt.run.minions![1]!.health).toBe(1)
+    expect(dead.destroyed).toBe(true)
+    expect(dead.run.minions!.map(m => m.name)).toEqual(['Sbire 2'])
+    expect(knDamageMinion(emptyKnRun(), 0, 3)).toEqual({ run: emptyKnRun(), destroyed: false })
+  })
+
+  it('retirer le dernier sbire retire la liste, et une pièce nettoyée les soigne tous', () => {
+    const run = knAddMinion(emptyKnRun(), { ...skeleton, health: 1, temporary: 3 })
+    const healed = knHealMinions(run)
+
+    expect(healed.minions![0]).toEqual(skeleton)
+    expect(knRemoveMinion(run, 0)).not.toHaveProperty('minions')
+    expect(knHealMinions(emptyKnRun())).toEqual(emptyKnRun())
+  })
+
+  it('les sbires survivent à la fin du combat', () => {
+    const run = knStartCombat(knAddMinion(emptyKnRun(), skeleton), [{ name: 'A', health: 1, maxHealth: 1 }])
+
+    expect(knEndCombat(run).minions).toEqual([skeleton])
+  })
+
+  it('des adversaires invoqués rejoignent le combat sans dépasser le maximum de leur fiche', () => {
+    const imps = (count: number) => Array.from({ length: count }, (_, i) => ({ ref: 'imp', name: `Démon ${i + 2}`, health: 2, maxHealth: 2 }))
+
+    expect(knAddCombatCreatures(foes(), imps(2)).combat!.creatures).toHaveLength(3)
+    expect(knAddCombatCreatures(foes(), imps(5), 4).combat!.creatures).toHaveLength(4)
+    expect(knAddCombatCreatures(knAddCombatCreatures(foes(), imps(3), 4), imps(2), 4).combat!.creatures).toHaveLength(4)
+    expect(knAddCombatCreatures(emptyKnRun(), imps(1))).toEqual(emptyKnRun())
+  })
+
+  it('une fiche peut ajouter des types qui la restaurent, et une action invoquer des adversaires', () => {
+    const demon = fakeCreature({ types: ['demon'], restored: ['fire'] })
+
+    expect(knCreatureDamageTarget(demon).restored).toEqual(['infernal', 'fire'])
+    expect(knCreatureSelfEffectSchema.safeParse({ kind: 'summon', ref: 'lesserDemon', count: { count: 1, sides: 4, bonus: 0 }, max: 4 }).success).toBe(true)
+    expect(knCreatureSelfEffectSchema.safeParse({ kind: 'summon', ref: 'Pas une clé', count: { count: 1, sides: 4, bonus: 0 } }).success).toBe(false)
   })
 })

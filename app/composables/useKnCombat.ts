@@ -30,10 +30,13 @@ import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knD100Check, type KnD100Result } from '~~/shared/ker-nethalas/roll'
 import {
+  knAddCombatCreatures,
   knAddCreatureBuff,
+  knAddMinion,
   knCombatLog,
   knConsumeCreatureEffects,
   knDamageCombatCreature,
+  knDamageMinion,
   knExpireCreatureTurnEffects,
   knExpireCombatTemporary,
   knGainCombatTemporary,
@@ -66,9 +69,21 @@ export interface KnAttackResult {
   applied: boolean
 }
 
+// Le test de Résistance magique d'une créature visée par un sort de sbire, et les dégâts qui suivent un échec.
+export interface KnSpellResult {
+  index: number
+  name: string
+  test: KnD100Result
+  damageRoll?: KnDamageRoll
+  damage?: KnDamageResult
+  applied: boolean
+}
+
 export interface KnTurnResult {
   index: number
   name: string
+  // Le sbire visé par l'action, quand ce n'est pas le survivant.
+  minion?: number
   action: KnCreatureAction
   d6: number
   check?: KnD100Result
@@ -141,7 +156,9 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
 
   function attack(input: {
     index: number
-    skill: KnSkillKey
+    // Compétence du survivant, ou `attackerScore` : la Compétence de combat d'un sbire qui attaque à sa place.
+    skill?: KnSkillKey
+    attackerScore?: number
     bonus: number
     speed: number
     pool: KnDice[]
@@ -156,7 +173,9 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const alive = combat.value.creatures.filter(c => c.ref === target.ref && c.health > 0).length
 
     const buffs = knBuffTotals(target.effects)
-    const mine = resolved().skills[input.skill]
+    const mine = input.attackerScore === undefined
+      ? resolved().skills[input.skill ?? 'bladedWeapons']
+      : { effective: input.attackerScore, rollMode: 'normal' as const }
     const aimed = input.aim && creature.hitLocation?.weakSpot ? knWithDisadvantage(mine.rollMode) : mine.rollMode
     const mode = buffs.disadvantageAgainst ? knWithDisadvantage(aimed) : aimed
     const attackCheck = knD100Check({ roll: d100(), score: mine.effective, difficulty: KN_ATTACKER_BONUS + input.bonus, mode })
@@ -200,6 +219,79 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     return result
   }
 
+  const minions = computed(() => character.value.run.minions ?? [])
+
+  const minionSheetAt = (index: number) => knFindCreature(bestiary(), minions.value[index]?.ref)
+
+  // Un sbire invoqué rejoint l'équipe avec toute sa Santé, qui ne grandit pas avec le niveau.
+  function addMinion(sheet: KnCreature) {
+    const same = minions.value.filter(minion => minion.ref === sheet.key).length
+    const health = Math.max(1, sheet.health.base)
+    const next = knAddMinion(character.value.run, { ref: sheet.key, name: same ? `${sheet.name} ${same + 1}` : sheet.name, health, maxHealth: health })
+    if (next === character.value.run) {
+      toast.add({ title: 'Équipe pleine', description: 'Six sbires au plus.', color: 'warning' })
+      return
+    }
+    character.value.run = next
+  }
+
+  function drawMinionAction(index: number) {
+    const sheet = minionSheetAt(index)
+    if (!sheet) return undefined
+    const d6 = knRollDie(6)
+    const action = sheet.actions.find(a => d6 >= a.min && d6 <= a.max)
+    return action ? { d6, action } : undefined
+  }
+
+  // Un sbire attaque une créature de la même façon qu'une créature attaque : jet opposé contre sa Compétence de combat.
+  function minionAttack(input: { minion: number, target: number, action: KnCreatureAction, bonus: number, extra: KnDice[] }): KnAttackResult | undefined {
+    const sheet = minionSheetAt(input.minion)
+    const { damage } = input.action
+    if (!sheet || !damage) return undefined
+    return attack({
+      index: input.target,
+      attackerScore: sheet.combatSkill,
+      bonus: input.bonus,
+      speed: 0,
+      pool: knActionPool(input.action, sheet, 1, input.extra),
+      damageType: damage.type,
+      aim: false,
+      magical: false,
+    })
+  }
+
+  // Une action Magique d'un sbire : la créature visée fait un test de Résistance magique, et les dégâts suivent un échec.
+  function minionSpell(input: { minion: number, target: number, action: KnCreatureAction, extra: KnDice[] }): KnSpellResult | undefined {
+    const sheet = minionSheetAt(input.minion)
+    const target = combat.value?.creatures[input.target]
+    const creature = creatureOf(input.target)
+    const { damage } = input.action
+    if (!sheet || !target || !creature || !damage) return undefined
+    const adapted = knCreatureAtLevel(creature, level.value)
+    const test = knD100Check({ roll: d100(), score: adapted.magicResistance, difficulty: 0, mode: 'normal' })
+    const result: KnSpellResult = { index: input.target, name: target.name, test, applied: false }
+    if (!test.success || damage.always) {
+      result.damageRoll = knRollDamagePool(knActionPool(input.action, sheet, 1, input.extra))
+      result.damage = knResolveDamage({
+        roll: result.damageRoll,
+        damageType: damage.type,
+        criticalStrike: false,
+        weakSpot: false,
+        armor: 0,
+        target: knBuffedTarget(knCreatureDamageTarget(creature), target.effects),
+        magical: true,
+      })
+    }
+    return result
+  }
+
+  function applySpell(result: KnSpellResult) {
+    const amount = result.damage ? result.damage.damage - result.damage.heal : 0
+    character.value.run = knDamageCombatCreature(character.value.run, result.index, amount)
+    log(`${result.name} ${amount > 0 ? `subit ${amount}` : amount < 0 ? `récupère ${-amount}` : 'ne subit rien'} (reste ${combat.value?.creatures[result.index]?.health ?? 0})`)
+    result.applied = true
+  }
+
   // Une fois l'attaque lue, on retire la Santé à la créature ; la surprise ne vaut que pour la première attaque.
   function applyAttack(result: KnAttackResult) {
     const amount = result.unavoidable ? 1 : result.damage ? result.damage.damage - result.damage.heal : 0
@@ -214,6 +306,22 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   function applySelfEffect(index: number, effect: KnCreatureSelfEffect, damage: number) {
     const target = combat.value?.creatures[index]
     if (!target) return 0
+    if (effect.kind === 'summon') {
+      const sheet = knFindCreature(bestiary(), effect.ref)
+      if (!sheet) {
+        toast.add({ title: 'Fiche absente', description: 'La créature invoquée n\'est pas dans le contenu chargé : ajoutez-la à la main.', color: 'warning' })
+        return 0
+      }
+      const count = knRollDice(effect.count).total
+      const maxHealth = Math.max(1, knCreatureAtLevel(sheet, level.value).health)
+      const already = combat.value?.creatures.filter(c => c.ref === sheet.key).length ?? 0
+      const instances = Array.from({ length: count }, (_, i) => ({ ref: sheet.key, name: `${sheet.name} ${already + i + 1}`, health: maxHealth, maxHealth }))
+      const before = combat.value?.creatures.length ?? 0
+      character.value.run = knAddCombatCreatures(character.value.run, instances, effect.max)
+      const added = (combat.value?.creatures.length ?? 0) - before
+      log(`${target.name} invoque ${added} ${sheet.name}${added < count ? ` (${count} tirés, limite atteinte)` : ''}`)
+      return added
+    }
     if (effect.kind === 'buff') {
       const { kind: _kind, scope, rounds, ...fields } = effect
       const duration = rounds ? knRollDice(rounds).total : 0
@@ -244,15 +352,18 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const survivorArmor = (location: KnHitLocationKey) =>
     character.value.status.armor?.[knSurvivorArmorZone(location)] ?? 0
 
-  // L'action d'une créature contre le survivant. Physique : jet opposé contre sa défense ; Magique : test de Résistance
-  // magique ; sans étiquette, c'est le texte de l'action qui décide.
-  function takeTurn(input: { index: number, d6: number, action: KnCreatureAction, defense: KnSkillKey, magicCheck: KnSkillKey | KnResistanceKey, bonus: number }): KnTurnResult | undefined {
+  // L'action d'une créature contre le survivant, ou contre un sbire (`minion`). Physique : jet opposé contre sa défense ;
+  // Magique : test de Résistance magique ; sans étiquette, c'est le texte de l'action qui décide.
+  function takeTurn(input: { index: number, d6: number, action: KnCreatureAction, defense: KnSkillKey, magicCheck: KnSkillKey | KnResistanceKey, bonus: number, minion?: number }): KnTurnResult | undefined {
     const target = combat.value?.creatures[input.index]
     const creature = creatureOf(input.index)
     if (!combat.value || !target || !creature) return undefined
+    const minionState = input.minion === undefined ? undefined : character.value.run.minions?.[input.minion]
+    const minionSheet = knFindCreature(bestiary(), minionState?.ref)
+    if (input.minion !== undefined && !minionSheet) return undefined
     const adapted = knCreatureAtLevel(creature, level.value)
     const { action } = input
-    const result: KnTurnResult = { index: input.index, name: target.name, action, d6: input.d6, unavoidable: false, applied: false }
+    const result: KnTurnResult = { index: input.index, name: target.name, action, d6: input.d6, unavoidable: false, applied: false, ...(minionSheet ? { minion: input.minion } : {}) }
     const buffs = knBuffTotals(target.effects)
     const pool = knActionPool(action, creature, level.value, buffs.damageBonuses)
     const damageType = action.damage?.type
@@ -260,20 +371,40 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const alive = combat.value.creatures.filter(c => c.ref === target.ref && c.health > 0).length
     const sheet = resolved()
 
+    // Qui se défend : le survivant (sa fiche, son Armure saisie) ou un sbire (sa propre fiche, qui ne s'adapte pas au niveau).
+    const defend = (kind: 'physical' | 'magic') => {
+      if (minionSheet) return knD100Check({ roll: d100(), score: kind === 'physical' ? minionSheet.combatSkill : minionSheet.magicResistance, difficulty: 0, mode: 'normal' })
+      if (kind === 'physical') {
+        const mine = sheet.skills[input.defense]
+        return knD100Check({ roll: d100(), score: mine.effective, difficulty: input.bonus - penalty, mode: mine.rollMode })
+      }
+      const ward = (KN_RESISTANCE_KEYS as readonly string[]).includes(input.magicCheck)
+        ? sheet.resistances[input.magicCheck as KnResistanceKey]
+        : sheet.skills[input.magicCheck as KnSkillKey]
+      return knD100Check({ roll: d100(), score: ward.effective, difficulty: input.bonus - penalty, mode: ward.rollMode })
+    }
+    const locationOf = () => minionSheet
+      ? (minionSheet.hitLocation ? knHitLocation(minionSheet.hitLocation.table, knRollDie(20)) : 'body' as const)
+      : knHitLocation('humanoid', knRollDie(20))
+    const armorAt = (location: KnHitLocationKey) => minionSheet ? knArmorAt(minionSheet.armor, location) : survivorArmor(location)
+    const damageTarget = minionSheet ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects) : { vulnerable: [], resistant: [], restored: [] }
+    const registerReaction = () => {
+      if (!minionSheet) character.value.run = knRegisterReaction(character.value.run)
+    }
+
     if (action.tag === 'physical') {
-      const mine = sheet.skills[input.defense]
       result.check = knD100Check({ roll: d100(), score: adapted.combatSkill + knPackBonus(creature, alive) + buffs.attackBonus, difficulty: KN_ATTACKER_BONUS, mode: buffs.attackAdvantage ? 'advantage' : 'normal' })
-      result.defense = knD100Check({ roll: d100(), score: mine.effective, difficulty: input.bonus - penalty, mode: mine.rollMode })
+      result.defense = defend('physical')
       result.exchange = knCombatExchange(result.check, result.defense)
-      character.value.run = knRegisterReaction(character.value.run)
+      registerReaction()
       if (result.exchange.fumble) result.monsterFumble = knRollDie(KN_MONSTER_FUMBLE_DIE)
-      if (result.exchange.outcome === 'defended') result.survivorMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
+      if (result.exchange.outcome === 'defended' && !minionSheet) result.survivorMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
       if (result.exchange.outcome === 'bothFail') {
         result.unavoidable = true
         result.amount = 1
       }
       if (result.exchange.outcome === 'hit') {
-        result.location = knHitLocation('humanoid', knRollDie(20))
+        result.location = locationOf()
         if (pool.length && damageType && knActionDamageDue(action, { hit: true })) {
           result.damageRoll = knRollDamagePool(pool)
           result.damage = knResolveDamage({
@@ -281,9 +412,9 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
             damageType,
             criticalStrike: result.exchange.criticalStrike,
             weakSpot: false,
-            armor: action.damage?.direct ? 0 : survivorArmor(result.location),
+            armor: action.damage?.direct ? 0 : armorAt(result.location),
             armorIgnored: knPenetrating(creature),
-            target: { vulnerable: [], resistant: [], restored: [] },
+            target: damageTarget,
           })
           result.amount = result.damage.damage
           result.direct = action.damage?.direct
@@ -292,11 +423,8 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     } else if (knActionIsTest(action)) {
       const hasTest = action.tag === 'magical' || !!action.checks?.length
       if (hasTest) {
-        const ward = (KN_RESISTANCE_KEYS as readonly string[]).includes(input.magicCheck)
-          ? sheet.resistances[input.magicCheck as KnResistanceKey]
-          : sheet.skills[input.magicCheck as KnSkillKey]
-        result.defense = knD100Check({ roll: d100(), score: ward.effective, difficulty: input.bonus - penalty, mode: ward.rollMode })
-        character.value.run = knRegisterReaction(character.value.run)
+        result.defense = defend('magic')
+        registerReaction()
       }
       if (pool.length && damageType && knActionDamageDue(action, { testFailed: result.defense ? !result.defense.success : true })) {
         result.damageRoll = knRollDamagePool(pool)
@@ -306,7 +434,8 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
           criticalStrike: false,
           weakSpot: false,
           armor: 0,
-          target: { vulnerable: [], resistant: [], restored: [] },
+          target: damageTarget,
+          magical: true,
         })
         result.amount = result.damage.damage
         result.direct = action.damage?.direct
@@ -338,6 +467,18 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     })
   }
 
+  // Dégâts subis par un sbire : à 0 Santé, il est détruit et quitte l'équipe.
+  function applyToMinion(result: KnTurnResult, amount: number) {
+    if (result.minion === undefined) return
+    const name = character.value.run.minions?.[result.minion]?.name ?? 'Le sbire'
+    const hit = knDamageMinion(character.value.run, result.minion, amount)
+    character.value.run = hit.run
+    log(`${result.name} (${result.action.name}) : ${name} subit ${amount}${hit.destroyed ? ', il est détruit' : ''}`)
+    toast.add({ title: hit.destroyed ? `${name} est détruit` : `${name} subit ${amount} dégâts`, color: hit.destroyed ? 'warning' : 'neutral' })
+    result.applied = true
+    result.dealt = amount
+  }
+
   function applyToSurvivor(result: KnTurnResult, amount: number) {
     damageSurvivor(amount, result.direct, `${result.name} (${result.action.name})`)
     result.applied = true
@@ -355,5 +496,5 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, creatureOf, engage, opposed, attack, applyAttack, drawAction, takeTurn, applyToSurvivor, applyReflect, applySelfEffect, moveText, survivorArmor, log }
+  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, attack, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
 }

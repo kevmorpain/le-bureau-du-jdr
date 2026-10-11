@@ -6,7 +6,7 @@ import { knClearCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_COMBAT_XP, knApplySelfEffects, knCombatWonEffects } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
-import { knEndCombat } from '~~/shared/ker-nethalas/run'
+import { knEndCombat, knHealMinions } from '~~/shared/ker-nethalas/run'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 // La fin d'un combat : le survivant récupère D4 Robustesse, les aptitudes « une fois par combat » se libèrent et l'état du
@@ -18,7 +18,7 @@ export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnRe
   function endCombat() {
     applyEffects([{ kind: 'vital', vital: 'toughness', dice: { count: 1, sides: 4, bonus: 0 }, sign: 'gain' }], 'Fin du combat')
     character.value.status = knClearCombatEffects(knResetUses(character.value.status, ['combat']))
-    character.value.run = knEndCombat(character.value.run)
+    character.value.run = knHealMinions(knEndCombat(character.value.run))
   }
 
   // Un combat engagé par erreur : on retire l'état, sans rien récupérer ni libérer.

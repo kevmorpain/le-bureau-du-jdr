@@ -5,6 +5,7 @@ import { boundedInt } from './zodHelpers'
 
 export const KN_COMBAT_BOUNDS = {
   creatures: 12,
+  minions: 6,
   health: { min: 0, max: 9999 },
   round: { min: 1, max: 99 },
   reactions: { min: 0, max: 20 },
