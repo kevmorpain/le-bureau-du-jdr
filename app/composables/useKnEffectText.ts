@@ -1,3 +1,4 @@
+import type { KnCreatureBuff } from '~~/shared/ker-nethalas/combatState'
 import type { KnCreatureSelfEffect, KnSelfAmount } from '~~/shared/ker-nethalas/creatures'
 import { knDiceLabel, type KnDice } from '~~/shared/ker-nethalas/dice'
 import type { KnTableEffect, KnTableEffectOutcome } from '~~/shared/ker-nethalas/tables'
@@ -43,7 +44,32 @@ export function useKnEffectText() {
     return `${amount.ratio === 0.5 ? 'la moitié' : `${Math.round(amount.ratio * 100)} %`} ${SELF_BASE[amount.of]}`
   }
 
+  const types = (list: readonly string[]) => list.map(key => t(`ker_nethalas.damageTypes.${key}`).toLowerCase()).join(', ')
+  const signed = (value: number) => value > 0 ? `+${value}` : String(value)
+
+  // Ce qu'un effet change chez la créature, en une phrase.
+  function buffParts(effect: Omit<KnCreatureBuff, 'label' | 'rounds' | 'untilTurn'>): string[] {
+    return [
+      ...(effect.resistantAll ? [`résistante à tous les dégâts${effect.resistantExcept?.length ? ` sauf ${types(effect.resistantExcept)}` : ''}`] : []),
+      ...(effect.resistant?.length ? [`résistante aux dégâts ${types(effect.resistant)}`] : []),
+      ...(effect.immune?.length ? [`immunisée aux dégâts ${types(effect.immune)}`] : []),
+      ...(effect.immuneNonMagical ? ['immunisée aux dégâts non magiques'] : []),
+      ...(effect.vulnerableAll ? ['vulnérable à tous les dégâts'] : []),
+      ...(effect.disadvantageAgainst ? ['les attaques qui la visent ont le Désavantage'] : []),
+      ...(effect.advantage ? [effect.advantage === 'attack' ? 'Avantage à ses attaques' : 'Avantage à ses défenses'] : []),
+      ...(effect.combatSkill ? [`Compétence de combat ${signed(effect.combatSkill)}`] : []),
+      ...(effect.defenseSkill ? [`défense ${signed(effect.defenseSkill)}`] : []),
+      ...(effect.damageBonus ? [`${knDiceLabel(effect.damageBonus)} dégâts de plus`] : []),
+      ...(effect.reflect ? [`${knDiceLabel(effect.reflect.dice)} dégâts ${types([effect.reflect.type])} à qui l'attaque`] : []),
+    ]
+  }
+
   function selfEffectText(effect: KnCreatureSelfEffect): string {
+    if (effect.kind === 'buff') {
+      const duration = effect.untilTurn ? ' jusqu\'à son prochain tour' : effect.rounds ? ` pendant ${knDiceLabel(effect.rounds)} round(s)` : ' jusqu\'à la fin du combat'
+      const scope = effect.scope === 'sameSheet' ? ' (toutes les créatures de sa fiche)' : ''
+      return `est sous l'effet de « ${effect.label} »${duration}${scope} : ${buffParts(effect).join(', ')}`
+    }
     if (effect.kind === 'heal') return `récupère ${selfAmountText(effect.amount)} en Santé`
     const until = effect.until === 'turn' ? ', jusqu\'à son prochain tour' : effect.until === 'round' ? ', jusqu\'à la fin du round' : ''
     const cap = effect.cap ? `, sans dépasser ${effect.cap} fois sa Santé` : ''
@@ -55,5 +81,5 @@ export function useKnEffectText() {
     return effectText(effect, 'dice' in effect || effect.kind === 'timed' ? roll.total : undefined)
   }
 
-  return { effectText, effectsText, outcomeText, selfEffectText }
+  return { effectText, effectsText, outcomeText, selfEffectText, buffParts }
 }

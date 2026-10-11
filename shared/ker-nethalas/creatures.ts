@@ -8,6 +8,7 @@ import {
   knHitLocationsOf,
   type KnHitLocationKey,
 } from './catalog/hitLocations'
+import { knCreatureBuffFields } from './combatState'
 import { knDiceSchema, type KnDice } from './dice'
 import { KN_CHECK_KEYS, knOutcomeSchema } from './tables'
 import { boundedInt } from './zodHelpers'
@@ -45,6 +46,16 @@ export const knCreatureSelfEffectSchema = z.discriminatedUnion('kind', [
     ifDamage: z.boolean().optional(),
     cap: z.number().min(1).max(4).optional(),
     until: z.enum(['turn', 'round']).optional(),
+  }),
+  // Un effet en cours sur la créature : `rounds` (un jet de dés ou un nombre), jusqu'à son prochain tour, ou jusqu'à la fin du
+  // combat sans l'un ni l'autre. `scope` : elle seule, ou toutes les créatures de sa fiche encore en vie.
+  z.object({
+    kind: z.literal('buff'),
+    label: z.string().trim().min(1).max(100),
+    rounds: knDiceSchema.optional(),
+    untilTurn: z.boolean().optional(),
+    scope: z.enum(['self', 'sameSheet']).optional(),
+    ...knCreatureBuffFields,
   }),
 ])
 

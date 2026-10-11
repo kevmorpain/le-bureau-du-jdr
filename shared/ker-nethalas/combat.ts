@@ -1,6 +1,7 @@
 import { KN_CREATURE_TYPE_RULES } from './catalog/creatureTypes'
 import { KN_ARMOR_IGNORED, type KnDamageType } from './catalog/damageTypes'
 import type { KnHitLocationKey } from './catalog/hitLocations'
+import type { KnCreatureBuff } from './combatState'
 import { knCreatureAtLevel, type KnCreature, type KnCreatureAction, type KnSelfAmount } from './creatures'
 import { knRollDice, type KnDice } from './dice'
 import type { KnRollMode } from './resolve'
@@ -72,6 +73,12 @@ export interface KnDamageTarget {
   restored: readonly KnDamageType[]
   // Résistant à tous les dégâts physiques non magiques.
   resistantPhysical?: boolean
+  // Venus d'effets en cours : Résistant ou Vulnérable à tout (sauf certains types), Immunisé.
+  resistantAll?: boolean
+  resistantExcept?: readonly KnDamageType[]
+  vulnerableAll?: boolean
+  immune?: readonly KnDamageType[]
+  immuneNonMagical?: boolean
 }
 
 const PHYSICAL_DAMAGE: readonly KnDamageType[] = ['bludgeoning', 'piercing', 'slashing']
@@ -135,13 +142,17 @@ export function knResolveDamage(input: KnDamageInput): KnDamageResult {
   }
 
   const { target } = input
+  if (target.immune?.includes(input.damageType) || (target.immuneNonMagical && !input.magical)) {
+    return { base: input.roll.total, doubled, armorAbsorbed, damage: 0, heal: 0, notes: [...notes, 'immunisée'] }
+  }
   if (target.restored.includes(input.damageType)) {
     return { base: input.roll.total, doubled, armorAbsorbed, damage: 0, heal: total, notes: [...notes, 'restaurée par ce type de dégâts'] }
   }
 
   const physicalResist = target.resistantPhysical && !input.magical && PHYSICAL_DAMAGE.includes(input.damageType)
-  const vulnerable = target.vulnerable.includes(input.damageType)
+  const vulnerable = !!target.vulnerableAll || target.vulnerable.includes(input.damageType)
   const resistant = target.resistant.includes(input.damageType) || !!physicalResist
+    || (!!target.resistantAll && !target.resistantExcept?.includes(input.damageType))
   if (vulnerable && !resistant) {
     total *= 2
     notes.push('vulnérable : dégâts doublés')
@@ -153,8 +164,46 @@ export function knResolveDamage(input: KnDamageInput): KnDamageResult {
 }
 
 // La réserve de dégâts d'une créature : le dé de l'action et les dés ajoutés par ses paliers de niveau.
-export function knActionPool(action: KnCreatureAction, creature: KnCreature, level: number): KnDice[] {
-  return action.damage ? [action.damage.dice, ...(action.damage.extra ?? []), ...knCreatureAtLevel(creature, level).damageBonuses] : []
+export function knActionPool(action: KnCreatureAction, creature: KnCreature, level: number, extra: readonly KnDice[] = []): KnDice[] {
+  return action.damage ? [action.damage.dice, ...(action.damage.extra ?? []), ...knCreatureAtLevel(creature, level).damageBonuses, ...extra] : []
+}
+
+// Ce que les effets en cours changent chez une créature, tous cumulés.
+export interface KnBuffTotals {
+  attackBonus: number
+  defenseBonus: number
+  attackAdvantage: boolean
+  defenseAdvantage: boolean
+  disadvantageAgainst: boolean
+  damageBonuses: KnDice[]
+  reflect: { dice: KnDice, type: KnDamageType, label: string }[]
+}
+
+export function knBuffTotals(effects: readonly KnCreatureBuff[] | undefined): KnBuffTotals {
+  const list = effects ?? []
+  return {
+    attackBonus: list.reduce((sum, effect) => sum + (effect.combatSkill ?? 0), 0),
+    defenseBonus: list.reduce((sum, effect) => sum + (effect.combatSkill ?? 0) + (effect.defenseSkill ?? 0), 0),
+    attackAdvantage: list.some(effect => effect.advantage === 'attack'),
+    defenseAdvantage: list.some(effect => effect.advantage === 'defense'),
+    disadvantageAgainst: list.some(effect => effect.disadvantageAgainst),
+    damageBonuses: list.flatMap(effect => effect.damageBonus ? [effect.damageBonus] : []),
+    reflect: list.flatMap(effect => effect.reflect ? [{ ...effect.reflect, label: effect.label }] : []),
+  }
+}
+
+// La cible des dégâts d'une créature, avec ses effets en cours.
+export function knBuffedTarget(base: KnDamageTarget, effects: readonly KnCreatureBuff[] | undefined): KnDamageTarget {
+  const list = effects ?? []
+  return {
+    ...base,
+    resistant: [...base.resistant, ...list.flatMap(effect => effect.resistant ?? [])],
+    immune: list.flatMap(effect => effect.immune ?? []),
+    immuneNonMagical: list.some(effect => effect.immuneNonMagical),
+    resistantAll: list.some(effect => effect.resistantAll),
+    resistantExcept: list.flatMap(effect => effect.resistantExcept ?? []),
+    vulnerableAll: list.some(effect => effect.vulnerableAll),
+  }
 }
 
 // Une action qui se joue sur un test du survivant plutôt que sur un jet d'attaque : Magique, ou sans étiquette mais avec

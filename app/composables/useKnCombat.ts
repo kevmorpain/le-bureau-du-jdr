@@ -8,6 +8,8 @@ import {
   knActionDamageDue,
   knActionIsTest,
   knActionPool,
+  knBuffedTarget,
+  knBuffTotals,
   knCombatExchange,
   knCreatureDamageTarget,
   knOpposedCheck,
@@ -28,8 +30,11 @@ import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knD100Check, type KnD100Result } from '~~/shared/ker-nethalas/roll'
 import {
+  knAddCreatureBuff,
   knCombatLog,
+  knConsumeCreatureEffects,
   knDamageCombatCreature,
+  knExpireCreatureTurnEffects,
   knExpireCombatTemporary,
   knGainCombatTemporary,
   knRegisterReaction,
@@ -49,6 +54,8 @@ export interface KnAttackResult {
   exchange: KnExchange
   location?: KnHitLocationKey
   weakSpot: boolean
+  // Dégâts que les effets de la créature renvoient à qui l'attaque.
+  reflect?: { label: string, type: KnDamageType, amount: number, applied: boolean }[]
   damageRoll?: KnDamageRoll
   damage?: KnDamageResult
   // Les deux jets ont échoué : 1 dégât qu'on ne peut pas éviter.
@@ -148,11 +155,13 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const adapted = knCreatureAtLevel(creature, level.value)
     const alive = combat.value.creatures.filter(c => c.ref === target.ref && c.health > 0).length
 
+    const buffs = knBuffTotals(target.effects)
     const mine = resolved().skills[input.skill]
-    const mode = input.aim && creature.hitLocation?.weakSpot ? knWithDisadvantage(mine.rollMode) : mine.rollMode
+    const aimed = input.aim && creature.hitLocation?.weakSpot ? knWithDisadvantage(mine.rollMode) : mine.rollMode
+    const mode = buffs.disadvantageAgainst ? knWithDisadvantage(aimed) : aimed
     const attackCheck = knD100Check({ roll: d100(), score: mine.effective, difficulty: KN_ATTACKER_BONUS + input.bonus, mode })
-    const defenseScore = adapted.combatSkill - input.speed + knPackBonus(creature, alive)
-    const defenseCheck = knD100Check({ roll: d100(), score: defenseScore, difficulty: 0, mode: 'normal' })
+    const defenseScore = adapted.combatSkill - input.speed + knPackBonus(creature, alive) + buffs.defenseBonus
+    const defenseCheck = knD100Check({ roll: d100(), score: defenseScore, difficulty: 0, mode: buffs.defenseAdvantage ? 'advantage' : 'normal' })
     const exchange = knCombatExchange(attackCheck, defenseCheck)
 
     const result: KnAttackResult = {
@@ -164,6 +173,9 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       weakSpot: false,
       unavoidable: exchange.outcome === 'bothFail',
       applied: false,
+    }
+    if (buffs.reflect.length) {
+      result.reflect = buffs.reflect.map(entry => ({ label: entry.label, type: entry.type, amount: knRollDamagePool([entry.dice]).total, applied: false }))
     }
     if (exchange.fumble) result.fumble = knRollDie(KN_DEFENSIVE_MOVE_DIE)
     if (exchange.outcome === 'defended') result.monsterMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
@@ -181,7 +193,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
         criticalStrike: exchange.criticalStrike,
         weakSpot: result.weakSpot,
         armor: knArmorAt(adapted.armor, result.location),
-        target: knCreatureDamageTarget(creature),
+        target: knBuffedTarget(knCreatureDamageTarget(creature), target.effects),
         magical: input.magical,
       })
     }
@@ -202,6 +214,13 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   function applySelfEffect(index: number, effect: KnCreatureSelfEffect, damage: number) {
     const target = combat.value?.creatures[index]
     if (!target) return 0
+    if (effect.kind === 'buff') {
+      const { kind: _kind, scope, rounds, ...fields } = effect
+      const duration = rounds ? knRollDice(rounds).total : 0
+      character.value.run = knAddCreatureBuff(character.value.run, index, { ...fields, ...(duration > 0 ? { rounds: duration } : {}) }, scope)
+      log(`${target.name} : ${effect.label}${duration > 0 ? ` (${duration} round${duration > 1 ? 's' : ''})` : ''}`)
+      return duration
+    }
     const amount = knSelfAmount(effect.amount, { damage, health: target.health, maxHealth: target.maxHealth })
     if (effect.kind === 'heal') {
       character.value.run = knDamageCombatCreature(character.value.run, index, -amount)
@@ -216,7 +235,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   function drawAction(index: number) {
     const creature = creatureOf(index)
     if (!creature) return undefined
-    character.value.run = knExpireCombatTemporary(character.value.run, 'turn', index)
+    character.value.run = knExpireCreatureTurnEffects(knExpireCombatTemporary(character.value.run, 'turn', index), index)
     const d6 = knRollDie(6)
     const action = creature.actions.find(a => d6 >= a.min && d6 <= a.max)
     return action ? { d6, action } : undefined
@@ -234,7 +253,8 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const adapted = knCreatureAtLevel(creature, level.value)
     const { action } = input
     const result: KnTurnResult = { index: input.index, name: target.name, action, d6: input.d6, unavoidable: false, applied: false }
-    const pool = knActionPool(action, creature, level.value)
+    const buffs = knBuffTotals(target.effects)
+    const pool = knActionPool(action, creature, level.value, buffs.damageBonuses)
     const damageType = action.damage?.type
     const penalty = knReactionPenalty(combat.value.reactions)
     const alive = combat.value.creatures.filter(c => c.ref === target.ref && c.health > 0).length
@@ -242,7 +262,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
 
     if (action.tag === 'physical') {
       const mine = sheet.skills[input.defense]
-      result.check = knD100Check({ roll: d100(), score: adapted.combatSkill + knPackBonus(creature, alive), difficulty: KN_ATTACKER_BONUS, mode: 'normal' })
+      result.check = knD100Check({ roll: d100(), score: adapted.combatSkill + knPackBonus(creature, alive) + buffs.attackBonus, difficulty: KN_ATTACKER_BONUS, mode: buffs.attackAdvantage ? 'advantage' : 'normal' })
       result.defense = knD100Check({ roll: d100(), score: mine.effective, difficulty: input.bonus - penalty, mode: mine.rollMode })
       result.exchange = knCombatExchange(result.check, result.defense)
       character.value.run = knRegisterReaction(character.value.run)
@@ -292,11 +312,12 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
         result.direct = action.damage?.direct
       }
     }
+    if (result.damage) character.value.run = knConsumeCreatureEffects(character.value.run, input.index)
     return result
   }
 
   // Dégâts reçus par le survivant : Robustesse temporaire, Robustesse, puis Santé.
-  function applyToSurvivor(result: KnTurnResult, amount: number) {
+  function damageSurvivor(amount: number, direct: boolean | undefined, line: string) {
     const c = character.value
     const maxVitals = resolved().maxVitals
     const before = c.healthCurrent
@@ -304,14 +325,12 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       { toughness: c.toughnessCurrent, health: c.healthCurrent, status: c.status },
       { toughness: maxVitals.toughness.effective, health: maxVitals.health.effective },
       amount,
-      result.direct,
+      direct,
     )
     c.toughnessCurrent = next.toughness
     c.healthCurrent = next.health
     c.status = next.status
-    log(`${result.name} (${result.action.name}) : le survivant subit ${amount}${result.direct ? ' directement à la Santé' : ''}`)
-    result.applied = true
-    result.dealt = amount
+    log(`${line} : le survivant subit ${amount}${direct ? ' directement à la Santé' : ''}`)
     toast.add({
       title: amount > 0 ? `${amount} dégâts subis` : 'Aucun dégât',
       description: before > 0 && next.health === 0 ? 'La Santé tombe à 0 : le survivant meurt.' : `Robustesse ${next.toughness}, Santé ${next.health}`,
@@ -319,8 +338,22 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     })
   }
 
+  function applyToSurvivor(result: KnTurnResult, amount: number) {
+    damageSurvivor(amount, result.direct, `${result.name} (${result.action.name})`)
+    result.applied = true
+    result.dealt = amount
+  }
+
+  // Les dégâts qu'un effet de la créature renvoie à celui qui l'attaque.
+  function applyReflect(result: KnAttackResult, index: number) {
+    const entry = result.reflect?.[index]
+    if (!entry || entry.applied) return
+    damageSurvivor(entry.amount, false, `${result.name} (${entry.label})`)
+    entry.applied = true
+  }
+
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, creatureOf, engage, opposed, attack, applyAttack, drawAction, takeTurn, applyToSurvivor, applySelfEffect, moveText, survivorArmor, log }
+  return { combat, level, creatureOf, engage, opposed, attack, applyAttack, drawAction, takeTurn, applyToSurvivor, applyReflect, applySelfEffect, moveText, survivorArmor, log }
 }

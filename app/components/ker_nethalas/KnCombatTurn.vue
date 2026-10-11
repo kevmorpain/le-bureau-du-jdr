@@ -320,8 +320,10 @@ const selfEffects = computed(() => drawn.value?.action.self ?? [])
 const creatureName = computed(() => combat.value?.creatures[who.value]?.name ?? '')
 
 // Une part « des dégâts infligés » n'a de sens qu'une fois ces dégâts retirés au survivant.
-const selfReady = (effect: KnCreatureSelfEffect) =>
-  !(effect.ifDamage || ('of' in effect.amount && effect.amount.of === 'damage')) || (result.value?.dealt ?? 0) > 0
+const selfReady = (effect: KnCreatureSelfEffect) => {
+  if (effect.kind === 'buff') return true
+  return !(effect.ifDamage || ('of' in effect.amount && effect.amount.of === 'damage')) || (result.value?.dealt ?? 0) > 0
+}
 
 function takeSelf(index: number) {
   const effect = selfEffects.value[index]

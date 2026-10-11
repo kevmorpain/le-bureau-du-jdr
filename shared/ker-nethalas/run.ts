@@ -6,7 +6,7 @@ import {
   type KnGrowingDarknessKey,
 } from './catalog/growingDarkness'
 import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
-import { KN_COMBAT_BOUNDS, knCombatSchema, type KnCombatCreature } from './combatState'
+import { KN_COMBAT_BOUNDS, knCombatSchema, type KnCombatCreature, type KnCreatureBuff } from './combatState'
 import { KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 import { KN_OBSTACLE_KINDS, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, type KnObstacleKind } from './exploration'
 import { KN_SKILL_KEYS } from './skills'
@@ -606,6 +606,51 @@ export function knGainCombatTemporary(run: KnRun, index: number, amount: number,
   return withCreature(run, index, c => ({ ...c, temporary, ...(options.until ? { temporaryUntil: options.until } : {}) }))
 }
 
+// Un effet en cours sur une créature, ou sur toutes les vivantes de sa fiche. Le même effet reposé en remplace la durée.
+export function knAddCreatureBuff(run: KnRun, index: number, buff: KnCreatureBuff, scope: 'self' | 'sameSheet' = 'self'): KnRun {
+  const target = run.combat?.creatures[index]
+  if (!run.combat || !target) return run
+  const concerned = (c: KnCombatCreature, i: number) => i === index || (scope === 'sameSheet' && !!target.ref && c.ref === target.ref && c.health > 0)
+  return {
+    ...run,
+    combat: {
+      ...run.combat,
+      creatures: run.combat.creatures.map((c, i) => concerned(c, i)
+        ? { ...c, effects: [...(c.effects ?? []).filter(effect => effect.label !== buff.label), buff].slice(-8) }
+        : c),
+    },
+  }
+}
+
+const withEffects = (creature: KnCombatCreature, effects: KnCreatureBuff[]): KnCombatCreature => {
+  const { effects: _previous, ...rest } = creature
+  return effects.length ? { ...rest, effects } : rest
+}
+
+// Un round qui passe : chaque effet à durée perd un round, et tombe à zéro.
+export function knAdvanceCreatureEffects(run: KnRun): KnRun {
+  if (!run.combat) return run
+  return {
+    ...run,
+    combat: {
+      ...run.combat,
+      creatures: run.combat.creatures.map(c => c.effects
+        ? withEffects(c, c.effects.flatMap(effect => effect.rounds === undefined ? [effect] : effect.rounds <= 1 ? [] : [{ ...effect, rounds: effect.rounds - 1 }]))
+        : c),
+    },
+  }
+}
+
+// La créature joue : ses effets « jusqu'à son prochain tour » tombent.
+export function knExpireCreatureTurnEffects(run: KnRun, index: number): KnRun {
+  return withCreature(run, index, c => c.effects?.some(effect => effect.untilTurn) ? withEffects(c, c.effects.filter(effect => !effect.untilTurn)) : c)
+}
+
+// Les effets à usage unique tombent une fois la créature servie d'eux.
+export function knConsumeCreatureEffects(run: KnRun, index: number): KnRun {
+  return withCreature(run, index, c => c.effects?.some(effect => effect.once) ? withEffects(c, c.effects.filter(effect => !effect.once)) : c)
+}
+
 // Sa Santé temporaire disparaît quand son terme arrive : au prochain tour de la créature, ou à la fin du round.
 export function knExpireCombatTemporary(run: KnRun, term: 'turn' | 'round', index?: number): KnRun {
   if (!run.combat) return run
@@ -625,7 +670,7 @@ export function knRegisterReaction(run: KnRun): KnRun {
 
 export function knNextCombatRound(run: KnRun): KnRun {
   if (!run.combat) return run
-  return knExpireCombatTemporary({ ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')
+  return knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round'))
 }
 
 export function knSetCombatSurprise(run: KnRun, surprise: boolean): KnRun {

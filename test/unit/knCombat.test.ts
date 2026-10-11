@@ -3,6 +3,8 @@ import {
   knActionDamageDue,
   knActionIsTest,
   knActionPool,
+  knBuffedTarget,
+  knBuffTotals,
   knSelfAmount,
   knCombatExchange,
   knCreatureDamageTarget,
@@ -20,7 +22,10 @@ import { knCombatWon, knCreatureDefeated, knReactionPenalty } from '../../shared
 import {
   emptyKnRun,
   knCombatLog,
+  knAddCreatureBuff,
+  knConsumeCreatureEffects,
   knDamageCombatCreature,
+  knExpireCreatureTurnEffects,
   knEndCombat,
   knExpireCombatTemporary,
   knGainCombatTemporary,
@@ -548,5 +553,99 @@ describe('effets de combat sur le survivant', () => {
 
     expect(knClearCombatEffects(status).custom).toEqual([own])
     expect(knClearCombatEffects(emptyKnStatus())).toEqual(emptyKnStatus())
+  })
+})
+
+describe('effets en cours sur une créature', () => {
+  const d = (count: number, sides: number, bonus = 0) => ({ count, sides, bonus })
+  const roll = (pool: number, damageType: KnDamageInput['damageType'], target: KnDamageInput['target'], magical = false) =>
+    knResolveDamage({ roll: { dice: [], bonus: 0, picked: pool, total: pool }, damageType, criticalStrike: false, weakSpot: false, armor: 0, target, magical })
+  const base = { vulnerable: [], resistant: [], restored: [] } as const
+  const foes = () => knStartCombat(emptyKnRun(), [
+    { ref: 'rat', name: 'Rat 1', health: 5, maxHealth: 5 },
+    { ref: 'rat', name: 'Rat 2', health: 5, maxHealth: 5 },
+    { ref: 'rat', name: 'Rat 3', health: 0, maxHealth: 5 },
+    { ref: 'owl', name: 'Hibou', health: 5, maxHealth: 5 },
+  ])
+
+  it('Résistant à tout divise les dégâts par deux, sauf pour les types exclus', () => {
+    const target = knBuffedTarget(base, [{ label: 'Voile', resistantAll: true, resistantExcept: ['holy'] }])
+
+    expect(roll(5, 'fire', target).damage).toBe(3)
+    expect(roll(5, 'holy', target).damage).toBe(5)
+  })
+
+  it('Immunisé annule les dégâts, y compris tous les dégâts non magiques', () => {
+    const fire = knBuffedTarget(base, [{ label: 'Forme', immune: ['fire'] }])
+    const ghost = knBuffedTarget(base, [{ label: 'Spectre', immuneNonMagical: true }])
+
+    expect(roll(5, 'fire', fire).damage).toBe(0)
+    expect(roll(5, 'cold', fire).damage).toBe(5)
+    expect(roll(5, 'slashing', ghost).damage).toBe(0)
+    expect(roll(5, 'arcane', ghost, true).damage).toBe(5)
+  })
+
+  it('Vulnérable à tout double les dégâts, et annule un Résistant à tout', () => {
+    expect(roll(4, 'fire', knBuffedTarget(base, [{ label: 'Frénésie', vulnerableAll: true }])).damage).toBe(8)
+    expect(roll(4, 'fire', knBuffedTarget(base, [{ label: 'a', vulnerableAll: true }, { label: 'b', resistantAll: true }])).damage).toBe(4)
+  })
+
+  it('les bonus, avantages et ripostes de plusieurs effets se cumulent', () => {
+    const totals = knBuffTotals([
+      { label: 'A', combatSkill: 5, defenseSkill: 10, advantage: 'attack', damageBonus: d(1, 6) },
+      { label: 'B', combatSkill: 10, disadvantageAgainst: true, reflect: { dice: d(0, 0, 2), type: 'lightning' } },
+    ])
+
+    expect(totals).toMatchObject({ attackBonus: 15, defenseBonus: 25, attackAdvantage: true, defenseAdvantage: false, disadvantageAgainst: true })
+    expect(totals.damageBonuses).toEqual([d(1, 6)])
+    expect(totals.reflect).toEqual([{ dice: d(0, 0, 2), type: 'lightning', label: 'B' }])
+    expect(knBuffTotals(undefined)).toMatchObject({ attackBonus: 0, defenseBonus: 0, damageBonuses: [], reflect: [] })
+  })
+
+  it('un effet se pose sur une créature, ou sur toutes les vivantes de sa fiche, et se remplace plutôt que de se cumuler', () => {
+    const one = knAddCreatureBuff(foes(), 0, { label: 'Cri', combatSkill: 10 })
+    const sheet = knAddCreatureBuff(foes(), 0, { label: 'Cri', combatSkill: 10 }, 'sameSheet')
+    const again = knAddCreatureBuff(sheet, 0, { label: 'Cri', combatSkill: 20 }, 'sameSheet')
+
+    expect(one.combat!.creatures.map(c => c.effects?.length ?? 0)).toEqual([1, 0, 0, 0])
+    expect(sheet.combat!.creatures.map(c => c.effects?.length ?? 0)).toEqual([1, 1, 0, 0])
+    expect(again.combat!.creatures[1]!.effects).toEqual([{ label: 'Cri', combatSkill: 20 }])
+  })
+
+  it('un round qui passe retire un round aux effets à durée, et ceux sans durée restent', () => {
+    let run = knAddCreatureBuff(foes(), 0, { label: 'Court', rounds: 1 })
+    run = knAddCreatureBuff(run, 0, { label: 'Long', rounds: 2 })
+    run = knAddCreatureBuff(run, 0, { label: 'Toujours' })
+    const next = knNextCombatRound(run)
+    const last = knNextCombatRound(next)
+
+    expect(next.combat!.creatures[0]!.effects!.map(e => [e.label, e.rounds])).toEqual([['Long', 1], ['Toujours', undefined]])
+    expect(last.combat!.creatures[0]!.effects!.map(e => e.label)).toEqual(['Toujours'])
+    expect(knNextCombatRound(foes()).combat!.creatures[0]).not.toHaveProperty('effects')
+  })
+
+  it('le tour de la créature retire ses effets « jusqu\'à son prochain tour », pas ceux d\'une autre', () => {
+    let run = knAddCreatureBuff(foes(), 0, { label: 'Voile', untilTurn: true })
+    run = knAddCreatureBuff(run, 3, { label: 'Voile', untilTurn: true })
+    const next = knExpireCreatureTurnEffects(run, 0)
+
+    expect(next.combat!.creatures[0]).not.toHaveProperty('effects')
+    expect(next.combat!.creatures[3]!.effects).toHaveLength(1)
+  })
+
+  it('un effet à usage unique tombe une fois utilisé', () => {
+    let run = knAddCreatureBuff(foes(), 0, { label: 'Infusion', once: true })
+    run = knAddCreatureBuff(run, 0, { label: 'Durable', rounds: 3 })
+    const next = knConsumeCreatureEffects(run, 0)
+
+    expect(next.combat!.creatures[0]!.effects!.map(e => e.label)).toEqual(['Durable'])
+  })
+
+  it('une action peut poser un effet sur la créature, avec une durée en dés', () => {
+    const buff = { kind: 'buff', label: 'Cri', scope: 'sameSheet', rounds: d(1, 4), combatSkill: 10 }
+
+    expect(knCreatureSelfEffectSchema.safeParse(buff).success).toBe(true)
+    expect(knCreatureSelfEffectSchema.safeParse({ ...buff, advantage: 'toujours' }).success).toBe(false)
+    expect(knCreatureSelfEffectSchema.safeParse({ ...buff, scope: 'tous' }).success).toBe(false)
   })
 })

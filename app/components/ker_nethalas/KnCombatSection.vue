@@ -118,6 +118,15 @@
                 size="md"
               />
               <UBadge
+                v-for="effect in creature.effects"
+                :key="effect.label"
+                :label="effect.rounds ? `${effect.label} (${effect.rounds})` : effect.label"
+                color="warning"
+                variant="subtle"
+                size="md"
+                :title="buffParts(effect).join(', ')"
+              />
+              <UBadge
                 v-if="creature.temporary"
                 :label="`+${creature.temporary} Santé temporaire`"
                 color="info"
@@ -234,6 +243,7 @@ const character = defineModel<KnCharacter>('character', { required: true })
 const { combat, creatureOf, opposed } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
+const { buffParts } = useKnEffectText()
 const toast = useToast()
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })

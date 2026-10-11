@@ -131,6 +131,22 @@
       >
         {{ result.applied ? 'Appliqué' : 'Appliquer à la créature' }}
       </UButton>
+      <div
+        v-for="(entry, index) in result.reflect"
+        :key="entry.label"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <UButton
+          size="xs"
+          variant="soft"
+          color="warning"
+          :disabled="entry.applied"
+          @click="applyReflect(result, index)"
+        >
+          {{ entry.applied ? 'Subi' : 'Subir la riposte' }}
+        </UButton>
+        <span>{{ entry.label }} : {{ entry.amount }} dégâts {{ $t(`ker_nethalas.damageTypes.${entry.type}`).toLowerCase() }} à qui attaque la créature.</span>
+      </div>
     </div>
   </div>
 </template>
@@ -153,7 +169,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, attack, applyAttack, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, attack, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 
 const KN_SURPRISE_BONUS = 20
 
