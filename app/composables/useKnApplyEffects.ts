@@ -8,7 +8,7 @@ export function useKnApplyEffects(character: Ref<KnCharacter>, resolved: () => K
   const toast = useToast()
   const { outcomeText } = useKnEffectText()
 
-  function applyEffects(effects: readonly KnTableEffect[], title: string) {
+  function applyEffects(effects: readonly KnTableEffect[], title: string, options: { creature?: boolean } = {}) {
     if (!effects.length) return
     const c = character.value
     const maxVitals = resolved().maxVitals
@@ -29,7 +29,7 @@ export function useKnApplyEffects(character: Ref<KnCharacter>, resolved: () => K
       toughness: maxVitals.toughness.effective,
       sanity: maxVitals.sanity.effective,
       aether: maxVitals.aether.effective,
-    })
+    }, undefined, options)
 
     c.coins = state.coins
     c.xp = state.xp

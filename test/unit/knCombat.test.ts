@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
+  knActionDamageDue,
+  knActionIsTest,
   knActionPool,
   knCombatExchange,
   knCreatureDamageTarget,
@@ -27,7 +29,7 @@ import {
 } from '../../shared/ker-nethalas/run'
 import { knParseDicePool } from '../../shared/ker-nethalas/dice'
 import { knD100Check } from '../../shared/ker-nethalas/roll'
-import { knApplyDamage } from '../../shared/ker-nethalas/tables'
+import { knApplyDamage, knApplyTableEffects, type KnTableEffectState } from '../../shared/ker-nethalas/tables'
 import { emptyKnStatus } from '../../shared/ker-nethalas/status'
 import { knSetTemporary, knTemporaryOf } from '../../shared/ker-nethalas/vitals'
 import { fakeCreature } from '../fixtures/knCreatures'
@@ -313,6 +315,14 @@ describe('dégâts subis par le survivant', () => {
     expect(knTemporaryOf(next.status, 'toughness')).toBe(0)
   })
 
+  it('des dégâts directs atteignent la Santé sans entamer la Robustesse', () => {
+    const status = knSetTemporary(emptyKnStatus(), 'toughness', 2)
+    const next = knApplyDamage({ toughness: 3, health: 10, status }, maxima, 4, true)
+
+    expect(next).toMatchObject({ toughness: 3, health: 6 })
+    expect(knTemporaryOf(next.status, 'toughness')).toBe(2)
+  })
+
   it('la Santé ne descend pas sous 0, et un état sans Robustesse temporaire reste intact', () => {
     const status = emptyKnStatus()
     const next = knApplyDamage({ toughness: 0, health: 3, status }, maxima, 50)
@@ -337,5 +347,71 @@ describe('surprise et Overseer dans l\'état du combat', () => {
     expect(knStartCombat(emptyKnRun(), foes, true).combat!.overseer).toBe(true)
     expect(knStartCombat(emptyKnRun(), foes).combat).not.toHaveProperty('overseer')
     expect(knRunSchema.safeParse(knStartCombat(emptyKnRun(), foes, true)).success).toBe(true)
+  })
+})
+
+describe('dégâts d\'une action de créature', () => {
+  const d = (count: number, sides: number, bonus = 0) => ({ count, sides, bonus })
+  const damage = (extra: object = {}) => ({ dice: d(1, 6), type: 'piercing' as const, ...extra })
+  const sequence = (...values: number[]) => {
+    let i = 0
+    return () => values[i++ % values.length]!
+  }
+  const state = (): KnTableEffectState => ({
+    coins: 0,
+    xp: 0,
+    provisions: { rations: 0, bandages: 0, craftingSupplies: 0, cookingIngredients: 0, lampOil: 0, lockpicks: 0, torches: 0, attunementCrystals: 0, ritualComponents: 0 },
+    health: 12,
+    toughness: 10,
+    sanity: 10,
+    aether: 10,
+    exhaustion: 0,
+    status: emptyKnStatus(),
+    run: emptyKnRun(),
+  })
+  const maxima = { health: 12, toughness: 10, sanity: 10, aether: 10 }
+
+  it('une action Magique, ou sans étiquette mais avec des dégâts, se joue sur un test du survivant', () => {
+    expect(knActionIsTest({ tag: 'magical' })).toBe(true)
+    expect(knActionIsTest({ damage: damage() })).toBe(true)
+    expect(knActionIsTest({})).toBe(false)
+    expect(knActionIsTest({ tag: 'physical', damage: damage() })).toBe(false)
+  })
+
+  it('les dégâts sont dus à la touche, à l\'échec du test, ou toujours', () => {
+    expect(knActionDamageDue({ tag: 'physical', damage: damage() }, { hit: true })).toBe(true)
+    expect(knActionDamageDue({ tag: 'physical', damage: damage() }, { hit: false })).toBe(false)
+    expect(knActionDamageDue({ tag: 'magical', damage: damage() }, { testFailed: false })).toBe(false)
+    expect(knActionDamageDue({ tag: 'magical', damage: damage() }, { testFailed: true })).toBe(true)
+    expect(knActionDamageDue({ tag: 'magical', damage: damage({ always: true }) }, { testFailed: false })).toBe(true)
+    expect(knActionDamageDue({ tag: 'magical' }, { testFailed: true })).toBe(false)
+  })
+
+  it('les dés en plus rejoignent la réserve', () => {
+    const action = { min: 1, max: 6, name: 'Nova', damage: damage({ extra: [d(1, 4)] }), text: 't' }
+
+    expect(knActionPool(action, fakeCreature(), 1)).toEqual([d(1, 6), d(1, 4)])
+  })
+
+  it('un adversaire retient le dé le plus haut, pas la somme', () => {
+    const effects = [{ kind: 'damage' as const, dice: d(2, 8, 1) }]
+    const foe = knApplyTableEffects(effects, state(), maxima, sequence(0, 0.6), { creature: true })
+    const trap = knApplyTableEffects(effects, state(), maxima, sequence(0, 0.6))
+
+    expect(foe.outcomes[0]!.roll.total).toBe(6)
+    expect(trap.outcomes[0]!.roll.total).toBe(7)
+  })
+
+  it('la moitié des dégâts s\'arrondit au supérieur', () => {
+    const half = knApplyTableEffects([{ kind: 'damage', dice: d(1, 6), half: true }], state(), maxima, () => 0.99, { creature: true })
+
+    expect(half.outcomes[0]!.roll.total).toBe(3)
+    expect(half.state.toughness).toBe(7)
+  })
+
+  it('des dégâts directs d\'un effet laissent la Robustesse intacte', () => {
+    const next = knApplyTableEffects([{ kind: 'damage', dice: d(0, 0, 2), direct: true }], state(), maxima).state
+
+    expect(next).toMatchObject({ health: 10, toughness: 10 })
   })
 })

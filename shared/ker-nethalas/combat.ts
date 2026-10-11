@@ -154,7 +154,19 @@ export function knResolveDamage(input: KnDamageInput): KnDamageResult {
 
 // La réserve de dégâts d'une créature : le dé de l'action et les dés ajoutés par ses paliers de niveau.
 export function knActionPool(action: KnCreatureAction, creature: KnCreature, level: number): KnDice[] {
-  return action.damage ? [action.damage.dice, ...knCreatureAtLevel(creature, level).damageBonuses] : []
+  return action.damage ? [action.damage.dice, ...(action.damage.extra ?? []), ...knCreatureAtLevel(creature, level).damageBonuses] : []
+}
+
+// Une action qui se joue sur un test du survivant plutôt que sur un jet d'attaque : Magique, ou sans étiquette mais avec
+// des dégâts.
+export const knActionIsTest = (action: Pick<KnCreatureAction, 'tag' | 'damage'>) =>
+  action.tag === 'magical' || (!action.tag && !!action.damage)
+
+// Les dégâts de l'action sont dus : sur une touche, à l'échec du test, ou toujours.
+export function knActionDamageDue(action: Pick<KnCreatureAction, 'tag' | 'damage'>, state: { hit?: boolean, testFailed?: boolean }): boolean {
+  if (!action.damage) return false
+  if (action.damage.always) return true
+  return action.tag === 'physical' ? !!state.hit : !!state.testFailed
 }
 
 // Où les coups portent sur le survivant, pour son Armure : le torse protège la poitrine et l'abdomen.

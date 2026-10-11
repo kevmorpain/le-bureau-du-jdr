@@ -18,7 +18,7 @@ export function useKnEffectText() {
       case 'provision': return `${sign(effect.sign)}${amount(effect.dice, total)} ${t(`ker_nethalas.provisions.${effect.key}`)}`
       case 'xp': return `+${effect.amount} XP`
       case 'vital': return `${sign(effect.sign)}${amount(effect.dice, total)} ${vital(effect.vital)}`
-      case 'damage': return `${amount(effect.dice, total)} dégâts`
+      case 'damage': return `${amount(effect.dice, total)} dégâts${effect.direct ? ' directs à la Santé' : ''}${effect.half ? ' (moitié)' : ''}`
       case 'exhaustion': return `${sign(effect.sign)}${amount(effect.dice, total)} Épuisement`
       case 'condition': return `${t(`ker_nethalas.conditions.${effect.key}.name`)}${effect.value ? ` (${effect.value})` : ''}`
       case 'temporary': return `+${amount(effect.dice, total)} ${vital(effect.vital)} temporaire`

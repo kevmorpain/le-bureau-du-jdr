@@ -64,6 +64,8 @@ const props = defineProps<{
   entry?: KnRollTableEntry
   taken: readonly number[]
   active?: boolean
+  // Le résultat d'un test déjà fait ailleurs : met en avant la branche qui lui correspond.
+  result?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -88,8 +90,10 @@ const toggle = (id: number) => {
   openGroup.value = openGroup.value === id ? null : id
 }
 
-const isSuggested = (group: number, outcome: KnOutcome) =>
-  suggested.value[group] !== undefined && (outcome.when === 'success' || outcome.when === 'failure') && (outcome.when === 'success') === suggested.value[group]
+const isSuggested = (group: number, outcome: KnOutcome) => {
+  const success = suggested.value[group] ?? props.result
+  return success !== undefined && (outcome.when === 'success' || outcome.when === 'failure') && (outcome.when === 'success') === success
+}
 
 function take(index: number) {
   openGroup.value = null

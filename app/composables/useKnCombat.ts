@@ -5,6 +5,8 @@ import type { KnDamageType } from '~~/shared/ker-nethalas/catalog/damageTypes'
 import { knHitLocation, type KnHitLocationKey } from '~~/shared/ker-nethalas/catalog/hitLocations'
 import {
   KN_ATTACKER_BONUS,
+  knActionDamageDue,
+  knActionIsTest,
   knActionPool,
   knCombatExchange,
   knCreatureDamageTarget,
@@ -70,6 +72,8 @@ export interface KnTurnResult {
   monsterFumble?: number
   // Dégâts à retirer au survivant, quand l'outil sait les calculer.
   amount?: number
+  // Les dégâts atteignent la Santé sans passer par la Robustesse.
+  direct?: boolean
   applied: boolean
 }
 
@@ -229,27 +233,31 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       }
       if (result.exchange.outcome === 'hit') {
         result.location = knHitLocation('humanoid', knRollDie(20))
-        if (pool.length && damageType) {
+        if (pool.length && damageType && knActionDamageDue(action, { hit: true })) {
           result.damageRoll = knRollDamagePool(pool)
           result.damage = knResolveDamage({
             roll: result.damageRoll,
             damageType,
             criticalStrike: result.exchange.criticalStrike,
             weakSpot: false,
-            armor: survivorArmor(result.location),
+            armor: action.damage?.direct ? 0 : survivorArmor(result.location),
             armorIgnored: knPenetrating(creature),
             target: { vulnerable: [], resistant: [], restored: [] },
           })
           result.amount = result.damage.damage
+          result.direct = action.damage?.direct
         }
       }
-    } else if (action.tag === 'magical') {
-      const ward = (KN_RESISTANCE_KEYS as readonly string[]).includes(input.magicCheck)
-        ? sheet.resistances[input.magicCheck as KnResistanceKey]
-        : sheet.skills[input.magicCheck as KnSkillKey]
-      result.defense = knD100Check({ roll: d100(), score: ward.effective, difficulty: input.bonus - penalty, mode: ward.rollMode })
-      character.value.run = knRegisterReaction(character.value.run)
-      if (!result.defense.success && pool.length && damageType) {
+    } else if (knActionIsTest(action)) {
+      const hasTest = action.tag === 'magical' || !!action.checks?.length
+      if (hasTest) {
+        const ward = (KN_RESISTANCE_KEYS as readonly string[]).includes(input.magicCheck)
+          ? sheet.resistances[input.magicCheck as KnResistanceKey]
+          : sheet.skills[input.magicCheck as KnSkillKey]
+        result.defense = knD100Check({ roll: d100(), score: ward.effective, difficulty: input.bonus - penalty, mode: ward.rollMode })
+        character.value.run = knRegisterReaction(character.value.run)
+      }
+      if (pool.length && damageType && knActionDamageDue(action, { testFailed: result.defense ? !result.defense.success : true })) {
         result.damageRoll = knRollDamagePool(pool)
         result.damage = knResolveDamage({
           roll: result.damageRoll,
@@ -260,6 +268,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
           target: { vulnerable: [], resistant: [], restored: [] },
         })
         result.amount = result.damage.damage
+        result.direct = action.damage?.direct
       }
     }
     return result
@@ -274,11 +283,12 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       { toughness: c.toughnessCurrent, health: c.healthCurrent, status: c.status },
       { toughness: maxVitals.toughness.effective, health: maxVitals.health.effective },
       amount,
+      result.direct,
     )
     c.toughnessCurrent = next.toughness
     c.healthCurrent = next.health
     c.status = next.status
-    log(`${result.name} (${result.action.name}) : le survivant subit ${amount}`)
+    log(`${result.name} (${result.action.name}) : le survivant subit ${amount}${result.direct ? ' directement à la Santé' : ''}`)
     result.applied = true
     toast.add({
       title: amount > 0 ? `${amount} dégâts subis` : 'Aucun dégât',

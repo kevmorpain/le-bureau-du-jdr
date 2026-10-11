@@ -60,7 +60,7 @@
         {{ drawn.action.text }}
       </p>
       <UFormField
-        v-if="drawn.action.tag === 'magical'"
+        v-if="isTest(drawn.action) && (drawn.action.tag === 'magical' || drawn.action.checks?.length)"
         label="Test que l'action demande (Résistance magique par défaut, sauf si son texte en nomme un autre)"
       >
         <USelect
@@ -70,11 +70,11 @@
         />
       </UFormField>
       <UButton
-        v-if="drawn.action.tag"
+        v-if="drawn.action.tag || isTest(drawn.action)"
         size="sm"
         @click="resolveNow"
       >
-        {{ drawn.action.tag === 'magical' ? 'Faire le test du survivant' : 'Se défendre' }}
+        {{ resolveLabel(drawn.action) }}
       </UButton>
       <p
         v-else
@@ -85,7 +85,7 @@
     </div>
 
     <div
-      v-if="result?.defense || result?.check"
+      v-if="result?.defense || result?.check || result?.damage"
       class="space-y-1 rounded-md bg-elevated p-3"
     >
       <KnCheckLine
@@ -95,7 +95,7 @@
       />
       <KnCheckLine
         v-if="result.defense"
-        :label="result.action.tag === 'magical' ? 'Test du survivant' : 'Défense du survivant'"
+        :label="isTest(result.action) ? 'Test du survivant' : 'Défense du survivant'"
         :check="result.defense"
       />
       <p
@@ -105,10 +105,10 @@
         {{ exchangeText }}
       </p>
       <p
-        v-if="result.action.tag === 'magical'"
+        v-if="isTest(result.action) && result.defense"
         class="font-medium"
       >
-        {{ result.defense?.success ? 'Résistée : aucun effet de dégâts.' : 'Ratée : les effets de l\'action s\'appliquent.' }}
+        {{ testText }}
       </p>
       <p
         v-if="result.survivorMove"
@@ -138,6 +138,7 @@
         <span class="text-muted">Dégâts :</span>
         {{ result.damageRoll?.dice.map(die => `D${die.sides} → ${die.roll}`).join(', ') }}
         → <span class="font-semibold">{{ result.damage.damage }}</span>
+        <span v-if="result.direct"> directement à la Santé</span>
         <span v-if="result.damage.armorAbsorbed"> (Armure : −{{ result.damage.armorAbsorbed }})</span>
       </p>
       <div
@@ -172,6 +173,7 @@
       <KnOutcomePanel
         :entry="rider"
         :taken
+        :result="riderResult"
         active
         @take="takeRider"
       />
@@ -182,6 +184,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knActionIsTest } from '~~/shared/ker-nethalas/combat'
 import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
 import type { KnCreature, KnCreatureAction } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -199,6 +202,8 @@ const character = defineModel<KnCharacter>('character', { required: true })
 const { t } = useI18n()
 const { combat, creatureOf, drawAction, takeTurn, applyToSurvivor, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
+
+const isTest = knActionIsTest
 
 const who = ref(0)
 const defense = ref<KnSkillKey>('dodge')
@@ -252,22 +257,37 @@ function resolveNow() {
   manualAmount.value = result.value?.amount ?? 0
 }
 
-// Ce que l'action fait en plus des dégâts : sans étiquette, tout de suite ; Physique, une fois touché ; Magique, test raté.
-// Le test d'une action Magique est déjà celui du survivant ci-dessus, le panneau ne le redemande pas.
+// Ce que l'action fait en plus des dégâts : sans étiquette ni dégâts, tout de suite ; Physique, une fois touché ; sur un test
+// du survivant, une fois ce test fait, la branche qui lui correspond étant mise en avant. Ce test est déjà celui d'au-dessus,
+// le panneau ne le redemande pas.
 const rider = computed<KnRollTableEntry | undefined>(() => {
   const action = drawn.value?.action
   if (!action?.outcomes?.length) return undefined
   const entry = (withChecks: boolean): KnRollTableEntry => ({ min: 1, max: 1, text: action.name, checks: withChecks ? action.checks : undefined, outcomes: action.outcomes })
+  if (isTest(action)) return result.value ? entry(false) : undefined
   if (!action.tag) return entry(true)
-  if (action.tag === 'physical') return result.value?.exchange?.outcome === 'hit' ? entry(true) : undefined
-  return result.value?.defense && !result.value.defense.success ? entry(false) : undefined
+  return result.value?.exchange?.outcome === 'hit' ? entry(true) : undefined
+})
+
+const riderResult = computed(() => result.value?.defense?.success)
+
+const resolveLabel = (action: KnCreatureAction) => {
+  if (!isTest(action)) return 'Se défendre'
+  return action.tag === 'magical' || action.checks?.length ? 'Faire le test du survivant' : 'Calculer les dégâts'
+}
+
+const testText = computed(() => {
+  const r = result.value
+  if (!r?.defense) return ''
+  if (r.action.damage?.always) return r.defense.success ? 'Test réussi : les dégâts restent dus, pas les autres effets.' : 'Test raté : les dégâts et les autres effets s\'appliquent.'
+  return r.defense.success ? 'Résisté : aucun effet de dégâts.' : 'Raté : les effets de l\'action s\'appliquent.'
 })
 
 function takeRider(index: number) {
   const action = drawn.value?.action
   const outcome = action?.outcomes?.[index]
   if (!action || !outcome || !knOutcomeAvailable(action.outcomes ?? [], taken.value, index)) return
-  applyEffects(outcome.effects, action.name)
+  applyEffects(outcome.effects, action.name, { creature: true })
   taken.value = [...taken.value, index]
   log(`${action.name} : effets appliqués au survivant`)
 }
@@ -275,7 +295,7 @@ function takeRider(index: number) {
 const canApply = computed(() => {
   const r = result.value
   if (!r) return false
-  if (r.action.tag === 'magical') return !!r.defense && !r.defense.success
+  if (isTest(r.action)) return r.amount !== undefined
   return r.exchange?.outcome === 'hit' || r.exchange?.outcome === 'bothFail'
 })
 

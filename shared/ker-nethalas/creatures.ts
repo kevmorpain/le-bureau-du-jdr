@@ -31,8 +31,18 @@ export const knCreatureActionSchema = z.object({
   name: z.string().trim().min(1).max(100),
   // Une action Physique se défend à l'arme ou à l'Esquive, une Magique par un test de Résistance magique du joueur.
   tag: z.enum(['physical', 'magical']).optional(),
-  // Les dégâts directs de l'action, appliqués au survivant touché (Physique) ou qui rate sa Résistance magique (Magique).
-  damage: z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES) }).optional(),
+  // Les dégâts directs de l'action, appliqués au survivant touché (Physique) ou qui rate son test (Magique, ou sans étiquette
+  // quand elle en a un).
+  damage: z.object({
+    dice: knDiceSchema,
+    type: z.enum(KN_DAMAGE_TYPES),
+    // Dés qui rejoignent la réserve : seul le plus haut des dés lancés compte.
+    extra: z.array(knDiceSchema).max(3).optional(),
+    // Dégâts qui atteignent la Santé sans passer par la Robustesse.
+    direct: z.boolean().optional(),
+    // Dus que le test du survivant réussisse ou non : il ne sert alors qu'aux effets annexes.
+    always: z.boolean().optional(),
+  }).optional(),
   // Le test que l'action demande au survivant (sa défense, pour une action Magique), et ce qui s'applique selon son résultat :
   // états, dégâts annexes. Le texte garde ce qui ne s'automatise pas.
   checks: z.array(z.object({ skill: z.enum(KN_CHECK_KEYS), group: boundedInt({ min: 0, max: 3 }).optional() })).max(3).optional(),
