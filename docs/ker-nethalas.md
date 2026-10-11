@@ -403,6 +403,24 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN36 — Exploration : tables de tirage privées, jets enregistrés par numéro
+- **Règles sourcées** (livre v1.2, p. 98-99 et 117) : la forme d'une entrée se tire au D100 (1-25 couloir, 26-100 salle) ;
+  rencontre de combat au D20, 10 ou plus dans une salle, 15 ou plus dans un couloir ; un événement se tire dans une salle
+  seulement, si aucun combat n'a lieu ; une porte au D10 (1-5 présente, 6-10 absente), à vérifier pour verrous et pièges ;
+  fouille au D20 après un test de Fouille réussi.
+- **Tables** : format public `{ die, entries: [{ min, max, title?, text, effects? }] }`, validé par Zod (les plages couvrent
+  1..dé sans trou ni chevauchement). Le contenu (descriptions de couloirs et de salles, fouille, événements) est privé,
+  chargé comme les Maîtrises (KN27) ; `useKnContent` renvoie `null` s'il est absent, et l'écran invite alors à noter le
+  résultat du livre.
+- **Chemin du Domaine** : chaque visite ne garde que les **numéros** tirés (forme, description, rencontre, événement, porte,
+  fouille), jamais le texte : le texte se relit dans la table, qui peut être corrigée sans toucher aux parties en cours.
+  Un jet saisi à la main est accepté partout.
+- **Effets de table** : `effects` ne porte que des gains ou pertes inconditionnels (pièces, provisions, XP, jauges, avec dés) ;
+  « Appliquer le résultat » les applique au survivant, bornés (provisions et jauges au maximum, pertes au plancher 0). Ce qui
+  dépend d'un test reste en texte, à jouer à la table.
+- **Laissé de côté** : les illustrations de forme des salles (non reprises, accord éditeur) ; événements (5b), verrous et
+  pièges (5c).
+
 ### KN35 — Activités de camp ajoutées par les traits, bonus au test de Camp, composants rituels
 - **Règles sourcées** (livre v1.2, p. 124-125) : les activités de camp ont chacune un coût en Épuisement et un modificateur du
   test de Camp, payés une fois quelle que soit la quantité pour les activités de fabrication ; « Swap Mastery Amulets » est une
@@ -595,7 +613,9 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
-| **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
+| **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
+| **5b — Événements** | table des événements (D100) | à faire |
+| **5c — Verrous, pièges, Overseer** | verrous et pièges des portes et contenants, fouille approfondie, Overseer et son influence | à faire |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
@@ -698,6 +718,15 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 5a : exploration, tables et jets de la pièce
+- Décision KN36 ; aucune migration (champs optionnels dans la colonne JSON `run`). Contenu privé : 20 descriptions de couloirs
+  (D20), 100 de salles (D100), table de fouille (D20), hors du dépôt.
+- Vérifié sur la base locale, contenu chargé sauf les événements : « Nouvelle entrée (forme au D100) » (95 → salle) ; tirage de
+  description, de rencontre (1 : pas de combat), d'événement (apparaît après l'absence de combat, texte « non chargé » faute de
+  table), de porte (1 : présente) et de fouille (4 : D4 Fournitures) enregistrés dans la visite ; « Appliquer le résultat »
+  proposé ; une fois appliqué, les Fournitures d'Artisanat passent de 0 à 4 et la visite est marquée appliquée.
+- Suite de la tranche : 5b les événements, 5c verrous, pièges et Overseer.
 
 ### 2026-10-11 — Tranche 4f-4 : activités de camp des traits
 - Décision KN35 ; migration `0142` (composants rituels). Le test de contrat des migrations rejoue la chaîne depuis une base

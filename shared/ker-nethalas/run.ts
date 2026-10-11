@@ -6,6 +6,7 @@ import {
   type KnGrowingDarknessKey,
 } from './catalog/growingDarkness'
 import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
+import { knEncounterTriggered, knHasDoor } from './exploration'
 import { KN_SKILL_KEYS } from './skills'
 import { boundedInt } from './zodHelpers'
 
@@ -68,12 +69,22 @@ const knDieResultSchema = z.object({
   triggered: z.boolean(),
 })
 
+// Un tirage dans une table du livre : on garde le numéro, jamais le texte, qui se relit dans le contenu chargé.
+const knTableRollSchema = z.object({ roll: boundedInt({ min: 1, max: 100 }) })
+
 export const knVisitSchema = z.object({
   kind: z.enum(KN_VISIT_KINDS),
   usageKind: z.enum(['lair', 'exit']).nullable(),
   tension: knDieResultSchema.optional(),
   usage: knDieResultSchema.optional(),
   darkness: knGrowingDarknessDrawSchema.optional(),
+  // D100 de forme, qui a décidé du type d'entrée ; absent quand le type a été choisi à la main.
+  shape: knTableRollSchema.optional(),
+  description: knTableRollSchema.optional(),
+  encounter: z.object({ roll: boundedInt({ min: 1, max: 20 }), triggered: z.boolean() }).optional(),
+  event: knTableRollSchema.optional(),
+  door: z.object({ roll: boundedInt({ min: 1, max: 10 }), present: z.boolean() }).optional(),
+  scavenge: knTableRollSchema.extend({ applied: z.boolean() }).optional(),
 })
 
 export const knDomainSchema = z.object({
@@ -237,11 +248,13 @@ function withLastVisit(run: KnRun, update: (visit: KnVisit) => KnVisit): KnRun {
 }
 
 // Le dé de Lair, puis celui de Sortie une fois le Lair trouvé, se lancent à chaque nouvelle salle ou couloir.
-export function knStartVisit(run: KnRun, kind: KnVisitKind): KnRun {
+// `shapeRoll` : le D100 de forme qui a décidé du type d'entrée.
+export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number): KnRun {
   const domain = knCurrentDomain(run)
   const usageKind: KnVisit['usageKind'] = kind === 'revisit' || domain.exitFound ? null : domain.lairFound ? 'exit' : 'lair'
   const entered = knEnterRoom(run, { isNew: kind !== 'revisit' })
-  const visits = [...knCurrentDomain(entered).visits, { kind, usageKind }].slice(-KN_RUN_BOUNDS.visits)
+  const visit: KnVisit = { kind, usageKind, ...(shapeRoll === undefined ? {} : { shape: { roll: shapeRoll } }) }
+  const visits = [...knCurrentDomain(entered).visits, visit].slice(-KN_RUN_BOUNDS.visits)
   return withCurrentDomain(entered, { visits })
 }
 
@@ -271,6 +284,47 @@ export function knRecordDarkness(run: KnRun, draw: KnGrowingDarknessDraw): KnRun
   const visit = knCurrentVisit(run)
   if (!visit?.tension?.triggered || visit.darkness) return run
   return withLastVisit(knAddGrowingDarkness(run, draw), v => ({ ...v, darkness: draw }))
+}
+
+// Pas de rencontre de combat dans une zone déjà explorée ni dans le Lair de l'Overseer.
+export const knVisitCanHaveEncounter = (visit: KnVisit) => visit.kind !== 'revisit' && !knVisitFoundLair(visit)
+
+// Pas d'événement dans un couloir ni dans une zone déjà explorée, ni dans le Lair, ni après une rencontre de combat.
+export const knVisitCanHaveEvent = (visit: KnVisit) =>
+  visit.kind === 'room' && !knVisitFoundLair(visit) && visit.encounter?.triggered === false
+
+export function knRecordDescription(run: KnRun, roll: number): KnRun {
+  const visit = knCurrentVisit(run)
+  return visit && visit.kind !== 'revisit' ? withLastVisit(run, v => ({ ...v, description: { roll } })) : run
+}
+
+export function knRecordEncounter(run: KnRun, roll: number): KnRun {
+  const visit = knCurrentVisit(run)
+  if (!visit || visit.encounter || !knVisitCanHaveEncounter(visit)) return run
+  const { kind } = visit
+  if (kind === 'revisit') return run
+  return withLastVisit(run, v => ({ ...v, encounter: { roll, triggered: knEncounterTriggered(kind, roll) } }))
+}
+
+export function knRecordEvent(run: KnRun, roll: number): KnRun {
+  const visit = knCurrentVisit(run)
+  return visit && !visit.event && knVisitCanHaveEvent(visit) ? withLastVisit(run, v => ({ ...v, event: { roll } })) : run
+}
+
+export function knRecordDoor(run: KnRun, roll: number): KnRun {
+  const visit = knCurrentVisit(run)
+  return visit && !visit.door ? withLastVisit(run, v => ({ ...v, door: { roll, present: knHasDoor(roll) } })) : run
+}
+
+// Une fouille par salle, hors zone explorée : le test de Fouille se fait à part, le tirage vient après sa réussite.
+export function knRecordScavenge(run: KnRun, roll: number): KnRun {
+  const visit = knCurrentVisit(run)
+  return visit && visit.kind !== 'revisit' && !visit.scavenge ? withLastVisit(run, v => ({ ...v, scavenge: { roll, applied: false } })) : run
+}
+
+export function knMarkScavengeApplied(run: KnRun): KnRun {
+  const visit = knCurrentVisit(run)
+  return visit?.scavenge ? withLastVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, applied: true } })) : run
 }
 
 // Le dé en cours de recherche : celui de Lair tant que le Lair n'est pas trouvé, puis celui de Sortie.

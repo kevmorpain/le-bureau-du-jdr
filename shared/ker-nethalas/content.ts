@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import { knPersonalGoalsContentSchema } from './goals'
 import { knMasteriesContentSchema } from './masteries'
+import { KN_EXPLORATION_TABLES, knRollTableSchema } from './tables'
 
 export type KnContentRegistry = Record<string, z.ZodType>
 
@@ -8,6 +9,7 @@ export type KnContentRegistry = Record<string, z.ZodType>
 export const KN_CONTENT_SCHEMAS: KnContentRegistry = {
   masteries: knMasteriesContentSchema,
   personalGoals: knPersonalGoalsContentSchema,
+  ...Object.fromEntries(Object.entries(KN_EXPLORATION_TABLES).map(([name, { die }]) => [name, knRollTableSchema(die)])),
 }
 
 export const KN_CONTENT_NAME_RE = /^[a-z][a-zA-Z0-9]{0,39}$/

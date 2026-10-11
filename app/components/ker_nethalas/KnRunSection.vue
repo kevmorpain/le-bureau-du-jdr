@@ -5,7 +5,7 @@
         Run
       </h2>
       <p class="text-sm text-muted">
-        Chaque entrée dans une salle retire la lumière et recharge l'Éther, puis ouvre un bloc qui garde les dés lancés : les blocs forment le chemin du Domaine. Les dés se lancent ici, ou se saisissent avec « 1-2 » et « 3+ » si vous avez lancé les vôtres.
+        Chaque entrée dans une salle retire la lumière et recharge l'Éther, puis ouvre un bloc qui garde les dés lancés : les blocs forment le chemin du Domaine. Les dés se lancent ici, ou se saisissent si vous avez lancé les vôtres. « Nouvelle entrée » tire la forme au D100 (1-25 un couloir, 26-100 une salle).
       </p>
     </template>
 
@@ -117,7 +117,16 @@
 
       <div class="space-y-3">
         <div class="flex flex-wrap gap-2">
-          <UButton @click="enter('room')">
+          <UButton
+            icon="i-heroicons:cube"
+            @click="enterByShape"
+          >
+            Nouvelle entrée (forme au D100)
+          </UButton>
+          <UButton
+            variant="soft"
+            @click="enter('room')"
+          >
             Nouvelle salle
           </UButton>
           <UButton
@@ -157,10 +166,13 @@
             :tension-die="run.tensionDie"
             :lair-die="domain.lairDie"
             :exit-die="domain.exitDie"
+            :tables
             @tension="tension"
             @usage="usage"
             @draw="drawDarkness"
             @undo="undo"
+            @table="tableRoll"
+            @apply-scavenge="applyScavenge"
           />
         </div>
       </div>
@@ -173,6 +185,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_DOOR_DIE, KN_ENCOUNTER_DIE, KN_SHAPE_DIE, knShapeKind, type KnVisitTable } from '~~/shared/ker-nethalas/exploration'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import {
   KN_LIGHT_ROOMS,
@@ -180,9 +193,16 @@ import {
   KN_RUN_BOUNDS,
   KN_USAGE_DICE,
   knCurrentDomain,
+  knCurrentVisit,
   knDrawGrowingDarkness,
+  knMarkScavengeApplied,
   knNewDomain,
   knRecordDarkness,
+  knRecordDescription,
+  knRecordDoor,
+  knRecordEncounter,
+  knRecordEvent,
+  knRecordScavenge,
   knRecordTension,
   knRecordUsage,
   knRollDie,
@@ -192,13 +212,18 @@ import {
   type KnUsageDie,
   type KnVisitKind,
 } from '~~/shared/ker-nethalas/run'
+import { KN_EXPLORATION_TABLES, knApplyTableEffects, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
+  tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+const toast = useToast()
+const { t } = useI18n()
 
 const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))
@@ -232,8 +257,14 @@ function newDomain() {
   character.value.run = knNewDomain(character.value.run)
 }
 
-function enter(kind: KnVisitKind) {
-  character.value.run = knStartVisit(character.value.run, kind)
+// La forme tirée au D100 décide du type d'entrée : 1-25 un couloir, 26-100 une salle.
+function enterByShape() {
+  const roll = knRollDie(KN_SHAPE_DIE)
+  enter(knShapeKind(roll), roll)
+}
+
+function enter(kind: KnVisitKind, shapeRoll?: number) {
+  character.value.run = knStartVisit(character.value.run, kind, shapeRoll)
   character.value.status = knResetUses(character.value.status, ['room'])
   character.value.aetherCurrent = props.resolved.maxVitals.aether.effective
 }
@@ -254,6 +285,69 @@ function usage(manual?: number) {
 
 function drawDarkness() {
   character.value.run = knRecordDarkness(character.value.run, knDrawGrowingDarkness())
+}
+
+const TABLE_RECORDS = {
+  description: knRecordDescription,
+  encounter: knRecordEncounter,
+  event: knRecordEvent,
+  door: knRecordDoor,
+  scavenge: knRecordScavenge,
+}
+
+function tableDie(name: KnVisitTable) {
+  if (name === 'encounter') return KN_ENCOUNTER_DIE
+  if (name === 'door') return KN_DOOR_DIE
+  if (name === 'event') return KN_EXPLORATION_TABLES.events.die
+  if (name === 'scavenge') return KN_EXPLORATION_TABLES.scavenging.die
+  return knCurrentVisit(character.value.run)?.kind === 'corridor'
+    ? KN_EXPLORATION_TABLES.corridorDescriptions.die
+    : KN_EXPLORATION_TABLES.roomDescriptions.die
+}
+
+function tableRoll(name: KnVisitTable, manual?: number) {
+  const roll = manual ?? knRollDie(tableDie(name))
+  character.value.run = TABLE_RECORDS[name](character.value.run, roll)
+}
+
+// Gains et pertes sans test d'un résultat de fouille : pièces, provisions, expérience, jauges.
+function applyScavenge() {
+  const c = character.value
+  const visit = knCurrentVisit(c.run)
+  const effects = knTableEntry(props.tables.scavenging ?? null, visit?.scavenge?.roll ?? 0)?.effects ?? []
+  if (!visit?.scavenge || visit.scavenge.applied || !effects.length) return
+
+  const { state, outcomes } = knApplyTableEffects(effects, {
+    coins: c.coins,
+    xp: c.xp,
+    provisions: c.provisions,
+    health: c.healthCurrent,
+    toughness: c.toughnessCurrent,
+    sanity: c.sanityCurrent,
+    aether: c.aetherCurrent,
+  }, {
+    health: props.resolved.maxVitals.health.effective,
+    toughness: props.resolved.maxVitals.toughness.effective,
+    sanity: props.resolved.maxVitals.sanity.effective,
+    aether: props.resolved.maxVitals.aether.effective,
+  })
+
+  c.coins = state.coins
+  c.xp = state.xp
+  c.provisions = state.provisions
+  c.healthCurrent = state.health
+  c.toughnessCurrent = state.toughness
+  c.sanityCurrent = state.sanity
+  c.aetherCurrent = state.aether
+  c.run = knMarkScavengeApplied(c.run)
+
+  const lines = outcomes.map(({ effect, roll }) => {
+    if (effect.kind === 'coins') return `${roll.total} ₵`
+    if (effect.kind === 'xp') return `${roll.total} XP`
+    if (effect.kind === 'provision') return `${roll.total} ${t(`ker_nethalas.provisions.${effect.key}`)}`
+    return `${effect.sign === 'gain' ? '+' : '−'}${roll.total} ${t(`ker_nethalas.vitals.${effect.vital}`).toLowerCase()}`
+  })
+  toast.add({ title: 'Fouille appliquée', description: lines.join(' · '), color: 'success' })
 }
 
 function undo() {
