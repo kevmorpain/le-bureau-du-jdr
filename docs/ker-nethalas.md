@@ -419,8 +419,10 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Fiche** : le panneau du camp liste les activités de trait avec leur coût, un champ de quantité (0 ou 1 sinon), le bonus
   d'aptitudes dans la ligne du test ; à la fin du camp, les effets sur soi des activités faites sont jetés et appliqués, et
   dits dans le compte rendu.
-- **Interprétation** : le gain d'une activité de trait (Prier soigne la Santé mentale) n'est pas un « bénéfice du camp » : il
-  n'est pas réduit de moitié après un test raté ou sans Ration, comme les effets de l'activité Dormir.
+- **Interprétation (du PM)** : « un échec réduit tous les bénéfices du camp de moitié, arrondi à l'inférieur » (p. 124) vaut
+  pour le résultat de toutes les activités, Prier compris : le gain d'une activité de trait est réduit de moitié, arrondi à
+  l'inférieur, après un test raté ou sans Ration. ⚠️ Le résultat de Dormir (−5 d'Épuisement, +1 Santé) et la production des
+  activités de fabrication, eux, ne sont pas réduits (choix de la tranche 2b, non revu) : à confirmer avec le PM.
 - **Contenu privé** : deux activités (le trait d'une Maîtrise de foi, celui d'une Maîtrise de rituels) et un bonus de +2.
 - **Laissé de côté** : la dépense de composants rituels dans les aptitudes du Ritualiste (quantités variables) ; ils se
   tiennent dans les provisions et se retirent à la main.

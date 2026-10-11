@@ -155,6 +155,18 @@ describe('effets sur soi', () => {
     expect(next).toMatchObject({ sanity: 14, aether: 25 })
   })
 
+  it('réduit chaque résultat de moitié, arrondi à l\'inférieur, quand les bénéfices du camp le sont', () => {
+    const effects = [{ kind: 'recover' as const, vital: 'sanity' as const, dice: { count: 0, sides: 0, bonus: 5 } }]
+    const full = knApplySelfEffects(effects, state(), rng)
+    const half = knApplySelfEffects(effects, state(), rng, { halved: true })
+
+    expect(full.outcomes[0]).toMatchObject({ applied: 5 })
+    expect(full.state.sanity).toBe(10)
+    expect(half.outcomes[0]).toMatchObject({ applied: 2, roll: { total: 5 } })
+    expect(half.state.sanity).toBe(7)
+    expect(knApplySelfEffects([{ kind: 'woundsHeal', dice: fixed(1) }], state(), rng, { halved: true }).state).toMatchObject({ toughness: 10, health: 12 })
+  })
+
   it('ajoute des points temporaires, qui s\'additionnent', () => {
     const { state: next } = knApplySelfEffects([
       { kind: 'temporary', vital: 'toughness', dice: fixed(5) },

@@ -273,7 +273,7 @@ function finish() {
   c.provisions = outcome.provisions
   c.status = knRest(c.status, 'camp')
 
-  // Les effets d'une activité de trait (Prier soigne la Santé mentale) ne sont pas des bénéfices du camp : pas de moitié.
+  // Le résultat d'une activité de trait (Prier soigne la Santé mentale) suit les bénéfices du camp : réduit de moitié avec eux.
   const recover = knCampRecoverEffects(context.value.traitActivities, used.traitActivities)
   const recovered = knApplySelfEffects(recover, {
     toughness: c.toughnessCurrent,
@@ -285,7 +285,7 @@ function finish() {
     aether: c.aetherCurrent,
     aetherMax: props.resolved.maxVitals.aether.effective,
     status: c.status,
-  })
+  }, Math.random, { halved: outcome.halved })
   c.toughnessCurrent = recovered.state.toughness
   c.healthCurrent = recovered.state.health
   c.sanityCurrent = recovered.state.sanity
@@ -306,8 +306,10 @@ function finish() {
       `${gain('Épuisement', outcome.gains.exhaustion)} (coûts des activités compris)`,
     ].join(' · ') + (outcome.rotHealthRoll === undefined ? '' : ` · D4 de Santé de la Pourriture : ${outcome.rotHealthRoll}`),
   )
-  for (const { effect, label, roll: dice } of recovered.outcomes) {
-    if (effect.kind === 'recover') lines.push(`${t(`ker_nethalas.vitals.${effect.vital}`)} +${dice.total} (${label} : ${dice.rolls.join(' + ') || dice.total}), activité de trait`)
+  for (const { effect, label, roll: dice, applied } of recovered.outcomes) {
+    const what = effect.kind === 'woundsHeal' ? 'Blessures soignées' : t(`ker_nethalas.vitals.${effect.vital}`)
+    const detail = `${label} : ${dice.rolls.join(' + ') || dice.total}${outcome.halved ? `, moitié de ${dice.total}` : ''}`
+    lines.push(`${what} +${applied} (${detail}), activité de trait`)
   }
   if (!outcome.success) lines.push('Test raté : tirez dans la table des Rencontres (les bénéfices réduits sont déjà appliqués).')
   if (c.status.rotStage >= 1) lines.push('Pourriture : test d\'Endurance, sinon elle avance d\'un stade.')
