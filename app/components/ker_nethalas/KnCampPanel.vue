@@ -249,14 +249,31 @@ function finish() {
   if (roll.value === null) return
   const c = character.value
   const used = plan.value
+
+  // Les activités se font d'abord, leurs effets sur soi compris (Prier soigne la Santé mentale), puis viennent les bénéfices du
+  // camp, seuls réduits de moitié après un test raté ou sans Ration.
+  const recovered = knApplySelfEffects(knCampRecoverEffects(context.value.traitActivities, used.traitActivities), {
+    toughness: c.toughnessCurrent,
+    toughnessMax: props.resolved.maxVitals.toughness.effective,
+    health: c.healthCurrent,
+    healthMax: props.resolved.maxVitals.health.effective,
+    sanity: c.sanityCurrent,
+    sanityMax: props.resolved.maxVitals.sanity.effective,
+    aether: c.aetherCurrent,
+    aetherMax: props.resolved.maxVitals.aether.effective,
+    status: c.status,
+  })
+
+  const before = { toughness: c.toughnessCurrent, health: c.healthCurrent, sanity: c.sanityCurrent, aether: c.aetherCurrent }
+
   const outcome = knFinishCamp(
     used,
     {
-      toughness: c.toughnessCurrent,
+      toughness: recovered.state.toughness,
       toughnessMax: props.resolved.maxVitals.toughness.effective,
-      health: c.healthCurrent,
+      health: recovered.state.health,
       healthMax: props.resolved.maxVitals.health.effective,
-      sanity: c.sanityCurrent,
+      sanity: recovered.state.sanity,
       sanityMax: props.resolved.maxVitals.sanity.effective,
       exhaustion: c.exhaustion,
       rotStage: c.status.rotStage,
@@ -269,28 +286,10 @@ function finish() {
   c.toughnessCurrent = outcome.state.toughness
   c.healthCurrent = outcome.state.health
   c.sanityCurrent = outcome.state.sanity
+  c.aetherCurrent = recovered.state.aether
   c.exhaustion = Math.min(KN_BOUNDS.exhaustion.max, outcome.state.exhaustion)
   c.provisions = outcome.provisions
-  c.status = knRest(c.status, 'camp')
-
-  // Les effets d'une activité de trait (Prier soigne la Santé mentale) ne sont pas des bénéfices du camp : pas de moitié.
-  const recover = knCampRecoverEffects(context.value.traitActivities, used.traitActivities)
-  const recovered = knApplySelfEffects(recover, {
-    toughness: c.toughnessCurrent,
-    toughnessMax: props.resolved.maxVitals.toughness.effective,
-    health: c.healthCurrent,
-    healthMax: props.resolved.maxVitals.health.effective,
-    sanity: c.sanityCurrent,
-    sanityMax: props.resolved.maxVitals.sanity.effective,
-    aether: c.aetherCurrent,
-    aetherMax: props.resolved.maxVitals.aether.effective,
-    status: c.status,
-  })
-  c.toughnessCurrent = recovered.state.toughness
-  c.healthCurrent = recovered.state.health
-  c.sanityCurrent = recovered.state.sanity
-  c.aetherCurrent = recovered.state.aether
-  c.status = recovered.state.status
+  c.status = knRest(recovered.state.status, 'camp')
 
   const lines = [
     `Test de Camp : ${roll.value} ${signed(preview.value.checkModifier)} = ${outcome.total}, ${outcome.success ? 'réussi' : 'raté'}.`,
@@ -307,7 +306,10 @@ function finish() {
     ].join(' · ') + (outcome.rotHealthRoll === undefined ? '' : ` · D4 de Santé de la Pourriture : ${outcome.rotHealthRoll}`),
   )
   for (const { effect, label, roll: dice } of recovered.outcomes) {
-    if (effect.kind === 'recover') lines.push(`${t(`ker_nethalas.vitals.${effect.vital}`)} +${dice.total} (${label} : ${dice.rolls.join(' + ') || dice.total}), activité de trait`)
+    if (effect.kind !== 'recover') continue
+    const gained = recovered.state[effect.vital] - before[effect.vital]
+    const capped = gained < dice.total ? `, limité au maximum : +${gained}` : ''
+    lines.push(`${t(`ker_nethalas.vitals.${effect.vital}`)} +${dice.total} (${label} : ${dice.rolls.join(' + ') || dice.total}${capped}), activité de trait`)
   }
   if (!outcome.success) lines.push('Test raté : tirez dans la table des Rencontres (les bénéfices réduits sont déjà appliqués).')
   if (c.status.rotStage >= 1) lines.push('Pourriture : test d\'Endurance, sinon elle avance d\'un stade.')

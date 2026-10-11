@@ -420,7 +420,9 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   d'aptitudes dans la ligne du test ; à la fin du camp, les effets sur soi des activités faites sont jetés et appliqués, et
   dits dans le compte rendu.
 - **Interprétation** : le gain d'une activité de trait (Prier soigne la Santé mentale) n'est pas un « bénéfice du camp » : il
-  n'est pas réduit de moitié après un test raté ou sans Ration, comme les effets de l'activité Dormir.
+  n'est pas réduit de moitié après un test raté ou sans Ration, comme les effets de l'activité Dormir : seuls le sont les
+  bénéfices de la liste du livre (Robustesse, Santé, Santé mentale, Épuisement), calculés après les activités (confirmé par
+  le PM). L'effet de Prier est donc appliqué avant ces bénéfices, pour que le plafond de la jauge joue dans le bon ordre.
 - **Contenu privé** : deux activités (le trait d'une Maîtrise de foi, celui d'une Maîtrise de rituels) et un bonus de +2.
 - **Laissé de côté** : la dépense de composants rituels dans les aptitudes du Ritualiste (quantités variables) ; ils se
   tiennent dans les provisions et se retirent à la main.
