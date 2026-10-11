@@ -221,10 +221,19 @@ describe('utiliser une aptitude', () => {
   const ability = { ...fakeMastery('alpha').abilities[0]!, aether: 4, exhaustion: 2, health: 1 }
   const purse = { aetherCurrent: 10, healthCurrent: 12, exhaustion: 3 }
 
-  it('l\'Éther actuel doit couvrir le coût', () => {
+  it('chaque ressource doit couvrir son coût, sinon l\'utilisation est bloquée', () => {
     expect(knAbilityBlockers(ability, purse)).toEqual([])
     expect(knAbilityBlockers(ability, { ...purse, aetherCurrent: 3 })).toEqual(['Éther insuffisant'])
+    expect(knAbilityBlockers(ability, { ...purse, healthCurrent: 0 })).toEqual(['Santé insuffisante'])
+    expect(knAbilityBlockers(ability, { ...purse, aetherCurrent: 3, healthCurrent: 0 })).toEqual(['Éther insuffisant', 'Santé insuffisante'])
     expect(knAbilityBlockers({ ...ability, aether: null }, { ...purse, aetherCurrent: 0 })).toEqual([])
+  })
+
+  it('une ressource qui couvre exactement le coût n\'est pas bloquée', () => {
+    const exact = { aetherCurrent: 4, healthCurrent: 1, exhaustion: 0 }
+
+    expect(knAbilityBlockers(ability, exact)).toEqual([])
+    expect(knPayAbility(ability, exact)).toMatchObject({ aetherCurrent: 0, healthCurrent: 0 })
   })
 
   it('une aptitude Maintenue demande que l\'Éther maximum absorbe son coût', () => {

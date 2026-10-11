@@ -452,8 +452,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Fiche** : un bouton « Utiliser » par aptitude débloquée non passive (vérifie l'Éther actuel, déduit Éther et Santé, ajoute
   l'Épuisement) et un interrupteur « Maintenir » pour les aptitudes Maintenues (vérifie que l'Éther maximum absorbe le coût ;
   l'Éther actuel est ramené au nouveau maximum). Les effets sur la cible restent du texte.
-- **Interprétations** : une aptitude qui coûte de la Santé se paie même si la Santé tombe à 0 : le bouton ne se bloque pas (aucune règle écrite),
-  mais une notification prévient que le survivant meurt ; « +5 Santé
+- **Interprétations** : une aptitude dont le coût en Éther ou en Santé dépasse la ressource actuelle est bloquée (« Éther insuffisant »,
+  « Santé insuffisante », règle du PM) ; payer jusqu'à 0 reste permis, avec une notification si la Santé tombe à 0 ; « +5 Santé
   mentale » du trait d'une Maîtrise est lu comme +5 de **maximum** (⚠️ le livre ne précise pas) ; le tirage et l'application
   de dés d'effet ne sont pas faits.
 - **Alternative écartée** : coder les effets de chaque Maîtrise dans le moteur, qui lierait du contenu du livre au dépôt

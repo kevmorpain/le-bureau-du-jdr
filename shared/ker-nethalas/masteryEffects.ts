@@ -155,8 +155,12 @@ export interface KnAbilityPurse {
   exhaustion: number
 }
 
+// Une ressource qui ne couvre pas son coût bloque l'utilisation ; la payer jusqu'à 0 reste permis.
 export function knAbilityBlockers(ability: KnMasteryAbility, purse: KnAbilityPurse): string[] {
-  return ability.aether !== null && purse.aetherCurrent < ability.aether ? ['Éther insuffisant'] : []
+  const blockers: string[] = []
+  if (ability.aether !== null && purse.aetherCurrent < ability.aether) blockers.push('Éther insuffisant')
+  if (ability.health && purse.healthCurrent < ability.health) blockers.push('Santé insuffisante')
+  return blockers
 }
 
 // Une aptitude Maintenue ne se paie pas : elle réduit l'Éther maximum, qui doit pouvoir absorber son coût.
