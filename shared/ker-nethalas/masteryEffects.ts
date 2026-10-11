@@ -51,35 +51,30 @@ export interface KnSelfOutcome {
   effect: KnSelfEffect
   label: string
   roll: KnDiceRoll
-  // Ce qui a réellement été appliqué : le jet, ou sa moitié arrondie à l'inférieur quand les bénéfices sont réduits.
-  applied: number
 }
 
 const raise = (current: number, amount: number, max: number) => Math.max(current, Math.min(max, current + amount))
 
-// Chaque effet jette ses dés. Un gain ne ramène pas sous sa valeur une jauge déjà au-dessus de son maximum. `halved` réduit
-// chaque résultat de moitié, arrondi à l'inférieur (camp raté ou sans Ration).
+// Chaque effet jette ses dés. Un gain ne ramène pas sous sa valeur une jauge déjà au-dessus de son maximum.
 export function knApplySelfEffects(
   effects: readonly KnSelfEffect[],
   state: KnSelfState,
   rng: KnRng = Math.random,
-  { halved = false }: { halved?: boolean } = {},
 ): { state: KnSelfState, outcomes: KnSelfOutcome[] } {
   let next = { ...state }
   const outcomes: KnSelfOutcome[] = []
 
   for (const effect of effects) {
     const roll = knRollDice(effect.dice, rng)
-    const applied = halved ? Math.floor(roll.total / 2) : roll.total
-    outcomes.push({ effect, label: knDiceLabel(effect.dice), roll, applied })
+    outcomes.push({ effect, label: knDiceLabel(effect.dice), roll })
 
     if (effect.kind === 'woundsHeal') {
-      const healed = knHealWounds({ ...next, temporaryToughness: knTemporaryOf(next.status, 'toughness') }, applied)
+      const healed = knHealWounds({ ...next, temporaryToughness: knTemporaryOf(next.status, 'toughness') }, roll.total)
       next = { ...next, toughness: healed.toughness, health: healed.health }
     } else if (effect.kind === 'temporary') {
-      next = { ...next, status: knGainTemporary(next.status, effect.vital, applied) }
+      next = { ...next, status: knGainTemporary(next.status, effect.vital, roll.total) }
     } else {
-      next = recover(next, effect.vital, applied)
+      next = recover(next, effect.vital, roll.total)
     }
   }
 
