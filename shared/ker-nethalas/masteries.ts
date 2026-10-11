@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { KN_PROVISION_KEYS } from './camp'
 import { knDiceSchema } from './dice'
 import { KN_VITAL_KEYS } from './effects'
 import { KN_STATUS_BOUNDS, KN_USE_LIMITS, knCustomEntrySchema } from './status'
@@ -30,6 +31,25 @@ export type KnSelfEffect = z.infer<typeof knSelfEffectSchema>
 
 const knSelfEffectsSchema = z.array(knSelfEffectSchema).max(4)
 
+const knCampCheckSchema = boundedInt({ min: -20, max: 20 })
+
+const knProvisionDeltaSchema = z.record(z.enum(KN_PROVISION_KEYS), boundedInt({ min: 1, max: 99 }))
+
+// Une activité de camp qu'un trait ajoute à celles du livre. L'Épuisement et le modificateur du test de Camp se paient une
+// fois quelle que soit la quantité, `consumes` et `produces` par unité ; `quantity` en fait une activité à quantité, sinon
+// on la fait ou non. `recover` s'applique une fois, à la fin du camp.
+export const knCampActivitySchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  exhaustion: knCostSchema,
+  check: knCampCheckSchema,
+  consumes: knProvisionDeltaSchema.optional(),
+  produces: knProvisionDeltaSchema.optional(),
+  quantity: z.boolean().optional(),
+  recover: knSelfEffectsSchema.optional(),
+})
+
+export type KnCampActivity = z.infer<typeof knCampActivitySchema>
+
 export const knMasteryAbilitySchema = z.object({
   tier: boundedInt({ min: 1, max: KN_MASTERY_TIERS }),
   name: z.string().trim().min(1).max(100),
@@ -48,6 +68,8 @@ export const knMasteryAbilitySchema = z.object({
   // Fréquence d'utilisation, suivie par la fiche ; « une fois par cible » ou par arme reste du texte.
   limit: z.enum(KN_USE_LIMITS).optional(),
   self: knSelfEffectsSchema.optional(),
+  // Modifie le test de Camp tant que l'aptitude est débloquée.
+  campCheck: knCampCheckSchema.optional(),
   text: z.string().trim().min(1).max(2000),
 })
 
@@ -59,6 +81,7 @@ const knMasteryTextSchema = z.object({
 const knMasteryFeatureSchema = knMasteryTextSchema.extend({
   effects: knMasteryEffectsSchema.optional(),
   onCombatWon: knSelfEffectsSchema.optional(),
+  campActivity: knCampActivitySchema.optional(),
 })
 
 export const KN_MASTERY_TRAINING_COUNT = 6

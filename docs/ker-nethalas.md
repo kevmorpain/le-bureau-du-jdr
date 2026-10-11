@@ -403,6 +403,28 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN35 — Activités de camp ajoutées par les traits, bonus au test de Camp, composants rituels
+- **Règles sourcées** (livre v1.2, p. 124-125) : les activités de camp ont chacune un coût en Épuisement et un modificateur du
+  test de Camp, payés une fois quelle que soit la quantité pour les activités de fabrication ; « Swap Mastery Amulets » est une
+  activité de camp (sans coût) : l'outil rappelle qu'on ne change d'amulette qu'au camp sans le contrôler. Les textes des
+  traits donnent les activités ajoutées et le bonus d'une aptitude de Pisteur.
+- **Format public** (optionnel) : `campActivity` sur un trait (nom, Épuisement, modificateur du test, provisions consommées et
+  produites par unité, `quantity` pour une activité à quantité, `recover` pour des effets sur soi appliqués à la fin du camp) ;
+  `campCheck` sur une aptitude. `knCampTraits` (pur) les rassemble pour les Maîtrises possédées, `knCampContext` les reçoit,
+  `knPreviewCamp` les ajoute aux activités du livre (Épuisement et test une fois, provisions par unité, Dormir interdit toute
+  autre activité, y compris celles-ci, sauf Barricader).
+- **Provisions** : `ritualComponents` rejoint les provisions ; migration `0142` (`json_set`) pour les survivants existants, car
+  chaque provision est obligatoire. Le DEFAULT SQL de la colonne, que SQLite ne permet pas de modifier, reste celui de 0135 :
+  l'application fournit toujours les provisions à l'insertion.
+- **Fiche** : le panneau du camp liste les activités de trait avec leur coût, un champ de quantité (0 ou 1 sinon), le bonus
+  d'aptitudes dans la ligne du test ; à la fin du camp, les effets sur soi des activités faites sont jetés et appliqués, et
+  dits dans le compte rendu.
+- **Interprétation** : le gain d'une activité de trait (Prier soigne la Santé mentale) n'est pas un « bénéfice du camp » : il
+  n'est pas réduit de moitié après un test raté ou sans Ration, comme les effets de l'activité Dormir.
+- **Contenu privé** : deux activités (le trait d'une Maîtrise de foi, celui d'une Maîtrise de rituels) et un bonus de +2.
+- **Laissé de côté** : la dépense de composants rituels dans les aptitudes du Ritualiste (quantités variables) ; ils se
+  tiennent dans les provisions et se retirent à la main.
+
 ### KN34 — Points temporaires, Blessures, fréquences d'usage et effets sur soi
 - **Règles sourcées** (livre v1.2) : *Temporary* (p. 13) : un bonus temporaire dure jusqu'à être dépensé ou jusqu'à ce qu'on
   se repose, et peut dépasser le maximum ; les dégâts retirent d'abord la Robustesse, puis la Santé (p. 81) ; « récupérer X
@@ -569,7 +591,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4e — Amulettes** | amulettes possédées, une portée, paliers communs, tirage au D20 (KN32) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
-| **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, modificateurs du test de camp | à proposer |
+| **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
 | **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
@@ -674,6 +696,16 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 4f-4 : activités de camp des traits
+- Décision KN35 ; migration `0142` (composants rituels). Le test de contrat des migrations rejoue la chaîne depuis une base
+  vierge : il passe, avec un nouveau test de la 0142 sur des provisions existantes.
+- Vérifié sur une base vierge, survivant de niveau 6 avec deux Maîtrises et une amulette débloquée à 3 paliers : le panneau du
+  camp montre les deux activités de trait avec leurs coûts ; test de Camp D20 −3 (+2 d'une aptitude de l'amulette, −1, −4) ;
+  Épuisement des activités +2 ; 3 composants fabriqués pour 3 Fournitures (6 → 3) ; Ration consommée ; Santé mentale 4 → 8
+  (D4 du camp et D4 de l'activité, détaillés dans le compte rendu).
+- **Non vérifié** dans le navigateur : le cas d'un camp raté ou sans Ration pour ces activités, et l'activité à quantité
+  refusée faute de Fournitures (couverts par les tests des fonctions pures).
 
 ### 2026-10-11 — Tranche 4f-3 : points temporaires, Blessures, fréquences, effets sur soi
 - Règles précisées par le PM puis vérifiées dans le livre (voir la tranche 4e) ; le PM demande de garder la notion du

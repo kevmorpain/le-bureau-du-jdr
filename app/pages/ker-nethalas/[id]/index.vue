@@ -37,6 +37,7 @@
     <KnRestSection
       v-model:character="character"
       :resolved
+      :masteries
     />
 
     <KnRollSection

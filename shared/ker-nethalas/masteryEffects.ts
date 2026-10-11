@@ -1,4 +1,5 @@
 import type { KnMasteryEntry } from './amulets'
+import type { KnCampTraitActivity } from './camp'
 import { KN_BOUNDS } from './character'
 import { knDiceLabel, knRollDice, type KnDiceRoll } from './dice'
 import type { KnActiveSource, KnEffect, KnVitalKey } from './effects'
@@ -85,6 +86,33 @@ function recover(state: KnSelfState, vital: KnVitalKey, amount: number): KnSelfS
   if (vital === 'health') return { ...state, health: raise(state.health, amount, state.healthMax) }
   if (vital === 'sanity') return { ...state, sanity: raise(state.sanity, amount, state.sanityMax) }
   return { ...state, aether: raise(state.aether, amount, state.aetherMax) }
+}
+
+// Ce que les Maîtrises ajoutent au camp : les activités de leurs traits, et le modificateur du test de Camp de leurs aptitudes
+// débloquées.
+export function knCampTraits(
+  masteries: readonly KnMastery[],
+  entries: readonly KnMasteryEntry[],
+): { activities: KnCampTraitActivity[], checkBonus: number } {
+  const activities: KnCampTraitActivity[] = []
+  let checkBonus = 0
+
+  for (const entry of entries) {
+    const mastery = masteries.find(candidate => candidate.key === entry.key)
+    if (!mastery) continue
+    if (mastery.feature.campActivity) activities.push({ key: entry.key, activity: mastery.feature.campActivity })
+    checkBonus += unlockedAbilities(mastery, entry).reduce((sum, ability) => sum + (ability.campCheck ?? 0), 0)
+  }
+
+  return { activities, checkBonus }
+}
+
+// Les effets sur soi des activités de trait réellement faites pendant ce camp.
+export function knCampRecoverEffects(
+  traitActivities: readonly KnCampTraitActivity[],
+  counts: Readonly<Record<string, number>>,
+): KnSelfEffect[] {
+  return traitActivities.flatMap(({ key, activity }) => (counts[key] ?? 0) > 0 ? activity.recover ?? [] : [])
 }
 
 // Ce que chaque Maîtrise possédée donne quand un combat est remporté.

@@ -156,7 +156,8 @@
       "lampOil": "Huile de lampe",
       "lockpicks": "Crochets",
       "torches": "Torches",
-      "attunementCrystals": "Cristaux d'Harmonisation"
+      "attunementCrystals": "Cristaux d'Harmonisation",
+      "ritualComponents": "Composants rituels"
     },
     "camp": {
       "activities": {

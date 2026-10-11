@@ -60,6 +60,34 @@
         </li>
       </ul>
 
+      <ul
+        v-if="context.traitActivities.length"
+        class="space-y-3 border-t border-default pt-3"
+      >
+        <li
+          v-for="{ key, activity } in context.traitActivities"
+          :key
+          class="flex flex-wrap items-center gap-3"
+        >
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium">
+              {{ activity.name }}
+            </p>
+            <p class="text-xs text-muted">
+              {{ traitHint(activity) }}
+            </p>
+          </div>
+          <KnNumberField
+            :model-value="plan.traitActivities[key] ?? 0"
+            :aria-label="`${activity.name} : ${activity.quantity ? 'quantité' : '0 ou 1'}`"
+            :min="0"
+            :max="activity.quantity ? KN_CAMP_QUANTITY_MAX : 1"
+            class="w-28"
+            @update:model-value="plan.traitActivities = { ...plan.traitActivities, [key]: $event }"
+          />
+        </li>
+      </ul>
+
       <div class="flex flex-wrap items-center gap-3">
         <UCheckbox
           v-model="plan.sleep"
@@ -90,6 +118,12 @@
           class="text-muted"
         >
           (dont −{{ context.checkPenalty }} d'événements de l'Obscurité Grandissante)
+        </span>
+        <span
+          v-if="context.traitCheckBonus"
+          class="text-muted"
+        >
+          (dont {{ signed(context.traitCheckBonus) }} d'aptitudes de Maîtrise)
         </span>
       </li>
       <li :class="preview.hasRation ? '' : 'text-warning'">
@@ -149,6 +183,7 @@
 
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
 import {
   KN_CAMP_ACTIVITY_KEYS,
   KN_CAMP_CHECK,
@@ -160,12 +195,15 @@ import {
   type KnCampIssue,
 } from '~~/shared/ker-nethalas/camp'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import type { KnCampActivity, KnMastery } from '~~/shared/ker-nethalas/masteries'
+import { knApplySelfEffects, knCampRecoverEffects, knCampTraits } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCurrentDomain, knRollDie } from '~~/shared/ker-nethalas/run'
 import { knRest } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
+  masteries: KnMastery[] | null
 }>()
 
 const emit = defineEmits<{
@@ -181,7 +219,17 @@ const plan = ref(emptyKnCampPlan())
 const roll = ref<number | null>(null)
 const report = ref<string[] | null>(null)
 
-const context = computed(() => knCampContext(character.value.provisions, knCurrentDomain(character.value.run)))
+const traits = computed(() => props.masteries
+  ? knCampTraits(props.masteries, knMasteryEntries(character.value.masteryPicks, character.value.amulets))
+  : { activities: [], checkBonus: 0 })
+const context = computed(() => knCampContext(character.value.provisions, knCurrentDomain(character.value.run), traits.value))
+
+const traitHint = (activity: KnCampActivity) => [
+  activity.exhaustion ? `+${activity.exhaustion} Épuisement` : '',
+  activity.check ? `test de Camp ${signed(activity.check)}` : '',
+  ...Object.entries(activity.consumes ?? {}).map(([key, amount]) => `−${amount} ${t(`ker_nethalas.provisions.${key}`)}${activity.quantity ? ' par unité' : ''}`),
+  ...Object.entries(activity.produces ?? {}).map(([key, amount]) => `+${amount} ${t(`ker_nethalas.provisions.${key}`)}${activity.quantity ? ' par unité' : ''}`),
+].filter(Boolean).join(' · ')
 const preview = computed(() => knPreviewCamp(plan.value, context.value))
 const total = computed(() => roll.value === null ? undefined : roll.value + preview.value.checkModifier)
 
@@ -225,6 +273,25 @@ function finish() {
   c.provisions = outcome.provisions
   c.status = knRest(c.status, 'camp')
 
+  // Les effets d'une activité de trait (Prier soigne la Santé mentale) ne sont pas des bénéfices du camp : pas de moitié.
+  const recover = knCampRecoverEffects(context.value.traitActivities, used.traitActivities)
+  const recovered = knApplySelfEffects(recover, {
+    toughness: c.toughnessCurrent,
+    toughnessMax: props.resolved.maxVitals.toughness.effective,
+    health: c.healthCurrent,
+    healthMax: props.resolved.maxVitals.health.effective,
+    sanity: c.sanityCurrent,
+    sanityMax: props.resolved.maxVitals.sanity.effective,
+    aether: c.aetherCurrent,
+    aetherMax: props.resolved.maxVitals.aether.effective,
+    status: c.status,
+  })
+  c.toughnessCurrent = recovered.state.toughness
+  c.healthCurrent = recovered.state.health
+  c.sanityCurrent = recovered.state.sanity
+  c.aetherCurrent = recovered.state.aether
+  c.status = recovered.state.status
+
   const lines = [
     `Test de Camp : ${roll.value} ${signed(preview.value.checkModifier)} = ${outcome.total}, ${outcome.success ? 'réussi' : 'raté'}.`,
   ]
@@ -239,6 +306,9 @@ function finish() {
       `${gain('Épuisement', outcome.gains.exhaustion)} (coûts des activités compris)`,
     ].join(' · ') + (outcome.rotHealthRoll === undefined ? '' : ` · D4 de Santé de la Pourriture : ${outcome.rotHealthRoll}`),
   )
+  for (const { effect, label, roll: dice } of recovered.outcomes) {
+    if (effect.kind === 'recover') lines.push(`${t(`ker_nethalas.vitals.${effect.vital}`)} +${dice.total} (${label} : ${dice.rolls.join(' + ') || dice.total}), activité de trait`)
+  }
   if (!outcome.success) lines.push('Test raté : tirez dans la table des Rencontres (les bénéfices réduits sont déjà appliqués).')
   if (c.status.rotStage >= 1) lines.push('Pourriture : test d\'Endurance, sinon elle avance d\'un stade.')
   if (used.activities.healConditions > 0) lines.push('Retirez les Conditions soignées dans « Effets en cours ».')

@@ -39,6 +39,8 @@ const context = (over: Partial<KnProvisions> = {}, extra: Partial<KnCampContext>
   provisions: provisions(over),
   checkPenalty: 0,
   attuneBlocked: false,
+  traitActivities: [],
+  traitCheckBonus: 0,
   ...extra,
 })
 

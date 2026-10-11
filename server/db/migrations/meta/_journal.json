@@ -995,6 +995,13 @@
       "when": 1792900000000,
       "tag": "0141_ker_nethalas_amulets",
       "breakpoints": true
+    },
+    {
+      "idx": 142,
+      "version": "6",
+      "when": 1793000000000,
+      "tag": "0142_ker_nethalas_ritual_components",
+      "breakpoints": true
     }
   ]
 }
