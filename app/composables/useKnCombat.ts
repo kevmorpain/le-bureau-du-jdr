@@ -15,6 +15,7 @@ import {
   knPenetrating,
   knResolveDamage,
   knRollDamagePool,
+  knSelfAmount,
   knSurvivorArmorZone,
   knWithDisadvantage,
   type KnDamageResult,
@@ -22,13 +23,15 @@ import {
   type KnExchange,
 } from '~~/shared/ker-nethalas/combat'
 import { knReactionPenalty, type KnCombat } from '~~/shared/ker-nethalas/combatState'
-import { knArmorAt, knCreatureAtLevel, knFindCreature, type KnCreature, type KnCreatureAction } from '~~/shared/ker-nethalas/creatures'
+import { knArmorAt, knCreatureAtLevel, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knD100Check, type KnD100Result } from '~~/shared/ker-nethalas/roll'
 import {
   knCombatLog,
   knDamageCombatCreature,
+  knExpireCombatTemporary,
+  knGainCombatTemporary,
   knRegisterReaction,
   knRollDie,
   knSetCombatFirst,
@@ -75,6 +78,8 @@ export interface KnTurnResult {
   // Les dégâts atteignent la Santé sans passer par la Robustesse.
   direct?: boolean
   applied: boolean
+  // Dégâts finalement retirés au survivant.
+  dealt?: number
 }
 
 export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, bestiary: () => KnCreature[] | null) {
@@ -193,9 +198,25 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     result.applied = true
   }
 
+  // Ce que l'action fait à la créature qui l'a jouée : soins, Santé temporaire. `damage` : ce qu'elle vient d'infliger.
+  function applySelfEffect(index: number, effect: KnCreatureSelfEffect, damage: number) {
+    const target = combat.value?.creatures[index]
+    if (!target) return 0
+    const amount = knSelfAmount(effect.amount, { damage, health: target.health, maxHealth: target.maxHealth })
+    if (effect.kind === 'heal') {
+      character.value.run = knDamageCombatCreature(character.value.run, index, -amount)
+      log(`${target.name} récupère ${amount} Santé`)
+    } else {
+      character.value.run = knGainCombatTemporary(character.value.run, index, amount, { cap: effect.cap, until: effect.until })
+      log(`${target.name} gagne ${amount} Santé temporaire`)
+    }
+    return amount
+  }
+
   function drawAction(index: number) {
     const creature = creatureOf(index)
     if (!creature) return undefined
+    character.value.run = knExpireCombatTemporary(character.value.run, 'turn', index)
     const d6 = knRollDie(6)
     const action = creature.actions.find(a => d6 >= a.min && d6 <= a.max)
     return action ? { d6, action } : undefined
@@ -290,6 +311,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     c.status = next.status
     log(`${result.name} (${result.action.name}) : le survivant subit ${amount}${result.direct ? ' directement à la Santé' : ''}`)
     result.applied = true
+    result.dealt = amount
     toast.add({
       title: amount > 0 ? `${amount} dégâts subis` : 'Aucun dégât',
       description: before > 0 && next.health === 0 ? 'La Santé tombe à 0 : le survivant meurt.' : `Robustesse ${next.toughness}, Santé ${next.health}`,
@@ -300,5 +322,5 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, creatureOf, engage, opposed, attack, applyAttack, drawAction, takeTurn, applyToSurvivor, moveText, survivorArmor, log }
+  return { combat, level, creatureOf, engage, opposed, attack, applyAttack, drawAction, takeTurn, applyToSurvivor, applySelfEffect, moveText, survivorArmor, log }
 }

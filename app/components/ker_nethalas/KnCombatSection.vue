@@ -90,6 +90,13 @@
                 variant="subtle"
                 size="md"
               />
+              <UBadge
+                v-if="creature.temporary"
+                :label="`+${creature.temporary} Santé temporaire`"
+                color="info"
+                variant="subtle"
+                size="md"
+              />
             </p>
             <p
               v-if="!creatureOf(index)"

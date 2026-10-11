@@ -1,8 +1,8 @@
 import { KN_CREATURE_TYPE_RULES } from './catalog/creatureTypes'
 import { KN_ARMOR_IGNORED, type KnDamageType } from './catalog/damageTypes'
 import type { KnHitLocationKey } from './catalog/hitLocations'
-import { knCreatureAtLevel, type KnCreature, type KnCreatureAction } from './creatures'
-import type { KnDice } from './dice'
+import { knCreatureAtLevel, type KnCreature, type KnCreatureAction, type KnSelfAmount } from './creatures'
+import { knRollDice, type KnDice } from './dice'
 import type { KnRollMode } from './resolve'
 import type { KnD100Result } from './roll'
 import { knRollDie, type KnRng } from './run'
@@ -203,4 +203,11 @@ export function knOpposedCheck(a: KnD100Result, b: KnD100Result): 'a' | 'b' | 't
   const rankB = rankOf(b)
   if (rankA !== rankB) return rankA > rankB ? 'a' : 'b'
   return compare(a, b)
+}
+
+// Le montant d'un gain de la créature : un jet de dés, ou une part (arrondie au supérieur) de ce qu'elle vient d'infliger, de
+// sa Santé maximale ou de sa Santé actuelle.
+export function knSelfAmount(amount: KnSelfAmount, context: { damage: number, health: number, maxHealth: number }, rng: KnRng = Math.random): number {
+  if ('dice' in amount) return knRollDice(amount.dice, rng).total
+  return Math.ceil(context[amount.of] * amount.ratio)
 }

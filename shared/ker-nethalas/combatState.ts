@@ -15,6 +15,9 @@ export const knCombatCreatureSchema = z.object({
   name: z.string().trim().min(1).max(100),
   health: boundedInt(KN_COMBAT_BOUNDS.health),
   maxHealth: boundedInt({ min: 1, max: KN_COMBAT_BOUNDS.health.max }),
+  // Santé temporaire : dépensée avant la Santé, jusqu'à son prochain tour (`turn`) ou la fin du round (`round`) si elle expire.
+  temporary: boundedInt(KN_COMBAT_BOUNDS.health).optional(),
+  temporaryUntil: z.enum(['turn', 'round']).optional(),
 })
 
 export const knCombatSchema = z.object({

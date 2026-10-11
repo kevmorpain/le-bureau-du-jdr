@@ -577,12 +577,41 @@ export function knCombatLog(run: KnRun, line: string): KnRun {
   return run.combat ? { ...run, combat: { ...run.combat, log: [line, ...run.combat.log].slice(0, KN_COMBAT_BOUNDS.log) } } : run
 }
 
-// Dégâts (positifs) ou soins (négatifs) sur une créature engagée, entre 0 et sa Santé maximale.
+const withCreature = (run: KnRun, index: number, patch: (creature: KnCombatCreature) => KnCombatCreature): KnRun =>
+  run.combat ? { ...run, combat: { ...run.combat, creatures: run.combat.creatures.map((c, i) => i === index ? patch(c) : c) } } : run
+
+const withoutTemporary = ({ temporary: _temporary, temporaryUntil: _until, ...rest }: KnCombatCreature): KnCombatCreature => rest
+
+// Dégâts (positifs) ou soins (négatifs) sur une créature engagée, entre 0 et sa Santé maximale. Les dégâts retirent d'abord
+// sa Santé temporaire.
 export function knDamageCombatCreature(run: KnRun, index: number, amount: number): KnRun {
   const target = run.combat?.creatures[index]
-  if (!run.combat || !target) return run
-  const health = Math.min(target.maxHealth, Math.max(0, target.health - Math.trunc(amount)))
-  return { ...run, combat: { ...run.combat, creatures: run.combat.creatures.map((c, i) => i === index ? { ...c, health } : c) } }
+  if (!target) return run
+  const hit = Math.trunc(amount)
+  const absorbed = hit > 0 ? Math.min(target.temporary ?? 0, hit) : 0
+  const health = Math.min(target.maxHealth, Math.max(0, target.health - (hit - absorbed)))
+  return withCreature(run, index, (c) => {
+    const left = (c.temporary ?? 0) - absorbed
+    return { ...(left > 0 ? { ...c, temporary: left } : withoutTemporary(c)), health }
+  })
+}
+
+// Santé temporaire gagnée : `cap` est le multiple de sa Santé que la créature ne peut pas dépasser avec elle.
+export function knGainCombatTemporary(run: KnRun, index: number, amount: number, options: { cap?: number, until?: 'turn' | 'round' } = {}): KnRun {
+  const target = run.combat?.creatures[index]
+  if (!target || amount <= 0) return run
+  const room = options.cap === undefined ? KN_COMBAT_BOUNDS.health.max : Math.max(0, Math.floor(target.health * (options.cap - 1)))
+  const temporary = Math.min(room, (target.temporary ?? 0) + Math.trunc(amount), KN_COMBAT_BOUNDS.health.max)
+  if (temporary <= 0) return run
+  return withCreature(run, index, c => ({ ...c, temporary, ...(options.until ? { temporaryUntil: options.until } : {}) }))
+}
+
+// Sa Santé temporaire disparaît quand son terme arrive : au prochain tour de la créature, ou à la fin du round.
+export function knExpireCombatTemporary(run: KnRun, term: 'turn' | 'round', index?: number): KnRun {
+  if (!run.combat) return run
+  const expires = (c: KnCombatCreature, i: number) =>
+    c.temporaryUntil === term && (term === 'round' || i === index)
+  return { ...run, combat: { ...run.combat, creatures: run.combat.creatures.map((c, i) => expires(c, i) ? withoutTemporary(c) : c) } }
 }
 
 export function knSetCombatFirst(run: KnRun, first: 'survivor' | 'creatures'): KnRun {
@@ -596,7 +625,7 @@ export function knRegisterReaction(run: KnRun): KnRun {
 
 export function knNextCombatRound(run: KnRun): KnRun {
   if (!run.combat) return run
-  return { ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }
+  return knExpireCombatTemporary({ ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')
 }
 
 export function knSetCombatSurprise(run: KnRun, surprise: boolean): KnRun {

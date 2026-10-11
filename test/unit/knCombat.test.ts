@@ -3,6 +3,7 @@ import {
   knActionDamageDue,
   knActionIsTest,
   knActionPool,
+  knSelfAmount,
   knCombatExchange,
   knCreatureDamageTarget,
   knOpposedCheck,
@@ -20,6 +21,8 @@ import {
   knCombatLog,
   knDamageCombatCreature,
   knEndCombat,
+  knExpireCombatTemporary,
+  knGainCombatTemporary,
   knNextCombatRound,
   knRegisterReaction,
   knRunSchema,
@@ -32,6 +35,7 @@ import { knD100Check } from '../../shared/ker-nethalas/roll'
 import { knApplyDamage, knApplyTableEffects, type KnTableEffectState } from '../../shared/ker-nethalas/tables'
 import { emptyKnStatus } from '../../shared/ker-nethalas/status'
 import { knSetTemporary, knTemporaryOf } from '../../shared/ker-nethalas/vitals'
+import { knCreatureSelfEffectSchema } from '../../shared/ker-nethalas/creatures'
 import { fakeCreature } from '../fixtures/knCreatures'
 
 const check = (roll: number, score: number) => knD100Check({ roll, score, difficulty: 0, mode: 'normal' })
@@ -413,5 +417,55 @@ describe('dégâts d\'une action de créature', () => {
     const next = knApplyTableEffects([{ kind: 'damage', dice: d(0, 0, 2), direct: true }], state(), maxima).state
 
     expect(next).toMatchObject({ health: 10, toughness: 10 })
+  })
+})
+
+describe('soins et Santé temporaire d\'une créature', () => {
+  const foes = () => knStartCombat(emptyKnRun(), [{ name: 'A', health: 8, maxHealth: 10 }, { name: 'B', health: 6, maxHealth: 6 }])
+  const context = { damage: 5, health: 8, maxHealth: 10 }
+
+  it('un montant est un jet de dés, ou une part arrondie au supérieur', () => {
+    expect(knSelfAmount({ ratio: 0.5, of: 'damage' }, context)).toBe(3)
+    expect(knSelfAmount({ ratio: 0.5, of: 'maxHealth' }, context)).toBe(5)
+    expect(knSelfAmount({ ratio: 1, of: 'health' }, context)).toBe(8)
+    expect(knSelfAmount({ dice: { count: 2, sides: 4, bonus: 1 } }, context, () => 0.99)).toBe(9)
+  })
+
+  it('la Santé temporaire s\'ajoute, sans dépasser un plafond en multiple de la Santé', () => {
+    const run = knGainCombatTemporary(foes(), 0, 6, { cap: 2 })
+    const more = knGainCombatTemporary(run, 0, 6, { cap: 2 })
+
+    expect(run.combat!.creatures[0]).toMatchObject({ health: 8, temporary: 6 })
+    expect(more.combat!.creatures[0]!.temporary).toBe(8)
+    expect(knGainCombatTemporary(foes(), 0, 3).combat!.creatures[0]!.temporary).toBe(3)
+    expect(knGainCombatTemporary(foes(), 0, 0)).toEqual(foes())
+  })
+
+  it('les dégâts retirent d\'abord la Santé temporaire, qui ne revient pas avec un soin', () => {
+    const run = knGainCombatTemporary(foes(), 0, 4)
+    const hit = knDamageCombatCreature(run, 0, 6)
+    const healed = knDamageCombatCreature(run, 0, -5)
+
+    expect(hit.combat!.creatures[0]).toMatchObject({ health: 6 })
+    expect(hit.combat!.creatures[0]).not.toHaveProperty('temporary')
+    expect(healed.combat!.creatures[0]).toMatchObject({ health: 10, temporary: 4 })
+  })
+
+  it('elle disparaît à son terme : au prochain tour de la créature, ou à la fin du round', () => {
+    const turn = knGainCombatTemporary(foes(), 0, 4, { until: 'turn' })
+    const round = knGainCombatTemporary(foes(), 1, 4, { until: 'round' })
+    const both = knGainCombatTemporary(turn, 1, 4, { until: 'round' })
+
+    expect(knExpireCombatTemporary(both, 'turn', 0).combat!.creatures.map(c => c.temporary)).toEqual([undefined, 4])
+    expect(knExpireCombatTemporary(both, 'turn', 1).combat!.creatures.map(c => c.temporary)).toEqual([4, 4])
+    expect(knNextCombatRound(both).combat!.creatures.map(c => c.temporary)).toEqual([4, undefined])
+    expect(knExpireCombatTemporary(round, 'round').combat!.creatures[1]).not.toHaveProperty('temporary')
+  })
+
+  it('un effet d\'action accepte un montant en dés ou en part', () => {
+    expect(knCreatureSelfEffectSchema.safeParse({ kind: 'heal', amount: { ratio: 0.5, of: 'damage' } }).success).toBe(true)
+    expect(knCreatureSelfEffectSchema.safeParse({ kind: 'temporary', amount: { dice: { count: 2, sides: 4, bonus: 0 } }, cap: 2, until: 'turn' }).success).toBe(true)
+    expect(knCreatureSelfEffectSchema.safeParse({ kind: 'heal', amount: { ratio: 2, of: 'damage' } }).success).toBe(false)
+    expect(knCreatureSelfEffectSchema.safeParse({ kind: 'temporary', amount: { ratio: 0.5, of: 'moi' } }).success).toBe(false)
   })
 })

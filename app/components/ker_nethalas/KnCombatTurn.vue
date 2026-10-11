@@ -164,6 +164,36 @@
     </div>
 
     <div
+      v-if="selfEffects.length"
+      class="space-y-1"
+    >
+      <p class="text-xs font-medium text-muted">
+        Effets sur la créature
+      </p>
+      <ul class="space-y-1 text-sm">
+        <li
+          v-for="(effect, index) in selfEffects"
+          :key="index"
+          class="flex flex-wrap items-center gap-2"
+        >
+          <UButton
+            size="xs"
+            variant="soft"
+            :disabled="selfTaken.includes(index) || !selfReady(effect)"
+            @click="takeSelf(index)"
+          >
+            {{ selfTaken.includes(index) ? 'Appliqué' : 'Appliquer' }}
+          </UButton>
+          <span>{{ creatureName }} {{ selfEffectText(effect) }}</span>
+          <span
+            v-if="!selfReady(effect) && !selfTaken.includes(index)"
+            class="text-xs text-muted"
+          >Après avoir appliqué des dégâts au survivant.</span>
+        </li>
+      </ul>
+    </div>
+
+    <div
       v-if="rider && drawn"
       class="space-y-1"
     >
@@ -186,7 +216,7 @@ import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knActionIsTest } from '~~/shared/ker-nethalas/combat'
 import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
-import type { KnCreature, KnCreatureAction } from '~~/shared/ker-nethalas/creatures'
+import type { KnCreature, KnCreatureAction, KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knOutcomeAvailable, type KnRollTableEntry } from '~~/shared/ker-nethalas/tables'
 import { KN_WEAPON_SKILL_KEYS, type KnResistanceKey, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
@@ -200,8 +230,9 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, drawAction, takeTurn, applyToSurvivor, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, drawAction, takeTurn, applyToSurvivor, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
+const { selfEffectText } = useKnEffectText()
 
 const isTest = knActionIsTest
 
@@ -212,11 +243,12 @@ const bonus = ref(0)
 const manualAmount = ref(0)
 const drawn = ref<{ d6: number, action: KnCreatureAction } | undefined>()
 const taken = ref<number[]>([])
+const selfTaken = ref<number[]>([])
 const result = ref<KnTurnResult | undefined>()
 
 const whoItems = computed<SelectItem[]>(() =>
   (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0
-    ? [{ label: `${creature.name} (${creature.health}/${creature.maxHealth})`, value: index }]
+    ? [{ label: `${creature.name} (${creature.health}/${creature.maxHealth}${creature.temporary ? ` +${creature.temporary}` : ''})`, value: index }]
     : []),
 )
 
@@ -247,6 +279,7 @@ const canAct = computed(() => whoItems.value.some(item => item.value === who.val
 function drawNow() {
   result.value = undefined
   taken.value = []
+  selfTaken.value = []
   drawn.value = drawAction(who.value)
   magicCheck.value = drawn.value?.action.checks?.[0]?.skill ?? 'spellward'
 }
@@ -282,6 +315,20 @@ const testText = computed(() => {
   if (r.action.damage?.always) return r.defense.success ? 'Test réussi : les dégâts restent dus, pas les autres effets.' : 'Test raté : les dégâts et les autres effets s\'appliquent.'
   return r.defense.success ? 'Résisté : aucun effet de dégâts.' : 'Raté : les effets de l\'action s\'appliquent.'
 })
+
+const selfEffects = computed(() => drawn.value?.action.self ?? [])
+const creatureName = computed(() => combat.value?.creatures[who.value]?.name ?? '')
+
+// Une part « des dégâts infligés » n'a de sens qu'une fois ces dégâts retirés au survivant.
+const selfReady = (effect: KnCreatureSelfEffect) =>
+  !(effect.ifDamage || ('of' in effect.amount && effect.amount.of === 'damage')) || (result.value?.dealt ?? 0) > 0
+
+function takeSelf(index: number) {
+  const effect = selfEffects.value[index]
+  if (!effect || selfTaken.value.includes(index) || !selfReady(effect)) return
+  applySelfEffect(who.value, effect, result.value?.dealt ?? 0)
+  selfTaken.value = [...selfTaken.value, index]
+}
 
 function takeRider(index: number) {
   const action = drawn.value?.action

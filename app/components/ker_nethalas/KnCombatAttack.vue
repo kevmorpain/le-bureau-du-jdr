@@ -188,7 +188,7 @@ const poolError = computed(() => poolText.value.trim() && !pool.value ? 'Réserv
 
 const targetItems = computed<SelectItem[]>(() =>
   (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0
-    ? [{ label: `${creature.name} (${creature.health}/${creature.maxHealth})`, value: index }]
+    ? [{ label: `${creature.name} (${creature.health}/${creature.maxHealth}${creature.temporary ? ` +${creature.temporary}` : ''})`, value: index }]
     : []),
 )
 const skillItems = KN_WEAPON_SKILL_KEYS.map(key => ({ label: t(`ker_nethalas.skills.${key}`), value: key }))

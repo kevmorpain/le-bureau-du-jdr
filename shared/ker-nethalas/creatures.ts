@@ -25,6 +25,31 @@ export const knCreatureArmorSchema = z.object({
 
 export type KnCreatureArmor = z.infer<typeof knCreatureArmorSchema>
 
+// Un montant gagné par une créature : un jet de dés, ou une part de ce qu'elle vient d'infliger, de sa Santé maximale ou de
+// sa Santé actuelle, arrondie au supérieur.
+export const knSelfAmountSchema = z.union([
+  z.object({ dice: knDiceSchema }),
+  z.object({ ratio: z.number().min(0.1).max(1), of: z.enum(['damage', 'maxHealth', 'health']) }),
+])
+
+export type KnSelfAmount = z.infer<typeof knSelfAmountSchema>
+
+// Ce qu'une action fait à la créature qui l'a jouée. `ifDamage` : seulement si l'action a infligé des dégâts.
+export const knCreatureSelfEffectSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('heal'), amount: knSelfAmountSchema, ifDamage: z.boolean().optional() }),
+  // Santé temporaire : dépensée avant la Santé. `cap` : multiple de sa Santé qu'elle ne peut pas dépasser avec ; `until` :
+  // jusqu'à son prochain tour ou jusqu'à la fin du round.
+  z.object({
+    kind: z.literal('temporary'),
+    amount: knSelfAmountSchema,
+    ifDamage: z.boolean().optional(),
+    cap: z.number().min(1).max(4).optional(),
+    until: z.enum(['turn', 'round']).optional(),
+  }),
+])
+
+export type KnCreatureSelfEffect = z.infer<typeof knCreatureSelfEffectSchema>
+
 export const knCreatureActionSchema = z.object({
   min: boundedInt({ min: 1, max: 6 }),
   max: boundedInt({ min: 1, max: 6 }),
@@ -47,6 +72,8 @@ export const knCreatureActionSchema = z.object({
   // états, dégâts annexes. Le texte garde ce qui ne s'automatise pas.
   checks: z.array(z.object({ skill: z.enum(KN_CHECK_KEYS), group: boundedInt({ min: 0, max: 3 }).optional() })).max(3).optional(),
   outcomes: z.array(knOutcomeSchema).max(8).optional(),
+  // Ce que l'action fait à la créature elle-même : soins, Santé temporaire.
+  self: z.array(knCreatureSelfEffectSchema).max(4).optional(),
   text: z.string().trim().min(1).max(1200),
 }).refine(action => action.min <= action.max, { message: 'la plage va de min à max' })
 

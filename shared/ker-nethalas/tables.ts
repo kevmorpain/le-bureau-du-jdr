@@ -180,7 +180,7 @@ export function knApplyTableEffects(
   state: KnTableEffectState,
   maxima: Pick<Record<KnVitalKey, number>, 'health' | 'toughness' | 'sanity' | 'aether'>,
   rng: KnRng = Math.random,
-  // `creature` : les dégâts viennent d'un adversaire, qui retient toujours le dé le plus haut (p. 81).
+  // `creature` : les dégâts viennent d'un adversaire, qui retient toujours le dé le plus haut.
   options: { creature?: boolean } = {},
 ): { state: KnTableEffectState, outcomes: KnTableEffectOutcome[] } {
   let next: KnTableEffectState = { ...state, provisions: { ...state.provisions } }
