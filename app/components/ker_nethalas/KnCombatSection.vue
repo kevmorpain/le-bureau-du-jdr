@@ -118,6 +118,13 @@
                 size="md"
               />
               <UBadge
+                v-if="creature.spent"
+                label="A agi : disparaît"
+                color="neutral"
+                variant="subtle"
+                size="md"
+              />
+              <UBadge
                 v-for="effect in creature.effects"
                 :key="effect.label"
                 :label="effect.rounds ? `${effect.label} (${effect.rounds})` : effect.label"

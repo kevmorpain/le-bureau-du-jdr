@@ -645,6 +645,17 @@ export function knGainCombatTemporary(run: KnRun, index: number, amount: number,
   return withCreature(run, index, c => ({ ...c, temporary, ...(options.until ? { temporaryUntil: options.until } : {}) }))
 }
 
+// Une créature éphémère vient de jouer son action.
+export function knSpendCombatCreature(run: KnRun, index: number): KnRun {
+  return withCreature(run, index, c => ({ ...c, spent: true }))
+}
+
+// Les créatures éphémères qui ont joué disparaissent.
+export function knVanishSpentCreatures(run: KnRun): KnRun {
+  if (!run.combat?.creatures.some(c => c.spent)) return run
+  return { ...run, combat: { ...run.combat, creatures: run.combat.creatures.map(({ spent, ...c }) => spent ? { ...c, health: 0 } : c) } }
+}
+
 // Un effet en cours sur une créature, ou sur toutes les vivantes de sa fiche. Le même effet reposé en remplace la durée.
 export function knAddCreatureBuff(run: KnRun, index: number, buff: KnCreatureBuff, scope: 'self' | 'sameSheet' = 'self'): KnRun {
   const target = run.combat?.creatures[index]
@@ -709,7 +720,7 @@ export function knRegisterReaction(run: KnRun): KnRun {
 
 export function knNextCombatRound(run: KnRun): KnRun {
   if (!run.combat) return run
-  return knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round'))
+  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
 }
 
 export function knSetCombatSurprise(run: KnRun, surprise: boolean): KnRun {

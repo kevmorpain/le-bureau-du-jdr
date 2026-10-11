@@ -65,7 +65,7 @@ export function useKnEffectText() {
   }
 
   function selfEffectText(effect: KnCreatureSelfEffect, nameOf: (ref: string) => string = ref => ref): string {
-    if (effect.kind === 'summon') return `invoque ${knDiceLabel(effect.count)} ${nameOf(effect.ref)}${effect.max ? ` (${effect.max} au plus en même temps)` : ''}`
+    if (effect.kind === 'summon') return `invoque ${knDiceLabel(effect.count)} ${nameOf(effect.ref)}${effect.max ? ` (${effect.max} au plus en même temps)` : ''}${effect.buff ? `, sous l'effet de « ${effect.buff.label} »` : ''}`
     if (effect.kind === 'buff') {
       const duration = effect.untilTurn ? ' jusqu\'à son prochain tour' : effect.rounds ? ` pendant ${knDiceLabel(effect.rounds)} round(s)` : ' jusqu\'à la fin du combat'
       const scope = effect.scope === 'sameSheet' ? ' (toutes les créatures de sa fiche)' : ''

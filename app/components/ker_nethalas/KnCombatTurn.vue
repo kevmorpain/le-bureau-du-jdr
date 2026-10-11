@@ -300,7 +300,7 @@ watch([who, savage, victim], () => {
   if (savage.value) defense.value = 'dodge'
 })
 
-const canAct = computed(() => whoItems.value.some(item => item.value === who.value) && !!creatureOf(who.value))
+const canAct = computed(() => whoItems.value.some(item => item.value === who.value) && !!creatureOf(who.value) && !combat.value?.creatures[who.value]?.spent)
 
 function drawNow() {
   result.value = undefined

@@ -59,6 +59,8 @@ export const knCombatCreatureSchema = z.object({
   temporary: boundedInt(KN_COMBAT_BOUNDS.health).optional(),
   temporaryUntil: z.enum(['turn', 'round']).optional(),
   effects: z.array(knCreatureBuffSchema).max(8).optional(),
+  // Une créature éphémère a joué son action : elle disparaît au tour suivant.
+  spent: z.boolean().optional(),
 })
 
 export const knCombatSchema = z.object({

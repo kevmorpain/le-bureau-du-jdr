@@ -44,7 +44,9 @@ import {
   knRollDie,
   knSetCombatFirst,
   knSetCombatSurprise,
+  knSpendCombatCreature,
   knStartCombat,
+  knVanishSpentCreatures,
 } from '~~/shared/ker-nethalas/run'
 import { KN_RESISTANCE_KEYS, type KnResistanceKey, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import { knApplyDamage } from '~~/shared/ker-nethalas/tables'
@@ -319,6 +321,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       const before = combat.value?.creatures.length ?? 0
       character.value.run = knAddCombatCreatures(character.value.run, instances, effect.max)
       const added = (combat.value?.creatures.length ?? 0) - before
+      const { buff } = effect
+      if (buff) {
+        for (let i = before; i < before + added; i++) character.value.run = knAddCreatureBuff(character.value.run, i, buff)
+      }
       log(`${target.name} invoque ${added} ${sheet.name}${added < count ? ` (${count} tirés, limite atteinte)` : ''}`)
       return added
     }
@@ -343,7 +349,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   function drawAction(index: number) {
     const creature = creatureOf(index)
     if (!creature) return undefined
-    character.value.run = knExpireCreatureTurnEffects(knExpireCombatTemporary(character.value.run, 'turn', index), index)
+    character.value.run = knVanishSpentCreatures(knExpireCreatureTurnEffects(knExpireCombatTemporary(character.value.run, 'turn', index), index))
     const d6 = knRollDie(6)
     const action = creature.actions.find(a => d6 >= a.min && d6 <= a.max)
     return action ? { d6, action } : undefined
@@ -442,6 +448,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       }
     }
     if (result.damage) character.value.run = knConsumeCreatureEffects(character.value.run, input.index)
+    if (creature.ephemeral) character.value.run = knSpendCombatCreature(character.value.run, input.index)
     return result
   }
 

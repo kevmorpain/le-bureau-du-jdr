@@ -48,7 +48,14 @@ export const knCreatureSelfEffectSchema = z.discriminatedUnion('kind', [
     until: z.enum(['turn', 'round']).optional(),
   }),
   // Fait entrer en combat des adversaires de plus, jusqu'à `max` de cette fiche en même temps.
-  z.object({ kind: z.literal('summon'), ref: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/), count: knDiceSchema, max: z.number().int().min(1).max(12).optional() }),
+  // `buff` : l'effet dont chaque adversaire invoqué arrive sous l'emprise.
+  z.object({
+    kind: z.literal('summon'),
+    ref: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/),
+    count: knDiceSchema,
+    max: z.number().int().min(1).max(12).optional(),
+    buff: z.object({ label: z.string().trim().min(1).max(100), rounds: boundedInt({ min: 1, max: 99 }).optional(), untilTurn: z.boolean().optional(), ...knCreatureBuffFields }).optional(),
+  }),
   // Un effet en cours sur la créature : `rounds` (un jet de dés ou un nombre), jusqu'à son prochain tour, ou jusqu'à la fin du
   // combat sans l'un ni l'autre. `scope` : elle seule, ou toutes les créatures de sa fiche encore en vie.
   z.object({
@@ -117,7 +124,8 @@ export const knCreatureSchema = z.object({
   key: slug,
   name: z.string().trim().min(1).max(100),
   role: z.enum(['creature', 'overseer', 'minion']),
-  types: z.array(z.enum(KN_CREATURE_TYPES)).min(1).max(2),
+  // Vide quand le livre ne donne pas de type (une créature invoquée décrite dans l'action qui l'invoque).
+  types: z.array(z.enum(KN_CREATURE_TYPES)).max(2),
   number: knDiceSchema,
   mind: boundedInt({ min: 0, max: 200 }),
   endurance: boundedInt({ min: 0, max: 200 }),
@@ -137,6 +145,8 @@ export const knCreatureSchema = z.object({
   resistantPhysical: z.boolean().optional(),
   // Restaurée par ces types de dégâts, en plus de ceux de son type de créature.
   restored: z.array(z.enum(KN_DAMAGE_TYPES)).max(4).optional(),
+  // Disparaît dès qu'elle a joué son action.
+  ephemeral: z.boolean().optional(),
   actions: z.array(knCreatureActionSchema).min(1).max(6),
   levelAdaptation: z.array(knLevelAdaptationSchema).max(4),
 }).superRefine((creature, ctx) => {

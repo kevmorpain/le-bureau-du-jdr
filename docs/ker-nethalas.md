@@ -448,7 +448,9 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   (p. 92-93). La carte « Sbires » joue leur tour : action tirée sur leur fiche, attaque d'une créature (leur Compétence de
   combat, sa défense et son Armure) ou sort (test de Résistance magique de la créature). Une créature peut viser un sbire :
   il se défend avec sa fiche. Qui l'adversaire vise reste le choix du joueur ; le livre veut les PJ d'abord.
-- **Adversaires invoqués** : un effet `summon` fait entrer des créatures de plus, jusqu'à un maximum de la même fiche.
+- **Adversaires invoqués** : un effet `summon` fait entrer des créatures de plus, jusqu'à un maximum de la même fiche, et peut
+  les placer d'emblée sous un effet (`buff`). Une fiche éphémère (`ephemeral`) disparaît au tour suivant celui où elle a joué
+  son action : c'est le cas des serviteurs qui n'attaquent qu'une fois.
 - **Fin du combat** : le survivant récupère D4 Robustesse quand un combat se termine (p. 86), victoire ou non ; « Annuler le
   combat » retire l'état sans rien rendre. La carte « Fin de combat » est supprimée : ses boutons (Combat remporté, Overseer
   vaincu, Combat terminé sans victoire) sont dans la carte « Combat », qui n'existe que pendant un combat, si bien que
@@ -456,7 +458,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Public** : les 20 textes des mouvements défensifs et des maladresses des monstres, reformulés (`ker_nethalas.combat`).
 - **Laissé de côté** : l'armure du survivant est saisie par zone à la main jusqu'à X16 (#263) ; les effets des mouvements
   défensifs et des maladresses restent du texte ; les conditions qui touchent une créature (Entravée, Aveuglée…) ne sont pas
-  suivies ; les doubles et serviteurs invoqués que le livre décrit sans fiche complète ; la réduction de la Robustesse maximale
+  suivies ; le « une seule action par round » des créatures invoquées ; la réduction de la Robustesse maximale
   par un coup ; la fuite, le corps à corps à deux armes, le bouclier, la
   réduction d'Armure par l'acide, les conditions qui donnent Avantage ou Désavantage (À terre), l'influence de l'Overseer et les
   bonus de combat de l'Obscurité Grandissante par catégorie d'adversaire.
@@ -873,6 +875,10 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   de tour pendant sa durée, sans nouveau test.
 - **Bonus offensifs d'un effet qui finit au début du prochain tour** : ils n'ont pas le temps de servir (l'effet tombe avant
   l'attaque) ; ces bonus restent du texte.
+- **Créatures invoquées sans fiche complète** : le livre ne donne ni type, ni localisation, ni Esprit, Endurance, Corps, Résistance
+  magique pour les serviteurs d'un Overseer ni pour les doubles d'un autre ; ces champs valent 0 ou sont absents, sans effet puisque
+  les premiers disparaissent après leur attaque et les seconds tombent au premier coup (Santé 1). La Compétence de combat des
+  doubles est lue comme celle de l'Overseer qui les invoque, avec son palier de niveau 10 (+10) : hypothèse, le livre ne la donne pas.
 - **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
   combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
   se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.
@@ -894,6 +900,10 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   attaque un sbire (1 dégât inévitable).
 - Suite complète verte (192 fichiers, 2334 tests), tsc 14 serveur / 128 app comme avant.
 - **Non vérifié** dans le navigateur : les durées en dés des effets sur la créature, l'usage unique, le sort d'un sbire.
+- Sur retour du PM, les serviteurs d'un Overseer (D4, une attaque chacun, puis disparition) et les doubles d'un autre (deux
+  par action, quatre au plus, sous un effet d'arrivée) sont des adversaires invoqués ; vérifié dans le navigateur (4 serviteurs
+  invoqués, l'un joue puis ne peut plus agir ; 2 doubles arrivent sous leur effet). La disparition au tour suivant n'est vérifiée
+  que par les tests unitaires.
 - Le schéma des dés passe dans `diceSchema.ts` pour éviter un cycle d'import entre l'état de combat et `dice.ts`.
 
 ### 2026-10-11 — Tranche 6c : fiches du bestiaire, Overseers et sbires

@@ -32,6 +32,8 @@ import {
   knEndCombat,
   knHealMinions,
   knRemoveMinion,
+  knSpendCombatCreature,
+  knVanishSpentCreatures,
   knExpireCombatTemporary,
   knGainCombatTemporary,
   knNextCombatRound,
@@ -46,7 +48,7 @@ import { knD100Check } from '../../shared/ker-nethalas/roll'
 import { knApplyDamage, knApplyTableEffects, type KnTableEffectState } from '../../shared/ker-nethalas/tables'
 import { emptyKnStatus } from '../../shared/ker-nethalas/status'
 import { knSetTemporary, knTemporaryOf } from '../../shared/ker-nethalas/vitals'
-import { knCreatureSelfEffectSchema } from '../../shared/ker-nethalas/creatures'
+import { knCreatureSchema, knCreatureSelfEffectSchema } from '../../shared/ker-nethalas/creatures'
 import { fakeCreature } from '../fixtures/knCreatures'
 
 const check = (roll: number, score: number) => knD100Check({ roll, score, difficulty: 0, mode: 'normal' })
@@ -710,5 +712,28 @@ describe('sbires et adversaires invoqués', () => {
     expect(knCreatureDamageTarget(demon).restored).toEqual(['infernal', 'fire'])
     expect(knCreatureSelfEffectSchema.safeParse({ kind: 'summon', ref: 'lesserDemon', count: { count: 1, sides: 4, bonus: 0 }, max: 4 }).success).toBe(true)
     expect(knCreatureSelfEffectSchema.safeParse({ kind: 'summon', ref: 'Pas une clé', count: { count: 1, sides: 4, bonus: 0 } }).success).toBe(false)
+  })
+})
+
+describe('créatures éphémères et invoquées sous un effet', () => {
+  const foes = () => knStartCombat(emptyKnRun(), [{ ref: 'a', name: 'A', health: 1, maxHealth: 1 }, { ref: 'b', name: 'B', health: 5, maxHealth: 5 }])
+
+  it('une créature éphémère qui a joué disparaît au tour suivant, pas avant', () => {
+    const run = knSpendCombatCreature(foes(), 0)
+
+    expect(run.combat!.creatures[0]).toMatchObject({ health: 1, spent: true })
+    expect(knVanishSpentCreatures(run).combat!.creatures.map(c => c.health)).toEqual([0, 5])
+    expect(knVanishSpentCreatures(run).combat!.creatures[0]).not.toHaveProperty('spent')
+    expect(knNextCombatRound(run).combat!.creatures[0]!.health).toBe(0)
+    expect(knVanishSpentCreatures(foes())).toEqual(foes())
+  })
+
+  it('une fiche peut ne donner aucun type, et une invocation arrive sous un effet', () => {
+    const untyped = fakeCreature({ types: [], ephemeral: true })
+    const summon = { kind: 'summon', ref: 'double', count: { count: 0, sides: 0, bonus: 2 }, max: 4, buff: { label: 'Mirage', rounds: 2, disadvantageAgainst: true } }
+
+    expect(knCreatureSchema.safeParse(untyped).success).toBe(true)
+    expect(knCreatureSelfEffectSchema.safeParse(summon).success).toBe(true)
+    expect(knCreatureSelfEffectSchema.safeParse({ ...summon, buff: { label: 'Mirage', advantage: 'toujours' } }).success).toBe(false)
   })
 })
