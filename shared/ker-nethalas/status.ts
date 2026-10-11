@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { KN_CONDITION_KEYS } from './catalog/conditions'
 import { KN_MADNESS_COUNTER_KEYS, emptyKnMadness } from './catalog/madness'
 import { KN_ROT_MAX_STAGE } from './catalog/rot'
+import { knDiceSchema } from './dice'
 import { KN_TARGET_GROUPS, KN_VITAL_KEYS } from './effects'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from './skills'
 import { boundedInt, shapeOf } from './zodHelpers'
@@ -52,6 +53,11 @@ export const knCustomModifierSchema = z.object({
   active: z.boolean(),
   entries: z.array(knCustomEntrySchema).max(KN_STATUS_BOUNDS.customEntries),
   note: z.string().trim().max(500).optional(),
+  // Effet posé par une action de créature : il disparaît à la fin du combat, perd un round à chaque round qui passe et
+  // inflige `tick` au survivant au début de chaque tour.
+  combat: z.boolean().optional(),
+  rounds: boundedInt({ min: 1, max: 99 }).optional(),
+  tick: z.object({ dice: knDiceSchema, direct: z.boolean().optional() }).optional(),
 })
 
 const knTemporaryAmount = boundedInt(KN_STATUS_BOUNDS.temporary)

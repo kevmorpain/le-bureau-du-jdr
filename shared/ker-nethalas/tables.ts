@@ -15,7 +15,7 @@ import {
   type KnRun,
 } from './run'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from './skills'
-import { KN_STATUS_BOUNDS, type KnStatus } from './status'
+import { KN_STATUS_BOUNDS, knCustomEntrySchema, type KnCustomModifier, type KnStatus } from './status'
 import { knGainTemporary, knSetTemporary, knTakeDamage, knTemporaryOf } from './vitals'
 import { boundedInt } from './zodHelpers'
 
@@ -38,6 +38,14 @@ export const knTableEffectSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('exhaustion'), dice: knDiceSchema, sign: knSign }),
   z.object({ kind: z.literal('condition'), key: z.enum(KN_CONDITION_KEYS), value: boundedInt(KN_STATUS_BOUNDS.conditionValue).optional() }),
   z.object({ kind: z.literal('temporary'), vital: z.enum(KN_VITAL_KEYS), dice: knDiceSchema }),
+  // Un effet qui dure : `rounds` (tous les rounds du combat si absent), des dégâts à chaque début de tour, des modificateurs.
+  z.object({
+    kind: z.literal('timed'),
+    label: z.string().trim().min(1).max(100),
+    rounds: knDiceSchema.optional(),
+    tick: z.object({ dice: knDiceSchema, direct: z.boolean().optional() }).optional(),
+    entries: z.array(knCustomEntrySchema).max(4).optional(),
+  }),
   z.object({ kind: z.literal('tensionReset') }),
   z.object({ kind: z.literal('lairDown') }),
   z.object({ kind: z.literal('darkness') }),
@@ -138,6 +146,21 @@ const clamp = (value: number, max: number) => Math.min(max, Math.max(0, value))
 
 const NO_ROLL: KnDiceRoll = { rolls: [], total: 0 }
 
+// Un même effet reposé en remplace la durée plutôt que de se cumuler.
+function withTimedEffect(status: KnStatus, effect: Extract<KnTableEffect, { kind: 'timed' }>, rounds: number): KnStatus {
+  const id = `combat:${effect.label}`.slice(0, 40)
+  const modifier: KnCustomModifier = {
+    id,
+    name: effect.label,
+    active: true,
+    entries: effect.entries ?? [],
+    combat: true,
+    ...(effect.rounds && rounds > 0 ? { rounds } : {}),
+    ...(effect.tick ? { tick: effect.tick } : {}),
+  }
+  return { ...status, custom: [...status.custom.filter(entry => entry.id !== id), modifier].slice(-KN_STATUS_BOUNDS.custom) }
+}
+
 // Un état déjà présent garde sa plus forte valeur : le livre ne dit pas comment cumuler deux fois le même.
 function withCondition(status: KnStatus, key: (typeof KN_CONDITION_KEYS)[number], value: number | undefined): KnStatus {
   const existing = status.conditions.find(entry => entry.key === key)
@@ -188,6 +211,7 @@ export function knApplyTableEffects(
 
   for (const effect of effects) {
     let roll = 'dice' in effect ? knRollDice(effect.dice, rng) : effect.kind === 'xp' ? { rolls: [], total: effect.amount } : NO_ROLL
+    if (effect.kind === 'timed' && effect.rounds) roll = knRollDice(effect.rounds, rng)
     if (effect.kind === 'damage') {
       const picked = options.creature && roll.rolls.length ? Math.max(...roll.rolls) + effect.dice.bonus : roll.total
       roll = { rolls: roll.rolls, total: effect.half ? Math.ceil(picked / 2) : picked }
@@ -208,6 +232,7 @@ export function knApplyTableEffects(
       next = knApplyDamage(next, maxima, roll.total, effect.direct)
     } else if (effect.kind === 'exhaustion') next = { ...next, exhaustion: clamp(next.exhaustion + signed(effect.sign), KN_BOUNDS.exhaustion.max) }
     else if (effect.kind === 'condition') next = { ...next, status: withCondition(next.status, effect.key, effect.value) }
+    else if (effect.kind === 'timed') next = { ...next, status: withTimedEffect(next.status, effect, roll.total) }
     else if (effect.kind === 'temporary') next = { ...next, status: knGainTemporary(next.status, effect.vital, roll.total) }
     else if (effect.kind === 'tensionReset') next = { ...next, run: { ...next.run, tensionDie: KN_TENSION_START_DIE } }
     else if (effect.kind === 'lairDown') {

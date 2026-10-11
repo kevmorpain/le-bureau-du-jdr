@@ -56,6 +56,33 @@
     </template>
 
     <div class="space-y-5">
+      <div
+        v-if="activeEffects.length"
+        class="space-y-1"
+      >
+        <p class="text-xs font-medium text-muted">
+          Effets en cours sur le survivant
+        </p>
+        <ul class="space-y-1 text-sm">
+          <li
+            v-for="effect in activeEffects"
+            :key="effect.id"
+            class="flex flex-wrap items-center gap-2"
+          >
+            <span class="font-medium">{{ effect.name }}</span>
+            <span class="text-muted">{{ effectInfo(effect) }}</span>
+            <UButton
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              @click="removeEffect(effect.id)"
+            >
+              Retirer
+            </UButton>
+          </li>
+        </ul>
+      </div>
+
       <div class="space-y-2">
         <p class="text-xs font-medium text-muted">
           Armure du survivant par zone (en attendant le suivi de l'équipement)
@@ -187,11 +214,14 @@
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker-nethalas/combat'
 import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
+import { knAdvanceCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
+import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
 import { KN_COMBAT_XP } from '~~/shared/ker-nethalas/masteryEffects'
+import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
-import { knNextCombatRound } from '~~/shared/ker-nethalas/run'
+import { knCombatLog, knNextCombatRound } from '~~/shared/ker-nethalas/run'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
@@ -203,6 +233,8 @@ const character = defineModel<KnCharacter>('character', { required: true })
 
 const { combat, creatureOf, opposed } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
+const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
+const toast = useToast()
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
@@ -217,8 +249,29 @@ function setArmor(zone: KnSurvivorArmorZone, value: number) {
   character.value.status = { ...character.value.status, armor: { ...current, [zone]: value } }
 }
 
-const nextRound = () => {
+const activeEffects = computed(() => character.value.status.custom.filter(modifier => modifier.combat))
+
+function effectInfo(effect: KnCustomModifier) {
+  const duration = effect.rounds === undefined ? 'jusqu\'à la fin du combat' : `${effect.rounds} round${effect.rounds > 1 ? 's' : ''} restant${effect.rounds > 1 ? 's' : ''}`
+  const tick = effect.tick ? ` · ${knDiceLabel(effect.tick.dice)} dégâts${effect.tick.direct ? ' directs' : ''} à chaque début de tour` : ''
+  return `${duration}${tick}${effect.entries.length ? ' · modificateurs appliqués à la fiche' : ''}`
+}
+
+function removeEffect(id: string) {
+  character.value.status = { ...character.value.status, custom: character.value.status.custom.filter(modifier => modifier.id !== id) }
+}
+
+// Le round passe : les effets de combat infligent leurs dégâts de début de tour, puis perdent un round.
+function nextRound() {
+  const { status, ticks, expired } = knAdvanceCombatEffects(character.value.status)
+  character.value.status = status
   character.value.run = knNextCombatRound(character.value.run)
+  if (expired.length) {
+    toast.add({ title: 'Effets terminés', description: expired.join(', '), color: 'neutral' })
+  }
+  if (!ticks.length) return
+  character.value.run = knCombatLog(character.value.run, `Round ${combat.value?.round ?? 1} : ${ticks.map(tick => `${tick.name} ${tick.roll}`).join(', ')}`)
+  applyEffects(ticks.map(tick => ({ kind: 'damage' as const, dice: { count: 0, sides: 0, bonus: tick.roll }, ...(tick.direct ? { direct: true } : {}) })), 'Début du tour')
 }
 
 const modifier = ref(0)

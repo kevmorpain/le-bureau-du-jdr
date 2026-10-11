@@ -2,6 +2,7 @@ import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import { knClearCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_COMBAT_XP, knApplySelfEffects, knCombatWonEffects } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -16,12 +17,13 @@ export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnRe
 
   function endCombat() {
     applyEffects([{ kind: 'vital', vital: 'toughness', dice: { count: 1, sides: 4, bonus: 0 }, sign: 'gain' }], 'Fin du combat')
-    character.value.status = knResetUses(character.value.status, ['combat'])
+    character.value.status = knClearCombatEffects(knResetUses(character.value.status, ['combat']))
     character.value.run = knEndCombat(character.value.run)
   }
 
   // Un combat engagé par erreur : on retire l'état, sans rien récupérer ni libérer.
   function cancelCombat() {
+    character.value.status = knClearCombatEffects(character.value.status)
     character.value.run = knEndCombat(character.value.run)
   }
 

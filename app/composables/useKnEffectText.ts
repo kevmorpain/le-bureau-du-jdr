@@ -22,6 +22,11 @@ export function useKnEffectText() {
       case 'damage': return `${amount(effect.dice, total)} dégâts${effect.direct ? ' directs à la Santé' : ''}${effect.half ? ' (moitié)' : ''}`
       case 'exhaustion': return `${sign(effect.sign)}${amount(effect.dice, total)} Épuisement`
       case 'condition': return `${t(`ker_nethalas.conditions.${effect.key}.name`)}${effect.value ? ` (${effect.value})` : ''}`
+      case 'timed': {
+        const rounds = total ? ` (${total} round${total > 1 ? 's' : ''})` : effect.rounds ? ` (${knDiceLabel(effect.rounds)} rounds)` : ''
+        const tick = effect.tick ? `, ${knDiceLabel(effect.tick.dice)} dégâts${effect.tick.direct ? ' directs' : ''} à chaque début de tour` : ''
+        return `${effect.label}${rounds}${tick}`
+      }
       case 'temporary': return `+${amount(effect.dice, total)} ${vital(effect.vital)} temporaire`
       case 'tensionReset': return 'Dé de Tension remis à D8'
       case 'darkness': return 'tirage dans l\'Obscurité Grandissante'
@@ -47,7 +52,7 @@ export function useKnEffectText() {
 
   function outcomeText({ effect, roll, draw }: KnTableEffectOutcome): string {
     if (draw) return `Obscurité Grandissante ${draw.roll}`
-    return effectText(effect, 'dice' in effect ? roll.total : undefined)
+    return effectText(effect, 'dice' in effect || effect.kind === 'timed' ? roll.total : undefined)
   }
 
   return { effectText, effectsText, outcomeText, selfEffectText }

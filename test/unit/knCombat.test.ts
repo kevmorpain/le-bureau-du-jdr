@@ -15,6 +15,7 @@ import {
   knWithDisadvantage,
   type KnDamageInput,
 } from '../../shared/ker-nethalas/combat'
+import { knAdvanceCombatEffects, knClearCombatEffects } from '../../shared/ker-nethalas/combatEffects'
 import { knCombatWon, knCreatureDefeated, knReactionPenalty } from '../../shared/ker-nethalas/combatState'
 import {
   emptyKnRun,
@@ -467,5 +468,85 @@ describe('soins et Santé temporaire d\'une créature', () => {
     expect(knCreatureSelfEffectSchema.safeParse({ kind: 'temporary', amount: { dice: { count: 2, sides: 4, bonus: 0 } }, cap: 2, until: 'turn' }).success).toBe(true)
     expect(knCreatureSelfEffectSchema.safeParse({ kind: 'heal', amount: { ratio: 2, of: 'damage' } }).success).toBe(false)
     expect(knCreatureSelfEffectSchema.safeParse({ kind: 'temporary', amount: { ratio: 0.5, of: 'moi' } }).success).toBe(false)
+  })
+})
+
+describe('effets de combat sur le survivant', () => {
+  const d = (count: number, sides: number, bonus = 0) => ({ count, sides, bonus })
+  const state = (status = emptyKnStatus()): KnTableEffectState => ({
+    coins: 0,
+    xp: 0,
+    provisions: { rations: 0, bandages: 0, craftingSupplies: 0, cookingIngredients: 0, lampOil: 0, lockpicks: 0, torches: 0, attunementCrystals: 0, ritualComponents: 0 },
+    health: 12,
+    toughness: 10,
+    sanity: 10,
+    aether: 10,
+    exhaustion: 0,
+    status,
+    run: emptyKnRun(),
+  })
+  const maxima = { health: 12, toughness: 10, sanity: 10, aether: 10 }
+  const aura = { kind: 'timed' as const, label: 'Aura', rounds: d(0, 0, 2), tick: { dice: d(0, 0, 3) } }
+
+  it('un effet posé devient un modificateur de combat avec ses rounds', () => {
+    const next = knApplyTableEffects([aura, { kind: 'timed', label: 'Faiblesse', rounds: d(1, 4), entries: [{ kind: 'disadvantage', target: 'allSkills' }] }], state(), maxima, () => 0.99)
+
+    expect(next.state.status.custom).toEqual([
+      { id: 'combat:Aura', name: 'Aura', active: true, entries: [], combat: true, rounds: 2, tick: { dice: d(0, 0, 3) } },
+      { id: 'combat:Faiblesse', name: 'Faiblesse', active: true, entries: [{ kind: 'disadvantage', target: 'allSkills' }], combat: true, rounds: 4 },
+    ])
+    expect(next.outcomes.map(o => o.roll.total)).toEqual([2, 4])
+  })
+
+  it('reposer le même effet en remplace la durée au lieu de le cumuler', () => {
+    const once = knApplyTableEffects([aura], state(), maxima).state
+    const twice = knApplyTableEffects([{ ...aura, rounds: d(0, 0, 5) }], once, maxima).state
+
+    expect(twice.status.custom).toHaveLength(1)
+    expect(twice.status.custom[0]!.rounds).toBe(5)
+  })
+
+  it('un effet sans durée reste jusqu\'à la fin du combat', () => {
+    const next = knApplyTableEffects([{ kind: 'timed', label: 'Étreinte', tick: { dice: d(0, 0, 1) } }], state(), maxima).state
+
+    expect(next.status.custom[0]).not.toHaveProperty('rounds')
+  })
+
+  it('un round qui passe inflige les dégâts de début de tour, puis retire un round', () => {
+    const status = knApplyTableEffects([aura], state(), maxima).state.status
+    const first = knAdvanceCombatEffects(status)
+    const second = knAdvanceCombatEffects(first.status)
+
+    expect(first.ticks).toEqual([{ name: 'Aura', direct: false, roll: 3 }])
+    expect(first.status.custom[0]!.rounds).toBe(1)
+    expect(second.ticks).toHaveLength(1)
+    expect(second.expired).toEqual(['Aura'])
+    expect(second.status.custom).toEqual([])
+  })
+
+  it('un effet inactif ou étranger au combat ne bouge pas, et l\'état inchangé est rendu tel quel', () => {
+    const own = { id: 'mien', name: 'Mien', active: true, entries: [] }
+    const paused = { ...own, id: 'c:p', name: 'Pause', combat: true, active: false, rounds: 2, tick: { dice: d(0, 0, 1) } }
+    const status = { ...emptyKnStatus(), custom: [own, paused] }
+    const next = knAdvanceCombatEffects(status)
+
+    expect(next.status).toBe(status)
+    expect(next.ticks).toEqual([])
+  })
+
+  it('un adversaire retient le dé le plus haut pour ses dégâts de début de tour', () => {
+    const status = { ...emptyKnStatus(), custom: [{ id: 'c:a', name: 'A', active: true, entries: [], combat: true, tick: { dice: d(2, 6, 1) } }] }
+    let calls = 0
+    const next = knAdvanceCombatEffects(status, () => [0, 0.99][calls++ % 2]!)
+
+    expect(next.ticks[0]!.roll).toBe(7)
+  })
+
+  it('la fin du combat retire les effets de ses créatures et garde les modificateurs du joueur', () => {
+    const own = { id: 'mien', name: 'Mien', active: true, entries: [] }
+    const status = knApplyTableEffects([aura], state({ ...emptyKnStatus(), custom: [own] }), maxima).state.status
+
+    expect(knClearCombatEffects(status).custom).toEqual([own])
+    expect(knClearCombatEffects(emptyKnStatus())).toEqual(emptyKnStatus())
   })
 })
