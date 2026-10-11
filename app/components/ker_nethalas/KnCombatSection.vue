@@ -1,0 +1,216 @@
+<template>
+  <UCard
+    v-if="combat"
+    id="kn-combat"
+  >
+    <template #header>
+      <div class="flex flex-wrap items-center gap-2">
+        <h2 class="font-semibold">
+          Combat · round {{ combat.round }}
+        </h2>
+        <UBadge
+          v-if="combat.first"
+          :label="combat.first === 'survivor' ? 'Le survivant agit en premier' : 'Les créatures agissent en premier'"
+          color="neutral"
+          variant="subtle"
+          size="md"
+        />
+        <div class="ml-auto flex flex-wrap gap-2">
+          <UButton
+            size="sm"
+            variant="soft"
+            @click="nextRound"
+          >
+            Round suivant
+          </UButton>
+          <UButton
+            v-if="won"
+            size="sm"
+            @click="win(combat.overseer ? 'overseer' : 'combat')"
+          >
+            {{ combat.overseer ? 'Overseer vaincu' : 'Combat remporté' }}
+          </UButton>
+          <UButton
+            size="sm"
+            variant="ghost"
+            color="neutral"
+            @click="endCombat"
+          >
+            Abandonner le combat
+          </UButton>
+        </div>
+      </div>
+      <p class="mt-1 text-sm text-muted">
+        Les jets se font ici avec les dés de l'outil. À chaque résultat, les dégâts s'appliquent par un bouton, jamais d'office.
+      </p>
+    </template>
+
+    <div class="space-y-5">
+      <div class="space-y-2">
+        <p class="text-xs font-medium text-muted">
+          Armure du survivant par zone (en attendant le suivi de l'équipement)
+        </p>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <KnNumberField
+            v-for="zone in KN_SURVIVOR_ARMOR_ZONES"
+            :key="zone"
+            :model-value="armorOf(zone)"
+            :label="ZONE_LABELS[zone]"
+            :min="0"
+            :max="9"
+            @update:model-value="value => setArmor(zone, value)"
+          />
+        </div>
+      </div>
+
+      <ul class="space-y-2">
+        <li
+          v-for="(creature, index) in combat.creatures"
+          :key="index"
+          class="flex flex-wrap items-end gap-3 rounded-md border border-default p-2"
+          :class="creature.health <= 0 ? 'opacity-60' : ''"
+        >
+          <div class="min-w-40 flex-1">
+            <p class="font-medium">
+              {{ creature.name }}
+              <UBadge
+                v-if="creature.health <= 0"
+                label="Vaincue"
+                color="success"
+                variant="subtle"
+                size="md"
+              />
+            </p>
+            <p
+              v-if="!creatureOf(index)"
+              class="text-xs text-warning"
+            >
+              Fiche non chargée
+            </p>
+          </div>
+          <KnNumberField
+            v-model="creature.health"
+            :label="`Santé (max ${creature.maxHealth})`"
+            :min="0"
+            :max="creature.maxHealth"
+            class="w-32"
+          />
+        </li>
+      </ul>
+
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-end gap-2">
+          <KnNumberField
+            v-model="modifier"
+            label="Bonus ou malus au test"
+            :min="-99"
+            :max="99"
+            class="w-40"
+          />
+          <UButton
+            variant="soft"
+            icon="i-heroicons:cube"
+            @click="play('surprise')"
+          >
+            Tenter de surprendre (Furtivité)
+          </UButton>
+          <UButton
+            variant="soft"
+            icon="i-heroicons:cube"
+            @click="play('initiative')"
+          >
+            Initiative (Perception)
+          </UButton>
+        </div>
+        <p
+          v-if="lastOpposed"
+          class="text-sm"
+        >
+          {{ lastOpposed }}
+        </p>
+        <p class="text-xs text-muted">
+          Contre l'Esprit le plus haut des créatures en vie. Une surprise réussie donne l'initiative et +20 à votre première
+          attaque ; une surprise ratée se rejoue en Initiative avec −20 en Perception.
+        </p>
+      </div>
+
+      <KnCombatAttack
+        v-model:character="character"
+        :resolved
+        :bestiary
+      />
+
+      <KnCombatTurn
+        v-model:character="character"
+        :resolved
+        :bestiary
+      />
+
+      <div
+        v-if="combat.log.length"
+        class="space-y-1"
+      >
+        <p class="text-xs font-medium text-muted">
+          Journal du combat
+        </p>
+        <ul class="space-y-0.5 text-xs text-muted">
+          <li
+            v-for="(line, index) in combat.log"
+            :key="index"
+          >
+            {{ line }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </UCard>
+</template>
+
+<script lang="ts" setup>
+import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker-nethalas/combat'
+import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
+import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import { knNextCombatRound } from '~~/shared/ker-nethalas/run'
+
+const props = defineProps<{
+  resolved: KnResolvedSheet
+  bestiary: KnCreature[] | null
+  masteries: KnMastery[] | null
+}>()
+
+const character = defineModel<KnCharacter>('character', { required: true })
+
+const { combat, creatureOf, opposed } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { win, endCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
+
+const ZONE_LABELS: Record<KnSurvivorArmorZone, string> = { head: 'Tête', torso: 'Torse', arms: 'Bras', legs: 'Jambes' }
+
+const won = computed(() => !!combat.value && knCombatWon(combat.value))
+
+const armorOf = (zone: KnSurvivorArmorZone) => character.value.status.armor?.[zone] ?? 0
+
+function setArmor(zone: KnSurvivorArmorZone, value: number) {
+  const current = character.value.status.armor ?? { head: 0, torso: 0, arms: 0, legs: 0 }
+  character.value.status = { ...character.value.status, armor: { ...current, [zone]: value } }
+}
+
+const nextRound = () => {
+  character.value.run = knNextCombatRound(character.value.run)
+}
+
+const modifier = ref(0)
+const lastOpposed = ref('')
+
+// Une surprise ratée se rejoue en Initiative, avec −20 en Perception.
+function play(kind: 'surprise' | 'initiative') {
+  const outcome = opposed(kind, modifier.value)
+  const label = kind === 'surprise' ? 'Furtivité' : 'Perception'
+  const summary = `${label} ${outcome.player.value} pour ${outcome.player.target}, créatures ${outcome.foes.value} pour ${outcome.foes.target} (Esprit ${outcome.mind})`
+  lastOpposed.value = outcome.winner === 'tie'
+    ? `${summary} : égalité parfaite, relancez.`
+    : `${summary} : ${outcome.winner === 'a' ? 'le survivant' : 'les créatures'} gagne${outcome.winner === 'a' && kind === 'surprise' ? ' (+20 à la première attaque)' : ''}.`
+}
+</script>

@@ -133,6 +133,8 @@
         :name="overseer.name"
         :level="character.level"
         :source="`Overseer du Domaine · D10 ${domain.overseer.roll}`"
+        :can-engage="!run.combat"
+        @engage="creature => engage(creature, true)"
       />
 
       <div class="space-y-3">
@@ -188,6 +190,7 @@
             :exit-die="domain.exitDie"
             :lockpicks="character.provisions.lockpicks"
             :level="character.level"
+            :in-combat="!!run.combat"
             :bestiary
             :tables
             @tension="tension"
@@ -207,6 +210,7 @@
             @add-room-trap="addRoomTrap"
             @obstacle-act="obstacleAct"
             @draw-creature="drawCreature"
+            @engage="creature => engage(creature)"
           />
         </div>
       </div>
@@ -275,6 +279,8 @@ const overseer = computed(() => {
   const entry = roll === undefined ? undefined : knTableEntry(props.tables.overseers ?? null, roll)
   return { name: entry?.text ?? 'Overseer inconnu', creature: knFindCreature(props.bestiary, entry?.ref) }
 })
+
+const { engage } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 
 const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))

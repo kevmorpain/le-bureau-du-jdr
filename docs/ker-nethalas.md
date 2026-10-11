@@ -403,6 +403,29 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
+- **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
+  réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
+  (localisations, réserve de dégâts, types de dégâts, Armure, Coup critique), p. 131 (défense contre les actions des créatures).
+- **Moteur pur** (`shared/ker-nethalas/combat.ts`) : `knCombatExchange` (succès, critique, échec critique, jet le plus haut,
+  égalité, et « si les deux échouent, 1 dégât inévitable »), `knOpposedCheck` pour l'Initiative et la surprise,
+  `knRollDamagePool` (le dé le plus haut plus tous les bonus fixes), `knResolveDamage` (doublement par Coup critique ou point
+  faible, Armure sauf ce que le type ignore, perforant, tranchant, Vulnérable, Résistant, Restauré), Meute et Pénétrant.
+- **État** (`combatState.ts`, dans `run.combat`) : les créatures engagées avec leur Santé fixée à l'engagement (au niveau du
+  survivant), le round, l'Initiative, la surprise, les défenses déjà faites ce round (−20 cumulatif) et un journal. Aucune
+  migration. La victoire et la fin du combat passent par `useKnCombatEnd`, partagé avec la carte « Fin de combat ».
+- **Interface** : « Engager le combat » sur une fiche de créature ou sur l'Overseer ; carte « Combat » avec l'armure du
+  survivant par zone, la Santé de chaque créature, l'Initiative, l'attaque du survivant (compétence d'arme, réserve de dégâts
+  saisie, type, point faible visé avec Désavantage) et le tour d'une créature (action tirée, défense, test d'une action
+  magique, dégâts). Les dégâts ne s'appliquent que par un bouton.
+- **Dégâts des actions** : champ optionnel `damage` (dé et type) sur une action de créature, ajouté à la réserve des dés de
+  ses paliers de niveau. Sans lui, le joueur saisit les dégâts du texte.
+- **Public** : les 20 textes des mouvements défensifs et des maladresses des monstres, reformulés (`ker_nethalas.combat`).
+- **Laissé de côté** : l'armure du survivant est saisie par zone à la main jusqu'à X16 (#263) ; les effets des mouvements
+  défensifs, des maladresses et des conditions restent du texte ; la fuite, le corps à corps à deux armes, le bouclier, la
+  réduction d'Armure par l'acide, les conditions qui donnent Avantage ou Désavantage (À terre), l'influence de l'Overseer et les
+  bonus de combat de l'Obscurité Grandissante par catégorie d'adversaire.
+
 ### KN38 — Bestiaire : format public, fiches privées, tirage par clé
 - **Règles sourcées** (livre v1.2) : p. 133-135 (un D6 choisit la table de rencontre : 1-3 A, 4-6 B ; un D20 donne la
   créature), p. 179 (D10 pour l'Overseer, une fois en entrant dans un Domaine), p. 129-133 (types, traits, fiche, adaptation
@@ -686,7 +709,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs | à faire |
+| **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers et sbires** | les 10 Overseers et les 5 sbires de Maîtrise | à faire |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
@@ -791,9 +814,31 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Dé de dégâts d'un palier** (« +D6 damage ») : un dé de plus dans la réserve de dégâts de la créature, qui garde le plus
   haut (p. 81) ; un bonus fixe (« +1 damage ») s'ajoute au dé choisi. Les paliers s'ajoutent entre eux.
 
+- **Point faible et Coup critique** : « un Coup critique sur un point faible ne triple pas les dégâts » est lu comme un
+  doublement seulement quand les deux se cumulent. ⚠️ hypothèse
+- **Perforant sur un Coup critique** : le +2, « non doublé », s'ajoute après le doublement et avant l'Armure.
+  ⚠️ hypothèse
+- **Action magique** : sans localisation (p. 80), donc sans Armure du survivant. Le test est la Résistance magique ; quand le
+  texte de l'action en nomme un autre (Endurance, Esquive), on le choisit à la main. ⚠️ hypothèse
+- **Réactions** : le malus de −20 par défense déjà faite dans le round vaut aussi pour le test d'une action magique, et se
+  remet à 0 au round suivant.
+- **Meute** : seules les créatures en vie de même fiche comptent.
+- **Surprise ratée** : la Perception de l'Initiative qui suit prend −20 (p. 76) ; on le saisit à la main dans le bonus du test.
+
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 6b : suivi de combat
+- Décision KN39 ; aucune migration. Moteur pur testé (jet opposé, critiques, égalités, dégâts, Armure, types de dégâts,
+  vulnérabilités, état du combat) : 44 tests.
+- Vérifié sur une base neuve avec les trois fiches pilotes : engagement depuis une fiche (Santé 12 au niveau 1) ; Initiative
+  (un double au-dessus de la cible est un échec critique, qui perd contre un simple échec) ; attaque parée avec mouvement défensif ;
+  échec des deux côtés (1 dégât inévitable, appliqué 12 → 11) ; touche au bras gauche (D6 → 3, +1 tranchant, 4 dégâts, 11 → 7) ;
+  tour de la créature : action magique ratée (Robustesse 23 → 21) puis action physique qui touche au torse (21 → 18) ; défenses
+  du round comptées.
+- **Non vérifié** dans le navigateur : l'engagement contre l'Overseer, la surprise, le point faible visé, la saisie manuelle
+  des dés (volet masqué) et le rendu visuel.
 
 ### 2026-10-11 — Tranche 6a : rencontres et bestiaire
 - Décision KN38 ; aucune migration. Trois pilotes privés à relire (deux créatures, un Overseer), plus les tables de tirage

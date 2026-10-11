@@ -304,6 +304,8 @@
         :name="draw.name"
         :level
         :source="draw.source"
+        :can-engage="active && !inCombat"
+        @engage="creature => emit('engage', creature)"
       />
       <KnCreatureDraw
         v-if="active && (visit.creatures?.length ?? 0) < KN_RUN_BOUNDS.creatures"
@@ -443,6 +445,7 @@ const props = defineProps<{
   exitDie: number
   lockpicks: number
   level: number
+  inCombat?: boolean
   bestiary: KnCreature[] | null
   tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
 }>()
@@ -465,6 +468,7 @@ const emit = defineEmits<{
   addRoomTrap: []
   obstacleAct: [index: number, act: KnObstacleAct]
   drawCreature: [d6: number, d20: number]
+  engage: [creature: KnCreature]
 }>()
 
 const { labelText } = useKnLabels()

@@ -178,3 +178,17 @@ export const knPackBonus = (creature: KnCreature, aliveSameKind: number) =>
 // Pénétrant (X) : les attaques de la créature ignorent X points d'Armure.
 export const knPenetrating = (creature: KnCreature) =>
   creature.traits.reduce((sum, trait) => sum + (trait.key === 'penetrating' ? (trait.value ?? 0) : 0), 0)
+
+const RANK = { critSuccess: 3, success: 2, fail: 1, critFail: 0 } as const
+
+const rankOf = (check: KnD100Result) =>
+  check.critical === 'success' ? RANK.critSuccess : check.critical === 'failure' ? RANK.critFail : check.success ? RANK.success : RANK.fail
+
+// Jet opposé hors combat (Initiative, surprise) : un critique bat un succès, qui bat un échec, qui bat un échec critique ;
+// à rang égal, le jet le plus haut gagne, puis la compétence la plus haute ; sinon on relance.
+export function knOpposedCheck(a: KnD100Result, b: KnD100Result): 'a' | 'b' | 'tie' {
+  const rankA = rankOf(a)
+  const rankB = rankOf(b)
+  if (rankA !== rankB) return rankA > rankB ? 'a' : 'b'
+  return compare(a, b)
+}

@@ -3,6 +3,7 @@ import {
   knActionPool,
   knCombatExchange,
   knCreatureDamageTarget,
+  knOpposedCheck,
   knPackBonus,
   knPenetrating,
   knResolveDamage,
@@ -21,9 +22,14 @@ import {
   knRegisterReaction,
   knRunSchema,
   knSetCombatFirst,
+  knSetCombatSurprise,
   knStartCombat,
 } from '../../shared/ker-nethalas/run'
+import { knParseDicePool } from '../../shared/ker-nethalas/dice'
 import { knD100Check } from '../../shared/ker-nethalas/roll'
+import { knApplyDamage } from '../../shared/ker-nethalas/tables'
+import { emptyKnStatus } from '../../shared/ker-nethalas/status'
+import { knSetTemporary, knTemporaryOf } from '../../shared/ker-nethalas/vitals'
 import { fakeCreature } from '../fixtures/knCreatures'
 
 const check = (roll: number, score: number) => knD100Check({ roll, score, difficulty: 0, mode: 'normal' })
@@ -258,5 +264,78 @@ describe('état du combat', () => {
 
     expect(knRunSchema.safeParse({ ...run, combat: { ...run.combat!, creatures: [] } }).success).toBe(false)
     expect(knRunSchema.safeParse({ ...run, combat: { ...run.combat!, creatures: [{ name: 'A', health: -1, maxHealth: 5 }] } }).success).toBe(false)
+  })
+})
+
+describe('jet opposé hors combat', () => {
+  it('un critique bat un succès, un succès bat un échec, un échec bat un échec critique', () => {
+    expect(knOpposedCheck(check(22, 50), check(10, 60))).toBe('a')
+    expect(knOpposedCheck(check(10, 60), check(22, 50))).toBe('b')
+    expect(knOpposedCheck(check(40, 50), check(80, 50))).toBe('a')
+    expect(knOpposedCheck(check(80, 50), check(77, 50))).toBe('a')
+  })
+
+  it('à rang égal, le jet le plus haut gagne, même entre deux échecs', () => {
+    expect(knOpposedCheck(check(45, 50), check(30, 50))).toBe('a')
+    expect(knOpposedCheck(check(95, 50), check(80, 50))).toBe('a')
+    expect(knOpposedCheck(check(80, 50), check(95, 50))).toBe('b')
+  })
+
+  it('à jets égaux, la compétence la plus haute gagne, sinon on relance', () => {
+    expect(knOpposedCheck(check(40, 70), check(40, 60))).toBe('a')
+    expect(knOpposedCheck(check(40, 60), check(40, 60))).toBe('tie')
+  })
+})
+
+describe('réserve de dégâts saisie', () => {
+  it('lit des dés, des bonus fixes et des sommes', () => {
+    expect(knParseDicePool('D6')).toEqual([{ count: 1, sides: 6, bonus: 0 }])
+    expect(knParseDicePool('2d8 + 1')).toEqual([{ count: 2, sides: 8, bonus: 0 }, { count: 0, sides: 0, bonus: 1 }])
+    expect(knParseDicePool('D6+D4+2')).toHaveLength(3)
+  })
+
+  it('refuse ce qui n\'est pas une réserve', () => {
+    expect(knParseDicePool('')).toBeNull()
+    expect(knParseDicePool('beaucoup')).toBeNull()
+    expect(knParseDicePool('D1')).toBeNull()
+    expect(knParseDicePool('30D6')).toBeNull()
+  })
+})
+
+describe('dégâts subis par le survivant', () => {
+  const maxima = { toughness: 20, health: 12 }
+
+  it('retirent la Robustesse temporaire, puis la Robustesse, puis la Santé', () => {
+    const status = knSetTemporary(emptyKnStatus(), 'toughness', 2)
+    const next = knApplyDamage({ toughness: 3, health: 10, status }, maxima, 9)
+
+    expect(next).toMatchObject({ toughness: 0, health: 6 })
+    expect(knTemporaryOf(next.status, 'toughness')).toBe(0)
+  })
+
+  it('la Santé ne descend pas sous 0, et un état sans Robustesse temporaire reste intact', () => {
+    const status = emptyKnStatus()
+    const next = knApplyDamage({ toughness: 0, health: 3, status }, maxima, 50)
+
+    expect(next.health).toBe(0)
+    expect(next.status).toBe(status)
+  })
+})
+
+describe('surprise et Overseer dans l\'état du combat', () => {
+  const foes = [{ name: 'A', health: 5, maxHealth: 5 }]
+
+  it('retient la surprise, puis l\'efface', () => {
+    const run = knStartCombat(emptyKnRun(), foes)
+
+    expect(knSetCombatSurprise(run, true).combat!.surprise).toBe(true)
+    expect(knSetCombatSurprise(knSetCombatSurprise(run, true), false).combat).not.toHaveProperty('surprise')
+    expect(knSetCombatSurprise(emptyKnRun(), true)).toEqual(emptyKnRun())
+  })
+
+  it('un combat contre l\'Overseer se reconnaît', () => {
+    expect(knStartCombat(emptyKnRun(), foes, true).combat!.overseer).toBe(true)
+    expect(knStartCombat(emptyKnRun(), foes).combat).not.toHaveProperty('overseer')
+    expect(knRunSchema.safeParse(knStartCombat(emptyKnRun(), foes, true)).success).toBe(true)
   })
 })

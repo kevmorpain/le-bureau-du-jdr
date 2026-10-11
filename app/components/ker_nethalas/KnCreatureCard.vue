@@ -27,6 +27,20 @@
       >{{ source }}</span>
     </div>
 
+    <div
+      v-if="creature && canEngage"
+      class="flex flex-wrap items-center gap-2"
+    >
+      <UButton
+        size="sm"
+        icon="i-heroicons:bolt"
+        @click="emit('engage', creature)"
+      >
+        Engager le combat
+      </UButton>
+      <span class="text-xs text-muted">Crée {{ creature.number.count === 0 && creature.number.bonus === 1 ? 'la créature' : 'ses créatures (nombre tiré)' }} avec leur Santé au niveau {{ level }}.</span>
+    </div>
+
     <p
       v-if="!creature"
       class="text-sm text-muted"
@@ -148,6 +162,11 @@ const props = defineProps<{
   name: string
   level: number
   source?: string
+  canEngage?: boolean
+}>()
+
+const emit = defineEmits<{
+  engage: [creature: KnCreature]
 }>()
 
 const { t } = useI18n()

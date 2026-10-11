@@ -142,6 +142,28 @@ function withCondition(status: KnStatus, key: (typeof KN_CONDITION_KEYS)[number]
   }
 }
 
+// Les dégâts reçus par le survivant retirent la Robustesse temporaire, puis la Robustesse, puis la Santé.
+export function knApplyDamage<T extends { toughness: number, health: number, status: KnStatus }>(
+  state: T,
+  maxima: { toughness: number, health: number },
+  amount: number,
+): T {
+  const temporary = knTemporaryOf(state.status, 'toughness')
+  const hit = knTakeDamage({
+    toughness: state.toughness,
+    toughnessMax: maxima.toughness,
+    health: state.health,
+    healthMax: maxima.health,
+    temporaryToughness: temporary,
+  }, amount)
+  return {
+    ...state,
+    toughness: hit.toughness,
+    health: hit.health,
+    status: hit.temporaryToughness === temporary ? state.status : knSetTemporary(state.status, 'toughness', hit.temporaryToughness),
+  }
+}
+
 // Applique les gains et pertes d'un résultat. Une jauge ne dépasse pas son maximum en gagnant, et ne descend pas sous 0 en
 // perdant ; `maxima` : les maxima effectifs. Les dégâts retirent la Robustesse temporaire, puis la Robustesse, puis la Santé.
 export function knApplyTableEffects(
@@ -168,20 +190,7 @@ export function knApplyTableEffects(
       const value = effect.sign === 'gain' ? Math.max(current, Math.min(maxima[effect.vital], current + roll.total)) : Math.max(0, current - roll.total)
       next = { ...next, [effect.vital]: value }
     } else if (effect.kind === 'damage') {
-      const temporary = knTemporaryOf(next.status, 'toughness')
-      const hit = knTakeDamage({
-        toughness: next.toughness,
-        toughnessMax: maxima.toughness,
-        health: next.health,
-        healthMax: maxima.health,
-        temporaryToughness: temporary,
-      }, roll.total)
-      next = {
-        ...next,
-        toughness: hit.toughness,
-        health: hit.health,
-        status: hit.temporaryToughness === temporary ? next.status : knSetTemporary(next.status, 'toughness', hit.temporaryToughness),
-      }
+      next = knApplyDamage(next, maxima, roll.total)
     } else if (effect.kind === 'exhaustion') next = { ...next, exhaustion: clamp(next.exhaustion + signed(effect.sign), KN_BOUNDS.exhaustion.max) }
     else if (effect.kind === 'condition') next = { ...next, status: withCondition(next.status, effect.key, effect.value) }
     else if (effect.kind === 'temporary') next = { ...next, status: knGainTemporary(next.status, effect.vital, roll.total) }

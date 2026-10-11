@@ -20,6 +20,10 @@ export const knCombatCreatureSchema = z.object({
 export const knCombatSchema = z.object({
   creatures: z.array(knCombatCreatureSchema).min(1).max(KN_COMBAT_BOUNDS.creatures),
   round: boundedInt(KN_COMBAT_BOUNDS.round),
+  // Le combat contre l'Overseer du Domaine : sa victoire rapporte plus d'expérience.
+  overseer: z.boolean().optional(),
+  // Surprise réussie : la première attaque du survivant reçoit +20.
+  surprise: z.boolean().optional(),
   // Qui agit en premier jusqu'à la fin du combat, une fois l'Initiative jouée.
   first: z.enum(['survivor', 'creatures']).optional(),
   // Défenses déjà faites ce round : chacune après la première coûte −20, cumulatif.

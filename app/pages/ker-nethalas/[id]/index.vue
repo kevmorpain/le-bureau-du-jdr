@@ -30,6 +30,13 @@
       :bestiary
     />
 
+    <KnCombatSection
+      v-model:character="character"
+      :resolved
+      :bestiary
+      :masteries
+    />
+
     <KnCombatActions
       v-model:character="character"
       :masteries
