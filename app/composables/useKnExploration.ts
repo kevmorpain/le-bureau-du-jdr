@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import { KN_OVERSEER_DIE } from '~~/shared/ker-nethalas/creatures'
 import type { KnDifficultyKey } from '~~/shared/ker-nethalas/difficulty'
 import {
   KN_DEEP_SEARCH_DIE,
@@ -22,6 +23,7 @@ import {
   knMarkScavengeApplied,
   knMarkScavengeOutcome,
   knObstacleState,
+  knRecordCreature,
   knRecordDeepSearchContent,
   knRecordDescription,
   knRecordDoor,
@@ -30,6 +32,7 @@ import {
   knRecordExtraDarkness,
   knRecordExtraTension,
   knRecordLock,
+  knRecordOverseer,
   knRecordScavenge,
   knRecordTrap,
   knRecordTrapType,
@@ -45,12 +48,10 @@ import {
 } from '~~/shared/ker-nethalas/run'
 import {
   KN_EXPLORATION_TABLES,
-  knApplyTableEffects,
   knOutcomeAvailable,
   knTableEntry,
   type KnExplorationTableName,
   type KnRollTable,
-  type KnTableEffect,
 } from '~~/shared/ker-nethalas/tables'
 
 type Tables = Partial<Record<KnExplorationTableName, KnRollTable | null>>
@@ -68,7 +69,7 @@ const OBSTACLE_DICE = { trap: KN_TRAP_DIE, trapType: KN_EXPLORATION_TABLES.traps
 
 export function useKnExploration(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, tables: () => Tables) {
   const toast = useToast()
-  const { outcomeText } = useKnEffectText()
+  const { applyEffects } = useKnApplyEffects(character, resolved)
 
   function tableDie(name: KnVisitTable) {
     if (name === 'encounter') return KN_ENCOUNTER_DIE
@@ -83,49 +84,6 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
   function tableRoll(name: KnVisitTable, manual?: number) {
     const roll = manual ?? knRollDie(tableDie(name))
     character.value.run = TABLE_RECORDS[name](character.value.run, roll)
-  }
-
-  // Applique des gains et des pertes à la fiche et le dit dans un message ; rend rien si la liste est vide.
-  function applyEffects(effects: readonly KnTableEffect[], title: string) {
-    if (!effects.length) return
-    const c = character.value
-    const maxVitals = resolved().maxVitals
-    const before = c.healthCurrent
-    const { state, outcomes } = knApplyTableEffects(effects, {
-      coins: c.coins,
-      xp: c.xp,
-      provisions: c.provisions,
-      health: c.healthCurrent,
-      toughness: c.toughnessCurrent,
-      sanity: c.sanityCurrent,
-      aether: c.aetherCurrent,
-      exhaustion: c.exhaustion,
-      status: c.status,
-      run: c.run,
-    }, {
-      health: maxVitals.health.effective,
-      toughness: maxVitals.toughness.effective,
-      sanity: maxVitals.sanity.effective,
-      aether: maxVitals.aether.effective,
-    })
-
-    c.coins = state.coins
-    c.xp = state.xp
-    c.provisions = state.provisions
-    c.healthCurrent = state.health
-    c.toughnessCurrent = state.toughness
-    c.sanityCurrent = state.sanity
-    c.aetherCurrent = state.aether
-    c.exhaustion = state.exhaustion
-    c.status = state.status
-    c.run = state.run
-
-    const dies = before > 0 && state.health === 0
-    toast.add({
-      title,
-      description: [...outcomes.map(outcomeText), ...(dies ? ['La Santé tombe à 0 : le survivant meurt.'] : [])].join(' · '),
-      color: dies ? 'error' : 'success',
-    })
   }
 
   function applyScavenge() {
@@ -234,5 +192,13 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
     }
   }
 
-  return { tableRoll, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct }
+  function drawCreature(d6: number, d20: number) {
+    character.value.run = knRecordCreature(character.value.run, d6, d20)
+  }
+
+  function drawOverseer(manual?: number) {
+    character.value.run = knRecordOverseer(character.value.run, manual ?? knRollDie(KN_OVERSEER_DIE))
+  }
+
+  return { tableRoll, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct, drawCreature, drawOverseer }
 }

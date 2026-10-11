@@ -49,6 +49,15 @@ describe('contenu des Maîtrises', () => {
     expect(knMasteriesContentSchema.safeParse(broken({ aether: -1 })).success).toBe(false)
     expect(knMasteriesContentSchema.safeParse(broken({ aether: null })).success).toBe(true)
   })
+
+  it('une aptitude désigne la fiche du sbire qu\'elle invoque par sa clé', () => {
+    const base = fakeMastery('alpha')
+    const summoning = (summons: string) =>
+      [{ ...base, abilities: base.abilities.map((ability, index) => index === 0 ? { ...ability, summons } : ability) }]
+
+    expect(knMasteriesContentSchema.safeParse(summoning('fakeMinion')).success).toBe(true)
+    expect(knMasteriesContentSchema.safeParse(summoning('Pas une clé')).success).toBe(false)
+  })
 })
 
 describe('Maîtrises du survivant', () => {

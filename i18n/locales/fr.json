@@ -14,6 +14,146 @@
   },
 
   "ker_nethalas": {
+    "combat": {
+      "survivorDefensiveMoves": {
+        "1": "Votre prochaine attaque reçoit +10 au test de combat.",
+        "2": "L'Armure de l'adversaire baisse de 1 sur une localisation tirée au hasard, jusqu'à la fin du combat.",
+        "3": "Votre adversaire reçoit Saignement (1).",
+        "4": "Vous êtes Immunisé à toutes les conditions jusqu'à votre prochain tour, y compris celles que vous subissez déjà.",
+        "5": "Votre adversaire subit aussitôt 1 dégât perforant qui ignore l'Armure.",
+        "6": "Ajoutez +D6 à votre réserve de dégâts pour votre prochaine attaque.",
+        "7": "Vous avez l'Avantage à votre prochaine attaque.",
+        "8": "Vous gardez l'initiative : le prochain test défensif de l'adversaire subit −20.",
+        "9": "Un moment de répit après avoir paré l'attaque : vous récupérez 2 Robustesse.",
+        "10": "Votre prochaine attaque ne subit pas le Désavantage habituel pour viser une partie du corps."
+      },
+      "monsterDefensiveMoves": {
+        "1": "La prochaine attaque de la créature reçoit +10 en Compétence de combat. Si elle est magique, votre Résistance magique baisse de 10 jusqu'à son prochain tour.",
+        "2": "Votre Armure baisse de 1 sur une localisation tirée au hasard, jusqu'à la fin du combat.",
+        "3": "Vous recevez Saignement (1).",
+        "4": "La créature se débarrasse de toutes les conditions négatives qu'elle subit.",
+        "5": "Vous subissez 1 dégât perforant qui ignore l'Armure.",
+        "6": "La prochaine action de dégâts de la créature ajoute +D6 à sa réserve de dégâts ; si elle n'en fait pas, votre Résistance magique baisse de 10 jusqu'à son prochain tour.",
+        "7": "La créature a l'Avantage à sa prochaine attaque. Si elle est magique, vous lancez votre Résistance magique avec Désavantage.",
+        "8": "Votre prochain test d'Esquive, de parade ou de Résistance magique subit −20.",
+        "9": "La créature récupère D4 Santé.",
+        "10": "La créature rejoue immédiatement un tour."
+      },
+      "monsterFumbles": {
+        "1": "La prochaine attaque de la créature subit −20. Si elle est magique, vous recevez +20 en Résistance magique.",
+        "2": "Déconcertée de ne pas vous atteindre, la créature est Étourdie au round suivant.",
+        "3": "La créature est Entravée pendant D4 rounds par de la végétation ou des détritus.",
+        "4": "La créature révèle une faille : vous avez l'Avantage à vos tests défensifs pendant 2 rounds.",
+        "5": "L'attaque soulève un nuage de poussière : vous êtes Dissimulé pendant D4 rounds, ou jusqu'à votre attaque.",
+        "6": "La créature trébuche et perd son action : elle est À terre et doit se relever à son prochain tour.",
+        "7": "En portant son attaque, la créature trébuche et se cogne la tête : elle est À terre et Étourdie (2).",
+        "8": "La créature devient Effrayée (20).",
+        "9": "La créature se frappe elle-même et subit D6 dégâts tranchants.",
+        "10": "La créature tombe dans une position inconfortable : elle est À terre, subit 2D6 dégâts contondants et doit se relever à son prochain tour."
+      }
+    },
+    "creatureTypes": {
+      "animal": "Animal",
+      "astral": "Astral",
+      "construct": "Artificiel",
+      "demon": "Démon",
+      "elemental": "Élémentaire",
+      "humanoid": "Humanoïde",
+      "plant": "Plante",
+      "undead": "Mort-vivant"
+    },
+    "damageTypes": {
+      "acid": "Acide",
+      "arcane": "Arcanique",
+      "bludgeoning": "Contondants",
+      "cold": "Froid",
+      "fire": "Feu",
+      "force": "Force",
+      "holy": "Sacrés",
+      "infernal": "Infernaux",
+      "lightning": "Foudre",
+      "necrotic": "Nécrotiques",
+      "piercing": "Perforants",
+      "poison": "Poison",
+      "psychic": "Psychiques",
+      "slashing": "Tranchants"
+    },
+    "hitLocationTables": {
+      "arachnid": "Arachnide",
+      "wingedBiped": "Bipède ailé",
+      "insectoid": "Insectoïde",
+      "humanoid": "Humanoïde",
+      "quadruped": "Quadrupède",
+      "serpentoid": "Serpentiforme"
+    },
+    "hitLocations": {
+      "rightRearLeg": "Patte arrière droite",
+      "leftRearLeg": "Patte arrière gauche",
+      "midRightLeg": "Patte centrale droite",
+      "midLeftLeg": "Patte centrale gauche",
+      "foreRightLeg": "Patte antérieure droite",
+      "foreLeftLeg": "Patte antérieure gauche",
+      "frontRightLeg": "Patte frontale droite",
+      "frontLeftLeg": "Patte frontale gauche",
+      "abdomen": "Abdomen",
+      "cephalothorax": "Céphalothorax",
+      "rightLeg": "Jambe droite",
+      "leftLeg": "Jambe gauche",
+      "chest": "Torse",
+      "rightWing": "Aile droite",
+      "leftWing": "Aile gauche",
+      "rightArm": "Bras droit",
+      "leftArm": "Bras gauche",
+      "head": "Tête",
+      "rightMiddleLeg": "Patte médiane droite",
+      "leftMiddleLeg": "Patte médiane gauche",
+      "thorax": "Thorax",
+      "rightFrontLeg": "Patte avant droite",
+      "leftFrontLeg": "Patte avant gauche",
+      "rightHindLeg": "Patte arrière droite",
+      "leftHindLeg": "Patte arrière gauche",
+      "hindquarters": "Arrière-train",
+      "forequarters": "Avant-train",
+      "body": "Corps"
+    },
+    "creatureTraits": {
+      "alert": {
+        "name": "Alerte",
+        "text": "Ne peut jamais être surprise, quoi que le survivant possède pour surprendre."
+      },
+      "frightening": {
+        "name": "Effrayant",
+        "text": "Au début du combat, test de Résolution : un échec coûte 2 Santé mentale. Un seul test pour tout un groupe."
+      },
+      "horrifying": {
+        "name": "Horrifiant",
+        "text": "Au début du combat, test de Résolution : un échec coûte 4 Santé mentale. Un seul test pour tout un groupe."
+      },
+      "pack": {
+        "name": "Meute",
+        "text": "+5 en Compétence de combat pour chaque autre créature de meute encore en vie dans la pièce."
+      },
+      "penetrating": {
+        "name": "Pénétrant",
+        "text": "Ses attaques ignorent {value} point(s) d'Armure."
+      },
+      "ruthlessness": {
+        "name": "Impitoyable",
+        "text": "{value} tour(s) de plus par round. Une condition qui fait perdre des actions (Paralysé, Étourdi) en retire une par cumul."
+      },
+      "savage": {
+        "name": "Sauvage",
+        "text": "Ses attaques ne se parent pas : seule l'Esquive les évite."
+      },
+      "swift": {
+        "name": "Rapide",
+        "text": "Ignore tous les malus de Réaction."
+      },
+      "venomous": {
+        "name": "Vénéneux",
+        "text": "Quand elle blesse le survivant, test d'Endurance : un échec donne Empoisonné (1)."
+      }
+    },
     "skills": {
       "acrobatics": "Acrobatie",
       "athletics": "Athlétisme",

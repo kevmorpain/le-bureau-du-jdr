@@ -6,6 +6,7 @@ import {
   type KnGrowingDarknessKey,
 } from './catalog/growingDarkness'
 import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
+import { KN_COMBAT_BOUNDS, knCombatCreatureSchema, knCombatSchema, type KnCombatCreature, type KnCreatureBuff } from './combatState'
 import { KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 import { KN_OBSTACLE_KINDS, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, type KnObstacleKind } from './exploration'
 import { KN_SKILL_KEYS } from './skills'
@@ -32,6 +33,7 @@ export const KN_RUN_BOUNDS = {
   visits: 200,
   obstacles: 8,
   extraTension: 10,
+  creatures: 4,
 } as const
 
 export const KN_VISIT_KINDS = ['room', 'corridor', 'revisit'] as const
@@ -119,6 +121,8 @@ export const knVisitSchema = z.object({
   obstacles: z.array(knObstacleSchema).max(KN_RUN_BOUNDS.obstacles).optional(),
   deepSearch: z.object({ content: knTableRollSchema.optional() }).optional(),
   extraTension: z.array(knExtraTensionSchema).max(KN_RUN_BOUNDS.extraTension).optional(),
+  // Les créatures tirées dans cette entrée (combat, événement, alarme) : un D6 pour la table, un D20 pour la créature.
+  creatures: z.array(z.object({ d6: boundedInt({ min: 1, max: 6 }), d20: boundedInt({ min: 1, max: 20 }) })).max(KN_RUN_BOUNDS.creatures).optional(),
 })
 
 export const knDomainSchema = z.object({
@@ -129,6 +133,8 @@ export const knDomainSchema = z.object({
   exitDie: knUsageDieSchema,
   exitFound: z.boolean(),
   overseerInfluences: z.array(z.enum(KN_OVERSEER_INFLUENCE_KEYS)).max(KN_RUN_BOUNDS.overseerInfluences),
+  // L'Overseer du Domaine : le D10 tiré en y entrant pour la première fois.
+  overseer: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
   growingDarkness: z.array(knGrowingDarknessEntrySchema).max(KN_RUN_BOUNDS.growingDarkness),
   visits: z.array(knVisitSchema).max(KN_RUN_BOUNDS.visits),
 })
@@ -138,6 +144,10 @@ export const knRunSchema = z.object({
   current: boundedInt({ min: 0, max: KN_RUN_BOUNDS.domains - 1 }),
   tensionDie: knUsageDieSchema,
   lightRemaining: boundedInt(KN_RUN_BOUNDS.light),
+  // Le combat en cours : il traverse les entrées du chemin du Domaine, d'où sa place dans le run.
+  combat: knCombatSchema.optional(),
+  // Les sbires de Maîtrise : ils suivent le survivant de pièce en pièce, jusqu'à leur destruction.
+  minions: z.array(knCombatCreatureSchema).max(KN_COMBAT_BOUNDS.minions).optional(),
 }).refine(run => run.current < run.domains.length, { message: 'Domaine courant inexistant' })
 
 export type KnGrowingDarknessEntry = z.infer<typeof knGrowingDarknessEntrySchema>
@@ -365,6 +375,17 @@ export function knMarkScavengeApplied(run: KnRun): KnRun {
 
 const withTaken = (taken: number[] | undefined, outcome: number) => taken?.includes(outcome) ? taken : [...(taken ?? []), outcome]
 
+// Une rencontre peut venir du test de combat, d'un événement ou d'une alarme : on garde chaque tirage, dans l'ordre.
+export function knRecordCreature(run: KnRun, d6: number, d20: number): KnRun {
+  const visit = knCurrentVisit(run)
+  if (!visit || visit.kind === 'revisit' || (visit.creatures?.length ?? 0) >= KN_RUN_BOUNDS.creatures) return run
+  return withLastVisit(run, v => ({ ...v, creatures: [...(v.creatures ?? []), { d6, d20 }] }))
+}
+
+export function knRecordOverseer(run: KnRun, roll: number): KnRun {
+  return knCurrentDomain(run).overseer ? run : withCurrentDomain(run, { overseer: { roll } })
+}
+
 export function knMarkEventOutcome(run: KnRun, outcome: number): KnRun {
   const visit = knCurrentVisit(run)
   return visit?.event ? withLastVisit(run, v => ({ ...v, event: { ...v.event!, taken: withTaken(v.event!.taken, outcome) } })) : run
@@ -540,4 +561,170 @@ export function knUndoLastVisit(run: KnRun): KnRun {
     visits: domain.visits.slice(0, -1),
     rooms: last.kind === 'revisit' ? domain.rooms : Math.max(0, domain.rooms - 1),
   })
+}
+
+// Engager un combat : chaque créature garde sa Santé, fixée ici à son niveau. Un combat déjà engagé ne se remplace pas.
+export function knStartCombat(run: KnRun, creatures: KnCombatCreature[], overseer = false): KnRun {
+  if (run.combat || !creatures.length) return run
+  return { ...run, combat: { creatures: creatures.slice(0, KN_COMBAT_BOUNDS.creatures), round: 1, reactions: 0, log: [], ...(overseer ? { overseer } : {}) } }
+}
+
+export function knEndCombat(run: KnRun): KnRun {
+  const { combat: _ended, ...rest } = run
+  return rest
+}
+
+// Une ligne de plus dans le journal du combat, les plus récentes en tête.
+export function knCombatLog(run: KnRun, line: string): KnRun {
+  return run.combat ? { ...run, combat: { ...run.combat, log: [line, ...run.combat.log].slice(0, KN_COMBAT_BOUNDS.log) } } : run
+}
+
+const withCreature = (run: KnRun, index: number, patch: (creature: KnCombatCreature) => KnCombatCreature): KnRun =>
+  run.combat ? { ...run, combat: { ...run.combat, creatures: run.combat.creatures.map((c, i) => i === index ? patch(c) : c) } } : run
+
+// Dégâts (positifs) ou soins (négatifs) sur une créature : la Santé temporaire part d'abord, la Santé reste entre 0 et son maximum.
+function damaged(creature: KnCombatCreature, amount: number): KnCombatCreature {
+  const hit = Math.trunc(amount)
+  const absorbed = hit > 0 ? Math.min(creature.temporary ?? 0, hit) : 0
+  const health = Math.min(creature.maxHealth, Math.max(0, creature.health - (hit - absorbed)))
+  const left = (creature.temporary ?? 0) - absorbed
+  return { ...(left > 0 ? { ...creature, temporary: left } : withoutTemporary(creature)), health }
+}
+
+const withoutTemporary = ({ temporary: _temporary, temporaryUntil: _until, ...rest }: KnCombatCreature): KnCombatCreature => rest
+
+// Dégâts (positifs) ou soins (négatifs) sur une créature engagée, entre 0 et sa Santé maximale. Les dégâts retirent d'abord
+// sa Santé temporaire.
+export function knDamageCombatCreature(run: KnRun, index: number, amount: number): KnRun {
+  if (!run.combat?.creatures[index]) return run
+  return withCreature(run, index, c => damaged(c, amount))
+}
+
+// Des adversaires de plus en combat ; `max` borne le nombre de ceux de la même fiche encore en vie.
+export function knAddCombatCreatures(run: KnRun, creatures: KnCombatCreature[], max?: number): KnRun {
+  if (!run.combat) return run
+  const ref = creatures[0]?.ref
+  const alive = ref ? run.combat.creatures.filter(c => c.ref === ref && c.health > 0).length : 0
+  const room = max === undefined ? creatures.length : Math.max(0, max - alive)
+  const added = creatures.slice(0, Math.min(room, KN_COMBAT_BOUNDS.creatures - run.combat.creatures.length))
+  return added.length ? { ...run, combat: { ...run.combat, creatures: [...run.combat.creatures, ...added] } } : run
+}
+
+export function knAddMinion(run: KnRun, minion: KnCombatCreature): KnRun {
+  const minions = run.minions ?? []
+  return minions.length >= KN_COMBAT_BOUNDS.minions ? run : { ...run, minions: [...minions, minion] }
+}
+
+export function knRemoveMinion(run: KnRun, index: number): KnRun {
+  const rest = (run.minions ?? []).filter((_, i) => i !== index)
+  const { minions: _previous, ...others } = run
+  return rest.length ? { ...others, minions: rest } : others
+}
+
+// Un sbire qui tombe à 0 Santé est détruit : il quitte l'équipe.
+export function knDamageMinion(run: KnRun, index: number, amount: number): { run: KnRun, destroyed: boolean } {
+  const target = run.minions?.[index]
+  if (!target) return { run, destroyed: false }
+  const next = damaged(target, amount)
+  if (next.health <= 0) return { run: knRemoveMinion(run, index), destroyed: true }
+  return { run: { ...run, minions: run.minions!.map((m, i) => i === index ? next : m) }, destroyed: false }
+}
+
+// Une pièce nettoyée : les sbires récupèrent toute leur Santé.
+export function knHealMinions(run: KnRun): KnRun {
+  return run.minions ? { ...run, minions: run.minions.map(m => ({ ...withoutTemporary(m), health: m.maxHealth })) } : run
+}
+
+// Santé temporaire gagnée : `cap` est le multiple de sa Santé que la créature ne peut pas dépasser avec elle.
+export function knGainCombatTemporary(run: KnRun, index: number, amount: number, options: { cap?: number, until?: 'turn' | 'round' } = {}): KnRun {
+  const target = run.combat?.creatures[index]
+  if (!target || amount <= 0) return run
+  const room = options.cap === undefined ? KN_COMBAT_BOUNDS.health.max : Math.max(0, Math.floor(target.health * (options.cap - 1)))
+  const temporary = Math.min(room, (target.temporary ?? 0) + Math.trunc(amount), KN_COMBAT_BOUNDS.health.max)
+  if (temporary <= 0) return run
+  return withCreature(run, index, c => ({ ...c, temporary, ...(options.until ? { temporaryUntil: options.until } : {}) }))
+}
+
+// Une créature éphémère vient de jouer son action.
+export function knSpendCombatCreature(run: KnRun, index: number): KnRun {
+  return withCreature(run, index, c => ({ ...c, spent: true }))
+}
+
+// Les créatures éphémères qui ont joué disparaissent.
+export function knVanishSpentCreatures(run: KnRun): KnRun {
+  if (!run.combat?.creatures.some(c => c.spent)) return run
+  return { ...run, combat: { ...run.combat, creatures: run.combat.creatures.map(({ spent, ...c }) => spent ? { ...c, health: 0 } : c) } }
+}
+
+// Un effet en cours sur une créature, ou sur toutes les vivantes de sa fiche. Le même effet reposé en remplace la durée.
+export function knAddCreatureBuff(run: KnRun, index: number, buff: KnCreatureBuff, scope: 'self' | 'sameSheet' = 'self'): KnRun {
+  const target = run.combat?.creatures[index]
+  if (!run.combat || !target) return run
+  const concerned = (c: KnCombatCreature, i: number) => i === index || (scope === 'sameSheet' && !!target.ref && c.ref === target.ref && c.health > 0)
+  return {
+    ...run,
+    combat: {
+      ...run.combat,
+      creatures: run.combat.creatures.map((c, i) => concerned(c, i)
+        ? { ...c, effects: [...(c.effects ?? []).filter(effect => effect.label !== buff.label), buff].slice(-8) }
+        : c),
+    },
+  }
+}
+
+const withEffects = (creature: KnCombatCreature, effects: KnCreatureBuff[]): KnCombatCreature => {
+  const { effects: _previous, ...rest } = creature
+  return effects.length ? { ...rest, effects } : rest
+}
+
+// Un round qui passe : chaque effet à durée perd un round, et tombe à zéro.
+export function knAdvanceCreatureEffects(run: KnRun): KnRun {
+  if (!run.combat) return run
+  return {
+    ...run,
+    combat: {
+      ...run.combat,
+      creatures: run.combat.creatures.map(c => c.effects
+        ? withEffects(c, c.effects.flatMap(effect => effect.rounds === undefined ? [effect] : effect.rounds <= 1 ? [] : [{ ...effect, rounds: effect.rounds - 1 }]))
+        : c),
+    },
+  }
+}
+
+// La créature joue : ses effets « jusqu'à son prochain tour » tombent.
+export function knExpireCreatureTurnEffects(run: KnRun, index: number): KnRun {
+  return withCreature(run, index, c => c.effects?.some(effect => effect.untilTurn) ? withEffects(c, c.effects.filter(effect => !effect.untilTurn)) : c)
+}
+
+// Les effets à usage unique tombent une fois la créature servie d'eux.
+export function knConsumeCreatureEffects(run: KnRun, index: number): KnRun {
+  return withCreature(run, index, c => c.effects?.some(effect => effect.once) ? withEffects(c, c.effects.filter(effect => !effect.once)) : c)
+}
+
+// Sa Santé temporaire disparaît quand son terme arrive : au prochain tour de la créature, ou à la fin du round.
+export function knExpireCombatTemporary(run: KnRun, term: 'turn' | 'round', index?: number): KnRun {
+  if (!run.combat) return run
+  const expires = (c: KnCombatCreature, i: number) =>
+    c.temporaryUntil === term && (term === 'round' || i === index)
+  return { ...run, combat: { ...run.combat, creatures: run.combat.creatures.map((c, i) => expires(c, i) ? withoutTemporary(c) : c) } }
+}
+
+export function knSetCombatFirst(run: KnRun, first: 'survivor' | 'creatures'): KnRun {
+  return run.combat ? { ...run, combat: { ...run.combat, first } } : run
+}
+
+// Le survivant vient de se défendre : la défense suivante du round coûtera plus cher.
+export function knRegisterReaction(run: KnRun): KnRun {
+  return run.combat ? { ...run, combat: { ...run.combat, reactions: Math.min(KN_COMBAT_BOUNDS.reactions.max, run.combat.reactions + 1) } } : run
+}
+
+export function knNextCombatRound(run: KnRun): KnRun {
+  if (!run.combat) return run
+  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
+}
+
+export function knSetCombatSurprise(run: KnRun, surprise: boolean): KnRun {
+  if (!run.combat) return run
+  const { surprise: _previous, ...rest } = run.combat
+  return { ...run, combat: surprise ? { ...rest, surprise } : rest }
 }

@@ -403,6 +403,90 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
+- **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
+  réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
+  (localisations, réserve de dégâts, types de dégâts, Armure, Coup critique), p. 131 (défense contre les actions des créatures).
+- **Moteur pur** (`shared/ker-nethalas/combat.ts`) : `knCombatExchange` (succès, critique, échec critique, jet le plus haut,
+  égalité, et « si les deux échouent, 1 dégât inévitable »), `knOpposedCheck` pour l'Initiative et la surprise,
+  `knRollDamagePool` (le dé le plus haut plus tous les bonus fixes), `knResolveDamage` (doublement par Coup critique ou point
+  faible, Armure sauf ce que le type ignore, perforant, tranchant, Vulnérable, Résistant, Restauré), Meute et Pénétrant.
+- **État** (`combatState.ts`, dans `run.combat`) : les créatures engagées avec leur Santé fixée à l'engagement (au niveau du
+  survivant), le round, l'Initiative, la surprise, les défenses déjà faites ce round (−20 cumulatif) et un journal. Aucune
+  migration. La victoire et la fin du combat passent par `useKnCombatEnd`, partagé avec la carte « Fin de combat ».
+- **Interface** : « Engager le combat » sur une fiche de créature ou sur l'Overseer ; carte « Combat » avec l'armure du
+  survivant par zone, la Santé de chaque créature, l'Initiative, l'attaque du survivant (compétence d'arme, réserve de dégâts
+  saisie, type, point faible visé avec Désavantage) et le tour d'une créature (action tirée, défense, test d'une action
+  magique, dégâts). Les dégâts ne s'appliquent que par un bouton.
+- **Dégâts des actions** : champ optionnel `damage` (dé et type) sur une action de créature, ajouté à la réserve des dés de
+  ses paliers de niveau. Sans lui, le joueur saisit les dégâts du texte. Il porte aussi, au besoin, `always` (dus que le test
+  du survivant réussisse ou non, quand il ne sert qu'aux effets annexes), `direct` (à la Santé, sans passer par la Robustesse ni
+  l'Armure) et `extra` (dés qui rejoignent la réserve). Une action sans étiquette avec des dégâts se joue comme une action
+  Magique : un test du survivant, et les dégâts à l'échec.
+- **Les adversaires retiennent le dé le plus haut** (p. 80-81, « Enemies and NPCs ») : les dégâts que les effets d'une action
+  infligent (`2D6`) suivent la même règle que sa réserve, au lieu d'une somme. Un effet de dégâts peut aussi valoir la moitié du
+  jet, arrondie au supérieur, pour « la moitié en cas de réussite ».
+- **Effets des actions** : champs optionnels `checks` (le test demandé au survivant) et `outcomes` (états, dégâts annexes,
+  même format que les événements, KN37) sur une action. Une action sans étiquette propose son test et ses effets tout de suite ;
+  une action Physique, une fois touché ; une action Magique, après un test raté, et son `checks` donne alors le test du
+  survivant à la place de la Résistance magique. Les effets s'appliquent par bouton, par le même chemin que les événements
+  (`useKnApplyEffects`). Les dégâts d'une action sans étiquette passent par ses `outcomes`, sans Armure.
+- **Effets à durée sur le survivant** : un effet `timed` (étiquette, rounds en dés ou en nombre, dégâts de début de tour,
+  modificateurs) devient un modificateur de la fiche marqué « de combat » (`combat`, `rounds`, `tick` dans `status.custom`), donc
+  compté par le calcul des scores. Reposer le même effet en remplace la durée. « Round suivant » inflige les dégâts de début
+  de tour (le dé le plus haut), puis retire un round ; les effets disparaissent à la fin du combat, et la carte de combat
+  les liste avec un bouton pour en retirer un (se libérer d'une étreinte). Aucune migration.
+- **Effets sur la créature** : `self` sur une action. Soins et Santé temporaire (en dés, ou en part des dégâts infligés, de
+  la Santé maximale ou de la Santé actuelle, arrondie au supérieur ; plafond en multiple de la Santé ; terme : prochain tour
+  ou fin du round) ; effets en cours (`buff`) : Résistant ou Vulnérable à tout (sauf certains types), Immunisé, Immunisé aux
+  dégâts non magiques, Avantage à ses attaques ou à ses défenses, bonus de Compétence de combat, dé de dégâts en plus, attaques
+  qui la visent avec Désavantage, dégâts renvoyés, usage unique. Ils durent des rounds, jusqu'au prochain tour de la créature
+  ou jusqu'à la fin du combat, et peuvent toucher toutes les créatures de la même fiche. Les attaques du survivant et les
+  tours de la créature en tiennent compte ; la riposte se subit par un bouton.
+- **Sbires alliés** : un sbire invoqué s'ajoute à l'équipe par un bouton sous l'aptitude (six au plus, `run.minions`). Les
+  sbires suivent le survivant de pièce en pièce, récupèrent toute leur Santé à la fin du combat et sont détruits à 0 Santé
+  (p. 92-93). La carte « Sbires » joue leur tour : action tirée sur leur fiche, attaque d'une créature (leur Compétence de
+  combat, sa défense et son Armure) ou sort (test de Résistance magique de la créature). Une créature peut viser un sbire :
+  il se défend avec sa fiche. Qui l'adversaire vise reste le choix du joueur ; le livre veut les PJ d'abord.
+- **Adversaires invoqués** : un effet `summon` fait entrer des créatures de plus, jusqu'à un maximum de la même fiche, et peut
+  les placer d'emblée sous un effet (`buff`). Une fiche éphémère (`ephemeral`) disparaît au tour suivant celui où elle a joué
+  son action : c'est le cas des serviteurs qui n'attaquent qu'une fois.
+- **Fin du combat** : le survivant récupère D4 Robustesse quand un combat se termine (p. 86), victoire ou non ; « Annuler le
+  combat » retire l'état sans rien rendre. La carte « Fin de combat » est supprimée : ses boutons (Combat remporté, Overseer
+  vaincu, Combat terminé sans victoire) sont dans la carte « Combat », qui n'existe que pendant un combat, si bien que
+  l'expérience d'une victoire ne se prend qu'une fois.
+- **Public** : les 20 textes des mouvements défensifs et des maladresses des monstres, reformulés (`ker_nethalas.combat`).
+- **Laissé de côté** : l'armure du survivant est saisie par zone à la main jusqu'à X16 (#263) ; les effets des mouvements
+  défensifs et des maladresses restent du texte ; les conditions qui touchent une créature (Entravée, Aveuglée…) ne sont pas
+  suivies ; le « une seule action par round » des créatures invoquées ; la réduction de la Robustesse maximale
+  par un coup ; la fuite, le corps à corps à deux armes, le bouclier, la
+  réduction d'Armure par l'acide, les conditions qui donnent Avantage ou Désavantage (À terre), l'influence de l'Overseer et les
+  bonus de combat de l'Obscurité Grandissante par catégorie d'adversaire.
+
+### KN38 — Bestiaire : format public, fiches privées, tirage par clé
+- **Règles sourcées** (livre v1.2) : p. 133-135 (un D6 choisit la table de rencontre : 1-3 A, 4-6 B ; un D20 donne la
+  créature), p. 179 (D10 pour l'Overseer, une fois en entrant dans un Domaine), p. 129-133 (types, traits, fiche, adaptation
+  au niveau), p. 80-81 (localisations), p. 82-83 (types de dégâts, Armure).
+- **Public** (`shared/ker-nethalas/creatures.ts`, `catalog/`) : le schéma d'une fiche (types, Nombre en dé, Esprit, Endurance,
+  Corps, Santé fixe ou « base + par niveau », table de localisation et point faible, Armure par localisation, Compétence de
+  combat, Résistance magique, traits, affinité, vulnérabilités, table d'actions D6 avec étiquette Physique ou Magique,
+  paliers d'adaptation) ; les 14 types de dégâts et ce qu'ils ignorent de l'Armure ; les 6 tables de localisation ; les règles
+  des 8 types de créature ; les 9 traits communs, reformulés. Ce sont des règles, comme les conditions.
+- **Privé** : les fiches (`bestiary`, un tableau de fiches de clé unique) et les tirages (`encountersA`, `encountersB`,
+  `overseers`, des tables dont chaque entrée porte le nom et `ref`, la clé de la fiche). Une créature sans fiche chargée
+  s'affiche avec son nom et l'invitation à noter ses caractéristiques.
+- **Adaptation au niveau** : le niveau du survivant fait la Santé (base + par niveau) et ouvre les paliers « après le
+  niveau N », qui s'ajoutent tous (Santé, Compétence de combat, Résistance magique, dé de dégâts, Armure). L'adaptation
+  s'affiche sur la fiche ; l'appliquer aux dégâts des actions viendra avec le suivi de combat.
+- **Dans le run** : `creatures` dans une entrée (jusqu'à 4 tirages : test de combat, événement ou alarme) et `overseer` dans
+  le Domaine, tous deux de simples numéros de dés ; aucune migration.
+- **Vocabulaire** : Esprit, Corps (Mind, Body) sont mon choix : la VF, d'une édition antérieure, dit Vigilance et Athlétisme.
+- **Sbires** : une fiche de rôle `minion` (même schéma, tableau d'actions à deux plages 1-4 / 5-6, pas d'adaptation) ; une
+  aptitude de Maîtrise l'invoque par `summons`, sa clé, et la fiche s'affiche sous l'aptitude une fois débloquée, sans
+  bouton d'engagement.
+- **Laissé de côté** : les bonus de Maîtrise sur leur fiche, qui se saisissent en « dés de dégâts en plus » et à la main pour la
+  Santé (KN39 pour le reste).
+
 ### KN37 — Tests en ligne, conséquences automatiques, actions sur les obstacles
 - **Test en ligne** : un bouton « Tester » ouvre, dans le bloc de l'entrée, le même panneau que la carte « Jet de dés »
   (`KnRollPanel`, avec le test imposé : compétence ou résistance, difficulté, bonus) : cible, D100 tiré ou saisi, Avantage et
@@ -659,12 +743,14 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
-| **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
-| **5b — Événements** | table des événements (D100), contenu privé en texte seul (KN36) | contenu écrit, validé par le schéma ; à relire par le PM |
-| **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
-| **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
+| **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
+| **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
+| **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |
+| **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
+| **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
+| **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
+| **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
@@ -763,9 +849,94 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Compétences ajoutées à la main** : doubles et criticité détectés, mais aucun effet de critique (le livre n'en
   donne pas).
 
+- **« Après le niveau N »** (fiches de créature) : lu comme *à partir du niveau N+1*. Le livre dit qu'un adversaire de
+  niveau 11 reçoit les deux paliers, 5 et 10, ce qui va dans ce sens ; le cas du niveau exact reste implicite.
+- **Dé de dégâts d'un palier** (« +D6 damage ») : un dé de plus dans la réserve de dégâts de la créature, qui garde le plus
+  haut (p. 81) ; un bonus fixe (« +1 damage ») s'ajoute au dé choisi. Les paliers s'ajoutent entre eux.
+
+- **Point faible et Coup critique** : « un Coup critique sur un point faible ne triple pas les dégâts » est lu comme un
+  doublement seulement quand les deux se cumulent. ⚠️ hypothèse
+- **Perforant sur un Coup critique** : le +2, « non doublé », s'ajoute après le doublement et avant l'Armure.
+  ⚠️ hypothèse
+- **Action magique** : sans localisation (p. 80), donc sans Armure du survivant. Le test est la Résistance magique ; quand le
+  texte de l'action en nomme un autre (Endurance, Esquive), on le choisit à la main. ⚠️ hypothèse
+- **Réactions** : le malus de −20 par défense déjà faite dans le round vaut aussi pour le test d'une action magique, et se
+  remet à 0 au round suivant.
+- **Meute** : seules les créatures en vie de même fiche comptent.
+- **Surprise ratée** : la Perception de l'Initiative qui suit prend −20 (p. 76) ; on le saisit à la main dans le bonus du test.
+- **Actions des fiches** : un dégât « sur une touche » s'applique à la touche ; sur un test, à l'échec du test, sauf quand le
+  texte dit que les dégâts sont dus et que le test ne vise que l'effet annexe (`always`).
+- **Test de Corps** : le livre dit « Athletics/Body checks » (p. 88) et oppose l'Athlétisme du PJ au Corps de la créature ; un
+  test de Corps demandé à un survivant est donc son Athlétisme.
+- **Durées en rounds** : un effet de N rounds compte le round en cours ; ses dégâts de début de tour tombent à chaque
+  changement de round, sans tenir compte de l'ordre de l'Initiative. Reposer un effet qui « se cumule » en remplace la durée.
+  « Jusqu'à la fin de son prochain tour » se lit comme deux rounds, « jusqu'au début de son prochain tour » comme jusqu'à
+  ce que la créature tire son action. Une aura n'est testée qu'à sa pose : un survivant qui la rate subit ses dégâts de début
+  de tour pendant sa durée, sans nouveau test.
+- **Bonus offensifs d'un effet qui finit au début du prochain tour** : ils n'ont pas le temps de servir (l'effet tombe avant
+  l'attaque) ; ces bonus restent du texte.
+- **Créatures invoquées sans fiche complète** : le livre ne donne ni type, ni localisation, ni Esprit, Endurance, Corps, Résistance
+  magique pour les serviteurs d'un Overseer ni pour les doubles d'un autre ; ces champs valent 0 ou sont absents, sans effet puisque
+  les premiers disparaissent après leur attaque et les seconds tombent au premier coup (Santé 1). La Compétence de combat des
+  doubles est lue comme celle de l'Overseer qui les invoque, avec son palier de niveau 10 (+10) : hypothèse, le livre ne la donne pas.
+- **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
+  combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
+  se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.
+
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 6c (suite) : effets des actions et sbires alliés
+- Retour du PM sur ce qui restait en texte : les dégâts directs, la Santé temporaire des créatures, le test de Corps, les effets
+  à durée et les sbires alliés « se font quand même ». Quatre étapes, chacune commitée, sans migration (`status.custom` et
+  `run` sont des colonnes JSON dont les champs ajoutés sont optionnels).
+- Source relue avant de coder : « Enemies and NPCs always pick the highest die rolled » (les dés d'un effet de créature étaient
+  additionnés à tort) ; « Athletics/Body checks » (le test de Corps) ; les règles des sbires (p. 92-93).
+- Vérifié dans le navigateur, sur un survivant de test supprimé ensuite : une action dont les dégâts sont dus malgré un test
+  réussi ; la Santé temporaire d'une créature (+1 après 2 dégâts infligés) ; une aura de 1 dégât sur 2 rounds (Robustesse
+  23 → 21, effet disparu au troisième round) ; Résistant à tout avec Désavantage contre soi, puis la riposte (2 dégâts de
+  foudre subis) ; deux sbires ajoutés depuis leur aptitude, l'attaque d'un sbire, D4 adversaires invoqués, une créature qui
+  attaque un sbire (1 dégât inévitable).
+- Suite complète verte (192 fichiers, 2334 tests), tsc 14 serveur / 128 app comme avant.
+- **Non vérifié** dans le navigateur : les durées en dés des effets sur la créature, l'usage unique, le sort d'un sbire.
+- Sur retour du PM, les serviteurs d'un Overseer (D4, une attaque chacun, puis disparition) et les doubles d'un autre (deux
+  par action, quatre au plus, sous un effet d'arrivée) sont des adversaires invoqués ; vérifié dans le navigateur (4 serviteurs
+  invoqués, l'un joue puis ne peut plus agir ; 2 doubles arrivent sous leur effet). La disparition au tour suivant n'est vérifiée
+  que par les tests unitaires.
+- Le schéma des dés passe dans `diceSchema.ts` pour éviter un cycle d'import entre l'état de combat et `dice.ts`.
+
+### 2026-10-11 — Tranche 6c : fiches du bestiaire, Overseers et sbires
+- Décision KN38 complétée ; aucune migration. Les 53 fiches (43 créatures, 10 Overseers) et les 5 sbires sont écrits hors
+  dépôt : chiffres, étiquettes, Armure, traits et adaptation lus par un script sur le livre et recoupés avec les pilotes ;
+  textes d'action en français, avec leurs dégâts, tests et conséquences quand le texte les donne.
+- Vérifié : les 58 fiches passent le schéma réel (chargement `kn:content` sur la base locale) ; dans le navigateur, une fiche
+  de sbire sous deux aptitudes d'invocation d'un survivant de test (supprimé ensuite).
+- Tests : un sbire accepté par le schéma des fiches, une aptitude qui désigne son sbire. Suite complète verte.
+- **Non vérifié** dans le navigateur : l'engagement d'une créature des lots 3 à 5, et les Overseers au-delà du pilote.
+- Texte français à relire par le PM avant tout chargement en production.
+
+### 2026-10-11 — Tranche 6b : suivi de combat
+- Décision KN39 ; aucune migration. Moteur pur testé (jet opposé, critiques, égalités, dégâts, Armure, types de dégâts,
+  vulnérabilités, état du combat) : 44 tests.
+- Vérifié sur une base neuve avec les trois fiches pilotes : engagement depuis une fiche (Santé 12 au niveau 1) ; Initiative
+  (un double au-dessus de la cible est un échec critique, qui perd contre un simple échec) ; attaque parée avec mouvement défensif ;
+  échec des deux côtés (1 dégât inévitable, appliqué 12 → 11) ; touche au bras gauche (D6 → 3, +1 tranchant, 4 dégâts, 11 → 7) ;
+  tour de la créature : action magique ratée (Robustesse 23 → 21) puis action physique qui touche au torse (21 → 18) ; défenses
+  du round comptées.
+- Retours du PM appliqués : texte « sa Santé » ou « leur Santé » selon le nombre de créatures, défilement vers la carte de
+  combat à l'engagement, format de la réserve de dégâts en sous-titre et erreur sous le champ, effets des actions (une Entrave
+  ratée donne l'état Entravé, journalisé), fin du combat qui rend D4 Robustesse (10 → 13) et retire la carte « Fin de combat ».
+- **Non vérifié** dans le navigateur : l'engagement contre l'Overseer, la surprise, le point faible visé, la saisie manuelle
+  des dés, le défilement animé (volet masqué, vérifié par l'appel à `scrollIntoView`) et le rendu visuel.
+
+### 2026-10-11 — Tranche 6a : rencontres et bestiaire
+- Décision KN38 ; aucune migration. Trois pilotes privés à relire (deux créatures, un Overseer), plus les tables de tirage
+  complètes (40 créatures, 10 Overseers), dont les clés servent aux futures fiches.
+- Vérifié sur une base neuve : l'Overseer du Domaine et trois créatures posés dans l'entrée (dont une sans fiche) s'affichent ;
+  la Santé suit le niveau (12 au niveau 1 pour 8 + 4 par niveau) ; « Tirer une créature » ajoute un tirage (limite de 4) ;
+  « Tirer l'action » met une ligne en avant.
+- **Non vérifié** dans le navigateur : la saisie manuelle des dés (volet masqué, le clavier ne répond pas) et le rendu visuel.
 
 ### 2026-10-11 — Tranche 5d : tests en ligne, conséquences, actions d'obstacle
 - Décision KN37. Retours du PM : un bouton pour tester la Fouille, les effets automatisables des événements (un piège,

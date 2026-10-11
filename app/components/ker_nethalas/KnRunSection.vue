@@ -115,6 +115,28 @@
         Règle optionnelle : {{ KN_OPTIONAL_LAIR_ROOMS }} salles explorées sans avoir trouvé le Lair, la salle suivante le contient.
       </p>
 
+      <ul
+        v-if="!domain.overseer"
+        class="text-sm"
+      >
+        <KnTableRoll
+          label="Overseer du Domaine (une fois en y entrant)"
+          :die="KN_OVERSEER_DIE"
+          plain
+          active
+          @roll="drawOverseer"
+        />
+      </ul>
+      <KnCreatureCard
+        v-else
+        :creature="overseer.creature"
+        :name="overseer.name"
+        :level="character.level"
+        :source="`Overseer du Domaine · D10 ${domain.overseer.roll}`"
+        :can-engage="!run.combat"
+        @engage="creature => engageAndShow(creature, true)"
+      />
+
       <div class="space-y-3">
         <div class="flex flex-wrap gap-2">
           <UButton
@@ -167,6 +189,9 @@
             :lair-die="domain.lairDie"
             :exit-die="domain.exitDie"
             :lockpicks="character.provisions.lockpicks"
+            :level="character.level"
+            :in-combat="!!run.combat"
+            :bestiary
             :tables
             @tension="tension"
             @usage="usage"
@@ -184,6 +209,8 @@
             @take="takeOutcome"
             @add-room-trap="addRoomTrap"
             @obstacle-act="obstacleAct"
+            @draw-creature="drawCreature"
+            @engage="creature => engageAndShow(creature)"
           />
         </div>
       </div>
@@ -216,12 +243,14 @@ import {
   type KnUsageDie,
   type KnVisitKind,
 } from '~~/shared/ker-nethalas/run'
-import type { KnExplorationTableName, KnRollTable } from '~~/shared/ker-nethalas/tables'
+import { KN_OVERSEER_DIE, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
+import { knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
   tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
+  bestiary: KnCreature[] | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
@@ -241,7 +270,24 @@ const {
   noise,
   extraDraw,
   obstacleAct,
+  drawCreature,
+  drawOverseer,
 } = useKnExploration(character, () => props.resolved, () => props.tables)
+
+const overseer = computed(() => {
+  const roll = knCurrentDomain(character.value.run).overseer?.roll
+  const entry = roll === undefined ? undefined : knTableEntry(props.tables.overseers ?? null, roll)
+  return { name: entry?.text ?? 'Overseer inconnu', creature: knFindCreature(props.bestiary, entry?.ref) }
+})
+
+const { engage } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+
+// La carte de combat est plus bas dans la page : on y emmène le joueur.
+async function engageAndShow(creature: KnCreature, overseer = false) {
+  engage(creature, overseer)
+  await nextTick()
+  document.getElementById('kn-combat')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))

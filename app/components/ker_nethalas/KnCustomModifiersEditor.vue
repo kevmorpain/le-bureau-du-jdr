@@ -34,6 +34,13 @@
         />
       </div>
 
+      <p
+        v-if="modifier.combat"
+        class="text-xs text-muted"
+      >
+        Posé par une créature : il disparaît à la fin du combat{{ modifier.rounds ? `, après ${modifier.rounds} round(s)` : '' }}{{ modifier.tick ? `, et inflige ${knDiceLabel(modifier.tick.dice)} dégâts à chaque début de tour` : '' }}.
+      </p>
+
       <div
         v-for="(entry, entryIndex) in modifier.entries"
         :key="entryIndex"
@@ -110,6 +117,7 @@
 
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
+import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
 import { KN_TARGET_GROUPS, KN_VITAL_KEYS } from '~~/shared/ker-nethalas/effects'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
 import { KN_STATUS_BOUNDS, type KnCustomModifier, type KnStatus } from '~~/shared/ker-nethalas/status'

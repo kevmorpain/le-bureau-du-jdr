@@ -70,6 +70,8 @@ export const knMasteryAbilitySchema = z.object({
   self: knSelfEffectsSchema.optional(),
   // Modifie le test de Camp tant que l'aptitude est débloquée.
   campCheck: knCampCheckSchema.optional(),
+  // Clé de la fiche de sbire (rôle `minion` du bestiaire) que l'aptitude invoque.
+  summons: slug.optional(),
   text: z.string().trim().min(1).max(2000),
 })
 

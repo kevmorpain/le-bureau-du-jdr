@@ -15,7 +15,7 @@ import {
   type KnRun,
 } from './run'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from './skills'
-import { KN_STATUS_BOUNDS, type KnStatus } from './status'
+import { KN_STATUS_BOUNDS, knCustomEntrySchema, type KnCustomModifier, type KnStatus } from './status'
 import { knGainTemporary, knSetTemporary, knTakeDamage, knTemporaryOf } from './vitals'
 import { boundedInt } from './zodHelpers'
 
@@ -27,10 +27,25 @@ export const knTableEffectSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('provision'), key: z.enum(KN_PROVISION_KEYS), dice: knDiceSchema, sign: knSign.optional() }),
   z.object({ kind: z.literal('xp'), amount: boundedInt({ min: 1, max: 9999 }) }),
   z.object({ kind: z.literal('vital'), vital: z.enum(KN_VITAL_KEYS), dice: knDiceSchema, sign: knSign }),
-  z.object({ kind: z.literal('damage'), dice: knDiceSchema }),
+  z.object({
+    kind: z.literal('damage'),
+    dice: knDiceSchema,
+    // Directement à la Santé, sans passer par la Robustesse.
+    direct: z.boolean().optional(),
+    // La moitié du jet, arrondie au supérieur (« la moitié des dégâts en cas de réussite »).
+    half: z.boolean().optional(),
+  }),
   z.object({ kind: z.literal('exhaustion'), dice: knDiceSchema, sign: knSign }),
   z.object({ kind: z.literal('condition'), key: z.enum(KN_CONDITION_KEYS), value: boundedInt(KN_STATUS_BOUNDS.conditionValue).optional() }),
   z.object({ kind: z.literal('temporary'), vital: z.enum(KN_VITAL_KEYS), dice: knDiceSchema }),
+  // Un effet qui dure : `rounds` (tous les rounds du combat si absent), des dégâts à chaque début de tour, des modificateurs.
+  z.object({
+    kind: z.literal('timed'),
+    label: z.string().trim().min(1).max(100),
+    rounds: knDiceSchema.optional(),
+    tick: z.object({ dice: knDiceSchema, direct: z.boolean().optional() }).optional(),
+    entries: z.array(knCustomEntrySchema).max(4).optional(),
+  }),
   z.object({ kind: z.literal('tensionReset') }),
   z.object({ kind: z.literal('lairDown') }),
   z.object({ kind: z.literal('darkness') }),
@@ -65,6 +80,8 @@ export const knRollTableEntrySchema = z.object({
   effects: z.array(knTableEffectSchema).max(4).optional(),
   checks: z.array(z.object({ skill: z.enum(KN_CHECK_KEYS), group: boundedInt({ min: 0, max: 3 }).optional() })).max(3).optional(),
   outcomes: z.array(knOutcomeSchema).max(8).optional(),
+  // Clé de la fiche du bestiaire que ce résultat désigne (rencontres, Overseers).
+  ref: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/).optional(),
   // Un événement qui installe un piège dans la pièce : à vérifier comme une porte ou un contenant.
   roomTrap: z.boolean().optional(),
 }).refine(entry => entry.min <= entry.max, { message: 'la plage va de min à max' })
@@ -129,6 +146,21 @@ const clamp = (value: number, max: number) => Math.min(max, Math.max(0, value))
 
 const NO_ROLL: KnDiceRoll = { rolls: [], total: 0 }
 
+// Un même effet reposé en remplace la durée plutôt que de se cumuler.
+function withTimedEffect(status: KnStatus, effect: Extract<KnTableEffect, { kind: 'timed' }>, rounds: number): KnStatus {
+  const id = `combat:${effect.label}`.slice(0, 40)
+  const modifier: KnCustomModifier = {
+    id,
+    name: effect.label,
+    active: true,
+    entries: effect.entries ?? [],
+    combat: true,
+    ...(effect.rounds && rounds > 0 ? { rounds } : {}),
+    ...(effect.tick ? { tick: effect.tick } : {}),
+  }
+  return { ...status, custom: [...status.custom.filter(entry => entry.id !== id), modifier].slice(-KN_STATUS_BOUNDS.custom) }
+}
+
 // Un état déjà présent garde sa plus forte valeur : le livre ne dit pas comment cumuler deux fois le même.
 function withCondition(status: KnStatus, key: (typeof KN_CONDITION_KEYS)[number], value: number | undefined): KnStatus {
   const existing = status.conditions.find(entry => entry.key === key)
@@ -140,6 +172,30 @@ function withCondition(status: KnStatus, key: (typeof KN_CONDITION_KEYS)[number]
   }
 }
 
+// Les dégâts reçus par le survivant retirent la Robustesse temporaire, puis la Robustesse, puis la Santé.
+export function knApplyDamage<T extends { toughness: number, health: number, status: KnStatus }>(
+  state: T,
+  maxima: { toughness: number, health: number },
+  amount: number,
+  direct = false,
+): T {
+  if (direct) return { ...state, health: Math.max(0, state.health - Math.max(0, amount)) }
+  const temporary = knTemporaryOf(state.status, 'toughness')
+  const hit = knTakeDamage({
+    toughness: state.toughness,
+    toughnessMax: maxima.toughness,
+    health: state.health,
+    healthMax: maxima.health,
+    temporaryToughness: temporary,
+  }, amount)
+  return {
+    ...state,
+    toughness: hit.toughness,
+    health: hit.health,
+    status: hit.temporaryToughness === temporary ? state.status : knSetTemporary(state.status, 'toughness', hit.temporaryToughness),
+  }
+}
+
 // Applique les gains et pertes d'un résultat. Une jauge ne dépasse pas son maximum en gagnant, et ne descend pas sous 0 en
 // perdant ; `maxima` : les maxima effectifs. Les dégâts retirent la Robustesse temporaire, puis la Robustesse, puis la Santé.
 export function knApplyTableEffects(
@@ -147,12 +203,19 @@ export function knApplyTableEffects(
   state: KnTableEffectState,
   maxima: Pick<Record<KnVitalKey, number>, 'health' | 'toughness' | 'sanity' | 'aether'>,
   rng: KnRng = Math.random,
+  // `creature` : les dégâts viennent d'un adversaire, qui retient toujours le dé le plus haut.
+  options: { creature?: boolean } = {},
 ): { state: KnTableEffectState, outcomes: KnTableEffectOutcome[] } {
   let next: KnTableEffectState = { ...state, provisions: { ...state.provisions } }
   const outcomes: KnTableEffectOutcome[] = []
 
   for (const effect of effects) {
-    const roll = 'dice' in effect ? knRollDice(effect.dice, rng) : effect.kind === 'xp' ? { rolls: [], total: effect.amount } : NO_ROLL
+    let roll = 'dice' in effect ? knRollDice(effect.dice, rng) : effect.kind === 'xp' ? { rolls: [], total: effect.amount } : NO_ROLL
+    if (effect.kind === 'timed' && effect.rounds) roll = knRollDice(effect.rounds, rng)
+    if (effect.kind === 'damage') {
+      const picked = options.creature && roll.rolls.length ? Math.max(...roll.rolls) + effect.dice.bonus : roll.total
+      roll = { rolls: roll.rolls, total: effect.half ? Math.ceil(picked / 2) : picked }
+    }
     const outcome: KnTableEffectOutcome = { effect, roll }
     outcomes.push(outcome)
     const signed = (sign: 'gain' | 'loss' | undefined) => sign === 'loss' ? -roll.total : roll.total
@@ -166,22 +229,10 @@ export function knApplyTableEffects(
       const value = effect.sign === 'gain' ? Math.max(current, Math.min(maxima[effect.vital], current + roll.total)) : Math.max(0, current - roll.total)
       next = { ...next, [effect.vital]: value }
     } else if (effect.kind === 'damage') {
-      const temporary = knTemporaryOf(next.status, 'toughness')
-      const hit = knTakeDamage({
-        toughness: next.toughness,
-        toughnessMax: maxima.toughness,
-        health: next.health,
-        healthMax: maxima.health,
-        temporaryToughness: temporary,
-      }, roll.total)
-      next = {
-        ...next,
-        toughness: hit.toughness,
-        health: hit.health,
-        status: hit.temporaryToughness === temporary ? next.status : knSetTemporary(next.status, 'toughness', hit.temporaryToughness),
-      }
+      next = knApplyDamage(next, maxima, roll.total, effect.direct)
     } else if (effect.kind === 'exhaustion') next = { ...next, exhaustion: clamp(next.exhaustion + signed(effect.sign), KN_BOUNDS.exhaustion.max) }
     else if (effect.kind === 'condition') next = { ...next, status: withCondition(next.status, effect.key, effect.value) }
+    else if (effect.kind === 'timed') next = { ...next, status: withTimedEffect(next.status, effect, roll.total) }
     else if (effect.kind === 'temporary') next = { ...next, status: knGainTemporary(next.status, effect.vital, roll.total) }
     else if (effect.kind === 'tensionReset') next = { ...next, run: { ...next.run, tensionDie: KN_TENSION_START_DIE } }
     else if (effect.kind === 'lairDown') {
@@ -206,6 +257,9 @@ export const KN_EXPLORATION_TABLES = {
   events: { die: 100 },
   scavenging: { die: 20 },
   traps: { die: 10 },
+  encountersA: { die: 20 },
+  encountersB: { die: 20 },
+  overseers: { die: 10 },
 } as const
 
 export type KnExplorationTableName = keyof typeof KN_EXPLORATION_TABLES

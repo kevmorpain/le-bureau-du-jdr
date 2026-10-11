@@ -297,6 +297,21 @@
       v-if="visit.kind !== 'revisit'"
       class="space-y-2"
     >
+      <KnCreatureCard
+        v-for="(draw, index) in encounters"
+        :key="index"
+        :creature="draw.creature"
+        :name="draw.name"
+        :level
+        :source="draw.source"
+        :can-engage="active && !inCombat"
+        @engage="creature => emit('engage', creature)"
+      />
+      <KnCreatureDraw
+        v-if="active && (visit.creatures?.length ?? 0) < KN_RUN_BOUNDS.creatures"
+        @draw="(d6, d20) => emit('drawCreature', d6, d20)"
+      />
+
       <div
         v-if="active && canAddDoor"
         class="flex flex-wrap items-center gap-2 text-sm"
@@ -418,6 +433,7 @@ import {
   type KnGrowingDarknessDraw,
   type KnVisit,
 } from '~~/shared/ker-nethalas/run'
+import { knEncounterTable, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { KN_EXPLORATION_TABLES, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const props = defineProps<{
@@ -428,6 +444,9 @@ const props = defineProps<{
   lairDie: number
   exitDie: number
   lockpicks: number
+  level: number
+  inCombat?: boolean
+  bestiary: KnCreature[] | null
   tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
 }>()
 
@@ -448,6 +467,8 @@ const emit = defineEmits<{
   take: [target: 'event' | 'scavenge', index: number]
   addRoomTrap: []
   obstacleAct: [index: number, act: KnObstacleAct]
+  drawCreature: [d6: number, d20: number]
+  engage: [creature: KnCreature]
 }>()
 
 const { labelText } = useKnLabels()
@@ -504,6 +525,17 @@ const canSearch = computed(() => knVisitCanSearch(props.visit) && (props.visit.o
 // Numéro d'un obstacle parmi ceux de sa sorte (porte n° 2, contenant n° 1).
 const obstaclePosition = (index: number) =>
   (props.visit.obstacles ?? []).slice(0, index + 1).filter(obstacle => obstacle.kind === props.visit.obstacles![index]!.kind).length
+
+// Chaque créature tirée : la table (D6) donne A ou B, le D20 la ligne, et la ligne désigne la fiche du bestiaire.
+const encounters = computed(() => (props.visit.creatures ?? []).map(({ d6, d20 }) => {
+  const table = knEncounterTable(d6)
+  const entry = knTableEntry(props.tables[table === 'A' ? 'encountersA' : 'encountersB'] ?? null, d20)
+  return {
+    name: entry?.text ?? 'Créature inconnue',
+    creature: knFindCreature(props.bestiary, entry?.ref),
+    source: `Table ${table} · D6 ${d6}, D20 ${d20}`,
+  }
+}))
 
 const eventEntry = computed(() => props.visit.event ? knTableEntry(props.tables.events ?? null, props.visit.event.roll) : undefined)
 const scavengeEntry = computed(() => props.visit.scavenge ? knTableEntry(props.tables.scavenging ?? null, props.visit.scavenge.roll) : undefined)

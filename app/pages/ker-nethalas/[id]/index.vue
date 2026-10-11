@@ -27,12 +27,14 @@
       v-model:character="character"
       :resolved
       :tables
+      :bestiary
     />
 
-    <KnCombatActions
+    <KnCombatSection
       v-model:character="character"
-      :masteries
       :resolved
+      :bestiary
+      :masteries
     />
 
     <KnRestSection
@@ -56,6 +58,7 @@
     <KnMasteriesSection
       v-model:character="character"
       :masteries
+      :bestiary
       :resolved
     />
 
@@ -93,6 +96,7 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { AutoSaveStatus } from '~/composables/useAutoSave'
+import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
@@ -107,12 +111,19 @@ const { data: roomDescriptions } = await useKnContent<KnRollTable>('roomDescript
 const { data: events } = await useKnContent<KnRollTable>('events')
 const { data: scavenging } = await useKnContent<KnRollTable>('scavenging')
 const { data: traps } = await useKnContent<KnRollTable>('traps')
+const { data: encountersA } = await useKnContent<KnRollTable>('encountersA')
+const { data: encountersB } = await useKnContent<KnRollTable>('encountersB')
+const { data: overseers } = await useKnContent<KnRollTable>('overseers')
+const { data: bestiary } = await useKnContent<KnCreature[]>('bestiary')
 const tables = computed(() => ({
   corridorDescriptions: corridorDescriptions.value,
   roomDescriptions: roomDescriptions.value,
   events: events.value,
   scavenging: scavenging.value,
   traps: traps.value,
+  encountersA: encountersA.value,
+  encountersB: encountersB.value,
+  overseers: overseers.value,
 }))
 
 const { data } = await useFetch<KnCharacter>(`/api/ker-nethalas/characters/${route.params.id}`)
