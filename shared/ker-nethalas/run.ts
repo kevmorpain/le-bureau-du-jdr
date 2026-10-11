@@ -6,7 +6,7 @@ import {
   type KnGrowingDarknessKey,
 } from './catalog/growingDarkness'
 import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
-import { knEncounterTriggered, knHasDoor } from './exploration'
+import { KN_OBSTACLE_KINDS, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, type KnObstacleKind } from './exploration'
 import { KN_SKILL_KEYS } from './skills'
 import { boundedInt } from './zodHelpers'
 
@@ -29,6 +29,8 @@ export const KN_RUN_BOUNDS = {
   overseerInfluences: 40,
   domains: 30,
   visits: 200,
+  obstacles: 8,
+  extraTension: 10,
 } as const
 
 export const KN_VISIT_KINDS = ['room', 'corridor', 'revisit'] as const
@@ -72,6 +74,21 @@ const knDieResultSchema = z.object({
 // Un tirage dans une table du livre : on garde le numéro, jamais le texte, qui se relit dans le contenu chargé.
 const knTableRollSchema = z.object({ roll: boundedInt({ min: 1, max: 100 }) })
 
+// Une porte ou un contenant : le test de Perception, puis les jets de piège, de type de piège et de verrou.
+export const knObstacleSchema = z.object({
+  kind: z.enum(KN_OBSTACLE_KINDS),
+  perception: z.enum(['passed', 'failed']).optional(),
+  trap: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
+  trapType: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
+  lock: z.object({ roll: boundedInt({ min: 1, max: 20 }) }).optional(),
+})
+
+// Test de Dé de Tension en plus de celui de l'entrée : fouille approfondie, vacarme d'un verrou forcé.
+const knExtraTensionSchema = knDieResultSchema.extend({
+  source: z.enum(['search', 'noise']),
+  darkness: knGrowingDarknessDrawSchema.optional(),
+})
+
 export const knVisitSchema = z.object({
   kind: z.enum(KN_VISIT_KINDS),
   usageKind: z.enum(['lair', 'exit']).nullable(),
@@ -85,6 +102,9 @@ export const knVisitSchema = z.object({
   event: knTableRollSchema.optional(),
   door: z.object({ roll: boundedInt({ min: 1, max: 10 }), present: z.boolean() }).optional(),
   scavenge: knTableRollSchema.extend({ applied: z.boolean() }).optional(),
+  obstacles: z.array(knObstacleSchema).max(KN_RUN_BOUNDS.obstacles).optional(),
+  deepSearch: z.object({ content: knTableRollSchema.optional() }).optional(),
+  extraTension: z.array(knExtraTensionSchema).max(KN_RUN_BOUNDS.extraTension).optional(),
 })
 
 export const knDomainSchema = z.object({
@@ -109,6 +129,8 @@ export const knRunSchema = z.object({
 export type KnGrowingDarknessEntry = z.infer<typeof knGrowingDarknessEntrySchema>
 export type KnGrowingDarknessDraw = z.infer<typeof knGrowingDarknessDrawSchema>
 export type KnDieResult = z.infer<typeof knDieResultSchema>
+export type KnObstacle = z.infer<typeof knObstacleSchema>
+export type KnExtraTension = z.infer<typeof knExtraTensionSchema>
 export type KnVisit = z.infer<typeof knVisitSchema>
 export type KnVisitKind = KnVisit['kind']
 export type KnDomain = z.infer<typeof knDomainSchema>
@@ -325,6 +347,81 @@ export function knRecordScavenge(run: KnRun, roll: number): KnRun {
 export function knMarkScavengeApplied(run: KnRun): KnRun {
   const visit = knCurrentVisit(run)
   return visit?.scavenge ? withLastVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, applied: true } })) : run
+}
+
+export function knRecordExtraTension(run: KnRun, roll: number, manual: boolean, source: KnExtraTension['source']): KnRun {
+  const visit = knCurrentVisit(run)
+  if (!visit || (visit.extraTension?.length ?? 0) >= KN_RUN_BOUNDS.extraTension) return run
+  const die = run.tensionDie
+  const { run: checked, triggered } = knTensionCheck(run, roll)
+  const check: KnExtraTension = { die, roll, manual, next: checked.tensionDie, triggered, source }
+  return withLastVisit(checked, v => ({ ...v, extraTension: [...(v.extraTension ?? []), check] }))
+}
+
+export function knRecordExtraDarkness(run: KnRun, index: number, draw: KnGrowingDarknessDraw): KnRun {
+  const check = knCurrentVisit(run)?.extraTension?.[index]
+  if (!check?.triggered || check.darkness) return run
+  const extraTension = (visit: KnVisit) => (visit.extraTension ?? []).map((entry, i) => i === index ? { ...entry, darkness: draw } : entry)
+  return withLastVisit(knAddGrowingDarkness(run, draw), v => ({ ...v, extraTension: extraTension(v) }))
+}
+
+export const knObstacleState = (obstacle: KnObstacle) => {
+  const trapped = obstacle.trap ? knIsTrapped(obstacle.trap.roll) : undefined
+  return {
+    trapped,
+    spotted: trapped === true && obstacle.perception === 'passed',
+    locked: obstacle.lock ? knIsLocked(obstacle.kind, obstacle.lock.roll) : undefined,
+  }
+}
+
+function withObstacle(run: KnRun, index: number, update: (obstacle: KnObstacle) => KnObstacle): KnRun {
+  return withLastVisit(run, v => v.obstacles?.[index]
+    ? { ...v, obstacles: v.obstacles.map((obstacle, i) => i === index ? update(obstacle) : obstacle) }
+    : v)
+}
+
+const addObstacle = (run: KnRun, kind: KnObstacleKind): KnRun =>
+  withLastVisit(run, v => ({ ...v, obstacles: [...(v.obstacles ?? []), { kind }] }))
+
+// Une porte à vérifier : seulement si le D10 en a trouvé une.
+export function knAddDoorObstacle(run: KnRun): KnRun {
+  const visit = knCurrentVisit(run)
+  if (!visit?.door?.present || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
+  return addObstacle(run, 'door')
+}
+
+export function knSetPerception(run: KnRun, index: number, perception: 'passed' | 'failed'): KnRun {
+  return withObstacle(run, index, obstacle => obstacle.perception ? obstacle : { ...obstacle, perception })
+}
+
+// Le jet de piège suit le test de Perception : réussi, un piège est repéré ; raté, il se déclenche en interagissant.
+export function knRecordTrap(run: KnRun, index: number, roll: number): KnRun {
+  return withObstacle(run, index, obstacle => obstacle.perception && !obstacle.trap ? { ...obstacle, trap: { roll } } : obstacle)
+}
+
+export function knRecordTrapType(run: KnRun, index: number, roll: number): KnRun {
+  return withObstacle(run, index, obstacle =>
+    obstacle.trap && knIsTrapped(obstacle.trap.roll) && !obstacle.trapType ? { ...obstacle, trapType: { roll } } : obstacle)
+}
+
+export function knRecordLock(run: KnRun, index: number, roll: number): KnRun {
+  return withObstacle(run, index, obstacle => obstacle.lock ? obstacle : { ...obstacle, lock: { roll } })
+}
+
+// Une fouille approfondie par salle ou couloir : un Dé de Tension tout de suite, puis un contenant à vérifier.
+export const knVisitCanSearch = (visit: KnVisit) => visit.kind !== 'revisit' && !visit.deepSearch
+
+export function knStartDeepSearch(run: KnRun, roll: number, manual: boolean): KnRun {
+  const visit = knCurrentVisit(run)
+  if (!visit || !knVisitCanSearch(visit) || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
+  const checked = knRecordExtraTension(run, roll, manual, 'search')
+  if (checked === run) return run
+  return addObstacle(withLastVisit(checked, v => ({ ...v, deepSearch: {} })), 'container')
+}
+
+export function knRecordDeepSearchContent(run: KnRun, roll: number): KnRun {
+  const visit = knCurrentVisit(run)
+  return visit?.deepSearch && !visit.deepSearch.content ? withLastVisit(run, v => ({ ...v, deepSearch: { content: { roll } } })) : run
 }
 
 // Le dé en cours de recherche : celui de Lair tant que le Lair n'est pas trouvé, puis celui de Sortie.

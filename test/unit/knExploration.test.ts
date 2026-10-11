@@ -1,19 +1,33 @@
 import { describe, it, expect } from 'vitest'
 import { emptyKnProvisions } from '../../shared/ker-nethalas/camp'
 import { KN_CONTENT_NAME_RE, KN_CONTENT_SCHEMAS } from '../../shared/ker-nethalas/content'
-import { knEncounterTriggered, knHasDoor, knShapeKind } from '../../shared/ker-nethalas/exploration'
+import { knDeepSearchEmpty, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, knShapeKind } from '../../shared/ker-nethalas/exploration'
 import {
+  KN_RUN_BOUNDS,
   emptyKnRun,
+  knAddDoorObstacle,
+  knCurrentDomain,
   knCurrentVisit,
+  knDrawGrowingDarkness,
   knMarkScavengeApplied,
+  knObstacleState,
+  knRecordDeepSearchContent,
   knRecordDescription,
   knRecordDoor,
   knRecordEncounter,
   knRecordEvent,
+  knRecordExtraDarkness,
+  knRecordExtraTension,
+  knRecordLock,
   knRecordScavenge,
+  knRecordTrap,
+  knRecordTrapType,
+  knSetPerception,
+  knStartDeepSearch,
   knStartVisit,
   knUndoLastVisit,
   knVisitCanHaveEvent,
+  knVisitCanSearch,
   knRunSchema,
   type KnRun,
 } from '../../shared/ker-nethalas/run'
@@ -91,7 +105,169 @@ describe('tables de dés', () => {
       expect(Object.keys(KN_CONTENT_SCHEMAS), name).toContain(name)
       expect(KN_CONTENT_NAME_RE.test(name), name).toBe(true)
     }
-    expect(KN_EXPLORATION_TABLES).toMatchObject({ corridorDescriptions: { die: 20 }, roomDescriptions: { die: 100 }, events: { die: 100 }, scavenging: { die: 20 } })
+    expect(KN_EXPLORATION_TABLES).toMatchObject({ corridorDescriptions: { die: 20 }, roomDescriptions: { die: 100 }, events: { die: 100 }, scavenging: { die: 20 }, traps: { die: 10 } })
+  })
+
+  it('une entrée peut porter la compétence qui évite le piège, pas une compétence inconnue', () => {
+    const entry = (skill: string) => ({ die: 10, entries: [{ min: 1, max: 10, text: 'x', skill }] })
+
+    expect(knRollTableSchema(10).safeParse(entry('dodge')).success).toBe(true)
+    expect(knRollTableSchema(10).safeParse(entry('luck')).success).toBe(false)
+  })
+})
+
+describe('verrous et pièges', () => {
+  it('piégé à 7 ou plus au D10', () => {
+    expect([6, 7].map(knIsTrapped)).toEqual([false, true])
+  })
+
+  it('verrouillé à 12 ou plus pour une porte, 10 ou plus pour un contenant', () => {
+    expect([11, 12].map(roll => knIsLocked('door', roll))).toEqual([false, true])
+    expect([9, 10].map(roll => knIsLocked('container', roll))).toEqual([false, true])
+  })
+
+  it('fouille approfondie : 1-5 vide, 6-10 du butin', () => {
+    expect([5, 6].map(knDeepSearchEmpty)).toEqual([true, false])
+  })
+})
+
+describe('obstacles d\'une entrée', () => {
+  const room = (doorRoll?: number): KnRun => {
+    const entered = knStartVisit(emptyKnRun(), 'room')
+    return doorRoll === undefined ? entered : knRecordDoor(entered, doorRoll)
+  }
+  const visit = (run: KnRun) => knCurrentVisit(run)!
+
+  it('une porte ne se vérifie que si le D10 en a trouvé une', () => {
+    expect(visit(knAddDoorObstacle(room(3))).obstacles).toEqual([{ kind: 'door' }])
+    expect(visit(knAddDoorObstacle(room(8)))).not.toHaveProperty('obstacles')
+    expect(visit(knAddDoorObstacle(room()))).not.toHaveProperty('obstacles')
+  })
+
+  it('plusieurs portes, dans la limite', () => {
+    let run = room(1)
+    for (let i = 0; i < KN_RUN_BOUNDS.obstacles + 3; i++) run = knAddDoorObstacle(run)
+
+    expect(visit(run).obstacles).toHaveLength(KN_RUN_BOUNDS.obstacles)
+  })
+
+  it('le jet de piège suit le test de Perception, le type suit un piège, une seule fois chacun', () => {
+    const base = knAddDoorObstacle(room(1))
+    const noPerception = knRecordTrap(base, 0, 9)
+
+    expect(visit(noPerception).obstacles![0]).toEqual({ kind: 'door' })
+
+    const spotted = knRecordTrap(knSetPerception(base, 0, 'passed'), 0, 9)
+    expect(visit(spotted).obstacles![0]).toEqual({ kind: 'door', perception: 'passed', trap: { roll: 9 } })
+    expect(visit(knRecordTrap(spotted, 0, 2)).obstacles![0]!.trap).toEqual({ roll: 9 })
+    expect(visit(knSetPerception(spotted, 0, 'failed')).obstacles![0]!.perception).toBe('passed')
+    expect(knObstacleState(visit(spotted).obstacles![0]!)).toEqual({ trapped: true, spotted: true, locked: undefined })
+
+    const typed = knRecordTrapType(spotted, 0, 4)
+    expect(visit(typed).obstacles![0]!.trapType).toEqual({ roll: 4 })
+    expect(visit(knRecordTrapType(typed, 0, 7)).obstacles![0]!.trapType).toEqual({ roll: 4 })
+  })
+
+  it('pas de type de piège sans piège', () => {
+    const clear = knRecordTrap(knSetPerception(knAddDoorObstacle(room(1)), 0, 'passed'), 0, 6)
+
+    expect(knObstacleState(visit(clear).obstacles![0]!).trapped).toBe(false)
+    expect(visit(knRecordTrapType(clear, 0, 4)).obstacles![0]).not.toHaveProperty('trapType')
+  })
+
+  it('un piège non repéré se déclenche : il n\'est pas « repéré »', () => {
+    const hidden = knRecordTrap(knSetPerception(knAddDoorObstacle(room(1)), 0, 'failed'), 0, 7)
+
+    expect(knObstacleState(visit(hidden).obstacles![0]!)).toMatchObject({ trapped: true, spotted: false })
+  })
+
+  it('le verrou se juge selon la sorte d\'obstacle, une seule fois', () => {
+    const locked = knRecordLock(knAddDoorObstacle(room(1)), 0, 12)
+
+    expect(knObstacleState(visit(locked).obstacles![0]!).locked).toBe(true)
+    expect(knObstacleState(visit(knRecordLock(knAddDoorObstacle(room(1)), 0, 11)).obstacles![0]!).locked).toBe(false)
+    expect(visit(knRecordLock(locked, 0, 1)).obstacles![0]!.lock).toEqual({ roll: 12 })
+  })
+
+  it('un indice d\'obstacle inexistant ne change rien', () => {
+    const run = knAddDoorObstacle(room(1))
+
+    expect(knSetPerception(run, 3, 'passed')).toEqual(run)
+    expect(knRecordLock(run, 3, 12)).toEqual(run)
+  })
+
+  it('le schéma du run accepte les obstacles enregistrés et refuse un jet hors dé', () => {
+    const run = knRecordLock(knRecordTrap(knSetPerception(knAddDoorObstacle(room(1)), 0, 'passed'), 0, 8), 0, 20)
+
+    expect(knRunSchema.safeParse(run).success).toBe(true)
+    expect(knRunSchema.safeParse(knRecordTrap(knSetPerception(knAddDoorObstacle(room(1)), 0, 'passed'), 0, 11)).success).toBe(false)
+  })
+})
+
+describe('fouille approfondie et tests de Tension supplémentaires', () => {
+  const room = () => knStartVisit(emptyKnRun(), 'room')
+  const visit = (run: KnRun) => knCurrentVisit(run)!
+
+  it('lance tout de suite un Dé de Tension et ouvre un contenant à vérifier', () => {
+    const run = knStartDeepSearch(room(), 5, false)
+
+    expect(visit(run).deepSearch).toEqual({})
+    expect(visit(run).obstacles).toEqual([{ kind: 'container' }])
+    expect(visit(run).extraTension).toEqual([{ die: 8, roll: 5, manual: false, next: 8, triggered: false, source: 'search' }])
+    expect(run.tensionDie).toBe(8)
+  })
+
+  it('un 1 ou 2 fait descendre le dé de Tension, comme pour l\'entrée', () => {
+    const run = knStartDeepSearch(room(), 2, false)
+
+    expect(run.tensionDie).toBe(6)
+    expect(visit(run).extraTension![0]).toMatchObject({ die: 8, next: 6, triggered: false })
+  })
+
+  it('une seule fouille approfondie par entrée, jamais dans une zone explorée', () => {
+    const once = knStartDeepSearch(room(), 5, false)
+
+    expect(knStartDeepSearch(once, 5, false)).toBe(once)
+    expect(knVisitCanSearch(visit(once))).toBe(false)
+    expect(knStartDeepSearch(knStartVisit(emptyKnRun(), 'revisit'), 5, false)).toEqual(knStartVisit(emptyKnRun(), 'revisit'))
+  })
+
+  it('retient le contenu du contenant, une fois', () => {
+    const run = knRecordDeepSearchContent(knStartDeepSearch(room(), 5, false), 8)
+
+    expect(visit(run).deepSearch).toEqual({ content: { roll: 8 } })
+    expect(visit(knRecordDeepSearchContent(run, 2)).deepSearch).toEqual({ content: { roll: 8 } })
+    expect(visit(knRecordDeepSearchContent(room(), 8))).not.toHaveProperty('deepSearch')
+  })
+
+  it('le vacarme ajoute un test, et un déclenchement fait tirer un événement, une seule fois', () => {
+    const base = { ...room(), tensionDie: 4 as const }
+    const noisy = knRecordExtraTension(base, 1, true, 'noise')
+
+    expect(visit(noisy).extraTension![0]).toMatchObject({ die: 4, triggered: true, manual: true, source: 'noise' })
+    expect(noisy.tensionDie).toBe(8)
+
+    const draw = knDrawGrowingDarkness(() => 0.2)
+    const drawn = knRecordExtraDarkness(noisy, 0, draw)
+
+    expect(visit(drawn).extraTension![0]!.darkness).toEqual(draw)
+    expect(knCurrentDomain(drawn).growingDarkness).toHaveLength(1)
+    expect(knRecordExtraDarkness(drawn, 0, knDrawGrowingDarkness(() => 0.7))).toEqual(drawn)
+    expect(knRecordExtraDarkness(knRecordExtraTension(room(), 5, true, 'noise'), 0, draw)).toEqual(knRecordExtraTension(room(), 5, true, 'noise'))
+  })
+
+  it('borne le nombre de tests supplémentaires et valide le schéma', () => {
+    let run = room()
+    for (let i = 0; i < KN_RUN_BOUNDS.extraTension + 2; i++) run = knRecordExtraTension(run, 8, false, 'noise')
+
+    expect(visit(run).extraTension).toHaveLength(KN_RUN_BOUNDS.extraTension)
+    expect(knRunSchema.safeParse(run).success).toBe(true)
+  })
+
+  it('annuler l\'entrée retire aussi ses obstacles et ses tests', () => {
+    const run = knAddDoorObstacle(knStartDeepSearch(room(), 5, false))
+
+    expect(knCurrentVisit(knUndoLastVisit(run))).toBeUndefined()
   })
 })
 

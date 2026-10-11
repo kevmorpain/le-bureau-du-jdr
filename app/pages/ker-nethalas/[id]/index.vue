@@ -106,11 +106,13 @@ const { data: corridorDescriptions } = await useKnContent<KnRollTable>('corridor
 const { data: roomDescriptions } = await useKnContent<KnRollTable>('roomDescriptions')
 const { data: events } = await useKnContent<KnRollTable>('events')
 const { data: scavenging } = await useKnContent<KnRollTable>('scavenging')
+const { data: traps } = await useKnContent<KnRollTable>('traps')
 const tables = computed(() => ({
   corridorDescriptions: corridorDescriptions.value,
   roomDescriptions: roomDescriptions.value,
   events: events.value,
   scavenging: scavenging.value,
+  traps: traps.value,
 }))
 
 const { data } = await useFetch<KnCharacter>(`/api/ker-nethalas/characters/${route.params.id}`)

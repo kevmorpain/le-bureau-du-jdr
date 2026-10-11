@@ -240,12 +240,129 @@
         </template>
       </KnTableRoll>
     </ul>
+
+    <div
+      v-if="visit.kind !== 'revisit'"
+      class="space-y-2"
+    >
+      <div
+        v-if="active && canAddDoor"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <UButton
+          size="sm"
+          variant="soft"
+          @click="emit('addDoor')"
+        >
+          Vérifier une porte
+        </UButton>
+      </div>
+
+      <div
+        v-if="active && canSearch"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <span class="flex-1">
+          Fouille approfondie d'un contenant : Dé de Tension (D{{ tensionDie }}) tout de suite, puis +{{ KN_DEEP_SEARCH_EXHAUSTION }} Épuisement
+        </span>
+        <KnDieActions
+          @roll="emit('deepSearch')"
+          @low="emit('deepSearch', LOW)"
+          @high="emit('deepSearch', HIGH)"
+        />
+      </div>
+
+      <KnObstacleBlock
+        v-for="(obstacle, index) in visit.obstacles ?? []"
+        :key="index"
+        :obstacle
+        :position="obstaclePosition(index)"
+        :active
+        :traps="tables.traps"
+        :tension-die="tensionDie"
+        @perception="result => emit('perception', index, result)"
+        @trap="manual => emit('obstacleRoll', index, 'trap', manual)"
+        @trap-type="manual => emit('obstacleRoll', index, 'trapType', manual)"
+        @lock="manual => emit('obstacleRoll', index, 'lock', manual)"
+        @noise="manual => emit('noise', manual)"
+      />
+
+      <ul
+        v-if="visit.deepSearch"
+        class="space-y-2 text-sm"
+      >
+        <KnTableRoll
+          label="Contenu du contenant ouvert (D10)"
+          :die="KN_DEEP_SEARCH_DIE"
+          :roll="visit.deepSearch.content?.roll"
+          plain
+          :active
+          @roll="manual => emit('deepSearchContent', manual)"
+        >
+          <template #result>
+            <p class="text-sm">
+              {{ knDeepSearchEmpty(visit.deepSearch.content?.roll ?? 0) ? 'Vide.' : 'Du butin : tirez dans la table du Butin des contenants (livre, p. 220).' }}
+            </p>
+          </template>
+        </KnTableRoll>
+      </ul>
+
+      <ul
+        v-if="visit.extraTension?.length"
+        class="space-y-2 text-sm"
+      >
+        <li
+          v-for="(check, index) in visit.extraTension"
+          :key="index"
+          class="flex flex-wrap items-center gap-2"
+        >
+          <UIcon
+            name="i-heroicons:check-circle"
+            class="size-5 text-success"
+          />
+          <span class="flex-1">
+            Dé de Tension ({{ check.source === 'search' ? 'fouille approfondie' : 'vacarme' }}) : {{ dieHead(check) }} ·
+            <span :class="outcome(check, 'tension').class">{{ outcome(check, 'tension').text }}</span>
+            <template v-if="check.darkness">
+              · Obscurité Grandissante {{ check.darkness.roll }} : {{ darknessText(check.darkness) }}
+              <template v-if="check.darkness.influence">
+                Influence tirée ({{ check.darkness.influence.roll }}) : {{ $t(`ker_nethalas.overseer.${check.darkness.influence.key}`) }}.
+              </template>
+            </template>
+          </span>
+          <UButton
+            v-if="active && check.triggered && !check.darkness"
+            size="sm"
+            color="warning"
+            @click="emit('extraDraw', index)"
+          >
+            Tirer l'événement
+          </UButton>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { KN_DOOR_DIE, KN_ENCOUNTER_DIE, KN_ENCOUNTER_THRESHOLD, type KnVisitTable } from '~~/shared/ker-nethalas/exploration'
-import { knVisitFoundLair, knVisitPending, type KnDieResult, type KnGrowingDarknessDraw, type KnVisit } from '~~/shared/ker-nethalas/run'
+import {
+  KN_DEEP_SEARCH_DIE,
+  KN_DEEP_SEARCH_EXHAUSTION,
+  KN_DOOR_DIE,
+  KN_ENCOUNTER_DIE,
+  KN_ENCOUNTER_THRESHOLD,
+  knDeepSearchEmpty,
+  type KnVisitTable,
+} from '~~/shared/ker-nethalas/exploration'
+import {
+  KN_RUN_BOUNDS,
+  knVisitCanSearch,
+  knVisitFoundLair,
+  knVisitPending,
+  type KnDieResult,
+  type KnGrowingDarknessDraw,
+  type KnVisit,
+} from '~~/shared/ker-nethalas/run'
 import { KN_EXPLORATION_TABLES, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const props = defineProps<{
@@ -265,6 +382,13 @@ const emit = defineEmits<{
   undo: []
   table: [name: KnVisitTable, manual?: number]
   applyScavenge: []
+  addDoor: []
+  deepSearch: [manual?: number]
+  deepSearchContent: [manual?: number]
+  perception: [index: number, result: 'passed' | 'failed']
+  obstacleRoll: [index: number, step: 'trap' | 'trapType' | 'lock', manual?: number]
+  noise: [manual?: number]
+  extraDraw: [index: number]
 }>()
 
 const { labelText } = useKnLabels()
@@ -312,6 +436,13 @@ const tableOf = (name: KnExplorationTableName) => ({ die: KN_EXPLORATION_TABLES[
 const descriptionTable = computed(() => props.visit.kind === 'revisit' ? null : tableOf(props.visit.kind === 'corridor' ? 'corridorDescriptions' : 'roomDescriptions'))
 const eventTable = computed(() => props.visit.kind === 'room' && !foundLair.value ? tableOf('events') : null)
 const scavengeTable = computed(() => tableOf('scavenging'))
+
+const canAddDoor = computed(() => !!props.visit.door?.present && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)
+const canSearch = computed(() => knVisitCanSearch(props.visit) && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)
+
+// Numéro d'un obstacle parmi ceux de sa sorte (porte n° 2, contenant n° 1).
+const obstaclePosition = (index: number) =>
+  (props.visit.obstacles ?? []).slice(0, index + 1).filter(obstacle => obstacle.kind === props.visit.obstacles![index]!.kind).length
 
 const scavengeEffects = computed(() => knTableEntry(props.tables.scavenging ?? null, props.visit.scavenge?.roll ?? 0)?.effects ?? [])
 </script>

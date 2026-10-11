@@ -4,6 +4,7 @@ import { KN_BOUNDS } from './character'
 import { knDiceSchema, knRollDice, type KnDiceRoll } from './dice'
 import { KN_VITAL_KEYS, type KnVitalKey } from './effects'
 import { knRollDie, type KnRng } from './run'
+import { KN_SKILL_KEYS } from './skills'
 import { boundedInt } from './zodHelpers'
 
 // Ce qu'un résultat de table donne sans test ni choix : le reste (jets de compétence, alternatives) reste dans son texte.
@@ -20,6 +21,7 @@ export const knRollTableEntrySchema = z.object({
   min: boundedInt({ min: 1, max: 100 }),
   max: boundedInt({ min: 1, max: 100 }),
   title: z.string().trim().min(1).max(100).optional(),
+  skill: z.enum(KN_SKILL_KEYS).optional(),
   text: z.string().trim().min(1).max(2000),
   effects: z.array(knTableEffectSchema).max(4).optional(),
 }).refine(entry => entry.min <= entry.max, { message: 'la plage va de min à max' })
@@ -104,6 +106,7 @@ export const KN_EXPLORATION_TABLES = {
   roomDescriptions: { die: 100 },
   events: { die: 100 },
   scavenging: { die: 20 },
+  traps: { die: 10 },
 } as const
 
 export type KnExplorationTableName = keyof typeof KN_EXPLORATION_TABLES
