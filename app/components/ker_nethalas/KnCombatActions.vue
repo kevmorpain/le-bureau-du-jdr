@@ -53,13 +53,11 @@ const endCombat = () => {
   character.value.status = knResetUses(character.value.status, ['combat'])
 }
 
-// Le trait d'une Maîtrise vaut « pour chaque rencontre de combat vaincue » : l'Overseer, rencontre à part dans la liste de
-// l'expérience du livre, n'en déclenche pas (hypothèse).
 function win(kind: keyof typeof KN_COMBAT_XP) {
   const c = character.value
   c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + KN_COMBAT_XP[kind])
 
-  const effects = kind === 'combat' && props.masteries
+  const effects = props.masteries
     ? knCombatWonEffects(props.masteries, knMasteryEntries(c.masteryPicks, c.amulets))
     : []
   if (effects.length) {

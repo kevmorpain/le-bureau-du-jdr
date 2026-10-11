@@ -135,6 +135,7 @@ function use() {
     description: [summary.value, ...lines].filter(Boolean).join(' · ') || undefined,
     color: 'success',
   })
+  if (props.ability.health && state.health === 0) toast.add({ title: 'La Santé tombe à 0 : le survivant meurt.', color: 'error' })
 }
 
 function toggle() {

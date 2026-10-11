@@ -426,7 +426,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   efface le temporaire et les usages concernés, une entrée dans une pièce remet à zéro les usages « par pièce ».
 - **Interprétations** : plusieurs gains temporaires s'additionnent (le livre ne dit pas qu'on garde le meilleur) ; toute
   entrée dans une pièce, y compris un retour dans une zone explorée, remet à zéro « une fois par pièce » ; le trait « pour
-  chaque rencontre de combat vaincue » ne se déclenche pas pour un Overseer, que la liste d'expérience traite à part.
+  chaque rencontre de combat vaincue » se déclenche aussi pour un Overseer, qui est un combat (précision du PM).
 - **Laissé de côté** : les fréquences « par cible », « par adversaire » ou « par arme », qui restent du texte ; les soins
   égaux aux dégâts infligés, ou par composant dépensé (variables) ; les activités de camp ajoutées par un trait ; la
   Robustesse temporaire conditionnelle (réduire une compétence pour en gagner) ; les points temporaires de Santé, que le livre
@@ -452,7 +452,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Fiche** : un bouton « Utiliser » par aptitude débloquée non passive (vérifie l'Éther actuel, déduit Éther et Santé, ajoute
   l'Épuisement) et un interrupteur « Maintenir » pour les aptitudes Maintenues (vérifie que l'Éther maximum absorbe le coût ;
   l'Éther actuel est ramené au nouveau maximum). Les effets sur la cible restent du texte.
-- **Interprétations** : une aptitude qui coûte de la Santé se paie sans plancher (on ne bloque pas le bouton) ; « +5 Santé
+- **Interprétations** : une aptitude qui coûte de la Santé se paie même si la Santé tombe à 0 : le bouton ne se bloque pas (aucune règle écrite),
+  mais une notification prévient que le survivant meurt ; « +5 Santé
   mentale » du trait d'une Maîtrise est lu comme +5 de **maximum** (⚠️ le livre ne précise pas) ; le tirage et l'application
   de dés d'effet ne sont pas faits.
 - **Alternative écartée** : coder les effets de chaque Maîtrise dans le moteur, qui lierait du contenu du livre au dépôt
