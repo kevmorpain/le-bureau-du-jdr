@@ -114,6 +114,20 @@
                 :mastery-key="entry.key"
                 :resolved
               />
+              <details
+                v-if="ability.summons && ability.tier <= entry.tiers"
+                class="mt-2 text-sm"
+              >
+                <summary class="cursor-pointer text-muted">
+                  Fiche du sbire
+                </summary>
+                <KnCreatureCard
+                  class="mt-2"
+                  :creature="minion(ability.summons)"
+                  :name="ability.summons"
+                  :level="character.level"
+                />
+              </details>
             </li>
           </ul>
         </template>
@@ -167,18 +181,22 @@ import {
   knUnlockMastery,
   type KnMastery,
 } from '~~/shared/ker-nethalas/masteries'
+import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 
 type Entry = KnMasteryEntry
 
 const props = defineProps<{
   masteries: KnMastery[] | null
+  bestiary: KnCreature[] | null
   resolved: KnResolvedSheet
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const find = (key: string) => props.masteries?.find(mastery => mastery.key === key)
+
+const minion = (key: string) => props.bestiary?.find(creature => creature.key === key)
 
 const unspent = computed(() => knAbilityPointsUnspent(character.value.level, character.value.masteryPicks, character.value.amulets.tiers))
 

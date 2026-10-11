@@ -66,7 +66,7 @@ export const knCreatureTraitSchema = z.object({
 export const knCreatureSchema = z.object({
   key: slug,
   name: z.string().trim().min(1).max(100),
-  role: z.enum(['creature', 'overseer']),
+  role: z.enum(['creature', 'overseer', 'minion']),
   types: z.array(z.enum(KN_CREATURE_TYPES)).min(1).max(2),
   number: knDiceSchema,
   mind: boundedInt({ min: 0, max: 200 }),

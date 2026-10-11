@@ -58,6 +58,7 @@
     <KnMasteriesSection
       v-model:character="character"
       :masteries
+      :bestiary
       :resolved
     />
 

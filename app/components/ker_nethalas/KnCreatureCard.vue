@@ -20,6 +20,13 @@
           variant="subtle"
           size="md"
         />
+        <UBadge
+          v-if="creature.role === 'minion'"
+          label="Sbire"
+          color="info"
+          variant="subtle"
+          size="md"
+        />
       </template>
       <span
         v-if="source"

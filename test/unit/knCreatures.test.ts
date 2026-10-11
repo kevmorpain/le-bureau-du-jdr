@@ -66,6 +66,13 @@ describe('fiche d\'une créature', () => {
     expect(knCreatureSchema.safeParse(fakeCreature({ actions: [action(1, 5)] })).success).toBe(false)
   })
 
+  it('un sbire se joue sur un tableau d\'actions à deux plages', () => {
+    const action = (min: number, max: number) => ({ min, max, name: 'A', text: 't' })
+
+    expect(knCreatureSchema.safeParse(fakeCreature({ role: 'minion', actions: [action(1, 4), action(5, 6)] })).success).toBe(true)
+    expect(knCreatureSchema.safeParse(fakeCreature({ role: 'inconnu' as 'minion' })).success).toBe(false)
+  })
+
   it('une action porte un test du survivant et des effets selon son résultat', () => {
     const action = (extra: object) => ({ min: 1, max: 6, name: 'A', text: 't', ...extra })
     const failure = { when: 'failure', effects: [{ kind: 'condition', key: 'prone' }] }
