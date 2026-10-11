@@ -30,6 +30,8 @@ export const knCreatureActionSchema = z.object({
   name: z.string().trim().min(1).max(100),
   // Une action Physique se défend à l'arme ou à l'Esquive, une Magique par un test de Résistance magique du joueur.
   tag: z.enum(['physical', 'magical']).optional(),
+  // Les dégâts directs de l'action, appliqués au survivant touché (Physique) ou qui rate sa Résistance magique (Magique).
+  damage: z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES) }).optional(),
   text: z.string().trim().min(1).max(1200),
 }).refine(action => action.min <= action.max, { message: 'la plage va de min à max' })
 

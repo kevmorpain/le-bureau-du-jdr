@@ -84,6 +84,13 @@ export const knStatusSchema = z.object({
   // Aptitudes à usage limité déjà utilisées depuis la dernière remise à zéro de leur fréquence.
   used: z.array(knUsedAbilitySchema).max(KN_STATUS_BOUNDS.used).optional(),
   temporary: knTemporarySchema.optional(),
+  // Armure du survivant par zone, saisie à la main tant que l'équipement n'est pas suivi.
+  armor: z.object({
+    head: boundedInt({ min: 0, max: 9 }),
+    torso: boundedInt({ min: 0, max: 9 }),
+    arms: boundedInt({ min: 0, max: 9 }),
+    legs: boundedInt({ min: 0, max: 9 }),
+  }).optional(),
 })
 
 export type KnStatus = z.infer<typeof knStatusSchema>

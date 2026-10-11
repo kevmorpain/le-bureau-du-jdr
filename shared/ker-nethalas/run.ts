@@ -6,6 +6,7 @@ import {
   type KnGrowingDarknessKey,
 } from './catalog/growingDarkness'
 import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
+import { KN_COMBAT_BOUNDS, knCombatSchema, type KnCombatCreature } from './combatState'
 import { KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 import { KN_OBSTACLE_KINDS, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, type KnObstacleKind } from './exploration'
 import { KN_SKILL_KEYS } from './skills'
@@ -143,6 +144,8 @@ export const knRunSchema = z.object({
   current: boundedInt({ min: 0, max: KN_RUN_BOUNDS.domains - 1 }),
   tensionDie: knUsageDieSchema,
   lightRemaining: boundedInt(KN_RUN_BOUNDS.light),
+  // Le combat en cours : il traverse les entrées du chemin du Domaine, d'où sa place dans le run.
+  combat: knCombatSchema.optional(),
 }).refine(run => run.current < run.domains.length, { message: 'Domaine courant inexistant' })
 
 export type KnGrowingDarknessEntry = z.infer<typeof knGrowingDarknessEntrySchema>
@@ -556,4 +559,42 @@ export function knUndoLastVisit(run: KnRun): KnRun {
     visits: domain.visits.slice(0, -1),
     rooms: last.kind === 'revisit' ? domain.rooms : Math.max(0, domain.rooms - 1),
   })
+}
+
+// Engager un combat : chaque créature garde sa Santé, fixée ici à son niveau. Un combat déjà engagé ne se remplace pas.
+export function knStartCombat(run: KnRun, creatures: KnCombatCreature[]): KnRun {
+  if (run.combat || !creatures.length) return run
+  return { ...run, combat: { creatures: creatures.slice(0, KN_COMBAT_BOUNDS.creatures), round: 1, reactions: 0, log: [] } }
+}
+
+export function knEndCombat(run: KnRun): KnRun {
+  const { combat: _ended, ...rest } = run
+  return rest
+}
+
+// Une ligne de plus dans le journal du combat, les plus récentes en tête.
+export function knCombatLog(run: KnRun, line: string): KnRun {
+  return run.combat ? { ...run, combat: { ...run.combat, log: [line, ...run.combat.log].slice(0, KN_COMBAT_BOUNDS.log) } } : run
+}
+
+// Dégâts (positifs) ou soins (négatifs) sur une créature engagée, entre 0 et sa Santé maximale.
+export function knDamageCombatCreature(run: KnRun, index: number, amount: number): KnRun {
+  const target = run.combat?.creatures[index]
+  if (!run.combat || !target) return run
+  const health = Math.min(target.maxHealth, Math.max(0, target.health - Math.trunc(amount)))
+  return { ...run, combat: { ...run.combat, creatures: run.combat.creatures.map((c, i) => i === index ? { ...c, health } : c) } }
+}
+
+export function knSetCombatFirst(run: KnRun, first: 'survivor' | 'creatures'): KnRun {
+  return run.combat ? { ...run, combat: { ...run.combat, first } } : run
+}
+
+// Le survivant vient de se défendre : la défense suivante du round coûtera plus cher.
+export function knRegisterReaction(run: KnRun): KnRun {
+  return run.combat ? { ...run, combat: { ...run.combat, reactions: Math.min(KN_COMBAT_BOUNDS.reactions.max, run.combat.reactions + 1) } } : run
+}
+
+export function knNextCombatRound(run: KnRun): KnRun {
+  if (!run.combat) return run
+  return { ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }
 }

@@ -14,6 +14,44 @@
   },
 
   "ker_nethalas": {
+    "combat": {
+      "survivorDefensiveMoves": {
+        "1": "Votre prochaine attaque reçoit +10 au test de combat.",
+        "2": "L'Armure de l'adversaire baisse de 1 sur une localisation tirée au hasard, jusqu'à la fin du combat.",
+        "3": "Votre adversaire reçoit Saignement (1).",
+        "4": "Vous êtes Immunisé à toutes les conditions jusqu'à votre prochain tour, y compris celles que vous subissez déjà.",
+        "5": "Votre adversaire subit aussitôt 1 dégât perforant qui ignore l'Armure.",
+        "6": "Ajoutez +D6 à votre réserve de dégâts pour votre prochaine attaque.",
+        "7": "Vous avez l'Avantage à votre prochaine attaque.",
+        "8": "Vous gardez l'initiative : le prochain test défensif de l'adversaire subit −20.",
+        "9": "Un moment de répit après avoir paré l'attaque : vous récupérez 2 Robustesse.",
+        "10": "Votre prochaine attaque ne subit pas le Désavantage habituel pour viser une partie du corps."
+      },
+      "monsterDefensiveMoves": {
+        "1": "La prochaine attaque de la créature reçoit +10 en Compétence de combat. Si elle est magique, votre Résistance magique baisse de 10 jusqu'à son prochain tour.",
+        "2": "Votre Armure baisse de 1 sur une localisation tirée au hasard, jusqu'à la fin du combat.",
+        "3": "Vous recevez Saignement (1).",
+        "4": "La créature se débarrasse de toutes les conditions négatives qu'elle subit.",
+        "5": "Vous subissez 1 dégât perforant qui ignore l'Armure.",
+        "6": "La prochaine action de dégâts de la créature ajoute +D6 à sa réserve de dégâts ; si elle n'en fait pas, votre Résistance magique baisse de 10 jusqu'à son prochain tour.",
+        "7": "La créature a l'Avantage à sa prochaine attaque. Si elle est magique, vous lancez votre Résistance magique avec Désavantage.",
+        "8": "Votre prochain test d'Esquive, de parade ou de Résistance magique subit −20.",
+        "9": "La créature récupère D4 Santé.",
+        "10": "La créature rejoue immédiatement un tour."
+      },
+      "monsterFumbles": {
+        "1": "La prochaine attaque de la créature subit −20. Si elle est magique, vous recevez +20 en Résistance magique.",
+        "2": "Déconcertée de ne pas vous atteindre, la créature est Étourdie au round suivant.",
+        "3": "La créature est Entravée pendant D4 rounds par de la végétation ou des détritus.",
+        "4": "La créature révèle une faille : vous avez l'Avantage à vos tests défensifs pendant 2 rounds.",
+        "5": "L'attaque soulève un nuage de poussière : vous êtes Dissimulé pendant D4 rounds, ou jusqu'à votre attaque.",
+        "6": "La créature trébuche et perd son action : elle est À terre et doit se relever à son prochain tour.",
+        "7": "En portant son attaque, la créature trébuche et se cogne la tête : elle est À terre et Étourdie (2).",
+        "8": "La créature devient Effrayée (20).",
+        "9": "La créature se frappe elle-même et subit D6 dégâts tranchants.",
+        "10": "La créature tombe dans une position inconfortable : elle est À terre, subit 2D6 dégâts contondants et doit se relever à son prochain tour."
+      }
+    },
     "creatureTypes": {
       "animal": "Animal",
       "astral": "Astral",
