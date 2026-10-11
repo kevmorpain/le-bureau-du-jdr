@@ -5,7 +5,7 @@
         Run
       </h2>
       <p class="text-sm text-muted">
-        Chaque entrée dans une salle retire la lumière et recharge l'Éther, puis ouvre un bloc qui garde les dés lancés : les blocs forment le chemin du Domaine. Les dés se lancent ici, ou se saisissent avec « 1-2 » et « 3+ » si vous avez lancé les vôtres.
+        Chaque entrée dans une salle retire la lumière et recharge l'Éther, puis ouvre un bloc qui garde les dés lancés : les blocs forment le chemin du Domaine. Les dés se lancent ici, ou se saisissent si vous avez lancé les vôtres. « Nouvelle entrée » tire la forme au D100 (1-25 un couloir, 26-100 une salle).
       </p>
     </template>
 
@@ -117,7 +117,16 @@
 
       <div class="space-y-3">
         <div class="flex flex-wrap gap-2">
-          <UButton @click="enter('room')">
+          <UButton
+            icon="i-heroicons:cube"
+            @click="enterByShape"
+          >
+            Nouvelle entrée (forme au D100)
+          </UButton>
+          <UButton
+            variant="soft"
+            @click="enter('room')"
+          >
             Nouvelle salle
           </UButton>
           <UButton
@@ -157,10 +166,24 @@
             :tension-die="run.tensionDie"
             :lair-die="domain.lairDie"
             :exit-die="domain.exitDie"
+            :lockpicks="character.provisions.lockpicks"
+            :tables
             @tension="tension"
             @usage="usage"
             @draw="drawDarkness"
             @undo="undo"
+            @table="tableRoll"
+            @apply-scavenge="applyScavenge"
+            @add-door="addDoor"
+            @deep-search="deepSearch"
+            @deep-search-content="deepSearchContent"
+            @perception="perception"
+            @obstacle-roll="obstacleRoll"
+            @noise="noise"
+            @extra-draw="extraDraw"
+            @take="takeOutcome"
+            @add-room-trap="addRoomTrap"
+            @obstacle-act="obstacleAct"
           />
         </div>
       </div>
@@ -173,6 +196,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import {
   KN_LIGHT_ROOMS,
@@ -192,13 +216,32 @@ import {
   type KnUsageDie,
   type KnVisitKind,
 } from '~~/shared/ker-nethalas/run'
+import type { KnExplorationTableName, KnRollTable } from '~~/shared/ker-nethalas/tables'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
+  tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
+
+const {
+  tableRoll,
+  applyScavenge,
+  takeOutcome,
+  addDoor,
+  addRoomTrap,
+  deepSearch,
+  deepSearchContent,
+  perception,
+  obstacleRoll,
+  noise,
+  extraDraw,
+  obstacleAct,
+} = useKnExploration(character, () => props.resolved, () => props.tables)
 
 const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))
@@ -232,8 +275,14 @@ function newDomain() {
   character.value.run = knNewDomain(character.value.run)
 }
 
-function enter(kind: KnVisitKind) {
-  character.value.run = knStartVisit(character.value.run, kind)
+// La forme tirée au D100 décide du type d'entrée : 1-25 un couloir, 26-100 une salle.
+function enterByShape() {
+  const roll = knRollDie(KN_SHAPE_DIE)
+  enter(knShapeKind(roll), roll)
+}
+
+function enter(kind: KnVisitKind, shapeRoll?: number) {
+  character.value.run = knStartVisit(character.value.run, kind, shapeRoll)
   character.value.status = knResetUses(character.value.status, ['room'])
   character.value.aetherCurrent = props.resolved.maxVitals.aether.effective
 }

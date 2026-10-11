@@ -403,6 +403,71 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN37 — Tests en ligne, conséquences automatiques, actions sur les obstacles
+- **Test en ligne** : un bouton « Tester » ouvre, dans le bloc de l'entrée, le même panneau que la carte « Jet de dés »
+  (`KnRollPanel`, avec le test imposé : compétence ou résistance, difficulté, bonus) : cible, D100 tiré ou saisi, Avantage et
+  Désavantage, critiques, maladresses et effets de critique. Le joueur n'a pas à changer de bloc ; le résultat met en avant le
+  bouton « réussi » ou « raté » qui lui correspond, sans le cliquer à sa place. La fiche et ses scores viennent d'un contexte
+  fourni par la section du run (`useKnCheckContext`). Première version écartée : régler la carte « Jet de dés » et y faire
+  défiler, qui obligeait à aller et venir entre deux blocs (retour du PM).
+- **Résultats d'une entrée de table** : format public optionnel `checks` (test à faire, par groupe) et `outcomes` (branche
+  `success`, `failure`, `choice` ou `always`, avec ses effets). Une seule branche par groupe hors `always` ; deux tests
+  indépendants dans une entrée font deux groupes. Chaque branche prise est marquée (`taken`) et ne se rejoue pas. Les effets
+  sont ceux du moteur : pièces, provisions, XP, jauges, dégâts, Épuisement, état, temporaire, remise du Dé de Tension à D8,
+  baisse du Dé de Lair, tirage d'Obscurité Grandissante. Les dégâts retirent la Robustesse temporaire, puis la Robustesse, puis
+  la Santé (avant toute résistance aux dégâts : l'outil ne les applique pas). Un état déjà présent garde sa plus forte valeur :
+  le livre ne dit pas comment cumuler. ⚠️ hypothèse
+- **Ce qui reste du texte** : bonus temporisés (autels : « pendant les D10+2 prochaines pièces »), choix de l'arme, tirages
+  dans les tables de Butin, de Folie et de Rencontres, la Pourriture, et tout ce qui dépend d'un
+  second dé (baies, herbes), ou qui se répète à chaque visite de la pièce (massacre, flammes).
+- **Fouille** : « Test de Fouille » se fait dans le bloc ; le premier résultat de la table (restes macabres) porte son test
+  de Résolution et sa perte de Santé mentale.
+- **Obstacles** : une machine d'états par porte, contenant ou piège de la pièce (un événement 1-10 en installe un). Piège
+  repéré : désamorcer (Larcin à difficulté aléatoire ; un échec le déclenche), contourner (pièce seulement, test d'évitement
+  +20), ou déclencher exprès (+20). Piège déclenché : test d'évitement de la compétence de la table, +20 si repéré ; « Subi »
+  applique les effets d'échec du piège et le règle une fois pour toutes. Un piège de la pièce non repéré se déclenche aussitôt.
+  Verrou, une fois le piège réglé : crocheter (Larcin, un Crochet ; la difficulté tirée au premier essai est retenue, chaque
+  échec brise un Crochet des provisions et la baisse d'un cran) ou forcer (Athlétisme, +20 par échec précédent ; chaque
+  tentative fait un test de Dé de Tension, automatique, enregistré dans l'entrée).
+- **Laissé de côté** : l'outil ne contrôle pas les Outils de voleur (seuls les Crochets sont des provisions) ; un piège à
+  conséquence partielle (filet : Entravé et dégâts de la chute après D6 tentatives) n'en applique que ce qui est
+  inconditionnel ; le gaz et l'alarme restent du texte.
+
+### KN36 — Exploration : tables de tirage privées, jets enregistrés par numéro
+- **Règles sourcées** (livre v1.2, p. 98-99 et 117) : la forme d'une entrée se tire au D100 (1-25 couloir, 26-100 salle) ;
+  rencontre de combat au D20, 10 ou plus dans une salle, 15 ou plus dans un couloir ; un événement se tire dans une salle
+  seulement, si aucun combat n'a lieu ; une porte au D10 (1-5 présente, 6-10 absente), à vérifier pour verrous et pièges ;
+  fouille au D20 après un test de Fouille réussi.
+- **Tables** : format public `{ die, entries: [{ min, max, title?, text, effects? }] }`, validé par Zod (les plages couvrent
+  1..dé sans trou ni chevauchement). Le contenu (descriptions de couloirs et de salles, fouille, événements) est privé,
+  chargé comme les Maîtrises (KN27) ; `useKnContent` renvoie `null` s'il est absent, et l'écran invite alors à noter le
+  résultat du livre.
+- **Chemin du Domaine** : chaque visite ne garde que les **numéros** tirés (forme, description, rencontre, événement, porte,
+  fouille), jamais le texte : le texte se relit dans la table, qui peut être corrigée sans toucher aux parties en cours.
+  Un jet saisi à la main est accepté partout.
+- **Effets de table** : `effects` ne porte que des gains ou pertes inconditionnels (pièces, provisions, XP, jauges, avec dés) ;
+  « Appliquer le résultat » les applique au survivant, bornés (provisions et jauges au maximum, pertes au plancher 0). Ce qui
+  dépend d'un test reste en texte, à jouer à la table.
+- **Événements** (5b) : la table (D100, contenu privé) est en **texte seul**, sans `effects` : seuls trois résultats donnent
+  un gain ou une perte sans test ni choix (Santé mentale, Épuisement), et le schéma des effets de table ne connaît pas
+  l'Épuisement ; le bouton « Appliquer » n'existe que pour la fouille. Les renvois du livre (tables des Pièges, du Butin,
+  Marchand) restent des renvois, à traiter en 5c et en tranche 7.
+- **Verrous et pièges** (5c, livre p. 116-119) : une porte (trouvée par le D10 de porte) ou un contenant (fouille
+  approfondie) se vérifie en deux temps. Test de Perception à difficulté aléatoire, noté « réussi » ou « raté » (le test se fait
+  dans la section « Jet de dés ») ; D10 de piège (7 ou plus : piégé, repéré si la Perception est réussie) ; type de piège au D10 (table
+  privée `traps`, avec la compétence d'évitement dans le champ optionnel `skill` de l'entrée) ; D20 de verrou (12 ou plus pour
+  une porte, 10 ou plus pour un contenant). Chaque étape ne se tire qu'une fois, dans l'ordre. Le texte de résolution
+  (désamorcer, contourner, déclencher, crocheter, forcer) est un rappel rédigé ici, replié.
+- **Fouille approfondie** (p. 116) : une par entrée, hors zone explorée ; elle lance tout de suite un test de Dé de Tension et
+  ajoute 2 Épuisement, puis ouvre un contenant à vérifier ; D10 de contenu (1-5 vide, 6-10 butin).
+- **Tests de Tension supplémentaires** : la fouille approfondie et chaque tentative de forcer un verrou (vacarme) font un test
+  de plus que celui de l'entrée. Ils sont enregistrés dans l'entrée (`extraTension`, dix au plus), modifient le Dé de Tension du
+  run, et un déclenchement fait tirer un événement de l'Obscurité Grandissante, ajouté au Domaine. Comme pour l'entrée,
+  « annuler » retire l'enregistrement mais ne rend pas l'état du dé, qui se corrige à la main.
+- **Laissé de côté** : les illustrations de forme des salles (non reprises, accord éditeur) ; table du Butin des contenants
+  (p. 220) et du Butin (p. 213) en tranche 7 ; choix de l'Overseer du Domaine (liste p. 179) avec ses blocs de caractéristiques en tranche 6 ;
+  conséquences d'un piège déclenché (dégâts, états) : le texte les donne, le joueur les applique.
+
 ### KN35 — Activités de camp ajoutées par les traits, bonus au test de Camp, composants rituels
 - **Règles sourcées** (livre v1.2, p. 124-125) : les activités de camp ont chacune un coût en Épuisement et un modificateur du
   test de Camp, payés une fois quelle que soit la quantité pour les activités de fabrication ; « Swap Mastery Amulets » est une
@@ -594,8 +659,11 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
+| **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
-| **5 — Boucle d'exploration** | forme et description des pièces et des couloirs, portes, événements, fouille, pièges, Overseer et son influence ; issue X14 (#261) | à faire |
+| **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
+| **5b — Événements** | table des événements (D100), contenu privé en texte seul (KN36) | contenu écrit, validé par le schéma ; à relire par le PM |
+| **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
@@ -698,6 +766,45 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 5d : tests en ligne, conséquences, actions d'obstacle
+- Décision KN37. Retours du PM : un bouton pour tester la Fouille, les effets automatisables des événements (un piège,
+  par exemple), les actions possibles sur une porte ou un contenant ; puis les tests directement dans le bloc de l'entrée,
+  sans changer de bloc. Aucune migration.
+- Contenu privé annoté (hors dépôt) : 42 événements avec résultats, les 10 pièges (compétence d'évitement et dégâts), le premier
+  résultat de la fouille. Un événement 1-10 installe un piège de la pièce.
+- Vérifié dans le navigateur, base locale : événement 38 (Test raté : Santé mentale 11 → 10 ; Esquive ratée : Robustesse
+  23 → 18 ; la réussite devient inactive) ; porte piégée (désamorcer à difficulté Exigeant, un échec déclenche ; test
+  d'évitement Esquive +20 ; « Subi » : Robustesse 18 → 9, piège réglé) ; forcer (+20 après un échec, test de Tension D4
+  enregistré) ; crocheter (difficulté retenue, Crochet brisé 2 → 1) ; piège de la pièce (événement 5, Perception ratée :
+  déclenché aussitôt). Tests en ligne : Fouille (cible 10), évitement d'un piège (cible 60 avec +20, « Subi » mis en avant
+  après un raté), événement 38 (deux tests, branche correspondante mise en avant, échec critique affiché dans le bloc).
+- **Non vérifié** dans le navigateur : le tirage d'Obscurité Grandissante et le gain temporaire appliqués par une branche
+  (couverts par les tests des fonctions pures) ; le rendu visuel (volet masqué).
+
+### 2026-10-11 — Tranche 5c : verrous, pièges et fouille approfondie
+- Contenu privé `traps` (D10, 10 pièges avec leur compétence d'évitement) ; code : constantes de seuils (`exploration.ts`),
+  obstacles et tests de Tension supplémentaires dans l'entrée (`run.ts`), composant `KnObstacleBlock`. Aucune migration.
+- Tests : 19 de plus (seuils, ordre des étapes d'un obstacle, fouille approfondie, bornes, déclenchement du vacarme).
+- Vérifié sur la base locale : porte n° 1 d'une salle (Perception réussie, piège 9 → repéré, type 5 → Acrobatie « +20, piège
+  repéré », verrou 14 → verrouillé) ; fouille approfondie (Épuisement 0 → 2, Dé de Tension D8 → 7, contenant ajouté, contenu
+  6 → butin) ; vacarme saisi « 1-2 » (D8 → D6).
+- **Non vérifié** dans le navigateur : l'affichage visuel (volet masqué, capture impossible) et le cas d'un test de Tension
+  supplémentaire qui se déclenche (couvert par les tests des fonctions pures).
+
+### 2026-10-11 — Tranche 5b : table des événements
+- Contenu privé `events` (D100, 1-10 piège, 11-20 Butin, 21-30 Marchand, 31-100 événements propres) rédigé hors du dépôt,
+  chargé en base locale : le schéma accepte la table (plages 1 à 100 sans trou) et l'événement déjà tiré (82) affiche son texte.
+- Aucun changement de code.
+
+### 2026-10-11 — Tranche 5a : exploration, tables et jets de la pièce
+- Décision KN36 ; aucune migration (champs optionnels dans la colonne JSON `run`). Contenu privé : 20 descriptions de couloirs
+  (D20), 100 de salles (D100), table de fouille (D20), hors du dépôt.
+- Vérifié sur la base locale, contenu chargé sauf les événements : « Nouvelle entrée (forme au D100) » (95 → salle) ; tirage de
+  description, de rencontre (1 : pas de combat), d'événement (apparaît après l'absence de combat, texte « non chargé » faute de
+  table), de porte (1 : présente) et de fouille (4 : D4 Fournitures) enregistrés dans la visite ; « Appliquer le résultat »
+  proposé ; une fois appliqué, les Fournitures d'Artisanat passent de 0 à 4 et la visite est marquée appliquée.
+- Suite de la tranche : 5b les événements, 5c verrous, pièges et Overseer.
 
 ### 2026-10-11 — Tranche 4f-4 : activités de camp des traits
 - Décision KN35 ; migration `0142` (composants rituels). Le test de contrat des migrations rejoue la chaîne depuis une base

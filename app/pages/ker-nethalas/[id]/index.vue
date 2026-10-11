@@ -26,6 +26,7 @@
     <KnRunSection
       v-model:character="character"
       :resolved
+      :tables
     />
 
     <KnCombatActions
@@ -94,11 +95,25 @@ import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { AutoSaveStatus } from '~/composables/useAutoSave'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const route = useRoute()
 
 const { data: masteries } = await useKnContent<KnMastery[]>('masteries')
 const { data: goals } = await useKnContent<KnPersonalGoal[]>('personalGoals')
+
+const { data: corridorDescriptions } = await useKnContent<KnRollTable>('corridorDescriptions')
+const { data: roomDescriptions } = await useKnContent<KnRollTable>('roomDescriptions')
+const { data: events } = await useKnContent<KnRollTable>('events')
+const { data: scavenging } = await useKnContent<KnRollTable>('scavenging')
+const { data: traps } = await useKnContent<KnRollTable>('traps')
+const tables = computed(() => ({
+  corridorDescriptions: corridorDescriptions.value,
+  roomDescriptions: roomDescriptions.value,
+  events: events.value,
+  scavenging: scavenging.value,
+  traps: traps.value,
+}))
 
 const { data } = await useFetch<KnCharacter>(`/api/ker-nethalas/characters/${route.params.id}`)
 // `useFetch` rend `data` superficielle : on la recopie dans une ref profonde pour que l'édition soit réactive.
