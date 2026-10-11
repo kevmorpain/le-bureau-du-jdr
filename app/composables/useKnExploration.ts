@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import { KN_OVERSEER_DIE } from '~~/shared/ker-nethalas/creatures'
 import type { KnDifficultyKey } from '~~/shared/ker-nethalas/difficulty'
 import {
   KN_DEEP_SEARCH_DIE,
@@ -22,6 +23,7 @@ import {
   knMarkScavengeApplied,
   knMarkScavengeOutcome,
   knObstacleState,
+  knRecordCreature,
   knRecordDeepSearchContent,
   knRecordDescription,
   knRecordDoor,
@@ -30,6 +32,7 @@ import {
   knRecordExtraDarkness,
   knRecordExtraTension,
   knRecordLock,
+  knRecordOverseer,
   knRecordScavenge,
   knRecordTrap,
   knRecordTrapType,
@@ -234,5 +237,13 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
     }
   }
 
-  return { tableRoll, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct }
+  function drawCreature(d6: number, d20: number) {
+    character.value.run = knRecordCreature(character.value.run, d6, d20)
+  }
+
+  function drawOverseer(manual?: number) {
+    character.value.run = knRecordOverseer(character.value.run, manual ?? knRollDie(KN_OVERSEER_DIE))
+  }
+
+  return { tableRoll, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct, drawCreature, drawOverseer }
 }

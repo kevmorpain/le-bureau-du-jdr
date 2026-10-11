@@ -403,6 +403,27 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN38 — Bestiaire : format public, fiches privées, tirage par clé
+- **Règles sourcées** (livre v1.2) : p. 133-135 (un D6 choisit la table de rencontre : 1-3 A, 4-6 B ; un D20 donne la
+  créature), p. 179 (D10 pour l'Overseer, une fois en entrant dans un Domaine), p. 129-133 (types, traits, fiche, adaptation
+  au niveau), p. 80-81 (localisations), p. 82-83 (types de dégâts, Armure).
+- **Public** (`shared/ker-nethalas/creatures.ts`, `catalog/`) : le schéma d'une fiche (types, Nombre en dé, Esprit, Endurance,
+  Corps, Santé fixe ou « base + par niveau », table de localisation et point faible, Armure par localisation, Compétence de
+  combat, Résistance magique, traits, affinité, vulnérabilités, table d'actions D6 avec étiquette Physique ou Magique,
+  paliers d'adaptation) ; les 14 types de dégâts et ce qu'ils ignorent de l'Armure ; les 6 tables de localisation ; les règles
+  des 8 types de créature ; les 9 traits communs, reformulés. Ce sont des règles, comme les conditions.
+- **Privé** : les fiches (`bestiary`, un tableau de fiches de clé unique) et les tirages (`encountersA`, `encountersB`,
+  `overseers`, des tables dont chaque entrée porte le nom et `ref`, la clé de la fiche). Une créature sans fiche chargée
+  s'affiche avec son nom et l'invitation à noter ses caractéristiques.
+- **Adaptation au niveau** : le niveau du survivant fait la Santé (base + par niveau) et ouvre les paliers « après le
+  niveau N », qui s'ajoutent tous (Santé, Compétence de combat, Résistance magique, dé de dégâts, Armure). L'adaptation
+  s'affiche sur la fiche ; l'appliquer aux dégâts des actions viendra avec le suivi de combat.
+- **Dans le run** : `creatures` dans une entrée (jusqu'à 4 tirages : test de combat, événement ou alarme) et `overseer` dans
+  le Domaine, tous deux de simples numéros de dés ; aucune migration.
+- **Vocabulaire** : Esprit, Corps (Mind, Body) sont mon choix : la VF, d'une édition antérieure, dit Vigilance et Athlétisme.
+- **Laissé de côté** : le suivi de combat (6b) et les Overseers et sbires (6c) ; les fiches du bestiaire, hormis trois
+  pilotes (deux créatures et un Overseer) à relire avant d'écrire les autres.
+
 ### KN37 — Tests en ligne, conséquences automatiques, actions sur les obstacles
 - **Test en ligne** : un bouton « Tester » ouvre, dans le bloc de l'entrée, le même panneau que la carte « Jet de dés »
   (`KnRollPanel`, avec le test imposé : compétence ou résistance, difficulté, bonus) : cible, D100 tiré ou saisi, Avantage et
@@ -659,12 +680,14 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
 | **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
-| **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
-| **5b — Événements** | table des événements (D100), contenu privé en texte seul (KN36) | contenu écrit, validé par le schéma ; à relire par le PM |
-| **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | écrite, vérifiée, non fusionnée ; contenu à valider par le PM |
-| **6 — Rencontres et combat** | table des rencontres, bestiaire, suivi de combat ; issue X15 (#262) | à faire |
+| **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
+| **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
+| **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |
+| **5d — Tests en ligne, conséquences, actions d'obstacle** | « Tester » fait le test dans le bloc de l'entrée, résultats d'événement, de fouille et de piège appliqués à la fiche, désamorcer / contourner / déclencher / crocheter / forcer (KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
+| **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
+| **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs | à faire |
+| **6c — Overseers et sbires** | les 10 Overseers et les 5 sbires de Maîtrise | à faire |
 | **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
@@ -763,9 +786,22 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Compétences ajoutées à la main** : doubles et criticité détectés, mais aucun effet de critique (le livre n'en
   donne pas).
 
+- **« Après le niveau N »** (fiches de créature) : lu comme *à partir du niveau N+1*. Le livre dit qu'un adversaire de
+  niveau 11 reçoit les deux paliers, 5 et 10, ce qui va dans ce sens ; le cas du niveau exact reste implicite.
+- **Dé de dégâts d'un palier** (« +D6 damage ») : un dé de plus dans la réserve de dégâts de la créature, qui garde le plus
+  haut (p. 81) ; un bonus fixe (« +1 damage ») s'ajoute au dé choisi. Les paliers s'ajoutent entre eux.
+
 ---
 
 ## Journal
+
+### 2026-10-11 — Tranche 6a : rencontres et bestiaire
+- Décision KN38 ; aucune migration. Trois pilotes privés à relire (deux créatures, un Overseer), plus les tables de tirage
+  complètes (40 créatures, 10 Overseers), dont les clés servent aux futures fiches.
+- Vérifié sur une base neuve : l'Overseer du Domaine et trois créatures posés dans l'entrée (dont une sans fiche) s'affichent ;
+  la Santé suit le niveau (12 au niveau 1 pour 8 + 4 par niveau) ; « Tirer une créature » ajoute un tirage (limite de 4) ;
+  « Tirer l'action » met une ligne en avant.
+- **Non vérifié** dans le navigateur : la saisie manuelle des dés (volet masqué, le clavier ne répond pas) et le rendu visuel.
 
 ### 2026-10-11 — Tranche 5d : tests en ligne, conséquences, actions d'obstacle
 - Décision KN37. Retours du PM : un bouton pour tester la Fouille, les effets automatisables des événements (un piège,

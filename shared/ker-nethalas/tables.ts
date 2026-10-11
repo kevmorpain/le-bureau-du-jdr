@@ -65,6 +65,8 @@ export const knRollTableEntrySchema = z.object({
   effects: z.array(knTableEffectSchema).max(4).optional(),
   checks: z.array(z.object({ skill: z.enum(KN_CHECK_KEYS), group: boundedInt({ min: 0, max: 3 }).optional() })).max(3).optional(),
   outcomes: z.array(knOutcomeSchema).max(8).optional(),
+  // Clé de la fiche du bestiaire que ce résultat désigne (rencontres, Overseers).
+  ref: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/).optional(),
   // Un événement qui installe un piège dans la pièce : à vérifier comme une porte ou un contenant.
   roomTrap: z.boolean().optional(),
 }).refine(entry => entry.min <= entry.max, { message: 'la plage va de min à max' })
@@ -206,6 +208,9 @@ export const KN_EXPLORATION_TABLES = {
   events: { die: 100 },
   scavenging: { die: 20 },
   traps: { die: 10 },
+  encountersA: { die: 20 },
+  encountersB: { die: 20 },
+  overseers: { die: 10 },
 } as const
 
 export type KnExplorationTableName = keyof typeof KN_EXPLORATION_TABLES

@@ -32,6 +32,7 @@ export const KN_RUN_BOUNDS = {
   visits: 200,
   obstacles: 8,
   extraTension: 10,
+  creatures: 4,
 } as const
 
 export const KN_VISIT_KINDS = ['room', 'corridor', 'revisit'] as const
@@ -119,6 +120,8 @@ export const knVisitSchema = z.object({
   obstacles: z.array(knObstacleSchema).max(KN_RUN_BOUNDS.obstacles).optional(),
   deepSearch: z.object({ content: knTableRollSchema.optional() }).optional(),
   extraTension: z.array(knExtraTensionSchema).max(KN_RUN_BOUNDS.extraTension).optional(),
+  // Les créatures tirées dans cette entrée (combat, événement, alarme) : un D6 pour la table, un D20 pour la créature.
+  creatures: z.array(z.object({ d6: boundedInt({ min: 1, max: 6 }), d20: boundedInt({ min: 1, max: 20 }) })).max(KN_RUN_BOUNDS.creatures).optional(),
 })
 
 export const knDomainSchema = z.object({
@@ -129,6 +132,8 @@ export const knDomainSchema = z.object({
   exitDie: knUsageDieSchema,
   exitFound: z.boolean(),
   overseerInfluences: z.array(z.enum(KN_OVERSEER_INFLUENCE_KEYS)).max(KN_RUN_BOUNDS.overseerInfluences),
+  // L'Overseer du Domaine : le D10 tiré en y entrant pour la première fois.
+  overseer: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
   growingDarkness: z.array(knGrowingDarknessEntrySchema).max(KN_RUN_BOUNDS.growingDarkness),
   visits: z.array(knVisitSchema).max(KN_RUN_BOUNDS.visits),
 })
@@ -364,6 +369,17 @@ export function knMarkScavengeApplied(run: KnRun): KnRun {
 }
 
 const withTaken = (taken: number[] | undefined, outcome: number) => taken?.includes(outcome) ? taken : [...(taken ?? []), outcome]
+
+// Une rencontre peut venir du test de combat, d'un événement ou d'une alarme : on garde chaque tirage, dans l'ordre.
+export function knRecordCreature(run: KnRun, d6: number, d20: number): KnRun {
+  const visit = knCurrentVisit(run)
+  if (!visit || visit.kind === 'revisit' || (visit.creatures?.length ?? 0) >= KN_RUN_BOUNDS.creatures) return run
+  return withLastVisit(run, v => ({ ...v, creatures: [...(v.creatures ?? []), { d6, d20 }] }))
+}
+
+export function knRecordOverseer(run: KnRun, roll: number): KnRun {
+  return knCurrentDomain(run).overseer ? run : withCurrentDomain(run, { overseer: { roll } })
+}
 
 export function knMarkEventOutcome(run: KnRun, outcome: number): KnRun {
   const visit = knCurrentVisit(run)

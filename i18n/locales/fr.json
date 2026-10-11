@@ -14,6 +14,108 @@
   },
 
   "ker_nethalas": {
+    "creatureTypes": {
+      "animal": "Animal",
+      "astral": "Astral",
+      "construct": "Artificiel",
+      "demon": "Démon",
+      "elemental": "Élémentaire",
+      "humanoid": "Humanoïde",
+      "plant": "Plante",
+      "undead": "Mort-vivant"
+    },
+    "damageTypes": {
+      "acid": "Acide",
+      "arcane": "Arcanique",
+      "bludgeoning": "Contondants",
+      "cold": "Froid",
+      "fire": "Feu",
+      "force": "Force",
+      "holy": "Sacrés",
+      "infernal": "Infernaux",
+      "lightning": "Foudre",
+      "necrotic": "Nécrotiques",
+      "piercing": "Perforants",
+      "poison": "Poison",
+      "psychic": "Psychiques",
+      "slashing": "Tranchants"
+    },
+    "hitLocationTables": {
+      "arachnid": "Arachnide",
+      "wingedBiped": "Bipède ailé",
+      "insectoid": "Insectoïde",
+      "humanoid": "Humanoïde",
+      "quadruped": "Quadrupède",
+      "serpentoid": "Serpentiforme"
+    },
+    "hitLocations": {
+      "rightRearLeg": "Patte arrière droite",
+      "leftRearLeg": "Patte arrière gauche",
+      "midRightLeg": "Patte centrale droite",
+      "midLeftLeg": "Patte centrale gauche",
+      "foreRightLeg": "Patte antérieure droite",
+      "foreLeftLeg": "Patte antérieure gauche",
+      "frontRightLeg": "Patte frontale droite",
+      "frontLeftLeg": "Patte frontale gauche",
+      "abdomen": "Abdomen",
+      "cephalothorax": "Céphalothorax",
+      "rightLeg": "Jambe droite",
+      "leftLeg": "Jambe gauche",
+      "chest": "Torse",
+      "rightWing": "Aile droite",
+      "leftWing": "Aile gauche",
+      "rightArm": "Bras droit",
+      "leftArm": "Bras gauche",
+      "head": "Tête",
+      "rightMiddleLeg": "Patte médiane droite",
+      "leftMiddleLeg": "Patte médiane gauche",
+      "thorax": "Thorax",
+      "rightFrontLeg": "Patte avant droite",
+      "leftFrontLeg": "Patte avant gauche",
+      "rightHindLeg": "Patte arrière droite",
+      "leftHindLeg": "Patte arrière gauche",
+      "hindquarters": "Arrière-train",
+      "forequarters": "Avant-train",
+      "body": "Corps"
+    },
+    "creatureTraits": {
+      "alert": {
+        "name": "Alerte",
+        "text": "Ne peut jamais être surprise, quoi que le survivant possède pour surprendre."
+      },
+      "frightening": {
+        "name": "Effrayant",
+        "text": "Au début du combat, test de Résolution : un échec coûte 2 Santé mentale. Un seul test pour tout un groupe."
+      },
+      "horrifying": {
+        "name": "Horrifiant",
+        "text": "Au début du combat, test de Résolution : un échec coûte 4 Santé mentale. Un seul test pour tout un groupe."
+      },
+      "pack": {
+        "name": "Meute",
+        "text": "+5 en Compétence de combat pour chaque autre créature de meute encore en vie dans la pièce."
+      },
+      "penetrating": {
+        "name": "Pénétrant",
+        "text": "Ses attaques ignorent {value} point(s) d'Armure."
+      },
+      "ruthlessness": {
+        "name": "Impitoyable",
+        "text": "{value} tour(s) de plus par round. Une condition qui fait perdre des actions (Paralysé, Étourdi) en retire une par cumul."
+      },
+      "savage": {
+        "name": "Sauvage",
+        "text": "Ses attaques ne se parent pas : seule l'Esquive les évite."
+      },
+      "swift": {
+        "name": "Rapide",
+        "text": "Ignore tous les malus de Réaction."
+      },
+      "venomous": {
+        "name": "Vénéneux",
+        "text": "Quand elle blesse le survivant, test d'Endurance : un échec donne Empoisonné (1)."
+      }
+    },
     "skills": {
       "acrobatics": "Acrobatie",
       "athletics": "Athlétisme",
