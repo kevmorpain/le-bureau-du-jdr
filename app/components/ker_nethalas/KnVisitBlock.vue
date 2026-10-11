@@ -188,7 +188,27 @@
         :table="eventTable.table"
         :active
         @roll="manual => emit('table', 'event', manual)"
-      />
+      >
+        <template #result>
+          <div class="mt-1 space-y-2">
+            <UButton
+              v-if="active && eventEntry?.roomTrap && !visit.obstacles?.some(obstacle => obstacle.kind === 'room')"
+              size="xs"
+              variant="soft"
+              @click="emit('addRoomTrap')"
+            >
+              Vérifier le piège
+            </UButton>
+            <KnOutcomePanel
+              :entry="eventEntry"
+              :taken="visit.event?.taken ?? []"
+              :active
+              @check="key => emit('check', { id: knCheckId(key), difficulty: 'normal', note: 'Événement' })"
+              @take="index => emit('take', 'event', index)"
+            />
+          </div>
+        </template>
+      </KnTableRoll>
       <li
         v-else-if="visit.kind === 'room' && !foundLair && !visit.encounter && active"
         class="text-muted"
@@ -211,6 +231,25 @@
           </p>
         </template>
       </KnTableRoll>
+
+      <li
+        v-if="visit.kind !== 'revisit' && active && !visit.scavenge"
+        class="flex flex-wrap items-center gap-2"
+      >
+        <UIcon
+          name="i-heroicons:minus-circle"
+          class="size-5 text-muted"
+        />
+        <span class="flex-1">Test de Fouille (une fois par salle ou couloir)</span>
+        <UButton
+          size="sm"
+          variant="outline"
+          icon="i-heroicons:cube"
+          @click="emit('check', { id: 'skill:scavenge', difficulty: 'normal', note: 'Fouiller la pièce' })"
+        >
+          Tester
+        </UButton>
+      </li>
 
       <KnTableRoll
         v-if="visit.kind !== 'revisit' && scavengeTable"
@@ -237,6 +276,14 @@
           >
             Résultat appliqué à la fiche.
           </p>
+          <KnOutcomePanel
+            :entry="scavengeEntry"
+            :taken="visit.scavenge?.taken ?? []"
+            :active
+            class="mt-1"
+            @check="key => emit('check', { id: knCheckId(key), difficulty: 'normal', note: 'Fouille' })"
+            @take="index => emit('take', 'scavenge', index)"
+          />
         </template>
       </KnTableRoll>
     </ul>
@@ -280,11 +327,14 @@
         :active
         :traps="tables.traps"
         :tension-die="tensionDie"
+        :lockpicks
         @perception="result => emit('perception', index, result)"
         @trap="manual => emit('obstacleRoll', index, 'trap', manual)"
         @trap-type="manual => emit('obstacleRoll', index, 'trapType', manual)"
         @lock="manual => emit('obstacleRoll', index, 'lock', manual)"
         @noise="manual => emit('noise', manual)"
+        @check="request => emit('check', request)"
+        @act="act => emit('obstacleAct', index, act)"
       />
 
       <ul
@@ -352,6 +402,7 @@ import {
   KN_ENCOUNTER_DIE,
   KN_ENCOUNTER_THRESHOLD,
   knDeepSearchEmpty,
+  type KnObstacleAct,
   type KnVisitTable,
 } from '~~/shared/ker-nethalas/exploration'
 import {
@@ -363,7 +414,8 @@ import {
   type KnGrowingDarknessDraw,
   type KnVisit,
 } from '~~/shared/ker-nethalas/run'
-import { KN_EXPLORATION_TABLES, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
+import type { KnRollRequest } from '~~/shared/ker-nethalas/roll'
+import { KN_EXPLORATION_TABLES, knCheckId, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const props = defineProps<{
   visit: KnVisit
@@ -372,6 +424,7 @@ const props = defineProps<{
   tensionDie: number
   lairDie: number
   exitDie: number
+  lockpicks: number
   tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
 }>()
 
@@ -389,6 +442,10 @@ const emit = defineEmits<{
   obstacleRoll: [index: number, step: 'trap' | 'trapType' | 'lock', manual?: number]
   noise: [manual?: number]
   extraDraw: [index: number]
+  check: [request: KnRollRequest]
+  take: [target: 'event' | 'scavenge', index: number]
+  addRoomTrap: []
+  obstacleAct: [index: number, act: KnObstacleAct]
 }>()
 
 const { labelText } = useKnLabels()
@@ -443,6 +500,9 @@ const canSearch = computed(() => knVisitCanSearch(props.visit) && (props.visit.o
 // Numéro d'un obstacle parmi ceux de sa sorte (porte n° 2, contenant n° 1).
 const obstaclePosition = (index: number) =>
   (props.visit.obstacles ?? []).slice(0, index + 1).filter(obstacle => obstacle.kind === props.visit.obstacles![index]!.kind).length
+
+const eventEntry = computed(() => props.visit.event ? knTableEntry(props.tables.events ?? null, props.visit.event.roll) : undefined)
+const scavengeEntry = computed(() => props.visit.scavenge ? knTableEntry(props.tables.scavenging ?? null, props.visit.scavenge.roll) : undefined)
 
 const scavengeEffects = computed(() => knTableEntry(props.tables.scavenging ?? null, props.visit.scavenge?.roll ?? 0)?.effects ?? [])
 </script>

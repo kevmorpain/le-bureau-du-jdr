@@ -10,7 +10,14 @@
     </template>
 
     <div class="space-y-4">
-      <div class="grid gap-3 sm:grid-cols-3">
+      <p
+        v-if="note"
+        class="text-sm text-primary"
+      >
+        Test préparé : {{ note }}
+      </p>
+
+      <div class="grid gap-3 sm:grid-cols-4">
         <UFormField label="Test">
           <USelect
             :model-value="current.id"
@@ -35,6 +42,17 @@
             </UButton>
           </div>
         </UFormField>
+        <UFormField label="Bonus au test">
+          <UInputNumber
+            v-model="bonus"
+            :min="-99"
+            :max="99"
+            :increment="false"
+            :decrement="false"
+            aria-label="Bonus au test"
+            class="w-full"
+          />
+        </UFormField>
         <UFormField label="Lecture du dé">
           <USelect
             v-model="modeChoice"
@@ -48,7 +66,7 @@
         Cible :
         <span class="font-semibold tabular-nums">{{ target }}</span>
         <span class="text-muted">
-          (score effectif {{ current.check.effective }}{{ difficultyModifier ? ` ${signed(difficultyModifier)} ${$t(`ker_nethalas.difficulties.${difficulty}`)}` : '' }})
+          (score effectif {{ current.check.effective }}{{ difficultyModifier ? ` ${signed(difficultyModifier)} ${$t(`ker_nethalas.difficulties.${difficulty}`)}` : '' }}{{ bonus ? ` ${signed(bonus)} bonus` : '' }})
         </span>
         <UBadge
           v-if="mode !== 'normal'"
@@ -202,6 +220,7 @@ import {
   type KnCriticalKind,
   type KnD100Result,
   type KnDifficultyKey,
+  type KnRollRequest,
 } from '~~/shared/ker-nethalas/roll'
 import { knRaiseUsageDie, knRollDie, knUsageDieRaise } from '~~/shared/ker-nethalas/run'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
@@ -209,6 +228,8 @@ import { knSetTemporary, knTemporaryOf } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
+  // Un test préparé ailleurs : `seq` change à chaque demande pour qu'une même demande se rejoue.
+  request?: (KnRollRequest & { seq: number }) | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
@@ -241,12 +262,27 @@ const choices = computed<Choice[]>(() => [
 const current = computed(() => choices.value.find(choice => choice.id === selected.value) ?? choices.value[0]!)
 const checkItems = computed<SelectItem[]>(() => choices.value.map(choice => ({ label: choice.label, value: choice.id })))
 
+const note = ref('')
+
 function select(value: unknown) {
-  if (typeof value === 'string') selected.value = value
+  if (typeof value !== 'string') return
+  selected.value = value
+  note.value = ''
 }
 
 const difficulty = ref<KnDifficultyKey>('normal')
+const bonus = ref(0)
 const difficultyModifier = computed(() => KN_DIFFICULTIES[difficulty.value])
+
+// Une demande avec difficulté ou bonus règle les deux (Normal et 0 par défaut) ; une demande simple remet le bonus à 0.
+watch(() => props.request?.seq, () => {
+  const request = props.request
+  if (!request) return
+  selected.value = request.id
+  if (request.difficulty !== undefined || request.bonus !== undefined) difficulty.value = request.difficulty ?? 'normal'
+  bonus.value = request.bonus ?? 0
+  note.value = request.note ?? ''
+})
 const difficultyItems = computed<SelectItem[]>(() =>
   KN_DIFFICULTY_KEYS.map(key => ({ label: `${t(`ker_nethalas.difficulties.${key}`)} (${signed(KN_DIFFICULTIES[key])})`, value: key })),
 )
@@ -261,7 +297,7 @@ const modeItems: SelectItem[] = [
 ]
 const mode = computed<KnRollMode>(() => modeChoice.value === 'auto' ? current.value.check.rollMode : modeChoice.value)
 
-const target = computed(() => Math.max(0, current.value.check.effective + difficultyModifier.value))
+const target = computed(() => Math.max(0, current.value.check.effective + difficultyModifier.value + (bonus.value ?? 0)))
 
 const manual = ref<number | null>(null)
 
@@ -286,7 +322,7 @@ function roll(entered?: number) {
   const check = knD100Check({
     roll: entered ?? knRollDie(100),
     score: choice.check.effective,
-    difficulty: difficultyModifier.value,
+    difficulty: difficultyModifier.value + (bonus.value ?? 0),
     mode: mode.value,
   })
   const kind = knCriticalKind(choice.key)

@@ -166,6 +166,7 @@
             :tension-die="run.tensionDie"
             :lair-die="domain.lairDie"
             :exit-die="domain.exitDie"
+            :lockpicks="character.provisions.lockpicks"
             :tables
             @tension="tension"
             @usage="usage"
@@ -180,6 +181,10 @@
             @obstacle-roll="obstacleRoll"
             @noise="noise"
             @extra-draw="extraDraw"
+            @check="request => emit('roll', request)"
+            @take="takeOutcome"
+            @add-room-trap="addRoomTrap"
+            @obstacle-act="obstacleAct"
           />
         </div>
       </div>
@@ -192,54 +197,28 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
-import {
-  KN_DEEP_SEARCH_DIE,
-  KN_DEEP_SEARCH_EXHAUSTION,
-  KN_DOOR_DIE,
-  KN_ENCOUNTER_DIE,
-  KN_LOCK_DIE,
-  KN_SHAPE_DIE,
-  KN_TRAP_DIE,
-  knShapeKind,
-  type KnVisitTable,
-} from '~~/shared/ker-nethalas/exploration'
+import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import type { KnRollRequest } from '~~/shared/ker-nethalas/roll'
 import {
   KN_LIGHT_ROOMS,
   KN_OPTIONAL_LAIR_ROOMS,
   KN_RUN_BOUNDS,
   KN_USAGE_DICE,
   knCurrentDomain,
-  knAddDoorObstacle,
-  knCurrentVisit,
   knDrawGrowingDarkness,
-  knMarkScavengeApplied,
   knNewDomain,
   knRecordDarkness,
-  knRecordDeepSearchContent,
-  knRecordDescription,
-  knRecordDoor,
-  knRecordEncounter,
-  knRecordEvent,
-  knRecordExtraDarkness,
-  knRecordExtraTension,
-  knRecordLock,
-  knRecordScavenge,
   knRecordTension,
-  knRecordTrap,
-  knRecordTrapType,
   knRecordUsage,
   knRollDie,
-  knSetPerception,
-  knStartDeepSearch,
   knStartVisit,
   knSwitchDomain,
   knUndoLastVisit,
   type KnUsageDie,
   type KnVisitKind,
 } from '~~/shared/ker-nethalas/run'
-import { KN_EXPLORATION_TABLES, knApplyTableEffects, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
+import type { KnExplorationTableName, KnRollTable } from '~~/shared/ker-nethalas/tables'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
@@ -249,8 +228,24 @@ const props = defineProps<{
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
-const toast = useToast()
-const { t } = useI18n()
+const emit = defineEmits<{
+  roll: [request: KnRollRequest]
+}>()
+
+const {
+  tableRoll,
+  applyScavenge,
+  takeOutcome,
+  addDoor,
+  addRoomTrap,
+  deepSearch,
+  deepSearchContent,
+  perception,
+  obstacleRoll,
+  noise,
+  extraDraw,
+  obstacleAct,
+} = useKnExploration(character, () => props.resolved, () => props.tables)
 
 const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))
@@ -313,101 +308,6 @@ function usage(manual?: number) {
 function drawDarkness() {
   character.value.run = knRecordDarkness(character.value.run, knDrawGrowingDarkness())
 }
-
-const TABLE_RECORDS = {
-  description: knRecordDescription,
-  encounter: knRecordEncounter,
-  event: knRecordEvent,
-  door: knRecordDoor,
-  scavenge: knRecordScavenge,
-}
-
-function tableDie(name: KnVisitTable) {
-  if (name === 'encounter') return KN_ENCOUNTER_DIE
-  if (name === 'door') return KN_DOOR_DIE
-  if (name === 'event') return KN_EXPLORATION_TABLES.events.die
-  if (name === 'scavenge') return KN_EXPLORATION_TABLES.scavenging.die
-  return knCurrentVisit(character.value.run)?.kind === 'corridor'
-    ? KN_EXPLORATION_TABLES.corridorDescriptions.die
-    : KN_EXPLORATION_TABLES.roomDescriptions.die
-}
-
-function tableRoll(name: KnVisitTable, manual?: number) {
-  const roll = manual ?? knRollDie(tableDie(name))
-  character.value.run = TABLE_RECORDS[name](character.value.run, roll)
-}
-
-// Gains et pertes sans test d'un résultat de fouille : pièces, provisions, expérience, jauges.
-function applyScavenge() {
-  const c = character.value
-  const visit = knCurrentVisit(c.run)
-  const effects = knTableEntry(props.tables.scavenging ?? null, visit?.scavenge?.roll ?? 0)?.effects ?? []
-  if (!visit?.scavenge || visit.scavenge.applied || !effects.length) return
-
-  const { state, outcomes } = knApplyTableEffects(effects, {
-    coins: c.coins,
-    xp: c.xp,
-    provisions: c.provisions,
-    health: c.healthCurrent,
-    toughness: c.toughnessCurrent,
-    sanity: c.sanityCurrent,
-    aether: c.aetherCurrent,
-  }, {
-    health: props.resolved.maxVitals.health.effective,
-    toughness: props.resolved.maxVitals.toughness.effective,
-    sanity: props.resolved.maxVitals.sanity.effective,
-    aether: props.resolved.maxVitals.aether.effective,
-  })
-
-  c.coins = state.coins
-  c.xp = state.xp
-  c.provisions = state.provisions
-  c.healthCurrent = state.health
-  c.toughnessCurrent = state.toughness
-  c.sanityCurrent = state.sanity
-  c.aetherCurrent = state.aether
-  c.run = knMarkScavengeApplied(c.run)
-
-  const lines = outcomes.map(({ effect, roll }) => {
-    if (effect.kind === 'coins') return `${roll.total} ₵`
-    if (effect.kind === 'xp') return `${roll.total} XP`
-    if (effect.kind === 'provision') return `${roll.total} ${t(`ker_nethalas.provisions.${effect.key}`)}`
-    return `${effect.sign === 'gain' ? '+' : '−'}${roll.total} ${t(`ker_nethalas.vitals.${effect.vital}`).toLowerCase()}`
-  })
-  toast.add({ title: 'Fouille appliquée', description: lines.join(' · '), color: 'success' })
-}
-
-const addDoor = () => character.value.run = knAddDoorObstacle(character.value.run)
-
-// La fouille approfondie coûte tout de suite un test de Dé de Tension et de l'Épuisement.
-function deepSearch(manual?: number) {
-  const c = character.value
-  const next = knStartDeepSearch(c.run, manual ?? knRollDie(c.run.tensionDie), manual !== undefined)
-  if (next === c.run) return
-  c.run = next
-  c.exhaustion = Math.min(KN_BOUNDS.exhaustion.max, c.exhaustion + KN_DEEP_SEARCH_EXHAUSTION)
-}
-
-function deepSearchContent(manual?: number) {
-  character.value.run = knRecordDeepSearchContent(character.value.run, manual ?? knRollDie(KN_DEEP_SEARCH_DIE))
-}
-
-const perception = (index: number, result: 'passed' | 'failed') => character.value.run = knSetPerception(character.value.run, index, result)
-
-const OBSTACLE_RECORDS = { trap: knRecordTrap, trapType: knRecordTrapType, lock: knRecordLock }
-const OBSTACLE_DICE = { trap: KN_TRAP_DIE, trapType: KN_EXPLORATION_TABLES.traps.die, lock: KN_LOCK_DIE }
-
-function obstacleRoll(index: number, step: keyof typeof OBSTACLE_RECORDS, manual?: number) {
-  character.value.run = OBSTACLE_RECORDS[step](character.value.run, index, manual ?? knRollDie(OBSTACLE_DICE[step]))
-}
-
-// Chaque tentative pour forcer un verrou fait du bruit.
-function noise(manual?: number) {
-  const c = character.value
-  c.run = knRecordExtraTension(c.run, manual ?? knRollDie(c.run.tensionDie), manual !== undefined, 'noise')
-}
-
-const extraDraw = (index: number) => character.value.run = knRecordExtraDarkness(character.value.run, index, knDrawGrowingDarkness())
 
 function undo() {
   character.value.run = knUndoLastVisit(character.value.run)

@@ -1,21 +1,10 @@
+import { KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 import type { KnRollMode } from './resolve'
 import { knRollDie, type KnRng } from './run'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, KN_WEAPON_SKILL_KEYS } from './skills'
 import { knTakeDamage } from './vitals'
 
-export const KN_DIFFICULTY_KEYS = ['childsPlay', 'effortless', 'easy', 'normal', 'demanding', 'hard', 'impossible'] as const
-
-export type KnDifficultyKey = (typeof KN_DIFFICULTY_KEYS)[number]
-
-export const KN_DIFFICULTIES: Record<KnDifficultyKey, number> = {
-  childsPlay: 30,
-  effortless: 20,
-  easy: 10,
-  normal: 0,
-  demanding: -10,
-  hard: -20,
-  impossible: -30,
-}
+export { KN_DIFFICULTIES, KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 
 const D8_DIFFICULTIES: readonly KnDifficultyKey[] = [
   'childsPlay',
@@ -29,6 +18,18 @@ const D8_DIFFICULTIES: readonly KnDifficultyKey[] = [
 ]
 
 export const knRollDifficulty = (rng: KnRng = Math.random): KnDifficultyKey => D8_DIFFICULTIES[knRollDie(8, rng) - 1]!
+
+// Un cran de difficulté plus bas par échec précédent (Exigeant → Normal), sans passer sous « Enfantin ».
+export const knEasierDifficulty = (key: KnDifficultyKey, steps: number): KnDifficultyKey =>
+  KN_DIFFICULTY_KEYS[Math.max(0, KN_DIFFICULTY_KEYS.indexOf(key) - Math.max(0, steps))]!
+
+// Un test que l'interface prépare dans « Jet de dés » : `difficulty` et `bonus` absents laissent le choix du joueur.
+export interface KnRollRequest {
+  id: string
+  difficulty?: KnDifficultyKey
+  bonus?: number
+  note?: string
+}
 
 // Un D100 se lit en deux chiffres ; 100 est le « 00 » du dé.
 export function knD100Digits(roll: number) {

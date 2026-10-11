@@ -2,15 +2,28 @@ import { describe, it, expect } from 'vitest'
 import { emptyKnProvisions } from '../../shared/ker-nethalas/camp'
 import { KN_CONTENT_NAME_RE, KN_CONTENT_SCHEMAS } from '../../shared/ker-nethalas/content'
 import { knDeepSearchEmpty, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, knShapeKind } from '../../shared/ker-nethalas/exploration'
+import { knEasierDifficulty } from '../../shared/ker-nethalas/roll'
+import { emptyKnStatus } from '../../shared/ker-nethalas/status'
+import { knSetTemporary, knTemporaryOf } from '../../shared/ker-nethalas/vitals'
 import {
   KN_RUN_BOUNDS,
   emptyKnRun,
   knAddDoorObstacle,
+  knAddRoomTrap,
   knCurrentDomain,
   knCurrentVisit,
   knDrawGrowingDarkness,
+  knFinishTrap,
+  knForceBonus,
+  knMarkEventOutcome,
   knMarkScavengeApplied,
+  knMarkScavengeOutcome,
   knObstacleState,
+  knResolveForce,
+  knResolvePick,
+  knResolveTrapAction,
+  knStartPick,
+  knTriggerTrap,
   knRecordDeepSearchContent,
   knRecordDescription,
   knRecordDoor,
@@ -34,11 +47,15 @@ import {
 import {
   KN_EXPLORATION_TABLES,
   knApplyTableEffects,
+  knCheckId,
+  knOutcomeAvailable,
   knRangeLabel,
   knRollTableSchema,
   knTableEntry,
+  type KnOutcome,
   type KnRollTable,
   type KnTableEffect,
+  type KnTableEffectState,
 } from '../../shared/ker-nethalas/tables'
 import { fakeTable } from '../fixtures/knTables'
 
@@ -108,11 +125,34 @@ describe('tables de dés', () => {
     expect(KN_EXPLORATION_TABLES).toMatchObject({ corridorDescriptions: { die: 20 }, roomDescriptions: { die: 100 }, events: { die: 100 }, scavenging: { die: 20 }, traps: { die: 10 } })
   })
 
-  it('une entrée peut porter la compétence qui évite le piège, pas une compétence inconnue', () => {
-    const entry = (skill: string) => ({ die: 10, entries: [{ min: 1, max: 10, text: 'x', skill }] })
+  it('une entrée porte des tests (compétence ou résistance connues) et des résultats', () => {
+    const entry = (extra: object) => ({ die: 10, entries: [{ min: 1, max: 10, text: 'x', ...extra }] })
+    const outcome = { when: 'failure', effects: [{ kind: 'damage', dice: { count: 2, sides: 6, bonus: 0 } }] }
 
-    expect(knRollTableSchema(10).safeParse(entry('dodge')).success).toBe(true)
-    expect(knRollTableSchema(10).safeParse(entry('luck')).success).toBe(false)
+    expect(knRollTableSchema(10).safeParse(entry({ checks: [{ skill: 'dodge' }, { skill: 'resolve', group: 1 }], outcomes: [outcome] })).success).toBe(true)
+    expect(knRollTableSchema(10).safeParse(entry({ checks: [{ skill: 'luck' }] })).success).toBe(false)
+    expect(knRollTableSchema(10).safeParse(entry({ outcomes: [{ when: 'maybe', effects: outcome.effects }] })).success).toBe(false)
+    expect(knRollTableSchema(10).safeParse(entry({ outcomes: [{ when: 'failure', effects: [] }] })).success).toBe(false)
+    expect(knRollTableSchema(10).safeParse(entry({ outcomes: [{ when: 'failure', effects: [{ kind: 'condition', key: 'bleeding', value: 1 }] }] })).success).toBe(true)
+    expect(knRollTableSchema(10).safeParse(entry({ outcomes: [{ when: 'failure', effects: [{ kind: 'condition', key: 'dizzy' }] }] })).success).toBe(false)
+  })
+
+  it('identifie un test par sa compétence ou sa résistance', () => {
+    expect([knCheckId('dodge'), knCheckId('resolve')]).toEqual(['skill:dodge', 'resistance:resolve'])
+  })
+
+  it('une seule branche par groupe, hors « toujours » ; deux groupes sont indépendants', () => {
+    const outcomes: KnOutcome[] = [
+      { when: 'success', effects: [{ kind: 'xp', amount: 10 }] },
+      { when: 'failure', effects: [{ kind: 'xp', amount: 10 }] },
+      { when: 'always', effects: [{ kind: 'xp', amount: 10 }] },
+      { when: 'failure', group: 1, effects: [{ kind: 'xp', amount: 10 }] },
+    ]
+
+    expect([0, 1, 2, 3].map(i => knOutcomeAvailable(outcomes, [], i))).toEqual([true, true, true, true])
+    expect([0, 1, 2, 3].map(i => knOutcomeAvailable(outcomes, [0], i))).toEqual([false, false, true, true])
+    expect([0, 1, 2, 3].map(i => knOutcomeAvailable(outcomes, [2], i))).toEqual([true, true, false, true])
+    expect(knOutcomeAvailable(outcomes, [], 9)).toBe(false)
   })
 })
 
@@ -161,7 +201,7 @@ describe('obstacles d\'une entrée', () => {
     expect(visit(spotted).obstacles![0]).toEqual({ kind: 'door', perception: 'passed', trap: { roll: 9 } })
     expect(visit(knRecordTrap(spotted, 0, 2)).obstacles![0]!.trap).toEqual({ roll: 9 })
     expect(visit(knSetPerception(spotted, 0, 'failed')).obstacles![0]!.perception).toBe('passed')
-    expect(knObstacleState(visit(spotted).obstacles![0]!)).toEqual({ trapped: true, spotted: true, locked: undefined })
+    expect(knObstacleState(visit(spotted).obstacles![0]!)).toMatchObject({ trapped: true, spotted: true, locked: undefined })
 
     const typed = knRecordTrapType(spotted, 0, 4)
     expect(visit(typed).obstacles![0]!.trapType).toEqual({ roll: 4 })
@@ -182,10 +222,10 @@ describe('obstacles d\'une entrée', () => {
   })
 
   it('le verrou se juge selon la sorte d\'obstacle, une seule fois', () => {
-    const locked = knRecordLock(knAddDoorObstacle(room(1)), 0, 12)
+    const locked = knRecordLock(knSetPerception(knAddDoorObstacle(room(1)), 0, 'passed'), 0, 12)
 
     expect(knObstacleState(visit(locked).obstacles![0]!).locked).toBe(true)
-    expect(knObstacleState(visit(knRecordLock(knAddDoorObstacle(room(1)), 0, 11)).obstacles![0]!).locked).toBe(false)
+    expect(knObstacleState(visit(knRecordLock(knSetPerception(knAddDoorObstacle(room(1)), 0, 'passed'), 0, 11)).obstacles![0]!).locked).toBe(false)
     expect(visit(knRecordLock(locked, 0, 1)).obstacles![0]!.lock).toEqual({ roll: 12 })
   })
 
@@ -338,8 +378,152 @@ describe('chemin du Domaine', () => {
   })
 })
 
+describe('actions sur un obstacle', () => {
+  const visit = (run: KnRun) => knCurrentVisit(run)!
+  const obstacle = (run: KnRun, index = 0) => visit(run).obstacles![index]!
+  const doorRun = () => knAddDoorObstacle(knRecordDoor(knStartVisit(emptyKnRun(), 'room'), 1))
+  const trapped = (perception: 'passed' | 'failed', run = doorRun()) =>
+    knRecordTrapType(knRecordTrap(knSetPerception(run, 0, perception), 0, 9), 0, 5)
+  const locked = (run: KnRun) => knRecordLock(knSetPerception(run, 0, 'passed'), 0, 15)
+  const roomTrapRun = () => knAddRoomTrap(knRecordEvent(knRecordEncounter(knStartVisit(emptyKnRun(), 'room'), 1), 5))
+
+  it('désamorcer un piège repéré le neutralise ; un échec le déclenche', () => {
+    expect(obstacle(knResolveTrapAction(trapped('passed'), 0, 'disarm', true)).trapState).toBe('disarmed')
+    expect(obstacle(knResolveTrapAction(trapped('passed'), 0, 'disarm', false)).trapState).toBe('triggering')
+  })
+
+  it('on ne désamorce pas un piège non repéré, ni deux fois', () => {
+    expect(obstacle(knResolveTrapAction(trapped('failed'), 0, 'disarm', true)).trapState).toBe('triggering')
+
+    const done = knResolveTrapAction(trapped('passed'), 0, 'disarm', true)
+    expect(obstacle(knResolveTrapAction(done, 0, 'disarm', false)).trapState).toBe('disarmed')
+    expect(obstacle(knResolveTrapAction(doorRun(), 0, 'disarm', true))).not.toHaveProperty('trapState')
+  })
+
+  it('contourner ne vaut que pour un piège de la pièce', () => {
+    expect(obstacle(knResolveTrapAction(trapped('passed'), 0, 'bypass', true))).not.toHaveProperty('trapState')
+
+    const room = knRecordTrapType(knSetPerception(roomTrapRun(), 0, 'passed'), 0, 5)
+    expect(obstacle(knResolveTrapAction(room, 0, 'bypass', true)).trapState).toBe('bypassed')
+    expect(obstacle(knResolveTrapAction(room, 0, 'bypass', false)).trapState).toBe('triggering')
+  })
+
+  it('un piège repéré se déclenche exprès, puis s\'évite ou se subit une seule fois', () => {
+    const triggered = knTriggerTrap(trapped('passed'), 0)
+
+    expect(obstacle(triggered).trapState).toBe('triggering')
+    expect(obstacle(knFinishTrap(triggered, 0, true)).trapState).toBe('avoided')
+
+    const suffered = knFinishTrap(triggered, 0, false, [0])
+    expect(obstacle(suffered)).toMatchObject({ trapState: 'suffered', trapTaken: [0] })
+    expect(obstacle(knFinishTrap(suffered, 0, true)).trapState).toBe('suffered')
+    expect(obstacle(knFinishTrap(trapped('passed'), 0, true))).not.toHaveProperty('trapState')
+  })
+
+  it('on ne règle pas un piège dont le type n\'est pas tiré', () => {
+    const untyped = knTriggerTrap(knRecordTrap(knSetPerception(doorRun(), 0, 'passed'), 0, 9), 0)
+
+    expect(obstacle(knFinishTrap(untyped, 0, true)).trapState).toBe('triggering')
+  })
+
+  it('un piège non repéré se déclenche dès que le jet le trouve, pas s\'il n\'y en a pas', () => {
+    expect(obstacle(trapped('failed')).trapState).toBe('triggering')
+    expect(obstacle(knRecordTrap(knSetPerception(doorRun(), 0, 'failed'), 0, 3))).not.toHaveProperty('trapState')
+  })
+
+  it('le piège de la pièce vient d\'un événement, une seule fois, sans jet de piège ni de verrou', () => {
+    expect(visit(roomTrapRun()).obstacles).toEqual([{ kind: 'room' }])
+    expect(visit(knAddRoomTrap(roomTrapRun())).obstacles).toHaveLength(1)
+    expect(visit(knAddRoomTrap(knStartVisit(emptyKnRun(), 'room'))).obstacles).toBeUndefined()
+
+    const room = knSetPerception(roomTrapRun(), 0, 'passed')
+    expect(obstacle(knRecordTrap(room, 0, 9))).not.toHaveProperty('trap')
+    expect(obstacle(knRecordLock(room, 0, 20))).not.toHaveProperty('lock')
+    expect(knObstacleState(obstacle(room))).toMatchObject({ trapped: true, spotted: true })
+  })
+
+  it('un piège de la pièce non repéré se déclenche aussitôt', () => {
+    expect(obstacle(knSetPerception(roomTrapRun(), 0, 'failed')).trapState).toBe('triggering')
+  })
+
+  it('le verrou attend que le piège soit réglé', () => {
+    const blocked = locked(trapped('passed'))
+
+    expect(knObstacleState(obstacle(blocked)).canWorkLock).toBe(false)
+    expect(obstacle(knResolveForce(blocked, 0, true))).not.toHaveProperty('lockOpen')
+    expect(knObstacleState(obstacle(knResolveTrapAction(blocked, 0, 'disarm', true))).canWorkLock).toBe(true)
+  })
+
+  it('crocheter : la difficulté est retenue, un échec la garde et compte, une réussite ouvre', () => {
+    const ready = locked(doorRun())
+    const started = knStartPick(ready, 0, 'demanding')
+
+    expect(obstacle(started).pick).toEqual({ difficulty: 'demanding', failures: 0 })
+    expect(obstacle(knStartPick(started, 0, 'easy')).pick).toEqual({ difficulty: 'demanding', failures: 0 })
+
+    const failed = knResolvePick(started, 0, false)
+    expect(obstacle(failed).pick).toEqual({ difficulty: 'demanding', failures: 1 })
+    expect(knObstacleState(obstacle(failed)).canWorkLock).toBe(true)
+
+    const opened = knResolvePick(failed, 0, true)
+    expect(obstacle(opened).lockOpen).toBe(true)
+    expect(knObstacleState(obstacle(opened)).canWorkLock).toBe(false)
+    expect(knResolvePick(ready, 0, true)).toEqual(ready)
+  })
+
+  it('pas de crochetage sans verrou', () => {
+    const open = knRecordLock(doorRun(), 0, 3)
+    const unset = knSetPerception(doorRun(), 0, 'passed')
+
+    expect(obstacle(knStartPick(knRecordLock(unset, 0, 3), 0, 'normal'))).not.toHaveProperty('pick')
+    expect(obstacle(knStartPick(open, 0, 'normal'))).not.toHaveProperty('pick')
+  })
+
+  it('forcer : chaque échec ajoute +20 aux tentatives suivantes, une réussite ouvre', () => {
+    const ready = locked(doorRun())
+    const once = knResolveForce(ready, 0, false)
+    const twice = knResolveForce(once, 0, false)
+
+    expect([knForceBonus(obstacle(ready)), knForceBonus(obstacle(once)), knForceBonus(obstacle(twice))]).toEqual([0, 20, 40])
+    expect(obstacle(knResolveForce(twice, 0, true)).lockOpen).toBe(true)
+  })
+
+  it('le schéma du run accepte les états d\'obstacle', () => {
+    const run = knResolveForce(knStartPick(locked(doorRun()), 0, 'hard'), 0, false)
+
+    expect(knRunSchema.safeParse(run).success).toBe(true)
+    expect(knRunSchema.safeParse(trapped('passed', knAddRoomTrap(roomTrapRun()))).success).toBe(true)
+  })
+
+  it('un résultat d\'événement ou de fouille se marque une fois', () => {
+    const base = knRecordScavenge(knRecordEvent(knRecordEncounter(knStartVisit(emptyKnRun(), 'room'), 1), 5), 3)
+    const marked = knMarkEventOutcome(knMarkEventOutcome(base, 1), 1)
+    const scavenged = knMarkScavengeOutcome(knMarkScavengeOutcome(marked, 0), 2)
+
+    expect(visit(marked).event).toEqual({ roll: 5, taken: [1] })
+    expect(visit(scavenged).scavenge).toEqual({ roll: 3, applied: false, taken: [0, 2] })
+    expect(knMarkEventOutcome(knStartVisit(emptyKnRun(), 'room'), 0)).toEqual(knStartVisit(emptyKnRun(), 'room'))
+  })
+
+  it('la difficulté baisse d\'un cran par échec, sans passer sous Enfantin', () => {
+    expect([knEasierDifficulty('demanding', 0), knEasierDifficulty('demanding', 1), knEasierDifficulty('hard', 2), knEasierDifficulty('easy', 9)])
+      .toEqual(['demanding', 'normal', 'normal', 'childsPlay'])
+  })
+})
+
 describe('gains et pertes d\'un résultat de table', () => {
-  const state = () => ({ coins: 5, xp: 90, provisions: { ...emptyKnProvisions(), craftingSupplies: 2 }, health: 10, toughness: 12, sanity: 6, aether: 4 })
+  const state = (): KnTableEffectState => ({
+    coins: 5,
+    xp: 90,
+    provisions: { ...emptyKnProvisions(), craftingSupplies: 2 },
+    health: 10,
+    toughness: 12,
+    sanity: 6,
+    aether: 4,
+    exhaustion: 3,
+    status: emptyKnStatus(),
+    run: emptyKnRun(),
+  })
   const maxima = { health: 15, toughness: 25, sanity: 14, aether: 20 }
   const fixed = (bonus: number) => ({ count: 0, sides: 0, bonus })
   const rng = () => 0.5
@@ -373,6 +557,78 @@ describe('gains et pertes d\'un résultat de table', () => {
     expect(next.coins).toBe(999999)
     expect(next.provisions.rations).toBe(999)
     expect(original).toEqual(copy)
+  })
+
+  it('les pertes de pièces et de provisions s\'arrêtent à 0', () => {
+    const { state: next } = knApplyTableEffects([
+      { kind: 'coins', dice: fixed(8), sign: 'loss' },
+      { kind: 'coins', dice: fixed(50), sign: 'loss' },
+      { kind: 'provision', key: 'craftingSupplies', dice: fixed(1), sign: 'loss' },
+      { kind: 'provision', key: 'bandages', dice: fixed(1), sign: 'loss' },
+    ], state(), maxima, rng)
+
+    expect(next.coins).toBe(0)
+    expect(next.provisions.craftingSupplies).toBe(1)
+    expect(next.provisions.bandages).toBe(0)
+  })
+
+  it('les dégâts retirent la Robustesse temporaire, puis la Robustesse, puis la Santé', () => {
+    const withTemporary = { ...state(), status: knSetTemporary(emptyKnStatus(), 'toughness', 3) }
+    const { state: next } = knApplyTableEffects([{ kind: 'damage', dice: fixed(20) }], withTemporary, maxima, rng)
+
+    expect(knTemporaryOf(next.status, 'toughness')).toBe(0)
+    expect(next).toMatchObject({ toughness: 0, health: 5 })
+  })
+
+  it('des dégâts sans Robustesse temporaire ne créent pas de champ temporaire', () => {
+    const { state: next } = knApplyTableEffects([{ kind: 'damage', dice: fixed(4) }], state(), maxima, rng)
+
+    expect(next.toughness).toBe(8)
+    expect(next.status).not.toHaveProperty('temporary')
+  })
+
+  it('l\'Épuisement monte et descend dans ses bornes', () => {
+    const gain = knApplyTableEffects([{ kind: 'exhaustion', dice: fixed(2), sign: 'gain' }], state(), maxima, rng).state
+    const loss = knApplyTableEffects([{ kind: 'exhaustion', dice: fixed(9), sign: 'loss' }], state(), maxima, rng).state
+    const cap = knApplyTableEffects([{ kind: 'exhaustion', dice: fixed(90), sign: 'gain' }], { ...state(), exhaustion: 50 }, maxima, rng).state
+
+    expect([gain.exhaustion, loss.exhaustion, cap.exhaustion]).toEqual([5, 0, 99])
+  })
+
+  it('une condition s\'ajoute, et une condition présente garde sa plus forte valeur', () => {
+    const added = knApplyTableEffects([{ kind: 'condition', key: 'bleeding', value: 1 }], state(), maxima, rng).state
+    const again = knApplyTableEffects([{ kind: 'condition', key: 'bleeding', value: 2 }], added, maxima, rng).state
+    const lower = knApplyTableEffects([{ kind: 'condition', key: 'bleeding', value: 1 }], again, maxima, rng).state
+    const plain = knApplyTableEffects([{ kind: 'condition', key: 'restrained' }], state(), maxima, rng).state
+
+    expect(added.status.conditions).toEqual([{ key: 'bleeding', value: 1 }])
+    expect(again.status.conditions).toEqual([{ key: 'bleeding', value: 2 }])
+    expect(lower.status.conditions).toEqual([{ key: 'bleeding', value: 2 }])
+    expect(plain.status.conditions).toEqual([{ key: 'restrained' }])
+  })
+
+  it('un gain temporaire s\'ajoute au temporaire déjà là', () => {
+    const { state: next } = knApplyTableEffects([{ kind: 'temporary', vital: 'aether', dice: fixed(4) }, { kind: 'temporary', vital: 'aether', dice: fixed(3) }], state(), maxima, rng)
+
+    expect(knTemporaryOf(next.status, 'aether')).toBe(7)
+  })
+
+  it('remet le Dé de Tension à D8 et baisse le Dé de Lair d\'un cran tant que le Lair n\'est pas trouvé', () => {
+    const run = { ...emptyKnRun(), tensionDie: 4 as const }
+    const { state: next } = knApplyTableEffects([{ kind: 'tensionReset' }, { kind: 'lairDown' }], { ...state(), run }, maxima, rng)
+    const found = { ...emptyKnRun(), domains: [{ ...emptyKnRun().domains[0]!, lairFound: true }] }
+    const { state: kept } = knApplyTableEffects([{ kind: 'lairDown' }], { ...state(), run: found }, maxima, rng)
+
+    expect(next.run.tensionDie).toBe(8)
+    expect(knCurrentDomain(next.run).lairDie).toBe(8)
+    expect(knCurrentDomain(kept.run).lairDie).toBe(10)
+  })
+
+  it('un tirage d\'Obscurité Grandissante entre dans le Domaine et se dit dans le résultat', () => {
+    const { state: next, outcomes } = knApplyTableEffects([{ kind: 'darkness' }], state(), maxima, rng)
+
+    expect(outcomes[0]!.draw).toBeDefined()
+    expect(knCurrentDomain(next.run).growingDarkness).toHaveLength(1)
   })
 })
 

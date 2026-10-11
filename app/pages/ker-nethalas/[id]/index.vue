@@ -27,6 +27,7 @@
       v-model:character="character"
       :resolved
       :tables
+      @roll="openRoll"
     />
 
     <KnCombatActions
@@ -44,6 +45,7 @@
     <KnRollSection
       v-model:character="character"
       v-model:selected="rollSelection"
+      :request="rollRequest"
       :resolved
     />
 
@@ -95,6 +97,7 @@ import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { AutoSaveStatus } from '~/composables/useAutoSave'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import type { KnRollRequest } from '~~/shared/ker-nethalas/roll'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const route = useRoute()
@@ -131,9 +134,11 @@ const STATUS_LABELS: Record<AutoSaveStatus, string> = {
 const stateLabel = computed(() => STATUS_LABELS[status.value])
 
 const rollSelection = ref('skill:dodge')
+const rollRequest = ref<(KnRollRequest & { seq: number }) | null>(null)
+let rollSeq = 0
 
-function openRoll(selection: string) {
-  rollSelection.value = selection
+function openRoll(selection: string | KnRollRequest) {
+  rollRequest.value = { ...(typeof selection === 'string' ? { id: selection } : selection), seq: ++rollSeq }
   document.getElementById('kn-roll')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 </script>
