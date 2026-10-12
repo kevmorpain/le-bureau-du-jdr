@@ -418,8 +418,13 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   anneaux et trois pochettes au plus ; un objet porté est unique. La validité d'un inventaire enregistré est contrôlée par le schéma.
 - **Interface** : la section Équipement a un panneau Inventaire (capacité, Ceinture, corps, ajout, quantité, endroit). Un dépassement
   de capacité est signalé, jamais bloqué.
-- **Laissé de côté** (tranche 7, étapes suivantes) : le catalogue d'objets, les armes et armures dans le combat, l'Intégrité, le
-  butin, les potions, le marchand, les objets magiques.
+- **Catalogue** (jeu de données privé `items`, schéma public dans `items.ts`) : les 30 armes, 4 boucliers, 3 casques, 9 armures de
+  torse, vambraces et jambières, et l'équipement courant du livre (p. 207-212), avec leur prix, encombrement, statistiques,
+  Intégrité maximale et description. Un objet « provision » (Torche, Ration, Crochet, Cristal d'harmonisation…) s'ajoute aux provisions
+  et non à l'inventaire. Ajouter un objet du catalogue en recopie les statistiques dans un exemplaire ; une armure ou un bouclier
+  « trouvé » a une Intégrité d'un cran sous son maximum (p. 83).
+- **Laissé de côté** (tranche 7, étapes suivantes) : les armes et armures dans le combat, l'Intégrité, le butin, les potions, le
+  marchand, les objets magiques.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,

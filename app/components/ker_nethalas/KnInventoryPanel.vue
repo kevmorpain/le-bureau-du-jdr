@@ -87,6 +87,25 @@
       Aucun objet. Ajoutez ce que le survivant trouve ou achète.
     </p>
 
+    <div
+      v-if="catalog"
+      class="flex flex-wrap items-end gap-3"
+    >
+      <UFormField label="Du catalogue du livre">
+        <KnAddPicker
+          :items="catalogItems"
+          placeholder="Choisir un objet"
+          class="w-72"
+          :disabled="inventory.length >= KN_MAX_ITEMS"
+          @pick="addFromCatalog(String($event))"
+        />
+      </UFormField>
+      <UCheckbox
+        v-model="found"
+        label="Trouvé en butin (Intégrité d'un cran en moins)"
+      />
+    </div>
+
     <form
       class="flex flex-wrap items-end gap-3"
       @submit.prevent="add"
@@ -135,6 +154,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import {
   KN_ITEM_KINDS,
   KN_ITEM_WEIGHTS,
@@ -154,6 +174,10 @@ import {
   type KnItemPlace,
   type KnItemWeight,
 } from '~~/shared/ker-nethalas/inventory'
+
+const props = defineProps<{
+  catalog: KnCatalogItem[] | null
+}>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
@@ -185,6 +209,24 @@ function add() {
   character.value.inventory = [...inventory.value, knNewItem({ name, kind: draft.kind, weight: draft.weight, quantity: draft.quantity }, knNextItemId(inventory.value))]
   draft.name = ''
   draft.quantity = 1
+}
+
+const found = ref(false)
+
+const catalogItems = computed<SelectItem[]>(() =>
+  (props.catalog ?? []).map(entry => ({ label: `${entry.name} — ${t(`ker_nethalas.inventory.kinds.${entry.kind}`).toLowerCase()}, ${entry.value} ₵`, value: entry.key })),
+)
+
+// Une provision du catalogue (Torche, Ration…) s'ajoute aux provisions, pas à l'inventaire.
+function addFromCatalog(key: string) {
+  const entry = props.catalog?.find(candidate => candidate.key === key)
+  if (!entry) return
+  if (entry.provision) {
+    character.value.provisions = { ...character.value.provisions, [entry.provision]: character.value.provisions[entry.provision] + 1 }
+    toast.add({ title: `${entry.name} ajouté aux provisions`, color: 'success' })
+    return
+  }
+  character.value.inventory = [...inventory.value, knItemFromCatalog(entry, knNextItemId(inventory.value), { found: found.value })]
 }
 
 function move(item: KnItem, place: KnItemPlace) {

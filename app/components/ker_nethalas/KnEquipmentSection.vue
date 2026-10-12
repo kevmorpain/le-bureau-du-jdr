@@ -24,7 +24,10 @@
         <span class="text-muted">(à gérer dans la section Maîtrises)</span>
       </p>
 
-      <KnInventoryPanel v-model:character="character" />
+      <KnInventoryPanel
+        v-model:character="character"
+        :catalog
+      />
 
       <UFormField label="Notes sur les armes">
         <UTextarea
@@ -62,10 +65,12 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 const props = defineProps<{
   masteries: KnMastery[] | null
+  catalog: KnCatalogItem[] | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })

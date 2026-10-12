@@ -54,9 +54,19 @@ export type KnWeaponTrait = (typeof KN_WEAPON_TRAITS)[number]
 // La chaîne des dés d'Intégrité d'une armure ou d'un bouclier.
 export const KN_INTEGRITY_DICE = [4, 6, 8, 10, 12] as const
 
-const knIntegrityDie = z.union([z.literal(4), z.literal(6), z.literal(8), z.literal(10), z.literal(12)])
+export const knIntegrityDieSchema = z.union([z.literal(4), z.literal(6), z.literal(8), z.literal(10), z.literal(12)])
 
-export type KnIntegrityDie = z.infer<typeof knIntegrityDie>
+export type KnIntegrityDie = z.infer<typeof knIntegrityDieSchema>
+
+// Un cran de moins sur la chaîne des dés d'Intégrité (D4 est le dernier).
+export const knIntegrityDown = (die: KnIntegrityDie): KnIntegrityDie => KN_INTEGRITY_DICE[Math.max(0, KN_INTEGRITY_DICE.indexOf(die) - 1)]!
+
+export const knWeaponStatsSchema = z.object({
+  skill: z.enum(KN_WEAPON_SKILL_KEYS),
+  speed: boundedInt({ min: 0, max: 20 }),
+  damageType: z.enum(KN_DAMAGE_TYPES),
+  traits: z.array(z.enum(KN_WEAPON_TRAITS)).max(KN_WEAPON_TRAITS.length),
+})
 
 export const KN_BASE_CARRY_SLOTS = 10
 export const KN_BACKPACK_SLOTS = 20
@@ -109,12 +119,7 @@ export const knItemSchema = z.object({
   value: boundedInt({ min: 0, max: 99999 }).optional(),
   // La clé de l'objet du catalogue dont celui-ci est un exemplaire.
   ref: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/).optional(),
-  weapon: z.object({
-    skill: z.enum(KN_WEAPON_SKILL_KEYS),
-    speed: boundedInt({ min: 0, max: 20 }),
-    damageType: z.enum(KN_DAMAGE_TYPES),
-    traits: z.array(z.enum(KN_WEAPON_TRAITS)).max(KN_WEAPON_TRAITS.length),
-  }).optional(),
+  weapon: knWeaponStatsSchema.optional(),
   // Armure, casque : Armure apportée à la zone qu'ils couvrent.
   protection: boundedInt({ min: 0, max: 9 }).optional(),
   // Bonus à la parade d'un bouclier.
@@ -122,8 +127,8 @@ export const knItemSchema = z.object({
   // Malus d'agilité (Acrobatie, Esquive, Furtivité) d'une armure, et de Perception d'un casque, en points.
   maneuverability: boundedInt({ min: 0, max: 30 }).optional(),
   perception: boundedInt({ min: 0, max: 30 }).optional(),
-  integrity: z.object({ max: knIntegrityDie, current: knIntegrityDie }).optional(),
-  note: z.string().trim().max(300).optional(),
+  integrity: z.object({ max: knIntegrityDieSchema, current: knIntegrityDieSchema }).optional(),
+  note: z.string().trim().max(600).optional(),
 })
 
 export type KnItem = z.infer<typeof knItemSchema>
