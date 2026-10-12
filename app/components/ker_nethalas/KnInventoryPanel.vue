@@ -34,6 +34,23 @@
       n'existent qu'avec une Ceinture portée. Les provisions, les pièces et les amulettes non portées comptent dans le sac.
     </p>
 
+    <div class="space-y-2">
+      <p class="text-sm font-medium">
+        Provisions
+        <span class="text-xs font-normal text-muted">(se consomment au camp, à l'exploration ; {{ provisionSlots }} emplacement{{ provisionSlots > 1 ? 's' : '' }} avec les autres objets légers)</span>
+      </p>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <KnNumberField
+          v-for="key in KN_PROVISION_KEYS"
+          :key
+          v-model="character.provisions[key]"
+          :label="$t(`ker_nethalas.provisions.${key}`)"
+          :min="KN_PROVISION_BOUNDS.min"
+          :max="KN_PROVISION_BOUNDS.max"
+        />
+      </div>
+    </div>
+
     <ul
       v-if="inventory.length"
       class="space-y-2"
@@ -181,6 +198,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_PROVISION_BOUNDS, KN_PROVISION_KEYS } from '~~/shared/ker-nethalas/camp'
 import { knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
 import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import {
@@ -218,6 +236,7 @@ const amuletsCarried = computed(() => character.value.amulets.owned.length - (ch
 const provisionsCount = computed(() => Object.values(character.value.provisions).reduce((sum, count) => sum + count, 0))
 
 const encumbrance = computed(() => knEncumbrance(inventory.value, { provisions: provisionsCount.value, coins: character.value.coins, amulets: amuletsCarried.value }))
+const provisionSlots = computed(() => Math.ceil(provisionsCount.value / 10))
 const quickSlots = computed(() => knQuickSlotCount(inventory.value))
 const quickUsed = computed(() => inventory.value.filter(item => item.place === 'quick').length)
 const bodyUsed = computed(() => knBodySlotCount(inventory.value, character.value.amulets.equipped !== null))
@@ -226,8 +245,14 @@ const bodyMax = computed(() => knBodySlotMax(inventory.value))
 const kindItems = KN_ITEM_KINDS.map(kind => ({ label: t(`ker_nethalas.inventory.kinds.${kind}`), value: kind }))
 const weightItems = KN_ITEM_WEIGHTS.map(weight => ({ label: t(`ker_nethalas.inventory.weights.${weight}`), value: weight }))
 
+// Un endroit où l'objet ne peut pas aller est grisé, avec la raison.
 const placeItems = (item: KnItem): SelectItem[] =>
-  knPlacesFor(item.kind).map(place => ({ label: t(`ker_nethalas.inventory.places.${place}`), value: place }))
+  knPlacesFor(item.kind).map((place) => {
+    const label = t(`ker_nethalas.inventory.places.${place}`)
+    const result = place === item.place ? undefined : knPlaceItem(inventory.value, item.id, place)
+    if (result && 'error' in result) return { label: `${label} — ${t(`ker_nethalas.inventory.unavailable.${result.error}`)}`, value: place, disabled: true }
+    return { label, value: place }
+  })
 
 const draft = reactive<{ name: string, kind: KnItemKind, weight: KnItemWeight, quantity: number }>({ name: '', kind: 'gear', weight: 'normal', quantity: 1 })
 

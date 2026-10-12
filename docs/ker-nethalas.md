@@ -416,8 +416,11 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   rapides n'existent qu'avec une Ceinture portée : la retirer renvoie ses objets au sac. Le départ du livre n'a ni sac, ni Ceinture.
 - **Placer un objet** : un endroit unique déjà pris renvoie son objet au sac ; une arme à deux mains libère l'autre main ; deux
   anneaux et trois pochettes au plus ; un objet porté est unique. La validité d'un inventaire enregistré est contrôlée par le schéma.
-- **Interface** : la section Équipement a un panneau Inventaire (capacité, Ceinture, corps, ajout, quantité, endroit). Un dépassement
-  de capacité est signalé, jamais bloqué.
+- **Interface** : la section Équipement a un panneau Inventaire (capacité, Ceinture, corps, provisions, ajout, quantité, endroit).
+  Un endroit où l'objet ne peut pas aller (emplacement rapide sans Ceinture, anneaux ou pochettes au complet…) est grisé avec sa
+  raison. Un dépassement de capacité est signalé, jamais bloqué.
+- **Provisions** : elles restent le compteur de la fiche (le camp et l'exploration les consomment), mais s'éditent dans le panneau
+  Inventaire, avec les autres objets ; la section Repos n'en garde qu'un rappel.
 - **Catalogue** (jeu de données privé `items`, schéma public dans `items.ts`) : les 30 armes, 4 boucliers, 3 casques, 9 armures de
   torse, vambraces et jambières, et l'équipement courant du livre (p. 207-212), avec leur prix, encombrement, statistiques,
   Intégrité maximale et description. Un objet « provision » (Torche, Ration, Crochet, Cristal d'harmonisation…) s'ajoute aux provisions

@@ -244,6 +244,14 @@
         "twoHanded": "À deux mains",
         "versatile": "Polyvalente"
       },
+      "unavailable": {
+        "noBelt": "Ceinture requise",
+        "slotTaken": "cases prises",
+        "full": "plein",
+        "notUnique": "pile à séparer",
+        "twoHandedOffHand": "arme à deux mains",
+        "wrongKind": "impossible"
+      },
       "errors": {
         "wrongKind": "Cet objet ne va pas à cet endroit.",
         "noBelt": "Aucun emplacement rapide sans Ceinture portée.",
