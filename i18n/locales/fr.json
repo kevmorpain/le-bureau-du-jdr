@@ -195,6 +195,55 @@
       "weaponSkills": "Compétences d'arme",
       "nonCombatSkills": "Compétences hors combat"
     },
+    "inventory": {
+      "kinds": {
+        "weapon": "Arme",
+        "shield": "Bouclier",
+        "helmet": "Casque",
+        "torso": "Armure de torse",
+        "vambraces": "Vambraces",
+        "greaves": "Jambières",
+        "belt": "Ceinture",
+        "gloves": "Gants",
+        "boots": "Bottes",
+        "ring": "Anneau",
+        "backpack": "Sac à dos",
+        "pouch": "Pochette",
+        "gear": "Équipement",
+        "potion": "Potion",
+        "fragment": "Fragment",
+        "gems": "Gemmes et bijoux"
+      },
+      "weights": {
+        "none": "Sans encombrement",
+        "light": "Léger",
+        "normal": "Normal",
+        "heavy": "Lourd",
+        "bulk": "Par centaine"
+      },
+      "places": {
+        "bag": "Dans le sac",
+        "quick": "Ceinture (emplacement rapide)",
+        "mainHand": "Main principale",
+        "offHand": "Main secondaire",
+        "belt": "Ceinture portée",
+        "head": "Tête",
+        "armor": "Armure",
+        "gloves": "Gants portés",
+        "boots": "Bottes portées",
+        "ring": "Anneau porté",
+        "backpack": "Sac à dos porté",
+        "pouch": "Pochette portée"
+      },
+      "errors": {
+        "wrongKind": "Cet objet ne va pas à cet endroit.",
+        "noBelt": "Aucun emplacement rapide sans Ceinture portée.",
+        "slotTaken": "Cette case de la Ceinture est prise.",
+        "full": "Cet endroit est plein.",
+        "twoHandedOffHand": "Une arme à deux mains se tient dans la main principale.",
+        "notUnique": "Un objet porté est unique : séparez la pile d'abord."
+      }
+    },
     "customKinds": {
       "modifier": "Modificateur",
       "advantage": "Avantage",

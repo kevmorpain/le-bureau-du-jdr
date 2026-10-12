@@ -403,6 +403,24 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN40 — Inventaire : emplacements, capacité et encombrement
+- **Règles sourcées** (livre v1.2) : p. 206 (10 emplacements sur le corps, 9 avec une arme à deux mains ; 10 emplacements de sac ;
+  objets sans encombrement, normaux, lourds, légers par dix, pièces et gemmes par centaine ; Sac à dos +20 et un seul, Pochette
+  +5 et trois au plus ; une armure d'un torse, de vambraces et de jambières n'occupe qu'un emplacement), p. 212 (la Ceinture a
+  4 emplacements rapides, le test de Ceinture D4 détruit l'objet de la case tirée).
+- **Modèle** (`shared/ker-nethalas/inventory.ts`, colonne JSON `inventory`, migration 0143) : chaque objet est un exemplaire
+  qui porte ses propres caractéristiques (type, encombrement, quantité, endroit, case de Ceinture, et, pour les armes et
+  armures, ce qui servira au combat). Il vient du catalogue privé ou se saisit à la main. Les champs texte « Armes » et
+  « Équipement » restent des notes, sans migration de leur contenu.
+- **Capacité** : 10 emplacements de sac, +20 avec un Sac à dos porté, +5 par Pochette portée ; sans l'objet, rien. Les emplacements
+  rapides n'existent qu'avec une Ceinture portée : la retirer renvoie ses objets au sac. Le départ du livre n'a ni sac, ni Ceinture.
+- **Placer un objet** : un endroit unique déjà pris renvoie son objet au sac ; une arme à deux mains libère l'autre main ; deux
+  anneaux et trois pochettes au plus ; un objet porté est unique. La validité d'un inventaire enregistré est contrôlée par le schéma.
+- **Interface** : la section Équipement a un panneau Inventaire (capacité, Ceinture, corps, ajout, quantité, endroit). Un dépassement
+  de capacité est signalé, jamais bloqué.
+- **Laissé de côté** (tranche 7, étapes suivantes) : le catalogue d'objets, les armes et armures dans le combat, l'Intégrité, le
+  butin, les potions, le marchand, les objets magiques.
+
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
   réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
@@ -751,7 +769,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
+| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire écrit) |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -879,6 +897,10 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   magique pour les serviteurs d'un Overseer ni pour les doubles d'un autre ; ces champs valent 0 ou sont absents, sans effet puisque
   les premiers disparaissent après leur attaque et les seconds tombent au premier coup (Santé 1). La Compétence de combat des
   doubles est lue comme celle de l'Overseer qui les invoque, avec son palier de niveau 10 (+10) : hypothèse, le livre ne la donne pas.
+- **Inventaire** : les objets rangés à la Ceinture ne comptent pas dans les emplacements de sac (le livre ne le dit pas) ; les objets
+  légers se rangent par dix tous types confondus, provisions et amulettes non portées comprises ; les pièces et les gemmes se comptent
+  ensemble par centaine ; le Sac à dos et les Pochettes portés n'occupent pas un des 10 emplacements du corps (le livre les
+  compte à part dans sa liste). ⚠️ hypothèses
 - **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
   combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
   se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.

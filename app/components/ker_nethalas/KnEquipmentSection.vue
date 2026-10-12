@@ -5,7 +5,7 @@
         Équipement
       </h2>
       <p class="text-sm text-muted">
-        Notes libres : l'outil n'en tire aucun calcul pour l'instant.
+        L'inventaire pèse et range les objets ; les notes libres en dessous n'entrent dans aucun calcul.
       </p>
     </template>
 
@@ -24,7 +24,9 @@
         <span class="text-muted">(à gérer dans la section Maîtrises)</span>
       </p>
 
-      <UFormField label="Armes">
+      <KnInventoryPanel v-model:character="character" />
+
+      <UFormField label="Notes sur les armes">
         <UTextarea
           v-model="character.weapons"
           :rows="5"
@@ -43,7 +45,7 @@
       </UFormField>
 
       <UFormField
-        label="Tout l'équipement"
+        label="Notes sur l'équipement"
         class="md:col-span-2"
       >
         <UTextarea
