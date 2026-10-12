@@ -713,6 +713,13 @@ export function knSetCombatFirst(run: KnRun, first: 'survivor' | 'creatures'): K
   return run.combat ? { ...run, combat: { ...run.combat, first } } : run
 }
 
+// Des pièces d'équipement ont servi (une armure qui a encaissé, un bouclier qui a paré) : leur Intégrité se jouera après le combat.
+export function knMarkGearUsed(run: KnRun, ids: readonly string[]): KnRun {
+  if (!run.combat || !ids.length) return run
+  const used = [...new Set([...(run.combat.gearUsed ?? []), ...ids])]
+  return { ...run, combat: { ...run.combat, gearUsed: used } }
+}
+
 // Le survivant vient de se défendre : la défense suivante du round coûtera plus cher.
 export function knRegisterReaction(run: KnRun): KnRun {
   return run.combat ? { ...run, combat: { ...run.combat, reactions: Math.min(KN_COMBAT_BOUNDS.reactions.max, run.combat.reactions + 1) } } : run

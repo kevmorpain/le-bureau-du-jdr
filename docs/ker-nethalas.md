@@ -426,6 +426,25 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Laissé de côté** (tranche 7, étapes suivantes) : les armes et armures dans le combat, l'Intégrité, le butin, les potions, le
   marchand, les objets magiques.
 
+### KN41 — L'équipement dans le combat
+- **Règles sourcées** (livre v1.2) : p. 207 (Traits des armes), p. 210-211 (armures par zone, malus d'agilité et de Perception, parade
+  des boucliers), p. 83 (Intégrité : un jet après un combat où l'armure a servi, 1-2 la fait baisser d'un cran, au D4 elle est perdue ;
+  la réparer la remonte d'un cran ; trouvée, elle part un cran sous son maximum), p. 125 (activité de camp Réparer).
+- **Armure par zone** (`equipment.ts`) : la tête vient du casque porté, le torse de l'armure de torse, les bras des vambraces, les
+  jambes des jambières ; la saisie manuelle est supprimée (`status.armor` n'existe plus). Le malus d'agilité (Acrobatie, Esquive,
+  Furtivité) et celui de Perception du casque sont une source de la fiche effective.
+- **Attaquer** : la carte d'attaque propose chaque arme tenue (ou les mains nues, D4) et règle la compétence, la Vitesse, la
+  réserve et le type de dégâts. Réserve : D6, Puissante +1, À deux mains +2, Polyvalente +1 quand l'autre main est libre ; Simple
+  ajoute +10 à l'attaque, Rapide +10 à l'Initiative.
+- **Se défendre** : l'Esquive, ou une parade à l'arme quand elle a le Trait Parade ou qu'un bouclier est porté ; le bouclier ajoute
+  son bonus de parade, et +10 pour une arme Défensive. Un adversaire Sauvage ne se pare pas.
+- **Intégrité** : les pièces qui ont encaissé un coup (l'armure de la zone touchée) ou paré (le bouclier) sont retenues pendant le
+  combat ; leur dé se joue quand le combat prend fin (victoire ou non), et la fiche de l'objet offre le jet à la main (acide) et la
+  réparation. Une pièce perdue sort de l'inventaire.
+- **Laissé de côté** : l'armure et les armes de départ de la création restent un texte (le tirage d'armure aléatoire vient avec le
+  butin) ; la réparation au camp ne choisit pas les pièces (l'activité décompte les Fournitures, le bouton « Réparer » remonte la
+  pièce) ; le corps à corps à deux armes.
+
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
   réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
@@ -774,7 +793,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire écrit) |
+| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits) |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -906,6 +925,9 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   légers se rangent par dix tous types confondus, provisions et amulettes non portées comprises ; les pièces et les gemmes se comptent
   ensemble par centaine ; le Sac à dos et les Pochettes portés n'occupent pas un des 10 emplacements du corps (le livre les
   compte à part dans sa liste). ⚠️ hypothèses
+- **Équipement** : l'Intégrité d'une pièce se joue après un combat quand elle a encaissé un coup ou paré, pas à chaque coup ; la
+  parade au bouclier est possible avec toute arme tenue ; une arme Polyvalente a son bonus dès que la main secondaire est libre.
+  ⚠️ hypothèses
 - **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
   combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
   se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.

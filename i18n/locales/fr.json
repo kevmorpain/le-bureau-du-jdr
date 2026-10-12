@@ -235,6 +235,15 @@
         "backpack": "Sac à dos porté",
         "pouch": "Pochette portée"
       },
+      "traits": {
+        "defensive": "Défensive",
+        "quick": "Rapide",
+        "parrying": "Parade",
+        "powerful": "Puissante",
+        "simple": "Simple",
+        "twoHanded": "À deux mains",
+        "versatile": "Polyvalente"
+      },
       "errors": {
         "wrongKind": "Cet objet ne va pas à cet endroit.",
         "noBelt": "Aucun emplacement rapide sans Ceinture portée.",
@@ -254,6 +263,7 @@
       "exhaustion": "Épuisement ({value})",
       "rot": "La Pourriture, stade {stage}",
       "overseer": "Influence de l'Overseer",
+      "equipment": "Équipement porté",
       "noLight": "Sans source de lumière"
     },
     "reminders": {

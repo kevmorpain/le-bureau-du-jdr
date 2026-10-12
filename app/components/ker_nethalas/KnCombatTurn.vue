@@ -27,7 +27,7 @@
         label="Défense du survivant (contre une attaque physique)"
       >
         <USelect
-          v-model="defense"
+          v-model="defenseId"
           :items="defenseItems"
           class="w-full"
         />
@@ -232,11 +232,12 @@
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knActionIsTest } from '~~/shared/ker-nethalas/combat'
+import { knDefenseOptions } from '~~/shared/ker-nethalas/equipment'
 import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
 import type { KnCreature, KnCreatureAction, KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knOutcomeAvailable, type KnRollTableEntry } from '~~/shared/ker-nethalas/tables'
-import { KN_WEAPON_SKILL_KEYS, type KnResistanceKey, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
+import type { KnResistanceKey, KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import type { KnTurnResult } from '~/composables/useKnCombat'
 
 const props = defineProps<{
@@ -254,7 +255,7 @@ const { selfEffectText } = useKnEffectText()
 const isTest = knActionIsTest
 
 const who = ref(0)
-const defense = ref<KnSkillKey>('dodge')
+const defenseId = ref('dodge')
 const magicCheck = ref<KnSkillKey | KnResistanceKey>('spellward')
 const bonus = ref(0)
 const manualAmount = ref(0)
@@ -290,14 +291,19 @@ const magicItems: SelectItem[] = [
   { label: t('ker_nethalas.resistances.resolve'), value: 'resolve' },
   { label: t('ker_nethalas.skills.dodge'), value: 'dodge' },
 ]
-const defenseItems = computed<SelectItem[]>(() =>
-  ['dodge', ...(savage.value ? [] : KN_WEAPON_SKILL_KEYS)].map(key => ({ label: t(`ker_nethalas.skills.${key}`), value: key })),
-)
+const defenseOptions = computed(() => knDefenseOptions(character.value.inventory).filter(option => option.kind === 'dodge' || !savage.value))
+const defenseItems = computed<SelectItem[]>(() => defenseOptions.value.map((option) => {
+  const detail = option.kind === 'dodge'
+    ? t('ker_nethalas.skills.dodge')
+    : `Parade : ${option.weapon}${option.shield ? ` et ${option.shield}` : ''} (${t(`ker_nethalas.skills.${option.skill}`)}${option.bonus ? `, +${option.bonus}` : ''})`
+  return { label: detail, value: option.id }
+}))
+const defense = computed(() => defenseOptions.value.find(option => option.id === defenseId.value) ?? defenseOptions.value[0]!)
 
 watch([who, savage, victim], () => {
   drawn.value = undefined
   result.value = undefined
-  if (savage.value) defense.value = 'dodge'
+  if (savage.value) defenseId.value = 'dodge'
 })
 
 const canAct = computed(() => whoItems.value.some(item => item.value === who.value) && !!creatureOf(who.value) && !combat.value?.creatures[who.value]?.spent)
@@ -312,7 +318,7 @@ function drawNow() {
 
 function resolveNow() {
   if (!drawn.value) return
-  result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value, magicCheck: magicCheck.value, bonus: bonus.value, ...(onSurvivor.value ? {} : { minion: victim.value as number }) })
+  result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value.skill, defenseBonus: defense.value.bonus, gear: defense.value.used, magicCheck: magicCheck.value, bonus: bonus.value, ...(onSurvivor.value ? {} : { minion: victim.value as number }) })
   manualAmount.value = result.value?.amount ?? 0
 }
 

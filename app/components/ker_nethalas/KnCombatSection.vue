@@ -83,21 +83,22 @@
         </ul>
       </div>
 
-      <div class="space-y-2">
+      <div class="space-y-1">
         <p class="text-xs font-medium text-muted">
-          Armure du survivant par zone (en attendant le suivi de l'équipement)
+          Armure portée par zone
         </p>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <KnNumberField
+        <p class="flex flex-wrap gap-x-4 text-sm">
+          <span
             v-for="zone in KN_SURVIVOR_ARMOR_ZONES"
             :key="zone"
-            :model-value="armorOf(zone)"
-            :label="ZONE_LABELS[zone]"
-            :min="0"
-            :max="9"
-            @update:model-value="value => setArmor(zone, value)"
-          />
-        </div>
+          ><span class="text-muted">{{ ZONE_LABELS[zone] }} :</span> <span class="font-medium">{{ armorByZone[zone] }}</span></span>
+        </p>
+        <p
+          v-if="!hasArmor"
+          class="text-xs text-muted"
+        >
+          Aucune pièce d'armure portée : ajoutez-en dans l'inventaire (section Équipement) et portez-les.
+        </p>
       </div>
 
       <ul class="space-y-2">
@@ -238,6 +239,7 @@ import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker
 import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
 import { knAdvanceCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
+import { knArmorByZone } from '~~/shared/ker-nethalas/equipment'
 import { KN_COMBAT_XP } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
@@ -265,12 +267,8 @@ const ZONE_LABELS: Record<KnSurvivorArmorZone, string> = { head: 'Tête', torso:
 
 const won = computed(() => !!combat.value && knCombatWon(combat.value))
 
-const armorOf = (zone: KnSurvivorArmorZone) => character.value.status.armor?.[zone] ?? 0
-
-function setArmor(zone: KnSurvivorArmorZone, value: number) {
-  const current = character.value.status.armor ?? { head: 0, torso: 0, arms: 0, legs: 0 }
-  character.value.status = { ...character.value.status, armor: { ...current, [zone]: value } }
-}
+const armorByZone = computed(() => knArmorByZone(character.value.inventory))
+const hasArmor = computed(() => Object.values(armorByZone.value).some(value => value > 0))
 
 const activeEffects = computed(() => character.value.status.custom.filter(modifier => modifier.combat))
 

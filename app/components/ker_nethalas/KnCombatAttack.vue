@@ -12,6 +12,13 @@
           class="w-full"
         />
       </UFormField>
+      <UFormField label="Arme">
+        <USelect
+          v-model="weaponId"
+          :items="weaponItems"
+          class="w-full"
+        />
+      </UFormField>
       <UFormField label="Compétence d'arme">
         <USelect
           v-model="skill"
@@ -157,6 +164,7 @@ import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_DAMAGE_TYPES, type KnDamageType } from '~~/shared/ker-nethalas/catalog/damageTypes'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { knParseDicePool } from '~~/shared/ker-nethalas/dice'
+import { knAttackOptions } from '~~/shared/ker-nethalas/equipment'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { KN_WEAPON_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import type { KnAttackResult } from '~/composables/useKnCombat'
@@ -173,30 +181,33 @@ const { combat, creatureOf, attack, applyAttack, applyReflect, moveText } = useK
 
 const KN_SURPRISE_BONUS = 20
 
-// Tous les dégâts d'une arme non magique valent D6 ; à mains nues, D4.
-const WEAPON_DEFAULTS: Record<string, { type: KnDamageType, pool: string }> = {
-  bladedWeapons: { type: 'slashing', pool: 'D6' },
-  bludgeoningWeapons: { type: 'bludgeoning', pool: 'D6' },
-  shaftedWeapons: { type: 'piercing', pool: 'D6' },
-  unarmedCombat: { type: 'bludgeoning', pool: 'D4' },
-}
-
 const target = ref(0)
-const skill = ref<KnSkillKey>('bladedWeapons')
 const bonus = ref(0)
-const speed = ref(0)
-const poolText = ref(WEAPON_DEFAULTS.bladedWeapons!.pool)
-const damageType = ref<KnDamageType>(WEAPON_DEFAULTS.bladedWeapons!.type)
+const attackOptions = computed(() => knAttackOptions(character.value.inventory))
+const weaponId = ref(attackOptions.value[0]!.id)
+const weaponBonus = ref(0)
+const skill = ref<KnSkillKey>(attackOptions.value[0]!.skill)
+const speed = ref(attackOptions.value[0]!.speed)
+const poolText = ref(attackOptions.value[0]!.pool)
+const damageType = ref<KnDamageType>(attackOptions.value[0]!.damageType)
+const weaponItems = computed<SelectItem[]>(() => attackOptions.value.map(option => ({ label: option.weapon ?? 'Mains nues', value: option.id })))
 const aim = ref(false)
 const magical = ref(false)
 const result = ref<KnAttackResult | undefined>()
 
-watch(skill, (key) => {
-  const defaults = WEAPON_DEFAULTS[key]
-  if (!defaults) return
-  poolText.value = defaults.pool
-  damageType.value = defaults.type
-})
+// Choisir une arme règle la compétence, la Vitesse, la réserve de dégâts et le type ; ces champs restent modifiables.
+function applyWeapon(id: string) {
+  const option = attackOptions.value.find(entry => entry.id === id) ?? attackOptions.value[0]!
+  weaponId.value = option.id
+  skill.value = option.skill
+  speed.value = option.speed
+  poolText.value = option.pool
+  damageType.value = option.damageType
+  weaponBonus.value = option.bonus
+}
+
+watch(weaponId, applyWeapon)
+watch(() => JSON.stringify(attackOptions.value), () => applyWeapon(weaponId.value), { immediate: true })
 
 const pool = computed(() => knParseDicePool(poolText.value))
 const surprise = computed(() => !!combat.value?.surprise)
@@ -223,7 +234,7 @@ function attackNow() {
   result.value = attack({
     index: target.value,
     skill: skill.value,
-    bonus: bonus.value + (surprise.value ? KN_SURPRISE_BONUS : 0),
+    bonus: bonus.value + weaponBonus.value + (surprise.value ? KN_SURPRISE_BONUS : 0),
     speed: speed.value,
     pool: pool.value,
     damageType: damageType.value,

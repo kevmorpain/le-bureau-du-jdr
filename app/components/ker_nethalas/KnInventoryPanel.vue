@@ -51,6 +51,12 @@
             {{ $t(`ker_nethalas.inventory.kinds.${item.kind}`) }} · {{ $t(`ker_nethalas.inventory.weights.${item.weight}`).toLowerCase() }}
             <span v-if="item.slot"> · case {{ item.slot }}</span>
           </p>
+          <p
+            v-if="stats(item)"
+            class="text-xs text-muted"
+          >
+            {{ stats(item) }}
+          </p>
         </div>
         <KnNumberField
           v-if="item.place === 'bag' || item.place === 'quick'"
@@ -70,6 +76,27 @@
             @update:model-value="move(item, $event as KnItemPlace)"
           />
         </UFormField>
+        <template v-if="item.integrity">
+          <UButton
+            size="xs"
+            variant="soft"
+            icon="i-heroicons:cube"
+            :aria-label="`Jet d'Intégrité de ${item.name}`"
+            @click="rollIntegrity(item.id)"
+          >
+            Jet d'Intégrité
+          </UButton>
+          <UButton
+            size="xs"
+            variant="soft"
+            icon="i-heroicons:wrench"
+            :disabled="item.integrity.current >= item.integrity.max"
+            :aria-label="`Réparer ${item.name}`"
+            @click="repair(item.id)"
+          >
+            Réparer
+          </UButton>
+        </template>
         <UButton
           icon="i-heroicons:trash"
           color="error"
@@ -154,6 +181,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
 import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import {
   KN_ITEM_KINDS,
@@ -237,6 +265,36 @@ function move(item: KnItem, place: KnItemPlace) {
     return
   }
   character.value.inventory = result.items
+}
+
+// Ce que l'objet apporte : arme (compétence, Vitesse, Traits), protection et Intégrité, parade, malus.
+function stats(item: KnItem): string {
+  const parts = [
+    ...(item.weapon ? [`${t(`ker_nethalas.skills.${item.weapon.skill}`)}, Vitesse ${item.weapon.speed}`, ...item.weapon.traits.map(trait => t(`ker_nethalas.inventory.traits.${trait}`))] : []),
+    ...(item.protection ? [`Armure ${item.protection}`] : []),
+    ...(item.parry ? [`Parade +${item.parry}`] : []),
+    ...(item.integrity ? [`Intégrité D${item.integrity.current} (max D${item.integrity.max})`] : []),
+    ...(item.maneuverability ? [`Agilité −${item.maneuverability}`] : []),
+    ...(item.perception ? [`Perception −${item.perception}`] : []),
+    ...(item.note ? [item.note] : []),
+  ]
+  return parts.join(' · ')
+}
+
+function rollIntegrity(id: string) {
+  const rolled = knRollIntegrity(inventory.value, id)
+  if (!rolled.result) return
+  character.value.inventory = rolled.items
+  const { name, die, roll, outcome, to } = rolled.result
+  toast.add({
+    title: `Intégrité de ${name}`,
+    description: `D${die} → ${roll}${outcome === 'held' ? ' : tient' : outcome === 'down' ? ` : passe au D${to}` : ' : perdu'}`,
+    color: outcome === 'held' ? 'neutral' : 'warning',
+  })
+}
+
+function repair(id: string) {
+  character.value.inventory = knRepairItem(inventory.value, id)
 }
 
 function setQuantity(id: string, quantity: number) {
