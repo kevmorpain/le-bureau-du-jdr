@@ -109,12 +109,12 @@ describe('ajouter le butin', () => {
     expect(next.inventory[0]).toMatchObject({ name: 'Gemme : Précieux', kind: 'gems', weight: 'bulk', value: 113, quantity: 1 })
   })
 
-  it('un fragment ou un objet magique arrive comme un objet à identifier ; rien ne donne rien', () => {
+  it('un fragment se garde tel quel, un objet magique arrive non harmonisé ; rien ne donne rien', () => {
     const fragment = knApplyLoot(state(), rolled('valuable', 0), catalog)
     const magic = knApplyLoot(state(), rolled('valuable', 0.99), catalog)
 
     expect(fragment.state.inventory[0]).toMatchObject({ name: 'Fragment : Chaîne', kind: 'fragment', weight: 'light' })
-    expect(magic.state.inventory[0]).toMatchObject({ name: 'Objet magique à identifier', kind: 'gear' })
+    expect(magic.state.inventory[0]).toMatchObject({ name: 'Anneau', kind: 'ring', magic: { table: 'ring', identified: false } })
     expect(knApplyLoot(state(), rolled('resources', 0), catalog)).toEqual({ state: state(), lines: [] })
   })
 

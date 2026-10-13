@@ -4,6 +4,7 @@ import { knBestiaryContentSchema } from './creatures'
 import { knPersonalGoalsContentSchema } from './goals'
 import { knItemsContentSchema } from './items'
 import { knLootContentSchema } from './loot'
+import { knMagicContentSchema } from './magic'
 import { knMasteriesContentSchema } from './masteries'
 import { KN_EXPLORATION_TABLES, knRollTableSchema } from './tables'
 
@@ -17,6 +18,7 @@ export const KN_CONTENT_SCHEMAS: KnContentRegistry = {
   items: knItemsContentSchema,
   loot: knLootContentSchema,
   potionAging: knPotionAgingSchema,
+  magicItems: knMagicContentSchema,
   ...Object.fromEntries(Object.entries(KN_EXPLORATION_TABLES).map(([name, { die }]) => [name, knRollTableSchema(die)])),
 }
 

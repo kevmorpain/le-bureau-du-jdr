@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { KN_DAMAGE_TYPES } from './catalog/damageTypes'
+import { knMagicSchema } from './magicSchema'
 import { KN_WEAPON_SKILL_KEYS } from './skills'
 import { boundedInt } from './zodHelpers'
 
@@ -128,6 +129,7 @@ export const knItemSchema = z.object({
   maneuverability: boundedInt({ min: 0, max: 30 }).optional(),
   perception: boundedInt({ min: 0, max: 30 }).optional(),
   integrity: z.object({ max: knIntegrityDieSchema, current: knIntegrityDieSchema }).optional(),
+  magic: knMagicSchema.optional(),
   // D'où vient un fragment ou une potion : la table de butin et le jet, pour relire ses effets dans le contenu. Une potion
   // trouvée n'est identifiée qu'après un test de Médecine ou une gorgée ; son vieillissement se tire alors, une fois.
   consumable: z.object({

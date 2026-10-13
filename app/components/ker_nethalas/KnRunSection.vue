@@ -322,6 +322,7 @@ function switchDomain(value: unknown) {
 
 function newDomain() {
   character.value.run = knNewDomain(character.value.run)
+  character.value.status = knResetUses(character.value.status, ['domain'])
 }
 
 // La forme tirée au D100 décide du type d'entrée : 1-25 un couloir, 26-100 une salle.

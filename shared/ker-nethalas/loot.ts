@@ -3,8 +3,10 @@ import { KN_PROVISION_BOUNDS, type KnProvisions } from './camp'
 import { knRollDice } from './dice'
 import { knUseSchema } from './consumables'
 import { knDiceSchema } from './diceSchema'
-import { KN_MAX_ITEMS, knNextItemId, type KnItem } from './inventory'
+import { KN_MAX_ITEMS, knDefaultWeight, knNextItemId, type KnItem, type KnItemKind } from './inventory'
 import { knItemFromCatalog, type KnCatalogItem } from './items'
+import { KN_MAGIC_TYPE_DIE, knMagicTypeAt, type KnMagicType } from './magic'
+import type { KnMagicTable } from './magicSchema'
 import { knRollDie, type KnRng } from './run'
 import { knCheckCoverage } from './zodHelpers'
 
@@ -96,6 +98,8 @@ export interface KnLootResult {
   // Le nombre tiré pour un objet « D4 Fournitures » (au moins 1), la valeur d'une gemme.
   count: number
   value: number
+  // Un objet magique : son type (D8), et pour une arme ou une armure l'objet ordinaire dont il est la version enchantée.
+  magic?: { type: KnMagicType, baseRef?: string }
 }
 
 const MAX_CHAIN = 6
@@ -107,9 +111,7 @@ export const knLootEntryAt = (table: KnLootTable | undefined, roll: number): KnL
 export const knConsumableEntry = (content: KnLootContent | null, item: Pick<KnItem, 'consumable'>): KnLootEntry | undefined =>
   item.consumable && content ? knLootEntryAt(content[item.consumable.table], item.consumable.roll) : undefined
 
-// Tire sur une table, puis sur celles qu'elle désigne, jusqu'à ce qu'un résultat donne quelque chose. Si une table de la chaîne
-// n'est pas chargée, rend celle qui manque.
-export function knRollLoot(content: KnLootContent, start: KnLootTableKey, rng: KnRng = Math.random): KnLootResult | { missing: KnLootTableKey } {
+function rollChain(content: KnLootContent, start: KnLootTableKey, rng: KnRng): KnLootResult | { missing: KnLootTableKey } {
   const steps: KnLootStep[] = []
   let key = start
   for (let depth = 0; depth < MAX_CHAIN; depth++) {
@@ -131,11 +133,34 @@ export function knRollLoot(content: KnLootContent, start: KnLootTableKey, rng: K
   return { missing: key }
 }
 
+const MAGIC_BASE_TABLES = { weapon: 'weapons', armor: 'armor' } as const satisfies Record<string, KnLootTableKey>
+
+// L'objet ordinaire dont un objet magique est la version enchantée : on tire sur la table des armes ou des armures aléatoires, et on
+// relance tant qu'elle redonne un objet magique.
+function rollMagicBase(content: KnLootContent, type: 'weapon' | 'armor', rng: KnRng): string | undefined {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const result = rollChain(content, MAGIC_BASE_TABLES[type], rng)
+    if ('missing' in result) return undefined
+    if (result.drop.kind === 'item') return result.drop.ref
+  }
+  return undefined
+}
+
+// Tire sur une table, puis sur celles qu'elle désigne, jusqu'à ce qu'un résultat donne quelque chose. Si une table de la chaîne
+// n'est pas chargée, rend celle qui manque. Un objet magique tire en plus son type.
+export function knRollLoot(content: KnLootContent, start: KnLootTableKey, rng: KnRng = Math.random): KnLootResult | { missing: KnLootTableKey } {
+  const result = rollChain(content, start, rng)
+  if ('missing' in result || result.drop.kind !== 'magic') return result
+  const type = result.drop.item ?? knMagicTypeAt(knRollDie(KN_MAGIC_TYPE_DIE, rng))
+  const baseRef = type === 'weapon' || type === 'armor' ? rollMagicBase(content, type, rng) : undefined
+  return { ...result, magic: { type, ...(baseRef ? { baseRef } : {}) } }
+}
+
 // L'armure d'un kit de départ : on tire sur la table des armures aléatoires, et on relance tant que le résultat n'est pas une pièce
 // du catalogue (une armure magique ne convient pas à un survivant qui commence).
 export function knRollStartingArmor(content: KnLootContent, rng: KnRng = Math.random): string | undefined {
   for (let attempt = 0; attempt < 20; attempt++) {
-    const result = knRollLoot(content, 'armor', rng)
+    const result = rollChain(content, 'armor', rng)
     if ('missing' in result) return undefined
     if (result.drop.kind === 'item') return result.drop.ref
   }
@@ -151,6 +176,17 @@ export interface KnLootApplied {
   state: KnLootState
   // Ce qui s'est ajouté, en une phrase par ligne.
   lines: string[]
+  // Une amulette : elle n'entre pas dans l'inventaire, c'est une Maîtrise à tirer.
+  amulet?: boolean
+}
+
+const MAGIC_PLACEHOLDERS: Record<KnMagicTable, { name: string, kind: KnItemKind }> = {
+  weapon: { name: 'Arme magique', kind: 'gear' },
+  armor: { name: 'Armure magique', kind: 'gear' },
+  belt: { name: 'Ceinture', kind: 'belt' },
+  boots: { name: 'Bottes', kind: 'boots' },
+  gloves: { name: 'Gants', kind: 'gloves' },
+  ring: { name: 'Anneau', kind: 'ring' },
 }
 
 const label = (result: KnLootResult) => {
@@ -200,6 +236,19 @@ export function knApplyLoot(state: KnLootState, result: KnLootResult, catalog: r
       : { ...base, name: 'Potion non identifiée', kind: 'potion' as const, weight: 'light' as const, note: 'Un test de Médecine l\'identifie ; sinon, il ne reste qu\'à la boire.' }
     return addItem(state, { ...item, ...(consumable ? { consumable: drop.kind === 'potion' ? { ...consumable, identified: false } : consumable } : {}) }) ?? { state, lines: ['inventaire plein'] }
   }
-  const name = drop.kind === 'relic' ? 'Relique à identifier' : `Objet magique à identifier${drop.item === 'weapon' ? ' (arme)' : drop.item === 'armor' ? ' (armure)' : ''}`
+  if (drop.kind === 'magic' && result.magic) {
+    const { type, baseRef } = result.magic
+    if (type === 'amulet') return { state, lines: [], amulet: true }
+    const entry = baseRef ? catalog.find(candidate => candidate.key === baseRef && !candidate.provision) : undefined
+    const placeholder = MAGIC_PLACEHOLDERS[type]
+    const ordinary: Omit<KnItem, 'id'> = entry
+      ? omitId(knItemFromCatalog(entry, 'x', { found: true }))
+      : { ...base, name: placeholder.name, kind: placeholder.kind, weight: knDefaultWeight(placeholder.kind) }
+    const added = addItem(state, { ...ordinary, magic: { table: type, identified: false, properties: [], peculiarities: [] } })
+    return added ? { ...added, lines: [`${ordinary.name} (objet magique à harmoniser)`] } : { state, lines: ['inventaire plein'] }
+  }
+  const name = drop.kind === 'relic' ? 'Relique à identifier' : 'Objet magique à identifier'
   return addItem(state, { ...base, name, kind: 'gear', weight: 'normal' }) ?? { state, lines: ['inventaire plein'] }
 }
+
+const omitId = ({ id: _id, ...item }: KnItem): Omit<KnItem, 'id'> => item

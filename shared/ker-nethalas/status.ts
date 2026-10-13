@@ -8,8 +8,9 @@ import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from './skills'
 import { boundedInt, shapeOf } from './zodHelpers'
 
 // Fréquences d'utilisation du livre (p. 123) : « par repos » vaut pour une pause comme pour un camp, « par camp » pour le
-// camp seul ; « par combat » et « par pièce » se remettent à zéro à la fin du combat et à l'entrée dans une pièce.
-export const KN_USE_LIMITS = ['combat', 'room', 'rest', 'campRest'] as const
+// camp seul ; « par combat » et « par pièce » se remettent à zéro à la fin du combat et à l'entrée dans une pièce, « par Domaine »
+// quand on en commence un nouveau.
+export const KN_USE_LIMITS = ['combat', 'room', 'rest', 'campRest', 'domain'] as const
 
 export type KnUseLimit = (typeof KN_USE_LIMITS)[number]
 
