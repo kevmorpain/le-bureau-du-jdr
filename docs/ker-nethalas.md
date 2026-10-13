@@ -463,6 +463,9 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   provisions, une gemme devient un objet de valeur tirée rangé par centaine, un fragment ou une potion garde sa table et son jet
   (KN43), un objet magique arrive « à identifier ».
   Rien ne s'ajoute sans le bouton, et un inventaire plein refuse.
+- **Livres de savoir** (p. 216-219) : un « Livre de savoir » trouvé tire le D10 des dix livres (table `loreBooks` du jeu `loot`) et
+  prend son titre ; le résumé français du texte du livre est en note de l'objet. L'objectif personnel « Vaelorian Erudite » (10 livres)
+  se suit à la main.
 - **Marchand** (`trade.ts`) : acheter retire les pièces et ajoute l'objet ou la provision ; vendre rend les pièces (50 % arrondi au
   supérieur, gemmes à 100 %). Seuls les objets du sac et les provisions que le catalogue connaît se vendent ; les amulettes non.
 - **Laissé de côté** (étapes suivantes de la tranche 7) : la génération des objets magiques et des Reliques. Les fragments et les

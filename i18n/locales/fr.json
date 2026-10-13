@@ -213,7 +213,8 @@
         "helmets": "Casques",
         "shields": "Boucliers",
         "masteries": "Maîtrise aléatoire",
-        "containers": "Contenant"
+        "containers": "Contenant",
+        "loreBooks": "Livres de savoir"
       }
     },
     "inventory": {

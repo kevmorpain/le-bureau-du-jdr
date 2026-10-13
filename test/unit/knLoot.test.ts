@@ -118,6 +118,22 @@ describe('ajouter le butin', () => {
     expect(knApplyLoot(state(), rolled('resources', 0), catalog)).toEqual({ state: state(), lines: [] })
   })
 
+  it('un livre de savoir tire le D10 des livres : il prend le titre du livre et son résumé en note', () => {
+    const withBooks: KnLootContent = {
+      ...content,
+      mundane: table(100, [[100, 'Livre de savoir', { kind: 'item', ref: 'loreBook' }]]),
+      loreBooks: table(10, [[5, 'Un premier livre.', { kind: 'nothing' }, 'Premier'], [5, 'Un second livre.', { kind: 'nothing' }, 'Second']]),
+    }
+    const books: KnCatalogItem[] = [{ key: 'loreBook', name: 'Livre de savoir', kind: 'gear', weight: 'light', value: 10 }]
+    const result = knRollLoot(withBooks, 'mundane', sequence(0, 0.9)) as Exclude<ReturnType<typeof knRollLoot>, { missing: unknown }>
+    const applied = knApplyLoot(state(), result, books)
+
+    expect(result.loreBook).toEqual({ roll: 10, title: 'Second', text: 'Un second livre.' })
+    expect(applied.state.inventory[0]).toMatchObject({ name: 'Livre de savoir : Second', note: 'Un second livre.' })
+    expect(applied.lines).toEqual(['Livre de savoir : Second'])
+    expect(knRollLoot(content, 'mundane', sequence(0.6))).not.toHaveProperty('loreBook')
+  })
+
   it('un objet absent du catalogue le dit, et un inventaire plein ne reçoit plus rien', () => {
     const unknown = knApplyLoot(state(), { steps: [{ table: 'mundane' as const, die: 100, roll: 1, text: 'Mystère' }], drop: { kind: 'item', ref: 'inconnu' }, count: 1, value: 0 }, catalog)
     const full: KnLootState = { ...state(), inventory: Array.from({ length: 120 }, (_, i) => ({ id: `i${i}`, name: 'x', kind: 'gear', weight: 'normal', quantity: 1, place: 'bag' }) satisfies KnItem) }

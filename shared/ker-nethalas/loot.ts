@@ -29,6 +29,7 @@ export const KN_LOOT_TABLES = {
   shields: 100,
   masteries: 20,
   containers: 20,
+  loreBooks: 10,
 } as const
 
 export type KnLootTableKey = keyof typeof KN_LOOT_TABLES
@@ -105,7 +106,11 @@ export interface KnLootResult {
   // Une Relique : celle qu'on a tirée (D20) ou que le contenant donne, et son jet.
   relic?: KnRelic
   relicRoll?: number
+  // Un livre de savoir : celui que le D10 a désigné.
+  loreBook?: { roll: number, title: string, text: string }
 }
+
+export const KN_LORE_BOOK_REF = 'loreBook'
 
 const MAX_CHAIN = 6
 
@@ -169,6 +174,11 @@ export function knRollLoot(
       ? [...(magic.containerRelics ?? []), ...(magic.relics?.entries ?? [])].find(candidate => candidate.key === key)
       : magic.relics?.entries.find(entry => roll !== undefined && roll >= entry.min && roll <= entry.max)
     return { ...result, ...(relic ? { relic } : {}), ...(roll === undefined ? {} : { relicRoll: roll }) }
+  }
+  if (result.drop.kind === 'item' && result.drop.ref === KN_LORE_BOOK_REF && content.loreBooks) {
+    const roll = knRollDie(content.loreBooks.die, rng)
+    const book = knLootEntryAt(content.loreBooks, roll)
+    return book ? { ...result, loreBook: { roll, title: book.title ?? book.text, text: book.text } } : result
   }
   if (result.drop.kind !== 'magic') return result
   const type = result.drop.item ?? knMagicTypeAt(knRollDie(KN_MAGIC_TYPE_DIE, rng))
@@ -235,11 +245,13 @@ export function knApplyLoot(state: KnLootState, result: KnLootResult, catalog: r
     let next = state
     const lines: string[] = []
     for (let i = 0; i < result.count; i++) {
-      const item = knItemFromCatalog(entry, 'x', { found: true })
+      const ordinary = knItemFromCatalog(entry, 'x', { found: true })
+      const { loreBook } = result
+      const item = loreBook ? { ...ordinary, name: `${entry.name} : ${loreBook.title}`.slice(0, 100), note: loreBook.text.slice(0, 600) } : ordinary
       const added = addItem(next, item)
       if (!added) return { state: next, lines: [...lines, 'inventaire plein'] }
       next = added.state
-      lines.push(entry.name)
+      lines.push(result.loreBook ? `${entry.name} : ${result.loreBook.title}` : entry.name)
     }
     return { state: next, lines }
   }

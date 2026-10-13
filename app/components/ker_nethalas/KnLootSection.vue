@@ -152,6 +152,7 @@ function path(entry: Pending) {
 }
 
 function summary(result: KnLootResult) {
+  if (result.loreBook) return `Livre de savoir : ${result.loreBook.title}`
   if (result.drop.kind === 'potion') return 'Une potion, à identifier'
   if (result.drop.kind === 'relic') return result.relic ? `Relique : ${result.relic.name}` : 'Une Relique (contenu non chargé : notez-la à la main)'
   if (result.drop.kind === 'magic' && result.magic) return `Objet magique : ${t(`ker_nethalas.inventory.magicTables.${result.magic.type}`)}${result.magic.baseRef ? ` (${props.catalog?.find(entry => entry.key === result.magic!.baseRef)?.name ?? result.magic.baseRef})` : ''}`
