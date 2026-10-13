@@ -2,6 +2,7 @@ import type { z } from 'zod'
 import { knBestiaryContentSchema } from './creatures'
 import { knPersonalGoalsContentSchema } from './goals'
 import { knItemsContentSchema } from './items'
+import { knLootContentSchema } from './loot'
 import { knMasteriesContentSchema } from './masteries'
 import { KN_EXPLORATION_TABLES, knRollTableSchema } from './tables'
 
@@ -13,6 +14,7 @@ export const KN_CONTENT_SCHEMAS: KnContentRegistry = {
   personalGoals: knPersonalGoalsContentSchema,
   bestiary: knBestiaryContentSchema,
   items: knItemsContentSchema,
+  loot: knLootContentSchema,
   ...Object.fromEntries(Object.entries(KN_EXPLORATION_TABLES).map(([name, { die }]) => [name, knRollTableSchema(die)])),
 }
 

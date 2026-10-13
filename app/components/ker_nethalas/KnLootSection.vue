@@ -1,0 +1,168 @@
+<template>
+  <UCard>
+    <template #header>
+      <h2 class="font-semibold">
+        Butin
+      </h2>
+      <p class="text-sm text-muted">
+        Le tirage suit les tables du livre, de l'une à l'autre. Chaque résultat s'ajoute par un bouton : à l'inventaire, ou aux
+        provisions.
+      </p>
+    </template>
+
+    <p
+      v-if="!loot"
+      class="text-sm text-muted"
+    >
+      Le contenu du butin n'est pas chargé : notez ce que le livre donne dans l'inventaire.
+    </p>
+
+    <div
+      v-else
+      class="space-y-4"
+    >
+      <div class="flex flex-wrap items-center gap-2">
+        <UButton
+          v-for="key in STARTS"
+          :key
+          size="sm"
+          variant="soft"
+          icon="i-heroicons:cube"
+          @click="draw([key])"
+        >
+          {{ $t(`ker_nethalas.loot.tables.${key}`) }}
+        </UButton>
+      </div>
+
+      <div
+        v-if="creatureItems.length"
+        class="flex flex-wrap items-end gap-2"
+      >
+        <UFormField label="Butin d'une créature">
+          <KnAddPicker
+            :items="creatureItems"
+            placeholder="Choisir une créature"
+            class="w-64"
+            @pick="drawCreature(String($event))"
+          />
+        </UFormField>
+      </div>
+
+      <ul
+        v-if="pending.length"
+        class="space-y-2"
+      >
+        <li
+          v-for="entry in pending"
+          :key="entry.id"
+          class="space-y-1 rounded-md bg-elevated p-3"
+        >
+          <p class="text-sm text-muted">
+            {{ path(entry) }}
+          </p>
+          <p
+            v-if="'missing' in entry.result"
+            class="text-sm text-warning"
+          >
+            La table « {{ $t(`ker_nethalas.loot.tables.${entry.result.missing}`) }} » n'est pas chargée : notez le résultat du livre.
+          </p>
+          <p
+            v-else
+            class="font-medium"
+          >
+            {{ summary(entry.result) }}
+          </p>
+          <div class="flex gap-2">
+            <UButton
+              v-if="!('missing' in entry.result) && entry.result.drop.kind !== 'nothing'"
+              size="xs"
+              @click="take(entry)"
+            >
+              Ajouter
+            </UButton>
+            <UButton
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              @click="discard(entry.id)"
+            >
+              Écarter
+            </UButton>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </UCard>
+</template>
+
+<script lang="ts" setup>
+import type { SelectItem } from '@nuxt/ui'
+import type { KnCharacter } from '~~/server/utils/drizzle'
+import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
+import { knApplyLoot, knRollLoot, type KnLootContent, type KnLootResult, type KnLootTableKey } from '~~/shared/ker-nethalas/loot'
+
+const props = defineProps<{
+  loot: KnLootContent | null
+  catalog: KnCatalogItem[] | null
+  bestiary: KnCreature[] | null
+}>()
+
+const character = defineModel<KnCharacter>('character', { required: true })
+
+const { t } = useI18n()
+const toast = useToast()
+
+const STARTS: KnLootTableKey[] = ['spoils', 'mundane', 'valuable', 'precious', 'resources']
+
+interface Pending {
+  id: number
+  result: KnLootResult | { missing: KnLootTableKey }
+}
+
+const pending = ref<Pending[]>([])
+let nextId = 1
+
+function draw(starts: readonly KnLootTableKey[]) {
+  if (!props.loot) return
+  for (const start of starts) pending.value.push({ id: nextId++, result: knRollLoot(props.loot, start) })
+}
+
+const creatureItems = computed<SelectItem[]>(() =>
+  (props.bestiary ?? []).filter(creature => creature.loot?.length).map(creature => ({ label: creature.name, value: creature.key })),
+)
+
+function drawCreature(key: string) {
+  const creature = props.bestiary?.find(candidate => candidate.key === key)
+  if (creature?.loot) draw(creature.loot)
+}
+
+const tableLabel = (key: KnLootTableKey) => t(`ker_nethalas.loot.tables.${key}`)
+
+function path(entry: Pending) {
+  if ('missing' in entry.result) return ''
+  return entry.result.steps.map(step => `${tableLabel(step.table)} (D${step.die} → ${step.roll})`).join(' › ')
+}
+
+function summary(result: KnLootResult) {
+  const last = result.steps[result.steps.length - 1]!
+  const label = last.title ?? last.text
+  if (result.drop.kind === 'gem') return `${label} : ${result.value} ₵`
+  if (result.drop.kind === 'item' && result.drop.count) return `${result.count} × ${label.replace(/^D\d+ /, '')}`
+  return label
+}
+
+function take(entry: Pending) {
+  if ('missing' in entry.result) return
+  const c = character.value
+  const { state, lines } = knApplyLoot({ inventory: c.inventory, provisions: c.provisions }, entry.result, props.catalog ?? [])
+  c.inventory = state.inventory
+  c.provisions = state.provisions
+  toast.add({ title: 'Butin ajouté', description: lines.join(', ') || 'Rien à ajouter', color: lines.length ? 'success' : 'neutral' })
+  discard(entry.id)
+}
+
+function discard(id: number) {
+  pending.value = pending.value.filter(entry => entry.id !== id)
+}
+</script>

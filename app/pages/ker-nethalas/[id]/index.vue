@@ -77,6 +77,18 @@
       :catalog
     />
 
+    <KnLootSection
+      v-model:character="character"
+      :loot
+      :catalog
+      :bestiary
+    />
+
+    <KnTraderSection
+      v-model:character="character"
+      :catalog
+    />
+
     <KnNotesSection v-model:character="character" />
   </div>
 
@@ -100,6 +112,7 @@ import type { AutoSaveStatus } from '~/composables/useAutoSave'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
+import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
 
@@ -118,6 +131,7 @@ const { data: encountersB } = await useKnContent<KnRollTable>('encountersB')
 const { data: overseers } = await useKnContent<KnRollTable>('overseers')
 const { data: bestiary } = await useKnContent<KnCreature[]>('bestiary')
 const { data: catalog } = await useKnContent<KnCatalogItem[]>('items')
+const { data: loot } = await useKnContent<KnLootContent>('loot')
 const tables = computed(() => ({
   corridorDescriptions: corridorDescriptions.value,
   roomDescriptions: roomDescriptions.value,

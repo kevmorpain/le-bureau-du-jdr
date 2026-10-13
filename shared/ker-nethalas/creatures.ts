@@ -10,6 +10,7 @@ import {
 } from './catalog/hitLocations'
 import { knCreatureBuffFields } from './combatState'
 import { knDiceSchema, type KnDice } from './dice'
+import { KN_LOOT_TABLE_KEYS } from './loot'
 import { KN_CHECK_KEYS, knOutcomeSchema } from './tables'
 import { boundedInt } from './zodHelpers'
 
@@ -137,6 +138,8 @@ export const knCreatureSchema = z.object({
   combatSkill: boundedInt({ min: 0, max: 200 }),
   magicResistance: boundedInt({ min: 0, max: 200 }),
   spoils: z.string().trim().min(1).max(300),
+  // Les tables de butin sur lesquelles tirer quand on la vainc.
+  loot: z.array(z.enum(KN_LOOT_TABLE_KEYS)).max(3).optional(),
   traits: z.array(knCreatureTraitSchema).max(8),
   affinity: z.enum(KN_DAMAGE_TYPES).optional(),
   vulnerable: z.array(z.enum(KN_DAMAGE_TYPES)).max(4).optional(),

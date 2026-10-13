@@ -448,6 +448,22 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   butin) ; la réparation au camp ne choisit pas les pièces (l'activité décompte les Fournitures, le bouton « Réparer » remonte la
   pièce) ; le corps à corps à deux armes.
 
+### KN42 — Butin et marchand
+- **Règles sourcées** (livre v1.2) : p. 213 (tables de Butin). Revente : la moitié du prix, sauf les gemmes et bijoux à leur valeur
+  entière (vérifié par le PM auprès de la communauté, pas dans une page du livre).
+- **Tables** (`loot.ts`, jeu de données privé `loot`) : un objet de tables, chacune avec son dé (D6, D100, D20, D10), des plages
+  qui couvrent le dé sans trou, et pour chaque résultat ce qu'il donne (`table`, `item`, `gem`, `fragment`, `potion`, `magic`,
+  `relic`, `mastery`, `nothing`). Une table absente du jeu de données se signale (`missing`) au lieu d'inventer un résultat.
+- **Tirage** : `knRollLoot` suit la chaîne des tables (six rebonds au plus) ; une quantité en dés vaut au moins 1 ; une gemme
+  tire sa valeur. Une créature du bestiaire peut porter `loot` (jusqu'à trois tables de départ) ; la carte « Butin » les tire.
+- **Ajouter** (`knApplyLoot`) : un objet du catalogue arrive « trouvé » (Intégrité d'un cran en moins), une provision va aux
+  provisions, une gemme devient un objet de valeur tirée rangé par centaine, fragments et objets magiques arrivent « à identifier ».
+  Rien ne s'ajoute sans le bouton, et un inventaire plein refuse.
+- **Marchand** (`trade.ts`) : acheter retire les pièces et ajoute l'objet ou la provision ; vendre rend les pièces (50 % arrondi à
+  l'inférieur, gemmes à 100 %). Seuls les objets du sac et les provisions que le catalogue connaît se vendent ; les amulettes non.
+- **Laissé de côté** (étapes suivantes de la tranche 7) : le contenu des tables des fragments et des potions, leur usage, leur
+  identification et leur vieillissement ; la génération des objets magiques et des Reliques ; l'équipement de départ en inventaire.
+
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
   réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
@@ -796,7 +812,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits) |
+| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits ; b : butin, gemmes, marchand écrits, KN42 ; fragments et potions à venir) |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -938,6 +954,12 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-13 — Tranche 7, étape 4a : butin et marchand
+- Pilotes en français relus et approuvés par le PM avant l'écriture ; la lecture « une arme ou une armure magique tirée dans le
+  butin ordinaire s'obtient par la procédure des objets magiques » est confirmée.
+- Vérifié dans le navigateur, sur un survivant de test : un tirage en chaîne (Butin D6 puis Objets ordinaires D100) donne « 2 ×
+  Composants rituels », ajouté aux provisions ; vendre le bouclier rend 20 ₵ (la moitié de son prix). Rien n'est chargé en production.
 
 ### 2026-10-11 — Tranche 6c (suite) : effets des actions et sbires alliés
 - Retour du PM sur ce qui restait en texte : les dégâts directs, la Santé temporaire des créatures, le test de Corps, les effets
