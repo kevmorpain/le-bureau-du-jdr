@@ -463,8 +463,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   provisions, une gemme devient un objet de valeur tirée rangé par centaine, un fragment ou une potion garde sa table et son jet
   (KN43), un objet magique arrive « à identifier ».
   Rien ne s'ajoute sans le bouton, et un inventaire plein refuse.
-- **Marchand** (`trade.ts`) : acheter retire les pièces et ajoute l'objet ou la provision ; vendre rend les pièces (50 % arrondi à
-  l'inférieur, gemmes à 100 %). Seuls les objets du sac et les provisions que le catalogue connaît se vendent ; les amulettes non.
+- **Marchand** (`trade.ts`) : acheter retire les pièces et ajoute l'objet ou la provision ; vendre rend les pièces (50 % arrondi au
+  supérieur, gemmes à 100 %). Seuls les objets du sac et les provisions que le catalogue connaît se vendent ; les amulettes non.
 - **Laissé de côté** (étapes suivantes de la tranche 7) : la génération des objets magiques et des Reliques. Les fragments et les
   potions : KN43.
 
@@ -1022,9 +1022,9 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   ⚠️ hypothèses
 - **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
   suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
-  s'arrondit au supérieur, les durées aussi, d'une salle ou d'un round au moins : règle générale d'arrondi de l'encart de la p. 70, cité
-  par le PM (l'encart n'est pas dans le texte extrait, qui ne donne que deux règles locales : le camp arrondit à l'inférieur, les
-  emplacements de pièces et de gemmes au supérieur). Une potion se vieillit une fois, à l'identification (test de Médecine, ou gorgée), pas à chaque emploi. ⚠️ hypothèses
+  s'arrondit au supérieur, les durées aussi, d'une salle ou d'un round au moins : règle de l'encart « Rounding Numbers » (p. 70, fourni par
+  le PM : tout nombre à arrondir, ⅃/2 compris, s'arrondit au supérieur ; le camp, qui dit « rounding down », est l'exception explicite).
+  La revente à 50 % suit la même règle. Une potion se vieillit une fois, à l'identification (test de Médecine, ou gorgée), pas à chaque emploi. ⚠️ hypothèses
 
 ---
 

@@ -131,7 +131,7 @@ describe('marchand', () => {
   const trade = (coins: number): KnTradeState => ({ coins, inventory: [], provisions: emptyKnProvisions() })
 
   it('vend à la moitié du prix, arrondie à l\'inférieur, et à la valeur entière pour les gemmes', () => {
-    expect(knSellPrice({ kind: 'weapon', value: 25, quantity: 1 })).toBe(12)
+    expect(knSellPrice({ kind: 'weapon', value: 25, quantity: 1 })).toBe(13)
     expect(knSellPrice({ kind: 'gear', value: 10, quantity: 3 })).toBe(15)
     expect(knSellPrice({ kind: 'gems', value: 163, quantity: 1 })).toBe(163)
     expect(knSellPrice({ kind: 'gear', quantity: 1 })).toBe(0)

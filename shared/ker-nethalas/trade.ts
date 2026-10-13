@@ -18,14 +18,14 @@ export const KN_MAGIC_PRICES = { uncommon: 200, rare: 400, epic: 600, relic: 100
 
 export const knIsUnsellable = (item: Pick<KnItem, 'magic'>): boolean => !!item.magic && !item.magic.identified
 
-// Un marchand rachète à la moitié du prix, arrondie à l'inférieur ; les gemmes et bijoux se vendent à leur valeur entière.
+// Un marchand rachète à la moitié du prix, arrondie au supérieur ; les gemmes et bijoux se vendent à leur valeur entière.
 export const knSellPrice = (item: Pick<KnItem, 'kind' | 'value' | 'quantity' | 'magic'>): number => {
   if (item.magic) return item.magic.identified && item.magic.rarity ? KN_MAGIC_PRICES[item.magic.rarity] * item.quantity : 0
   const unit = item.value ?? 0
-  return item.kind === 'gems' ? unit * item.quantity : Math.floor(unit / 2) * item.quantity
+  return item.kind === 'gems' ? unit * item.quantity : Math.ceil(unit / 2) * item.quantity
 }
 
-export const knUnitSellPrice = (entry: Pick<KnCatalogItem, 'value'>): number => Math.floor(entry.value / 2)
+export const knUnitSellPrice = (entry: Pick<KnCatalogItem, 'value'>): number => Math.ceil(entry.value / 2)
 
 const gain = (coins: number, amount: number) => Math.min(KN_BOUNDS.coins.max, coins + amount)
 
