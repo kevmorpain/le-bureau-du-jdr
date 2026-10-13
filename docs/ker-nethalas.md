@@ -1012,19 +1012,19 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
   combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
   se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.
-- **Objets magiques** : la table D20 des types de dégâts est brouillée dans l'extraction du livre ; les plages sont appariées aux
-  noms **dans l'ordre vertical** (1 Acide, 2-3 Arcanique, 4-5 Contondants, 6 Froid, 7-8 Force, 9 Feu, 10 Sacrés, 11 Infernaux, 12 Foudre,
-  13-14 Nécrotiques, 15-16 Perforants, 17 Poison, 18 Psychiques, 19-20 Tranchants), seule lecture qui double les trois types physiques ;
-  **à contrôler dans le PDF**. La réduction de dégâts se retranche après l'Armure, avant la Résistance (le livre ne les ordonne pas).
+- **Objets magiques** : la table D20 des types de dégâts est brouillée dans l'extraction du livre ; les plages ont été appariées aux
+  noms dans l'ordre vertical (1 Acide, 2-3 Arcanique, 4-5 Contondants, 6 Froid, 7-8 Force, 9 Feu, 10 Sacrés, 11 Infernaux, 12 Foudre,
+  13-14 Nécrotiques, 15-16 Perforants, 17 Poison, 18 Psychiques, 19-20 Tranchants), puis **confirmées par le PM** sur le livre.
+  La réduction de dégâts se retranche après l'Armure, avant la Résistance (le livre ne les ordonne pas).
   Un objet « tant qu'on le porte » agit porté ou tenu. La table du butin des contenants (D20, p. 220) est brouillée de la même
   façon : ses 18 lignes sont appariées aux plages dans l'ordre (1-2 nourriture avariée … 11 Journal vierge, 12 Pierre de Borestia,
   13 Cœur d'Amal-Tul, 14 Masse de l'Oblitération, 15 Anneau de Paix mentale, 16-20 les cinq Fioles) ; **à contrôler dans le PDF**.
   ⚠️ hypothèses
 - **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
   suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
-  s'arrondit au supérieur, les durées aussi, d'une salle ou d'un round au moins : règle générale d'arrondi indiquée par le PM
-  (le texte extrait n'en donne que deux, locales : le camp arrondit à l'inférieur, les emplacements de pièces et de gemmes au
-  supérieur). Une potion se vieillit une fois, à l'identification (test de Médecine, ou gorgée), pas à chaque emploi. ⚠️ hypothèses
+  s'arrondit au supérieur, les durées aussi, d'une salle ou d'un round au moins : règle générale d'arrondi de l'encart de la p. 70, cité
+  par le PM (l'encart n'est pas dans le texte extrait, qui ne donne que deux règles locales : le camp arrondit à l'inférieur, les
+  emplacements de pièces et de gemmes au supérieur). Une potion se vieillit une fois, à l'identification (test de Médecine, ou gorgée), pas à chaque emploi. ⚠️ hypothèses
 
 ---
 
