@@ -98,14 +98,17 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knAddAmulet, knRandomMasteryKey } from '~~/shared/ker-nethalas/amulets'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knApplyLoot, knRollLoot, type KnLootContent, type KnLootResult, type KnLootTableKey } from '~~/shared/ker-nethalas/loot'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 const props = defineProps<{
   loot: KnLootContent | null
   catalog: KnCatalogItem[] | null
   bestiary: KnCreature[] | null
+  masteries: KnMastery[] | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
@@ -148,6 +151,7 @@ function path(entry: Pending) {
 
 function summary(result: KnLootResult) {
   if (result.drop.kind === 'potion') return 'Une potion, à identifier'
+  if (result.drop.kind === 'magic' && result.magic) return `Objet magique : ${t(`ker_nethalas.inventory.magicTables.${result.magic.type}`)}${result.magic.baseRef ? ` (${props.catalog?.find(entry => entry.key === result.magic!.baseRef)?.name ?? result.magic.baseRef})` : ''}`
   const last = result.steps[result.steps.length - 1]!
   const label = last.title ?? last.text
   if (result.drop.kind === 'gem') return `${label} : ${result.value} ₵`
@@ -158,11 +162,20 @@ function summary(result: KnLootResult) {
 function take(entry: Pending) {
   if ('missing' in entry.result) return
   const c = character.value
-  const { state, lines } = knApplyLoot({ inventory: c.inventory, provisions: c.provisions }, entry.result, props.catalog ?? [])
+  const { state, lines, amulet } = knApplyLoot({ inventory: c.inventory, provisions: c.provisions }, entry.result, props.catalog ?? [])
   c.inventory = state.inventory
   c.provisions = state.provisions
+  if (amulet) lines.push(drawAmulet())
   toast.add({ title: 'Butin ajouté', description: lines.join(', ') || 'Rien à ajouter', color: lines.length ? 'success' : 'neutral' })
   discard(entry.id)
+}
+
+// Une amulette n'est pas un objet : on tire la Maîtrise à laquelle elle donne accès (table des Maîtrises aléatoires).
+function drawAmulet(): string {
+  const key = props.masteries ? knRandomMasteryKey(props.masteries.map(mastery => mastery.key)) : null
+  if (key === null) return 'amulette (Maîtrises non chargées : tirez-la dans la section Maîtrises)'
+  character.value.amulets = knAddAmulet(character.value.amulets, key, character.value.masteryPicks)
+  return `amulette : ${props.masteries!.find(mastery => mastery.key === key)?.name ?? key}`
 }
 
 function discard(id: number) {

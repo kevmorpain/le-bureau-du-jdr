@@ -133,12 +133,23 @@ describe('harmonisation', () => {
     expect('rolls' in result && result.rolls).toEqual({ rarity: 9, properties: [3, 15, 20], peculiarities: [] })
   })
 
-  it('une rareté commune ne tire qu\'une propriété ; les peculiarités se tirent en plus, une ou deux', () => {
-    const one = knIdentifyMagic(unknown, content, labels, { peculiarities: 'roll' }, sequence(die(10, 2), die(20, 4), die(100, 80)))
-    const two = knIdentifyMagic(unknown, content, labels, { peculiarities: 'rollTwice' }, sequence(die(10, 2), die(20, 4), die(100, 10), die(100, 90)))
+  it('une rareté commune ne tire qu\'une propriété ; la peculiarité se tire en plus, si on la veut', () => {
+    const one = knIdentifyMagic(unknown, content, labels, { peculiarity: true }, sequence(die(10, 2), die(20, 4), die(100, 80)))
+    const none = knIdentifyMagic(unknown, content, labels, {}, sequence(die(10, 2), die(20, 4)))
 
     expect('magic' in one && one.magic).toMatchObject({ rarity: 'uncommon', properties: [{ text: 'dix premiers' }], peculiarities: ['Il scintille.'] })
-    expect('magic' in two && two.magic.peculiarities).toEqual(['Il est humide.', 'Il scintille.'])
+    expect('magic' in none && none.magic.peculiarities).toEqual([])
+  })
+
+  it('un résultat « tirez deux fois » donne deux autres peculiarités, sans en redemander', () => {
+    const twice: KnMagicContent = {
+      ...content,
+      peculiarities: { die: 100, entries: [{ min: 1, max: 40, text: 'Il est humide.' }, { min: 41, max: 80, text: 'Il scintille.' }, { min: 81, max: 100, text: 'Tirez deux fois.', meta: 'twice' }] },
+    }
+    // D10, D20, puis D100 = 90 (deux fois), 95 (deux fois encore : ignoré), 10, 60
+    const result = knIdentifyMagic(unknown, twice, labels, { peculiarity: true }, sequence(die(10, 2), die(20, 4), die(100, 90), die(100, 95), die(100, 10), die(100, 60)))
+
+    expect('magic' in result && result.magic.peculiarities).toEqual(['Il est humide.', 'Il scintille.'])
   })
 
   it('rend la table qui manque plutôt que de tirer à vide', () => {

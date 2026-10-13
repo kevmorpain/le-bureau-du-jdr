@@ -47,7 +47,8 @@ export const knMagicMechSchema = z.discriminatedUnion('k', [
   z.object({ k: z.literal('damageVs'), enemy, amount }),
   z.object({ k: z.literal('speed'), amount }),
   z.object({ k: z.literal('armor'), piece, amount }),
-  z.object({ k: z.literal('use'), limit, label, heal: knDiceSchema.optional() }),
+  // `heal` : les Blessures que l'usage soigne, au porteur lui-même quand `self`, sinon à une cible que le joueur désigne.
+  z.object({ k: z.literal('use'), limit, label, heal: knDiceSchema.optional(), self: z.boolean().optional() }),
 ])
 
 export type KnMagicMech = z.infer<typeof knMagicMechSchema>
@@ -77,6 +78,7 @@ export const knMagicMechTemplateSchema = z.discriminatedUnion('k', [
     limit,
     label,
     heal: z.object({ count: boundedInt({ min: 0, max: 20 }), sides: boundedInt({ min: 0, max: 100 }), bonus: amountT }).optional(),
+    self: z.boolean().optional(),
   }),
 ])
 

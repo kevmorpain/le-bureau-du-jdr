@@ -80,6 +80,71 @@
           >
             Vieillissement : {{ agingText(item) }}
           </p>
+
+          <div
+            v-if="item.magic"
+            class="mt-1 space-y-1"
+          >
+            <UBadge
+              :label="magicBadge(item)"
+              :color="item.magic.identified ? 'primary' : 'neutral'"
+              variant="subtle"
+              size="md"
+            />
+            <p
+              v-if="!item.magic.identified"
+              class="text-xs text-muted"
+            >
+              Tant qu'il n'est pas harmonisé (activité Harmoniser du camp, 1 Cristal d'harmonisation), il se comporte comme son équivalent ordinaire.
+            </p>
+            <p
+              v-else-if="!knIsWorn(item)"
+              class="text-xs text-warning"
+            >
+              Ses propriétés n'agissent que quand il est porté.
+            </p>
+            <ul
+              v-if="item.magic.properties.length"
+              class="space-y-1 text-xs"
+            >
+              <li
+                v-for="(property, index) in item.magic.properties"
+                :key="index"
+                class="flex flex-wrap items-center gap-2"
+              >
+                <span>{{ property.text }}</span>
+                <USelect
+                  v-if="property.choose"
+                  :model-value="property.choice"
+                  :items="skillItems"
+                  placeholder="Choisir une compétence"
+                  size="xs"
+                  class="w-56"
+                  :aria-label="`Compétence de ${item.name}`"
+                  @update:model-value="setChoice(item.id, index, $event as KnSkillKey)"
+                />
+                <UButton
+                  v-for="use in usesOf(item, index)"
+                  :key="use.key"
+                  size="xs"
+                  variant="soft"
+                  icon="i-heroicons:bolt"
+                  :disabled="!knIsWorn(item) || knIsUsedUp(character.status, use.key)"
+                  :title="knIsUsedUp(character.status, use.key) ? `Déjà utilisé : ${knUseLimitLabel[use.limit]}` : knUseLimitLabel[use.limit]"
+                  @click="useMagic(use)"
+                >
+                  {{ use.label }}
+                </UButton>
+              </li>
+            </ul>
+            <p
+              v-for="peculiarity in item.magic.peculiarities"
+              :key="peculiarity"
+              class="text-xs italic text-muted"
+            >
+              {{ peculiarity }}
+            </p>
+          </div>
         </div>
         <KnNumberField
           v-if="item.place === 'bag' || item.place === 'quick'"
@@ -249,9 +314,12 @@ import { knDiceLabel, knRollDice } from '~~/shared/ker-nethalas/dice'
 import { knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
 import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knConsumableEntry, type KnLootContent } from '~~/shared/ker-nethalas/loot'
+import { knIsWorn, knMagicCarryBonus, knMagicUses, type KnMagicUse } from '~~/shared/ker-nethalas/magicEffects'
+import { knIsUsedUp, knMarkUsed, knUseLimitLabel } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import type { KnRollRequest } from '~~/shared/ker-nethalas/roll'
 import { knRollDie } from '~~/shared/ker-nethalas/run'
+import { KN_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import { knCheckId } from '~~/shared/ker-nethalas/tables'
 import {
   KN_ITEM_KINDS,
@@ -293,7 +361,7 @@ const inventory = computed(() => character.value.inventory)
 const amuletsCarried = computed(() => character.value.amulets.owned.length - (character.value.amulets.equipped === null ? 0 : 1))
 const provisionsCount = computed(() => Object.values(character.value.provisions).reduce((sum, count) => sum + count, 0))
 
-const encumbrance = computed(() => knEncumbrance(inventory.value, { provisions: provisionsCount.value, coins: character.value.coins, amulets: amuletsCarried.value }))
+const encumbrance = computed(() => knEncumbrance(inventory.value, { provisions: provisionsCount.value, coins: character.value.coins, amulets: amuletsCarried.value }, knMagicCarryBonus(inventory.value)))
 const provisionSlots = computed(() => Math.ceil(provisionsCount.value / 10))
 const quickSlots = computed(() => knQuickSlotCount(inventory.value))
 const quickUsed = computed(() => inventory.value.filter(item => item.place === 'quick').length)
@@ -386,6 +454,33 @@ function setQuantity(id: string, quantity: number) {
 
 function remove(id: string) {
   character.value.inventory = knRemoveItem(inventory.value, id)
+}
+
+const skillItems = KN_SKILL_KEYS.map(key => ({ label: t(`ker_nethalas.skills.${key}`), value: key }))
+
+const magicBadge = (item: KnItem) => item.magic?.identified
+  ? t(`ker_nethalas.inventory.rarities.${item.magic.rarity ?? 'uncommon'}`)
+  : `Magique (${t(`ker_nethalas.inventory.magicTables.${item.magic!.table}`)}), non harmonisé`
+
+const usesOf = (item: KnItem, index: number) => knMagicUses(inventory.value).filter(use => use.itemId === item.id && use.key === `${item.id}:${index + 1}`)
+
+function setChoice(id: string, index: number, skill: KnSkillKey) {
+  character.value.inventory = inventory.value.map(item => item.id === id && item.magic
+    ? { ...item, magic: { ...item.magic, properties: item.magic.properties.map((property, i) => i === index ? { ...property, choice: skill } : property) } }
+    : item)
+}
+
+// Un usage limité : il se marque (et se remet à zéro avec sa fréquence) ; un soin du porteur s'applique, celui d'une cible se jette.
+function useMagic(use: KnMagicUse) {
+  character.value.status = knMarkUsed(character.value.status, use.key, use.limit)
+  if (use.heal && use.self) {
+    applyEffects([{ kind: 'woundsHeal', dice: use.heal }], use.label)
+  } else if (use.heal) {
+    const rolled = knRollDice(use.heal)
+    toast.add({ title: use.label, description: `${knDiceLabel(use.heal)} → ${rolled.total} Blessures à soigner`, color: 'info', duration: 15000 })
+  } else {
+    toast.add({ title: use.label, description: `${use.itemName} : ${knUseLimitLabel[use.limit]}`, color: 'info' })
+  }
 }
 
 const pendingCheck = ref<{ id: number, request: KnRollRequest, done: (success: boolean) => void } | null>(null)

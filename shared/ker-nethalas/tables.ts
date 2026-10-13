@@ -144,6 +144,8 @@ export interface KnTableEffectOutcome {
   effect: KnTableEffect
   roll: KnDiceRoll
   draw?: KnGrowingDarknessDraw
+  // Un état que l'équipement du survivant a empêché.
+  blocked?: boolean
 }
 
 const clamp = (value: number, max: number) => Math.min(max, Math.max(0, value))
@@ -237,7 +239,8 @@ export function knApplyTableEffects(
   rng: KnRng = Math.random,
   // `creature` : les dégâts viennent d'un adversaire, qui retient toujours le dé le plus haut.
   // `scale` : le vieillissement d'une potion, qui change les montants et les durées.
-  options: { creature?: boolean, scale?: KnEffectScale } = {},
+  // `immune` : les états auxquels le survivant est Immunisé, qu'un effet de condition ne lui donne donc pas.
+  options: { creature?: boolean, scale?: KnEffectScale, immune?: readonly (typeof KN_CONDITION_KEYS)[number][] } = {},
 ): { state: KnTableEffectState, outcomes: KnTableEffectOutcome[] } {
   let next: KnTableEffectState = { ...state, provisions: { ...state.provisions } }
   const outcomes: KnTableEffectOutcome[] = []
@@ -269,8 +272,10 @@ export function knApplyTableEffects(
     } else if (effect.kind === 'damage') {
       next = knApplyDamage(next, maxima, roll.total, effect.direct)
     } else if (effect.kind === 'exhaustion') next = { ...next, exhaustion: clamp(next.exhaustion + signed(effect.sign), KN_BOUNDS.exhaustion.max) }
-    else if (effect.kind === 'condition') next = { ...next, status: withCondition(next.status, effect.key, effect.value) }
-    else if (effect.kind === 'timed') next = { ...next, status: withTimedEffect(next.status, effect, roll.total, scale) }
+    else if (effect.kind === 'condition') {
+      if (options.immune?.includes(effect.key)) outcome.blocked = true
+      else next = { ...next, status: withCondition(next.status, effect.key, effect.value) }
+    } else if (effect.kind === 'timed') next = { ...next, status: withTimedEffect(next.status, effect, roll.total, scale) }
     else if (effect.kind === 'woundsHeal') next = { ...next, ...healWounds(next, maxima, roll.total) }
     else if (effect.kind === 'conditionRemove') {
       next = { ...next, status: { ...next.status, conditions: next.status.conditions.filter(entry => !effect.keys.includes(entry.key)) } }

@@ -489,6 +489,32 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   du texte ; la Pierre de Borestia (identification sans test) vient avec les objets magiques ; deux potions de Vitalité bues de
   suite ne déclenchent pas les dégâts d'acide.
 
+### KN44 — Objets magiques : génération, harmonisation, effets
+- **Règles sourcées** (livre v1.2) : p. 224 (procédure : type D8, rareté D10, une propriété par niveau, deux fois la même s'ajoutent ;
+  une amulette donne accès à une Maîtrise au lieu de propriétés), p. 225 (types de dégâts D20, types d'adversaire D8), p. 226-231
+  (propriétés par type d'objet, D20), p. 232-233 (peculiarités D100), p. 124-125 (activité de camp Harmoniser : 1 Cristal et
+  +1 Épuisement par objet), p. 83 (réduction de dégâts : « après l'Armure »).
+- **Un objet trouvé n'est que son type** : le D8 se tire à l'obtention (carte Butin) ; une arme ou une armure prend pour base un
+  objet ordinaire de la table aléatoire, relancé tant qu'elle redonne un objet magique ; une amulette est une Maîtrise tirée au D20.
+  Il se comporte comme son équivalent ordinaire (`item.magic.identified: false`) jusqu'à l'harmonisation.
+- **Harmoniser** (activité de camp) : on coche les objets à harmoniser, ce qui fixe le nombre d'Harmonisations du camp ; à la
+  fin du camp, la rareté et les propriétés se tirent (`knIdentifyMagic`) et se **figent sur l'objet** avec leur texte résolu (montant
+  selon la rareté ou aux dés, type de dégâts ou d'adversaire tiré). La peculiarité (D100, un résultat peut en demander deux) est
+  facultative ; la compétence « au choix » se choisit ensuite sur l'objet.
+- **Vocabulaire des mécaniques** (`magicSchema.ts`, le seul que le moteur connaisse) : modificateur de compétence ou de
+  résistance, Avantage, jauge maximale, portage, Résistance / réduction / immunité du survivant, Initiative, dés et Vitesse
+  d'arme, dégâts contre un type d'adversaire, Armure des vambraces et des jambières, source de lumière, usage limité (par combat,
+  salle, repos, camp ou Domaine, avec ou sans soin). Une propriété sans mécanique est un **rappel** affiché dans la fiche tant que l'objet
+  est porté. Le contenu (tables, textes) reste privé : jeu `magicItems`.
+- **Ce qui agit** : un objet n'agit que **porté** ou tenu (pas dans le sac ni à la Ceinture). Les sources rejoignent la fiche
+  effective (`knMagicSources`) ; le portage entre dans l'encombrement ; la lumière dispense de source de lumière ; l'Armure des
+  vambraces et jambières, l'Initiative et la Vitesse, la réserve de dégâts de l'attaque (dés de l'arme maniée, plus ceux des gants)
+  suivent. Les immunités s'appliquent aux états que les effets donneraient ; les Résistances et réductions s'appliquent aux
+  dégâts que le survivant reçoit en combat (`damageTarget` du survivant).
+- **Laissé de côté** : les propriétés qui demandent un état de combat que l'outil ne suit pas (Réaction gratuite, relance de test,
+  bonus de Compétence « pour parer ») restent des rappels ; les dés de dégâts d'un type propre (+D4 de feu) entrent dans la réserve
+  sans type séparé, rappelés sous l'attaque ; les Reliques, la revente et la Pierre de Borestia viennent ensuite.
+
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
   réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
@@ -837,7 +863,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits ; b : butin, gemmes, marchand écrits, KN42 ; fragments et potions utilisables écrits, KN43) |
+| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits ; b : butin, gemmes, marchand écrits, KN42 ; fragments et potions utilisables écrits, KN43 ; c : objets magiques générés, harmonisés et appliqués, KN44 ; Reliques et revente à venir) |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -975,6 +1001,11 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
   combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
   se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.
+- **Objets magiques** : la table D20 des types de dégâts est brouillée dans l'extraction du livre ; les plages sont appariées aux
+  noms **dans l'ordre vertical** (1 Acide, 2-3 Arcanique, 4-5 Contondants, 6 Froid, 7-8 Force, 9 Feu, 10 Sacrés, 11 Infernaux, 12 Foudre,
+  13-14 Nécrotiques, 15-16 Perforants, 17 Poison, 18 Psychiques, 19-20 Tranchants), seule lecture qui double les trois types physiques ;
+  **à contrôler dans le PDF**. La réduction de dégâts se retranche après l'Armure, avant la Résistance (le livre ne les ordonne pas).
+  Un objet « tant qu'on le porte » agit porté ou tenu. ⚠️ hypothèses
 - **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
   suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
   s'arrondit au supérieur (seule règle d'arrondi du livre : la moitié des dégâts), les durées aussi, d'une salle ou d'un round au
@@ -983,6 +1014,13 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-13 — Tranche 7, lot c : objets magiques
+- Contenu écrit hors dépôt (`magicItems` : six tables de propriétés, 50 peculiarités), validé par le schéma au chargement ; à
+  relire par le PM avant tout chargement en production.
+- Vérifié dans le navigateur, sur un survivant de test : cinq objets magiques tirés au butin (type affiché), harmonisation de deux
+  d'entre eux au camp (rareté et propriétés tirées, Cristaux décomptés), Résistance magique 20 → 30 une fois la ceinture
+  harmonisée portée. Non vérifié à l'écran : les boutons d'usage limité, la compétence à choisir, et l'amulette tirée au butin.
 
 ### 2026-10-13 — Tranche 7, étape 4c : kit de départ en inventaire
 - Vérifié dans le navigateur : l'étape Équipement de la création tire l'armure (« Grand bouclier ») et propose les armes du

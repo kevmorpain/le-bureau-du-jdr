@@ -28,6 +28,7 @@ import { knReactionPenalty, type KnCombat } from '~~/shared/ker-nethalas/combatS
 import { knArmorAt, knCreatureAtLevel, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
 import { knArmorByZone, knArmorPieces, knInitiativeBonus } from '~~/shared/ker-nethalas/equipment'
+import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knD100Check, type KnD100Result } from '~~/shared/ker-nethalas/roll'
 import {
@@ -395,7 +396,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       ? (minionSheet.hitLocation ? knHitLocation(minionSheet.hitLocation.table, knRollDie(20)) : 'body' as const)
       : knHitLocation('humanoid', knRollDie(20))
     const armorAt = (location: KnHitLocationKey) => minionSheet ? knArmorAt(minionSheet.armor, location) : survivorArmor(location)
-    const damageTarget = minionSheet ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects) : { vulnerable: [], resistant: [], restored: [] }
+    const survivorDefenses = knMagicDefenses(character.value.inventory)
+    const damageTarget = minionSheet
+      ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects)
+      : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: survivorDefenses.reduction }
     const registerReaction = () => {
       if (!minionSheet) character.value.run = knRegisterReaction(character.value.run)
     }

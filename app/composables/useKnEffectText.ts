@@ -80,9 +80,10 @@ export function useKnEffectText() {
     return `gagne ${selfAmountText(effect.amount)} en Santé temporaire${cap}${until}`
   }
 
-  function outcomeText({ effect, roll, draw }: KnTableEffectOutcome): string {
+  function outcomeText({ effect, roll, draw, blocked }: KnTableEffectOutcome): string {
     if (draw) return `Obscurité Grandissante ${draw.roll}`
-    return effectText(effect, 'dice' in effect || effect.kind === 'timed' ? roll.total : undefined)
+    const text = effectText(effect, 'dice' in effect || effect.kind === 'timed' ? roll.total : undefined)
+    return blocked ? `${text} : empêché par l'équipement (Immunisé)` : text
   }
 
   return { effectText, effectsText, outcomeText, selfEffectText, buffParts }

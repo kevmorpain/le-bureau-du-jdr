@@ -41,6 +41,7 @@
       v-model:character="character"
       :resolved
       :masteries
+      :magic
     />
 
     <KnRollSection
@@ -85,6 +86,7 @@
       :loot
       :catalog
       :bestiary
+      :masteries
     />
 
     <KnTraderSection
@@ -117,6 +119,7 @@ import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
+import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
 
@@ -137,6 +140,7 @@ const { data: bestiary } = await useKnContent<KnCreature[]>('bestiary')
 const { data: catalog } = await useKnContent<KnCatalogItem[]>('items')
 const { data: loot } = await useKnContent<KnLootContent>('loot')
 const { data: aging } = await useKnContent<KnPotionAging>('potionAging')
+const { data: magic } = await useKnContent<KnMagicContent>('magicItems')
 const tables = computed(() => ({
   corridorDescriptions: corridorDescriptions.value,
   roomDescriptions: roomDescriptions.value,

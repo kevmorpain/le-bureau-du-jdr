@@ -216,6 +216,21 @@
       }
     },
     "inventory": {
+      "magicTables": {
+        "weapon": "arme",
+        "armor": "armure",
+        "belt": "ceinture",
+        "boots": "bottes",
+        "gloves": "gants",
+        "ring": "anneau",
+        "amulet": "amulette"
+      },
+      "rarities": {
+        "uncommon": "Peu commun",
+        "rare": "Rare",
+        "epic": "Épique",
+        "relic": "Relique"
+      },
       "kinds": {
         "weapon": "Arme",
         "shield": "Bouclier",

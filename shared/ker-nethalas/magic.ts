@@ -77,6 +77,8 @@ export const knPeculiaritySchema = z.object({
   min: boundedInt({ min: 1, max: KN_PECULIARITY_DIE }),
   max: boundedInt({ min: 1, max: KN_PECULIARITY_DIE }),
   text: z.string().trim().min(1).max(300),
+  // « Choisissez-en une » : le joueur la note à la main ; « tirez deux fois » : le moteur tire deux autres résultats.
+  meta: z.enum(['choose', 'twice']).optional(),
 }).refine(entry => entry.min <= entry.max, { message: 'la plage va de min à max' })
 
 export const knMagicContentSchema = z.object({
@@ -131,7 +133,7 @@ function mechOf(template: KnMagicMechTemplate, context: Context): KnMagicMech | 
     }
     case 'use': {
       const { heal } = template
-      return { k: 'use', limit: template.limit, label: template.label, ...(heal ? { heal: { ...heal, bonus: num(heal.bonus) } } : {}) }
+      return { k: 'use', limit: template.limit, label: template.label, ...(heal ? { heal: { ...heal, bonus: num(heal.bonus) } } : {}), ...(template.self ? { self: true } : {}) }
     }
     default: return template
   }
@@ -162,12 +164,12 @@ export interface KnMagicIdentification {
 }
 
 // Harmoniser un objet : sa rareté (D10) dit combien de propriétés tirer (D20 sur la table de son type) ; deux fois la même
-// s'ajoutent. Les peculiarités, facultatives, se tirent sur le D100.
+// s'ajoutent. La peculiarité, facultative, se tire sur le D100 (un résultat peut en demander deux).
 export function knIdentifyMagic(
   magic: KnMagic,
   content: KnMagicContent,
   labels: KnMagicLabels,
-  options: { peculiarities?: 'none' | 'roll' | 'rollTwice' } = {},
+  options: { peculiarity?: boolean } = {},
   rng: KnRng = Math.random,
 ): KnMagicIdentification | { missing: KnMagicTable } {
   const table = content.tables[magic.table]
@@ -185,13 +187,22 @@ export function knIdentifyMagic(
   }
   const peculiarityRolls: number[] = []
   const peculiarities: string[] = []
-  const wanted = options.peculiarities === 'rollTwice' ? 2 : options.peculiarities === 'roll' ? 1 : 0
-  for (let i = 0; content.peculiarities && i < wanted; i++) {
+  const rollPeculiarity = () => {
     const roll = knRollDie(KN_PECULIARITY_DIE, rng)
-    const entry = content.peculiarities.entries.find(candidate => roll >= candidate.min && roll <= candidate.max)
-    if (!entry) continue
     peculiarityRolls.push(roll)
-    peculiarities.push(entry.text)
+    return content.peculiarities?.entries.find(candidate => roll >= candidate.min && roll <= candidate.max)
+  }
+  if (options.peculiarity && content.peculiarities) {
+    const first = rollPeculiarity()
+    if (first?.meta === 'twice') {
+      // Un résultat qui demande deux tirages ne peut pas en redemander : on relance jusqu'à deux résultats ordinaires.
+      for (let attempt = 0; attempt < 20 && peculiarities.length < KN_MAGIC_BOUNDS.peculiarities; attempt++) {
+        const next = rollPeculiarity()
+        if (next && !next.meta) peculiarities.push(next.text)
+      }
+    } else if (first) {
+      peculiarities.push(first.text)
+    }
   }
   return {
     rarity,

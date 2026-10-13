@@ -40,6 +40,7 @@
           v-model:character="character"
           :resolved
           :masteries
+          :magic
           @close="campOpen = false"
         />
       </div>
@@ -56,6 +57,7 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_PROVISION_KEYS, knTakeBreather } from '~~/shared/ker-nethalas/camp'
+import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCurrentDomain } from '~~/shared/ker-nethalas/run'
@@ -64,6 +66,7 @@ import { knRest } from '~~/shared/ker-nethalas/vitals'
 const props = defineProps<{
   resolved: KnResolvedSheet
   masteries: KnMastery[] | null
+  magic: KnMagicContent | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })

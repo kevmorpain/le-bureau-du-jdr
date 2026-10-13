@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
 import { knApplyTableEffects, type KnEffectScale, type KnTableEffect } from '~~/shared/ker-nethalas/tables'
 
 // Applique à la fiche des gains et des pertes (pièces, provisions, XP, jauges, dégâts, états…) et le dit dans un message.
@@ -29,7 +30,7 @@ export function useKnApplyEffects(character: Ref<KnCharacter>, resolved: () => K
       toughness: maxVitals.toughness.effective,
       sanity: maxVitals.sanity.effective,
       aether: maxVitals.aether.effective,
-    }, undefined, options)
+    }, undefined, { ...options, immune: knMagicDefenses(c.inventory).immune })
 
     c.coins = state.coins
     c.xp = state.xp

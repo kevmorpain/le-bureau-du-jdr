@@ -2,6 +2,7 @@ import type { KnSurvivorArmorZone } from './combat'
 import type { KnDamageType } from './catalog/damageTypes'
 import type { KnActiveSource, KnEffect } from './effects'
 import { knIntegrityDown, KN_INTEGRITY_DICE, type KnItem, type KnIntegrityDie } from './inventory'
+import { knMagicArmorBonus, knMagicAttack, knMagicInitiative, type KnMagicAttack } from './magicEffects'
 import { knRollDie, type KnRng } from './run'
 import type { KnSkillKey } from './skills'
 
@@ -11,11 +12,15 @@ const ZONE_KINDS = { head: 'helmet', torso: 'torso', arms: 'vambraces', legs: 'g
 export const knArmorPieces = (items: readonly KnItem[], zone: KnSurvivorArmorZone): KnItem[] =>
   items.filter(item => item.kind === ZONE_KINDS[zone] && (zone === 'head' ? item.place === 'head' : item.place === 'armor'))
 
+const protectionOf = (pieces: readonly KnItem[], bonus = 0) =>
+  pieces.length ? pieces.reduce((sum, item) => sum + (item.protection ?? 0), bonus) : 0
+
+// Des gants ou des bottes magiques améliorent l'Armure des vambraces ou des jambières, quand on en porte.
 export const knArmorByZone = (items: readonly KnItem[]): Record<KnSurvivorArmorZone, number> => ({
-  head: knArmorPieces(items, 'head').reduce((sum, item) => sum + (item.protection ?? 0), 0),
-  torso: knArmorPieces(items, 'torso').reduce((sum, item) => sum + (item.protection ?? 0), 0),
-  arms: knArmorPieces(items, 'arms').reduce((sum, item) => sum + (item.protection ?? 0), 0),
-  legs: knArmorPieces(items, 'legs').reduce((sum, item) => sum + (item.protection ?? 0), 0),
+  head: protectionOf(knArmorPieces(items, 'head')),
+  torso: protectionOf(knArmorPieces(items, 'torso')),
+  arms: protectionOf(knArmorPieces(items, 'arms'), knMagicArmorBonus(items, 'vambraces')),
+  legs: protectionOf(knArmorPieces(items, 'legs'), knMagicArmorBonus(items, 'greaves')),
 })
 
 // Une armure lourde gêne les mouvements (Acrobatie, Esquive, Furtivité), un casque la vue (Perception).
@@ -51,30 +56,44 @@ export interface KnAttackOption {
   damageType: KnDamageType
   // Bonus à l'attaque (Simple : +10).
   bonus: number
+  // Ce que les objets magiques ajoutent : déjà dans la réserve ; à rappeler quand les dés ont un type de dégâts propre, ou que
+  // le bonus ne vaut que contre un type d'adversaire.
+  magic?: KnMagicAttack
 }
 
 export const KN_UNARMED_OPTION: KnAttackOption = { id: 'unarmed', skill: 'unarmedCombat', speed: 0, pool: 'D4', damageType: 'bludgeoning', bonus: 0 }
+
+// La réserve d'une arme, complétée des dés et des bonus que lui donnent les objets magiques.
+function withMagicPool(pool: string, magic: KnMagicAttack): string {
+  const tokens = magic.dice.map(({ dice }) => dice.count ? `${dice.count > 1 ? dice.count : ''}D${dice.sides}${dice.bonus ? `+${dice.bonus}` : ''}` : String(dice.bonus))
+  return [pool, ...tokens].join('+')
+}
 
 // Les façons d'attaquer : à mains nues, ou avec chaque arme tenue.
 export function knAttackOptions(items: readonly KnItem[]): KnAttackOption[] {
   const offHandEmpty = !items.some(item => item.place === 'offHand')
   return [
-    ...knWieldedWeapons(items).map(item => ({
-      id: item.id,
-      weapon: item.name,
-      skill: item.weapon!.skill,
-      speed: item.weapon!.speed,
-      pool: knWeaponPool(item, offHandEmpty),
-      damageType: item.weapon!.damageType,
-      bonus: traits(item).includes('simple') ? 10 : 0,
-    })),
+    ...knWieldedWeapons(items).map((item) => {
+      const magic = knMagicAttack(items, item.id)
+      const hasMagic = magic.dice.length || magic.speed || magic.vs.length
+      return {
+        id: item.id,
+        weapon: item.name,
+        skill: item.weapon!.skill,
+        speed: item.weapon!.speed + magic.speed,
+        pool: withMagicPool(knWeaponPool(item, offHandEmpty), magic),
+        damageType: item.weapon!.damageType,
+        bonus: traits(item).includes('simple') ? 10 : 0,
+        ...(hasMagic ? { magic } : {}),
+      }
+    }),
     KN_UNARMED_OPTION,
   ]
 }
 
-// Une arme Rapide donne +10 à l'Initiative.
+// Une arme Rapide donne +10 à l'Initiative, comme certains objets magiques.
 export const knInitiativeBonus = (items: readonly KnItem[]): number =>
-  knWieldedWeapons(items).some(item => traits(item).includes('quick')) ? 10 : 0
+  (knWieldedWeapons(items).some(item => traits(item).includes('quick')) ? 10 : 0) + knMagicInitiative(items)
 
 export interface KnDefenseOption {
   id: string
