@@ -9,12 +9,18 @@ export interface KnTradeState {
   provisions: KnProvisions
 }
 
-export type KnTradeError = 'coins' | 'full' | 'unknown' | 'stock'
+export type KnTradeError = 'coins' | 'full' | 'unknown' | 'stock' | 'unidentified'
 
 export type KnTradeResult = { state: KnTradeState } | { error: KnTradeError }
 
+// Un objet magique se vend à prix fixe selon sa rareté, jamais à la moitié ; tant qu'il n'est pas harmonisé, on ignore sa rareté.
+export const KN_MAGIC_PRICES = { uncommon: 200, rare: 400, epic: 600, relic: 1000 } as const
+
+export const knIsUnsellable = (item: Pick<KnItem, 'magic'>): boolean => !!item.magic && !item.magic.identified
+
 // Un marchand rachète à la moitié du prix, arrondie à l'inférieur ; les gemmes et bijoux se vendent à leur valeur entière.
-export const knSellPrice = (item: Pick<KnItem, 'kind' | 'value' | 'quantity'>): number => {
+export const knSellPrice = (item: Pick<KnItem, 'kind' | 'value' | 'quantity' | 'magic'>): number => {
+  if (item.magic) return item.magic.identified && item.magic.rarity ? KN_MAGIC_PRICES[item.magic.rarity] * item.quantity : 0
   const unit = item.value ?? 0
   return item.kind === 'gems' ? unit * item.quantity : Math.floor(unit / 2) * item.quantity
 }
@@ -41,6 +47,7 @@ export function knBuy(state: KnTradeState, entry: KnCatalogItem, count = 1): KnT
 export function knSell(state: KnTradeState, id: string): KnTradeResult {
   const item = state.inventory.find(entry => entry.id === id)
   if (!item) return { error: 'unknown' }
+  if (knIsUnsellable(item)) return { error: 'unidentified' }
   return { state: { ...state, coins: gain(state.coins, knSellPrice(item)), inventory: state.inventory.filter(entry => entry.id !== id) } }
 }
 

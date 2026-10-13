@@ -87,6 +87,7 @@
       :catalog
       :bestiary
       :masteries
+      :magic
     />
 
     <KnTraderSection

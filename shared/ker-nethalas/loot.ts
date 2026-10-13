@@ -5,7 +5,7 @@ import { knUseSchema } from './consumables'
 import { knDiceSchema } from './diceSchema'
 import { KN_MAX_ITEMS, knDefaultWeight, knNextItemId, type KnItem, type KnItemKind } from './inventory'
 import { knItemFromCatalog, type KnCatalogItem } from './items'
-import { KN_MAGIC_TYPE_DIE, knMagicTypeAt, type KnMagicType } from './magic'
+import { KN_MAGIC_TYPE_DIE, KN_RELIC_DIE, knMagicTypeAt, type KnMagicContent, type KnMagicType, type KnRelic } from './magic'
 import type { KnMagicTable } from './magicSchema'
 import { knRollDie, type KnRng } from './run'
 import { knCheckCoverage } from './zodHelpers'
@@ -28,6 +28,7 @@ export const KN_LOOT_TABLES = {
   helmets: 100,
   shields: 100,
   masteries: 20,
+  containers: 20,
 } as const
 
 export type KnLootTableKey = keyof typeof KN_LOOT_TABLES
@@ -45,7 +46,8 @@ export const knLootDropSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('fragment') }),
   z.object({ kind: z.literal('potion') }),
   z.object({ kind: z.literal('magic'), item: z.enum(['weapon', 'armor']).optional() }),
-  z.object({ kind: z.literal('relic') }),
+  // Sans clé, une Relique se tire sur la table des Reliques ; avec une clé, c'est celle-là (un contenant).
+  z.object({ kind: z.literal('relic'), key: slug.optional() }),
   z.object({ kind: z.literal('mastery'), key: slug }),
   z.object({ kind: z.literal('nothing') }),
 ])
@@ -100,6 +102,9 @@ export interface KnLootResult {
   value: number
   // Un objet magique : son type (D8), et pour une arme ou une armure l'objet ordinaire dont il est la version enchantée.
   magic?: { type: KnMagicType, baseRef?: string }
+  // Une Relique : celle qu'on a tirée (D20) ou que le contenant donne, et son jet.
+  relic?: KnRelic
+  relicRoll?: number
 }
 
 const MAX_CHAIN = 6
@@ -148,9 +153,24 @@ function rollMagicBase(content: KnLootContent, type: 'weapon' | 'armor', rng: Kn
 
 // Tire sur une table, puis sur celles qu'elle désigne, jusqu'à ce qu'un résultat donne quelque chose. Si une table de la chaîne
 // n'est pas chargée, rend celle qui manque. Un objet magique tire en plus son type.
-export function knRollLoot(content: KnLootContent, start: KnLootTableKey, rng: KnRng = Math.random): KnLootResult | { missing: KnLootTableKey } {
+export function knRollLoot(
+  content: KnLootContent,
+  start: KnLootTableKey,
+  rng: KnRng = Math.random,
+  // Le contenu des objets magiques : sans lui, une Relique n'est qu'un objet « à identifier ».
+  magic: KnMagicContent | null = null,
+): KnLootResult | { missing: KnLootTableKey } {
   const result = rollChain(content, start, rng)
-  if ('missing' in result || result.drop.kind !== 'magic') return result
+  if ('missing' in result) return result
+  if (result.drop.kind === 'relic' && magic) {
+    const { key } = result.drop
+    const roll = key || !magic.relics ? undefined : knRollDie(KN_RELIC_DIE, rng)
+    const relic = key
+      ? [...(magic.containerRelics ?? []), ...(magic.relics?.entries ?? [])].find(candidate => candidate.key === key)
+      : magic.relics?.entries.find(entry => roll !== undefined && roll >= entry.min && roll <= entry.max)
+    return { ...result, ...(relic ? { relic } : {}), ...(roll === undefined ? {} : { relicRoll: roll }) }
+  }
+  if (result.drop.kind !== 'magic') return result
   const type = result.drop.item ?? knMagicTypeAt(knRollDie(KN_MAGIC_TYPE_DIE, rng))
   const baseRef = type === 'weapon' || type === 'armor' ? rollMagicBase(content, type, rng) : undefined
   return { ...result, magic: { type, ...(baseRef ? { baseRef } : {}) } }
@@ -246,6 +266,21 @@ export function knApplyLoot(state: KnLootState, result: KnLootResult, catalog: r
       : { ...base, name: placeholder.name, kind: placeholder.kind, weight: knDefaultWeight(placeholder.kind) }
     const added = addItem(state, { ...ordinary, magic: { table: type, identified: false, properties: [], peculiarities: [] } })
     return added ? { ...added, lines: [`${ordinary.name} (objet magique à harmoniser)`] } : { state, lines: ['inventaire plein'] }
+  }
+  if (drop.kind === 'relic' && result.relic) {
+    const { relic } = result
+    const entry = relic.base ? catalog.find(candidate => candidate.key === relic.base && !candidate.provision) : undefined
+    const ordinary: Omit<KnItem, 'id'> = entry
+      ? omitId(knItemFromCatalog(entry, 'x'))
+      : { ...base, name: relic.name, kind: relic.kind, weight: knDefaultWeight(relic.kind) }
+    const { note: _note, ...rest } = ordinary
+    const added = addItem(state, {
+      ...rest,
+      name: relic.name,
+      ...(relic.lore ? { note: relic.lore.slice(0, 600) } : {}),
+      magic: { table: 'relic', identified: true, rarity: 'relic', properties: relic.properties, peculiarities: [] },
+    })
+    return added ? { ...added, lines: [`Relique : ${relic.name}`] } : { state, lines: ['inventaire plein'] }
   }
   const name = drop.kind === 'relic' ? 'Relique à identifier' : 'Objet magique à identifier'
   return addItem(state, { ...base, name, kind: 'gear', weight: 'normal' }) ?? { state, lines: ['inventaire plein'] }

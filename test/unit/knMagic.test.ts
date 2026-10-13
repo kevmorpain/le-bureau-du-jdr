@@ -227,3 +227,59 @@ describe('butin magique', () => {
     expect(applied.state.inventory).toEqual([])
   })
 })
+
+describe('Reliques', () => {
+  const relics: KnMagicContent = {
+    tables: {},
+    relics: {
+      die: 20,
+      entries: [
+        { min: 1, max: 10, key: 'shield', name: 'Égide', kind: 'shield', base: 'fakeShield', lore: 'Une égide.', properties: [{ text: 'Parade +20.', mech: [{ k: 'parry', amount: 20 }] }] },
+        { min: 11, max: 20, key: 'draught', name: 'Philtre', kind: 'potion', properties: [{ text: 'Santé +D4.', mech: [{ k: 'permanent', vital: 'health', dice: d(1, 4) }] }] },
+      ],
+    },
+    containerRelics: [{ key: 'stone', name: 'Pierre de Borestia', kind: 'gear', properties: [{ text: 'Identifie les potions.', mech: [{ k: 'identify' }] }] }],
+  }
+  const content: KnLootContent = {
+    precious: { die: 20, entries: [{ min: 1, max: 20, text: 'Relique', drop: { kind: 'relic' } }] },
+    containers: { die: 20, entries: [{ min: 1, max: 20, text: 'Pierre de Borestia', drop: { kind: 'relic', key: 'stone' } }] },
+  }
+  const catalog: KnCatalogItem[] = [{ key: 'fakeShield', name: 'Pavois', kind: 'shield', weight: 'normal', value: 100, parry: 20, integrity: 10, protection: 0 }]
+  const start = { inventory: [] as KnItem[], provisions: emptyKnProvisions() }
+
+  it('une Relique se tire sur la table D20, ou vient d\'un contenant par sa clé', () => {
+    const drawn = knRollLoot(content, 'precious', sequence(die(20, 1), die(20, 15)), relics)
+    const container = knRollLoot(content, 'containers', sequence(die(20, 1)), relics)
+
+    expect(drawn).toMatchObject({ relic: { key: 'draught' }, relicRoll: 15 })
+    expect(container).toMatchObject({ relic: { key: 'stone' } })
+    expect('relicRoll' in container).toBe(false)
+  })
+
+  it('sans le contenu des objets magiques, une Relique reste à identifier', () => {
+    const result = knRollLoot(content, 'precious', sequence(die(20, 1)))
+    const applied = knApplyLoot(start, result as Exclude<typeof result, { missing: unknown }>, catalog)
+
+    expect(applied.state.inventory[0]).toMatchObject({ name: 'Relique à identifier' })
+  })
+
+  it('une Relique est déjà harmonisée, reprend les statistiques de son objet de base, neuves, et garde son texte d\'ambiance', () => {
+    const result = knRollLoot(content, 'precious', sequence(die(20, 1), die(20, 3)), relics) as Exclude<ReturnType<typeof knRollLoot>, { missing: unknown }>
+    const item = knApplyLoot(start, result, catalog).state.inventory[0]!
+
+    expect(item).toMatchObject({
+      name: 'Égide',
+      kind: 'shield',
+      parry: 20,
+      integrity: { max: 10, current: 10 },
+      note: 'Une égide.',
+      magic: { table: 'relic', identified: true, rarity: 'relic', properties: [{ mech: [{ k: 'parry', amount: 20 }] }] },
+    })
+    expect(knItemSchema.safeParse(item).success).toBe(true)
+  })
+
+  it('le schéma du contenu accepte les Reliques et les fait couvrir leur D20', () => {
+    expect(knMagicContentSchema.safeParse(relics).success).toBe(true)
+    expect(knMagicContentSchema.safeParse({ ...relics, relics: { die: 20, entries: relics.relics!.entries.slice(0, 1) } }).success).toBe(false)
+  })
+})

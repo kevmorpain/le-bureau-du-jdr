@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { emptyKnProvisions } from '../../shared/ker-nethalas/camp'
 import { knResolveDamage } from '../../shared/ker-nethalas/combat'
-import { knArmorByZone, knAttackOptions, knInitiativeBonus } from '../../shared/ker-nethalas/equipment'
+import { knArmorByZone, knAttackOptions, knDefenseOptions, knInitiativeBonus } from '../../shared/ker-nethalas/equipment'
 import type { KnItem } from '../../shared/ker-nethalas/inventory'
 import type { KnMagic, KnMagicMech, KnMagicProperty } from '../../shared/ker-nethalas/magicSchema'
 import {
@@ -10,12 +10,16 @@ import {
   knMagicAttack,
   knMagicCarryBonus,
   knMagicDefenses,
+  knMagicIdentifiesPotions,
   knMagicInitiative,
+  knMagicParry,
   knMagicPendingChoices,
   knMagicProvidesLight,
   knMagicSources,
   knMagicUses,
+  knPermanentGains,
 } from '../../shared/ker-nethalas/magicEffects'
+import { knIsUnsellable, knSell, knSellPrice } from '../../shared/ker-nethalas/trade'
 import { emptyKnRun } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus } from '../../shared/ker-nethalas/status'
 import { knApplyTableEffects, type KnTableEffectState } from '../../shared/ker-nethalas/tables'
@@ -151,6 +155,47 @@ describe('attaque avec des objets magiques', () => {
     expect(option).toMatchObject({ weapon: 'objet i1', pool: 'D6+D4+1', speed: 12 })
     expect(option!.magic?.vs).toEqual([{ enemy: 'undead', amount: 2 }])
     expect(knAttackOptions([item('i5', 'weapon', 'mainHand', { weapon: { skill: 'bladedWeapons', speed: 0, damageType: 'slashing', traits: ['powerful'] } })])[0]).toMatchObject({ pool: 'D6+1' })
+  })
+})
+
+describe('objets des Reliques', () => {
+  it('une parade magique vaut pour toute parade, et s\'ajoute au bouclier', () => {
+    const shield = item('i1', 'shield', 'offHand', { parry: 10, magic: magic([property([{ k: 'parry', amount: 20 }])]) })
+    const sword = item('i2', 'weapon', 'mainHand', { weapon: { skill: 'bladedWeapons', speed: 0, damageType: 'slashing', traits: [] } })
+
+    expect(knMagicParry([shield, sword])).toBe(20)
+    expect(knDefenseOptions([shield, sword]).find(option => option.kind === 'parry')!.bonus).toBe(30)
+    expect(knDefenseOptions([sword]).find(option => option.kind === 'parry')).toBeUndefined()
+  })
+
+  it('une pierre qui identifie les potions suffit d\'être possédée, au sac comme sur soi', () => {
+    const stone = item('i1', 'gear', 'bag', { magic: magic([property([{ k: 'identify' }])]) })
+
+    expect(knMagicIdentifiesPotions([stone])).toBe(true)
+    expect(knMagicIdentifiesPotions([item('i2', 'gear', 'bag')])).toBe(false)
+    expect(knMagicIdentifiesPotions([{ ...stone, magic: magic([property([{ k: 'identify' }])], false) }])).toBe(false)
+  })
+
+  it('un objet à consommer annonce ses gains permanents, qu\'on le porte ou non', () => {
+    const vial = item('i1', 'potion', 'bag', { magic: magic([property([{ k: 'permanent', vital: 'health', dice: d(1, 4) }]), property([{ k: 'permanentResist', resistance: 'endurance', amount: 5 }])]) })
+
+    expect(knPermanentGains(vial)).toEqual([
+      { k: 'permanent', vital: 'health', dice: d(1, 4) },
+      { k: 'permanentResist', resistance: 'endurance', amount: 5 },
+    ])
+    expect(knPermanentGains(item('i2', 'potion', 'bag'))).toEqual([])
+  })
+
+  it('un objet magique se vend à prix fixe selon sa rareté, et pas tant qu\'il n\'est pas harmonisé', () => {
+    const ring = (over: Partial<KnMagic>) => item('i1', 'ring', 'bag', { value: 999, magic: { ...magic([]), ...over } })
+
+    expect(knSellPrice(ring({ rarity: 'uncommon' }))).toBe(200)
+    expect(knSellPrice(ring({ rarity: 'epic' }))).toBe(600)
+    expect(knSellPrice(ring({ rarity: 'relic' }))).toBe(1000)
+    expect(knSellPrice({ ...ring({ rarity: 'relic' }), quantity: 2 })).toBe(2000)
+    expect(knIsUnsellable(ring({ identified: false }))).toBe(true)
+    expect(knSell({ coins: 0, inventory: [ring({ identified: false })], provisions: emptyKnProvisions() }, 'i1')).toEqual({ error: 'unidentified' })
+    expect(knSell({ coins: 5, inventory: [ring({ rarity: 'rare' })], provisions: emptyKnProvisions() }, 'i1')).toMatchObject({ state: { coins: 405, inventory: [] } })
   })
 })
 

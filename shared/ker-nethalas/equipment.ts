@@ -2,7 +2,7 @@ import type { KnSurvivorArmorZone } from './combat'
 import type { KnDamageType } from './catalog/damageTypes'
 import type { KnActiveSource, KnEffect } from './effects'
 import { knIntegrityDown, KN_INTEGRITY_DICE, type KnItem, type KnIntegrityDie } from './inventory'
-import { knMagicArmorBonus, knMagicAttack, knMagicInitiative, type KnMagicAttack } from './magicEffects'
+import { knMagicArmorBonus, knMagicAttack, knMagicInitiative, knMagicParry, type KnMagicAttack } from './magicEffects'
 import { knRollDie, type KnRng } from './run'
 import type { KnSkillKey } from './skills'
 
@@ -119,7 +119,7 @@ export function knDefenseOptions(items: readonly KnItem[]): KnDefenseOption[] {
       skill: item.weapon!.skill,
       weapon: item.name,
       ...(shield ? { shield: shield.name } : {}),
-      bonus: shield ? (shield.parry ?? 0) + (traits(item).includes('defensive') ? 10 : 0) : 0,
+      bonus: (shield ? (shield.parry ?? 0) + (traits(item).includes('defensive') ? 10 : 0) : 0) + knMagicParry(items),
       used: shield ? [shield.id] : [],
     }))
   return [{ id: 'dodge', kind: 'dodge', skill: 'dodge', bonus: 0, used: [] }, ...parries]

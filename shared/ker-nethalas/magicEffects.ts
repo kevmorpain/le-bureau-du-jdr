@@ -60,6 +60,20 @@ export const knMagicProvidesLight = (items: readonly KnItem[]): boolean => activ
 
 export const knMagicInitiative = (items: readonly KnItem[]): number => sum(items, mech => mech.k === 'initiative' ? mech.amount : 0)
 
+// Un bonus de parade (le bouclier d'une Relique) vaut pour toute parade.
+export const knMagicParry = (items: readonly KnItem[]): number => sum(items, mech => mech.k === 'parry' ? mech.amount : 0)
+
+// Une pierre qui identifie les potions sans test : il suffit de la posséder, dans le sac comme sur soi.
+export const knMagicIdentifiesPotions = (items: readonly KnItem[]): boolean =>
+  items.some(item => item.magic?.identified && item.magic.properties.some(property => property.mech.some(mech => mech.k === 'identify')))
+
+export type KnPermanentGain = Extract<KnMagicMech, { k: 'permanent' | 'permanentResist' }>
+
+// Un objet à consommer qui augmente à jamais une jauge ou une Résistance.
+export const knPermanentGains = (item: Pick<KnItem, 'magic'>): KnPermanentGain[] =>
+  (item.magic?.identified ? item.magic.properties : []).flatMap(property =>
+    property.mech.filter((mech): mech is KnPermanentGain => mech.k === 'permanent' || mech.k === 'permanentResist'))
+
 // Une pièce d'armure qui en protège mieux une autre : les vambraces ou les jambières portées gagnent de l'Armure.
 export const knMagicArmorBonus = (items: readonly KnItem[], piece: 'vambraces' | 'greaves'): number =>
   sum(items, mech => mech.k === 'armor' && mech.piece === piece ? mech.amount : 0)

@@ -49,6 +49,12 @@ export const knMagicMechSchema = z.discriminatedUnion('k', [
   z.object({ k: z.literal('armor'), piece, amount }),
   // `heal` : les Blessures que l'usage soigne, au porteur lui-même quand `self`, sinon à une cible que le joueur désigne.
   z.object({ k: z.literal('use'), limit, label, heal: knDiceSchema.optional(), self: z.boolean().optional() }),
+  // Réservées aux Reliques : un bonus de parade, une identification des potions sans test, et un objet à consommer qui augmente à
+  // jamais une jauge ou une Résistance.
+  z.object({ k: z.literal('parry'), amount }),
+  z.object({ k: z.literal('identify') }),
+  z.object({ k: z.literal('permanent'), vital: z.enum(KN_VITAL_KEYS), dice: knDiceSchema }),
+  z.object({ k: z.literal('permanentResist'), resistance: z.enum(KN_RESISTANCE_KEYS), amount }),
 ])
 
 export type KnMagicMech = z.infer<typeof knMagicMechSchema>
@@ -103,7 +109,8 @@ export type KnMagicProperty = z.infer<typeof knMagicPropertySchema>
 // Un objet magique : tant qu'il n'est pas harmonisé, il se comporte comme son équivalent ordinaire, et seul son type est
 // connu. L'harmonisation tire sa rareté et ses propriétés, figées ici.
 export const knMagicSchema = z.object({
-  table: z.enum(KN_MAGIC_TABLES),
+  // La table de propriétés de son type, ou `relic` : une Relique porte ses propres propriétés.
+  table: z.enum([...KN_MAGIC_TABLES, 'relic']),
   identified: z.boolean(),
   rarity: z.enum(KN_ITEM_RARITIES).optional(),
   properties: z.array(knMagicPropertySchema).max(KN_MAGIC_BOUNDS.properties),

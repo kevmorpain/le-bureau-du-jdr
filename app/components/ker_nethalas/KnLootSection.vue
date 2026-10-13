@@ -102,6 +102,7 @@ import { knAddAmulet, knRandomMasteryKey } from '~~/shared/ker-nethalas/amulets'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knApplyLoot, knRollLoot, type KnLootContent, type KnLootResult, type KnLootTableKey } from '~~/shared/ker-nethalas/loot'
+import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 const props = defineProps<{
@@ -109,6 +110,7 @@ const props = defineProps<{
   catalog: KnCatalogItem[] | null
   bestiary: KnCreature[] | null
   masteries: KnMastery[] | null
+  magic: KnMagicContent | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
@@ -116,7 +118,7 @@ const character = defineModel<KnCharacter>('character', { required: true })
 const { t } = useI18n()
 const toast = useToast()
 
-const STARTS: KnLootTableKey[] = ['spoils', 'mundane', 'valuable', 'precious', 'resources']
+const STARTS: KnLootTableKey[] = ['spoils', 'mundane', 'valuable', 'precious', 'resources', 'containers']
 
 interface Pending {
   id: number
@@ -128,7 +130,7 @@ let nextId = 1
 
 function draw(starts: readonly KnLootTableKey[]) {
   if (!props.loot) return
-  for (const start of starts) pending.value.push({ id: nextId++, result: knRollLoot(props.loot, start) })
+  for (const start of starts) pending.value.push({ id: nextId++, result: knRollLoot(props.loot, start, Math.random, props.magic) })
 }
 
 const creatureItems = computed<SelectItem[]>(() =>
@@ -151,6 +153,7 @@ function path(entry: Pending) {
 
 function summary(result: KnLootResult) {
   if (result.drop.kind === 'potion') return 'Une potion, à identifier'
+  if (result.drop.kind === 'relic') return result.relic ? `Relique : ${result.relic.name}` : 'Une Relique (contenu non chargé : notez-la à la main)'
   if (result.drop.kind === 'magic' && result.magic) return `Objet magique : ${t(`ker_nethalas.inventory.magicTables.${result.magic.type}`)}${result.magic.baseRef ? ` (${props.catalog?.find(entry => entry.key === result.magic!.baseRef)?.name ?? result.magic.baseRef})` : ''}`
   const last = result.steps[result.steps.length - 1]!
   const label = last.title ?? last.text

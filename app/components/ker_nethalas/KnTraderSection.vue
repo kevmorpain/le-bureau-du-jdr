@@ -5,7 +5,8 @@
         Marchand
       </h2>
       <p class="text-sm text-muted">
-        Un marchand rachète à la moitié du prix, sauf les gemmes et bijoux, payés à leur valeur entière. Les amulettes ne se vendent pas.
+        Un marchand rachète à la moitié du prix, sauf les gemmes et bijoux, payés à leur valeur entière. Un objet magique se vend à prix fixe
+        (Peu commun 200, Rare 400, Épique 600, Relique 1 000) une fois harmonisé. Les amulettes ne se vendent pas.
         Pièces : <span class="font-semibold">{{ character.coins }}</span>
       </p>
     </template>
@@ -69,7 +70,14 @@
             class="flex flex-wrap items-center gap-2"
           >
             <span class="min-w-40 flex-1">{{ item.name }}{{ item.quantity > 1 ? ` × ${item.quantity}` : '' }}</span>
+            <span
+              v-if="knIsUnsellable(item)"
+              class="text-xs text-muted"
+            >
+              à harmoniser avant de vendre
+            </span>
             <UButton
+              v-else
               size="xs"
               variant="soft"
               @click="sell(item.id)"
@@ -107,7 +115,7 @@
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
-import { knBuy, knSell, knSellPrice, knSellProvision, knUnitSellPrice, type KnTradeResult } from '~~/shared/ker-nethalas/trade'
+import { knBuy, knIsUnsellable, knSell, knSellPrice, knSellProvision, knUnitSellPrice, type KnTradeResult } from '~~/shared/ker-nethalas/trade'
 
 const props = defineProps<{
   catalog: KnCatalogItem[] | null
@@ -136,7 +144,7 @@ const state = () => ({ coins: character.value.coins, inventory: character.value.
 
 function commit(result: KnTradeResult, title: string) {
   if ('error' in result) {
-    toast.add({ title: { coins: 'Pas assez de pièces', full: 'Plus de place', unknown: 'Objet introuvable', stock: 'Pas assez en réserve' }[result.error], color: 'warning' })
+    toast.add({ title: { coins: 'Pas assez de pièces', full: 'Plus de place', unknown: 'Objet introuvable', stock: 'Pas assez en réserve', unidentified: 'Harmonisez l\'objet avant de le vendre' }[result.error], color: 'warning' })
     return
   }
   character.value.coins = result.state.coins

@@ -511,9 +511,20 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   vambraces et jambières, l'Initiative et la Vitesse, la réserve de dégâts de l'attaque (dés de l'arme maniée, plus ceux des gants)
   suivent. Les immunités s'appliquent aux états que les effets donneraient ; les Résistances et réductions s'appliquent aux
   dégâts que le survivant reçoit en combat (`damageTarget` du survivant).
+- **Reliques** (p. 234-241) : un objet unique aux propriétés fixées (jeu `magicItems`, `relics` en D20 et `containerRelics` par clé),
+  déjà harmonisé, avec le texte d'ambiance en note et, s'il reprend un objet du catalogue (bouclier, sabre, plaques, masse, lance), ses
+  statistiques neuves. Mécaniques en plus : bonus de parade, identification des potions sans test (Pierre de Borestia, rien qu'à la
+  posséder), et objet à consommer qui augmente à jamais une jauge ou une Résistance (bouton « Consommer »). Elles tombent au butin
+  précieux (D20 puis D20 des Reliques) ou, par clé, dans la table du **butin des contenants** (D20, p. 220), à tirer après la
+  fouille approfondie d'un contenant.
+- **Revente** (p. 127) : un objet magique se vend à prix fixe, jamais à la moitié : Peu commun 200, Rare 400, Épique 600, Relique 1 000.
+  Il ne se vend qu'une fois harmonisé (sa rareté n'est connue qu'alors) ; une amulette ne se vend pas.
 - **Laissé de côté** : les propriétés qui demandent un état de combat que l'outil ne suit pas (Réaction gratuite, relance de test,
   bonus de Compétence « pour parer ») restent des rappels ; les dés de dégâts d'un type propre (+D4 de feu) entrent dans la réserve
-  sans type séparé, rappelés sous l'attaque ; les Reliques, la revente et la Pierre de Borestia viennent ensuite.
+  sans type séparé, rappelés sous l'attaque ; les Gantelets de l'Étreinte du vide n'ont pas de statistiques d'arme (le livre dit
+  « arme de poing » sans en donner) ; la Santé que l'Anneau de la Servitude soumise ajoute aux Sbires est illisible dans
+  l'extraction (« /2 ») et reste à compléter d'après le livre ; les effets d'un Cœur d'Amal-Tul (200 XP) et de la Graine de Cœur-sombre
+  (+1 Point d'Aptitude) se font à la main.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -863,7 +874,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits ; b : butin, gemmes, marchand écrits, KN42 ; fragments et potions utilisables écrits, KN43 ; c : objets magiques générés, harmonisés et appliqués, KN44 ; Reliques et revente à venir) |
+| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits ; b : butin, gemmes, marchand écrits, KN42 ; fragments et potions utilisables écrits, KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -1005,7 +1016,10 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   noms **dans l'ordre vertical** (1 Acide, 2-3 Arcanique, 4-5 Contondants, 6 Froid, 7-8 Force, 9 Feu, 10 Sacrés, 11 Infernaux, 12 Foudre,
   13-14 Nécrotiques, 15-16 Perforants, 17 Poison, 18 Psychiques, 19-20 Tranchants), seule lecture qui double les trois types physiques ;
   **à contrôler dans le PDF**. La réduction de dégâts se retranche après l'Armure, avant la Résistance (le livre ne les ordonne pas).
-  Un objet « tant qu'on le porte » agit porté ou tenu. ⚠️ hypothèses
+  Un objet « tant qu'on le porte » agit porté ou tenu. La table du butin des contenants (D20, p. 220) est brouillée de la même
+  façon : ses 18 lignes sont appariées aux plages dans l'ordre (1-2 nourriture avariée … 11 Journal vierge, 12 Pierre de Borestia,
+  13 Cœur d'Amal-Tul, 14 Masse de l'Oblitération, 15 Anneau de Paix mentale, 16-20 les cinq Fioles) ; **à contrôler dans le PDF**.
+  ⚠️ hypothèses
 - **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
   suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
   s'arrondit au supérieur (seule règle d'arrondi du livre : la moitié des dégâts), les durées aussi, d'une salle ou d'un round au

@@ -3,8 +3,10 @@ import type { KnCreatureType } from './catalog/creatureTypes'
 import type { KnDamageType } from './catalog/damageTypes'
 import { knRollDice } from './dice'
 import { knDiceSchema } from './diceSchema'
+import { KN_ITEM_KINDS } from './inventory'
 import {
   KN_MAGIC_BOUNDS,
+  knMagicPropertySchema,
   KN_MAGIC_TABLES,
   knMagicMechTemplateSchema,
   type KnMagic,
@@ -81,12 +83,33 @@ export const knPeculiaritySchema = z.object({
   meta: z.enum(['choose', 'twice']).optional(),
 }).refine(entry => entry.min <= entry.max, { message: 'la plage va de min à max' })
 
+// Une Relique : un objet unique, aux propriétés déjà fixées, qui n'a pas besoin d'être harmonisé. `base` : l'objet ordinaire du
+// catalogue dont elle reprend les statistiques (arme, armure, bouclier).
+export const knRelicSchema = z.object({
+  key: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/),
+  name: z.string().trim().min(1).max(100),
+  kind: z.enum(KN_ITEM_KINDS),
+  base: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/).optional(),
+  lore: z.string().trim().max(600).optional(),
+  properties: z.array(knMagicPropertySchema).min(1).max(KN_MAGIC_BOUNDS.properties),
+})
+
+export type KnRelic = z.infer<typeof knRelicSchema>
+
+export const KN_RELIC_DIE = 20
+
 export const knMagicContentSchema = z.object({
   tables: z.object(Object.fromEntries(KN_MAGIC_TABLES.map(key => [key, tableOf(KN_MAGIC_PROPERTY_DIE).optional()])) as Record<KnMagicTable, z.ZodOptional<ReturnType<typeof tableOf>>>),
   peculiarities: z.object({
     die: z.literal(KN_PECULIARITY_DIE),
     entries: z.array(knPeculiaritySchema).min(1).max(KN_PECULIARITY_DIE),
   }).superRefine((table, ctx) => knCheckCoverage(table.entries, KN_PECULIARITY_DIE, ctx)).optional(),
+  // La table des Reliques (D20), et celles qu'on ne trouve que dans les contenants, par clé.
+  relics: z.object({
+    die: z.literal(KN_RELIC_DIE),
+    entries: z.array(knRelicSchema.extend({ min: boundedInt({ min: 1, max: KN_RELIC_DIE }), max: boundedInt({ min: 1, max: KN_RELIC_DIE }) })).min(1).max(KN_RELIC_DIE),
+  }).superRefine((table, ctx) => knCheckCoverage(table.entries, KN_RELIC_DIE, ctx)).optional(),
+  containerRelics: z.array(knRelicSchema).max(20).optional(),
 })
 
 export type KnMagicContent = z.infer<typeof knMagicContentSchema>
@@ -171,7 +194,8 @@ export function knIdentifyMagic(
   labels: KnMagicLabels,
   options: { peculiarity?: boolean } = {},
   rng: KnRng = Math.random,
-): KnMagicIdentification | { missing: KnMagicTable } {
+): KnMagicIdentification | { missing: KnMagicTable | 'relic' } {
+  if (magic.table === 'relic') return { missing: 'relic' }
   const table = content.tables[magic.table]
   if (!table) return { missing: magic.table }
   const rarityRoll = knRollDie(KN_RARITY_DIE, rng)

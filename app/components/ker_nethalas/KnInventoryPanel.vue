@@ -185,6 +185,15 @@
             Réparer
           </UButton>
         </template>
+        <UButton
+          v-if="knPermanentGains(item).length"
+          size="xs"
+          icon="i-heroicons:sparkles"
+          :aria-label="`Consommer ${item.name}`"
+          @click="consumePermanent(item)"
+        >
+          Consommer
+        </UButton>
         <template v-if="item.consumable">
           <UButton
             v-if="item.consumable.identified === false"
@@ -314,7 +323,8 @@ import { knDiceLabel, knRollDice } from '~~/shared/ker-nethalas/dice'
 import { knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
 import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knConsumableEntry, type KnLootContent } from '~~/shared/ker-nethalas/loot'
-import { knIsWorn, knMagicCarryBonus, knMagicUses, type KnMagicUse } from '~~/shared/ker-nethalas/magicEffects'
+import { knIsWorn, knMagicCarryBonus, knMagicIdentifiesPotions, knMagicUses, knPermanentGains, type KnMagicUse } from '~~/shared/ker-nethalas/magicEffects'
+import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import { knIsUsedUp, knMarkUsed, knUseLimitLabel } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import type { KnRollRequest } from '~~/shared/ker-nethalas/roll'
@@ -470,6 +480,25 @@ function setChoice(id: string, index: number, skill: KnSkillKey) {
     : item)
 }
 
+// Consommer un objet qui augmente à jamais une jauge ou une Résistance : le maximum monte, et la valeur actuelle avec lui.
+function consumePermanent(item: KnItem) {
+  const c = character.value
+  const lines: string[] = []
+  for (const gain of knPermanentGains(item)) {
+    if (gain.k === 'permanent') {
+      const rolled = knRollDice(gain.dice).total
+      c[`${gain.vital}Max`] = Math.min(KN_BOUNDS.vital.max, c[`${gain.vital}Max`] + rolled)
+      c[`${gain.vital}Current`] = Math.min(KN_BOUNDS.vital.max, c[`${gain.vital}Current`] + rolled)
+      lines.push(`+${rolled} ${t(`ker_nethalas.vitals.${gain.vital}`).toLowerCase()} maximum`)
+    } else {
+      c.resistances[gain.resistance] = Math.min(KN_BOUNDS.resistance.max, c.resistances[gain.resistance] + gain.amount)
+      lines.push(`+${gain.amount} ${t(`ker_nethalas.resistances.${gain.resistance}`)}`)
+    }
+  }
+  c.inventory = knRemoveItem(inventory.value, item.id)
+  toast.add({ title: `${item.name} consommé`, description: lines.join(', '), color: 'success' })
+}
+
 // Un usage limité : il se marque (et se remet à zéro avec sa fréquence) ; un soin du porteur s'applique, celui d'une cible se jette.
 function useMagic(use: KnMagicUse) {
   character.value.status = knMarkUsed(character.value.status, use.key, use.limit)
@@ -504,7 +533,19 @@ function replace(item: KnItem) {
   character.value.inventory = inventory.value.map(candidate => candidate.id === item.id ? item : candidate)
 }
 
+// Une pierre de Borestia identifie les potions sans test de Médecine.
+function identifyNow(item: KnItem) {
+  const known = reveal(item)
+  if (!known) return
+  replace(known)
+  toast.add({ title: known.name, description: agingOf(known)?.text, color: 'success' })
+}
+
 function startIdentify(item: KnItem) {
+  if (knMagicIdentifiesPotions(inventory.value)) {
+    identifyNow(item)
+    return
+  }
   pendingCheck.value = {
     id: ++checkSeq,
     request: { id: knCheckId('medicine'), note: `Identifier : ${item.name}` },

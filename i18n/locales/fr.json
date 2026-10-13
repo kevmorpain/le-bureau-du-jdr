@@ -212,7 +212,8 @@
         "greaves": "Jambières",
         "helmets": "Casques",
         "shields": "Boucliers",
-        "masteries": "Maîtrise aléatoire"
+        "masteries": "Maîtrise aléatoire",
+        "containers": "Contenant"
       }
     },
     "inventory": {
@@ -223,7 +224,8 @@
         "boots": "bottes",
         "gloves": "gants",
         "ring": "anneau",
-        "amulet": "amulette"
+        "amulet": "amulette",
+        "relic": "Relique"
       },
       "rarities": {
         "uncommon": "Peu commun",
