@@ -124,16 +124,16 @@
                   @update:model-value="setChoice(item.id, index, $event as KnSkillKey)"
                 />
                 <UButton
-                  v-for="use in usesOf(item, index)"
-                  :key="use.key"
+                  v-for="limited in usesOf(item, index)"
+                  :key="limited.key"
                   size="xs"
                   variant="soft"
                   icon="i-heroicons:bolt"
-                  :disabled="!knIsWorn(item) || knIsUsedUp(character.status, use.key)"
-                  :title="knIsUsedUp(character.status, use.key) ? `Déjà utilisé : ${knUseLimitLabel[use.limit]}` : knUseLimitLabel[use.limit]"
-                  @click="useMagic(use)"
+                  :disabled="!knIsWorn(item) || knIsUsedUp(character.status, limited.key)"
+                  :title="knIsUsedUp(character.status, limited.key) ? `Déjà utilisé : ${knUseLimitLabel[limited.limit]}` : knUseLimitLabel[limited.limit]"
+                  @click="useMagic(limited)"
                 >
-                  {{ use.label }}
+                  {{ limited.label }}
                 </UButton>
               </li>
             </ul>

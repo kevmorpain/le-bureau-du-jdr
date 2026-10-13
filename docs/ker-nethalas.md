@@ -874,7 +874,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits ; b : butin, gemmes, marchand écrits, KN42 ; fragments et potions utilisables écrits, KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) |
+| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 7 (a : inventaire, catalogue, équipement dans le combat, kit de départ, KN40-KN41 ; b : butin, gemmes, marchand, fragments et potions utilisables, KN42-KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) ; contenu à relire par le PM |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -1034,7 +1034,9 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   relire par le PM avant tout chargement en production.
 - Vérifié dans le navigateur, sur un survivant de test : cinq objets magiques tirés au butin (type affiché), harmonisation de deux
   d'entre eux au camp (rareté et propriétés tirées, Cristaux décomptés), Résistance magique 20 → 30 une fois la ceinture
-  harmonisée portée. Non vérifié à l'écran : les boutons d'usage limité, la compétence à choisir, et l'amulette tirée au butin.
+  harmonisée portée. Reliques tirées au butin précieux et dans la table des contenants ; une fiole consommée fait passer l'Éther
+  maximum de 9 à 12 et disparaît. Non vérifié à l'écran : les boutons d'usage limité, la compétence à choisir, l'amulette tirée
+  au butin, la revente, et la Pierre de Borestia en situation (couverts par les tests du moteur).
 
 ### 2026-10-13 — Tranche 7, étape 4c : kit de départ en inventaire
 - Vérifié dans le navigateur : l'étape Équipement de la création tire l'armure (« Grand bouclier ») et propose les armes du
