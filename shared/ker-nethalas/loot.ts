@@ -112,6 +112,9 @@ export interface KnLootResult {
 
 export const KN_LORE_BOOK_REF = 'loreBook'
 
+// Trouver un livre de savoir rapporte de l'expérience.
+export const KN_LORE_BOOK_XP = 10
+
 const MAX_CHAIN = 6
 
 export const knLootEntryAt = (table: KnLootTable | undefined, roll: number): KnLootEntry | undefined =>
@@ -208,6 +211,8 @@ export interface KnLootApplied {
   lines: string[]
   // Une amulette : elle n'entre pas dans l'inventaire, c'est une Maîtrise à tirer.
   amulet?: boolean
+  // L'expérience que ce butin rapporte (un livre de savoir trouvé).
+  xp?: number
 }
 
 const MAGIC_PLACEHOLDERS: Record<KnMagicTable, { name: string, kind: KnItemKind }> = {
@@ -244,16 +249,17 @@ export function knApplyLoot(state: KnLootState, result: KnLootResult, catalog: r
     }
     let next = state
     const lines: string[] = []
+    const earned = () => entry.key === KN_LORE_BOOK_REF && lines.length ? { xp: KN_LORE_BOOK_XP * lines.length } : {}
     for (let i = 0; i < result.count; i++) {
       const ordinary = knItemFromCatalog(entry, 'x', { found: true })
       const { loreBook } = result
       const item = loreBook ? { ...ordinary, name: `${entry.name} : ${loreBook.title}`.slice(0, 100), note: loreBook.text.slice(0, 600) } : ordinary
       const added = addItem(next, item)
-      if (!added) return { state: next, lines: [...lines, 'inventaire plein'] }
+      if (!added) return { state: next, lines: [...lines, 'inventaire plein'], ...earned() }
       next = added.state
       lines.push(result.loreBook ? `${entry.name} : ${result.loreBook.title}` : entry.name)
     }
-    return { state: next, lines }
+    return { state: next, lines, ...earned() }
   }
 
   const base = { quantity: 1, place: 'bag' as const }

@@ -99,6 +99,7 @@
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knAddAmulet, knRandomMasteryKey } from '~~/shared/ker-nethalas/amulets'
+import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knApplyLoot, knRollLoot, type KnLootContent, type KnLootResult, type KnLootTableKey } from '~~/shared/ker-nethalas/loot'
@@ -166,10 +167,14 @@ function summary(result: KnLootResult) {
 function take(entry: Pending) {
   if ('missing' in entry.result) return
   const c = character.value
-  const { state, lines, amulet } = knApplyLoot({ inventory: c.inventory, provisions: c.provisions }, entry.result, props.catalog ?? [])
+  const { state, lines, amulet, xp } = knApplyLoot({ inventory: c.inventory, provisions: c.provisions }, entry.result, props.catalog ?? [])
   c.inventory = state.inventory
   c.provisions = state.provisions
   if (amulet) lines.push(drawAmulet())
+  if (xp) {
+    c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + xp)
+    lines.push(`+${xp} XP`)
+  }
   toast.add({ title: 'Butin ajouté', description: lines.join(', ') || 'Rien à ajouter', color: lines.length ? 'success' : 'neutral' })
   discard(entry.id)
 }

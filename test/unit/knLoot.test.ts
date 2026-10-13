@@ -131,6 +131,9 @@ describe('ajouter le butin', () => {
     expect(result.loreBook).toEqual({ roll: 10, title: 'Second', text: 'Un second livre.' })
     expect(applied.state.inventory[0]).toMatchObject({ name: 'Livre de savoir : Second', note: 'Un second livre.' })
     expect(applied.lines).toEqual(['Livre de savoir : Second'])
+    expect(applied.xp).toBe(10)
+    expect(knApplyLoot(state(), knRollLoot(content, 'mundane', sequence(0.6)) as never, catalog).xp).toBeUndefined()
+    expect(knApplyLoot({ ...state(), inventory: Array.from({ length: 120 }, (_, i) => ({ id: `i${i}`, name: 'x', kind: 'gear', weight: 'normal', quantity: 1, place: 'bag' }) satisfies KnItem) }, result, books).xp).toBeUndefined()
     expect(knRollLoot(content, 'mundane', sequence(0.6))).not.toHaveProperty('loreBook')
   })
 
