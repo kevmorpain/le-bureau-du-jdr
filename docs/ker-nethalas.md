@@ -522,9 +522,9 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Laissé de côté** : les propriétés qui demandent un état de combat que l'outil ne suit pas (Réaction gratuite, relance de test,
   bonus de Compétence « pour parer ») restent des rappels ; les dés de dégâts d'un type propre (+D4 de feu) entrent dans la réserve
   sans type séparé, rappelés sous l'attaque ; les Gantelets de l'Étreinte du vide n'ont pas de statistiques d'arme (le livre dit
-  « arme de poing » sans en donner) ; la Santé que l'Anneau de la Servitude soumise ajoute aux Sbires est illisible dans
-  l'extraction (« /2 ») et reste à compléter d'après le livre ; les effets d'un Cœur d'Amal-Tul (200 XP) et de la Graine de Cœur-sombre
-  (+1 Point d'Aptitude) se font à la main.
+  « arme de poing » sans en donner) ; la Santé que l'Anneau de la Servitude soumise ajoute aux Sbires (la moitié du niveau, p. 12 :
+  le symbole ⅃ est le niveau) se saisit à la main, comme les autres bonus de Maîtrise sur les sbires ; les effets d'un Cœur d'Amal-Tul
+  (200 XP) et de la Graine de Cœur-sombre (+1 Point d'Aptitude) se font à la main.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -1022,8 +1022,9 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   ⚠️ hypothèses
 - **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
   suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
-  s'arrondit au supérieur (seule règle d'arrondi du livre : la moitié des dégâts), les durées aussi, d'une salle ou d'un round au
-  moins. Une potion se vieillit une fois, à l'identification (test de Médecine, ou gorgée), pas à chaque emploi. ⚠️ hypothèses
+  s'arrondit au supérieur, les durées aussi, d'une salle ou d'un round au moins : règle générale d'arrondi indiquée par le PM
+  (le texte extrait n'en donne que deux, locales : le camp arrondit à l'inférieur, les emplacements de pièces et de gemmes au
+  supérieur). Une potion se vieillit une fois, à l'identification (test de Médecine, ou gorgée), pas à chaque emploi. ⚠️ hypothèses
 
 ---
 
