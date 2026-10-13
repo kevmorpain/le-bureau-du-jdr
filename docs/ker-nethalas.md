@@ -403,6 +403,133 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   relisent à l'écran. Les valeurs viennent du livre anglais, le vocabulaire de la VF, dont les chiffres diffèrent
   (le palier 3 du Faucheur abyssal n'y coûte pas la même Santé mentale que dans Gravebound).
 
+### KN40 — Inventaire : emplacements, capacité et encombrement
+- **Règles sourcées** (livre v1.2) : p. 206 (10 emplacements sur le corps, 9 avec une arme à deux mains ; 10 emplacements de sac ;
+  objets sans encombrement, normaux, lourds, légers par dix, pièces et gemmes par centaine ; Sac à dos +20 et un seul, Pochette
+  +5 et trois au plus ; une armure d'un torse, de vambraces et de jambières n'occupe qu'un emplacement), p. 212 (la Ceinture a
+  4 emplacements rapides, le test de Ceinture D4 détruit l'objet de la case tirée).
+- **Modèle** (`shared/ker-nethalas/inventory.ts`, colonne JSON `inventory`, migration 0143) : chaque objet est un exemplaire
+  qui porte ses propres caractéristiques (type, encombrement, quantité, endroit, case de Ceinture, et, pour les armes et
+  armures, ce qui servira au combat). Il vient du catalogue privé ou se saisit à la main. Les champs texte « Armes » et
+  « Équipement » restent des notes, sans migration de leur contenu.
+- **Capacité** : 10 emplacements de sac, +20 avec un Sac à dos porté, +5 par Pochette portée ; sans l'objet, rien. Les emplacements
+  rapides n'existent qu'avec une Ceinture portée : la retirer renvoie ses objets au sac. Le départ du livre n'a ni sac, ni Ceinture.
+- **Placer un objet** : un endroit unique déjà pris renvoie son objet au sac ; une arme à deux mains libère l'autre main ; deux
+  anneaux et trois pochettes au plus ; un objet porté est unique. La validité d'un inventaire enregistré est contrôlée par le schéma.
+- **Interface** : la section Équipement a un panneau Inventaire (capacité, Ceinture, corps, provisions, ajout, quantité, endroit).
+  Un endroit où l'objet ne peut pas aller (emplacement rapide sans Ceinture, anneaux ou pochettes au complet…) est grisé avec sa
+  raison. Un dépassement de capacité est signalé, jamais bloqué.
+- **Provisions** : elles restent le compteur de la fiche (le camp et l'exploration les consomment), mais s'éditent dans le panneau
+  Inventaire, avec les autres objets ; la section Repos n'en garde qu'un rappel.
+- **Catalogue** (jeu de données privé `items`, schéma public dans `items.ts`) : les 30 armes, 4 boucliers, 3 casques, 9 armures de
+  torse, vambraces et jambières, et l'équipement courant du livre (p. 207-212), avec leur prix, encombrement, statistiques,
+  Intégrité maximale et description. Un objet « provision » (Torche, Ration, Crochet, Cristal d'harmonisation…) s'ajoute aux provisions
+  et non à l'inventaire. Ajouter un objet du catalogue en recopie les statistiques dans un exemplaire ; une armure ou un bouclier
+  « trouvé » a une Intégrité d'un cran sous son maximum (p. 83).
+- **Laissé de côté** (tranche 7, étapes suivantes) : les armes et armures dans le combat, l'Intégrité, le butin, les potions, le
+  marchand, les objets magiques.
+
+### KN41 — L'équipement dans le combat
+- **Règles sourcées** (livre v1.2) : p. 207 (Traits des armes), p. 210-211 (armures par zone, malus d'agilité et de Perception, parade
+  des boucliers), p. 83 (Intégrité : un jet après un combat où l'armure a servi, 1-2 la fait baisser d'un cran, au D4 elle est perdue ;
+  la réparer la remonte d'un cran ; trouvée, elle part un cran sous son maximum), p. 125 (activité de camp Réparer).
+- **Armure par zone** (`equipment.ts`) : la tête vient du casque porté, le torse de l'armure de torse, les bras des vambraces, les
+  jambes des jambières ; la saisie manuelle est supprimée (`status.armor` n'existe plus). Le malus d'agilité (Acrobatie, Esquive,
+  Furtivité) et celui de Perception du casque sont une source de la fiche effective.
+- **Attaquer** : la carte d'attaque propose chaque arme tenue (ou les mains nues, D4) et règle la compétence, la Vitesse, la
+  réserve et le type de dégâts. Réserve : D6, Puissante +1, À deux mains +2, Polyvalente +1 quand l'autre main est libre ; Simple
+  ajoute +10 à l'attaque, Rapide +10 à l'Initiative.
+- **Se défendre** : l'Esquive, ou une parade à l'arme quand elle a le Trait Parade ou qu'un bouclier est porté ; le bouclier ajoute
+  son bonus de parade, et +10 pour une arme Défensive. Un adversaire Sauvage ne se pare pas.
+- **Intégrité** : les pièces qui ont encaissé un coup (l'armure de la zone touchée) ou paré (le bouclier) sont retenues pendant le
+  combat ; leur dé se joue quand le combat prend fin (victoire ou non), et la fiche de l'objet offre le jet à la main (acide) et la
+  réparation. Une pièce perdue sort de l'inventaire.
+- **Kit de départ** (création, p. 67) : quand le catalogue du livre est chargé, l'arme choisie et la pièce d'armure tirée sur la
+  table des armures aléatoires (on relance tant que le résultat est une armure magique) entrent dans l'inventaire, neuves,
+  portées (arme en main, pièce sur le corps) ; `creation.kit.items` les porte, et leur texte libre n'est alors pas repris.
+  Sans catalogue, la saisie reste un texte.
+- **Laissé de côté** : la réparation au camp ne choisit pas les pièces (l'activité décompte les Fournitures, le bouton « Réparer » remonte la
+  pièce) ; le corps à corps à deux armes.
+
+### KN42 — Butin et marchand
+- **Règles sourcées** (livre v1.2) : p. 213 (tables de Butin). Revente : la moitié du prix, sauf les gemmes et bijoux à leur valeur
+  entière (vérifié par le PM auprès de la communauté, pas dans une page du livre).
+- **Tables** (`loot.ts`, jeu de données privé `loot`) : un objet de tables, chacune avec son dé (D6, D100, D20, D10), des plages
+  qui couvrent le dé sans trou, et pour chaque résultat ce qu'il donne (`table`, `item`, `gem`, `fragment`, `potion`, `magic`,
+  `relic`, `mastery`, `nothing`). Une table absente du jeu de données se signale (`missing`) au lieu d'inventer un résultat.
+- **Tirage** : `knRollLoot` suit la chaîne des tables (six rebonds au plus) ; une quantité en dés vaut au moins 1 ; une gemme
+  tire sa valeur. Une créature du bestiaire peut porter `loot` (jusqu'à trois tables de départ) ; la carte « Butin » les tire.
+- **Ajouter** (`knApplyLoot`) : un objet du catalogue arrive « trouvé » (Intégrité d'un cran en moins), une provision va aux
+  provisions, une gemme devient un objet de valeur tirée rangé par centaine, un fragment ou une potion garde sa table et son jet
+  (KN43), un objet magique arrive « à identifier ».
+  Rien ne s'ajoute sans le bouton, et un inventaire plein refuse.
+- **Livres de savoir** (p. 216-219) : un « Livre de savoir » trouvé tire le D10 des dix livres (table `loreBooks` du jeu `loot`) et
+  prend son titre ; le résumé français du texte du livre est en note de l'objet. Trouver un livre rapporte **10 XP** (p. 63, avec les
+  autres sources d'expérience) : ils s'ajoutent à l'ajout du butin, pour chaque livre effectivement rangé. L'objectif personnel
+  « Vaelorian Erudite » (10 livres) se suit à la main.
+- **Marchand** (`trade.ts`) : acheter retire les pièces et ajoute l'objet ou la provision ; vendre rend les pièces (50 % arrondi au
+  supérieur, gemmes à 100 %). Seuls les objets du sac et les provisions que le catalogue connaît se vendent ; les amulettes non.
+- **Laissé de côté** (étapes suivantes de la tranche 7) : la génération des objets magiques et des Reliques. Les fragments et les
+  potions : KN43.
+
+### KN43 — Fragments et potions utilisables
+- **Règles sourcées** (livre v1.2) : p. 214-215 (Fragments : un seul emploi, sans s'accorder), p. 126 (Potions : test de Médecine pour
+  connaître les effets, sinon les essayer ; une fois identifiée, tirage de vieillissement), p. 221 (table des Potions).
+- **Données** : les tables `fragments` et `potions` sont des tables de butin ordinaires (jeu `loot`) dont chaque résultat porte
+  `use` : des effets (`KnTableEffect`) que la fiche applique, et au besoin un jet que l'objet demande sans l'appliquer (dégâts sur
+  des cibles, Blessures soignées au fil des rounds). Le jeu `potionAging` (D20) donne le texte du vieillissement ; ses effets sont
+  en code (`consumables.ts`) : tournée au poison, explosion (2D4 de force), éventée, affaiblie (moitié), normale, raffinée
+  (double, +50 % de durée), parfaite (sans fin).
+- **L'objet ne recopie pas ses effets** : il garde la table et le jet (`item.consumable`), et relit ses effets dans le contenu à
+  l'emploi. Une correction du contenu s'applique donc aux objets déjà trouvés ; sans le contenu chargé, les boutons sont grisés.
+- **Nouveaux effets de table** : soigner des Blessures (Robustesse avant Santé), retirer un état, et une durée en salles
+  (`timed.rooms`, décomptée à l'entrée d'une salle, `status.custom[].rooms`). Un effet sans durée ni combat reste jusqu'à ce qu'on
+  le retire (potion parfaite).
+- **Interface** : une potion trouvée se range « non identifiée » (ni nom, ni ligne de table visibles, y compris sur la carte
+  Butin) ; « Identifier (Médecine) » ouvre le test en ligne, « Boire » identifie d'office et applique. Un fragment s'emploie
+  d'un clic. Le texte de l'objet s'affiche à chaque emploi, pour ce que les effets chiffrés ne couvrent pas.
+- **Laissé de côté** : l'Armure +1 de la Peau de pierre (pas de cible « Armure » dans les modificateurs libres) ; les bonus
+  ponctuels (« prochain test d'Athlétisme +50 », « +D4 de feu à la Réserve ») et les actions (Action Standard gratuite) restent
+  du texte ; la Pierre de Borestia (identification sans test) vient avec les objets magiques ; deux potions de Vitalité bues de
+  suite ne déclenchent pas les dégâts d'acide.
+
+### KN44 — Objets magiques : génération, harmonisation, effets
+- **Règles sourcées** (livre v1.2) : p. 224 (procédure : type D8, rareté D10, une propriété par niveau, deux fois la même s'ajoutent ;
+  une amulette donne accès à une Maîtrise au lieu de propriétés), p. 225 (types de dégâts D20, types d'adversaire D8), p. 226-231
+  (propriétés par type d'objet, D20), p. 232-233 (peculiarités D100), p. 124-125 (activité de camp Harmoniser : 1 Cristal et
+  +1 Épuisement par objet), p. 83 (réduction de dégâts : « après l'Armure »).
+- **Un objet trouvé n'est que son type** : le D8 se tire à l'obtention (carte Butin) ; une arme ou une armure prend pour base un
+  objet ordinaire de la table aléatoire, relancé tant qu'elle redonne un objet magique ; une amulette est une Maîtrise tirée au D20.
+  Il se comporte comme son équivalent ordinaire (`item.magic.identified: false`) jusqu'à l'harmonisation.
+- **Harmoniser** (activité de camp) : on coche les objets à harmoniser, ce qui fixe le nombre d'Harmonisations du camp ; à la
+  fin du camp, la rareté et les propriétés se tirent (`knIdentifyMagic`) et se **figent sur l'objet** avec leur texte résolu (montant
+  selon la rareté ou aux dés, type de dégâts ou d'adversaire tiré). La peculiarité (D100, un résultat peut en demander deux) est
+  facultative ; la compétence « au choix » se choisit ensuite sur l'objet.
+- **Vocabulaire des mécaniques** (`magicSchema.ts`, le seul que le moteur connaisse) : modificateur de compétence ou de
+  résistance, Avantage, jauge maximale, portage, Résistance / réduction / immunité du survivant, Initiative, dés et Vitesse
+  d'arme, dégâts contre un type d'adversaire, Armure des vambraces et des jambières, source de lumière, usage limité (par combat,
+  salle, repos, camp ou Domaine, avec ou sans soin). Une propriété sans mécanique est un **rappel** affiché dans la fiche tant que l'objet
+  est porté. Le contenu (tables, textes) reste privé : jeu `magicItems`.
+- **Ce qui agit** : un objet n'agit que **porté** ou tenu (pas dans le sac ni à la Ceinture). Les sources rejoignent la fiche
+  effective (`knMagicSources`) ; le portage entre dans l'encombrement ; la lumière dispense de source de lumière ; l'Armure des
+  vambraces et jambières, l'Initiative et la Vitesse, la réserve de dégâts de l'attaque (dés de l'arme maniée, plus ceux des gants)
+  suivent. Les immunités s'appliquent aux états que les effets donneraient ; les Résistances et réductions s'appliquent aux
+  dégâts que le survivant reçoit en combat (`damageTarget` du survivant).
+- **Reliques** (p. 234-241) : un objet unique aux propriétés fixées (jeu `magicItems`, `relics` en D20 et `containerRelics` par clé),
+  déjà harmonisé, avec le texte d'ambiance en note et, s'il reprend un objet du catalogue (bouclier, sabre, plaques, masse, lance), ses
+  statistiques neuves. Mécaniques en plus : bonus de parade, identification des potions sans test (Pierre de Borestia, rien qu'à la
+  posséder), et objet à consommer qui augmente à jamais une jauge ou une Résistance (bouton « Consommer »). Elles tombent au butin
+  précieux (D20 puis D20 des Reliques) ou, par clé, dans la table du **butin des contenants** (D20, p. 220), à tirer après la
+  fouille approfondie d'un contenant.
+- **Revente** (p. 127) : un objet magique se vend à prix fixe, jamais à la moitié : Peu commun 200, Rare 400, Épique 600, Relique 1 000.
+  Il ne se vend qu'une fois harmonisé (sa rareté n'est connue qu'alors) ; une amulette ne se vend pas.
+- **Laissé de côté** : les propriétés qui demandent un état de combat que l'outil ne suit pas (Réaction gratuite, relance de test,
+  bonus de Compétence « pour parer ») restent des rappels ; les dés de dégâts d'un type propre (+D4 de feu) entrent dans la réserve
+  sans type séparé, rappelés sous l'attaque ; les Gantelets de l'Étreinte du vide n'ont pas de statistiques d'arme (le livre dit
+  « arme de poing » sans en donner) ; la Santé que l'Anneau de la Servitude soumise ajoute aux Sbires (la moitié du niveau, p. 12 :
+  le symbole ⅃ est le niveau) se saisit à la main, comme les autres bonus de Maîtrise sur les sbires ; les effets d'un Cœur d'Amal-Tul
+  (200 XP) et de la Graine de Cœur-sombre (+1 Point d'Aptitude) se font à la main.
+
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
   réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
@@ -751,7 +878,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **7 — Inventaire, équipement, butin** | objets, bonus appliqués en combat, butin, objets magiques, potions ; issue X16 (#263) | à faire |
+| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 7 (a : inventaire, catalogue, équipement dans le combat, kit de départ, KN40-KN41 ; b : butin, gemmes, marchand, fragments et potions utilisables, KN42-KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) ; contenu à relire par le PM |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -879,13 +1006,61 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   magique pour les serviteurs d'un Overseer ni pour les doubles d'un autre ; ces champs valent 0 ou sont absents, sans effet puisque
   les premiers disparaissent après leur attaque et les seconds tombent au premier coup (Santé 1). La Compétence de combat des
   doubles est lue comme celle de l'Overseer qui les invoque, avec son palier de niveau 10 (+10) : hypothèse, le livre ne la donne pas.
+- **Inventaire** : les objets rangés à la Ceinture ne comptent pas dans les emplacements de sac (le livre ne le dit pas) ; les objets
+  légers se rangent par dix tous types confondus, provisions et amulettes non portées comprises ; les pièces et les gemmes se comptent
+  ensemble par centaine ; le Sac à dos et les Pochettes portés n'occupent pas un des 10 emplacements du corps (le livre les
+  compte à part dans sa liste). ⚠️ hypothèses
+- **Équipement** : l'Intégrité d'une pièce se joue après un combat quand elle a encaissé un coup ou paré, pas à chaque coup ; la
+  parade au bouclier est possible avec toute arme tenue ; une arme Polyvalente a son bonus dès que la main secondaire est libre.
+  ⚠️ hypothèses
 - **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
   combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
   se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.
+- **Objets magiques** : la table D20 des types de dégâts est brouillée dans l'extraction du livre ; les plages ont été appariées aux
+  noms dans l'ordre vertical (1 Acide, 2-3 Arcanique, 4-5 Contondants, 6 Froid, 7-8 Force, 9 Feu, 10 Sacrés, 11 Infernaux, 12 Foudre,
+  13-14 Nécrotiques, 15-16 Perforants, 17 Poison, 18 Psychiques, 19-20 Tranchants), puis **confirmées par le PM** sur le livre.
+  La réduction de dégâts se retranche après l'Armure, avant la Résistance (le livre ne les ordonne pas).
+  Un objet « tant qu'on le porte » agit porté ou tenu. La table du butin des contenants (D20, p. 220) est brouillée de la même
+  façon : ses 18 lignes sont appariées aux plages dans l'ordre (1-2 nourriture avariée … 11 Journal vierge, 12 Pierre de Borestia,
+  13 Cœur d'Amal-Tul, 14 Masse de l'Oblitération, 15 Anneau de Paix mentale, 16-20 les cinq Fioles) ; **à contrôler dans le PDF**.
+  ⚠️ hypothèses
+- **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
+  suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
+  s'arrondit au supérieur, les durées aussi, d'une salle ou d'un round au moins : règle de l'encart « Rounding Numbers » (p. 70, fourni par
+  le PM : tout nombre à arrondir, ⅃/2 compris, s'arrondit au supérieur ; le camp, qui dit « rounding down », est l'exception explicite).
+  La revente à 50 % suit la même règle. Une potion se vieillit une fois, à l'identification (test de Médecine, ou gorgée), pas à chaque emploi. ⚠️ hypothèses
 
 ---
 
 ## Journal
+
+### 2026-10-13 — Tranche 7, lot c : objets magiques
+- Contenu écrit hors dépôt (`magicItems` : six tables de propriétés, 50 peculiarités), validé par le schéma au chargement ; à
+  relire par le PM avant tout chargement en production.
+- Vérifié dans le navigateur, sur un survivant de test : cinq objets magiques tirés au butin (type affiché), harmonisation de deux
+  d'entre eux au camp (rareté et propriétés tirées, Cristaux décomptés), Résistance magique 20 → 30 une fois la ceinture
+  harmonisée portée. Reliques tirées au butin précieux et dans la table des contenants ; une fiole consommée fait passer l'Éther
+  maximum de 9 à 12 et disparaît. Non vérifié à l'écran : les boutons d'usage limité, la compétence à choisir, l'amulette tirée
+  au butin, la revente, et la Pierre de Borestia en situation (couverts par les tests du moteur).
+
+### 2026-10-13 — Tranche 7, étape 4c : kit de départ en inventaire
+- Vérifié dans le navigateur : l'étape Équipement de la création tire l'armure (« Grand bouclier ») et propose les armes du
+  catalogue ; un POST de création avec une Dague en main la range en `mainHand` et laisse le texte des armes vide.
+  Non vérifié à l'écran : une création complète de bout en bout par l'assistant.
+
+### 2026-10-13 — Tranche 7, étape 4b : fragments et potions
+- Sources relues dans le livre (p. 214-215, 221, 126) avant d'écrire les 20 fragments, les 20 potions et la table de
+  vieillissement ; contenu français hors dépôt (`loot`, `potionAging`), à relire par le PM avant tout chargement en production.
+- Vérifié dans le navigateur, sur un survivant de test : tirage d'une potion (identité masquée sur la carte Butin), identification
+  par test de Médecine (nom, description et vieillissement révélés), potion bue sans identification (vieillissement « tourné au
+  poison » : test d'Endurance ouvert), fragment employé (effet de 5 salles posé puis décompté à l'entrée d'une salle : 5 → 4).
+  Non vérifié à l'écran : l'application de Empoisonné (1) après un test d'Endurance raté (couverte par les tests du moteur).
+
+### 2026-10-13 — Tranche 7, étape 4a : butin et marchand
+- Pilotes en français relus et approuvés par le PM avant l'écriture ; la lecture « une arme ou une armure magique tirée dans le
+  butin ordinaire s'obtient par la procédure des objets magiques » est confirmée.
+- Vérifié dans le navigateur, sur un survivant de test : un tirage en chaîne (Butin D6 puis Objets ordinaires D100) donne « 2 ×
+  Composants rituels », ajouté aux provisions ; vendre le bouclier rend 20 ₵ (la moitié de son prix). Rien n'est chargé en production.
 
 ### 2026-10-11 — Tranche 6c (suite) : effets des actions et sbires alliés
 - Retour du PM sur ce qui restait en texte : les dégâts directs, la Santé temporaire des créatures, le test de Corps, les effets

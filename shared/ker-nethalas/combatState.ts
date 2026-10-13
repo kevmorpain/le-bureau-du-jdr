@@ -74,6 +74,8 @@ export const knCombatSchema = z.object({
   first: z.enum(['survivor', 'creatures']).optional(),
   // Défenses déjà faites ce round : chacune après la première coûte −20, cumulatif.
   reactions: boundedInt(KN_COMBAT_BOUNDS.reactions),
+  // Les pièces d'équipement (par identifiant) qui ont servi dans ce combat : leur Intégrité se joue à la fin.
+  gearUsed: z.array(z.string().min(1).max(40)).max(20).optional(),
   log: z.array(z.string().max(400)).max(KN_COMBAT_BOUNDS.log),
 })
 

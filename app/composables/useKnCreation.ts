@@ -4,11 +4,13 @@ import {
   KN_CREATION_VITAL_KEYS,
   knAllotmentIssues,
   knCreationSchema,
+  knStartingKitItems,
   knVitalRange,
   type KnAllotments,
   type KnCreationVital,
 } from '~~/shared/ker-nethalas/creation'
 import { knGoalPickIssues, type KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
+import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knMasteryPickIssues, type KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResistanceKey } from '~~/shared/ker-nethalas/skills'
 
@@ -26,6 +28,9 @@ export interface KnCreationDraft {
   kit: {
     weapon: string
     armor: string
+    // Les clés d'objets du catalogue quand il est chargé : l'arme et l'armure tirée deviennent des objets d'inventaire.
+    weaponRef: string | null
+    armorRef: string | null
     cookingIngredients: number | null
     craftingSupplies: number | null
     coins: number | null
@@ -42,7 +47,7 @@ export const emptyKnCreationDraft = (): KnCreationDraft => ({
   trainingRolls: {},
   goals: [],
   kitEnabled: false,
-  kit: { weapon: '', armor: '', cookingIngredients: null, craftingSupplies: null, coins: null },
+  kit: { weapon: '', armor: '', weaponRef: null, armorRef: null, cookingIngredients: null, craftingSupplies: null, coins: null },
 })
 
 export const KN_CREATION_STEPS = [
@@ -75,14 +80,19 @@ export const knTrainingText = (draft: KnCreationDraft, masteries: KnMastery[] | 
     })
     .join('\n')
 
-// `masteries`, `goals` : le contenu chargé, ou `null` s'il ne l'est pas (ils se choisiront alors sur la fiche).
-export function useKnCreation(masteries: Ref<KnMastery[] | null>, goals: Ref<KnPersonalGoal[] | null>) {
+// `masteries`, `goals`, `catalog` : le contenu chargé, ou `null` s'il ne l'est pas (ils se choisiront alors sur la fiche).
+export function useKnCreation(masteries: Ref<KnMastery[] | null>, goals: Ref<KnPersonalGoal[] | null>, catalog: Ref<KnCatalogItem[] | null>) {
   const { t } = useI18n()
   const draft = ref(emptyKnCreationDraft())
   const currentStepId = ref<KnCreationStepId>('identity')
 
   const masteryIssues = computed(() => knMasteryPickIssues(draft.value.masteries, masteries.value?.map(mastery => mastery.key) ?? null))
   const goalIssues = computed(() => knGoalPickIssues(draft.value.goals, goals.value?.map(goal => goal.key) ?? null))
+
+  const kitPayload = (kit: KnCreationDraft['kit']) => {
+    const { weaponRef, armorRef, ...text } = kit
+    return { ...text, items: catalog.value ? knStartingKitItems(catalog.value, { weapon: weaponRef, armor: armorRef }) : [] }
+  }
 
   const parsed = computed(() => {
     const d = draft.value
@@ -95,7 +105,7 @@ export function useKnCreation(masteries: Ref<KnMastery[] | null>, goals: Ref<KnP
       resistanceBoost: d.resistanceBoost ?? undefined,
       masteries: d.masteries,
       goals: d.goals,
-      kit: d.kitEnabled ? d.kit : null,
+      kit: d.kitEnabled ? kitPayload(d.kit) : null,
     })
   })
 

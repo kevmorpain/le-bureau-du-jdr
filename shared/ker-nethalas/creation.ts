@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { emptyKnProvisions } from './camp'
 import { defaultKnResistances, defaultKnSkills, type KnResistances, type KnSkills } from './character'
 import { KN_MAX_ACTIVE_GOALS, knNewGoalPick } from './goals'
+import { knInventorySchema, knNextItemId, knPlaceItem, knPlacesFor, type KnItem } from './inventory'
+import { knItemFromCatalog, type KnCatalogItem } from './items'
 import { KN_MAX_TRAINED_MASTERIES } from './masteries'
 import { knRollDie, type KnRng } from './run'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, KN_WEAPON_SKILL_KEYS, type KnSkillKey } from './skills'
@@ -84,6 +86,26 @@ export function knRollStartingKit(rng: KnRng = Math.random) {
   }
 }
 
+const KN_KIT_MAX_ITEMS = 2
+
+const ARMOR_KINDS: readonly KnItem['kind'][] = ['torso', 'vambraces', 'greaves', 'helmet', 'shield']
+
+// L'arme choisie, portée en main, et la pièce d'armure tirée, portée sur le corps : des exemplaires neufs du catalogue.
+export function knStartingKitItems(catalog: readonly KnCatalogItem[], pick: { weapon?: string | null, armor?: string | null }): KnItem[] {
+  let items: KnItem[] = []
+  for (const key of [pick.weapon, pick.armor]) {
+    const entry = key ? catalog.find(candidate => candidate.key === key) : undefined
+    if (!entry || entry.provision) continue
+    const id = knNextItemId(items)
+    items = [...items, knItemFromCatalog(entry, id)]
+    const place = knPlacesFor(entry.kind).find(candidate => candidate !== 'bag' && candidate !== 'quick')
+    if (!place) continue
+    const placed = knPlaceItem(items, id, place)
+    if ('items' in placed) items = placed.items
+  }
+  return items
+}
+
 const vitalSchema = (vital: KnCreationVital) => boundedInt(knVitalRange(vital))
 
 const allotmentSchema = z.union([z.literal(60), z.literal(40), z.literal(30), z.literal(20), z.literal(10)])
@@ -114,6 +136,9 @@ export const knCreationSchema = z.object({
     cookingIngredients: boundedInt(KN_CREATION_KIT.cookingIngredients),
     craftingSupplies: boundedInt(KN_CREATION_KIT.craftingSupplies),
     coins: boundedInt(KN_CREATION_KIT.coins),
+    // L'arme et l'armure du kit, quand le catalogue du livre est chargé : elles entrent dans l'inventaire, portées, et leur
+    // texte libre ci-dessus n'est alors pas repris.
+    items: knInventorySchema.refine(items => items.length <= KN_KIT_MAX_ITEMS, { message: 'le kit ne compte qu\'une arme et une armure' }).default([]),
   }).nullable(),
 })
 
@@ -139,8 +164,9 @@ export function knBuildCreatedSheet(creation: KnCreation) {
     skills: knCreationSkills(creation.allotments),
     resistances: knCreationResistances(creation.resistanceBoost),
     masteryPicks: creation.masteries.map(key => ({ key, tiers: 1 })),
-    weapons: kit?.weapon ?? '',
-    equipment: kit?.armor ? `Armure : ${kit.armor}` : '',
+    weapons: kit && !kit.items.some(item => item.kind === 'weapon') ? kit.weapon : '',
+    equipment: kit?.armor && !kit.items.some(item => ARMOR_KINDS.includes(item.kind)) ? `Armure : ${kit.armor}` : '',
+    inventory: kit?.items ?? [],
     provisions: kit
       ? { ...emptyKnProvisions(), torches: KN_CREATION_KIT.torches, cookingIngredients: kit.cookingIngredients, craftingSupplies: kit.craftingSupplies }
       : emptyKnProvisions(),

@@ -223,6 +223,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knAdvanceRooms } from '~~/shared/ker-nethalas/combatEffects'
 import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import {
@@ -254,6 +255,8 @@ const props = defineProps<{
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+const toast = useToast()
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
@@ -319,6 +322,7 @@ function switchDomain(value: unknown) {
 
 function newDomain() {
   character.value.run = knNewDomain(character.value.run)
+  character.value.status = knResetUses(character.value.status, ['domain'])
 }
 
 // La forme tirée au D100 décide du type d'entrée : 1-25 un couloir, 26-100 une salle.
@@ -330,6 +334,11 @@ function enterByShape() {
 function enter(kind: KnVisitKind, shapeRoll?: number) {
   character.value.run = knStartVisit(character.value.run, kind, shapeRoll)
   character.value.status = knResetUses(character.value.status, ['room'])
+  if (kind === 'room') {
+    const { status, expired } = knAdvanceRooms(character.value.status)
+    character.value.status = status
+    if (expired.length) toast.add({ title: 'Effet terminé', description: expired.join(', '), color: 'neutral' })
+  }
   character.value.aetherCurrent = props.resolved.maxVitals.aether.effective
 }
 

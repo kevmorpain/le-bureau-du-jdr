@@ -41,6 +41,7 @@
       v-model:character="character"
       :resolved
       :masteries
+      :magic
     />
 
     <KnRollSection
@@ -74,6 +75,24 @@
     <KnEquipmentSection
       v-model:character="character"
       :masteries
+      :catalog
+      :loot
+      :aging
+      :resolved
+    />
+
+    <KnLootSection
+      v-model:character="character"
+      :loot
+      :catalog
+      :bestiary
+      :masteries
+      :magic
+    />
+
+    <KnTraderSection
+      v-model:character="character"
+      :catalog
     />
 
     <KnNotesSection v-model:character="character" />
@@ -96,8 +115,12 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { AutoSaveStatus } from '~/composables/useAutoSave'
+import type { KnPotionAging } from '~~/shared/ker-nethalas/consumables'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
+import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
+import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
+import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
 
@@ -115,6 +138,10 @@ const { data: encountersA } = await useKnContent<KnRollTable>('encountersA')
 const { data: encountersB } = await useKnContent<KnRollTable>('encountersB')
 const { data: overseers } = await useKnContent<KnRollTable>('overseers')
 const { data: bestiary } = await useKnContent<KnCreature[]>('bestiary')
+const { data: catalog } = await useKnContent<KnCatalogItem[]>('items')
+const { data: loot } = await useKnContent<KnLootContent>('loot')
+const { data: aging } = await useKnContent<KnPotionAging>('potionAging')
+const { data: magic } = await useKnContent<KnMagicContent>('magicItems')
 const tables = computed(() => ({
   corridorDescriptions: corridorDescriptions.value,
   roomDescriptions: roomDescriptions.value,

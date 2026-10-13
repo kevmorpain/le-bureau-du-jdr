@@ -79,6 +79,8 @@ export interface KnDamageTarget {
   vulnerableAll?: boolean
   immune?: readonly KnDamageType[]
   immuneNonMagical?: boolean
+  // Réduction de dégâts par type (équipement du survivant), retranchée après l'Armure.
+  reduction?: Partial<Record<KnDamageType, number>>
 }
 
 const PHYSICAL_DAMAGE: readonly KnDamageType[] = ['bludgeoning', 'piercing', 'slashing']
@@ -142,6 +144,11 @@ export function knResolveDamage(input: KnDamageInput): KnDamageResult {
   }
 
   const { target } = input
+  const reduction = Math.min(total, target.reduction?.[input.damageType] ?? 0)
+  if (reduction > 0) {
+    total -= reduction
+    notes.push(`réduction de dégâts : −${reduction}`)
+  }
   if (target.immune?.includes(input.damageType) || (target.immuneNonMagical && !input.magical)) {
     return { base: input.roll.total, doubled, armorAbsorbed, damage: 0, heal: 0, notes: [...notes, 'immunisée'] }
   }

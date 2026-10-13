@@ -1,6 +1,8 @@
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
+import { knEquipmentSources } from '~~/shared/ker-nethalas/equipment'
+import { knMagicProvidesLight, knMagicSources } from '~~/shared/ker-nethalas/magicEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { knMasteryProvidesLight, knMasterySources } from '~~/shared/ker-nethalas/masteryEffects'
 import { resolveKnSheet } from '~~/shared/ker-nethalas/resolve'
@@ -14,8 +16,8 @@ export function useKnResolved(character: Ref<KnCharacter | undefined | null>, ma
     const sustained = c.status.sustained ?? []
 
     return resolveKnSheet({
-      extraSources: masteries.value ? knMasterySources(masteries.value, entries, sustained) : [],
-      lightProvided: masteries.value ? knMasteryProvidesLight(masteries.value, entries, sustained) : false,
+      extraSources: [...(masteries.value ? knMasterySources(masteries.value, entries, sustained) : []), ...knEquipmentSources(c.inventory), ...knMagicSources(c.inventory)],
+      lightProvided: (masteries.value ? knMasteryProvidesLight(masteries.value, entries, sustained) : false) || knMagicProvidesLight(c.inventory),
       skills: c.skills,
       extraSkills: c.extraSkills,
       resistances: c.resistances,

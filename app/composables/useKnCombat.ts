@@ -27,6 +27,8 @@ import {
 import { knReactionPenalty, type KnCombat } from '~~/shared/ker-nethalas/combatState'
 import { knArmorAt, knCreatureAtLevel, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
+import { knArmorByZone, knArmorPieces, knInitiativeBonus } from '~~/shared/ker-nethalas/equipment'
+import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knD100Check, type KnD100Result } from '~~/shared/ker-nethalas/roll'
 import {
@@ -40,6 +42,7 @@ import {
   knExpireCreatureTurnEffects,
   knExpireCombatTemporary,
   knGainCombatTemporary,
+  knMarkGearUsed,
   knRegisterReaction,
   knRollDie,
   knSetCombatFirst,
@@ -143,7 +146,8 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const skill: KnSkillKey = kind === 'surprise' ? 'stealth' : 'perception'
     const mind = highestMind()
     const mine = resolved().skills[skill]
-    const player = knD100Check({ roll: d100(), score: mine.effective, difficulty: modifier, mode: mine.rollMode })
+    const gear = kind === 'initiative' ? knInitiativeBonus(character.value.inventory) : 0
+    const player = knD100Check({ roll: d100(), score: mine.effective, difficulty: modifier + gear, mode: mine.rollMode })
     const foes = knD100Check({ roll: d100(), score: mind, difficulty: 0, mode: 'normal' })
     const winner = knOpposedCheck(player, foes)
     const won = winner === 'a'
@@ -355,12 +359,11 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     return action ? { d6, action } : undefined
   }
 
-  const survivorArmor = (location: KnHitLocationKey) =>
-    character.value.status.armor?.[knSurvivorArmorZone(location)] ?? 0
+  const survivorArmor = (location: KnHitLocationKey) => knArmorByZone(character.value.inventory)[knSurvivorArmorZone(location)]
 
   // L'action d'une créature contre le survivant, ou contre un sbire (`minion`). Physique : jet opposé contre sa défense ;
   // Magique : test de Résistance magique ; sans étiquette, c'est le texte de l'action qui décide.
-  function takeTurn(input: { index: number, d6: number, action: KnCreatureAction, defense: KnSkillKey, magicCheck: KnSkillKey | KnResistanceKey, bonus: number, minion?: number }): KnTurnResult | undefined {
+  function takeTurn(input: { index: number, d6: number, action: KnCreatureAction, defense: KnSkillKey, magicCheck: KnSkillKey | KnResistanceKey, bonus: number, minion?: number, defenseBonus?: number, gear?: string[] }): KnTurnResult | undefined {
     const target = combat.value?.creatures[input.index]
     const creature = creatureOf(input.index)
     if (!combat.value || !target || !creature) return undefined
@@ -382,7 +385,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       if (minionSheet) return knD100Check({ roll: d100(), score: kind === 'physical' ? minionSheet.combatSkill : minionSheet.magicResistance, difficulty: 0, mode: 'normal' })
       if (kind === 'physical') {
         const mine = sheet.skills[input.defense]
-        return knD100Check({ roll: d100(), score: mine.effective, difficulty: input.bonus - penalty, mode: mine.rollMode })
+        return knD100Check({ roll: d100(), score: mine.effective, difficulty: input.bonus + (input.defenseBonus ?? 0) - penalty, mode: mine.rollMode })
       }
       const ward = (KN_RESISTANCE_KEYS as readonly string[]).includes(input.magicCheck)
         ? sheet.resistances[input.magicCheck as KnResistanceKey]
@@ -393,7 +396,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       ? (minionSheet.hitLocation ? knHitLocation(minionSheet.hitLocation.table, knRollDie(20)) : 'body' as const)
       : knHitLocation('humanoid', knRollDie(20))
     const armorAt = (location: KnHitLocationKey) => minionSheet ? knArmorAt(minionSheet.armor, location) : survivorArmor(location)
-    const damageTarget = minionSheet ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects) : { vulnerable: [], resistant: [], restored: [] }
+    const survivorDefenses = knMagicDefenses(character.value.inventory)
+    const damageTarget = minionSheet
+      ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects)
+      : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: survivorDefenses.reduction }
     const registerReaction = () => {
       if (!minionSheet) character.value.run = knRegisterReaction(character.value.run)
     }
@@ -403,6 +409,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       result.defense = defend('physical')
       result.exchange = knCombatExchange(result.check, result.defense)
       registerReaction()
+      if (!minionSheet) character.value.run = knMarkGearUsed(character.value.run, input.gear ?? [])
       if (result.exchange.fumble) result.monsterFumble = knRollDie(KN_MONSTER_FUMBLE_DIE)
       if (result.exchange.outcome === 'defended' && !minionSheet) result.survivorMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
       if (result.exchange.outcome === 'bothFail') {
@@ -424,6 +431,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
           })
           result.amount = result.damage.damage
           result.direct = action.damage?.direct
+          if (!minionSheet && result.damage.armorAbsorbed > 0) {
+            const zone = knSurvivorArmorZone(result.location)
+            character.value.run = knMarkGearUsed(character.value.run, knArmorPieces(character.value.inventory, zone).map(piece => piece.id))
+          }
         }
       }
     } else if (knActionIsTest(action)) {

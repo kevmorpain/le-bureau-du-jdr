@@ -60,6 +60,36 @@
         </li>
       </ul>
 
+      <div
+        v-if="unidentified.length"
+        class="space-y-2 border-t border-default pt-3"
+      >
+        <p class="text-sm font-medium">
+          Objets magiques à harmoniser
+        </p>
+        <p class="text-xs text-muted">
+          Chaque objet coché coûte 1 Cristal d'harmonisation et 1 Épuisement : sa rareté et ses propriétés se tirent à la fin du camp.
+        </p>
+        <p
+          v-if="!magic"
+          class="text-xs text-warning"
+        >
+          Le contenu des objets magiques n'est pas chargé : notez les propriétés à la main.
+        </p>
+        <UCheckbox
+          v-for="item in unidentified"
+          :key="item.id"
+          :model-value="attuneIds.includes(item.id)"
+          :disabled="!magic"
+          :label="`${item.name} (${$t(`ker_nethalas.inventory.magicTables.${item.magic!.table}`)})`"
+          @update:model-value="toggleAttune(item.id)"
+        />
+        <UCheckbox
+          v-model="withPeculiarity"
+          label="Tirer une peculiarité (étape facultative)"
+        />
+      </div>
+
       <ul
         v-if="context.traitActivities.length"
         class="space-y-3 border-t border-default pt-3"
@@ -194,7 +224,10 @@ import {
   knPreviewCamp,
   type KnCampIssue,
 } from '~~/shared/ker-nethalas/camp'
+import { KN_CREATURE_TYPES } from '~~/shared/ker-nethalas/catalog/creatureTypes'
+import { KN_DAMAGE_TYPES } from '~~/shared/ker-nethalas/catalog/damageTypes'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import { knIdentifyMagic, type KnMagicContent, type KnMagicLabels } from '~~/shared/ker-nethalas/magic'
 import type { KnCampActivity, KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { knApplySelfEffects, knCampRecoverEffects, knCampTraits } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -204,6 +237,7 @@ import { knRest } from '~~/shared/ker-nethalas/vitals'
 const props = defineProps<{
   resolved: KnResolvedSheet
   masteries: KnMastery[] | null
+  magic: KnMagicContent | null
 }>()
 
 const emit = defineEmits<{
@@ -218,6 +252,45 @@ const { signed } = useKnLabels()
 const plan = ref(emptyKnCampPlan())
 const roll = ref<number | null>(null)
 const report = ref<string[] | null>(null)
+
+const unidentified = computed(() => character.value.inventory.filter(item => item.magic && !item.magic.identified))
+const attuneIds = ref<string[]>([])
+const withPeculiarity = ref(false)
+
+// Cocher un objet à harmoniser fixe le nombre d'Harmonisations du camp, et donc ce qu'elles consomment.
+function toggleAttune(id: string) {
+  attuneIds.value = attuneIds.value.includes(id) ? attuneIds.value.filter(other => other !== id) : [...attuneIds.value, id]
+  plan.value.activities.attune = attuneIds.value.length
+}
+
+const RARITY_LABELS = { uncommon: 'Peu commun', rare: 'Rare', epic: 'Épique', relic: 'Relique' } as const
+
+const magicLabels = computed<KnMagicLabels>(() => ({
+  damage: Object.fromEntries(KN_DAMAGE_TYPES.map(type => [type, t(`ker_nethalas.damageTypes.${type}`)])) as KnMagicLabels['damage'],
+  enemy: Object.fromEntries(KN_CREATURE_TYPES.map(type => [type, t(`ker_nethalas.creatureTypes.${type}`)])) as KnMagicLabels['enemy'],
+}))
+
+// Harmoniser les objets cochés : rareté, propriétés et peculiarité tirées et figées sur chaque objet.
+function attuneItems(lines: string[]) {
+  const c = character.value
+  if (!props.magic || !attuneIds.value.length) return
+  let inventory = c.inventory
+  for (const id of attuneIds.value) {
+    const item = inventory.find(candidate => candidate.id === id)
+    if (!item?.magic || item.magic.identified) continue
+    const result = knIdentifyMagic(item.magic, props.magic, magicLabels.value, { peculiarity: withPeculiarity.value })
+    if ('missing' in result) {
+      lines.push(`${item.name} : la table des objets de ce type n'est pas chargée, notez ses propriétés à la main.`)
+      continue
+    }
+    inventory = inventory.map(candidate => candidate.id === id ? { ...candidate, magic: result.magic } : candidate)
+    lines.push(`Harmonisation de ${item.name} : ${RARITY_LABELS[result.rarity]}.`)
+    for (const property of result.magic.properties) lines.push(`— ${property.text}${property.choose ? ' (compétence à choisir sur l\'objet)' : ''}`)
+    for (const peculiarity of result.magic.peculiarities) lines.push(`— Peculiarité : ${peculiarity}`)
+  }
+  c.inventory = inventory
+  attuneIds.value = []
+}
 
 const traits = computed(() => props.masteries
   ? knCampTraits(props.masteries, knMasteryEntries(character.value.masteryPicks, character.value.amulets))
@@ -314,7 +387,10 @@ function finish() {
   if (!outcome.success) lines.push('Test raté : tirez dans la table des Rencontres (les bénéfices réduits sont déjà appliqués).')
   if (c.status.rotStage >= 1) lines.push('Pourriture : test d\'Endurance, sinon elle avance d\'un stade.')
   if (used.activities.healConditions > 0) lines.push('Retirez les Conditions soignées dans « Effets en cours ».')
-  if (used.activities.attune > 0) lines.push('Pensez à noter les objets harmonisés dans l\'équipement.')
+  if (used.activities.attune > 0) {
+    if (attuneIds.value.length) attuneItems(lines)
+    else lines.push('Pensez à noter les objets harmonisés dans l\'équipement.')
+  }
 
   report.value = lines
   plan.value = emptyKnCampPlan()

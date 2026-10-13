@@ -195,6 +195,110 @@
       "weaponSkills": "Compétences d'arme",
       "nonCombatSkills": "Compétences hors combat"
     },
+    "loot": {
+      "tables": {
+        "spoils": "Butin",
+        "mundane": "Objets ordinaires",
+        "valuable": "Objets de valeur",
+        "precious": "Objets précieux",
+        "gems": "Gemmes et bijoux",
+        "fragments": "Fragments",
+        "potions": "Potions",
+        "resources": "Ressources",
+        "weapons": "Arme aléatoire",
+        "armor": "Armure aléatoire",
+        "torso": "Armure de torse",
+        "vambraces": "Vambraces",
+        "greaves": "Jambières",
+        "helmets": "Casques",
+        "shields": "Boucliers",
+        "masteries": "Maîtrise aléatoire",
+        "containers": "Contenant",
+        "loreBooks": "Livres de savoir"
+      }
+    },
+    "inventory": {
+      "magicTables": {
+        "weapon": "arme",
+        "armor": "armure",
+        "belt": "ceinture",
+        "boots": "bottes",
+        "gloves": "gants",
+        "ring": "anneau",
+        "amulet": "amulette",
+        "relic": "Relique"
+      },
+      "rarities": {
+        "uncommon": "Peu commun",
+        "rare": "Rare",
+        "epic": "Épique",
+        "relic": "Relique"
+      },
+      "kinds": {
+        "weapon": "Arme",
+        "shield": "Bouclier",
+        "helmet": "Casque",
+        "torso": "Armure de torse",
+        "vambraces": "Vambraces",
+        "greaves": "Jambières",
+        "belt": "Ceinture",
+        "gloves": "Gants",
+        "boots": "Bottes",
+        "ring": "Anneau",
+        "backpack": "Sac à dos",
+        "pouch": "Pochette",
+        "gear": "Équipement",
+        "potion": "Potion",
+        "fragment": "Fragment",
+        "gems": "Gemmes et bijoux"
+      },
+      "weights": {
+        "none": "Sans encombrement",
+        "light": "Léger",
+        "normal": "Normal",
+        "heavy": "Lourd",
+        "bulk": "Par centaine"
+      },
+      "places": {
+        "bag": "Dans le sac",
+        "quick": "Ceinture (emplacement rapide)",
+        "mainHand": "Main principale",
+        "offHand": "Main secondaire",
+        "belt": "Ceinture portée",
+        "head": "Tête",
+        "armor": "Armure",
+        "gloves": "Gants portés",
+        "boots": "Bottes portées",
+        "ring": "Anneau porté",
+        "backpack": "Sac à dos porté",
+        "pouch": "Pochette portée"
+      },
+      "traits": {
+        "defensive": "Défensive",
+        "quick": "Rapide",
+        "parrying": "Parade",
+        "powerful": "Puissante",
+        "simple": "Simple",
+        "twoHanded": "À deux mains",
+        "versatile": "Polyvalente"
+      },
+      "unavailable": {
+        "noBelt": "Ceinture requise",
+        "slotTaken": "cases prises",
+        "full": "plein",
+        "notUnique": "pile à séparer",
+        "twoHandedOffHand": "arme à deux mains",
+        "wrongKind": "impossible"
+      },
+      "errors": {
+        "wrongKind": "Cet objet ne va pas à cet endroit.",
+        "noBelt": "Aucun emplacement rapide sans Ceinture portée.",
+        "slotTaken": "Cette case de la Ceinture est prise.",
+        "full": "Cet endroit est plein.",
+        "twoHandedOffHand": "Une arme à deux mains se tient dans la main principale.",
+        "notUnique": "Un objet porté est unique : séparez la pile d'abord."
+      }
+    },
     "customKinds": {
       "modifier": "Modificateur",
       "advantage": "Avantage",
@@ -205,6 +309,7 @@
       "exhaustion": "Épuisement ({value})",
       "rot": "La Pourriture, stade {stage}",
       "overseer": "Influence de l'Overseer",
+      "equipment": "Équipement porté",
       "noLight": "Sans source de lumière"
     },
     "reminders": {

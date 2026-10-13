@@ -8,8 +8,9 @@ import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from './skills'
 import { boundedInt, shapeOf } from './zodHelpers'
 
 // Fréquences d'utilisation du livre (p. 123) : « par repos » vaut pour une pause comme pour un camp, « par camp » pour le
-// camp seul ; « par combat » et « par pièce » se remettent à zéro à la fin du combat et à l'entrée dans une pièce.
-export const KN_USE_LIMITS = ['combat', 'room', 'rest', 'campRest'] as const
+// camp seul ; « par combat » et « par pièce » se remettent à zéro à la fin du combat et à l'entrée dans une pièce, « par Domaine »
+// quand on en commence un nouveau.
+export const KN_USE_LIMITS = ['combat', 'room', 'rest', 'campRest', 'domain'] as const
 
 export type KnUseLimit = (typeof KN_USE_LIMITS)[number]
 
@@ -58,6 +59,9 @@ export const knCustomModifierSchema = z.object({
   combat: z.boolean().optional(),
   rounds: boundedInt({ min: 1, max: 99 }).optional(),
   tick: z.object({ dice: knDiceSchema, direct: z.boolean().optional() }).optional(),
+  // Salles restantes à parcourir avant que l'effet cesse (0 : il tient jusqu'à la sortie de la salle courante). Sans
+  // `combat`, `rounds` ni `rooms`, un effet dure jusqu'à ce qu'on le retire.
+  rooms: boundedInt({ min: 0, max: 99 }).optional(),
 })
 
 const knTemporaryAmount = boundedInt(KN_STATUS_BOUNDS.temporary)
@@ -90,13 +94,6 @@ export const knStatusSchema = z.object({
   // Aptitudes à usage limité déjà utilisées depuis la dernière remise à zéro de leur fréquence.
   used: z.array(knUsedAbilitySchema).max(KN_STATUS_BOUNDS.used).optional(),
   temporary: knTemporarySchema.optional(),
-  // Armure du survivant par zone, saisie à la main tant que l'équipement n'est pas suivi.
-  armor: z.object({
-    head: boundedInt({ min: 0, max: 9 }),
-    torso: boundedInt({ min: 0, max: 9 }),
-    arms: boundedInt({ min: 0, max: 9 }),
-    legs: boundedInt({ min: 0, max: 9 }),
-  }).optional(),
 })
 
 export type KnStatus = z.infer<typeof knStatusSchema>

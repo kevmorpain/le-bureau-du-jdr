@@ -38,7 +38,13 @@
         v-if="modifier.combat"
         class="text-xs text-muted"
       >
-        Posé par une créature : il disparaît à la fin du combat{{ modifier.rounds ? `, après ${modifier.rounds} round(s)` : '' }}{{ modifier.tick ? `, et inflige ${knDiceLabel(modifier.tick.dice)} dégâts à chaque début de tour` : '' }}.
+        Effet de combat : il disparaît à la fin du combat{{ modifier.rounds ? `, après ${modifier.rounds} round(s)` : '' }}{{ modifier.tick ? `, et inflige ${knDiceLabel(modifier.tick.dice)} dégâts à chaque début de tour` : '' }}.
+      </p>
+      <p
+        v-else-if="modifier.rooms !== undefined"
+        class="text-xs text-muted"
+      >
+        {{ modifier.rooms === 0 ? 'Il cesse en quittant cette salle.' : `Il tient encore ${modifier.rooms} salle${modifier.rooms > 1 ? 's' : ''} après celle-ci.` }}
       </p>
 
       <div

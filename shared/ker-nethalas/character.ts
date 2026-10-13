@@ -9,6 +9,7 @@ import {
 import { knAmuletsSchema } from './amulets'
 import { knProvisionsSchema } from './camp'
 import { knGoalPicksSchema } from './goals'
+import { knInventorySchema } from './inventory'
 import { knMasteryPicksSchema } from './masteries'
 import { knRunSchema } from './run'
 import { knStatusSchema } from './status'
@@ -75,6 +76,7 @@ export const updateKnCharacterSchema = z.object({
   coins: boundedInt(KN_BOUNDS.coins),
   masteryPicks: knMasteryPicksSchema,
   amulets: knAmuletsSchema,
+  inventory: knInventorySchema,
   masteries: z.string().max(10000),
   perks: z.string().max(5000),
   weapons: z.string().max(5000),

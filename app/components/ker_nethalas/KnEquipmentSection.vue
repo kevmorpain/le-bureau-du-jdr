@@ -5,7 +5,7 @@
         Équipement
       </h2>
       <p class="text-sm text-muted">
-        Notes libres : l'outil n'en tire aucun calcul pour l'instant.
+        L'inventaire pèse et range les objets ; les notes libres en dessous n'entrent dans aucun calcul.
       </p>
     </template>
 
@@ -24,7 +24,15 @@
         <span class="text-muted">(à gérer dans la section Maîtrises)</span>
       </p>
 
-      <UFormField label="Armes">
+      <KnInventoryPanel
+        v-model:character="character"
+        :catalog
+        :loot
+        :aging
+        :resolved
+      />
+
+      <UFormField label="Notes sur les armes">
         <UTextarea
           v-model="character.weapons"
           :rows="5"
@@ -43,7 +51,7 @@
       </UFormField>
 
       <UFormField
-        label="Tout l'équipement"
+        label="Notes sur l'équipement"
         class="md:col-span-2"
       >
         <UTextarea
@@ -60,10 +68,18 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import type { KnPotionAging } from '~~/shared/ker-nethalas/consumables'
+import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
+import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 
 const props = defineProps<{
   masteries: KnMastery[] | null
+  catalog: KnCatalogItem[] | null
+  loot: KnLootContent | null
+  aging: KnPotionAging | null
+  resolved: KnResolvedSheet
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })

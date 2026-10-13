@@ -218,6 +218,19 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.amulets).toEqual(amulets)
   })
 
+  it('crée un survivant sans objet et relit son inventaire', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Sac'))
+    expect((await getKnCharacter(db, id))!.inventory).toEqual([])
+
+    const inventory = [
+      { id: 'i1', name: 'Ceinture', kind: 'belt' as const, weight: 'normal' as const, quantity: 1, place: 'belt' as const },
+      { id: 'i2', name: 'Lanterne', kind: 'gear' as const, weight: 'normal' as const, quantity: 1, place: 'quick' as const, slot: 1 },
+    ]
+    await updateKnCharacter(db, id, { inventory })
+
+    expect((await getKnCharacter(db, id))!.inventory).toEqual(inventory)
+  })
+
   it('crée un survivant sans objectif quand aucun n\'est choisi', async () => {
     const { id } = await createKnCharacter(db, alice, validKnCreation('Sans objectif'))
 

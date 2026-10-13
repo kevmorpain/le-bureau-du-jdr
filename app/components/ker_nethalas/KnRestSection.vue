@@ -40,32 +40,24 @@
           v-model:character="character"
           :resolved
           :masteries
+          :magic
           @close="campOpen = false"
         />
       </div>
 
-      <div class="space-y-2">
-        <h3 class="font-medium">
-          Provisions
-        </h3>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <KnNumberField
-            v-for="key in KN_PROVISION_KEYS"
-            :key
-            v-model="character.provisions[key]"
-            :label="$t(`ker_nethalas.provisions.${key}`)"
-            :min="KN_PROVISION_BOUNDS.min"
-            :max="KN_PROVISION_BOUNDS.max"
-          />
-        </div>
-      </div>
+      <p class="text-sm">
+        <span class="font-medium">Provisions :</span>
+        {{ provisionsText }}
+        <span class="text-muted">(à gérer dans la section Équipement)</span>
+      </p>
     </div>
   </UCard>
 </template>
 
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import { KN_PROVISION_BOUNDS, KN_PROVISION_KEYS, knTakeBreather } from '~~/shared/ker-nethalas/camp'
+import { KN_PROVISION_KEYS, knTakeBreather } from '~~/shared/ker-nethalas/camp'
+import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCurrentDomain } from '~~/shared/ker-nethalas/run'
@@ -74,11 +66,18 @@ import { knRest } from '~~/shared/ker-nethalas/vitals'
 const props = defineProps<{
   resolved: KnResolvedSheet
   masteries: KnMastery[] | null
+  magic: KnMagicContent | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { signed } = useKnLabels()
+const { t } = useI18n()
+
+const provisionsText = computed(() => {
+  const held = KN_PROVISION_KEYS.filter(key => character.value.provisions[key] > 0)
+  return held.length ? held.map(key => `${character.value.provisions[key]} ${t(`ker_nethalas.provisions.${key}`).toLowerCase()}`).join(', ') : 'aucune'
+})
 
 const campOpen = ref(false)
 const breatherLines = ref<string[]>([])

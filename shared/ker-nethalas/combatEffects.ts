@@ -27,6 +27,20 @@ export function knAdvanceCombatEffects(status: KnStatus, rng: KnRng = Math.rando
   return { status: changed ? { ...status, custom } : status, ticks, expired }
 }
 
+// Entrer dans une salle : un effet à durée en salles en perd une ; celui qui n'en avait plus cesse.
+export function knAdvanceRooms(status: KnStatus): { status: KnStatus, expired: string[] } {
+  const expired: string[] = []
+  const custom = status.custom.flatMap((modifier) => {
+    if (modifier.rooms === undefined) return [modifier]
+    if (modifier.rooms === 0) {
+      expired.push(modifier.name)
+      return []
+    }
+    return [{ ...modifier, rooms: modifier.rooms - 1 }]
+  })
+  return { status: status.custom.some(modifier => modifier.rooms !== undefined) ? { ...status, custom } : status, expired }
+}
+
 // La fin du combat retire tous les effets que ses créatures avaient posés.
 export const knClearCombatEffects = (status: KnStatus): KnStatus =>
   status.custom.some(modifier => modifier.combat) ? { ...status, custom: status.custom.filter(modifier => !modifier.combat) } : status

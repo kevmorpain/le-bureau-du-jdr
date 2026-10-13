@@ -24,6 +24,7 @@ export const knUseLimitLabel: Record<KnUseLimit, string> = {
   room: 'une fois par pièce',
   rest: 'une fois par repos',
   campRest: 'une fois par camp',
+  domain: 'une fois par Domaine',
 }
 
 export const knIsUsedUp = (status: Pick<KnStatus, 'used'>, key: string) => !!status.used?.some(use => use.key === key)
