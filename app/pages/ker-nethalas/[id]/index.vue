@@ -75,6 +75,9 @@
       v-model:character="character"
       :masteries
       :catalog
+      :loot
+      :aging
+      :resolved
     />
 
     <KnLootSection
@@ -109,6 +112,7 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { AutoSaveStatus } from '~/composables/useAutoSave'
+import type { KnPotionAging } from '~~/shared/ker-nethalas/consumables'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
@@ -132,6 +136,7 @@ const { data: overseers } = await useKnContent<KnRollTable>('overseers')
 const { data: bestiary } = await useKnContent<KnCreature[]>('bestiary')
 const { data: catalog } = await useKnContent<KnCatalogItem[]>('items')
 const { data: loot } = await useKnContent<KnLootContent>('loot')
+const { data: aging } = await useKnContent<KnPotionAging>('potionAging')
 const tables = computed(() => ({
   corridorDescriptions: corridorDescriptions.value,
   roomDescriptions: roomDescriptions.value,

@@ -74,6 +74,12 @@
           >
             {{ stats(item) }}
           </p>
+          <p
+            v-if="agingText(item)"
+            class="text-xs text-muted"
+          >
+            Vieillissement : {{ agingText(item) }}
+          </p>
         </div>
         <KnNumberField
           v-if="item.place === 'bag' || item.place === 'quick'"
@@ -114,6 +120,29 @@
             Réparer
           </UButton>
         </template>
+        <template v-if="item.consumable">
+          <UButton
+            v-if="item.consumable.identified === false"
+            size="xs"
+            variant="soft"
+            icon="i-heroicons:magnifying-glass"
+            :disabled="!canUse(item)"
+            :aria-label="`Identifier ${item.name}`"
+            @click="startIdentify(item)"
+          >
+            Identifier (Médecine)
+          </UButton>
+          <UButton
+            size="xs"
+            icon="i-heroicons:sparkles"
+            :disabled="!canUse(item)"
+            :title="canUse(item) ? undefined : 'Le contenu des butins n\'est pas chargé'"
+            :aria-label="`${item.kind === 'potion' ? 'Boire' : 'Utiliser'} ${item.name}`"
+            @click="use(item)"
+          >
+            {{ item.kind === 'potion' ? 'Boire' : 'Utiliser' }}
+          </UButton>
+        </template>
         <UButton
           icon="i-heroicons:trash"
           color="error"
@@ -130,6 +159,14 @@
     >
       Aucun objet. Ajoutez ce que le survivant trouve ou achète.
     </p>
+
+    <KnInlineCheck
+      v-if="pendingCheck"
+      :key="pendingCheck.id"
+      :request="pendingCheck.request"
+      @rolled="pendingCheck.done"
+      @close="pendingCheck = null"
+    />
 
     <div
       v-if="catalog"
@@ -199,8 +236,23 @@
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_PROVISION_BOUNDS, KN_PROVISION_KEYS } from '~~/shared/ker-nethalas/camp'
+import {
+  KN_AGING_DIE,
+  KN_POTION_POISON,
+  knAgingAt,
+  knIdentifyPotion,
+  knPlanConsumable,
+  knSpendConsumable,
+  type KnPotionAging,
+} from '~~/shared/ker-nethalas/consumables'
+import { knDiceLabel, knRollDice } from '~~/shared/ker-nethalas/dice'
 import { knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
 import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
+import { knConsumableEntry, type KnLootContent } from '~~/shared/ker-nethalas/loot'
+import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import type { KnRollRequest } from '~~/shared/ker-nethalas/roll'
+import { knRollDie } from '~~/shared/ker-nethalas/run'
+import { knCheckId } from '~~/shared/ker-nethalas/tables'
 import {
   KN_ITEM_KINDS,
   KN_ITEM_WEIGHTS,
@@ -223,12 +275,18 @@ import {
 
 const props = defineProps<{
   catalog: KnCatalogItem[] | null
+  loot: KnLootContent | null
+  aging: KnPotionAging | null
+  resolved: KnResolvedSheet
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
 const toast = useToast()
+
+provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
+const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 
 const inventory = computed(() => character.value.inventory)
 
@@ -328,5 +386,73 @@ function setQuantity(id: string, quantity: number) {
 
 function remove(id: string) {
   character.value.inventory = knRemoveItem(inventory.value, id)
+}
+
+const pendingCheck = ref<{ id: number, request: KnRollRequest, done: (success: boolean) => void } | null>(null)
+let checkSeq = 0
+
+const isUnknownPotion = (item: KnItem) => item.kind === 'potion' && item.consumable?.identified === false
+
+const canUse = (item: KnItem) => !!knConsumableEntry(props.loot, item) && (item.kind !== 'potion' || !!props.aging)
+
+const agingOf = (item: KnItem) => props.aging && item.consumable?.aging ? knAgingAt(props.aging, item.consumable.aging) : undefined
+
+const agingText = (item: KnItem) => agingOf(item)?.text
+
+// Identifier une potion la révèle et tire son vieillissement, une fois pour toutes.
+function reveal(item: KnItem): KnItem | undefined {
+  const entry = knConsumableEntry(props.loot, item)
+  return entry ? knIdentifyPotion(item, entry, knRollDie(KN_AGING_DIE)) : undefined
+}
+
+function replace(item: KnItem) {
+  character.value.inventory = inventory.value.map(candidate => candidate.id === item.id ? item : candidate)
+}
+
+function startIdentify(item: KnItem) {
+  pendingCheck.value = {
+    id: ++checkSeq,
+    request: { id: knCheckId('medicine'), note: `Identifier : ${item.name}` },
+    done: (success) => {
+      const current = inventory.value.find(candidate => candidate.id === item.id)
+      if (!current || !isUnknownPotion(current)) return
+      if (!success) {
+        toast.add({ title: 'Identification manquée', description: 'Il ne reste qu\'à la boire pour voir.', color: 'warning' })
+        return
+      }
+      const known = reveal(current)
+      if (!known) return
+      replace(known)
+      toast.add({ title: known.name, description: agingOf(known)?.text, color: 'success' })
+    },
+  }
+}
+
+// Employer un fragment ou boire une potion : ses effets s'appliquent à la fiche, et un exemplaire s'en va. Une potion bue
+// sans être identifiée se révèle à ce moment, vieillissement compris.
+function use(item: KnItem) {
+  const entry = knConsumableEntry(props.loot, item)
+  if (!entry) return
+  const known = isUnknownPotion(item) ? reveal(item) : item
+  if (!known) return
+  const plan = knPlanConsumable(entry, item.kind === 'potion' ? agingOf(known) : undefined)
+  character.value.inventory = knSpendConsumable(inventory.value.map(candidate => candidate.id === known.id ? known : candidate), known.id)
+
+  const title = `${item.kind === 'potion' ? 'Potion bue' : 'Fragment utilisé'} : ${entry.title ?? known.name}`
+  applyEffects(plan.effects, title, plan.scale ? { scale: plan.scale } : {})
+  toast.add({ title, description: [entry.text, plan.aging?.text].filter(Boolean).join(' — '), color: 'info', duration: 15000 })
+  if (plan.roll) {
+    const rolled = knRollDice(plan.roll.dice)
+    toast.add({ title: plan.roll.label, description: `${knDiceLabel(plan.roll.dice)} → ${rolled.total}`, color: 'info', duration: 15000 })
+  }
+  if (plan.enduranceCheck) {
+    pendingCheck.value = {
+      id: ++checkSeq,
+      request: { id: knCheckId('endurance'), note: `${title} : la potion a tourné au poison` },
+      done: (success) => {
+        if (!success) applyEffects(KN_POTION_POISON, 'Empoisonné par la potion')
+      },
+    }
+  }
 }
 </script>

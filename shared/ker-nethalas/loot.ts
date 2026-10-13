@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { KN_PROVISION_BOUNDS, type KnProvisions } from './camp'
 import { knRollDice } from './dice'
+import { knUseSchema } from './consumables'
 import { knDiceSchema } from './diceSchema'
 import { KN_MAX_ITEMS, knNextItemId, type KnItem } from './inventory'
 import { knItemFromCatalog, type KnCatalogItem } from './items'
 import { knRollDie, type KnRng } from './run'
+import { knCheckCoverage } from './zodHelpers'
 
 // Les tables de butin du livre et leur dé.
 export const KN_LOOT_TABLES = {
@@ -55,6 +57,8 @@ export const knLootEntrySchema = z.object({
   title: z.string().trim().min(1).max(100).optional(),
   text: z.string().trim().min(1).max(600),
   drop: knLootDropSchema,
+  // Ce que fait un fragment ou une potion quand on l'emploie.
+  use: knUseSchema.optional(),
 }).refine(entry => entry.min <= entry.max, { message: 'la plage va de min à max' })
 
 export type KnLootEntry = z.infer<typeof knLootEntrySchema>
@@ -62,15 +66,7 @@ export type KnLootEntry = z.infer<typeof knLootEntrySchema>
 export const knLootTableSchema = (die: number) => z.object({
   die: z.literal(die),
   entries: z.array(knLootEntrySchema).min(1).max(die),
-}).superRefine((table, ctx) => {
-  let expected = 1
-  table.entries.forEach((entry, index) => {
-    if (entry.min !== expected) ctx.addIssue({ code: 'custom', path: ['entries', index, 'min'], message: `la plage doit commencer à ${expected}` })
-    if (entry.max > die) ctx.addIssue({ code: 'custom', path: ['entries', index, 'max'], message: `la plage dépasse le dé (${die})` })
-    expected = entry.max + 1
-  })
-  if (expected !== die + 1) ctx.addIssue({ code: 'custom', path: ['entries'], message: `les plages doivent couvrir de 1 à ${die}` })
-})
+}).superRefine((table, ctx) => knCheckCoverage(table.entries, die, ctx))
 
 export interface KnLootTable {
   die: number
@@ -106,6 +102,10 @@ const MAX_CHAIN = 6
 
 export const knLootEntryAt = (table: KnLootTable | undefined, roll: number): KnLootEntry | undefined =>
   table?.entries.find(entry => roll >= entry.min && roll <= entry.max)
+
+// Le résultat de la table de butin dont un fragment ou une potion est issu : c'est là que se relisent ses effets.
+export const knConsumableEntry = (content: KnLootContent | null, item: Pick<KnItem, 'consumable'>): KnLootEntry | undefined =>
+  item.consumable && content ? knLootEntryAt(content[item.consumable.table], item.consumable.roll) : undefined
 
 // Tire sur une table, puis sur celles qu'elle désigne, jusqu'à ce qu'un résultat donne quelque chose. Si une table de la chaîne
 // n'est pas chargée, rend celle qui manque.
@@ -181,13 +181,13 @@ export function knApplyLoot(state: KnLootState, result: KnLootResult, catalog: r
   if (drop.kind === 'gem') {
     return addItem(state, { ...base, name: `Gemme : ${label(result)}`, kind: 'gems', weight: 'bulk', value: result.value }) ?? { state, lines: ['inventaire plein'] }
   }
-  if (drop.kind === 'fragment') {
+  if (drop.kind === 'fragment' || drop.kind === 'potion') {
     const last = result.steps[result.steps.length - 1]!
-    return addItem(state, { ...base, name: `Fragment${last.title ? ` : ${last.title}` : ''}`, kind: 'fragment', weight: 'light', note: last.text.slice(0, 600) }) ?? { state, lines: ['inventaire plein'] }
-  }
-  if (drop.kind === 'potion') {
-    const last = result.steps[result.steps.length - 1]!
-    return addItem(state, { ...base, name: last.title ? `Potion : ${last.title}` : 'Potion', kind: 'potion', weight: 'light', note: last.text.slice(0, 600) }) ?? { state, lines: ['inventaire plein'] }
+    const consumable = last.table === 'fragments' || last.table === 'potions' ? { table: last.table, roll: last.roll } : undefined
+    const item = drop.kind === 'fragment'
+      ? { ...base, name: `Fragment${last.title ? ` : ${last.title}` : ''}`, kind: 'fragment' as const, weight: 'light' as const, note: last.text.slice(0, 600) }
+      : { ...base, name: 'Potion non identifiée', kind: 'potion' as const, weight: 'light' as const, note: 'Un test de Médecine l\'identifie ; sinon, il ne reste qu\'à la boire.' }
+    return addItem(state, { ...item, ...(consumable ? { consumable: drop.kind === 'potion' ? { ...consumable, identified: false } : consumable } : {}) }) ?? { state, lines: ['inventaire plein'] }
   }
   const name = drop.kind === 'relic' ? 'Relique à identifier' : `Objet magique à identifier${drop.item === 'weapon' ? ' (arme)' : drop.item === 'armor' ? ' (armure)' : ''}`
   return addItem(state, { ...base, name, kind: 'gear', weight: 'normal' }) ?? { state, lines: ['inventaire plein'] }

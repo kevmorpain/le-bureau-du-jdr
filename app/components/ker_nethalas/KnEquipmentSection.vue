@@ -27,6 +27,9 @@
       <KnInventoryPanel
         v-model:character="character"
         :catalog
+        :loot
+        :aging
+        :resolved
       />
 
       <UFormField label="Notes sur les armes">
@@ -65,12 +68,18 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import type { KnPotionAging } from '~~/shared/ker-nethalas/consumables'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
+import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 
 const props = defineProps<{
   masteries: KnMastery[] | null
   catalog: KnCatalogItem[] | null
+  loot: KnLootContent | null
+  aging: KnPotionAging | null
+  resolved: KnResolvedSheet
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })

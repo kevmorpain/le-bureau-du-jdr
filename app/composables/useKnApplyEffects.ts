@@ -1,14 +1,14 @@
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
-import { knApplyTableEffects, type KnTableEffect } from '~~/shared/ker-nethalas/tables'
+import { knApplyTableEffects, type KnEffectScale, type KnTableEffect } from '~~/shared/ker-nethalas/tables'
 
 // Applique à la fiche des gains et des pertes (pièces, provisions, XP, jauges, dégâts, états…) et le dit dans un message.
 export function useKnApplyEffects(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet) {
   const toast = useToast()
   const { outcomeText } = useKnEffectText()
 
-  function applyEffects(effects: readonly KnTableEffect[], title: string, options: { creature?: boolean } = {}) {
+  function applyEffects(effects: readonly KnTableEffect[], title: string, options: { creature?: boolean, scale?: KnEffectScale } = {}) {
     if (!effects.length) return
     const c = character.value
     const maxVitals = resolved().maxVitals

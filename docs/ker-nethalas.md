@@ -457,12 +457,34 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Tirage** : `knRollLoot` suit la chaîne des tables (six rebonds au plus) ; une quantité en dés vaut au moins 1 ; une gemme
   tire sa valeur. Une créature du bestiaire peut porter `loot` (jusqu'à trois tables de départ) ; la carte « Butin » les tire.
 - **Ajouter** (`knApplyLoot`) : un objet du catalogue arrive « trouvé » (Intégrité d'un cran en moins), une provision va aux
-  provisions, une gemme devient un objet de valeur tirée rangé par centaine, fragments et objets magiques arrivent « à identifier ».
+  provisions, une gemme devient un objet de valeur tirée rangé par centaine, un fragment ou une potion garde sa table et son jet
+  (KN43), un objet magique arrive « à identifier ».
   Rien ne s'ajoute sans le bouton, et un inventaire plein refuse.
 - **Marchand** (`trade.ts`) : acheter retire les pièces et ajoute l'objet ou la provision ; vendre rend les pièces (50 % arrondi à
   l'inférieur, gemmes à 100 %). Seuls les objets du sac et les provisions que le catalogue connaît se vendent ; les amulettes non.
-- **Laissé de côté** (étapes suivantes de la tranche 7) : le contenu des tables des fragments et des potions, leur usage, leur
-  identification et leur vieillissement ; la génération des objets magiques et des Reliques ; l'équipement de départ en inventaire.
+- **Laissé de côté** (étapes suivantes de la tranche 7) : la génération des objets magiques et des Reliques ; l'équipement de
+  départ en inventaire. Les fragments et les potions : KN43.
+
+### KN43 — Fragments et potions utilisables
+- **Règles sourcées** (livre v1.2) : p. 214-215 (Fragments : un seul emploi, sans s'accorder), p. 126 (Potions : test de Médecine pour
+  connaître les effets, sinon les essayer ; une fois identifiée, tirage de vieillissement), p. 221 (table des Potions).
+- **Données** : les tables `fragments` et `potions` sont des tables de butin ordinaires (jeu `loot`) dont chaque résultat porte
+  `use` : des effets (`KnTableEffect`) que la fiche applique, et au besoin un jet que l'objet demande sans l'appliquer (dégâts sur
+  des cibles, Blessures soignées au fil des rounds). Le jeu `potionAging` (D20) donne le texte du vieillissement ; ses effets sont
+  en code (`consumables.ts`) : tournée au poison, explosion (2D4 de force), éventée, affaiblie (moitié), normale, raffinée
+  (double, +50 % de durée), parfaite (sans fin).
+- **L'objet ne recopie pas ses effets** : il garde la table et le jet (`item.consumable`), et relit ses effets dans le contenu à
+  l'emploi. Une correction du contenu s'applique donc aux objets déjà trouvés ; sans le contenu chargé, les boutons sont grisés.
+- **Nouveaux effets de table** : soigner des Blessures (Robustesse avant Santé), retirer un état, et une durée en salles
+  (`timed.rooms`, décomptée à l'entrée d'une salle, `status.custom[].rooms`). Un effet sans durée ni combat reste jusqu'à ce qu'on
+  le retire (potion parfaite).
+- **Interface** : une potion trouvée se range « non identifiée » (ni nom, ni ligne de table visibles, y compris sur la carte
+  Butin) ; « Identifier (Médecine) » ouvre le test en ligne, « Boire » identifie d'office et applique. Un fragment s'emploie
+  d'un clic. Le texte de l'objet s'affiche à chaque emploi, pour ce que les effets chiffrés ne couvrent pas.
+- **Laissé de côté** : l'Armure +1 de la Peau de pierre (pas de cible « Armure » dans les modificateurs libres) ; les bonus
+  ponctuels (« prochain test d'Athlétisme +50 », « +D4 de feu à la Réserve ») et les actions (Action Standard gratuite) restent
+  du texte ; la Pierre de Borestia (identification sans test) vient avec les objets magiques ; deux potions de Vitalité bues de
+  suite ne déclenchent pas les dégâts d'acide.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -812,7 +834,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6a — Rencontres et bestiaire** | tirage de la rencontre (D6 puis D20) et de l'Overseer du Domaine (D10), fiche de créature adaptée au niveau, table d'actions, catalogues de règles (types de dégâts, localisations, types et traits de créature) (KN38) ; issue X15 (#262) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
-| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits ; b : butin, gemmes, marchand écrits, KN42 ; fragments et potions à venir) |
+| **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | en cours (a : inventaire, catalogue, équipement dans le combat écrits ; b : butin, gemmes, marchand écrits, KN42 ; fragments et potions utilisables écrits, KN43) |
 | **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
@@ -950,10 +972,22 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 - **Sbires de Maîtrise** : le livre veut que les adversaires visent les PJ avant les sbires, et laisse la répartition au début du
   combat ; l'outil laisse le joueur choisir la cible de chaque action. Les bonus d'une Maîtrise sur ses sbires (dégâts, Santé)
   se saisissent à la main. Un sbire ne subit pas les règles de Santé mentale (p. 92-93), qu'il n'a pas.
+- **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
+  suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
+  s'arrondit au supérieur (seule règle d'arrondi du livre : la moitié des dégâts), les durées aussi, d'une salle ou d'un round au
+  moins. Une potion se vieillit une fois, à l'identification (test de Médecine, ou gorgée), pas à chaque emploi. ⚠️ hypothèses
 
 ---
 
 ## Journal
+
+### 2026-10-13 — Tranche 7, étape 4b : fragments et potions
+- Sources relues dans le livre (p. 214-215, 221, 126) avant d'écrire les 20 fragments, les 20 potions et la table de
+  vieillissement ; contenu français hors dépôt (`loot`, `potionAging`), à relire par le PM avant tout chargement en production.
+- Vérifié dans le navigateur, sur un survivant de test : tirage d'une potion (identité masquée sur la carte Butin), identification
+  par test de Médecine (nom, description et vieillissement révélés), potion bue sans identification (vieillissement « tourné au
+  poison » : test d'Endurance ouvert), fragment employé (effet de 5 salles posé puis décompté à l'entrée d'une salle : 5 → 4).
+  Non vérifié à l'écran : l'application de Empoisonné (1) après un test d'Endurance raté (couverte par les tests du moteur).
 
 ### 2026-10-13 — Tranche 7, étape 4a : butin et marchand
 - Pilotes en français relus et approuvés par le PM avant l'écriture ; la lecture « une arme ou une armure magique tirée dans le

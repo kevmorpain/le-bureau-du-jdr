@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import { knPotionAgingSchema } from './consumables'
 import { knBestiaryContentSchema } from './creatures'
 import { knPersonalGoalsContentSchema } from './goals'
 import { knItemsContentSchema } from './items'
@@ -15,6 +16,7 @@ export const KN_CONTENT_SCHEMAS: KnContentRegistry = {
   bestiary: knBestiaryContentSchema,
   items: knItemsContentSchema,
   loot: knLootContentSchema,
+  potionAging: knPotionAgingSchema,
   ...Object.fromEntries(Object.entries(KN_EXPLORATION_TABLES).map(([name, { die }]) => [name, knRollTableSchema(die)])),
 }
 

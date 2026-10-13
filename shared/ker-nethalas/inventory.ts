@@ -128,6 +128,14 @@ export const knItemSchema = z.object({
   maneuverability: boundedInt({ min: 0, max: 30 }).optional(),
   perception: boundedInt({ min: 0, max: 30 }).optional(),
   integrity: z.object({ max: knIntegrityDieSchema, current: knIntegrityDieSchema }).optional(),
+  // D'où vient un fragment ou une potion : la table de butin et le jet, pour relire ses effets dans le contenu. Une potion
+  // trouvée n'est identifiée qu'après un test de Médecine ou une gorgée ; son vieillissement se tire alors, une fois.
+  consumable: z.object({
+    table: z.enum(['fragments', 'potions']),
+    roll: boundedInt({ min: 1, max: 100 }),
+    identified: z.boolean().optional(),
+    aging: boundedInt({ min: 1, max: 20 }).optional(),
+  }).optional(),
   note: z.string().trim().max(600).optional(),
 })
 

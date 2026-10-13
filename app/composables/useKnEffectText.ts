@@ -23,8 +23,11 @@ export function useKnEffectText() {
       case 'damage': return `${amount(effect.dice, total)} dégâts${effect.direct ? ' directs à la Santé' : ''}${effect.half ? ' (moitié)' : ''}`
       case 'exhaustion': return `${sign(effect.sign)}${amount(effect.dice, total)} Épuisement`
       case 'condition': return `${t(`ker_nethalas.conditions.${effect.key}.name`)}${effect.value ? ` (${effect.value})` : ''}`
+      case 'woundsHeal': return `${amount(effect.dice, total)} Blessures soignées`
+      case 'conditionRemove': return `retire ${effect.keys.map(key => t(`ker_nethalas.conditions.${key}.name`)).join(', ')}`
       case 'timed': {
-        const rounds = total ? ` (${total} round${total > 1 ? 's' : ''})` : effect.rounds ? ` (${knDiceLabel(effect.rounds)} rounds)` : ''
+        const unit = effect.rooms ? 'salle' : 'round'
+        const rounds = total ? ` (${total} ${unit}${total > 1 ? 's' : ''})` : (effect.rooms ?? effect.rounds) ? ` (${knDiceLabel((effect.rooms ?? effect.rounds)!)} ${unit}s)` : ''
         const tick = effect.tick ? `, ${knDiceLabel(effect.tick.dice)} dégâts${effect.tick.direct ? ' directs' : ''} à chaque début de tour` : ''
         return `${effect.label}${rounds}${tick}`
       }

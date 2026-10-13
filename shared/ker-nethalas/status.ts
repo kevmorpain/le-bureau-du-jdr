@@ -58,6 +58,9 @@ export const knCustomModifierSchema = z.object({
   combat: z.boolean().optional(),
   rounds: boundedInt({ min: 1, max: 99 }).optional(),
   tick: z.object({ dice: knDiceSchema, direct: z.boolean().optional() }).optional(),
+  // Salles restantes à parcourir avant que l'effet cesse (0 : il tient jusqu'à la sortie de la salle courante). Sans
+  // `combat`, `rounds` ni `rooms`, un effet dure jusqu'à ce qu'on le retire.
+  rooms: boundedInt({ min: 0, max: 99 }).optional(),
 })
 
 const knTemporaryAmount = boundedInt(KN_STATUS_BOUNDS.temporary)

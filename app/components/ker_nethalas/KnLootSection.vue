@@ -139,12 +139,15 @@ function drawCreature(key: string) {
 
 const tableLabel = (key: KnLootTableKey) => t(`ker_nethalas.loot.tables.${key}`)
 
+// Une potion trouvée n'est pas identifiée : ni sa ligne de table ni son nom ne se montrent avant l'identification.
 function path(entry: Pending) {
   if ('missing' in entry.result) return ''
-  return entry.result.steps.map(step => `${tableLabel(step.table)} (D${step.die} → ${step.roll})`).join(' › ')
+  const steps = entry.result.drop.kind === 'potion' ? entry.result.steps.slice(0, -1) : entry.result.steps
+  return steps.map(step => `${tableLabel(step.table)} (D${step.die} → ${step.roll})`).join(' › ')
 }
 
 function summary(result: KnLootResult) {
+  if (result.drop.kind === 'potion') return 'Une potion, à identifier'
   const last = result.steps[result.steps.length - 1]!
   const label = last.title ?? last.text
   if (result.drop.kind === 'gem') return `${label} : ${result.value} ₵`
