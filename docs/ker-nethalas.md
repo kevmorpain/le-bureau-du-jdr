@@ -444,8 +444,11 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Intégrité** : les pièces qui ont encaissé un coup (l'armure de la zone touchée) ou paré (le bouclier) sont retenues pendant le
   combat ; leur dé se joue quand le combat prend fin (victoire ou non), et la fiche de l'objet offre le jet à la main (acide) et la
   réparation. Une pièce perdue sort de l'inventaire.
-- **Laissé de côté** : l'armure et les armes de départ de la création restent un texte (le tirage d'armure aléatoire vient avec le
-  butin) ; la réparation au camp ne choisit pas les pièces (l'activité décompte les Fournitures, le bouton « Réparer » remonte la
+- **Kit de départ** (création, p. 67) : quand le catalogue du livre est chargé, l'arme choisie et la pièce d'armure tirée sur la
+  table des armures aléatoires (on relance tant que le résultat est une armure magique) entrent dans l'inventaire, neuves,
+  portées (arme en main, pièce sur le corps) ; `creation.kit.items` les porte, et leur texte libre n'est alors pas repris.
+  Sans catalogue, la saisie reste un texte.
+- **Laissé de côté** : la réparation au camp ne choisit pas les pièces (l'activité décompte les Fournitures, le bouton « Réparer » remonte la
   pièce) ; le corps à corps à deux armes.
 
 ### KN42 — Butin et marchand
@@ -462,8 +465,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   Rien ne s'ajoute sans le bouton, et un inventaire plein refuse.
 - **Marchand** (`trade.ts`) : acheter retire les pièces et ajoute l'objet ou la provision ; vendre rend les pièces (50 % arrondi à
   l'inférieur, gemmes à 100 %). Seuls les objets du sac et les provisions que le catalogue connaît se vendent ; les amulettes non.
-- **Laissé de côté** (étapes suivantes de la tranche 7) : la génération des objets magiques et des Reliques ; l'équipement de
-  départ en inventaire. Les fragments et les potions : KN43.
+- **Laissé de côté** (étapes suivantes de la tranche 7) : la génération des objets magiques et des Reliques. Les fragments et les
+  potions : KN43.
 
 ### KN43 — Fragments et potions utilisables
 - **Règles sourcées** (livre v1.2) : p. 214-215 (Fragments : un seul emploi, sans s'accorder), p. 126 (Potions : test de Médecine pour
@@ -980,6 +983,11 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
 ---
 
 ## Journal
+
+### 2026-10-13 — Tranche 7, étape 4c : kit de départ en inventaire
+- Vérifié dans le navigateur : l'étape Équipement de la création tire l'armure (« Grand bouclier ») et propose les armes du
+  catalogue ; un POST de création avec une Dague en main la range en `mainHand` et laisse le texte des armes vide.
+  Non vérifié à l'écran : une création complète de bout en bout par l'assistant.
 
 ### 2026-10-13 — Tranche 7, étape 4b : fragments et potions
 - Sources relues dans le livre (p. 214-215, 221, 126) avant d'écrire les 20 fragments, les 20 potions et la table de

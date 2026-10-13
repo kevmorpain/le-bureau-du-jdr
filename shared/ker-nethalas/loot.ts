@@ -131,6 +131,17 @@ export function knRollLoot(content: KnLootContent, start: KnLootTableKey, rng: K
   return { missing: key }
 }
 
+// L'armure d'un kit de départ : on tire sur la table des armures aléatoires, et on relance tant que le résultat n'est pas une pièce
+// du catalogue (une armure magique ne convient pas à un survivant qui commence).
+export function knRollStartingArmor(content: KnLootContent, rng: KnRng = Math.random): string | undefined {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const result = knRollLoot(content, 'armor', rng)
+    if ('missing' in result) return undefined
+    if (result.drop.kind === 'item') return result.drop.ref
+  }
+  return undefined
+}
+
 export interface KnLootState {
   inventory: KnItem[]
   provisions: KnProvisions

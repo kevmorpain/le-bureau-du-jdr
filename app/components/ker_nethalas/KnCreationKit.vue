@@ -21,14 +21,37 @@
     >
       <div class="grid gap-4 sm:grid-cols-2">
         <UFormField label="Arme de votre choix">
+          <USelect
+            v-if="weapons.length"
+            :model-value="draft.kit.weaponRef ?? undefined"
+            :items="weapons"
+            placeholder="Choisir une arme"
+            class="w-full"
+            @update:model-value="pickWeapon(String($event))"
+          />
           <UInput
+            v-else
             v-model="draft.kit.weapon"
             :maxlength="200"
             class="w-full"
           />
         </UFormField>
         <UFormField label="Armure (tirée sur la table du livre)">
+          <div
+            v-if="canRollArmor"
+            class="flex flex-wrap items-center gap-3"
+          >
+            <span class="min-w-32 flex-1">{{ draft.kit.armor || 'Aucune armure tirée' }}</span>
+            <UButton
+              variant="soft"
+              icon="i-heroicons:cube"
+              @click="rollArmor"
+            >
+              {{ draft.kit.armorRef ? 'Relancer' : 'Tirer une armure' }}
+            </UButton>
+          </div>
           <UInput
+            v-else
             v-model="draft.kit.armor"
             :maxlength="200"
             class="w-full"
@@ -84,10 +107,39 @@
 </template>
 
 <script lang="ts" setup>
+import type { SelectItem } from '@nuxt/ui'
 import type { KnCreationDraft } from '~/composables/useKnCreation'
 import { KN_CREATION_KIT, knRollStartingKit } from '~~/shared/ker-nethalas/creation'
+import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
+import { knRollStartingArmor, type KnLootContent } from '~~/shared/ker-nethalas/loot'
+
+const props = defineProps<{
+  catalog: KnCatalogItem[] | null
+  loot: KnLootContent | null
+}>()
 
 const draft = defineModel<KnCreationDraft>('draft', { required: true })
+
+const weapons = computed<SelectItem[]>(() =>
+  (props.catalog ?? []).filter(entry => entry.kind === 'weapon').map(entry => ({ label: entry.name, value: entry.key })),
+)
+
+const canRollArmor = computed(() => !!props.catalog && !!props.loot?.armor)
+
+function pickWeapon(key: string) {
+  const entry = props.catalog?.find(candidate => candidate.key === key)
+  if (!entry) return
+  draft.value.kit.weaponRef = key
+  draft.value.kit.weapon = entry.name
+}
+
+function rollArmor() {
+  const key = props.loot ? knRollStartingArmor(props.loot) : undefined
+  const entry = props.catalog?.find(candidate => candidate.key === key)
+  if (!entry) return
+  draft.value.kit.armorRef = entry.key
+  draft.value.kit.armor = entry.name
+}
 
 type RolledKey = 'cookingIngredients' | 'craftingSupplies' | 'coins'
 

@@ -11,9 +11,12 @@ import {
   knCreationSkills,
   knRollStartingKit,
   knRollStartingVital,
+  knStartingKitItems,
   knVitalRange,
   type KnAllotments,
 } from '../../shared/ker-nethalas/creation'
+import type { KnCatalogItem } from '../../shared/ker-nethalas/items'
+import { knRollStartingArmor, type KnLootContent } from '../../shared/ker-nethalas/loot'
 import { KN_SKILL_KEYS } from '../../shared/ker-nethalas/skills'
 import { validKnCreation } from '../fixtures/knCreation'
 
@@ -181,7 +184,7 @@ describe('fiche construite à la création', () => {
 
   it('avec l\'équipement des runs suivants : Torche, Denrées, Fournitures, pièces, arme et armure', () => {
     const sheet = knBuildCreatedSheet(validKnCreation('Jera', {
-      kit: { weapon: 'Hache', armor: 'Cuir clouté', cookingIngredients: 4, craftingSupplies: 12, coins: 9 },
+      kit: { weapon: 'Hache', armor: 'Cuir clouté', cookingIngredients: 4, craftingSupplies: 12, coins: 9, items: [] },
     }))
 
     expect(sheet.weapons).toBe('Hache')
@@ -190,9 +193,61 @@ describe('fiche construite à la création', () => {
     expect(sheet.provisions).toEqual({ ...emptyKnProvisions(), torches: 1, cookingIngredients: 4, craftingSupplies: 12 })
   })
 
+  describe('arme et armure du kit en objets d\'inventaire', () => {
+    const catalog: KnCatalogItem[] = [
+      { key: 'fakeSword', name: 'Épée factice', kind: 'weapon', weight: 'normal', value: 20, weapon: { skill: 'bladedWeapons', speed: 0, damageType: 'slashing', traits: [] } },
+      { key: 'fakeMail', name: 'Maille factice', kind: 'torso', weight: 'normal', value: 150, protection: 2, integrity: 8 },
+      { key: 'fakeHelm', name: 'Casque factice', kind: 'helmet', weight: 'normal', value: 40, protection: 1, integrity: 6 },
+    ]
+
+    it('l\'arme se tient en main et l\'armure se porte, neuves : Intégrité au maximum', () => {
+      const items = knStartingKitItems(catalog, { weapon: 'fakeSword', armor: 'fakeMail' })
+
+      expect(items).toMatchObject([
+        { id: 'i1', ref: 'fakeSword', place: 'mainHand' },
+        { id: 'i2', ref: 'fakeMail', place: 'armor', integrity: { max: 8, current: 8 } },
+      ])
+      expect(knStartingKitItems(catalog, { armor: 'fakeHelm' })[0]).toMatchObject({ place: 'head' })
+      expect(knStartingKitItems(catalog, { weapon: 'inconnu', armor: null })).toEqual([])
+    })
+
+    it('la fiche reçoit les objets, et le texte libre du kit n\'est alors pas repris', () => {
+      const items = knStartingKitItems(catalog, { weapon: 'fakeSword', armor: 'fakeMail' })
+      const sheet = knBuildCreatedSheet(validKnCreation('Jera', {
+        kit: { weapon: 'Épée factice', armor: 'Maille factice', cookingIngredients: 4, craftingSupplies: 12, coins: 9, items },
+      }))
+
+      expect(sheet.inventory).toEqual(items)
+      expect(sheet.weapons).toBe('')
+      expect(sheet.equipment).toBe('')
+    })
+
+    it('le texte de l\'armure reste quand seule l\'arme est un objet, et le kit refuse plus de deux objets', () => {
+      const items = knStartingKitItems(catalog, { weapon: 'fakeSword' })
+      const sheet = knBuildCreatedSheet(validKnCreation('Jera', {
+        kit: { weapon: 'Épée factice', armor: 'Cuir', cookingIngredients: 4, craftingSupplies: 12, coins: 9, items },
+      }))
+      const three = [...knStartingKitItems(catalog, { weapon: 'fakeSword', armor: 'fakeMail' }), { id: 'i3', name: 'x', kind: 'gear' as const, weight: 'normal' as const, quantity: 1, place: 'bag' as const }]
+
+      expect(sheet).toMatchObject({ weapons: '', equipment: 'Armure : Cuir' })
+      expect(knCreationSchema.safeParse(validKnCreation('x', {
+        kit: { weapon: '', armor: '', cookingIngredients: 4, craftingSupplies: 12, coins: 9, items: three },
+      })).success).toBe(false)
+    })
+
+    it('l\'armure tirée relance tant que le tirage n\'est pas une pièce du catalogue', () => {
+      const loot: KnLootContent = {
+        armor: { die: 10, entries: [{ min: 1, max: 5, text: 'Magique', drop: { kind: 'magic', item: 'armor' } }, { min: 6, max: 10, text: 'Casque', drop: { kind: 'item', ref: 'fakeHelm' } }] },
+      }
+
+      expect(knRollStartingArmor(loot, rolls([10, 2], [10, 9]))).toBe('fakeHelm')
+      expect(knRollStartingArmor({}, () => 0)).toBeUndefined()
+    })
+  })
+
   it('n\'écrit pas de ligne d\'armure quand elle n\'est pas renseignée', () => {
     expect(knBuildCreatedSheet(validKnCreation('x', {
-      kit: { weapon: 'Hache', armor: '', cookingIngredients: 1, craftingSupplies: 6, coins: 1 },
+      kit: { weapon: 'Hache', armor: '', cookingIngredients: 1, craftingSupplies: 6, coins: 1, items: [] },
     })).equipment).toBe('')
   })
 })

@@ -61,6 +61,8 @@
     <KnCreationKit
       v-else
       v-model:draft="draft"
+      :catalog
+      :loot
     />
 
     <template #preview>
@@ -83,6 +85,8 @@
 <script lang="ts" setup>
 import { KN_CREATION_STEPS, useKnCreation } from '~/composables/useKnCreation'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
+import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
+import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 definePageMeta({ layout: 'blank' })
@@ -91,8 +95,10 @@ const toast = useToast()
 
 const { data: masteries } = await useKnContent<KnMastery[]>('masteries')
 const { data: goals } = await useKnContent<KnPersonalGoal[]>('personalGoals')
+const { data: catalog } = await useKnContent<KnCatalogItem[]>('items')
+const { data: loot } = await useKnContent<KnLootContent>('loot')
 
-const { draft, currentStepId, parsed, missingSteps, canCreate, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev } = useKnCreation(masteries, goals)
+const { draft, currentStepId, parsed, missingSteps, canCreate, canGoNext, canGoPrev, isLastStep, isStepComplete, stepSummaries, goTo, goNext, goPrev } = useKnCreation(masteries, goals, catalog)
 
 const showSummary = ref(false)
 const creating = ref(false)
