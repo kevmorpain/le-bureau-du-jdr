@@ -101,6 +101,11 @@
         </p>
       </div>
 
+      <KnCombatFear
+        v-model:character="character"
+        :resolved
+      />
+
       <ul class="space-y-2">
         <li
           v-for="(creature, index) in combat.creatures"
@@ -171,6 +176,7 @@
           <UButton
             variant="soft"
             icon="i-heroicons:cube"
+            :disabled="cannotSurprise"
             @click="play('surprise')"
           >
             {{ knHasActivePerk(character, 'livingShadow') ? 'Surprendre (Atout, sans test)' : 'Tenter de surprendre (Furtivité)' }}
@@ -184,6 +190,12 @@
           </UButton>
         </div>
         <p
+          v-if="cannotSurprise"
+          class="text-sm text-warning"
+        >
+          Une créature Alerte ne peut être surprise d'aucune façon, même par un Atout : jouez l'Initiative.
+        </p>
+        <p
           v-if="lastOpposed"
           class="text-sm"
         >
@@ -192,6 +204,39 @@
         <p class="text-xs text-muted">
           Contre l'Esprit le plus haut des créatures en vie. Une surprise réussie donne l'initiative et +20 à votre première
           attaque ; une surprise ratée se rejoue en Initiative avec −20 en Perception.
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <UButton
+            size="sm"
+            variant="soft"
+            icon="i-heroicons:light-bulb"
+            @click="setLamp(!combat.lampDown)"
+          >
+            {{ combat.lampDown ? 'Reprendre la lampe' : 'Poser la lampe (Action Standard)' }}
+          </UButton>
+          <UBadge
+            v-if="combat.lampDown"
+            label="Lampe posée : une maladresse la renverse"
+            color="warning"
+            variant="subtle"
+            size="md"
+          />
+        </div>
+        <p
+          v-if="handsWarning"
+          class="text-sm text-warning"
+        >
+          Vos deux mains sont prises : une Torche ou une Lampe demande une main libre (sauf une Lampe de ceinture ou un sort).
+          Posez la lampe au sol, ou libérez une main.
+        </p>
+        <p
+          v-else-if="combat.lampDown"
+          class="text-xs text-muted"
+        >
+          Une seconde arme à une main se dégaine, ou une arme à deux mains se tient, pendant que la lampe est posée.
         </p>
       </div>
 
@@ -239,10 +284,10 @@ import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker
 import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
 import { knAdvanceCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
-import { knArmorByZone } from '~~/shared/ker-nethalas/equipment'
+import { knArmorByZone, knFreeHands } from '~~/shared/ker-nethalas/equipment'
 import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
-import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import { knCannotBeSurprised, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -256,7 +301,7 @@ const props = defineProps<{
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
-const { combat, creatureOf, opposed, surpriseAutomatically } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, opposed, surpriseAutomatically, setLamp } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { buffParts } = useKnEffectText()
@@ -296,11 +341,20 @@ function nextRound() {
   applyEffects(ticks.map(tick => ({ kind: 'damage' as const, dice: { count: 0, sides: 0, bonus: tick.roll }, ...(tick.direct ? { direct: true } : {}) })), 'Début du tour')
 }
 
+const handsWarning = computed(() =>
+  !combat.value?.lampDown && character.value.run.lightRemaining > 0 && knFreeHands(character.value.inventory) === 0,
+)
+
+const cannotSurprise = computed(() => knCannotBeSurprised(
+  (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0 && creatureOf(index) ? [creatureOf(index)!] : []),
+))
+
 const modifier = ref(0)
 const lastOpposed = ref('')
 
 // Une surprise ratée se rejoue en Initiative, avec −20 en Perception.
 function play(kind: 'surprise' | 'initiative') {
+  if (kind === 'surprise' && cannotSurprise.value) return
   if (kind === 'surprise' && knHasActivePerk(character.value, 'livingShadow')) {
     surpriseAutomatically()
     lastOpposed.value = 'Atout de surprise : la surprise réussit sans test (+20 à la première attaque).'

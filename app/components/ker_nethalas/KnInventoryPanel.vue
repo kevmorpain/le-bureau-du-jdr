@@ -63,6 +63,13 @@
         <div class="min-w-40 flex-1">
           <p class="font-medium">
             {{ item.name }}
+            <UBadge
+              v-if="item.broken"
+              label="Brisé"
+              color="error"
+              variant="subtle"
+              size="md"
+            />
           </p>
           <p class="text-xs text-muted">
             {{ $t(`ker_nethalas.inventory.kinds.${item.kind}`) }} · {{ $t(`ker_nethalas.inventory.weights.${item.weight}`).toLowerCase() }}

@@ -133,6 +133,8 @@ export const knDomainSchema = z.object({
   exitDie: knUsageDieSchema,
   exitFound: z.boolean(),
   overseerInfluences: z.array(z.enum(KN_OVERSEER_INFLUENCE_KEYS)).max(KN_RUN_BOUNDS.overseerInfluences),
+  // Vaincu, l'Overseer ne donne plus d'influence aux adversaires du Domaine ; la liste reste pour mémoire.
+  overseerDefeated: z.boolean().optional(),
   // L'Overseer du Domaine : le D10 tiré en y entrant pour la première fois.
   overseer: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
   growingDarkness: z.array(knGrowingDarknessEntrySchema).max(KN_RUN_BOUNDS.growingDarkness),
@@ -390,6 +392,8 @@ export function knRecordCreature(run: KnRun, d6: number, d20: number): KnRun {
   return withLastVisit(run, v => ({ ...v, creatures: [...(v.creatures ?? []), { d6, d20 }] }))
 }
 
+export const knDefeatOverseer = (run: KnRun): KnRun => withCurrentDomain(run, { overseerDefeated: true })
+
 export function knRecordOverseer(run: KnRun, roll: number): KnRun {
   return knCurrentDomain(run).overseer ? run : withCurrentDomain(run, { overseer: { roll } })
 }
@@ -572,9 +576,34 @@ export function knUndoLastVisit(run: KnRun): KnRun {
 }
 
 // Engager un combat : chaque créature garde sa Santé, fixée ici à son niveau. Un combat déjà engagé ne se remplace pas.
-export function knStartCombat(run: KnRun, creatures: KnCombatCreature[], overseer = false): KnRun {
+export function knStartCombat(run: KnRun, creatures: KnCombatCreature[], overseer = false, fearLoss = 0): KnRun {
   if (run.combat || !creatures.length) return run
-  return { ...run, combat: { creatures: creatures.slice(0, KN_COMBAT_BOUNDS.creatures), round: 1, reactions: 0, log: [], ...(overseer ? { overseer } : {}) } }
+  return {
+    ...run,
+    combat: {
+      creatures: creatures.slice(0, KN_COMBAT_BOUNDS.creatures),
+      round: 1,
+      reactions: 0,
+      log: [],
+      ...(overseer ? { overseer } : {}),
+      ...(fearLoss > 0 ? { fear: { loss: fearLoss, resolved: false } } : {}),
+    },
+  }
+}
+
+export function knSetCombatLamp(run: KnRun, down: boolean): KnRun {
+  if (!run.combat) return run
+  const { lampDown: _previous, ...rest } = run.combat
+  return { ...run, combat: down ? { ...rest, lampDown: true } : rest }
+}
+
+// Une maladresse renverse la lampe posée : toute son huile se répand, la lumière restante tombe à 0.
+export function knSpillLamp(run: KnRun): KnRun {
+  return { ...knSetCombatLamp(run, false), lightRemaining: 0 }
+}
+
+export function knResolveCombatFear(run: KnRun): KnRun {
+  return run.combat?.fear ? { ...run, combat: { ...run.combat, fear: { ...run.combat.fear, resolved: true } } } : run
 }
 
 export function knEndCombat(run: KnRun): KnRun {
@@ -735,7 +764,17 @@ export function knRegisterReaction(run: KnRun): KnRun {
 
 export function knNextCombatRound(run: KnRun): KnRun {
   if (!run.combat) return run
-  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
+  const { freeParryUsed: _used, ...combat } = run.combat
+  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
+}
+
+// La Parade gratuite du combat à deux armes ne compte pas parmi les Réactions du round, une fois par round.
+export const knUseFreeParry = (run: KnRun): KnRun => run.combat ? { ...run, combat: { ...run.combat, freeParryUsed: true } } : run
+
+export function knSetCombatDual(run: KnRun, dominant: string | null): KnRun {
+  if (!run.combat) return run
+  const { dual: _previous, ...rest } = run.combat
+  return { ...run, combat: dominant ? { ...rest, dual: dominant } : rest }
 }
 
 export function knSetCombatSurprise(run: KnRun, surprise: boolean): KnRun {

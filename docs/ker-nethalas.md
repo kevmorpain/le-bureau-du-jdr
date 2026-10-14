@@ -578,6 +578,55 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   ⚠️ hypothèses : « tous vos dégâts de Feu infligés +1 » vise surtout les Aptitudes, que l'outil ne lance pas : rappel seulement ;
   la réduction d'un type s'ajoute à celle de l'équipement.
 
+### KN46 — Règles de combat restantes
+- **Overseer vaincu** (issue X25) : vaincre l'Overseer rend D4 Santé mentale, et ses influences cessent : le Domaine porte
+  `overseerDefeated`, la fiche n'en rappelle plus aucune et l'éditeur de Domaine n'en réclame plus. La liste d'influences reste
+  pour mémoire, et la case « Overseer vaincu » corrige une erreur. Un Overseer n'est pas touché par sa propre influence.
+- **Peur** (issue X24) : engager une créature Effrayante ou Terrifiante pose `fear` sur le combat (perte de 2 ou 4 Santé mentale,
+  `knFearLoss`) ; la carte de combat propose le test de Résolution en ligne, avec « Réussi » et « Raté : −N Santé mentale ». Un seul
+  test pour toute la rencontre et la perte la plus forte, comme le dit le livre. ⚠️ hypothèse : une créature ajoutée au combat après
+  son début (invocation) ne redéclenche pas le test.
+- **Alerte** : une créature Alerte ne peut être surprise d'aucune façon, et ce trait l'emporte sur les Atouts qui font toujours
+  surprendre. Le bouton « Surprendre » est donc grisé tant qu'une créature en vie l'a (`knCannotBeSurprised`) ; l'Atout de surprise
+  assurée de la tranche précédente l'ignorait.
+- **Bandage hors combat** (`healing.ts`, issue X28) : dans « Repos et provisions », un test de Médecine en ligne, puis « Test réussi :
+  soigner D4 Robustesse » consomme un Bandage et marque l'usage comme « par salle » (remis à zéro à l'entrée d'une salle, comme les
+  aptitudes). Le soin ne touche que la Robustesse, sans déborder sur la Santé, et ne dépasse pas son maximum. La clé d'usage
+  `bandage` n'a pas de palier : le format d'un usage accepte désormais une clé sans `:palier`.
+  Une réussite au test de Médecine est exigée (confirmé par le PM) : le bouton se confirme après le test. ⚠️ hypothèse : un test raté
+  ne consomme rien et n'épuise pas l'usage de la salle.
+- **Lampe en combat** (issue X32) : un bouton de la carte de combat pose la lampe au sol (Action Standard) ou la reprend ; l'état
+  `lampDown` vit dans le combat et disparaît avec lui. Lampe posée, une maladresse du survivant ne tire pas dans la table : elle
+  renverse la lampe, et « Appliquer : plus de lumière » met la lumière restante à 0 (la source de lumière manquante rend déjà
+  Aveuglé et déclenche le test de Résolution par salle). Une carte avertit quand les deux mains sont prises (`knFreeHands` : une arme
+  ou un bouclier en prend une, une arme à deux mains les deux) alors que de la lumière reste, sauf si la lampe est posée.
+  « Toute son huile se répand » se lit comme une lumière restante de 0 (confirmé par le PM). ⚠️ hypothèses : l'outil ne sait pas si la
+  source est une Torche, une Lampe, une Lampe de ceinture ou un sort, donc l'avertissement le dit et laisse le joueur juger ; la lampe
+  se reprend à la main, et l'état n'est pas conservé après le combat.
+- **Combat à deux armes** (issue X26) : avec une arme à une main dans chaque main (`knDualPair`), la carte d'attaque propose « Combat à deux
+  armes » et le choix de l'arme dominante, à faire au début du combat (`combat.dual`). Seule l'arme dominante attaque, avec ses Traits et
+  ses propriétés magiques : toutes les attaques à −40, +1 dégât (`KN_DUAL_WIELD`). Elle ouvre aussi une Parade gratuite par round, même sans
+  le Trait Parade : cette défense n'ajoute pas au compte des Réactions et ne subit pas leur malus cumulatif ; elle se libère au round
+  suivant (`freeParryUsed`). Décocher la case rend les deux armes séparées.
+  Le −40 vise les attaques, pas la Parade gratuite (confirmé par le PM). ⚠️ hypothèses : la Parade gratuite se fait avec l'arme dominante,
+  dont la compétence sert au test ; une seconde Parade du même round compte comme une Réaction ordinaire.
+- **Arme ou bouclier sacrifié** (issue X27) : quand une créature porte un Coup critique au survivant, le tour propose de sacrifier l'arme ou le
+  bouclier tenus : tous les dégâts sont absorbés (le tour passe en « appliqué » à 0) et l'objet est brisé (`broken` sur l'objet,
+  `knBreakItem`). Un objet brisé reste dans sa main mais ne sert plus : il n'attaque ni ne pare, un bouclier brisé n'apporte plus son
+  bonus, et ses propriétés magiques cessent (`knIsWorn`). Il ne se répare qu'au camp (le livre renvoie aux activités de camp ; confirmé par
+  le PM) : le panneau de camp liste les objets brisés, chacun coché ajoute une pièce à l'activité Réparer (2 Fournitures par pièce,
+  +2 Épuisement et −2 au test une seule fois), et la réparation s'applique à la fin du camp ; son Intégrité ne bouge pas. Ne vaut que
+  pour le survivant, pas pour un sbire.
+  ⚠️ hypothèse : les conditions que l'action de la créature aurait imposées en plus des dégâts sont annulées avec le coup.
+- **Destin refusé** (`fateDenied.ts`, issue X29) : règle optionnelle du livre, offerte par un encart qui n'apparaît que lorsque la Santé
+  est à 0 ; un premier clic demande la confirmation. Le survivant récupère 2D6 Santé mentale, 2D6 Santé et toute sa Robustesse (sans
+  dépasser les maximums), le combat en cours s'arrête sans gain (« la pièce est vidée ») et il perd deux Aptitudes de Maîtrise au choix,
+  jamais sous une Aptitude par Maîtrise, celle de l'amulette portée comprise. Chaque Aptitude perdue est la plus haute de sa Maîtrise ;
+  s'il n'en reste qu'une (ou aucune) à perdre, on perd ce qui reste.
+  La règle étant optionnelle, l'encart s'offre toujours et il suffit de ne pas le confirmer pour repartir avec un nouveau survivant :
+  pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
+  paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
+
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
   réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
@@ -918,7 +967,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 à X23 écrits) |
+| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | fusionnée (PR #286) ; jeu `personalGoals` typé chargé en production |
+| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | écrite (X24 à X29 et X32) ; une PR |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |

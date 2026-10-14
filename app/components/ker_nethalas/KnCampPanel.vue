@@ -90,6 +90,25 @@
         />
       </div>
 
+      <div
+        v-if="broken.length"
+        class="space-y-2 border-t border-default pt-3"
+      >
+        <p class="text-sm font-medium">
+          Objets brisés à réparer
+        </p>
+        <p class="text-xs text-muted">
+          Un objet sacrifié ne se répare qu'au camp, par l'activité Réparer : chaque objet coché compte pour une pièce.
+        </p>
+        <UCheckbox
+          v-for="item in broken"
+          :key="item.id"
+          :model-value="mendIds.includes(item.id)"
+          :label="item.name"
+          @update:model-value="toggleMend(item.id)"
+        />
+      </div>
+
       <ul
         v-if="context.traitActivities.length"
         class="space-y-3 border-t border-default pt-3"
@@ -238,6 +257,7 @@ import { knIdentifyMagic, type KnMagicContent, type KnMagicLabels } from '~~/sha
 import type { KnCampActivity, KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { knApplySelfEffects, knCampRecoverEffects, knCampTraits } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import { knMendItem } from '~~/shared/ker-nethalas/equipment'
 import { knCurrentDomain, knRollDie } from '~~/shared/ker-nethalas/run'
 import { KN_SKILL_IMPROVEMENT, knImproveMarkedSkills, type KnSkillTarget } from '~~/shared/ker-nethalas/skillImprovement'
 import { KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
@@ -270,6 +290,25 @@ const withPeculiarity = ref(false)
 function toggleAttune(id: string) {
   attuneIds.value = attuneIds.value.includes(id) ? attuneIds.value.filter(other => other !== id) : [...attuneIds.value, id]
   plan.value.activities.attune = attuneIds.value.length
+}
+
+const broken = computed(() => character.value.inventory.filter(item => item.broken))
+const mendIds = ref<string[]>([])
+
+// Chaque objet brisé coché ajoute une pièce à l'activité Réparer, sans toucher aux pièces comptées à la main.
+function toggleMend(id: string) {
+  const checked = !mendIds.value.includes(id)
+  mendIds.value = checked ? [...mendIds.value, id] : mendIds.value.filter(other => other !== id)
+  plan.value.activities.repair = Math.max(0, plan.value.activities.repair + (checked ? 1 : -1))
+}
+
+function mendItems(lines: string[]) {
+  const c = character.value
+  if (!mendIds.value.length) return
+  const names = mendIds.value.map(id => broken.value.find(item => item.id === id)?.name ?? 'Objet')
+  c.inventory = mendIds.value.reduce((items, id) => knMendItem(items, id), c.inventory)
+  for (const name of names) lines.push(`Réparation : ${name}.`)
+  mendIds.value = []
 }
 
 const RARITY_LABELS = { uncommon: 'Peu commun', rare: 'Rare', epic: 'Épique', relic: 'Relique' } as const
@@ -415,6 +454,7 @@ function finish() {
     lines.push(`${t(`ker_nethalas.vitals.${effect.vital}`)} +${dice.total} (${label} : ${dice.rolls.join(' + ') || dice.total}${capped}), activité de trait`)
   }
   improveSkills(lines)
+  mendItems(lines)
   if (!outcome.success) lines.push('Test raté : tirez dans la table des Rencontres (les bénéfices réduits sont déjà appliqués).')
   if (c.status.rotStage >= 1) lines.push('Pourriture : test d\'Endurance, sinon elle avance d\'un stade.')
   if (used.activities.healConditions > 0) lines.push('Retirez les Conditions soignées dans « Effets en cours ».')

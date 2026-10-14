@@ -25,9 +25,9 @@ import {
   type KnExchange,
 } from '~~/shared/ker-nethalas/combat'
 import { knReactionPenalty, type KnCombat } from '~~/shared/ker-nethalas/combatState'
-import { knArmorAt, knCreatureAtLevel, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
+import { knArmorAt, knCreatureAtLevel, knFearLoss, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
-import { knArmorByZone, knArmorPieces, knInitiativeBonus } from '~~/shared/ker-nethalas/equipment'
+import { knArmorByZone, knArmorPieces, knBreakItem, knInitiativeBonus, knSacrificeChoices } from '~~/shared/ker-nethalas/equipment'
 import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
 import { knGoalCriticalTriple, knGoalReductions, knHasActivePerk, knMergeReductions } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -46,8 +46,12 @@ import {
   knMarkGearUsed,
   knRegisterReaction,
   knRollDie,
+  knSetCombatDual,
   knSetCombatFirst,
+  knSetCombatLamp,
   knSetCombatSurprise,
+  knSpillLamp,
+  knUseFreeParry,
   knSpendCombatCreature,
   knStartCombat,
   knVanishSpentCreatures,
@@ -74,6 +78,9 @@ export interface KnAttackResult {
   // Mouvement défensif de la créature (D10) quand elle a paré, maladresse du survivant (D10) sur un échec critique.
   monsterMove?: number
   fumble?: number
+  // Lampe posée : la maladresse la renverse au lieu de tirer dans la table des maladresses.
+  lampSpilled?: boolean
+  lampSpillApplied?: boolean
   applied: boolean
 }
 
@@ -103,6 +110,8 @@ export interface KnTurnResult {
   unavoidable: boolean
   survivorMove?: number
   monsterFumble?: number
+  // L'arme ou le bouclier sacrifié pour annuler un Coup critique.
+  sacrificed?: string
   // Dégâts à retirer au survivant, quand l'outil sait les calculer.
   amount?: number
   // Les dégâts atteignent la Santé sans passer par la Robustesse.
@@ -137,7 +146,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       health: maxHealth,
       maxHealth,
     }))
-    character.value.run = knStartCombat(character.value.run, instances, overseer)
+    character.value.run = knStartCombat(character.value.run, instances, overseer, knFearLoss([creature]))
   }
 
   const highestMind = () => (combat.value?.creatures ?? []).reduce((best, creature, index) => {
@@ -212,7 +221,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     if (buffs.reflect.length) {
       result.reflect = buffs.reflect.map(entry => ({ label: entry.label, type: entry.type, amount: knRollDamagePool([entry.dice]).total, applied: false }))
     }
-    if (exchange.fumble) result.fumble = knRollDie(KN_DEFENSIVE_MOVE_DIE)
+    if (exchange.fumble) {
+      if (combat.value.lampDown && input.attackerScore === undefined) result.lampSpilled = true
+      else result.fumble = knRollDie(KN_DEFENSIVE_MOVE_DIE)
+    }
     if (exchange.outcome === 'defended') result.monsterMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
 
     if (exchange.outcome === 'hit') {
@@ -245,6 +257,23 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       target: knBuffedTarget(knCreatureDamageTarget(creature), target.effects),
       magical: input.magical,
     })
+  }
+
+  function setDual(dominant: string | null) {
+    character.value.run = knSetCombatDual(character.value.run, dominant)
+    log(dominant ? 'Combat à deux armes : arme dominante choisie' : 'Combat à deux armes abandonné')
+  }
+
+  function setLamp(down: boolean) {
+    character.value.run = knSetCombatLamp(character.value.run, down)
+    log(down ? 'Lampe posée au sol (Action Standard)' : 'Lampe reprise en main')
+  }
+
+  function spillLamp(result: KnAttackResult) {
+    if (!result.lampSpilled || result.lampSpillApplied) return
+    character.value.run = knSpillLamp(character.value.run)
+    log('Maladresse : la lampe se renverse, son huile se répand, le survivant est Aveuglé')
+    result.lampSpillApplied = true
   }
 
   function rerollDamage(result: KnAttackResult) {
@@ -393,7 +422,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
 
   // L'action d'une créature contre le survivant, ou contre un sbire (`minion`). Physique : jet opposé contre sa défense ;
   // Magique : test de Résistance magique ; sans étiquette, c'est le texte de l'action qui décide.
-  function takeTurn(input: { index: number, d6: number, action: KnCreatureAction, defense: KnSkillKey, magicCheck: KnSkillKey | KnResistanceKey, bonus: number, minion?: number, defenseBonus?: number, gear?: string[] }): KnTurnResult | undefined {
+  function takeTurn(input: { index: number, d6: number, action: KnCreatureAction, defense: KnSkillKey, magicCheck: KnSkillKey | KnResistanceKey, bonus: number, minion?: number, defenseBonus?: number, gear?: string[], freeParry?: boolean }): KnTurnResult | undefined {
     const target = combat.value?.creatures[input.index]
     const creature = creatureOf(input.index)
     if (!combat.value || !target || !creature) return undefined
@@ -406,7 +435,8 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const buffs = knBuffTotals(target.effects)
     const pool = knActionPool(action, creature, level.value, buffs.damageBonuses)
     const damageType = action.damage?.type
-    const penalty = knReactionPenalty(combat.value.reactions)
+    const free = !!input.freeParry && !minionSheet && !combat.value.freeParryUsed
+    const penalty = free ? 0 : knReactionPenalty(combat.value.reactions)
     const alive = combat.value.creatures.filter(c => c.ref === target.ref && c.health > 0).length
     const sheet = resolved()
 
@@ -431,7 +461,8 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects)
       : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: knMergeReductions(survivorDefenses.reduction, knGoalReductions(character.value.goalEffects)) }
     const registerReaction = () => {
-      if (!minionSheet) character.value.run = knRegisterReaction(character.value.run)
+      if (minionSheet) return
+      character.value.run = free ? knUseFreeParry(character.value.run) : knRegisterReaction(character.value.run)
     }
 
     if (action.tag === 'physical') {
@@ -533,6 +564,18 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     result.dealt = amount
   }
 
+  // Sacrifier l'arme ou le bouclier annule le Coup critique : tous les dégâts sont absorbés, l'objet est brisé.
+  function sacrificeGear(result: KnTurnResult, id: string) {
+    const item = knSacrificeChoices(character.value.inventory).find(entry => entry.id === id)
+    if (!item || result.applied || result.minion !== undefined || !result.exchange?.criticalStrike) return
+    character.value.inventory = knBreakItem(character.value.inventory, id)
+    result.sacrificed = item.name
+    result.amount = 0
+    result.dealt = 0
+    result.applied = true
+    log(`${result.name} : ${item.name} sacrifié, le Coup critique est annulé`)
+  }
+
   // Les dégâts qu'un effet de la créature renvoie à celui qui l'attaque.
   function applyReflect(result: KnAttackResult, index: number) {
     const entry = result.reflect?.[index]
@@ -544,5 +587,5 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
+  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, setDual, setLamp, spillLamp, applyAttack, drawAction, takeTurn, applyToSurvivor, sacrificeGear, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
 }

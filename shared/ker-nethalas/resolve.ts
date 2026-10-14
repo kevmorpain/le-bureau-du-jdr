@@ -122,7 +122,7 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
     })
   })
 
-  if (domain.overseerInfluences.length) {
+  if (domain.overseerInfluences.length && !domain.overseerDefeated) {
     sources.push({
       id: 'overseer',
       label: { key: 'ker_nethalas.sources.overseer' },

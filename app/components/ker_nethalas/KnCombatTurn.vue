@@ -45,6 +45,9 @@
       >
         Défenses déjà faites ce round : {{ combat?.reactions ?? 0 }}
         (malus de {{ knReactionPenalty(combat?.reactions ?? 0) }} à la prochaine)
+        <template v-if="defense.free">
+          · {{ combat?.freeParryUsed ? 'Parade gratuite déjà prise ce round' : 'Parade gratuite disponible : sans malus et hors du compte' }}
+        </template>
       </div>
     </div>
 
@@ -159,7 +162,35 @@
         <span v-if="result.damage.armorAbsorbed"> (Armure : −{{ result.damage.armorAbsorbed }})</span>
       </p>
       <div
-        v-if="canApply"
+        v-if="canSacrifice"
+        class="flex flex-wrap items-end gap-2 rounded-md border border-warning p-2"
+      >
+        <UFormField label="Coup critique : sacrifier pour l'annuler">
+          <USelect
+            v-model="sacrificeId"
+            :items="sacrificeItems"
+            placeholder="Arme ou bouclier"
+            class="w-56"
+          />
+        </UFormField>
+        <UButton
+          size="sm"
+          color="warning"
+          variant="soft"
+          :disabled="!sacrificeId"
+          @click="sacrifice"
+        >
+          Sacrifier : aucun dégât, objet brisé
+        </UButton>
+      </div>
+      <p
+        v-if="result.sacrificed"
+        class="text-sm"
+      >
+        {{ result.sacrificed }} est brisé et absorbe tous les dégâts ; il reste inutilisable jusqu'à sa réparation.
+      </p>
+      <div
+        v-if="canApply && !result.sacrificed"
         class="flex flex-wrap items-end gap-2"
       >
         <KnNumberField
@@ -232,7 +263,7 @@
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knActionIsTest } from '~~/shared/ker-nethalas/combat'
-import { knDefenseOptions } from '~~/shared/ker-nethalas/equipment'
+import { knDefenseOptions, knSacrificeChoices } from '~~/shared/ker-nethalas/equipment'
 import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
 import type { KnCreature, KnCreatureAction, KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -248,7 +279,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, minions, creatureOf, drawAction, takeTurn, applyToSurvivor, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, minions, creatureOf, drawAction, takeTurn, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { selfEffectText } = useKnEffectText()
 
@@ -291,11 +322,11 @@ const magicItems: SelectItem[] = [
   { label: t('ker_nethalas.resistances.resolve'), value: 'resolve' },
   { label: t('ker_nethalas.skills.dodge'), value: 'dodge' },
 ]
-const defenseOptions = computed(() => knDefenseOptions(character.value.inventory).filter(option => option.kind === 'dodge' || !savage.value))
+const defenseOptions = computed(() => knDefenseOptions(character.value.inventory, combat.value?.dual).filter(option => option.kind === 'dodge' || !savage.value))
 const defenseItems = computed<SelectItem[]>(() => defenseOptions.value.map((option) => {
   const detail = option.kind === 'dodge'
     ? t('ker_nethalas.skills.dodge')
-    : `Parade : ${option.weapon}${option.shield ? ` et ${option.shield}` : ''} (${t(`ker_nethalas.skills.${option.skill}`)}${option.bonus ? `, +${option.bonus}` : ''})`
+    : `Parade${option.free ? ' gratuite' : ''} : ${option.weapon}${option.shield ? ` et ${option.shield}` : ''} (${t(`ker_nethalas.skills.${option.skill}`)}${option.bonus ? `, +${option.bonus}` : ''})`
   return { label: detail, value: option.id }
 }))
 const defense = computed(() => defenseOptions.value.find(option => option.id === defenseId.value) ?? defenseOptions.value[0]!)
@@ -318,7 +349,7 @@ function drawNow() {
 
 function resolveNow() {
   if (!drawn.value) return
-  result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value.skill, defenseBonus: defense.value.bonus, gear: defense.value.used, magicCheck: magicCheck.value, bonus: bonus.value, ...(onSurvivor.value ? {} : { minion: victim.value as number }) })
+  result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value.skill, defenseBonus: defense.value.bonus, gear: defense.value.used, freeParry: defense.value.free, magicCheck: magicCheck.value, bonus: bonus.value, ...(onSurvivor.value ? {} : { minion: victim.value as number }) })
   manualAmount.value = result.value?.amount ?? 0
 }
 
@@ -381,6 +412,20 @@ const canApply = computed(() => {
   if (isTest(r.action)) return r.amount !== undefined
   return r.exchange?.outcome === 'hit' || r.exchange?.outcome === 'bothFail'
 })
+
+const sacrificeId = ref<string | undefined>()
+const sacrificeItems = computed<SelectItem[]>(() => knSacrificeChoices(character.value.inventory).map(item => ({ label: item.name, value: item.id })))
+const canSacrifice = computed(() => {
+  const r = result.value
+  return !!r && r.minion === undefined && !r.applied && !!r.exchange?.criticalStrike && sacrificeItems.value.length > 0
+})
+
+function sacrifice() {
+  if (!result.value || !sacrificeId.value) return
+  sacrificeGear(result.value, sacrificeId.value)
+  manualAmount.value = 0
+  sacrificeId.value = undefined
+}
 
 function apply() {
   if (!result.value) return
