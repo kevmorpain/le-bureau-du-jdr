@@ -2,6 +2,7 @@ import type { z } from 'zod'
 import { knPotionAgingSchema } from './consumables'
 import { knBestiaryContentSchema } from './creatures'
 import { knPersonalGoalsContentSchema } from './goals'
+import { knFirstDomainContentSchema } from './firstDomain'
 import { knItemsContentSchema } from './items'
 import { knLootContentSchema } from './loot'
 import { knMagicContentSchema } from './magic'
@@ -19,6 +20,7 @@ export const KN_CONTENT_SCHEMAS: KnContentRegistry = {
   loot: knLootContentSchema,
   potionAging: knPotionAgingSchema,
   magicItems: knMagicContentSchema,
+  firstDomain: knFirstDomainContentSchema,
   ...Object.fromEntries(Object.entries(KN_EXPLORATION_TABLES).map(([name, { die }]) => [name, knRollTableSchema(die)])),
 }
 

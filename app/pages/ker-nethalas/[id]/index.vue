@@ -39,6 +39,15 @@
       :bestiary
     />
 
+    <KnFirstDomainSection
+      v-model:character="character"
+      :resolved
+      :rooms="firstDomain"
+      :catalog
+      :loot
+      :magic
+    />
+
     <KnCombatSection
       v-model:character="character"
       :resolved
@@ -101,6 +110,7 @@
     />
 
     <KnTraderSection
+      v-if="traderHere"
       v-model:character="character"
       :catalog
     />
@@ -127,11 +137,13 @@ import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { AutoSaveStatus } from '~/composables/useAutoSave'
 import type { KnPotionAging } from '~~/shared/ker-nethalas/consumables'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import type { KnFirstDomainRoom } from '~~/shared/ker-nethalas/firstDomain'
 import type { KnPersonalGoal } from '~~/shared/ker-nethalas/goals'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import { knTraderHere } from '~~/shared/ker-nethalas/run'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const route = useRoute()
@@ -146,6 +158,8 @@ const { data: scavenging } = await useKnContent<KnRollTable>('scavenging')
 const { data: traps } = await useKnContent<KnRollTable>('traps')
 const { data: encountersA } = await useKnContent<KnRollTable>('encountersA')
 const { data: encountersB } = await useKnContent<KnRollTable>('encountersB')
+const { data: encountersFirstDomain } = await useKnContent<KnRollTable>('encountersFirstDomain')
+const { data: firstDomain } = await useKnContent<KnFirstDomainRoom[]>('firstDomain')
 const { data: overseers } = await useKnContent<KnRollTable>('overseers')
 const { data: bestiary } = await useKnContent<KnCreature[]>('bestiary')
 const { data: catalog } = await useKnContent<KnCatalogItem[]>('items')
@@ -160,6 +174,7 @@ const tables = computed(() => ({
   traps: traps.value,
   encountersA: encountersA.value,
   encountersB: encountersB.value,
+  encountersFirstDomain: encountersFirstDomain.value,
   overseers: overseers.value,
 }))
 
@@ -168,6 +183,7 @@ const { data } = await useFetch<KnCharacter>(`/api/ker-nethalas/characters/${rou
 const character = ref(data.value)
 
 const { status } = useKnAutosave(character)
+const traderHere = computed(() => !!character.value && knTraderHere(character.value.run))
 useKnDarknessGoal(character)
 const resolved = useKnResolved(character, masteries)
 

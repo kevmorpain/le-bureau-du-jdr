@@ -250,6 +250,20 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.perkKeys).toEqual(['scholar', 'luckyFind'])
   })
 
+  it('une première partie commence dans le Domaine d\'introduction, sans lumière, une partie suivante dans un Domaine ordinaire', async () => {
+    const intro = await createKnCharacter(db, alice, validKnCreation('Intro', { intro: true }))
+    const ordinary = await createKnCharacter(db, alice, validKnCreation('Ordinaire'))
+
+    const first = (await getKnCharacter(db, intro.id))!.run
+    expect(first.domains).toHaveLength(1)
+    expect(first.domains[0]).toMatchObject({ name: 'Domaine d\'introduction', lairFound: true, exitFound: true, intro: { awakened: false, taken: [] } })
+    expect(first.lightRemaining).toBe(0)
+
+    const second = (await getKnCharacter(db, ordinary.id))!.run
+    expect(second.domains[0]!.intro).toBeUndefined()
+    expect(second.lightRemaining).toBeGreaterThan(0)
+  })
+
   it('crée un survivant sans effet d\'objectif et relit ceux qu\'on lui copie', async () => {
     const { id } = await createKnCharacter(db, alice, validKnCreation('Effets'))
     expect((await getKnCharacter(db, id))!.goalEffects).toEqual([])

@@ -155,7 +155,7 @@
 
     <ul class="space-y-2 text-sm">
       <li
-        v-if="visit.kind === 'revisit' || foundLair"
+        v-if="visit.kind === 'revisit' || foundLair || visit.noEncounter"
         class="text-muted"
       >
         {{ encounterText }}
@@ -210,6 +210,12 @@
         </template>
       </KnTableRoll>
       <li
+        v-else-if="visit.noEvent && visit.kind === 'room' && !visit.noEncounter"
+        class="text-muted"
+      >
+        Pas d'événement dans cette salle du Domaine d'introduction, même sans rencontre de combat.
+      </li>
+      <li
         v-else-if="visit.kind === 'room' && !foundLair && !visit.encounter && active"
         class="text-muted"
       >
@@ -217,7 +223,7 @@
       </li>
 
       <KnTableRoll
-        v-if="visit.kind !== 'revisit'"
+        v-if="visit.kind !== 'revisit' && !intro"
         label="Porte ?"
         :die="KN_DOOR_DIE"
         :roll="visit.door?.roll"
@@ -338,8 +344,35 @@
       />
       <KnCreatureDraw
         v-if="active && (visit.creatures?.length ?? 0) < KN_RUN_BOUNDS.creatures"
+        :single="intro"
         @draw="(d6, d20) => emit('drawCreature', d6, d20)"
       />
+
+      <div
+        v-if="active"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <template v-if="visit.trader">
+          <span class="flex-1">Le marchand est ici : sa carte est dans la section Marchand.</span>
+          <UButton
+            size="sm"
+            variant="ghost"
+            color="neutral"
+            @click="emit('trader', false)"
+          >
+            Il n'est pas là
+          </UButton>
+        </template>
+        <UButton
+          v-else
+          size="sm"
+          variant="soft"
+          icon="i-heroicons:shopping-bag"
+          @click="emit('trader', true)"
+        >
+          {{ traderFound ? 'Retourner voir le marchand' : 'Un marchand est ici' }}
+        </UButton>
+      </div>
 
       <div
         v-if="active && canAddDoor"
@@ -480,6 +513,10 @@ const props = defineProps<{
   inCombat?: boolean
   bestiary: KnCreature[] | null
   tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
+  // Le Domaine d'introduction : portes déjà marquées, une seule table de rencontres.
+  intro?: boolean
+  // Un marchand a déjà été trouvé dans ce Domaine.
+  traderFound?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -488,6 +525,7 @@ const emit = defineEmits<{
   draw: []
   undo: []
   table: [name: KnVisitTable, manual?: number]
+  trader: [here: boolean]
   adjustScavenge: [delta: number]
   applyScavenge: []
   addDoor: []
@@ -553,6 +591,7 @@ const darknessText = (draw: KnGrowingDarknessDraw) => labelText({
 
 const encounterText = computed(() => {
   if (props.visit.kind === 'revisit') return 'Ni rencontre de combat ni événement : la zone est déjà explorée.'
+  if (props.visit.noEncounter) return 'Cette salle du Domaine d\'introduction n\'a ni rencontre de combat ni événement.'
   if (foundLair.value) return 'Lair de l\'Overseer : pas de test de rencontre de combat.'
   return props.visit.kind === 'corridor'
     ? `Rencontre de combat (D20, ${KN_ENCOUNTER_THRESHOLD.corridor} ou plus dans un couloir)`
@@ -562,10 +601,10 @@ const encounterText = computed(() => {
 const tableOf = (name: KnExplorationTableName) => ({ die: KN_EXPLORATION_TABLES[name].die, table: props.tables[name] ?? null })
 
 const descriptionTable = computed(() => props.visit.kind === 'revisit' ? null : tableOf(props.visit.kind === 'corridor' ? 'corridorDescriptions' : 'roomDescriptions'))
-const eventTable = computed(() => props.visit.kind === 'room' && !foundLair.value ? tableOf('events') : null)
+const eventTable = computed(() => props.visit.kind === 'room' && !foundLair.value && !props.visit.noEvent ? tableOf('events') : null)
 const scavengeTable = computed(() => tableOf('scavenging'))
 
-const canAddDoor = computed(() => !!props.visit.door?.present && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)
+const canAddDoor = computed(() => (props.intro ? props.visit.kind !== 'revisit' : !!props.visit.door?.present) && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)
 const canSearch = computed(() => knVisitCanSearch(props.visit) && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)
 
 // Numéro d'un obstacle parmi ceux de sa sorte (porte n° 2, contenant n° 1).
@@ -574,6 +613,10 @@ const obstaclePosition = (index: number) =>
 
 // Chaque créature tirée : la table (D6) donne A ou B, le D20 la ligne, et la ligne désigne la fiche du bestiaire.
 const encounters = computed(() => (props.visit.creatures ?? []).map(({ d6, d20 }) => {
+  if (props.intro) {
+    const entry = knTableEntry(props.tables.encountersFirstDomain ?? null, d20)
+    return { name: entry?.text ?? 'Créature inconnue', creature: knFindCreature(props.bestiary, entry?.ref), source: `Table du Domaine d'introduction · D20 ${d20}` }
+  }
   const table = knEncounterTable(d6)
   const entry = knTableEntry(props.tables[table === 'A' ? 'encountersA' : 'encountersB'] ?? null, d20)
   return {

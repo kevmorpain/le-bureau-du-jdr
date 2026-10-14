@@ -112,7 +112,7 @@
         v-if="!draft.kitEnabled"
         class="text-muted"
       >
-        Première partie : l'équipement vient du Domaine d'introduction.
+        {{ draft.intro ? "Première partie : l'équipement vient du Domaine d'introduction, où la partie commence." : "Départ sans équipement, dans un Domaine ordinaire." }}
       </p>
       <ul
         v-else

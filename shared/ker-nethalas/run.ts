@@ -9,6 +9,7 @@ import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
 import { KN_COMBAT_BOUNDS, knCombatCreatureSchema, knCombatSchema, type KnCombatCreature, type KnCreatureBuff } from './combatState'
 import { KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 import { KN_OBSTACLE_KINDS, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, type KnObstacleKind } from './exploration'
+import { knIntroSchema } from './introState'
 import { KN_SKILL_KEYS, type KnWeaponSkillKey } from './skills'
 import { boundedInt } from './zodHelpers'
 
@@ -108,6 +109,12 @@ const knExtraTensionSchema = knDieResultSchema.extend({
 export const knVisitSchema = z.object({
   kind: z.enum(KN_VISIT_KINDS),
   usageKind: z.enum(['lair', 'exit']).nullable(),
+  // Domaine d'introduction : la salle de la carte que cette entrée parcourt, et ce que le livre y exclut.
+  introRoom: boundedInt({ min: 1, max: 8 }).optional(),
+  noEncounter: z.boolean().optional(),
+  noEvent: z.boolean().optional(),
+  // Le marchand est dans cette entrée du chemin (trouvé ici, ou revu en y retournant).
+  trader: z.boolean().optional(),
   tension: knDieResultSchema.optional(),
   usage: knDieResultSchema.optional(),
   darkness: knGrowingDarknessDrawSchema.optional(),
@@ -135,6 +142,10 @@ export const knDomainSchema = z.object({
   overseerInfluences: z.array(z.enum(KN_OVERSEER_INFLUENCE_KEYS)).max(KN_RUN_BOUNDS.overseerInfluences),
   // Vaincu, l'Overseer ne donne plus d'influence aux adversaires du Domaine ; la liste reste pour mémoire.
   overseerDefeated: z.boolean().optional(),
+  // Un marchand a été trouvé dans ce Domaine : il y reste, on peut le revoir depuis une entrée de retour.
+  traderFound: z.boolean().optional(),
+  // Le Domaine d'introduction : sa carte est fixe, avec son contenu et sa table de rencontres propres.
+  intro: knIntroSchema.optional(),
   // L'Overseer du Domaine : le D10 tiré en y entrant pour la première fois.
   overseer: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
   growingDarkness: z.array(knGrowingDarknessEntrySchema).max(KN_RUN_BOUNDS.growingDarkness),
@@ -297,11 +308,22 @@ function withLastVisit(run: KnRun, update: (visit: KnVisit) => KnVisit): KnRun {
 
 // Le dé de Lair, puis celui de Sortie une fois le Lair trouvé, se lancent à chaque nouvelle salle ou couloir.
 // `shapeRoll` : le D100 de forme qui a décidé du type d'entrée.
-export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number): KnRun {
+export interface KnIntroEntry {
+  room: number
+  noEncounter?: boolean
+  noEvent?: boolean
+}
+
+export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number, intro?: KnIntroEntry): KnRun {
   const domain = knCurrentDomain(run)
   const usageKind: KnVisit['usageKind'] = kind === 'revisit' || domain.exitFound ? null : domain.lairFound ? 'exit' : 'lair'
   const entered = knEnterRoom(run, { isNew: kind !== 'revisit' })
-  const visit: KnVisit = { kind, usageKind, ...(shapeRoll === undefined ? {} : { shape: { roll: shapeRoll } }) }
+  const visit: KnVisit = {
+    kind,
+    usageKind,
+    ...(shapeRoll === undefined ? {} : { shape: { roll: shapeRoll } }),
+    ...(intro ? { introRoom: intro.room, ...(intro.noEncounter ? { noEncounter: true } : {}), ...(intro.noEvent || intro.noEncounter ? { noEvent: true } : {}) } : {}),
+  }
   const visits = [...knCurrentDomain(entered).visits, visit].slice(-KN_RUN_BOUNDS.visits)
   return withCurrentDomain(entered, { visits })
 }
@@ -335,11 +357,12 @@ export function knRecordDarkness(run: KnRun, draw: KnGrowingDarknessDraw): KnRun
 }
 
 // Pas de rencontre de combat dans une zone déjà explorée ni dans le Lair de l'Overseer.
-export const knVisitCanHaveEncounter = (visit: KnVisit) => visit.kind !== 'revisit' && !knVisitFoundLair(visit)
+export const knVisitCanHaveEncounter = (visit: KnVisit) => visit.kind !== 'revisit' && !knVisitFoundLair(visit) && !visit.noEncounter
 
-// Pas d'événement dans un couloir ni dans une zone déjà explorée, ni dans le Lair, ni après une rencontre de combat.
+// Pas d'événement dans un couloir ni dans une zone déjà explorée, ni dans le Lair, ni après une rencontre de combat, ni dans une salle
+// du Domaine d'introduction qui n'en a pas.
 export const knVisitCanHaveEvent = (visit: KnVisit) =>
-  visit.kind === 'room' && !knVisitFoundLair(visit) && visit.encounter?.triggered === false
+  visit.kind === 'room' && !knVisitFoundLair(visit) && !visit.noEvent && visit.encounter?.triggered === false
 
 export function knRecordDescription(run: KnRun, roll: number): KnRun {
   const visit = knCurrentVisit(run)
@@ -390,6 +413,16 @@ export function knRecordCreature(run: KnRun, d6: number, d20: number): KnRun {
   const visit = knCurrentVisit(run)
   if (!visit || visit.kind === 'revisit' || (visit.creatures?.length ?? 0) >= KN_RUN_BOUNDS.creatures) return run
   return withLastVisit(run, v => ({ ...v, creatures: [...(v.creatures ?? []), { d6, d20 }] }))
+}
+
+export const knTraderHere = (run: KnRun): boolean => !!knCurrentVisit(run)?.trader
+
+// Marquer, ou démarquer, l'entrée courante comme celle où se trouve le marchand ; le Domaine retient qu'il en a un.
+export function knSetTrader(run: KnRun, here: boolean): KnRun {
+  const visit = knCurrentVisit(run)
+  if (!visit) return run
+  const marked = withLastVisit(run, ({ trader: _previous, ...rest }) => here ? { ...rest, trader: true } : rest)
+  return withCurrentDomain(marked, { traderFound: knCurrentDomain(marked).visits.some(entry => entry.trader) })
 }
 
 export const knDefeatOverseer = (run: KnRun): KnRun => withCurrentDomain(run, { overseerDefeated: true })
@@ -451,7 +484,9 @@ const addObstacle = (run: KnRun, kind: KnObstacleKind): KnRun =>
 // Une porte à vérifier : seulement si le D10 en a trouvé une.
 export function knAddDoorObstacle(run: KnRun): KnRun {
   const visit = knCurrentVisit(run)
-  if (!visit?.door?.present || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
+  // Dans le Domaine d'introduction, toutes les portes sont déjà sur la carte : il n'y a pas de D10 pour en trouver une.
+  const marked = !!knCurrentDomain(run).intro && visit?.kind !== 'revisit'
+  if (!visit || (!visit.door?.present && !marked) || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
   return addObstacle(run, 'door')
 }
 

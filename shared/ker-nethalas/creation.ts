@@ -129,6 +129,8 @@ export const knCreationSchema = z.object({
   masteries: z.array(z.string().max(40)).max(KN_MAX_TRAINED_MASTERIES).default([]),
   // Clés des objectifs personnels choisis, vérifiées comme les Maîtrises par `knGoalPickIssues`.
   goals: z.array(z.string().max(40)).max(KN_MAX_ACTIVE_GOALS).default([]),
+  // Commencer dans le Domaine d'introduction, dont la carte est fixe : recommandé pour une première partie.
+  intro: z.boolean().default(false),
   // Équipement des runs suivants ; `null` pour une première partie, qui trouve son équipement dans le Domaine d'introduction.
   kit: z.object({
     weapon: z.string().max(200),

@@ -21,6 +21,7 @@ export const validKnCreation = (name: string, over: Partial<KnCreation> = {}): K
   resistanceBoost: 'endurance',
   masteries: [],
   goals: [],
+  intro: false,
   kit: null,
   ...over,
 })
