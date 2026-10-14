@@ -593,38 +593,39 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   soigner D4 Robustesse » consomme un Bandage et marque l'usage comme « par salle » (remis à zéro à l'entrée d'une salle, comme les
   aptitudes). Le soin ne touche que la Robustesse, sans déborder sur la Santé, et ne dépasse pas son maximum. La clé d'usage
   `bandage` n'a pas de palier : le format d'un usage accepte désormais une clé sans `:palier`.
-  ⚠️ hypothèses : le livre dit « en combinaison avec la compétence Médecine » sans écrire qu'une réussite est exigée ; l'outil
-  l'exige, par un bouton que le joueur confirme après le test. Un test raté ne consomme rien et n'épuise pas l'usage de la salle.
+  Une réussite au test de Médecine est exigée (confirmé par le PM) : le bouton se confirme après le test. ⚠️ hypothèse : un test raté
+  ne consomme rien et n'épuise pas l'usage de la salle.
 - **Lampe en combat** (issue X32) : un bouton de la carte de combat pose la lampe au sol (Action Standard) ou la reprend ; l'état
   `lampDown` vit dans le combat et disparaît avec lui. Lampe posée, une maladresse du survivant ne tire pas dans la table : elle
   renverse la lampe, et « Appliquer : plus de lumière » met la lumière restante à 0 (la source de lumière manquante rend déjà
   Aveuglé et déclenche le test de Résolution par salle). Une carte avertit quand les deux mains sont prises (`knFreeHands` : une arme
   ou un bouclier en prend une, une arme à deux mains les deux) alors que de la lumière reste, sauf si la lampe est posée.
-  ⚠️ hypothèses : « toute son huile se répand » est lu comme une lumière restante de 0 ; l'outil ne sait pas si la source est une
-  Torche, une Lampe, une Lampe de ceinture ou un sort, donc l'avertissement le dit et laisse le joueur juger ; la lampe se reprend
-  à la main, et l'état n'est pas conservé après le combat.
+  « Toute son huile se répand » se lit comme une lumière restante de 0 (confirmé par le PM). ⚠️ hypothèses : l'outil ne sait pas si la
+  source est une Torche, une Lampe, une Lampe de ceinture ou un sort, donc l'avertissement le dit et laisse le joueur juger ; la lampe
+  se reprend à la main, et l'état n'est pas conservé après le combat.
 - **Combat à deux armes** (issue X26) : avec une arme à une main dans chaque main (`knDualPair`), la carte d'attaque propose « Combat à deux
   armes » et le choix de l'arme dominante, à faire au début du combat (`combat.dual`). Seule l'arme dominante attaque, avec ses Traits et
   ses propriétés magiques : toutes les attaques à −40, +1 dégât (`KN_DUAL_WIELD`). Elle ouvre aussi une Parade gratuite par round, même sans
   le Trait Parade : cette défense n'ajoute pas au compte des Réactions et ne subit pas leur malus cumulatif ; elle se libère au round
   suivant (`freeParryUsed`). Décocher la case rend les deux armes séparées.
-  ⚠️ hypothèses : le −40 vise les attaques, pas la Parade gratuite ; la Parade gratuite se fait avec l'arme dominante, dont la compétence
-  sert au test ; une seconde Parade du même round compte comme une Réaction ordinaire.
+  Le −40 vise les attaques, pas la Parade gratuite (confirmé par le PM). ⚠️ hypothèses : la Parade gratuite se fait avec l'arme dominante,
+  dont la compétence sert au test ; une seconde Parade du même round compte comme une Réaction ordinaire.
 - **Arme ou bouclier sacrifié** (issue X27) : quand une créature porte un Coup critique au survivant, le tour propose de sacrifier l'arme ou le
   bouclier tenus : tous les dégâts sont absorbés (le tour passe en « appliqué » à 0) et l'objet est brisé (`broken` sur l'objet,
   `knBreakItem`). Un objet brisé reste dans sa main mais ne sert plus : il n'attaque ni ne pare, un bouclier brisé n'apporte plus son
-  bonus, et ses propriétés magiques cessent (`knIsWorn`). Le bouton « Réparer (brisé) » de l'inventaire le remet en service ; son
-  Intégrité ne bouge pas. Ne vaut que pour le survivant, pas pour un sbire.
-  ⚠️ hypothèses : la réparation passe par ce bouton et non par la quantité de l'activité de camp « Réparer » (qui ne vise pas une pièce,
-  voir la tranche 7) ; les conditions que l'action de la créature aurait imposées en plus des dégâts sont annulées avec le coup.
+  bonus, et ses propriétés magiques cessent (`knIsWorn`). Il ne se répare qu'au camp (le livre renvoie aux activités de camp ; confirmé par
+  le PM) : le panneau de camp liste les objets brisés, chacun coché ajoute une pièce à l'activité Réparer (2 Fournitures par pièce,
+  +2 Épuisement et −2 au test une seule fois), et la réparation s'applique à la fin du camp ; son Intégrité ne bouge pas. Ne vaut que
+  pour le survivant, pas pour un sbire.
+  ⚠️ hypothèse : les conditions que l'action de la créature aurait imposées en plus des dégâts sont annulées avec le coup.
 - **Destin refusé** (`fateDenied.ts`, issue X29) : règle optionnelle du livre, offerte par un encart qui n'apparaît que lorsque la Santé
   est à 0 ; un premier clic demande la confirmation. Le survivant récupère 2D6 Santé mentale, 2D6 Santé et toute sa Robustesse (sans
   dépasser les maximums), le combat en cours s'arrête sans gain (« la pièce est vidée ») et il perd deux Aptitudes de Maîtrise au choix,
   jamais sous une Aptitude par Maîtrise, celle de l'amulette portée comprise. Chaque Aptitude perdue est la plus haute de sa Maîtrise ;
   s'il n'en reste qu'une (ou aucune) à perdre, on perd ce qui reste.
-  ⚠️ hypothèses : pas de réglage par survivant, la règle étant optionnelle : l'encart s'offre toujours et il suffit de ne pas le
-  confirmer pour repartir avec un nouveau survivant ; « 2 Aptitudes au choix » se retire par le haut, pour que les paliers restent
-  consécutifs ; les Conditions et la Pourriture ne changent pas.
+  La règle étant optionnelle, l'encart s'offre toujours et il suffit de ne pas le confirmer pour repartir avec un nouveau survivant :
+  pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
+  paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,

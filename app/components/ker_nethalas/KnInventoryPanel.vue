@@ -171,16 +171,6 @@
             @update:model-value="move(item, $event as KnItemPlace)"
           />
         </UFormField>
-        <UButton
-          v-if="item.broken"
-          size="xs"
-          variant="soft"
-          icon="i-heroicons:wrench"
-          :aria-label="`Réparer ${item.name} (brisé)`"
-          @click="mend(item.id)"
-        >
-          Réparer (brisé)
-        </UButton>
         <template v-if="item.integrity">
           <UButton
             size="xs"
@@ -337,7 +327,7 @@ import {
   type KnPotionAging,
 } from '~~/shared/ker-nethalas/consumables'
 import { knDiceLabel, knRollDice } from '~~/shared/ker-nethalas/dice'
-import { knMendItem, knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
+import { knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
 import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knConsumableEntry, type KnLootContent } from '~~/shared/ker-nethalas/loot'
 import { knIsWorn, knMagicCarryBonus, knMagicIdentifiesPotions, knMagicUses, knPermanentGains, type KnMagicUse } from '~~/shared/ker-nethalas/magicEffects'
@@ -469,10 +459,6 @@ function rollIntegrity(id: string) {
     description: `D${die} → ${roll}${outcome === 'held' ? ' : tient' : outcome === 'down' ? ` : passe au D${to}` : ' : perdu'}`,
     color: outcome === 'held' ? 'neutral' : 'warning',
   })
-}
-
-function mend(id: string) {
-  character.value.inventory = knMendItem(inventory.value, id)
 }
 
 function repair(id: string) {
