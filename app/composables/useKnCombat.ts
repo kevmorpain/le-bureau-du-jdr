@@ -29,6 +29,7 @@ import { knArmorAt, knCreatureAtLevel, knFindCreature, type KnCreature, type KnC
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
 import { knArmorByZone, knArmorPieces, knInitiativeBonus } from '~~/shared/ker-nethalas/equipment'
 import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
+import { knGoalCriticalTriple, knGoalReductions, knHasActivePerk, knMergeReductions } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knD100Check, type KnD100Result } from '~~/shared/ker-nethalas/roll'
 import {
@@ -66,6 +67,8 @@ export interface KnAttackResult {
   reflect?: { label: string, type: KnDamageType, amount: number, applied: boolean }[]
   damageRoll?: KnDamageRoll
   damage?: KnDamageResult
+  // Atout de relance des dégâts critiques : les dégâts d'un Coup critique se relancent une fois, avant d'être appliqués.
+  reroll?: { pool: KnDice[], damageType: KnDamageType, magical: boolean, used: boolean }
   // Les deux jets ont échoué : 1 dégât qu'on ne peut pas éviter.
   unavoidable: boolean
   // Mouvement défensif de la créature (D10) quand elle a paré, maladresse du survivant (D10) sur un échec critique.
@@ -160,6 +163,13 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     return { player, foes, winner, mind }
   }
 
+  // Atout de surprise assurée : la surprise réussit toujours, sans test.
+  function surpriseAutomatically() {
+    character.value.run = knSetCombatFirst(character.value.run, 'survivor')
+    character.value.run = knSetCombatSurprise(character.value.run, true)
+    log('Surprise assurée par un Atout : le survivant agit en premier')
+  }
+
   function attack(input: {
     index: number
     // Compétence du survivant, ou `attackerScore` : la Compétence de combat d'un sbire qui attaque à sa place.
@@ -211,18 +221,38 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
         ? (input.aim && spot ? spot : knHitLocation(creature.hitLocation.table, knRollDie(20)))
         : 'body'
       result.weakSpot = !!spot && result.location === spot
-      result.damageRoll = knRollDamagePool(input.pool)
-      result.damage = knResolveDamage({
-        roll: result.damageRoll,
-        damageType: input.damageType,
-        criticalStrike: exchange.criticalStrike,
-        weakSpot: result.weakSpot,
-        armor: knArmorAt(adapted.armor, result.location),
-        target: knBuffedTarget(knCreatureDamageTarget(creature), target.effects),
-        magical: input.magical,
-      })
+      const damage = { pool: input.pool, damageType: input.damageType, magical: input.magical }
+      rollHitDamage(result, damage)
+      if (exchange.criticalStrike && input.attackerScore === undefined && knHasActivePerk(character.value, 'precisionStriker')) {
+        result.reroll = { ...damage, used: false }
+      }
     }
     return result
+  }
+
+  function rollHitDamage(result: KnAttackResult, input: { pool: KnDice[], damageType: KnDamageType, magical: boolean }) {
+    const target = combat.value?.creatures[result.index]
+    const creature = creatureOf(result.index)
+    if (!target || !creature || !result.location) return
+    result.damageRoll = knRollDamagePool(input.pool)
+    result.damage = knResolveDamage({
+      roll: result.damageRoll,
+      damageType: input.damageType,
+      criticalStrike: result.exchange.criticalStrike,
+      criticalTriple: knGoalCriticalTriple(character.value.goalEffects, creature.types),
+      weakSpot: result.weakSpot,
+      armor: knArmorAt(knCreatureAtLevel(creature, level.value).armor, result.location),
+      target: knBuffedTarget(knCreatureDamageTarget(creature), target.effects),
+      magical: input.magical,
+    })
+  }
+
+  function rerollDamage(result: KnAttackResult) {
+    if (!result.reroll || result.reroll.used || result.applied) return
+    const previous = result.damage?.damage
+    rollHitDamage(result, result.reroll)
+    result.reroll.used = true
+    log(`Atout : dégâts du Coup critique relancés (${previous ?? 0} → ${result.damage?.damage ?? 0})`)
   }
 
   const minions = computed(() => character.value.run.minions ?? [])
@@ -399,7 +429,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const survivorDefenses = knMagicDefenses(character.value.inventory)
     const damageTarget = minionSheet
       ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects)
-      : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: survivorDefenses.reduction }
+      : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: knMergeReductions(survivorDefenses.reduction, knGoalReductions(character.value.goalEffects)) }
     const registerReaction = () => {
       if (!minionSheet) character.value.run = knRegisterReaction(character.value.run)
     }
@@ -514,5 +544,5 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, attack, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
+  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
 }

@@ -17,8 +17,6 @@ export const knAbilityIsPassive = (ability: Pick<KnMasteryAbility, 'action'>) =>
 export const knAbilityIsUsable = (ability: Pick<KnMasteryAbility, 'action' | 'self' | 'limit'>) =>
   !knAbilityIsPassive(ability) || !!ability.self?.length || !!ability.limit
 
-export const KN_COMBAT_XP = { combat: 50, overseer: 200 } as const
-
 export const knUseLimitLabel: Record<KnUseLimit, string> = {
   combat: 'une fois par combat',
   room: 'une fois par pièce',

@@ -1,7 +1,9 @@
 import type { KnSurvivorArmorZone } from './combat'
 import type { KnDamageType } from './catalog/damageTypes'
 import type { KnActiveSource, KnEffect } from './effects'
+import { knGoalAttackDice, type KnGoalEffectEntry } from './goalEffects'
 import { knIntegrityDown, KN_INTEGRITY_DICE, type KnItem, type KnIntegrityDie } from './inventory'
+import { knLevelAttackDice, type KnLevelBenefit } from './progression'
 import { knMagicArmorBonus, knMagicAttack, knMagicInitiative, knMagicParry, type KnMagicAttack } from './magicEffects'
 import { knRollDie, type KnRng } from './run'
 import type { KnSkillKey } from './skills'
@@ -69,12 +71,24 @@ function withMagicPool(pool: string, magic: KnMagicAttack): string {
   return [pool, ...tokens].join('+')
 }
 
-// Les façons d'attaquer : à mains nues, ou avec chaque arme tenue.
-export function knAttackOptions(items: readonly KnItem[]): KnAttackOption[] {
+// Les façons d'attaquer : à mains nues, ou avec chaque arme tenue. Les dés de dégâts physiques pris à la montée de niveau et
+// ceux des objectifs récupérés s'ajoutent à chacune : toutes sont des attaques physiques hors Aptitude.
+export function knAttackOptions(
+  items: readonly KnItem[],
+  levelBenefits: readonly KnLevelBenefit[] = [],
+  goalEffects: readonly KnGoalEffectEntry[] = [],
+): KnAttackOption[] {
   const offHandEmpty = !items.some(item => item.place === 'offHand')
+  const levelDice = knLevelAttackDice(levelBenefits)
+  const extraDice = (skill: KnSkillKey) => [...levelDice, ...knGoalAttackDice(goalEffects, skill)]
+  const unarmedDice = extraDice(KN_UNARMED_OPTION.skill)
+  const unarmed: KnAttackOption = unarmedDice.length
+    ? { ...KN_UNARMED_OPTION, pool: withMagicPool(KN_UNARMED_OPTION.pool, { dice: unarmedDice, speed: 0, vs: [] }), magic: { dice: unarmedDice, speed: 0, vs: [] } }
+    : KN_UNARMED_OPTION
   return [
     ...knWieldedWeapons(items).map((item) => {
-      const magic = knMagicAttack(items, item.id)
+      const own = knMagicAttack(items, item.id)
+      const magic = { ...own, dice: [...own.dice, ...extraDice(item.weapon!.skill)] }
       const hasMagic = magic.dice.length || magic.speed || magic.vs.length
       return {
         id: item.id,
@@ -87,7 +101,7 @@ export function knAttackOptions(items: readonly KnItem[]): KnAttackOption[] {
         ...(hasMagic ? { magic } : {}),
       }
     }),
-    KN_UNARMED_OPTION,
+    unarmed,
   ]
 }
 

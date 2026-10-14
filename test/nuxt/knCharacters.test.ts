@@ -231,6 +231,37 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.inventory).toEqual(inventory)
   })
 
+  it('crée un survivant sans avantage de niveau et relit l\'historique', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Niveaux'))
+    expect((await getKnCharacter(db, id))!.levelBenefits).toEqual([])
+
+    const levelBenefits = [{ benefit: 'physicalDamage' as const, damageType: 'slashing' as const, level: 2 }, { benefit: 'skill' as const, skill: 'stealth' as const, level: 3 }]
+    await updateKnCharacter(db, id, { levelBenefits })
+
+    expect((await getKnCharacter(db, id))!.levelBenefits).toEqual(levelBenefits)
+  })
+
+  it('crée un survivant sans Atout et relit ceux qu\'on lui donne', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Atouts'))
+    expect((await getKnCharacter(db, id))!.perkKeys).toEqual([])
+
+    await updateKnCharacter(db, id, { perkKeys: ['scholar', 'luckyFind'] })
+
+    expect((await getKnCharacter(db, id))!.perkKeys).toEqual(['scholar', 'luckyFind'])
+  })
+
+  it('crée un survivant sans effet d\'objectif et relit ceux qu\'on lui copie', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Effets'))
+    expect((await getKnCharacter(db, id))!.goalEffects).toEqual([])
+
+    const goalEffects = [{ goal: 'acidExpert', effect: { kind: 'reduction' as const, damage: 'acid' as const, amount: 1 } }, { goal: 'quiet', effect: { kind: 'note' as const }, text: 'rappel' }]
+    await updateKnCharacter(db, id, { goalEffects, goalPicks: [{ key: 'acidExpert', progress: 3, claimed: true, granted: true }] })
+
+    const character = (await getKnCharacter(db, id))!
+    expect(character.goalEffects).toEqual(goalEffects)
+    expect(character.goalPicks).toEqual([{ key: 'acidExpert', progress: 3, claimed: true, granted: true }])
+  })
+
   it('crée un survivant sans objectif quand aucun n\'est choisi', async () => {
     const { id } = await createKnCharacter(db, alice, validKnCreation('Sans objectif'))
 

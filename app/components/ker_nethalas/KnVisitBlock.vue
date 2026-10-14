@@ -267,6 +267,34 @@
         @roll="manual => emit('table', 'scavenge', manual)"
       >
         <template #result>
+          <div
+            v-if="canAdjustScavenge"
+            class="mt-1 flex flex-wrap items-center gap-2"
+          >
+            <UButton
+              size="xs"
+              variant="outline"
+              icon="i-heroicons:cube"
+              @click="scavengerRoll = knRollDie(KN_SCAVENGER_DIE)"
+            >
+              Fouille ajustable : lancer le D4
+            </UButton>
+            <template v-if="scavengerRoll">
+              <span class="text-sm">D4 : {{ scavengerRoll }}</span>
+              <UButton
+                size="xs"
+                @click="adjustScavenge(scavengerRoll)"
+              >
+                +{{ scavengerRoll }}
+              </UButton>
+              <UButton
+                size="xs"
+                @click="adjustScavenge(-scavengerRoll)"
+              >
+                −{{ scavengerRoll }}
+              </UButton>
+            </template>
+          </div>
           <UButton
             v-if="scavengeEffects.length && !visit.scavenge?.applied"
             size="xs"
@@ -426,6 +454,7 @@ import {
 } from '~~/shared/ker-nethalas/exploration'
 import {
   KN_RUN_BOUNDS,
+  knRollDie,
   knVisitCanSearch,
   knVisitFoundLair,
   knVisitPending,
@@ -433,6 +462,8 @@ import {
   type KnGrowingDarknessDraw,
   type KnVisit,
 } from '~~/shared/ker-nethalas/run'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
+import { KN_SCAVENGER_DIE } from '~~/shared/ker-nethalas/perks'
 import { knEncounterTable, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { KN_EXPLORATION_TABLES, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
 
@@ -456,6 +487,7 @@ const emit = defineEmits<{
   draw: []
   undo: []
   table: [name: KnVisitTable, manual?: number]
+  adjustScavenge: [delta: number]
   applyScavenge: []
   addDoor: []
   deepSearch: [manual?: number]
@@ -484,6 +516,19 @@ const foundLair = computed(() => knVisitFoundLair(props.visit))
 const pending = computed(() => knVisitPending(props.visit))
 
 const scavengeCheckOpen = ref(false)
+
+const { character } = useKnCheckContext()
+const scavengerRoll = ref<number | null>(null)
+const canAdjustScavenge = computed(() => {
+  const scavenge = props.visit.scavenge
+  return props.active && !!scavenge && !scavenge.adjusted && !scavenge.applied && !scavenge.taken?.length
+    && knHasActivePerk(character.value, 'scavenger')
+})
+
+function adjustScavenge(delta: number) {
+  emit('adjustScavenge', delta)
+  scavengerRoll.value = null
+}
 
 const rollText = (result: KnDieResult) => result.manual ? (result.roll <= 2 ? '1-2' : '3+') : String(result.roll)
 

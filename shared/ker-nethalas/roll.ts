@@ -28,6 +28,8 @@ export interface KnRollRequest {
   id: string
   difficulty?: KnDifficultyKey
   bonus?: number
+  // Avantage propre à ce test (un Atout), en plus de celui de la fiche.
+  advantage?: boolean
   note?: string
 }
 

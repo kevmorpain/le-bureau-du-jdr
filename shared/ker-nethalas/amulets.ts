@@ -75,6 +75,17 @@ export const knLockAmuletTier = (amulets: KnAmulets): KnAmulets =>
   ({ ...amulets, owned: [...amulets.owned], tiers: Math.max(0, amulets.tiers - 1) })
 
 // Table « Random Mastery » : un D20 sur les Maîtrises dans l'ordre du livre, soit l'ordre du contenu chargé.
+// Une amulette trouvée donne accès à une Maîtrise tirée au hasard ; sans Maîtrises chargées, rien à tirer.
+export function knDrawAmulet(
+  amulets: KnAmulets,
+  picks: readonly KnMasteryPick[],
+  masteryKeys: readonly string[],
+  rng: KnRng = Math.random,
+): { amulets: KnAmulets, key: string } | null {
+  const key = knRandomMasteryKey(masteryKeys, rng)
+  return key === null ? null : { amulets: knAddAmulet(amulets, key, picks), key }
+}
+
 export function knRandomMasteryKey(keys: readonly string[], rng: KnRng = Math.random): string | null {
   return keys.length ? keys[knRollDie(keys.length, rng) - 1] ?? null : null
 }

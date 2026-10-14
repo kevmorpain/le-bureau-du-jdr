@@ -530,6 +530,54 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   le symbole ⅃ est le niveau) se saisit à la main, comme les autres bonus de Maîtrise sur les sbires ; les effets d'un Cœur d'Amal-Tul
   (200 XP) et de la Graine de Cœur-sombre (+1 Point d'Aptitude) se font à la main.
 
+### KN45 — Progression : expérience, niveau, amélioration des compétences, Atouts
+- **Règles sourcées** (livre v1.2) : p. 62-63 (Skill Improvement, Leveling Up, Perks), p. 70 (arrondi au supérieur, KN7).
+- **Expérience** (`experience.ts`, issue X19) : toutes les valeurs de la p. 63 sont à un seul endroit (`KN_XP`) : combat vaincu 50,
+  Overseer 200, verrou ouvert 10, piège désamorcé 10, nouveau Domaine 50, livre de savoir 10. Un verrou ouvert ou un piège désamorcé
+  ne rapporte qu'au passage d'un état à l'autre de l'obstacle (`knObstacleXp`, pure, comparée avant et après l'action), donc jamais
+  deux fois, même en cas de retour en arrière. Un piège contourné ne rapporte rien (le livre dit « désamorcer »). Seule l'action
+  « Nouveau Domaine » compte : revenir dans un Domaine déjà exploré n'est pas entrer dans un nouveau.
+- **Passage de niveau** (`progression.ts`, `levelUp.ts`, issue X20) : dès 1 000 XP, la section Identité propose « Monter de niveau ».
+  Le niveau monte (le Point d'Aptitude de plus se déduit du niveau, KN30), 1 000 XP partent, et le joueur prend l'un des huit
+  avantages de la p. 62 : Santé +D4, Robustesse +D6, Santé mentale +D4, Éther +D6 (le maximum et la valeur actuelle montent du dé
+  tiré), +5 à une compétence, +5 en Endurance, Résolution et Résistance magique (plafond 80), +D6 dégâts physiques (Tranchants,
+  Contondants ou Perforants, au choix) ajouté à la réserve de chaque attaque, +1 aux dégâts d'une Aptitude (rappel dans la fiche
+  effective). Chaque choix s'ajoute à `levelBenefits` (colonne JSON, migration 0144), qui garde l'historique et porte les deux
+  avantages de dégâts. Un D6 de dégâts physiques par avantage pris, du type choisi ; les mains nues en profitent aussi (toute
+  attaque de l'outil est physique, hors Aptitude).
+- **Amélioration de compétence** (`skillImprovement.ts`, issue X21) : sur des doubles à un test de compétence (pas de Résistance),
+  le panneau de jet propose « Marquer pour amélioration » (la case de la section Compétences reste cochable à la main). À la fin du
+  camp, chaque compétence marquée, ajoutée à la main comprise, passe son test : D100 au-dessus du score, +D4 ; sinon +1 ; plafond de
+  80, un score déjà au-delà ne baisse jamais. La marque est retirée et le rapport du camp détaille chaque test. Le tirage est
+  automatique, sans saisie manuelle du D100.
+  ⚠️ hypothèses : le livre ne dit pas si la marque survit à un échec (elle est retirée dans tous les cas) ni si le « score » est
+  le score de base (c'est lui qui est testé et augmenté, pas le score effectif).
+- **Atouts** (`perks.ts`, issue X22) : les six Atouts du livre se cochent dans la section Notes (colonne JSON `perkKeys`, migration
+  0145 ; le champ libre devient « Autres atouts »). Leur effet est appliqué là où il joue :
+  l'Avantage en Raison est un effet de fiche comme les autres sources ; l'Avantage contre les pièges s'ajoute au test de Larcin
+  « Désamorcer le piège » (`KnRollRequest.advantage`, combiné à la fiche : Avantage + Désavantage donne la lecture normale, comme
+  ailleurs) ; la surprise assurée réussit sans test ; les dégâts d'un Coup critique du survivant (jamais d'un sbire) se relancent
+  une fois avant d'être appliqués ; la Fouille ajustable ajoute ou retranche un D4 au tirage de Fouille, une fois, tant que rien
+  n'en est pris (`knAdjustScavenge`, résultat borné à la table) ; les pièces des contenants ajoutent D20 pièces au butin d'un tirage
+  qui passe par la table des contenants.
+  Les libellés sont descriptifs : les noms du livre sont dans le contenu privé (récompenses d'objectifs) et ne se versionnent pas.
+  ⚠️ Laissé de côté : un contenant « Vide » à la fouille approfondie n'ouvre aucun tirage de butin, donc rapporte ses pièces à la
+  main ; « ne peut pas être surpris » n'a pas de mécanique propre (l'outil ne tire pas la surprise des créatures).
+- **Récompenses d'objectifs** (`goalEffects.ts`, `goalRewards.ts`, issue X23) : le format public d'un objectif gagne un champ
+  `effect` optionnel (le contenu déjà écrit reste valide), renseigné dans le contenu privé. Neuf sortes : Atout, réduction de
+  dégâts d'un type, bonus de dégâts d'une compétence d'arme, dé de dégâts ajouté à toute attaque, Coup critique triplé contre un
+  type de créature, XP, amulette, dé de jauge maximale, et `note` pour ce que l'outil ne sait pas jouer (le texte de la
+  récompense devient un rappel de la fiche : +1 aux dégâts d'un élément, Étourdissement de l'Overseer, vente à plein prix, second
+  tirage d'Obscurité Grandissante). À la récupération :
+  les effets durables sont copiés dans `goalEffects` (colonne JSON, migration 0146) pour que combat, butin et fiche les lisent sans
+  recharger le contenu ; annuler la récupération les retire. Les gains ponctuels (XP, amulette, dé de jauge) ne se donnent qu'une
+  fois : `granted` sur l'objectif retient qu'ils l'ont été, une annulation suivie d'une nouvelle récupération ne les redonne pas
+  (⚠️ les objectifs déjà récupérés avant cette tranche n'ont pas ce drapeau). Les Atouts donnés par un objectif s'ajoutent à
+  ceux cochés à la main (`knActivePerks`) et s'affichent cochés, grisés. L'amulette tire sa Maîtrise comme au butin
+  (`knDrawAmulet`). Un Coup critique triplé remplace le doublement ; avec un point faible, il reste triplé.
+  ⚠️ hypothèses : « tous vos dégâts de Feu infligés +1 » vise surtout les Aptitudes, que l'outil ne lance pas : rappel seulement ;
+  la réduction d'un type s'ajoute à celle de l'équipement.
+
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
   réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
@@ -815,7 +863,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Laissé de côté** : l'application des récompenses (réduction de dégâts, bonus, Atout, XP, Amulette) : elles s'affichent
   et se reportent à la main, comme les aptitudes de Maîtrise ; le gain de 100 XP d'un objectif ne s'ajoute pas tout seul.
   L'Amulette (récompense de l'objectif recommandé en premier, qui ouvre une troisième Maîtrise) n'a pas d'effet sur la
-  fiche : elle viendra avec la tranche 4d.
+  fiche : elle viendra avec la tranche 4d. Repris par KN45 (X23) : les récompenses s'appliquent.
 
 ---
 
@@ -870,7 +918,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **Progression** | avantage au passage de niveau, amélioration de compétence par les doubles ; à rattacher à une issue | à proposer |
+| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 à X23 écrits) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |
@@ -1024,6 +1072,8 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   façon : ses 18 lignes sont appariées aux plages dans l'ordre (1-2 nourriture avariée … 11 Journal vierge, 12 Pierre de Borestia,
   13 Cœur d'Amal-Tul, 14 Masse de l'Oblitération, 15 Anneau de Paix mentale, 16-20 les cinq Fioles) ; **à contrôler dans le PDF**.
   ⚠️ hypothèses
+- **Progression** : le livre dit « accumuler un total de 1 000 XP » sans dire si l'XP repart de zéro à chaque niveau ; l'outil retire
+  1 000 XP et garde l'excédent. Le choix « une compétence » ne vise pas les compétences ajoutées à la main. ⚠️ hypothèses
 - **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
   suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
   s'arrondit au supérieur, les durées aussi, d'une salle ou d'un round au moins : règle de l'encart « Rounding Numbers » (p. 70, fourni par

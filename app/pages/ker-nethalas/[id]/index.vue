@@ -14,7 +14,10 @@
       </template>
     </UPageHeader>
 
-    <KnIdentitySection v-model:character="character" />
+    <KnIdentitySection
+      v-model:character="character"
+      :masteries
+    />
 
     <KnRemindersSection :reminders="resolved.reminders" />
 
@@ -66,6 +69,7 @@
     <KnGoalsSection
       v-model:character="character"
       :goals
+      :masteries
     />
 
     <KnEffectsSection v-model:character="character" />

@@ -198,6 +198,7 @@
             @draw="drawDarkness"
             @undo="undo"
             @table="tableRoll"
+            @adjust-scavenge="adjustScavenge"
             @apply-scavenge="applyScavenge"
             @add-door="addDoor"
             @deep-search="deepSearch"
@@ -233,7 +234,6 @@ import {
   KN_USAGE_DICE,
   knCurrentDomain,
   knDrawGrowingDarkness,
-  knNewDomain,
   knRecordDarkness,
   knRecordTension,
   knRecordUsage,
@@ -262,6 +262,7 @@ provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 const {
   tableRoll,
+  adjustScavenge,
   applyScavenge,
   takeOutcome,
   addDoor,
@@ -273,6 +274,7 @@ const {
   noise,
   extraDraw,
   obstacleAct,
+  newDomain,
   drawCreature,
   drawOverseer,
 } = useKnExploration(character, () => props.resolved, () => props.tables)
@@ -318,11 +320,6 @@ function rename(value: string | number | null | undefined) {
 
 function switchDomain(value: unknown) {
   if (typeof value === 'number') character.value.run = knSwitchDomain(character.value.run, value)
-}
-
-function newDomain() {
-  character.value.run = knNewDomain(character.value.run)
-  character.value.status = knResetUses(character.value.status, ['domain'])
 }
 
 // La forme tirée au D100 décide du type d'entrée : 1-25 un couloir, 26-100 une salle.

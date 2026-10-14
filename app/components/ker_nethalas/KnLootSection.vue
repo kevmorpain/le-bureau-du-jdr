@@ -72,9 +72,15 @@
           >
             {{ summary(entry.result) }}
           </p>
+          <p
+            v-if="entry.coins"
+            class="text-sm"
+          >
+            Pièces des contenants : +{{ entry.coins }} ₵
+          </p>
           <div class="flex gap-2">
             <UButton
-              v-if="!('missing' in entry.result) && entry.result.drop.kind !== 'nothing'"
+              v-if="!('missing' in entry.result) && (entry.result.drop.kind !== 'nothing' || entry.coins)"
               size="xs"
               @click="take(entry)"
             >
@@ -98,13 +104,16 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import { knAddAmulet, knRandomMasteryKey } from '~~/shared/ker-nethalas/amulets'
+import { knDrawAmulet } from '~~/shared/ker-nethalas/amulets'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knApplyLoot, knRollLoot, type KnLootContent, type KnLootResult, type KnLootTableKey } from '~~/shared/ker-nethalas/loot'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
+import { KN_LUCKY_FIND_DIE } from '~~/shared/ker-nethalas/perks'
+import { knRollDie } from '~~/shared/ker-nethalas/run'
 
 const props = defineProps<{
   loot: KnLootContent | null
@@ -124,6 +133,8 @@ const STARTS: KnLootTableKey[] = ['spoils', 'mundane', 'valuable', 'precious', '
 interface Pending {
   id: number
   result: KnLootResult | { missing: KnLootTableKey }
+  // Atout des pièces de contenant : les pièces d'un contenant ouvert.
+  coins?: number
 }
 
 const pending = ref<Pending[]>([])
@@ -131,7 +142,12 @@ let nextId = 1
 
 function draw(starts: readonly KnLootTableKey[]) {
   if (!props.loot) return
-  for (const start of starts) pending.value.push({ id: nextId++, result: knRollLoot(props.loot, start, Math.random, props.magic) })
+  const lucky = knHasActivePerk(character.value, 'luckyFind')
+  for (const start of starts) {
+    const result = knRollLoot(props.loot, start, Math.random, props.magic)
+    const container = lucky && !('missing' in result) && result.steps.some(step => step.table === 'containers')
+    pending.value.push({ id: nextId++, result, ...(container ? { coins: knRollDie(KN_LUCKY_FIND_DIE) } : {}) })
+  }
 }
 
 const creatureItems = computed<SelectItem[]>(() =>
@@ -170,6 +186,10 @@ function take(entry: Pending) {
   const { state, lines, amulet, xp } = knApplyLoot({ inventory: c.inventory, provisions: c.provisions }, entry.result, props.catalog ?? [])
   c.inventory = state.inventory
   c.provisions = state.provisions
+  if (entry.coins) {
+    c.coins = Math.min(KN_BOUNDS.coins.max, c.coins + entry.coins)
+    lines.push(`+${entry.coins} ₵`)
+  }
   if (amulet) lines.push(drawAmulet())
   if (xp) {
     c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + xp)
@@ -181,10 +201,10 @@ function take(entry: Pending) {
 
 // Une amulette n'est pas un objet : on tire la Maîtrise à laquelle elle donne accès (table des Maîtrises aléatoires).
 function drawAmulet(): string {
-  const key = props.masteries ? knRandomMasteryKey(props.masteries.map(mastery => mastery.key)) : null
-  if (key === null) return 'amulette (Maîtrises non chargées : tirez-la dans la section Maîtrises)'
-  character.value.amulets = knAddAmulet(character.value.amulets, key, character.value.masteryPicks)
-  return `amulette : ${props.masteries!.find(mastery => mastery.key === key)?.name ?? key}`
+  const drawn = props.masteries ? knDrawAmulet(character.value.amulets, character.value.masteryPicks, props.masteries.map(mastery => mastery.key)) : null
+  if (!drawn) return 'amulette (Maîtrises non chargées : tirez-la dans la section Maîtrises)'
+  character.value.amulets = drawn.amulets
+  return `amulette : ${props.masteries!.find(mastery => mastery.key === drawn.key)?.name ?? drawn.key}`
 }
 
 function discard(id: number) {

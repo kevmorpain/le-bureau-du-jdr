@@ -28,7 +28,7 @@
             :variant="won ? 'solid' : 'soft'"
             @click="win(combat.overseer ? 'overseer' : 'combat')"
           >
-            {{ combat.overseer ? `Overseer vaincu (+${KN_COMBAT_XP.overseer} XP)` : `Combat remporté (+${KN_COMBAT_XP.combat} XP)` }}
+            {{ combat.overseer ? `Overseer vaincu (+${KN_XP.overseer} XP)` : `Combat remporté (+${KN_XP.combat} XP)` }}
           </UButton>
           <UButton
             size="sm"
@@ -173,7 +173,7 @@
             icon="i-heroicons:cube"
             @click="play('surprise')"
           >
-            Tenter de surprendre (Furtivité)
+            {{ knHasActivePerk(character, 'livingShadow') ? 'Surprendre (Atout, sans test)' : 'Tenter de surprendre (Furtivité)' }}
           </UButton>
           <UButton
             variant="soft"
@@ -240,9 +240,10 @@ import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
 import { knAdvanceCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
 import { knArmorByZone } from '~~/shared/ker-nethalas/equipment'
-import { KN_COMBAT_XP } from '~~/shared/ker-nethalas/masteryEffects'
+import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCombatLog, knNextCombatRound } from '~~/shared/ker-nethalas/run'
@@ -255,7 +256,7 @@ const props = defineProps<{
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
-const { combat, creatureOf, opposed } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, opposed, surpriseAutomatically } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { buffParts } = useKnEffectText()
@@ -300,6 +301,11 @@ const lastOpposed = ref('')
 
 // Une surprise ratée se rejoue en Initiative, avec −20 en Perception.
 function play(kind: 'surprise' | 'initiative') {
+  if (kind === 'surprise' && knHasActivePerk(character.value, 'livingShadow')) {
+    surpriseAutomatically()
+    lastOpposed.value = 'Atout de surprise : la surprise réussit sans test (+20 à la première attaque).'
+    return
+  }
   const outcome = opposed(kind, modifier.value)
   const label = kind === 'surprise' ? 'Furtivité' : 'Perception'
   const summary = `${label} ${outcome.player.value} pour ${outcome.player.target}, créatures ${outcome.foes.value} pour ${outcome.foes.target} (Esprit ${outcome.mind})`

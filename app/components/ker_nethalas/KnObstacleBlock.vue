@@ -113,7 +113,7 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
-            @click="openCheck('disarm', { id: 'skill:thievery', difficulty: knRollDifficulty(), note: 'Désamorcer le piège' })"
+            @click="openCheck('disarm', { id: 'skill:thievery', difficulty: knRollDifficulty(), advantage: knHasActivePerk(character, 'trapBuster'), note: 'Désamorcer le piège' })"
           >
             Tester
           </UButton>
@@ -331,6 +331,7 @@
 
 <script lang="ts" setup>
 import { KN_LOCK_DIE, KN_LOCK_THRESHOLD, KN_TRAP_DIE, type KnObstacleAct } from '~~/shared/ker-nethalas/exploration'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import { knEasierDifficulty, knRollDifficulty, type KnRollRequest } from '~~/shared/ker-nethalas/roll'
 import { KN_RESISTANCE_KEYS } from '~~/shared/ker-nethalas/skills'
 import { knForceBonus, knObstacleState, type KnObstacle } from '~~/shared/ker-nethalas/run'
@@ -389,6 +390,7 @@ function perceive(perception: 'passed' | 'failed') {
 
 const { t } = useI18n()
 const { effectsText } = useKnEffectText()
+const { character } = useKnCheckContext()
 
 // Résultat saisi à la main : 1-2 et 3+ valent 1 et 3, les seuls cas que le Dé de Tension distingue.
 const LOW = 1

@@ -122,6 +122,16 @@
           <span v-if="result.damage.armorAbsorbed"> (Armure : −{{ result.damage.armorAbsorbed }})</span>
           <span v-if="result.damage.heal"> (la créature récupère {{ result.damage.heal }})</span>
         </p>
+        <UButton
+          v-if="result.reroll"
+          size="xs"
+          variant="outline"
+          icon="i-heroicons:arrow-path"
+          :disabled="result.reroll.used || result.applied"
+          @click="rerollDamage(result)"
+        >
+          {{ result.reroll.used ? 'Dégâts relancés' : 'Relancer les dégâts (Atout)' }}
+        </UButton>
         <p
           v-if="result.damage.notes.length"
           class="text-xs text-muted"
@@ -177,13 +187,13 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, attack, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, attack, rerollDamage, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 
 const KN_SURPRISE_BONUS = 20
 
 const target = ref(0)
 const bonus = ref(0)
-const attackOptions = computed(() => knAttackOptions(character.value.inventory))
+const attackOptions = computed(() => knAttackOptions(character.value.inventory, character.value.levelBenefits, character.value.goalEffects))
 const weaponId = ref(attackOptions.value[0]!.id)
 const weaponBonus = ref(0)
 const skill = ref<KnSkillKey>(attackOptions.value[0]!.skill)
