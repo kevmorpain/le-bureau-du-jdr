@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { knCannotBeSurprised, knFearLoss } from '../../shared/ker-nethalas/creatures'
+import { knFreeHands } from '../../shared/ker-nethalas/equipment'
 import { knUseBandage, type KnBandageInput } from '../../shared/ker-nethalas/healing'
+import type { KnItem } from '../../shared/ker-nethalas/inventory'
 import { resolveKnSheet } from '../../shared/ker-nethalas/resolve'
-import { emptyKnRun, knCurrentDomain, knDefeatOverseer, knNewDomain, knResolveCombatFear, knRunSchema, knStartCombat, type KnRun } from '../../shared/ker-nethalas/run'
+import { emptyKnRun, knCurrentDomain, knDefeatOverseer, knNewDomain, knResolveCombatFear, knRunSchema, knSetCombatLamp, knSpillLamp, knStartCombat, type KnRun } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, knStatusSchema } from '../../shared/ker-nethalas/status'
 import { knResetUses } from '../../shared/ker-nethalas/vitals'
 
@@ -98,5 +100,39 @@ describe('Bandage hors combat', () => {
     expect(knUseBandage(input({ status: used.status }))).toEqual({ error: 'usedThisRoom' })
     expect(knUseBandage(input({ bandages: 0 }))).toEqual({ error: 'noBandage' })
     expect(knUseBandage(input({ status: knResetUses(used.status, ['room']) }), die(2))).toMatchObject({ roll: 2 })
+  })
+})
+
+describe('lampe en combat', () => {
+  const weapon = (id: string, place: KnItem['place'], traits: readonly ('twoHanded' | 'simple')[] = []): KnItem =>
+    ({ id, name: id, kind: 'weapon', weight: 'normal', quantity: 1, place, weapon: { skill: 'bladedWeapons', speed: 0, damageType: 'slashing', traits: [...traits] } })
+  const shield: KnItem = { id: 's', name: 'Bouclier', kind: 'shield', weight: 'normal', quantity: 1, place: 'offHand' }
+  const fighting = () => knStartCombat(emptyKnRun(), [{ ref: 'x', name: 'X', health: 5, maxHealth: 5 }])
+
+  it('les mains libres : une arme à deux mains les prend toutes les deux', () => {
+    expect(knFreeHands([])).toBe(2)
+    expect(knFreeHands([weapon('a', 'mainHand')])).toBe(1)
+    expect(knFreeHands([weapon('a', 'mainHand'), shield])).toBe(0)
+    expect(knFreeHands([weapon('a', 'mainHand'), weapon('b', 'offHand')])).toBe(0)
+    expect(knFreeHands([weapon('a', 'mainHand', ['twoHanded'])])).toBe(0)
+    expect(knFreeHands([weapon('a', 'bag')])).toBe(2)
+  })
+
+  it('poser puis reprendre la lampe, seulement pendant un combat', () => {
+    const down = knSetCombatLamp(fighting(), true)
+
+    expect(down.combat?.lampDown).toBe(true)
+    expect(knRunSchema.safeParse(down).success).toBe(true)
+    expect(knSetCombatLamp(down, false).combat?.lampDown).toBeUndefined()
+    const calm = emptyKnRun()
+    expect(knSetCombatLamp(calm, true)).toBe(calm)
+  })
+
+  it('une lampe renversée n\'éclaire plus : la lumière restante tombe à 0', () => {
+    const spilled = knSpillLamp(knSetCombatLamp(fighting(), true))
+
+    expect(spilled.lightRemaining).toBe(0)
+    expect(spilled.combat?.lampDown).toBeUndefined()
+    expect(knRunSchema.safeParse(spilled).success).toBe(true)
   })
 })

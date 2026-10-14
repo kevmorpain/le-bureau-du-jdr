@@ -42,6 +42,13 @@ export const knWieldedWeapons = (items: readonly KnItem[]): KnItem[] =>
 
 const traits = (item: KnItem) => item.weapon?.traits ?? []
 
+// Les mains que l'équipement laisse libres : une arme à deux mains, une arme ou un bouclier tenus en prennent une ou deux.
+export function knFreeHands(items: readonly KnItem[]): number {
+  const held = items.filter(item => item.place === 'mainHand' || item.place === 'offHand')
+  const used = held.reduce((total, item) => total + (traits(item).includes('twoHanded') ? 2 : 1), 0)
+  return Math.max(0, 2 - used)
+}
+
 // La réserve de dégâts d'une arme : D6, et ses bonus (Puissante +1, À deux mains +2, Polyvalente +1 tenue à deux mains).
 export function knWeaponPool(item: KnItem, offHandEmpty: boolean): string {
   const bonus = (traits(item).includes('powerful') ? 1 : 0) + (traits(item).includes('twoHanded') ? 2 : 0) + (traits(item).includes('versatile') && offHandEmpty ? 1 : 0)

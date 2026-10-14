@@ -207,6 +207,39 @@
         </p>
       </div>
 
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <UButton
+            size="sm"
+            variant="soft"
+            icon="i-heroicons:light-bulb"
+            @click="setLamp(!combat.lampDown)"
+          >
+            {{ combat.lampDown ? 'Reprendre la lampe' : 'Poser la lampe (Action Standard)' }}
+          </UButton>
+          <UBadge
+            v-if="combat.lampDown"
+            label="Lampe posée : une maladresse la renverse"
+            color="warning"
+            variant="subtle"
+            size="md"
+          />
+        </div>
+        <p
+          v-if="handsWarning"
+          class="text-sm text-warning"
+        >
+          Vos deux mains sont prises : une Torche ou une Lampe demande une main libre (sauf une Lampe de ceinture ou un sort).
+          Posez la lampe au sol, ou libérez une main.
+        </p>
+        <p
+          v-else-if="combat.lampDown"
+          class="text-xs text-muted"
+        >
+          Une seconde arme à une main se dégaine, ou une arme à deux mains se tient, pendant que la lampe est posée.
+        </p>
+      </div>
+
       <KnCombatAttack
         v-model:character="character"
         :resolved
@@ -251,7 +284,7 @@ import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker
 import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
 import { knAdvanceCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
-import { knArmorByZone } from '~~/shared/ker-nethalas/equipment'
+import { knArmorByZone, knFreeHands } from '~~/shared/ker-nethalas/equipment'
 import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
 import { knCannotBeSurprised, type KnCreature } from '~~/shared/ker-nethalas/creatures'
@@ -268,7 +301,7 @@ const props = defineProps<{
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
-const { combat, creatureOf, opposed, surpriseAutomatically } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, opposed, surpriseAutomatically, setLamp } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { buffParts } = useKnEffectText()
@@ -307,6 +340,10 @@ function nextRound() {
   character.value.run = knCombatLog(character.value.run, `Round ${combat.value?.round ?? 1} : ${ticks.map(tick => `${tick.name} ${tick.roll}`).join(', ')}`)
   applyEffects(ticks.map(tick => ({ kind: 'damage' as const, dice: { count: 0, sides: 0, bonus: tick.roll }, ...(tick.direct ? { direct: true } : {}) })), 'Début du tour')
 }
+
+const handsWarning = computed(() =>
+  !combat.value?.lampDown && character.value.run.lightRemaining > 0 && knFreeHands(character.value.inventory) === 0,
+)
 
 const cannotSurprise = computed(() => knCannotBeSurprised(
   (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0 && creatureOf(index) ? [creatureOf(index)!] : []),

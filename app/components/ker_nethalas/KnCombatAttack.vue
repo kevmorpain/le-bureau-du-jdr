@@ -104,6 +104,20 @@
         <span class="font-medium">Mouvement défensif de la créature (D10 : {{ result.monsterMove }})</span> :
         {{ moveText('monsterDefensiveMoves', result.monsterMove) }}
       </p>
+      <div
+        v-if="result.lampSpilled"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <span><span class="font-medium">Maladresse</span> : la lampe posée se renverse, l'huile se répand et vous êtes Aveuglé.</span>
+        <UButton
+          size="xs"
+          variant="soft"
+          :disabled="result.lampSpillApplied"
+          @click="spillLamp(result)"
+        >
+          {{ result.lampSpillApplied ? 'Appliqué' : 'Appliquer : plus de lumière' }}
+        </UButton>
+      </div>
       <p
         v-if="result.fumble"
         class="text-sm"
@@ -187,7 +201,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, attack, rerollDamage, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, attack, rerollDamage, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 
 const KN_SURPRISE_BONUS = 20
 

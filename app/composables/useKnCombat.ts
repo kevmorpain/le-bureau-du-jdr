@@ -47,7 +47,9 @@ import {
   knRegisterReaction,
   knRollDie,
   knSetCombatFirst,
+  knSetCombatLamp,
   knSetCombatSurprise,
+  knSpillLamp,
   knSpendCombatCreature,
   knStartCombat,
   knVanishSpentCreatures,
@@ -74,6 +76,9 @@ export interface KnAttackResult {
   // Mouvement défensif de la créature (D10) quand elle a paré, maladresse du survivant (D10) sur un échec critique.
   monsterMove?: number
   fumble?: number
+  // Lampe posée : la maladresse la renverse au lieu de tirer dans la table des maladresses.
+  lampSpilled?: boolean
+  lampSpillApplied?: boolean
   applied: boolean
 }
 
@@ -212,7 +217,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     if (buffs.reflect.length) {
       result.reflect = buffs.reflect.map(entry => ({ label: entry.label, type: entry.type, amount: knRollDamagePool([entry.dice]).total, applied: false }))
     }
-    if (exchange.fumble) result.fumble = knRollDie(KN_DEFENSIVE_MOVE_DIE)
+    if (exchange.fumble) {
+      if (combat.value.lampDown && input.attackerScore === undefined) result.lampSpilled = true
+      else result.fumble = knRollDie(KN_DEFENSIVE_MOVE_DIE)
+    }
     if (exchange.outcome === 'defended') result.monsterMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
 
     if (exchange.outcome === 'hit') {
@@ -245,6 +253,18 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       target: knBuffedTarget(knCreatureDamageTarget(creature), target.effects),
       magical: input.magical,
     })
+  }
+
+  function setLamp(down: boolean) {
+    character.value.run = knSetCombatLamp(character.value.run, down)
+    log(down ? 'Lampe posée au sol (Action Standard)' : 'Lampe reprise en main')
+  }
+
+  function spillLamp(result: KnAttackResult) {
+    if (!result.lampSpilled || result.lampSpillApplied) return
+    character.value.run = knSpillLamp(character.value.run)
+    log('Maladresse : la lampe se renverse, son huile se répand, le survivant est Aveuglé')
+    result.lampSpillApplied = true
   }
 
   function rerollDamage(result: KnAttackResult) {
@@ -544,5 +564,5 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
+  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, setLamp, spillLamp, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
 }

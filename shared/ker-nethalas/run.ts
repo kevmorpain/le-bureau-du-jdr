@@ -591,6 +591,17 @@ export function knStartCombat(run: KnRun, creatures: KnCombatCreature[], oversee
   }
 }
 
+export function knSetCombatLamp(run: KnRun, down: boolean): KnRun {
+  if (!run.combat) return run
+  const { lampDown: _previous, ...rest } = run.combat
+  return { ...run, combat: down ? { ...rest, lampDown: true } : rest }
+}
+
+// Une maladresse renverse la lampe posée : toute son huile se répand, la lumière restante tombe à 0.
+export function knSpillLamp(run: KnRun): KnRun {
+  return { ...knSetCombatLamp(run, false), lightRemaining: 0 }
+}
+
 export function knResolveCombatFear(run: KnRun): KnRun {
   return run.combat?.fear ? { ...run, combat: { ...run.combat, fear: { ...run.combat.fear, resolved: true } } } : run
 }
