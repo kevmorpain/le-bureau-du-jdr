@@ -26,6 +26,12 @@
       :resolved
     />
 
+    <KnFateDenied
+      v-model:character="character"
+      :resolved
+      :masteries
+    />
+
     <KnRunSection
       v-model:character="character"
       :resolved

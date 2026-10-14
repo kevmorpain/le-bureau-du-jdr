@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { knCannotBeSurprised, knFearLoss } from '../../shared/ker-nethalas/creatures'
+import { knMasteryEntries } from '../../shared/ker-nethalas/amulets'
+import { knAbilitiesToLose, knApplyFateDenied, knFateDeniedIssues, type KnFateDeniedSheet } from '../../shared/ker-nethalas/fateDenied'
 import { KN_DUAL_WIELD, knAttackOptions, knBreakItem, knDefenseOptions, knDualPair, knFreeHands, knMendItem, knSacrificeChoices } from '../../shared/ker-nethalas/equipment'
 import { knUseBandage, type KnBandageInput } from '../../shared/ker-nethalas/healing'
 import { knInventorySchema, type KnItem } from '../../shared/ker-nethalas/inventory'
@@ -217,5 +219,62 @@ describe('arme ou bouclier sacrifié', () => {
     expect(mended[0]).toEqual(blade)
     expect(mended[0]).not.toHaveProperty('broken')
     expect(knInventorySchema.safeParse(knBreakItem(kit, 'w')).success).toBe(true)
+  })
+})
+
+describe('Destin refusé', () => {
+  const sheet = (over: Partial<KnFateDeniedSheet> = {}): KnFateDeniedSheet => ({
+    healthCurrent: 0,
+    healthMax: 12,
+    sanityCurrent: 3,
+    sanityMax: 11,
+    toughnessCurrent: 0,
+    toughnessMax: 25,
+    masteryPicks: [{ key: 'alpha', tiers: 3 }, { key: 'beta', tiers: 1 }],
+    amulets: { owned: ['gamma'], equipped: 'gamma', tiers: 2 },
+    ...over,
+  })
+  const entries = (s: KnFateDeniedSheet) => knMasteryEntries(s.masteryPicks, s.amulets)
+  const rolls = (...results: number[]) => {
+    const queue = [...results]
+    return () => (queue.shift()! - 0.5) / 6
+  }
+
+  it('on perd deux Aptitudes, jamais sous une par Maîtrise, amulette comprise', () => {
+    const s = sheet()
+
+    expect(knAbilitiesToLose(entries(s))).toBe(2)
+    expect(knFateDeniedIssues(entries(s), ['alpha', 'gamma'])).toEqual([])
+    expect(knFateDeniedIssues(entries(s), ['alpha', 'alpha'])).toEqual([])
+    expect(knFateDeniedIssues(entries(s), ['beta', 'alpha']).length).toBeGreaterThan(0)
+    expect(knFateDeniedIssues(entries(s), ['gamma', 'gamma']).length).toBeGreaterThan(0)
+    expect(knFateDeniedIssues(entries(s), ['alpha']).length).toBeGreaterThan(0)
+    expect(knFateDeniedIssues(entries(s), ['alpha', 'inconnue']).length).toBeGreaterThan(0)
+  })
+
+  it('s\'il reste moins de deux Aptitudes à perdre, on perd ce qui reste', () => {
+    const s = sheet({ masteryPicks: [{ key: 'alpha', tiers: 2 }, { key: 'beta', tiers: 1 }], amulets: { owned: [], equipped: null, tiers: 0 } })
+
+    expect(knAbilitiesToLose(entries(s))).toBe(1)
+    expect(knFateDeniedIssues(entries(s), ['alpha'])).toEqual([])
+    expect(knAbilitiesToLose(entries(sheet({ masteryPicks: [{ key: 'beta', tiers: 1 }], amulets: { owned: [], equipped: null, tiers: 0 } })))).toBe(0)
+  })
+
+  it('rend 2D6 Santé mentale, 2D6 Santé et toute la Robustesse, et retire les Aptitudes choisies', () => {
+    const result = knApplyFateDenied(sheet(), ['alpha', 'gamma'], rolls(3, 4, 5, 6))
+
+    if ('error' in result) throw new Error(result.error)
+    expect(result.patch).toMatchObject({ sanityCurrent: 10, healthCurrent: 11, toughnessCurrent: 25 })
+    expect(result.patch.masteryPicks).toEqual([{ key: 'alpha', tiers: 2 }, { key: 'beta', tiers: 1 }])
+    expect(result.patch.amulets?.tiers).toBe(1)
+  })
+
+  it('les jauges ne dépassent pas leur maximum, et un choix invalide ne change rien', () => {
+    const full = knApplyFateDenied(sheet({ sanityCurrent: 10, healthMax: 5 }), ['alpha', 'alpha'], rolls(6, 6, 6, 6))
+
+    if ('error' in full) throw new Error(full.error)
+    expect(full.patch).toMatchObject({ sanityCurrent: 11, healthCurrent: 5 })
+    expect(full.patch.masteryPicks?.[0]).toEqual({ key: 'alpha', tiers: 1 })
+    expect(knApplyFateDenied(sheet(), ['beta', 'beta'])).toEqual({ error: 'choice' })
   })
 })

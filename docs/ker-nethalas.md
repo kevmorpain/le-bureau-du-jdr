@@ -617,6 +617,14 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   Intégrité ne bouge pas. Ne vaut que pour le survivant, pas pour un sbire.
   ⚠️ hypothèses : la réparation passe par ce bouton et non par la quantité de l'activité de camp « Réparer » (qui ne vise pas une pièce,
   voir la tranche 7) ; les conditions que l'action de la créature aurait imposées en plus des dégâts sont annulées avec le coup.
+- **Destin refusé** (`fateDenied.ts`, issue X29) : règle optionnelle du livre, offerte par un encart qui n'apparaît que lorsque la Santé
+  est à 0 ; un premier clic demande la confirmation. Le survivant récupère 2D6 Santé mentale, 2D6 Santé et toute sa Robustesse (sans
+  dépasser les maximums), le combat en cours s'arrête sans gain (« la pièce est vidée ») et il perd deux Aptitudes de Maîtrise au choix,
+  jamais sous une Aptitude par Maîtrise, celle de l'amulette portée comprise. Chaque Aptitude perdue est la plus haute de sa Maîtrise ;
+  s'il n'en reste qu'une (ou aucune) à perdre, on perd ce qui reste.
+  ⚠️ hypothèses : pas de réglage par survivant, la règle étant optionnelle : l'encart s'offre toujours et il suffit de ne pas le
+  confirmer pour repartir avec un nouveau survivant ; « 2 Aptitudes au choix » se retire par le haut, pour que les paliers restent
+  consécutifs ; les Conditions et la Pourriture ne changent pas.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -959,7 +967,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | fusionnée (PR #286) ; jeu `personalGoals` typé chargé en production |
-| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | en cours (X25, X24, X28, X32, X26 et X27 écrits) |
+| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | écrite (X24 à X29 et X32) ; une PR |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |
