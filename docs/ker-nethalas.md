@@ -545,6 +545,13 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   effective). Chaque choix s'ajoute à `levelBenefits` (colonne JSON, migration 0144), qui garde l'historique et porte les deux
   avantages de dégâts. Un D6 de dégâts physiques par avantage pris, du type choisi ; les mains nues en profitent aussi (toute
   attaque de l'outil est physique, hors Aptitude).
+- **Amélioration de compétence** (`skillImprovement.ts`, issue X21) : sur des doubles à un test de compétence (pas de Résistance),
+  le panneau de jet propose « Marquer pour amélioration » (la case de la section Compétences reste cochable à la main). À la fin du
+  camp, chaque compétence marquée, ajoutée à la main comprise, passe son test : D100 au-dessus du score, +D4 ; sinon +1 ; plafond de
+  80, un score déjà au-delà ne baisse jamais. La marque est retirée et le rapport du camp détaille chaque test. Le tirage est
+  automatique, sans saisie manuelle du D100.
+  ⚠️ hypothèses : le livre ne dit pas si la marque survit à un échec (elle est retirée dans tous les cas) ni si le « score » est
+  le score de base (c'est lui qui est testé et augmenté, pas le score effectif).
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -886,7 +893,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 et X20 écrits) |
+| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 à X21 écrits) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |

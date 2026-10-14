@@ -128,6 +128,13 @@
         </p>
       </div>
 
+      <p
+        v-if="markedNames.length"
+        class="border-t border-default pt-3 text-sm"
+      >
+        Test d'amélioration à la fin du camp : {{ markedNames.join(', ') }}.
+      </p>
+
       <KnNumberField
         v-model="plan.modifier"
         label="Autre modificateur du test de Camp (objet, aptitude)"
@@ -232,6 +239,8 @@ import type { KnCampActivity, KnMastery } from '~~/shared/ker-nethalas/masteries
 import { knApplySelfEffects, knCampRecoverEffects, knCampTraits } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCurrentDomain, knRollDie } from '~~/shared/ker-nethalas/run'
+import { KN_SKILL_IMPROVEMENT, knImproveMarkedSkills, type KnSkillTarget } from '~~/shared/ker-nethalas/skillImprovement'
+import { KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
 import { knRest } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
@@ -318,6 +327,27 @@ function rollCheck() {
 
 const gain = (label: string, amount: number) => `${label} ${signed(amount)}`
 
+const skillName = (target: KnSkillTarget) => 'skill' in target
+  ? t(`ker_nethalas.skills.${target.skill}`)
+  : character.value.extraSkills[target.extra]!.name
+
+const markedNames = computed(() => [
+  ...KN_SKILL_KEYS.filter(key => character.value.skills[key].marked).map(key => skillName({ skill: key })),
+  ...character.value.extraSkills.filter(extra => extra.marked).map(extra => extra.name),
+])
+
+function improveSkills(lines: string[]) {
+  const c = character.value
+  const result = knImproveMarkedSkills(c.skills, c.extraSkills)
+  c.skills = result.skills
+  c.extraSkills = result.extraSkills
+  for (const entry of result.improvements) {
+    const check = `D100 : ${entry.roll} (score ${entry.before}), ${entry.success ? 'au-dessus' : 'sous ou égal'}`
+    const outcome = entry.gain ? `+${entry.gain} (${entry.before} → ${entry.after})` : `inchangé (plafond de ${KN_SKILL_IMPROVEMENT.max})`
+    lines.push(`Amélioration de ${skillName(entry.target)} : ${check}, ${outcome}.`)
+  }
+}
+
 function finish() {
   if (roll.value === null) return
   const c = character.value
@@ -384,6 +414,7 @@ function finish() {
     const capped = gained < dice.total ? `, limité au maximum : +${gained}` : ''
     lines.push(`${t(`ker_nethalas.vitals.${effect.vital}`)} +${dice.total} (${label} : ${dice.rolls.join(' + ') || dice.total}${capped}), activité de trait`)
   }
+  improveSkills(lines)
   if (!outcome.success) lines.push('Test raté : tirez dans la table des Rencontres (les bénéfices réduits sont déjà appliqués).')
   if (c.status.rotStage >= 1) lines.push('Pourriture : test d\'Endurance, sinon elle avance d\'un stade.')
   if (used.activities.healConditions > 0) lines.push('Retirez les Conditions soignées dans « Effets en cours ».')

@@ -119,6 +119,22 @@
         {{ criticalText }}
       </p>
       <div
+        v-if="markTarget"
+        class="flex flex-wrap items-center gap-3 rounded-md bg-elevated p-2"
+      >
+        <p class="flex-1 text-sm">
+          Doubles : la compétence peut être marquée pour un test d'amélioration au prochain camp.
+        </p>
+        <UButton
+          size="sm"
+          variant="soft"
+          :disabled="isMarked"
+          @click="mark"
+        >
+          {{ isMarked ? 'Marquée' : 'Marquer pour amélioration' }}
+        </UButton>
+      </div>
+      <div
         v-if="result.effects.length"
         class="space-y-2 rounded-md bg-elevated p-2"
       >
@@ -202,7 +218,8 @@ import {
   type KnDifficultyKey,
 } from '~~/shared/ker-nethalas/roll'
 import { knRaiseUsageDie, knRollDie, knUsageDieRaise } from '~~/shared/ker-nethalas/run'
-import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
+import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
+import type { KnSkillTarget } from '~~/shared/ker-nethalas/skillImprovement'
 import { knSetTemporary, knTemporaryOf } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
@@ -247,6 +264,26 @@ const choices = computed<Choice[]>(() => [
 const current = computed(() => choices.value.find(choice => choice.id === selected.value) ?? choices.value[0]!)
 const checkItems = computed<SelectItem[]>(() => choices.value.map(choice => ({ label: choice.label, value: choice.id })))
 
+// Seules les compétences s'améliorent : une Résistance n'est pas un test de compétence.
+function skillTarget(id: string): KnSkillTarget | undefined {
+  const [kind, key] = id.split(':')
+  if (kind === 'skill') return { skill: key as KnSkillKey }
+  if (kind === 'extra') return { extra: Number(key) }
+  return undefined
+}
+
+const markTarget = computed(() => result.value?.markTarget)
+const markedSkill = computed(() => {
+  const target = markTarget.value
+  if (!target) return undefined
+  return 'skill' in target ? character.value.skills[target.skill] : character.value.extraSkills[target.extra]
+})
+const isMarked = computed(() => markedSkill.value?.marked ?? false)
+
+function mark() {
+  if (markedSkill.value) markedSkill.value.marked = true
+}
+
 function select(value: unknown) {
   if (typeof value === 'string') selected.value = value
 }
@@ -281,6 +318,7 @@ interface RollOutcome {
   manual: boolean
   effects: KnCriticalEffect[]
   applied: boolean
+  markTarget?: KnSkillTarget
   note?: string
 }
 
@@ -306,6 +344,7 @@ function roll(entered?: number) {
     manual: entered !== undefined,
     effects: check.critical && kind === 'table' ? knCriticalEffects(choice.key, check.critical) : [],
     applied: false,
+    markTarget: check.doubles ? skillTarget(choice.id) : undefined,
   }
 
   const outcome = `${check.success ? 'réussi' : 'raté'}${check.critical ? (check.critical === 'success' ? ' (critique)' : ' (échec critique)') : ''}`
