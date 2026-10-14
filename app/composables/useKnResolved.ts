@@ -6,6 +6,7 @@ import { knLevelBenefitSources } from '~~/shared/ker-nethalas/levelUp'
 import { knMagicProvidesLight, knMagicSources } from '~~/shared/ker-nethalas/magicEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { knMasteryProvidesLight, knMasterySources } from '~~/shared/ker-nethalas/masteryEffects'
+import { knPerkSources } from '~~/shared/ker-nethalas/perks'
 import { resolveKnSheet } from '~~/shared/ker-nethalas/resolve'
 
 export function useKnResolved(character: Ref<KnCharacter | undefined | null>, masteries: Ref<KnMastery[] | null>) {
@@ -21,7 +22,7 @@ export function useKnResolved(character: Ref<KnCharacter | undefined | null>, ma
     const sustained = c.status.sustained ?? []
 
     return resolveKnSheet({
-      extraSources: [...(masteries.value ? knMasterySources(masteries.value, entries, sustained) : []), ...knEquipmentSources(c.inventory), ...knMagicSources(c.inventory), ...knLevelBenefitSources(c.levelBenefits, abilityName)],
+      extraSources: [...(masteries.value ? knMasterySources(masteries.value, entries, sustained) : []), ...knEquipmentSources(c.inventory), ...knMagicSources(c.inventory), ...knLevelBenefitSources(c.levelBenefits, abilityName), ...knPerkSources(c.perkKeys)],
       lightProvided: (masteries.value ? knMasteryProvidesLight(masteries.value, entries, sustained) : false) || knMagicProvidesLight(c.inventory),
       skills: c.skills,
       extraSkills: c.extraSkills,

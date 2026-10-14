@@ -1016,6 +1016,13 @@
       "when": 1793200000000,
       "tag": "0144_ker_nethalas_level_benefits",
       "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "6",
+      "when": 1793300000000,
+      "tag": "0145_ker_nethalas_perk_keys",
+      "breakpoints": true
     }
   ]
 }

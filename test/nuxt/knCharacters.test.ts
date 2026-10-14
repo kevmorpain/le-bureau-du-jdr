@@ -241,6 +241,15 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.levelBenefits).toEqual(levelBenefits)
   })
 
+  it('crée un survivant sans Atout et relit ceux qu\'on lui donne', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Atouts'))
+    expect((await getKnCharacter(db, id))!.perkKeys).toEqual([])
+
+    await updateKnCharacter(db, id, { perkKeys: ['scholar', 'luckyFind'] })
+
+    expect((await getKnCharacter(db, id))!.perkKeys).toEqual(['scholar', 'luckyFind'])
+  })
+
   it('crée un survivant sans objectif quand aucun n\'est choisi', async () => {
     const { id } = await createKnCharacter(db, alice, validKnCreation('Sans objectif'))
 

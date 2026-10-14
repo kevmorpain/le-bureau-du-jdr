@@ -173,7 +173,7 @@
             icon="i-heroicons:cube"
             @click="play('surprise')"
           >
-            Tenter de surprendre (Furtivité)
+            {{ character.perkKeys.includes('livingShadow') ? 'Surprendre (Atout, sans test)' : 'Tenter de surprendre (Furtivité)' }}
           </UButton>
           <UButton
             variant="soft"
@@ -255,7 +255,7 @@ const props = defineProps<{
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
-const { combat, creatureOf, opposed } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, opposed, surpriseAutomatically } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { buffParts } = useKnEffectText()
@@ -300,6 +300,11 @@ const lastOpposed = ref('')
 
 // Une surprise ratée se rejoue en Initiative, avec −20 en Perception.
 function play(kind: 'surprise' | 'initiative') {
+  if (kind === 'surprise' && character.value.perkKeys.includes('livingShadow')) {
+    surpriseAutomatically()
+    lastOpposed.value = 'Atout de surprise : la surprise réussit sans test (+20 à la première attaque).'
+    return
+  }
   const outcome = opposed(kind, modifier.value)
   const label = kind === 'surprise' ? 'Furtivité' : 'Perception'
   const summary = `${label} ${outcome.player.value} pour ${outcome.player.target}, créatures ${outcome.foes.value} pour ${outcome.foes.target} (Esprit ${outcome.mind})`

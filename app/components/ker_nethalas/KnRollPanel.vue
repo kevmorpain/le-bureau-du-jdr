@@ -228,6 +228,7 @@ const props = defineProps<{
   fixed?: boolean
   startDifficulty?: KnDifficultyKey
   modifier?: number
+  advantage?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -302,7 +303,12 @@ const modeItems: SelectItem[] = [
   { label: 'Avantage', value: 'advantage' },
   { label: 'Désavantage', value: 'disadvantage' },
 ]
-const mode = computed<KnRollMode>(() => modeChoice.value === 'auto' ? current.value.check.rollMode : modeChoice.value)
+const sheetMode = computed<KnRollMode>(() => {
+  const mode = current.value.check.rollMode
+  if (!props.advantage) return mode
+  return mode === 'normal' || mode === 'advantage' ? 'advantage' : 'both'
+})
+const mode = computed<KnRollMode>(() => modeChoice.value === 'auto' ? sheetMode.value : modeChoice.value)
 
 const bonus = computed(() => props.modifier ?? 0)
 const target = computed(() => Math.max(0, current.value.check.effective + difficultyModifier.value + bonus.value))

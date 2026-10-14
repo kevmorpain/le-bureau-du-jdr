@@ -113,7 +113,7 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
-            @click="openCheck('disarm', { id: 'skill:thievery', difficulty: knRollDifficulty(), note: 'Désamorcer le piège' })"
+            @click="openCheck('disarm', { id: 'skill:thievery', difficulty: knRollDifficulty(), advantage: character.perkKeys.includes('trapBuster'), note: 'Désamorcer le piège' })"
           >
             Tester
           </UButton>
@@ -389,6 +389,7 @@ function perceive(perception: 'passed' | 'failed') {
 
 const { t } = useI18n()
 const { effectsText } = useKnEffectText()
+const { character } = useKnCheckContext()
 
 // Résultat saisi à la main : 1-2 et 3+ valent 1 et 3, les seuls cas que le Dé de Tension distingue.
 const LOW = 1

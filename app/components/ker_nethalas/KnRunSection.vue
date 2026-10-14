@@ -198,6 +198,7 @@
             @draw="drawDarkness"
             @undo="undo"
             @table="tableRoll"
+            @adjust-scavenge="adjustScavenge"
             @apply-scavenge="applyScavenge"
             @add-door="addDoor"
             @deep-search="deepSearch"
@@ -261,6 +262,7 @@ provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 const {
   tableRoll,
+  adjustScavenge,
   applyScavenge,
   takeOutcome,
   addDoor,

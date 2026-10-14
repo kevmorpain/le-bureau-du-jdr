@@ -117,7 +117,7 @@ export const knVisitSchema = z.object({
   encounter: z.object({ roll: boundedInt({ min: 1, max: 20 }), triggered: z.boolean() }).optional(),
   event: knTableRollSchema.extend({ taken: knTakenSchema }).optional(),
   door: z.object({ roll: boundedInt({ min: 1, max: 10 }), present: z.boolean() }).optional(),
-  scavenge: knTableRollSchema.extend({ applied: z.boolean(), taken: knTakenSchema }).optional(),
+  scavenge: knTableRollSchema.extend({ applied: z.boolean(), taken: knTakenSchema, adjusted: z.boolean().optional() }).optional(),
   obstacles: z.array(knObstacleSchema).max(KN_RUN_BOUNDS.obstacles).optional(),
   deepSearch: z.object({ content: knTableRollSchema.optional() }).optional(),
   extraTension: z.array(knExtraTensionSchema).max(KN_RUN_BOUNDS.extraTension).optional(),
@@ -366,6 +366,14 @@ export function knRecordDoor(run: KnRun, roll: number): KnRun {
 export function knRecordScavenge(run: KnRun, roll: number): KnRun {
   const visit = knCurrentVisit(run)
   return visit && visit.kind !== 'revisit' && !visit.scavenge ? withLastVisit(run, v => ({ ...v, scavenge: { roll, applied: false } })) : run
+}
+
+// Atout de Fouille ajustable : le tirage de Fouille bouge une seule fois, du résultat d'un D4, tant que rien n'en a été pris ni appliqué.
+export function knAdjustScavenge(run: KnRun, delta: number, die: number): KnRun {
+  const scavenge = knCurrentVisit(run)?.scavenge
+  if (!scavenge || scavenge.adjusted || scavenge.applied || scavenge.taken?.length) return run
+  const roll = Math.min(die, Math.max(1, scavenge.roll + delta))
+  return withLastVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, roll, adjusted: true } }))
 }
 
 export function knMarkScavengeApplied(run: KnRun): KnRun {

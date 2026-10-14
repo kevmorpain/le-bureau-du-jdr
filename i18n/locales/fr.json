@@ -312,6 +312,32 @@
       "equipment": "Équipement porté",
       "noLight": "Sans source de lumière"
     },
+    "perks": {
+      "livingShadow": {
+        "name": "Surprise assurée",
+        "hint": "Vous surprenez toujours vos adversaires et ne pouvez pas être surpris."
+      },
+      "luckyFind": {
+        "name": "Pièces des contenants",
+        "hint": "Chaque conteneur ouvert rapporte D20 pièces."
+      },
+      "precisionStriker": {
+        "name": "Dégâts critiques relancés",
+        "hint": "Sur un Coup critique, vous pouvez relancer les dégâts."
+      },
+      "scavenger": {
+        "name": "Fouille ajustable",
+        "hint": "Un D4 de plus sur la table de Fouille, à ajouter ou à retrancher au tirage."
+      },
+      "scholar": {
+        "name": "Avantage en Raison",
+        "hint": "Avantage à tous les tests de Raison."
+      },
+      "trapBuster": {
+        "name": "Avantage contre les pièges",
+        "hint": "Avantage aux tests de Larcin pour désamorcer un piège."
+      }
+    },
     "reminders": {
       "noLight": "Un test de Résolution à chaque salle, sinon −1 Santé mentale.",
       "exhaustionHalfHealing": "Épuisement 11 ou plus : vous ne récupérez que la moitié des Blessures, quelle que soit la source.",

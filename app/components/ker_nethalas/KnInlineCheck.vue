@@ -18,6 +18,7 @@
       fixed
       :start-difficulty="request.difficulty"
       :modifier="request.bonus"
+      :advantage="request.advantage"
       @rolled="success => emit('rolled', success)"
     />
   </div>

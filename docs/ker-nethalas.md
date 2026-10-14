@@ -552,6 +552,17 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   automatique, sans saisie manuelle du D100.
   ⚠️ hypothèses : le livre ne dit pas si la marque survit à un échec (elle est retirée dans tous les cas) ni si le « score » est
   le score de base (c'est lui qui est testé et augmenté, pas le score effectif).
+- **Atouts** (`perks.ts`, issue X22) : les six Atouts du livre se cochent dans la section Notes (colonne JSON `perkKeys`, migration
+  0145 ; le champ libre devient « Autres atouts »). Leur effet est appliqué là où il joue :
+  l'Avantage en Raison est un effet de fiche comme les autres sources ; l'Avantage contre les pièges s'ajoute au test de Larcin
+  « Désamorcer le piège » (`KnRollRequest.advantage`, combiné à la fiche : Avantage + Désavantage donne la lecture normale, comme
+  ailleurs) ; la surprise assurée réussit sans test ; les dégâts d'un Coup critique du survivant (jamais d'un sbire) se relancent
+  une fois avant d'être appliqués ; la Fouille ajustable ajoute ou retranche un D4 au tirage de Fouille, une fois, tant que rien
+  n'en est pris (`knAdjustScavenge`, résultat borné à la table) ; les pièces des contenants ajoutent D20 pièces au butin d'un tirage
+  qui passe par la table des contenants.
+  Les libellés sont descriptifs : les noms du livre sont dans le contenu privé (récompenses d'objectifs) et ne se versionnent pas.
+  ⚠️ Laissé de côté : un contenant « Vide » à la fouille approfondie n'ouvre aucun tirage de butin, donc rapporte ses pièces à la
+  main ; « ne peut pas être surpris » n'a pas de mécanique propre (l'outil ne tire pas la surprise des créatures).
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -893,7 +904,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 à X21 écrits) |
+| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 à X22 écrits) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |
