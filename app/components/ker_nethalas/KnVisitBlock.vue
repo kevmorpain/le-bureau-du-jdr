@@ -343,6 +343,32 @@
       />
 
       <div
+        v-if="active"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <template v-if="visit.trader">
+          <span class="flex-1">Le marchand est ici : sa carte est dans la section Marchand.</span>
+          <UButton
+            size="sm"
+            variant="ghost"
+            color="neutral"
+            @click="emit('trader', false)"
+          >
+            Il n'est pas là
+          </UButton>
+        </template>
+        <UButton
+          v-else
+          size="sm"
+          variant="soft"
+          icon="i-heroicons:shopping-bag"
+          @click="emit('trader', true)"
+        >
+          {{ traderFound ? 'Retourner voir le marchand' : 'Un marchand est ici' }}
+        </UButton>
+      </div>
+
+      <div
         v-if="active && canAddDoor"
         class="flex flex-wrap items-center gap-2 text-sm"
       >
@@ -483,6 +509,8 @@ const props = defineProps<{
   tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
   // Le Domaine d'introduction : portes déjà marquées, une seule table de rencontres.
   intro?: boolean
+  // Un marchand a déjà été trouvé dans ce Domaine.
+  traderFound?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -491,6 +519,7 @@ const emit = defineEmits<{
   draw: []
   undo: []
   table: [name: KnVisitTable, manual?: number]
+  trader: [here: boolean]
   adjustScavenge: [delta: number]
   applyScavenge: []
   addDoor: []

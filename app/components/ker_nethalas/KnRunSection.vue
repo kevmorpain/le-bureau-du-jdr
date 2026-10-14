@@ -194,11 +194,13 @@
             :bestiary
             :tables
             :intro="!!domain.intro"
+            :trader-found="!!domain.traderFound"
             @tension="tension"
             @usage="usage"
             @draw="drawDarkness"
             @undo="undo"
             @table="tableRoll"
+            @trader="here => character.run = knSetTrader(character.run, here)"
             @adjust-scavenge="adjustScavenge"
             @apply-scavenge="applyScavenge"
             @add-door="addDoor"
@@ -235,6 +237,7 @@ import {
   KN_RUN_BOUNDS,
   KN_USAGE_DICE,
   knCurrentDomain,
+  knSetTrader,
   knDrawGrowingDarkness,
   knRecordDarkness,
   knRecordTension,

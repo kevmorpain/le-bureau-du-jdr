@@ -649,6 +649,13 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   réussite de Raison donne un tirage de dépouilles ; l'armure aléatoire de la salle II se tire telle quelle (elle peut être magique) ; les
   objets du Domaine arrivent « trouvés » comme tout butin ; « pas de rencontre ni d'événement » des salles I à V reste dans leur texte.
 
+- **Marchand conservé dans le Domaine** (issue X33) : un marchand trouvé dans un Domaine y reste et peut être revisité. L'entrée du chemin
+  où il se trouve porte `trader` et le Domaine retient `traderFound`. Un bouton de l'entrée active marque « Un marchand est ici »
+  (« Retourner voir le marchand » une fois trouvé, pour une entrée de retour ; « Il n'est pas là » corrige une erreur) ; la carte
+  « Marchand » n'est affichée que dans une entrée marquée, et un nouveau Domaine repart sans marchand.
+  ⚠️ hypothèses : le jeu ne sait pas où le marchand se trouve sur la carte, c'est le joueur qui marque l'entrée ; un survivant déjà
+  en cours ne voit plus la carte Marchand tant qu'il n'a pas marqué une entrée.
+
 ### KN47 — Progrès automatique des objectifs
 - **Format** (`goalCounts.ts`, issue X17) : un objectif porte un champ optionnel `counts`, la nature de ce qu'il compte (le contenu déjà
   écrit reste valide, un objectif sans `counts` se note à la main). Douze natures : adversaires vaincus (tous, d'un type, avec une
@@ -1011,7 +1018,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | fusionnée (PR #286) ; jeu `personalGoals` typé chargé en production |
-| **10 — Début de partie** | Débuts difficiles (X30 #282), Domaine d'introduction : carte fixe, contenu des salles, table de rencontres propre, sortie sans retour (X31 #283), marchand conservé dans le Domaine (X33 #285) ; une seule PR (KN48) | en cours (X30 et X31 écrits) |
+| **10 — Début de partie** | Débuts difficiles (X30 #282), Domaine d'introduction : carte fixe, contenu des salles, table de rencontres propre, sortie sans retour (X31 #283), marchand conservé dans le Domaine (X33 #285) ; une seule PR (KN48) | écrite (X30, X31 et X33) |
 | **X17 — Progrès automatique des objectifs** | champ `counts` sur l'objectif, événements du combat, de l'exploration et du butin qui font avancer le progrès, sans confirmation (KN47) | fusionnée (PR #288) |
 | **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | fusionnée (PR #287) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |

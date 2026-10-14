@@ -109,6 +109,8 @@ const knExtraTensionSchema = knDieResultSchema.extend({
 export const knVisitSchema = z.object({
   kind: z.enum(KN_VISIT_KINDS),
   usageKind: z.enum(['lair', 'exit']).nullable(),
+  // Le marchand est dans cette entrée du chemin (trouvé ici, ou revu en y retournant).
+  trader: z.boolean().optional(),
   tension: knDieResultSchema.optional(),
   usage: knDieResultSchema.optional(),
   darkness: knGrowingDarknessDrawSchema.optional(),
@@ -136,6 +138,8 @@ export const knDomainSchema = z.object({
   overseerInfluences: z.array(z.enum(KN_OVERSEER_INFLUENCE_KEYS)).max(KN_RUN_BOUNDS.overseerInfluences),
   // Vaincu, l'Overseer ne donne plus d'influence aux adversaires du Domaine ; la liste reste pour mémoire.
   overseerDefeated: z.boolean().optional(),
+  // Un marchand a été trouvé dans ce Domaine : il y reste, on peut le revoir depuis une entrée de retour.
+  traderFound: z.boolean().optional(),
   // Le Domaine d'introduction : sa carte est fixe, avec son contenu et sa table de rencontres propres.
   intro: knIntroSchema.optional(),
   // L'Overseer du Domaine : le D10 tiré en y entrant pour la première fois.
@@ -393,6 +397,16 @@ export function knRecordCreature(run: KnRun, d6: number, d20: number): KnRun {
   const visit = knCurrentVisit(run)
   if (!visit || visit.kind === 'revisit' || (visit.creatures?.length ?? 0) >= KN_RUN_BOUNDS.creatures) return run
   return withLastVisit(run, v => ({ ...v, creatures: [...(v.creatures ?? []), { d6, d20 }] }))
+}
+
+export const knTraderHere = (run: KnRun): boolean => !!knCurrentVisit(run)?.trader
+
+// Marquer, ou démarquer, l'entrée courante comme celle où se trouve le marchand ; le Domaine retient qu'il en a un.
+export function knSetTrader(run: KnRun, here: boolean): KnRun {
+  const visit = knCurrentVisit(run)
+  if (!visit) return run
+  const marked = withLastVisit(run, ({ trader: _previous, ...rest }) => here ? { ...rest, trader: true } : rest)
+  return withCurrentDomain(marked, { traderFound: knCurrentDomain(marked).visits.some(entry => entry.trader) })
 }
 
 export const knDefeatOverseer = (run: KnRun): KnRun => withCurrentDomain(run, { overseerDefeated: true })

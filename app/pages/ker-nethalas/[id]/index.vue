@@ -110,6 +110,7 @@
     />
 
     <KnTraderSection
+      v-if="traderHere"
       v-model:character="character"
       :catalog
     />
@@ -142,6 +143,7 @@ import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import { knTraderHere } from '~~/shared/ker-nethalas/run'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const route = useRoute()
@@ -181,6 +183,7 @@ const { data } = await useFetch<KnCharacter>(`/api/ker-nethalas/characters/${rou
 const character = ref(data.value)
 
 const { status } = useKnAutosave(character)
+const traderHere = computed(() => !!character.value && knTraderHere(character.value.run))
 useKnDarknessGoal(character)
 const resolved = useKnResolved(character, masteries)
 
