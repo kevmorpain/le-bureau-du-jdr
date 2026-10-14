@@ -305,6 +305,8 @@ export const KN_EXPLORATION_TABLES = {
   traps: { die: 10 },
   encountersA: { die: 20 },
   encountersB: { die: 20 },
+  // La table de rencontres propre au Domaine d'introduction : un seul D20, sans le D6 qui choisit la table.
+  encountersFirstDomain: { die: 20 },
   overseers: { die: 10 },
 } as const
 

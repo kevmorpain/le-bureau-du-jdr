@@ -627,6 +627,28 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN48 — Début de partie : Débuts difficiles et Domaine d'introduction
+- **Choix à la création** (issues X30 et X31) : une première partie ne prend aucun équipement, c'est le Domaine d'introduction qui le
+  fournit. L'étape « Équipement » propose « Commencer par le Domaine d'introduction », cochée par défaut tant qu'on n'a pas choisi le
+  kit des parties suivantes, décochable pour un départ « hardcore » (le livre le permet). Le serveur crée alors un run dont l'unique
+  Domaine porte `intro` (`knIntroRun`) : Repaire et Sortie déjà « trouvés » (ils sont sur la carte, donc pas de dé d'usage), et aucune
+  lumière jusqu'à la torche de la salle I.
+- **La carte** (`KnFirstDomainSection`, `firstDomain.ts`) : huit salles au contenu fixe, que le jeu de données privé `firstDomain` décrit
+  (nom, texte, ce que la salle donne : lumière, objets du catalogue avec leur nombre, gains de provisions, tables de butin à tirer) ;
+  un bouton « Prendre le contenu » par salle, une seule fois (`intro.taken`). La salle du chœur teste la Résolution à chaque entrée (échec :
+  dégâts) et un test de Raison ouvre un tirage sur la table de dépouilles ; la salle de l'Overseer renvoie au tirage habituel de la section Run ;
+  la sortie passe au Domaine suivant et ferme celui-ci (`intro.left` : il disparaît du sélecteur de Domaine). Les entrées du chemin du
+  Domaine restent libres (le livre laisse décider de ce qu'est un couloir) et gardent leur Dé de Tension : la carte n'est pas liée aux visites.
+- **Règles propres au Domaine** : toutes les portes sont marquées, donc pas de D10 de porte (« Vérifier une porte » est toujours proposé),
+  mais verrous et pièges se vérifient comme d'habitude ; une table de rencontres à un seul D20 (jeu privé `encountersFirstDomain`) remplace
+  les deux tables de la section Combat, et le tirage d'une créature n'a plus de D6.
+- **Débuts difficiles** (X30) : un bouton de la carte, une seule fois (`intro.awakened`), applique D6 dégâts (Robustesse puis Santé), D4 de
+  Santé mentale perdue et +1 Épuisement par les effets habituels (`KN_HARD_BEGINNINGS`).
+- **Contenu privé** : `firstDomain` et `encountersFirstDomain` (français rédigé hors du dépôt, à relire avant tout chargement en production).
+  ⚠️ hypothèses : le jeu part sans lumière et la torche donne 10 salles ; chaque entrée dans la salle du chœur refait le test et chaque
+  réussite de Raison donne un tirage de dépouilles ; l'armure aléatoire de la salle II se tire telle quelle (elle peut être magique) ; les
+  objets du Domaine arrivent « trouvés » comme tout butin ; « pas de rencontre ni d'événement » des salles I à V reste dans leur texte.
+
 ### KN47 — Progrès automatique des objectifs
 - **Format** (`goalCounts.ts`, issue X17) : un objectif porte un champ optionnel `counts`, la nature de ce qu'il compte (le contenu déjà
   écrit reste valide, un objectif sans `counts` se note à la main). Douze natures : adversaires vaincus (tous, d'un type, avec une
@@ -989,7 +1011,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | fusionnée (PR #286) ; jeu `personalGoals` typé chargé en production |
-| **X17 — Progrès automatique des objectifs** | champ `counts` sur l'objectif, événements du combat, de l'exploration et du butin qui font avancer le progrès, sans confirmation (KN47) | écrite (X17 #265) |
+| **10 — Début de partie** | Débuts difficiles (X30 #282), Domaine d'introduction : carte fixe, contenu des salles, table de rencontres propre, sortie sans retour (X31 #283), marchand conservé dans le Domaine (X33 #285) ; une seule PR (KN48) | en cours (X30 et X31 écrits) |
+| **X17 — Progrès automatique des objectifs** | champ `counts` sur l'objectif, événements du combat, de l'exploration et du butin qui font avancer le progrès, sans confirmation (KN47) | fusionnée (PR #288) |
 | **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | fusionnée (PR #287) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |

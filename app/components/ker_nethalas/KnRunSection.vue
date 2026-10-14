@@ -193,6 +193,7 @@
             :in-combat="!!run.combat"
             :bestiary
             :tables
+            :intro="!!domain.intro"
             @tension="tension"
             @usage="usage"
             @draw="drawDarkness"
@@ -226,6 +227,7 @@ import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knAdvanceRooms } from '~~/shared/ker-nethalas/combatEffects'
 import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
+import { knReturnableDomains } from '~~/shared/ker-nethalas/firstDomain'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import {
   KN_LIGHT_ROOMS,
@@ -299,7 +301,7 @@ const domain = computed(() => knCurrentDomain(character.value.run))
 const visitsNewestFirst = computed(() => [...domain.value.visits].reverse())
 
 const domainItems = computed<SelectItem[]>(() =>
-  run.value.domains.map((d, index) => ({ label: d.name, value: index })),
+  knReturnableDomains(run.value).map(index => ({ label: run.value.domains[index]!.name, value: index })),
 )
 const dieItems: SelectItem[] = KN_USAGE_DICE.map(die => ({ label: `D${die}`, value: die }))
 

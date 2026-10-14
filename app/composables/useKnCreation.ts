@@ -25,6 +25,8 @@ export interface KnCreationDraft {
   trainingRolls: Record<string, number>
   goals: string[]
   kitEnabled: boolean
+  // Commencer dans le Domaine d'introduction : proposé, et coché, tant qu'on n'a pas choisi l'équipement des parties suivantes.
+  intro: boolean
   kit: {
     weapon: string
     armor: string
@@ -47,6 +49,7 @@ export const emptyKnCreationDraft = (): KnCreationDraft => ({
   trainingRolls: {},
   goals: [],
   kitEnabled: false,
+  intro: true,
   kit: { weapon: '', armor: '', weaponRef: null, armorRef: null, cookingIngredients: null, craftingSupplies: null, coins: null },
 })
 
@@ -105,6 +108,7 @@ export function useKnCreation(masteries: Ref<KnMastery[] | null>, goals: Ref<KnP
       resistanceBoost: d.resistanceBoost ?? undefined,
       masteries: d.masteries,
       goals: d.goals,
+      intro: !d.kitEnabled && d.intro,
       kit: d.kitEnabled ? kitPayload(d.kit) : null,
     })
   })

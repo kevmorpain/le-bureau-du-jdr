@@ -217,7 +217,7 @@
       </li>
 
       <KnTableRoll
-        v-if="visit.kind !== 'revisit'"
+        v-if="visit.kind !== 'revisit' && !intro"
         label="Porte ?"
         :die="KN_DOOR_DIE"
         :roll="visit.door?.roll"
@@ -338,6 +338,7 @@
       />
       <KnCreatureDraw
         v-if="active && (visit.creatures?.length ?? 0) < KN_RUN_BOUNDS.creatures"
+        :single="intro"
         @draw="(d6, d20) => emit('drawCreature', d6, d20)"
       />
 
@@ -480,6 +481,8 @@ const props = defineProps<{
   inCombat?: boolean
   bestiary: KnCreature[] | null
   tables: Partial<Record<KnExplorationTableName, KnRollTable | null>>
+  // Le Domaine d'introduction : portes déjà marquées, une seule table de rencontres.
+  intro?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -565,7 +568,7 @@ const descriptionTable = computed(() => props.visit.kind === 'revisit' ? null : 
 const eventTable = computed(() => props.visit.kind === 'room' && !foundLair.value ? tableOf('events') : null)
 const scavengeTable = computed(() => tableOf('scavenging'))
 
-const canAddDoor = computed(() => !!props.visit.door?.present && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)
+const canAddDoor = computed(() => (props.intro ? props.visit.kind !== 'revisit' : !!props.visit.door?.present) && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)
 const canSearch = computed(() => knVisitCanSearch(props.visit) && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)
 
 // Numéro d'un obstacle parmi ceux de sa sorte (porte n° 2, contenant n° 1).
@@ -574,6 +577,10 @@ const obstaclePosition = (index: number) =>
 
 // Chaque créature tirée : la table (D6) donne A ou B, le D20 la ligne, et la ligne désigne la fiche du bestiaire.
 const encounters = computed(() => (props.visit.creatures ?? []).map(({ d6, d20 }) => {
+  if (props.intro) {
+    const entry = knTableEntry(props.tables.encountersFirstDomain ?? null, d20)
+    return { name: entry?.text ?? 'Créature inconnue', creature: knFindCreature(props.bestiary, entry?.ref), source: `Table du Domaine d'introduction · D20 ${d20}` }
+  }
   const table = knEncounterTable(d6)
   const entry = knTableEntry(props.tables[table === 'A' ? 'encountersA' : 'encountersB'] ?? null, d20)
   return {

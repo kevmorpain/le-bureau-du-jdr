@@ -9,6 +9,7 @@ import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
 import { KN_COMBAT_BOUNDS, knCombatCreatureSchema, knCombatSchema, type KnCombatCreature, type KnCreatureBuff } from './combatState'
 import { KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 import { KN_OBSTACLE_KINDS, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, type KnObstacleKind } from './exploration'
+import { knIntroSchema } from './introState'
 import { KN_SKILL_KEYS, type KnWeaponSkillKey } from './skills'
 import { boundedInt } from './zodHelpers'
 
@@ -135,6 +136,8 @@ export const knDomainSchema = z.object({
   overseerInfluences: z.array(z.enum(KN_OVERSEER_INFLUENCE_KEYS)).max(KN_RUN_BOUNDS.overseerInfluences),
   // Vaincu, l'Overseer ne donne plus d'influence aux adversaires du Domaine ; la liste reste pour mémoire.
   overseerDefeated: z.boolean().optional(),
+  // Le Domaine d'introduction : sa carte est fixe, avec son contenu et sa table de rencontres propres.
+  intro: knIntroSchema.optional(),
   // L'Overseer du Domaine : le D10 tiré en y entrant pour la première fois.
   overseer: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
   growingDarkness: z.array(knGrowingDarknessEntrySchema).max(KN_RUN_BOUNDS.growingDarkness),
@@ -451,7 +454,9 @@ const addObstacle = (run: KnRun, kind: KnObstacleKind): KnRun =>
 // Une porte à vérifier : seulement si le D10 en a trouvé une.
 export function knAddDoorObstacle(run: KnRun): KnRun {
   const visit = knCurrentVisit(run)
-  if (!visit?.door?.present || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
+  // Dans le Domaine d'introduction, toutes les portes sont déjà sur la carte : il n'y a pas de D10 pour en trouver une.
+  const marked = !!knCurrentDomain(run).intro && visit?.kind !== 'revisit'
+  if (!visit || (!visit.door?.present && !marked) || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
   return addObstacle(run, 'door')
 }
 

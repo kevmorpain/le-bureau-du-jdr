@@ -4,13 +4,14 @@
       size="sm"
       variant="soft"
       icon="i-heroicons:cube"
-      @click="emit('draw', knRollDie(KN_ENCOUNTER_TABLE_DIE), knRollDie(KN_ENCOUNTER_CREATURE_DIE))"
+      @click="emit('draw', single ? 1 : knRollDie(KN_ENCOUNTER_TABLE_DIE), knRollDie(KN_ENCOUNTER_CREATURE_DIE))"
     >
-      Tirer une créature (D6 puis D20)
+      {{ single ? 'Tirer une créature (D20)' : 'Tirer une créature (D6 puis D20)' }}
     </UButton>
     <UFormField label="Ou saisir les dés">
       <div class="flex gap-2">
         <UInputNumber
+          v-if="!single"
           v-model="d6"
           :min="1"
           :max="KN_ENCOUNTER_TABLE_DIE"
@@ -33,7 +34,7 @@
         <UButton
           size="sm"
           variant="outline"
-          :disabled="d6 === null || d20 === null"
+          :disabled="(!single && d6 === null) || d20 === null"
           aria-label="Valider la créature saisie"
           @click="submit"
         >
@@ -48,6 +49,11 @@
 import { KN_ENCOUNTER_CREATURE_DIE, KN_ENCOUNTER_TABLE_DIE } from '~~/shared/ker-nethalas/creatures'
 import { knRollDie } from '~~/shared/ker-nethalas/run'
 
+const props = defineProps<{
+  // Le Domaine d'introduction n'a qu'un D20 : pas de D6 pour choisir la table.
+  single?: boolean
+}>()
+
 const emit = defineEmits<{
   draw: [d6: number, d20: number]
 }>()
@@ -56,8 +62,8 @@ const d6 = ref<number | null>(null)
 const d20 = ref<number | null>(null)
 
 function submit() {
-  if (d6.value === null || d20.value === null) return
-  emit('draw', d6.value, d20.value)
+  if ((!props.single && d6.value === null) || d20.value === null) return
+  emit('draw', props.single ? 1 : d6.value!, d20.value)
   d6.value = null
   d20.value = null
 }

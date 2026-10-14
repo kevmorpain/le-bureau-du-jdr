@@ -16,6 +16,20 @@
     />
 
     <div
+      v-if="!draft.kitEnabled"
+      class="space-y-1"
+    >
+      <USwitch
+        v-model="draft.intro"
+        label="Commencer par le Domaine d'introduction"
+      />
+      <p class="text-sm text-muted">
+        Recommandé pour une première partie : la carte est déjà tracée, avec huit salles au contenu fixe et sa propre table de
+        rencontres. Décochez pour un départ « hardcore » dans un Domaine ordinaire.
+      </p>
+    </div>
+
+    <div
       v-if="draft.kitEnabled"
       class="space-y-6"
     >

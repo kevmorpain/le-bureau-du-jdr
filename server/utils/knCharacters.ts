@@ -3,6 +3,7 @@ import * as schema from '~~/server/db/schema'
 import type { Db } from '~~/server/utils/db'
 import type { UpdateKnCharacterInput } from '~~/shared/ker-nethalas/character'
 import { knBuildCreatedSheet, type KnCreation } from '~~/shared/ker-nethalas/creation'
+import { knIntroRun } from '~~/shared/ker-nethalas/firstDomain'
 import { emptyKnRun } from '~~/shared/ker-nethalas/run'
 import { emptyKnStatus } from '~~/shared/ker-nethalas/status'
 
@@ -19,7 +20,7 @@ export async function createKnCharacter(db: Db, ownerId: number, creation: KnCre
       ...knBuildCreatedSheet(creation),
       ownerId,
       status: emptyKnStatus(),
-      run: emptyKnRun(),
+      run: creation.intro ? knIntroRun() : emptyKnRun(),
     })
     .returning({ id: knCharacters.id })
 
