@@ -196,6 +196,11 @@
       "nonCombatSkills": "Compétences hors combat"
     },
     "loot": {
+      "draws": {
+        "armor": "une armure aléatoire",
+        "weapons": "une arme aléatoire",
+        "spoils": "un tirage de butin"
+      },
       "tables": {
         "spoils": "Butin",
         "mundane": "Objets ordinaires",

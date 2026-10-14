@@ -637,8 +637,12 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   (nom, texte, ce que la salle donne : lumière, objets du catalogue avec leur nombre, gains de provisions, tables de butin à tirer) ;
   un bouton « Prendre le contenu » par salle, une seule fois (`intro.taken`). La salle du chœur teste la Résolution à chaque entrée (échec :
   dégâts) et un test de Raison ouvre un tirage sur la table de dépouilles ; la salle de l'Overseer renvoie au tirage habituel de la section Run ;
-  la sortie passe au Domaine suivant et ferme celui-ci (`intro.left` : il disparaît du sélecteur de Domaine). Les entrées du chemin du
-  Domaine restent libres (le livre laisse décider de ce qu'est un couloir) et gardent leur Dé de Tension : la carte n'est pas liée aux visites.
+  la sortie passe au Domaine suivant et ferme celui-ci (`intro.left` : il disparaît du sélecteur de Domaine). Chaque salle a un bouton
+  « Entrer dans la salle » (« Y retourner » ensuite) qui crée l'entrée du chemin du Domaine liée à la salle (`visit.introRoom`), avec son Dé de
+  Tension et ses tests comme partout ; les entrées créées par la section Run restent libres (le livre laisse décider de ce qu'est un couloir).
+- **Rencontres et événements par salle** : sauf mention contraire du livre, une salle a ses rencontres de combat et ses événements comme une salle
+  ordinaire. Le jeu de données porte ce que le livre exclut (`noEncounter` : ni rencontre de combat ni événement, salles I et II ; `noEvent` :
+  pas d'événement même sans adversaire, salles III et IV) ; l'entrée en garde les drapeaux et son bloc n'affiche plus les tests exclus.
 - **Règles propres au Domaine** : toutes les portes sont marquées, donc pas de D10 de porte (« Vérifier une porte » est toujours proposé),
   mais verrous et pièges se vérifient comme d'habitude ; une table de rencontres à un seul D20 (jeu privé `encountersFirstDomain`) remplace
   les deux tables de la section Combat, et le tirage d'une créature n'a plus de D6.
@@ -647,7 +651,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Contenu privé** : `firstDomain` et `encountersFirstDomain` (français rédigé hors du dépôt, à relire avant tout chargement en production).
   ⚠️ hypothèses : le jeu part sans lumière et la torche donne 10 salles ; chaque entrée dans la salle du chœur refait le test et chaque
   réussite de Raison donne un tirage de dépouilles ; l'armure aléatoire de la salle II se tire telle quelle (elle peut être magique) ; les
-  objets du Domaine arrivent « trouvés » comme tout butin ; « pas de rencontre ni d'événement » des salles I à V reste dans leur texte.
+  objets du Domaine arrivent « trouvés » comme tout butin. Les textes des salles sont ceux du chapitre du PDF français (VF v1.8), sauf la
+  salle VI, nouvelle dans Gravebound, rédigée ici ; le « pilum » de la VF est l'épieu du catalogue.
 
 - **Marchand conservé dans le Domaine** (issue X33) : un marchand trouvé dans un Domaine y reste et peut être revisité. L'entrée du chemin
   où il se trouve porte `trader` et le Domaine retient `traderFound`. Un bouton de l'entrée active marque « Un marchand est ici »

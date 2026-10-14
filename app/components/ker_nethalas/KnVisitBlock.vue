@@ -155,7 +155,7 @@
 
     <ul class="space-y-2 text-sm">
       <li
-        v-if="visit.kind === 'revisit' || foundLair"
+        v-if="visit.kind === 'revisit' || foundLair || visit.noEncounter"
         class="text-muted"
       >
         {{ encounterText }}
@@ -209,6 +209,12 @@
           </div>
         </template>
       </KnTableRoll>
+      <li
+        v-else-if="visit.noEvent && visit.kind === 'room' && !visit.noEncounter"
+        class="text-muted"
+      >
+        Pas d'événement dans cette salle du Domaine d'introduction, même sans rencontre de combat.
+      </li>
       <li
         v-else-if="visit.kind === 'room' && !foundLair && !visit.encounter && active"
         class="text-muted"
@@ -585,6 +591,7 @@ const darknessText = (draw: KnGrowingDarknessDraw) => labelText({
 
 const encounterText = computed(() => {
   if (props.visit.kind === 'revisit') return 'Ni rencontre de combat ni événement : la zone est déjà explorée.'
+  if (props.visit.noEncounter) return 'Cette salle du Domaine d\'introduction n\'a ni rencontre de combat ni événement.'
   if (foundLair.value) return 'Lair de l\'Overseer : pas de test de rencontre de combat.'
   return props.visit.kind === 'corridor'
     ? `Rencontre de combat (D20, ${KN_ENCOUNTER_THRESHOLD.corridor} ou plus dans un couloir)`
@@ -594,7 +601,7 @@ const encounterText = computed(() => {
 const tableOf = (name: KnExplorationTableName) => ({ die: KN_EXPLORATION_TABLES[name].die, table: props.tables[name] ?? null })
 
 const descriptionTable = computed(() => props.visit.kind === 'revisit' ? null : tableOf(props.visit.kind === 'corridor' ? 'corridorDescriptions' : 'roomDescriptions'))
-const eventTable = computed(() => props.visit.kind === 'room' && !foundLair.value ? tableOf('events') : null)
+const eventTable = computed(() => props.visit.kind === 'room' && !foundLair.value && !props.visit.noEvent ? tableOf('events') : null)
 const scavengeTable = computed(() => tableOf('scavenging'))
 
 const canAddDoor = computed(() => (props.intro ? props.visit.kind !== 'revisit' : !!props.visit.door?.present) && (props.visit.obstacles?.length ?? 0) < KN_RUN_BOUNDS.obstacles)

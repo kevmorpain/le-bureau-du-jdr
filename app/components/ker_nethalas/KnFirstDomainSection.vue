@@ -63,6 +63,18 @@
             {{ room.text }}
           </p>
 
+          <div class="flex flex-wrap items-center gap-2">
+            <UButton
+              size="sm"
+              variant="outline"
+              icon="i-heroicons:arrow-right-circle"
+              @click="enterRoom(room)"
+            >
+              {{ visited(room.number) ? 'Y retourner' : 'Entrer dans la salle' }}
+            </UButton>
+            <span class="text-xs text-muted">{{ rulesText(room) }}</span>
+          </div>
+
           <div
             v-if="room.grants"
             class="flex flex-wrap items-center gap-2"
@@ -189,6 +201,7 @@ import {
   type KnRoomGrants,
 } from '~~/shared/ker-nethalas/firstDomain'
 import { KN_FIRST_DOMAIN_ROOMS } from '~~/shared/ker-nethalas/introState'
+import { knCurrentDomain } from '~~/shared/ker-nethalas/run'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knApplyLoot, knRollLoot, type KnLootContent, type KnLootTableKey } from '~~/shared/ker-nethalas/loot'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
@@ -205,15 +218,34 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const toast = useToast()
-const { t } = useI18n()
+const { t, te } = useI18n()
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 const romans = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
 
+const { enter } = useKnVisitEntry(character, () => props.resolved)
+
 const intro = computed(() => knIntroState(character.value.run))
 const taken = (number: number) => intro.value?.taken.includes(number) ?? false
+
+const visited = (number: number) => knCurrentDomain(character.value.run).visits.some(visit => visit.introRoom === number)
+
+// Ce que le livre dit de la salle : on y teste la rencontre de combat comme ailleurs, sauf mention contraire.
+const rulesText = (room: KnFirstDomainRoom) => room.noEncounter
+  ? 'Ni rencontre de combat ni événement.'
+  : room.noEvent
+    ? 'Rencontre de combat à tester ; pas d\'événement, même sans adversaire.'
+    : 'Rencontre de combat et événement comme dans une salle ordinaire.'
+
+function enterRoom(room: KnFirstDomainRoom) {
+  enter(visited(room.number) ? 'revisit' : 'room', undefined, {
+    room: room.number,
+    ...(room.noEncounter ? { noEncounter: true } : {}),
+    ...(room.noEvent ? { noEvent: true } : {}),
+  })
+}
 
 const resolveOpen = ref(false)
 const reasonOpen = ref(false)
@@ -227,7 +259,7 @@ function grantsText(grants: KnRoomGrants) {
     grants.light ? `lumière pour ${grants.light} salles` : '',
     ...(grants.items ?? []).map(item => `${item.count ? diceText(item.count) : '1'} × ${props.catalog?.find(entry => entry.key === item.ref)?.name ?? item.ref}`),
     ...(grants.effects ?? []).map(effect => effect.kind === 'provision' ? `${effect.dice.bonus || diceText(effect.dice)} × ${t(`ker_nethalas.provisions.${effect.key}`).toLowerCase()}` : effect.kind),
-    ...(grants.loot ?? []).map(table => `un tirage « ${table} »`),
+    ...(grants.loot ?? []).map(table => te(`ker_nethalas.loot.draws.${table}`) ? t(`ker_nethalas.loot.draws.${table}`) : `un tirage « ${t(`ker_nethalas.loot.tables.${table}`).toLowerCase()} »`),
   ]
   return parts.filter(Boolean).join(' · ')
 }

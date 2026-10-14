@@ -38,6 +38,9 @@ export const knFirstDomainRoomSchema = z.object({
   // Une salle qui agresse à chaque entrée : un test de Résolution (échec : ces dégâts), puis un test de Raison pour la calmer,
   // qui ouvre un tirage sur cette table de butin.
   choir: z.object({ damage: knDiceSchema, loot: z.enum(KN_LOOT_TABLE_KEYS) }).optional(),
+  // Ce que le livre exclut de la salle : pas de rencontre de combat (et donc pas d'événement), ou seulement pas d'événement.
+  noEncounter: z.literal(true).optional(),
+  noEvent: z.literal(true).optional(),
   overseer: z.literal(true).optional(),
   exit: z.literal(true).optional(),
 })

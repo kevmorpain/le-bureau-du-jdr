@@ -17,7 +17,7 @@ import {
   type KnFirstDomainRoom,
 } from '../../shared/ker-nethalas/firstDomain'
 import type { KnCatalogItem } from '../../shared/ker-nethalas/items'
-import { emptyKnRun, knAddDoorObstacle, knCurrentDomain, knCurrentVisit, knRunSchema, knStartVisit } from '../../shared/ker-nethalas/run'
+import { emptyKnRun, knAddDoorObstacle, knCurrentDomain, knCurrentVisit, knRunSchema, knStartVisit, knVisitCanHaveEncounter, knVisitCanHaveEvent } from '../../shared/ker-nethalas/run'
 import { validKnCreation } from '../fixtures/knCreation'
 
 const rooms = (): KnFirstDomainRoom[] => Array.from({ length: 8 }, (_, index) => ({ number: index + 1, name: `Salle ${index + 1}`, text: 'Texte.' }))
@@ -135,5 +135,48 @@ describe('création et contenu', () => {
 
   it('les deux jeux de données du premier Domaine sont connus du registre', () => {
     expect(Object.keys(KN_CONTENT_SCHEMAS)).toEqual(expect.arrayContaining(['firstDomain', 'encountersFirstDomain']))
+  })
+})
+
+describe('règles de rencontre et d\'événement par salle', () => {
+  const entered = (intro?: { room: number, noEncounter?: boolean, noEvent?: boolean }) => knCurrentVisit(knStartVisit(knIntroRun(), 'room', undefined, intro))!
+
+  it('une salle sans mention ordinaire : rencontre de combat, puis événement s\'il n\'y en a pas', () => {
+    const visit = entered({ room: 5 })
+
+    expect(visit.introRoom).toBe(5)
+    expect(visit.noEncounter).toBeUndefined()
+    expect(knVisitCanHaveEncounter(visit)).toBe(true)
+    expect(knVisitCanHaveEvent({ ...visit, encounter: { roll: 3, triggered: false } })).toBe(true)
+  })
+
+  it('« ni rencontre de combat ni événement » : ni l\'un ni l\'autre', () => {
+    const visit = entered({ room: 1, noEncounter: true })
+
+    expect(visit).toMatchObject({ noEncounter: true, noEvent: true })
+    expect(knVisitCanHaveEncounter(visit)).toBe(false)
+    expect(knVisitCanHaveEvent({ ...visit, encounter: { roll: 3, triggered: false } })).toBe(false)
+  })
+
+  it('« pas d\'événement, même sans adversaire » : la rencontre se teste, pas d\'événement', () => {
+    const visit = entered({ room: 3, noEvent: true })
+
+    expect(visit.noEncounter).toBeUndefined()
+    expect(knVisitCanHaveEncounter(visit)).toBe(true)
+    expect(knVisitCanHaveEvent({ ...visit, encounter: { roll: 3, triggered: false } })).toBe(false)
+  })
+
+  it('une entrée de retour ou sans salle liée ne change rien à la règle ordinaire', () => {
+    const ordinary = knCurrentVisit(knStartVisit(emptyKnRun(), 'room'))!
+
+    expect(ordinary.introRoom).toBeUndefined()
+    expect(knVisitCanHaveEncounter(ordinary)).toBe(true)
+    expect(knRunSchema.safeParse(knStartVisit(knIntroRun(), 'room', undefined, { room: 2, noEncounter: true })).success).toBe(true)
+  })
+
+  it('le jeu de données peut exclure la rencontre ou l\'événement d\'une salle', () => {
+    const content = rooms().map(room => room.number === 1 ? { ...room, noEncounter: true } : room.number === 3 ? { ...room, noEvent: true } : room)
+
+    expect(knFirstDomainContentSchema.safeParse(content).success).toBe(true)
   })
 })

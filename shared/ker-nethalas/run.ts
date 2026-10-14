@@ -109,6 +109,10 @@ const knExtraTensionSchema = knDieResultSchema.extend({
 export const knVisitSchema = z.object({
   kind: z.enum(KN_VISIT_KINDS),
   usageKind: z.enum(['lair', 'exit']).nullable(),
+  // Domaine d'introduction : la salle de la carte que cette entrée parcourt, et ce que le livre y exclut.
+  introRoom: boundedInt({ min: 1, max: 8 }).optional(),
+  noEncounter: z.boolean().optional(),
+  noEvent: z.boolean().optional(),
   // Le marchand est dans cette entrée du chemin (trouvé ici, ou revu en y retournant).
   trader: z.boolean().optional(),
   tension: knDieResultSchema.optional(),
@@ -304,11 +308,22 @@ function withLastVisit(run: KnRun, update: (visit: KnVisit) => KnVisit): KnRun {
 
 // Le dé de Lair, puis celui de Sortie une fois le Lair trouvé, se lancent à chaque nouvelle salle ou couloir.
 // `shapeRoll` : le D100 de forme qui a décidé du type d'entrée.
-export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number): KnRun {
+export interface KnIntroEntry {
+  room: number
+  noEncounter?: boolean
+  noEvent?: boolean
+}
+
+export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number, intro?: KnIntroEntry): KnRun {
   const domain = knCurrentDomain(run)
   const usageKind: KnVisit['usageKind'] = kind === 'revisit' || domain.exitFound ? null : domain.lairFound ? 'exit' : 'lair'
   const entered = knEnterRoom(run, { isNew: kind !== 'revisit' })
-  const visit: KnVisit = { kind, usageKind, ...(shapeRoll === undefined ? {} : { shape: { roll: shapeRoll } }) }
+  const visit: KnVisit = {
+    kind,
+    usageKind,
+    ...(shapeRoll === undefined ? {} : { shape: { roll: shapeRoll } }),
+    ...(intro ? { introRoom: intro.room, ...(intro.noEncounter ? { noEncounter: true } : {}), ...(intro.noEvent || intro.noEncounter ? { noEvent: true } : {}) } : {}),
+  }
   const visits = [...knCurrentDomain(entered).visits, visit].slice(-KN_RUN_BOUNDS.visits)
   return withCurrentDomain(entered, { visits })
 }
@@ -342,11 +357,12 @@ export function knRecordDarkness(run: KnRun, draw: KnGrowingDarknessDraw): KnRun
 }
 
 // Pas de rencontre de combat dans une zone déjà explorée ni dans le Lair de l'Overseer.
-export const knVisitCanHaveEncounter = (visit: KnVisit) => visit.kind !== 'revisit' && !knVisitFoundLair(visit)
+export const knVisitCanHaveEncounter = (visit: KnVisit) => visit.kind !== 'revisit' && !knVisitFoundLair(visit) && !visit.noEncounter
 
-// Pas d'événement dans un couloir ni dans une zone déjà explorée, ni dans le Lair, ni après une rencontre de combat.
+// Pas d'événement dans un couloir ni dans une zone déjà explorée, ni dans le Lair, ni après une rencontre de combat, ni dans une salle
+// du Domaine d'introduction qui n'en a pas.
 export const knVisitCanHaveEvent = (visit: KnVisit) =>
-  visit.kind === 'room' && !knVisitFoundLair(visit) && visit.encounter?.triggered === false
+  visit.kind === 'room' && !knVisitFoundLair(visit) && !visit.noEvent && visit.encounter?.triggered === false
 
 export function knRecordDescription(run: KnRun, roll: number): KnRun {
   const visit = knCurrentVisit(run)

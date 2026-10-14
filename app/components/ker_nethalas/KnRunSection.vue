@@ -227,7 +227,6 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import { knAdvanceRooms } from '~~/shared/ker-nethalas/combatEffects'
 import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
 import { knReturnableDomains } from '~~/shared/ker-nethalas/firstDomain'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -243,15 +242,12 @@ import {
   knRecordTension,
   knRecordUsage,
   knRollDie,
-  knStartVisit,
   knSwitchDomain,
   knUndoLastVisit,
   type KnUsageDie,
-  type KnVisitKind,
 } from '~~/shared/ker-nethalas/run'
 import { KN_OVERSEER_DIE, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
-import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
@@ -260,8 +256,6 @@ const props = defineProps<{
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
-
-const toast = useToast()
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
@@ -333,16 +327,7 @@ function enterByShape() {
   enter(knShapeKind(roll), roll)
 }
 
-function enter(kind: KnVisitKind, shapeRoll?: number) {
-  character.value.run = knStartVisit(character.value.run, kind, shapeRoll)
-  character.value.status = knResetUses(character.value.status, ['room'])
-  if (kind === 'room') {
-    const { status, expired } = knAdvanceRooms(character.value.status)
-    character.value.status = status
-    if (expired.length) toast.add({ title: 'Effet terminé', description: expired.join(', '), color: 'neutral' })
-  }
-  character.value.aetherCurrent = props.resolved.maxVitals.aether.effective
-}
+const { enter } = useKnVisitEntry(character, () => props.resolved)
 
 // Saisie manuelle : le bloc passe 1 ou 3, tirage automatique sinon.
 function tension(manual?: number) {
