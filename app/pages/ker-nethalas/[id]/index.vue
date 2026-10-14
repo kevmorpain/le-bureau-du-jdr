@@ -14,7 +14,10 @@
       </template>
     </UPageHeader>
 
-    <KnIdentitySection v-model:character="character" />
+    <KnIdentitySection
+      v-model:character="character"
+      :masteries
+    />
 
     <KnRemindersSection :reminders="resolved.reminders" />
 

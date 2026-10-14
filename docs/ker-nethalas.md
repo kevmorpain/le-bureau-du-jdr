@@ -537,6 +537,14 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   ne rapporte qu'au passage d'un état à l'autre de l'obstacle (`knObstacleXp`, pure, comparée avant et après l'action), donc jamais
   deux fois, même en cas de retour en arrière. Un piège contourné ne rapporte rien (le livre dit « désamorcer »). Seule l'action
   « Nouveau Domaine » compte : revenir dans un Domaine déjà exploré n'est pas entrer dans un nouveau.
+- **Passage de niveau** (`progression.ts`, `levelUp.ts`, issue X20) : dès 1 000 XP, la section Identité propose « Monter de niveau ».
+  Le niveau monte (le Point d'Aptitude de plus se déduit du niveau, KN30), 1 000 XP partent, et le joueur prend l'un des huit
+  avantages de la p. 62 : Santé +D4, Robustesse +D6, Santé mentale +D4, Éther +D6 (le maximum et la valeur actuelle montent du dé
+  tiré), +5 à une compétence, +5 en Endurance, Résolution et Résistance magique (plafond 80), +D6 dégâts physiques (Tranchants,
+  Contondants ou Perforants, au choix) ajouté à la réserve de chaque attaque, +1 aux dégâts d'une Aptitude (rappel dans la fiche
+  effective). Chaque choix s'ajoute à `levelBenefits` (colonne JSON, migration 0144), qui garde l'historique et porte les deux
+  avantages de dégâts. Un D6 de dégâts physiques par avantage pris, du type choisi ; les mains nues en profitent aussi (toute
+  attaque de l'outil est physique, hors Aptitude).
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -878,7 +886,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 écrit) |
+| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 et X20 écrits) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |
@@ -1032,6 +1040,8 @@ peut se corriger avec un modificateur libre. Aucune n'est une règle établie.
   façon : ses 18 lignes sont appariées aux plages dans l'ordre (1-2 nourriture avariée … 11 Journal vierge, 12 Pierre de Borestia,
   13 Cœur d'Amal-Tul, 14 Masse de l'Oblitération, 15 Anneau de Paix mentale, 16-20 les cinq Fioles) ; **à contrôler dans le PDF**.
   ⚠️ hypothèses
+- **Progression** : le livre dit « accumuler un total de 1 000 XP » sans dire si l'XP repart de zéro à chaque niveau ; l'outil retire
+  1 000 XP et garde l'excédent. Le choix « une compétence » ne vise pas les compétences ajoutées à la main. ⚠️ hypothèses
 - **Potions et fragments** : « pendant D10 salles » compte la salle où l'on boit jusqu'à son entrée suivante, puis les D10 salles
   suivantes ; seules les salles (pas les couloirs ni les retours) font passer la durée. Le vieillissement « moitié » et « double »
   s'arrondit au supérieur, les durées aussi, d'une salle ou d'un round au moins : règle de l'encart « Rounding Numbers » (p. 70, fourni par

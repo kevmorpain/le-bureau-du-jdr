@@ -231,6 +231,16 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.inventory).toEqual(inventory)
   })
 
+  it('crée un survivant sans avantage de niveau et relit l\'historique', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Niveaux'))
+    expect((await getKnCharacter(db, id))!.levelBenefits).toEqual([])
+
+    const levelBenefits = [{ benefit: 'physicalDamage' as const, damageType: 'slashing' as const, level: 2 }, { benefit: 'skill' as const, skill: 'stealth' as const, level: 3 }]
+    await updateKnCharacter(db, id, { levelBenefits })
+
+    expect((await getKnCharacter(db, id))!.levelBenefits).toEqual(levelBenefits)
+  })
+
   it('crée un survivant sans objectif quand aucun n\'est choisi', async () => {
     const { id } = await createKnCharacter(db, alice, validKnCreation('Sans objectif'))
 

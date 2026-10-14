@@ -24,6 +24,28 @@
         :max="KN_BOUNDS.xp.max"
       />
 
+      <div class="flex flex-wrap items-center gap-3 sm:col-span-3">
+        <p class="text-sm text-muted">
+          Prochain niveau à {{ KN_LEVEL_XP }} XP : {{ character.xp }} / {{ KN_LEVEL_XP }}.
+        </p>
+        <UButton
+          v-if="canLevelUp"
+          size="sm"
+          icon="i-heroicons:arrow-up-circle"
+          @click="levelUpOpen = !levelUpOpen"
+        >
+          Monter de niveau
+        </UButton>
+      </div>
+
+      <KnLevelUpPanel
+        v-if="levelUpOpen && canLevelUp"
+        v-model:character="character"
+        :masteries
+        class="sm:col-span-3"
+        @close="levelUpOpen = false"
+      />
+
       <UFormField
         label="Genre, âge, apparence"
         class="sm:col-span-3"
@@ -54,8 +76,17 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import { KN_LEVEL_XP, knCanLevelUp } from '~~/shared/ker-nethalas/progression'
+
+defineProps<{
+  masteries: KnMastery[] | null
+}>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+const levelUpOpen = ref(false)
+const canLevelUp = computed(() => knCanLevelUp(character.value.xp))
 
 // Un nom vidé en cours de frappe n'est pas écrit : le schéma le refuserait et l'auto-save échouerait.
 function rename(value: string | number | null | undefined) {

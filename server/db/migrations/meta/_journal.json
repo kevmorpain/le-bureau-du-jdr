@@ -1009,6 +1009,13 @@
       "when": 1793100000000,
       "tag": "0143_ker_nethalas_inventory",
       "breakpoints": true
+    },
+    {
+      "idx": 144,
+      "version": "6",
+      "when": 1793200000000,
+      "tag": "0144_ker_nethalas_level_benefits",
+      "breakpoints": true
     }
   ]
 }

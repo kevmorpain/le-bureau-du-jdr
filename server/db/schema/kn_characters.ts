@@ -4,6 +4,7 @@ import type { KnProvisions } from '~~/shared/ker-nethalas/camp'
 import type { KnExtraSkill, KnResistances, KnSkills } from '~~/shared/ker-nethalas/character'
 import type { KnGoalPick } from '~~/shared/ker-nethalas/goals'
 import type { KnItem } from '~~/shared/ker-nethalas/inventory'
+import type { KnLevelBenefit } from '~~/shared/ker-nethalas/progression'
 import type { KnMasteryPick } from '~~/shared/ker-nethalas/masteries'
 import type { KnRun } from '~~/shared/ker-nethalas/run'
 import type { KnStatus } from '~~/shared/ker-nethalas/status'
@@ -39,6 +40,7 @@ const knCharacters = sqliteTable('kn_characters', {
   masteryPicks: text('mastery_picks', { mode: 'json' }).$type<KnMasteryPick[]>().default([]).notNull(),
   amulets: text({ mode: 'json' }).$type<KnAmulets>().default({ owned: [], equipped: null, tiers: 0 }).notNull(),
   inventory: text({ mode: 'json' }).$type<KnItem[]>().default([]).notNull(),
+  levelBenefits: text('level_benefits', { mode: 'json' }).$type<KnLevelBenefit[]>().default([]).notNull(),
   masteries: text().default('').notNull(),
   perks: text().default('').notNull(),
   weapons: text().default('').notNull(),
