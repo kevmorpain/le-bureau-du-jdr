@@ -125,6 +125,7 @@ const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
 const toast = useToast()
+const { record } = useKnGoalProgress(character)
 
 const buyKey = ref<string | undefined>()
 const buyCount = ref(1)
@@ -147,7 +148,9 @@ function commit(result: KnTradeResult, title: string) {
     toast.add({ title: { coins: 'Pas assez de pièces', full: 'Plus de place', unknown: 'Objet introuvable', stock: 'Pas assez en réserve', unidentified: 'Harmonisez l\'objet avant de le vendre' }[result.error], color: 'warning' })
     return
   }
+  const earned = result.state.coins - character.value.coins
   character.value.coins = result.state.coins
+  if (earned > 0) record({ kind: 'coins', amount: earned })
   character.value.inventory = result.state.inventory
   character.value.provisions = result.state.provisions
   toast.add({ title, color: 'success' })

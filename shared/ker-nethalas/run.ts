@@ -9,7 +9,7 @@ import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
 import { KN_COMBAT_BOUNDS, knCombatCreatureSchema, knCombatSchema, type KnCombatCreature, type KnCreatureBuff } from './combatState'
 import { KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 import { KN_OBSTACLE_KINDS, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, type KnObstacleKind } from './exploration'
-import { KN_SKILL_KEYS } from './skills'
+import { KN_SKILL_KEYS, type KnWeaponSkillKey } from './skills'
 import { boundedInt } from './zodHelpers'
 
 // Dés d'usage : un jet de 1 ou 2 fait descendre d'un cran ; un 1-2 au D4 déclenche la procédure.
@@ -635,6 +635,10 @@ const withoutTemporary = ({ temporary: _temporary, temporaryUntil: _until, ...re
 export function knDamageCombatCreature(run: KnRun, index: number, amount: number): KnRun {
   if (!run.combat?.creatures[index]) return run
   return withCreature(run, index, c => damaged(c, amount))
+}
+
+export function knMarkCreatureSlain(run: KnRun, index: number, skill: KnWeaponSkillKey): KnRun {
+  return run.combat?.creatures[index] ? withCreature(run, index, creature => ({ ...creature, slainBy: skill })) : run
 }
 
 // Des adversaires de plus en combat ; `max` borne le nombre de ceux de la même fiche encore en vie.

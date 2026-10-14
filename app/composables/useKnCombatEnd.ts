@@ -4,6 +4,8 @@ import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import { knClearCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knRollIntegrity, type KnIntegrityResult } from '~~/shared/ker-nethalas/equipment'
+import { knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
+import type { KnGoalEvent } from '~~/shared/ker-nethalas/goalCounts'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import { knApplySelfEffects, knCombatWonEffects } from '~~/shared/ker-nethalas/masteryEffects'
@@ -13,9 +15,30 @@ import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 // La fin d'un combat : le survivant récupère D4 Robustesse, les aptitudes « une fois par combat » se libèrent et l'état du
 // combat disparaît. Une victoire donne en plus l'expérience du livre et les gains des Maîtrises.
-export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, masteries: () => KnMastery[] | null) {
+export function useKnCombatEnd(
+  character: Ref<KnCharacter>,
+  resolved: () => KnResolvedSheet,
+  masteries: () => KnMastery[] | null,
+  bestiary: () => KnCreature[] | null = () => null,
+) {
   const toast = useToast()
   const { applyEffects } = useKnApplyEffects(character, resolved)
+  const { record } = useKnGoalProgress(character)
+
+  // Chaque adversaire vaincu fait avancer les objectifs, avec son type, la compétence du coup fatal et son rang d'Overseer.
+  // Une créature éphémère qui a disparu après son action n'a pas été vaincue.
+  function recordDefeats() {
+    const combat = character.value.run.combat
+    if (!combat) return
+    record(...combat.creatures.flatMap<KnGoalEvent>((creature, index) => creature.health > 0 || creature.spent
+      ? []
+      : [{
+          kind: 'defeat',
+          types: knFindCreature(bestiary(), creature.ref)?.types ?? [],
+          ...(creature.slainBy ? { skill: creature.slainBy } : {}),
+          ...(combat.overseer && index === 0 ? { overseer: true } : {}),
+        }]))
+  }
 
   // Les pièces d'équipement qui ont servi (armure qui a encaissé, bouclier qui a paré) jouent leur dé d'Intégrité.
   function rollIntegrity() {
@@ -38,6 +61,7 @@ export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnRe
   }
 
   function endCombat() {
+    recordDefeats()
     rollIntegrity()
     applyEffects([{ kind: 'vital', vital: 'toughness', dice: { count: 1, sides: 4, bonus: 0 }, sign: 'gain' }], 'Fin du combat')
     character.value.status = knClearCombatEffects(knResetUses(character.value.status, ['combat']))

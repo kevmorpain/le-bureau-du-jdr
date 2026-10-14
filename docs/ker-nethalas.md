@@ -627,6 +627,27 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN47 — Progrès automatique des objectifs
+- **Format** (`goalCounts.ts`, issue X17) : un objectif porte un champ optionnel `counts`, la nature de ce qu'il compte (le contenu déjà
+  écrit reste valide, un objectif sans `counts` se note à la main). Douze natures : adversaires vaincus (tous, d'un type, avec une
+  compétence d'arme, ou Overseers : un seul critère à la fois), dégâts infligés d'un type, pièces obtenues, adversaires surpris, verrous
+  crochetés, coups critiques, Reliques trouvées, pièces fouillées, tests de Raison réussis sur un événement, pièges désamorcés, événements
+  d'Obscurité Grandissante, Livres de savoir pillés. Les valeurs sont dans le contenu privé.
+- **Incrément direct, sans confirmation** (décision retenue, l'issue laissait le choix) : chaque événement fait avancer les objectifs
+  en cours qui le comptent (`knApplyGoalEvents`, `useKnGoalProgress`) ; un message n'annonce que la cible atteinte. Le correctif manuel
+  (+1, −1, saisie) reste disponible. Un objectif récupéré ne bouge plus ; le progrès a le même plafond que la saisie.
+- **Où chaque événement naît** : adversaires vaincus à la fin du combat, avec leur type, la compétence d'arme du coup fatal (`slainBy`,
+  posé quand le coup du survivant ramène une créature à 0) et le rang d'Overseer ; dégâts et Coups critiques quand l'attaque du survivant
+  est appliquée ; surprise réussie ou automatique (les créatures en vie comptent chacune) ; verrou crocheté et piège désamorcé aux actions
+  des obstacles ; pièce fouillée au tirage de la table de Fouille ; Relique et Livre de savoir à l'ajout du butin ; test de Raison réussi
+  sur un événement ; pièces des effets de table, des ventes au marchand et de l'Atout des contenants ; Obscurité Grandissante par un seul
+  observateur de la page, sur le Domaine courant.
+  ⚠️ hypothèses : les dégâts d'Aptitudes et de sorts, que l'outil ne lance pas, ne sont pas comptés ; les pièces saisies à la main ne
+  comptent pas (taper un nombre chiffre par chiffre en compterait trop) ; les adversaires vaincus par un sbire comptent sans compétence ;
+  une créature éphémère disparue après son action ne compte pas ; « adversaires surpris » compte chaque créature en vie à la surprise ;
+  un test de Raison sur une Fouille ne compte pas, seulement sur un événement ; un Domaine ajouté à la main compte un événement
+  d'Obscurité de plus.
+
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
   réactions à −20 cumulatif, vitesse de l'arme), p. 78 et 85 (mouvements défensifs, maladresses des monstres), p. 80-83
@@ -968,7 +989,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | fusionnée (PR #286) ; jeu `personalGoals` typé chargé en production |
-| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | écrite (X24 à X29 et X32) ; une PR |
+| **X17 — Progrès automatique des objectifs** | champ `counts` sur l'objectif, événements du combat, de l'exploration et du butin qui font avancer le progrès, sans confirmation (KN47) | écrite (X17 #265) |
+| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | fusionnée (PR #287) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |

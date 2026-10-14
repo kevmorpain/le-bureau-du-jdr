@@ -46,6 +46,7 @@ import {
   knMarkGearUsed,
   knRegisterReaction,
   knRollDie,
+  knMarkCreatureSlain,
   knSetCombatDual,
   knSetCombatFirst,
   knSetCombatLamp,
@@ -56,7 +57,7 @@ import {
   knStartCombat,
   knVanishSpentCreatures,
 } from '~~/shared/ker-nethalas/run'
-import { KN_RESISTANCE_KEYS, type KnResistanceKey, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
+import { KN_RESISTANCE_KEYS, knIsWeaponSkill, type KnResistanceKey, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import { knApplyDamage } from '~~/shared/ker-nethalas/tables'
 
 export interface KnAttackResult {
@@ -81,6 +82,10 @@ export interface KnAttackResult {
   // Lampe posée : la maladresse la renverse au lieu de tirer dans la table des maladresses.
   lampSpilled?: boolean
   lampSpillApplied?: boolean
+  // Une attaque du survivant (et non d'un sbire), avec sa compétence et son type de dégâts : de quoi faire avancer les objectifs.
+  survivor?: boolean
+  skill?: KnSkillKey
+  damageType?: KnDamageType
   applied: boolean
 }
 
@@ -124,6 +129,7 @@ export interface KnTurnResult {
 export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, bestiary: () => KnCreature[] | null) {
   const toast = useToast()
   const { t } = useI18n()
+  const { record } = useKnGoalProgress(character)
 
   const combat = computed<KnCombat | undefined>(() => character.value.run.combat)
   const level = computed(() => character.value.level)
@@ -166,6 +172,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     if (winner !== 'tie') {
       character.value.run = knSetCombatFirst(character.value.run, won ? 'survivor' : 'creatures')
       character.value.run = knSetCombatSurprise(character.value.run, kind === 'surprise' && won)
+      if (kind === 'surprise' && won) record({ kind: 'surprise', creatures: combat.value?.creatures.filter(creature => creature.health > 0).length ?? 0 })
     }
     const label = kind === 'surprise' ? 'Surprise' : 'Initiative'
     log(`${label} : ${player.value} pour ${player.target}, adversaire ${foes.value} pour ${foes.target} — ${winner === 'tie' ? 'égalité, à relancer' : won ? 'le survivant agit en premier' : 'les créatures agissent en premier'}`)
@@ -176,6 +183,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   function surpriseAutomatically() {
     character.value.run = knSetCombatFirst(character.value.run, 'survivor')
     character.value.run = knSetCombatSurprise(character.value.run, true)
+    record({ kind: 'surprise', creatures: combat.value?.creatures.filter(creature => creature.health > 0).length ?? 0 })
     log('Surprise assurée par un Atout : le survivant agit en premier')
   }
 
@@ -217,6 +225,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       weakSpot: false,
       unavoidable: exchange.outcome === 'bothFail',
       applied: false,
+      ...(input.attackerScore === undefined ? { survivor: true, skill: input.skill ?? 'bladedWeapons', damageType: input.damageType } : {}),
     }
     if (buffs.reflect.length) {
       result.reflect = buffs.reflect.map(entry => ({ label: entry.label, type: entry.type, amount: knRollDamagePool([entry.dice]).total, applied: false }))
@@ -365,6 +374,17 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const left = combat.value?.creatures[result.index]?.health ?? 0
     log(`${result.name} ${amount > 0 ? `subit ${amount}` : amount < 0 ? `récupère ${-amount}` : 'ne subit rien'} (reste ${left})`)
     result.applied = true
+    recordSurvivorHit(result, amount, left)
+  }
+
+  // Les coups du survivant font avancer les objectifs : dégâts par type, Coups critiques, et la compétence qui a porté le coup fatal.
+  function recordSurvivorHit(result: KnAttackResult, amount: number, left: number) {
+    if (!result.survivor || !result.damage) return
+    if (result.exchange.criticalStrike) record({ kind: 'critical' })
+    if (amount > 0 && result.damageType) record({ kind: 'damage', damage: result.damageType, amount })
+    if (amount > 0 && left <= 0 && result.skill && knIsWeaponSkill(result.skill)) {
+      character.value.run = knMarkCreatureSlain(character.value.run, result.index, result.skill)
+    }
   }
 
   // Ce que l'action fait à la créature qui l'a jouée : soins, Santé temporaire. `damage` : ce qu'elle vient d'infliger.

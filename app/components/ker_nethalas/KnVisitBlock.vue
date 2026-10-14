@@ -203,6 +203,7 @@
               :entry="eventEntry"
               :taken="visit.event?.taken ?? []"
               :active
+              event
               @take="index => emit('take', 'event', index)"
             />
           </div>

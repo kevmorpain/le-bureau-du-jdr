@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { knGoalCountSchema } from './goalCounts'
 import { knGoalEffectSchema } from './goalEffects'
 import { boundedInt } from './zodHelpers'
 
@@ -18,6 +19,8 @@ export const knPersonalGoalSchema = z.object({
   // Tout objectif se compte : un objectif « en une fois » a pour cible 1.
   target: boundedInt(KN_GOAL_BOUNDS.target),
   reward: z.string().trim().min(1).max(500),
+  // Ce que l'objectif compte, pour que le jeu en tienne le progrès ; sans lui, le progrès se note à la main.
+  counts: knGoalCountSchema.optional(),
   // Ce que la récompense change sur la fiche ; sans lui, elle ne s'affiche que comme un texte.
   effect: knGoalEffectSchema.optional(),
   recommended: z.boolean().optional(),

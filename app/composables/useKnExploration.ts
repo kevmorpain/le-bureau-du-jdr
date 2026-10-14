@@ -74,6 +74,7 @@ const OBSTACLE_DICE = { trap: KN_TRAP_DIE, trapType: KN_EXPLORATION_TABLES.traps
 export function useKnExploration(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, tables: () => Tables) {
   const toast = useToast()
   const { applyEffects } = useKnApplyEffects(character, resolved)
+  const { record } = useKnGoalProgress(character)
 
   function tableDie(name: KnVisitTable) {
     if (name === 'encounter') return KN_ENCOUNTER_DIE
@@ -87,7 +88,9 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
 
   function tableRoll(name: KnVisitTable, manual?: number) {
     const roll = manual ?? knRollDie(tableDie(name))
+    const hadScavenge = !!knCurrentVisit(character.value.run)?.scavenge
     character.value.run = TABLE_RECORDS[name](character.value.run, roll)
+    if (name === 'scavenge' && !hadScavenge && knCurrentVisit(character.value.run)?.scavenge) record({ kind: 'scavenge' })
   }
 
   function adjustScavenge(delta: number) {
@@ -201,6 +204,8 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
 
     for (const { source, amount } of knObstacleXp(obstacle, knCurrentVisit(c.run)?.obstacles?.[index])) {
       applyEffects([{ kind: 'xp', amount }], source === 'lockOpened' ? 'Verrou ouvert' : 'Piège désamorcé')
+      if (source === 'trapDisarmed') record({ kind: 'trap' })
+      if (source === 'lockOpened' && act === 'pickOpened') record({ kind: 'lockpick' })
     }
   }
 

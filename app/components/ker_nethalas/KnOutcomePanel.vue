@@ -21,7 +21,7 @@
       <KnInlineCheck
         v-if="active && group.check && openGroup === group.id"
         :request="{ id: knCheckId(group.check), difficulty: 'normal', note: 'Test de l\'événement' }"
-        @rolled="success => suggested[group.id] = success"
+        @rolled="success => onRolled(group.id, group.check, success)"
         @close="openGroup = null"
       />
 
@@ -66,6 +66,8 @@ const props = defineProps<{
   active?: boolean
   // Le résultat d'un test déjà fait ailleurs : met en avant la branche qui lui correspond.
   result?: boolean
+  // Les tests de Raison réussis ici résolvent un événement : ils font avancer les objectifs qui les comptent.
+  event?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -73,6 +75,13 @@ const emit = defineEmits<{
 }>()
 
 const { effectsText } = useKnEffectText()
+const { character } = useKnCheckContext()
+const { record } = useKnGoalProgress(character)
+
+function onRolled(groupId: number, check: KnCheckKey, success: boolean) {
+  suggested.value[groupId] = success
+  if (success && props.event && check === 'reason') record({ kind: 'reason' })
+}
 
 const isResistance = (key: KnCheckKey) => (KN_RESISTANCE_KEYS as readonly string[]).includes(key)
 
