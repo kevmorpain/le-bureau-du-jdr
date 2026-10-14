@@ -162,7 +162,35 @@
         <span v-if="result.damage.armorAbsorbed"> (Armure : −{{ result.damage.armorAbsorbed }})</span>
       </p>
       <div
-        v-if="canApply"
+        v-if="canSacrifice"
+        class="flex flex-wrap items-end gap-2 rounded-md border border-warning p-2"
+      >
+        <UFormField label="Coup critique : sacrifier pour l'annuler">
+          <USelect
+            v-model="sacrificeId"
+            :items="sacrificeItems"
+            placeholder="Arme ou bouclier"
+            class="w-56"
+          />
+        </UFormField>
+        <UButton
+          size="sm"
+          color="warning"
+          variant="soft"
+          :disabled="!sacrificeId"
+          @click="sacrifice"
+        >
+          Sacrifier : aucun dégât, objet brisé
+        </UButton>
+      </div>
+      <p
+        v-if="result.sacrificed"
+        class="text-sm"
+      >
+        {{ result.sacrificed }} est brisé et absorbe tous les dégâts ; il reste inutilisable jusqu'à sa réparation.
+      </p>
+      <div
+        v-if="canApply && !result.sacrificed"
         class="flex flex-wrap items-end gap-2"
       >
         <KnNumberField
@@ -235,7 +263,7 @@
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knActionIsTest } from '~~/shared/ker-nethalas/combat'
-import { knDefenseOptions } from '~~/shared/ker-nethalas/equipment'
+import { knDefenseOptions, knSacrificeChoices } from '~~/shared/ker-nethalas/equipment'
 import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
 import type { KnCreature, KnCreatureAction, KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -251,7 +279,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, minions, creatureOf, drawAction, takeTurn, applyToSurvivor, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, minions, creatureOf, drawAction, takeTurn, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { selfEffectText } = useKnEffectText()
 
@@ -384,6 +412,20 @@ const canApply = computed(() => {
   if (isTest(r.action)) return r.amount !== undefined
   return r.exchange?.outcome === 'hit' || r.exchange?.outcome === 'bothFail'
 })
+
+const sacrificeId = ref<string | undefined>()
+const sacrificeItems = computed<SelectItem[]>(() => knSacrificeChoices(character.value.inventory).map(item => ({ label: item.name, value: item.id })))
+const canSacrifice = computed(() => {
+  const r = result.value
+  return !!r && r.minion === undefined && !r.applied && !!r.exchange?.criticalStrike && sacrificeItems.value.length > 0
+})
+
+function sacrifice() {
+  if (!result.value || !sacrificeId.value) return
+  sacrificeGear(result.value, sacrificeId.value)
+  manualAmount.value = 0
+  sacrificeId.value = undefined
+}
 
 function apply() {
   if (!result.value) return

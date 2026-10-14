@@ -610,6 +610,13 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   suivant (`freeParryUsed`). Décocher la case rend les deux armes séparées.
   ⚠️ hypothèses : le −40 vise les attaques, pas la Parade gratuite ; la Parade gratuite se fait avec l'arme dominante, dont la compétence
   sert au test ; une seconde Parade du même round compte comme une Réaction ordinaire.
+- **Arme ou bouclier sacrifié** (issue X27) : quand une créature porte un Coup critique au survivant, le tour propose de sacrifier l'arme ou le
+  bouclier tenus : tous les dégâts sont absorbés (le tour passe en « appliqué » à 0) et l'objet est brisé (`broken` sur l'objet,
+  `knBreakItem`). Un objet brisé reste dans sa main mais ne sert plus : il n'attaque ni ne pare, un bouclier brisé n'apporte plus son
+  bonus, et ses propriétés magiques cessent (`knIsWorn`). Le bouton « Réparer (brisé) » de l'inventaire le remet en service ; son
+  Intégrité ne bouge pas. Ne vaut que pour le survivant, pas pour un sbire.
+  ⚠️ hypothèses : la réparation passe par ce bouton et non par la quantité de l'activité de camp « Réparer » (qui ne vise pas une pièce,
+  voir la tranche 7) ; les conditions que l'action de la créature aurait imposées en plus des dégâts sont annulées avec le coup.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -952,7 +959,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | fusionnée (PR #286) ; jeu `personalGoals` typé chargé en production |
-| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | en cours (X25, X24, X28, X32 et X26 écrits) |
+| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | en cours (X25, X24, X28, X32, X26 et X27 écrits) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |

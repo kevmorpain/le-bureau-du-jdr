@@ -39,8 +39,8 @@ export function knEquipmentSources(items: readonly KnItem[]): KnActiveSource[] {
 
 // Deux armes à une main, une dans chaque main : le combat à deux armes est possible.
 export function knDualPair(items: readonly KnItem[]): [KnItem, KnItem] | null {
-  const main = items.find(item => item.place === 'mainHand' && item.weapon)
-  const off = items.find(item => item.place === 'offHand' && item.weapon)
+  const main = items.find(item => item.place === 'mainHand' && item.weapon && !item.broken)
+  const off = items.find(item => item.place === 'offHand' && item.weapon && !item.broken)
   return main && off && !traits(main).includes('twoHanded') && !traits(off).includes('twoHanded') ? [main, off] : null
 }
 
@@ -48,7 +48,7 @@ export function knDualPair(items: readonly KnItem[]): [KnItem, KnItem] | null {
 export const KN_DUAL_WIELD = { attack: -40, damage: 1 } as const
 
 export const knWieldedWeapons = (items: readonly KnItem[]): KnItem[] =>
-  items.filter(item => item.weapon && (item.place === 'mainHand' || item.place === 'offHand'))
+  items.filter(item => item.weapon && !item.broken && (item.place === 'mainHand' || item.place === 'offHand'))
 
 const traits = (item: KnItem) => item.weapon?.traits ?? []
 
@@ -146,7 +146,7 @@ export interface KnDefenseOption {
 // Se défendre : à l'Esquive, ou à l'arme quand elle Pare ou qu'un bouclier le permet (qui ajoute son bonus de parade, et +10
 // pour une arme Défensive).
 export function knDefenseOptions(items: readonly KnItem[], dualId?: string): KnDefenseOption[] {
-  const shield = items.find(item => item.kind === 'shield' && item.place === 'offHand')
+  const shield = items.find(item => item.kind === 'shield' && item.place === 'offHand' && !item.broken)
   const dominant = dualId ? knDualPair(items)?.find(item => item.id === dualId) : undefined
   const parries = (dominant ? [dominant] : knWieldedWeapons(items))
     .filter(item => dominant || shield || traits(item).includes('parrying'))
@@ -187,6 +187,22 @@ export function knRollIntegrity(items: readonly KnItem[], id: string, rng: KnRng
     items: items.map(entry => entry.id === id && entry.integrity ? { ...entry, integrity: { ...entry.integrity, current: to } } : entry),
     result: { id, name: item.name, die: current, roll, outcome: 'down', to },
   }
+}
+
+// Ce qu'on peut sacrifier pour annuler un Coup critique : l'arme ou le bouclier tenus, pas déjà brisés.
+export const knSacrificeChoices = (items: readonly KnItem[]): KnItem[] =>
+  items.filter(item => (item.weapon || item.kind === 'shield') && !item.broken && (item.place === 'mainHand' || item.place === 'offHand'))
+
+export const knBreakItem = (items: readonly KnItem[], id: string): KnItem[] =>
+  items.map(item => item.id === id ? { ...item, broken: true } : item)
+
+// Réparer un objet brisé le remet en service ; son Intégrité ne change pas.
+export function knMendItem(items: readonly KnItem[], id: string): KnItem[] {
+  return items.map((item) => {
+    if (item.id !== id) return item
+    const { broken: _broken, ...mended } = item
+    return mended
+  })
 }
 
 // Réparer remonte l'Intégrité d'un cran, sans dépasser son maximum d'origine.

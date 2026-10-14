@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { knCannotBeSurprised, knFearLoss } from '../../shared/ker-nethalas/creatures'
-import { KN_DUAL_WIELD, knAttackOptions, knDefenseOptions, knDualPair, knFreeHands } from '../../shared/ker-nethalas/equipment'
+import { KN_DUAL_WIELD, knAttackOptions, knBreakItem, knDefenseOptions, knDualPair, knFreeHands, knMendItem, knSacrificeChoices } from '../../shared/ker-nethalas/equipment'
 import { knUseBandage, type KnBandageInput } from '../../shared/ker-nethalas/healing'
-import type { KnItem } from '../../shared/ker-nethalas/inventory'
+import { knInventorySchema, type KnItem } from '../../shared/ker-nethalas/inventory'
+import { knIsWorn } from '../../shared/ker-nethalas/magicEffects'
 import { resolveKnSheet } from '../../shared/ker-nethalas/resolve'
 import { emptyKnRun, knCurrentDomain, knDefeatOverseer, knNewDomain, knNextCombatRound, knResolveCombatFear, knRunSchema, knSetCombatDual, knSetCombatLamp, knSpillLamp, knStartCombat, knUseFreeParry, type KnRun } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, knStatusSchema } from '../../shared/ker-nethalas/status'
@@ -182,5 +183,39 @@ describe('combat à deux armes', () => {
     expect(knRunSchema.safeParse(used).success).toBe(true)
     const calm = emptyKnRun()
     expect(knSetCombatDual(calm, 'a')).toBe(calm)
+  })
+})
+
+describe('arme ou bouclier sacrifié', () => {
+  const blade: KnItem = { id: 'w', name: 'Épée', kind: 'weapon', weight: 'normal', quantity: 1, place: 'mainHand', weapon: { skill: 'bladedWeapons', speed: 0, damageType: 'slashing', traits: ['parrying'] } }
+  const buckler: KnItem = { id: 's', name: 'Bouclier', kind: 'shield', weight: 'normal', quantity: 1, place: 'offHand', parry: 10 }
+  const spare: KnItem = { id: 'x', name: 'Dague', kind: 'weapon', weight: 'light', quantity: 1, place: 'bag', weapon: { skill: 'bladedWeapons', speed: 0, damageType: 'piercing', traits: [] } }
+  const kit = [blade, buckler, spare]
+
+  it('on sacrifie ce qui est tenu, pas ce qui dort dans le sac', () => {
+    expect(knSacrificeChoices(kit).map(item => item.id)).toEqual(['w', 's'])
+    expect(knSacrificeChoices(knBreakItem(kit, 'w')).map(item => item.id)).toEqual(['s'])
+  })
+
+  it('un objet brisé ne sert plus : ni attaque, ni parade, ni magie', () => {
+    const brokenBlade = knBreakItem(kit, 'w')
+    const brokenShield = knBreakItem(kit, 's')
+
+    expect(knAttackOptions(brokenBlade).map(option => option.id)).toEqual(['unarmed'])
+    expect(knDefenseOptions(brokenBlade).map(option => option.id)).toEqual(['dodge'])
+    expect(knDefenseOptions(brokenShield).map(option => option.id)).toEqual(['dodge', 'parry:w'])
+    expect(knDefenseOptions(brokenShield).find(option => option.id === 'parry:w')?.bonus).toBe(0)
+    expect(knIsWorn(brokenBlade[0]!)).toBe(false)
+    expect(knIsWorn(blade)).toBe(true)
+    expect(knDualPair([blade, { ...buckler, kind: 'weapon', weapon: blade.weapon }])).not.toBeNull()
+    expect(knDualPair(knBreakItem([blade, { ...buckler, kind: 'weapon', weapon: blade.weapon }], 's'))).toBeNull()
+  })
+
+  it('la réparation remet l\'objet en service, tel qu\'il était', () => {
+    const mended = knMendItem(knBreakItem(kit, 'w'), 'w')
+
+    expect(mended[0]).toEqual(blade)
+    expect(mended[0]).not.toHaveProperty('broken')
+    expect(knInventorySchema.safeParse(knBreakItem(kit, 'w')).success).toBe(true)
   })
 })

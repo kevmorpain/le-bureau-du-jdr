@@ -27,7 +27,7 @@ import {
 import { knReactionPenalty, type KnCombat } from '~~/shared/ker-nethalas/combatState'
 import { knArmorAt, knCreatureAtLevel, knFearLoss, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
-import { knArmorByZone, knArmorPieces, knInitiativeBonus } from '~~/shared/ker-nethalas/equipment'
+import { knArmorByZone, knArmorPieces, knBreakItem, knInitiativeBonus, knSacrificeChoices } from '~~/shared/ker-nethalas/equipment'
 import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
 import { knGoalCriticalTriple, knGoalReductions, knHasActivePerk, knMergeReductions } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -110,6 +110,8 @@ export interface KnTurnResult {
   unavoidable: boolean
   survivorMove?: number
   monsterFumble?: number
+  // L'arme ou le bouclier sacrifié pour annuler un Coup critique.
+  sacrificed?: string
   // Dégâts à retirer au survivant, quand l'outil sait les calculer.
   amount?: number
   // Les dégâts atteignent la Santé sans passer par la Robustesse.
@@ -562,6 +564,18 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     result.dealt = amount
   }
 
+  // Sacrifier l'arme ou le bouclier annule le Coup critique : tous les dégâts sont absorbés, l'objet est brisé.
+  function sacrificeGear(result: KnTurnResult, id: string) {
+    const item = knSacrificeChoices(character.value.inventory).find(entry => entry.id === id)
+    if (!item || result.applied || result.minion !== undefined || !result.exchange?.criticalStrike) return
+    character.value.inventory = knBreakItem(character.value.inventory, id)
+    result.sacrificed = item.name
+    result.amount = 0
+    result.dealt = 0
+    result.applied = true
+    log(`${result.name} : ${item.name} sacrifié, le Coup critique est annulé`)
+  }
+
   // Les dégâts qu'un effet de la créature renvoie à celui qui l'attaque.
   function applyReflect(result: KnAttackResult, index: number) {
     const entry = result.reflect?.[index]
@@ -573,5 +587,5 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, setDual, setLamp, spillLamp, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
+  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, setDual, setLamp, spillLamp, applyAttack, drawAction, takeTurn, applyToSurvivor, sacrificeGear, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
 }
