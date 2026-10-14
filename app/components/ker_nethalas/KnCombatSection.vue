@@ -173,7 +173,7 @@
             icon="i-heroicons:cube"
             @click="play('surprise')"
           >
-            {{ character.perkKeys.includes('livingShadow') ? 'Surprendre (Atout, sans test)' : 'Tenter de surprendre (Furtivité)' }}
+            {{ knHasActivePerk(character, 'livingShadow') ? 'Surprendre (Atout, sans test)' : 'Tenter de surprendre (Furtivité)' }}
           </UButton>
           <UButton
             variant="soft"
@@ -243,6 +243,7 @@ import { knArmorByZone } from '~~/shared/ker-nethalas/equipment'
 import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCombatLog, knNextCombatRound } from '~~/shared/ker-nethalas/run'
@@ -300,7 +301,7 @@ const lastOpposed = ref('')
 
 // Une surprise ratée se rejoue en Initiative, avec −20 en Perception.
 function play(kind: 'surprise' | 'initiative') {
-  if (kind === 'surprise' && character.value.perkKeys.includes('livingShadow')) {
+  if (kind === 'surprise' && knHasActivePerk(character.value, 'livingShadow')) {
     surpriseAutomatically()
     lastOpposed.value = 'Atout de surprise : la surprise réussit sans test (+20 à la première attaque).'
     return

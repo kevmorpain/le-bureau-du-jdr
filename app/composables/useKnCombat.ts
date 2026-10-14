@@ -29,7 +29,7 @@ import { knArmorAt, knCreatureAtLevel, knFindCreature, type KnCreature, type KnC
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
 import { knArmorByZone, knArmorPieces, knInitiativeBonus } from '~~/shared/ker-nethalas/equipment'
 import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
-import { knHasPerk } from '~~/shared/ker-nethalas/perks'
+import { knGoalCriticalTriple, knGoalReductions, knHasActivePerk, knMergeReductions } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knD100Check, type KnD100Result } from '~~/shared/ker-nethalas/roll'
 import {
@@ -223,7 +223,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       result.weakSpot = !!spot && result.location === spot
       const damage = { pool: input.pool, damageType: input.damageType, magical: input.magical }
       rollHitDamage(result, damage)
-      if (exchange.criticalStrike && input.attackerScore === undefined && knHasPerk(character.value.perkKeys, 'precisionStriker')) {
+      if (exchange.criticalStrike && input.attackerScore === undefined && knHasActivePerk(character.value, 'precisionStriker')) {
         result.reroll = { ...damage, used: false }
       }
     }
@@ -239,6 +239,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       roll: result.damageRoll,
       damageType: input.damageType,
       criticalStrike: result.exchange.criticalStrike,
+      criticalTriple: knGoalCriticalTriple(character.value.goalEffects, creature.types),
       weakSpot: result.weakSpot,
       armor: knArmorAt(knCreatureAtLevel(creature, level.value).armor, result.location),
       target: knBuffedTarget(knCreatureDamageTarget(creature), target.effects),
@@ -428,7 +429,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const survivorDefenses = knMagicDefenses(character.value.inventory)
     const damageTarget = minionSheet
       ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects)
-      : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: survivorDefenses.reduction }
+      : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: knMergeReductions(survivorDefenses.reduction, knGoalReductions(character.value.goalEffects)) }
     const registerReaction = () => {
       if (!minionSheet) character.value.run = knRegisterReaction(character.value.run)
     }

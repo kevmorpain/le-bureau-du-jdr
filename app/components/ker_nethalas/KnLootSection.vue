@@ -104,13 +104,14 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import { knAddAmulet, knRandomMasteryKey } from '~~/shared/ker-nethalas/amulets'
+import { knDrawAmulet } from '~~/shared/ker-nethalas/amulets'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knApplyLoot, knRollLoot, type KnLootContent, type KnLootResult, type KnLootTableKey } from '~~/shared/ker-nethalas/loot'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import { KN_LUCKY_FIND_DIE } from '~~/shared/ker-nethalas/perks'
 import { knRollDie } from '~~/shared/ker-nethalas/run'
 
@@ -141,7 +142,7 @@ let nextId = 1
 
 function draw(starts: readonly KnLootTableKey[]) {
   if (!props.loot) return
-  const lucky = character.value.perkKeys.includes('luckyFind')
+  const lucky = knHasActivePerk(character.value, 'luckyFind')
   for (const start of starts) {
     const result = knRollLoot(props.loot, start, Math.random, props.magic)
     const container = lucky && !('missing' in result) && result.steps.some(step => step.table === 'containers')
@@ -200,10 +201,10 @@ function take(entry: Pending) {
 
 // Une amulette n'est pas un objet : on tire la Maîtrise à laquelle elle donne accès (table des Maîtrises aléatoires).
 function drawAmulet(): string {
-  const key = props.masteries ? knRandomMasteryKey(props.masteries.map(mastery => mastery.key)) : null
-  if (key === null) return 'amulette (Maîtrises non chargées : tirez-la dans la section Maîtrises)'
-  character.value.amulets = knAddAmulet(character.value.amulets, key, character.value.masteryPicks)
-  return `amulette : ${props.masteries!.find(mastery => mastery.key === key)?.name ?? key}`
+  const drawn = props.masteries ? knDrawAmulet(character.value.amulets, character.value.masteryPicks, props.masteries.map(mastery => mastery.key)) : null
+  if (!drawn) return 'amulette (Maîtrises non chargées : tirez-la dans la section Maîtrises)'
+  character.value.amulets = drawn.amulets
+  return `amulette : ${props.masteries!.find(mastery => mastery.key === drawn.key)?.name ?? drawn.key}`
 }
 
 function discard(id: number) {

@@ -250,6 +250,18 @@ describe('updateKnCharacter', () => {
     expect((await getKnCharacter(db, id))!.perkKeys).toEqual(['scholar', 'luckyFind'])
   })
 
+  it('crée un survivant sans effet d\'objectif et relit ceux qu\'on lui copie', async () => {
+    const { id } = await createKnCharacter(db, alice, validKnCreation('Effets'))
+    expect((await getKnCharacter(db, id))!.goalEffects).toEqual([])
+
+    const goalEffects = [{ goal: 'acidExpert', effect: { kind: 'reduction' as const, damage: 'acid' as const, amount: 1 } }, { goal: 'quiet', effect: { kind: 'note' as const }, text: 'rappel' }]
+    await updateKnCharacter(db, id, { goalEffects, goalPicks: [{ key: 'acidExpert', progress: 3, claimed: true, granted: true }] })
+
+    const character = (await getKnCharacter(db, id))!
+    expect(character.goalEffects).toEqual(goalEffects)
+    expect(character.goalPicks).toEqual([{ key: 'acidExpert', progress: 3, claimed: true, granted: true }])
+  })
+
   it('crée un survivant sans objectif quand aucun n\'est choisi', async () => {
     const { id } = await createKnCharacter(db, alice, validKnCreation('Sans objectif'))
 

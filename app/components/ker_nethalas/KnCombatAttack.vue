@@ -193,7 +193,7 @@ const KN_SURPRISE_BONUS = 20
 
 const target = ref(0)
 const bonus = ref(0)
-const attackOptions = computed(() => knAttackOptions(character.value.inventory, character.value.levelBenefits))
+const attackOptions = computed(() => knAttackOptions(character.value.inventory, character.value.levelBenefits, character.value.goalEffects))
 const weaponId = ref(attackOptions.value[0]!.id)
 const weaponBonus = ref(0)
 const skill = ref<KnSkillKey>(attackOptions.value[0]!.skill)

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { knGoalEffectSchema } from './goalEffects'
 import { boundedInt } from './zodHelpers'
 
 export const KN_MAX_ACTIVE_GOALS = 2
@@ -17,6 +18,8 @@ export const knPersonalGoalSchema = z.object({
   // Tout objectif se compte : un objectif « en une fois » a pour cible 1.
   target: boundedInt(KN_GOAL_BOUNDS.target),
   reward: z.string().trim().min(1).max(500),
+  // Ce que la récompense change sur la fiche ; sans lui, elle ne s'affiche que comme un texte.
+  effect: knGoalEffectSchema.optional(),
   recommended: z.boolean().optional(),
 })
 
@@ -35,6 +38,8 @@ export const knGoalPicksSchema = z.array(z.object({
   progress: boundedInt(KN_GOAL_BOUNDS.progress),
   // Récompense récupérée : l'objectif ne peut plus être repris ni modifié.
   claimed: z.boolean(),
+  // Gain ponctuel de la récompense (XP, amulette, dé de jauge) déjà donné : une annulation puis une nouvelle récupération ne le redonne pas.
+  granted: z.boolean().optional(),
 })).max(100).superRefine((picks, ctx) => {
   const keys = picks.map(pick => pick.key)
   if (new Set(keys).size !== keys.length) ctx.addIssue({ code: 'custom', message: 'un objectif ne se prend qu\'une fois' })

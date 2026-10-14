@@ -108,6 +108,8 @@ export interface KnDamageInput {
   target: KnDamageTarget
   // Une attaque magique n'est pas freinée par « Résistant aux dégâts physiques non magiques ».
   magical?: boolean
+  // Un Coup critique triple la réserve au lieu de la doubler.
+  criticalTriple?: boolean
 }
 
 export interface KnDamageResult {
@@ -127,7 +129,13 @@ export function knResolveDamage(input: KnDamageInput): KnDamageResult {
   const notes: string[] = []
   let total = input.roll.total
   const doubled = input.criticalStrike || input.weakSpot
-  if (doubled) total *= 2
+  const tripled = input.criticalStrike && !!input.criticalTriple
+  if (tripled) {
+    total *= 3
+    notes.push('Coup critique : dégâts triplés')
+  } else if (doubled) {
+    total *= 2
+  }
   if (input.damageType === 'piercing' && input.criticalStrike) {
     total += 2
     notes.push('perforant : +2 sur un Coup critique, non doublé')

@@ -169,24 +169,28 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knDrawAmulet } from '~~/shared/ker-nethalas/amulets'
+import { knClaimGoalReward, knUnclaimGoalReward } from '~~/shared/ker-nethalas/goalRewards'
 import {
   KN_GOAL_BOUNDS,
   KN_MAX_ACTIVE_GOALS,
-  knClaimGoal,
   knDropGoal,
   knGoalReached,
   knSetGoalProgress,
   knTakeGoal,
-  knUnclaimGoal,
   type KnGoalPick,
   type KnPersonalGoal,
 } from '~~/shared/ker-nethalas/goals'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 
 const props = defineProps<{
   goals: KnPersonalGoal[] | null
+  masteries: KnMastery[] | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+const toast = useToast()
 
 const find = (key: string) => props.goals?.find(goal => goal.key === key)
 
@@ -213,12 +217,28 @@ const drop = (key: string) => {
 }
 
 const unclaim = (key: string) => {
-  character.value.goalPicks = knUnclaimGoal(character.value.goalPicks, key)
+  Object.assign(character.value, knUnclaimGoalReward(character.value, key))
 }
 
 function claim(key: string) {
   const goal = find(key)
-  if (goal) character.value.goalPicks = knClaimGoal(character.value.goalPicks, goal)
+  if (!goal) return
+  const c = character.value
+  const result = knClaimGoalReward(c, goal)
+  if ('error' in result) return
+  Object.assign(c, result.patch)
+
+  const lines = [...result.lines]
+  if (result.amulet) {
+    const drawn = props.masteries ? knDrawAmulet(c.amulets, c.masteryPicks, props.masteries.map(mastery => mastery.key)) : null
+    if (drawn) {
+      c.amulets = drawn.amulets
+      lines.push(`amulette : ${props.masteries?.find(mastery => mastery.key === drawn.key)?.name ?? drawn.key}`)
+    } else {
+      lines.push('amulette (Maîtrises non chargées : tirez-la dans la section Maîtrises)')
+    }
+  }
+  toast.add({ title: 'Récompense récupérée', description: lines.join(', ') || goal.reward, color: 'success' })
 }
 
 function takeGoal(key: string | number) {

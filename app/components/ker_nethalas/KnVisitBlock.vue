@@ -462,6 +462,7 @@ import {
   type KnGrowingDarknessDraw,
   type KnVisit,
 } from '~~/shared/ker-nethalas/run'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import { KN_SCAVENGER_DIE } from '~~/shared/ker-nethalas/perks'
 import { knEncounterTable, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { KN_EXPLORATION_TABLES, knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
@@ -521,7 +522,7 @@ const scavengerRoll = ref<number | null>(null)
 const canAdjustScavenge = computed(() => {
   const scavenge = props.visit.scavenge
   return props.active && !!scavenge && !scavenge.adjusted && !scavenge.applied && !scavenge.taken?.length
-    && character.value.perkKeys.includes('scavenger')
+    && knHasActivePerk(character.value, 'scavenger')
 })
 
 function adjustScavenge(delta: number) {

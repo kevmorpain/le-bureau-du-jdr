@@ -563,6 +563,20 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   Les libellés sont descriptifs : les noms du livre sont dans le contenu privé (récompenses d'objectifs) et ne se versionnent pas.
   ⚠️ Laissé de côté : un contenant « Vide » à la fouille approfondie n'ouvre aucun tirage de butin, donc rapporte ses pièces à la
   main ; « ne peut pas être surpris » n'a pas de mécanique propre (l'outil ne tire pas la surprise des créatures).
+- **Récompenses d'objectifs** (`goalEffects.ts`, `goalRewards.ts`, issue X23) : le format public d'un objectif gagne un champ
+  `effect` optionnel (le contenu déjà écrit reste valide), renseigné dans le contenu privé. Neuf sortes : Atout, réduction de
+  dégâts d'un type, bonus de dégâts d'une compétence d'arme, dé de dégâts ajouté à toute attaque, Coup critique triplé contre un
+  type de créature, XP, amulette, dé de jauge maximale, et `note` pour ce que l'outil ne sait pas jouer (le texte de la
+  récompense devient un rappel de la fiche : +1 aux dégâts d'un élément, Étourdissement de l'Overseer, vente à plein prix, second
+  tirage d'Obscurité Grandissante). À la récupération :
+  les effets durables sont copiés dans `goalEffects` (colonne JSON, migration 0146) pour que combat, butin et fiche les lisent sans
+  recharger le contenu ; annuler la récupération les retire. Les gains ponctuels (XP, amulette, dé de jauge) ne se donnent qu'une
+  fois : `granted` sur l'objectif retient qu'ils l'ont été, une annulation suivie d'une nouvelle récupération ne les redonne pas
+  (⚠️ les objectifs déjà récupérés avant cette tranche n'ont pas ce drapeau). Les Atouts donnés par un objectif s'ajoutent à
+  ceux cochés à la main (`knActivePerks`) et s'affichent cochés, grisés. L'amulette tire sa Maîtrise comme au butin
+  (`knDrawAmulet`). Un Coup critique triplé remplace le doublement ; avec un point faible, il reste triplé.
+  ⚠️ hypothèses : « tous vos dégâts de Feu infligés +1 » vise surtout les Aptitudes, que l'outil ne lance pas : rappel seulement ;
+  la réduction d'un type s'ajoute à celle de l'équipement.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -849,7 +863,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Laissé de côté** : l'application des récompenses (réduction de dégâts, bonus, Atout, XP, Amulette) : elles s'affichent
   et se reportent à la main, comme les aptitudes de Maîtrise ; le gain de 100 XP d'un objectif ne s'ajoute pas tout seul.
   L'Amulette (récompense de l'objectif recommandé en premier, qui ouvre une troisième Maîtrise) n'a pas d'effet sur la
-  fiche : elle viendra avec la tranche 4d.
+  fiche : elle viendra avec la tranche 4d. Repris par KN45 (X23) : les récompenses s'appliquent.
 
 ---
 
@@ -904,7 +918,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-1/2 — Coûts, aptitudes Maintenues, effets chiffrés** | bouton « Utiliser », interrupteur « Maintenir », effets du moteur (KN33) ; issue X13 (#260) | écrite, vérifiée, non fusionnée |
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
-| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 à X22 écrits) |
+| **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | en cours (X19 à X23 écrits) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |

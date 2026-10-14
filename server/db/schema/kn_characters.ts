@@ -2,6 +2,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import type { KnAmulets } from '~~/shared/ker-nethalas/amulets'
 import type { KnProvisions } from '~~/shared/ker-nethalas/camp'
 import type { KnExtraSkill, KnResistances, KnSkills } from '~~/shared/ker-nethalas/character'
+import type { KnGoalEffectEntry } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnGoalPick } from '~~/shared/ker-nethalas/goals'
 import type { KnItem } from '~~/shared/ker-nethalas/inventory'
 import type { KnMasteryPick } from '~~/shared/ker-nethalas/masteries'
@@ -43,6 +44,7 @@ const knCharacters = sqliteTable('kn_characters', {
   inventory: text({ mode: 'json' }).$type<KnItem[]>().default([]).notNull(),
   levelBenefits: text('level_benefits', { mode: 'json' }).$type<KnLevelBenefit[]>().default([]).notNull(),
   perkKeys: text('perk_keys', { mode: 'json' }).$type<KnPerkKey[]>().default([]).notNull(),
+  goalEffects: text('goal_effects', { mode: 'json' }).$type<KnGoalEffectEntry[]>().default([]).notNull(),
   masteries: text().default('').notNull(),
   perks: text().default('').notNull(),
   weapons: text().default('').notNull(),

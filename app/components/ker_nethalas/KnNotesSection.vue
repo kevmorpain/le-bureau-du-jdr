@@ -27,9 +27,10 @@
           <UCheckbox
             v-for="key in KN_PERK_KEYS"
             :key
-            :model-value="character.perkKeys.includes(key)"
+            :model-value="activePerks.includes(key)"
+            :disabled="fromGoals.includes(key)"
             :label="$t(`ker_nethalas.perks.${key}.name`)"
-            :description="$t(`ker_nethalas.perks.${key}.hint`)"
+            :description="fromGoals.includes(key) ? `${$t(`ker_nethalas.perks.${key}.hint`)} (donné par un objectif)` : $t(`ker_nethalas.perks.${key}.hint`)"
             @update:model-value="togglePerk(key)"
           />
         </div>
@@ -58,9 +59,13 @@
 
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knActivePerks, knGoalPerks } from '~~/shared/ker-nethalas/goalEffects'
 import { KN_PERK_KEYS, type KnPerkKey } from '~~/shared/ker-nethalas/perks'
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+const fromGoals = computed(() => knGoalPerks(character.value.goalEffects))
+const activePerks = computed(() => knActivePerks(character.value.perkKeys, character.value.goalEffects))
 
 function togglePerk(key: KnPerkKey) {
   const keys = character.value.perkKeys

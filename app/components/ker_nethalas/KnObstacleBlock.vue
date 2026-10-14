@@ -113,7 +113,7 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
-            @click="openCheck('disarm', { id: 'skill:thievery', difficulty: knRollDifficulty(), advantage: character.perkKeys.includes('trapBuster'), note: 'Désamorcer le piège' })"
+            @click="openCheck('disarm', { id: 'skill:thievery', difficulty: knRollDifficulty(), advantage: knHasActivePerk(character, 'trapBuster'), note: 'Désamorcer le piège' })"
           >
             Tester
           </UButton>
@@ -331,6 +331,7 @@
 
 <script lang="ts" setup>
 import { KN_LOCK_DIE, KN_LOCK_THRESHOLD, KN_TRAP_DIE, type KnObstacleAct } from '~~/shared/ker-nethalas/exploration'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import { knEasierDifficulty, knRollDifficulty, type KnRollRequest } from '~~/shared/ker-nethalas/roll'
 import { KN_RESISTANCE_KEYS } from '~~/shared/ker-nethalas/skills'
 import { knForceBonus, knObstacleState, type KnObstacle } from '~~/shared/ker-nethalas/run'

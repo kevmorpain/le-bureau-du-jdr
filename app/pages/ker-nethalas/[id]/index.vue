@@ -69,6 +69,7 @@
     <KnGoalsSection
       v-model:character="character"
       :goals
+      :masteries
     />
 
     <KnEffectsSection v-model:character="character" />
