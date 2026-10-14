@@ -133,6 +133,8 @@ export const knDomainSchema = z.object({
   exitDie: knUsageDieSchema,
   exitFound: z.boolean(),
   overseerInfluences: z.array(z.enum(KN_OVERSEER_INFLUENCE_KEYS)).max(KN_RUN_BOUNDS.overseerInfluences),
+  // Vaincu, l'Overseer ne donne plus d'influence aux adversaires du Domaine ; la liste reste pour mémoire.
+  overseerDefeated: z.boolean().optional(),
   // L'Overseer du Domaine : le D10 tiré en y entrant pour la première fois.
   overseer: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
   growingDarkness: z.array(knGrowingDarknessEntrySchema).max(KN_RUN_BOUNDS.growingDarkness),
@@ -389,6 +391,8 @@ export function knRecordCreature(run: KnRun, d6: number, d20: number): KnRun {
   if (!visit || visit.kind === 'revisit' || (visit.creatures?.length ?? 0) >= KN_RUN_BOUNDS.creatures) return run
   return withLastVisit(run, v => ({ ...v, creatures: [...(v.creatures ?? []), { d6, d20 }] }))
 }
+
+export const knDefeatOverseer = (run: KnRun): KnRun => withCurrentDomain(run, { overseerDefeated: true })
 
 export function knRecordOverseer(run: KnRun, roll: number): KnRun {
   return knCurrentDomain(run).overseer ? run : withCurrentDomain(run, { overseer: { roll } })

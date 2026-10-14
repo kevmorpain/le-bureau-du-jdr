@@ -8,6 +8,10 @@
       <p class="text-sm font-medium">
         Influences de l'Overseer
       </p>
+      <UCheckbox
+        v-model="overseerDefeated"
+        label="Overseer vaincu : ses influences ne s'appliquent plus"
+      />
       <KnAddPicker
         :items="overseerItems"
         placeholder="Ajouter une influence"
@@ -130,6 +134,13 @@ import { KN_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 
 const domain = defineModel<KnDomain>('domain', { required: true })
 
+const overseerDefeated = computed({
+  get: () => domain.value.overseerDefeated === true,
+  set: (value: boolean) => {
+    domain.value.overseerDefeated = value
+  },
+})
+
 const { t } = useI18n()
 const { labelText } = useKnLabels()
 
@@ -158,8 +169,9 @@ const skillItems = computed<SelectItem[]>(() =>
   KN_SKILL_KEYS.map(key => ({ label: t(`ker_nethalas.skills.${key}`), value: key })),
 )
 
-const missingInfluences = computed(() =>
-  domain.value.growingDarkness.filter(e => e.key === 'gd_81_100').length - domain.value.overseerInfluences.length,
+const missingInfluences = computed(() => domain.value.overseerDefeated
+  ? 0
+  : domain.value.growingDarkness.filter(e => e.key === 'gd_81_100').length - domain.value.overseerInfluences.length,
 )
 
 function addInfluence(key: string | number) {

@@ -8,7 +8,7 @@ import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import { knApplySelfEffects, knCombatWonEffects } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
-import { knEndCombat, knHealMinions } from '~~/shared/ker-nethalas/run'
+import { knDefeatOverseer, knEndCombat, knHealMinions } from '~~/shared/ker-nethalas/run'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 // La fin d'un combat : le survivant récupère D4 Robustesse, les aptitudes « une fois par combat » se libèrent et l'état du
@@ -54,6 +54,10 @@ export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnRe
     const c = character.value
     const maxVitals = resolved().maxVitals
     c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + KN_XP[kind])
+    if (kind === 'overseer') {
+      applyEffects([{ kind: 'vital', vital: 'sanity', dice: { count: 1, sides: 4, bonus: 0 }, sign: 'gain' }], 'Overseer vaincu')
+      c.run = knDefeatOverseer(c.run)
+    }
 
     const known = masteries()
     const effects = known ? knCombatWonEffects(known, knMasteryEntries(c.masteryPicks, c.amulets)) : []
@@ -78,7 +82,7 @@ export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnRe
 
     toast.add({
       title: kind === 'combat' ? 'Combat remporté' : 'Overseer vaincu',
-      description: `+${KN_XP[kind]} XP${effects.length ? ' · gains de Maîtrise appliqués' : ''}`,
+      description: `+${KN_XP[kind]} XP${kind === 'overseer' ? ' · +D4 Santé mentale · ses influences cessent' : ''}${effects.length ? ' · gains de Maîtrise appliqués' : ''}`,
       color: 'success',
     })
     endCombat()
