@@ -576,9 +576,23 @@ export function knUndoLastVisit(run: KnRun): KnRun {
 }
 
 // Engager un combat : chaque créature garde sa Santé, fixée ici à son niveau. Un combat déjà engagé ne se remplace pas.
-export function knStartCombat(run: KnRun, creatures: KnCombatCreature[], overseer = false): KnRun {
+export function knStartCombat(run: KnRun, creatures: KnCombatCreature[], overseer = false, fearLoss = 0): KnRun {
   if (run.combat || !creatures.length) return run
-  return { ...run, combat: { creatures: creatures.slice(0, KN_COMBAT_BOUNDS.creatures), round: 1, reactions: 0, log: [], ...(overseer ? { overseer } : {}) } }
+  return {
+    ...run,
+    combat: {
+      creatures: creatures.slice(0, KN_COMBAT_BOUNDS.creatures),
+      round: 1,
+      reactions: 0,
+      log: [],
+      ...(overseer ? { overseer } : {}),
+      ...(fearLoss > 0 ? { fear: { loss: fearLoss, resolved: false } } : {}),
+    },
+  }
+}
+
+export function knResolveCombatFear(run: KnRun): KnRun {
+  return run.combat?.fear ? { ...run, combat: { ...run.combat, fear: { ...run.combat.fear, resolved: true } } } : run
 }
 
 export function knEndCombat(run: KnRun): KnRun {

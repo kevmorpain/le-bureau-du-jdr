@@ -25,7 +25,7 @@ import {
   type KnExchange,
 } from '~~/shared/ker-nethalas/combat'
 import { knReactionPenalty, type KnCombat } from '~~/shared/ker-nethalas/combatState'
-import { knArmorAt, knCreatureAtLevel, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
+import { knArmorAt, knCreatureAtLevel, knFearLoss, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
 import { knArmorByZone, knArmorPieces, knInitiativeBonus } from '~~/shared/ker-nethalas/equipment'
 import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
@@ -137,7 +137,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       health: maxHealth,
       maxHealth,
     }))
-    character.value.run = knStartCombat(character.value.run, instances, overseer)
+    character.value.run = knStartCombat(character.value.run, instances, overseer, knFearLoss([creature]))
   }
 
   const highestMind = () => (combat.value?.creatures ?? []).reduce((best, creature, index) => {

@@ -217,5 +217,17 @@ export function knArmorAt(armor: readonly KnCreatureArmor[], location: KnHitLoca
 export const knCreatureLocations = (creature: KnCreature): KnHitLocationKey[] =>
   creature.hitLocation ? knHitLocationsOf(creature.hitLocation.table) : []
 
+export const KN_FEAR_LOSS = { frightening: 2, horrifying: 4 } as const
+
+// Un seul test de Résolution pour toute la rencontre, et la perte la plus forte parmi les créatures.
+export function knFearLoss(creatures: readonly Pick<KnCreature, 'traits'>[]): number {
+  const losses = creatures.flatMap(creature => creature.traits.flatMap(trait =>
+    trait.key === 'frightening' || trait.key === 'horrifying' ? [KN_FEAR_LOSS[trait.key]] : []))
+  return Math.max(0, ...losses)
+}
+
+export const knCannotBeSurprised = (creatures: readonly Pick<KnCreature, 'traits'>[]): boolean =>
+  creatures.some(creature => creature.traits.some(trait => trait.key === 'alert'))
+
 export const knFindCreature = (bestiary: readonly KnCreature[] | null | undefined, key: string | undefined): KnCreature | undefined =>
   key === undefined ? undefined : bestiary?.find(creature => creature.key === key)

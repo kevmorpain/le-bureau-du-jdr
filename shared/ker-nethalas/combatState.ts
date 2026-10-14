@@ -70,6 +70,8 @@ export const knCombatSchema = z.object({
   overseer: z.boolean().optional(),
   // Surprise réussie : la première attaque du survivant reçoit +20.
   surprise: z.boolean().optional(),
+  // Créature Effrayante ou Terrifiante : la Santé mentale perdue sur un test de Résolution raté, une seule fois par rencontre.
+  fear: z.object({ loss: boundedInt({ min: 1, max: 9 }), resolved: z.boolean() }).optional(),
   // Qui agit en premier jusqu'à la fin du combat, une fois l'Initiative jouée.
   first: z.enum(['survivor', 'creatures']).optional(),
   // Défenses déjà faites ce round : chacune après la première coûte −20, cumulatif.

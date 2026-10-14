@@ -101,6 +101,11 @@
         </p>
       </div>
 
+      <KnCombatFear
+        v-model:character="character"
+        :resolved
+      />
+
       <ul class="space-y-2">
         <li
           v-for="(creature, index) in combat.creatures"
@@ -171,6 +176,7 @@
           <UButton
             variant="soft"
             icon="i-heroicons:cube"
+            :disabled="cannotSurprise"
             @click="play('surprise')"
           >
             {{ knHasActivePerk(character, 'livingShadow') ? 'Surprendre (Atout, sans test)' : 'Tenter de surprendre (Furtivité)' }}
@@ -183,6 +189,12 @@
             Initiative (Perception)
           </UButton>
         </div>
+        <p
+          v-if="cannotSurprise"
+          class="text-sm text-warning"
+        >
+          Une créature Alerte ne peut être surprise d'aucune façon, même par un Atout : jouez l'Initiative.
+        </p>
         <p
           v-if="lastOpposed"
           class="text-sm"
@@ -242,7 +254,7 @@ import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
 import { knArmorByZone } from '~~/shared/ker-nethalas/equipment'
 import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
-import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import { knCannotBeSurprised, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -296,11 +308,16 @@ function nextRound() {
   applyEffects(ticks.map(tick => ({ kind: 'damage' as const, dice: { count: 0, sides: 0, bonus: tick.roll }, ...(tick.direct ? { direct: true } : {}) })), 'Début du tour')
 }
 
+const cannotSurprise = computed(() => knCannotBeSurprised(
+  (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0 && creatureOf(index) ? [creatureOf(index)!] : []),
+))
+
 const modifier = ref(0)
 const lastOpposed = ref('')
 
 // Une surprise ratée se rejoue en Initiative, avec −20 en Perception.
 function play(kind: 'surprise' | 'initiative') {
+  if (kind === 'surprise' && cannotSurprise.value) return
   if (kind === 'surprise' && knHasActivePerk(character.value, 'livingShadow')) {
     surpriseAutomatically()
     lastOpposed.value = 'Atout de surprise : la surprise réussit sans test (+20 à la première attaque).'
