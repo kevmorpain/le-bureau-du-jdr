@@ -76,8 +76,9 @@ export const knTemporarySchema = z.object({
 
 export type KnTemporary = z.infer<typeof knTemporarySchema>
 
+// `maîtrise:palier` pour une aptitude, ou une clé simple pour un usage limité qui n'en est pas une (les Bandages hors combat).
 export const knUsedAbilitySchema = z.object({
-  key: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}:[1-5]$/),
+  key: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}(:[1-5])?$/),
   limit: z.enum(KN_USE_LIMITS),
 })
 

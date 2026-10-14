@@ -43,6 +43,53 @@
           :magic
           @close="campOpen = false"
         />
+
+        <div class="space-y-2 border-t border-default pt-3">
+          <p class="text-sm font-medium">
+            Bandage hors combat
+          </p>
+          <p class="text-sm text-muted">
+            Un test de Médecine réussi et un Bandage soignent D4 Robustesse, une seule fois par salle.
+          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            <UButton
+              size="sm"
+              variant="outline"
+              icon="i-heroicons:cube"
+              @click="bandageCheckOpen = !bandageCheckOpen"
+            >
+              Tester la Médecine
+            </UButton>
+            <UButton
+              size="sm"
+              :variant="bandageSuggested ? 'solid' : 'soft'"
+              :disabled="character.provisions.bandages < 1 || bandageUsed"
+              @click="useBandage"
+            >
+              Test réussi : soigner D4 Robustesse
+            </UButton>
+            <span
+              v-if="bandageUsed"
+              class="text-sm text-muted"
+            >Déjà fait dans cette salle.</span>
+            <span
+              v-else-if="character.provisions.bandages < 1"
+              class="text-sm text-muted"
+            >Aucun Bandage.</span>
+          </div>
+          <KnInlineCheck
+            v-if="bandageCheckOpen"
+            :request="{ id: 'skill:medicine', difficulty: 'normal', note: 'Soigner avec un Bandage' }"
+            @rolled="success => bandageSuggested = success"
+            @close="bandageCheckOpen = false"
+          />
+          <p
+            v-if="bandageLine"
+            class="text-sm"
+          >
+            {{ bandageLine }}
+          </p>
+        </div>
       </div>
 
       <p class="text-sm">
@@ -57,7 +104,9 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_PROVISION_KEYS, knTakeBreather } from '~~/shared/ker-nethalas/camp'
+import { KN_BANDAGE, knUseBandage } from '~~/shared/ker-nethalas/healing'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
+import { knIsUsedUp } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCurrentDomain } from '~~/shared/ker-nethalas/run'
@@ -81,6 +130,31 @@ const provisionsText = computed(() => {
 
 const campOpen = ref(false)
 const breatherLines = ref<string[]>([])
+
+provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
+
+const bandageCheckOpen = ref(false)
+const bandageSuggested = ref(false)
+const bandageLine = ref('')
+const bandageUsed = computed(() => knIsUsedUp(character.value.status, KN_BANDAGE.key))
+
+function useBandage() {
+  const c = character.value
+  const result = knUseBandage({
+    toughness: c.toughnessCurrent,
+    toughnessMax: props.resolved.maxVitals.toughness.effective,
+    bandages: c.provisions.bandages,
+    status: c.status,
+  })
+  if ('error' in result) return
+  const gained = result.toughness - c.toughnessCurrent
+  c.toughnessCurrent = result.toughness
+  c.provisions = { ...c.provisions, bandages: result.bandages }
+  c.status = result.status
+  bandageLine.value = `Bandage : D4 → ${result.roll}, Robustesse ${signed(gained)}${gained < result.roll ? ' (limitée au maximum)' : ''}.`
+  bandageSuggested.value = false
+  bandageCheckOpen.value = false
+}
 
 function takeBreather() {
   const c = character.value

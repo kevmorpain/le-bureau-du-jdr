@@ -589,6 +589,12 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Alerte** : une créature Alerte ne peut être surprise d'aucune façon, et ce trait l'emporte sur les Atouts qui font toujours
   surprendre. Le bouton « Surprendre » est donc grisé tant qu'une créature en vie l'a (`knCannotBeSurprised`) ; l'Atout de surprise
   assurée de la tranche précédente l'ignorait.
+- **Bandage hors combat** (`healing.ts`, issue X28) : dans « Repos et provisions », un test de Médecine en ligne, puis « Test réussi :
+  soigner D4 Robustesse » consomme un Bandage et marque l'usage comme « par salle » (remis à zéro à l'entrée d'une salle, comme les
+  aptitudes). Le soin ne touche que la Robustesse, sans déborder sur la Santé, et ne dépasse pas son maximum. La clé d'usage
+  `bandage` n'a pas de palier : le format d'un usage accepte désormais une clé sans `:palier`.
+  ⚠️ hypothèses : le livre dit « en combinaison avec la compétence Médecine » sans écrire qu'une réussite est exigée ; l'outil
+  l'exige, par un bouton que le joueur confirme après le test. Un test raté ne consomme rien et n'épuise pas l'usage de la salle.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -931,7 +937,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | fusionnée (PR #286) ; jeu `personalGoals` typé chargé en production |
-| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | en cours (X25 et X24 écrits) |
+| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | en cours (X25, X24 et X28 écrits) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |

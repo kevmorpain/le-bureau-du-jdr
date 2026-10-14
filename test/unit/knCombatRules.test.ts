@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { knCannotBeSurprised, knFearLoss } from '../../shared/ker-nethalas/creatures'
+import { knUseBandage, type KnBandageInput } from '../../shared/ker-nethalas/healing'
 import { resolveKnSheet } from '../../shared/ker-nethalas/resolve'
 import { emptyKnRun, knCurrentDomain, knDefeatOverseer, knNewDomain, knResolveCombatFear, knRunSchema, knStartCombat, type KnRun } from '../../shared/ker-nethalas/run'
-import { emptyKnStatus } from '../../shared/ker-nethalas/status'
+import { emptyKnStatus, knStatusSchema } from '../../shared/ker-nethalas/status'
+import { knResetUses } from '../../shared/ker-nethalas/vitals'
 
 const resolve = (run: KnRun) => resolveKnSheet({
   skills: defaultKnSkills(),
@@ -66,5 +68,35 @@ describe('peur au début du combat', () => {
   it('une créature Alerte ne peut pas être surprise', () => {
     expect(knCannotBeSurprised([{ traits: [trait('pack')] }, { traits: [trait('alert')] }])).toBe(true)
     expect(knCannotBeSurprised([{ traits: [trait('pack')] }])).toBe(false)
+  })
+})
+
+describe('Bandage hors combat', () => {
+  const input = (over: Partial<KnBandageInput> = {}): KnBandageInput => ({ toughness: 10, toughnessMax: 25, bandages: 2, status: emptyKnStatus(), ...over })
+  const die = (result: number) => () => (result - 0.5) / 4
+
+  it('soigne D4 Robustesse, consomme un Bandage et se range sur la salle', () => {
+    const result = knUseBandage(input(), die(3))
+
+    if ('error' in result) throw new Error(result.error)
+    expect(result).toMatchObject({ toughness: 13, bandages: 1, roll: 3 })
+    expect(result.status.used).toEqual([{ key: 'bandage', limit: 'room' }])
+    expect(knStatusSchema.safeParse(result.status).success).toBe(true)
+  })
+
+  it('ne dépasse pas le maximum de Robustesse, ni ne déborde sur la Santé', () => {
+    const result = knUseBandage(input({ toughness: 24 }), die(4))
+
+    expect(result).toMatchObject({ toughness: 25 })
+    expect(knUseBandage(input({ toughness: 30 }), die(2))).toMatchObject({ toughness: 30 })
+  })
+
+  it('une seule fois par salle, et seulement avec un Bandage', () => {
+    const used = knUseBandage(input(), die(1))
+    if ('error' in used) throw new Error(used.error)
+
+    expect(knUseBandage(input({ status: used.status }))).toEqual({ error: 'usedThisRoom' })
+    expect(knUseBandage(input({ bandages: 0 }))).toEqual({ error: 'noBandage' })
+    expect(knUseBandage(input({ status: knResetUses(used.status, ['room']) }), die(2))).toMatchObject({ roll: 2 })
   })
 })
