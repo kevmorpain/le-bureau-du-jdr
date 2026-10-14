@@ -37,6 +37,16 @@ export function knEquipmentSources(items: readonly KnItem[]): KnActiveSource[] {
   return effects.length ? [{ id: 'equipment', label: { key: 'ker_nethalas.sources.equipment' }, effects, reminders: [] }] : []
 }
 
+// Deux armes à une main, une dans chaque main : le combat à deux armes est possible.
+export function knDualPair(items: readonly KnItem[]): [KnItem, KnItem] | null {
+  const main = items.find(item => item.place === 'mainHand' && item.weapon)
+  const off = items.find(item => item.place === 'offHand' && item.weapon)
+  return main && off && !traits(main).includes('twoHanded') && !traits(off).includes('twoHanded') ? [main, off] : null
+}
+
+// Toutes les attaques à −40, +1 dégât ; seule l'arme dominante compte, avec ses Traits et ses effets, et une Parade gratuite par round.
+export const KN_DUAL_WIELD = { attack: -40, damage: 1 } as const
+
 export const knWieldedWeapons = (items: readonly KnItem[]): KnItem[] =>
   items.filter(item => item.weapon && (item.place === 'mainHand' || item.place === 'offHand'))
 
@@ -84,7 +94,10 @@ export function knAttackOptions(
   items: readonly KnItem[],
   levelBenefits: readonly KnLevelBenefit[] = [],
   goalEffects: readonly KnGoalEffectEntry[] = [],
+  dualId?: string,
 ): KnAttackOption[] {
+  const dominant = dualId ? knDualPair(items)?.find(item => item.id === dualId) : undefined
+  const dualDice = dominant ? [{ dice: { count: 0, sides: 0, bonus: KN_DUAL_WIELD.damage } }] : []
   const offHandEmpty = !items.some(item => item.place === 'offHand')
   const levelDice = knLevelAttackDice(levelBenefits)
   const extraDice = (skill: KnSkillKey) => [...levelDice, ...knGoalAttackDice(goalEffects, skill)]
@@ -93,9 +106,9 @@ export function knAttackOptions(
     ? { ...KN_UNARMED_OPTION, pool: withMagicPool(KN_UNARMED_OPTION.pool, { dice: unarmedDice, speed: 0, vs: [] }), magic: { dice: unarmedDice, speed: 0, vs: [] } }
     : KN_UNARMED_OPTION
   return [
-    ...knWieldedWeapons(items).map((item) => {
+    ...(dominant ? [dominant] : knWieldedWeapons(items)).map((item) => {
       const own = knMagicAttack(items, item.id)
-      const magic = { ...own, dice: [...own.dice, ...extraDice(item.weapon!.skill)] }
+      const magic = { ...own, dice: [...own.dice, ...extraDice(item.weapon!.skill), ...dualDice] }
       const hasMagic = magic.dice.length || magic.speed || magic.vs.length
       return {
         id: item.id,
@@ -104,7 +117,7 @@ export function knAttackOptions(
         speed: item.weapon!.speed + magic.speed,
         pool: withMagicPool(knWeaponPool(item, offHandEmpty), magic),
         damageType: item.weapon!.damageType,
-        bonus: traits(item).includes('simple') ? 10 : 0,
+        bonus: (traits(item).includes('simple') ? 10 : 0) + (dominant ? KN_DUAL_WIELD.attack : 0),
         ...(hasMagic ? { magic } : {}),
       }
     }),
@@ -126,14 +139,17 @@ export interface KnDefenseOption {
   bonus: number
   // Les pièces qui servent à cette défense, dont l'Intégrité sera jouée après le combat.
   used: string[]
+  // La Parade gratuite du combat à deux armes : une par round, hors du malus cumulatif des Réactions.
+  free?: boolean
 }
 
 // Se défendre : à l'Esquive, ou à l'arme quand elle Pare ou qu'un bouclier le permet (qui ajoute son bonus de parade, et +10
 // pour une arme Défensive).
-export function knDefenseOptions(items: readonly KnItem[]): KnDefenseOption[] {
+export function knDefenseOptions(items: readonly KnItem[], dualId?: string): KnDefenseOption[] {
   const shield = items.find(item => item.kind === 'shield' && item.place === 'offHand')
-  const parries = knWieldedWeapons(items)
-    .filter(item => shield || traits(item).includes('parrying'))
+  const dominant = dualId ? knDualPair(items)?.find(item => item.id === dualId) : undefined
+  const parries = (dominant ? [dominant] : knWieldedWeapons(items))
+    .filter(item => dominant || shield || traits(item).includes('parrying'))
     .map<KnDefenseOption>(item => ({
       id: `parry:${item.id}`,
       kind: 'parry',
@@ -142,6 +158,7 @@ export function knDefenseOptions(items: readonly KnItem[]): KnDefenseOption[] {
       ...(shield ? { shield: shield.name } : {}),
       bonus: (shield ? (shield.parry ?? 0) + (traits(item).includes('defensive') ? 10 : 0) : 0) + knMagicParry(items),
       used: shield ? [shield.id] : [],
+      ...(dominant ? { free: true } : {}),
     }))
   return [{ id: 'dodge', kind: 'dodge', skill: 'dodge', bonus: 0, used: [] }, ...parries]
 }

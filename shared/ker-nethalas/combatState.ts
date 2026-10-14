@@ -70,6 +70,10 @@ export const knCombatSchema = z.object({
   overseer: z.boolean().optional(),
   // Surprise réussie : la première attaque du survivant reçoit +20.
   surprise: z.boolean().optional(),
+  // Combat à deux armes : l'identifiant de l'arme dominante, choisie au début du combat.
+  dual: z.string().min(1).max(40).optional(),
+  // La Parade gratuite du combat à deux armes est déjà prise ce round.
+  freeParryUsed: z.boolean().optional(),
   // La lampe est posée au sol (Action Standard) : une main est libre, mais une maladresse la renverse.
   lampDown: z.boolean().optional(),
   // Créature Effrayante ou Terrifiante : la Santé mentale perdue sur un test de Résolution raté, une seule fois par rencontre.

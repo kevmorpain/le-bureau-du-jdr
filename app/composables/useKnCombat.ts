@@ -46,10 +46,12 @@ import {
   knMarkGearUsed,
   knRegisterReaction,
   knRollDie,
+  knSetCombatDual,
   knSetCombatFirst,
   knSetCombatLamp,
   knSetCombatSurprise,
   knSpillLamp,
+  knUseFreeParry,
   knSpendCombatCreature,
   knStartCombat,
   knVanishSpentCreatures,
@@ -255,6 +257,11 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     })
   }
 
+  function setDual(dominant: string | null) {
+    character.value.run = knSetCombatDual(character.value.run, dominant)
+    log(dominant ? 'Combat à deux armes : arme dominante choisie' : 'Combat à deux armes abandonné')
+  }
+
   function setLamp(down: boolean) {
     character.value.run = knSetCombatLamp(character.value.run, down)
     log(down ? 'Lampe posée au sol (Action Standard)' : 'Lampe reprise en main')
@@ -413,7 +420,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
 
   // L'action d'une créature contre le survivant, ou contre un sbire (`minion`). Physique : jet opposé contre sa défense ;
   // Magique : test de Résistance magique ; sans étiquette, c'est le texte de l'action qui décide.
-  function takeTurn(input: { index: number, d6: number, action: KnCreatureAction, defense: KnSkillKey, magicCheck: KnSkillKey | KnResistanceKey, bonus: number, minion?: number, defenseBonus?: number, gear?: string[] }): KnTurnResult | undefined {
+  function takeTurn(input: { index: number, d6: number, action: KnCreatureAction, defense: KnSkillKey, magicCheck: KnSkillKey | KnResistanceKey, bonus: number, minion?: number, defenseBonus?: number, gear?: string[], freeParry?: boolean }): KnTurnResult | undefined {
     const target = combat.value?.creatures[input.index]
     const creature = creatureOf(input.index)
     if (!combat.value || !target || !creature) return undefined
@@ -426,7 +433,8 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const buffs = knBuffTotals(target.effects)
     const pool = knActionPool(action, creature, level.value, buffs.damageBonuses)
     const damageType = action.damage?.type
-    const penalty = knReactionPenalty(combat.value.reactions)
+    const free = !!input.freeParry && !minionSheet && !combat.value.freeParryUsed
+    const penalty = free ? 0 : knReactionPenalty(combat.value.reactions)
     const alive = combat.value.creatures.filter(c => c.ref === target.ref && c.health > 0).length
     const sheet = resolved()
 
@@ -451,7 +459,8 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects)
       : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: knMergeReductions(survivorDefenses.reduction, knGoalReductions(character.value.goalEffects)) }
     const registerReaction = () => {
-      if (!minionSheet) character.value.run = knRegisterReaction(character.value.run)
+      if (minionSheet) return
+      character.value.run = free ? knUseFreeParry(character.value.run) : knRegisterReaction(character.value.run)
     }
 
     if (action.tag === 'physical') {
@@ -564,5 +573,5 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, setLamp, spillLamp, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
+  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, setDual, setLamp, spillLamp, applyAttack, drawAction, takeTurn, applyToSurvivor, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
 }

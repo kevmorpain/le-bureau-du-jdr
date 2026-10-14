@@ -4,6 +4,31 @@
       Attaque du survivant
     </h3>
 
+    <div
+      v-if="dualPair"
+      class="space-y-1"
+    >
+      <div class="flex flex-wrap items-center gap-3">
+        <UCheckbox
+          :model-value="!!dualActive"
+          label="Combat à deux armes"
+          @update:model-value="toggleDual"
+        />
+        <USelect
+          v-if="dualActive"
+          :model-value="combat?.dual"
+          :items="dualItems"
+          class="w-56"
+          aria-label="Arme dominante"
+          @update:model-value="chooseDominant"
+        />
+      </div>
+      <p class="text-xs text-muted">
+        À choisir au début du combat : toutes les attaques à {{ KN_DUAL_WIELD.attack }}, +{{ KN_DUAL_WIELD.damage }} dégât et une Parade gratuite par
+        round ; seuls les Traits et les effets de l'arme dominante comptent.
+      </p>
+    </div>
+
     <div class="grid gap-3 sm:grid-cols-2">
       <UFormField label="Cible">
         <USelect
@@ -188,7 +213,7 @@ import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_DAMAGE_TYPES, type KnDamageType } from '~~/shared/ker-nethalas/catalog/damageTypes'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { knParseDicePool } from '~~/shared/ker-nethalas/dice'
-import { knAttackOptions } from '~~/shared/ker-nethalas/equipment'
+import { KN_DUAL_WIELD, knAttackOptions, knDualPair } from '~~/shared/ker-nethalas/equipment'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { KN_WEAPON_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import type { KnAttackResult } from '~/composables/useKnCombat'
@@ -201,13 +226,24 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, attack, rerollDamage, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, attack, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 
 const KN_SURPRISE_BONUS = 20
 
 const target = ref(0)
 const bonus = ref(0)
-const attackOptions = computed(() => knAttackOptions(character.value.inventory, character.value.levelBenefits, character.value.goalEffects))
+const attackOptions = computed(() => knAttackOptions(character.value.inventory, character.value.levelBenefits, character.value.goalEffects, combat.value?.dual))
+const dualPair = computed(() => knDualPair(character.value.inventory))
+const dualActive = computed(() => dualPair.value?.some(item => item.id === combat.value?.dual))
+const dualItems = computed<SelectItem[]>(() => (dualPair.value ?? []).map(item => ({ label: item.name, value: item.id })))
+
+function toggleDual(on: boolean | 'indeterminate') {
+  setDual(on === true && dualPair.value ? dualPair.value[0].id : null)
+}
+
+function chooseDominant(id: unknown) {
+  if (typeof id === 'string') setDual(id)
+}
 const weaponId = ref(attackOptions.value[0]!.id)
 const weaponBonus = ref(0)
 const skill = ref<KnSkillKey>(attackOptions.value[0]!.skill)

@@ -764,7 +764,17 @@ export function knRegisterReaction(run: KnRun): KnRun {
 
 export function knNextCombatRound(run: KnRun): KnRun {
   if (!run.combat) return run
-  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...run.combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
+  const { freeParryUsed: _used, ...combat } = run.combat
+  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
+}
+
+// La Parade gratuite du combat à deux armes ne compte pas parmi les Réactions du round, une fois par round.
+export const knUseFreeParry = (run: KnRun): KnRun => run.combat ? { ...run, combat: { ...run.combat, freeParryUsed: true } } : run
+
+export function knSetCombatDual(run: KnRun, dominant: string | null): KnRun {
+  if (!run.combat) return run
+  const { dual: _previous, ...rest } = run.combat
+  return { ...run, combat: dominant ? { ...rest, dual: dominant } : rest }
 }
 
 export function knSetCombatSurprise(run: KnRun, surprise: boolean): KnRun {

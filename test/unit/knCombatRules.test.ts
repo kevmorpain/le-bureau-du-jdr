@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { knCannotBeSurprised, knFearLoss } from '../../shared/ker-nethalas/creatures'
-import { knFreeHands } from '../../shared/ker-nethalas/equipment'
+import { KN_DUAL_WIELD, knAttackOptions, knDefenseOptions, knDualPair, knFreeHands } from '../../shared/ker-nethalas/equipment'
 import { knUseBandage, type KnBandageInput } from '../../shared/ker-nethalas/healing'
 import type { KnItem } from '../../shared/ker-nethalas/inventory'
 import { resolveKnSheet } from '../../shared/ker-nethalas/resolve'
-import { emptyKnRun, knCurrentDomain, knDefeatOverseer, knNewDomain, knResolveCombatFear, knRunSchema, knSetCombatLamp, knSpillLamp, knStartCombat, type KnRun } from '../../shared/ker-nethalas/run'
+import { emptyKnRun, knCurrentDomain, knDefeatOverseer, knNewDomain, knNextCombatRound, knResolveCombatFear, knRunSchema, knSetCombatDual, knSetCombatLamp, knSpillLamp, knStartCombat, knUseFreeParry, type KnRun } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, knStatusSchema } from '../../shared/ker-nethalas/status'
 import { knResetUses } from '../../shared/ker-nethalas/vitals'
 
@@ -134,5 +134,53 @@ describe('lampe en combat', () => {
     expect(spilled.lightRemaining).toBe(0)
     expect(spilled.combat?.lampDown).toBeUndefined()
     expect(knRunSchema.safeParse(spilled).success).toBe(true)
+  })
+})
+
+describe('combat à deux armes', () => {
+  const sword = (id: string, place: KnItem['place'], traits: ('twoHanded' | 'simple' | 'parrying' | 'powerful')[] = []): KnItem =>
+    ({ id, name: id, kind: 'weapon', weight: 'normal', quantity: 1, place, weapon: { skill: 'bladedWeapons', speed: 0, damageType: 'slashing', traits } })
+  const pair = [sword('a', 'mainHand', ['simple']), sword('b', 'offHand', ['powerful'])]
+  const fighting = () => knStartCombat(emptyKnRun(), [{ ref: 'x', name: 'X', health: 5, maxHealth: 5 }])
+
+  it('il faut une arme à une main dans chaque main', () => {
+    expect(knDualPair(pair)?.map(item => item.id)).toEqual(['a', 'b'])
+    expect(knDualPair([sword('a', 'mainHand', ['twoHanded'])])).toBeNull()
+    expect(knDualPair([sword('a', 'mainHand'), { ...sword('s', 'offHand'), kind: 'shield', weapon: undefined }])).toBeNull()
+    expect(knDualPair([sword('a', 'mainHand')])).toBeNull()
+  })
+
+  it('seule l\'arme dominante attaque, à −40 et +1 dégât, avec ses seuls Traits', () => {
+    const options = knAttackOptions(pair, [], [], 'a')
+
+    expect(options.map(option => option.id)).toEqual(['a', 'unarmed'])
+    expect(options[0]).toMatchObject({ pool: 'D6+1', bonus: 10 + KN_DUAL_WIELD.attack })
+    expect(knAttackOptions(pair, [], [], 'b')[0]).toMatchObject({ id: 'b', pool: 'D6+1+1', bonus: KN_DUAL_WIELD.attack })
+    expect(knAttackOptions(pair).map(option => option.id)).toEqual(['a', 'b', 'unarmed'])
+    expect(knAttackOptions(pair, [], [], 'inconnue').map(option => option.id)).toEqual(['a', 'b', 'unarmed'])
+  })
+
+  it('une Parade gratuite avec l\'arme dominante, même sans le Trait Parade', () => {
+    const options = knDefenseOptions(pair, 'a')
+    const parries = options.filter(option => option.kind === 'parry')
+
+    expect(parries).toHaveLength(1)
+    expect(parries[0]).toMatchObject({ id: 'parry:a', free: true })
+    expect(knDefenseOptions(pair).some(option => option.kind === 'parry')).toBe(false)
+  })
+
+  it('l\'arme dominante et la Parade gratuite se retiennent dans le combat, la Parade se libère au round suivant', () => {
+    const dual = knSetCombatDual(fighting(), 'a')
+    const used = knUseFreeParry(dual)
+
+    expect(dual.combat?.dual).toBe('a')
+    expect(used.combat?.freeParryUsed).toBe(true)
+    expect(used.combat?.reactions).toBe(0)
+    expect(knNextCombatRound(used).combat?.freeParryUsed).toBeUndefined()
+    expect(knNextCombatRound(used).combat?.dual).toBe('a')
+    expect(knSetCombatDual(dual, null).combat?.dual).toBeUndefined()
+    expect(knRunSchema.safeParse(used).success).toBe(true)
+    const calm = emptyKnRun()
+    expect(knSetCombatDual(calm, 'a')).toBe(calm)
   })
 })

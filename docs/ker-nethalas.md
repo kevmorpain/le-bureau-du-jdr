@@ -603,6 +603,13 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   ⚠️ hypothèses : « toute son huile se répand » est lu comme une lumière restante de 0 ; l'outil ne sait pas si la source est une
   Torche, une Lampe, une Lampe de ceinture ou un sort, donc l'avertissement le dit et laisse le joueur juger ; la lampe se reprend
   à la main, et l'état n'est pas conservé après le combat.
+- **Combat à deux armes** (issue X26) : avec une arme à une main dans chaque main (`knDualPair`), la carte d'attaque propose « Combat à deux
+  armes » et le choix de l'arme dominante, à faire au début du combat (`combat.dual`). Seule l'arme dominante attaque, avec ses Traits et
+  ses propriétés magiques : toutes les attaques à −40, +1 dégât (`KN_DUAL_WIELD`). Elle ouvre aussi une Parade gratuite par round, même sans
+  le Trait Parade : cette défense n'ajoute pas au compte des Réactions et ne subit pas leur malus cumulatif ; elle se libère au round
+  suivant (`freeParryUsed`). Décocher la case rend les deux armes séparées.
+  ⚠️ hypothèses : le −40 vise les attaques, pas la Parade gratuite ; la Parade gratuite se fait avec l'arme dominante, dont la compétence
+  sert au test ; une seconde Parade du même round compte comme une Réaction ordinaire.
 
 ### KN39 — Suivi de combat : échange opposé, dégâts calculés, application par bouton
 - **Règles sourcées** (livre v1.2) : p. 70 (jet opposé), p. 75-79 (attaque, défense, actions, Initiative et surprise,
@@ -945,7 +952,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **4f-3 — Effets sur soi** | points temporaires, soin de Blessures, fin de combat, fréquences d'usage, effets sur soi avec dés (KN34) | écrite, vérifiée, non fusionnée |
 | **4f-4 — Activités de camp des traits** | activités ajoutées au camp par certains traits, bonus au test de camp, composants rituels (KN35) | écrite, vérifiée, non fusionnée |
 | **8 — Progression** | sources d'XP (X19 #271), passage de niveau (X20 #272), amélioration de compétence au camp (X21 #273), Atouts (X22 #274), récompenses d'objectifs (X23 #275) avec le progrès automatique (X17 #265) ; une seule PR, un commit par issue (KN45) | fusionnée (PR #286) ; jeu `personalGoals` typé chargé en production |
-| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | en cours (X25, X24, X28 et X32 écrits) |
+| **9 — Règles de combat restantes** | Overseer vaincu (X25 #277), test de Résolution contre les créatures Effrayantes et Terrifiantes (X24 #276), Bandages hors combat (X28 #280), lampe en combat (X32 #284), combat à deux armes (X26 #278), arme ou bouclier sacrifié (X27 #279), Destin refusé (X29 #281) ; une seule PR, un commit par issue (KN46) | en cours (X25, X24, X28, X32 et X26 écrits) |
 | **5a — Exploration : tables, forme, description, rencontre, porte, fouille** | format des tables de tirage, forme au D100, descriptions de couloirs et de salles, contrôle de combat, porte, fouille avec application des effets (KN36) ; issue X14 (#261) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5b — Événements** | table des événements (D100), contenu privé, ses tests et ses résultats (KN36, KN37) | fusionnée (PR #268) ; contenu à relire par le PM |
 | **5c — Verrous, pièges, fouille approfondie** | vérification des portes et des contenants (Perception, piège, type de piège, verrou), fouille approfondie, tests de Tension supplémentaires (KN36) | fusionnée (PR #268) ; contenu à relire par le PM |

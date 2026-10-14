@@ -45,6 +45,9 @@
       >
         Défenses déjà faites ce round : {{ combat?.reactions ?? 0 }}
         (malus de {{ knReactionPenalty(combat?.reactions ?? 0) }} à la prochaine)
+        <template v-if="defense.free">
+          · {{ combat?.freeParryUsed ? 'Parade gratuite déjà prise ce round' : 'Parade gratuite disponible : sans malus et hors du compte' }}
+        </template>
       </div>
     </div>
 
@@ -291,11 +294,11 @@ const magicItems: SelectItem[] = [
   { label: t('ker_nethalas.resistances.resolve'), value: 'resolve' },
   { label: t('ker_nethalas.skills.dodge'), value: 'dodge' },
 ]
-const defenseOptions = computed(() => knDefenseOptions(character.value.inventory).filter(option => option.kind === 'dodge' || !savage.value))
+const defenseOptions = computed(() => knDefenseOptions(character.value.inventory, combat.value?.dual).filter(option => option.kind === 'dodge' || !savage.value))
 const defenseItems = computed<SelectItem[]>(() => defenseOptions.value.map((option) => {
   const detail = option.kind === 'dodge'
     ? t('ker_nethalas.skills.dodge')
-    : `Parade : ${option.weapon}${option.shield ? ` et ${option.shield}` : ''} (${t(`ker_nethalas.skills.${option.skill}`)}${option.bonus ? `, +${option.bonus}` : ''})`
+    : `Parade${option.free ? ' gratuite' : ''} : ${option.weapon}${option.shield ? ` et ${option.shield}` : ''} (${t(`ker_nethalas.skills.${option.skill}`)}${option.bonus ? `, +${option.bonus}` : ''})`
   return { label: detail, value: option.id }
 }))
 const defense = computed(() => defenseOptions.value.find(option => option.id === defenseId.value) ?? defenseOptions.value[0]!)
@@ -318,7 +321,7 @@ function drawNow() {
 
 function resolveNow() {
   if (!drawn.value) return
-  result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value.skill, defenseBonus: defense.value.bonus, gear: defense.value.used, magicCheck: magicCheck.value, bonus: bonus.value, ...(onSurvivor.value ? {} : { minion: victim.value as number }) })
+  result.value = takeTurn({ index: who.value, d6: drawn.value.d6, action: drawn.value.action, defense: defense.value.skill, defenseBonus: defense.value.bonus, gear: defense.value.used, freeParry: defense.value.free, magicCheck: magicCheck.value, bonus: bonus.value, ...(onSurvivor.value ? {} : { minion: victim.value as number }) })
   manualAmount.value = result.value?.amount ?? 0
 }
 
