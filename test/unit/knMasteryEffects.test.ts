@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { knMasteriesContentSchema } from '../../shared/ker-nethalas/masteries'
 import {
-  KN_COMBAT_XP,
   knAbilityBlockers,
   knAbilityIsPassive,
   knAbilityIsUsable,
@@ -210,10 +209,6 @@ describe('usage limité', () => {
     expect(knAbilityIsUsable({ ...passive, limit: 'campRest' })).toBe(true)
     expect(knAbilityIsUsable({ ...passive, self: [{ kind: 'woundsHeal', dice: { count: 1, sides: 4, bonus: 0 } }] })).toBe(true)
     expect(knAbilityIsUsable({ action: '1 Action Standard' })).toBe(true)
-  })
-
-  it('l\'expérience d\'un combat vaincu vient du livre', () => {
-    expect(KN_COMBAT_XP).toEqual({ combat: 50, overseer: 200 })
   })
 })
 

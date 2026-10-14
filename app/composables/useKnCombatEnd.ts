@@ -5,7 +5,8 @@ import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import { knClearCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knRollIntegrity, type KnIntegrityResult } from '~~/shared/ker-nethalas/equipment'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
-import { KN_COMBAT_XP, knApplySelfEffects, knCombatWonEffects } from '~~/shared/ker-nethalas/masteryEffects'
+import { KN_XP } from '~~/shared/ker-nethalas/experience'
+import { knApplySelfEffects, knCombatWonEffects } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knEndCombat, knHealMinions } from '~~/shared/ker-nethalas/run'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
@@ -49,10 +50,10 @@ export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnRe
     character.value.run = knEndCombat(character.value.run)
   }
 
-  function win(kind: keyof typeof KN_COMBAT_XP) {
+  function win(kind: 'combat' | 'overseer') {
     const c = character.value
     const maxVitals = resolved().maxVitals
-    c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + KN_COMBAT_XP[kind])
+    c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + KN_XP[kind])
 
     const known = masteries()
     const effects = known ? knCombatWonEffects(known, knMasteryEntries(c.masteryPicks, c.amulets)) : []
@@ -77,7 +78,7 @@ export function useKnCombatEnd(character: Ref<KnCharacter>, resolved: () => KnRe
 
     toast.add({
       title: kind === 'combat' ? 'Combat remporté' : 'Overseer vaincu',
-      description: `+${KN_COMBAT_XP[kind]} XP${effects.length ? ' · gains de Maîtrise appliqués' : ''}`,
+      description: `+${KN_XP[kind]} XP${effects.length ? ' · gains de Maîtrise appliqués' : ''}`,
       color: 'success',
     })
     endCombat()

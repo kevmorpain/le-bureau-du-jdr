@@ -28,7 +28,7 @@
             :variant="won ? 'solid' : 'soft'"
             @click="win(combat.overseer ? 'overseer' : 'combat')"
           >
-            {{ combat.overseer ? `Overseer vaincu (+${KN_COMBAT_XP.overseer} XP)` : `Combat remporté (+${KN_COMBAT_XP.combat} XP)` }}
+            {{ combat.overseer ? `Overseer vaincu (+${KN_XP.overseer} XP)` : `Combat remporté (+${KN_XP.combat} XP)` }}
           </UButton>
           <UButton
             size="sm"
@@ -240,7 +240,7 @@ import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
 import { knAdvanceCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
 import { knArmorByZone } from '~~/shared/ker-nethalas/equipment'
-import { KN_COMBAT_XP } from '~~/shared/ker-nethalas/masteryEffects'
+import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'

@@ -3,6 +3,7 @@ import { KN_PROVISION_BOUNDS, type KnProvisions } from './camp'
 import { knRollDice } from './dice'
 import { knUseSchema } from './consumables'
 import { knDiceSchema } from './diceSchema'
+import { KN_XP } from './experience'
 import { KN_MAX_ITEMS, knDefaultWeight, knNextItemId, type KnItem, type KnItemKind } from './inventory'
 import { knItemFromCatalog, type KnCatalogItem } from './items'
 import { KN_MAGIC_TYPE_DIE, KN_RELIC_DIE, knMagicTypeAt, type KnMagicContent, type KnMagicType, type KnRelic } from './magic'
@@ -111,9 +112,6 @@ export interface KnLootResult {
 }
 
 export const KN_LORE_BOOK_REF = 'loreBook'
-
-// Trouver un livre de savoir rapporte de l'expérience.
-export const KN_LORE_BOOK_XP = 10
 
 const MAX_CHAIN = 6
 
@@ -249,7 +247,7 @@ export function knApplyLoot(state: KnLootState, result: KnLootResult, catalog: r
     }
     let next = state
     const lines: string[] = []
-    const earned = () => entry.key === KN_LORE_BOOK_REF && lines.length ? { xp: KN_LORE_BOOK_XP * lines.length } : {}
+    const earned = () => entry.key === KN_LORE_BOOK_REF && lines.length ? { xp: KN_XP.loreBook * lines.length } : {}
     for (let i = 0; i < result.count; i++) {
       const ordinary = knItemFromCatalog(entry, 'x', { found: true })
       const { loreBook } = result

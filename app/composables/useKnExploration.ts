@@ -13,6 +13,7 @@ import {
   type KnObstacleAct,
   type KnVisitTable,
 } from '~~/shared/ker-nethalas/exploration'
+import { KN_XP, knObstacleXp } from '~~/shared/ker-nethalas/experience'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import {
   knAddDoorObstacle,
@@ -22,6 +23,7 @@ import {
   knMarkEventOutcome,
   knMarkScavengeApplied,
   knMarkScavengeOutcome,
+  knNewDomain,
   knObstacleState,
   knRecordCreature,
   knRecordDeepSearchContent,
@@ -53,6 +55,7 @@ import {
   type KnExplorationTableName,
   type KnRollTable,
 } from '~~/shared/ker-nethalas/tables'
+import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 type Tables = Partial<Record<KnExplorationTableName, KnRollTable | null>>
 
@@ -190,6 +193,18 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
       c.run = knResolveForce(c.run, index, act === 'forceOpened')
       noise()
     }
+
+    for (const { source, amount } of knObstacleXp(obstacle, knCurrentVisit(c.run)?.obstacles?.[index])) {
+      applyEffects([{ kind: 'xp', amount }], source === 'lockOpened' ? 'Verrou ouvert' : 'Piège désamorcé')
+    }
+  }
+
+  // Un nouveau Domaine : le dé de Lair repart, les usages « par Domaine » se remettent à zéro, et il rapporte de l'expérience.
+  function newDomain() {
+    const c = character.value
+    c.run = knNewDomain(c.run)
+    c.status = knResetUses(c.status, ['domain'])
+    applyEffects([{ kind: 'xp', amount: KN_XP.newDomain }], 'Nouveau Domaine')
   }
 
   function drawCreature(d6: number, d20: number) {
@@ -200,5 +215,5 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
     character.value.run = knRecordOverseer(character.value.run, manual ?? knRollDie(KN_OVERSEER_DIE))
   }
 
-  return { tableRoll, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct, drawCreature, drawOverseer }
+  return { tableRoll, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct, newDomain, drawCreature, drawOverseer }
 }
