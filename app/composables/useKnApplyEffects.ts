@@ -8,6 +8,7 @@ import { knApplyTableEffects, type KnEffectScale, type KnTableEffect } from '~~/
 export function useKnApplyEffects(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet) {
   const toast = useToast()
   const { outcomeText } = useKnEffectText()
+  const { record } = useKnGoalProgress(character)
 
   function applyEffects(effects: readonly KnTableEffect[], title: string, options: { creature?: boolean, scale?: KnEffectScale } = {}) {
     if (!effects.length) return
@@ -32,7 +33,9 @@ export function useKnApplyEffects(character: Ref<KnCharacter>, resolved: () => K
       aether: maxVitals.aether.effective,
     }, undefined, { ...options, immune: knMagicDefenses(c.inventory).immune })
 
+    const earned = state.coins - c.coins
     c.coins = state.coins
+    if (earned > 0) record({ kind: 'coins', amount: earned })
     c.xp = state.xp
     c.provisions = state.provisions
     c.healthCurrent = state.health

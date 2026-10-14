@@ -302,7 +302,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { combat, creatureOf, opposed, surpriseAutomatically, setLamp } = useKnCombat(character, () => props.resolved, () => props.bestiary)
-const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries)
+const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { buffParts } = useKnEffectText()
 const toast = useToast()

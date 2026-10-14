@@ -23,6 +23,10 @@ export type KnResistanceKey = (typeof KN_RESISTANCE_KEYS)[number]
 // Les compétences d'arme (« weapon Skills ») sont ces quatre-là, Combat à mains nues compris.
 export const KN_WEAPON_SKILL_KEYS = ['bladedWeapons', 'bludgeoningWeapons', 'shaftedWeapons', 'unarmedCombat'] as const
 
+export type KnWeaponSkillKey = (typeof KN_WEAPON_SKILL_KEYS)[number]
+
+export const knIsWeaponSkill = (key: string): key is KnWeaponSkillKey => (KN_WEAPON_SKILL_KEYS as readonly string[]).includes(key)
+
 // Le livre ne définit pas « non-combat Skill » : ici, tout ce qui n'est ni compétence d'arme ni Esquive.
 export const KN_NON_COMBAT_SKILL_KEYS = KN_SKILL_KEYS.filter(
   key => key !== 'dodge' && !(KN_WEAPON_SKILL_KEYS as readonly string[]).includes(key),

@@ -127,6 +127,7 @@ const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
 const toast = useToast()
+const { record } = useKnGoalProgress(character)
 
 const STARTS: KnLootTableKey[] = ['spoils', 'mundane', 'valuable', 'precious', 'resources', 'containers']
 
@@ -189,7 +190,10 @@ function take(entry: Pending) {
   if (entry.coins) {
     c.coins = Math.min(KN_BOUNDS.coins.max, c.coins + entry.coins)
     lines.push(`+${entry.coins} ₵`)
+    record({ kind: 'coins', amount: entry.coins })
   }
+  if (entry.result.drop.kind === 'relic') record({ kind: 'relic' })
+  if (entry.result.loreBook) record({ kind: 'loreBook' })
   if (amulet) lines.push(drawAmulet())
   if (xp) {
     c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + xp)

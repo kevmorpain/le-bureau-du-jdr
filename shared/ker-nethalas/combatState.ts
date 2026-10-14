@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { KN_DAMAGE_TYPES } from './catalog/damageTypes'
 import { knDiceSchema } from './diceSchema'
+import { KN_WEAPON_SKILL_KEYS } from './skills'
 import { boundedInt } from './zodHelpers'
 
 export const KN_COMBAT_BOUNDS = {
@@ -61,6 +62,8 @@ export const knCombatCreatureSchema = z.object({
   effects: z.array(knCreatureBuffSchema).max(8).optional(),
   // Une créature éphémère a joué son action : elle disparaît au tour suivant.
   spent: z.boolean().optional(),
+  // La compétence d'arme du survivant dont le coup l'a vaincue, pour les objectifs.
+  slainBy: z.enum(KN_WEAPON_SKILL_KEYS).optional(),
 })
 
 export const knCombatSchema = z.object({

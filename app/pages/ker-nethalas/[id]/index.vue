@@ -168,6 +168,7 @@ const { data } = await useFetch<KnCharacter>(`/api/ker-nethalas/characters/${rou
 const character = ref(data.value)
 
 const { status } = useKnAutosave(character)
+useKnDarknessGoal(character)
 const resolved = useKnResolved(character, masteries)
 
 const STATUS_LABELS: Record<AutoSaveStatus, string> = {
