@@ -5,9 +5,11 @@
   >
     <template #header>
       <div class="flex flex-wrap items-center gap-2">
-        <h2 class="font-semibold">
-          Combat · round {{ combat.round }}
-        </h2>
+        <KnCardHeader :title="`Combat · round ${combat.round}`">
+          Les jets se font ici avec les dés de l'outil. À chaque résultat, les dégâts s'appliquent par un bouton, jamais d'office.
+          La fin du combat rend D4 Robustesse et libère les aptitudes « une fois par combat » ; une victoire donne aussi l'expérience
+          et les gains des Maîtrises. « Annuler » retire le combat sans rien rendre.
+        </KnCardHeader>
         <UBadge
           v-if="combat.first"
           :label="combat.first === 'survivor' ? 'Le survivant agit en premier' : 'Les créatures agissent en premier'"
@@ -40,6 +42,17 @@
           </UButton>
           <UButton
             size="sm"
+            variant="outline"
+            color="neutral"
+            icon="i-heroicons:arrow-uturn-left"
+            :disabled="!canFlee"
+            :title="canFlee ? undefined : 'Aucune pièce précédente où se replier'"
+            @click="fleeCheckOpen = !fleeCheckOpen"
+          >
+            Fuir
+          </UButton>
+          <UButton
+            size="sm"
             variant="ghost"
             color="neutral"
             @click="cancelCombat"
@@ -48,11 +61,6 @@
           </UButton>
         </div>
       </div>
-      <p class="mt-1 text-sm text-muted">
-        Les jets se font ici avec les dés de l'outil. À chaque résultat, les dégâts s'appliquent par un bouton, jamais d'office.
-        La fin du combat rend D4 Robustesse et libère les aptitudes « une fois par combat » ; une victoire donne aussi l'expérience
-        et les gains des Maîtrises. « Annuler » retire le combat sans rien rendre.
-      </p>
     </template>
 
     <div class="space-y-5">
@@ -83,23 +91,12 @@
         </ul>
       </div>
 
-      <div class="space-y-1">
-        <p class="text-xs font-medium text-muted">
-          Armure portée par zone
-        </p>
-        <p class="flex flex-wrap gap-x-4 text-sm">
-          <span
-            v-for="zone in KN_SURVIVOR_ARMOR_ZONES"
-            :key="zone"
-          ><span class="text-muted">{{ ZONE_LABELS[zone] }} :</span> <span class="font-medium">{{ armorByZone[zone] }}</span></span>
-        </p>
-        <p
-          v-if="!hasArmor"
-          class="text-xs text-muted"
-        >
-          Aucune pièce d'armure portée : ajoutez-en dans l'inventaire (section Équipement) et portez-les.
-        </p>
-      </div>
+      <KnInlineCheck
+        v-if="fleeCheckOpen"
+        :request="{ id: knCheckId('dodge'), difficulty: 'normal', note: 'Fuir le combat : se replier dans la pièce précédente (Action Standard)' }"
+        @rolled="success => attemptFlee(success)"
+        @close="fleeCheckOpen = false"
+      />
 
       <KnCombatFear
         v-model:character="character"
@@ -110,7 +107,7 @@
         <li
           v-for="(creature, index) in combat.creatures"
           :key="index"
-          class="flex flex-wrap items-end gap-3 rounded-md border border-default p-2"
+          class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-default p-3"
           :class="creature.health <= 0 ? 'opacity-60' : ''"
         >
           <div class="min-w-40 flex-1">
@@ -154,12 +151,24 @@
               Fiche non chargée
             </p>
           </div>
+          <div class="w-44 space-y-1">
+            <div class="flex justify-between text-xs text-muted">
+              <span>Santé</span>
+              <span class="tabular-nums">{{ creature.health }} / {{ creature.maxHealth }}</span>
+            </div>
+            <UProgress
+              :model-value="Math.max(0, creature.health)"
+              :max="Math.max(1, creature.maxHealth)"
+              size="sm"
+              color="error"
+            />
+          </div>
           <KnNumberField
             v-model="creature.health"
-            :label="`Santé (max ${creature.maxHealth})`"
+            :aria-label="`Santé de ${creature.name} (max ${creature.maxHealth})`"
             :min="0"
             :max="creature.maxHealth"
-            class="w-32"
+            class="w-24"
           />
         </li>
       </ul>
@@ -246,6 +255,12 @@
         :bestiary
       />
 
+      <KnCombatAbilities
+        v-model:character="character"
+        :masteries
+        :resolved
+      />
+
       <KnCombatMinions
         v-model:character="character"
         :resolved
@@ -280,11 +295,10 @@
 
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker-nethalas/combat'
 import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
 import { knAdvanceCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
-import { knArmorByZone, knFreeHands } from '~~/shared/ker-nethalas/equipment'
+import { knFreeHands } from '~~/shared/ker-nethalas/equipment'
 import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
 import { knCannotBeSurprised, type KnCreature } from '~~/shared/ker-nethalas/creatures'
@@ -292,6 +306,7 @@ import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCombatLog, knNextCombatRound } from '~~/shared/ker-nethalas/run'
+import { knCheckId } from '~~/shared/ker-nethalas/tables'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
@@ -304,17 +319,21 @@ const character = defineModel<KnCharacter>('character', { required: true })
 const { combat, creatureOf, opposed, surpriseAutomatically, setLamp } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
+const { canFlee, flee } = useKnFlee(character, () => props.resolved, () => props.bestiary)
+
+const fleeCheckOpen = ref(false)
+
+function attemptFlee(success: boolean) {
+  fleeCheckOpen.value = false
+  if (success) flee()
+  else toast.add({ title: 'Fuite manquée', description: 'Un adversaire vous barre la route : impossible de quitter le combat ce tour-ci.', color: 'warning' })
+}
 const { buffParts } = useKnEffectText()
 const toast = useToast()
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
-const ZONE_LABELS: Record<KnSurvivorArmorZone, string> = { head: 'Tête', torso: 'Torse', arms: 'Bras', legs: 'Jambes' }
-
 const won = computed(() => !!combat.value && knCombatWon(combat.value))
-
-const armorByZone = computed(() => knArmorByZone(character.value.inventory))
-const hasArmor = computed(() => Object.values(armorByZone.value).some(value => value > 0))
 
 const activeEffects = computed(() => character.value.status.custom.filter(modifier => modifier.combat))
 

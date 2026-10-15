@@ -1,19 +1,17 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Compétences et résistances
-      </h2>
-      <p class="text-sm text-muted">
-        Le score de base est modifiable ; le score effectif s'affiche à droite. Case cochée : compétence marquée pour amélioration.
-      </p>
+      <KnCardHeader title="Compétences et résistances">
+        Le score effectif s'affiche ; un clic dessus ouvre le détail du calcul et le score de base, modifiable. ▲ avantage, ▼ désavantage.
+        Case cochée : compétence marquée pour amélioration.
+      </KnCardHeader>
     </template>
 
     <h3 class="mb-3 text-sm font-medium text-muted">
       Compétences
     </h3>
 
-    <div class="grid gap-x-8 gap-y-3 md:grid-cols-2">
+    <div class="grid gap-x-8 gap-y-3 @2xl:grid-cols-2">
       <div
         v-for="key in KN_SKILL_KEYS"
         :key
@@ -24,17 +22,13 @@
           :aria-label="`${$t(`ker_nethalas.skills.${key}`)} : à améliorer`"
         />
         <span class="flex-1 min-w-0">{{ $t(`ker_nethalas.skills.${key}`) }}</span>
-        <KnNumberField
-          v-model="character.skills[key].score"
-          :aria-label="$t(`ker_nethalas.skills.${key}`)"
-          :min="KN_BOUNDS.skill.min"
-          :max="KN_BOUNDS.skill.max"
-          class="w-24"
-        />
-        <div class="w-24">
+        <div class="w-16">
           <KnEffectiveScore
+            v-model:base="character.skills[key].score"
             :check="resolved.skills[key]"
             :name="$t(`ker_nethalas.skills.${key}`)"
+            :min="KN_BOUNDS.skill.min"
+            :max="KN_BOUNDS.skill.max"
           />
         </div>
         <UButton
@@ -63,17 +57,13 @@
         class="flex-1"
         @update:model-value="renameExtra(index, $event)"
       />
-      <KnNumberField
-        v-model="extra.score"
-        :aria-label="`${extra.name} : score`"
-        :min="KN_BOUNDS.skill.min"
-        :max="KN_BOUNDS.skill.max"
-        class="w-24"
-      />
-      <div class="w-24">
+      <div class="w-16">
         <KnEffectiveScore
+          v-model:base="extra.score"
           :check="resolved.extraSkills[index]!"
           :name="extra.name"
+          :min="KN_BOUNDS.skill.min"
+          :max="KN_BOUNDS.skill.max"
         />
       </div>
       <UButton
@@ -112,7 +102,7 @@
       <span class="font-normal">(plafonnées à {{ KN_BOUNDS.resistance.max }}, quel que soit l'équipement)</span>
     </h3>
 
-    <div class="grid gap-x-8 gap-y-3 md:grid-cols-2">
+    <div class="grid gap-x-8 gap-y-3 @2xl:grid-cols-2">
       <div
         v-for="key in KN_RESISTANCE_KEYS"
         :key
@@ -123,17 +113,13 @@
           aria-hidden="true"
         />
         <span class="flex-1 min-w-0">{{ $t(`ker_nethalas.resistances.${key}`) }}</span>
-        <KnNumberField
-          v-model="character.resistances[key]"
-          :aria-label="$t(`ker_nethalas.resistances.${key}`)"
-          :min="KN_BOUNDS.resistance.min"
-          :max="KN_BOUNDS.resistance.max"
-          class="w-24"
-        />
-        <div class="w-24">
+        <div class="w-16">
           <KnEffectiveScore
+            v-model:base="character.resistances[key]"
             :check="resolved.resistances[key]"
             :name="$t(`ker_nethalas.resistances.${key}`)"
+            :min="KN_BOUNDS.resistance.min"
+            :max="KN_BOUNDS.resistance.max"
           />
         </div>
         <UButton

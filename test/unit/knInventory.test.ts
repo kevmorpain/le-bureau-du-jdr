@@ -3,6 +3,7 @@ import {
   knBeltCheck,
   knBodySlotCount,
   knBodySlotMax,
+  knBodySlots,
   knCarryCapacity,
   knEncumbrance,
   knInventoryIssues,
@@ -24,6 +25,26 @@ const placed = (items: KnItem[], id: string, place: Parameters<typeof knPlaceIte
   return result.items
 }
 const carried = { provisions: 0, coins: 0, amulets: 0 }
+
+describe('emplacements du corps', () => {
+  it('liste tous les emplacements, vides compris', () => {
+    const slots = knBodySlots([])
+    expect(slots.map(slot => slot.place)).toEqual([
+      'mainHand', 'offHand', 'belt', 'head', 'armor', 'armor', 'armor', 'gloves', 'boots', 'ring', 'ring',
+    ])
+    expect(slots.every(slot => !slot.item)).toBe(true)
+    expect(slots.filter(slot => slot.place === 'armor').map(slot => slot.kind)).toEqual(['torso', 'vambraces', 'greaves'])
+  })
+
+  it('place chaque objet porté dans son emplacement, une pièce d\'armure par type', () => {
+    const worn = placed(placed(placed([item('w', { kind: 'weapon' }), item('t', { kind: 'torso' }), item('g', { kind: 'greaves' })], 'w', 'mainHand'), 't', 'armor'), 'g', 'armor')
+    const slots = knBodySlots(worn)
+    expect(slots.find(slot => slot.place === 'mainHand')!.item!.id).toBe('w')
+    expect(slots.find(slot => slot.kind === 'torso')!.item!.id).toBe('t')
+    expect(slots.find(slot => slot.kind === 'vambraces')!.item).toBeUndefined()
+    expect(slots.find(slot => slot.kind === 'greaves')!.item!.id).toBe('g')
+  })
+})
 
 describe('capacité et emplacements rapides', () => {
   it('un survivant sans sac ni Ceinture a 10 emplacements et aucun emplacement rapide', () => {

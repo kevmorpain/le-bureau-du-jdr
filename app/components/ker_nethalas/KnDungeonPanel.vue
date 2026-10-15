@@ -1,16 +1,13 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Run
-      </h2>
-      <p class="text-sm text-muted">
-        Chaque entrée dans une salle retire la lumière et recharge l'Éther, puis ouvre un bloc qui garde les dés lancés : les blocs forment le chemin du Domaine. Les dés se lancent ici, ou se saisissent si vous avez lancé les vôtres. « Nouvelle entrée » tire la forme au D100 (1-25 un couloir, 26-100 une salle).
-      </p>
+      <KnCardHeader title="Donjon">
+        Chaque entrée dans une salle retire la lumière et recharge l'Éther. Les entrées forment le chemin du Domaine ; en choisir une affiche son contenu à droite. « Nouvelle entrée » tire la forme au D100 (1-25 un couloir, 26-100 une salle).
+      </KnCardHeader>
     </template>
 
     <div class="space-y-6">
-      <div class="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
+      <div class="space-y-3">
         <UFormField label="Domaine">
           <USelect
             :model-value="run.current"
@@ -19,32 +16,34 @@
             @update:model-value="switchDomain"
           />
         </UFormField>
-        <UFormField label="Nom du Domaine">
-          <UInput
-            :model-value="domain.name"
-            :maxlength="100"
-            class="w-full"
-            @update:model-value="rename"
-          />
-        </UFormField>
-        <UButton
-          icon="i-heroicons:plus"
-          variant="soft"
-          :disabled="run.domains.length >= KN_RUN_BOUNDS.domains"
-          @click="newDomain"
-        >
-          Nouveau Domaine
-        </UButton>
+        <div class="grid items-end gap-3 @sm:grid-cols-[1fr_auto]">
+          <UFormField label="Nom du Domaine">
+            <UInput
+              :model-value="domain.name"
+              :maxlength="100"
+              class="w-full"
+              @update:model-value="rename"
+            />
+          </UFormField>
+          <UButton
+            icon="i-heroicons:plus"
+            variant="soft"
+            :disabled="run.domains.length >= KN_RUN_BOUNDS.domains"
+            @click="newDomain"
+          >
+            Nouveau Domaine
+          </UButton>
+        </div>
       </div>
 
-      <div class="grid gap-3 sm:grid-cols-[8rem_1fr]">
+      <div class="grid gap-3 @sm:grid-cols-[8rem_1fr]">
         <KnNumberField
           v-model="domain.rooms"
           label="Salles explorées"
           :min="KN_RUN_BOUNDS.rooms.min"
           :max="KN_RUN_BOUNDS.rooms.max"
         />
-        <div class="flex items-end gap-3">
+        <div class="flex flex-wrap items-end gap-3">
           <KnNumberField
             v-model="character.run.lightRemaining"
             label="Lumière restante (salles)"
@@ -67,7 +66,7 @@
         </div>
       </div>
 
-      <div class="grid gap-3 sm:grid-cols-3">
+      <div class="grid gap-3 @2xl:grid-cols-3">
         <UFormField label="Dé de Tension">
           <USelect
             :model-value="run.tensionDie"
@@ -137,6 +136,8 @@
         @engage="creature => engageAndShow(creature, true)"
       />
 
+      <KnDomainEditor v-model:domain="character.run.domains[character.run.current]" />
+
       <div class="space-y-3">
         <div class="flex flex-wrap gap-2">
           <UButton
@@ -157,12 +158,6 @@
           >
             Nouveau couloir
           </UButton>
-          <UButton
-            variant="outline"
-            @click="enter('revisit')"
-          >
-            Retour dans une salle ou un couloir déjà explorés
-          </UButton>
         </div>
 
         <p
@@ -179,47 +174,53 @@
           <p class="text-xs font-medium text-muted">
             Chemin du Domaine, de la dernière entrée à la première
           </p>
-          <KnVisitBlock
-            v-for="(visit, index) in visitsNewestFirst"
-            :key="domain.visits.length - index"
-            :visit
-            :position="domain.visits.length - index"
-            :active="index === 0"
-            :tension-die="run.tensionDie"
-            :lair-die="domain.lairDie"
-            :exit-die="domain.exitDie"
-            :lockpicks="character.provisions.lockpicks"
-            :level="character.level"
-            :in-combat="!!run.combat"
-            :bestiary
-            :tables
-            :intro="!!domain.intro"
-            :trader-found="!!domain.traderFound"
-            @tension="tension"
-            @usage="usage"
-            @draw="drawDarkness"
-            @undo="undo"
-            @table="tableRoll"
-            @trader="here => character.run = knSetTrader(character.run, here)"
-            @adjust-scavenge="adjustScavenge"
-            @apply-scavenge="applyScavenge"
-            @add-door="addDoor"
-            @deep-search="deepSearch"
-            @deep-search-content="deepSearchContent"
-            @perception="perception"
-            @obstacle-roll="obstacleRoll"
-            @noise="noise"
-            @extra-draw="extraDraw"
-            @take="takeOutcome"
-            @add-room-trap="addRoomTrap"
-            @obstacle-act="obstacleAct"
-            @draw-creature="drawCreature"
-            @engage="creature => engageAndShow(creature)"
-          />
+          <div
+            v-for="entry in entriesNewestFirst"
+            :key="entry.index"
+            class="flex items-center gap-2"
+          >
+            <button
+              type="button"
+              class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-left hover:bg-elevated"
+              :class="entry.index === shown ? 'border-primary' : 'border-default'"
+              :aria-pressed="entry.index === shown"
+              @click="selected = entry.index === lastIndex ? null : entry.index"
+            >
+              <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-elevated text-xs font-semibold">
+                {{ entry.index + 1 }}
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block font-medium">{{ entryLabel(entry.visit) }}</span>
+                <span class="block text-xs text-muted">{{ summary(entry.visit) }}</span>
+              </span>
+              <UBadge
+                v-if="entry.index === lastIndex"
+                color="primary"
+                variant="subtle"
+                size="md"
+                label="En cours"
+              />
+              <UBadge
+                v-else-if="entry.index === location"
+                color="info"
+                variant="subtle"
+                size="md"
+                label="Vous êtes ici"
+              />
+            </button>
+            <UButton
+              v-if="entry.visit.kind !== 'revisit' && entry.index !== location"
+              size="xs"
+              variant="outline"
+              icon="i-heroicons:arrow-uturn-left"
+              :aria-label="`Retourner dans ${entryLabel(entry.visit).toLowerCase()} n° ${entry.index + 1}`"
+              @click="enter('revisit', undefined, undefined, entry.index)"
+            >
+              Y retourner
+            </UButton>
+          </div>
         </div>
       </div>
-
-      <KnDomainEditor v-model:domain="character.run.domains[character.run.current]" />
     </div>
   </UCard>
 </template>
@@ -227,6 +228,7 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_OVERSEER_DIE, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
 import { knReturnableDomains } from '~~/shared/ker-nethalas/firstDomain'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
@@ -236,17 +238,14 @@ import {
   KN_RUN_BOUNDS,
   KN_USAGE_DICE,
   knCurrentDomain,
-  knSetTrader,
-  knDrawGrowingDarkness,
-  knRecordDarkness,
-  knRecordTension,
-  knRecordUsage,
+  knLocationIndex,
   knRollDie,
   knSwitchDomain,
-  knUndoLastVisit,
+  knVisitFoundLair,
   type KnUsageDie,
+  type KnVisit,
+  type KnVisitKind,
 } from '~~/shared/ker-nethalas/run'
-import { KN_OVERSEER_DIE, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { knTableEntry, type KnExplorationTableName, type KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 const props = defineProps<{
@@ -256,46 +255,28 @@ const props = defineProps<{
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
+const selected = defineModel<number | null>('selected', { required: true })
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
-const {
-  tableRoll,
-  adjustScavenge,
-  applyScavenge,
-  takeOutcome,
-  addDoor,
-  addRoomTrap,
-  deepSearch,
-  deepSearchContent,
-  perception,
-  obstacleRoll,
-  noise,
-  extraDraw,
-  obstacleAct,
-  newDomain,
-  drawCreature,
-  drawOverseer,
-} = useKnExploration(character, () => props.resolved, () => props.tables)
+const { newDomain, drawOverseer } = useKnExploration(character, () => props.resolved, () => props.tables)
+const { engage } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { enter } = useKnVisitEntry(character, () => props.resolved)
+
+const KIND_LABELS: Record<KnVisitKind, string> = { room: 'Salle', corridor: 'Couloir', revisit: 'Retour' }
+
+const run = computed(() => character.value.run)
+const domain = computed(() => knCurrentDomain(character.value.run))
+const entriesNewestFirst = computed(() => domain.value.visits.map((visit, index) => ({ visit, index })).reverse())
+const lastIndex = computed(() => domain.value.visits.length - 1)
+const location = computed(() => knLocationIndex(domain.value))
+const shown = computed(() => Math.min(selected.value ?? lastIndex.value, lastIndex.value))
 
 const overseer = computed(() => {
   const roll = knCurrentDomain(character.value.run).overseer?.roll
   const entry = roll === undefined ? undefined : knTableEntry(props.tables.overseers ?? null, roll)
   return { name: entry?.text ?? 'Overseer inconnu', creature: knFindCreature(props.bestiary, entry?.ref) }
 })
-
-const { engage } = useKnCombat(character, () => props.resolved, () => props.bestiary)
-
-// La carte de combat est plus bas dans la page : on y emmène le joueur.
-async function engageAndShow(creature: KnCreature, overseer = false) {
-  engage(creature, overseer)
-  await nextTick()
-  document.getElementById('kn-combat')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-const run = computed(() => character.value.run)
-const domain = computed(() => knCurrentDomain(character.value.run))
-const visitsNewestFirst = computed(() => [...domain.value.visits].reverse())
 
 const domainItems = computed<SelectItem[]>(() =>
   knReturnableDomains(run.value).map(index => ({ label: run.value.domains[index]!.name, value: index })),
@@ -327,27 +308,28 @@ function enterByShape() {
   enter(knShapeKind(roll), roll)
 }
 
-const { enter } = useKnVisitEntry(character, () => props.resolved)
-
-// Saisie manuelle : le bloc passe 1 ou 3, tirage automatique sinon.
-function tension(manual?: number) {
-  const roll = manual ?? knRollDie(character.value.run.tensionDie)
-  character.value.run = knRecordTension(character.value.run, roll, manual !== undefined)
+// La carte de combat est dans la colonne de droite : on y emmène le joueur.
+async function engageAndShow(creature: KnCreature, overseer = false) {
+  engage(creature, overseer)
+  await nextTick()
+  document.getElementById('kn-combat')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-function usage(manual?: number) {
-  const current = domain.value
-  const visit = current.visits.at(-1)
-  if (!visit?.usageKind) return
-  const roll = manual ?? knRollDie(visit.usageKind === 'lair' ? current.lairDie : current.exitDie)
-  character.value.run = knRecordUsage(character.value.run, roll, manual !== undefined)
+// Un retour dit où il retourne ; une ancienne entrée de retour, sans cible, reste « Retour ».
+function entryLabel(visit: KnVisit) {
+  if (visit.kind !== 'revisit' || visit.of === undefined) return KIND_LABELS[visit.kind]
+  const target = domain.value.visits.findIndex(entry => entry.id === visit.of)
+  return target < 0 ? 'Retour' : `Retour · ${domain.value.visits[target]!.kind === 'corridor' ? 'couloir' : 'salle'} n° ${target + 1}`
 }
 
-function drawDarkness() {
-  character.value.run = knRecordDarkness(character.value.run, knDrawGrowingDarkness())
-}
-
-function undo() {
-  character.value.run = knUndoLastVisit(character.value.run)
+function summary(visit: KnVisit) {
+  const parts: string[] = visit.fled ? ['combat fui'] : []
+  if (knVisitFoundLair(visit)) parts.push('Lair trouvé')
+  else if (visit.usageKind === 'exit' && visit.usage?.triggered) parts.push('Sortie trouvée')
+  if (visit.creatures?.length) parts.push(`${visit.creatures.length} créature${visit.creatures.length > 1 ? 's' : ''}`)
+  if (visit.event) parts.push('événement')
+  if (visit.trader) parts.push('marchand')
+  if (visit.obstacles?.length) parts.push(`${visit.obstacles.length} obstacle${visit.obstacles.length > 1 ? 's' : ''}`)
+  return parts.length ? parts.join(' · ') : 'rien de notable'
 }
 </script>

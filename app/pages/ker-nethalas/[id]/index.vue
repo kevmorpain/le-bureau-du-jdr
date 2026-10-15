@@ -1,121 +1,127 @@
 <template>
   <div
     v-if="character && resolved"
-    class="space-y-6 pb-12"
+    class="pb-12"
   >
-    <UPageHeader :title="character.name">
-      <template #links>
-        <span
-          class="text-sm"
-          :class="status === 'error' ? 'text-error' : 'text-muted'"
-        >
-          {{ stateLabel }}
-        </span>
-      </template>
-    </UPageHeader>
-
-    <KnIdentitySection
-      v-model:character="character"
-      :masteries
-    />
-
-    <KnRemindersSection :reminders="resolved.reminders" />
-
-    <KnVitalsSection
-      v-model:character="character"
-      :resolved
-    />
-
-    <KnFateDenied
-      v-model:character="character"
-      :resolved
-      :masteries
-    />
-
-    <KnRunSection
-      v-model:character="character"
-      :resolved
-      :tables
-      :bestiary
-    />
-
-    <KnFirstDomainSection
-      v-model:character="character"
-      :resolved
-      :rooms="firstDomain"
-      :catalog
-      :loot
-      :magic
-    />
-
-    <KnCombatSection
-      v-model:character="character"
-      :resolved
-      :bestiary
-      :masteries
-    />
-
-    <KnRestSection
+    <KnStatusBar
       v-model:character="character"
       :resolved
       :masteries
       :magic
+      :state-label
+      :failed="status === 'error'"
     />
 
-    <KnRollSection
-      v-model:character="character"
-      v-model:selected="rollSelection"
-      :resolved
-    />
+    <div class="grid items-start gap-5 py-5 min-[1400px]:grid-cols-[minmax(24rem,32rem)_minmax(26rem,36rem)_minmax(30rem,1fr)]">
+      <div class="@container min-w-0 space-y-4">
+        <KnRemindersSection :reminders="resolved.reminders" />
 
-    <KnChecksSection
-      v-model:character="character"
-      :resolved
-      @roll="openRoll"
-    />
+        <KnFateDenied
+          v-model:character="character"
+          :resolved
+          :masteries
+        />
 
-    <KnMasteriesSection
-      v-model:character="character"
-      :masteries
-      :bestiary
-      :resolved
-    />
+        <KnGoalsSection
+          v-model:character="character"
+          :goals
+          :masteries
+        />
 
-    <KnGoalsSection
-      v-model:character="character"
-      :goals
-      :masteries
-    />
+        <KnChecksSection
+          v-model:character="character"
+          :resolved
+          @roll="openRoll"
+        />
 
-    <KnEffectsSection v-model:character="character" />
+        <KnRollSection
+          v-model:character="character"
+          v-model:selected="rollSelection"
+          :resolved
+        />
 
-    <KnConditionsReference :character />
+        <KnMasteriesSection
+          v-model:character="character"
+          :masteries
+          :bestiary
+          :resolved
+        />
 
-    <KnEquipmentSection
-      v-model:character="character"
-      :masteries
-      :catalog
-      :loot
-      :aging
-      :resolved
-    />
+        <KnMadnessSection
+          v-model:character="character"
+          :resolved
+        />
 
-    <KnLootSection
-      v-model:character="character"
-      :loot
-      :catalog
-      :bestiary
-      :masteries
-      :magic
-    />
+        <KnEffectsSection v-model:character="character" />
 
-    <KnTraderSection
-      v-if="traderHere"
-      v-model:character="character"
-      :catalog
-    />
+        <KnEquipmentSection
+          v-model:character="character"
+          :masteries
+          :catalog
+          :loot
+          :aging
+          :resolved
+        />
 
-    <KnNotesSection v-model:character="character" />
+        <KnIdentitySection
+          v-model:character="character"
+          :masteries
+        />
+
+        <KnNotesSection v-model:character="character" />
+      </div>
+
+      <div class="@container min-w-0 space-y-4">
+        <KnFirstDomainSection
+          v-model:character="character"
+          :resolved
+          :rooms="firstDomain"
+          :catalog
+          :loot
+          :magic
+        />
+
+        <KnDungeonPanel
+          v-model:character="character"
+          v-model:selected="selectedVisit"
+          :resolved
+          :tables
+          :bestiary
+        />
+      </div>
+
+      <div class="@container min-w-0 space-y-4">
+        <KnRoomPanel
+          v-model:character="character"
+          :selected="selectedVisit"
+          :resolved
+          :tables
+          :bestiary
+        />
+
+        <KnCombatSection
+          v-model:character="character"
+          :resolved
+          :bestiary
+          :masteries
+        />
+
+        <KnLootSection
+          v-model:character="character"
+          :loot
+          :catalog
+          :bestiary
+          :masteries
+          :magic
+        />
+
+        <KnTraderSection
+          v-if="traderHere"
+          v-model:character="character"
+          :catalog
+        />
+      </div>
+    </div>
   </div>
 
   <UPageBody v-else>
@@ -143,8 +149,10 @@ import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
-import { knTraderHere } from '~~/shared/ker-nethalas/run'
+import { knCurrentDomain, knTraderHere } from '~~/shared/ker-nethalas/run'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
+
+definePageMeta({ layout: 'wide' })
 
 const route = useRoute()
 
@@ -196,6 +204,15 @@ const STATUS_LABELS: Record<AutoSaveStatus, string> = {
 const stateLabel = computed(() => STATUS_LABELS[status.value])
 
 const rollSelection = ref('skill:dodge')
+
+// `null` : la colonne de droite suit la dernière entrée du chemin ; un nombre fixe une entrée plus ancienne.
+const selectedVisit = ref<number | null>(null)
+watch(
+  [() => character.value?.run.current, () => character.value && knCurrentDomain(character.value.run).visits.length],
+  () => {
+    selectedVisit.value = null
+  },
+)
 
 function openRoll(selection: string) {
   rollSelection.value = selection

@@ -1,13 +1,10 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Objectifs personnels
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Objectifs personnels">
         Deux objectifs en cours au plus. Le progrès se note à la main ; une fois la cible atteinte, récupérez la récompense,
         puis choisissez un autre objectif.
-      </p>
+      </KnCardHeader>
     </template>
 
     <p

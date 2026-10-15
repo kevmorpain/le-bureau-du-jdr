@@ -1,6 +1,6 @@
 <template>
   <UCard>
-    <div class="grid gap-4 md:grid-cols-2">
+    <div class="grid gap-4 @xl:grid-cols-2">
       <UFormField label="Autres objectifs">
         <UTextarea
           v-model="character.personalGoals"
@@ -19,11 +19,11 @@
         />
       </UFormField>
 
-      <fieldset class="space-y-2 md:col-span-2">
+      <fieldset class="space-y-2 @xl:col-span-2">
         <legend class="mb-2 text-sm font-medium">
           Atouts
         </legend>
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div class="grid gap-3 @sm:grid-cols-2">
           <UCheckbox
             v-for="key in KN_PERK_KEYS"
             :key

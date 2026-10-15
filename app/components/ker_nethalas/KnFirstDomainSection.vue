@@ -1,15 +1,16 @@
 <template>
   <UCard v-if="intro && !intro.left">
     <template #header>
-      <h2 class="font-semibold">
-        Domaine d'introduction
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Domaine d'introduction">
         La carte est déjà tracée : huit salles au contenu fixe, des portes toutes marquées (reste à voir si elles sont verrouillées
         ou piégées), sa propre table de rencontres, et un Dé de Tension à chaque salle. Le Repaire et la Sortie sont sur la carte.
-        On ne peut plus y revenir une fois la sortie franchie. {{ intro.taken.length }} contenu{{ intro.taken.length > 1 ? 's' : '' }}
-        pris sur {{ KN_FIRST_DOMAIN_ROOMS }}.
-      </p>
+        On ne peut plus y revenir une fois la sortie franchie.
+        <template #extra>
+          <span class="text-sm text-muted">
+            {{ intro.taken.length }} contenu{{ intro.taken.length > 1 ? 's' : '' }} pris sur {{ KN_FIRST_DOMAIN_ROOMS }}
+          </span>
+        </template>
+      </KnCardHeader>
     </template>
 
     <div class="space-y-4">

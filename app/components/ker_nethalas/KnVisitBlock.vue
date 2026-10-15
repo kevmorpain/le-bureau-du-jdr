@@ -11,6 +11,17 @@
         size="md"
       />
       <span class="text-sm text-muted">n° {{ position }}</span>
+      <span
+        v-if="returnTo"
+        class="text-sm text-muted"
+      >· dans {{ returnTo.kind === 'corridor' ? 'le couloir' : 'la salle' }} n° {{ returnTo.position }}</span>
+      <UBadge
+        v-if="retracing"
+        label="De retour ici"
+        color="info"
+        variant="subtle"
+        size="md"
+      />
       <UBadge
         v-if="foundLair"
         label="Lair de l'Overseer"
@@ -26,7 +37,7 @@
         size="md"
       />
       <UButton
-        v-if="active"
+        v-if="active && !retracing"
         class="ml-auto"
         size="xs"
         variant="ghost"
@@ -58,7 +69,7 @@
         :die="descriptionTable.die"
         :roll="visit.description?.roll"
         :table="descriptionTable.table"
-        :active
+        :active="active && !retracing"
         @roll="manual => emit('table', 'description', manual)"
       />
 
@@ -75,7 +86,7 @@
           </span>
         </template>
         <span
-          v-else-if="!active"
+          v-else-if="!active || retracing"
           class="flex-1 text-muted"
         >
           Dé de Tension : non lancé
@@ -106,7 +117,7 @@
           </span>
         </template>
         <span
-          v-else-if="!active"
+          v-else-if="!active || retracing"
           class="flex-1 text-muted"
         >
           Dé de {{ USAGE_NAMES[visit.usageKind] }} : non lancé
@@ -139,7 +150,24 @@
     </ul>
 
     <div
-      v-if="active && pending.darkness"
+      v-if="visit.fled"
+      class="flex flex-wrap items-center gap-3 rounded-md border border-error p-3"
+    >
+      <p class="flex-1 text-sm">
+        Un combat a été fui ici : {{ visit.fled.creatures.map(creature => creature.name).join(', ') }} {{ visit.fled.creatures.length > 1 ? 'attendent' : 'attend' }},
+        la Santé remise à fond.
+      </p>
+      <UButton
+        v-if="active && !inCombat"
+        color="error"
+        @click="emit('resume')"
+      >
+        Reprendre le combat
+      </UButton>
+    </div>
+
+    <div
+      v-if="active && !retracing && pending.darkness"
       class="flex flex-wrap items-center gap-3 rounded-md border border-warning p-3"
     >
       <p class="flex-1 text-sm">
@@ -155,7 +183,7 @@
 
     <ul class="space-y-2 text-sm">
       <li
-        v-if="visit.kind === 'revisit' || foundLair || visit.noEncounter"
+        v-if="encounterLocked"
         class="text-muted"
       >
         {{ encounterText }}
@@ -167,7 +195,7 @@
         :die="KN_ENCOUNTER_DIE"
         :roll="visit.encounter?.roll"
         plain
-        :active
+        :active="active && !retracing"
         @roll="manual => emit('table', 'encounter', manual)"
       >
         <template #result>
@@ -186,7 +214,7 @@
         :die="eventTable.die"
         :roll="visit.event?.roll"
         :table="eventTable.table"
-        :active
+        :active="active && !retracing"
         @roll="manual => emit('table', 'event', manual)"
       >
         <template #result>
@@ -216,7 +244,7 @@
         Pas d'événement dans cette salle du Domaine d'introduction, même sans rencontre de combat.
       </li>
       <li
-        v-else-if="visit.kind === 'room' && !foundLair && !visit.encounter && active"
+        v-else-if="visit.kind === 'room' && !foundLair && !visit.encounter && active && !retracing"
         class="text-muted"
       >
         Sans rencontre de combat, un événement se tire dans la table des Événements.
@@ -517,6 +545,11 @@ const props = defineProps<{
   intro?: boolean
   // Un marchand a déjà été trouvé dans ce Domaine.
   traderFound?: boolean
+  // La pièce où l'on est revenu : ni description, ni rencontre de combat, ni événement à tirer, et ses Dés de Tension, de Lair et de
+  // Sortie sont ceux du retour.
+  retracing?: boolean
+  // Pour une entrée de retour : la pièce ou le couloir qu'elle revisite.
+  returnTo?: { position: number, kind: 'room' | 'corridor' }
 }>()
 
 const emit = defineEmits<{
@@ -540,6 +573,7 @@ const emit = defineEmits<{
   obstacleAct: [index: number, act: KnObstacleAct]
   drawCreature: [d6: number, d20: number]
   engage: [creature: KnCreature]
+  resume: []
 }>()
 
 const { labelText } = useKnLabels()
@@ -589,8 +623,12 @@ const darknessText = (draw: KnGrowingDarknessDraw) => labelText({
   params: { value: draw.entry.value ?? 0, skill: draw.entry.skill ? `ker_nethalas.skills.${draw.entry.skill}` : 'ker_nethalas.reminders.noSkillChosen' },
 })
 
+// Retour dans une pièce : rien à tirer si elle n'a pas déjà eu sa rencontre.
+const encounterLocked = computed(() =>
+  props.visit.kind === 'revisit' || foundLair.value || !!props.visit.noEncounter || (!!props.retracing && !props.visit.encounter))
+
 const encounterText = computed(() => {
-  if (props.visit.kind === 'revisit') return 'Ni rencontre de combat ni événement : la zone est déjà explorée.'
+  if (props.visit.kind === 'revisit' || props.retracing) return 'Ni rencontre de combat ni événement : la zone est déjà explorée.'
   if (props.visit.noEncounter) return 'Cette salle du Domaine d\'introduction n\'a ni rencontre de combat ni événement.'
   if (foundLair.value) return 'Lair de l\'Overseer : pas de test de rencontre de combat.'
   return props.visit.kind === 'corridor'

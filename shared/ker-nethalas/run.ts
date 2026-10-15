@@ -106,8 +106,19 @@ const knExtraTensionSchema = knDieResultSchema.extend({
   darkness: knGrowingDarknessDrawSchema.optional(),
 })
 
+const KN_VISIT_ID_MAX = 100000
+
 export const knVisitSchema = z.object({
   kind: z.enum(KN_VISIT_KINDS),
+  // Donné à une pièce quand on y retourne, pour que le retour la désigne même si le chemin est tronqué.
+  id: boundedInt({ min: 1, max: KN_VISIT_ID_MAX }).optional(),
+  // Un retour : l'identifiant de la pièce ou du couloir dont on repasse le seuil.
+  of: boundedInt({ min: 1, max: KN_VISIT_ID_MAX }).optional(),
+  // Un combat fui dans cette pièce : les créatures vivantes y sont restées, leur Santé remise à fond.
+  fled: z.object({
+    creatures: z.array(knCombatCreatureSchema).min(1).max(KN_COMBAT_BOUNDS.creatures),
+    overseer: z.boolean().optional(),
+  }).optional(),
   usageKind: z.enum(['lair', 'exit']).nullable(),
   // Domaine d'introduction : la salle de la carte que cette entrée parcourt, et ce que le livre y exclut.
   introRoom: boundedInt({ min: 1, max: 8 }).optional(),
@@ -292,6 +303,26 @@ export function knAddGrowingDarkness(run: KnRun, draw: KnGrowingDarknessDraw): K
 
 export const knCurrentVisit = (run: KnRun): KnVisit | undefined => knCurrentDomain(run).visits.at(-1)
 
+// Où se trouve le survivant : la dernière entrée du chemin, ou la pièce dont cette entrée est le retour. Le Dé de Tension, le Lair
+// et la Sortie se jouent sur la dernière entrée ; fouille, pièges, événement, créatures et marchand, dans la pièce.
+export function knLocationIndex(domain: KnDomain): number {
+  const last = domain.visits.length - 1
+  const target = domain.visits[last]?.of
+  const index = target === undefined ? -1 : domain.visits.findIndex(visit => visit.id === target)
+  return index >= 0 && index < last ? index : last
+}
+
+export const knLocationVisit = (run: KnRun): KnVisit | undefined => {
+  const domain = knCurrentDomain(run)
+  return domain.visits[knLocationIndex(domain)]
+}
+
+// Un retour dans une pièce déjà explorée : ni rencontre de combat ni événement à tirer, mais ce qui reste à faire dans la pièce se fait.
+export const knRetracing = (run: KnRun): boolean => {
+  const domain = knCurrentDomain(run)
+  return domain.visits.length > 0 && knLocationIndex(domain) !== domain.visits.length - 1
+}
+
 export const knVisitFoundLair = (visit: KnVisit): boolean => visit.usageKind === 'lair' && !!visit.usage?.triggered
 
 export const knVisitPending = (visit: KnVisit) => ({
@@ -306,6 +337,12 @@ function withLastVisit(run: KnRun, update: (visit: KnVisit) => KnVisit): KnRun {
   return last ? withCurrentDomain(run, { visits: [...visits.slice(0, -1), update(last)] }) : run
 }
 
+function withLocationVisit(run: KnRun, update: (visit: KnVisit) => KnVisit): KnRun {
+  const domain = knCurrentDomain(run)
+  const index = knLocationIndex(domain)
+  return domain.visits[index] ? withCurrentDomain(run, { visits: domain.visits.map((visit, i) => i === index ? update(visit) : visit) }) : run
+}
+
 // Le dé de Lair, puis celui de Sortie une fois le Lair trouvé, se lancent à chaque nouvelle salle ou couloir.
 // `shapeRoll` : le D100 de forme qui a décidé du type d'entrée.
 export interface KnIntroEntry {
@@ -314,17 +351,24 @@ export interface KnIntroEntry {
   noEvent?: boolean
 }
 
-export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number, intro?: KnIntroEntry): KnRun {
+// `target` : la position, dans le chemin, de la pièce ou du couloir dont un retour repasse le seuil.
+export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number, intro?: KnIntroEntry, target?: number): KnRun {
   const domain = knCurrentDomain(run)
   const usageKind: KnVisit['usageKind'] = kind === 'revisit' || domain.exitFound ? null : domain.lairFound ? 'exit' : 'lair'
   const entered = knEnterRoom(run, { isNew: kind !== 'revisit' })
+  const existing = knCurrentDomain(entered).visits
+  const aimed = kind === 'revisit' && target !== undefined ? existing[target] : undefined
+  const room = aimed && aimed.kind !== 'revisit' ? aimed : undefined
+  const roomId = room ? room.id ?? Math.max(0, ...existing.map(entry => entry.id ?? 0)) + 1 : undefined
   const visit: KnVisit = {
     kind,
     usageKind,
+    ...(roomId === undefined ? {} : { of: roomId }),
     ...(shapeRoll === undefined ? {} : { shape: { roll: shapeRoll } }),
     ...(intro ? { introRoom: intro.room, ...(intro.noEncounter ? { noEncounter: true } : {}), ...(intro.noEvent || intro.noEncounter ? { noEvent: true } : {}) } : {}),
   }
-  const visits = [...knCurrentDomain(entered).visits, visit].slice(-KN_RUN_BOUNDS.visits)
+  const marked = room && room.id === undefined ? existing.map(entry => entry === room ? { ...entry, id: roomId } : entry) : existing
+  const visits = [...marked, visit].slice(-KN_RUN_BOUNDS.visits)
   return withCurrentDomain(entered, { visits })
 }
 
@@ -365,63 +409,64 @@ export const knVisitCanHaveEvent = (visit: KnVisit) =>
   visit.kind === 'room' && !knVisitFoundLair(visit) && !visit.noEvent && visit.encounter?.triggered === false
 
 export function knRecordDescription(run: KnRun, roll: number): KnRun {
-  const visit = knCurrentVisit(run)
-  return visit && visit.kind !== 'revisit' ? withLastVisit(run, v => ({ ...v, description: { roll } })) : run
+  const visit = knLocationVisit(run)
+  return visit && visit.kind !== 'revisit' && !knRetracing(run) ? withLocationVisit(run, v => ({ ...v, description: { roll } })) : run
 }
 
 export function knRecordEncounter(run: KnRun, roll: number): KnRun {
-  const visit = knCurrentVisit(run)
-  if (!visit || visit.encounter || !knVisitCanHaveEncounter(visit)) return run
+  const visit = knLocationVisit(run)
+  if (!visit || visit.encounter || !knVisitCanHaveEncounter(visit) || knRetracing(run)) return run
   const { kind } = visit
   if (kind === 'revisit') return run
-  return withLastVisit(run, v => ({ ...v, encounter: { roll, triggered: knEncounterTriggered(kind, roll) } }))
+  return withLocationVisit(run, v => ({ ...v, encounter: { roll, triggered: knEncounterTriggered(kind, roll) } }))
 }
 
 export function knRecordEvent(run: KnRun, roll: number): KnRun {
-  const visit = knCurrentVisit(run)
-  return visit && !visit.event && knVisitCanHaveEvent(visit) ? withLastVisit(run, v => ({ ...v, event: { roll } })) : run
+  const visit = knLocationVisit(run)
+  return visit && !visit.event && knVisitCanHaveEvent(visit) && !knRetracing(run) ? withLocationVisit(run, v => ({ ...v, event: { roll } })) : run
 }
 
 export function knRecordDoor(run: KnRun, roll: number): KnRun {
-  const visit = knCurrentVisit(run)
-  return visit && !visit.door ? withLastVisit(run, v => ({ ...v, door: { roll, present: knHasDoor(roll) } })) : run
+  const visit = knLocationVisit(run)
+  return visit && !visit.door ? withLocationVisit(run, v => ({ ...v, door: { roll, present: knHasDoor(roll) } })) : run
 }
 
-// Une fouille par salle, hors zone explorée : le test de Fouille se fait à part, le tirage vient après sa réussite.
+// Une fouille par salle, hors zone explorée : le test de Fouille se fait à part, le tirage vient après sa réussite. On peut la faire en
+// retournant dans une pièce où elle ne l'a pas encore été.
 export function knRecordScavenge(run: KnRun, roll: number): KnRun {
-  const visit = knCurrentVisit(run)
-  return visit && visit.kind !== 'revisit' && !visit.scavenge ? withLastVisit(run, v => ({ ...v, scavenge: { roll, applied: false } })) : run
+  const visit = knLocationVisit(run)
+  return visit && visit.kind !== 'revisit' && !visit.scavenge ? withLocationVisit(run, v => ({ ...v, scavenge: { roll, applied: false } })) : run
 }
 
 // Atout de Fouille ajustable : le tirage de Fouille bouge une seule fois, du résultat d'un D4, tant que rien n'en a été pris ni appliqué.
 export function knAdjustScavenge(run: KnRun, delta: number, die: number): KnRun {
-  const scavenge = knCurrentVisit(run)?.scavenge
+  const scavenge = knLocationVisit(run)?.scavenge
   if (!scavenge || scavenge.adjusted || scavenge.applied || scavenge.taken?.length) return run
   const roll = Math.min(die, Math.max(1, scavenge.roll + delta))
-  return withLastVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, roll, adjusted: true } }))
+  return withLocationVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, roll, adjusted: true } }))
 }
 
 export function knMarkScavengeApplied(run: KnRun): KnRun {
-  const visit = knCurrentVisit(run)
-  return visit?.scavenge ? withLastVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, applied: true } })) : run
+  const visit = knLocationVisit(run)
+  return visit?.scavenge ? withLocationVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, applied: true } })) : run
 }
 
 const withTaken = (taken: number[] | undefined, outcome: number) => taken?.includes(outcome) ? taken : [...(taken ?? []), outcome]
 
 // Une rencontre peut venir du test de combat, d'un événement ou d'une alarme : on garde chaque tirage, dans l'ordre.
 export function knRecordCreature(run: KnRun, d6: number, d20: number): KnRun {
-  const visit = knCurrentVisit(run)
+  const visit = knLocationVisit(run)
   if (!visit || visit.kind === 'revisit' || (visit.creatures?.length ?? 0) >= KN_RUN_BOUNDS.creatures) return run
-  return withLastVisit(run, v => ({ ...v, creatures: [...(v.creatures ?? []), { d6, d20 }] }))
+  return withLocationVisit(run, v => ({ ...v, creatures: [...(v.creatures ?? []), { d6, d20 }] }))
 }
 
-export const knTraderHere = (run: KnRun): boolean => !!knCurrentVisit(run)?.trader
+export const knTraderHere = (run: KnRun): boolean => !!knLocationVisit(run)?.trader
 
-// Marquer, ou démarquer, l'entrée courante comme celle où se trouve le marchand ; le Domaine retient qu'il en a un.
+// Marquer, ou démarquer, la pièce où l'on se trouve comme celle du marchand ; le Domaine retient qu'il en a un.
 export function knSetTrader(run: KnRun, here: boolean): KnRun {
-  const visit = knCurrentVisit(run)
+  const visit = knLocationVisit(run)
   if (!visit) return run
-  const marked = withLastVisit(run, ({ trader: _previous, ...rest }) => here ? { ...rest, trader: true } : rest)
+  const marked = withLocationVisit(run, ({ trader: _previous, ...rest }) => here ? { ...rest, trader: true } : rest)
   return withCurrentDomain(marked, { traderFound: knCurrentDomain(marked).visits.some(entry => entry.trader) })
 }
 
@@ -432,29 +477,29 @@ export function knRecordOverseer(run: KnRun, roll: number): KnRun {
 }
 
 export function knMarkEventOutcome(run: KnRun, outcome: number): KnRun {
-  const visit = knCurrentVisit(run)
-  return visit?.event ? withLastVisit(run, v => ({ ...v, event: { ...v.event!, taken: withTaken(v.event!.taken, outcome) } })) : run
+  const visit = knLocationVisit(run)
+  return visit?.event ? withLocationVisit(run, v => ({ ...v, event: { ...v.event!, taken: withTaken(v.event!.taken, outcome) } })) : run
 }
 
 export function knMarkScavengeOutcome(run: KnRun, outcome: number): KnRun {
-  const visit = knCurrentVisit(run)
-  return visit?.scavenge ? withLastVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, taken: withTaken(v.scavenge!.taken, outcome) } })) : run
+  const visit = knLocationVisit(run)
+  return visit?.scavenge ? withLocationVisit(run, v => ({ ...v, scavenge: { ...v.scavenge!, taken: withTaken(v.scavenge!.taken, outcome) } })) : run
 }
 
 export function knRecordExtraTension(run: KnRun, roll: number, manual: boolean, source: KnExtraTension['source']): KnRun {
-  const visit = knCurrentVisit(run)
+  const visit = knLocationVisit(run)
   if (!visit || (visit.extraTension?.length ?? 0) >= KN_RUN_BOUNDS.extraTension) return run
   const die = run.tensionDie
   const { run: checked, triggered } = knTensionCheck(run, roll)
   const check: KnExtraTension = { die, roll, manual, next: checked.tensionDie, triggered, source }
-  return withLastVisit(checked, v => ({ ...v, extraTension: [...(v.extraTension ?? []), check] }))
+  return withLocationVisit(checked, v => ({ ...v, extraTension: [...(v.extraTension ?? []), check] }))
 }
 
 export function knRecordExtraDarkness(run: KnRun, index: number, draw: KnGrowingDarknessDraw): KnRun {
-  const check = knCurrentVisit(run)?.extraTension?.[index]
+  const check = knLocationVisit(run)?.extraTension?.[index]
   if (!check?.triggered || check.darkness) return run
   const extraTension = (visit: KnVisit) => (visit.extraTension ?? []).map((entry, i) => i === index ? { ...entry, darkness: draw } : entry)
-  return withLastVisit(knAddGrowingDarkness(run, draw), v => ({ ...v, extraTension: extraTension(v) }))
+  return withLocationVisit(knAddGrowingDarkness(run, draw), v => ({ ...v, extraTension: extraTension(v) }))
 }
 
 export const knObstacleState = (obstacle: KnObstacle) => {
@@ -473,17 +518,17 @@ export const knObstacleState = (obstacle: KnObstacle) => {
 }
 
 function withObstacle(run: KnRun, index: number, update: (obstacle: KnObstacle) => KnObstacle): KnRun {
-  return withLastVisit(run, v => v.obstacles?.[index]
+  return withLocationVisit(run, v => v.obstacles?.[index]
     ? { ...v, obstacles: v.obstacles.map((obstacle, i) => i === index ? update(obstacle) : obstacle) }
     : v)
 }
 
 const addObstacle = (run: KnRun, kind: KnObstacleKind): KnRun =>
-  withLastVisit(run, v => ({ ...v, obstacles: [...(v.obstacles ?? []), { kind }] }))
+  withLocationVisit(run, v => ({ ...v, obstacles: [...(v.obstacles ?? []), { kind }] }))
 
 // Une porte à vérifier : seulement si le D10 en a trouvé une.
 export function knAddDoorObstacle(run: KnRun): KnRun {
-  const visit = knCurrentVisit(run)
+  const visit = knLocationVisit(run)
   // Dans le Domaine d'introduction, toutes les portes sont déjà sur la carte : il n'y a pas de D10 pour en trouver une.
   const marked = !!knCurrentDomain(run).intro && visit?.kind !== 'revisit'
   if (!visit || (!visit.door?.present && !marked) || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
@@ -492,7 +537,7 @@ export function knAddDoorObstacle(run: KnRun): KnRun {
 
 // Le piège de la pièce que l'événement vient d'annoncer : un seul par entrée.
 export function knAddRoomTrap(run: KnRun): KnRun {
-  const visit = knCurrentVisit(run)
+  const visit = knLocationVisit(run)
   if (!visit?.event || visit.obstacles?.some(obstacle => obstacle.kind === 'room') || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
   return addObstacle(run, 'room')
 }
@@ -570,16 +615,16 @@ export function knResolveForce(run: KnRun, index: number, success: boolean): KnR
 export const knVisitCanSearch = (visit: KnVisit) => visit.kind !== 'revisit' && !visit.deepSearch
 
 export function knStartDeepSearch(run: KnRun, roll: number, manual: boolean): KnRun {
-  const visit = knCurrentVisit(run)
+  const visit = knLocationVisit(run)
   if (!visit || !knVisitCanSearch(visit) || (visit.obstacles?.length ?? 0) >= KN_RUN_BOUNDS.obstacles) return run
   const checked = knRecordExtraTension(run, roll, manual, 'search')
   if (checked === run) return run
-  return addObstacle(withLastVisit(checked, v => ({ ...v, deepSearch: {} })), 'container')
+  return addObstacle(withLocationVisit(checked, v => ({ ...v, deepSearch: {} })), 'container')
 }
 
 export function knRecordDeepSearchContent(run: KnRun, roll: number): KnRun {
-  const visit = knCurrentVisit(run)
-  return visit?.deepSearch && !visit.deepSearch.content ? withLastVisit(run, v => ({ ...v, deepSearch: { content: { roll } } })) : run
+  const visit = knLocationVisit(run)
+  return visit?.deepSearch && !visit.deepSearch.content ? withLocationVisit(run, v => ({ ...v, deepSearch: { content: { roll } } })) : run
 }
 
 // Le dé en cours de recherche : celui de Lair tant que le Lair n'est pas trouvé, puis celui de Sortie.
@@ -644,6 +689,37 @@ export function knResolveCombatFear(run: KnRun): KnRun {
 export function knEndCombat(run: KnRun): KnRun {
   const { combat: _ended, ...rest } = run
   return rest
+}
+
+// La pièce d'où l'on a fui : la dernière pièce ou le dernier couloir avant celle où l'on se trouve.
+export function knPreviousRoomIndex(run: KnRun): number | undefined {
+  const domain = knCurrentDomain(run)
+  for (let index = knLocationIndex(domain) - 1; index >= 0; index--) {
+    if (domain.visits[index]!.kind !== 'revisit') return index
+  }
+  return undefined
+}
+
+const resetForReturn = ({ temporary: _temporary, temporaryUntil: _until, effects: _effects, spent: _spent, slainBy: _slain, ...creature }: KnCombatCreature): KnCombatCreature =>
+  ({ ...creature, health: creature.maxHealth })
+
+// Fuir : le combat s'arrête, et les créatures encore en vie restent dans la pièce, leur Santé remise à fond pour le retour.
+export function knFlee(run: KnRun): KnRun {
+  const combat = run.combat
+  if (!combat) return run
+  const left = combat.creatures.filter(creature => creature.health > 0 && !creature.spent).map(resetForReturn)
+  const ended = knEndCombat(run)
+  return left.length
+    ? withLocationVisit(ended, v => ({ ...v, fled: { creatures: left, ...(combat.overseer ? { overseer: true } : {}) } }))
+    : ended
+}
+
+// Reprendre un combat fui : les créatures, à pleine Santé, sont toujours là.
+export function knResumeCombat(run: KnRun, fearLoss = 0): KnRun {
+  const fled = knLocationVisit(run)?.fled
+  if (run.combat || !fled) return run
+  const started = knStartCombat(run, fled.creatures, fled.overseer, fearLoss)
+  return withLocationVisit(started, ({ fled: _fled, ...rest }) => rest)
 }
 
 // Une ligne de plus dans le journal du combat, les plus récentes en tête.

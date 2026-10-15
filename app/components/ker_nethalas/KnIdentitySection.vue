@@ -1,6 +1,6 @@
 <template>
-  <UCard>
-    <div class="grid gap-4 sm:grid-cols-[1fr_8rem_10rem]">
+  <UCard id="kn-identity">
+    <div class="grid gap-4 @sm:grid-cols-[1fr_8rem_10rem]">
       <UFormField label="Nom">
         <UInput
           :model-value="character.name"
@@ -24,7 +24,7 @@
         :max="KN_BOUNDS.xp.max"
       />
 
-      <div class="flex flex-wrap items-center gap-3 sm:col-span-3">
+      <div class="flex flex-wrap items-center gap-3 @sm:col-span-3">
         <p class="text-sm text-muted">
           Prochain niveau à {{ KN_LEVEL_XP }} XP : {{ character.xp }} / {{ KN_LEVEL_XP }}.
         </p>
@@ -42,13 +42,13 @@
         v-if="levelUpOpen && canLevelUp"
         v-model:character="character"
         :masteries
-        class="sm:col-span-3"
+        class="@sm:col-span-3"
         @close="levelUpOpen = false"
       />
 
       <UFormField
         label="Genre, âge, apparence"
-        class="sm:col-span-3"
+        class="@sm:col-span-3"
       >
         <UTextarea
           v-model="character.appearance"
@@ -60,7 +60,7 @@
 
       <UFormField
         label="Entraînement"
-        class="sm:col-span-3"
+        class="@sm:col-span-3"
       >
         <UTextarea
           v-model="character.training"

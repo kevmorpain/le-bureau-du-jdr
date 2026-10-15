@@ -210,6 +210,23 @@ export const KN_BODY_SLOTS = 10
 export const knBodySlotMax = (items: readonly KnItem[]): number =>
   inPlace(items, 'mainHand').some(twoHanded) ? KN_BODY_SLOTS - 1 : KN_BODY_SLOTS
 
+export interface KnBodySlot {
+  place: KnBodyPlace
+  kind?: KnItemKind
+  item?: KnItem
+}
+
+// Tous les emplacements du corps, vides compris : une armure a un emplacement par pièce (torse, vambraces, jambières). Le
+// sac à dos et les pochettes n'y sont pas : ils ouvrent leur propre section quand ils sont portés.
+export function knBodySlots(items: readonly KnItem[]): KnBodySlot[] {
+  return KN_BODY_PLACES.filter(place => place !== 'backpack' && place !== 'pouch').flatMap((place) => {
+    const rule = BODY_PLACES[place]
+    const worn = inPlace(items, place)
+    if (rule.perKind) return (rule.kinds as readonly KnItemKind[]).map(kind => ({ place, kind, item: worn.find(item => item.kind === kind) }))
+    return Array.from({ length: rule.max }, (_, index) => ({ place, item: worn[index] }))
+  })
+}
+
 export const knBodySlotCount = (items: readonly KnItem[], amuletWorn: boolean): number =>
   items.filter(item => isBodyPlace(item.place) && item.place !== 'backpack' && item.place !== 'pouch').length
   - Math.max(0, inPlace(items, 'armor').length - 1)

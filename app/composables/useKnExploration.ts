@@ -19,7 +19,7 @@ import {
   knAddDoorObstacle,
   knAdjustScavenge,
   knAddRoomTrap,
-  knCurrentVisit,
+  knLocationVisit,
   knFinishTrap,
   knMarkEventOutcome,
   knMarkScavengeApplied,
@@ -81,16 +81,16 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
     if (name === 'door') return KN_DOOR_DIE
     if (name === 'event') return KN_EXPLORATION_TABLES.events.die
     if (name === 'scavenge') return KN_EXPLORATION_TABLES.scavenging.die
-    return knCurrentVisit(character.value.run)?.kind === 'corridor'
+    return knLocationVisit(character.value.run)?.kind === 'corridor'
       ? KN_EXPLORATION_TABLES.corridorDescriptions.die
       : KN_EXPLORATION_TABLES.roomDescriptions.die
   }
 
   function tableRoll(name: KnVisitTable, manual?: number) {
     const roll = manual ?? knRollDie(tableDie(name))
-    const hadScavenge = !!knCurrentVisit(character.value.run)?.scavenge
+    const hadScavenge = !!knLocationVisit(character.value.run)?.scavenge
     character.value.run = TABLE_RECORDS[name](character.value.run, roll)
-    if (name === 'scavenge' && !hadScavenge && knCurrentVisit(character.value.run)?.scavenge) record({ kind: 'scavenge' })
+    if (name === 'scavenge' && !hadScavenge && knLocationVisit(character.value.run)?.scavenge) record({ kind: 'scavenge' })
   }
 
   function adjustScavenge(delta: number) {
@@ -99,7 +99,7 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
 
   function applyScavenge() {
     const c = character.value
-    const visit = knCurrentVisit(c.run)
+    const visit = knLocationVisit(c.run)
     const effects = knTableEntry(tables().scavenging ?? null, visit?.scavenge?.roll ?? 0)?.effects ?? []
     if (!visit?.scavenge || visit.scavenge.applied || !effects.length) return
     applyEffects(effects, 'Fouille appliquée')
@@ -109,7 +109,7 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
   // Un résultat (réussite, échec, choix) d'une entrée d'événement ou de fouille : appliqué une fois.
   function takeOutcome(target: 'event' | 'scavenge', index: number) {
     const c = character.value
-    const visit = knCurrentVisit(c.run)
+    const visit = knLocationVisit(c.run)
     const source = target === 'event' ? visit?.event : visit?.scavenge
     const entry = source ? knTableEntry(tables()[target === 'event' ? 'events' : 'scavenging'] ?? null, source.roll) : undefined
     const outcomes = entry?.outcomes ?? []
@@ -150,10 +150,10 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
   // Chaque tentative pour forcer un verrou fait du bruit.
   function noise(manual?: number) {
     const c = character.value
-    const before = knCurrentVisit(c.run)?.extraTension?.length ?? 0
+    const before = knLocationVisit(c.run)?.extraTension?.length ?? 0
     c.run = knRecordExtraTension(c.run, manual ?? knRollDie(c.run.tensionDie), manual !== undefined, 'noise')
-    const check = knCurrentVisit(c.run)?.extraTension?.at(-1)
-    if ((knCurrentVisit(c.run)?.extraTension?.length ?? 0) === before || !check) return
+    const check = knLocationVisit(c.run)?.extraTension?.at(-1)
+    if ((knLocationVisit(c.run)?.extraTension?.length ?? 0) === before || !check) return
     toast.add({
       title: 'Vacarme',
       description: check.triggered
@@ -169,7 +169,7 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
 
   function sufferTrap(index: number) {
     const c = character.value
-    const obstacle = knCurrentVisit(c.run)?.obstacles?.[index]
+    const obstacle = knLocationVisit(c.run)?.obstacles?.[index]
     if (!obstacle || obstacle.trapState !== 'triggering' || !obstacle.trapType) return
     const outcomes = knTableEntry(tables().traps ?? null, obstacle.trapType.roll)?.outcomes ?? []
     const taken = outcomes.flatMap((outcome, i) => outcome.when === 'failure' ? [i] : [])
@@ -179,7 +179,7 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
 
   function obstacleAct(index: number, act: KnObstacleAct) {
     const c = character.value
-    const obstacle = knCurrentVisit(c.run)?.obstacles?.[index]
+    const obstacle = knLocationVisit(c.run)?.obstacles?.[index]
     if (!obstacle) return
     if (act.startsWith('startPick:')) {
       c.run = knStartPick(c.run, index, act.slice('startPick:'.length) as KnDifficultyKey)
@@ -202,7 +202,7 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
       noise()
     }
 
-    for (const { source, amount } of knObstacleXp(obstacle, knCurrentVisit(c.run)?.obstacles?.[index])) {
+    for (const { source, amount } of knObstacleXp(obstacle, knLocationVisit(c.run)?.obstacles?.[index])) {
       applyEffects([{ kind: 'xp', amount }], source === 'lockOpened' ? 'Verrou ouvert' : 'Piège désamorcé')
       if (source === 'trapDisarmed') record({ kind: 'trap' })
       if (source === 'lockOpened' && act === 'pickOpened') record({ kind: 'lockpick' })

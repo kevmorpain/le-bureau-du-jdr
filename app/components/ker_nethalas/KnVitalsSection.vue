@@ -1,12 +1,9 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Jauges
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Jauges">
         Le maximum de base est modifiable ; le maximum effectif s'affiche à droite quand un effet le change.
-      </p>
+      </KnCardHeader>
     </template>
 
     <div class="space-y-3">
@@ -54,7 +51,7 @@
         <p class="text-sm font-medium">
           Points temporaires
         </p>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3">
           <KnNumberField
             v-for="vital in VITALS"
             :key="vital"
