@@ -51,191 +51,205 @@
       </div>
     </div>
 
-    <ul
-      v-if="inventory.length"
+    <section
+      v-for="group in groups"
+      :key="group.key"
       class="space-y-2"
     >
-      <li
-        v-for="item in inventory"
-        :key="item.id"
-        class="flex flex-wrap items-end gap-3 rounded-md border border-default p-2"
-      >
-        <div class="min-w-40 flex-1">
-          <p class="font-medium">
-            {{ item.name }}
-            <UBadge
-              v-if="item.broken"
-              label="Brisé"
-              color="error"
-              variant="subtle"
-              size="md"
-            />
-          </p>
-          <p class="text-xs text-muted">
-            {{ $t(`ker_nethalas.inventory.kinds.${item.kind}`) }} · {{ $t(`ker_nethalas.inventory.weights.${item.weight}`).toLowerCase() }}
-            <span v-if="item.slot"> · case {{ item.slot }}</span>
-          </p>
-          <p
-            v-if="stats(item)"
-            class="text-xs text-muted"
-          >
-            {{ stats(item) }}
-          </p>
-          <p
-            v-if="agingText(item)"
-            class="text-xs text-muted"
-          >
-            Vieillissement : {{ agingText(item) }}
-          </p>
-
-          <div
-            v-if="item.magic"
-            class="mt-1 space-y-1"
-          >
-            <UBadge
-              :label="magicBadge(item)"
-              :color="item.magic.identified ? 'primary' : 'neutral'"
-              variant="subtle"
-              size="md"
-            />
+      <h4 class="text-sm font-medium">
+        {{ group.title }}
+        <span class="font-normal text-muted">{{ group.count }}</span>
+      </h4>
+      <ul class="space-y-2">
+        <li
+          v-for="item in group.items"
+          :key="item.id"
+          class="flex flex-wrap items-end gap-3 rounded-md border border-default p-2"
+        >
+          <div class="min-w-40 flex-1">
+            <p class="flex flex-wrap items-center gap-2 font-medium">
+              {{ item.name }}
+              <UBadge
+                v-if="item.broken"
+                label="Brisé"
+                color="error"
+                variant="subtle"
+                size="md"
+              />
+              <UBadge
+                v-if="item.integrity"
+                :label="`Intégrité D${item.integrity.current} / D${item.integrity.max}`"
+                :color="item.integrity.current < item.integrity.max ? 'warning' : 'neutral'"
+                variant="subtle"
+                size="md"
+              />
+            </p>
+            <p class="text-xs text-muted">
+              {{ $t(`ker_nethalas.inventory.kinds.${item.kind}`) }} · {{ $t(`ker_nethalas.inventory.weights.${item.weight}`).toLowerCase() }}
+              <span v-if="item.slot"> · case {{ item.slot }}</span>
+            </p>
             <p
-              v-if="!item.magic.identified"
+              v-if="stats(item)"
               class="text-xs text-muted"
             >
-              Tant qu'il n'est pas harmonisé (activité Harmoniser du camp, 1 Cristal d'harmonisation), il se comporte comme son équivalent ordinaire.
+              {{ stats(item) }}
             </p>
             <p
-              v-else-if="!knIsWorn(item)"
-              class="text-xs text-warning"
+              v-if="agingText(item)"
+              class="text-xs text-muted"
             >
-              Ses propriétés n'agissent que quand il est porté.
+              Vieillissement : {{ agingText(item) }}
             </p>
-            <ul
-              v-if="item.magic.properties.length"
-              class="space-y-1 text-xs"
+
+            <div
+              v-if="item.magic"
+              class="mt-1 space-y-1"
             >
-              <li
-                v-for="(property, index) in item.magic.properties"
-                :key="index"
-                class="flex flex-wrap items-center gap-2"
+              <UBadge
+                :label="magicBadge(item)"
+                :color="item.magic.identified ? 'primary' : 'neutral'"
+                variant="subtle"
+                size="md"
+              />
+              <p
+                v-if="!item.magic.identified"
+                class="text-xs text-muted"
               >
-                <span>{{ property.text }}</span>
-                <USelect
-                  v-if="property.choose"
-                  :model-value="property.choice"
-                  :items="skillItems"
-                  placeholder="Choisir une compétence"
-                  size="xs"
-                  class="w-56"
-                  :aria-label="`Compétence de ${item.name}`"
-                  @update:model-value="setChoice(item.id, index, $event as KnSkillKey)"
-                />
-                <UButton
-                  v-for="limited in usesOf(item, index)"
-                  :key="limited.key"
-                  size="xs"
-                  variant="soft"
-                  icon="i-heroicons:bolt"
-                  :disabled="!knIsWorn(item) || knIsUsedUp(character.status, limited.key)"
-                  :title="knIsUsedUp(character.status, limited.key) ? `Déjà utilisé : ${knUseLimitLabel[limited.limit]}` : knUseLimitLabel[limited.limit]"
-                  @click="useMagic(limited)"
+                Tant qu'il n'est pas harmonisé (activité Harmoniser du camp, 1 Cristal d'harmonisation), il se comporte comme son équivalent ordinaire.
+              </p>
+              <p
+                v-else-if="!knIsWorn(item)"
+                class="text-xs text-warning"
+              >
+                Ses propriétés n'agissent que quand il est porté.
+              </p>
+              <ul
+                v-if="item.magic.properties.length"
+                class="space-y-1 text-xs"
+              >
+                <li
+                  v-for="(property, index) in item.magic.properties"
+                  :key="index"
+                  class="flex flex-wrap items-center gap-2"
                 >
-                  {{ limited.label }}
-                </UButton>
-              </li>
-            </ul>
-            <p
-              v-for="peculiarity in item.magic.peculiarities"
-              :key="peculiarity"
-              class="text-xs italic text-muted"
-            >
-              {{ peculiarity }}
-            </p>
+                  <span>{{ property.text }}</span>
+                  <USelect
+                    v-if="property.choose"
+                    :model-value="property.choice"
+                    :items="skillItems"
+                    placeholder="Choisir une compétence"
+                    size="xs"
+                    class="w-56"
+                    :aria-label="`Compétence de ${item.name}`"
+                    @update:model-value="setChoice(item.id, index, $event as KnSkillKey)"
+                  />
+                  <UButton
+                    v-for="limited in usesOf(item, index)"
+                    :key="limited.key"
+                    size="xs"
+                    variant="soft"
+                    icon="i-heroicons:bolt"
+                    :disabled="!knIsWorn(item) || knIsUsedUp(character.status, limited.key)"
+                    :title="knIsUsedUp(character.status, limited.key) ? `Déjà utilisé : ${knUseLimitLabel[limited.limit]}` : knUseLimitLabel[limited.limit]"
+                    @click="useMagic(limited)"
+                  >
+                    {{ limited.label }}
+                  </UButton>
+                </li>
+              </ul>
+              <p
+                v-for="peculiarity in item.magic.peculiarities"
+                :key="peculiarity"
+                class="text-xs italic text-muted"
+              >
+                {{ peculiarity }}
+              </p>
+            </div>
           </div>
-        </div>
-        <KnNumberField
-          v-if="item.place === 'bag' || item.place === 'quick'"
-          :model-value="item.quantity"
-          label="Quantité"
-          :min="1"
-          :max="9999"
-          class="w-24"
-          @update:model-value="setQuantity(item.id, $event)"
-        />
-        <UFormField label="Emplacement">
-          <USelect
-            :model-value="item.place"
-            :items="placeItems(item)"
-            class="w-60"
-            :aria-label="`Emplacement de ${item.name}`"
-            @update:model-value="move(item, $event as KnItemPlace)"
+          <KnNumberField
+            v-if="item.place === 'bag' || item.place === 'quick'"
+            :model-value="item.quantity"
+            label="Quantité"
+            :min="1"
+            :max="9999"
+            class="w-24"
+            @update:model-value="setQuantity(item.id, $event)"
           />
-        </UFormField>
-        <template v-if="item.integrity">
+          <UFormField label="Emplacement">
+            <USelect
+              :model-value="item.place"
+              :items="placeItems(item)"
+              class="w-60"
+              :aria-label="`Emplacement de ${item.name}`"
+              @update:model-value="move(item, $event as KnItemPlace)"
+            />
+          </UFormField>
+          <template v-if="item.integrity">
+            <UButton
+              size="xs"
+              variant="soft"
+              icon="i-heroicons:cube"
+              :aria-label="`Jet d'Intégrité de ${item.name}`"
+              @click="rollIntegrity(item.id)"
+            >
+              Jet d'Intégrité
+            </UButton>
+            <UButton
+              size="xs"
+              variant="soft"
+              icon="i-heroicons:wrench"
+              :disabled="item.integrity.current >= item.integrity.max"
+              :aria-label="`Réparer ${item.name}`"
+              @click="repair(item.id)"
+            >
+              Réparer
+            </UButton>
+          </template>
           <UButton
-            size="xs"
-            variant="soft"
-            icon="i-heroicons:cube"
-            :aria-label="`Jet d'Intégrité de ${item.name}`"
-            @click="rollIntegrity(item.id)"
-          >
-            Jet d'Intégrité
-          </UButton>
-          <UButton
-            size="xs"
-            variant="soft"
-            icon="i-heroicons:wrench"
-            :disabled="item.integrity.current >= item.integrity.max"
-            :aria-label="`Réparer ${item.name}`"
-            @click="repair(item.id)"
-          >
-            Réparer
-          </UButton>
-        </template>
-        <UButton
-          v-if="knPermanentGains(item).length"
-          size="xs"
-          icon="i-heroicons:sparkles"
-          :aria-label="`Consommer ${item.name}`"
-          @click="consumePermanent(item)"
-        >
-          Consommer
-        </UButton>
-        <template v-if="item.consumable">
-          <UButton
-            v-if="item.consumable.identified === false"
-            size="xs"
-            variant="soft"
-            icon="i-heroicons:magnifying-glass"
-            :disabled="!canUse(item)"
-            :aria-label="`Identifier ${item.name}`"
-            @click="startIdentify(item)"
-          >
-            Identifier (Médecine)
-          </UButton>
-          <UButton
+            v-if="knPermanentGains(item).length"
             size="xs"
             icon="i-heroicons:sparkles"
-            :disabled="!canUse(item)"
-            :title="canUse(item) ? undefined : 'Le contenu des butins n\'est pas chargé'"
-            :aria-label="`${item.kind === 'potion' ? 'Boire' : 'Utiliser'} ${item.name}`"
-            @click="use(item)"
+            :aria-label="`Consommer ${item.name}`"
+            @click="consumePermanent(item)"
           >
-            {{ item.kind === 'potion' ? 'Boire' : 'Utiliser' }}
+            Consommer
           </UButton>
-        </template>
-        <UButton
-          icon="i-heroicons:trash"
-          color="error"
-          variant="ghost"
-          size="sm"
-          :aria-label="`Retirer ${item.name}`"
-          @click="remove(item.id)"
-        />
-      </li>
-    </ul>
+          <template v-if="item.consumable">
+            <UButton
+              v-if="item.consumable.identified === false"
+              size="xs"
+              variant="soft"
+              icon="i-heroicons:magnifying-glass"
+              :disabled="!canUse(item)"
+              :aria-label="`Identifier ${item.name}`"
+              @click="startIdentify(item)"
+            >
+              Identifier (Médecine)
+            </UButton>
+            <UButton
+              size="xs"
+              icon="i-heroicons:sparkles"
+              :disabled="!canUse(item)"
+              :title="canUse(item) ? undefined : 'Le contenu des butins n\'est pas chargé'"
+              :aria-label="`${item.kind === 'potion' ? 'Boire' : 'Utiliser'} ${item.name}`"
+              @click="use(item)"
+            >
+              {{ item.kind === 'potion' ? 'Boire' : 'Utiliser' }}
+            </UButton>
+          </template>
+          <UButton
+            icon="i-heroicons:trash"
+            color="error"
+            variant="ghost"
+            size="sm"
+            :aria-label="`Retirer ${item.name}`"
+            @click="remove(item.id)"
+          />
+        </li>
+      </ul>
+    </section>
     <p
-      v-else
+      v-if="!inventory.length"
       class="text-sm text-muted"
     >
       Aucun objet. Ajoutez ce que le survivant trouve ou achète.
@@ -340,6 +354,7 @@ import { KN_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import { knCheckId } from '~~/shared/ker-nethalas/tables'
 import {
   KN_ITEM_KINDS,
+  KN_BODY_PLACES,
   KN_ITEM_WEIGHTS,
   KN_MAX_ITEMS,
   knBodySlotCount,
@@ -384,6 +399,17 @@ const quickSlots = computed(() => knQuickSlotCount(inventory.value))
 const quickUsed = computed(() => inventory.value.filter(item => item.place === 'quick').length)
 const bodyUsed = computed(() => knBodySlotCount(inventory.value, character.value.amulets.equipped !== null))
 const bodyMax = computed(() => knBodySlotMax(inventory.value))
+
+const groups = computed(() => {
+  const worn = KN_BODY_PLACES.flatMap(place => inventory.value.filter(item => item.place === place))
+  const belt = inventory.value.filter(item => item.place === 'quick').sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0))
+  const bag = inventory.value.filter(item => item.place === 'bag')
+  return [
+    { key: 'worn', title: 'Sur le corps', count: `${bodyUsed.value} / ${bodyMax.value}`, items: worn },
+    { key: 'quick', title: 'Ceinture', count: quickSlots.value ? `${quickUsed.value} / ${quickSlots.value}` : 'aucun emplacement rapide', items: belt },
+    { key: 'bag', title: 'Sac', count: `${encumbrance.value.used} / ${encumbrance.value.capacity}`, items: bag },
+  ].filter(group => group.items.length)
+})
 
 const kindItems = KN_ITEM_KINDS.map(kind => ({ label: t(`ker_nethalas.inventory.kinds.${kind}`), value: kind }))
 const weightItems = KN_ITEM_WEIGHTS.map(weight => ({ label: t(`ker_nethalas.inventory.weights.${weight}`), value: weight }))
@@ -441,7 +467,6 @@ function stats(item: KnItem): string {
     ...(item.weapon ? [`${t(`ker_nethalas.skills.${item.weapon.skill}`)}, Vitesse ${item.weapon.speed}`, ...item.weapon.traits.map(trait => t(`ker_nethalas.inventory.traits.${trait}`))] : []),
     ...(item.protection ? [`Armure ${item.protection}`] : []),
     ...(item.parry ? [`Parade +${item.parry}`] : []),
-    ...(item.integrity ? [`Intégrité D${item.integrity.current} (max D${item.integrity.max})`] : []),
     ...(item.maneuverability ? [`Agilité −${item.maneuverability}`] : []),
     ...(item.perception ? [`Perception −${item.perception}`] : []),
     ...(item.note ? [item.note] : []),
