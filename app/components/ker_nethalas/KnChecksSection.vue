@@ -2,7 +2,8 @@
   <UCard>
     <template #header>
       <KnCardHeader title="Compétences et résistances">
-        Le score de base est modifiable ; le score effectif s'affiche à droite. Case cochée : compétence marquée pour amélioration.
+        Le score effectif s'affiche ; un clic dessus ouvre le détail du calcul et le score de base, modifiable. ▲ avantage, ▼ désavantage.
+        Case cochée : compétence marquée pour amélioration.
       </KnCardHeader>
     </template>
 
@@ -21,17 +22,13 @@
           :aria-label="`${$t(`ker_nethalas.skills.${key}`)} : à améliorer`"
         />
         <span class="flex-1 min-w-0">{{ $t(`ker_nethalas.skills.${key}`) }}</span>
-        <KnNumberField
-          v-model="character.skills[key].score"
-          :aria-label="$t(`ker_nethalas.skills.${key}`)"
-          :min="KN_BOUNDS.skill.min"
-          :max="KN_BOUNDS.skill.max"
-          class="w-24"
-        />
-        <div class="w-24">
+        <div class="w-16">
           <KnEffectiveScore
+            v-model:base="character.skills[key].score"
             :check="resolved.skills[key]"
             :name="$t(`ker_nethalas.skills.${key}`)"
+            :min="KN_BOUNDS.skill.min"
+            :max="KN_BOUNDS.skill.max"
           />
         </div>
         <UButton
@@ -60,17 +57,13 @@
         class="flex-1"
         @update:model-value="renameExtra(index, $event)"
       />
-      <KnNumberField
-        v-model="extra.score"
-        :aria-label="`${extra.name} : score`"
-        :min="KN_BOUNDS.skill.min"
-        :max="KN_BOUNDS.skill.max"
-        class="w-24"
-      />
-      <div class="w-24">
+      <div class="w-16">
         <KnEffectiveScore
+          v-model:base="extra.score"
           :check="resolved.extraSkills[index]!"
           :name="extra.name"
+          :min="KN_BOUNDS.skill.min"
+          :max="KN_BOUNDS.skill.max"
         />
       </div>
       <UButton
@@ -120,17 +113,13 @@
           aria-hidden="true"
         />
         <span class="flex-1 min-w-0">{{ $t(`ker_nethalas.resistances.${key}`) }}</span>
-        <KnNumberField
-          v-model="character.resistances[key]"
-          :aria-label="$t(`ker_nethalas.resistances.${key}`)"
-          :min="KN_BOUNDS.resistance.min"
-          :max="KN_BOUNDS.resistance.max"
-          class="w-24"
-        />
-        <div class="w-24">
+        <div class="w-16">
           <KnEffectiveScore
+            v-model:base="character.resistances[key]"
             :check="resolved.resistances[key]"
             :name="$t(`ker_nethalas.resistances.${key}`)"
+            :min="KN_BOUNDS.resistance.min"
+            :max="KN_BOUNDS.resistance.max"
           />
         </div>
         <UButton
