@@ -42,6 +42,17 @@
           </UButton>
           <UButton
             size="sm"
+            variant="outline"
+            color="neutral"
+            icon="i-heroicons:arrow-uturn-left"
+            :disabled="!canFlee"
+            :title="canFlee ? undefined : 'Aucune pièce précédente où se replier'"
+            @click="fleeCheckOpen = !fleeCheckOpen"
+          >
+            Fuir
+          </UButton>
+          <UButton
+            size="sm"
             variant="ghost"
             color="neutral"
             @click="cancelCombat"
@@ -79,6 +90,13 @@
           </li>
         </ul>
       </div>
+
+      <KnInlineCheck
+        v-if="fleeCheckOpen"
+        :request="{ id: knCheckId('dodge'), difficulty: 'normal', note: 'Fuir le combat : se replier dans la pièce précédente (Action Standard)' }"
+        @rolled="success => attemptFlee(success)"
+        @close="fleeCheckOpen = false"
+      />
 
       <KnCombatFear
         v-model:character="character"
@@ -288,6 +306,7 @@ import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCombatLog, knNextCombatRound } from '~~/shared/ker-nethalas/run'
+import { knCheckId } from '~~/shared/ker-nethalas/tables'
 
 const props = defineProps<{
   resolved: KnResolvedSheet
@@ -300,6 +319,15 @@ const character = defineModel<KnCharacter>('character', { required: true })
 const { combat, creatureOf, opposed, surpriseAutomatically, setLamp } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { win, endCombat, cancelCombat } = useKnCombatEnd(character, () => props.resolved, () => props.masteries, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
+const { canFlee, flee } = useKnFlee(character, () => props.resolved, () => props.bestiary)
+
+const fleeCheckOpen = ref(false)
+
+function attemptFlee(success: boolean) {
+  fleeCheckOpen.value = false
+  if (success) flee()
+  else toast.add({ title: 'Fuite manquée', description: 'Un adversaire vous barre la route : impossible de quitter le combat ce tour-ci.', color: 'warning' })
+}
 const { buffParts } = useKnEffectText()
 const toast = useToast()
 

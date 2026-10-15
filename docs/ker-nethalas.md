@@ -627,6 +627,24 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN50 — Pièces persistantes : retour, fouille, pièges et fuite (X34)
+- **Une pièce a une identité.** Un retour (`kind: 'revisit'`) désigne désormais la pièce ou le couloir qu'il revisite (`of`, l'identifiant `id`
+  que reçoit la pièce la première fois qu'on y retourne). La **pièce courante** (`knLocationIndex`) est la dernière entrée, ou la pièce que cette
+  entrée désigne. Le Dé de Tension, le Lair, la Sortie, le dé de l'Obscurité et l'annulation restent sur la dernière entrée ; fouille, portes,
+  pièges, événement déjà tiré, créatures, marchand et vacarme agissent sur la pièce courante (`withLocationVisit`). Les anciennes entrées de
+  retour, sans `of`, se comportent comme avant (la pièce courante est l'entrée elle-même).
+- **Repasser par une pièce** (livre, ch. IV, « Retracing Your Steps ») : Dé de Tension et lumière à chaque entrée, mais ni rencontre de combat ni
+  événement à tirer (`knRetracing`), et pas de description : ces tirages sont refusés. Ce qui reste à faire dans la pièce se fait : fouille si elle
+  n'a pas eu lieu, pièges et verrous non réglés, effets d'un événement déjà tiré, marchand.
+- **Fuir** (livre, ch. III, « Flee ») : test d'Esquive réussi, comme Action Standard (bouton « Fuir » de la carte Combat, `useKnFlee`). Le combat
+  s'arrête sans récompense (`knFlee`), les créatures encore en vie restent dans la pièce (`visit.fled`) avec leur Santé remise à fond, et le
+  survivant repasse dans la pièce précédente par une entrée de retour. En retournant dans la pièce, le bloc propose « Reprendre le combat »
+  (`knResumeCombat`). Un test raté laisse le combat en cours.
+- **Interface** : chaque pièce du chemin a un bouton « Y retourner » (le bouton générique disparaît) ; la colonne de droite montre le retour puis la
+  pièce où il ramène, marquée « De retour ici ».
+  ⚠️ hypothèses : la « pièce précédente » est la dernière entrée non-retour avant la pièce du combat ; le test de fuite est de difficulté normale
+  et ne fait pas avancer le round ; les créatures déjà vaincues ne reviennent pas ; la peur d'une créature Effrayante se rejoue à la reprise.
+
 ### KN49 — Fiche en trois colonnes (U13a)
 - **Maquette retenue** : trois colonnes, choisies sur maquette (Design) entre deux colonnes, colonne fixe, tiroir et trois colonnes. Le
   survivant d'un côté, le donjon (le chemin du Domaine) au milieu, la pièce choisie à droite. Pas de version téléphone : la fiche se joue sur
@@ -641,8 +659,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   bouton qui la sélectionne. **Colonne Pièce** (`KnRoomPanel`) : le bloc de l'entrée choisie (`KnVisitBlock`), puis combat, butin et marchand.
   `KnRunSection`, qui faisait les deux, est supprimée.
 - **Sélection d'entrée** : état d'interface (`selectedVisit` de la page), sans enregistrement. `null` suit la dernière entrée ; elle revient à
-  `null` à chaque nouvelle entrée ou changement de Domaine. Une entrée plus ancienne s'affiche en lecture seule, comme avant : les actions
-  visent toujours la dernière entrée (`withLastVisit`). Les rendre possibles sur une pièce passée (fouille, piège, fuite) est l'issue X34 (#290).
+  `null` à chaque nouvelle entrée ou changement de Domaine. Une entrée plus ancienne s'affiche en lecture seule : on ne joue que la pièce
+  où l'on se trouve, y compris après un retour (KN50, issue X34 #290).
 - **Sous-titres des cartes** : `KnCardHeader` affiche le titre et range le sous-titre dans une infobulle derrière une icône d'information ; ce
   qui change en cours de partie (points à dépenser, pièces, contenus pris) reste affiché à côté du titre.
 - **Grilles** : les colonnes sont des conteneurs (`@container`) et les grilles des sections du survivant passent aux variantes `@sm:` et `@md:`,
@@ -1069,7 +1087,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 7 (a : inventaire, catalogue, équipement dans le combat, kit de départ, KN40-KN41 ; b : butin, gemmes, marchand, fragments et potions utilisables, KN42-KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) ; contenu à relire par le PM |
 | **U13a — Fiche en trois colonnes** | survivant, donjon et pièce, barre d'état collante (KN28, KN49) ; issue U13 (#264) | écrite |
-| **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) | à faire |
+| **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
 

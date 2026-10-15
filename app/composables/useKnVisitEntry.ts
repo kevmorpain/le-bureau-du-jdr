@@ -10,9 +10,9 @@ import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 export function useKnVisitEntry(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet) {
   const toast = useToast()
 
-  function enter(kind: KnVisitKind, shapeRoll?: number, intro?: KnIntroEntry) {
+  function enter(kind: KnVisitKind, shapeRoll?: number, intro?: KnIntroEntry, target?: number) {
     const c = character.value
-    c.run = knStartVisit(c.run, kind, shapeRoll, intro)
+    c.run = knStartVisit(c.run, kind, shapeRoll, intro, target)
     c.status = knResetUses(c.status, ['room'])
     if (kind === 'room') {
       const { status, expired } = knAdvanceRooms(c.status)

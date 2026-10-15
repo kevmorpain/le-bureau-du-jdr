@@ -158,12 +158,6 @@
           >
             Nouveau couloir
           </UButton>
-          <UButton
-            variant="outline"
-            @click="enter('revisit')"
-          >
-            Retour dans une salle ou un couloir déjà explorés
-          </UButton>
         </div>
 
         <p
@@ -180,30 +174,51 @@
           <p class="text-xs font-medium text-muted">
             Chemin du Domaine, de la dernière entrée à la première
           </p>
-          <button
-            v-for="(visit, index) in visitsNewestFirst"
-            :key="domain.visits.length - index"
-            type="button"
-            class="flex w-full cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-left hover:bg-elevated"
-            :class="domain.visits.length - 1 - index === shown ? 'border-primary' : 'border-default'"
-            :aria-pressed="domain.visits.length - 1 - index === shown"
-            @click="selected = index === 0 ? null : domain.visits.length - 1 - index"
+          <div
+            v-for="entry in entriesNewestFirst"
+            :key="entry.index"
+            class="flex items-center gap-2"
           >
-            <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-elevated text-xs font-semibold">
-              {{ domain.visits.length - index }}
-            </span>
-            <span class="min-w-0 flex-1">
-              <span class="block font-medium">{{ KIND_LABELS[visit.kind] }}</span>
-              <span class="block text-xs text-muted">{{ summary(visit) }}</span>
-            </span>
-            <UBadge
-              v-if="index === 0"
-              color="primary"
-              variant="subtle"
-              size="md"
-              label="En cours"
-            />
-          </button>
+            <button
+              type="button"
+              class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-left hover:bg-elevated"
+              :class="entry.index === shown ? 'border-primary' : 'border-default'"
+              :aria-pressed="entry.index === shown"
+              @click="selected = entry.index === lastIndex ? null : entry.index"
+            >
+              <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-elevated text-xs font-semibold">
+                {{ entry.index + 1 }}
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block font-medium">{{ entryLabel(entry.visit) }}</span>
+                <span class="block text-xs text-muted">{{ summary(entry.visit) }}</span>
+              </span>
+              <UBadge
+                v-if="entry.index === lastIndex"
+                color="primary"
+                variant="subtle"
+                size="md"
+                label="En cours"
+              />
+              <UBadge
+                v-else-if="entry.index === location"
+                color="info"
+                variant="subtle"
+                size="md"
+                label="Vous êtes ici"
+              />
+            </button>
+            <UButton
+              v-if="entry.visit.kind !== 'revisit' && entry.index !== location"
+              size="xs"
+              variant="outline"
+              icon="i-heroicons:arrow-uturn-left"
+              :aria-label="`Retourner dans ${entryLabel(entry.visit).toLowerCase()} n° ${entry.index + 1}`"
+              @click="enter('revisit', undefined, undefined, entry.index)"
+            >
+              Y retourner
+            </UButton>
+          </div>
         </div>
       </div>
     </div>
@@ -223,6 +238,7 @@ import {
   KN_RUN_BOUNDS,
   KN_USAGE_DICE,
   knCurrentDomain,
+  knLocationIndex,
   knRollDie,
   knSwitchDomain,
   knVisitFoundLair,
@@ -251,8 +267,10 @@ const KIND_LABELS: Record<KnVisitKind, string> = { room: 'Salle', corridor: 'Cou
 
 const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))
-const visitsNewestFirst = computed(() => [...domain.value.visits].reverse())
-const shown = computed(() => Math.min(selected.value ?? domain.value.visits.length - 1, domain.value.visits.length - 1))
+const entriesNewestFirst = computed(() => domain.value.visits.map((visit, index) => ({ visit, index })).reverse())
+const lastIndex = computed(() => domain.value.visits.length - 1)
+const location = computed(() => knLocationIndex(domain.value))
+const shown = computed(() => Math.min(selected.value ?? lastIndex.value, lastIndex.value))
 
 const overseer = computed(() => {
   const roll = knCurrentDomain(character.value.run).overseer?.roll
@@ -297,8 +315,15 @@ async function engageAndShow(creature: KnCreature, overseer = false) {
   document.getElementById('kn-combat')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+// Un retour dit où il retourne ; une ancienne entrée de retour, sans cible, reste « Retour ».
+function entryLabel(visit: KnVisit) {
+  if (visit.kind !== 'revisit' || visit.of === undefined) return KIND_LABELS[visit.kind]
+  const target = domain.value.visits.findIndex(entry => entry.id === visit.of)
+  return target < 0 ? 'Retour' : `Retour · ${domain.value.visits[target]!.kind === 'corridor' ? 'couloir' : 'salle'} n° ${target + 1}`
+}
+
 function summary(visit: KnVisit) {
-  const parts: string[] = []
+  const parts: string[] = visit.fled ? ['combat fui'] : []
   if (knVisitFoundLair(visit)) parts.push('Lair trouvé')
   else if (visit.usageKind === 'exit' && visit.usage?.triggered) parts.push('Sortie trouvée')
   if (visit.creatures?.length) parts.push(`${visit.creatures.length} créature${visit.creatures.length > 1 ? 's' : ''}`)
