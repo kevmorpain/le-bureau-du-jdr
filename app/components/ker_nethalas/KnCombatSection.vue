@@ -243,6 +243,12 @@
         :bestiary
       />
 
+      <KnCombatAbilities
+        v-model:character="character"
+        :masteries
+        :resolved
+      />
+
       <KnCombatMinions
         v-model:character="character"
         :resolved

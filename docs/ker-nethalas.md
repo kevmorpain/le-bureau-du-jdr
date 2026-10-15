@@ -647,8 +647,17 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   qui change en cours de partie (points à dépenser, pièces, contenus pris) reste affiché à côté du titre.
 - **Grilles** : les colonnes sont des conteneurs (`@container`) et les grilles des sections du survivant passent aux variantes `@sm:` et `@md:`,
   sinon la liste des compétences se chevauchait dans 22 rem.
+- **Refonte du contenu des sections** : (1) une compétence ou une résistance n'affiche que son score effectif ; un clic ouvre le détail du
+  calcul et le score de base, modifiable (`KnEffectiveScore`, `v-model:base`), l'avantage et le désavantage sont des symboles ▲ ▼ ◆. (2) La carte
+  « Folie et Pourriture » (`KnMadnessSection`) tire sur la table de Folie (`madnessDraw.ts`) : 1 mort, 2 à 7 un cumul de plus, 8 un souvenir
+  bloqué à choisir, 9 deux D6 de dégâts contondants (bouton), 10 +100 XP (bouton) ; « Esprit fragile » retire 1 par cumul au D10 ; une alerte et
+  un badge de la barre apparaissent à 0 en Santé mentale. (3) L'inventaire est groupé par emplacement (sur le corps, ceinture, sac), avec
+  l'Intégrité en badge. (4) La carte Combat liste les Aptitudes de Maîtrise utilisables (`KnCombatAbilities`, qui réutilise `KnAbilityUse`).
+  ⚠️ hypothèses : un résultat ramené à 1 ou moins par « Esprit fragile » compte comme un 1 ; les dégâts du 9 passent par la Robustesse puis la
+  Santé comme tout dégât, l'armure n'y intervenant pas ; la Santé mentale n'est pas remise à niveau après un tirage (le livre ne le dit pas).
 - Laissé de côté : boutons « Prendre son souffle » et « Établir le camp » directement dans la barre (ils sont dans le panneau), provisions dans la
-  barre, détail des Maîtrises, Aptitudes dans l'attaque, tirage de Folie, état des armures et contenu des sacs (à suivre en issues à part), carte du Domaine.
+  barre, effet d'une Aptitude sur le jet d'attaque (le bloc ne fait que payer le coût et marquer l'usage), effets automatiques de « Les ténèbres
+  approchent » et « Mémoire défaillante », carte du Domaine.
 
 ### KN48 — Début de partie : Débuts difficiles et Domaine d'introduction
 - **Choix à la création** (issues X30 et X31) : une première partie ne prend aucun équipement, c'est le Domaine d'introduction qui le
