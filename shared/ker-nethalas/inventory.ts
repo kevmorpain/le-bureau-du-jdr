@@ -216,9 +216,10 @@ export interface KnBodySlot {
   item?: KnItem
 }
 
-// Tous les emplacements du corps, vides compris : une armure a un emplacement par pièce (torse, vambraces, jambières).
+// Tous les emplacements du corps, vides compris : une armure a un emplacement par pièce (torse, vambraces, jambières). Le
+// sac à dos et les pochettes n'y sont pas : ils ouvrent leur propre section quand ils sont portés.
 export function knBodySlots(items: readonly KnItem[]): KnBodySlot[] {
-  return KN_BODY_PLACES.flatMap((place) => {
+  return KN_BODY_PLACES.filter(place => place !== 'backpack' && place !== 'pouch').flatMap((place) => {
     const rule = BODY_PLACES[place]
     const worn = inPlace(items, place)
     if (rule.perKind) return (rule.kinds as readonly KnItemKind[]).map(kind => ({ place, kind, item: worn.find(item => item.kind === kind) }))

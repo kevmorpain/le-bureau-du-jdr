@@ -30,7 +30,7 @@ describe('emplacements du corps', () => {
   it('liste tous les emplacements, vides compris', () => {
     const slots = knBodySlots([])
     expect(slots.map(slot => slot.place)).toEqual([
-      'mainHand', 'offHand', 'belt', 'head', 'armor', 'armor', 'armor', 'gloves', 'boots', 'ring', 'ring', 'backpack', 'pouch', 'pouch', 'pouch',
+      'mainHand', 'offHand', 'belt', 'head', 'armor', 'armor', 'armor', 'gloves', 'boots', 'ring', 'ring',
     ])
     expect(slots.every(slot => !slot.item)).toBe(true)
     expect(slots.filter(slot => slot.place === 'armor').map(slot => slot.kind)).toEqual(['torso', 'vambraces', 'greaves'])

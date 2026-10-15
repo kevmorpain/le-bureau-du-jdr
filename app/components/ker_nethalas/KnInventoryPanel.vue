@@ -61,15 +61,15 @@
         <span class="font-normal text-muted">{{ group.count }}</span>
       </h4>
       <ul
-        v-if="group.key === 'worn'"
+        v-if="group.slots"
         class="grid gap-x-6 gap-y-1 text-sm @xl:grid-cols-2"
       >
         <li
-          v-for="(slot, index) in bodySlots"
+          v-for="(slot, index) in group.slots"
           :key="index"
           class="flex items-baseline gap-2"
         >
-          <span class="w-36 shrink-0 text-muted">{{ $t(slot.kind ? `ker_nethalas.inventory.kinds.${slot.kind}` : `ker_nethalas.inventory.places.${slot.place}`) }}</span>
+          <span class="w-36 shrink-0 text-muted">{{ slot.label }}</span>
           <span :class="slot.item ? 'font-medium' : 'text-muted italic'">{{ slot.item?.name ?? 'vide' }}</span>
           <UBadge
             v-if="slot.item?.broken"
@@ -373,10 +373,12 @@ import { knRollDie } from '~~/shared/ker-nethalas/run'
 import { KN_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 import { knCheckId } from '~~/shared/ker-nethalas/tables'
 import {
+  KN_BACKPACK_SLOTS,
   KN_ITEM_KINDS,
   KN_BODY_PLACES,
   KN_ITEM_WEIGHTS,
   KN_MAX_ITEMS,
+  KN_POUCH_SLOTS,
   knBodySlotCount,
   knBodySlotMax,
   knBodySlots,
@@ -421,18 +423,45 @@ const quickUsed = computed(() => inventory.value.filter(item => item.place === '
 const bodyUsed = computed(() => knBodySlotCount(inventory.value, character.value.amulets.equipped !== null))
 const bodyMax = computed(() => knBodySlotMax(inventory.value))
 
-const groups = computed(() => {
-  const worn = KN_BODY_PLACES.flatMap(place => inventory.value.filter(item => item.place === place))
-  const belt = inventory.value.filter(item => item.place === 'quick').sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0))
-  const bag = inventory.value.filter(item => item.place === 'bag')
-  return [
-    { key: 'worn', title: 'Sur le corps', count: `${bodyUsed.value} / ${bodyMax.value}`, items: worn },
-    { key: 'quick', title: 'Ceinture', count: quickSlots.value ? `${quickUsed.value} / ${quickSlots.value}` : 'aucun emplacement rapide', items: belt },
-    { key: 'bag', title: 'Sac', count: `${encumbrance.value.used} / ${encumbrance.value.capacity}`, items: bag },
-  ].filter(group => group.key === 'worn' || group.items.length)
-})
+interface InventoryGroup {
+  key: string
+  title: string
+  count: string
+  items: KnItem[]
+  slots?: { label: string, item?: KnItem }[]
+}
 
-const bodySlots = computed(() => knBodySlots(inventory.value))
+const inPlace = (place: KnItemPlace) => inventory.value.filter(item => item.place === place)
+
+// Le sac à dos, les pochettes et la ceinture rapide n'ont leur section qu'une fois portés.
+const groups = computed<InventoryGroup[]>(() => {
+  const bodyPlaces = KN_BODY_PLACES.filter(place => place !== 'backpack' && place !== 'pouch')
+  const belt = inPlace('quick')
+  const bag = inPlace('bag')
+  const backpack = inPlace('backpack')
+  const pouches = inPlace('pouch')
+  return [
+    {
+      key: 'worn',
+      title: 'Sur le corps',
+      count: `${bodyUsed.value} / ${bodyMax.value}`,
+      items: bodyPlaces.flatMap(inPlace),
+      slots: knBodySlots(inventory.value).map(slot => ({ label: t(slot.kind ? `ker_nethalas.inventory.kinds.${slot.kind}` : `ker_nethalas.inventory.places.${slot.place}`), item: slot.item })),
+    },
+    ...(backpack.length ? [{ key: 'backpack', title: 'Sac à dos', count: `+${KN_BACKPACK_SLOTS} emplacements`, items: backpack }] : []),
+    ...(pouches.length ? [{ key: 'pouch', title: 'Pochettes', count: `+${KN_POUCH_SLOTS} emplacements chacune`, items: pouches }] : []),
+    ...(quickSlots.value
+      ? [{
+          key: 'quick',
+          title: 'Ceinture',
+          count: `${quickUsed.value} / ${quickSlots.value}`,
+          items: belt.sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0)),
+          slots: Array.from({ length: quickSlots.value }, (_, index) => ({ label: `Case ${index + 1}`, item: belt.find(item => item.slot === index + 1) })),
+        }]
+      : []),
+    ...(bag.length ? [{ key: 'bag', title: 'Sac', count: `${encumbrance.value.used} / ${encumbrance.value.capacity}`, items: bag }] : []),
+  ]
+})
 
 const kindItems = KN_ITEM_KINDS.map(kind => ({ label: t(`ker_nethalas.inventory.kinds.${kind}`), value: kind }))
 const weightItems = KN_ITEM_WEIGHTS.map(weight => ({ label: t(`ker_nethalas.inventory.weights.${weight}`), value: weight }))
