@@ -433,13 +433,18 @@ interface InventoryGroup {
 
 const inPlace = (place: KnItemPlace) => inventory.value.filter(item => item.place === place)
 
-// Le sac à dos, les pochettes et la ceinture rapide n'ont leur section qu'une fois portés.
+// Le sac à dos et les pochettes portés ne contiennent rien en propre : ils rejoignent le sac, dont ils augmentent la capacité.
 const groups = computed<InventoryGroup[]>(() => {
   const bodyPlaces = KN_BODY_PLACES.filter(place => place !== 'backpack' && place !== 'pouch')
   const belt = inPlace('quick')
   const bag = inPlace('bag')
   const backpack = inPlace('backpack')
   const pouches = inPlace('pouch')
+  const containers = [...backpack, ...pouches]
+  const capacityNote = [
+    backpack.length ? `sac à dos +${KN_BACKPACK_SLOTS}` : '',
+    pouches.length ? `${pouches.length > 1 ? `${pouches.length} pochettes` : 'pochette'} +${KN_POUCH_SLOTS * pouches.length}` : '',
+  ].filter(Boolean).join(', ')
   return [
     {
       key: 'worn',
@@ -448,8 +453,6 @@ const groups = computed<InventoryGroup[]>(() => {
       items: bodyPlaces.flatMap(inPlace),
       slots: knBodySlots(inventory.value).map(slot => ({ label: t(slot.kind ? `ker_nethalas.inventory.kinds.${slot.kind}` : `ker_nethalas.inventory.places.${slot.place}`), item: slot.item })),
     },
-    ...(backpack.length ? [{ key: 'backpack', title: 'Sac à dos', count: `+${KN_BACKPACK_SLOTS} emplacements`, items: backpack }] : []),
-    ...(pouches.length ? [{ key: 'pouch', title: 'Pochettes', count: `+${KN_POUCH_SLOTS} emplacements chacune`, items: pouches }] : []),
     ...(quickSlots.value
       ? [{
           key: 'quick',
@@ -459,7 +462,7 @@ const groups = computed<InventoryGroup[]>(() => {
           slots: Array.from({ length: quickSlots.value }, (_, index) => ({ label: `Case ${index + 1}`, item: belt.find(item => item.slot === index + 1) })),
         }]
       : []),
-    ...(bag.length ? [{ key: 'bag', title: 'Sac', count: `${encumbrance.value.used} / ${encumbrance.value.capacity}`, items: bag }] : []),
+    ...(bag.length || containers.length ? [{ key: 'bag', title: 'Sac', count: `${encumbrance.value.used} / ${encumbrance.value.capacity}${capacityNote ? ` (${capacityNote})` : ''}`, items: [...containers, ...bag] }] : []),
   ]
 })
 
