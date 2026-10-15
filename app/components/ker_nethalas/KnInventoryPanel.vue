@@ -1,5 +1,5 @@
 <template>
-  <section class="space-y-3 md:col-span-2">
+  <section class="space-y-3 @xl:col-span-2">
     <h3 class="font-medium">
       Inventaire
     </h3>
@@ -39,7 +39,7 @@
         Provisions
         <span class="text-xs font-normal text-muted">(se consomment au camp, à l'exploration ; {{ provisionSlots }} emplacement{{ provisionSlots > 1 ? 's' : '' }} avec les autres objets légers)</span>
       </p>
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div class="grid grid-cols-2 gap-3 @sm:grid-cols-5">
         <KnNumberField
           v-for="key in KN_PROVISION_KEYS"
           :key

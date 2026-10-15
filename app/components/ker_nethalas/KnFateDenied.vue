@@ -4,13 +4,10 @@
     class="border border-error"
   >
     <template #header>
-      <h2 class="font-semibold">
-        Le survivant est mort
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Le survivant est mort">
         Règle optionnelle « Destin refusé » : au lieu de repartir avec un nouveau survivant, il se relève, au prix de deux Aptitudes
         de Maîtrise.
-      </p>
+      </KnCardHeader>
     </template>
 
     <div class="space-y-3">

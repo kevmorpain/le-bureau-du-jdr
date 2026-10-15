@@ -1,12 +1,9 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Repos et provisions
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Repos et provisions">
         Prendre son souffle et établir le camp appliquent les gains et les coûts à votre place : jauges, Épuisement, lumière, provisions.
-      </p>
+      </KnCardHeader>
     </template>
 
     <div class="space-y-6">

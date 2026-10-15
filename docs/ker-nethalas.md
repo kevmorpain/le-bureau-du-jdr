@@ -627,6 +627,29 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN49 — Fiche en trois colonnes (U13a)
+- **Maquette retenue** : trois colonnes, choisies sur maquette (Design) entre deux colonnes, colonne fixe, tiroir et trois colonnes. Le
+  survivant d'un côté, le donjon (le chemin du Domaine) au milieu, la pièce choisie à droite. Pas de version téléphone : la fiche se joue sur
+  grand écran, et sous 1 400 px les colonnes passent simplement les unes sous les autres. Les deux premières colonnes grandissent jusqu'à 32 et 36 rem
+  quand l'écran le permet, la colonne de droite garde au moins 30 rem.
+- **Page pleine largeur** : la page utilise le layout `wide` (l'en-tête du site est `AppHeader`, partagé avec `default`, sans `UContainer`).
+- **Barre d'état collante** (`KnStatusBar`) : nom, niveau, Domaine et entrée en cours, XP, les quatre jauges, Épuisement, lumière, une pastille
+  par condition (au survol, ce que la condition fait), Pourriture et Folie. Les jauges ouvrent un panneau (`KnVitalsSection`) et « Repos et
+  provisions » un autre (`KnRestSection`) : les deux restent accessibles de partout. La carte « Référence des conditions » disparaît, ses textes
+  sont dans les pastilles.
+- **Colonne Donjon** (`KnDungeonPanel`) : Domaine, lumière, dés, Overseer, influences, boutons d'entrée, chemin du Domaine ; chaque entrée est un
+  bouton qui la sélectionne. **Colonne Pièce** (`KnRoomPanel`) : le bloc de l'entrée choisie (`KnVisitBlock`), puis combat, butin et marchand.
+  `KnRunSection`, qui faisait les deux, est supprimée.
+- **Sélection d'entrée** : état d'interface (`selectedVisit` de la page), sans enregistrement. `null` suit la dernière entrée ; elle revient à
+  `null` à chaque nouvelle entrée ou changement de Domaine. Une entrée plus ancienne s'affiche en lecture seule, comme avant : les actions
+  visent toujours la dernière entrée (`withLastVisit`). Les rendre possibles sur une pièce passée (fouille, piège, fuite) est l'issue X34 (#290).
+- **Sous-titres des cartes** : `KnCardHeader` affiche le titre et range le sous-titre dans une infobulle derrière une icône d'information ; ce
+  qui change en cours de partie (points à dépenser, pièces, contenus pris) reste affiché à côté du titre.
+- **Grilles** : les colonnes sont des conteneurs (`@container`) et les grilles des sections du survivant passent aux variantes `@sm:` et `@md:`,
+  sinon la liste des compétences se chevauchait dans 22 rem.
+- Laissé de côté : boutons « Prendre son souffle » et « Établir le camp » directement dans la barre (ils sont dans le panneau), provisions dans la
+  barre, détail des Maîtrises, Aptitudes dans l'attaque, tirage de Folie, état des armures et contenu des sacs (à suivre en issues à part), carte du Domaine.
+
 ### KN48 — Début de partie : Débuts difficiles et Domaine d'introduction
 - **Choix à la création** (issues X30 et X31) : une première partie ne prend aucun équipement, c'est le Domaine d'introduction qui le
   fournit. L'étape « Équipement » propose « Commencer par le Domaine d'introduction », cochée par défaut tant qu'on n'a pas choisi le
@@ -1034,7 +1057,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6b — Suivi de combat** | initiative et surprise, attaque opposée, localisation, dégâts et armure, actions des monstres, mouvements défensifs (KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 7 (a : inventaire, catalogue, équipement dans le combat, kit de départ, KN40-KN41 ; b : butin, gemmes, marchand, fragments et potions utilisables, KN42-KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) ; contenu à relire par le PM |
-| **U13 — Deux colonnes** | fiche en deux colonnes, survivant et partie (KN28) ; issue U13 (#264) | à faire |
+| **U13a — Fiche en trois colonnes** | survivant, donjon et pièce, barre d'état collante (KN28, KN49) ; issue U13 (#264) | écrite |
+| **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) | à faire |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.
 

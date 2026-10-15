@@ -56,7 +56,7 @@
     </p>
 
     <template v-else>
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
+      <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm @sm:grid-cols-4">
         <div
           v-for="stat in stats"
           :key="stat.label"

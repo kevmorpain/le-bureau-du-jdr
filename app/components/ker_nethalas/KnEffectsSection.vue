@@ -1,12 +1,9 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Effets en cours
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Effets en cours">
         Activez ce qui s'applique : les scores effectifs se mettent à jour. L'Épuisement se règle dans les jauges.
-      </p>
+      </KnCardHeader>
     </template>
 
     <div class="space-y-8">

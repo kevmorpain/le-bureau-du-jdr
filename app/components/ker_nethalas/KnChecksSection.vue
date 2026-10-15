@@ -1,19 +1,16 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Compétences et résistances
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Compétences et résistances">
         Le score de base est modifiable ; le score effectif s'affiche à droite. Case cochée : compétence marquée pour amélioration.
-      </p>
+      </KnCardHeader>
     </template>
 
     <h3 class="mb-3 text-sm font-medium text-muted">
       Compétences
     </h3>
 
-    <div class="grid gap-x-8 gap-y-3 md:grid-cols-2">
+    <div class="grid gap-x-8 gap-y-3 @2xl:grid-cols-2">
       <div
         v-for="key in KN_SKILL_KEYS"
         :key
@@ -112,7 +109,7 @@
       <span class="font-normal">(plafonnées à {{ KN_BOUNDS.resistance.max }}, quel que soit l'équipement)</span>
     </h3>
 
-    <div class="grid gap-x-8 gap-y-3 md:grid-cols-2">
+    <div class="grid gap-x-8 gap-y-3 @2xl:grid-cols-2">
       <div
         v-for="key in KN_RESISTANCE_KEYS"
         :key

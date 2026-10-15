@@ -1,12 +1,9 @@
 <template>
   <UCard v-if="reminders.length">
     <template #header>
-      <h2 class="font-semibold">
-        Rappels
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Rappels">
         Ce qui est en cours et que le calcul ne peut pas appliquer à votre place.
-      </p>
+      </KnCardHeader>
     </template>
 
     <ul class="space-y-2">

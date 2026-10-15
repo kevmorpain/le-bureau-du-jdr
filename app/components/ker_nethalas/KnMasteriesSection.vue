@@ -1,13 +1,15 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Maîtrises
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Maîtrises">
         Un point d'Aptitude par niveau (deux au niveau 1) : on débloque les aptitudes d'une Maîtrise du palier 1 au palier 5 ;
-        les paliers à venir restent lisibles, grisés. Points à dépenser : <span class="font-semibold">{{ unspent }}</span>.
-      </p>
+        les paliers à venir restent lisibles, grisés.
+        <template #extra>
+          <span class="text-sm text-muted">
+            Points à dépenser : <span class="font-semibold text-default">{{ unspent }}</span>
+          </span>
+        </template>
+      </KnCardHeader>
     </template>
 
     <p

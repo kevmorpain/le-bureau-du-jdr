@@ -1,24 +1,21 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Équipement
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Équipement">
         L'inventaire pèse et range les objets ; les notes libres en dessous n'entrent dans aucun calcul.
-      </p>
+      </KnCardHeader>
     </template>
 
-    <div class="grid gap-4 md:grid-cols-2">
+    <div class="grid gap-4 @xl:grid-cols-2">
       <KnNumberField
         v-model="character.coins"
         label="Pièces"
         :min="KN_BOUNDS.coins.min"
         :max="KN_BOUNDS.coins.max"
-        class="md:col-span-2 md:w-48"
+        class="@xl:col-span-2 @xl:w-48"
       />
 
-      <p class="text-sm md:col-span-2">
+      <p class="text-sm @xl:col-span-2">
         <span class="font-medium">Amulette portée :</span>
         {{ amuletLabel }}
         <span class="text-muted">(à gérer dans la section Maîtrises)</span>
@@ -52,7 +49,7 @@
 
       <UFormField
         label="Notes sur l'équipement"
-        class="md:col-span-2"
+        class="@xl:col-span-2"
       >
         <UTextarea
           v-model="character.equipment"

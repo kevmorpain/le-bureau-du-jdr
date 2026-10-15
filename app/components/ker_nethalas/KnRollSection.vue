@@ -1,12 +1,9 @@
 <template>
   <UCard id="kn-roll">
     <template #header>
-      <h2 class="font-semibold">
-        Jet de dés
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Jet de dés">
         Choisissez le test : la cible vient du score effectif, la difficulté s'y ajoute, l'Avantage et le Désavantage de la fiche sont lus sur le D100.
-      </p>
+      </KnCardHeader>
     </template>
 
     <KnRollPanel

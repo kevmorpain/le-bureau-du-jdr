@@ -5,9 +5,11 @@
   >
     <template #header>
       <div class="flex flex-wrap items-center gap-2">
-        <h2 class="font-semibold">
-          Combat · round {{ combat.round }}
-        </h2>
+        <KnCardHeader :title="`Combat · round ${combat.round}`">
+          Les jets se font ici avec les dés de l'outil. À chaque résultat, les dégâts s'appliquent par un bouton, jamais d'office.
+          La fin du combat rend D4 Robustesse et libère les aptitudes « une fois par combat » ; une victoire donne aussi l'expérience
+          et les gains des Maîtrises. « Annuler » retire le combat sans rien rendre.
+        </KnCardHeader>
         <UBadge
           v-if="combat.first"
           :label="combat.first === 'survivor' ? 'Le survivant agit en premier' : 'Les créatures agissent en premier'"
@@ -48,11 +50,6 @@
           </UButton>
         </div>
       </div>
-      <p class="mt-1 text-sm text-muted">
-        Les jets se font ici avec les dés de l'outil. À chaque résultat, les dégâts s'appliquent par un bouton, jamais d'office.
-        La fin du combat rend D4 Robustesse et libère les aptitudes « une fois par combat » ; une victoire donne aussi l'expérience
-        et les gains des Maîtrises. « Annuler » retire le combat sans rien rendre.
-      </p>
     </template>
 
     <div class="space-y-5">

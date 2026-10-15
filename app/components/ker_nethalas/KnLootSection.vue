@@ -1,13 +1,10 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Butin
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Butin">
         Le tirage suit les tables du livre, de l'une à l'autre. Chaque résultat s'ajoute par un bouton : à l'inventaire, ou aux
         provisions.
-      </p>
+      </KnCardHeader>
     </template>
 
     <p

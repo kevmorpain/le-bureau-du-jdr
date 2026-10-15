@@ -1,14 +1,15 @@
 <template>
   <UCard>
     <template #header>
-      <h2 class="font-semibold">
-        Marchand
-      </h2>
-      <p class="text-sm text-muted">
+      <KnCardHeader title="Marchand">
         Un marchand rachète à la moitié du prix, sauf les gemmes et bijoux, payés à leur valeur entière. Un objet magique se vend à prix fixe
         (Peu commun 200, Rare 400, Épique 600, Relique 1 000) une fois harmonisé. Les amulettes ne se vendent pas.
-        Pièces : <span class="font-semibold">{{ character.coins }}</span>
-      </p>
+        <template #extra>
+          <span class="text-sm text-muted">
+            Pièces : <span class="font-semibold text-default">{{ character.coins }}</span>
+          </span>
+        </template>
+      </KnCardHeader>
     </template>
 
     <div class="grid gap-6 md:grid-cols-2">
