@@ -47,6 +47,11 @@
           :resolved
         />
 
+        <KnMadnessSection
+          v-model:character="character"
+          :resolved
+        />
+
         <KnEffectsSection v-model:character="character" />
 
         <KnEquipmentSection

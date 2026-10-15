@@ -59,6 +59,13 @@
         :label="`Épuisement ${character.exhaustion}`"
       />
       <UBadge
+        v-if="character.sanityCurrent === 0"
+        color="error"
+        variant="solid"
+        size="md"
+        label="Santé mentale à 0 : tirer une Folie"
+      />
+      <UBadge
         :color="character.run.lightRemaining === 0 ? 'error' : 'neutral'"
         variant="subtle"
         size="md"

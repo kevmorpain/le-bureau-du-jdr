@@ -8,7 +8,6 @@
 
     <div class="space-y-8">
       <KnConditionsEditor v-model:status="character.status" />
-      <KnRotMadnessEditor v-model:status="character.status" />
       <KnCustomModifiersEditor v-model:status="character.status" />
     </div>
   </UCard>
