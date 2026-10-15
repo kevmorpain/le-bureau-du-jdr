@@ -80,6 +80,16 @@
           />
         </li>
       </ul>
+      <p
+        v-if="group.key === 'worn'"
+        class="flex flex-wrap gap-x-4 text-sm"
+      >
+        <span class="text-muted">Armure par zone</span>
+        <span
+          v-for="zone in KN_SURVIVOR_ARMOR_ZONES"
+          :key="zone"
+        ><span class="text-muted">{{ ZONE_LABELS[zone] }} :</span> <span class="font-semibold">{{ armorByZone[zone] }}</span></span>
+      </p>
       <ul class="space-y-2">
         <li
           v-for="item in group.items"
@@ -361,7 +371,8 @@ import {
   type KnPotionAging,
 } from '~~/shared/ker-nethalas/consumables'
 import { knDiceLabel, knRollDice } from '~~/shared/ker-nethalas/dice'
-import { knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
+import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker-nethalas/combat'
+import { knArmorByZone, knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
 import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knConsumableEntry, type KnLootContent } from '~~/shared/ker-nethalas/loot'
 import { knIsWorn, knMagicCarryBonus, knMagicIdentifiesPotions, knMagicUses, knPermanentGains, type KnMagicUse } from '~~/shared/ker-nethalas/magicEffects'
@@ -422,6 +433,10 @@ const quickSlots = computed(() => knQuickSlotCount(inventory.value))
 const quickUsed = computed(() => inventory.value.filter(item => item.place === 'quick').length)
 const bodyUsed = computed(() => knBodySlotCount(inventory.value, character.value.amulets.equipped !== null))
 const bodyMax = computed(() => knBodySlotMax(inventory.value))
+
+const ZONE_LABELS: Record<KnSurvivorArmorZone, string> = { head: 'Tête', torso: 'Torse', arms: 'Bras', legs: 'Jambes' }
+
+const armorByZone = computed(() => knArmorByZone(inventory.value))
 
 interface InventoryGroup {
   key: string

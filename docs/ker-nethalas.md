@@ -653,7 +653,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   bloqué à choisir, 9 deux D6 de dégâts contondants (bouton), 10 +100 XP (bouton) ; « Esprit fragile » retire 1 par cumul au D10 ; une alerte et
   un badge de la barre apparaissent à 0 en Santé mentale. (3) L'inventaire est groupé par emplacement (sur le corps, ceinture, sac), avec
   l'Intégrité en badge ; « Sur le corps » liste d'abord tous les emplacements (`knBodySlots`), vides compris, puis les objets portés ; la ceinture rapide (ses quatre cases) n'a sa
-  section qu'une fois portée, et le sac à dos et les pochettes portés rejoignent la section « Sac », dont ils augmentent la capacité. (4) La carte Combat liste les Aptitudes de Maîtrise utilisables (`KnCombatAbilities`, qui réutilise `KnAbilityUse`).
+  section qu'une fois portée, et le sac à dos et les pochettes portés rejoignent la section « Sac », dont ils augmentent la capacité. (4) La carte Combat liste les Aptitudes de Maîtrise utilisables (`KnCombatAbilities`, qui réutilise `KnAbilityUse`) ; l'armure par zone quitte
+  la carte Combat pour la section Équipement, et chaque créature y affiche sa Santé en barre avec un champ aligné.
   ⚠️ hypothèses : un résultat ramené à 1 ou moins par « Esprit fragile » compte comme un 1 ; les dégâts du 9 passent par la Robustesse puis la
   Santé comme tout dégât, l'armure n'y intervenant pas ; la Santé mentale n'est pas remise à niveau après un tirage (le livre ne le dit pas).
 - Laissé de côté : boutons « Prendre son souffle » et « Établir le camp » directement dans la barre (ils sont dans le panneau), provisions dans la

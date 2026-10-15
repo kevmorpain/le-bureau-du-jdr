@@ -80,24 +80,6 @@
         </ul>
       </div>
 
-      <div class="space-y-1">
-        <p class="text-xs font-medium text-muted">
-          Armure portée par zone
-        </p>
-        <p class="flex flex-wrap gap-x-4 text-sm">
-          <span
-            v-for="zone in KN_SURVIVOR_ARMOR_ZONES"
-            :key="zone"
-          ><span class="text-muted">{{ ZONE_LABELS[zone] }} :</span> <span class="font-medium">{{ armorByZone[zone] }}</span></span>
-        </p>
-        <p
-          v-if="!hasArmor"
-          class="text-xs text-muted"
-        >
-          Aucune pièce d'armure portée : ajoutez-en dans l'inventaire (section Équipement) et portez-les.
-        </p>
-      </div>
-
       <KnCombatFear
         v-model:character="character"
         :resolved
@@ -107,7 +89,7 @@
         <li
           v-for="(creature, index) in combat.creatures"
           :key="index"
-          class="flex flex-wrap items-end gap-3 rounded-md border border-default p-2"
+          class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-default p-3"
           :class="creature.health <= 0 ? 'opacity-60' : ''"
         >
           <div class="min-w-40 flex-1">
@@ -151,12 +133,24 @@
               Fiche non chargée
             </p>
           </div>
+          <div class="w-44 space-y-1">
+            <div class="flex justify-between text-xs text-muted">
+              <span>Santé</span>
+              <span class="tabular-nums">{{ creature.health }} / {{ creature.maxHealth }}</span>
+            </div>
+            <UProgress
+              :model-value="Math.max(0, creature.health)"
+              :max="Math.max(1, creature.maxHealth)"
+              size="sm"
+              color="error"
+            />
+          </div>
           <KnNumberField
             v-model="creature.health"
-            :label="`Santé (max ${creature.maxHealth})`"
+            :aria-label="`Santé de ${creature.name} (max ${creature.maxHealth})`"
             :min="0"
             :max="creature.maxHealth"
-            class="w-32"
+            class="w-24"
           />
         </li>
       </ul>
@@ -283,11 +277,10 @@
 
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
-import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker-nethalas/combat'
 import { knCombatWon } from '~~/shared/ker-nethalas/combatState'
 import { knAdvanceCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knDiceLabel } from '~~/shared/ker-nethalas/dice'
-import { knArmorByZone, knFreeHands } from '~~/shared/ker-nethalas/equipment'
+import { knFreeHands } from '~~/shared/ker-nethalas/equipment'
 import { KN_XP } from '~~/shared/ker-nethalas/experience'
 import type { KnCustomModifier } from '~~/shared/ker-nethalas/status'
 import { knCannotBeSurprised, type KnCreature } from '~~/shared/ker-nethalas/creatures'
@@ -312,12 +305,7 @@ const toast = useToast()
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
-const ZONE_LABELS: Record<KnSurvivorArmorZone, string> = { head: 'Tête', torso: 'Torse', arms: 'Bras', legs: 'Jambes' }
-
 const won = computed(() => !!combat.value && knCombatWon(combat.value))
-
-const armorByZone = computed(() => knArmorByZone(character.value.inventory))
-const hasArmor = computed(() => Object.values(armorByZone.value).some(value => value > 0))
 
 const activeEffects = computed(() => character.value.status.custom.filter(modifier => modifier.combat))
 
