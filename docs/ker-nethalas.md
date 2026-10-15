@@ -652,7 +652,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   « Folie et Pourriture » (`KnMadnessSection`) tire sur la table de Folie (`madnessDraw.ts`) : 1 mort, 2 à 7 un cumul de plus, 8 un souvenir
   bloqué à choisir, 9 deux D6 de dégâts contondants (bouton), 10 +100 XP (bouton) ; « Esprit fragile » retire 1 par cumul au D10 ; une alerte et
   un badge de la barre apparaissent à 0 en Santé mentale. (3) L'inventaire est groupé par emplacement (sur le corps, ceinture, sac), avec
-  l'Intégrité en badge. (4) La carte Combat liste les Aptitudes de Maîtrise utilisables (`KnCombatAbilities`, qui réutilise `KnAbilityUse`).
+  l'Intégrité en badge ; « Sur le corps » liste d'abord tous les emplacements (`knBodySlots`), vides compris, puis les objets portés. (4) La carte Combat liste les Aptitudes de Maîtrise utilisables (`KnCombatAbilities`, qui réutilise `KnAbilityUse`).
   ⚠️ hypothèses : un résultat ramené à 1 ou moins par « Esprit fragile » compte comme un 1 ; les dégâts du 9 passent par la Robustesse puis la
   Santé comme tout dégât, l'armure n'y intervenant pas ; la Santé mentale n'est pas remise à niveau après un tirage (le livre ne le dit pas).
 - Laissé de côté : boutons « Prendre son souffle » et « Établir le camp » directement dans la barre (ils sont dans le panneau), provisions dans la

@@ -60,6 +60,26 @@
         {{ group.title }}
         <span class="font-normal text-muted">{{ group.count }}</span>
       </h4>
+      <ul
+        v-if="group.key === 'worn'"
+        class="grid gap-x-6 gap-y-1 text-sm @xl:grid-cols-2"
+      >
+        <li
+          v-for="(slot, index) in bodySlots"
+          :key="index"
+          class="flex items-baseline gap-2"
+        >
+          <span class="w-36 shrink-0 text-muted">{{ $t(slot.kind ? `ker_nethalas.inventory.kinds.${slot.kind}` : `ker_nethalas.inventory.places.${slot.place}`) }}</span>
+          <span :class="slot.item ? 'font-medium' : 'text-muted italic'">{{ slot.item?.name ?? 'vide' }}</span>
+          <UBadge
+            v-if="slot.item?.broken"
+            label="Brisé"
+            color="error"
+            variant="subtle"
+            size="md"
+          />
+        </li>
+      </ul>
       <ul class="space-y-2">
         <li
           v-for="item in group.items"
@@ -359,6 +379,7 @@ import {
   KN_MAX_ITEMS,
   knBodySlotCount,
   knBodySlotMax,
+  knBodySlots,
   knDefaultWeight,
   knEncumbrance,
   knNewItem,
@@ -408,8 +429,10 @@ const groups = computed(() => {
     { key: 'worn', title: 'Sur le corps', count: `${bodyUsed.value} / ${bodyMax.value}`, items: worn },
     { key: 'quick', title: 'Ceinture', count: quickSlots.value ? `${quickUsed.value} / ${quickSlots.value}` : 'aucun emplacement rapide', items: belt },
     { key: 'bag', title: 'Sac', count: `${encumbrance.value.used} / ${encumbrance.value.capacity}`, items: bag },
-  ].filter(group => group.items.length)
+  ].filter(group => group.key === 'worn' || group.items.length)
 })
+
+const bodySlots = computed(() => knBodySlots(inventory.value))
 
 const kindItems = KN_ITEM_KINDS.map(kind => ({ label: t(`ker_nethalas.inventory.kinds.${kind}`), value: kind }))
 const weightItems = KN_ITEM_WEIGHTS.map(weight => ({ label: t(`ker_nethalas.inventory.weights.${weight}`), value: weight }))
