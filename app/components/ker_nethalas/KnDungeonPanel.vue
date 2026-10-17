@@ -401,6 +401,7 @@ function summary(visit: KnVisit) {
   if (visit.creatures?.length) parts.push(`${visit.creatures.length} créature${visit.creatures.length > 1 ? 's' : ''}`)
   if (visit.event) parts.push('événement')
   if (visit.trader) parts.push('marchand')
+  if (visit.rest?.length) parts.push(visit.rest.includes('camp') ? 'camp' : 'souffle')
   if (visit.obstacles?.length) parts.push(`${visit.obstacles.length} obstacle${visit.obstacles.length > 1 ? 's' : ''}`)
   return parts.length ? parts.join(' · ') : 'rien de notable'
 }

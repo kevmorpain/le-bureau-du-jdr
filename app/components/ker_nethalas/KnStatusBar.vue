@@ -52,6 +52,13 @@
 
     <div class="flex flex-wrap items-center gap-2">
       <UBadge
+        v-if="unspentPoints > 0"
+        color="primary"
+        variant="subtle"
+        size="md"
+        :label="`${unspentPoints} point${unspentPoints > 1 ? 's' : ''} d'Aptitude`"
+      />
+      <UBadge
         v-if="character.exhaustion > 0"
         color="warning"
         variant="subtle"
@@ -163,11 +170,18 @@
       </span>
       <UButton
         size="sm"
-        variant="soft"
         icon="i-heroicons:moon"
+        @click="breathe"
+      >
+        Prendre son souffle
+      </UButton>
+      <UButton
+        size="sm"
+        variant="soft"
+        icon="i-heroicons:fire"
         @click="restOpen = true"
       >
-        Repos et provisions
+        Établir le camp
       </UButton>
     </div>
 
@@ -187,7 +201,7 @@
 
     <USlideover
       v-model:open="restOpen"
-      title="Repos et provisions"
+      title="Camp et soins"
       side="right"
       :ui="{ content: 'max-w-2xl', body: 'overflow-y-auto' }"
     >
@@ -197,6 +211,7 @@
           :resolved
           :masteries
           :magic
+          open-camp
         />
       </template>
     </USlideover>
@@ -208,12 +223,12 @@ import { useStorage } from '@vueuse/core'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_MADNESS_COUNTER_KEYS } from '~~/shared/ker-nethalas/catalog/madness'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
-import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
+import { knAbilityPointsUnspent, type KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { KN_LEVEL_XP, knCanLevelUp } from '~~/shared/ker-nethalas/progression'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knCurrentDomain } from '~~/shared/ker-nethalas/run'
 
-defineProps<{
+const props = defineProps<{
   resolved: KnResolvedSheet
   masteries: KnMastery[] | null
   magic: KnMagicContent | null
@@ -243,6 +258,15 @@ const madness = computed(() => [
     label: entry.skill ? `${t('ker_nethalas.madnessNames.lostSkill')} : ${t(`ker_nethalas.skills.${entry.skill}`)}` : t('ker_nethalas.madnessNames.lostSkill'),
   })),
 ])
+
+const toast = useToast()
+const { takeBreather } = useKnBreather(character, () => props.resolved)
+
+function breathe() {
+  toast.add({ title: 'Souffle pris', description: takeBreather().join(' — '), color: 'success', duration: 15000 })
+}
+
+const unspentPoints = computed(() => knAbilityPointsUnspent(character.value.level, character.value.masteryPicks, character.value.amulets.tiers))
 
 // La carte Identité est repliée par défaut : on l'ouvre pour y montrer le bouton de montée de niveau.
 const identityOpen = useStorage('kn:card:identity', false, undefined, { initOnMounted: true })

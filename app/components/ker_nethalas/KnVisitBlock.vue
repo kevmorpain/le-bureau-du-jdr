@@ -149,6 +149,13 @@
       </li>
     </ul>
 
+    <p
+      v-if="restText"
+      class="text-sm text-muted"
+    >
+      Repos pris ici : {{ restText }}.
+    </p>
+
     <div
       v-if="visit.fled"
       class="flex flex-wrap items-center gap-3 rounded-md border border-error p-3"
@@ -584,6 +591,15 @@ const HIGH = 3
 
 const KIND_LABELS = { room: 'Salle', corridor: 'Couloir', revisit: 'Retour' }
 const USAGE_NAMES = { lair: 'Lair', exit: 'Sortie' }
+
+const restText = computed(() => {
+  const breathers = (props.visit.rest ?? []).filter(kind => kind === 'breather').length
+  const camps = (props.visit.rest ?? []).filter(kind => kind === 'camp').length
+  return [
+    breathers ? `${breathers} souffle${breathers > 1 ? 's' : ''}` : '',
+    camps ? `${camps} camp${camps > 1 ? 's' : ''}` : '',
+  ].filter(Boolean).join(', ')
+})
 
 const foundLair = computed(() => knVisitFoundLair(props.visit))
 const pending = computed(() => knVisitPending(props.visit))
