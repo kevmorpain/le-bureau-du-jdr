@@ -113,6 +113,7 @@
             size="sm"
             variant="outline"
             icon="i-heroicons:cube"
+            :disabled="!hasToolkit"
             @click="openCheck('disarm', { id: 'skill:thievery', difficulty: knRollDifficulty(), advantage: knHasActivePerk(character, 'trapBuster'), note: 'Désamorcer le piège' })"
           >
             Tester
@@ -132,6 +133,12 @@
             Raté
           </UButton>
         </div>
+        <p
+          v-if="!hasToolkit"
+          class="text-xs text-warning"
+        >
+          Aucun Outils de voleur dans l'inventaire : il en faut pour désamorcer.
+        </p>
         <div
           v-if="obstacle.kind === 'room'"
           class="flex flex-wrap items-center gap-2"
@@ -332,6 +339,7 @@
 <script lang="ts" setup>
 import { KN_LOCK_DIE, KN_LOCK_THRESHOLD, KN_TRAP_DIE, type KnObstacleAct } from '~~/shared/ker-nethalas/exploration'
 import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
+import { knHasThievesToolkit } from '~~/shared/ker-nethalas/equipment'
 import { knEasierDifficulty, knRollDifficulty, type KnRollRequest } from '~~/shared/ker-nethalas/roll'
 import { KN_RESISTANCE_KEYS } from '~~/shared/ker-nethalas/skills'
 import { knForceBonus, knObstacleState, type KnObstacle } from '~~/shared/ker-nethalas/run'
@@ -391,6 +399,7 @@ function perceive(perception: 'passed' | 'failed') {
 const { t } = useI18n()
 const { effectsText } = useKnEffectText()
 const { character } = useKnCheckContext()
+const hasToolkit = computed(() => knHasThievesToolkit(character.value.inventory))
 
 // Résultat saisi à la main : 1-2 et 3+ valent 1 et 3, les seuls cas que le Dé de Tension distingue.
 const LOW = 1

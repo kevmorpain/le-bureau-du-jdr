@@ -193,6 +193,12 @@ describe('application des effets', () => {
     expect(knApplyCriticalEffects([{ type: 'exhaustion', amount: 4 }], { ...vitals, exhaustion: 98, exhaustionMax: 99 }).exhaustion).toBe(99)
   })
 
+  it('ajoute la perte supplémentaire de Santé mentale aux seules pertes', () => {
+    expect(knApplyCriticalEffects([{ type: 'sanity', amount: -2 }], vitals, 3).sanity).toBe(1)
+    expect(knApplyCriticalEffects([{ type: 'sanity', amount: 2 }], vitals, 3).sanity).toBe(8)
+    expect(knApplyCriticalEffects([{ type: 'health', amount: -2 }], vitals, 3).health).toBe(6)
+  })
+
   it('garde une jauge déjà au-dessus de son maximum quand elle gagne', () => {
     expect(knApplyCriticalEffects([{ type: 'toughness', amount: 3 }], { ...vitals, toughness: 25 }).toughness).toBe(25)
   })

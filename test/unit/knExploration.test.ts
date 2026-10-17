@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { emptyKnProvisions } from '../../shared/ker-nethalas/camp'
+import { emptyKnMadness } from '../../shared/ker-nethalas/catalog/madness'
 import { KN_CONTENT_NAME_RE, KN_CONTENT_SCHEMAS } from '../../shared/ker-nethalas/content'
 import { knDeepSearchEmpty, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, knShapeKind } from '../../shared/ker-nethalas/exploration'
 import { knEasierDifficulty } from '../../shared/ker-nethalas/roll'
@@ -539,6 +540,31 @@ describe('gains et pertes d\'un résultat de table', () => {
     expect(outcomes.map(o => o.roll.total)).toEqual([11, 3, 10])
     expect(next).toMatchObject({ coins: 16, xp: 100 })
     expect(next.provisions.craftingSupplies).toBe(5)
+  })
+
+  it('« Mémoire défaillante » retire 10 XP par cumul à un gain d\'expérience, sans passer sous 0', () => {
+    const forgetful = (forgetfulness: number) => ({ ...state(), status: { ...emptyKnStatus(), madness: { ...emptyKnMadness(), counters: { ...emptyKnMadness().counters, forgetfulness } } } })
+    const one = knApplyTableEffects([{ kind: 'xp', amount: 25 }], forgetful(1), maxima, rng)
+    const many = knApplyTableEffects([{ kind: 'xp', amount: 25 }], forgetful(3), maxima, rng)
+
+    expect(one.state.xp).toBe(105)
+    expect(one.outcomes[0]).toMatchObject({ xpReduced: 10 })
+    expect(many.state.xp).toBe(90)
+    expect(many.outcomes[0]).toMatchObject({ xpReduced: 25 })
+    expect(knApplyTableEffects([{ kind: 'xp', amount: 25 }], state(), maxima, rng).outcomes[0]).not.toHaveProperty('xpReduced')
+  })
+
+  it('« Les ténèbres approchent » ajoute 1 par cumul à une perte de Santé mentale, et à elle seule', () => {
+    const dark = { ...state(), status: { ...emptyKnStatus(), madness: { ...emptyKnMadness(), counters: { ...emptyKnMadness().counters, darknessComing: 2 } } } }
+    const loss = knApplyTableEffects([{ kind: 'vital', vital: 'sanity', dice: fixed(1), sign: 'loss' }], dark, maxima, rng)
+    const gain = knApplyTableEffects([{ kind: 'vital', vital: 'sanity', dice: fixed(1), sign: 'gain' }], dark, maxima, rng)
+    const health = knApplyTableEffects([{ kind: 'vital', vital: 'health', dice: fixed(1), sign: 'loss' }], dark, maxima, rng)
+
+    expect(loss.state.sanity).toBe(3)
+    expect(loss.outcomes[0]).toMatchObject({ sanityExtra: 2 })
+    expect(gain.state.sanity).toBe(7)
+    expect(health.state.health).toBe(9)
+    expect(knApplyTableEffects([{ kind: 'vital', vital: 'sanity', dice: fixed(1), sign: 'loss' }], state(), maxima, rng).outcomes[0]).not.toHaveProperty('sanityExtra')
   })
 
   it('une jauge gagne jusqu\'à son maximum et perd jusqu\'à 0', () => {

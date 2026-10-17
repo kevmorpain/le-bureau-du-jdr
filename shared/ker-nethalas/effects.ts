@@ -25,6 +25,7 @@ export type KnEffect
     | { type: 'disadvantage', targets: readonly KnTarget[] }
     | { type: 'maxVitalDelta', vital: KnVitalKey, amount: number }
     | { type: 'maxVitalHalf', vital: KnVitalKey }
+    | { type: 'armorBonus', amount: number }
 
 export type KnReminderSeverity = 'info' | 'warning' | 'danger'
 

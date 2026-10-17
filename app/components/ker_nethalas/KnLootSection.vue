@@ -102,6 +102,7 @@
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knDrawAmulet } from '~~/shared/ker-nethalas/amulets'
+import { knReduceXpGain } from '~~/shared/ker-nethalas/catalog/madness'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
 import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
@@ -193,8 +194,9 @@ function take(entry: Pending) {
   if (entry.result.loreBook) record({ kind: 'loreBook' })
   if (amulet) lines.push(drawAmulet())
   if (xp) {
-    c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + xp)
-    lines.push(`+${xp} XP`)
+    const gained = knReduceXpGain(xp, c.status.madness)
+    c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + gained)
+    lines.push(`+${gained} XP${gained < xp ? ' (Mémoire défaillante)' : ''}`)
   }
   toast.add({ title: 'Butin ajouté', description: lines.join(', ') || 'Rien à ajouter', color: lines.length ? 'success' : 'neutral' })
   discard(entry.id)

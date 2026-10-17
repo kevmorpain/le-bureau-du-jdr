@@ -355,6 +355,15 @@ describe('modificateurs libres', () => {
     expect(resolveKnSheet(sheet({}, { custom })).skills.dodge.effective).toBe(45)
   })
 
+  it('additionne l\'Armure des effets, sans toucher aux compétences', () => {
+    const custom = [{ id: 'a', name: 'Peau de pierre', active: true, entries: [{ kind: 'armor' as const, amount: 1 }, { kind: 'armor' as const, amount: 2 }] }]
+    const off = [{ ...custom[0]!, active: false }]
+
+    expect(resolveKnSheet(sheet({}, { custom })).armorBonus).toBe(3)
+    expect(resolveKnSheet(sheet({}, { custom: off })).armorBonus).toBe(0)
+    expect(resolveKnSheet(sheet({}, { custom })).skills.dodge.effective).toBe(resolveKnSheet(sheet()).skills.dodge.effective)
+  })
+
   it('applique un retrait de maximum et rappelle la note', () => {
     const custom = [{
       id: 'a',

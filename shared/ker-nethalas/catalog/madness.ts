@@ -34,6 +34,15 @@ export const KN_MADNESS_D10: Record<KnMadnessCounterKey | 'lostSkill', number> =
   lostSkill: 8,
 }
 
+export const KN_MADNESS_XP_PENALTY = 10
+
+// « Les ténèbres approchent » : toute perte de Santé mentale est aggravée de 1 par cumul.
+export const knSanityLossExtra = (madness: KnMadness, loss: number): number => loss > 0 ? madness.counters.darknessComing : 0
+
+// « Mémoire défaillante » : chaque gain d'XP est réduit de 10 par cumul, sans descendre sous 0.
+export const knReduceXpGain = (amount: number, madness: KnMadness): number =>
+  Math.max(0, amount - KN_MADNESS_XP_PENALTY * madness.counters.forgetfulness)
+
 export const emptyKnMadness = (): KnMadness => ({
   counters: Object.fromEntries(KN_MADNESS_COUNTER_KEYS.map(key => [key, 0])) as Record<KnMadnessCounterKey, number>,
   lostSkills: [],

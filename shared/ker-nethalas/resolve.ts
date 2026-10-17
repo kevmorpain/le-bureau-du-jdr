@@ -65,6 +65,7 @@ export interface KnResolvedSheet {
   extraSkills: KnResolvedCheck[]
   resistances: Record<KnResistanceKey, KnResolvedCheck>
   maxVitals: Record<KnVitalKey, KnResolvedVital>
+  armorBonus: number
   reminders: KnResolvedReminder[]
 }
 
@@ -73,6 +74,7 @@ const sourceRef = ({ id, label }: KnActiveSource): KnSourceRef => ({ id, label }
 export function knCustomEntryEffect(entry: KnCustomEntry): KnEffect {
   if (entry.kind === 'modifier') return { type: 'modifier', targets: [entry.target], amount: entry.amount }
   if (entry.kind === 'maxVital') return { type: 'maxVitalDelta', vital: entry.vital, amount: entry.amount }
+  if (entry.kind === 'armor') return { type: 'armorBonus', amount: entry.amount }
   return { type: entry.kind, targets: [entry.target] }
 }
 
@@ -245,6 +247,7 @@ export function resolveKnSheet(input: KnResolveInput): KnResolvedSheet {
     extraSkills: input.extraSkills.map(extra => resolveCheck(extra.score, sources, reachesExtraSkill, null)),
     resistances,
     maxVitals,
+    armorBonus: sources.reduce((sum, source) => sum + source.effects.reduce((inner, effect) => effect.type === 'armorBonus' ? inner + effect.amount : inner, 0), 0),
     reminders: sources.flatMap(source => source.reminders.map(reminder => ({ ...reminder, source: sourceRef(source) }))),
   }
 }

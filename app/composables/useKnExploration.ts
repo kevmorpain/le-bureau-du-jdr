@@ -10,10 +10,13 @@ import {
   KN_ENCOUNTER_DIE,
   KN_LOCK_DIE,
   KN_TRAP_DIE,
+  knDeepSearchEmpty,
   type KnObstacleAct,
   type KnVisitTable,
 } from '~~/shared/ker-nethalas/exploration'
 import { knRollEntry } from '~~/shared/ker-nethalas/entryRolls'
+import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
+import { KN_LUCKY_FIND_DIE } from '~~/shared/ker-nethalas/perks'
 import { KN_XP, knObstacleXp } from '~~/shared/ker-nethalas/experience'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import {
@@ -136,8 +139,15 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
     c.exhaustion = Math.min(KN_BOUNDS.exhaustion.max, c.exhaustion + KN_DEEP_SEARCH_EXHAUSTION)
   }
 
+  // Un contenant vide s'ouvre quand même : l'Atout des pièces de contenant y trouve ses pièces, que le butin ne tirera pas.
   function deepSearchContent(manual?: number) {
-    character.value.run = knRecordDeepSearchContent(character.value.run, manual ?? knRollDie(KN_DEEP_SEARCH_DIE))
+    const c = character.value
+    const next = knRecordDeepSearchContent(c.run, manual ?? knRollDie(KN_DEEP_SEARCH_DIE))
+    if (next === c.run) return
+    c.run = next
+    if (knDeepSearchEmpty(knLocationVisit(next)?.deepSearch?.content?.roll ?? 0) && knHasActivePerk(c, 'luckyFind')) {
+      applyEffects([{ kind: 'coins', dice: { count: 1, sides: KN_LUCKY_FIND_DIE, bonus: 0 } }], 'Contenant vide')
+    }
   }
 
   function perception(index: number, result: 'passed' | 'failed') {

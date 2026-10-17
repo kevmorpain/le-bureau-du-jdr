@@ -384,7 +384,7 @@ function applyEffects() {
     sanityMax: props.resolved.maxVitals.sanity.effective,
     exhaustion: c.exhaustion,
     exhaustionMax: KN_BOUNDS.exhaustion.max,
-  })
+  }, c.status.madness.counters.darknessComing)
   c.toughnessCurrent = next.toughness
   if (next.temporaryToughness !== knTemporaryOf(c.status, 'toughness')) {
     c.status = knSetTemporary(c.status, 'toughness', next.temporaryToughness ?? 0)

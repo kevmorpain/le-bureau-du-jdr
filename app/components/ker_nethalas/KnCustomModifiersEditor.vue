@@ -67,14 +67,14 @@
           aria-label="Jauge"
         />
         <USelect
-          v-else
+          v-else-if="entry.kind !== 'armor'"
           v-model="entry.target"
           :items="targetItems"
           class="w-64"
           aria-label="Cible"
         />
         <KnNumberField
-          v-if="entry.kind === 'modifier' || entry.kind === 'maxVital'"
+          v-if="entry.kind === 'modifier' || entry.kind === 'maxVital' || entry.kind === 'armor'"
           v-model="entry.amount"
           aria-label="Valeur"
           :min="KN_STATUS_BOUNDS.customAmount.min"
@@ -133,7 +133,7 @@ const status = defineModel<KnStatus>('status', { required: true })
 const { t } = useI18n()
 
 const kindItems = computed<SelectItem[]>(() =>
-  (['modifier', 'advantage', 'disadvantage', 'maxVital'] as const).map(kind => ({ label: t(`ker_nethalas.customKinds.${kind}`), value: kind })),
+  (['modifier', 'advantage', 'disadvantage', 'maxVital', 'armor'] as const).map(kind => ({ label: t(`ker_nethalas.customKinds.${kind}`), value: kind })),
 )
 
 const vitalItems = computed<SelectItem[]>(() =>
@@ -162,5 +162,6 @@ function setKind(modifier: KnCustomModifier, index: number, kind: unknown) {
   if (kind === 'modifier') modifier.entries[index] = { kind, target, amount: 0 }
   else if (kind === 'advantage' || kind === 'disadvantage') modifier.entries[index] = { kind, target }
   else if (kind === 'maxVital') modifier.entries[index] = { kind, vital: 'toughness', amount: 0 }
+  else if (kind === 'armor') modifier.entries[index] = { kind, amount: 0 }
 }
 </script>

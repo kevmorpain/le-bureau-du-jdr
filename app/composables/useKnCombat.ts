@@ -438,7 +438,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     return action ? { d6, action } : undefined
   }
 
-  const survivorArmor = (location: KnHitLocationKey) => knArmorByZone(character.value.inventory)[knSurvivorArmorZone(location)]
+  const survivorArmor = (location: KnHitLocationKey) => knArmorByZone(character.value.inventory, resolved().armorBonus)[knSurvivorArmorZone(location)]
 
   // L'action d'une créature contre le survivant, ou contre un sbire (`minion`). Physique : jet opposé contre sa défense ;
   // Magique : test de Résistance magique ; sans étiquette, c'est le texte de l'action qui décide.

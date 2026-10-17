@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { emptyKnMadness } from '../../shared/ker-nethalas/catalog/madness'
 import type { KnDamageInput } from '../../shared/ker-nethalas/combat'
 import { knResolveDamage } from '../../shared/ker-nethalas/combat'
 import { knAttackOptions } from '../../shared/ker-nethalas/equipment'
@@ -73,6 +74,14 @@ describe('récupérer la récompense d\'un objectif', () => {
     expect(first.patch.goalEffects).toEqual([{ goal: 'a', effect: perk }])
     expect(knHasActivePerk({ perkKeys: [], goalEffects: first.patch.goalEffects! }, 'scholar')).toBe(true)
     expect(knActivePerks(['scavenger'], first.patch.goalEffects!)).toEqual(['scavenger', 'scholar'])
+  })
+
+  it('la Mémoire défaillante réduit l\'XP de la récompense', () => {
+    const forgetful = { madness: { ...emptyKnMadness(), counters: { ...emptyKnMadness().counters, forgetfulness: 2 } } }
+    const { patch, lines } = ok(knClaimGoalReward(sheet({ status: forgetful }), goal('a', { kind: 'xp', amount: 100 })))
+
+    expect(patch.xp).toBe(180)
+    expect(lines).toEqual(['+80 XP (100 moins la Mémoire défaillante)'])
   })
 
   it('l\'XP se donne une fois, même après une annulation suivie d\'une nouvelle récupération', () => {
