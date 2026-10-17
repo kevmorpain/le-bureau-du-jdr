@@ -1,12 +1,16 @@
+import { knReduceXpGain } from './catalog/madness'
 import { knRollDice } from './dice'
 import { KN_ONE_SHOT_GOAL_EFFECTS, type KnGoalEffectEntry } from './goalEffects'
 import { knClaimGoal, knGoalReached, knUnclaimGoal, type KnGoalPick, type KnPersonalGoal } from './goals'
 import type { KnLevelSheet } from './levelUp'
 import type { KnRng } from './run'
+import type { KnStatus } from './status'
 
 export type KnGoalSheet = Pick<KnLevelSheet, 'xp' | 'healthMax' | 'healthCurrent' | 'toughnessMax' | 'toughnessCurrent' | 'aetherMax' | 'aetherCurrent' | 'sanityMax' | 'sanityCurrent'> & {
   goalPicks: KnGoalPick[]
   goalEffects: KnGoalEffectEntry[]
+  // Pour réduire l'XP d'une récompense quand la Mémoire défaillante est en cours.
+  status?: Pick<KnStatus, 'madness'>
 }
 
 export type KnGoalClaim
@@ -35,8 +39,9 @@ export function knClaimGoalReward(sheet: KnGoalSheet, goal: KnPersonalGoal, rng:
   } else if (effect && !before.granted) {
     patch.goalPicks = claimed.map(pick => pick.key === goal.key ? { ...pick, granted: true } : pick)
     if (effect.kind === 'xp') {
-      patch.xp = sheet.xp + effect.amount
-      lines.push(`+${effect.amount} XP`)
+      const gained = sheet.status ? knReduceXpGain(effect.amount, sheet.status.madness) : effect.amount
+      patch.xp = sheet.xp + gained
+      lines.push(`+${gained} XP${gained < effect.amount ? ` (${effect.amount} moins la Mémoire défaillante)` : ''}`)
     } else if (effect.kind === 'amulet') {
       amulet = true
     } else if (effect.kind === 'maxVital') {

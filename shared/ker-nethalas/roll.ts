@@ -156,12 +156,13 @@ const adjust = (current: number, amount: number, max: number) =>
   amount >= 0 ? Math.max(current, Math.min(max, current + amount)) : Math.max(0, current + amount)
 
 // Les dégâts se retirent à la Robustesse d'abord, puis à la Santé, sans compter l'armure que le livre ne mentionne pas ici.
-export function knApplyCriticalEffects(effects: KnCriticalEffect[], state: KnVitalsState): KnVitalsState {
+// `extraSanityLoss` : « Les ténèbres approchent » aggrave d'autant toute perte de Santé mentale.
+export function knApplyCriticalEffects(effects: KnCriticalEffect[], state: KnVitalsState, extraSanityLoss = 0): KnVitalsState {
   const next = { ...state }
   for (const effect of effects) {
     if (effect.type === 'health') next.health = adjust(next.health, effect.amount, next.healthMax)
     else if (effect.type === 'toughness') next.toughness = adjust(next.toughness, effect.amount, next.toughnessMax)
-    else if (effect.type === 'sanity') next.sanity = adjust(next.sanity, effect.amount, next.sanityMax)
+    else if (effect.type === 'sanity') next.sanity = adjust(next.sanity, effect.amount < 0 ? effect.amount - extraSanityLoss : effect.amount, next.sanityMax)
     else if (effect.type === 'exhaustion') next.exhaustion = adjust(next.exhaustion, effect.amount, next.exhaustionMax)
     else if (effect.type === 'damage') {
       const hit = knTakeDamage({ ...next, temporaryToughness: next.temporaryToughness ?? 0 }, effect.amount)

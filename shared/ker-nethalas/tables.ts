@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { KN_PROVISION_BOUNDS, KN_PROVISION_KEYS, knLowerDie, type KnProvisions } from './camp'
 import { KN_CONDITION_KEYS } from './catalog/conditions'
+import { knReduceXpGain, knSanityLossExtra } from './catalog/madness'
 import { KN_BOUNDS } from './character'
 import { knDiceSchema, knRollDice, type KnDiceRoll } from './dice'
 import { KN_VITAL_KEYS, type KnVitalKey } from './effects'
@@ -146,6 +147,9 @@ export interface KnTableEffectOutcome {
   draw?: KnGrowingDarknessDraw
   // Un état que l'équipement du survivant a empêché.
   blocked?: boolean
+  // La Folie a changé le montant : perte de Santé mentale aggravée (`sanityExtra`), XP réduit (`xpReduced`).
+  sanityExtra?: number
+  xpReduced?: number
 }
 
 const clamp = (value: number, max: number) => Math.min(max, Math.max(0, value))
@@ -162,7 +166,7 @@ export interface KnEffectScale {
 const scaled = (value: number, factor: number) => Math.ceil(value * factor)
 
 const scaleEntry = (entry: KnCustomEntry, factor: number): KnCustomEntry =>
-  factor !== 1 && (entry.kind === 'modifier' || entry.kind === 'maxVital') ? { ...entry, amount: scaled(entry.amount, factor) } : entry
+  factor !== 1 && (entry.kind === 'modifier' || entry.kind === 'maxVital' || entry.kind === 'armor') ? { ...entry, amount: scaled(entry.amount, factor) } : entry
 
 // Un même effet reposé en remplace la durée plutôt que de se cumuler.
 function withTimedEffect(status: KnStatus, effect: Extract<KnTableEffect, { kind: 'timed' }>, duration: number, scale?: KnEffectScale): KnStatus {
@@ -262,12 +266,17 @@ export function knApplyTableEffects(
     const signed = (sign: 'gain' | 'loss' | undefined) => sign === 'loss' ? -roll.total : roll.total
 
     if (effect.kind === 'coins') next = { ...next, coins: clamp(next.coins + signed(effect.sign), KN_BOUNDS.coins.max) }
-    else if (effect.kind === 'xp') next = { ...next, xp: clamp(next.xp + roll.total, KN_BOUNDS.xp.max) }
-    else if (effect.kind === 'provision') {
+    else if (effect.kind === 'xp') {
+      const gained = knReduceXpGain(roll.total, next.status.madness)
+      if (gained !== roll.total) outcome.xpReduced = roll.total - gained
+      next = { ...next, xp: clamp(next.xp + gained, KN_BOUNDS.xp.max) }
+    } else if (effect.kind === 'provision') {
       next = { ...next, provisions: { ...next.provisions, [effect.key]: clamp(next.provisions[effect.key] + signed(effect.sign), KN_PROVISION_BOUNDS.max) } }
     } else if (effect.kind === 'vital') {
       const current = next[effect.vital]
-      const value = effect.sign === 'gain' ? Math.max(current, Math.min(maxima[effect.vital], current + roll.total)) : Math.max(0, current - roll.total)
+      const extra = effect.vital === 'sanity' && effect.sign === 'loss' ? knSanityLossExtra(next.status.madness, roll.total) : 0
+      if (extra) outcome.sanityExtra = extra
+      const value = effect.sign === 'gain' ? Math.max(current, Math.min(maxima[effect.vital], current + roll.total)) : Math.max(0, current - roll.total - extra)
       next = { ...next, [effect.vital]: value }
     } else if (effect.kind === 'damage') {
       next = knApplyDamage(next, maxima, roll.total, effect.direct)

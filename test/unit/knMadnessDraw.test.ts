@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emptyKnMadness } from '../../shared/ker-nethalas/catalog/madness'
+import { emptyKnMadness, knReduceXpGain, knSanityLossExtra } from '../../shared/ker-nethalas/catalog/madness'
 import { knDrawMadness, knMadnessOutcome } from '../../shared/ker-nethalas/madnessDraw'
 
 describe('table de Folie (D10)', () => {
@@ -37,6 +37,20 @@ describe('table de Folie (D10)', () => {
     const drawn = knDrawMadness(madness, 5)
     expect(drawn.modified).toBe(3)
     expect(drawn.outcome).toEqual({ kind: 'counter', key: 'physicalReactions' })
+  })
+
+  it('« Les ténèbres approchent » ajoute son cumul à une vraie perte de Santé mentale seulement', () => {
+    const madness = { ...emptyKnMadness(), counters: { ...emptyKnMadness().counters, darknessComing: 2 } }
+    expect(knSanityLossExtra(madness, 3)).toBe(2)
+    expect(knSanityLossExtra(madness, 0)).toBe(0)
+    expect(knSanityLossExtra(emptyKnMadness(), 3)).toBe(0)
+  })
+
+  it('« Mémoire défaillante » retire 10 XP par cumul à un gain, sans descendre sous 0', () => {
+    const madness = { ...emptyKnMadness(), counters: { ...emptyKnMadness().counters, forgetfulness: 2 } }
+    expect(knReduceXpGain(100, madness)).toBe(80)
+    expect(knReduceXpGain(15, madness)).toBe(0)
+    expect(knReduceXpGain(100, emptyKnMadness())).toBe(100)
   })
 
   it('un résultat ramené à 1 ou moins compte comme un 1', () => {

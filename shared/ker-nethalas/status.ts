@@ -46,6 +46,7 @@ export const knCustomEntrySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('advantage'), target: knTarget }),
   z.object({ kind: z.literal('disadvantage'), target: knTarget }),
   z.object({ kind: z.literal('maxVital'), vital: knVital, amount: boundedInt(KN_STATUS_BOUNDS.customAmount) }),
+  z.object({ kind: z.literal('armor'), amount: boundedInt(KN_STATUS_BOUNDS.customAmount) }),
 ])
 
 export const knCustomModifierSchema = z.object({

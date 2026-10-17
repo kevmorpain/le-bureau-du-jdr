@@ -80,10 +80,13 @@ export function useKnEffectText() {
     return `gagne ${selfAmountText(effect.amount)} en Santé temporaire${cap}${until}`
   }
 
-  function outcomeText({ effect, roll, draw, blocked }: KnTableEffectOutcome): string {
+  function outcomeText({ effect, roll, draw, blocked, sanityExtra, xpReduced }: KnTableEffectOutcome): string {
     if (draw) return `Obscurité Grandissante ${draw.roll}`
-    const text = effectText(effect, 'dice' in effect || effect.kind === 'timed' ? roll.total : undefined)
-    return blocked ? `${text} : empêché par l'équipement (Immunisé)` : text
+    const text = effectText(effect, 'dice' in effect || effect.kind === 'timed' ? roll.total + (sanityExtra ?? 0) : undefined)
+    if (blocked) return `${text} : empêché par l'équipement (Immunisé)`
+    if (sanityExtra) return `${text} (dont ${sanityExtra} des Ténèbres qui approchent)`
+    if (xpReduced) return `${text} (moins ${xpReduced} par la Mémoire défaillante)`
+    return text
   }
 
   return { effectText, effectsText, outcomeText, selfEffectText, buffParts }

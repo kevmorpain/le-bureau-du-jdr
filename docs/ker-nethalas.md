@@ -488,7 +488,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Interface** : une potion trouvée se range « non identifiée » (ni nom, ni ligne de table visibles, y compris sur la carte
   Butin) ; « Identifier (Médecine) » ouvre le test en ligne, « Boire » identifie d'office et applique. Un fragment s'emploie
   d'un clic. Le texte de l'objet s'affiche à chaque emploi, pour ce que les effets chiffrés ne couvrent pas.
-- **Laissé de côté** : l'Armure +1 de la Peau de pierre (pas de cible « Armure » dans les modificateurs libres) ; les bonus
+- **Laissé de côté** : les bonus
   ponctuels (« prochain test d'Athlétisme +50 », « +D4 de feu à la Réserve ») et les actions (Action Standard gratuite) restent
   du texte ; la Pierre de Borestia (identification sans test) vient avec les objets magiques ; deux potions de Vitalité bues de
   suite ne déclenchent pas les dégâts d'acide.
@@ -561,8 +561,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   n'en est pris (`knAdjustScavenge`, résultat borné à la table) ; les pièces des contenants ajoutent D20 pièces au butin d'un tirage
   qui passe par la table des contenants.
   Les libellés sont descriptifs : les noms du livre sont dans le contenu privé (récompenses d'objectifs) et ne se versionnent pas.
-  ⚠️ Laissé de côté : un contenant « Vide » à la fouille approfondie n'ouvre aucun tirage de butin, donc rapporte ses pièces à la
-  main ; « ne peut pas être surpris » n'a pas de mécanique propre (l'outil ne tire pas la surprise des créatures).
+  « Ne peut pas être surpris » n'a pas de mécanique propre (l'outil ne tire pas la surprise des créatures) : rien à faire (confirmé par le PM).
 - **Récompenses d'objectifs** (`goalEffects.ts`, `goalRewards.ts`, issue X23) : le format public d'un objectif gagne un champ
   `effect` optionnel (le contenu déjà écrit reste valide), renseigné dans le contenu privé. Neuf sortes : Atout, réduction de
   dégâts d'un type, bonus de dégâts d'une compétence d'arme, dé de dégâts ajouté à toute attaque, Coup critique triplé contre un
@@ -626,6 +625,26 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   La règle étant optionnelle, l'encart s'offre toujours et il suffit de ne pas le confirmer pour repartir avec un nouveau survivant :
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
+
+### KN52 — Folie : les effets qui jouent tout seuls
+- **« Les ténèbres approchent »** : chaque perte de Santé mentale prend 1 de plus par cumul (`knSanityLossExtra`), qu'elle vienne d'une
+  table (`knApplyTableEffects`) ou d'un Coup critique (`knApplyCriticalEffects`, paramètre `extraSanityLoss` passé par `KnRollPanel`). Un
+  gain de Santé mentale, ou une perte nulle, ne change pas.
+- **« Mémoire défaillante »** : chaque gain d'XP perd 10 par cumul, sans descendre sous 0 (`knReduceXpGain`) : effets de table,
+  récompense d'objectif (`knClaimGoalReward`, `status` optionnel), fin de combat (`useKnCombatEnd`), livre de savoir (`KnLootSection`).
+  Les messages disent la réduction (« dont N des Ténèbres qui approchent », « moins N par la Mémoire défaillante »).
+- ⚠️ hypothèses : le plancher à 0 de l'XP, et la réduction aussi appliquée au +100 XP du résultat 10 de la table de Folie (il passe par
+  `applyEffects`, donc par `knApplyTableEffects`).
+- **Contenant « Vide »** : le résultat 1-5 du contenu d'une fouille approfondie donne quand même ses D20 pièces à l'Atout des pièces de
+  contenant (`deepSearchContent`), puisque le butin ne sera pas tiré (le PM confirme que l'Atout vaut aussi pour un
+  contenant vide).
+- **Armure d'un effet** : une entrée `armor` (modificateur libre, effet de potion ou de Maîtrise) devient l'effet `armorBonus`, que
+  `resolveKnSheet` additionne (`armorBonus`) et que `knArmorByZone` ajoute à chaque zone, pièce portée ou non (Peau de pierre : contenu
+  privé de la potion mis à jour, à recharger par `npm run kn:content`).
+- **Outils de voleur** (`knHasThievesToolkit`, objet du catalogue de clé `thievesToolkit`) : désamorcer un piège exige de les avoir (le
+  test est bloqué et un avertissement s'affiche sinon ; « Réussi » et « Raté » restent saisissables) et ils donnent +5 en Larcin tant qu'ils
+  sont dans l'inventaire et entiers. ⚠️ hypothèse : le +5 vaut pour tout test de Larcin, pas seulement le désamorçage (le livre ne précise pas).
+  Les Crochets restent une provision, pour les verrous.
 
 ### KN51 — Revue de la fiche contre la maquette
 - **Cartes repliables** (`KnCard`) : comme les sections de la fiche D&D, un bandeau d'en-tête (fond relevé, titre en capitales) cliquable avec un
@@ -865,7 +884,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   Verrou, une fois le piège réglé : crocheter (Larcin, un Crochet ; la difficulté tirée au premier essai est retenue, chaque
   échec brise un Crochet des provisions et la baisse d'un cran) ou forcer (Athlétisme, +20 par échec précédent ; chaque
   tentative fait un test de Dé de Tension, automatique, enregistré dans l'entrée).
-- **Laissé de côté** : l'outil ne contrôle pas les Outils de voleur (seuls les Crochets sont des provisions) ; un piège à
+- **Laissé de côté** : un piège à
   conséquence partielle (filet : Entravé et dégâts de la chute après D6 tentatives) n'en applique que ce qui est
   inconditionnel ; le gaz et l'alarme restent du texte.
 
@@ -1109,6 +1128,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 7 (a : inventaire, catalogue, équipement dans le combat, kit de départ, KN40-KN41 ; b : butin, gemmes, marchand, fragments et potions utilisables, KN42-KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) ; contenu à relire par le PM |
 | **U13a — Fiche en trois colonnes** | survivant, donjon et pièce, barre d'état collante (KN28, KN49) ; issue U13 (#264) | écrite |
 | **U13c — Revue de la fiche** | cartes repliables, compacité, couleurs, repos, dés d'entrée, repères (KN51) | écrite |
+| **Folie automatique** | « Les ténèbres approchent » et « Mémoire défaillante » appliqués aux pertes de Santé mentale et aux gains d'XP (KN52) | écrite, non commitée |
 | **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.

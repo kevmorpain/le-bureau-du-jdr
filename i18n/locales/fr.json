@@ -308,13 +308,15 @@
       "modifier": "Modificateur",
       "advantage": "Avantage",
       "disadvantage": "Désavantage",
-      "maxVital": "Maximum d'une jauge"
+      "maxVital": "Maximum d'une jauge",
+      "armor": "Armure (toutes les zones)"
     },
     "sources": {
       "exhaustion": "Épuisement ({value})",
       "rot": "La Pourriture, stade {stage}",
       "overseer": "Influence de l'Overseer",
       "equipment": "Équipement porté",
+      "thievesToolkit": "Outils de voleur",
       "noLight": "Sans source de lumière"
     },
     "perks": {

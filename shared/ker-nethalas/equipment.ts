@@ -17,13 +17,30 @@ export const knArmorPieces = (items: readonly KnItem[], zone: KnSurvivorArmorZon
 const protectionOf = (pieces: readonly KnItem[], bonus = 0) =>
   pieces.length ? pieces.reduce((sum, item) => sum + (item.protection ?? 0), bonus) : 0
 
-// Des gants ou des bottes magiques améliorent l'Armure des vambraces ou des jambières, quand on en porte.
-export const knArmorByZone = (items: readonly KnItem[]): Record<KnSurvivorArmorZone, number> => ({
-  head: protectionOf(knArmorPieces(items, 'head')),
-  torso: protectionOf(knArmorPieces(items, 'torso')),
-  arms: protectionOf(knArmorPieces(items, 'arms'), knMagicArmorBonus(items, 'vambraces')),
-  legs: protectionOf(knArmorPieces(items, 'legs'), knMagicArmorBonus(items, 'greaves')),
+// Des gants ou des bottes magiques améliorent l'Armure des vambraces ou des jambières, quand on en porte. `bonus` : l'Armure d'un effet (potion), à chaque zone.
+export const knArmorByZone = (items: readonly KnItem[], bonus = 0): Record<KnSurvivorArmorZone, number> => ({
+  head: protectionOf(knArmorPieces(items, 'head')) + bonus,
+  torso: protectionOf(knArmorPieces(items, 'torso')) + bonus,
+  arms: protectionOf(knArmorPieces(items, 'arms'), knMagicArmorBonus(items, 'vambraces')) + bonus,
+  legs: protectionOf(knArmorPieces(items, 'legs'), knMagicArmorBonus(items, 'greaves')) + bonus,
 })
+
+export const KN_THIEVES_TOOLKIT_REF = 'thievesToolkit'
+export const KN_THIEVES_TOOLKIT_BONUS = 5
+
+// Désamorcer un piège exige les Outils de voleur, qui donnent aussi un bonus de Larcin tant qu'on les porte.
+export const knHasThievesToolkit = (items: readonly KnItem[]): boolean =>
+  items.some(item => item.ref === KN_THIEVES_TOOLKIT_REF && !item.broken)
+
+const knThievesToolkitSources = (items: readonly KnItem[]): KnActiveSource[] =>
+  knHasThievesToolkit(items)
+    ? [{
+        id: 'thievesToolkit',
+        label: { key: 'ker_nethalas.sources.thievesToolkit' },
+        effects: [{ type: 'modifier', targets: ['thievery'], amount: KN_THIEVES_TOOLKIT_BONUS }],
+        reminders: [],
+      }]
+    : []
 
 // Une armure lourde gêne les mouvements (Acrobatie, Esquive, Furtivité), un casque la vue (Perception).
 export function knEquipmentSources(items: readonly KnItem[]): KnActiveSource[] {
@@ -34,7 +51,10 @@ export function knEquipmentSources(items: readonly KnItem[]): KnActiveSource[] {
     ...(maneuverability ? [{ type: 'modifier' as const, targets: ['acrobatics', 'dodge', 'stealth'] as const, amount: -maneuverability }] : []),
     ...(perception ? [{ type: 'modifier' as const, targets: ['perception'] as const, amount: -perception }] : []),
   ]
-  return effects.length ? [{ id: 'equipment', label: { key: 'ker_nethalas.sources.equipment' }, effects, reminders: [] }] : []
+  return [
+    ...(effects.length ? [{ id: 'equipment', label: { key: 'ker_nethalas.sources.equipment' }, effects, reminders: [] }] : []),
+    ...knThievesToolkitSources(items),
+  ]
 }
 
 // Deux armes à une main, une dans chaque main : le combat à deux armes est possible.

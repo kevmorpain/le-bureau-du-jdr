@@ -490,7 +490,7 @@ const bodyMax = computed(() => knBodySlotMax(inventory.value))
 
 const ZONE_LABELS: Record<KnSurvivorArmorZone, string> = { head: 'Tête', torso: 'Torse', arms: 'Bras', legs: 'Jambes' }
 
-const armorByZone = computed(() => knArmorByZone(inventory.value))
+const armorByZone = computed(() => knArmorByZone(inventory.value, props.resolved.armorBonus))
 
 interface InventoryGroup {
   key: string

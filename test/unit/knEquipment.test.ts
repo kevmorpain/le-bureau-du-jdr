@@ -6,6 +6,7 @@ import {
   knAttackOptions,
   knDefenseOptions,
   knEquipmentSources,
+  knHasThievesToolkit,
   knInitiativeBonus,
   knRepairItem,
   knRollIntegrity,
@@ -31,6 +32,20 @@ describe('armure portée', () => {
     expect(knArmorByZone(worn)).toEqual({ head: 3, torso: 2, arms: 1, legs: 0 })
     expect(knArmorPieces(worn, 'torso').map(p => p.id)).toEqual(['t'])
     expect(knArmorByZone([])).toEqual({ head: 0, torso: 0, arms: 0, legs: 0 })
+  })
+
+  it('l\'Armure d\'un effet s\'ajoute à chaque zone, pièce portée ou non', () => {
+    expect(knArmorByZone(worn, 1)).toEqual({ head: 4, torso: 3, arms: 2, legs: 1 })
+    expect(knArmorByZone([], 1)).toEqual({ head: 1, torso: 1, arms: 1, legs: 1 })
+  })
+
+  it('les Outils de voleur donnent +5 en Larcin tant qu\'ils sont là et entiers', () => {
+    const toolkit = item('k', { ref: 'thievesToolkit' })
+
+    expect(knHasThievesToolkit([toolkit])).toBe(true)
+    expect(knHasThievesToolkit([item('k', { ref: 'thievesToolkit', broken: true }), item('x')])).toBe(false)
+    expect(knEquipmentSources([toolkit])).toEqual([expect.objectContaining({ id: 'thievesToolkit', effects: [{ type: 'modifier', targets: ['thievery'], amount: 5 }] })])
+    expect(knEquipmentSources([item('x')])).toEqual([])
   })
 
   it('l\'armure gêne l\'agilité et le casque la Perception', () => {

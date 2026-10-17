@@ -2,6 +2,7 @@ import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import { knReduceXpGain } from '~~/shared/ker-nethalas/catalog/madness'
 import { knClearCombatEffects } from '~~/shared/ker-nethalas/combatEffects'
 import { knRollIntegrity, type KnIntegrityResult } from '~~/shared/ker-nethalas/equipment'
 import { knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
@@ -77,7 +78,7 @@ export function useKnCombatEnd(
   function win(kind: 'combat' | 'overseer') {
     const c = character.value
     const maxVitals = resolved().maxVitals
-    c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + KN_XP[kind])
+    c.xp = Math.min(KN_BOUNDS.xp.max, c.xp + knReduceXpGain(KN_XP[kind], c.status.madness))
     if (kind === 'overseer') {
       applyEffects([{ kind: 'vital', vital: 'sanity', dice: { count: 1, sides: 4, bonus: 0 }, sign: 'gain' }], 'Overseer vaincu')
       c.run = knDefeatOverseer(c.run)

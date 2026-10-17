@@ -70,7 +70,7 @@ describe('libellés français', () => {
     for (const key of KN_MADNESS_COUNTER_KEYS) expect(labels.madnessNames[key], key).toBeTruthy()
     expect(labels.madnessNames.lostSkill).toBeTruthy()
     for (const group of KN_TARGET_GROUPS) expect(labels.targets[group], group).toBeTruthy()
-    for (const kind of ['modifier', 'advantage', 'disadvantage', 'maxVital']) expect(labels.customKinds[kind], kind).toBeTruthy()
+    for (const kind of ['modifier', 'advantage', 'disadvantage', 'maxVital', 'armor']) expect(labels.customKinds[kind], kind).toBeTruthy()
   })
 
   it('n\'a pas de libellé orphelin pour Growing Darkness ni pour les conditions', () => {
