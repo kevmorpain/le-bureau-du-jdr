@@ -627,6 +627,27 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN51 — Revue de la fiche contre la maquette
+- **Cartes repliables** (`KnCard`) : comme les sections de la fiche D&D, un bandeau d'en-tête (fond relevé, titre en capitales) cliquable avec un
+  chevron ; replié, il montre un mini-résumé du contenu et aucun espace vide. État retenu par carte dans le navigateur (`kn:card:<clé>`). Identité et Notes et atouts, repliées par défaut, ont désormais un titre. Les Maîtrises se replient aussi une à une.
+- **Compacité** : objectifs sur une ligne (nom, progrès, +1 / −1, récompense à récupérer), détail à l'ouverture ; équipement une ligne par objet,
+  actions principales visibles, détails à la demande ; provisions, ajout d'objet et notes libres repliés ; Overseer sur une ligne (influences en
+  pastilles, bouton « Engager le combat »), fiche à la demande ; compteurs, dés et éditeur d'Obscurité dans « Réglages du Domaine ».
+  À 1 600 px : colonne du survivant 8 220 → 5 750 px, du donjon 2 480 → 750 px.
+- **Couleurs** : cartes violettes par effet de Folie (texte de l'effet, cumul modifiable), panneau vert-brun pour la Pourriture.
+- **Jet de dés** : la carte disparaît ; le bouton « Jet » de chaque compétence, résistance ou compétence ajoutée ouvre le test dans un panneau
+  (`KnRollButton` → `KnInlineCheck`).
+- **Repos** : « Prendre son souffle » (effet immédiat, résumé en message, `useKnBreather`) et « Établir le camp » (panneau du camp ouvert) sont dans
+  la barre d'état. Un repos s'inscrit sur la pièce courante (`visit.rest`, `knMarkRest` ; le livre dit que le camp implique de sécuriser une
+  salle) et se lit dans le bloc de la pièce et sur sa ligne du chemin.
+- **Dés d'entrée** (`entryRolls.ts`) : la description d'une nouvelle salle ou d'un nouveau couloir se tire à l'entrée ; « Lancer les dés d'entrée »
+  tire d'un coup ce qui ne demande aucun choix (Tension, Lair ou Sortie, porte, rencontre de combat, événement) ; « Saisir mes propres dés » rend les
+  champs de saisie. Un retour ne tire que sa Tension. Tout tirage automatique se fait ici, jamais sans clic, pour garder la saisie de vrais dés.
+- **Repères du chemin** : pastilles combat (ou fui), butin, marchand, Lair, Sortie, événement, obstacles, repos. La carte « Butin » ne s'affiche
+  qu'après un combat, une fouille, un événement ou un contenant, un bouton la montre à la demande.
+- Laissé de côté : la carte du Domaine, la mémorisation des cartes par survivant (elle est par appareil), un réglage pour lancer les dés d'entrée dès
+  l'entrée.
+
 ### KN50 — Pièces persistantes : retour, fouille, pièges et fuite (X34)
 - **Une pièce a une identité.** Un retour (`kind: 'revisit'`) désigne désormais la pièce ou le couloir qu'il revisite (`of`, l'identifiant `id`
   que reçoit la pièce la première fois qu'on y retourne). La **pièce courante** (`knLocationIndex`) est la dernière entrée, ou la pièce que cette
@@ -652,8 +673,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   quand l'écran le permet, la colonne de droite garde au moins 30 rem.
 - **Page pleine largeur** : la page utilise le layout `wide` (l'en-tête du site est `AppHeader`, partagé avec `default`, sans `UContainer`).
 - **Barre d'état collante** (`KnStatusBar`) : nom, niveau, Domaine et entrée en cours, XP, les quatre jauges, Épuisement, lumière, une pastille
-  par condition (au survol, ce que la condition fait), Pourriture et Folie. Les jauges ouvrent un panneau (`KnVitalsSection`) et « Repos et
-  provisions » un autre (`KnRestSection`) : les deux restent accessibles de partout. La carte « Référence des conditions » disparaît, ses textes
+  par condition (au survol, ce que la condition fait), Pourriture et Folie. Les jauges ouvrent un panneau (`KnVitalsSection`) et « Établir le
+  camp » un autre (`KnRestSection`), accessibles de partout ; « Prendre son souffle » est un bouton direct (KN51). La carte « Référence des conditions » disparaît, ses textes
   sont dans les pastilles.
 - **Colonne Donjon** (`KnDungeonPanel`) : Domaine, lumière, dés, Overseer, influences, boutons d'entrée, chemin du Domaine ; chaque entrée est un
   bouton qui la sélectionne. **Colonne Pièce** (`KnRoomPanel`) : le bloc de l'entrée choisie (`KnVisitBlock`), puis combat, butin et marchand.
@@ -1087,6 +1108,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **6c — Overseers, sbires, effets des actions** | les 53 fiches du bestiaire (43 créatures, 10 Overseers), les 5 sbires de Maîtrise (alliés dans le combat) et les effets que le texte des actions décrit : dégâts dus, directs, moitié, durées sur le survivant et sur les créatures, soins, Santé temporaire, invocations (KN38, KN39) | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 6 |
 | **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 7 (a : inventaire, catalogue, équipement dans le combat, kit de départ, KN40-KN41 ; b : butin, gemmes, marchand, fragments et potions utilisables, KN42-KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) ; contenu à relire par le PM |
 | **U13a — Fiche en trois colonnes** | survivant, donjon et pièce, barre d'état collante (KN28, KN49) ; issue U13 (#264) | écrite |
+| **U13c — Revue de la fiche** | cartes repliables, compacité, couleurs, repos, dés d'entrée, repères (KN51) | écrite |
 | **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.

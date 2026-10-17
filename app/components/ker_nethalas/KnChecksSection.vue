@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="checks">
     <template #header>
       <KnCardHeader title="Compétences et résistances">
         Le score effectif s'affiche ; un clic dessus ouvre le détail du calcul et le score de base, modifiable. ▲ avantage, ▼ désavantage.
@@ -31,14 +31,10 @@
             :max="KN_BOUNDS.skill.max"
           />
         </div>
-        <UButton
-          size="xs"
-          variant="soft"
-          :aria-label="`Jet : ${$t(`ker_nethalas.skills.${key}`)}`"
-          @click="emit('roll', `skill:${key}`)"
-        >
-          Jet
-        </UButton>
+        <KnRollButton
+          :id="`skill:${key}`"
+          :label="$t(`ker_nethalas.skills.${key}`)"
+        />
       </div>
     </div>
 
@@ -66,14 +62,10 @@
           :max="KN_BOUNDS.skill.max"
         />
       </div>
-      <UButton
-        size="xs"
-        variant="soft"
-        :aria-label="`Jet : ${extra.name}`"
-        @click="emit('roll', `extra:${index}`)"
-      >
-        Jet
-      </UButton>
+      <KnRollButton
+        :id="`extra:${index}`"
+        :label="extra.name"
+      />
       <UButton
         icon="i-heroicons:trash"
         color="error"
@@ -122,17 +114,13 @@
             :max="KN_BOUNDS.resistance.max"
           />
         </div>
-        <UButton
-          size="xs"
-          variant="soft"
-          :aria-label="`Jet : ${$t(`ker_nethalas.resistances.${key}`)}`"
-          @click="emit('roll', `resistance:${key}`)"
-        >
-          Jet
-        </UButton>
+        <KnRollButton
+          :id="`resistance:${key}`"
+          :label="$t(`ker_nethalas.resistances.${key}`)"
+        />
       </div>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>
@@ -141,15 +129,13 @@ import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
 
-defineProps<{
+const props = defineProps<{
   resolved: KnResolvedSheet
 }>()
 
-const emit = defineEmits<{
-  roll: [selection: string]
-}>()
-
 const character = defineModel<KnCharacter>('character', { required: true })
+
+provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 function addExtra() {
   character.value.extraSkills.push({ name: 'Nouvelle compétence', score: 0, marked: false })

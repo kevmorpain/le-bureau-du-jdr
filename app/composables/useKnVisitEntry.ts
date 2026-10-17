@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knAdvanceRooms } from '~~/shared/ker-nethalas/combatEffects'
+import { knRollDescription } from '~~/shared/ker-nethalas/entryRolls'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knStartVisit, type KnIntroEntry, type KnVisitKind } from '~~/shared/ker-nethalas/run'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
@@ -13,6 +14,7 @@ export function useKnVisitEntry(character: Ref<KnCharacter>, resolved: () => KnR
   function enter(kind: KnVisitKind, shapeRoll?: number, intro?: KnIntroEntry, target?: number) {
     const c = character.value
     c.run = knStartVisit(c.run, kind, shapeRoll, intro, target)
+    if (!intro) c.run = knRollDescription(c.run)
     c.status = knResetUses(c.status, ['room'])
     if (kind === 'room') {
       const { status, expired } = knAdvanceRooms(c.status)

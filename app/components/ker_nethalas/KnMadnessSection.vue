@@ -1,5 +1,8 @@
 <template>
-  <UCard>
+  <KnCard storage-key="madness">
+    <template #summary>
+      {{ summary }}
+    </template>
     <template #header>
       <KnCardHeader title="Folie et Pourriture">
         À 0 en Santé mentale, le survivant est pris par la folie : on tire sur la table de Folie (D10). Les résultats cumulatifs se
@@ -9,7 +12,7 @@
             class="ml-auto"
             size="sm"
             icon="i-heroicons:cube"
-            :color="atZero ? 'error' : 'primary'"
+            color="secondary"
             :variant="atZero ? 'solid' : 'soft'"
             @click="draw"
           >
@@ -50,7 +53,7 @@
 
       <KnRotMadnessEditor v-model:status="character.status" />
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>
@@ -71,6 +74,15 @@ const { signed } = useKnLabels()
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 
 const atZero = computed(() => character.value.sanityCurrent === 0)
+
+const summary = computed(() => {
+  const { madness, rotStage } = character.value.status
+  const folies = Object.values(madness.counters).reduce((sum, count) => sum + count, 0) + madness.lostSkills.length
+  return [
+    folies ? `Folie : ${folies} effet${folies > 1 ? 's' : ''}` : 'Aucune Folie',
+    rotStage ? `Pourriture : stade ${rotStage}` : 'aucune Pourriture',
+  ].join(' · ')
+})
 
 const last = ref<ReturnType<typeof knDrawMadness>>()
 const applied = ref(false)

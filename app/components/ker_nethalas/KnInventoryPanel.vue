@@ -1,8 +1,9 @@
 <template>
   <section class="space-y-3 @xl:col-span-2">
-    <h3 class="font-medium">
-      Inventaire
-    </h3>
+    <KnCardHeader title="Inventaire">
+      Dix emplacements de sac au départ ; un Sac à dos porté en ajoute 20, chaque Pochette portée 5. Les emplacements rapides
+      n'existent qu'avec une Ceinture portée. Les provisions, les pièces et les amulettes non portées comptent dans le sac.
+    </KnCardHeader>
 
     <div class="flex flex-wrap items-center gap-2 text-sm">
       <UBadge
@@ -29,17 +30,24 @@
         class="text-error"
       >Vous portez plus que votre sac ne le permet.</span>
     </div>
-    <p class="text-xs text-muted">
-      Dix emplacements de sac au départ ; un Sac à dos porté en ajoute 20, chaque Pochette portée 5. Les emplacements rapides
-      n'existent qu'avec une Ceinture portée. Les provisions, les pièces et les amulettes non portées comptent dans le sac.
-    </p>
-
     <div class="space-y-2">
-      <p class="text-sm font-medium">
-        Provisions
-        <span class="text-xs font-normal text-muted">(se consomment au camp, à l'exploration ; {{ provisionSlots }} emplacement{{ provisionSlots > 1 ? 's' : '' }} avec les autres objets légers)</span>
-      </p>
-      <div class="grid grid-cols-2 gap-3 @sm:grid-cols-5">
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        <span class="font-medium">Provisions</span>
+        <span class="text-muted">{{ provisionsText }} · {{ provisionSlots }} emplacement{{ provisionSlots > 1 ? 's' : '' }}</span>
+        <UButton
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          :aria-expanded="provisionsOpen"
+          @click="provisionsOpen = !provisionsOpen"
+        >
+          {{ provisionsOpen ? 'Fermer' : 'Modifier' }}
+        </UButton>
+      </div>
+      <div
+        v-if="provisionsOpen"
+        class="grid grid-cols-2 gap-3 @sm:grid-cols-5"
+      >
         <KnNumberField
           v-for="key in KN_PROVISION_KEYS"
           :key
@@ -94,7 +102,7 @@
         <li
           v-for="item in group.items"
           :key="item.id"
-          class="flex flex-wrap items-end gap-3 rounded-md border border-default p-2"
+          class="flex flex-wrap items-center gap-3 rounded-md border border-default p-2"
         >
           <div class="min-w-40 flex-1">
             <p class="flex flex-wrap items-center gap-2 font-medium">
@@ -103,6 +111,13 @@
                 v-if="item.broken"
                 label="Brisé"
                 color="error"
+                variant="subtle"
+                size="md"
+              />
+              <UBadge
+                v-if="item.magic && !isOpen(item.id)"
+                :label="magicBadge(item)"
+                :color="item.magic.identified ? 'primary' : 'neutral'"
                 variant="subtle"
                 size="md"
               />
@@ -124,117 +139,80 @@
             >
               {{ stats(item) }}
             </p>
-            <p
-              v-if="agingText(item)"
-              class="text-xs text-muted"
-            >
-              Vieillissement : {{ agingText(item) }}
-            </p>
-
-            <div
-              v-if="item.magic"
-              class="mt-1 space-y-1"
-            >
-              <UBadge
-                :label="magicBadge(item)"
-                :color="item.magic.identified ? 'primary' : 'neutral'"
-                variant="subtle"
-                size="md"
-              />
+            <template v-if="isOpen(item.id)">
               <p
-                v-if="!item.magic.identified"
+                v-if="agingText(item)"
                 class="text-xs text-muted"
               >
-                Tant qu'il n'est pas harmonisé (activité Harmoniser du camp, 1 Cristal d'harmonisation), il se comporte comme son équivalent ordinaire.
+                Vieillissement : {{ agingText(item) }}
               </p>
-              <p
-                v-else-if="!knIsWorn(item)"
-                class="text-xs text-warning"
+
+              <div
+                v-if="item.magic"
+                class="mt-1 space-y-1"
               >
-                Ses propriétés n'agissent que quand il est porté.
-              </p>
-              <ul
-                v-if="item.magic.properties.length"
-                class="space-y-1 text-xs"
-              >
-                <li
-                  v-for="(property, index) in item.magic.properties"
-                  :key="index"
-                  class="flex flex-wrap items-center gap-2"
+                <UBadge
+                  :label="magicBadge(item)"
+                  :color="item.magic.identified ? 'primary' : 'neutral'"
+                  variant="subtle"
+                  size="md"
+                />
+                <p
+                  v-if="!item.magic.identified"
+                  class="text-xs text-muted"
                 >
-                  <span>{{ property.text }}</span>
-                  <USelect
-                    v-if="property.choose"
-                    :model-value="property.choice"
-                    :items="skillItems"
-                    placeholder="Choisir une compétence"
-                    size="xs"
-                    class="w-56"
-                    :aria-label="`Compétence de ${item.name}`"
-                    @update:model-value="setChoice(item.id, index, $event as KnSkillKey)"
-                  />
-                  <UButton
-                    v-for="limited in usesOf(item, index)"
-                    :key="limited.key"
-                    size="xs"
-                    variant="soft"
-                    icon="i-heroicons:bolt"
-                    :disabled="!knIsWorn(item) || knIsUsedUp(character.status, limited.key)"
-                    :title="knIsUsedUp(character.status, limited.key) ? `Déjà utilisé : ${knUseLimitLabel[limited.limit]}` : knUseLimitLabel[limited.limit]"
-                    @click="useMagic(limited)"
+                  Tant qu'il n'est pas harmonisé (activité Harmoniser du camp, 1 Cristal d'harmonisation), il se comporte comme son équivalent ordinaire.
+                </p>
+                <p
+                  v-else-if="!knIsWorn(item)"
+                  class="text-xs text-warning"
+                >
+                  Ses propriétés n'agissent que quand il est porté.
+                </p>
+                <ul
+                  v-if="item.magic.properties.length"
+                  class="space-y-1 text-xs"
+                >
+                  <li
+                    v-for="(property, index) in item.magic.properties"
+                    :key="index"
+                    class="flex flex-wrap items-center gap-2"
                   >
-                    {{ limited.label }}
-                  </UButton>
-                </li>
-              </ul>
-              <p
-                v-for="peculiarity in item.magic.peculiarities"
-                :key="peculiarity"
-                class="text-xs italic text-muted"
-              >
-                {{ peculiarity }}
-              </p>
-            </div>
+                    <span>{{ property.text }}</span>
+                    <USelect
+                      v-if="property.choose"
+                      :model-value="property.choice"
+                      :items="skillItems"
+                      placeholder="Choisir une compétence"
+                      size="xs"
+                      class="w-56"
+                      :aria-label="`Compétence de ${item.name}`"
+                      @update:model-value="setChoice(item.id, index, $event as KnSkillKey)"
+                    />
+                    <UButton
+                      v-for="limited in usesOf(item, index)"
+                      :key="limited.key"
+                      size="xs"
+                      variant="soft"
+                      icon="i-heroicons:bolt"
+                      :disabled="!knIsWorn(item) || knIsUsedUp(character.status, limited.key)"
+                      :title="knIsUsedUp(character.status, limited.key) ? `Déjà utilisé : ${knUseLimitLabel[limited.limit]}` : knUseLimitLabel[limited.limit]"
+                      @click="useMagic(limited)"
+                    >
+                      {{ limited.label }}
+                    </UButton>
+                  </li>
+                </ul>
+                <p
+                  v-for="peculiarity in item.magic.peculiarities"
+                  :key="peculiarity"
+                  class="text-xs italic text-muted"
+                >
+                  {{ peculiarity }}
+                </p>
+              </div>
+            </template>
           </div>
-          <KnNumberField
-            v-if="item.place === 'bag' || item.place === 'quick'"
-            :model-value="item.quantity"
-            label="Quantité"
-            :min="1"
-            :max="9999"
-            class="w-24"
-            @update:model-value="setQuantity(item.id, $event)"
-          />
-          <UFormField label="Emplacement">
-            <USelect
-              :model-value="item.place"
-              :items="placeItems(item)"
-              class="w-60"
-              :aria-label="`Emplacement de ${item.name}`"
-              @update:model-value="move(item, $event as KnItemPlace)"
-            />
-          </UFormField>
-          <template v-if="item.integrity">
-            <UButton
-              size="xs"
-              variant="soft"
-              icon="i-heroicons:cube"
-              :aria-label="`Jet d'Intégrité de ${item.name}`"
-              @click="rollIntegrity(item.id)"
-            >
-              Jet d'Intégrité
-            </UButton>
-            <UButton
-              size="xs"
-              variant="soft"
-              icon="i-heroicons:wrench"
-              :disabled="item.integrity.current >= item.integrity.max"
-              :aria-label="`Réparer ${item.name}`"
-              @click="repair(item.id)"
-            >
-              Réparer
-            </UButton>
-          </template>
           <UButton
             v-if="knPermanentGains(item).length"
             size="xs"
@@ -268,13 +246,63 @@
             </UButton>
           </template>
           <UButton
-            icon="i-heroicons:trash"
-            color="error"
+            :icon="isOpen(item.id) ? 'i-heroicons:chevron-up' : 'i-heroicons:chevron-down'"
+            color="neutral"
             variant="ghost"
-            size="sm"
-            :aria-label="`Retirer ${item.name}`"
-            @click="remove(item.id)"
+            size="xs"
+            :aria-expanded="isOpen(item.id)"
+            :aria-label="`${isOpen(item.id) ? 'Replier' : 'Détails de'} ${item.name}`"
+            @click="toggle(item.id)"
           />
+          <template v-if="isOpen(item.id)">
+            <KnNumberField
+              v-if="item.place === 'bag' || item.place === 'quick'"
+              :model-value="item.quantity"
+              label="Quantité"
+              :min="1"
+              :max="9999"
+              class="w-24"
+              @update:model-value="setQuantity(item.id, $event)"
+            />
+            <UFormField label="Emplacement">
+              <USelect
+                :model-value="item.place"
+                :items="placeItems(item)"
+                class="w-60"
+                :aria-label="`Emplacement de ${item.name}`"
+                @update:model-value="move(item, $event as KnItemPlace)"
+              />
+            </UFormField>
+            <template v-if="item.integrity">
+              <UButton
+                size="xs"
+                variant="soft"
+                icon="i-heroicons:cube"
+                :aria-label="`Jet d'Intégrité de ${item.name}`"
+                @click="rollIntegrity(item.id)"
+              >
+                Jet d'Intégrité
+              </UButton>
+              <UButton
+                size="xs"
+                variant="soft"
+                icon="i-heroicons:wrench"
+                :disabled="item.integrity.current >= item.integrity.max"
+                :aria-label="`Réparer ${item.name}`"
+                @click="repair(item.id)"
+              >
+                Réparer
+              </UButton>
+            </template>
+            <UButton
+              icon="i-heroicons:trash"
+              color="error"
+              variant="ghost"
+              size="sm"
+              :aria-label="`Retirer ${item.name}`"
+              @click="remove(item.id)"
+            />
+          </template>
         </li>
       </ul>
     </section>
@@ -293,8 +321,19 @@
       @close="pendingCheck = null"
     />
 
+    <UButton
+      :icon="addOpen ? 'i-heroicons:chevron-up' : 'i-heroicons:plus'"
+      color="neutral"
+      variant="soft"
+      size="sm"
+      :aria-expanded="addOpen"
+      @click="addOpen = !addOpen"
+    >
+      Ajouter un objet
+    </UButton>
+
     <div
-      v-if="catalog"
+      v-if="addOpen && catalog"
       class="flex flex-wrap items-end gap-3"
     >
       <UFormField label="Du catalogue du livre">
@@ -313,6 +352,7 @@
     </div>
 
     <form
+      v-if="addOpen"
       class="flex flex-wrap items-end gap-3"
       @submit.prevent="add"
     >
@@ -423,6 +463,20 @@ provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 
 const inventory = computed(() => character.value.inventory)
+
+const opened = ref<string[]>([])
+const isOpen = (id: string) => opened.value.includes(id)
+const toggle = (id: string) => {
+  opened.value = isOpen(id) ? opened.value.filter(entry => entry !== id) : [...opened.value, id]
+}
+
+const provisionsOpen = ref(false)
+const addOpen = ref(false)
+
+const provisionsText = computed(() => {
+  const held = KN_PROVISION_KEYS.filter(key => character.value.provisions[key] > 0)
+  return held.length ? held.map(key => `${character.value.provisions[key]} ${t(`ker_nethalas.provisions.${key}`).toLowerCase()}`).join(', ') : 'aucune'
+})
 
 const amuletsCarried = computed(() => character.value.amulets.owned.length - (character.value.amulets.equipped === null ? 0 : 1))
 const provisionsCount = computed(() => Object.values(character.value.provisions).reduce((sum, count) => sum + count, 0))

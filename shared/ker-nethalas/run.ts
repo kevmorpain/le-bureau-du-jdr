@@ -35,6 +35,7 @@ export const KN_RUN_BOUNDS = {
   obstacles: 8,
   extraTension: 10,
   creatures: 4,
+  rests: 20,
 } as const
 
 export const KN_VISIT_KINDS = ['room', 'corridor', 'revisit'] as const
@@ -119,6 +120,8 @@ export const knVisitSchema = z.object({
     creatures: z.array(knCombatCreatureSchema).min(1).max(KN_COMBAT_BOUNDS.creatures),
     overseer: z.boolean().optional(),
   }).optional(),
+  // Les repos pris dans cette pièce, dans l'ordre.
+  rest: z.array(z.enum(['breather', 'camp'])).max(KN_RUN_BOUNDS.rests).optional(),
   usageKind: z.enum(['lair', 'exit']).nullable(),
   // Domaine d'introduction : la salle de la carte que cette entrée parcourt, et ce que le livre y exclut.
   introRoom: boundedInt({ min: 1, max: 8 }).optional(),
@@ -712,6 +715,11 @@ export function knFlee(run: KnRun): KnRun {
   return left.length
     ? withLocationVisit(ended, v => ({ ...v, fled: { creatures: left, ...(combat.overseer ? { overseer: true } : {}) } }))
     : ended
+}
+
+// Un repos (souffle ou camp) se prend dans une pièce : il s'inscrit sur celle où l'on se trouve.
+export function knMarkRest(run: KnRun, kind: 'breather' | 'camp'): KnRun {
+  return withLocationVisit(run, v => ({ ...v, rest: [...(v.rest ?? []), kind].slice(-KN_RUN_BOUNDS.rests) }))
 }
 
 // Reprendre un combat fui : les créatures, à pleine Santé, sont toujours là.

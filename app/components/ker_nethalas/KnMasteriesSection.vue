@@ -1,5 +1,8 @@
 <template>
-  <UCard>
+  <KnCard storage-key="masteries">
+    <template #summary>
+      {{ entries.length ? entries.map(entry => `${find(entry.key)?.name ?? entry.key} ${entry.tiers}/${KN_MASTERY_TIERS}`).join(' · ') : 'aucune Maîtrise' }}
+    </template>
     <template #header>
       <KnCardHeader title="Maîtrises">
         Un point d'Aptitude par niveau (deux au niveau 1) : on débloque les aptitudes d'une Maîtrise du palier 1 au palier 5 ;
@@ -65,17 +68,31 @@
             >
               Reprendre un palier
             </UButton>
+            <UButton
+              :icon="isClosed(entry.key) ? 'i-heroicons:chevron-down' : 'i-heroicons:chevron-up'"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              :aria-expanded="!isClosed(entry.key)"
+              :aria-label="`${isClosed(entry.key) ? 'Déplier' : 'Replier'} ${find(entry.key)!.name}`"
+              @click="toggle(entry.key)"
+            />
           </header>
 
-          <p class="text-sm text-muted">
-            {{ find(entry.key)!.summary }}
-          </p>
+          <template v-if="!isClosed(entry.key)">
+            <p class="text-sm text-muted">
+              {{ find(entry.key)!.summary }}
+            </p>
 
-          <p class="rounded-md bg-elevated p-2 text-sm">
-            <span class="font-medium">{{ find(entry.key)!.feature.name }}.</span> {{ find(entry.key)!.feature.text }}
-          </p>
+            <p class="rounded-md bg-elevated p-2 text-sm">
+              <span class="font-medium">{{ find(entry.key)!.feature.name }}.</span> {{ find(entry.key)!.feature.text }}
+            </p>
+          </template>
 
-          <ul class="space-y-3">
+          <ul
+            v-if="!isClosed(entry.key)"
+            class="space-y-3"
+          >
             <li
               v-for="ability in find(entry.key)!.abilities"
               :key="ability.tier"
@@ -178,11 +195,12 @@
         :masteries
       />
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
+import { useStorage } from '@vueuse/core'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knLockAmuletTier, knMasteryEntries, knUnlockAmuletTier, type KnMasteryEntry } from '~~/shared/ker-nethalas/amulets'
 import {
@@ -207,6 +225,13 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const find = (key: string) => props.masteries?.find(mastery => mastery.key === key)
+
+// Les Maîtrises repliées, retenues sur l'appareil.
+const closed = useStorage<string[]>('kn:masteries:closed', [], undefined, { initOnMounted: true })
+const isClosed = (key: string) => closed.value.includes(key)
+const toggle = (key: string) => {
+  closed.value = isClosed(key) ? closed.value.filter(entry => entry !== key) : [...closed.value, key]
+}
 
 const { minions: team, addMinion } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const teamSize = computed(() => team.value.length)

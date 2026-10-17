@@ -1,5 +1,8 @@
 <template>
-  <UCard>
+  <KnCard storage-key="effects">
+    <template #summary>
+      {{ character.status.conditions.length }} condition{{ character.status.conditions.length > 1 ? 's' : '' }} · {{ character.status.custom.length }} effet{{ character.status.custom.length > 1 ? 's' : '' }} personnalisé{{ character.status.custom.length > 1 ? 's' : '' }}
+    </template>
     <template #header>
       <KnCardHeader title="Effets en cours">
         Activez ce qui s'applique : les scores effectifs se mettent à jour. L'Épuisement se règle dans les jauges.
@@ -10,7 +13,7 @@
       <KnConditionsEditor v-model:status="character.status" />
       <KnCustomModifiersEditor v-model:status="character.status" />
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

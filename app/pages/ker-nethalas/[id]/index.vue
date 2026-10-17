@@ -31,13 +31,6 @@
         <KnChecksSection
           v-model:character="character"
           :resolved
-          @roll="openRoll"
-        />
-
-        <KnRollSection
-          v-model:character="character"
-          v-model:selected="rollSelection"
-          :resolved
         />
 
         <KnMasteriesSection
@@ -107,6 +100,7 @@
         />
 
         <KnLootSection
+          v-if="lootShown"
           v-model:character="character"
           :loot
           :catalog
@@ -114,6 +108,15 @@
           :masteries
           :magic
         />
+        <UButton
+          v-else
+          variant="ghost"
+          color="neutral"
+          icon="i-heroicons:gift"
+          @click="lootForced = true"
+        >
+          Tirer du butin
+        </UButton>
 
         <KnTraderSection
           v-if="traderHere"
@@ -149,7 +152,7 @@ import type { KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import type { KnLootContent } from '~~/shared/ker-nethalas/loot'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
-import { knCurrentDomain, knTraderHere } from '~~/shared/ker-nethalas/run'
+import { knCurrentDomain, knLocationVisit, knTraderHere } from '~~/shared/ker-nethalas/run'
 import type { KnRollTable } from '~~/shared/ker-nethalas/tables'
 
 definePageMeta({ layout: 'wide' })
@@ -203,7 +206,13 @@ const STATUS_LABELS: Record<AutoSaveStatus, string> = {
 }
 const stateLabel = computed(() => STATUS_LABELS[status.value])
 
-const rollSelection = ref('skill:dodge')
+// Le butin se tire après un combat, une fouille, un événement ou un contenant ; sinon un bouton le montre à la demande.
+const lootForced = ref(false)
+const lootShown = computed(() => {
+  const c = character.value
+  const visit = c && knLocationVisit(c.run)
+  return lootForced.value || !!c?.run.combat || !!(visit && (visit.scavenge || visit.deepSearch || visit.event || visit.creatures?.length || visit.obstacles?.some(obstacle => obstacle.kind === 'container')))
+})
 
 // `null` : la colonne de droite suit la dernière entrée du chemin ; un nombre fixe une entrée plus ancienne.
 const selectedVisit = ref<number | null>(null)
@@ -213,9 +222,4 @@ watch(
     selectedVisit.value = null
   },
 )
-
-function openRoll(selection: string) {
-  rollSelection.value = selection
-  document.getElementById('kn-roll')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-}
 </script>

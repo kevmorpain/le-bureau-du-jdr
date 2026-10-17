@@ -258,7 +258,7 @@ import type { KnCampActivity, KnMastery } from '~~/shared/ker-nethalas/masteries
 import { knApplySelfEffects, knCampRecoverEffects, knCampTraits } from '~~/shared/ker-nethalas/masteryEffects'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knMendItem } from '~~/shared/ker-nethalas/equipment'
-import { knCurrentDomain, knRollDie } from '~~/shared/ker-nethalas/run'
+import { knCurrentDomain, knMarkRest, knRollDie } from '~~/shared/ker-nethalas/run'
 import { KN_SKILL_IMPROVEMENT, knImproveMarkedSkills, type KnSkillTarget } from '~~/shared/ker-nethalas/skillImprovement'
 import { KN_SKILL_KEYS } from '~~/shared/ker-nethalas/skills'
 import { knRest } from '~~/shared/ker-nethalas/vitals'
@@ -432,6 +432,7 @@ function finish() {
   c.exhaustion = Math.min(KN_BOUNDS.exhaustion.max, outcome.state.exhaustion)
   c.provisions = outcome.provisions
   c.status = knRest(recovered.state.status, 'camp')
+  c.run = knMarkRest(c.run, 'camp')
 
   const lines = [
     `Test de Camp : ${roll.value} ${signed(preview.value.checkModifier)} = ${outcome.total}, ${outcome.success ? 'réussi' : 'raté'}.`,

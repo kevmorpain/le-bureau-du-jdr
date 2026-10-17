@@ -6,6 +6,7 @@ import {
   knCurrentVisit,
   knFlee,
   knLocationVisit,
+  knMarkRest,
   knPreviousRoomIndex,
   knRecordDescription,
   knRecordDoor,
@@ -92,6 +93,25 @@ describe('retour dans une pièce déjà explorée', () => {
     const back = knStartVisit(away, 'revisit', undefined, undefined, 0)
     expect(knLocationVisit(away)!.trader).toBeUndefined()
     expect(knLocationVisit(back)!.trader).toBe(true)
+  })
+})
+
+describe('repos pris dans une pièce', () => {
+  it('s\'inscrit sur la pièce où l\'on se trouve, dans l\'ordre', () => {
+    const rested = knMarkRest(knMarkRest(path(), 'breather'), 'camp')
+    expect(visits(rested).at(-1)!.rest).toEqual(['breather', 'camp'])
+    expect(visits(rested)[0]!.rest).toBeUndefined()
+  })
+
+  it('en retour, il va sur la pièce, pas sur l\'entrée du retour', () => {
+    const rested = knMarkRest(knStartVisit(path(), 'revisit', undefined, undefined, 0), 'camp')
+    expect(visits(rested)[0]!.rest).toEqual(['camp'])
+    expect(visits(rested).at(-1)!.rest).toBeUndefined()
+  })
+
+  it('rien à inscrire sans entrée', () => {
+    const run = emptyKnRun()
+    expect(knMarkRest(run, 'camp')).toBe(run)
   })
 })
 

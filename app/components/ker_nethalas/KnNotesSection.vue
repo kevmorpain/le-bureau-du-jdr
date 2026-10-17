@@ -1,5 +1,12 @@
 <template>
-  <UCard>
+  <KnCard
+    storage-key="notes"
+    :default-open="false"
+  >
+    <template #header>
+      <KnCardHeader title="Notes et atouts" />
+    </template>
+
     <div class="grid gap-4 @xl:grid-cols-2">
       <UFormField label="Autres objectifs">
         <UTextarea
@@ -54,7 +61,7 @@
         />
       </UFormField>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

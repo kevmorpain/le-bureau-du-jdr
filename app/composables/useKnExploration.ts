@@ -13,6 +13,7 @@ import {
   type KnObstacleAct,
   type KnVisitTable,
 } from '~~/shared/ker-nethalas/exploration'
+import { knRollEntry } from '~~/shared/ker-nethalas/entryRolls'
 import { KN_XP, knObstacleXp } from '~~/shared/ker-nethalas/experience'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import {
@@ -225,5 +226,9 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
     character.value.run = knRecordOverseer(character.value.run, manual ?? knRollDie(KN_OVERSEER_DIE))
   }
 
-  return { tableRoll, adjustScavenge, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct, newDomain, drawCreature, drawOverseer }
+  function rollEntry() {
+    character.value.run = knRollEntry(character.value.run)
+  }
+
+  return { rollEntry, tableRoll, adjustScavenge, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct, newDomain, drawCreature, drawOverseer }
 }
