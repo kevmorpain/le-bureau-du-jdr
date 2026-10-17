@@ -49,6 +49,27 @@
       </UButton>
     </div>
 
+    <div
+      v-if="active && entryPending"
+      class="flex flex-wrap items-center gap-3 rounded-md bg-elevated p-2"
+    >
+      <UButton
+        icon="i-heroicons:cube"
+        @click="emit('rollEntry')"
+      >
+        Lancer les dés d'entrée
+      </UButton>
+      <UButton
+        size="xs"
+        variant="link"
+        color="neutral"
+        :aria-expanded="manual"
+        @click="manual = !manual"
+      >
+        {{ manual ? 'Masquer la saisie' : 'Saisir mes propres dés' }}
+      </UButton>
+    </div>
+
     <ul class="space-y-2 text-sm">
       <li
         v-if="visit.shape"
@@ -86,7 +107,7 @@
           </span>
         </template>
         <span
-          v-else-if="!active || retracing"
+          v-else-if="!active || retracing || !manual"
           class="flex-1 text-muted"
         >
           Dé de Tension : non lancé
@@ -117,7 +138,7 @@
           </span>
         </template>
         <span
-          v-else-if="!active || retracing"
+          v-else-if="!active || retracing || !manual"
           class="flex-1 text-muted"
         >
           Dé de {{ USAGE_NAMES[visit.usageKind] }} : non lancé
@@ -202,7 +223,7 @@
         :die="KN_ENCOUNTER_DIE"
         :roll="visit.encounter?.roll"
         plain
-        :active="active && !retracing"
+        :active="active && !retracing && manual"
         @roll="manual => emit('table', 'encounter', manual)"
       >
         <template #result>
@@ -221,7 +242,7 @@
         :die="eventTable.die"
         :roll="visit.event?.roll"
         :table="eventTable.table"
-        :active="active && !retracing"
+        :active="active && !retracing && manual"
         @roll="manual => emit('table', 'event', manual)"
       >
         <template #result>
@@ -263,7 +284,7 @@
         :die="KN_DOOR_DIE"
         :roll="visit.door?.roll"
         plain
-        :active
+        :active="active && manual"
         @roll="manual => emit('table', 'door', manual)"
       >
         <template #result>
@@ -531,6 +552,7 @@ import {
   type KnGrowingDarknessDraw,
   type KnVisit,
 } from '~~/shared/ker-nethalas/run'
+import { knEntryPending } from '~~/shared/ker-nethalas/entryRolls'
 import { knHasActivePerk } from '~~/shared/ker-nethalas/goalEffects'
 import { KN_SCAVENGER_DIE } from '~~/shared/ker-nethalas/perks'
 import { knEncounterTable, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
@@ -581,7 +603,12 @@ const emit = defineEmits<{
   drawCreature: [d6: number, d20: number]
   engage: [creature: KnCreature]
   resume: []
+  rollEntry: []
 }>()
+
+// Les dés d'entrée se lancent d'un bouton ; saisir ses propres dés rend leurs champs.
+const manual = ref(false)
+const entryPending = computed(() => knEntryPending(props.visit, !!props.intro, !!props.retracing))
 
 const { labelText } = useKnLabels()
 

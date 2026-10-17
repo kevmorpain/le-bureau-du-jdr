@@ -48,6 +48,7 @@
       @draw-creature="drawCreature"
       @engage="creature => engageAndShow(creature)"
       @resume="resume"
+      @roll-entry="rollEntry"
     />
   </template>
 </template>
@@ -81,6 +82,7 @@ const character = defineModel<KnCharacter>('character', { required: true })
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 const {
+  rollEntry,
   tableRoll,
   adjustScavenge,
   applyScavenge,

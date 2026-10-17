@@ -254,7 +254,20 @@
               </span>
               <span class="min-w-0 flex-1">
                 <span class="block font-medium">{{ entryLabel(entry.visit) }}</span>
-                <span class="block text-xs text-muted">{{ summary(entry.visit) }}</span>
+                <span class="mt-1 flex flex-wrap gap-1">
+                  <UBadge
+                    v-for="tag in tags(entry.visit)"
+                    :key="tag.label"
+                    :label="tag.label"
+                    :color="tag.color"
+                    variant="subtle"
+                    size="md"
+                  />
+                  <span
+                    v-if="!tags(entry.visit).length"
+                    class="text-xs text-muted"
+                  >rien de notable</span>
+                </span>
               </span>
               <UBadge
                 v-if="entry.index === lastIndex"
@@ -394,15 +407,20 @@ function entryLabel(visit: KnVisit) {
   return target < 0 ? 'Retour' : `Retour · ${domain.value.visits[target]!.kind === 'corridor' ? 'couloir' : 'salle'} n° ${target + 1}`
 }
 
-function summary(visit: KnVisit) {
-  const parts: string[] = visit.fled ? ['combat fui'] : []
-  if (knVisitFoundLair(visit)) parts.push('Lair trouvé')
-  else if (visit.usageKind === 'exit' && visit.usage?.triggered) parts.push('Sortie trouvée')
-  if (visit.creatures?.length) parts.push(`${visit.creatures.length} créature${visit.creatures.length > 1 ? 's' : ''}`)
-  if (visit.event) parts.push('événement')
-  if (visit.trader) parts.push('marchand')
-  if (visit.rest?.length) parts.push(visit.rest.includes('camp') ? 'camp' : 'souffle')
-  if (visit.obstacles?.length) parts.push(`${visit.obstacles.length} obstacle${visit.obstacles.length > 1 ? 's' : ''}`)
-  return parts.length ? parts.join(' · ') : 'rien de notable'
+type BadgeColor = 'error' | 'warning' | 'success' | 'info' | 'neutral'
+
+// Les repères d'une pièce sur sa ligne du chemin : ce qui s'y est passé ou s'y trouve.
+function tags(visit: KnVisit): { label: string, color: BadgeColor }[] {
+  const out: { label: string, color: BadgeColor }[] = []
+  if (visit.fled) out.push({ label: 'combat fui', color: 'warning' })
+  else if (visit.creatures?.length || visit.encounter?.triggered) out.push({ label: 'combat', color: 'error' })
+  if (visit.scavenge || visit.deepSearch) out.push({ label: 'butin', color: 'warning' })
+  if (visit.trader) out.push({ label: 'marchand', color: 'success' })
+  if (knVisitFoundLair(visit)) out.push({ label: 'Lair', color: 'warning' })
+  else if (visit.usageKind === 'exit' && visit.usage?.triggered) out.push({ label: 'Sortie', color: 'success' })
+  if (visit.event) out.push({ label: 'événement', color: 'neutral' })
+  if (visit.obstacles?.length) out.push({ label: `${visit.obstacles.length} obstacle${visit.obstacles.length > 1 ? 's' : ''}`, color: 'neutral' })
+  if (visit.rest?.length) out.push({ label: visit.rest.includes('camp') ? 'camp' : 'souffle', color: 'info' })
+  return out
 }
 </script>
