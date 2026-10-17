@@ -628,8 +628,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
 ### KN51 — Revue de la fiche contre la maquette
-- **Cartes repliables** (`KnCard`) : un chevron dans l'en-tête de chaque carte de la page, état retenu par carte dans le navigateur
-  (`kn:card:<clé>`). Identité et Notes et atouts, repliées par défaut, ont désormais un titre. Les Maîtrises se replient aussi une à une.
+- **Cartes repliables** (`KnCard`) : comme les sections de la fiche D&D, un bandeau d'en-tête (fond relevé, titre en capitales) cliquable avec un
+  chevron ; replié, il montre un mini-résumé du contenu et aucun espace vide. État retenu par carte dans le navigateur (`kn:card:<clé>`). Identité et Notes et atouts, repliées par défaut, ont désormais un titre. Les Maîtrises se replient aussi une à une.
 - **Compacité** : objectifs sur une ligne (nom, progrès, +1 / −1, récompense à récupérer), détail à l'ouverture ; équipement une ligne par objet,
   actions principales visibles, détails à la demande ; provisions, ajout d'objet et notes libres repliés ; Overseer sur une ligne (influences en
   pastilles, bouton « Engager le combat »), fiche à la demande ; compteurs, dés et éditeur d'Obscurité dans « Réglages du Domaine ».

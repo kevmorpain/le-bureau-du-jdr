@@ -1,5 +1,8 @@
 <template>
   <KnCard storage-key="equipment">
+    <template #summary>
+      {{ character.coins }} pièces · {{ character.inventory.length }} objet{{ character.inventory.length > 1 ? 's' : '' }}
+    </template>
     <template #header>
       <KnCardHeader title="Équipement">
         L'inventaire pèse et range les objets ; les notes libres en dessous n'entrent dans aucun calcul.

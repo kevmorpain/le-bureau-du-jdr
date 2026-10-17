@@ -1,5 +1,8 @@
 <template>
   <KnCard storage-key="dungeon">
+    <template #summary>
+      {{ domain.name }} · {{ settingsSummary }}
+    </template>
     <template #header>
       <KnCardHeader title="Donjon">
         Chaque entrée dans une salle retire la lumière et recharge l'Éther. Les entrées forment le chemin du Domaine ; en choisir une affiche son contenu à droite. « Nouvelle entrée » tire la forme au D100 (1-25 un couloir, 26-100 une salle).
@@ -240,12 +243,12 @@
           <div
             v-for="entry in entriesNewestFirst"
             :key="entry.index"
-            class="flex items-center gap-2"
+            class="flex items-center gap-2 rounded-lg border pr-2 hover:bg-elevated"
+            :class="entry.index === shown ? 'border-primary' : 'border-default'"
           >
             <button
               type="button"
-              class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-left hover:bg-elevated"
-              :class="entry.index === shown ? 'border-primary' : 'border-default'"
+              class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 py-2 text-left"
               :aria-pressed="entry.index === shown"
               @click="selected = entry.index === lastIndex ? null : entry.index"
             >

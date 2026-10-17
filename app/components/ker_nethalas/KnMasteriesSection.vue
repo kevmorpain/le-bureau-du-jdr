@@ -1,5 +1,8 @@
 <template>
   <KnCard storage-key="masteries">
+    <template #summary>
+      {{ entries.length ? entries.map(entry => `${find(entry.key)?.name ?? entry.key} ${entry.tiers}/${KN_MASTERY_TIERS}`).join(' · ') : 'aucune Maîtrise' }}
+    </template>
     <template #header>
       <KnCardHeader title="Maîtrises">
         Un point d'Aptitude par niveau (deux au niveau 1) : on débloque les aptitudes d'une Maîtrise du palier 1 au palier 5 ;

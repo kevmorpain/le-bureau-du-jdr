@@ -3,6 +3,10 @@
     v-if="reminders.length"
     storage-key="reminders"
   >
+    <template #summary>
+      {{ reminders.length }} rappel{{ reminders.length > 1 ? 's' : '' }} en cours
+    </template>
+
     <template #header>
       <KnCardHeader title="Rappels">
         Ce qui est en cours et que le calcul ne peut pas appliquer à votre place.

@@ -4,6 +4,9 @@
     storage-key="identity"
     :default-open="false"
   >
+    <template #summary>
+      {{ character.name }} · niveau {{ character.level }} · {{ character.xp }} / {{ KN_LEVEL_XP }} XP
+    </template>
     <template #header>
       <KnCardHeader title="Identité" />
     </template>

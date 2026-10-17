@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-wrap items-center gap-2">
-    <h2 class="font-semibold">
+    <h2 class="text-xs font-bold uppercase tracking-widest text-muted">
       {{ title }}
     </h2>
     <UTooltip

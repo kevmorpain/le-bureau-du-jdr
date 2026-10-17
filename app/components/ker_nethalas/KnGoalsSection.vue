@@ -1,5 +1,8 @@
 <template>
   <KnCard storage-key="goals">
+    <template #summary>
+      {{ active.length ? active.map(pick => `${find(pick.key)?.name ?? pick.key} ${pick.progress}/${find(pick.key)?.target ?? '?'}`).join(' · ') : 'aucun objectif en cours' }}
+    </template>
     <template #header>
       <KnCardHeader title="Objectifs personnels">
         Deux objectifs en cours au plus. Le progrès se note à la main ; une fois la cible atteinte, récupérez la récompense,
