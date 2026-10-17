@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="loot">
     <template #header>
       <KnCardHeader title="Butin">
         Le tirage suit les tables du livre, de l'une à l'autre. Chaque résultat s'ajoute par un bouton : à l'inventaire, ou aux
@@ -95,7 +95,7 @@
         </li>
       </ul>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

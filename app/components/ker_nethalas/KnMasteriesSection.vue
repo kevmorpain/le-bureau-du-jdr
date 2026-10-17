@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="masteries">
     <template #header>
       <KnCardHeader title="Maîtrises">
         Un point d'Aptitude par niveau (deux au niveau 1) : on débloque les aptitudes d'une Maîtrise du palier 1 au palier 5 ;
@@ -178,7 +178,7 @@
         :masteries
       />
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

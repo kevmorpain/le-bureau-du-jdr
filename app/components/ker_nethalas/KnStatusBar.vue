@@ -204,6 +204,7 @@
 </template>
 
 <script lang="ts" setup>
+import { useStorage } from '@vueuse/core'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_MADNESS_COUNTER_KEYS } from '~~/shared/ker-nethalas/catalog/madness'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
@@ -243,7 +244,12 @@ const madness = computed(() => [
   })),
 ])
 
-function goToLevelUp() {
+// La carte Identité est repliée par défaut : on l'ouvre pour y montrer le bouton de montée de niveau.
+const identityOpen = useStorage('kn:card:identity', false, undefined, { initOnMounted: true })
+
+async function goToLevelUp() {
+  identityOpen.value = true
+  await nextTick()
   document.getElementById('kn-identity')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 </script>

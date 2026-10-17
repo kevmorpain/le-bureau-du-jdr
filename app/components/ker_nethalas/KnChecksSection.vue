@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="checks">
     <template #header>
       <KnCardHeader title="Compétences et résistances">
         Le score effectif s'affiche ; un clic dessus ouvre le détail du calcul et le score de base, modifiable. ▲ avantage, ▼ désavantage.
@@ -132,7 +132,7 @@
         </UButton>
       </div>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

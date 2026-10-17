@@ -1,7 +1,8 @@
 <template>
-  <UCard
+  <KnCard
     v-if="combat"
     id="kn-combat"
+    storage-key="combat"
   >
     <template #header>
       <div class="flex flex-wrap items-center gap-2">
@@ -290,7 +291,7 @@
         </ul>
       </div>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

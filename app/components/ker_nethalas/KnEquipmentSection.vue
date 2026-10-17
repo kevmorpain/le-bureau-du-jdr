@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="equipment">
     <template #header>
       <KnCardHeader title="Équipement">
         L'inventaire pèse et range les objets ; les notes libres en dessous n'entrent dans aucun calcul.
@@ -59,7 +59,7 @@
         />
       </UFormField>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

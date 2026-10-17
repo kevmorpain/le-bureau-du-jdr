@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="effects">
     <template #header>
       <KnCardHeader title="Effets en cours">
         Activez ce qui s'applique : les scores effectifs se mettent à jour. L'Épuisement se règle dans les jauges.
@@ -10,7 +10,7 @@
       <KnConditionsEditor v-model:status="character.status" />
       <KnCustomModifiersEditor v-model:status="character.status" />
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

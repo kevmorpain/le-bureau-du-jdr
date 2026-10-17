@@ -1,5 +1,8 @@
 <template>
-  <UCard v-if="intro && !intro.left">
+  <KnCard
+    v-if="intro && !intro.left"
+    storage-key="first-domain"
+  >
     <template #header>
       <KnCardHeader title="Domaine d'introduction">
         La carte est déjà tracée : huit salles au contenu fixe, des portes toutes marquées (reste à voir si elles sont verrouillées
@@ -184,7 +187,7 @@
         </li>
       </ul>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

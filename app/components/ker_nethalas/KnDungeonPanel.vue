@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="dungeon">
     <template #header>
       <KnCardHeader title="Donjon">
         Chaque entrée dans une salle retire la lumière et recharge l'Éther. Les entrées forment le chemin du Domaine ; en choisir une affiche son contenu à droite. « Nouvelle entrée » tire la forme au D100 (1-25 un couloir, 26-100 une salle).
@@ -222,7 +222,7 @@
         </div>
       </div>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

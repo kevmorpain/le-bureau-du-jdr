@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="madness">
     <template #header>
       <KnCardHeader title="Folie et Pourriture">
         À 0 en Santé mentale, le survivant est pris par la folie : on tire sur la table de Folie (D10). Les résultats cumulatifs se
@@ -50,7 +50,7 @@
 
       <KnRotMadnessEditor v-model:status="character.status" />
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

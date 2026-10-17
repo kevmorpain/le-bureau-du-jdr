@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="trader">
     <template #header>
       <KnCardHeader title="Marchand">
         Un marchand rachète à la moitié du prix, sauf les gemmes et bijoux, payés à leur valeur entière. Un objet magique se vend à prix fixe
@@ -109,7 +109,7 @@
         </p>
       </section>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

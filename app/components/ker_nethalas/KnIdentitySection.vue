@@ -1,5 +1,13 @@
 <template>
-  <UCard id="kn-identity">
+  <KnCard
+    id="kn-identity"
+    storage-key="identity"
+    :default-open="false"
+  >
+    <template #header>
+      <KnCardHeader title="Identité" />
+    </template>
+
     <div class="grid gap-4 @sm:grid-cols-[1fr_8rem_10rem]">
       <UFormField label="Nom">
         <UInput
@@ -70,7 +78,7 @@
         />
       </UFormField>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>

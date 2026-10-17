@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <KnCard storage-key="goals">
     <template #header>
       <KnCardHeader title="Objectifs personnels">
         Deux objectifs en cours au plus. Le progrès se note à la main ; une fois la cible atteinte, récupérez la récompense,
@@ -160,7 +160,7 @@
         </ul>
       </div>
     </div>
-  </UCard>
+  </KnCard>
 </template>
 
 <script lang="ts" setup>
