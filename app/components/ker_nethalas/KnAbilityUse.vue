@@ -11,12 +11,29 @@
       :aria-label="`${ability.name} : maintenir`"
       @update:model-value="toggle"
     />
+    <template v-else-if="ability.engrave">
+      <USelect
+        v-model="engraveTarget"
+        :items="engraveItems"
+        placeholder="Arme à graver"
+        class="w-52"
+        :aria-label="`${ability.name} : arme à graver`"
+      />
+      <UButton
+        size="xs"
+        variant="soft"
+        :disabled="!engraveTarget || blockers.length > 0"
+        @click="engrave"
+      >
+        Graver
+      </UButton>
+    </template>
     <UButton
       v-else
       size="xs"
       variant="soft"
       :disabled="blockers.length > 0"
-      :aria-label="`${knAbilityIsPassive(ability) ? 'Marquer comme utilisée' : 'Utiliser'} ${ability.name}`"
+      :aria-label="`${knAbilityIsPassive(ability) && !ability.self?.length ? 'Marquer comme utilisée' : 'Utiliser'} ${ability.name}`"
       @click="use"
     >
       {{ knAbilityIsPassive(ability) && !ability.self?.length ? 'Marquer utilisée' : 'Utiliser' }}
@@ -53,7 +70,9 @@
 </template>
 
 <script lang="ts" setup>
+import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knEngravableWeapons, knEngrave } from '~~/shared/ker-nethalas/abilityAttack'
 import type { KnMasteryAbility } from '~~/shared/ker-nethalas/masteries'
 import {
   knAbilityBlockers,
@@ -94,11 +113,37 @@ const purse = computed(() => ({
   exhaustion: character.value.exhaustion,
 }))
 
+const missingProvisions = computed(() => Object.entries(props.ability.provisions ?? {}).some(([key, count]) => character.value.provisions[key as keyof typeof character.value.provisions] < count))
+
 const blockers = computed(() => {
   if (props.ability.sustained) return isOn.value ? [] : knSustainBlockers(props.ability, props.resolved.maxVitals.aether.effective)
   if (used.value) return ['Déjà utilisée']
-  return knAbilityBlockers(props.ability, purse.value)
+  return [...knAbilityBlockers(props.ability, purse.value), ...(missingProvisions.value ? ['Provisions insuffisantes'] : [])]
 })
+
+const engraveTarget = ref<string | undefined>()
+const engraveItems = computed<SelectItem[]>(() => knEngravableWeapons(character.value.inventory).map(item => ({ label: item.name, value: item.id })))
+
+// Les provisions que l'usage consomme.
+function payProvisions(c: KnCharacter) {
+  for (const [key, count] of Object.entries(props.ability.provisions ?? {})) {
+    const provision = key as keyof typeof c.provisions
+    c.provisions = { ...c.provisions, [provision]: Math.max(0, c.provisions[provision] - count) }
+  }
+}
+
+function engrave() {
+  const c = character.value
+  if (!engraveTarget.value || !props.ability.engrave) return
+  const paid = knPayAbility(props.ability, purse.value)
+  c.aetherCurrent = paid.aetherCurrent
+  c.healthCurrent = paid.healthCurrent
+  c.exhaustion = paid.exhaustion
+  payProvisions(c)
+  c.inventory = knEngrave(c.inventory, engraveTarget.value, props.ability.engrave)
+  toast.add({ title: `${props.ability.name} : arme gravée`, description: knCostSummary(props.ability) || undefined, color: 'success' })
+  engraveTarget.value = undefined
+}
 
 const vitalName = (vital: string) => t(`ker_nethalas.vitals.${vital}`).toLowerCase()
 
@@ -122,7 +167,11 @@ function use() {
   c.sanityCurrent = state.sanity
   c.aetherCurrent = state.aether
   c.exhaustion = paid.exhaustion
-  c.status = props.ability.limit ? knMarkUsed(state.status, key.value, props.ability.limit) : state.status
+  const marked = props.ability.limit ? knMarkUsed(state.status, key.value, props.ability.limit) : state.status
+  c.status = props.ability.combatModifier?.length
+    ? { ...marked, custom: [...marked.custom, { id: crypto.randomUUID(), name: props.ability.name, active: true, entries: props.ability.combatModifier, combat: true }] }
+    : marked
+  payProvisions(c)
 
   const lines = outcomes.map(({ effect, label, roll }) => {
     const detail = `${label} : ${roll.rolls.length ? roll.rolls.join(' + ') : roll.total}`

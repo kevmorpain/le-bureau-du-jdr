@@ -79,6 +79,8 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
   const toast = useToast()
   const { applyEffects } = useKnApplyEffects(character, resolved)
   const { record } = useKnGoalProgress(character)
+  const permanent = useKnPermanent(character)
+  const { t } = useI18n()
 
   function tableDie(name: KnVisitTable) {
     if (name === 'encounter') return KN_ENCOUNTER_DIE
@@ -94,7 +96,19 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
     const roll = manual ?? knRollDie(tableDie(name))
     const hadScavenge = !!knLocationVisit(character.value.run)?.scavenge
     character.value.run = TABLE_RECORDS[name](character.value.run, roll)
-    if (name === 'scavenge' && !hadScavenge && knLocationVisit(character.value.run)?.scavenge) record({ kind: 'scavenge' })
+    if (name === 'scavenge' && !hadScavenge && knLocationVisit(character.value.run)?.scavenge) {
+      record({ kind: 'scavenge' })
+      findWhileScavenging()
+    }
+  }
+
+  // Les aptitudes passives qui font trouver des provisions à chaque Fouille réussie.
+  function findWhileScavenging() {
+    const finds = permanent.value.scavengeFinds
+    if (!finds.length) return
+    const c = character.value
+    for (const { key, count } of finds) c.provisions = { ...c.provisions, [key]: Math.min(999, c.provisions[key] + count) }
+    toast.add({ title: 'Fouille réussie', description: finds.map(({ key, count }) => `+${count} ${t(`ker_nethalas.provisions.${key}`)}`).join(', '), color: 'success' })
   }
 
   function adjustScavenge(delta: number) {

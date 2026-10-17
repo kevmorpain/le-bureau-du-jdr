@@ -311,6 +311,7 @@ import { KN_OVERSEER_DIE, knFindCreature, type KnCreature } from '~~/shared/ker-
 import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
 import { knReturnableDomains } from '~~/shared/ker-nethalas/firstDomain'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import { knSetTensionStart } from '~~/shared/ker-nethalas/run'
 import {
   KN_LIGHT_ROOMS,
   KN_OPTIONAL_LAIR_ROOMS,
@@ -339,6 +340,10 @@ const selected = defineModel<number | null>('selected', { required: true })
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 const { newDomain, drawOverseer } = useKnExploration(character, () => props.resolved, () => props.tables)
+const permanent = useKnPermanent(character)
+watch(() => permanent.value.tensionStart, (die) => {
+  character.value.run = knSetTensionStart(character.value.run, die)
+}, { immediate: true })
 const { engage } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { enter } = useKnVisitEntry(character, () => props.resolved)
 

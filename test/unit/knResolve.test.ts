@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import type { KnActiveSource } from '../../shared/ker-nethalas/effects'
 import { resolveKnSheet, type KnResolveInput } from '../../shared/ker-nethalas/resolve'
-import { emptyKnDomain, emptyKnRun, type KnDomain } from '../../shared/ker-nethalas/run'
+import { emptyKnDomain, emptyKnRun, knSetImmuneConditions, knStartCombat, type KnDomain } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, type KnStatus } from '../../shared/ker-nethalas/status'
 import { KN_RESISTANCE_KEYS, KN_SKILL_KEYS, type KnSkillKey } from '../../shared/ker-nethalas/skills'
 
@@ -460,5 +460,15 @@ describe('sources apportées par les Maîtrises', () => {
 
   it('ne changent rien sans source', () => {
     expect(resolveKnSheet(sheet({ extraSources: [] })).maxVitals.aether.effective).toBe(12)
+  })
+})
+
+describe('immunité aux conditions', () => {
+  it('tant que le survivant est immunisé, les conditions qu\'il subit n\'ont plus d\'effet', () => {
+    const conditions = [{ key: 'sickened' as const, value: 10 }]
+    const run = knSetImmuneConditions(knStartCombat(emptyKnRun(), [{ name: 'A', health: 5, maxHealth: 5 }]), true)
+
+    expect(resolveKnSheet(sheet({}, { conditions })).skills.dodge.effective).toBe(35)
+    expect(resolveKnSheet(sheet({ run }, { conditions })).skills.dodge.effective).toBe(45)
   })
 })

@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
+import { KN_CONDITION_KEYS } from '~~/shared/ker-nethalas/catalog/conditions'
 import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
 import { knApplyTableEffects, type KnEffectScale, type KnTableEffect } from '~~/shared/ker-nethalas/tables'
 
@@ -9,6 +10,7 @@ export function useKnApplyEffects(character: Ref<KnCharacter>, resolved: () => K
   const toast = useToast()
   const { outcomeText } = useKnEffectText()
   const { record } = useKnGoalProgress(character)
+  const permanent = useKnPermanent(character)
 
   function applyEffects(effects: readonly KnTableEffect[], title: string, options: { creature?: boolean, scale?: KnEffectScale } = {}) {
     if (!effects.length) return
@@ -31,7 +33,7 @@ export function useKnApplyEffects(character: Ref<KnCharacter>, resolved: () => K
       toughness: maxVitals.toughness.effective,
       sanity: maxVitals.sanity.effective,
       aether: maxVitals.aether.effective,
-    }, undefined, { ...options, immune: knMagicDefenses(c.inventory).immune })
+    }, undefined, { ...options, immune: c.run.combat?.immuneConditions ? KN_CONDITION_KEYS : [...knMagicDefenses(c.inventory).immune, ...permanent.value.immuneConditions] })
 
     const earned = state.coins - c.coins
     c.coins = state.coins

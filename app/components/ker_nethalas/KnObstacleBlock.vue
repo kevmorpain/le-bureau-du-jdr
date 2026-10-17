@@ -399,6 +399,7 @@ function perceive(perception: 'passed' | 'failed') {
 const { t } = useI18n()
 const { effectsText } = useKnEffectText()
 const { character } = useKnCheckContext()
+const permanent = useKnPermanent(character)
 const hasToolkit = computed(() => knHasThievesToolkit(character.value.inventory))
 
 // Résultat saisi à la main : 1-2 et 3+ valent 1 et 3, les seuls cas que le Dé de Tension distingue.
@@ -445,7 +446,8 @@ const pickText = computed(() => {
 // Test d'évitement du piège : +20 si on l'a repéré, que ce soit pour le contourner, le déclencher ou l'éviter.
 function avoidCheck(purpose: Purpose, note: string) {
   if (!avoidSkill.value) return
-  openCheck(purpose, { id: knCheckId(avoidSkill.value), difficulty: 'normal', bonus: state.value.spotted ? 20 : 0, note })
+  const passive = permanent.value.trapAvoid.filter(entry => entry.skill === avoidSkill.value).reduce((sum, entry) => sum + entry.amount, 0)
+  openCheck(purpose, { id: knCheckId(avoidSkill.value), difficulty: 'normal', bonus: (state.value.spotted ? 20 : 0) + passive, note })
 }
 
 function pickCheck() {

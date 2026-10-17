@@ -1,8 +1,11 @@
 import { z } from 'zod'
 import { KN_PROVISION_KEYS } from './camp'
+import { KN_CONDITION_KEYS } from './catalog/conditions'
+import { KN_CREATURE_TYPES } from './catalog/creatureTypes'
 import { KN_DAMAGE_TYPES } from './catalog/damageTypes'
 import { knDiceSchema } from './dice'
 import { KN_VITAL_KEYS } from './effects'
+import { KN_SKILL_KEYS } from './skills'
 import { KN_STATUS_BOUNDS, KN_USE_LIMITS, knCustomEntrySchema } from './status'
 import { boundedInt } from './zodHelpers'
 
@@ -62,6 +65,8 @@ export const knAbilityAttackSchema = z.object({
   dice: z.array(knTypedDiceSchema).max(3).optional(),
   // Tient lieu de réserve de l'arme.
   pool: z.array(knTypedDiceSchema).max(3).optional(),
+  // Si l'attaque tue la cible, ce que le survivant récupère.
+  onKill: z.array(knSelfEffectSchema).max(2).optional(),
   // Une touche est un Coup critique.
   critical: z.boolean().optional(),
   // La cible ne se défend pas.
@@ -72,6 +77,14 @@ export const knAbilityAttackSchema = z.object({
   allTargets: z.boolean().optional(),
   // Marque une cible : ses attaques suivantes contre elle reçoivent `bonus` et `dice` (une fois par adversaire).
   mark: z.boolean().optional(),
+  // Bonus au prochain test défensif du survivant si l'attaque touche.
+  afterDefenseIfHit: boundedInt({ min: -99, max: 99 }).optional(),
+  // L'attaque n'inflige aucun dégât.
+  noDamage: z.boolean().optional(),
+  // Sur une touche, la cible perd toute son Armure à la localisation choisie.
+  stripArmor: z.boolean().optional(),
+  // Réaction après une défense à l'Esquive réussie : la prochaine attaque reçoit ce bonus, qui remplace celui du mouvement défensif.
+  afterDodge: boundedInt({ min: 1, max: 99 }).optional(),
   // Bonus ou malus au prochain test défensif du survivant.
   afterDefense: boundedInt({ min: -99, max: 99 }).optional(),
   // Le survivant ne se défend plus jusqu'à sa prochaine attaque.
@@ -104,6 +117,34 @@ export const knMasteryAbilitySchema = z.object({
   summons: slug.optional(),
   // Ce que l'aptitude change à l'attaque du survivant.
   attack: knAbilityAttackSchema.optional(),
+  // Ce qu'une aptitude passive change toujours une fois débloquée : défenses du survivant, type de ses dégâts, soin par dégât infligé.
+  permanent: z.object({
+    resistant: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_DAMAGE_TYPES.length).optional(),
+    immune: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_DAMAGE_TYPES.length).optional(),
+    restored: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_DAMAGE_TYPES.length).optional(),
+    damageType: z.enum(KN_DAMAGE_TYPES).optional(),
+    healOnDamage: boundedInt({ min: 1, max: 9 }).optional(),
+    // Conditions auxquelles le survivant est Immunisé.
+    immuneConditions: z.array(z.enum(KN_CONDITION_KEYS)).max(KN_CONDITION_KEYS.length).optional(),
+    // Malus de chaque Réaction consécutive après la première, à la place de −20.
+    reactionPenalty: boundedInt({ min: 0, max: 19 }).optional(),
+    // Une attaque qui ferait tomber la Santé à 0 la laisse à 1 : une fois, tant que l'usage limité de l'aptitude n'est pas marqué.
+    surviveOnce: z.boolean().optional(),
+    // Le Dé de Tension recommence à ce dé (D10 au lieu de D8).
+    tensionStart: boundedInt({ min: 4, max: 20 }).optional(),
+    // Ce que chaque test de Fouille réussi fait trouver, en provisions.
+    scavengeFinds: z.array(z.object({ key: z.enum(KN_PROVISION_KEYS), count: boundedInt({ min: 1, max: 9 }) })).max(3).optional(),
+    // Bonus des sbires d'un type de créature : dés de dégâts typés et Santé en plus.
+    minionBonus: z.object({ creatureType: z.enum(KN_CREATURE_TYPES), dice: knDiceSchema.optional(), type: z.enum(KN_DAMAGE_TYPES).optional(), health: boundedInt({ min: 1, max: 99 }).optional() }).optional(),
+    // Bonus à un test fait pour éviter un piège.
+    trapAvoid: z.object({ skill: z.enum(KN_SKILL_KEYS), amount: boundedInt({ min: 1, max: 99 }) }).optional(),
+  }).optional(),
+  // Modificateurs posés à l'usage, jusqu'à la fin du combat (échange de compétence contre des points temporaires, par exemple).
+  combatModifier: knMasteryEffectsSchema.optional(),
+  // Grave ces dés sur une arme du survivant, pour toujours (une fois par arme).
+  engrave: z.array(knTypedDiceSchema).max(3).optional(),
+  // Provisions que l'usage consomme.
+  provisions: knProvisionDeltaSchema.optional(),
   text: z.string().trim().min(1).max(2000),
 })
 

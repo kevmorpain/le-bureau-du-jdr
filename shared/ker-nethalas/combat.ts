@@ -202,6 +202,8 @@ export interface KnBuffTotals {
   attackAdvantage: boolean
   defenseAdvantage: boolean
   disadvantageAgainst: boolean
+  advantageAgainst: boolean
+  noDefense: boolean
   damageBonuses: KnDice[]
   reflect: { dice: KnDice, type: KnDamageType, label: string }[]
 }
@@ -214,6 +216,8 @@ export function knBuffTotals(effects: readonly KnCreatureBuff[] | undefined): Kn
     attackAdvantage: list.some(effect => effect.advantage === 'attack'),
     defenseAdvantage: list.some(effect => effect.advantage === 'defense'),
     disadvantageAgainst: list.some(effect => effect.disadvantageAgainst),
+    advantageAgainst: list.some(effect => effect.advantageAgainst),
+    noDefense: list.some(effect => effect.noDefense),
     damageBonuses: list.flatMap(effect => effect.damageBonus ? [effect.damageBonus] : []),
     reflect: list.flatMap(effect => effect.reflect ? [{ ...effect.reflect, label: effect.label }] : []),
   }
@@ -287,3 +291,12 @@ export function knSelfAmount(amount: KnSelfAmount, context: { damage: number, he
   if ('dice' in amount) return knRollDice(amount.dice, rng).total
   return Math.ceil(context[amount.of] * amount.ratio)
 }
+
+// Avantage à une attaque : il s'annule contre un Désavantage déjà là (lecture normale, comme ailleurs).
+export function knWithAdvantage(mode: KnRollMode): KnRollMode {
+  return mode === 'normal' || mode === 'advantage' ? 'advantage' : 'both'
+}
+
+// L'Armure d'une créature à une localisation, déduction faite de ce qu'on lui a retiré (99 : tout).
+export const knArmorAfterLoss = (armor: number, loss: Record<string, number> | undefined, location: string): number =>
+  Math.max(0, armor - (loss?.[location] ?? 0))

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { KN_DAMAGE_TYPES } from './catalog/damageTypes'
+import { knDiceSchema } from './diceSchema'
 import { knMagicSchema } from './magicSchema'
 import { KN_WEAPON_SKILL_KEYS } from './skills'
 import { boundedInt } from './zodHelpers'
@@ -132,6 +133,8 @@ export const knItemSchema = z.object({
   // Sacrifié contre un Coup critique : inutilisable, magie comprise, tant qu'il n'est pas réparé.
   broken: z.boolean().optional(),
   magic: knMagicSchema.optional(),
+  // Dés gravés sur l'arme (aptitude), permanents : ils s'ajoutent à la réserve de ses attaques, avec leur type de dégâts.
+  engraved: z.array(z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES).optional() })).max(3).optional(),
   // D'où vient un fragment ou une potion : la table de butin et le jet, pour relire ses effets dans le contenu. Une potion
   // trouvée n'est identifiée qu'après un test de Médecine ou une gorgée ; son vieillissement se tire alors, une fois.
   consumable: z.object({

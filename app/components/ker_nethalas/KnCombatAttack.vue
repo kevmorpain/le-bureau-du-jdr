@@ -29,6 +29,13 @@
       </p>
     </div>
 
+    <p
+      v-if="combat?.immuneConditions"
+      class="text-xs text-success"
+    >
+      Immunisé à toutes les conditions (celles que vous subissez n'ont plus d'effet) jusqu'à votre prochaine attaque.
+    </p>
+
     <div class="grid gap-3 sm:grid-cols-2">
       <UFormField label="Cible">
         <USelect
@@ -82,6 +89,13 @@
         />
       </UFormField>
     </div>
+
+    <p
+      v-if="typedExtras.length"
+      class="text-xs text-muted"
+    >
+      Dés ajoutés, avec leur type de dégâts : {{ typedExtras.map(entry => `${entry.count === 0 ? signed(entry.bonus) : knDiceLabel(entry)} ${damageName(entry.type!)}`).join(' + ') }}
+    </p>
 
     <div class="flex flex-wrap items-center gap-4 text-sm">
       <UCheckbox
@@ -186,6 +200,10 @@
       >
         <span class="font-medium">Mouvement défensif de la créature (D10 : {{ shot.monsterMove }})</span> :
         {{ moveText('monsterDefensiveMoves', shot.monsterMove) }}
+        <span
+          v-if="shot.monsterMoveApplied"
+          class="text-success"
+        >(appliqué)</span>
       </p>
       <div
         v-if="shot.lampSpilled"
@@ -206,7 +224,58 @@
         class="text-sm"
       >
         <span class="font-medium">Maladresse (D10 : {{ shot.fumble }})</span> : {{ $t(`ker_nethalas.fumbles.f${shot.fumble}`) }}
+        <span
+          v-if="shot.fumbleApplied"
+          class="text-success"
+        >(appliqué)</span>
       </p>
+      <div
+        v-if="shot.selfHit"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <span>
+          Coup porté contre {{ shot.selfHit.ally ? shot.selfHit.ally.name : 'vous' }} ({{ $t(`ker_nethalas.hitLocations.${shot.selfHit.location}`) }}) :
+          {{ shot.selfHit.roll.dice.map(die => `D${die.sides} → ${die.roll}`).join(', ') }}
+          → <span class="font-semibold">{{ shot.selfHit.damage.damage }}</span>
+          <span v-if="shot.selfHit.damage.armorAbsorbed"> (Armure : −{{ shot.selfHit.damage.armorAbsorbed }})</span>
+          <span v-if="shot.selfHit.critical"> (Coup critique)</span>
+        </span>
+        <UButton
+          size="xs"
+          variant="soft"
+          color="warning"
+          :disabled="shot.selfHit.applied"
+          @click="applySelfHit(shot)"
+        >
+          {{ shot.selfHit.applied ? 'Subi' : shot.selfHit.ally ? 'Appliquer à l\'allié' : 'Appliquer au survivant' }}
+        </UButton>
+      </div>
+      <p
+        v-if="shot.noDamage && shot.exchange.outcome === 'hit'"
+        class="text-sm"
+      >
+        Cette attaque n'inflige aucun dégât.
+      </p>
+      <div
+        v-if="shot.stripArmor"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <USelect
+          v-model="stripChoice[shotIndex]"
+          :items="locationItems(shot.index)"
+          placeholder="Localisation"
+          class="w-52"
+          aria-label="Localisation à dépouiller de son Armure"
+        />
+        <UButton
+          size="xs"
+          variant="soft"
+          :disabled="!stripChoice[shotIndex] || shot.stripped"
+          @click="strip(shot, shotIndex)"
+        >
+          {{ shot.stripped ? 'Armure retirée' : "Retirer toute l'Armure" }}
+        </UButton>
+      </div>
       <template v-if="shot.damage && shot.location">
         <p class="text-sm">
           <span class="text-muted">Localisation :</span> {{ $t(`ker_nethalas.hitLocations.${shot.location}`) }}
@@ -274,13 +343,15 @@ import {
   knAttackAbilityBlockers,
   knAttackPlan,
   knMarkAbilities,
+  knPermanentEffects,
   knSpendAttackAbilities,
   knSustainedAttackAbilities,
   type KnAttackAbility,
 } from '~~/shared/ker-nethalas/abilityAttack'
 import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
 import { KN_DAMAGE_TYPES, type KnDamageType } from '~~/shared/ker-nethalas/catalog/damageTypes'
-import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import { knCreatureLocations, type KnCreature } from '~~/shared/ker-nethalas/creatures'
+import type { KnPoolEntry } from '~~/shared/ker-nethalas/combat'
 import { knDiceLabel, knParseDicePool } from '~~/shared/ker-nethalas/dice'
 import { KN_DUAL_WIELD, knAttackOptions, knDualPair } from '~~/shared/ker-nethalas/equipment'
 import type { KnAbilityAttack, KnMastery } from '~~/shared/ker-nethalas/masteries'
@@ -298,7 +369,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, attackWithAbilities, markCreature, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, attackWithAbilities, markCreature, stripArmor, applySelfHit, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary, () => props.masteries)
 
 const KN_SURPRISE_BONUS = 20
 
@@ -325,6 +396,10 @@ const damageType = ref<KnDamageType>(attackOptions.value[0]!.damageType)
 const weaponItems = computed<SelectItem[]>(() => attackOptions.value.map(option => ({ label: option.weapon ?? 'Mains nues', value: option.id })))
 const aim = ref(false)
 const magical = ref(false)
+const typedExtras = ref<KnPoolEntry[]>([])
+const permanent = computed(() => props.masteries
+  ? knPermanentEffects(props.masteries, knMasteryEntries(character.value.masteryPicks, character.value.amulets))
+  : null)
 const shots = ref<KnAttackResult[]>([])
 
 const masteryEntries = computed(() => knMasteryEntries(character.value.masteryPicks, character.value.amulets))
@@ -388,8 +463,9 @@ function applyWeapon(id: string) {
   skill.value = option.skill
   speed.value = option.speed
   poolText.value = option.pool
-  damageType.value = option.damageType
+  damageType.value = permanent.value?.damageType ?? option.damageType
   weaponBonus.value = option.bonus
+  typedExtras.value = option.typed ?? []
 }
 
 watch(weaponId, applyWeapon)
@@ -422,16 +498,31 @@ function attackNow() {
   const plan = knAttackPlan([...sustainedAbilities.value, ...chosen])
   spend(chosen)
   picked.value = []
+  stripChoice.value = {}
   shots.value = attackWithAbilities({
     index: target.value,
     skill: skill.value,
     bonus: bonus.value + weaponBonus.value + (surprise.value ? KN_SURPRISE_BONUS : 0),
     speed: speed.value,
-    pool: pool.value,
+    pool: [...pool.value, ...typedExtras.value],
     damageType: damageType.value,
     aim: aim.value && hasWeakSpot.value,
     magical: magical.value,
+    weaponId: weaponId.value,
   }, plan)
+}
+
+const stripChoice = ref<Record<number, string>>({})
+const locationItems = (index: number): SelectItem[] => {
+  const creature = creatureOf(index)
+  return (creature ? knCreatureLocations(creature) : ['body']).map(key => ({ label: t(`ker_nethalas.hitLocations.${key}`), value: key }))
+}
+
+function strip(shot: KnAttackResult, shotIndex: number) {
+  const location = stripChoice.value[shotIndex]
+  if (!location || shot.stripped) return
+  stripArmor(shot.index, location)
+  shot.stripped = true
 }
 
 function apply(shot: KnAttackResult) {

@@ -146,8 +146,10 @@ describe('effets durables des objectifs', () => {
     expect(knGoalAttackDice(goals, 'unarmedCombat')).toEqual([{ dice: { count: 1, sides: 4, bonus: 0 }, type: 'psychic' }])
 
     const [weapon, unarmed] = knAttackOptions([sword], [], goals)
-    expect(weapon).toMatchObject({ pool: 'D6+1+D4' })
-    expect(unarmed).toMatchObject({ id: 'unarmed', pool: 'D4+D4' })
+    const typed = [{ count: 1, sides: 4, bonus: 0, type: 'psychic' }]
+
+    expect(weapon).toMatchObject({ pool: 'D6+1', typed })
+    expect(unarmed).toMatchObject({ id: 'unarmed', pool: 'D4', typed })
     expect(knAttackOptions([sword]).map(option => option.pool)).toEqual(['D6', 'D4'])
   })
 

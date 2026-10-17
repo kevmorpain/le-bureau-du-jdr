@@ -4,13 +4,19 @@ import {
   knAttackAbilities,
   knAttackAbilityBlockers,
   knAttackPlan,
+  knDodgeAbilities,
+  knEngravableWeapons,
+  knEngrave,
   knMarkAbilities,
   knMarkPlan,
   knMergePlans,
+  knPermanentEffects,
   knSpendAttackAbilities,
   knSustainedAttackAbilities,
 } from '../../shared/ker-nethalas/abilityAttack'
+import { knAttackOptions } from '../../shared/ker-nethalas/equipment'
 import { KN_NO_DEFENSE, knCombatExchange, knRollDamagePool } from '../../shared/ker-nethalas/combat'
+import { knReactionPenalty } from '../../shared/ker-nethalas/combatState'
 import { knAbilityIsUsable } from '../../shared/ker-nethalas/masteryEffects'
 import { knMasteryAbilitySchema, type KnAbilityAttack, type KnMastery } from '../../shared/ker-nethalas/masteries'
 import { emptyKnRun, knMarkCreature, knSetCombatDefense, knStartCombat } from '../../shared/ker-nethalas/run'
@@ -108,7 +114,13 @@ describe('plan d\'attaque', () => {
       allTargets: true,
       followUp: { dice: undefined },
       afterDefense: -20,
+      afterDefenseIfHit: 0,
+      noDamage: false,
+      stripArmor: false,
       noDefense: true,
+      onKill: [],
+      advantage: false,
+      freeAim: false,
     })
   })
 
@@ -169,5 +181,104 @@ describe('dés typés et défense', () => {
     expect(defended.combat).toMatchObject({ defenseBonus: -20, noDefense: true })
     expect(knSetCombatDefense(defended, {}).combat).not.toHaveProperty('noDefense')
     expect(knSetCombatDefense(emptyKnRun(), { none: true })).toEqual(emptyKnRun())
+  })
+})
+
+describe('aptitudes de réaction, sans dégâts et défense après une touche', () => {
+  const mastery = withAttacks({
+    1: { attack: { afterDodge: 20 } },
+    2: { sustained: false, attack: { afterDefenseIfHit: 10, noDamage: true, stripArmor: true } },
+  })
+
+  it('une réaction à l\'Esquive ne se coche pas dans l\'attaque : elle a son propre bouton', () => {
+    expect(knAttackAbilities([mastery], entries(2)).map(entry => entry.ability.tier)).toEqual([2])
+    expect(knDodgeAbilities([mastery], entries(2)).map(entry => entry.ability.tier)).toEqual([1])
+  })
+
+  it('le plan retient le bonus défensif sur touche, l\'absence de dégâts et le retrait d\'Armure', () => {
+    const plan = knAttackPlan(knAttackAbilities([mastery], entries(2)))
+
+    expect(plan).toMatchObject({ afterDefenseIfHit: 10, noDamage: true, stripArmor: true, afterDefense: 0 })
+    expect(knMergePlans(plan, { ...KN_EMPTY_ATTACK_PLAN, dice: [], advantage: true, freeAim: true })).toMatchObject({ advantage: true, freeAim: true, afterDefenseIfHit: 10 })
+  })
+})
+
+describe('effets permanents, gravure et effet à la mort', () => {
+  const permanentMastery = (permanent: Record<string, unknown>, tier = 1): KnMastery => {
+    const base = fakeMastery('alpha')
+    return { ...base, abilities: base.abilities.map(ability => ability.tier === tier ? { ...ability, permanent } : ability) as KnMastery['abilities'] }
+  }
+
+  it('les effets permanents des aptitudes débloquées s\'additionnent', () => {
+    const effects = knPermanentEffects([permanentMastery({ resistant: ['slashing'], immune: ['bludgeoning'], damageType: 'psychic', healOnDamage: 1 })], entries(2))
+
+    expect(effects).toEqual({ resistant: ['slashing'], immune: ['bludgeoning'], restored: [], damageType: 'psychic', healOnDamage: 1, immuneConditions: [], trapAvoid: [], scavengeFinds: [], minionBonuses: [] })
+    expect(knPermanentEffects([permanentMastery({ healOnDamage: 1 }, 3)], entries(2))).toEqual({ resistant: [], immune: [], restored: [], healOnDamage: 0, immuneConditions: [], trapAvoid: [], scavengeFinds: [], minionBonuses: [] })
+  })
+
+  it('un effet à la mort se retrouve dans le plan', () => {
+    const mastery = withAttacks({ 1: { attack: { onKill: [{ kind: 'recover', vital: 'sanity', dice: d(1, 6) }] } } })
+
+    expect(knAttackPlan(knAttackAbilities([mastery], entries(1))).onKill).toEqual([{ kind: 'recover', vital: 'sanity', dice: d(1, 6) }])
+  })
+
+  it('une arme ne se grave qu\'une fois', () => {
+    const sword = { id: 'w', name: 'Épée', kind: 'weapon', weight: 'normal', quantity: 1, place: 'mainHand', weapon: { skill: 'bladedWeapons', speed: 5, damageType: 'slashing', traits: [] } } as const
+    const dice = [{ dice: d(1, 10), type: 'arcane' as const }]
+    const engraved = knEngrave([sword], 'w', dice)
+
+    expect(engraved[0]).toMatchObject({ engraved: dice })
+    expect(knEngravableWeapons([sword]).map(item => item.id)).toEqual(['w'])
+    expect(knEngravableWeapons(engraved)).toEqual([])
+    expect(knEngrave(engraved, 'w', [{ dice: d(1, 4) }])[0]?.engraved).toEqual(dice)
+  })
+
+  it('une arme gravée ajoute ses dés typés à ses attaques, hors du texte de la réserve', () => {
+    const sword = { id: 'w', name: 'Épée', kind: 'weapon', weight: 'normal', quantity: 1, place: 'mainHand', weapon: { skill: 'bladedWeapons', speed: 5, damageType: 'slashing', traits: [] }, engraved: [{ dice: d(1, 10), type: 'arcane' }] } as const
+    const [option] = knAttackOptions([{ ...sword, engraved: [...sword.engraved] }])
+
+    expect(option).toMatchObject({ pool: 'D6', typed: [{ count: 1, sides: 10, bonus: 0, type: 'arcane' }] })
+  })
+})
+
+describe('autres effets permanents', () => {
+  const base = fakeMastery('alpha')
+  const mastery = (tier: number, permanent: Record<string, unknown>): KnMastery =>
+    ({ ...base, abilities: base.abilities.map(ability => ability.tier === tier ? { ...ability, permanent } : ability) }) as KnMastery
+
+  it('les conditions, la pénalité de Réaction, la survie, le Dé de Tension et les pièges se lisent', () => {
+    const effects = knPermanentEffects([
+      mastery(1, { immuneConditions: ['frightened', 'poisoned'], reactionPenalty: 10 }),
+    ], entries(1))
+    expect(effects).toMatchObject({ immuneConditions: ['frightened', 'poisoned'], reactionPenalty: 10 })
+
+    const survive = knPermanentEffects([mastery(2, { surviveOnce: true, tensionStart: 10, trapAvoid: { skill: 'acrobatics', amount: 20 } })], entries(2))
+    expect(survive).toMatchObject({ surviveKey: 'alpha:2', tensionStart: 10, trapAvoid: [{ skill: 'acrobatics', amount: 20 }] })
+    expect(knPermanentEffects([mastery(2, { surviveOnce: true })], entries(1)).surviveKey).toBeUndefined()
+  })
+
+  it('la pénalité de Réaction réduite s\'applique à chaque Réaction consécutive', () => {
+    expect([0, 1, 3].map(count => knReactionPenalty(count))).toEqual([0, 20, 60])
+    expect([0, 1, 3].map(count => knReactionPenalty(count, 10))).toEqual([0, 10, 30])
+  })
+})
+
+describe('Fouille et sbires', () => {
+  const base = fakeMastery('alpha')
+  const both: KnMastery = {
+    ...base,
+    abilities: base.abilities.map((ability) => {
+      if (ability.tier === 1) return { ...ability, permanent: { scavengeFinds: [{ key: 'cookingIngredients', count: 1 }] } }
+      if (ability.tier === 2) return { ...ability, permanent: { minionBonus: { creatureType: 'undead', dice: d(1, 6), type: 'necrotic', health: 2 } } }
+      return ability
+    }) as KnMastery['abilities'],
+  }
+
+  it('les trouvailles de Fouille et le bonus des sbires se lisent', () => {
+    const effects = knPermanentEffects([both], entries(2))
+
+    expect(effects.scavengeFinds).toEqual([{ key: 'cookingIngredients', count: 1 }])
+    expect(effects.minionBonuses).toEqual([{ creatureType: 'undead', dice: d(1, 6), type: 'necrotic', health: 2 }])
+    expect(knPermanentEffects([both], entries(1)).minionBonuses).toEqual([])
   })
 })

@@ -110,9 +110,11 @@ describe('effets durables des avantages', () => {
   it('ils s\'ajoutent à la réserve de chaque attaque, mains nues comprises', () => {
     const [weapon, unarmed] = knAttackOptions([sword], benefits)
 
-    expect(weapon).toMatchObject({ pool: 'D6+D6+D6' })
+    const typed = [{ count: 1, sides: 6, bonus: 0, type: 'piercing' }, { count: 1, sides: 6, bonus: 0, type: 'slashing' }]
+
+    expect(weapon).toMatchObject({ pool: 'D6', typed })
     expect(weapon!.magic!.dice).toHaveLength(2)
-    expect(unarmed).toMatchObject({ id: 'unarmed', pool: 'D4+D6+D6' })
+    expect(unarmed).toMatchObject({ id: 'unarmed', pool: 'D4', typed })
     expect(knAttackOptions([sword]).at(-1)).toBe(KN_UNARMED_OPTION)
   })
 

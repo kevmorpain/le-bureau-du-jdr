@@ -44,7 +44,7 @@
         class="self-end text-sm text-muted"
       >
         Défenses déjà faites ce round : {{ combat?.reactions ?? 0 }}
-        (malus de {{ knReactionPenalty(combat?.reactions ?? 0) }} à la prochaine)
+        (malus de {{ reactionPenalty(combat?.reactions ?? 0) }} à la prochaine)
         <template v-if="defense.free">
           · {{ combat?.freeParryUsed ? 'Parade gratuite déjà prise ce round' : 'Parade gratuite disponible : sans malus et hors du compte' }}
         </template>
@@ -59,6 +59,13 @@
     >
       Tirer l'action de la créature (D6)
     </UButton>
+
+    <p
+      v-if="lostTurn"
+      class="rounded-md bg-elevated p-3 text-sm"
+    >
+      La créature perd son tour : {{ lostTurn }}.
+    </p>
 
     <div
       v-if="drawn"
@@ -142,13 +149,36 @@
       >
         <span class="font-medium">Mouvement défensif du survivant (D10 : {{ result.survivorMove }})</span> :
         {{ moveText('survivorDefensiveMoves', result.survivorMove) }}
+        <span
+          v-if="result.survivorMoveApplied"
+          class="text-success"
+        >(appliqué)</span>
       </p>
+      <div
+        v-if="result.dodged && dodgeReactions.length"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <UButton
+          v-for="entry in dodgeReactions"
+          :key="entry.id"
+          size="xs"
+          variant="soft"
+          :disabled="reacted || abilityBlockers(entry).length > 0"
+          @click="react(entry)"
+        >
+          {{ reacted ? 'Réaction faite' : `${entry.ability.name} : prochaine attaque +${entry.attack.afterDodge}` }}
+        </UButton>
+      </div>
       <p
         v-if="result.monsterFumble"
         class="text-sm"
       >
         <span class="font-medium">Maladresse de la créature (D10 : {{ result.monsterFumble }})</span> :
         {{ moveText('monsterFumbles', result.monsterFumble) }}
+        <span
+          v-if="result.monsterFumbleApplied"
+          class="text-success"
+        >(appliqué)</span>
       </p>
       <p
         v-if="result.location"
@@ -268,9 +298,11 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knAttackAbilityBlockers, knDodgeAbilities, knSpendAttackAbilities, type KnAttackAbility } from '~~/shared/ker-nethalas/abilityAttack'
+import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { knActionIsTest } from '~~/shared/ker-nethalas/combat'
 import { knDefenseOptions, knSacrificeChoices } from '~~/shared/ker-nethalas/equipment'
-import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
 import type { KnCreature, KnCreatureAction, KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knOutcomeAvailable, type KnRollTableEntry } from '~~/shared/ker-nethalas/tables'
@@ -280,16 +312,37 @@ import type { KnTurnResult } from '~/composables/useKnCombat'
 const props = defineProps<{
   resolved: KnResolvedSheet
   bestiary: KnCreature[] | null
+  masteries: KnMastery[] | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, minions, creatureOf, drawAction, takeTurn, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, minions, creatureOf, drawAction, takeTurn, reactionPenalty, reactAfterDodge, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary, () => props.masteries)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { selfEffectText } = useKnEffectText()
 
 const isTest = knActionIsTest
+
+const dodgeReactions = computed(() => props.masteries
+  ? knDodgeAbilities(props.masteries, knMasteryEntries(character.value.masteryPicks, character.value.amulets))
+  : [])
+const reacted = ref(false)
+const abilityBlockers = (entry: KnAttackAbility) => knAttackAbilityBlockers(entry, {
+  aetherCurrent: character.value.aetherCurrent,
+  healthCurrent: character.value.healthCurrent,
+  exhaustion: character.value.exhaustion,
+}, character.value.status)
+
+function react(entry: KnAttackAbility) {
+  const spent = knSpendAttackAbilities([entry], { aetherCurrent: character.value.aetherCurrent, healthCurrent: character.value.healthCurrent, exhaustion: character.value.exhaustion }, character.value.status)
+  character.value.aetherCurrent = spent.purse.aetherCurrent
+  character.value.healthCurrent = spent.purse.healthCurrent
+  character.value.exhaustion = spent.purse.exhaustion
+  character.value.status = spent.status
+  reactAfterDodge(entry.attack.afterDodge ?? 0)
+  reacted.value = true
+}
 
 const who = ref(0)
 const defenseId = ref('dodge')
@@ -306,9 +359,13 @@ const onSurvivor = computed(() => victim.value === 'survivor' || !minions.value[
 const victimName = computed(() => victim.value === 'survivor' ? 'le survivant' : minions.value[victim.value]?.name ?? 'le sbire')
 const refName = (ref: string) => props.bestiary?.find(creature => creature.key === ref)?.name ?? ref
 const drawn = ref<{ d6: number, action: KnCreatureAction } | undefined>()
+const lostTurn = ref<string | undefined>()
 const taken = ref<number[]>([])
 const selfTaken = ref<number[]>([])
 const result = ref<KnTurnResult | undefined>()
+watch(result, () => {
+  reacted.value = false
+})
 
 const whoItems = computed<SelectItem[]>(() =>
   (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0
@@ -349,7 +406,9 @@ function drawNow() {
   result.value = undefined
   taken.value = []
   selfTaken.value = []
-  drawn.value = drawAction(who.value)
+  const drew = drawAction(who.value)
+  lostTurn.value = drew && 'lost' in drew ? drew.lost : undefined
+  drawn.value = drew && 'd6' in drew ? drew : undefined
   magicCheck.value = drawn.value?.action.checks?.[0]?.skill ?? 'spellward'
 }
 

@@ -170,6 +170,8 @@ export const knRunSchema = z.object({
   domains: z.array(knDomainSchema).min(1).max(KN_RUN_BOUNDS.domains),
   current: boundedInt({ min: 0, max: KN_RUN_BOUNDS.domains - 1 }),
   tensionDie: knUsageDieSchema,
+  // Le dé auquel le Dé de Tension recommence (D8, ou D10 avec une aptitude).
+  tensionStart: knUsageDieSchema.optional(),
   lightRemaining: boundedInt(KN_RUN_BOUNDS.light),
   // Le combat en cours : il traverse les entrées du chemin du Domaine, d'où sa place dans le run.
   combat: knCombatSchema.optional(),
@@ -241,9 +243,11 @@ export function knEnterRoom(run: KnRun, { isNew }: { isNew: boolean }): KnRun {
   }
 }
 
+export const knTensionStart = (run: Pick<KnRun, 'tensionStart'>): KnUsageDie => run.tensionStart ?? KN_TENSION_START_DIE
+
 export function knTensionCheck(run: KnRun, roll: number): { run: KnRun, triggered: boolean } {
   const { die, triggered } = knUsageCheck(run.tensionDie, roll)
-  return { run: { ...run, tensionDie: triggered ? KN_TENSION_START_DIE : die }, triggered }
+  return { run: { ...run, tensionDie: triggered ? knTensionStart(run) : die }, triggered }
 }
 
 export function knLairCheck(run: KnRun, roll: number): { run: KnRun, found: boolean } {
@@ -268,7 +272,7 @@ export function knNewDomain(run: KnRun): KnRun {
     ...run,
     domains: [...run.domains, emptyKnDomain(run.domains.length + 1)],
     current: run.domains.length,
-    tensionDie: KN_TENSION_START_DIE,
+    tensionDie: knTensionStart(run),
   }
 }
 
@@ -885,10 +889,18 @@ export function knRegisterReaction(run: KnRun): KnRun {
   return run.combat ? { ...run, combat: { ...run.combat, reactions: Math.min(KN_COMBAT_BOUNDS.reactions.max, run.combat.reactions + 1) } } : run
 }
 
+// Le Saignement d'une créature lui coûte sa valeur en Santé à chaque round, l'Armure ignorée.
+const bleed = (creature: KnCombatCreature): KnCombatCreature => {
+  const loss = (creature.effects ?? []).reduce((sum, effect) => sum + (effect.bleeding ?? 0), 0)
+  return loss > 0 && creature.health > 0 ? damaged(creature, loss) : creature
+}
+
 export function knNextCombatRound(run: KnRun): KnRun {
   if (!run.combat) return run
-  const { freeParryUsed: _used, ...combat } = run.combat
-  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
+  const { freeParryUsed: _used, defenseAdvantage, ...combat } = run.combat
+  const advantage = defenseAdvantage && defenseAdvantage > 1 ? { defenseAdvantage: defenseAdvantage - 1 } : {}
+  const bled = combat.creatures.map(creature => bleed(creature))
+  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...combat, ...advantage, creatures: bled, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
 }
 
 // La Parade gratuite du combat à deux armes ne compte pas parmi les Réactions du round, une fois par round.
@@ -915,4 +927,96 @@ export function knSetCombatDefense(run: KnRun, defense: { bonus?: number, none?:
   if (!run.combat) return run
   const { defenseBonus: _bonus, noDefense: _none, ...rest } = run.combat
   return { ...run, combat: { ...rest, ...(defense.bonus ? { defenseBonus: defense.bonus } : {}), ...(defense.none ? { noDefense: true } : {}) } }
+}
+
+type NextAttack = NonNullable<NonNullable<KnRun['combat']>['next']>
+
+const withNextAttack = (run: KnRun, next: NextAttack): KnRun => {
+  if (!run.combat) return run
+  const { next: _previous, ...rest } = run.combat
+  return { ...run, combat: Object.keys(next).length ? { ...rest, next } : rest }
+}
+
+// Ce que la prochaine attaque du survivant reçoit en plus : les bonus s'additionnent, les dés se joignent à la réserve.
+export function knAddNextAttack(run: KnRun, patch: NextAttack): KnRun {
+  const current = run.combat?.next ?? {}
+  const bonus = (current.bonus ?? 0) + (patch.bonus ?? 0)
+  const dice = [...(current.dice ?? []), ...(patch.dice ?? [])]
+  return withNextAttack(run, {
+    ...(bonus ? { bonus } : {}),
+    ...(dice.length ? { dice } : {}),
+    ...(current.advantage || patch.advantage ? { advantage: true } : {}),
+    ...(current.freeAim || patch.freeAim ? { freeAim: true } : {}),
+  })
+}
+
+// Un bonus qui remplace celui qu'on avait déjà s'il est plus fort, au lieu de s'y ajouter.
+export function knRaiseNextAttackBonus(run: KnRun, bonus: number): KnRun {
+  const current = run.combat?.next ?? {}
+  return withNextAttack(run, { ...current, bonus: Math.max(current.bonus ?? 0, bonus) })
+}
+
+export const knClearNextAttack = (run: KnRun): KnRun => withNextAttack(run, {})
+
+export function knLoseCreatureArmor(run: KnRun, index: number, location: string, points: number): KnRun {
+  return run.combat?.creatures[index]
+    ? withCreature(run, index, creature => ({ ...creature, armorLoss: { ...creature.armorLoss, [location]: Math.min(99, (creature.armorLoss?.[location] ?? 0) + points) } }))
+    : run
+}
+
+export function knSetCreatureDefenseMalus(run: KnRun, index: number, amount: number): KnRun {
+  return run.combat?.creatures[index]
+    ? withCreature(run, index, ({ defenseMalus: _previous, ...creature }) => amount > 0 ? { ...creature, defenseMalus: Math.min(99, amount) } : creature)
+    : run
+}
+
+export function knLoseSurvivorArmor(run: KnRun, zone: 'head' | 'torso' | 'arms' | 'legs', points: number): KnRun {
+  if (!run.combat) return run
+  return { ...run, combat: { ...run.combat, armorLoss: { ...run.combat.armorLoss, [zone]: Math.min(99, (run.combat.armorLoss?.[zone] ?? 0) + points) } } }
+}
+
+// Un bonus ou un malus de plus au prochain test défensif du survivant, sans toucher à son éventuelle impossibilité de se défendre.
+export function knAddDefenseBonus(run: KnRun, amount: number): KnRun {
+  if (!run.combat) return run
+  const total = (run.combat.defenseBonus ?? 0) + amount
+  const { defenseBonus: _previous, ...rest } = run.combat
+  return { ...run, combat: { ...rest, ...(total ? { defenseBonus: total } : {}) } }
+}
+
+export function knSetDefenseAdvantage(run: KnRun, rounds: number): KnRun {
+  return run.combat ? { ...run, combat: { ...run.combat, defenseAdvantage: Math.min(9, Math.max(1, rounds)) } } : run
+}
+
+// Une créature qui a perdu un tour le perd quand on tire son action : l'effet en compte un de moins, et on en dit la cause.
+export function knConsumeLostTurn(run: KnRun, index: number): { run: KnRun, label?: string } {
+  const creature = run.combat?.creatures[index]
+  const effect = creature?.effects?.find(candidate => candidate.lostTurn)
+  if (!creature || !effect) return { run }
+  const next = run.combat!.creatures.map((c, i) => i === index
+    ? { ...c, effects: (c.effects ?? []).flatMap(candidate => candidate !== effect ? [candidate] : candidate.lostTurn! > 1 ? [{ ...candidate, lostTurn: candidate.lostTurn! - 1 }] : []) }
+    : c)
+  return { run: { ...run, combat: { ...run.combat!, creatures: next } }, label: effect.label }
+}
+
+// Un Saignement de plus sur une créature : il se cumule avec celui qu'elle a déjà.
+export function knBleedCreature(run: KnRun, index: number, value: number): KnRun {
+  const creature = run.combat?.creatures[index]
+  if (!creature) return run
+  const current = (creature.effects ?? []).find(effect => effect.bleeding)
+  const total = Math.min(99, (current?.bleeding ?? 0) + value)
+  return knAddCreatureBuff(run, index, { label: 'Saignement', bleeding: total })
+}
+
+export function knSetImmuneConditions(run: KnRun, on: boolean): KnRun {
+  if (!run.combat) return run
+  const { immuneConditions: _previous, ...rest } = run.combat
+  return { ...run, combat: on ? { ...rest, immuneConditions: true } : rest }
+}
+
+// Une aptitude change le dé auquel le Dé de Tension recommence : D8 par défaut. Renvoie le même run quand rien ne change.
+export function knSetTensionStart(run: KnRun, die: number | undefined): KnRun {
+  const wanted = (KN_USAGE_DICE as readonly number[]).includes(die ?? 0) && die !== KN_TENSION_START_DIE ? die as KnUsageDie : undefined
+  if (run.tensionStart === wanted) return run
+  const { tensionStart: _previous, ...rest } = run
+  return wanted ? { ...rest, tensionStart: wanted } : rest
 }
