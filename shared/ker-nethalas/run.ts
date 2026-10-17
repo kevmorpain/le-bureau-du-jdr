@@ -887,8 +887,9 @@ export function knRegisterReaction(run: KnRun): KnRun {
 
 export function knNextCombatRound(run: KnRun): KnRun {
   if (!run.combat) return run
-  const { freeParryUsed: _used, ...combat } = run.combat
-  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...combat, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
+  const { freeParryUsed: _used, defenseAdvantage, ...combat } = run.combat
+  const advantage = defenseAdvantage && defenseAdvantage > 1 ? { defenseAdvantage: defenseAdvantage - 1 } : {}
+  return knVanishSpentCreatures(knAdvanceCreatureEffects(knExpireCombatTemporary({ ...run, combat: { ...combat, ...advantage, round: Math.min(KN_COMBAT_BOUNDS.round.max, run.combat.round + 1), reactions: 0 } }, 'round')))
 }
 
 // La Parade gratuite du combat à deux armes ne compte pas parmi les Réactions du round, une fois par round.
@@ -969,4 +970,19 @@ export function knAddDefenseBonus(run: KnRun, amount: number): KnRun {
   const total = (run.combat.defenseBonus ?? 0) + amount
   const { defenseBonus: _previous, ...rest } = run.combat
   return { ...run, combat: { ...rest, ...(total ? { defenseBonus: total } : {}) } }
+}
+
+export function knSetDefenseAdvantage(run: KnRun, rounds: number): KnRun {
+  return run.combat ? { ...run, combat: { ...run.combat, defenseAdvantage: Math.min(9, Math.max(1, rounds)) } } : run
+}
+
+// Une créature qui a perdu un tour le perd quand on tire son action : l'effet en compte un de moins, et on en dit la cause.
+export function knConsumeLostTurn(run: KnRun, index: number): { run: KnRun, label?: string } {
+  const creature = run.combat?.creatures[index]
+  const effect = creature?.effects?.find(candidate => candidate.lostTurn)
+  if (!creature || !effect) return { run }
+  const next = run.combat!.creatures.map((c, i) => i === index
+    ? { ...c, effects: (c.effects ?? []).flatMap(candidate => candidate !== effect ? [candidate] : candidate.lostTurn! > 1 ? [{ ...candidate, lostTurn: candidate.lostTurn! - 1 }] : []) }
+    : c)
+  return { run: { ...run, combat: { ...run.combat!, creatures: next } }, label: effect.label }
 }

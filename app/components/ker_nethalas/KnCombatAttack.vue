@@ -217,7 +217,32 @@
         class="text-sm"
       >
         <span class="font-medium">Maladresse (D10 : {{ shot.fumble }})</span> : {{ $t(`ker_nethalas.fumbles.f${shot.fumble}`) }}
+        <span
+          v-if="shot.fumbleApplied"
+          class="text-success"
+        >(appliqué)</span>
       </p>
+      <div
+        v-if="shot.selfHit"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <span>
+          Coup porté contre {{ shot.selfHit.ally ? shot.selfHit.ally.name : 'vous' }} ({{ $t(`ker_nethalas.hitLocations.${shot.selfHit.location}`) }}) :
+          {{ shot.selfHit.roll.dice.map(die => `D${die.sides} → ${die.roll}`).join(', ') }}
+          → <span class="font-semibold">{{ shot.selfHit.damage.damage }}</span>
+          <span v-if="shot.selfHit.damage.armorAbsorbed"> (Armure : −{{ shot.selfHit.damage.armorAbsorbed }})</span>
+          <span v-if="shot.selfHit.critical"> (Coup critique)</span>
+        </span>
+        <UButton
+          size="xs"
+          variant="soft"
+          color="warning"
+          :disabled="shot.selfHit.applied"
+          @click="applySelfHit(shot)"
+        >
+          {{ shot.selfHit.applied ? 'Subi' : shot.selfHit.ally ? 'Appliquer à l\'allié' : 'Appliquer au survivant' }}
+        </UButton>
+      </div>
       <p
         v-if="shot.noDamage && shot.exchange.outcome === 'hit'"
         class="text-sm"
@@ -337,7 +362,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, attackWithAbilities, markCreature, stripArmor, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary, () => props.masteries)
+const { combat, creatureOf, attackWithAbilities, markCreature, stripArmor, applySelfHit, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary, () => props.masteries)
 
 const KN_SURPRISE_BONUS = 20
 
@@ -476,6 +501,7 @@ function attackNow() {
     damageType: damageType.value,
     aim: aim.value && hasWeakSpot.value,
     magical: magical.value,
+    weaponId: weaponId.value,
   }, plan)
 }
 

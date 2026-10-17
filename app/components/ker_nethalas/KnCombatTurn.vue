@@ -60,6 +60,13 @@
       Tirer l'action de la créature (D6)
     </UButton>
 
+    <p
+      v-if="lostTurn"
+      class="rounded-md bg-elevated p-3 text-sm"
+    >
+      La créature perd son tour : {{ lostTurn }}.
+    </p>
+
     <div
       v-if="drawn"
       class="space-y-2 rounded-md bg-elevated p-3"
@@ -168,6 +175,10 @@
       >
         <span class="font-medium">Maladresse de la créature (D10 : {{ result.monsterFumble }})</span> :
         {{ moveText('monsterFumbles', result.monsterFumble) }}
+        <span
+          v-if="result.monsterFumbleApplied"
+          class="text-success"
+        >(appliqué)</span>
       </p>
       <p
         v-if="result.location"
@@ -349,6 +360,7 @@ const onSurvivor = computed(() => victim.value === 'survivor' || !minions.value[
 const victimName = computed(() => victim.value === 'survivor' ? 'le survivant' : minions.value[victim.value]?.name ?? 'le sbire')
 const refName = (ref: string) => props.bestiary?.find(creature => creature.key === ref)?.name ?? ref
 const drawn = ref<{ d6: number, action: KnCreatureAction } | undefined>()
+const lostTurn = ref<string | undefined>()
 const taken = ref<number[]>([])
 const selfTaken = ref<number[]>([])
 const result = ref<KnTurnResult | undefined>()
@@ -395,7 +407,9 @@ function drawNow() {
   result.value = undefined
   taken.value = []
   selfTaken.value = []
-  drawn.value = drawAction(who.value)
+  const drew = drawAction(who.value)
+  lostTurn.value = drew && 'lost' in drew ? drew.lost : undefined
+  drawn.value = drew && 'd6' in drew ? drew : undefined
   magicCheck.value = drawn.value?.action.checks?.[0]?.skill ?? 'spellward'
 }
 
