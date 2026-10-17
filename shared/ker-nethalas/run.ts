@@ -957,3 +957,16 @@ export function knSetCreatureDefenseMalus(run: KnRun, index: number, amount: num
     ? withCreature(run, index, ({ defenseMalus: _previous, ...creature }) => amount > 0 ? { ...creature, defenseMalus: Math.min(99, amount) } : creature)
     : run
 }
+
+export function knLoseSurvivorArmor(run: KnRun, zone: 'head' | 'torso' | 'arms' | 'legs', points: number): KnRun {
+  if (!run.combat) return run
+  return { ...run, combat: { ...run.combat, armorLoss: { ...run.combat.armorLoss, [zone]: Math.min(99, (run.combat.armorLoss?.[zone] ?? 0) + points) } } }
+}
+
+// Un bonus ou un malus de plus au prochain test défensif du survivant, sans toucher à son éventuelle impossibilité de se défendre.
+export function knAddDefenseBonus(run: KnRun, amount: number): KnRun {
+  if (!run.combat) return run
+  const total = (run.combat.defenseBonus ?? 0) + amount
+  const { defenseBonus: _previous, ...rest } = run.combat
+  return { ...run, combat: { ...rest, ...(total ? { defenseBonus: total } : {}) } }
+}

@@ -62,6 +62,8 @@ export const knAbilityAttackSchema = z.object({
   dice: z.array(knTypedDiceSchema).max(3).optional(),
   // Tient lieu de réserve de l'arme.
   pool: z.array(knTypedDiceSchema).max(3).optional(),
+  // Si l'attaque tue la cible, ce que le survivant récupère.
+  onKill: z.array(knSelfEffectSchema).max(2).optional(),
   // Une touche est un Coup critique.
   critical: z.boolean().optional(),
   // La cible ne se défend pas.
@@ -112,6 +114,20 @@ export const knMasteryAbilitySchema = z.object({
   summons: slug.optional(),
   // Ce que l'aptitude change à l'attaque du survivant.
   attack: knAbilityAttackSchema.optional(),
+  // Ce qu'une aptitude passive change toujours une fois débloquée : défenses du survivant, type de ses dégâts, soin par dégât infligé.
+  permanent: z.object({
+    resistant: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_DAMAGE_TYPES.length).optional(),
+    immune: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_DAMAGE_TYPES.length).optional(),
+    restored: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_DAMAGE_TYPES.length).optional(),
+    damageType: z.enum(KN_DAMAGE_TYPES).optional(),
+    healOnDamage: boundedInt({ min: 1, max: 9 }).optional(),
+  }).optional(),
+  // Modificateurs posés à l'usage, jusqu'à la fin du combat (échange de compétence contre des points temporaires, par exemple).
+  combatModifier: knMasteryEffectsSchema.optional(),
+  // Grave ces dés sur une arme du survivant, pour toujours (une fois par arme).
+  engrave: z.array(knTypedDiceSchema).max(3).optional(),
+  // Provisions que l'usage consomme.
+  provisions: knProvisionDeltaSchema.optional(),
   text: z.string().trim().min(1).max(2000),
 })
 

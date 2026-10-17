@@ -83,6 +83,13 @@
       </UFormField>
     </div>
 
+    <p
+      v-if="typedExtras.length"
+      class="text-xs text-muted"
+    >
+      Dés ajoutés, avec leur type de dégâts : {{ typedExtras.map(entry => `${entry.count === 0 ? signed(entry.bonus) : knDiceLabel(entry)} ${damageName(entry.type!)}`).join(' + ') }}
+    </p>
+
     <div class="flex flex-wrap items-center gap-4 text-sm">
       <UCheckbox
         v-if="hasWeakSpot"
@@ -186,6 +193,10 @@
       >
         <span class="font-medium">Mouvement défensif de la créature (D10 : {{ shot.monsterMove }})</span> :
         {{ moveText('monsterDefensiveMoves', shot.monsterMove) }}
+        <span
+          v-if="shot.monsterMoveApplied"
+          class="text-success"
+        >(appliqué)</span>
       </p>
       <div
         v-if="shot.lampSpilled"
@@ -300,6 +311,7 @@ import {
   knAttackAbilityBlockers,
   knAttackPlan,
   knMarkAbilities,
+  knPermanentEffects,
   knSpendAttackAbilities,
   knSustainedAttackAbilities,
   type KnAttackAbility,
@@ -307,6 +319,7 @@ import {
 import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
 import { KN_DAMAGE_TYPES, type KnDamageType } from '~~/shared/ker-nethalas/catalog/damageTypes'
 import { knCreatureLocations, type KnCreature } from '~~/shared/ker-nethalas/creatures'
+import type { KnPoolEntry } from '~~/shared/ker-nethalas/combat'
 import { knDiceLabel, knParseDicePool } from '~~/shared/ker-nethalas/dice'
 import { KN_DUAL_WIELD, knAttackOptions, knDualPair } from '~~/shared/ker-nethalas/equipment'
 import type { KnAbilityAttack, KnMastery } from '~~/shared/ker-nethalas/masteries'
@@ -324,7 +337,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, attackWithAbilities, markCreature, stripArmor, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, attackWithAbilities, markCreature, stripArmor, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary, () => props.masteries)
 
 const KN_SURPRISE_BONUS = 20
 
@@ -351,6 +364,10 @@ const damageType = ref<KnDamageType>(attackOptions.value[0]!.damageType)
 const weaponItems = computed<SelectItem[]>(() => attackOptions.value.map(option => ({ label: option.weapon ?? 'Mains nues', value: option.id })))
 const aim = ref(false)
 const magical = ref(false)
+const typedExtras = ref<KnPoolEntry[]>([])
+const permanent = computed(() => props.masteries
+  ? knPermanentEffects(props.masteries, knMasteryEntries(character.value.masteryPicks, character.value.amulets))
+  : null)
 const shots = ref<KnAttackResult[]>([])
 
 const masteryEntries = computed(() => knMasteryEntries(character.value.masteryPicks, character.value.amulets))
@@ -414,8 +431,9 @@ function applyWeapon(id: string) {
   skill.value = option.skill
   speed.value = option.speed
   poolText.value = option.pool
-  damageType.value = option.damageType
+  damageType.value = permanent.value?.damageType ?? option.damageType
   weaponBonus.value = option.bonus
+  typedExtras.value = option.typed ?? []
 }
 
 watch(weaponId, applyWeapon)
@@ -454,7 +472,7 @@ function attackNow() {
     skill: skill.value,
     bonus: bonus.value + weaponBonus.value + (surprise.value ? KN_SURPRISE_BONUS : 0),
     speed: speed.value,
-    pool: pool.value,
+    pool: [...pool.value, ...typedExtras.value],
     damageType: damageType.value,
     aim: aim.value && hasWeakSpot.value,
     magical: magical.value,

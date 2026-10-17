@@ -5,12 +5,16 @@ import {
   knAttackAbilityBlockers,
   knAttackPlan,
   knDodgeAbilities,
+  knEngravableWeapons,
+  knEngrave,
   knMarkAbilities,
   knMarkPlan,
   knMergePlans,
+  knPermanentEffects,
   knSpendAttackAbilities,
   knSustainedAttackAbilities,
 } from '../../shared/ker-nethalas/abilityAttack'
+import { knAttackOptions } from '../../shared/ker-nethalas/equipment'
 import { KN_NO_DEFENSE, knCombatExchange, knRollDamagePool } from '../../shared/ker-nethalas/combat'
 import { knAbilityIsUsable } from '../../shared/ker-nethalas/masteryEffects'
 import { knMasteryAbilitySchema, type KnAbilityAttack, type KnMastery } from '../../shared/ker-nethalas/masteries'
@@ -113,6 +117,7 @@ describe('plan d\'attaque', () => {
       noDamage: false,
       stripArmor: false,
       noDefense: true,
+      onKill: [],
       advantage: false,
       freeAim: false,
     })
@@ -194,5 +199,43 @@ describe('aptitudes de réaction, sans dégâts et défense après une touche', 
 
     expect(plan).toMatchObject({ afterDefenseIfHit: 10, noDamage: true, stripArmor: true, afterDefense: 0 })
     expect(knMergePlans(plan, { ...KN_EMPTY_ATTACK_PLAN, dice: [], advantage: true, freeAim: true })).toMatchObject({ advantage: true, freeAim: true, afterDefenseIfHit: 10 })
+  })
+})
+
+describe('effets permanents, gravure et effet à la mort', () => {
+  const permanentMastery = (permanent: Record<string, unknown>, tier = 1): KnMastery => {
+    const base = fakeMastery('alpha')
+    return { ...base, abilities: base.abilities.map(ability => ability.tier === tier ? { ...ability, permanent } : ability) as KnMastery['abilities'] }
+  }
+
+  it('les effets permanents des aptitudes débloquées s\'additionnent', () => {
+    const effects = knPermanentEffects([permanentMastery({ resistant: ['slashing'], immune: ['bludgeoning'], damageType: 'psychic', healOnDamage: 1 })], entries(2))
+
+    expect(effects).toEqual({ resistant: ['slashing'], immune: ['bludgeoning'], restored: [], damageType: 'psychic', healOnDamage: 1 })
+    expect(knPermanentEffects([permanentMastery({ healOnDamage: 1 }, 3)], entries(2))).toEqual({ resistant: [], immune: [], restored: [], healOnDamage: 0 })
+  })
+
+  it('un effet à la mort se retrouve dans le plan', () => {
+    const mastery = withAttacks({ 1: { attack: { onKill: [{ kind: 'recover', vital: 'sanity', dice: d(1, 6) }] } } })
+
+    expect(knAttackPlan(knAttackAbilities([mastery], entries(1))).onKill).toEqual([{ kind: 'recover', vital: 'sanity', dice: d(1, 6) }])
+  })
+
+  it('une arme ne se grave qu\'une fois', () => {
+    const sword = { id: 'w', name: 'Épée', kind: 'weapon', weight: 'normal', quantity: 1, place: 'mainHand', weapon: { skill: 'bladedWeapons', speed: 5, damageType: 'slashing', traits: [] } } as const
+    const dice = [{ dice: d(1, 10), type: 'arcane' as const }]
+    const engraved = knEngrave([sword], 'w', dice)
+
+    expect(engraved[0]).toMatchObject({ engraved: dice })
+    expect(knEngravableWeapons([sword]).map(item => item.id)).toEqual(['w'])
+    expect(knEngravableWeapons(engraved)).toEqual([])
+    expect(knEngrave(engraved, 'w', [{ dice: d(1, 4) }])[0]?.engraved).toEqual(dice)
+  })
+
+  it('une arme gravée ajoute ses dés typés à ses attaques, hors du texte de la réserve', () => {
+    const sword = { id: 'w', name: 'Épée', kind: 'weapon', weight: 'normal', quantity: 1, place: 'mainHand', weapon: { skill: 'bladedWeapons', speed: 5, damageType: 'slashing', traits: [] }, engraved: [{ dice: d(1, 10), type: 'arcane' }] } as const
+    const [option] = knAttackOptions([{ ...sword, engraved: [...sword.engraved] }])
+
+    expect(option).toMatchObject({ pool: 'D6', typed: [{ count: 1, sides: 10, bonus: 0, type: 'arcane' }] })
   })
 })

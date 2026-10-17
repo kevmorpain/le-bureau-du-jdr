@@ -626,7 +626,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
-### KN54 — Mouvements défensifs du survivant, réaction à l'Esquive et retrait d'Armure
+### KN54 — Mouvements défensifs, passifs, gravure et dés typés
 - **Mouvement défensif du survivant** (`survivorMoves.ts`, livre p. 77) : le D10 tiré après une défense réussie s'applique tout seul
   quand l'outil sait le faire. Six résultats posent un état sur la **prochaine attaque** du survivant (`combat.next` : bonus, dés,
   Avantage, visée sans Désavantage), consommé à sa prochaine attaque, touchée ou non ; un retire 1 d'Armure à la localisation
@@ -638,11 +638,29 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
 - **Aptitude à bonus défensif sur touche** (`attack.afterDefenseIfHit`) : le bonus au prochain test défensif ne vaut que si l'attaque
   touche. **Aptitude sans dégâts qui retire l'Armure** (`attack.noDamage`, `attack.stripArmor`) : sur une touche, le joueur choisit la
   localisation et la créature y perd toute son Armure (`armorLoss` à 99) jusqu'à la fin du combat.
+- **Mouvement défensif d'une créature** (`monsterMoves.ts`, livre p. 78) : quand une créature pare l'attaque du survivant, son D10 s'applique.
+  Sa prochaine attaque devient un effet d'une seule attaque de la créature (bonus de compétence, Avantage, dé de dégâts : mécanisme
+  existant des effets de créature, `once`) ; le survivant perd 1 d'Armure à une zone tirée (`combat.armorLoss`), reçoit Saignement (1) ou
+  1 dégât perforant direct, ou subit −20 à son prochain test défensif (Esquive, parade ou Résistance magique, `combat.defenseBonus`) ; la
+  créature récupère D4 Santé. « Nettoie ses conditions » et « rejoue un tour » restent du texte ; la clause « si l'action est magique »
+  reste dans le libellé de l'effet.
+- **Aptitudes passives** (`permanent`) : défenses du survivant (Résistant, Immunisé, Restauré par un type de dégâts), type de ses
+  dégâts, Blessure soignée par coup qui inflige des dégâts (`rewardSurvivorHit`). **À la mort de la cible** (`attack.onKill`) : ce que le
+  survivant récupère. **À l'usage** : `combatModifier` pose un modificateur de combat (jusqu'à la fin du combat) en plus de `self` (échange
+  de compétence d'arme contre des points temporaires).
+- **Gravure** (`engrave`, `provisions`, `KnItem.engraved`) : une aptitude grave des dés typés sur une arme choisie, une fois par arme,
+  et consomme des provisions (Composants rituels) ; l'arme gravée les ajoute à ses attaques.
+- **Dés typés** : les dés ajoutés à une attaque qui ont un type propre (objets magiques, objectifs, niveau, gravure) ne sont plus écrits
+  dans le texte de la réserve (qui n'a qu'un type) : `KnAttackOption.typed` les porte, le formulaire les affiche et les joint à la réserve,
+  si bien que le dé retenu donne son type à l'attaque (Résistances, objectifs de dégâts).
 - ⚠️ hypothèses : « remplace le +10 habituel » se lit comme un bonus qui prend la valeur la plus forte, pas une somme ; la réaction
   n'ajoute pas de défense au compte du round ; l'Armure retirée vaut aussi pour les Coups critiques ; le mouvement défensif du survivant
-  n'est tiré que sur les attaques physiques (comme avant).
-- Laissé de côté : les mouvements défensifs et maladresses des créatures (leur prochaine attaque, le prochain test défensif du
-  survivant, Armure du survivant, Saignement du survivant), Saignement de l'adversaire. Contenu privé à recharger en prod après le
+  n'est tiré que sur les attaques physiques (comme avant) ; les défenses permanentes jouent contre les attaques de créature sur le survivant (pas sur ses
+  sbires) ; le soin par coup s'applique au moment où l'on applique les dégâts à la créature ; le bonus qu'une aptitude passive donne aux
+  sbires Morts-vivants n'est pas appliqué.
+- Laissé de côté : les maladresses (tables du survivant et des créatures : états À terre, Étourdi, Entravé, Effrayé… qui ne sont pas suivis
+  sur les créatures), Saignement et Immunité du mouvement défensif du survivant, les aptitudes passives qui portent sur le camp, le Dé de
+  Tension ou la réaction (pénalité de Réaction réduite, Santé tombée à 1 une fois par repos…). Contenu privé à recharger en prod après le
   merge (`npm run kn:content`, jeu `masteries`).
 
 ### KN53 — Aptitudes qui changent l'attaque du survivant
@@ -665,10 +683,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   précise valent pour toutes les attaques tant qu'elles sont allumées ; « prochaine attaque » se consomme même ratée (confirmé par le PM) ;
   la défense interdite ne vaut que pour l'attaque physique, pas pour le test de Résistance magique ; le joueur ne choisit pas un dé plus
   faible du pool contre une Vulnérabilité (le plus haut compte).
-- Laissé de côté : marquer une arme précise (gravure permanente),
-  les aptitudes qui agissent sur l'équipe, et les cas isolés (soins ou Santé mentale à la mort ou aux dégâts, dégâts
-  psychiques). Les dés typés des objectifs et des objets magiques restent résolus au type de l'arme (leur type n'entre pas dans le
-  texte de la réserve). Contenu privé à recharger en prod après le merge (`npm run kn:content`, jeu `masteries`).
+- Laissé de côté : les aptitudes qui agissent sur l'équipe. Gravure, effets à la mort, effets permanents et dés typés : KN54.
 
 ### KN52 — Folie : les effets qui jouent tout seuls
 - **« Les ténèbres approchent »** : chaque perte de Santé mentale prend 1 de plus par cumul (`knSanityLossExtra`), qu'elle vienne d'une
@@ -1173,7 +1188,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **U13c — Revue de la fiche** | cartes repliables, compacité, couleurs, repos, dés d'entrée, repères (KN51) | écrite |
 | **Folie automatique** | « Les ténèbres approchent » et « Mémoire défaillante » appliqués aux pertes de Santé mentale et aux gains d'XP, Armure d'effet, Outils de voleur (KN52) | mergée (#293) |
 | **Aptitudes d'attaque** | aptitudes cochées dans l'attaque : bonus, dés typés, critique, défense interdite, seconde attaque, toutes les cibles, marque (KN53) | mergée (#294) |
-| **Mouvements défensifs** | mouvement défensif du survivant appliqué, réaction à l'Esquive, retrait d'Armure d'une aptitude (KN54) | écrite, non commitée |
+| **Mouvements défensifs et passifs** | mouvements défensifs du survivant et des créatures appliqués, réaction à l'Esquive, retrait d'Armure, passifs, gravure, dés typés (KN54) | écrite, non mergée |
 | **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.

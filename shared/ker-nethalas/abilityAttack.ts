@@ -1,6 +1,8 @@
 import type { KnMasteryEntry } from './amulets'
+import type { KnDamageType } from './catalog/damageTypes'
 import type { KnPoolEntry } from './combat'
-import type { KnAbilityAttack, KnMastery, KnMasteryAbility } from './masteries'
+import type { KnItem } from './inventory'
+import type { KnAbilityAttack, KnMastery, KnMasteryAbility, KnSelfEffect } from './masteries'
 import { knAbilityBlockers, knIsUsedUp, knMarkUsed, knPayAbility, knSustainedKey, type KnAbilityPurse } from './masteryEffects'
 import type { KnStatus } from './status'
 
@@ -61,12 +63,14 @@ export interface KnAttackPlan {
   noDamage: boolean
   stripArmor: boolean
   noDefense: boolean
+  // Ce que le survivant récupère si cette attaque tue sa cible.
+  onKill: KnSelfEffect[]
   // Ce que le mouvement défensif ou une réaction a préparé pour cette attaque.
   advantage: boolean
   freeAim: boolean
 }
 
-export const KN_EMPTY_ATTACK_PLAN: KnAttackPlan = { bonus: 0, dice: [], critical: false, undefendable: false, allTargets: false, afterDefense: 0, afterDefenseIfHit: 0, noDamage: false, stripArmor: false, noDefense: false, advantage: false, freeAim: false }
+export const KN_EMPTY_ATTACK_PLAN: KnAttackPlan = { bonus: 0, dice: [], critical: false, undefendable: false, allTargets: false, afterDefense: 0, afterDefenseIfHit: 0, noDamage: false, stripArmor: false, noDefense: false, onKill: [], advantage: false, freeAim: false }
 
 // Ce que les aptitudes choisies ajoutent à l'attaque : les bonus s'additionnent, les dés se joignent à la réserve.
 export function knAttackPlan(abilities: readonly KnAttackAbility[]): KnAttackPlan {
@@ -84,6 +88,7 @@ export function knAttackPlan(abilities: readonly KnAttackAbility[]): KnAttackPla
     if (attack.noDamage) plan.noDamage = true
     if (attack.stripArmor) plan.stripArmor = true
     if (attack.noDefense) plan.noDefense = true
+    if (attack.onKill) plan.onKill = [...plan.onKill, ...attack.onKill]
   }
   return plan
 }
@@ -106,6 +111,7 @@ export const knMergePlans = (...plans: readonly KnAttackPlan[]): KnAttackPlan =>
   noDamage: total.noDamage || plan.noDamage,
   stripArmor: total.stripArmor || plan.stripArmor,
   noDefense: total.noDefense || plan.noDefense,
+  onKill: [...total.onKill, ...plan.onKill],
   advantage: total.advantage || plan.advantage,
   freeAim: total.freeAim || plan.freeAim,
 }), { ...KN_EMPTY_ATTACK_PLAN, dice: [] })
@@ -123,4 +129,37 @@ export function knSpendAttackAbilities(
     if (ability.limit) nextStatus = knMarkUsed(nextStatus, id, ability.limit)
   }
   return { purse: nextPurse, status: nextStatus }
+}
+
+export interface KnPermanentEffects {
+  resistant: KnDamageType[]
+  immune: KnDamageType[]
+  restored: KnDamageType[]
+  damageType?: KnDamageType
+  healOnDamage: number
+}
+
+// Ce que les aptitudes passives débloquées changent toujours : défenses du survivant, type de ses dégâts, soin par dégât infligé.
+export function knPermanentEffects(masteries: readonly KnMastery[], entries: readonly KnMasteryEntry[]): KnPermanentEffects {
+  const total: KnPermanentEffects = { resistant: [], immune: [], restored: [], healOnDamage: 0 }
+  for (const entry of entries) {
+    const mastery = masteries.find(candidate => candidate.key === entry.key)
+    for (const ability of mastery?.abilities ?? []) {
+      const permanent = ability.permanent
+      if (!permanent || ability.tier > entry.tiers) continue
+      total.resistant.push(...(permanent.resistant ?? []))
+      total.immune.push(...(permanent.immune ?? []))
+      total.restored.push(...(permanent.restored ?? []))
+      if (permanent.damageType) total.damageType = permanent.damageType
+      total.healOnDamage += permanent.healOnDamage ?? 0
+    }
+  }
+  return total
+}
+
+// Les armes que l'aptitude de gravure peut encore marquer : une fois par arme.
+export const knEngravableWeapons = (items: readonly KnItem[]): KnItem[] => items.filter(item => item.weapon && !item.engraved?.length)
+
+export function knEngrave(items: readonly KnItem[], weaponId: string, dice: NonNullable<KnAbilityAttack['dice']>): KnItem[] {
+  return items.map(item => item.id === weaponId && item.weapon && !item.engraved?.length ? { ...item, engraved: dice } : item)
 }

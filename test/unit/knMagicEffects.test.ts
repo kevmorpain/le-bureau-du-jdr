@@ -152,7 +152,7 @@ describe('attaque avec des objets magiques', () => {
   it('la réserve proposée reprend les dés, et la Vitesse l\'ajout magique', () => {
     const [option] = knAttackOptions([sword])
 
-    expect(option).toMatchObject({ weapon: 'objet i1', pool: 'D6+D4+1', speed: 12 })
+    expect(option).toMatchObject({ weapon: 'objet i1', pool: 'D6+1', speed: 12, typed: [{ count: 1, sides: 4, bonus: 0, type: 'fire' }] })
     expect(option!.magic?.vs).toEqual([{ enemy: 'undead', amount: 2 }])
     expect(knAttackOptions([item('i5', 'weapon', 'mainHand', { weapon: { skill: 'bladedWeapons', speed: 0, damageType: 'slashing', traits: ['powerful'] } })])[0]).toMatchObject({ pool: 'D6+1' })
   })

@@ -1,4 +1,4 @@
-import type { KnSurvivorArmorZone } from './combat'
+import type { KnPoolEntry, KnSurvivorArmorZone } from './combat'
 import type { KnDamageType } from './catalog/damageTypes'
 import type { KnActiveSource, KnEffect } from './effects'
 import { knGoalAttackDice, type KnGoalEffectEntry } from './goalEffects'
@@ -98,13 +98,18 @@ export interface KnAttackOption {
   // Ce que les objets magiques ajoutent : déjà dans la réserve ; à rappeler quand les dés ont un type de dégâts propre, ou que
   // le bonus ne vaut que contre un type d'adversaire.
   magic?: KnMagicAttack
+  // Les dés ajoutés qui ont leur propre type de dégâts (objet magique, objectif, gravure, niveau) : hors du texte de la réserve.
+  typed?: KnPoolEntry[]
 }
 
 export const KN_UNARMED_OPTION: KnAttackOption = { id: 'unarmed', skill: 'unarmedCombat', speed: 0, pool: 'D4', damageType: 'bludgeoning', bonus: 0 }
 
-// La réserve d'une arme, complétée des dés et des bonus que lui donnent les objets magiques.
+// Les dés à type de dégâts propre : ils ne se lisent pas dans le texte de la réserve, qui n'a qu'un type, mais se joignent à elle.
+const typedDice = (list: KnMagicAttack['dice']): KnPoolEntry[] => list.flatMap(({ dice, type }) => type ? [{ ...dice, type }] : [])
+
+// La réserve d'une arme, complétée des dés et des bonus sans type que lui donnent les objets magiques.
 function withMagicPool(pool: string, magic: KnMagicAttack): string {
-  const tokens = magic.dice.map(({ dice }) => dice.count ? `${dice.count > 1 ? dice.count : ''}D${dice.sides}${dice.bonus ? `+${dice.bonus}` : ''}` : String(dice.bonus))
+  const tokens = magic.dice.filter(({ type }) => !type).map(({ dice }) => dice.count ? `${dice.count > 1 ? dice.count : ''}D${dice.sides}${dice.bonus ? `+${dice.bonus}` : ''}` : String(dice.bonus))
   return [pool, ...tokens].join('+')
 }
 
@@ -123,12 +128,12 @@ export function knAttackOptions(
   const extraDice = (skill: KnSkillKey) => [...levelDice, ...knGoalAttackDice(goalEffects, skill)]
   const unarmedDice = extraDice(KN_UNARMED_OPTION.skill)
   const unarmed: KnAttackOption = unarmedDice.length
-    ? { ...KN_UNARMED_OPTION, pool: withMagicPool(KN_UNARMED_OPTION.pool, { dice: unarmedDice, speed: 0, vs: [] }), magic: { dice: unarmedDice, speed: 0, vs: [] } }
+    ? { ...KN_UNARMED_OPTION, pool: withMagicPool(KN_UNARMED_OPTION.pool, { dice: unarmedDice, speed: 0, vs: [] }), magic: { dice: unarmedDice, speed: 0, vs: [] }, ...(typedDice(unarmedDice).length ? { typed: typedDice(unarmedDice) } : {}) }
     : KN_UNARMED_OPTION
   return [
     ...(dominant ? [dominant] : knWieldedWeapons(items)).map((item) => {
       const own = knMagicAttack(items, item.id)
-      const magic = { ...own, dice: [...own.dice, ...extraDice(item.weapon!.skill), ...dualDice] }
+      const magic = { ...own, dice: [...own.dice, ...extraDice(item.weapon!.skill), ...dualDice, ...(item.engraved ?? [])] }
       const hasMagic = magic.dice.length || magic.speed || magic.vs.length
       return {
         id: item.id,
@@ -139,6 +144,7 @@ export function knAttackOptions(
         damageType: item.weapon!.damageType,
         bonus: (traits(item).includes('simple') ? 10 : 0) + (dominant ? KN_DUAL_WIELD.attack : 0),
         ...(hasMagic ? { magic } : {}),
+        ...(typedDice(magic.dice).length ? { typed: typedDice(magic.dice) } : {}),
       }
     }),
     unarmed,

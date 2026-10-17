@@ -93,6 +93,8 @@ export const knCombatSchema = z.object({
   first: z.enum(['survivor', 'creatures']).optional(),
   // Défenses déjà faites ce round : chacune après la première coûte −20, cumulatif.
   reactions: boundedInt(KN_COMBAT_BOUNDS.reactions),
+  // Armure du survivant retirée par un mouvement défensif de créature, par zone, jusqu'à la fin du combat.
+  armorLoss: z.record(z.enum(['head', 'torso', 'arms', 'legs']), boundedInt({ min: 1, max: 99 })).optional(),
   // Ce que la prochaine attaque du survivant reçoit en plus (mouvement défensif, aptitude de réaction) : bonus, dés, Avantage, visée libre.
   next: z.object({
     bonus: boundedInt({ min: -99, max: 99 }).optional(),

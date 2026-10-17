@@ -308,7 +308,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, minions, creatureOf, drawAction, takeTurn, reactAfterDodge, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, minions, creatureOf, drawAction, takeTurn, reactAfterDodge, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary, () => props.masteries)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { selfEffectText } = useKnEffectText()
 

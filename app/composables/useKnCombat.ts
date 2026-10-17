@@ -1,6 +1,8 @@
+import { knMonsterMove } from '~~/shared/ker-nethalas/monsterMoves'
+import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
+import type { KnMastery, KnSelfEffect, KnAbilityAttack } from '~~/shared/ker-nethalas/masteries'
 import { knSurvivorMove } from '~~/shared/ker-nethalas/survivorMoves'
-import { KN_EMPTY_ATTACK_PLAN, knMarkPlan, knMergePlans, knPoolEntries, type KnAttackPlan } from '~~/shared/ker-nethalas/abilityAttack'
-import type { KnAbilityAttack } from '~~/shared/ker-nethalas/masteries'
+import { KN_EMPTY_ATTACK_PLAN, knMarkPlan, knPermanentEffects, knMergePlans, knPoolEntries, type KnAttackPlan } from '~~/shared/ker-nethalas/abilityAttack'
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_DEFENSIVE_MOVE_DIE, KN_MONSTER_FUMBLE_DIE } from '~~/shared/ker-nethalas/catalog/combatTables'
@@ -53,7 +55,9 @@ import {
   knMarkGearUsed,
   knRegisterReaction,
   knRollDie,
+  knAddDefenseBonus,
   knAddNextAttack,
+  knLoseSurvivorArmor,
   knClearNextAttack,
   knLoseCreatureArmor,
   knMarkCreature,
@@ -90,6 +94,8 @@ export interface KnAttackResult {
   reroll?: { pool: KnPoolEntry[], damageType: KnDamageType, magical: boolean, used: boolean }
   // Seconde attaque gratuite d'une aptitude.
   followUp?: boolean
+  // Aptitude : ce que le survivant récupère si ce coup tue la cible.
+  onKill?: KnSelfEffect[]
   // Une aptitude : pas de dégâts, mais l'Armure d'une localisation à retirer.
   noDamage?: boolean
   stripArmor?: boolean
@@ -100,6 +106,8 @@ export interface KnAttackResult {
   unavoidable: boolean
   // Mouvement défensif de la créature (D10) quand elle a paré, maladresse du survivant (D10) sur un échec critique.
   monsterMove?: number
+  // L'outil a appliqué l'effet du mouvement défensif de la créature.
+  monsterMoveApplied?: boolean
   fumble?: number
   // Lampe posée : la maladresse la renverse au lieu de tirer dans la table des maladresses.
   lampSpilled?: boolean
@@ -154,12 +162,14 @@ export interface KnTurnResult {
   dealt?: number
 }
 
-export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, bestiary: () => KnCreature[] | null) {
+export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResolvedSheet, bestiary: () => KnCreature[] | null, masteries: () => KnMastery[] | null = () => null) {
   const toast = useToast()
   const { t } = useI18n()
   const { record } = useKnGoalProgress(character)
+  const { applyEffects } = useKnApplyEffects(character, resolved)
 
   const combat = computed<KnCombat | undefined>(() => character.value.run.combat)
+  const permanent = computed(() => knPermanentEffects(masteries() ?? [], knMasteryEntries(character.value.masteryPicks, character.value.amulets)))
   const level = computed(() => character.value.level)
 
   const creatureOf = (index: number) => knFindCreature(bestiary(), combat.value?.creatures[index]?.ref)
@@ -279,7 +289,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       if (combat.value.lampDown && input.attackerScore === undefined) result.lampSpilled = true
       else result.fumble = knRollDie(KN_DEFENSIVE_MOVE_DIE)
     }
-    if (exchange.outcome === 'defended') result.monsterMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
+    if (exchange.outcome === 'defended') {
+      result.monsterMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
+      if (input.attackerScore === undefined) result.monsterMoveApplied = applyMonsterMove(input.index, result.monsterMove)
+    }
 
     if (exchange.outcome === 'hit') {
       const spot = creature.hitLocation?.weakSpot
@@ -349,7 +362,11 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
         noDamage: first.noDamage,
       })
       if (!shot) continue
-      results.push(first.stripArmor && shot.exchange.outcome === 'hit' ? { ...shot, stripArmor: true } : shot)
+      results.push({
+        ...shot,
+        ...(first.stripArmor && shot.exchange.outcome === 'hit' ? { stripArmor: true } : {}),
+        ...(first.onKill.length ? { onKill: first.onKill } : {}),
+      })
       if (plan.followUp && shot.exchange.outcome === 'hit') {
         const second = attack({ ...input, index, bonus: input.bonus + plan.bonus, pool: plan.followUp.dice ?? [...input.pool, ...plan.dice] })
         if (second) results.push({ ...second, followUp: true })
@@ -397,6 +414,42 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     if (effect.kind === 'recover') {
       const c = character.value
       c.toughnessCurrent = Math.min(resolved().maxVitals.toughness.effective, c.toughnessCurrent + effect.amount)
+      return true
+    }
+    return false
+  }
+
+  // Le mouvement défensif de la créature qui a paré : son prochain coup, le survivant ou elle-même.
+  function applyMonsterMove(index: number, roll: number): boolean {
+    const target = combat.value?.creatures[index]
+    if (!target) return false
+    const effect = knMonsterMove(roll)
+    if (effect.kind === 'creatureBuff') {
+      character.value.run = knAddCreatureBuff(character.value.run, index, effect.buff)
+      return true
+    }
+    if (effect.kind === 'survivorArmorLoss') {
+      const location = knHitLocation('humanoid', knRollDie(20))
+      character.value.run = knLoseSurvivorArmor(character.value.run, knSurvivorArmorZone(location), effect.points)
+      log(`Armure du survivant −${effect.points} (${t(`ker_nethalas.hitLocations.${location}`)}) jusqu'à la fin du combat`)
+      return true
+    }
+    if (effect.kind === 'survivorCondition') {
+      applyEffects([{ kind: 'condition', key: effect.key, value: effect.value }], `${target.name} : mouvement défensif`)
+      return true
+    }
+    if (effect.kind === 'survivorPiercing') {
+      applyEffects([{ kind: 'damage', dice: { count: 0, sides: 0, bonus: effect.amount }, direct: true }], `${target.name} : mouvement défensif`)
+      return true
+    }
+    if (effect.kind === 'survivorDefense') {
+      character.value.run = knAddDefenseBonus(character.value.run, effect.amount)
+      return true
+    }
+    if (effect.kind === 'creatureHeal') {
+      const healed = knRollDice(effect.dice).total
+      character.value.run = knDamageCombatCreature(character.value.run, index, -healed)
+      log(`${target.name} récupère ${healed} Santé`)
       return true
     }
     return false
@@ -531,6 +584,21 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     log(`${result.name} ${amount > 0 ? `subit ${amount}` : amount < 0 ? `récupère ${-amount}` : 'ne subit rien'} (reste ${left})`)
     result.applied = true
     recordSurvivorHit(result, amount, left)
+    if (result.survivor) rewardSurvivorHit(result, amount, left)
+  }
+
+  // Les aptitudes qui récompensent un coup : un soin par dégât infligé, et ce que la mort de la cible rapporte.
+  function rewardSurvivorHit(result: KnAttackResult, amount: number, left: number) {
+    if (amount > 0 && permanent.value.healOnDamage) {
+      applyEffects([{ kind: 'woundsHeal', dice: { count: 0, sides: 0, bonus: permanent.value.healOnDamage } }], 'Aptitude : coup porté')
+    }
+    if (amount > 0 && left <= 0 && result.onKill?.length) {
+      applyEffects(result.onKill.map(effect => effect.kind === 'woundsHeal'
+        ? effect
+        : effect.kind === 'temporary'
+          ? effect
+          : { kind: 'vital' as const, vital: effect.vital, dice: effect.dice, sign: 'gain' as const }), 'Aptitude : cible tuée')
+    }
   }
 
   // Les coups du survivant font avancer les objectifs : dégâts par type, Coups critiques, et la compétence qui a porté le coup fatal.
@@ -594,7 +662,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     return action ? { d6, action } : undefined
   }
 
-  const survivorArmor = (location: KnHitLocationKey) => knArmorByZone(character.value.inventory, resolved().armorBonus)[knSurvivorArmorZone(location)]
+  const survivorArmor = (location: KnHitLocationKey) => {
+    const zone = knSurvivorArmorZone(location)
+    return knArmorAfterLoss(knArmorByZone(character.value.inventory, resolved().armorBonus)[zone], combat.value?.armorLoss, zone)
+  }
 
   // L'action d'une créature contre le survivant, ou contre un sbire (`minion`). Physique : jet opposé contre sa défense ;
   // Magique : test de Résistance magique ; sans étiquette, c'est le texte de l'action qui décide.
@@ -631,7 +702,10 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       const ward = (KN_RESISTANCE_KEYS as readonly string[]).includes(input.magicCheck)
         ? sheet.resistances[input.magicCheck as KnResistanceKey]
         : sheet.skills[input.magicCheck as KnSkillKey]
-      return knD100Check({ roll: d100(), score: ward.effective, difficulty: input.bonus - penalty, mode: ward.rollMode })
+      const aftermath = combat.value?.defenseBonus ?? 0
+      const check = knD100Check({ roll: d100(), score: ward.effective, difficulty: input.bonus + aftermath - penalty, mode: ward.rollMode })
+      if (aftermath) character.value.run = knSetCombatDefense(character.value.run, { none: combat.value?.noDefense })
+      return check
     }
     const locationOf = () => minionSheet
       ? (minionSheet.hitLocation ? knHitLocation(minionSheet.hitLocation.table, knRollDie(20)) : 'body' as const)
@@ -640,7 +714,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const survivorDefenses = knMagicDefenses(character.value.inventory)
     const damageTarget = minionSheet
       ? knBuffedTarget(knCreatureDamageTarget(minionSheet), minionState?.effects)
-      : { vulnerable: [], resistant: survivorDefenses.resistant, restored: [], reduction: knMergeReductions(survivorDefenses.reduction, knGoalReductions(character.value.goalEffects)) }
+      : { vulnerable: [], resistant: [...survivorDefenses.resistant, ...permanent.value.resistant], restored: permanent.value.restored, immune: permanent.value.immune, reduction: knMergeReductions(survivorDefenses.reduction, knGoalReductions(character.value.goalEffects)) }
     const registerReaction = () => {
       if (minionSheet) return
       character.value.run = free ? knUseFreeParry(character.value.run) : knRegisterReaction(character.value.run)

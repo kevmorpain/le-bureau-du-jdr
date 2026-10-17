@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { knArmorAfterLoss, knWithAdvantage } from '../../shared/ker-nethalas/combat'
+import { knCreatureBuffSchema } from '../../shared/ker-nethalas/combatState'
+import { knMonsterMove } from '../../shared/ker-nethalas/monsterMoves'
 import {
   emptyKnRun,
+  knAddDefenseBonus,
   knAddNextAttack,
   knClearNextAttack,
   knLoseCreatureArmor,
+  knLoseSurvivorArmor,
   knRaiseNextAttackBonus,
+  knSetCombatDefense,
   knSetCreatureDefenseMalus,
   knStartCombat,
 } from '../../shared/ker-nethalas/run'
@@ -73,5 +78,46 @@ describe('effets sur une créature', () => {
   it('l\'Avantage s\'annule contre un Désavantage déjà là', () => {
     expect([knWithAdvantage('normal'), knWithAdvantage('advantage'), knWithAdvantage('disadvantage'), knWithAdvantage('both')])
       .toEqual(['advantage', 'advantage', 'both', 'both'])
+  })
+})
+
+describe('mouvement défensif d\'une créature', () => {
+  it('chaque résultat du D10 est lu : effet d\'une seule attaque de la créature, sur le survivant, sur elle, ou texte', () => {
+    expect(knMonsterMove(1)).toMatchObject({ kind: 'creatureBuff', buff: { combatSkill: 10, once: true } })
+    expect(knMonsterMove(2)).toEqual({ kind: 'survivorArmorLoss', points: 1 })
+    expect(knMonsterMove(3)).toEqual({ kind: 'survivorCondition', key: 'bleeding', value: 1 })
+    expect(knMonsterMove(4)).toEqual({ kind: 'text' })
+    expect(knMonsterMove(5)).toEqual({ kind: 'survivorPiercing', amount: 1 })
+    expect(knMonsterMove(6)).toMatchObject({ kind: 'creatureBuff', buff: { damageBonus: d(1, 6), once: true } })
+    expect(knMonsterMove(7)).toMatchObject({ kind: 'creatureBuff', buff: { advantage: 'attack', once: true } })
+    expect(knMonsterMove(8)).toEqual({ kind: 'survivorDefense', amount: -20 })
+    expect(knMonsterMove(9)).toEqual({ kind: 'creatureHeal', dice: d(1, 4) })
+    expect(knMonsterMove(10)).toEqual({ kind: 'text' })
+  })
+
+  it('les libellés des effets de créature tiennent dans le schéma', () => {
+    for (const roll of [1, 6, 7]) {
+      const move = knMonsterMove(roll)
+      expect(move.kind === 'creatureBuff' && knCreatureBuffSchema.safeParse(move.buff).success).toBe(true)
+    }
+  })
+})
+
+describe('état du survivant', () => {
+  it('l\'Armure perdue s\'additionne par zone', () => {
+    let run = knLoseSurvivorArmor(fight(), 'torso', 1)
+    run = knLoseSurvivorArmor(run, 'torso', 1)
+
+    expect(run.combat?.armorLoss).toEqual({ torso: 2 })
+    expect(knArmorAfterLoss(3, run.combat?.armorLoss, 'torso')).toBe(1)
+    expect(knLoseSurvivorArmor(emptyKnRun(), 'head', 1)).toEqual(emptyKnRun())
+  })
+
+  it('un malus défensif s\'ajoute au précédent sans effacer l\'impossibilité de se défendre', () => {
+    const base = knSetCombatDefense(fight(), { bonus: -20, none: true })
+    const run = knAddDefenseBonus(base, -20)
+
+    expect(run.combat).toMatchObject({ defenseBonus: -40, noDefense: true })
+    expect(knAddDefenseBonus(run, 40).combat).not.toHaveProperty('defenseBonus')
   })
 })
