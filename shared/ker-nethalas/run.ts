@@ -916,3 +916,44 @@ export function knSetCombatDefense(run: KnRun, defense: { bonus?: number, none?:
   const { defenseBonus: _bonus, noDefense: _none, ...rest } = run.combat
   return { ...run, combat: { ...rest, ...(defense.bonus ? { defenseBonus: defense.bonus } : {}), ...(defense.none ? { noDefense: true } : {}) } }
 }
+
+type NextAttack = NonNullable<NonNullable<KnRun['combat']>['next']>
+
+const withNextAttack = (run: KnRun, next: NextAttack): KnRun => {
+  if (!run.combat) return run
+  const { next: _previous, ...rest } = run.combat
+  return { ...run, combat: Object.keys(next).length ? { ...rest, next } : rest }
+}
+
+// Ce que la prochaine attaque du survivant reçoit en plus : les bonus s'additionnent, les dés se joignent à la réserve.
+export function knAddNextAttack(run: KnRun, patch: NextAttack): KnRun {
+  const current = run.combat?.next ?? {}
+  const bonus = (current.bonus ?? 0) + (patch.bonus ?? 0)
+  const dice = [...(current.dice ?? []), ...(patch.dice ?? [])]
+  return withNextAttack(run, {
+    ...(bonus ? { bonus } : {}),
+    ...(dice.length ? { dice } : {}),
+    ...(current.advantage || patch.advantage ? { advantage: true } : {}),
+    ...(current.freeAim || patch.freeAim ? { freeAim: true } : {}),
+  })
+}
+
+// Un bonus qui remplace celui qu'on avait déjà s'il est plus fort, au lieu de s'y ajouter.
+export function knRaiseNextAttackBonus(run: KnRun, bonus: number): KnRun {
+  const current = run.combat?.next ?? {}
+  return withNextAttack(run, { ...current, bonus: Math.max(current.bonus ?? 0, bonus) })
+}
+
+export const knClearNextAttack = (run: KnRun): KnRun => withNextAttack(run, {})
+
+export function knLoseCreatureArmor(run: KnRun, index: number, location: string, points: number): KnRun {
+  return run.combat?.creatures[index]
+    ? withCreature(run, index, creature => ({ ...creature, armorLoss: { ...creature.armorLoss, [location]: Math.min(99, (creature.armorLoss?.[location] ?? 0) + points) } }))
+    : run
+}
+
+export function knSetCreatureDefenseMalus(run: KnRun, index: number, amount: number): KnRun {
+  return run.combat?.creatures[index]
+    ? withCreature(run, index, ({ defenseMalus: _previous, ...creature }) => amount > 0 ? { ...creature, defenseMalus: Math.min(99, amount) } : creature)
+    : run
+}

@@ -4,6 +4,7 @@ import {
   knAttackAbilities,
   knAttackAbilityBlockers,
   knAttackPlan,
+  knDodgeAbilities,
   knMarkAbilities,
   knMarkPlan,
   knMergePlans,
@@ -108,7 +109,12 @@ describe('plan d\'attaque', () => {
       allTargets: true,
       followUp: { dice: undefined },
       afterDefense: -20,
+      afterDefenseIfHit: 0,
+      noDamage: false,
+      stripArmor: false,
       noDefense: true,
+      advantage: false,
+      freeAim: false,
     })
   })
 
@@ -169,5 +175,24 @@ describe('dés typés et défense', () => {
     expect(defended.combat).toMatchObject({ defenseBonus: -20, noDefense: true })
     expect(knSetCombatDefense(defended, {}).combat).not.toHaveProperty('noDefense')
     expect(knSetCombatDefense(emptyKnRun(), { none: true })).toEqual(emptyKnRun())
+  })
+})
+
+describe('aptitudes de réaction, sans dégâts et défense après une touche', () => {
+  const mastery = withAttacks({
+    1: { attack: { afterDodge: 20 } },
+    2: { sustained: false, attack: { afterDefenseIfHit: 10, noDamage: true, stripArmor: true } },
+  })
+
+  it('une réaction à l\'Esquive ne se coche pas dans l\'attaque : elle a son propre bouton', () => {
+    expect(knAttackAbilities([mastery], entries(2)).map(entry => entry.ability.tier)).toEqual([2])
+    expect(knDodgeAbilities([mastery], entries(2)).map(entry => entry.ability.tier)).toEqual([1])
+  })
+
+  it('le plan retient le bonus défensif sur touche, l\'absence de dégâts et le retrait d\'Armure', () => {
+    const plan = knAttackPlan(knAttackAbilities([mastery], entries(2)))
+
+    expect(plan).toMatchObject({ afterDefenseIfHit: 10, noDamage: true, stripArmor: true, afterDefense: 0 })
+    expect(knMergePlans(plan, { ...KN_EMPTY_ATTACK_PLAN, dice: [], advantage: true, freeAim: true })).toMatchObject({ advantage: true, freeAim: true, afterDefenseIfHit: 10 })
   })
 })

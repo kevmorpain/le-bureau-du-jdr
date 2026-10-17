@@ -51,6 +51,8 @@ export const knCreatureBuffSchema = z.object({
 export type KnCreatureBuff = z.infer<typeof knCreatureBuffSchema>
 
 // Une créature engagée : sa fiche (par clé), son nom pour l'affichage, et sa Santé fixée à l'engagement (niveau compris).
+const knTypedDiceEntrySchema = z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES).optional() })
+
 export const knCombatCreatureSchema = z.object({
   ref: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/).optional(),
   name: z.string().trim().min(1).max(100),
@@ -63,7 +65,11 @@ export const knCombatCreatureSchema = z.object({
   // Une créature éphémère a joué son action : elle disparaît au tour suivant.
   spent: z.boolean().optional(),
   // Faille exploitée (aptitude) : les attaques du survivant contre elle reçoivent ce bonus et ces dés.
-  mark: z.object({ bonus: boundedInt({ min: -99, max: 99 }).optional(), dice: z.array(z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES).optional() })).max(3).optional() }).optional(),
+  mark: z.object({ bonus: boundedInt({ min: -99, max: 99 }).optional(), dice: z.array(knTypedDiceEntrySchema).max(3).optional() }).optional(),
+  // Armure retirée par une aptitude ou un mouvement défensif, par localisation (99 : toute l'Armure), jusqu'à la fin du combat.
+  armorLoss: z.record(z.string().regex(/^[a-z][a-zA-Z]{1,29}$/), boundedInt({ min: 1, max: 99 })).optional(),
+  // Malus à son prochain test défensif, consommé à cette défense.
+  defenseMalus: boundedInt({ min: 1, max: 99 }).optional(),
   // La compétence d'arme du survivant dont le coup l'a vaincue, pour les objectifs.
   slainBy: z.enum(KN_WEAPON_SKILL_KEYS).optional(),
 })
@@ -87,6 +93,13 @@ export const knCombatSchema = z.object({
   first: z.enum(['survivor', 'creatures']).optional(),
   // Défenses déjà faites ce round : chacune après la première coûte −20, cumulatif.
   reactions: boundedInt(KN_COMBAT_BOUNDS.reactions),
+  // Ce que la prochaine attaque du survivant reçoit en plus (mouvement défensif, aptitude de réaction) : bonus, dés, Avantage, visée libre.
+  next: z.object({
+    bonus: boundedInt({ min: -99, max: 99 }).optional(),
+    dice: z.array(knTypedDiceEntrySchema).max(6).optional(),
+    advantage: z.boolean().optional(),
+    freeAim: z.boolean().optional(),
+  }).optional(),
   // Bonus ou malus du prochain test défensif du survivant, et défense impossible jusqu'à sa prochaine attaque (aptitudes).
   defenseBonus: boundedInt({ min: -99, max: 99 }).optional(),
   noDefense: z.boolean().optional(),

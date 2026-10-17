@@ -72,6 +72,14 @@ export const knAbilityAttackSchema = z.object({
   allTargets: z.boolean().optional(),
   // Marque une cible : ses attaques suivantes contre elle reçoivent `bonus` et `dice` (une fois par adversaire).
   mark: z.boolean().optional(),
+  // Bonus au prochain test défensif du survivant si l'attaque touche.
+  afterDefenseIfHit: boundedInt({ min: -99, max: 99 }).optional(),
+  // L'attaque n'inflige aucun dégât.
+  noDamage: z.boolean().optional(),
+  // Sur une touche, la cible perd toute son Armure à la localisation choisie.
+  stripArmor: z.boolean().optional(),
+  // Réaction après une défense à l'Esquive réussie : la prochaine attaque reçoit ce bonus, qui remplace celui du mouvement défensif.
+  afterDodge: boundedInt({ min: 1, max: 99 }).optional(),
   // Bonus ou malus au prochain test défensif du survivant.
   afterDefense: boundedInt({ min: -99, max: 99 }).optional(),
   // Le survivant ne se défend plus jusqu'à sa prochaine attaque.

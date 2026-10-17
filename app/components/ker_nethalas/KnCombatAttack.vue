@@ -207,6 +207,32 @@
       >
         <span class="font-medium">Maladresse (D10 : {{ shot.fumble }})</span> : {{ $t(`ker_nethalas.fumbles.f${shot.fumble}`) }}
       </p>
+      <p
+        v-if="shot.noDamage && shot.exchange.outcome === 'hit'"
+        class="text-sm"
+      >
+        Cette attaque n'inflige aucun dégât.
+      </p>
+      <div
+        v-if="shot.stripArmor"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <USelect
+          v-model="stripChoice[shotIndex]"
+          :items="locationItems(shot.index)"
+          placeholder="Localisation"
+          class="w-52"
+          aria-label="Localisation à dépouiller de son Armure"
+        />
+        <UButton
+          size="xs"
+          variant="soft"
+          :disabled="!stripChoice[shotIndex] || shot.stripped"
+          @click="strip(shot, shotIndex)"
+        >
+          {{ shot.stripped ? 'Armure retirée' : "Retirer toute l'Armure" }}
+        </UButton>
+      </div>
       <template v-if="shot.damage && shot.location">
         <p class="text-sm">
           <span class="text-muted">Localisation :</span> {{ $t(`ker_nethalas.hitLocations.${shot.location}`) }}
@@ -280,7 +306,7 @@ import {
 } from '~~/shared/ker-nethalas/abilityAttack'
 import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
 import { KN_DAMAGE_TYPES, type KnDamageType } from '~~/shared/ker-nethalas/catalog/damageTypes'
-import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import { knCreatureLocations, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { knDiceLabel, knParseDicePool } from '~~/shared/ker-nethalas/dice'
 import { KN_DUAL_WIELD, knAttackOptions, knDualPair } from '~~/shared/ker-nethalas/equipment'
 import type { KnAbilityAttack, KnMastery } from '~~/shared/ker-nethalas/masteries'
@@ -298,7 +324,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, creatureOf, attackWithAbilities, markCreature, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, creatureOf, attackWithAbilities, markCreature, stripArmor, rerollDamage, setDual, spillLamp, applyAttack, applyReflect, moveText } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 
 const KN_SURPRISE_BONUS = 20
 
@@ -422,6 +448,7 @@ function attackNow() {
   const plan = knAttackPlan([...sustainedAbilities.value, ...chosen])
   spend(chosen)
   picked.value = []
+  stripChoice.value = {}
   shots.value = attackWithAbilities({
     index: target.value,
     skill: skill.value,
@@ -432,6 +459,19 @@ function attackNow() {
     aim: aim.value && hasWeakSpot.value,
     magical: magical.value,
   }, plan)
+}
+
+const stripChoice = ref<Record<number, string>>({})
+const locationItems = (index: number): SelectItem[] => {
+  const creature = creatureOf(index)
+  return (creature ? knCreatureLocations(creature) : ['body']).map(key => ({ label: t(`ker_nethalas.hitLocations.${key}`), value: key }))
+}
+
+function strip(shot: KnAttackResult, shotIndex: number) {
+  const location = stripChoice.value[shotIndex]
+  if (!location || shot.stripped) return
+  stripArmor(shot.index, location)
+  shot.stripped = true
 }
 
 function apply(shot: KnAttackResult) {

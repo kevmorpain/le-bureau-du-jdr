@@ -273,6 +273,7 @@
         v-model:character="character"
         :resolved
         :bestiary
+        :masteries
       />
 
       <div

@@ -626,6 +626,25 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN54 — Mouvements défensifs du survivant, réaction à l'Esquive et retrait d'Armure
+- **Mouvement défensif du survivant** (`survivorMoves.ts`, livre p. 77) : le D10 tiré après une défense réussie s'applique tout seul
+  quand l'outil sait le faire. Six résultats posent un état sur la **prochaine attaque** du survivant (`combat.next` : bonus, dés,
+  Avantage, visée sans Désavantage), consommé à sa prochaine attaque, touchée ou non ; un retire 1 d'Armure à la localisation
+  d'adversaire tirée (`creature.armorLoss`, jusqu'à la fin du combat) ; un inflige 1 dégât perforant qui ignore l'Armure, en tenant
+  compte des Résistances ; un retire 20 au prochain test défensif de l'adversaire (`creature.defenseMalus`, consommé à sa prochaine
+  défense) ; un rend 2 Robustesse. Les deux résultats sur les conditions (Saignement de l'adversaire, Immunité) restent du texte.
+- **Aptitude de réaction à l'Esquive** : sur une défense à l'Esquive réussie, un bouton donne à la prochaine attaque le bonus de
+  l'aptitude (`attack.afterDodge`), qui **remplace** celui du mouvement défensif s'il est plus fort au lieu de s'y ajouter.
+- **Aptitude à bonus défensif sur touche** (`attack.afterDefenseIfHit`) : le bonus au prochain test défensif ne vaut que si l'attaque
+  touche. **Aptitude sans dégâts qui retire l'Armure** (`attack.noDamage`, `attack.stripArmor`) : sur une touche, le joueur choisit la
+  localisation et la créature y perd toute son Armure (`armorLoss` à 99) jusqu'à la fin du combat.
+- ⚠️ hypothèses : « remplace le +10 habituel » se lit comme un bonus qui prend la valeur la plus forte, pas une somme ; la réaction
+  n'ajoute pas de défense au compte du round ; l'Armure retirée vaut aussi pour les Coups critiques ; le mouvement défensif du survivant
+  n'est tiré que sur les attaques physiques (comme avant).
+- Laissé de côté : les mouvements défensifs et maladresses des créatures (leur prochaine attaque, le prochain test défensif du
+  survivant, Armure du survivant, Saignement du survivant), Saignement de l'adversaire. Contenu privé à recharger en prod après le
+  merge (`npm run kn:content`, jeu `masteries`).
+
 ### KN53 — Aptitudes qui changent l'attaque du survivant
 - **Format** (`masteries.ts`, `abilityAttack.ts`) : champ public optionnel `attack` sur une aptitude, renseigné dans le contenu privé.
   Il porte un bonus à l'attaque, des dés typés à la réserve (ou une réserve de remplacement), un Coup critique forcé, une cible qui ne
@@ -646,8 +665,8 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   précise valent pour toutes les attaques tant qu'elles sont allumées ; « prochaine attaque » se consomme même ratée (confirmé par le PM) ;
   la défense interdite ne vaut que pour l'attaque physique, pas pour le test de Résistance magique ; le joueur ne choisit pas un dé plus
   faible du pool contre une Vulnérabilité (le plus haut compte).
-- Laissé de côté : marquer une arme précise (gravure permanente), une aptitude de réaction qui double un bonus « habituel » que l'outil ne connaît pas,
-  les aptitudes qui agissent sur l'équipe, et les cas isolés (retrait d'Armure, soins ou Santé mentale à la mort ou aux dégâts, dégâts
+- Laissé de côté : marquer une arme précise (gravure permanente),
+  les aptitudes qui agissent sur l'équipe, et les cas isolés (soins ou Santé mentale à la mort ou aux dégâts, dégâts
   psychiques). Les dés typés des objectifs et des objets magiques restent résolus au type de l'arme (leur type n'entre pas dans le
   texte de la réserve). Contenu privé à recharger en prod après le merge (`npm run kn:content`, jeu `masteries`).
 
@@ -1153,7 +1172,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **U13a — Fiche en trois colonnes** | survivant, donjon et pièce, barre d'état collante (KN28, KN49) ; issue U13 (#264) | écrite |
 | **U13c — Revue de la fiche** | cartes repliables, compacité, couleurs, repos, dés d'entrée, repères (KN51) | écrite |
 | **Folie automatique** | « Les ténèbres approchent » et « Mémoire défaillante » appliqués aux pertes de Santé mentale et aux gains d'XP, Armure d'effet, Outils de voleur (KN52) | mergée (#293) |
-| **Aptitudes d'attaque** | aptitudes cochées dans l'attaque : bonus, dés typés, critique, défense interdite, seconde attaque, toutes les cibles, marque (KN53) | écrite, non commitée |
+| **Aptitudes d'attaque** | aptitudes cochées dans l'attaque : bonus, dés typés, critique, défense interdite, seconde attaque, toutes les cibles, marque (KN53) | mergée (#294) |
+| **Mouvements défensifs** | mouvement défensif du survivant appliqué, réaction à l'Esquive, retrait d'Armure d'une aptitude (KN54) | écrite, non commitée |
 | **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.

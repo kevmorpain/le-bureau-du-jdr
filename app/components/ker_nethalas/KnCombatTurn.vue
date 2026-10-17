@@ -142,7 +142,26 @@
       >
         <span class="font-medium">Mouvement défensif du survivant (D10 : {{ result.survivorMove }})</span> :
         {{ moveText('survivorDefensiveMoves', result.survivorMove) }}
+        <span
+          v-if="result.survivorMoveApplied"
+          class="text-success"
+        >(appliqué)</span>
       </p>
+      <div
+        v-if="result.dodged && dodgeReactions.length"
+        class="flex flex-wrap items-center gap-2 text-sm"
+      >
+        <UButton
+          v-for="entry in dodgeReactions"
+          :key="entry.id"
+          size="xs"
+          variant="soft"
+          :disabled="reacted || abilityBlockers(entry).length > 0"
+          @click="react(entry)"
+        >
+          {{ reacted ? 'Réaction faite' : `${entry.ability.name} : prochaine attaque +${entry.attack.afterDodge}` }}
+        </UButton>
+      </div>
       <p
         v-if="result.monsterFumble"
         class="text-sm"
@@ -268,6 +287,9 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { knAttackAbilityBlockers, knDodgeAbilities, knSpendAttackAbilities, type KnAttackAbility } from '~~/shared/ker-nethalas/abilityAttack'
+import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
+import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { knActionIsTest } from '~~/shared/ker-nethalas/combat'
 import { knDefenseOptions, knSacrificeChoices } from '~~/shared/ker-nethalas/equipment'
 import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
@@ -280,16 +302,37 @@ import type { KnTurnResult } from '~/composables/useKnCombat'
 const props = defineProps<{
   resolved: KnResolvedSheet
   bestiary: KnCreature[] | null
+  masteries: KnMastery[] | null
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, minions, creatureOf, drawAction, takeTurn, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
+const { combat, minions, creatureOf, drawAction, takeTurn, reactAfterDodge, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { selfEffectText } = useKnEffectText()
 
 const isTest = knActionIsTest
+
+const dodgeReactions = computed(() => props.masteries
+  ? knDodgeAbilities(props.masteries, knMasteryEntries(character.value.masteryPicks, character.value.amulets))
+  : [])
+const reacted = ref(false)
+const abilityBlockers = (entry: KnAttackAbility) => knAttackAbilityBlockers(entry, {
+  aetherCurrent: character.value.aetherCurrent,
+  healthCurrent: character.value.healthCurrent,
+  exhaustion: character.value.exhaustion,
+}, character.value.status)
+
+function react(entry: KnAttackAbility) {
+  const spent = knSpendAttackAbilities([entry], { aetherCurrent: character.value.aetherCurrent, healthCurrent: character.value.healthCurrent, exhaustion: character.value.exhaustion }, character.value.status)
+  character.value.aetherCurrent = spent.purse.aetherCurrent
+  character.value.healthCurrent = spent.purse.healthCurrent
+  character.value.exhaustion = spent.purse.exhaustion
+  character.value.status = spent.status
+  reactAfterDodge(entry.attack.afterDodge ?? 0)
+  reacted.value = true
+}
 
 const who = ref(0)
 const defenseId = ref('dodge')
@@ -309,6 +352,9 @@ const drawn = ref<{ d6: number, action: KnCreatureAction } | undefined>()
 const taken = ref<number[]>([])
 const selfTaken = ref<number[]>([])
 const result = ref<KnTurnResult | undefined>()
+watch(result, () => {
+  reacted.value = false
+})
 
 const whoItems = computed<SelectItem[]>(() =>
   (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0
