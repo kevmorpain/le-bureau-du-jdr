@@ -254,6 +254,7 @@
         v-model:character="character"
         :resolved
         :bestiary
+        :masteries
       />
 
       <KnCombatAbilities

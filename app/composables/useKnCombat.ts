@@ -1,3 +1,5 @@
+import { knMarkPlan, type KnAttackPlan } from '~~/shared/ker-nethalas/abilityAttack'
+import type { KnAbilityAttack } from '~~/shared/ker-nethalas/masteries'
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_DEFENSIVE_MOVE_DIE, KN_MONSTER_FUMBLE_DIE } from '~~/shared/ker-nethalas/catalog/combatTables'
@@ -16,7 +18,9 @@ import {
   knPackBonus,
   knPenetrating,
   knResolveDamage,
+  KN_NO_DEFENSE,
   knRollDamagePool,
+  type KnPoolEntry,
   knSelfAmount,
   knSurvivorArmorZone,
   knWithDisadvantage,
@@ -46,7 +50,9 @@ import {
   knMarkGearUsed,
   knRegisterReaction,
   knRollDie,
+  knMarkCreature,
   knMarkCreatureSlain,
+  knSetCombatDefense,
   knSetCombatDual,
   knSetCombatFirst,
   knSetCombatLamp,
@@ -73,7 +79,11 @@ export interface KnAttackResult {
   damageRoll?: KnDamageRoll
   damage?: KnDamageResult
   // Atout de relance des dégâts critiques : les dégâts d'un Coup critique se relancent une fois, avant d'être appliqués.
-  reroll?: { pool: KnDice[], damageType: KnDamageType, magical: boolean, used: boolean }
+  reroll?: { pool: KnPoolEntry[], damageType: KnDamageType, magical: boolean, used: boolean }
+  // Seconde attaque gratuite d'une aptitude.
+  followUp?: boolean
+  // Aptitude : la cible n'a pas pu se défendre.
+  undefended?: boolean
   // Les deux jets ont échoué : 1 dégât qu'on ne peut pas éviter.
   unavoidable: boolean
   // Mouvement défensif de la créature (D10) quand elle a paré, maladresse du survivant (D10) sur un échec critique.
@@ -108,6 +118,8 @@ export interface KnTurnResult {
   d6: number
   check?: KnD100Result
   defense?: KnD100Result
+  // Une aptitude interdit au survivant de se défendre.
+  undefended?: boolean
   exchange?: KnExchange
   location?: KnHitLocationKey
   damageRoll?: KnDamageRoll
@@ -194,10 +206,13 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     attackerScore?: number
     bonus: number
     speed: number
-    pool: KnDice[]
+    pool: KnPoolEntry[]
     damageType: KnDamageType
     aim: boolean
     magical: boolean
+    // Aptitudes : la touche est un Coup critique ; la cible ne se défend pas.
+    critical?: boolean
+    undefendable?: boolean
   }): KnAttackResult | undefined {
     const target = combat.value?.creatures[input.index]
     const creature = creatureOf(input.index)
@@ -205,16 +220,22 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const adapted = knCreatureAtLevel(creature, level.value)
     const alive = combat.value.creatures.filter(c => c.ref === target.ref && c.health > 0).length
 
+    const mark = input.attackerScore === undefined ? knMarkPlan(target.mark) : undefined
+    const attackBonus = input.bonus + (mark?.bonus ?? 0)
+    const pool = mark ? [...input.pool, ...mark.dice] : input.pool
     const buffs = knBuffTotals(target.effects)
     const mine = input.attackerScore === undefined
       ? resolved().skills[input.skill ?? 'bladedWeapons']
       : { effective: input.attackerScore, rollMode: 'normal' as const }
     const aimed = input.aim && creature.hitLocation?.weakSpot ? knWithDisadvantage(mine.rollMode) : mine.rollMode
     const mode = buffs.disadvantageAgainst ? knWithDisadvantage(aimed) : aimed
-    const attackCheck = knD100Check({ roll: d100(), score: mine.effective, difficulty: KN_ATTACKER_BONUS + input.bonus, mode })
+    const attackCheck = knD100Check({ roll: d100(), score: mine.effective, difficulty: KN_ATTACKER_BONUS + attackBonus, mode })
     const defenseScore = adapted.combatSkill - input.speed + knPackBonus(creature, alive) + buffs.defenseBonus
-    const defenseCheck = knD100Check({ roll: d100(), score: defenseScore, difficulty: 0, mode: buffs.defenseAdvantage ? 'advantage' : 'normal' })
-    const exchange = knCombatExchange(attackCheck, defenseCheck)
+    const defenseCheck = input.undefendable
+      ? KN_NO_DEFENSE
+      : knD100Check({ roll: d100(), score: defenseScore, difficulty: 0, mode: buffs.defenseAdvantage ? 'advantage' : 'normal' })
+    const rolled = knCombatExchange(attackCheck, defenseCheck)
+    const exchange = input.critical && rolled.outcome === 'hit' ? { ...rolled, criticalStrike: true } : rolled
 
     const result: KnAttackResult = {
       index: input.index,
@@ -225,6 +246,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       weakSpot: false,
       unavoidable: exchange.outcome === 'bothFail',
       applied: false,
+      ...(input.undefendable ? { undefended: true } : {}),
       ...(input.attackerScore === undefined ? { survivor: true, skill: input.skill ?? 'bladedWeapons', damageType: input.damageType } : {}),
     }
     if (buffs.reflect.length) {
@@ -242,7 +264,7 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
         ? (input.aim && spot ? spot : knHitLocation(creature.hitLocation.table, knRollDie(20)))
         : 'body'
       result.weakSpot = !!spot && result.location === spot
-      const damage = { pool: input.pool, damageType: input.damageType, magical: input.magical }
+      const damage = { pool, damageType: input.damageType, magical: input.magical }
       rollHitDamage(result, damage)
       if (exchange.criticalStrike && input.attackerScore === undefined && knHasActivePerk(character.value, 'precisionStriker')) {
         result.reroll = { ...damage, used: false }
@@ -251,14 +273,16 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     return result
   }
 
-  function rollHitDamage(result: KnAttackResult, input: { pool: KnDice[], damageType: KnDamageType, magical: boolean }) {
+  function rollHitDamage(result: KnAttackResult, input: { pool: KnPoolEntry[], damageType: KnDamageType, magical: boolean }) {
     const target = combat.value?.creatures[result.index]
     const creature = creatureOf(result.index)
     if (!target || !creature || !result.location) return
     result.damageRoll = knRollDamagePool(input.pool)
+    const damageType = result.damageRoll.pickedType ?? input.damageType
+    if (result.survivor) result.damageType = damageType
     result.damage = knResolveDamage({
       roll: result.damageRoll,
-      damageType: input.damageType,
+      damageType,
       criticalStrike: result.exchange.criticalStrike,
       criticalTriple: knGoalCriticalTriple(character.value.goalEffects, creature.types),
       weakSpot: result.weakSpot,
@@ -266,6 +290,37 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       target: knBuffedTarget(knCreatureDamageTarget(creature), target.effects),
       magical: input.magical,
     })
+  }
+
+  type SurvivorAttackInput = Parameters<typeof attack>[0]
+
+  // L'attaque du survivant avec ses aptitudes : une attaque par cible visée, chacune suivie de la seconde attaque gratuite si
+  // elle touche, puis la défense du survivant se règle pour la suite.
+  function attackWithAbilities(input: SurvivorAttackInput, plan: KnAttackPlan): KnAttackResult[] {
+    const targets = plan.allTargets
+      ? (combat.value?.creatures ?? []).flatMap((creature, index) => creature.health > 0 ? [index] : [])
+      : [input.index]
+    const base = { ...input, bonus: input.bonus + plan.bonus }
+    const results: KnAttackResult[] = []
+    for (const index of targets) {
+      const first = attack({ ...base, index, pool: [...(plan.pool ?? input.pool), ...plan.dice], critical: plan.critical, undefendable: plan.undefendable })
+      if (!first) continue
+      results.push(first)
+      if (plan.followUp && first.exchange.outcome === 'hit') {
+        const second = attack({ ...base, index, pool: plan.followUp.dice ?? [...input.pool, ...plan.dice] })
+        if (second) results.push({ ...second, followUp: true })
+      }
+    }
+    character.value.run = knSetCombatDefense(character.value.run, { bonus: plan.afterDefense, none: plan.noDefense })
+    return results
+  }
+
+  function markCreature(index: number, mark: Pick<KnAbilityAttack, 'bonus' | 'dice'>) {
+    const target = combat.value?.creatures[index]
+    if (!target || target.mark) return false
+    character.value.run = knMarkCreature(character.value.run, index, mark)
+    log(`${target.name} : faille exploitée`)
+    return true
   }
 
   function setDual(dominant: string | null) {
@@ -459,13 +514,18 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     const penalty = free ? 0 : knReactionPenalty(combat.value.reactions)
     const alive = combat.value.creatures.filter(c => c.ref === target.ref && c.health > 0).length
     const sheet = resolved()
+    const undefended = !minionSheet && !!combat.value.noDefense
 
     // Qui se défend : le survivant (sa fiche, son Armure saisie) ou un sbire (sa propre fiche, qui ne s'adapte pas au niveau).
     const defend = (kind: 'physical' | 'magic') => {
       if (minionSheet) return knD100Check({ roll: d100(), score: kind === 'physical' ? minionSheet.combatSkill : minionSheet.magicResistance, difficulty: 0, mode: 'normal' })
       if (kind === 'physical') {
+        if (undefended) return KN_NO_DEFENSE
         const mine = sheet.skills[input.defense]
-        return knD100Check({ roll: d100(), score: mine.effective, difficulty: input.bonus + (input.defenseBonus ?? 0) - penalty, mode: mine.rollMode })
+        const aftermath = combat.value?.defenseBonus ?? 0
+        const check = knD100Check({ roll: d100(), score: mine.effective, difficulty: input.bonus + (input.defenseBonus ?? 0) + aftermath - penalty, mode: mine.rollMode })
+        if (aftermath) character.value.run = knSetCombatDefense(character.value.run, { none: combat.value?.noDefense })
+        return check
       }
       const ward = (KN_RESISTANCE_KEYS as readonly string[]).includes(input.magicCheck)
         ? sheet.resistances[input.magicCheck as KnResistanceKey]
@@ -488,8 +548,9 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
     if (action.tag === 'physical') {
       result.check = knD100Check({ roll: d100(), score: adapted.combatSkill + knPackBonus(creature, alive) + buffs.attackBonus, difficulty: KN_ATTACKER_BONUS, mode: buffs.attackAdvantage ? 'advantage' : 'normal' })
       result.defense = defend('physical')
+      if (undefended) result.undefended = true
       result.exchange = knCombatExchange(result.check, result.defense)
-      registerReaction()
+      if (!undefended) registerReaction()
       if (!minionSheet) character.value.run = knMarkGearUsed(character.value.run, input.gear ?? [])
       if (result.exchange.fumble) result.monsterFumble = knRollDie(KN_MONSTER_FUMBLE_DIE)
       if (result.exchange.outcome === 'defended' && !minionSheet) result.survivorMove = knRollDie(KN_DEFENSIVE_MOVE_DIE)
@@ -607,5 +668,5 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
   const moveText = (table: 'survivorDefensiveMoves' | 'monsterDefensiveMoves' | 'monsterFumbles', roll: number) =>
     t(`ker_nethalas.combat.${table}.${roll}`)
 
-  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, rerollDamage, setDual, setLamp, spillLamp, applyAttack, drawAction, takeTurn, applyToSurvivor, sacrificeGear, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
+  return { combat, level, minions, minionSheetAt, addMinion, drawMinionAction, minionAttack, minionSpell, applySpell, creatureOf, engage, opposed, surpriseAutomatically, attack, attackWithAbilities, markCreature, rerollDamage, setDual, setLamp, spillLamp, applyAttack, drawAction, takeTurn, applyToSurvivor, sacrificeGear, applyToMinion, applyReflect, applySelfEffect, moveText, survivorArmor, log }
 }

@@ -626,6 +626,31 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN53 — Aptitudes qui changent l'attaque du survivant
+- **Format** (`masteries.ts`, `abilityAttack.ts`) : champ public optionnel `attack` sur une aptitude, renseigné dans le contenu privé.
+  Il porte un bonus à l'attaque, des dés typés à la réserve (ou une réserve de remplacement), un Coup critique forcé, une cible qui ne
+  se défend pas, une seconde attaque gratuite si la première touche, une attaque contre chaque adversaire, une marque de cible, un
+  bonus au prochain test défensif et une défense interdite jusqu'à la prochaine attaque. 14 aptitudes sont annotées.
+- **Une aptitude est une option de l'attaque.** Le formulaire d'attaque liste les aptitudes débloquées qui changent l'attaque : on
+  coche celles qu'on veut, et « Attaquer » les paie (Éther, Santé, Épuisement), note leur usage limité et applique leur plan
+  (`knAttackPlan`), réussie ou non. Une aptitude Maintenue allumée s'ajoute d'elle-même à toutes les attaques ; une marque de cible
+  se pose par son bouton (une fois par adversaire, `creature.mark`) et joue pour les attaques suivantes contre elle. Les aptitudes
+  d'attaque non Maintenues n'ont plus de bouton « Utiliser » dans la carte des Aptitudes de Maîtrise (`knAbilityIsUsable`).
+- **Dés typés** : la réserve de dégâts garde un dé (le plus haut, le premier à égalité) et chaque dé peut avoir son type ; le dé retenu
+  donne son type à l'attaque (`pickedType`), donc ses Résistances, Vulnérabilités et les objectifs de dégâts par type.
+- **Défense du survivant** : `combat.defenseBonus` se consomme au prochain test défensif physique, `combat.noDefense` supprime la défense
+  physique (`KN_NO_DEFENSE`, sans jet ni réaction comptée) jusqu'à la prochaine attaque du survivant.
+- ⚠️ hypothèses : « Coup critique automatique » = une touche est un Coup critique (le jet d'attaque reste fait) ; la seconde attaque
+  gratuite reprend la compétence et les bonus de la première, avec la réserve de l'aptitude quand elle en a une ; « tous les adversaires
+  engagés » = tous les adversaires en vie (l'engagement n'est pas suivi) et l'état Hébété n'est pas posé ; les aptitudes liées à une arme
+  précise valent pour toutes les attaques tant qu'elles sont allumées ; « prochaine attaque » se consomme même ratée (confirmé par le PM) ;
+  la défense interdite ne vaut que pour l'attaque physique, pas pour le test de Résistance magique ; le joueur ne choisit pas un dé plus
+  faible du pool contre une Vulnérabilité (le plus haut compte).
+- Laissé de côté : marquer une arme précise (gravure permanente), une aptitude de réaction qui double un bonus « habituel » que l'outil ne connaît pas,
+  les aptitudes qui agissent sur l'équipe, et les cas isolés (retrait d'Armure, soins ou Santé mentale à la mort ou aux dégâts, dégâts
+  psychiques). Les dés typés des objectifs et des objets magiques restent résolus au type de l'arme (leur type n'entre pas dans le
+  texte de la réserve). Contenu privé à recharger en prod après le merge (`npm run kn:content`, jeu `masteries`).
+
 ### KN52 — Folie : les effets qui jouent tout seuls
 - **« Les ténèbres approchent »** : chaque perte de Santé mentale prend 1 de plus par cumul (`knSanityLossExtra`), qu'elle vienne d'une
   table (`knApplyTableEffects`) ou d'un Coup critique (`knApplyCriticalEffects`, paramètre `extraSanityLoss` passé par `KnRollPanel`). Un
@@ -716,8 +741,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   ⚠️ hypothèses : un résultat ramené à 1 ou moins par « Esprit fragile » compte comme un 1 ; les dégâts du 9 passent par la Robustesse puis la
   Santé comme tout dégât, l'armure n'y intervenant pas ; la Santé mentale n'est pas remise à niveau après un tirage (le livre ne le dit pas).
 - Laissé de côté : boutons « Prendre son souffle » et « Établir le camp » directement dans la barre (ils sont dans le panneau), provisions dans la
-  barre, effet d'une Aptitude sur le jet d'attaque (le bloc ne fait que payer le coût et marquer l'usage), effets automatiques de « Les ténèbres
-  approchent » et « Mémoire défaillante », carte du Domaine.
+  barre, carte du Domaine (l'effet des Aptitudes sur l'attaque vient en KN53, les effets de la Folie en KN52).
 
 ### KN48 — Début de partie : Débuts difficiles et Domaine d'introduction
 - **Choix à la création** (issues X30 et X31) : une première partie ne prend aucun équipement, c'est le Domaine d'introduction qui le
@@ -1128,7 +1152,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **7 — Inventaire, équipement, butin** | issue X16 (#263), une seule PR : (a) inventaire, emplacements, capacité (KN40), catalogue d'objets, armes et armures dans le combat, Intégrité ; (b) butin, gemmes, fragments, potions, marchand ; (c) objets magiques, reliques, attunement | écrite, vérifiée, non fusionnée ; une seule PR pour la tranche 7 (a : inventaire, catalogue, équipement dans le combat, kit de départ, KN40-KN41 ; b : butin, gemmes, marchand, fragments et potions utilisables, KN42-KN43 ; c : objets magiques générés, harmonisés et appliqués, Reliques, contenants et revente, KN44) ; contenu à relire par le PM |
 | **U13a — Fiche en trois colonnes** | survivant, donjon et pièce, barre d'état collante (KN28, KN49) ; issue U13 (#264) | écrite |
 | **U13c — Revue de la fiche** | cartes repliables, compacité, couleurs, repos, dés d'entrée, repères (KN51) | écrite |
-| **Folie automatique** | « Les ténèbres approchent » et « Mémoire défaillante » appliqués aux pertes de Santé mentale et aux gains d'XP (KN52) | écrite, non commitée |
+| **Folie automatique** | « Les ténèbres approchent » et « Mémoire défaillante » appliqués aux pertes de Santé mentale et aux gains d'XP, Armure d'effet, Outils de voleur (KN52) | mergée (#293) |
+| **Aptitudes d'attaque** | aptitudes cochées dans l'attaque : bonus, dés typés, critique, défense interdite, seconde attaque, toutes les cibles, marque (KN53) | écrite, non commitée |
 | **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.

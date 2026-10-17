@@ -25,6 +25,9 @@ export interface KnExchange {
   fumble: boolean
 }
 
+// Un défenseur qui ne peut pas se défendre : un échec, sans jet.
+export const KN_NO_DEFENSE: KnD100Result = { roll: 100, value: 100, swapped: false, mode: 'normal', target: 0, success: false, doubles: false, critical: null }
+
 const compare = (a: KnD100Result, b: KnD100Result): 'a' | 'b' | 'tie' => {
   if (a.value !== b.value) return a.value > b.value ? 'a' : 'b'
   if (a.target !== b.target) return a.target > b.target ? 'a' : 'b'
@@ -53,18 +56,27 @@ export function knCombatExchange(attack: KnD100Result, defense: KnD100Result): K
 }
 
 export interface KnDamageRoll {
-  dice: { sides: number, roll: number }[]
+  dice: { sides: number, roll: number, type?: KnDamageType }[]
   bonus: number
-  // Le dé retenu : le plus haut de la réserve, auquel s'ajoutent tous les bonus fixes.
+  // Le dé retenu : le plus haut de la réserve (le premier à égalité), auquel s'ajoutent tous les bonus fixes.
   picked: number
+  // Son type de dégâts, quand ce dé en a un propre ; sinon c'est celui de l'attaque.
+  pickedType?: KnDamageType
   total: number
 }
 
-export function knRollDamagePool(pool: readonly KnDice[], rng: KnRng = Math.random): KnDamageRoll {
-  const dice = pool.flatMap(entry => Array.from({ length: entry.count }, () => ({ sides: entry.sides, roll: knRollDie(entry.sides, rng) })))
+export type KnPoolEntry = KnDice & { type?: KnDamageType }
+
+export function knRollDamagePool(pool: readonly KnPoolEntry[], rng: KnRng = Math.random): KnDamageRoll {
+  const dice = pool.flatMap(entry => Array.from({ length: entry.count }, () => ({
+    sides: entry.sides,
+    roll: knRollDie(entry.sides, rng),
+    ...(entry.type ? { type: entry.type } : {}),
+  })))
   const bonus = pool.reduce((sum, entry) => sum + entry.bonus, 0)
-  const picked = dice.reduce((best, die) => Math.max(best, die.roll), 0)
-  return { dice, bonus, picked, total: Math.max(0, picked + bonus) }
+  const best = dice.reduce<(typeof dice)[number] | undefined>((top, die) => !top || die.roll > top.roll ? die : top, undefined)
+  const picked = best?.roll ?? 0
+  return { dice, bonus, picked, ...(best?.type ? { pickedType: best.type } : {}), total: Math.max(0, picked + bonus) }
 }
 
 export interface KnDamageTarget {

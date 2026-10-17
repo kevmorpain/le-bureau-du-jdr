@@ -905,3 +905,14 @@ export function knSetCombatSurprise(run: KnRun, surprise: boolean): KnRun {
   const { surprise: _previous, ...rest } = run.combat
   return { ...run, combat: surprise ? { ...rest, surprise } : rest }
 }
+
+export function knMarkCreature(run: KnRun, index: number, mark: KnCombatCreature['mark']): KnRun {
+  return run.combat?.creatures[index] && mark ? withCreature(run, index, creature => ({ ...creature, mark })) : run
+}
+
+// Le survivant qui attaque se remet en défense ; une aptitude peut en revanche le priver de défense, ou changer son prochain test.
+export function knSetCombatDefense(run: KnRun, defense: { bonus?: number, none?: boolean }): KnRun {
+  if (!run.combat) return run
+  const { defenseBonus: _bonus, noDefense: _none, ...rest } = run.combat
+  return { ...run, combat: { ...rest, ...(defense.bonus ? { defenseBonus: defense.bonus } : {}), ...(defense.none ? { noDefense: true } : {}) } }
+}

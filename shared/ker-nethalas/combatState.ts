@@ -62,6 +62,8 @@ export const knCombatCreatureSchema = z.object({
   effects: z.array(knCreatureBuffSchema).max(8).optional(),
   // Une créature éphémère a joué son action : elle disparaît au tour suivant.
   spent: z.boolean().optional(),
+  // Faille exploitée (aptitude) : les attaques du survivant contre elle reçoivent ce bonus et ces dés.
+  mark: z.object({ bonus: boundedInt({ min: -99, max: 99 }).optional(), dice: z.array(z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES).optional() })).max(3).optional() }).optional(),
   // La compétence d'arme du survivant dont le coup l'a vaincue, pour les objectifs.
   slainBy: z.enum(KN_WEAPON_SKILL_KEYS).optional(),
 })
@@ -85,6 +87,9 @@ export const knCombatSchema = z.object({
   first: z.enum(['survivor', 'creatures']).optional(),
   // Défenses déjà faites ce round : chacune après la première coûte −20, cumulatif.
   reactions: boundedInt(KN_COMBAT_BOUNDS.reactions),
+  // Bonus ou malus du prochain test défensif du survivant, et défense impossible jusqu'à sa prochaine attaque (aptitudes).
+  defenseBonus: boundedInt({ min: -99, max: 99 }).optional(),
+  noDefense: z.boolean().optional(),
   // Les pièces d'équipement (par identifiant) qui ont servi dans ce combat : leur Intégrité se joue à la fin.
   gearUsed: z.array(z.string().min(1).max(40)).max(20).optional(),
   log: z.array(z.string().max(400)).max(KN_COMBAT_BOUNDS.log),
