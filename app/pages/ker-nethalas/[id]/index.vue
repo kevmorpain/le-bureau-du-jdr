@@ -31,13 +31,6 @@
         <KnChecksSection
           v-model:character="character"
           :resolved
-          @roll="openRoll"
-        />
-
-        <KnRollSection
-          v-model:character="character"
-          v-model:selected="rollSelection"
-          :resolved
         />
 
         <KnMasteriesSection
@@ -203,8 +196,6 @@ const STATUS_LABELS: Record<AutoSaveStatus, string> = {
 }
 const stateLabel = computed(() => STATUS_LABELS[status.value])
 
-const rollSelection = ref('skill:dodge')
-
 // `null` : la colonne de droite suit la dernière entrée du chemin ; un nombre fixe une entrée plus ancienne.
 const selectedVisit = ref<number | null>(null)
 watch(
@@ -213,9 +204,4 @@ watch(
     selectedVisit.value = null
   },
 )
-
-function openRoll(selection: string) {
-  rollSelection.value = selection
-  document.getElementById('kn-roll')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-}
 </script>

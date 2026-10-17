@@ -9,7 +9,7 @@
             class="ml-auto"
             size="sm"
             icon="i-heroicons:cube"
-            :color="atZero ? 'error' : 'primary'"
+            color="secondary"
             :variant="atZero ? 'solid' : 'soft'"
             @click="draw"
           >

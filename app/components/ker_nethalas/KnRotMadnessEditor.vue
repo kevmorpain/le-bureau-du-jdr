@@ -1,6 +1,6 @@
 <template>
-  <section class="space-y-3">
-    <h3 class="font-medium">
+  <section class="space-y-3 rounded-md border border-lime-700/40 bg-lime-900/10 p-3">
+    <h3 class="font-medium text-lime-500">
       La Pourriture
     </h3>
 
@@ -12,8 +12,8 @@
           type="button"
           class="size-5 rounded-full border-2 transition-colors cursor-pointer"
           :class="n <= status.rotStage
-            ? 'bg-error/60 border-error hover:bg-error/80'
-            : 'bg-transparent border-muted hover:border-error'"
+            ? 'bg-lime-700/70 border-lime-600 hover:bg-lime-600/80'
+            : 'bg-transparent border-muted hover:border-lime-600'"
           :aria-label="`La Pourriture : stade ${n}`"
           @click="status.rotStage = status.rotStage === n ? n - 1 : n"
         />
@@ -31,14 +31,14 @@
         v-for="n in status.rotStage"
         :key="n"
       >
-        <span class="font-medium">Stade {{ n }}</span>
+        <span class="font-medium text-lime-500">Stade {{ n }}</span>
         — {{ $t(`ker_nethalas.rot.stage${n}`) }}
       </li>
     </ul>
   </section>
 
-  <section class="space-y-3">
-    <h3 class="font-medium">
+  <section class="space-y-3 rounded-md border border-violet-500/30 bg-violet-500/10 p-3">
+    <h3 class="font-medium text-violet-400">
       Folie
     </h3>
 
@@ -56,11 +56,14 @@
       <li
         v-for="key in activeCounters"
         :key
-        class="flex items-center gap-3"
+        class="flex items-center gap-3 rounded-md border border-violet-500/30 bg-violet-500/10 px-3 py-2"
       >
-        <span class="flex-1">
-          {{ $t(`ker_nethalas.madnessNames.${key}`) }}
-          <span class="text-sm text-muted">(D10 : {{ KN_MADNESS_D10[key] }})</span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-medium">
+            {{ $t(`ker_nethalas.madnessNames.${key}`) }}
+            <span class="text-sm font-normal text-muted">(D10 : {{ KN_MADNESS_D10[key] }})</span>
+          </span>
+          <span class="block text-xs text-muted">{{ effectText(key) }}</span>
         </span>
         <UButton
           icon="i-heroicons:minus"
@@ -83,7 +86,7 @@
       <li
         v-for="(entry, index) in status.madness.lostSkills"
         :key="`lostSkill-${index}`"
-        class="flex items-center gap-3"
+        class="flex items-center gap-3 rounded-md border border-violet-500/30 bg-violet-500/10 px-3 py-2"
       >
         <span class="flex-1">
           {{ $t('ker_nethalas.madnessNames.lostSkill') }}
@@ -121,6 +124,10 @@ const status = defineModel<KnStatus>('status', { required: true })
 const { t } = useI18n()
 
 const LOST_SKILL = 'lostSkill'
+
+// L'effet d'un cumul, sans le nom qui le précède dans le libellé.
+const effectText = (key: KnMadnessCounterKey) =>
+  t(`ker_nethalas.madness.${key}`, { count: status.value.madness.counters[key] }).split(' : ').slice(1).join(' : ')
 
 const activeCounters = computed(() => KN_MADNESS_COUNTER_KEYS.filter(key => status.value.madness.counters[key] > 0))
 
