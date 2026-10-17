@@ -658,10 +658,29 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   n'est tiré que sur les attaques physiques (comme avant) ; les défenses permanentes jouent contre les attaques de créature sur le survivant (pas sur ses
   sbires) ; le soin par coup s'applique au moment où l'on applique les dégâts à la créature ; le bonus qu'une aptitude passive donne aux
   sbires Morts-vivants n'est pas appliqué.
-- Laissé de côté : les maladresses (tables du survivant et des créatures : états À terre, Étourdi, Entravé, Effrayé… qui ne sont pas suivis
-  sur les créatures), Saignement et Immunité du mouvement défensif du survivant, les aptitudes passives qui portent sur le camp, le Dé de
-  Tension ou la réaction (pénalité de Réaction réduite, Santé tombée à 1 une fois par repos…). Contenu privé à recharger en prod après le
-  merge (`npm run kn:content`, jeu `masteries`).
+- **Maladresses** (`fumbles.ts`, livre p. 84). Du survivant (D10 d'un échec critique) : l'arme se brise si elle n'est pas magique (réparable au
+  camp), un objet de la Ceinture se casse (sans Ceinture, 1 dégât perforant), perte de D8 Éther (sans Éther, 1 dégât perforant), À terre,
+  À terre et Hébété (2), et le **coup qui se retourne** (contre un allié, un sbire, quand il y en a ; sinon contre soi ; Coup critique au
+  10) : dégâts lancés avec la réserve de l'attaque, l'Armure et les défenses, à appliquer par un bouton. Sans arme, la prochaine attaque
+  subit −20 ; arme perdue ou fichée dans le sol : texte (récupérer l'arme est un geste). D'une créature : sa prochaine attaque −20 ; Entravée
+  (−20 pendant D4 rounds), Effrayée (20) ; **conditions des créatures** modélisées par des effets : Étourdie (perd ses tours, ne se défend pas
+  activement : `lostTurn`, `noDefense`), À terre (attaques contre elle avec Avantage : `advantageAgainst`, perd son tour pour se relever),
+  Saignement cumulatif (`bleeding`, dégâts par round, l'Armure ignorée) ; dégâts qu'elle s'inflige ; Avantage défensif du survivant pendant
+  2 rounds (`combat.defenseAdvantage`) ; Dissimulé (condition posée, à retirer à la main). Le tirage de l'action d'une créature qui a perdu
+  un tour le dit et le consomme.
+- **Mouvement défensif du survivant, suite** : Saignement (1) de l'adversaire (`knBleedCreature`) et Immunité à toutes les conditions jusqu'à
+  sa prochaine attaque (`combat.immuneConditions` : les conditions subies n'ont plus d'effet, aucune nouvelle ne se pose).
+- **Passives, suite** (`permanent`) : conditions auxquelles le survivant est Immunisé, pénalité de Réaction réduite (`reactionPenalty`),
+  Santé laissée à 1 une fois par camp quand une attaque la ferait tomber à 0 (`surviveOnce`, dégâts de combat seulement), Dé de Tension qui
+  recommence à D10 (`tensionStart`, `run.tensionStart`), bonus à un test pour éviter un piège (`trapAvoid`), provisions trouvées à chaque
+  Fouille réussie (`scavengeFinds`), dés et Santé en plus pour les sbires d'un type de créature (`minionBonus`).
+- ⚠️ hypothèses de ces ajouts : la maladresse d'une créature ne s'applique qu'à la créature elle-même quand sa cible est un sbire ; Effrayée (20)
+  vaut −20 à ses attaques pendant 2 rounds (le livre la fait décroître de 10 à la fin de chacun de ses tours) ; Étourdie dure autant de tours
+  que sa valeur, un tirage d'action en consomme un ; la maladresse « Dissimulé » ne dit pas combien de rounds elle dure, l'outil pose la
+  condition et rappelle D4 rounds ; les dégâts qu'une créature s'inflige ignorent son Armure ; le coup qui se retourne contre un allié ne
+  double pas ses dégâts, même au Coup critique ; la Santé laissée à 1 ne vaut que pour les dégâts de combat appliqués par l'outil.
+- Laissé de côté : Robustesse définitive de l'aptitude passive qui l'augmente à chaque niveau (elle relève du choix de niveau), l'aptitude qui génère des pièces à l'avance (pièces générées à la main), et la récupération de l'arme perdue ou fichée au sol. Contenu privé à recharger en prod après le merge
+  (`npm run kn:content`, jeu `masteries`).
 
 ### KN53 — Aptitudes qui changent l'attaque du survivant
 - **Format** (`masteries.ts`, `abilityAttack.ts`) : champ public optionnel `attack` sur une aptitude, renseigné dans le contenu privé.
@@ -1188,7 +1207,7 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **U13c — Revue de la fiche** | cartes repliables, compacité, couleurs, repos, dés d'entrée, repères (KN51) | écrite |
 | **Folie automatique** | « Les ténèbres approchent » et « Mémoire défaillante » appliqués aux pertes de Santé mentale et aux gains d'XP, Armure d'effet, Outils de voleur (KN52) | mergée (#293) |
 | **Aptitudes d'attaque** | aptitudes cochées dans l'attaque : bonus, dés typés, critique, défense interdite, seconde attaque, toutes les cibles, marque (KN53) | mergée (#294) |
-| **Mouvements défensifs et passifs** | mouvements défensifs du survivant et des créatures appliqués, réaction à l'Esquive, retrait d'Armure, passifs, gravure, dés typés (KN54) | écrite, non mergée |
+| **Mouvements défensifs, maladresses et passifs** | mouvements défensifs et maladresses du survivant et des créatures, réaction à l'Esquive, retrait d'Armure, passifs, gravure, dés typés (KN54) | écrite, non mergée |
 | **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.

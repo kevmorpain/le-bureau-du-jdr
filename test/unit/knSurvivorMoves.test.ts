@@ -23,8 +23,8 @@ describe('mouvement défensif du survivant', () => {
   it('chaque résultat du D10 est lu : effet sur la prochaine attaque, l\'adversaire, le survivant, ou texte', () => {
     expect(knSurvivorMove(1)).toEqual({ kind: 'nextAttack', bonus: 10 })
     expect(knSurvivorMove(2)).toEqual({ kind: 'armorLoss', points: 1 })
-    expect(knSurvivorMove(3)).toEqual({ kind: 'text' })
-    expect(knSurvivorMove(4)).toEqual({ kind: 'text' })
+    expect(knSurvivorMove(3)).toEqual({ kind: 'foeBleeding', value: 1 })
+    expect(knSurvivorMove(4)).toEqual({ kind: 'immunity' })
     expect(knSurvivorMove(5)).toEqual({ kind: 'piercing', amount: 1 })
     expect(knSurvivorMove(6)).toEqual({ kind: 'nextAttack', dice: [{ dice: d(1, 6) }] })
     expect(knSurvivorMove(7)).toEqual({ kind: 'nextAttack', advantage: true })

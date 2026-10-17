@@ -6,6 +6,8 @@ import type { KnDamageType } from './catalog/damageTypes'
 export type KnSurvivorMoveEffect
   = | { kind: 'nextAttack', bonus?: number, dice?: { dice: KnDice, type?: KnDamageType }[], advantage?: boolean, freeAim?: boolean }
     | { kind: 'armorLoss', points: number }
+    | { kind: 'foeBleeding', value: number }
+    | { kind: 'immunity' }
     | { kind: 'piercing', amount: number }
     | { kind: 'foeDefense', amount: number }
     | { kind: 'recover', vital: 'toughness', amount: number }
@@ -16,8 +18,8 @@ export const KN_SURVIVOR_MOVE_BONUS = 10
 const MOVES: Record<number, KnSurvivorMoveEffect> = {
   1: { kind: 'nextAttack', bonus: KN_SURVIVOR_MOVE_BONUS },
   2: { kind: 'armorLoss', points: 1 },
-  3: { kind: 'text' },
-  4: { kind: 'text' },
+  3: { kind: 'foeBleeding', value: 1 },
+  4: { kind: 'immunity' },
   5: { kind: 'piercing', amount: 1 },
   6: { kind: 'nextAttack', dice: [{ dice: { count: 1, sides: 6, bonus: 0 } }] },
   7: { kind: 'nextAttack', advantage: true },

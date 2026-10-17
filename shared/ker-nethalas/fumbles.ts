@@ -36,6 +36,10 @@ export interface KnMonsterFumbleBuff {
   once?: true
   // Tours que la créature perd (Étourdie, À terre).
   lostTurn?: number
+  defenseSkill?: number
+  noDefense?: true
+  advantageAgainst?: true
+  rounds?: number
 }
 
 export type KnMonsterFumbleEffect
@@ -48,15 +52,15 @@ const d = (count: number, sides: number): KnDice => ({ count, sides, bonus: 0 })
 
 const MONSTER: Record<number, KnMonsterFumbleEffect> = {
   1: { kind: 'creatureBuff', buff: { label: 'Maladresse : prochaine attaque −20 (si magique : Résistance magique +20)', combatSkill: -20, once: true } },
-  2: { kind: 'creatureBuff', buff: { label: 'Étourdie : perd son prochain tour', lostTurn: 1 } },
+  2: { kind: 'creatureBuff', buff: { label: 'Étourdie : perd son prochain tour et ne se défend pas', lostTurn: 1, noDefense: true } },
   3: { kind: 'creatureBuff', buff: { label: 'Entravée', combatSkill: -20 }, rounds: d(1, 4) },
   4: { kind: 'survivorDefenseAdvantage', rounds: 2 },
   5: { kind: 'survivorCondition', key: 'concealed', rounds: d(1, 4) },
-  6: { kind: 'creatureBuff', buff: { label: 'À terre : se relève à son prochain tour', lostTurn: 1 } },
-  7: { kind: 'creatureBuff', buff: { label: 'À terre et Étourdie (2) : perd ses deux prochains tours', lostTurn: 2 } },
-  8: { kind: 'creatureBuff', buff: { label: 'Effrayée (20)', combatSkill: -20 } },
+  6: { kind: 'creatureBuff', buff: { label: 'À terre : se relève à son prochain tour', lostTurn: 1, advantageAgainst: true } },
+  7: { kind: 'creatureBuff', buff: { label: 'À terre et Étourdie (2) : perd ses deux prochains tours et ne se défend pas', lostTurn: 2, noDefense: true, advantageAgainst: true } },
+  8: { kind: 'creatureBuff', buff: { label: 'Effrayée (20) : −20 à ses attaques, puis −10', combatSkill: -20, defenseSkill: 20, rounds: 2 } },
   9: { kind: 'creatureDamage', dice: d(1, 6), type: 'slashing' },
-  10: { kind: 'creatureDamage', dice: d(2, 6), type: 'bludgeoning', buff: { label: 'À terre : se relève à son prochain tour', lostTurn: 1 } },
+  10: { kind: 'creatureDamage', dice: d(2, 6), type: 'bludgeoning', buff: { label: 'À terre : se relève à son prochain tour', lostTurn: 1, advantageAgainst: true } },
 }
 
 export const knMonsterFumble = (roll: number): KnMonsterFumbleEffect => MONSTER[roll] ?? MONSTER[1]!

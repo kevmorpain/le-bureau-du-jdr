@@ -40,6 +40,12 @@ export const knCreatureBuffFields = {
   once: z.boolean().optional(),
   // Tours que la créature perd (Étourdie, À terre) : chaque tirage d'action en consomme un.
   lostTurn: boundedInt({ min: 1, max: 9 }).optional(),
+  // Étourdie : elle ne se défend pas activement des attaques physiques (l'attaquant doit encore réussir son test).
+  noDefense: z.boolean().optional(),
+  // À terre : les attaques qui la visent se font avec Avantage.
+  advantageAgainst: z.boolean().optional(),
+  // Saignement (X) : X dégâts à chaque round, l'Armure ignorée ; cumulatif.
+  bleeding: boundedInt({ min: 1, max: 99 }).optional(),
 }
 
 export const knCreatureBuffSchema = z.object({
@@ -97,6 +103,8 @@ export const knCombatSchema = z.object({
   reactions: boundedInt(KN_COMBAT_BOUNDS.reactions),
   // Armure du survivant retirée par un mouvement défensif de créature, par zone, jusqu'à la fin du combat.
   armorLoss: z.record(z.enum(['head', 'torso', 'arms', 'legs']), boundedInt({ min: 1, max: 99 })).optional(),
+  // Immunisé à toutes les conditions jusqu'à sa prochaine attaque (mouvement défensif).
+  immuneConditions: z.boolean().optional(),
   // Rounds pendant lesquels le survivant a l'Avantage à ses tests défensifs (maladresse d'une créature).
   defenseAdvantage: boundedInt({ min: 1, max: 9 }).optional(),
   // Ce que la prochaine attaque du survivant reçoit en plus (mouvement défensif, aptitude de réaction) : bonus, dés, Avantage, visée libre.
@@ -119,7 +127,7 @@ export type KnCombatCreature = z.infer<typeof knCombatCreatureSchema>
 
 export const KN_REACTION_PENALTY = 20
 
-export const knReactionPenalty = (reactions: number) => KN_REACTION_PENALTY * Math.max(0, reactions)
+export const knReactionPenalty = (reactions: number, perReaction = KN_REACTION_PENALTY) => perReaction * Math.max(0, reactions)
 
 export const knCreatureDefeated = (creature: KnCombatCreature) => creature.health <= 0
 

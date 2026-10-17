@@ -202,6 +202,8 @@ export interface KnBuffTotals {
   attackAdvantage: boolean
   defenseAdvantage: boolean
   disadvantageAgainst: boolean
+  advantageAgainst: boolean
+  noDefense: boolean
   damageBonuses: KnDice[]
   reflect: { dice: KnDice, type: KnDamageType, label: string }[]
 }
@@ -214,6 +216,8 @@ export function knBuffTotals(effects: readonly KnCreatureBuff[] | undefined): Kn
     attackAdvantage: list.some(effect => effect.advantage === 'attack'),
     defenseAdvantage: list.some(effect => effect.advantage === 'defense'),
     disadvantageAgainst: list.some(effect => effect.disadvantageAgainst),
+    advantageAgainst: list.some(effect => effect.advantageAgainst),
+    noDefense: list.some(effect => effect.noDefense),
     damageBonuses: list.flatMap(effect => effect.damageBonus ? [effect.damageBonus] : []),
     reflect: list.flatMap(effect => effect.reflect ? [{ ...effect.reflect, label: effect.label }] : []),
   }

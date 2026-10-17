@@ -89,7 +89,7 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
     if (exhaustionSource) sources.push(exhaustionSource)
   }
 
-  for (const entry of status.conditions) {
+  for (const entry of run.combat?.immuneConditions ? [] : status.conditions) {
     const def = KN_CONDITIONS[entry.key]
     const value = entry.value ?? def.value?.default ?? 0
     sources.push({

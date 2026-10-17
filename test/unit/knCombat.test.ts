@@ -102,7 +102,7 @@ describe('jet opposé d\'un échange de combat', () => {
   })
 
   it('chaque défense du round après la première coûte 20 de plus', () => {
-    expect([0, 1, 2, 3].map(knReactionPenalty)).toEqual([0, 20, 40, 60])
+    expect([0, 1, 2, 3].map(count => knReactionPenalty(count))).toEqual([0, 20, 40, 60])
   })
 })
 

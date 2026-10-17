@@ -1,8 +1,11 @@
 import { z } from 'zod'
 import { KN_PROVISION_KEYS } from './camp'
+import { KN_CONDITION_KEYS } from './catalog/conditions'
+import { KN_CREATURE_TYPES } from './catalog/creatureTypes'
 import { KN_DAMAGE_TYPES } from './catalog/damageTypes'
 import { knDiceSchema } from './dice'
 import { KN_VITAL_KEYS } from './effects'
+import { KN_SKILL_KEYS } from './skills'
 import { KN_STATUS_BOUNDS, KN_USE_LIMITS, knCustomEntrySchema } from './status'
 import { boundedInt } from './zodHelpers'
 
@@ -121,6 +124,20 @@ export const knMasteryAbilitySchema = z.object({
     restored: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_DAMAGE_TYPES.length).optional(),
     damageType: z.enum(KN_DAMAGE_TYPES).optional(),
     healOnDamage: boundedInt({ min: 1, max: 9 }).optional(),
+    // Conditions auxquelles le survivant est Immunisé.
+    immuneConditions: z.array(z.enum(KN_CONDITION_KEYS)).max(KN_CONDITION_KEYS.length).optional(),
+    // Malus de chaque Réaction consécutive après la première, à la place de −20.
+    reactionPenalty: boundedInt({ min: 0, max: 19 }).optional(),
+    // Une attaque qui ferait tomber la Santé à 0 la laisse à 1 : une fois, tant que l'usage limité de l'aptitude n'est pas marqué.
+    surviveOnce: z.boolean().optional(),
+    // Le Dé de Tension recommence à ce dé (D10 au lieu de D8).
+    tensionStart: boundedInt({ min: 4, max: 20 }).optional(),
+    // Ce que chaque test de Fouille réussi fait trouver, en provisions.
+    scavengeFinds: z.array(z.object({ key: z.enum(KN_PROVISION_KEYS), count: boundedInt({ min: 1, max: 9 }) })).max(3).optional(),
+    // Bonus des sbires d'un type de créature : dés de dégâts typés et Santé en plus.
+    minionBonus: z.object({ creatureType: z.enum(KN_CREATURE_TYPES), dice: knDiceSchema.optional(), type: z.enum(KN_DAMAGE_TYPES).optional(), health: boundedInt({ min: 1, max: 99 }).optional() }).optional(),
+    // Bonus à un test fait pour éviter un piège.
+    trapAvoid: z.object({ skill: z.enum(KN_SKILL_KEYS), amount: boundedInt({ min: 1, max: 99 }) }).optional(),
   }).optional(),
   // Modificateurs posés à l'usage, jusqu'à la fin du combat (échange de compétence contre des points temporaires, par exemple).
   combatModifier: knMasteryEffectsSchema.optional(),

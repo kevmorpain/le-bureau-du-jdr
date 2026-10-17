@@ -29,6 +29,13 @@
       </p>
     </div>
 
+    <p
+      v-if="combat?.immuneConditions"
+      class="text-xs text-success"
+    >
+      Immunisé à toutes les conditions (celles que vous subissez n'ont plus d'effet) jusqu'à votre prochaine attaque.
+    </p>
+
     <div class="grid gap-3 sm:grid-cols-2">
       <UFormField label="Cible">
         <USelect

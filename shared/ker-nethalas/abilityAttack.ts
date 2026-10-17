@@ -1,9 +1,12 @@
 import type { KnMasteryEntry } from './amulets'
+import type { KnProvisionKey } from './camp'
+import type { KnConditionKey } from './catalog/conditions'
 import type { KnDamageType } from './catalog/damageTypes'
 import type { KnPoolEntry } from './combat'
 import type { KnItem } from './inventory'
 import type { KnAbilityAttack, KnMastery, KnMasteryAbility, KnSelfEffect } from './masteries'
 import { knAbilityBlockers, knIsUsedUp, knMarkUsed, knPayAbility, knSustainedKey, type KnAbilityPurse } from './masteryEffects'
+import type { KnSkillKey } from './skills'
 import type { KnStatus } from './status'
 
 export interface KnAttackAbility {
@@ -137,11 +140,20 @@ export interface KnPermanentEffects {
   restored: KnDamageType[]
   damageType?: KnDamageType
   healOnDamage: number
+  immuneConditions: KnConditionKey[]
+  // Le malus le plus faible des Réactions consécutives.
+  reactionPenalty?: number
+  // La clé d'usage de l'aptitude qui sauve une fois d'une attaque mortelle.
+  surviveKey?: string
+  tensionStart?: number
+  trapAvoid: { skill: KnSkillKey, amount: number }[]
+  scavengeFinds: { key: KnProvisionKey, count: number }[]
+  minionBonuses: NonNullable<NonNullable<KnMasteryAbility['permanent']>['minionBonus']>[]
 }
 
 // Ce que les aptitudes passives débloquées changent toujours : défenses du survivant, type de ses dégâts, soin par dégât infligé.
 export function knPermanentEffects(masteries: readonly KnMastery[], entries: readonly KnMasteryEntry[]): KnPermanentEffects {
-  const total: KnPermanentEffects = { resistant: [], immune: [], restored: [], healOnDamage: 0 }
+  const total: KnPermanentEffects = { resistant: [], immune: [], restored: [], healOnDamage: 0, immuneConditions: [], trapAvoid: [], scavengeFinds: [], minionBonuses: [] }
   for (const entry of entries) {
     const mastery = masteries.find(candidate => candidate.key === entry.key)
     for (const ability of mastery?.abilities ?? []) {
@@ -152,6 +164,13 @@ export function knPermanentEffects(masteries: readonly KnMastery[], entries: rea
       total.restored.push(...(permanent.restored ?? []))
       if (permanent.damageType) total.damageType = permanent.damageType
       total.healOnDamage += permanent.healOnDamage ?? 0
+      total.immuneConditions.push(...(permanent.immuneConditions ?? []))
+      if (permanent.reactionPenalty !== undefined) total.reactionPenalty = Math.min(total.reactionPenalty ?? permanent.reactionPenalty, permanent.reactionPenalty)
+      if (permanent.surviveOnce) total.surviveKey = knSustainedKey(entry.key, ability.tier)
+      if (permanent.tensionStart !== undefined) total.tensionStart = Math.max(total.tensionStart ?? 0, permanent.tensionStart)
+      if (permanent.trapAvoid) total.trapAvoid.push(permanent.trapAvoid)
+      total.scavengeFinds.push(...(permanent.scavengeFinds ?? []))
+      if (permanent.minionBonus) total.minionBonuses.push(permanent.minionBonus)
     }
   }
   return total

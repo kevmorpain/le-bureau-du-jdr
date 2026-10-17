@@ -44,7 +44,7 @@
         class="self-end text-sm text-muted"
       >
         Défenses déjà faites ce round : {{ combat?.reactions ?? 0 }}
-        (malus de {{ knReactionPenalty(combat?.reactions ?? 0) }} à la prochaine)
+        (malus de {{ reactionPenalty(combat?.reactions ?? 0) }} à la prochaine)
         <template v-if="defense.free">
           · {{ combat?.freeParryUsed ? 'Parade gratuite déjà prise ce round' : 'Parade gratuite disponible : sans malus et hors du compte' }}
         </template>
@@ -303,7 +303,6 @@ import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
 import type { KnMastery } from '~~/shared/ker-nethalas/masteries'
 import { knActionIsTest } from '~~/shared/ker-nethalas/combat'
 import { knDefenseOptions, knSacrificeChoices } from '~~/shared/ker-nethalas/equipment'
-import { knReactionPenalty } from '~~/shared/ker-nethalas/combatState'
 import type { KnCreature, KnCreatureAction, KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import { knOutcomeAvailable, type KnRollTableEntry } from '~~/shared/ker-nethalas/tables'
@@ -319,7 +318,7 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { t } = useI18n()
-const { combat, minions, creatureOf, drawAction, takeTurn, reactAfterDodge, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary, () => props.masteries)
+const { combat, minions, creatureOf, drawAction, takeTurn, reactionPenalty, reactAfterDodge, applyToSurvivor, sacrificeGear, applyToMinion, applySelfEffect, moveText, survivorArmor, log } = useKnCombat(character, () => props.resolved, () => props.bestiary, () => props.masteries)
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
 const { selfEffectText } = useKnEffectText()
 

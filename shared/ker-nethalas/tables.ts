@@ -6,7 +6,7 @@ import { KN_BOUNDS } from './character'
 import { knDiceSchema, knRollDice, type KnDiceRoll } from './dice'
 import { KN_VITAL_KEYS, type KnVitalKey } from './effects'
 import {
-  KN_TENSION_START_DIE,
+  knTensionStart,
   knAddGrowingDarkness,
   knCurrentDomain,
   knDrawGrowingDarkness,
@@ -289,7 +289,7 @@ export function knApplyTableEffects(
     else if (effect.kind === 'conditionRemove') {
       next = { ...next, status: { ...next.status, conditions: next.status.conditions.filter(entry => !effect.keys.includes(entry.key)) } }
     } else if (effect.kind === 'temporary') next = { ...next, status: knGainTemporary(next.status, effect.vital, roll.total) }
-    else if (effect.kind === 'tensionReset') next = { ...next, run: { ...next.run, tensionDie: KN_TENSION_START_DIE } }
+    else if (effect.kind === 'tensionReset') next = { ...next, run: { ...next.run, tensionDie: knTensionStart(next.run) } }
     else if (effect.kind === 'lairDown') {
       const domain = knCurrentDomain(next.run)
       if (!domain.lairFound) {

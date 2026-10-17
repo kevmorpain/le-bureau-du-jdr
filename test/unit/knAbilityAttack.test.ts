@@ -16,6 +16,7 @@ import {
 } from '../../shared/ker-nethalas/abilityAttack'
 import { knAttackOptions } from '../../shared/ker-nethalas/equipment'
 import { KN_NO_DEFENSE, knCombatExchange, knRollDamagePool } from '../../shared/ker-nethalas/combat'
+import { knReactionPenalty } from '../../shared/ker-nethalas/combatState'
 import { knAbilityIsUsable } from '../../shared/ker-nethalas/masteryEffects'
 import { knMasteryAbilitySchema, type KnAbilityAttack, type KnMastery } from '../../shared/ker-nethalas/masteries'
 import { emptyKnRun, knMarkCreature, knSetCombatDefense, knStartCombat } from '../../shared/ker-nethalas/run'
@@ -211,8 +212,8 @@ describe('effets permanents, gravure et effet à la mort', () => {
   it('les effets permanents des aptitudes débloquées s\'additionnent', () => {
     const effects = knPermanentEffects([permanentMastery({ resistant: ['slashing'], immune: ['bludgeoning'], damageType: 'psychic', healOnDamage: 1 })], entries(2))
 
-    expect(effects).toEqual({ resistant: ['slashing'], immune: ['bludgeoning'], restored: [], damageType: 'psychic', healOnDamage: 1 })
-    expect(knPermanentEffects([permanentMastery({ healOnDamage: 1 }, 3)], entries(2))).toEqual({ resistant: [], immune: [], restored: [], healOnDamage: 0 })
+    expect(effects).toEqual({ resistant: ['slashing'], immune: ['bludgeoning'], restored: [], damageType: 'psychic', healOnDamage: 1, immuneConditions: [], trapAvoid: [], scavengeFinds: [], minionBonuses: [] })
+    expect(knPermanentEffects([permanentMastery({ healOnDamage: 1 }, 3)], entries(2))).toEqual({ resistant: [], immune: [], restored: [], healOnDamage: 0, immuneConditions: [], trapAvoid: [], scavengeFinds: [], minionBonuses: [] })
   })
 
   it('un effet à la mort se retrouve dans le plan', () => {
@@ -237,5 +238,47 @@ describe('effets permanents, gravure et effet à la mort', () => {
     const [option] = knAttackOptions([{ ...sword, engraved: [...sword.engraved] }])
 
     expect(option).toMatchObject({ pool: 'D6', typed: [{ count: 1, sides: 10, bonus: 0, type: 'arcane' }] })
+  })
+})
+
+describe('autres effets permanents', () => {
+  const base = fakeMastery('alpha')
+  const mastery = (tier: number, permanent: Record<string, unknown>): KnMastery =>
+    ({ ...base, abilities: base.abilities.map(ability => ability.tier === tier ? { ...ability, permanent } : ability) }) as KnMastery
+
+  it('les conditions, la pénalité de Réaction, la survie, le Dé de Tension et les pièges se lisent', () => {
+    const effects = knPermanentEffects([
+      mastery(1, { immuneConditions: ['frightened', 'poisoned'], reactionPenalty: 10 }),
+    ], entries(1))
+    expect(effects).toMatchObject({ immuneConditions: ['frightened', 'poisoned'], reactionPenalty: 10 })
+
+    const survive = knPermanentEffects([mastery(2, { surviveOnce: true, tensionStart: 10, trapAvoid: { skill: 'acrobatics', amount: 20 } })], entries(2))
+    expect(survive).toMatchObject({ surviveKey: 'alpha:2', tensionStart: 10, trapAvoid: [{ skill: 'acrobatics', amount: 20 }] })
+    expect(knPermanentEffects([mastery(2, { surviveOnce: true })], entries(1)).surviveKey).toBeUndefined()
+  })
+
+  it('la pénalité de Réaction réduite s\'applique à chaque Réaction consécutive', () => {
+    expect([0, 1, 3].map(count => knReactionPenalty(count))).toEqual([0, 20, 60])
+    expect([0, 1, 3].map(count => knReactionPenalty(count, 10))).toEqual([0, 10, 30])
+  })
+})
+
+describe('Fouille et sbires', () => {
+  const base = fakeMastery('alpha')
+  const both: KnMastery = {
+    ...base,
+    abilities: base.abilities.map((ability) => {
+      if (ability.tier === 1) return { ...ability, permanent: { scavengeFinds: [{ key: 'cookingIngredients', count: 1 }] } }
+      if (ability.tier === 2) return { ...ability, permanent: { minionBonus: { creatureType: 'undead', dice: d(1, 6), type: 'necrotic', health: 2 } } }
+      return ability
+    }) as KnMastery['abilities'],
+  }
+
+  it('les trouvailles de Fouille et le bonus des sbires se lisent', () => {
+    const effects = knPermanentEffects([both], entries(2))
+
+    expect(effects.scavengeFinds).toEqual([{ key: 'cookingIngredients', count: 1 }])
+    expect(effects.minionBonuses).toEqual([{ creatureType: 'undead', dice: d(1, 6), type: 'necrotic', health: 2 }])
+    expect(knPermanentEffects([both], entries(1)).minionBonuses).toEqual([])
   })
 })
