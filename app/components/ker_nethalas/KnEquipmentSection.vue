@@ -29,35 +29,50 @@
         :resolved
       />
 
-      <UFormField label="Notes sur les armes">
-        <UTextarea
-          v-model="character.weapons"
-          :rows="5"
-          :maxlength="5000"
-          class="w-full"
-        />
-      </UFormField>
+      <div class="@xl:col-span-2">
+        <UButton
+          :icon="notesOpen ? 'i-heroicons:chevron-up' : 'i-heroicons:chevron-down'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :aria-expanded="notesOpen"
+          @click="notesOpen = !notesOpen"
+        >
+          Notes libres sur les armes, les affinités et l'équipement
+        </UButton>
+      </div>
 
-      <UFormField label="Résistances, vulnérabilités, etc. aux types de dégâts">
-        <UTextarea
-          v-model="character.damageAffinities"
-          :rows="5"
-          :maxlength="5000"
-          class="w-full"
-        />
-      </UFormField>
+      <template v-if="notesOpen">
+        <UFormField label="Notes sur les armes">
+          <UTextarea
+            v-model="character.weapons"
+            :rows="5"
+            :maxlength="5000"
+            class="w-full"
+          />
+        </UFormField>
 
-      <UFormField
-        label="Notes sur l'équipement"
-        class="@xl:col-span-2"
-      >
-        <UTextarea
-          v-model="character.equipment"
-          :rows="8"
-          :maxlength="10000"
-          class="w-full"
-        />
-      </UFormField>
+        <UFormField label="Résistances, vulnérabilités, etc. aux types de dégâts">
+          <UTextarea
+            v-model="character.damageAffinities"
+            :rows="5"
+            :maxlength="5000"
+            class="w-full"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Notes sur l'équipement"
+          class="@xl:col-span-2"
+        >
+          <UTextarea
+            v-model="character.equipment"
+            :rows="8"
+            :maxlength="10000"
+            class="w-full"
+          />
+        </UFormField>
+      </template>
     </div>
   </KnCard>
 </template>
@@ -80,6 +95,8 @@ const props = defineProps<{
 }>()
 
 const character = defineModel<KnCharacter>('character', { required: true })
+
+const notesOpen = ref(false)
 
 const amuletLabel = computed(() => {
   const key = character.value.amulets.equipped

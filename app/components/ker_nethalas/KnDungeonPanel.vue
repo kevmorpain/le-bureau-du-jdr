@@ -7,112 +7,130 @@
     </template>
 
     <div class="space-y-6">
-      <div class="space-y-3">
-        <UFormField label="Domaine">
-          <USelect
-            :model-value="run.current"
-            :items="domainItems"
-            class="w-full"
-            @update:model-value="switchDomain"
-          />
-        </UFormField>
-        <div class="grid items-end gap-3 @sm:grid-cols-[1fr_auto]">
-          <UFormField label="Nom du Domaine">
-            <UInput
-              :model-value="domain.name"
-              :maxlength="100"
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        <span class="font-medium">{{ domain.name }}</span>
+        <span class="text-muted">{{ settingsSummary }}</span>
+        <UButton
+          class="ml-auto"
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          :icon="settingsOpen ? 'i-heroicons:chevron-up' : 'i-heroicons:cog-6-tooth'"
+          :aria-expanded="settingsOpen"
+          @click="settingsOpen = !settingsOpen"
+        >
+          Réglages du Domaine
+        </UButton>
+      </div>
+
+      <template v-if="settingsOpen">
+        <div class="space-y-3">
+          <UFormField label="Domaine">
+            <USelect
+              :model-value="run.current"
+              :items="domainItems"
               class="w-full"
-              @update:model-value="rename"
+              @update:model-value="switchDomain"
             />
           </UFormField>
-          <UButton
-            icon="i-heroicons:plus"
-            variant="soft"
-            :disabled="run.domains.length >= KN_RUN_BOUNDS.domains"
-            @click="newDomain"
-          >
-            Nouveau Domaine
-          </UButton>
+          <div class="grid items-end gap-3 @sm:grid-cols-[1fr_auto]">
+            <UFormField label="Nom du Domaine">
+              <UInput
+                :model-value="domain.name"
+                :maxlength="100"
+                class="w-full"
+                @update:model-value="rename"
+              />
+            </UFormField>
+            <UButton
+              icon="i-heroicons:plus"
+              variant="soft"
+              :disabled="run.domains.length >= KN_RUN_BOUNDS.domains"
+              @click="newDomain"
+            >
+              Nouveau Domaine
+            </UButton>
+          </div>
         </div>
-      </div>
 
-      <div class="grid gap-3 @sm:grid-cols-[8rem_1fr]">
-        <KnNumberField
-          v-model="domain.rooms"
-          label="Salles explorées"
-          :min="KN_RUN_BOUNDS.rooms.min"
-          :max="KN_RUN_BOUNDS.rooms.max"
-        />
-        <div class="flex flex-wrap items-end gap-3">
+        <div class="grid gap-3 @sm:grid-cols-[8rem_1fr]">
           <KnNumberField
-            v-model="character.run.lightRemaining"
-            label="Lumière restante (salles)"
-            :min="KN_RUN_BOUNDS.light.min"
-            :max="KN_RUN_BOUNDS.light.max"
-            class="w-40"
+            v-model="domain.rooms"
+            label="Salles explorées"
+            :min="KN_RUN_BOUNDS.rooms.min"
+            :max="KN_RUN_BOUNDS.rooms.max"
           />
-          <UButton
-            variant="soft"
-            @click="character.run.lightRemaining = KN_LIGHT_ROOMS"
-          >
-            Nouvelle source ({{ KN_LIGHT_ROOMS }})
-          </UButton>
-          <UBadge
-            v-if="run.lightRemaining === 0"
-            color="warning"
-            variant="subtle"
-            label="Sans lumière"
-          />
+          <div class="flex flex-wrap items-end gap-3">
+            <KnNumberField
+              v-model="character.run.lightRemaining"
+              label="Lumière restante (salles)"
+              :min="KN_RUN_BOUNDS.light.min"
+              :max="KN_RUN_BOUNDS.light.max"
+              class="w-40"
+            />
+            <UButton
+              variant="soft"
+              @click="character.run.lightRemaining = KN_LIGHT_ROOMS"
+            >
+              Nouvelle source ({{ KN_LIGHT_ROOMS }})
+            </UButton>
+            <UBadge
+              v-if="run.lightRemaining === 0"
+              color="warning"
+              variant="subtle"
+              label="Sans lumière"
+            />
+          </div>
         </div>
-      </div>
 
-      <div class="grid gap-3 @2xl:grid-cols-3">
-        <UFormField label="Dé de Tension">
-          <USelect
-            :model-value="run.tensionDie"
-            :items="dieItems"
-            class="w-full"
-            @update:model-value="value => setDie('tension', value)"
-          />
-        </UFormField>
-        <UFormField label="Dé de Lair">
-          <div class="flex items-center gap-3">
+        <div class="grid gap-3 @2xl:grid-cols-3">
+          <UFormField label="Dé de Tension">
             <USelect
-              :model-value="domain.lairDie"
+              :model-value="run.tensionDie"
               :items="dieItems"
-              :disabled="domain.lairFound"
-              class="flex-1"
-              @update:model-value="value => setDie('lair', value)"
+              class="w-full"
+              @update:model-value="value => setDie('tension', value)"
             />
-            <UCheckbox
-              v-model="domain.lairFound"
-              label="Trouvé"
-            />
-          </div>
-        </UFormField>
-        <UFormField label="Dé de Sortie">
-          <div class="flex items-center gap-3">
-            <USelect
-              :model-value="domain.exitDie"
-              :items="dieItems"
-              :disabled="domain.exitFound"
-              class="flex-1"
-              @update:model-value="value => setDie('exit', value)"
-            />
-            <UCheckbox
-              v-model="domain.exitFound"
-              label="Trouvée"
-            />
-          </div>
-        </UFormField>
-      </div>
+          </UFormField>
+          <UFormField label="Dé de Lair">
+            <div class="flex items-center gap-3">
+              <USelect
+                :model-value="domain.lairDie"
+                :items="dieItems"
+                :disabled="domain.lairFound"
+                class="flex-1"
+                @update:model-value="value => setDie('lair', value)"
+              />
+              <UCheckbox
+                v-model="domain.lairFound"
+                label="Trouvé"
+              />
+            </div>
+          </UFormField>
+          <UFormField label="Dé de Sortie">
+            <div class="flex items-center gap-3">
+              <USelect
+                :model-value="domain.exitDie"
+                :items="dieItems"
+                :disabled="domain.exitFound"
+                class="flex-1"
+                @update:model-value="value => setDie('exit', value)"
+              />
+              <UCheckbox
+                v-model="domain.exitFound"
+                label="Trouvée"
+              />
+            </div>
+          </UFormField>
+        </div>
 
-      <p
-        v-if="!domain.lairFound && domain.rooms >= KN_OPTIONAL_LAIR_ROOMS"
-        class="text-sm text-warning"
-      >
-        Règle optionnelle : {{ KN_OPTIONAL_LAIR_ROOMS }} salles explorées sans avoir trouvé le Lair, la salle suivante le contient.
-      </p>
+        <p
+          v-if="!domain.lairFound && domain.rooms >= KN_OPTIONAL_LAIR_ROOMS"
+          class="text-sm text-warning"
+        >
+          Règle optionnelle : {{ KN_OPTIONAL_LAIR_ROOMS }} salles explorées sans avoir trouvé le Lair, la salle suivante le contient.
+        </p>
+      </template>
 
       <ul
         v-if="!domain.overseer"
@@ -126,17 +144,62 @@
           @roll="drawOverseer"
         />
       </ul>
-      <KnCreatureCard
+      <div
         v-else
-        :creature="overseer.creature"
-        :name="overseer.name"
-        :level="character.level"
-        :source="`Overseer du Domaine · D10 ${domain.overseer.roll}`"
-        :can-engage="!run.combat"
-        @engage="creature => engageAndShow(creature, true)"
-      />
+        class="space-y-2 rounded-md border border-default p-3"
+      >
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-semibold">Overseer : {{ overseer.name }}</span>
+          <span class="text-xs text-muted">D10 {{ domain.overseer.roll }}{{ domain.overseerDefeated ? ' · vaincu' : '' }}</span>
+          <div class="ml-auto flex gap-2">
+            <UButton
+              v-if="overseer.creature && !run.combat"
+              size="xs"
+              icon="i-heroicons:bolt"
+              @click="engageAndShow(overseer.creature, true)"
+            >
+              Engager le combat
+            </UButton>
+            <UButton
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              :aria-expanded="overseerOpen"
+              @click="overseerOpen = !overseerOpen"
+            >
+              {{ overseerOpen ? 'Masquer la fiche' : 'Voir la fiche' }}
+            </UButton>
+          </div>
+        </div>
+        <div
+          v-if="domain.overseerInfluences.length"
+          class="flex flex-wrap gap-1.5"
+        >
+          <UBadge
+            v-for="(key, index) in domain.overseerInfluences"
+            :key="index"
+            :label="$t(`ker_nethalas.overseer.${key}`).split(' :')[0]"
+            :title="$t(`ker_nethalas.overseer.${key}`)"
+            color="error"
+            variant="subtle"
+            size="md"
+          />
+        </div>
+        <KnCreatureCard
+          v-if="overseerOpen"
+          :creature="overseer.creature"
+          :name="overseer.name"
+          :level="character.level"
+          :source="`Overseer du Domaine · D10 ${domain.overseer.roll}`"
+          :can-engage="!run.combat"
+          @engage="creature => engageAndShow(creature, true)"
+        />
+      </div>
 
-      <KnDomainEditor v-model:domain="character.run.domains[character.run.current]" />
+      <KnDomainEditor
+        v-if="settingsOpen"
+        v-model:domain="character.run.domains[character.run.current]"
+      />
 
       <div class="space-y-3">
         <div class="flex flex-wrap gap-2">
@@ -267,6 +330,15 @@ const KIND_LABELS: Record<KnVisitKind, string> = { room: 'Salle', corridor: 'Cou
 
 const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))
+const settingsOpen = ref(false)
+const overseerOpen = ref(false)
+
+const settingsSummary = computed(() => {
+  const d = domain.value
+  const dice = [`Tension D${run.value.tensionDie}`, d.lairFound ? 'Lair trouvé' : `Lair D${d.lairDie}`, d.exitFound ? 'Sortie trouvée' : `Sortie D${d.exitDie}`]
+  return `${d.rooms} salle${d.rooms > 1 ? 's' : ''} · lumière ${run.value.lightRemaining} · ${dice.join(' · ')}`
+})
+
 const entriesNewestFirst = computed(() => domain.value.visits.map((visit, index) => ({ visit, index })).reverse())
 const lastIndex = computed(() => domain.value.visits.length - 1)
 const location = computed(() => knLocationIndex(domain.value))

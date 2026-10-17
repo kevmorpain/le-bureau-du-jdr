@@ -17,61 +17,38 @@
 
     <div
       v-else
-      class="space-y-6"
+      class="space-y-4"
     >
       <article
         v-for="pick in active"
         :key="pick.key"
-        class="space-y-3 rounded-md border border-default p-3"
+        class="space-y-2 rounded-md border border-default p-3"
       >
         <template v-if="find(pick.key)">
-          <header class="flex flex-wrap items-center gap-3">
-            <h3 class="flex-1 text-lg font-semibold">
-              {{ find(pick.key)!.name }}
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+              :aria-expanded="isOpen(pick.key)"
+              :aria-label="`${find(pick.key)!.name} : détails`"
+              @click="toggle(pick.key)"
+            >
+              <UIcon
+                :name="isOpen(pick.key) ? 'i-heroicons:chevron-down' : 'i-heroicons:chevron-right'"
+                class="size-4 shrink-0 text-muted"
+              />
+              <span class="truncate font-semibold">{{ find(pick.key)!.name }}</span>
               <UBadge
                 v-if="reached(pick)"
                 label="Atteint"
                 color="success"
                 variant="subtle"
                 size="md"
-                class="ml-2 align-middle"
               />
-            </h3>
+            </button>
+            <span class="text-sm tabular-nums text-muted">{{ pick.progress }} / {{ find(pick.key)!.target }}</span>
             <UButton
-              size="sm"
-              :disabled="!reached(pick)"
-              @click="claim(pick.key)"
-            >
-              Récupérer la récompense
-            </UButton>
-            <UButton
-              v-if="pick.progress === 0"
-              size="sm"
-              variant="ghost"
-              color="neutral"
-              :aria-label="`Retirer l'objectif ${find(pick.key)!.name}`"
-              @click="drop(pick.key)"
-            >
-              Retirer
-            </UButton>
-          </header>
-
-          <p class="text-sm">
-            {{ find(pick.key)!.objective }}
-          </p>
-
-          <div class="flex flex-wrap items-end gap-3">
-            <KnNumberField
-              :model-value="pick.progress"
-              label="Progrès"
-              :aria-label="`Progrès : ${find(pick.key)!.name}`"
-              :min="KN_GOAL_BOUNDS.progress.min"
-              :max="KN_GOAL_BOUNDS.progress.max"
-              class="w-32"
-              @update:model-value="setProgress(pick.key, $event)"
-            />
-            <UButton
-              size="sm"
+              size="xs"
               variant="soft"
               :aria-label="`Ajouter 1 au progrès : ${find(pick.key)!.name}`"
               @click="setProgress(pick.key, pick.progress + 1)"
@@ -79,7 +56,7 @@
               +1
             </UButton>
             <UButton
-              size="sm"
+              size="xs"
               variant="soft"
               color="neutral"
               :aria-label="`Retirer 1 au progrès : ${find(pick.key)!.name}`"
@@ -87,9 +64,13 @@
             >
               −1
             </UButton>
-            <span class="pb-1.5 text-sm tabular-nums">
-              {{ pick.progress }} / {{ find(pick.key)!.target }}
-            </span>
+            <UButton
+              v-if="reached(pick)"
+              size="xs"
+              @click="claim(pick.key)"
+            >
+              Récupérer la récompense
+            </UButton>
           </div>
 
           <UProgress
@@ -98,9 +79,40 @@
             size="sm"
           />
 
-          <p class="rounded-md bg-elevated p-2 text-sm">
-            <span class="font-medium">Récompense.</span> {{ find(pick.key)!.reward }}
-          </p>
+          <div
+            v-if="isOpen(pick.key)"
+            class="space-y-3 pt-1"
+          >
+            <p class="text-sm">
+              {{ find(pick.key)!.objective }}
+            </p>
+
+            <p class="rounded-md bg-elevated p-2 text-sm">
+              <span class="font-medium">Récompense.</span> {{ find(pick.key)!.reward }}
+            </p>
+
+            <div class="flex flex-wrap items-end gap-3">
+              <KnNumberField
+                :model-value="pick.progress"
+                label="Progrès"
+                :aria-label="`Progrès : ${find(pick.key)!.name}`"
+                :min="KN_GOAL_BOUNDS.progress.min"
+                :max="KN_GOAL_BOUNDS.progress.max"
+                class="w-32"
+                @update:model-value="setProgress(pick.key, $event)"
+              />
+              <UButton
+                v-if="pick.progress === 0"
+                size="sm"
+                variant="ghost"
+                color="neutral"
+                :aria-label="`Retirer l'objectif ${find(pick.key)!.name}`"
+                @click="drop(pick.key)"
+              >
+                Retirer l'objectif
+              </UButton>
+            </div>
+          </div>
         </template>
         <p
           v-else
@@ -193,6 +205,12 @@ const find = (key: string) => props.goals?.find(goal => goal.key === key)
 
 const active = computed(() => character.value.goalPicks.filter(pick => !pick.claimed))
 const claimed = computed(() => character.value.goalPicks.filter(pick => pick.claimed))
+
+const opened = ref<string[]>([])
+const isOpen = (key: string) => opened.value.includes(key)
+const toggle = (key: string) => {
+  opened.value = isOpen(key) ? opened.value.filter(entry => entry !== key) : [...opened.value, key]
+}
 
 const reached = (pick: KnGoalPick) => {
   const goal = find(pick.key)
