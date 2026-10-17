@@ -13,9 +13,10 @@ export const knSustainedKey = (masteryKey: string, tier: number) => `${masteryKe
 
 export const knAbilityIsPassive = (ability: Pick<KnMasteryAbility, 'action'>) => ability.action.startsWith('Passif')
 
-// Un passif n'a un bouton que s'il fait quelque chose de mesurable : un effet sur soi, ou un usage limité à marquer.
-export const knAbilityIsUsable = (ability: Pick<KnMasteryAbility, 'action' | 'self' | 'limit'>) =>
-  !knAbilityIsPassive(ability) || !!ability.self?.length || !!ability.limit
+// Un passif n'a un bouton que s'il fait quelque chose de mesurable : un effet sur soi, ou un usage limité à marquer. Une
+// aptitude qui change l'attaque se choisit dans l'attaque, sauf si elle est Maintenue : celle-là s'allume.
+export const knAbilityIsUsable = (ability: Pick<KnMasteryAbility, 'action' | 'self' | 'limit'> & Partial<Pick<KnMasteryAbility, 'attack' | 'sustained'>>) =>
+  (!knAbilityIsPassive(ability) || !!ability.self?.length || !!ability.limit) && (!ability.attack || !!ability.sustained)
 
 export const knUseLimitLabel: Record<KnUseLimit, string> = {
   combat: 'une fois par combat',

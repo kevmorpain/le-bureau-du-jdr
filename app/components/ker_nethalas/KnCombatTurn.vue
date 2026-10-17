@@ -113,8 +113,14 @@
         label="Attaque de la créature"
         :check="result.check"
       />
+      <p
+        v-if="result.undefended"
+        class="text-sm"
+      >
+        <span class="text-muted">Défense du survivant :</span> impossible (aptitude).
+      </p>
       <KnCheckLine
-        v-if="result.defense"
+        v-else-if="result.defense"
         :label="`${isTest(result.action) ? 'Test' : 'Défense'} ${onSurvivor ? 'du survivant' : `de ${victimName}`}`"
         :check="result.defense"
       />

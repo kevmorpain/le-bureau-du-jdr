@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { KN_PROVISION_KEYS } from './camp'
+import { KN_DAMAGE_TYPES } from './catalog/damageTypes'
 import { knDiceSchema } from './dice'
 import { KN_VITAL_KEYS } from './effects'
 import { KN_STATUS_BOUNDS, KN_USE_LIMITS, knCustomEntrySchema } from './status'
@@ -50,6 +51,35 @@ export const knCampActivitySchema = z.object({
 
 export type KnCampActivity = z.infer<typeof knCampActivitySchema>
 
+const knTypedDiceSchema = z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES).optional() })
+
+// Ce qu'une aptitude change à l'attaque du survivant. Une aptitude non Maintenue se coche dans l'attaque : elle se paie et
+// s'applique à celle qu'on lance. Une aptitude Maintenue s'applique à toutes les attaques tant qu'elle est allumée.
+export const knAbilityAttackSchema = z.object({
+  // Bonus ou malus au jet d'attaque.
+  bonus: boundedInt({ min: -99, max: 99 }).optional(),
+  // Dés et bonus ajoutés à la réserve de dégâts, avec leur type quand il diffère de celui de l'arme.
+  dice: z.array(knTypedDiceSchema).max(3).optional(),
+  // Tient lieu de réserve de l'arme.
+  pool: z.array(knTypedDiceSchema).max(3).optional(),
+  // Une touche est un Coup critique.
+  critical: z.boolean().optional(),
+  // La cible ne se défend pas.
+  undefendable: z.boolean().optional(),
+  // Une seconde attaque gratuite contre la même cible si celle-ci touche ; `dice` en remplace la réserve.
+  followUp: z.object({ dice: z.array(knTypedDiceSchema).max(3).optional() }).optional(),
+  // Une attaque contre chaque adversaire.
+  allTargets: z.boolean().optional(),
+  // Marque une cible : ses attaques suivantes contre elle reçoivent `bonus` et `dice` (une fois par adversaire).
+  mark: z.boolean().optional(),
+  // Bonus ou malus au prochain test défensif du survivant.
+  afterDefense: boundedInt({ min: -99, max: 99 }).optional(),
+  // Le survivant ne se défend plus jusqu'à sa prochaine attaque.
+  noDefense: z.boolean().optional(),
+})
+
+export type KnAbilityAttack = z.infer<typeof knAbilityAttackSchema>
+
 export const knMasteryAbilitySchema = z.object({
   tier: boundedInt({ min: 1, max: KN_MASTERY_TIERS }),
   name: z.string().trim().min(1).max(100),
@@ -72,6 +102,8 @@ export const knMasteryAbilitySchema = z.object({
   campCheck: knCampCheckSchema.optional(),
   // Clé de la fiche de sbire (rôle `minion` du bestiaire) que l'aptitude invoque.
   summons: slug.optional(),
+  // Ce que l'aptitude change à l'attaque du survivant.
+  attack: knAbilityAttackSchema.optional(),
   text: z.string().trim().min(1).max(2000),
 })
 
