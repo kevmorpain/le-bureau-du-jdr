@@ -1,12 +1,14 @@
 import { SpellComponent } from '~~/server/db/schema/spells'
 
 const filters = reactive<{
+  name: string
   levels: number[]
   concentration: string
   ritual: string
   castingTime: string[]
   components: SpellComponent[]
 }>({
+  name: '',
   levels: [],
   concentration: 'both',
   ritual: 'both',

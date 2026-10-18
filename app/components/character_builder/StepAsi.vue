@@ -4,7 +4,7 @@
       <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Carac. / Don</h2>
       <p class="text-sm text-muted">
         À chaque palier d'ASI, vous pouvez augmenter vos caractéristiques
-        (+2 max par palier, plafond 20) <strong>ou</strong> prendre un don.
+        (+2 max par palier, plafond {{ ABILITY_SCORE_MAX }}) <strong>ou</strong> prendre un don.
       </p>
     </header>
 
@@ -109,7 +109,7 @@
                 @click="adjust(lvl, ab, +1)"
               >+</button>
             </div>
-            <div v-if="finalAfterAsi(lvl, ab) >= 20" class="text-xs text-red-400 text-center mt-1">max 20</div>
+            <div v-if="finalAfterAsi(lvl, ab) >= ABILITY_SCORE_MAX" class="text-xs text-red-400 text-center mt-1">max {{ ABILITY_SCORE_MAX }}</div>
           </div>
         </div>
       </div>
@@ -224,6 +224,7 @@
 
 <script lang="ts" setup>
 import { ABILITIES, ABILITY_SHORT, ABILITY_LABELS, type AbilityKey } from '~/data/character-builder'
+import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
 const {
@@ -313,18 +314,18 @@ function remainingForLevel(lvl: number): number {
   return 2 - total
 }
 
-// Score final (ASI de ce palier + des autres + dons), plafonné à 20 : sert à griser les boutons +.
+// Score final (ASI de ce palier + des autres + dons), plafonné : sert à griser les boutons +.
 function finalAfterAsi(lvl: number, ab: AbilityKey): number {
   const base = baseScore(ab)
   const otherAsi = (asiBonusByAbility.value[ab] ?? 0) - getBonus(lvl, ab)
   const feat = featBonusByAbility.value[ab] ?? 0
-  return Math.min(20, base + otherAsi + getBonus(lvl, ab) + feat)
+  return Math.min(ABILITY_SCORE_MAX, base + otherAsi + getBonus(lvl, ab) + feat)
 }
 
 function canIncrease(lvl: number, ab: AbilityKey): boolean {
   if (remainingForLevel(lvl) <= 0) return false
   if (getBonus(lvl, ab) >= 2) return false
-  if (finalAfterAsi(lvl, ab) >= 20) return false
+  if (finalAfterAsi(lvl, ab) >= ABILITY_SCORE_MAX) return false
   return true
 }
 

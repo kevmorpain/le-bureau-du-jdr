@@ -14,20 +14,27 @@
       </UButton>
     </div>
 
+    <UInput
+      v-model="search"
+      icon="i-heroicons:magnifying-glass"
+      placeholder="Rechercher un objet"
+      size="sm"
+      class="w-full"
+    />
+
     <UTabs
       v-model="activeTab"
       :items="tabItems"
       size="sm"
     />
 
-    <!-- Cap d'harmonisation (règle 2014 : max 3) — avertissement non bloquant. -->
     <UAlert
-      v-if="attunedCount > 3"
+      v-if="attunedCount > ATTUNEMENT_LIMIT"
       color="warning"
       variant="subtle"
       icon="i-heroicons:exclamation-triangle"
       :title="`${attunedCount} objets harmonisés`"
-      description="La règle 2014 limite l'harmonisation à 3 objets à la fois."
+      :description="`La règle 2014 limite l'harmonisation à ${ATTUNEMENT_LIMIT} objets à la fois.`"
     />
 
     <template v-if="activeTab === 'weapons'">
@@ -35,7 +42,7 @@
         v-if="weapons.length === 0"
         class="text-sm text-muted text-center py-4"
       >
-        Aucune arme dans l'inventaire
+        {{ emptyText('weapons') }}
       </div>
       <ul
         v-else
@@ -275,7 +282,7 @@
         v-if="armors.length === 0"
         class="text-sm text-muted text-center py-4"
       >
-        Aucune armure dans l'inventaire
+        {{ emptyText('armors') }}
       </div>
       <ul
         v-else
@@ -379,7 +386,7 @@
         v-if="equipmentItems.length === 0"
         class="text-sm text-muted text-center py-4"
       >
-        Aucun équipement dans l'inventaire
+        {{ emptyText('equipment') }}
       </div>
       <ul
         v-else
@@ -417,6 +424,7 @@
 
             <MagicItemMeta
               :entry="entry"
+              :attunement-full="attunementFull"
               @toggle-attune="toggleAttuned"
             />
 
@@ -488,7 +496,7 @@
         v-if="toolItems.length === 0"
         class="text-sm text-muted text-center py-4"
       >
-        Aucun outil dans l'inventaire
+        {{ emptyText('tools') }}
       </div>
       <ul
         v-else
@@ -524,6 +532,7 @@
             />
             <MagicItemMeta
               :entry="entry"
+              :attunement-full="attunementFull"
               @toggle-attune="toggleAttuned"
             />
             <UBadge
@@ -607,6 +616,8 @@ import type {
   InventoryItem,
 } from '~/composables/character/useCharacterInventory'
 import type { WeaponProperties, ArmorProperties, ToolProperties } from '~~/server/db/schema/items'
+import { ATTUNEMENT_LIMIT, canAttune } from '~~/shared/rules/attunement'
+import { matchesSearch } from '~~/shared/utils/search'
 import { toolTypeLabels, weaponPropertyLabels, weaponPropertyTooltips } from '~~/shared/utils/item'
 import type { RollFn } from '~/composables/useDiceRoller'
 
@@ -709,18 +720,26 @@ const tabItems = computed(() => [
   { label: `Outils ${toolItems.value.length ? `(${toolItems.value.length})` : ''}`, value: 'tools' },
 ])
 
-const weapons = computed(() =>
-  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'weapon'),
-)
-const armors = computed(() =>
-  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'armor'),
-)
-const equipmentItems = computed(() =>
-  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'equipment'),
-)
-const toolItems = computed(() =>
-  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'tool'),
-)
+const search = ref('')
+
+const ofType = (itemType: InventoryItem['itemType']) =>
+  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === itemType && matchesSearch(e.item.name, search.value))
+
+const weapons = computed(() => ofType('weapon'))
+const armors = computed(() => ofType('armor'))
+const equipmentItems = computed(() => ofType('equipment'))
+const toolItems = computed(() => ofType('tool'))
+
+const EMPTY_TEXTS = {
+  weapons: 'Aucune arme dans l\'inventaire',
+  armors: 'Aucune armure dans l\'inventaire',
+  equipment: 'Aucun équipement dans l\'inventaire',
+  tools: 'Aucun outil dans l\'inventaire',
+}
+const emptyText = (tab: keyof typeof EMPTY_TEXTS) =>
+  search.value.trim() ? 'Aucun objet ne correspond à la recherche' : EMPTY_TEXTS[tab]
+
+const attunementFull = computed(() => !canAttune(attunedCount.value))
 
 const damageTypeLabels: Record<string, string> = {
   acid: 'acide', bludgeoning: 'contondant', cold: 'froid', fire: 'feu', force: 'force',

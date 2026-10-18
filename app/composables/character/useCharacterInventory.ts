@@ -6,6 +6,7 @@ import { armorClassBonusParts, sumBonusParts, weaponBonusParts, type BonusPart, 
 import { activeItemEffectSources, isItemActive } from '~~/shared/rules/characterEffects'
 import { damageDiceAppliesToWeapon, itemWeaponDamageDice } from '~~/shared/rules/classResources'
 import type { ClassTraits } from '~~/shared/rules/classResources'
+import { canAttune } from '~~/shared/rules/attunement'
 import { pactWeaponBonus, type PactWeaponBonus } from '~~/shared/rules/pactWeapon'
 import type { RollSource } from '~~/shared/rules/rolls'
 import { rangeRollSources, type RangeChoice } from '~~/shared/rules/weaponRange'
@@ -561,14 +562,16 @@ export const useCharacterInventory = (
     return updateEntry(entryId, { equipped: !entry.equipped })
   }
 
+  const attunedCount = computed(() => inventory.value.filter(e => e.attuned).length)
+
+  // La limite se garde ici et dans l'interface, pas sur le serveur : un refus au rejeu resterait en tête de la file
+  // hors-ligne et bloquerait tout ce qui la suit.
   const toggleAttuned = (entryId: number) => {
     const entry = inventory.value.find(e => e.id === entryId)
     if (!entry) return
+    if (!entry.attuned && !canAttune(attunedCount.value)) return
     return updateEntry(entryId, { attuned: !entry.attuned })
   }
-
-  // Nombre d'objets harmonisés (règle 2014 : max 3). Sert d'avertissement non bloquant à l'UI.
-  const attunedCount = computed(() => inventory.value.filter(e => e.attuned).length)
 
   const setUsingTwoHanded = async (entryId: number, value: boolean) => {
     await updateEntry(entryId, { usingTwoHanded: value })

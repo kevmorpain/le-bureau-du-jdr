@@ -124,13 +124,13 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 
 | Code | Suivi | Sujet |
 |---|---|---|
-| **O1** | [#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158) | Harmonisation : limite de 3 objets liés non bloquante |
+| **O1** | ✅ résolu ([#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158), lot 9) | Harmonisation : la limite de 3 objets bloque (`shared/rules/attunement.ts`) — l'interrupteur d'un quatrième objet est grisé et `toggleAttuned` ne fait rien ; on peut toujours en retirer un. Côté fiche seulement : un refus serveur au rejeu resterait en tête de la file hors-ligne ([D25](./decisions.md#d25)). L'alerte ne reste que pour une fiche déjà au-dessus de la limite |
 | **O2** | [#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159) | Poids et prix des objets |
 | **O3** | ✅ résolu ([#160](https://github.com/kevmorpain/le-bureau-du-jdr/issues/160), lot 4) | Pénalité de vitesse des armures lourdes : même règle que R10 (AideDD : seule une Force insuffisante réduit la vitesse) |
-| **O4** | [#161](https://github.com/kevmorpain/le-bureau-du-jdr/issues/161) | Munitions non décomptées |
+| **O4** | [#161](https://github.com/kevmorpain/le-bureau-du-jdr/issues/161) | Munitions non décomptées. Laissée de côté au lot 9 : les tables jouent différemment (munitions comptées ou non), ce serait un réglage de plus dans `shared/rules/preferences.ts` ([D23](./decisions.md#d23)) ; aucune munition n'est seedée |
 | **O5** | ✅ résolu ([#162](https://github.com/kevmorpain/le-bureau-du-jdr/issues/162), lot 9) | Armes lancées et longue portée : une arme de corps à corps à lancer garde son attaque de mêlée et gagne un lancer, qui est une attaque à distance (même caractéristique, bonus « à distance » des effets ; ni Rage, ni Duel, ni dés de critique de mêlée). « Longue portée » et « Ennemi à 1,50 m » sont des choix du joueur par arme (`useWeaponRange`, dans le navigateur) qui nomment un désavantage au jet de tir ou de lancer. **Non porté** : le style Archerie n'est pas appliqué au lancer (règle non vérifiée) ; la portée maximale n'est pas imposée ; les munitions restent à O4 |
 | **O6** | [#163](https://github.com/kevmorpain/le-bureau-du-jdr/issues/163) | Objets magiques à effets actifs (une charge → un effet) |
-| **O7** | ✅ résolu (2026-09-26) ; restes : O7a [#164](https://github.com/kevmorpain/le-bureau-du-jdr/issues/164), O7b [#165](https://github.com/kevmorpain/le-bureau-du-jdr/issues/165) | Caractéristiques : effets d'objets et plafond |
+| **O7** | ✅ résolu (2026-09-26) ; restes : O7a [#164](https://github.com/kevmorpain/le-bureau-du-jdr/issues/164), O7b [#165](https://github.com/kevmorpain/le-bureau-du-jdr/issues/165) (lot 9, en partie) | Caractéristiques : effets d'objets et plafond. **O7b, lot 9** : (3) la lentille de sorts lit désormais les objets et effets temporaires de la fiche (`sheetActiveEffectSources`, aussi lu par le level-up) ; (5) déjà couvert par les PV max dérivés (`hitPointsDerivation.test.ts`, Amulette de santé) ; (2) le plafond du builder et des étapes d'ASI passe par `ABILITY_SCORE_MAX`, **mais le builder ne projette aucun effet de classe** (`useBuilderSheetProjection`) : Champion primitif n'y est jamais appliqué, ce reste n'est pas fait ; (4) l'ordre score fixé / bonus reste non sourcé |
 
 ---
 
@@ -209,7 +209,7 @@ présentation/interaction.
 | **U6** | ✅ résolu ([#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184), lot 9) | Durée en rounds des états (champ du menu « Ajouter un état », décompte au « Nouveau tour », fin signalée) et des effets temporaires (champ « Durée » de l'éditeur). Au-delà de 10 minutes rien ne se décompte : pas d'horloge de jeu, la durée du sort s'affiche et l'arrêt est manuel |
 | **U12** | ✅ résolu ([#238](https://github.com/kevmorpain/le-bureau-du-jdr/issues/238), lot 9) | Compteur de tour : il existait déjà (U5, `useCombatTracker`) — le constat de l'issue était périmé. Ce qui manquait était un consommateur : « Nouveau tour » et « Round suivant » font désormais avancer les durées (S6, U6). « Round précédent » ne les rend pas : corriger se fait dans l'éditeur de l'effet |
 | **U7** | ✅ résolu (2026-10-02) — [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Confirmation avant un repos long et avant la suppression d'un objet (`ConfirmActionModal`) ; l'annulation d'un repos reste sans objet (pas d'historique, U4) |
-| **U8** | [#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186) | Pas de recherche texte (sorts, inventaire) |
+| **U8** | ✅ résolu ([#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186), lot 9) | Recherche par nom, sans casse ni accents (`shared/utils/search.ts`) : inventaire (les quatre onglets, avec leurs effectifs), liste de sorts de la fiche et catalogue `/spells`. Le tri de l'inventaire n'est pas porté |
 | **U9** | ✅ résolu (2026-10-01) | Clé localStorage `armorClass` morte — supprimée de `useCharacterClasses` ([#187](https://github.com/kevmorpain/le-bureau-du-jdr/issues/187)) |
 | **U10** | ✅ résolu (2026-09-15), voir la note plus bas | Montée en puissance des dégâts affichés |
 

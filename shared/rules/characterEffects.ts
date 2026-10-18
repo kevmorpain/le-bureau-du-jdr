@@ -113,3 +113,14 @@ export const activeTemporaryEffectSources = (temporaryEffects: readonly Temporar
 // Le GET de la fiche porte l'inventaire en `{ inventory, item }` ; les effets lisent une entrée à plat.
 export const inventoryEntriesOf = (rows: readonly { inventory: object, item: object | null }[]): InventoryEntryEffects[] =>
   rows.map(row => ({ ...row.inventory, item: row.item }) as InventoryEntryEffects)
+
+export interface ActiveEffectsSheet {
+  inventory?: Parameters<typeof inventoryEntriesOf>[0]
+  temporaryEffects?: readonly TemporaryEffect[]
+}
+
+// Ce que la fiche applique au-delà des capacités : effets des objets actifs et des effets temporaires, lus dans le GET.
+export const sheetActiveEffectSources = (sheet: ActiveEffectsSheet | null | undefined): EffectSource[] => [
+  ...activeItemEffectSources(inventoryEntriesOf(sheet?.inventory ?? [])),
+  ...activeTemporaryEffectSources(sheet?.temporaryEffects ?? []),
+]

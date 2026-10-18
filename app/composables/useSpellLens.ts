@@ -1,5 +1,6 @@
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
+import { sheetActiveEffectSources, type ActiveEffectsSheet } from '~~/shared/rules/characterEffects'
 import { useAbilityEffectInputs } from './useCharacterSheet'
 
 // « Lentille » des pages /spells : jeu de stats éditables, volontairement DÉCOUPLÉ de
@@ -63,6 +64,7 @@ const deriveStatsFromSheet = (sheet: CharacterSheet): LensStats => {
 
     const abilities = useCharacterAbilities(sheetRef, {
       ...useAbilityEffectInputs(sheetRef),
+      activeEffectSources: computed(() => sheetActiveEffectSources(sheet as unknown as ActiveEffectsSheet)),
       proficiencyBonus: classes.proficiencyBonus,
     })
 
