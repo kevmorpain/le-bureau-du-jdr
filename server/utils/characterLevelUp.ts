@@ -5,6 +5,7 @@ import { isPassiveGrant } from '~~/server/utils/features'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { applyMetamagicChanges } from '~~/server/utils/metamagic'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
+import { resolvePactBoonFeatureId } from '~~/server/utils/pactBoon'
 import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { buildCatalog } from '~~/server/utils/catalog'
@@ -355,6 +356,8 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, newLevel)
     : null
 
+  const pactBoonFeatureId = d.pactBoon ? await resolvePactBoonFeatureId(db, cls.id, d.pactBoon) : null
+
   const expertiseProgressionId = d.expertiseSkills?.length
     ? await resolveExpertiseProgressionId(db, cls.id)
     : null
@@ -455,6 +458,12 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .onConflictDoNothing())
     stmts.push(db.insert(schema.characterFeatures)
       .values({ characterSheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
+      .onConflictDoNothing())
+  }
+
+  if (pactBoonFeatureId != null) {
+    stmts.push(db.insert(schema.characterFeatures)
+      .values({ characterSheetId, featureId: pactBoonFeatureId, currentUses: 0 })
       .onConflictDoNothing())
   }
 

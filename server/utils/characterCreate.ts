@@ -4,6 +4,7 @@ import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
+import { resolvePactBoonFeatureId } from '~~/server/utils/pactBoon'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { creationDuplicates } from '~~/server/utils/duplicateProficiencies'
@@ -500,6 +501,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, d.level)
     : null
 
+  const pactBoonFeatureId = d.pactBoon ? await resolvePactBoonFeatureId(db, cls.id, d.pactBoon) : null
+
   const expertiseProgressionId = d.expertiseSkills?.length
     ? await resolveExpertiseProgressionId(db, cls.id)
     : null
@@ -597,6 +600,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }).onConflictDoNothing())
     stmts.push(db.insert(schema.characterFeatures)
       .values({ characterSheetId: sheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
+      .onConflictDoNothing())
+  }
+
+  if (pactBoonFeatureId != null) {
+    stmts.push(db.insert(schema.characterFeatures)
+      .values({ characterSheetId: sheetId, featureId: pactBoonFeatureId, currentUses: 0 })
       .onConflictDoNothing())
   }
 

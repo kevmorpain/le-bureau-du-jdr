@@ -764,6 +764,7 @@ export function useCharacterBuilder() {
         const cls = classData.value
         if (!cls) return false
         if (s.skills.length < cls.skillChoices.count) return false
+        if (needsSubclass.value && !s.subclass) return false
         // Style de combat requis quand le catalogue le rend dû à ce niveau (Guerrier 1, Paladin/Rôdeur 2).
         if (needsFightingStyle.value && !s.fightingStyle) return false
         if (needsExpertise.value && s.expertiseSkills.length < expertiseExpected.value) return false

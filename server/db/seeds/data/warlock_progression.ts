@@ -1,5 +1,6 @@
 import type { FeatureDef, ProgressionDef } from '../lib/seedClass'
 import type { Formula } from '~~/shared/utils/formula'
+import { PACT_BOON_NAMES } from '~~/shared/rules/pactBoon'
 
 /** Nombre d'invocations connues par niveau d'occultiste (PHB 2014). Index = niveau - 1. */
 export const INVOCATIONS_KNOWN: Formula = {
@@ -11,7 +12,7 @@ export const INVOCATIONS_KNOWN: Formula = {
 // Descriptions identiques à celles de la migration 0082, pour que seed et migration convergent.
 export const warlockPactBoonFeatures: FeatureDef[] = [
   {
-    name: 'Pacte de la Chaîne',
+    name: PACT_BOON_NAMES.chain,
     description: 'Vous apprenez le sort Appel de familier et pouvez le lancer en tant que rituel ; votre familier peut prendre une forme spéciale (diablotin, pseudodragon, quasit ou lutin) et attaquer avec sa réaction.',
     featureType: 'class_feature',
     levelRequired: 3,
@@ -22,7 +23,7 @@ export const warlockPactBoonFeatures: FeatureDef[] = [
     effects: [],
   },
   {
-    name: 'Pacte de la Lame',
+    name: PACT_BOON_NAMES.blade,
     description: 'Vous pouvez créer une arme de pacte magique dans votre main ; vous en avez la maîtrise, elle compte comme magique, et vous pouvez la faire apparaître ou disparaître à volonté.',
     featureType: 'class_feature',
     levelRequired: 3,
@@ -33,7 +34,7 @@ export const warlockPactBoonFeatures: FeatureDef[] = [
     effects: [],
   },
   {
-    name: 'Pacte du Tome',
+    name: PACT_BOON_NAMES.tome,
     description: 'Votre patron vous offre le Livre des Ombres : choisissez trois sorts mineurs dans la liste de n\'importe quelle classe, que vous pouvez lancer à volonté tant que vous détenez le livre.',
     featureType: 'class_feature',
     levelRequired: 3,

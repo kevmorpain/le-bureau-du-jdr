@@ -1490,12 +1490,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
     {
       "choices": null,
       "classLevel": null,
-      "feature": "Faveur de pacte",
-      "source": null,
-    },
-    {
-      "choices": null,
-      "classLevel": null,
       "feature": "Incantation occulte",
       "source": null,
     },
@@ -1503,6 +1497,12 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
       "choices": null,
       "classLevel": null,
       "feature": "Manifestations occultes",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Pacte de la Chaîne",
       "source": null,
     },
     {
@@ -1676,12 +1676,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
     {
       "choices": null,
       "classLevel": null,
-      "feature": "Faveur de pacte",
-      "source": null,
-    },
-    {
-      "choices": null,
-      "classLevel": null,
       "feature": "Incantation occulte",
       "source": null,
     },
@@ -1695,6 +1689,12 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
       "choices": null,
       "classLevel": null,
       "feature": "Maître des masques",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Pacte de la Chaîne",
       "source": null,
     },
     {

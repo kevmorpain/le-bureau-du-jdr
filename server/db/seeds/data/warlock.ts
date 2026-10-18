@@ -44,7 +44,8 @@ Emplacements de sorts : vos emplacements de sorts de Magie de pacte se rechargen
 **Pacte de la Lame** : Vous pouvez utiliser votre action pour créer une arme de pacte dans votre main vide. Vous choisissez la forme que prend cette arme de corps à corps chaque fois que vous la créez. Vous possédez la maîtrise de cette arme pendant que vous la tenez. Cette arme est considérée comme magique pour les besoins de vaincre la résistance aux dégâts non magiques.
 
 **Pacte du Tome** : Votre patron vous donne un grimoire appelé Livre des Ombres. Quand vous gagnez ce don, choisissez trois sorts mineurs dans la liste de sorts de n'importe quelle classe. Tant que vous avez ce livre en votre possession, vous pouvez lancer ces sorts mineurs à volonté.`,
-    featureType: 'class_feature' as const,
+    // Owner INVISIBLE du choix : le pacte choisi est matérialisé sur la fiche.
+    featureType: 'choice_carrier' as const,
     levelRequired: 3,
     maxUsesFormula: null,
     actionType: null,

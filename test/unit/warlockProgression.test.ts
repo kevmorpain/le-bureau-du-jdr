@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { createClient } from '@libsql/client'
 import { INVOCATIONS_KNOWN, warlockPactBoonFeatures, warlockProgressionByOwner } from '../../server/db/seeds/data/warlock_progression'
 import { warlockInvocations } from '../../server/db/seeds/data/warlock_invocations'
+import { warlockFeatures } from '../../server/db/seeds/data/warlock'
 import {
   FEATURE_GROUP_RESOLUTION,
   WARLOCK_PACT_BOON_OPTIONS,
@@ -22,6 +23,7 @@ describe('catalogue de choix Occultiste — seed (module propre)', () => {
   it('warlockProgressionByOwner porte exactement le contrat', () => {
     const actual = warlockProgressionByOwner.map(o => ({
       ownerName: o.ownerName,
+      ownerFeatureType: warlockFeatures.find(f => f.name === o.ownerName)?.featureType,
       ownerLevelRequired: o.ownerLevelRequired,
       kind: o.progression.kind,
       count: o.progression.count,

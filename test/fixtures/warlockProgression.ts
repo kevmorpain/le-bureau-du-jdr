@@ -15,6 +15,7 @@ const INVOCATIONS_COUNT: Formula = {
 
 export interface WarlockProgressionContract {
   ownerName: string
+  ownerFeatureType: FeatureType
   ownerLevelRequired: number
   kind: ChoiceKind
   count: Formula
@@ -23,12 +24,12 @@ export interface WarlockProgressionContract {
 }
 
 export const WARLOCK_PROGRESSION_CONTRACT: WarlockProgressionContract[] = [
-  { ownerName: 'Faveur de pacte', ownerLevelRequired: 3, kind: 'pact_boon', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feature_group', group: 'pact_boon' }, replaceable: false },
-  { ownerName: 'Manifestations occultes', ownerLevelRequired: 2, kind: 'invocations', count: INVOCATIONS_COUNT, optionSource: { type: 'feature_group', group: 'invocation' }, replaceable: true },
-  { ownerName: 'Arcanum mystique (niveau 6)', ownerLevelRequired: 11, kind: 'spell', count: { op: 'fixed', value: 1 }, optionSource: { type: 'spells', spellClass: 'warlock', maxLevel: 6 }, replaceable: false },
-  { ownerName: 'Arcanum mystique (niveau 7)', ownerLevelRequired: 13, kind: 'spell', count: { op: 'fixed', value: 1 }, optionSource: { type: 'spells', spellClass: 'warlock', maxLevel: 7 }, replaceable: false },
-  { ownerName: 'Arcanum mystique (niveau 8)', ownerLevelRequired: 15, kind: 'spell', count: { op: 'fixed', value: 1 }, optionSource: { type: 'spells', spellClass: 'warlock', maxLevel: 8 }, replaceable: false },
-  { ownerName: 'Arcanum mystique (niveau 9)', ownerLevelRequired: 17, kind: 'spell', count: { op: 'fixed', value: 1 }, optionSource: { type: 'spells', spellClass: 'warlock', maxLevel: 9 }, replaceable: false },
+  { ownerName: 'Faveur de pacte', ownerFeatureType: 'choice_carrier', ownerLevelRequired: 3, kind: 'pact_boon', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feature_group', group: 'pact_boon' }, replaceable: false },
+  { ownerName: 'Manifestations occultes', ownerFeatureType: 'class_feature', ownerLevelRequired: 2, kind: 'invocations', count: INVOCATIONS_COUNT, optionSource: { type: 'feature_group', group: 'invocation' }, replaceable: true },
+  { ownerName: 'Arcanum mystique (niveau 6)', ownerFeatureType: 'class_feature', ownerLevelRequired: 11, kind: 'spell', count: { op: 'fixed', value: 1 }, optionSource: { type: 'spells', spellClass: 'warlock', maxLevel: 6 }, replaceable: false },
+  { ownerName: 'Arcanum mystique (niveau 7)', ownerFeatureType: 'class_feature', ownerLevelRequired: 13, kind: 'spell', count: { op: 'fixed', value: 1 }, optionSource: { type: 'spells', spellClass: 'warlock', maxLevel: 7 }, replaceable: false },
+  { ownerName: 'Arcanum mystique (niveau 8)', ownerFeatureType: 'class_feature', ownerLevelRequired: 15, kind: 'spell', count: { op: 'fixed', value: 1 }, optionSource: { type: 'spells', spellClass: 'warlock', maxLevel: 8 }, replaceable: false },
+  { ownerName: 'Arcanum mystique (niveau 9)', ownerFeatureType: 'class_feature', ownerLevelRequired: 17, kind: 'spell', count: { op: 'fixed', value: 1 }, optionSource: { type: 'spells', spellClass: 'warlock', maxLevel: 9 }, replaceable: false },
 ]
 
 export interface PactBoonOptionContract {
