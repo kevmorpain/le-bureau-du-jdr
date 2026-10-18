@@ -143,6 +143,8 @@ export const knMasteryAbilitySchema = z.object({
   }).optional(),
   // Modificateurs posés à l'usage, jusqu'à la fin du combat (échange de compétence contre des points temporaires, par exemple).
   combatModifier: knMasteryEffectsSchema.optional(),
+  // Projette l'esprit : jusqu'à ce nombre de pièces à venir se pressentent (usage limité à part).
+  project: boundedInt({ min: 1, max: 5 }).optional(),
   // Grave ces dés sur une arme du survivant, pour toujours (une fois par arme).
   engrave: z.array(knTypedDiceSchema).max(3).optional(),
   // Provisions que l'usage consomme.

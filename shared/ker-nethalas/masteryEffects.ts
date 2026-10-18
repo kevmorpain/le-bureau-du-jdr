@@ -15,8 +15,8 @@ export const knAbilityIsPassive = (ability: Pick<KnMasteryAbility, 'action'>) =>
 
 // Un passif n'a un bouton que s'il fait quelque chose de mesurable : un effet sur soi, ou un usage limité à marquer. Une
 // aptitude qui change l'attaque se choisit dans l'attaque, sauf si elle est Maintenue : celle-là s'allume.
-export const knAbilityIsUsable = (ability: Pick<KnMasteryAbility, 'action' | 'self' | 'limit'> & Partial<Pick<KnMasteryAbility, 'attack' | 'sustained' | 'combatModifier' | 'engrave'>>) =>
-  (!knAbilityIsPassive(ability) || !!ability.self?.length || !!ability.limit || !!ability.combatModifier?.length || !!ability.engrave?.length)
+export const knAbilityIsUsable = (ability: Pick<KnMasteryAbility, 'action' | 'self' | 'limit'> & Partial<Pick<KnMasteryAbility, 'attack' | 'sustained' | 'combatModifier' | 'engrave' | 'project'>>) =>
+  (!knAbilityIsPassive(ability) || !!ability.self?.length || !!ability.limit || !!ability.combatModifier?.length || !!ability.engrave?.length || !!ability.project)
   && (!ability.attack || !!ability.sustained)
 
 export const knUseLimitLabel: Record<KnUseLimit, string> = {

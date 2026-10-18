@@ -3,7 +3,7 @@ import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knAdvanceRooms } from '~~/shared/ker-nethalas/combatEffects'
 import { knRollDescription } from '~~/shared/ker-nethalas/entryRolls'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
-import { knStartVisit, type KnIntroEntry, type KnVisitKind } from '~~/shared/ker-nethalas/run'
+import { knCurrentVisit, knStartVisit, type KnIntroEntry, type KnVisitKind } from '~~/shared/ker-nethalas/run'
 import { knResetUses } from '~~/shared/ker-nethalas/vitals'
 
 // Entrer dans une salle, un couloir ou une zone déjà explorée : l'entrée rejoint le chemin du Domaine, les usages « par salle » reviennent,
@@ -16,7 +16,8 @@ export function useKnVisitEntry(character: Ref<KnCharacter>, resolved: () => KnR
     c.run = knStartVisit(c.run, kind, shapeRoll, intro, target)
     if (!intro) c.run = knRollDescription(c.run)
     c.status = knResetUses(c.status, ['room'])
-    if (kind === 'room') {
+    // Une pièce pressentie impose son type : c'est celui de l'entrée créée qui compte.
+    if (knCurrentVisit(c.run)?.kind === 'room') {
       const { status, expired } = knAdvanceRooms(c.status)
       c.status = status
       if (expired.length) toast.add({ title: 'Effet terminé', description: expired.join(', '), color: 'neutral' })

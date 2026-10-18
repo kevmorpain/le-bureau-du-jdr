@@ -153,6 +153,24 @@
             >
               {{ stats(item) }}
             </p>
+            <div
+              v-if="item.dropped"
+              class="mt-1 flex flex-wrap items-center gap-2"
+            >
+              <KnRollButton
+                v-if="item.dropped === 'stuck'"
+                id="skill:athletics"
+                :label="`Récupérer ${item.name}`"
+              />
+              <UButton
+                size="xs"
+                variant="soft"
+                :aria-label="`${item.dropped === 'stuck' ? 'Récupérée' : 'Ramasser'} ${item.name}`"
+                @click="pickUp(item.id)"
+              >
+                {{ item.dropped === 'stuck' ? 'Récupérée' : 'Ramasser' }}
+              </UButton>
+            </div>
             <template v-if="isOpen(item.id)">
               <p
                 v-if="agingText(item)"
@@ -306,21 +324,6 @@
                 @click="repair(item.id)"
               >
                 Réparer
-              </UButton>
-            </template>
-            <template v-if="item.dropped">
-              <KnRollButton
-                v-if="item.dropped === 'stuck'"
-                id="skill:athletics"
-                :label="`Récupérer ${item.name}`"
-              />
-              <UButton
-                size="xs"
-                variant="soft"
-                :aria-label="`${item.dropped === 'stuck' ? 'Récupérée' : 'Ramasser'} ${item.name}`"
-                @click="pickUp(item.id)"
-              >
-                {{ item.dropped === 'stuck' ? 'Récupérée' : 'Ramasser' }}
               </UButton>
             </template>
             <UButton

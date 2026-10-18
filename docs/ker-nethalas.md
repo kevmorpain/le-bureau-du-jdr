@@ -626,6 +626,24 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN55 — Arme à terre, maximum qui grandit avec le niveau, projection de l'esprit
+- **Arme lâchée ou fichée au sol** (`KnItem.dropped`, `knDropItem`, `knPickUpItem`) : une maladresse du survivant qui lui fait lâcher son arme (À terre) ou
+  la plante hors de portée (Fichée au sol), ou qui heurte la pierre avec une arme magique sans la briser, la rend inutilisable comme une arme brisée
+  (`knIsUsable` : elle n'attaque plus, ne pare plus, ses effets magiques cessent). La fiche la marque et propose « Ramasser » (un tour) ou, pour
+  une arme fichée, un test d'Athlétisme puis « Récupérée ». ⚠️ hypothèse : l'arme qui a servi est celle qui tombe ; sans arme tenue, la prochaine
+  attaque subit −20 (comme avant) ; pour tenir une autre arme, on la déplace à la main.
+- **Maximum d'une jauge qui grandit avec le niveau** (`permanent.maxVitalPerLevel`, `knMasteryLevelSources`) : le bonus se **dérive** (il part avec le
+  palier) : le niveau auquel on a débloqué l'aptitude, plus un nombre fixe par niveau gagné depuis. Chaque Maîtrise choisie retient donc le
+  niveau de chaque palier (`masteryPicks[].levels`). ⚠️ hypothèses : sans niveau connu (palier pris avant ce changement, ou à la création), l'aptitude
+  compte comme obtenue au niveau actuel ; le maximum monte, la valeur courante non (on récupère en se soignant).
+- **Projection de l'esprit** (`project`, `foresight.ts`, `KnForesightPanel`) : une aptitude à usage limité tire d'avance jusqu'à 5 entrées nouvelles du
+  Domaine : forme, description, porte, rencontre (et sa créature) et événement, comme une entrée réelle mais sans bouger ni entamer la lumière
+  (`domain.foresight`). Elles s'affichent en entier dans la colonne de la pièce. Les prochaines entrées nouvelles du Domaine, dans cet ordre,
+  reprennent ces tirages (`visit.foreseen`) quoi qu'on demande comme type ou forme ; les retours et le Domaine d'introduction n'y touchent
+  pas. ⚠️ hypothèses : le Dé de Tension, le Lair et la Sortie se tirent à l'entrée réelle ; une projection remplace la précédente ; un événement
+  pressenti dans une pièce qui se révèle être le Lair n'a pas lieu (les règles de l'entrée s'appliquent) ; la créature d'une rencontre se
+  lit dans la table des Rencontres du Domaine, comme à l'entrée réelle.
+
 ### KN54 — Mouvements défensifs, passifs, gravure et dés typés
 - **Mouvement défensif du survivant** (`survivorMoves.ts`, livre p. 77) : le D10 tiré après une défense réussie s'applique tout seul
   quand l'outil sait le faire. Six résultats posent un état sur la **prochaine attaque** du survivant (`combat.next` : bonus, dés,
@@ -679,8 +697,7 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   que sa valeur, un tirage d'action en consomme un ; la maladresse « Dissimulé » ne dit pas combien de rounds elle dure, l'outil pose la
   condition et rappelle D4 rounds ; les dégâts qu'une créature s'inflige ignorent son Armure ; le coup qui se retourne contre un allié ne
   double pas ses dégâts, même au Coup critique ; la Santé laissée à 1 ne vaut que pour les dégâts de combat appliqués par l'outil.
-- Laissé de côté : Robustesse définitive de l'aptitude passive qui l'augmente à chaque niveau (elle relève du choix de niveau), l'aptitude qui génère des pièces à l'avance (pièces générées à la main), et la récupération de l'arme perdue ou fichée au sol. Contenu privé à recharger en prod après le merge
-  (`npm run kn:content`, jeu `masteries`).
+- Laissé de côté : voir KN55. Contenu privé à recharger en prod après le merge (`npm run kn:content`, jeu `masteries`).
 
 ### KN53 — Aptitudes qui changent l'attaque du survivant
 - **Format** (`masteries.ts`, `abilityAttack.ts`) : champ public optionnel `attack` sur une aptitude, renseigné dans le contenu privé.
@@ -1207,7 +1224,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **U13c — Revue de la fiche** | cartes repliables, compacité, couleurs, repos, dés d'entrée, repères (KN51) | écrite |
 | **Folie automatique** | « Les ténèbres approchent » et « Mémoire défaillante » appliqués aux pertes de Santé mentale et aux gains d'XP, Armure d'effet, Outils de voleur (KN52) | mergée (#293) |
 | **Aptitudes d'attaque** | aptitudes cochées dans l'attaque : bonus, dés typés, critique, défense interdite, seconde attaque, toutes les cibles, marque (KN53) | mergée (#294) |
-| **Mouvements défensifs, maladresses et passifs** | mouvements défensifs et maladresses du survivant et des créatures, réaction à l'Esquive, retrait d'Armure, passifs, gravure, dés typés (KN54) | écrite, non mergée |
+| **Restes d'aptitudes** | arme à terre, maximum par niveau, projection de l'esprit (KN55) | écrite, non mergée |
+| **Mouvements défensifs, maladresses et passifs** | mouvements défensifs et maladresses du survivant et des créatures, réaction à l'Esquive, retrait d'Armure, passifs, gravure, dés typés (KN54) | mergée (#295) |
 | **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
 `CLAUDE.md` (section Architecture) et `docs/persistence.md` ont été mis à jour avec la tranche 0.

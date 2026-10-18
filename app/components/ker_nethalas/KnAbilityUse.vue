@@ -11,6 +11,26 @@
       :aria-label="`${ability.name} : maintenir`"
       @update:model-value="toggle"
     />
+    <template v-else-if="ability.project">
+      <USelect
+        v-model="projectCount"
+        :items="projectItems"
+        class="w-44"
+        :aria-label="`${ability.name} : nombre de pièces`"
+      />
+      <UButton
+        size="xs"
+        variant="soft"
+        :disabled="blockers.length > 0 || !canProject"
+        @click="project"
+      >
+        Projeter
+      </UButton>
+      <span
+        v-if="!canProject"
+        class="text-xs text-muted"
+      >Pas dans le Domaine d'introduction</span>
+    </template>
     <template v-else-if="ability.engrave">
       <USelect
         v-model="engraveTarget"
@@ -73,6 +93,8 @@
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { knEngravableWeapons, knEngrave } from '~~/shared/ker-nethalas/abilityAttack'
+import { knForesight, knProjectRooms } from '~~/shared/ker-nethalas/foresight'
+import { knCurrentDomain } from '~~/shared/ker-nethalas/run'
 import type { KnMasteryAbility } from '~~/shared/ker-nethalas/masteries'
 import {
   knAbilityBlockers,
@@ -120,6 +142,22 @@ const blockers = computed(() => {
   if (used.value) return ['Déjà utilisée']
   return [...knAbilityBlockers(props.ability, purse.value), ...(missingProvisions.value ? ['Provisions insuffisantes'] : [])]
 })
+
+const projectCount = ref(props.ability.project ?? 1)
+const projectItems = computed<SelectItem[]>(() => Array.from({ length: props.ability.project ?? 1 }, (_, index) => ({ label: `${index + 1} pièce${index ? 's' : ''}`, value: index + 1 })))
+const canProject = computed(() => !knCurrentDomain(character.value.run).intro)
+
+// Projeter l'esprit : les prochaines entrées nouvelles du Domaine sont tirées d'avance, et gardées pour l'entrée réelle.
+function project() {
+  const c = character.value
+  const paid = knPayAbility(props.ability, purse.value)
+  c.aetherCurrent = paid.aetherCurrent
+  c.healthCurrent = paid.healthCurrent
+  c.exhaustion = paid.exhaustion
+  c.status = props.ability.limit ? knMarkUsed(c.status, key.value, props.ability.limit) : c.status
+  c.run = knProjectRooms(c.run, projectCount.value)
+  toast.add({ title: `${props.ability.name} : ${knForesight(c.run).length} pièce(s) pressentie(s)`, description: 'Elles s\'affichent dans la colonne de la pièce.', color: 'success' })
+}
 
 const engraveTarget = ref<string | undefined>()
 const engraveItems = computed<SelectItem[]>(() => knEngravableWeapons(character.value.inventory).map(item => ({ label: item.name, value: item.id })))
