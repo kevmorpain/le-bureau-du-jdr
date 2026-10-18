@@ -99,14 +99,14 @@ describe('débloquer et reprendre une aptitude', () => {
     current = knUnlockMastery(current, 'alpha', 3)
     current = knUnlockMastery(current, 'beta', 3)
 
-    expect(current).toEqual([{ key: 'alpha', tiers: 2 }, { key: 'beta', tiers: 1 }])
+    expect(current).toMatchObject([{ key: 'alpha', tiers: 2 }, { key: 'beta', tiers: 1 }])
   })
 
   it('ne dépense pas plus de points que le niveau n\'en donne', () => {
     const full = [{ key: 'alpha', tiers: 1 }, { key: 'beta', tiers: 1 }]
 
     expect(knUnlockMastery(full, 'alpha', 1)).toEqual(full)
-    expect(knUnlockMastery([], 'alpha', 1)).toEqual([{ key: 'alpha', tiers: 1 }])
+    expect(knUnlockMastery([], 'alpha', 1)).toMatchObject([{ key: 'alpha', tiers: 1 }])
   })
 
   it('n\'accepte pas une troisième Maîtrise ni un sixième palier', () => {

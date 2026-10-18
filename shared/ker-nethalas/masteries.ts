@@ -124,6 +124,8 @@ export const knMasteryAbilitySchema = z.object({
     restored: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_DAMAGE_TYPES.length).optional(),
     damageType: z.enum(KN_DAMAGE_TYPES).optional(),
     healOnDamage: boundedInt({ min: 1, max: 9 }).optional(),
+    // Maximum d'une jauge qui augmente à l'obtention (`atUnlock` fois le niveau d'alors), puis de `perLevel` à chaque niveau gagné.
+    maxVitalPerLevel: z.object({ vital: z.enum(KN_VITAL_KEYS), atUnlock: boundedInt({ min: 0, max: 5 }), perLevel: boundedInt({ min: 0, max: 9 }) }).optional(),
     // Conditions auxquelles le survivant est Immunisé.
     immuneConditions: z.array(z.enum(KN_CONDITION_KEYS)).max(KN_CONDITION_KEYS.length).optional(),
     // Malus de chaque Réaction consécutive après la première, à la place de −20.
@@ -189,6 +191,8 @@ export type KnMastery = z.infer<typeof knMasterySchema>
 export const knMasteryPicksSchema = z.array(z.object({
   key: slug,
   tiers: boundedInt({ min: 1, max: KN_MASTERY_TIERS }),
+  // Le niveau auquel chaque palier a été débloqué (clé : le palier), pour les effets qui en dépendent.
+  levels: z.record(z.string().regex(/^[1-5]$/), boundedInt({ min: 1, max: 99 })).optional(),
 })).max(KN_MAX_TRAINED_MASTERIES).superRefine((picks, ctx) => {
   const keys = picks.map(pick => pick.key)
   if (new Set(keys).size !== keys.length) ctx.addIssue({ code: 'custom', message: 'une Maîtrise ne se choisit qu\'une fois' })
@@ -210,16 +214,19 @@ export const knAbilityPointsUnspent = (level: number, picks: readonly KnMasteryP
 export function knUnlockMastery(picks: readonly KnMasteryPick[], key: string, level: number, amuletTiers = 0): KnMasteryPick[] {
   if (knAbilityPointsUnspent(level, picks, amuletTiers) < 1) return [...picks]
   const existing = picks.find(pick => pick.key === key)
-  if (!existing) return picks.length >= KN_MAX_TRAINED_MASTERIES ? [...picks] : [...picks, { key, tiers: 1 }]
+  if (!existing) return picks.length >= KN_MAX_TRAINED_MASTERIES ? [...picks] : [...picks, { key, tiers: 1, levels: { 1: level } }]
   if (existing.tiers >= KN_MASTERY_TIERS) return [...picks]
-  return picks.map(pick => pick.key === key ? { ...pick, tiers: pick.tiers + 1 } : pick)
+  return picks.map(pick => pick.key === key ? { ...pick, tiers: pick.tiers + 1, levels: { ...pick.levels, [pick.tiers + 1]: level } } : pick)
 }
 
 // Corriger une erreur : reprend la dernière aptitude débloquée, et retire la Maîtrise quand il n'en reste plus.
 export function knLockMastery(picks: readonly KnMasteryPick[], key: string): KnMasteryPick[] {
   return picks.flatMap((pick) => {
     if (pick.key !== key) return [pick]
-    return pick.tiers > 1 ? [{ ...pick, tiers: pick.tiers - 1 }] : []
+    if (pick.tiers <= 1) return []
+    const { levels: previous, ...rest } = pick
+    const { [String(pick.tiers)]: _removed, ...levels } = previous ?? {}
+    return [{ ...rest, tiers: pick.tiers - 1, ...(Object.keys(levels).length ? { levels } : {}) }]
   })
 }
 

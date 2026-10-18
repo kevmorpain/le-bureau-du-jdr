@@ -140,7 +140,7 @@ describe('paliers de la Maîtrise d\'une amulette', () => {
     const spent = { ...worn, tiers: 3 }
 
     expect(knUnlockMastery(trained, 'alpha', 5, spent.tiers)).toEqual(trained)
-    expect(knUnlockMastery(trained, 'alpha', 6, spent.tiers)).toContainEqual({ key: 'alpha', tiers: 3 })
+    expect(knUnlockMastery(trained, 'alpha', 6, spent.tiers)).toContainEqual(expect.objectContaining({ key: 'alpha', tiers: 3 }))
   })
 })
 
