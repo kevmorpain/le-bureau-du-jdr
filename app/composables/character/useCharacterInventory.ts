@@ -6,6 +6,7 @@ import { armorClassBonusParts, sumBonusParts, weaponBonusParts, type BonusPart, 
 import { activeItemEffectSources, isItemActive } from '~~/shared/rules/characterEffects'
 import { damageDiceAppliesToWeapon, itemWeaponDamageDice } from '~~/shared/rules/classResources'
 import type { ClassTraits } from '~~/shared/rules/classResources'
+import { pactWeaponBonus, type PactWeaponBonus } from '~~/shared/rules/pactWeapon'
 import type { RollSource } from '~~/shared/rules/rolls'
 import type {
   WeaponProperties,
@@ -44,6 +45,7 @@ export interface InventoryEntry {
   notes: string | null
   usingTwoHanded: boolean
   attuned: boolean
+  isPactWeapon: boolean
   item: InventoryItem | null
 }
 
@@ -76,6 +78,10 @@ export interface WeaponStats {
   damageParts: BonusPart[]
   // Dés ajoutés à l'attaque (Attaque sournoise, Châtiment divin amélioré) : jetés à part.
   extraDamageDice: ClassTraits['weaponDamageDice']
+  // Dégâts fixes d'un autre type ajoutés à ceux de l'arme (Buveuse de vie) : à lire, rien à jeter.
+  extraDamageFixed: PactWeaponBonus['extraDamage']
+  // Attaques de l'action Attaquer menées avec cette arme (Lame assoiffée : deux avec l'arme de pacte).
+  attacksPerAction: number
 }
 
 export interface ArmorClassBreakdown {
@@ -314,6 +320,8 @@ export const useCharacterInventory = (
 
   const speciesSize = computed(() => characterSheet?.value?.species?.size ?? null)
 
+  const pactWeapon = computed(() => pactWeaponBonus(deps?.allEffects.value ?? [], deps?.abilityModifiers.value.cha ?? 0))
+
   const equippedWeaponStats = computed<WeaponStats[]>(() =>
     equippedWeapons.value
       .filter(e => e.item)
@@ -413,6 +421,8 @@ export const useCharacterInventory = (
               .filter(d => damageDiceAppliesToWeapon(d.weapons, { isRanged, isFinesse })),
             ...(isItemActive(entry) ? itemWeaponDamageDice(item.effects ?? []) : []),
           ],
+          extraDamageFixed: entry.isPactWeapon ? pactWeapon.value.extraDamage : [],
+          attacksPerAction: Math.max(deps?.classTraits?.value.attacksPerAction ?? 1, entry.isPactWeapon ? pactWeapon.value.attacksPerAction : 1),
         }
       }),
   )
@@ -445,6 +455,7 @@ export const useCharacterInventory = (
       notes: notes ?? null,
       usingTwoHanded: false,
       attuned: false,
+      isPactWeapon: false,
       item: optimisticItem ?? null,
     }]
 

@@ -133,6 +133,13 @@
               class="size-4 text-rose-400"
             />
           </UTooltip>
+          <UBadge
+            v-if="weapon.attacksPerAction > classTraits.attacksPerAction"
+            :label="`${weapon.attacksPerAction} attaques avec cette arme`"
+            color="primary"
+            variant="soft"
+            size="md"
+          />
           <div class="flex gap-1 flex-wrap">
             <UTooltip
               :text="bonusBreakdown(weapon.attackParts)"
@@ -174,6 +181,18 @@
               >
                 + {{ dice.name }} {{ dice.count }}d{{ dice.sides }}{{ dice.damageType ? ` ${damageTypeLabels[dice.damageType] ?? dice.damageType}` : '' }}{{ extraDiceStatus(dice)?.mark }}
               </RollButton>
+            </UTooltip>
+            <UTooltip
+              v-for="extra in weapon.extraDamageFixed"
+              :key="extra.name"
+              text="Quand vous touchez : s'ajoute aux dégâts de l'arme"
+            >
+              <UBadge
+                :label="`+ ${extra.name} ${extra.amount} ${damageTypeLabels[extra.damageType] ?? extra.damageType}`"
+                color="warning"
+                variant="soft"
+                size="md"
+              />
             </UTooltip>
             <UTooltip
               v-if="weapon.isLight"

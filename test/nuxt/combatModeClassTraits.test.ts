@@ -6,6 +6,7 @@ import { barbareFeatures } from '../../server/db/seeds/data/barbare'
 import { guerrierFeatures } from '../../server/db/seeds/data/guerrier'
 import { paladinFeatures } from '../../server/db/seeds/data/paladin'
 import { roublardFeatures } from '../../server/db/seeds/data/roublard'
+import { warlockInvocationFeatures } from '../../server/db/seeds/data/warlock_invocations'
 import { abilityScores, classSheet, featureRow, named } from '../fixtures/classSheet'
 
 const SHEET_ID = 9301
@@ -80,6 +81,32 @@ describe('Mode combat — attaques par action', () => {
     const cs = classSheet(SHEET_ID, 'Guerrier', 6, 4, [featureRow(named(guerrierFeatures, 'Attaque supplémentaire'), 6)])
     const wrapper = await mount(cs)
     expect(wrapper.text()).not.toContain('attaques par action')
+  })
+})
+
+describe('Mode combat — arme de pacte', () => {
+  const WARLOCK = 7
+  const warlock = (cha: number, ...names: string[]) =>
+    classSheet(SHEET_ID, 'Occultiste', WARLOCK, 12, names.map(name => featureRow(named(warlockInvocationFeatures, name), WARLOCK)), { baseAbilityScores: abilityScores({ cha }) })
+  const pactSword = () => ({ ...longsword(), isPactWeapon: true })
+
+  it('Lame assoiffée : l\'arme de pacte annonce ses deux attaques, pas le bandeau de la classe', async () => {
+    const wrapper = await mount(warlock(16, 'Lame assoiffée'), { weapons: [pactSword()] })
+    expect(wrapper.text()).toContain('2 attaques avec cette arme')
+    expect(wrapper.text()).not.toContain('attaques par action')
+  })
+
+  it('Buveuse de vie : le Charisme en dégâts nécrotiques, 1 au minimum', async () => {
+    const strong = await mount(warlock(16, 'Buveuse de vie'), { weapons: [pactSword()] })
+    expect(strong.text()).toContain('+ Buveuse de vie 3 nécrotique')
+    const weak = await mount(warlock(8, 'Buveuse de vie'), { weapons: [pactSword()] })
+    expect(weak.text()).toContain('+ Buveuse de vie 1 nécrotique')
+  })
+
+  it('une arme qui n\'est pas l\'arme de pacte n\'affiche rien de tout cela', async () => {
+    const wrapper = await mount(warlock(16, 'Lame assoiffée', 'Buveuse de vie'), { weapons: [longsword()] })
+    expect(wrapper.text()).not.toContain('attaques avec cette arme')
+    expect(wrapper.text()).not.toContain('Buveuse de vie')
   })
 })
 
