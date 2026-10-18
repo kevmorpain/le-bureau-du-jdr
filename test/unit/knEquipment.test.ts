@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
   KN_UNARMED_OPTION,
+  knDropItem,
+  knPickUpItem,
+  knWieldedWeapons,
   knArmorByZone,
   knArmorPieces,
   knAttackOptions,
@@ -146,5 +149,28 @@ describe('pièces utilisées pendant un combat', () => {
     expect(marked.combat!.gearUsed).toEqual(['a', 'b', 'c'])
     expect(knMarkGearUsed(emptyKnRun(), ['a'])).toEqual(emptyKnRun())
     expect(knMarkGearUsed(run, [])).toBe(run)
+  })
+})
+
+describe('arme lâchée ou fichée au sol', () => {
+  const sword = weapon('a', 'mainHand')
+  const dagger = weapon('b', 'offHand')
+
+  it('une arme à terre ne sert plus, jusqu\'à ce qu\'on la ramasse', () => {
+    const dropped = knDropItem([sword, dagger], 'a', 'floor')
+
+    expect(dropped[0]).toMatchObject({ id: 'a', dropped: 'floor' })
+    expect(knWieldedWeapons(dropped).map(item => item.id)).toEqual(['b'])
+    expect(knAttackOptions(dropped).map(option => option.id)).toEqual(['b', 'unarmed'])
+    expect(knPickUpItem(dropped, 'a')[0]).not.toHaveProperty('dropped')
+    expect(knWieldedWeapons(knPickUpItem(dropped, 'a')).map(item => item.id)).toEqual(['a', 'b'])
+  })
+
+  it('seule une arme se lâche, et une arme fichée au sol est traitée de même', () => {
+    const items = [sword, item('g', { kind: 'gear' })]
+
+    expect(knDropItem(items, 'g', 'floor')[1]).not.toHaveProperty('dropped')
+    expect(knDropItem(items, 'a', 'stuck')[0]).toMatchObject({ dropped: 'stuck' })
+    expect(knAttackOptions(knDropItem(items, 'a', 'stuck'))).toEqual([KN_UNARMED_OPTION])
   })
 })

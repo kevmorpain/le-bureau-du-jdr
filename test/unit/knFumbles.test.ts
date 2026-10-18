@@ -21,8 +21,8 @@ const fight = () => knStartCombat(emptyKnRun(), [{ name: 'A', health: 5, maxHeal
 
 describe('maladresses du survivant', () => {
   it('chaque résultat du D10 est lu', () => {
-    expect(knSurvivorFumble(1)).toEqual({ kind: 'weaponLost' })
-    expect(knSurvivorFumble(2)).toEqual({ kind: 'weaponLost' })
+    expect(knSurvivorFumble(1)).toEqual({ kind: 'weaponLost', stuck: false })
+    expect(knSurvivorFumble(2)).toEqual({ kind: 'weaponLost', stuck: true })
     expect(knSurvivorFumble(3)).toEqual({ kind: 'weaponBreaks' })
     expect(knSurvivorFumble(4)).toEqual({ kind: 'beltBreaks' })
     expect(knSurvivorFumble(5)).toEqual({ kind: 'aetherLoss', dice: d(1, 8) })

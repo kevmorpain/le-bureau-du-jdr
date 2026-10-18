@@ -86,6 +86,13 @@
             variant="subtle"
             size="md"
           />
+          <UBadge
+            v-if="slot.item?.dropped"
+            :label="slot.item.dropped === 'stuck' ? 'Fichée au sol' : 'À terre'"
+            color="warning"
+            variant="subtle"
+            size="md"
+          />
         </li>
       </ul>
       <p
@@ -111,6 +118,13 @@
                 v-if="item.broken"
                 label="Brisé"
                 color="error"
+                variant="subtle"
+                size="md"
+              />
+              <UBadge
+                v-if="item.dropped"
+                :label="item.dropped === 'stuck' ? 'Fichée au sol' : 'À terre'"
+                color="warning"
                 variant="subtle"
                 size="md"
               />
@@ -294,6 +308,21 @@
                 Réparer
               </UButton>
             </template>
+            <template v-if="item.dropped">
+              <KnRollButton
+                v-if="item.dropped === 'stuck'"
+                id="skill:athletics"
+                :label="`Récupérer ${item.name}`"
+              />
+              <UButton
+                size="xs"
+                variant="soft"
+                :aria-label="`${item.dropped === 'stuck' ? 'Récupérée' : 'Ramasser'} ${item.name}`"
+                @click="pickUp(item.id)"
+              >
+                {{ item.dropped === 'stuck' ? 'Récupérée' : 'Ramasser' }}
+              </UButton>
+            </template>
             <UButton
               icon="i-heroicons:trash"
               color="error"
@@ -412,7 +441,7 @@ import {
 } from '~~/shared/ker-nethalas/consumables'
 import { knDiceLabel, knRollDice } from '~~/shared/ker-nethalas/dice'
 import { KN_SURVIVOR_ARMOR_ZONES, type KnSurvivorArmorZone } from '~~/shared/ker-nethalas/combat'
-import { knArmorByZone, knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
+import { knArmorByZone, knPickUpItem, knRepairItem, knRollIntegrity } from '~~/shared/ker-nethalas/equipment'
 import { knItemFromCatalog, type KnCatalogItem } from '~~/shared/ker-nethalas/items'
 import { knConsumableEntry, type KnLootContent } from '~~/shared/ker-nethalas/loot'
 import { knIsWorn, knMagicCarryBonus, knMagicIdentifiesPotions, knMagicUses, knPermanentGains, type KnMagicUse } from '~~/shared/ker-nethalas/magicEffects'
@@ -608,6 +637,10 @@ function rollIntegrity(id: string) {
     description: `D${die} → ${roll}${outcome === 'held' ? ' : tient' : outcome === 'down' ? ` : passe au D${to}` : ' : perdu'}`,
     color: outcome === 'held' ? 'neutral' : 'warning',
   })
+}
+
+function pickUp(id: string) {
+  character.value.inventory = knPickUpItem(character.value.inventory, id)
 }
 
 function repair(id: string) {

@@ -5,7 +5,7 @@ import type { KnDice } from './dice'
 // Les maladresses (livre p. 84) : ce que l'outil applique tout seul. Ce qui dépend d'une action manuelle (récupérer une arme,
 // se relever) reste du texte à lire.
 export type KnSurvivorFumbleEffect
-  = | { kind: 'weaponLost' }
+  = | { kind: 'weaponLost', stuck: boolean }
     | { kind: 'weaponBreaks' }
     | { kind: 'beltBreaks' }
     | { kind: 'aetherLoss', dice: KnDice }
@@ -16,8 +16,8 @@ export type KnSurvivorFumbleEffect
 export const KN_UNARMED_FUMBLE_MALUS = -20
 
 const SURVIVOR: Record<number, KnSurvivorFumbleEffect> = {
-  1: { kind: 'weaponLost' },
-  2: { kind: 'weaponLost' },
+  1: { kind: 'weaponLost', stuck: false },
+  2: { kind: 'weaponLost', stuck: true },
   3: { kind: 'weaponBreaks' },
   4: { kind: 'beltBreaks' },
   5: { kind: 'aetherLoss', dice: { count: 1, sides: 8, bonus: 0 } },
@@ -28,7 +28,7 @@ const SURVIVOR: Record<number, KnSurvivorFumbleEffect> = {
   10: { kind: 'selfHit', critical: true, ally: false },
 }
 
-export const knSurvivorFumble = (roll: number): KnSurvivorFumbleEffect => SURVIVOR[roll] ?? { kind: 'weaponLost' }
+export const knSurvivorFumble = (roll: number): KnSurvivorFumbleEffect => SURVIVOR[roll] ?? { kind: 'weaponLost', stuck: false }
 
 export interface KnMonsterFumbleBuff {
   label: string
