@@ -77,35 +77,43 @@
                   class="flex items-center gap-1 flex-wrap"
                   @click.stop
                 >
-                  <RollButton
-                    size="sm"
-                    variant="soft"
-                    color="primary"
-                    @click="rollAttack(entry.id)"
-                  >
-                    Attaque {{ formatModifier(weaponStatsByEntry.get(entry.id)!.attackBonus) }}
-                  </RollButton>
-                  <RollButton
-                    size="sm"
-                    variant="soft"
-                    color="neutral"
-                    @click="rollDamage(entry.id)"
-                  >
-                    Dégâts {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonus !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonus) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
-                  </RollButton>
-                  <UTooltip
-                    v-if="weaponStatsByEntry.get(entry.id)!.isLight"
-                    text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
-                  >
+                  <WeaponThrowSwitch
+                    :weapon="weaponStatsByEntry.get(entry.id)!"
+                    :damage-type-label="damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType"
+                    :roll="roll"
+                    @update:throwing="setThrowing(entry.id, $event)"
+                  />
+                  <template v-if="!weaponStatsByEntry.get(entry.id)!.throwing">
+                    <RollButton
+                      size="sm"
+                      variant="soft"
+                      color="primary"
+                      @click="rollAttack(entry.id)"
+                    >
+                      Attaque {{ formatModifier(weaponStatsByEntry.get(entry.id)!.attackBonus) }}
+                    </RollButton>
                     <RollButton
                       size="sm"
                       variant="soft"
                       color="neutral"
-                      @click="rollOffhand(entry.id)"
+                      @click="rollDamage(entry.id)"
                     >
-                      Main secondaire {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonusOffhand !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonusOffhand) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
+                      Dégâts {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonus !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonus) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
                     </RollButton>
-                  </UTooltip>
+                    <UTooltip
+                      v-if="weaponStatsByEntry.get(entry.id)!.isLight"
+                      text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
+                    >
+                      <RollButton
+                        size="sm"
+                        variant="soft"
+                        color="neutral"
+                        @click="rollOffhand(entry.id)"
+                      >
+                        Main secondaire {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonusOffhand !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonusOffhand) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
+                      </RollButton>
+                    </UTooltip>
+                  </template>
                 </div>
               </template>
 
@@ -212,26 +220,39 @@
 
           <div class="space-y-1.5 mt-1.5">
             <div
-              v-if="weaponPropertiesOf(entry).length"
-              class="flex flex-wrap items-center gap-1"
+              v-if="weaponPropertiesOf(entry).length || (entry.equipped && weaponStatsByEntry.get(entry.id))"
+              class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5"
             >
-              <UTooltip
-                v-for="prop in weaponPropertiesOf(entry)"
-                :key="prop"
-                :text="weaponPropertyTooltips[prop] ?? ''"
+              <div
+                v-if="weaponPropertiesOf(entry).length"
+                class="flex flex-wrap items-center gap-1"
               >
-                <UBadge
-                  :label="weaponPropertyLabels[prop] ?? prop"
-                  variant="soft"
-                  size="md"
-                />
-              </UTooltip>
-              <span
-                v-if="weaponRangeOf(entry)"
-                class="text-sm text-muted ml-1"
-              >
-                Portée : {{ weaponRangeOf(entry) }}
-              </span>
+                <UTooltip
+                  v-for="prop in weaponPropertiesOf(entry)"
+                  :key="prop"
+                  :text="weaponPropertyTooltips[prop] ?? ''"
+                >
+                  <UBadge
+                    :label="weaponPropertyLabels[prop] ?? prop"
+                    variant="soft"
+                    size="md"
+                  />
+                </UTooltip>
+                <span
+                  v-if="weaponRangeOf(entry)"
+                  class="text-sm text-muted ml-1"
+                >
+                  Portée : {{ weaponRangeOf(entry) }}
+                </span>
+              </div>
+
+              <WeaponRange
+                v-if="entry.equipped && weaponStatsByEntry.get(entry.id)"
+                class="ml-auto"
+                :weapon="weaponStatsByEntry.get(entry.id)!"
+                :show-range="false"
+                @range-choice="setRangeChoice(entry.id, $event)"
+              />
             </div>
 
             <UCheckbox
@@ -240,14 +261,6 @@
               label="Tenue à deux mains"
               size="sm"
               @update:model-value="(val: boolean | 'indeterminate') => setUsingTwoHanded(entry.id, val === true)"
-            />
-
-            <WeaponRange
-              v-if="entry.equipped && weaponStatsByEntry.get(entry.id)"
-              :weapon="weaponStatsByEntry.get(entry.id)!"
-              :roll="roll"
-              :show-range="false"
-              @range-choice="setRangeChoice(entry.id, $event)"
             />
 
             <ul
@@ -641,6 +654,7 @@ const {
   attunedCount,
   setUsingTwoHanded,
   setRangeChoice,
+  setThrowing,
 } = useCharacterSheet(characterSheetModel)
 
 const entryToRemove = ref<InventoryEntry | null>(null)

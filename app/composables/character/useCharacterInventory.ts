@@ -85,6 +85,8 @@ export interface WeaponStats {
   // Distance de la cible choisie par le joueur ; null pour une arme qui ne frappe pas à distance.
   rangeChoice: RangeChoice | null
   thrown: ThrownStats | null
+  // Le joueur a basculé cette arme en mode Lancer : le mode Mêlée reste celui par défaut.
+  throwing: boolean
   magicBonus: number
   isProficient: boolean
   // Part de `damageBonus` due à la Rage (arme de corps à corps maniée avec la Force).
@@ -448,6 +450,7 @@ export const useCharacterInventory = (
           rangeText,
           rangeChoice,
           thrown,
+          throwing: thrown !== null && weaponRange.isThrowing(entry.id),
           magicBonus: entry.magicBonus ?? 0,
           isProficient: proficient,
           rageBonus,
@@ -635,6 +638,7 @@ export const useCharacterInventory = (
     attunedCount,
     setUsingTwoHanded,
     setRangeChoice: weaponRange.setChoice,
+    setThrowing: weaponRange.setThrowing,
     addProficiencyOverride,
     removeProficiencyOverride,
     refreshInventory,

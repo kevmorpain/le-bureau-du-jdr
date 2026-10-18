@@ -104,6 +104,30 @@ describe('fiche — armes de lancer', () => {
     expect(modeOf(sources)).toBe('disadvantage')
   })
 
+  it('une arme à lancer s\'ouvre en mêlée ; la bascule en lancer ne change aucun chiffre', async () => {
+    const s = await mount(scenario)
+    const before = { ...statsOf(s, 'Hachette') }
+    expect(before.throwing).toBe(false)
+
+    s.setThrowing(1, true)
+    const after = statsOf(s, 'Hachette')
+    expect(after.throwing).toBe(true)
+    expect([after.attackBonus, after.damageBonus, after.thrown]).toEqual([before.attackBonus, before.damageBonus, before.thrown])
+    expect(statsOf(s, 'Dague').throwing).toBe(false)
+
+    s.setThrowing(1, false)
+    expect(statsOf(s, 'Hachette').throwing).toBe(false)
+  })
+
+  it('une arme qui ne se lance pas ne bascule jamais en lancer, même si l\'état le dit', async () => {
+    const s = await mount(scenario)
+    s.setThrowing(4, true)
+    s.setThrowing(5, true)
+    expect(statsOf(s, 'Arc court').throwing).toBe(false)
+    expect(statsOf(s, 'Fléchette').throwing).toBe(false)
+    expect(statsOf(s, 'Gourdin').throwing).toBe(false)
+  })
+
   it('décocher le choix lève le désavantage', async () => {
     const s = await mount(scenario)
     s.setRangeChoice(4, { long: true })

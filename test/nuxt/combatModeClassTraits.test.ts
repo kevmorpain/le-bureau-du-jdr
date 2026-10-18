@@ -116,34 +116,45 @@ describe('Mode combat — lancer et portée', () => {
   const buttons = (wrapper: Awaited<ReturnType<typeof mount>>, text: string) =>
     wrapper.findAll('button').filter(b => b.text().startsWith(text))
 
-  it('une arme de corps à corps à lancer garde son attaque de mêlée et gagne un lancer', async () => {
+  const mode = (wrapper: Awaited<ReturnType<typeof mount>>, label: 'Mêlée' | 'Lancer') =>
+    wrapper.findAll('button').find(b => b.text() === label)
+
+  it('une arme de corps à corps à lancer s\'ouvre en mêlée, avec une bascule Mêlée / Lancer', async () => {
     const wrapper = await mount(fighter(), { weapons: [hatchet()] })
-    expect(wrapper.text()).toContain('Lancer')
-    expect(buttons(wrapper, 'Attaque')).toHaveLength(2)
-    expect(buttons(wrapper, 'Dégâts 1d6')).toHaveLength(2)
+    expect(mode(wrapper, 'Mêlée')).toBeDefined()
+    expect(mode(wrapper, 'Lancer')).toBeDefined()
+    expect(buttons(wrapper, 'Attaque')).toHaveLength(1)
+    expect(buttons(wrapper, 'Dégâts 1d6')).toHaveLength(1)
+    expect(wrapper.text()).toContain('Main secondaire')
   })
 
   it('le lancer est une attaque à distance : ses dégâts n\'ajoutent aucun dé de critique de mêlée', async () => {
     const roll = vi.fn()
     const wrapper = await mount(fighter(), { weapons: [hatchet()], roll })
-    await buttons(wrapper, 'Attaque')[1]!.trigger('click')
-    expect(roll).toHaveBeenLastCalledWith('Lancer — Hachette', 3, 20, 1, { d20: { type: 'attack', weapon: true, extra: [] } })
-
-    await buttons(wrapper, 'Dégâts 1d6')[1]!.trigger('click')
-    expect(roll).toHaveBeenLastCalledWith('Dégâts (lancer) — Hachette', 3, 6, 1, { damage: { weaponDie: { melee: false } } })
 
     await buttons(wrapper, 'Dégâts 1d6')[0]!.trigger('click')
     expect(roll).toHaveBeenLastCalledWith('Dégâts — Hachette', 3, 6, 1, { damage: { weaponDie: { melee: true } } })
+
+    await mode(wrapper, 'Lancer')!.trigger('click')
+    expect(wrapper.text()).not.toContain('Main secondaire')
+    await buttons(wrapper, 'Attaque')[0]!.trigger('click')
+    expect(roll).toHaveBeenLastCalledWith('Lancer — Hachette', 3, 20, 1, { d20: { type: 'attack', weapon: true, extra: [] } })
+    await buttons(wrapper, 'Dégâts 1d6')[0]!.trigger('click')
+    expect(roll).toHaveBeenLastCalledWith('Dégâts (lancer) — Hachette', 3, 6, 1, { damage: { weaponDie: { melee: false } } })
   })
 
-  it('« Longue portée » pèse sur le lancer, pas sur la frappe de mêlée', async () => {
+  it('« Longue portée » n\'apparaît qu\'en mode Lancer et pèse sur le lancer, pas sur la mêlée', async () => {
     const roll = vi.fn()
     const wrapper = await mount(fighter(), { weapons: [hatchet()], roll })
-    await wrapper.find('[role="checkbox"]').trigger('click')
+    expect(wrapper.find('[role="checkbox"]').exists()).toBe(false)
 
-    await buttons(wrapper, 'Attaque')[1]!.trigger('click')
+    await mode(wrapper, 'Lancer')!.trigger('click')
+    await wrapper.find('[role="checkbox"]').trigger('click')
+    await buttons(wrapper, 'Attaque')[0]!.trigger('click')
     expect(roll.mock.lastCall![4].d20.extra).toEqual([{ label: 'Longue portée', mode: 'disadvantage' }])
 
+    await mode(wrapper, 'Mêlée')!.trigger('click')
+    expect(wrapper.find('[role="checkbox"]').exists()).toBe(false)
     await buttons(wrapper, 'Attaque')[0]!.trigger('click')
     expect(roll.mock.lastCall![4].d20.extra).toEqual([])
   })
