@@ -112,6 +112,7 @@ export const guerrierSubclasses: SubclassDef[] = [
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        progression: { kind: 'additional_fighting_style', count: fixed(1), optionSource: { type: 'feature_group', group: 'fighting_style' } },
       },
       {
         name: 'Critique supérieur',

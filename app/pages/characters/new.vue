@@ -58,6 +58,7 @@ const {
   speciesDbId,
   backgroundDbId,
   choicePicksPayload,
+  featurePicksPayload,
   finalAbilities,
   hpBase,
   resetBuilder,
@@ -188,6 +189,7 @@ async function handleSubmit() {
       })(),
       classSkills: state.value.skills,
       choicePicks: choicePicksPayload.value,
+      featurePicks: featurePicksPayload.value,
       // classSavingThrows retiré : les JS sont DÉRIVÉS du porteur de la classe principale (F3 tranche 2).
       // F5 : plus de `armorProficiencyKeys`/`weaponProficiencyKeys` — les maîtrises de base de
       // classe sont DÉRIVÉES côté serveur du porteur de classe (volet B), ces champs étaient

@@ -1051,6 +1051,13 @@
       "when": 1793700000000,
       "tag": "0149_ranger_favorite_choices",
       "breakpoints": true
+    },
+    {
+      "idx": 150,
+      "version": "6",
+      "when": 1793800000000,
+      "tag": "0150_champion_additional_fighting_style",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,8 @@ import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { applyMetamagicChanges } from '~~/server/utils/metamagic'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
 import { resolvePactBoonFeatureId } from '~~/server/utils/pactBoon'
+import { featurePickSchema, featurePickWriteStmts, ownedFeatureIds } from '~~/server/utils/featurePicks'
+import { featurePicksError, isFeaturePickChoice, type FeaturePick } from '~~/shared/rules/featurePicks'
 import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { buildCatalog } from '~~/server/utils/catalog'
@@ -49,6 +51,7 @@ export const levelUpSchema = z.object({
   newSkills: uniqueSkillKeysSchema.optional(),
   // Maîtrises, sorts mineurs et terrain du cercle choisis à ce niveau (instrument du Barde rejoint par multiclassage).
   choicePicks: z.array(choicePickSchema).optional(),
+  featurePicks: z.array(featurePickSchema).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
   replacedSpellId: z.number().int().positive().nullable().optional(),
@@ -137,6 +140,12 @@ async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSki
 async function validateLevelUpChoicePicks(db: Db, characterSheetId: number, gained: ResolvedChoice[], replacements: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
   if (!picks.length) return
   const error = choicePicksError(picks, [...gained.filter(isPickChoice), ...replacements]) ?? await alreadyPickedError(db, characterSheetId, picks)
+  if (error) throw new CharacterValidationError(error)
+}
+
+async function validateLevelUpFeaturePicks(db: Db, characterSheetId: number, gained: ResolvedChoice[], picks: FeaturePick[]): Promise<void> {
+  if (!picks.length) return
+  const error = featurePicksError(picks, gained.filter(isFeaturePickChoice), await ownedFeatureIds(db, characterSheetId))
   if (error) throw new CharacterValidationError(error)
 }
 
@@ -303,6 +312,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     ? (await levelUpReplacements(db, characterSheetId, cls.id)).choices
     : []
   await validateLevelUpChoicePicks(db, characterSheetId, gained, replacements, d.choicePicks ?? [])
+  await validateLevelUpFeaturePicks(db, characterSheetId, gained, d.featurePicks ?? [])
   await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, subclassAfter ?? null, gained)
   validateLevelUpAsi(d, newLevel, gained)
 
@@ -460,6 +470,8 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .values({ characterSheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
       .onConflictDoNothing())
   }
+
+  stmts.push(...featurePickWriteStmts(db, characterSheetId, d.featurePicks ?? []))
 
   if (pactBoonFeatureId != null) {
     stmts.push(db.insert(schema.characterFeatures)

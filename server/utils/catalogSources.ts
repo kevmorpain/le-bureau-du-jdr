@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNotNull, isNull, or } from 'drizzle-orm'
 import * as schema from '~~/server/db/schema'
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
@@ -181,6 +181,15 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended =
     prerequisites: f.prerequisites as FeaturePrerequisite | null,
     effects: effectsByFeature.get(f.id) ?? [],
   }))
+}
+
+/** Options de point de choix (features taguées) par identifiant ; une feature sans tag n'est pas une option. */
+export async function loadFeatureOptions(db: Db, ids: number[]): Promise<{ id: number, name: string, description: string | null }[]> {
+  return await db
+    .select({ id: schema.features.id, name: schema.features.name, description: schema.features.description })
+    .from(schema.features)
+    .where(and(inArray(schema.features.id, ids), isNotNull(schema.features.tag)))
+    .orderBy(asc(schema.features.name))
 }
 
 // Descriptives : pas d'effets bakés, le joueur applique en jeu.

@@ -78,6 +78,19 @@
       </div>
     </div>
 
+    <div v-if="newFeaturePickChoices.length" class="mb-6 space-y-3">
+      <FeaturePickPicker
+        v-for="choice in newFeaturePickChoices"
+        :key="choice.progressionId"
+        v-model="state.featurePicks[choice.progressionId]"
+        :title="choiceTitle(choice) ?? 'Choix'"
+        :count="choice.count"
+        :option-ids="optionFeatureIds(choice)"
+        :excluded-ids="ownedFeatureIds"
+        :excluded-names="state.fightingStyle ? [state.fightingStyle] : []"
+      />
+    </div>
+
     <div v-if="needsExpertise" class="mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
         ★ Expertise
@@ -232,7 +245,7 @@
     </div>
 
     <div
-      v-if="!isSubclassLevel && !needsFightingStyle && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation && !needsMetamagic"
+      v-if="!isSubclassLevel && !needsFightingStyle && !newFeaturePickChoices.length && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation && !needsMetamagic"
       class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted"
     >
       Aucun choix requis à cette étape. Cliquez sur Suivant pour continuer.
@@ -241,6 +254,8 @@
 </template>
 
 <script lang="ts" setup>
+import { optionFeatureIds } from '~~/shared/rules/featurePicks'
+
 const PACT_BOON_OPTIONS = [
   { id: 'chain' as const, name: 'Pacte de la Chaîne', description: 'Vous apprenez Appel de familier et pouvez invoquer un familier spécial (diablotin, pseudodragon, quasit ou lutin).' },
   { id: 'blade' as const, name: 'Pacte de la Lame', description: 'Vous pouvez créer une arme de pacte magique dans votre main vide. Vous en choisissez la forme à chaque invocation.' },
@@ -255,6 +270,8 @@ const {
   pickedCharClass,
   isSubclassLevel,
   needsFightingStyle,
+  newFeaturePickChoices,
+  ownedFeatureIds,
   needsExpertise,
   newExpertiseCount,
   needsPactBoon,
