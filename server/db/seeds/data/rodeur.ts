@@ -1,9 +1,14 @@
-import { fixed } from '~~/shared/utils/formula'
+import { fixed, lookup } from '~~/shared/utils/formula'
+import { FAVORED_ENEMIES, FAVORED_TERRAINS } from '~~/shared/rules/rangerFavorites'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
 import { asiFeatures } from './asi'
 
 export const rodeurName = 'Rôdeur'
+
+// Un ennemi juré de plus aux niveaux 6 et 14, un terrain favori de plus aux niveaux 6 et 10 (index = niveau - 1).
+export const FAVORED_ENEMY_COUNT = lookup([1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3])
+export const FAVORED_TERRAIN_COUNT = lookup([1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3])
 
 export const rodeurFeatures: FeatureDef[] = [
   {
@@ -19,6 +24,7 @@ Vous choisissez un ennemi favori supplémentaire aux niveaux 6 et 14.`,
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    progression: { kind: 'favored_enemy', count: FAVORED_ENEMY_COUNT, optionSource: { type: 'enum', values: [...FAVORED_ENEMIES] } },
   },
   {
     name: 'Explorateur-né',
@@ -33,6 +39,7 @@ Vous choisissez des terrains favoris supplémentaires aux niveaux 6 et 10.`,
     rechargeType: null,
     maxUsesFormula: null,
     effects: [],
+    progression: { kind: 'terrain', count: FAVORED_TERRAIN_COUNT, optionSource: { type: 'enum', values: [...FAVORED_TERRAINS] } },
   },
   {
     name: 'Style de combat',

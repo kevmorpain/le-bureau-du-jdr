@@ -152,6 +152,7 @@
             :count="choice.count"
             :options="optionValuesOf(choice)"
             :owned="ownedFor(choice)"
+            :title="choiceTitle(choice)"
           />
         </div>
       </template>

@@ -22,7 +22,7 @@ import { classSlugFromName } from '~~/shared/rules/classSlugs'
 import { effectiveCasterType } from '~~/shared/rules/subclassCasting'
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import { isValidAsiDistribution } from '~~/shared/rules/composite'
-import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
+import { alreadyPickedError, choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Db } from '~~/server/utils/db'
@@ -134,9 +134,9 @@ async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSki
 
 // Les picks portent sur les points de choix que CE niveau de classe rend dus (porteur de multiclassage d'une
 // classe rejointe compris) et sur les remplacements de maîtrises qu'elle double, validés comme à la création.
-async function validateLevelUpChoicePicks(gained: ResolvedChoice[], replacements: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
+async function validateLevelUpChoicePicks(db: Db, characterSheetId: number, gained: ResolvedChoice[], replacements: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
   if (!picks.length) return
-  const error = choicePicksError(picks, [...gained.filter(isPickChoice), ...replacements])
+  const error = choicePicksError(picks, [...gained.filter(isPickChoice), ...replacements]) ?? await alreadyPickedError(db, characterSheetId, picks)
   if (error) throw new CharacterValidationError(error)
 }
 
@@ -302,7 +302,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   const replacements = existingClass == null && currentClasses.length > 0
     ? (await levelUpReplacements(db, characterSheetId, cls.id)).choices
     : []
-  await validateLevelUpChoicePicks(gained, replacements, d.choicePicks ?? [])
+  await validateLevelUpChoicePicks(db, characterSheetId, gained, replacements, d.choicePicks ?? [])
   await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, subclassAfter ?? null, gained)
   validateLevelUpAsi(d, newLevel, gained)
 

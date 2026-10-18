@@ -37,6 +37,22 @@ export function choicePicksError(picks: ChoicePick[], choices: ResolvedChoice[])
   return null
 }
 
+// L'unicité de `character_choices` ignorerait en silence un pick déjà enregistré sur ce point de choix : un point de choix
+// qui grandit au level-up (ennemi juré) ne peut pas reprendre une valeur déjà choisie.
+export async function alreadyPickedError(db: Db, characterSheetId: number, picks: ChoicePick[]): Promise<string | null> {
+  if (!picks.length) return null
+  const rows = await db
+    .select({ progressionId: schema.characterChoices.progressionId, value: schema.characterChoices.selectedValue, spellId: schema.characterChoices.selectedSpellId })
+    .from(schema.characterChoices)
+    .where(and(
+      eq(schema.characterChoices.characterSheetId, characterSheetId),
+      inArray(schema.characterChoices.progressionId, [...new Set(picks.map(p => p.progressionId))]),
+    ))
+  const done = new Set(rows.map(r => `${r.progressionId}|${r.value ?? r.spellId}`))
+  const again = picks.find(p => done.has(`${p.progressionId}|${p.value ?? p.spellId}`))
+  return again ? `« ${again.value ?? again.spellId} » est déjà choisi pour ce point de choix (id=${again.progressionId}).` : null
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function choicePickWriteStmts(db: Db, characterSheetId: number, picks: ChoicePick[]): any[] {
   if (!picks.length) return []

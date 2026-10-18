@@ -59,7 +59,6 @@ const DEFAULT_TITLES: Partial<Record<ChoiceKind, string>> = {
   tool: 'Maîtrise d\'outil au choix',
   language: 'Langue au choix',
   cantrip: 'Sort mineur au choix',
-  terrain: 'Terrain du cercle',
   spellcasting_ability: 'Caractéristique d\'incantation',
 }
 

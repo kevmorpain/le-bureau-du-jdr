@@ -114,6 +114,13 @@
             </div>
           </div>
 
+          <p
+            v-if="feature.picks.length"
+            class="mt-1 text-xs text-muted"
+          >
+            Choix : <span class="font-medium text-default">{{ feature.picks.join(', ') }}</span>
+          </p>
+
           <template #content>
             <div
               v-if="sheetEffects(feature).length"

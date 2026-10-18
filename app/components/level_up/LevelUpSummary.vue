@@ -194,6 +194,7 @@
 import { useOnline } from '@vueuse/core'
 import type { AbilityKey } from '~/data/character-builder'
 import { languageLabel } from '~~/shared/rules/languages'
+import { LABEL_CHOICE_KINDS } from '~~/shared/rules/choices'
 
 defineEmits<{ back: [] }>()
 
@@ -349,7 +350,8 @@ const gains = computed(() => {
   }
 
   const picksOf = (choices: typeof newPickChoices.value) => choices.flatMap(c => (s.choicePicks[c.progressionId] ?? []).map(String))
-  const chosen = picksOf(newPickChoices.value.filter(c => c.kind !== 'terrain'))
+  const isLabel = (c: (typeof newPickChoices.value)[number]) => (LABEL_CHOICE_KINDS as readonly string[]).includes(c.kind)
+  const chosen = picksOf(newPickChoices.value.filter(c => !isLabel(c)))
   if (chosen.length) {
     list.push({ label: 'Maîtrises au choix', detail: chosen.map(v => SKILLS.find(sk => sk.key === v)?.label ?? languageLabel(v)).join(', ') })
   }
@@ -357,8 +359,10 @@ const gains = computed(() => {
   if (replacements.length) {
     list.push({ label: 'Maîtrises de remplacement', detail: replacements.map(v => SKILLS.find(sk => sk.key === v)?.label ?? v).join(', ') })
   }
-  const terrain = picksOf(newPickChoices.value.filter(c => c.kind === 'terrain'))
-  if (terrain.length) list.push({ label: 'Terrain du cercle', detail: terrain.join(', ') })
+  for (const choice of newPickChoices.value.filter(isLabel)) {
+    const labels = picksOf([choice])
+    if (labels.length) list.push({ label: choiceTitle(choice) ?? 'Choix', detail: labels.join(', ') })
+  }
 
   if (cls) {
     list.push({ label: `+1 dé de vie`, detail: `d${cls.hitDie}` })

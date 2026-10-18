@@ -515,9 +515,14 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
   const choicePicksPayload = (choices: ResolvedChoice[]) => choices.flatMap(c => picksOf(c.progressionId).slice(0, c.count).map(v =>
     c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string }))
+  // Ennemis et terrains déjà pris sur ce point de choix : un point de choix qui grandit ne les reprend pas.
+  const labelPicks = computed(() => (charSheet.value as { labelPicks?: Array<{ featureId: number, value: string }> } | null | undefined)?.labelPicks ?? [])
   const ownedFor = (choice: ResolvedChoice): string[] => {
     if (choice.kind === 'skill') return proficientSkills.value
     if (choice.kind === 'language') return knownLanguages.value
+    if (choice.kind === 'terrain' || choice.kind === 'favored_enemy') {
+      return labelPicks.value.filter(p => p.featureId === choice.ownerFeatureId).map(p => p.value)
+    }
     return [...ownedTools.value, ...knownLanguages.value]
   }
 

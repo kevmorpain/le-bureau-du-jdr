@@ -56,6 +56,7 @@ export interface SheetScenario {
   skills?: { skillKey: string, proficiencyLevel: 'proficient' | 'expert' }[]
   preferences?: Preferences | null
   ownerPreferences?: Preferences | null
+  labelPicks?: { featureId: number, value: string }[]
 }
 
 // Un identifiant de fiche par scénario : useFetch met l'inventaire en cache par URL.
@@ -83,6 +84,7 @@ export const mountSheet = async (scenario: SheetScenario) => {
     },
     temporaryEffects: scenario.temporaryEffects ?? [],
     preferences: scenario.preferences ?? null,
+    labelPicks: scenario.labelPicks ?? [],
     owner: { id: 1, name: 'Testeur', preferences: scenario.ownerPreferences ?? null },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any)

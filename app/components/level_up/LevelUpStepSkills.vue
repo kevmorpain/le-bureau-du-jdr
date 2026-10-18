@@ -60,6 +60,7 @@
         :count="choice.count"
         :options="choice.options.map(optionPickValue).filter((v): v is string | number => v != null)"
         :owned="ownedFor(choice)"
+        :title="choiceTitle(choice)"
       />
     </div>
 

@@ -209,7 +209,8 @@ export function isPickChoice(c: ResolvedChoice): boolean {
 // Points de choix d'une classe devenus dus en la passant de `fromLevel` à `toLevel` (level-up). Une classe
 // rejointe (`fromLevel` 0, autre que `mainClassId`) reçoit ceux de son porteur de multiclassage. Les choix d'une
 // sous-classe ne se résolvent qu'une fois la sous-classe connue : celle d'avant le level-up pour l'état de départ,
-// celle d'après (peut-être choisie à ce niveau) pour l'état d'arrivée.
+// celle d'après (peut-être choisie à ce niveau) pour l'état d'arrivée. Un point de choix dont le nombre grandit
+// (ennemi juré du Rôdeur) revient avec le seul surplus : `count` et `remaining` valent le nombre de picks à faire.
 export function choicesGainedAtLevelUp(
   catalog: Catalog,
   { classId, fromLevel, toLevel, mainClassId, subclassIdsBefore = [], subclassIdsAfter = [] }: {
@@ -223,6 +224,9 @@ export function choicesGainedAtLevelUp(
 ): ResolvedChoice[] {
   const at = (level: number, subclassIds: number[]) =>
     level > 0 ? resolveChoices({ classLevels: { [classId]: level }, mainClassId, subclassIds }, catalog).choices : []
-  const before = new Set(at(fromLevel, subclassIdsBefore).map(c => c.progressionId))
-  return at(toLevel, subclassIdsAfter).filter(c => c.ownerClassId === classId && !before.has(c.progressionId))
+  const before = new Map(at(fromLevel, subclassIdsBefore).map(c => [c.progressionId, c.count]))
+  return at(toLevel, subclassIdsAfter).flatMap((c) => {
+    const gained = c.count - (before.get(c.progressionId) ?? 0)
+    return c.ownerClassId === classId && gained > 0 ? [{ ...c, count: gained, remaining: gained }] : []
+  })
 }
