@@ -110,6 +110,58 @@ describe('Mode combat — arme de pacte', () => {
   })
 })
 
+describe('Mode combat — lancer et portée', () => {
+  const hatchet = () => weapon(6, 'Hachette', ['light', 'thrown'], 'simple_melee', '1d6', 'slashing')
+  const fighter = () => classSheet(SHEET_ID, 'Guerrier', 6, 4, [], { baseAbilityScores: abilityScores({ str: 16 }) })
+  const buttons = (wrapper: Awaited<ReturnType<typeof mount>>, text: string) =>
+    wrapper.findAll('button').filter(b => b.text().startsWith(text))
+
+  it('une arme de corps à corps à lancer garde son attaque de mêlée et gagne un lancer', async () => {
+    const wrapper = await mount(fighter(), { weapons: [hatchet()] })
+    expect(wrapper.text()).toContain('Lancer')
+    expect(buttons(wrapper, 'Attaque')).toHaveLength(2)
+    expect(buttons(wrapper, 'Dégâts 1d6')).toHaveLength(2)
+  })
+
+  it('le lancer est une attaque à distance : ses dégâts n\'ajoutent aucun dé de critique de mêlée', async () => {
+    const roll = vi.fn()
+    const wrapper = await mount(fighter(), { weapons: [hatchet()], roll })
+    await buttons(wrapper, 'Attaque')[1]!.trigger('click')
+    expect(roll).toHaveBeenLastCalledWith('Lancer — Hachette', 3, 20, 1, { d20: { type: 'attack', weapon: true, extra: [] } })
+
+    await buttons(wrapper, 'Dégâts 1d6')[1]!.trigger('click')
+    expect(roll).toHaveBeenLastCalledWith('Dégâts (lancer) — Hachette', 3, 6, 1, { damage: { weaponDie: { melee: false } } })
+
+    await buttons(wrapper, 'Dégâts 1d6')[0]!.trigger('click')
+    expect(roll).toHaveBeenLastCalledWith('Dégâts — Hachette', 3, 6, 1, { damage: { weaponDie: { melee: true } } })
+  })
+
+  it('« Longue portée » pèse sur le lancer, pas sur la frappe de mêlée', async () => {
+    const roll = vi.fn()
+    const wrapper = await mount(fighter(), { weapons: [hatchet()], roll })
+    await wrapper.find('[role="checkbox"]').trigger('click')
+
+    await buttons(wrapper, 'Attaque')[1]!.trigger('click')
+    expect(roll.mock.lastCall![4].d20.extra).toEqual([{ label: 'Longue portée', mode: 'disadvantage' }])
+
+    await buttons(wrapper, 'Attaque')[0]!.trigger('click')
+    expect(roll.mock.lastCall![4].d20.extra).toEqual([])
+  })
+
+  it('une arme sans lancer ni portée ne propose rien de tout cela', async () => {
+    const wrapper = await mount(fighter(), { weapons: [longsword()] })
+    expect(wrapper.text()).not.toContain('Lancer')
+    expect(wrapper.text()).not.toContain('Longue portée')
+  })
+
+  it('un arc propose le choix de distance, pas de lancer', async () => {
+    const wrapper = await mount(fighter(), { weapons: [shortbow()] })
+    expect(wrapper.text()).toContain('Longue portée')
+    expect(wrapper.text()).toContain('Ennemi à 1,50 m')
+    expect(wrapper.text()).not.toContain('Lancer')
+  })
+})
+
 describe('Mode combat — Attaque sournoise', () => {
   const rogue = (level: number) => classSheet(SHEET_ID, 'Roublard', 9, level, [featureRow(named(roublardFeatures, 'Attaque sournoise'), 9)])
 

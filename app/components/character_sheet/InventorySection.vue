@@ -235,6 +235,14 @@
               @update:model-value="(val: boolean | 'indeterminate') => setUsingTwoHanded(entry.id, val === true)"
             />
 
+            <WeaponRange
+              v-if="entry.equipped && weaponStatsByEntry.get(entry.id)"
+              :weapon="weaponStatsByEntry.get(entry.id)!"
+              :roll="roll"
+              :show-range="false"
+              @range-choice="setRangeChoice(entry.id, $event)"
+            />
+
             <ul
               v-if="entry.equipped && (weaponStatsByEntry.get(entry.id)?.warnings.length ?? 0) > 0"
               class="space-y-0.5"
@@ -621,6 +629,7 @@ const {
   toggleAttuned,
   attunedCount,
   setUsingTwoHanded,
+  setRangeChoice,
 } = useCharacterSheet(characterSheetModel)
 
 const entryToRemove = ref<InventoryEntry | null>(null)

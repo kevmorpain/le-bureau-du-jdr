@@ -209,6 +209,12 @@
             </UTooltip>
           </div>
         </div>
+        <WeaponRange
+          :weapon="weapon"
+          :roll="roll"
+          class="mt-1.5"
+          @range-choice="setRangeChoice(weapon.entryId, $event)"
+        />
       </div>
 
       <template
@@ -321,7 +327,7 @@ const bonusBreakdown = (parts: { label: string, amount: number }[]) =>
   `dont ${parts.map(p => `${formatModifier(p.amount)} ${p.label}`).join(', ')}`
 
 const csRef = toRef(props, 'characterSheet')
-const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, elapseDurations } = useCharacterSheet(csRef)
+const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, elapseDurations, setRangeChoice } = useCharacterSheet(csRef)
 
 const slots = inject<Ref<{ spellcasting: Record<number, { max: number, current: number, created?: number }>, pact_magic: Record<number, { max: number, current: number }> }>>('spellSlots')
 const { setActive } = useClassResources(csRef, slots)

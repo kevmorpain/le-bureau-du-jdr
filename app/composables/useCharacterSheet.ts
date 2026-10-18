@@ -549,6 +549,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     toggleAttuned: inventoryLayer.toggleAttuned,
     attunedCount: inventoryLayer.attunedCount,
     setUsingTwoHanded: inventoryLayer.setUsingTwoHanded,
+    setRangeChoice: inventoryLayer.setRangeChoice,
     addProficiencyOverride: inventoryLayer.addProficiencyOverride,
     removeProficiencyOverride: inventoryLayer.removeProficiencyOverride,
     refreshInventory: inventoryLayer.refreshInventory,

@@ -8,6 +8,8 @@ import { damageDiceAppliesToWeapon, itemWeaponDamageDice } from '~~/shared/rules
 import type { ClassTraits } from '~~/shared/rules/classResources'
 import { pactWeaponBonus, type PactWeaponBonus } from '~~/shared/rules/pactWeapon'
 import type { RollSource } from '~~/shared/rules/rolls'
+import { rangeRollSources, type RangeChoice } from '~~/shared/rules/weaponRange'
+import { useWeaponRange } from './useWeaponRange'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -49,6 +51,16 @@ export interface InventoryEntry {
   item: InventoryItem | null
 }
 
+// Lancer une arme de corps à corps (propriété lancer) : une attaque à distance, à part de l'attaque de mêlée.
+export interface ThrownStats {
+  attackBonus: number
+  damageDice: string
+  damageBonus: number
+  attackRollSources: RollSource[]
+  attackParts: BonusPart[]
+  damageParts: BonusPart[]
+}
+
 export interface WeaponStats {
   entryId: number
   name: string
@@ -69,6 +81,9 @@ export interface WeaponStats {
   // Désavantages propres à l'arme, ajoutés à ceux de la fiche au jet d'attaque.
   attackRollSources: RollSource[]
   rangeText: string | null
+  // Distance de la cible choisie par le joueur ; null pour une arme qui ne frappe pas à distance.
+  rangeChoice: RangeChoice | null
+  thrown: ThrownStats | null
   magicBonus: number
   isProficient: boolean
   // Part de `damageBonus` due à la Rage (arme de corps à corps maniée avec la Force).
@@ -105,6 +120,7 @@ export const useCharacterInventory = (
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
+  const weaponRange = useWeaponRange(characterSheet?.value?.id)
   const { offlineMutate } = useOfflineMutation(() => characterId.value ?? 0)
   const { refreshPendingCount } = useOfflineSync()
 
@@ -393,6 +409,24 @@ export const useCharacterInventory = (
           rangeText = `${props.range.normal} m / ${props.range.long} m`
         }
 
+        // Une arme de corps à corps à lancer garde son attaque de mêlée ; le lancer est une attaque à distance à part,
+        // menée avec la même caractéristique mais sans les bonus propres au corps à corps (Rage, Duel, Archerie).
+        const canThrow = isThrown && !isRanged
+        const rangeChoice = isRanged || canThrow ? weaponRange.choiceOf(entry.id) : null
+        const rangeSources = rangeChoice ? rangeRollSources(rangeChoice) : []
+        const throwAttackParts = canThrow ? weaponBonusParts(bonusSources.value, 'attack', { isRanged: true }) : []
+        const throwDamageParts = canThrow ? weaponBonusParts(bonusSources.value, 'damage', { isRanged: true }) : []
+        const thrown: ThrownStats | null = canThrow
+          ? {
+              attackBonus: abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0) + sumBonusParts(throwAttackParts),
+              damageDice: props.damage_dice,
+              damageBonus: abilityMod + (entry.magicBonus ?? 0) + sumBonusParts(throwDamageParts),
+              attackRollSources: [...attackRollSources, ...rangeSources],
+              attackParts: throwAttackParts,
+              damageParts: throwDamageParts,
+            }
+          : null
+
         return {
           entryId: entry.id,
           name: item.name,
@@ -409,8 +443,10 @@ export const useCharacterInventory = (
           warnings,
           isRanged,
           usesStrength,
-          attackRollSources,
+          attackRollSources: isRanged ? [...attackRollSources, ...rangeSources] : attackRollSources,
           rangeText,
+          rangeChoice,
+          thrown,
           magicBonus: entry.magicBonus ?? 0,
           isProficient: proficient,
           rageBonus,
@@ -595,6 +631,7 @@ export const useCharacterInventory = (
     toggleAttuned,
     attunedCount,
     setUsingTwoHanded,
+    setRangeChoice: weaponRange.setChoice,
     addProficiencyOverride,
     removeProficiencyOverride,
     refreshInventory,

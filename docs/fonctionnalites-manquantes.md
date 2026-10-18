@@ -128,7 +128,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | **O2** | [#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159) | Poids et prix des objets |
 | **O3** | ✅ résolu ([#160](https://github.com/kevmorpain/le-bureau-du-jdr/issues/160), lot 4) | Pénalité de vitesse des armures lourdes : même règle que R10 (AideDD : seule une Force insuffisante réduit la vitesse) |
 | **O4** | [#161](https://github.com/kevmorpain/le-bureau-du-jdr/issues/161) | Munitions non décomptées |
-| **O5** | [#162](https://github.com/kevmorpain/le-bureau-du-jdr/issues/162) | Armes lancées et longue portée |
+| **O5** | ✅ résolu ([#162](https://github.com/kevmorpain/le-bureau-du-jdr/issues/162), lot 9) | Armes lancées et longue portée : une arme de corps à corps à lancer garde son attaque de mêlée et gagne un lancer, qui est une attaque à distance (même caractéristique, bonus « à distance » des effets ; ni Rage, ni Duel, ni dés de critique de mêlée). « Longue portée » et « Ennemi à 1,50 m » sont des choix du joueur par arme (`useWeaponRange`, dans le navigateur) qui nomment un désavantage au jet de tir ou de lancer. **Non porté** : le style Archerie n'est pas appliqué au lancer (règle non vérifiée) ; la portée maximale n'est pas imposée ; les munitions restent à O4 |
 | **O6** | [#163](https://github.com/kevmorpain/le-bureau-du-jdr/issues/163) | Objets magiques à effets actifs (une charge → un effet) |
 | **O7** | ✅ résolu (2026-09-26) ; restes : O7a [#164](https://github.com/kevmorpain/le-bureau-du-jdr/issues/164), O7b [#165](https://github.com/kevmorpain/le-bureau-du-jdr/issues/165) | Caractéristiques : effets d'objets et plafond |
 
