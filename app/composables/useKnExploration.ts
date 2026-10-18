@@ -25,6 +25,7 @@ import {
   knAddRoomTrap,
   knLocationVisit,
   knFinishTrap,
+  knForeseenRoll,
   knMarkEventOutcome,
   knMarkScavengeApplied,
   knMarkScavengeOutcome,
@@ -93,7 +94,7 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
   }
 
   function tableRoll(name: KnVisitTable, manual?: number) {
-    const roll = manual ?? knRollDie(tableDie(name))
+    const roll = manual ?? (name === 'scavenge' ? undefined : knForeseenRoll(character.value.run, name)) ?? knRollDie(tableDie(name))
     const hadScavenge = !!knLocationVisit(character.value.run)?.scavenge
     character.value.run = TABLE_RECORDS[name](character.value.run, roll)
     if (name === 'scavenge' && !hadScavenge && knLocationVisit(character.value.run)?.scavenge) {

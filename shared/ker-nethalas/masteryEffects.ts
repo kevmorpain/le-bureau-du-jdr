@@ -3,7 +3,7 @@ import type { KnCampTraitActivity } from './camp'
 import { KN_BOUNDS } from './character'
 import { knDiceLabel, knRollDice, type KnDiceRoll } from './dice'
 import type { KnActiveSource, KnEffect, KnVitalKey } from './effects'
-import type { KnMastery, KnMasteryAbility, KnSelfEffect } from './masteries'
+import type { KnMastery, KnMasteryAbility, KnMasteryPick, KnSelfEffect } from './masteries'
 import { knCustomEntryEffect } from './resolve'
 import type { KnRng } from './run'
 import type { KnStatus, KnUseLimit } from './status'
@@ -15,8 +15,8 @@ export const knAbilityIsPassive = (ability: Pick<KnMasteryAbility, 'action'>) =>
 
 // Un passif n'a un bouton que s'il fait quelque chose de mesurable : un effet sur soi, ou un usage limité à marquer. Une
 // aptitude qui change l'attaque se choisit dans l'attaque, sauf si elle est Maintenue : celle-là s'allume.
-export const knAbilityIsUsable = (ability: Pick<KnMasteryAbility, 'action' | 'self' | 'limit'> & Partial<Pick<KnMasteryAbility, 'attack' | 'sustained' | 'combatModifier' | 'engrave'>>) =>
-  (!knAbilityIsPassive(ability) || !!ability.self?.length || !!ability.limit || !!ability.combatModifier?.length || !!ability.engrave?.length)
+export const knAbilityIsUsable = (ability: Pick<KnMasteryAbility, 'action' | 'self' | 'limit'> & Partial<Pick<KnMasteryAbility, 'attack' | 'sustained' | 'combatModifier' | 'engrave' | 'project'>>) =>
+  (!knAbilityIsPassive(ability) || !!ability.self?.length || !!ability.limit || !!ability.combatModifier?.length || !!ability.engrave?.length || !!ability.project)
   && (!ability.attack || !!ability.sustained)
 
 export const knUseLimitLabel: Record<KnUseLimit, string> = {
@@ -172,6 +172,18 @@ export function knMasteryProvidesLight(
     return mastery !== undefined && unlockedAbilities(mastery, entry).some(ability =>
       ability.light && (!ability.sustained || sustained.includes(knSustainedKey(entry.key, ability.tier))))
   })
+}
+
+// Les aptitudes dont le maximum d'une jauge grandit avec le niveau : le bonus vaut le niveau d'obtention, plus un nombre fixe par niveau
+// gagné depuis. Sans niveau d'obtention connu, l'aptitude compte comme obtenue au niveau actuel.
+export function knMasteryLevelSources(masteries: readonly KnMastery[], picks: readonly KnMasteryPick[], level: number): KnActiveSource[] {
+  return picks.flatMap(pick => (masteries.find(mastery => mastery.key === pick.key)?.abilities ?? []).flatMap((ability) => {
+    const growth = ability.permanent?.maxVitalPerLevel
+    if (!growth || ability.tier > pick.tiers) return []
+    const at = Math.min(level, pick.levels?.[ability.tier] ?? level)
+    const amount = at * growth.atUnlock + (level - at) * growth.perLevel
+    return [{ id: `mastery:${pick.key}:${ability.tier}:level`, label: { text: ability.name }, effects: [{ type: 'maxVitalDelta' as const, vital: growth.vital, amount }], reminders: [] }]
+  }))
 }
 
 export function knToggleSustained(sustained: readonly string[], key: string): string[] {

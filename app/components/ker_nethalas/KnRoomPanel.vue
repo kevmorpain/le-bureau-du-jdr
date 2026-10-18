@@ -1,4 +1,14 @@
 <template>
+  <KnForesightPanel
+    v-if="foresight.length"
+    :run
+    :rooms="foresight"
+    :level="character.level"
+    :bestiary
+    :tables
+    @clear="character.run = knClearForesight(character.run)"
+  />
+
   <UCard v-if="!blocks.length">
     <template #header>
       <KnCardHeader title="Pièce" />
@@ -56,6 +66,7 @@
 <script lang="ts" setup>
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import type { KnCreature } from '~~/shared/ker-nethalas/creatures'
+import { knClearForesight, knForesight } from '~~/shared/ker-nethalas/foresight'
 import type { KnResolvedSheet } from '~~/shared/ker-nethalas/resolve'
 import {
   knCurrentDomain,
@@ -103,6 +114,7 @@ const { engage } = useKnCombat(character, () => props.resolved, () => props.best
 const { resume } = useKnFlee(character, () => props.resolved, () => props.bestiary)
 
 const run = computed(() => character.value.run)
+const foresight = computed(() => knForesight(character.value.run))
 const domain = computed(() => knCurrentDomain(character.value.run))
 
 // Ce qui s'affiche : l'entrée choisie ; en suivant la dernière, le retour puis la pièce où il ramène, car c'est elle qu'on joue.

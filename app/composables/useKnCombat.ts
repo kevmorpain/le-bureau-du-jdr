@@ -1,5 +1,5 @@
 import { KN_UNARMED_FUMBLE_MALUS, knMonsterFumble, knSurvivorFumble } from '~~/shared/ker-nethalas/fumbles'
-import { knQuickSlotCount } from '~~/shared/ker-nethalas/inventory'
+import { knIsUsable, knQuickSlotCount } from '~~/shared/ker-nethalas/inventory'
 import { knIsUsedUp, knMarkUsed } from '~~/shared/ker-nethalas/masteryEffects'
 import { knMonsterMove } from '~~/shared/ker-nethalas/monsterMoves'
 import { knMasteryEntries } from '~~/shared/ker-nethalas/amulets'
@@ -39,7 +39,7 @@ import {
 import { knReactionPenalty, type KnCombat } from '~~/shared/ker-nethalas/combatState'
 import { knArmorAt, knCreatureAtLevel, knFearLoss, knFindCreature, type KnCreature, type KnCreatureAction, type KnCreatureSelfEffect } from '~~/shared/ker-nethalas/creatures'
 import { knRollDice, type KnDice } from '~~/shared/ker-nethalas/dice'
-import { knArmorByZone, knArmorPieces, knBreakItem, knInitiativeBonus, knSacrificeChoices, knWieldedWeapons } from '~~/shared/ker-nethalas/equipment'
+import { knArmorByZone, knArmorPieces, knBreakItem, knDropItem, knInitiativeBonus, knSacrificeChoices, knWieldedWeapons } from '~~/shared/ker-nethalas/equipment'
 import { knMagicDefenses } from '~~/shared/ker-nethalas/magicEffects'
 import { knGoalCriticalTriple, knGoalReductions, knHasActivePerk, knMergeReductions } from '~~/shared/ker-nethalas/goalEffects'
 import type { KnResolvedSheet, KnRollMode } from '~~/shared/ker-nethalas/resolve'
@@ -500,11 +500,23 @@ export function useKnCombat(character: Ref<KnCharacter>, resolved: () => KnResol
       c.run = knAddNextAttack(c.run, { bonus: KN_UNARMED_FUMBLE_MALUS })
       return true
     }
-    if (effect.kind === 'weaponLost') return armed ? false : unarmed()
+    // L'arme qui a servi, sinon la première tenue.
+    const used = () => c.inventory.find(item => item.id === input.weaponId && item.weapon && knIsUsable(item)) ?? knWieldedWeapons(c.inventory)[0]
+    if (effect.kind === 'weaponLost') {
+      const weapon = armed ? used() : undefined
+      if (!weapon) return unarmed()
+      c.inventory = knDropItem(c.inventory, weapon.id, effect.stuck ? 'stuck' : 'floor')
+      log(`Maladresse : ${weapon.name} ${effect.stuck ? 'se fiche hors de portée (test d\'Athlétisme pour la récupérer)' : 'tombe : il faut un tour pour la ramasser'}`)
+      return true
+    }
     if (effect.kind === 'weaponBreaks') {
-      if (!armed) return unarmed()
-      const weapon = c.inventory.find(item => item.id === input.weaponId)
-      if (!weapon || weapon.magic) return false
+      const weapon = armed ? used() : undefined
+      if (!weapon) return unarmed()
+      if (weapon.magic) {
+        c.inventory = knDropItem(c.inventory, weapon.id, 'floor')
+        log(`Maladresse : ${weapon.name} heurte la pierre sans se briser : il faut un tour pour la récupérer`)
+        return true
+      }
       c.inventory = knBreakItem(c.inventory, weapon.id)
       log(`Maladresse : ${weapon.name} se brise, réparable au camp`)
       return true

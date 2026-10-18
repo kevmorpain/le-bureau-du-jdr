@@ -132,6 +132,8 @@ export const knItemSchema = z.object({
   integrity: z.object({ max: knIntegrityDieSchema, current: knIntegrityDieSchema }).optional(),
   // Sacrifié contre un Coup critique : inutilisable, magie comprise, tant qu'il n'est pas réparé.
   broken: z.boolean().optional(),
+  // Une arme lâchée (`floor`) ou fichée dans un mur ou le sol (`stuck`) : inutilisable tant qu'elle n'est pas récupérée.
+  dropped: z.enum(['floor', 'stuck']).optional(),
   magic: knMagicSchema.optional(),
   // Dés gravés sur l'arme (aptitude), permanents : ils s'ajoutent à la réserve de ses attaques, avec leur type de dégâts.
   engraved: z.array(z.object({ dice: knDiceSchema, type: z.enum(KN_DAMAGE_TYPES).optional() })).max(3).optional(),
@@ -147,6 +149,9 @@ export const knItemSchema = z.object({
 })
 
 export type KnItem = z.infer<typeof knItemSchema>
+
+// Un objet brisé, ou une arme restée au sol, ne sert à rien.
+export const knIsUsable = (item: Pick<KnItem, 'broken' | 'dropped'>): boolean => !item.broken && !item.dropped
 
 const twoHanded = (item: KnItem) => !!item.weapon?.traits.includes('twoHanded')
 

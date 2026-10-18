@@ -2,7 +2,7 @@ import type { KnPoolEntry, KnSurvivorArmorZone } from './combat'
 import type { KnDamageType } from './catalog/damageTypes'
 import type { KnActiveSource, KnEffect } from './effects'
 import { knGoalAttackDice, type KnGoalEffectEntry } from './goalEffects'
-import { knIntegrityDown, KN_INTEGRITY_DICE, type KnItem, type KnIntegrityDie } from './inventory'
+import { knIntegrityDown, knIsUsable, KN_INTEGRITY_DICE, type KnItem, type KnIntegrityDie } from './inventory'
 import { knLevelAttackDice, type KnLevelBenefit } from './progression'
 import { knMagicArmorBonus, knMagicAttack, knMagicInitiative, knMagicParry, type KnMagicAttack } from './magicEffects'
 import { knRollDie, type KnRng } from './run'
@@ -59,8 +59,8 @@ export function knEquipmentSources(items: readonly KnItem[]): KnActiveSource[] {
 
 // Deux armes à une main, une dans chaque main : le combat à deux armes est possible.
 export function knDualPair(items: readonly KnItem[]): [KnItem, KnItem] | null {
-  const main = items.find(item => item.place === 'mainHand' && item.weapon && !item.broken)
-  const off = items.find(item => item.place === 'offHand' && item.weapon && !item.broken)
+  const main = items.find(item => item.place === 'mainHand' && item.weapon && knIsUsable(item))
+  const off = items.find(item => item.place === 'offHand' && item.weapon && knIsUsable(item))
   return main && off && !traits(main).includes('twoHanded') && !traits(off).includes('twoHanded') ? [main, off] : null
 }
 
@@ -68,7 +68,7 @@ export function knDualPair(items: readonly KnItem[]): [KnItem, KnItem] | null {
 export const KN_DUAL_WIELD = { attack: -40, damage: 1 } as const
 
 export const knWieldedWeapons = (items: readonly KnItem[]): KnItem[] =>
-  items.filter(item => item.weapon && !item.broken && (item.place === 'mainHand' || item.place === 'offHand'))
+  items.filter(item => item.weapon && knIsUsable(item) && (item.place === 'mainHand' || item.place === 'offHand'))
 
 const traits = (item: KnItem) => item.weapon?.traits ?? []
 
@@ -217,7 +217,7 @@ export function knRollIntegrity(items: readonly KnItem[], id: string, rng: KnRng
 
 // Ce qu'on peut sacrifier pour annuler un Coup critique : l'arme ou le bouclier tenus, pas déjà brisés.
 export const knSacrificeChoices = (items: readonly KnItem[]): KnItem[] =>
-  items.filter(item => (item.weapon || item.kind === 'shield') && !item.broken && (item.place === 'mainHand' || item.place === 'offHand'))
+  items.filter(item => (item.weapon || item.kind === 'shield') && knIsUsable(item) && (item.place === 'mainHand' || item.place === 'offHand'))
 
 export const knBreakItem = (items: readonly KnItem[], id: string): KnItem[] =>
   items.map(item => item.id === id ? { ...item, broken: true } : item)
@@ -240,3 +240,14 @@ export function knRepairItem(items: readonly KnItem[], id: string): KnItem[] {
     return { ...item, integrity: { max, current: up } }
   })
 }
+
+// Une maladresse fait lâcher l'arme (`floor`) ou la plante hors de portée (`stuck`) ; la ramasser la remet en service.
+export const knDropItem = (items: readonly KnItem[], id: string, mode: NonNullable<KnItem['dropped']>): KnItem[] =>
+  items.map(item => item.id === id && item.weapon ? { ...item, dropped: mode } : item)
+
+export const knPickUpItem = (items: readonly KnItem[], id: string): KnItem[] =>
+  items.map((item) => {
+    if (item.id !== id) return item
+    const { dropped: _dropped, ...rest } = item
+    return rest
+  })

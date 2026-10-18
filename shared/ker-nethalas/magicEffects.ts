@@ -8,7 +8,7 @@ import type { KnMagicMech, KnMagicProperty } from './magicSchema'
 import type { KnUseLimit } from './status'
 
 // Un objet magique n'agit que porté (ou tenu) : dans le sac ou à la Ceinture, il n'est qu'un objet.
-export const knIsWorn = (item: Pick<KnItem, 'place' | 'broken'>): boolean => item.place !== 'bag' && item.place !== 'quick' && !item.broken
+export const knIsWorn = (item: Pick<KnItem, 'place' | 'broken' | 'dropped'>): boolean => item.place !== 'bag' && item.place !== 'quick' && !item.broken && !item.dropped
 
 interface Active {
   item: KnItem

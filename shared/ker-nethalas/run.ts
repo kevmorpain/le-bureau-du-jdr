@@ -22,6 +22,8 @@ export const KN_TENSION_START_DIE: KnUsageDie = 8
 export const KN_LAIR_START_DIE: KnUsageDie = 10
 export const KN_EXIT_START_DIE: KnUsageDie = 8
 export const KN_LIGHT_ROOMS = 20
+// Les pièces qu'une projection de l'esprit peut pressentir d'un coup.
+export const KN_FORESIGHT_MAX = 5
 export const KN_OPTIONAL_LAIR_ROOMS = 15
 
 export const KN_RUN_BOUNDS = {
@@ -135,6 +137,14 @@ export const knVisitSchema = z.object({
   // D100 de forme, qui a décidé du type d'entrée ; absent quand le type a été choisi à la main.
   shape: knTableRollSchema.optional(),
   description: knTableRollSchema.optional(),
+  // Ce qu'une projection de l'esprit a vu de cette pièce : les tirages d'entrée, repris tels quels à l'entrée.
+  foreseen: z.object({
+    description: boundedInt({ min: 1, max: 100 }).optional(),
+    door: boundedInt({ min: 1, max: 10 }).optional(),
+    encounter: boundedInt({ min: 1, max: 20 }).optional(),
+    event: boundedInt({ min: 1, max: 100 }).optional(),
+    creatures: z.array(z.object({ d6: boundedInt({ min: 1, max: 6 }), d20: boundedInt({ min: 1, max: 20 }) })).max(KN_RUN_BOUNDS.creatures).optional(),
+  }).optional(),
   encounter: z.object({ roll: boundedInt({ min: 1, max: 20 }), triggered: z.boolean() }).optional(),
   event: knTableRollSchema.extend({ taken: knTakenSchema }).optional(),
   door: z.object({ roll: boundedInt({ min: 1, max: 10 }), present: z.boolean() }).optional(),
@@ -164,6 +174,8 @@ export const knDomainSchema = z.object({
   overseer: z.object({ roll: boundedInt({ min: 1, max: 10 }) }).optional(),
   growingDarkness: z.array(knGrowingDarknessEntrySchema).max(KN_RUN_BOUNDS.growingDarkness),
   visits: z.array(knVisitSchema).max(KN_RUN_BOUNDS.visits),
+  // Les pièces pressenties (aptitude) : les prochaines entrées nouvelles, dans l'ordre, avec ce qu'on y a vu.
+  foresight: z.array(knVisitSchema).max(KN_FORESIGHT_MAX).optional(),
 })
 
 export const knRunSchema = z.object({
@@ -359,8 +371,12 @@ export interface KnIntroEntry {
 }
 
 // `target` : la position, dans le chemin, de la pièce ou du couloir dont un retour repasse le seuil.
-export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number, intro?: KnIntroEntry, target?: number): KnRun {
+export function knStartVisit(run: KnRun, requestedKind: KnVisitKind, requestedShape?: number, intro?: KnIntroEntry, target?: number): KnRun {
   const domain = knCurrentDomain(run)
+  // Une pièce pressentie s'impose à la prochaine entrée nouvelle : son type, sa forme et ses tirages.
+  const seen = requestedKind !== 'revisit' && !intro ? domain.foresight?.[0] : undefined
+  const kind = seen?.kind ?? requestedKind
+  const shapeRoll = seen?.shape?.roll ?? requestedShape
   const usageKind: KnVisit['usageKind'] = kind === 'revisit' || domain.exitFound ? null : domain.lairFound ? 'exit' : 'lair'
   const entered = knEnterRoom(run, { isNew: kind !== 'revisit' })
   const existing = knCurrentDomain(entered).visits
@@ -372,12 +388,30 @@ export function knStartVisit(run: KnRun, kind: KnVisitKind, shapeRoll?: number, 
     usageKind,
     ...(roomId === undefined ? {} : { of: roomId }),
     ...(shapeRoll === undefined ? {} : { shape: { roll: shapeRoll } }),
+    ...(seen ? { foreseen: knForeseenOf(seen) } : {}),
     ...(intro ? { introRoom: intro.room, ...(intro.noEncounter ? { noEncounter: true } : {}), ...(intro.noEvent || intro.noEncounter ? { noEvent: true } : {}) } : {}),
   }
   const marked = room && room.id === undefined ? existing.map(entry => entry === room ? { ...entry, id: roomId } : entry) : existing
   const visits = [...marked, visit].slice(-KN_RUN_BOUNDS.visits)
-  return withCurrentDomain(entered, { visits })
+  const rest = domain.foresight?.slice(1) ?? []
+  const { foresight: _seen, ...withoutForesight } = knCurrentDomain(entered)
+  return seen
+    ? { ...entered, domains: entered.domains.map((candidate, index) => index === entered.current ? { ...withoutForesight, visits, ...(rest.length ? { foresight: rest } : {}) } : candidate) }
+    : withCurrentDomain(entered, { visits })
 }
+
+// Les tirages d'entrée qu'une pièce pressentie a déjà eus.
+const knForeseenOf = (room: KnVisit): NonNullable<KnVisit['foreseen']> => ({
+  ...(room.description ? { description: room.description.roll } : {}),
+  ...(room.door ? { door: room.door.roll } : {}),
+  ...(room.encounter ? { encounter: room.encounter.roll } : {}),
+  ...(room.event ? { event: room.event.roll } : {}),
+  ...(room.creatures?.length ? { creatures: room.creatures } : {}),
+})
+
+// Un tirage d'entrée déjà vu par une projection de l'esprit, pour la pièce où l'on est.
+export const knForeseenRoll = (run: KnRun, name: 'description' | 'door' | 'encounter' | 'event'): number | undefined =>
+  knLocationVisit(run)?.foreseen?.[name]
 
 export function knRecordTension(run: KnRun, roll: number, manual: boolean): KnRun {
   const visit = knCurrentVisit(run)
