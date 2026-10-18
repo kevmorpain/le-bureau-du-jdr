@@ -161,8 +161,8 @@
               </RollButton>
             </UTooltip>
             <UTooltip
-              v-for="dice in weapon.extraDamageDice"
-              :key="dice.name"
+              v-for="(dice, index) in weapon.extraDamageDice"
+              :key="`${dice.name}:${index}`"
               :text="[dice.condition, dice.limit === 'once_per_turn' ? 'Une fois par tour' : 'À chaque attaque', extraDiceStatus(dice)?.hint].filter(Boolean).join(' — ')"
               :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
             >

@@ -41,17 +41,26 @@
         />
       </div>
 
-      <div v-if="effect.type === 'extra_damage'" class="grid grid-cols-2 gap-2">
-        <UFormField label="Dés de dégâts">
+      <div v-if="effect.type === 'weapon_damage_dice'" class="grid grid-cols-3 gap-2">
+        <UFormField label="Nombre de dés">
           <UInput
-            v-model="(effect.value as ExtraDamageValue).die_count_notation"
-            placeholder="ex: 1d6"
+            v-model.number="(effect.value as ExtraDiceValue).dice.value"
+            type="number"
+            :min="1"
+            size="sm"
+          />
+        </UFormField>
+        <UFormField label="Faces">
+          <UInput
+            v-model.number="(effect.value as ExtraDiceValue).sides"
+            type="number"
+            :min="2"
             size="sm"
           />
         </UFormField>
         <UFormField label="Type de dégâts">
           <USelect
-            v-model="(effect.value as ExtraDamageValue).damage_type"
+            v-model="(effect.value as ExtraDiceValue).damageType"
             :items="damageTypeOptions"
             size="sm"
           />
@@ -292,9 +301,10 @@ import type { Effect, EffectType, ExtractEffect } from '~~/server/db/schema/effe
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { fixed, fixedAmount } from '~~/shared/utils/formula'
 
-interface ExtraDamageValue {
-  die_count_notation: string
-  damage_type: string
+interface ExtraDiceValue {
+  dice: { value: number }
+  sides: number
+  damageType: string
 }
 
 type AbilityIncreaseValue = ExtractEffect<'ability_increase'>['value']
@@ -309,9 +319,12 @@ const props = withDefaults(defineProps<{
   title?: string
   // Restreint les types proposés (effets temporaires : seuls ceux que la fiche applique).
   types?: readonly EffectType[]
+  // Les dés de dégâts supplémentaires valent pour l'arme qui les porte : proposés sur une arme seulement.
+  weapon?: boolean
 }>(), {
   title: 'Effets magiques',
   types: undefined,
+  weapon: false,
 })
 
 const emit = defineEmits<{
@@ -340,7 +353,7 @@ watch(() => props.modelValue, (val) => {
 const allEffectTypeOptions: { label: string, value: EffectType }[] = [
   { label: 'Bonus à la CA', value: 'armor_class_bonus' },
   { label: 'Bonus aux jets de sauvegarde', value: 'saving_throw_bonus' },
-  { label: 'Dégâts supplémentaires', value: 'extra_damage' },
+  { label: 'Dégâts supplémentaires', value: 'weapon_damage_dice' },
   { label: 'Résistance aux dégâts', value: 'damage_resistance' },
   { label: 'Immunité aux dégâts', value: 'damage_immunity' },
   { label: 'Vulnérabilité aux dégâts', value: 'vulnerability' },
@@ -365,7 +378,9 @@ const allEffectTypeOptions: { label: string, value: EffectType }[] = [
 ]
 
 const effectTypeOptions = computed(() =>
-  props.types ? allEffectTypeOptions.filter(o => props.types!.includes(o.value)) : allEffectTypeOptions,
+  props.types
+    ? allEffectTypeOptions.filter(o => props.types!.includes(o.value))
+    : allEffectTypeOptions.filter(o => props.weapon || o.value !== 'weapon_damage_dice'),
 )
 
 const passiveSkillOptions = [
@@ -418,7 +433,7 @@ const savingThrowAbilityOptions = [
 
 const defaultValueForType = (type: string): unknown => {
   switch (type) {
-    case 'extra_damage': return { die_count_notation: '1d6', damage_type: 'fire' }
+    case 'weapon_damage_dice': return { name: 'Dégâts supplémentaires', dice: fixed(1), sides: 6, damageType: 'fire', weapons: 'all', limit: 'each_hit' }
     case 'damage_resistance':
     case 'damage_immunity':
     case 'vulnerability': return { damageType: 'fire' }

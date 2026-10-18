@@ -3,8 +3,8 @@ import { hasHeavyWeaponDisadvantage } from '~~/shared/rules/creatureSize'
 import { archeryAttackBonus, defenseAcBonus, duelingDamageBonus, twoWeaponOffhandUsesAbilityMod } from '~~/shared/rules/fightingStyleEffects'
 import { bestUnarmoredDefense } from '~~/shared/rules/armorClass'
 import { armorClassBonusParts, sumBonusParts, weaponBonusParts, type BonusPart, type EffectSource } from '~~/shared/rules/effectBonuses'
-import { activeItemEffectSources } from '~~/shared/rules/characterEffects'
-import { damageDiceAppliesToWeapon } from '~~/shared/rules/classResources'
+import { activeItemEffectSources, isItemActive } from '~~/shared/rules/characterEffects'
+import { damageDiceAppliesToWeapon, itemWeaponDamageDice } from '~~/shared/rules/classResources'
 import type { ClassTraits } from '~~/shared/rules/classResources'
 import type { RollSource } from '~~/shared/rules/rolls'
 import type {
@@ -408,8 +408,11 @@ export const useCharacterInventory = (
           rageBonus,
           attackParts,
           damageParts,
-          extraDamageDice: (deps?.classTraits?.value.weaponDamageDice ?? [])
-            .filter(d => damageDiceAppliesToWeapon(d.weapons, { isRanged, isFinesse })),
+          extraDamageDice: [
+            ...(deps?.classTraits?.value.weaponDamageDice ?? [])
+              .filter(d => damageDiceAppliesToWeapon(d.weapons, { isRanged, isFinesse })),
+            ...(isItemActive(entry) ? itemWeaponDamageDice(item.effects ?? []) : []),
+          ],
         }
       }),
   )

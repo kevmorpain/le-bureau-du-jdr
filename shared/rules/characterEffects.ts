@@ -97,9 +97,12 @@ export interface InventoryEntryEffects {
 
 // DMG : « Une créature qui ne se lie pas à un objet qui nécessite un lien obtient uniquement les
 // avantages non magiques de celui-ci » → aucun effet sans lien.
+export const isItemActive = (entry: InventoryEntryEffects): boolean =>
+  entry.equipped && (!entry.item?.requiresAttunement || entry.attuned)
+
 export const activeItemEffectSources = (inventory: readonly InventoryEntryEffects[]): EffectSource[] =>
   inventory
-    .filter(e => e.equipped && (!e.item?.requiresAttunement || e.attuned) && e.item?.effects?.length)
+    .filter(e => isItemActive(e) && e.item?.effects?.length)
     .map(e => ({ label: e.item!.name, effects: e.item!.effects! }))
 
 export const activeTemporaryEffectSources = (temporaryEffects: readonly TemporaryEffect[]): EffectSource[] =>

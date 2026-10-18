@@ -1,3 +1,4 @@
+import { fixed } from '~~/shared/utils/formula'
 import { CreatureSize } from '../../schema/character_species'
 import type * as schema from '../../schema'
 import type { SpeciesTraitData } from '../lib/seedLineages'
@@ -1073,12 +1074,8 @@ const halfOrc: SpeciesSeed = {
       description: `Quand vous obtenez un coup critique avec une attaque au corps à corps, vous pouvez lancer l'un des dés de dégâts de l'arme une fois de plus et en ajouter le résultat aux dégâts supplémentaires du coup critique.`,
       effects: [
         {
-          type: 'extra_damage',
-          value: {
-            trigger: 'critical_hit',
-            attackType: 'melee',
-            extraDie: 1,
-          },
+          type: 'critical_extra_dice',
+          value: { dice: fixed(1) },
         },
       ],
     },

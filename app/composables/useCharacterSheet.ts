@@ -3,7 +3,7 @@ import type { FormulaContext } from '~~/shared/utils/formula'
 import type { Effect } from '~~/server/db/schema/effects'
 import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, type FeatChoices } from '~~/shared/rules/characterEffects'
 import { spellDamageBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
-import { deriveClassTraits, featureFormulaContext, featureUses, isFeatureUnlocked, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
+import { criticalExtraDiceOf, deriveClassTraits, featureFormulaContext, featureUses, isFeatureUnlocked, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
 import type { OwnerClass } from '~~/shared/rules/classResources'
 import { castDuration, type SpellDurationRow } from '~~/shared/rules/durations'
 import { conditionLabels } from '~~/shared/utils/labels'
@@ -365,7 +365,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     effectSources: computed<EffectSource[]>(() => [{ label: 'Capacités', effects: capabilityEffects.value }, ...activeEffectSources.value]),
     allEffects: computed<Effect[]>(() => [...capabilityEffects.value, ...activeEffects.value]),
     getEffectiveProficiency: abilities.getEffectiveProficiency,
-    criticalExtraDice: computed(() => classTraits.value.criticalExtraDice),
+    criticalExtraDice: computed(() => classTraits.value.criticalExtraDice + criticalExtraDiceOf(speciesEffects.value, formulaContext.value)),
     rollsEnabled: computed(() => prefs.preferences.value.diceRolls),
   })
 

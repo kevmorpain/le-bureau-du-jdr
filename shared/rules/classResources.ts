@@ -1,6 +1,6 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeatureMeta, RechargeType } from '~~/server/db/schema/features'
-import { evaluate } from '~~/shared/utils/formula'
+import { evaluate, fixedAmount } from '~~/shared/utils/formula'
 import type { Formula, FormulaContext } from '~~/shared/utils/formula'
 import { REST_RECHARGE_MAP } from '~~/shared/utils/rest'
 import type { RestType } from '~~/shared/utils/rest'
@@ -182,7 +182,7 @@ export const deriveClassTraits = (
           traits.meleeStrengthDamageBonus += evaluate(effect.value.amount, ctx)
           break
         case 'critical_extra_dice':
-          traits.criticalExtraDice = Math.max(traits.criticalExtraDice, evaluate(effect.value.dice, ctx))
+          traits.criticalExtraDice += evaluate(effect.value.dice, ctx)
           break
         case 'slot_damage_dice':
           traits.slotDamage.push(effect.value)
@@ -219,8 +219,20 @@ export const deriveClassTraits = (
   return traits
 }
 
+// Les dés d'un objet sont toujours fixes (l'éditeur n'écrit pas de formule) et valent pour l'arme qui les porte.
+export const itemWeaponDamageDice = (effects: readonly Effect[]): WeaponDamageDice[] =>
+  effects.flatMap((e) => {
+    if (e.type !== 'weapon_damage_dice') return []
+    const count = fixedAmount(e.value.dice)
+    return count === undefined ? [] : [{ ...e.value, count }]
+  })
+
+// Les dés de critique de sources différentes s'additionnent (Critique brutal et Attaques sauvages).
+export const criticalExtraDiceOf = (effects: readonly Effect[], ctx: FormulaContext): number =>
+  effects.reduce((total, e) => e.type === 'critical_extra_dice' ? total + evaluate(e.value.dice, ctx) : total, 0)
+
 export const damageDiceAppliesToWeapon = (weapons: WeaponDamageDice['weapons'], weapon: { isRanged: boolean, isFinesse: boolean }): boolean =>
-  weapons === 'melee' ? !weapon.isRanged : weapon.isRanged || weapon.isFinesse
+  weapons === 'all' || (weapons === 'melee' ? !weapon.isRanged : weapon.isRanged || weapon.isFinesse)
 
 // Châtiment divin : 2d8 au niveau 1, +1d8 par niveau au-delà ; le dé contre une cible donnée porte le plafond de 5d8 à 6d8.
 export const slotDamageDiceCount = (damage: SlotDamage, slotLevel: number, bonusApplies: boolean): number => {

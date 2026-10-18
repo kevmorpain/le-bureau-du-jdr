@@ -69,7 +69,6 @@ export type Effect
     | { type: 'damage_resistance', value: { damageType: DamageTypeKey } }
     | { type: 'darkvision', value: { range: number } }
     | { type: 'equipment_penalty', value: { penalty: string, armor_type: string, modifier: string, override: boolean } }
-    | { type: 'extra_damage', value: { trigger: string, attackType: string, extraDie: number } }
     | { type: 'damage_immunity', value: { damageType: DamageTypeKey } }
     | { type: 'condition_immunity', value: { condition: ConditionKey } }
     | { type: 'immunity', value: ImmunityKey }
@@ -134,8 +133,9 @@ export type Effect
     // (`shared/rules/classResources.ts`), jamais à celui de la classe principale.
     // Attaques par action Attaquer ; les sources ne se cumulent pas.
     | { type: 'extra_attack', value: { attacks: Formula } }
-    // Dés de dégâts ajoutés à une attaque d'arme (Attaque sournoise, Châtiment divin amélioré).
-    | { type: 'weapon_damage_dice', value: { name: string, dice: Formula, sides: number, damageType?: DamageType, weapons: 'melee' | 'finesse_or_ranged', limit: 'once_per_turn' | 'each_hit', condition?: string, needsAdvantage?: boolean } }
+    // Dés de dégâts ajoutés à une attaque d'arme (Attaque sournoise, Châtiment divin amélioré). Sur un objet, ils
+    // valent pour l'arme qui les porte (`weapons: 'all'`).
+    | { type: 'weapon_damage_dice', value: { name: string, dice: Formula, sides: number, damageType?: DamageType, weapons: 'melee' | 'finesse_or_ranged' | 'all', limit: 'once_per_turn' | 'each_hit', condition?: string, needsAdvantage?: boolean } }
     // Bonus fixe aux dégâts d'une attaque d'arme de corps à corps menée avec la Force (Rage).
     | { type: 'melee_strength_damage_bonus', value: { amount: Formula } }
     // Taille du dé de la réserve (Inspiration bardique : d6 → d12).

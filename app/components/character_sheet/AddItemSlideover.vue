@@ -269,7 +269,10 @@
             <!-- Effets magiques (tous types) : appliqués automatiquement
                  quand l'objet est équipé. -->
             <div class="rounded-lg ring ring-default p-3">
-              <MagicEffectEditor v-model="createForm.effects" />
+              <MagicEffectEditor
+                v-model="createForm.effects"
+                :weapon="createForm.itemType === 'weapon'"
+              />
             </div>
           </div>
         </template>
@@ -452,6 +455,10 @@ const createForm = ref({
   rechargeType: 'none' as 'none' | 'short_rest' | 'long_rest' | 'dawn',
   rechargeMode: 'full' as 'full' | 'dice',
   rechargeDice: '1d6+4',
+})
+
+watch(() => createForm.value.itemType, (type) => {
+  if (type !== 'weapon') createForm.value.effects = createForm.value.effects.filter(e => e.type !== 'weapon_damage_dice')
 })
 
 const rechargeTypeOptions = [
