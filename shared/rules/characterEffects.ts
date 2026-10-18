@@ -97,9 +97,12 @@ export interface InventoryEntryEffects {
 
 // DMG : « Une créature qui ne se lie pas à un objet qui nécessite un lien obtient uniquement les
 // avantages non magiques de celui-ci » → aucun effet sans lien.
+export const isItemActive = (entry: InventoryEntryEffects): boolean =>
+  entry.equipped && (!entry.item?.requiresAttunement || entry.attuned)
+
 export const activeItemEffectSources = (inventory: readonly InventoryEntryEffects[]): EffectSource[] =>
   inventory
-    .filter(e => e.equipped && (!e.item?.requiresAttunement || e.attuned) && e.item?.effects?.length)
+    .filter(e => isItemActive(e) && e.item?.effects?.length)
     .map(e => ({ label: e.item!.name, effects: e.item!.effects! }))
 
 export const activeTemporaryEffectSources = (temporaryEffects: readonly TemporaryEffect[]): EffectSource[] =>
@@ -110,3 +113,14 @@ export const activeTemporaryEffectSources = (temporaryEffects: readonly Temporar
 // Le GET de la fiche porte l'inventaire en `{ inventory, item }` ; les effets lisent une entrée à plat.
 export const inventoryEntriesOf = (rows: readonly { inventory: object, item: object | null }[]): InventoryEntryEffects[] =>
   rows.map(row => ({ ...row.inventory, item: row.item }) as InventoryEntryEffects)
+
+export interface ActiveEffectsSheet {
+  inventory?: Parameters<typeof inventoryEntriesOf>[0]
+  temporaryEffects?: readonly TemporaryEffect[]
+}
+
+// Ce que la fiche applique au-delà des capacités : effets des objets actifs et des effets temporaires, lus dans le GET.
+export const sheetActiveEffectSources = (sheet: ActiveEffectsSheet | null | undefined): EffectSource[] => [
+  ...activeItemEffectSources(inventoryEntriesOf(sheet?.inventory ?? [])),
+  ...activeTemporaryEffectSources(sheet?.temporaryEffects ?? []),
+]

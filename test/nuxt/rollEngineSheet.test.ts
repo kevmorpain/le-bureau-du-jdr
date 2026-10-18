@@ -5,6 +5,7 @@ import { bardeFeatures } from '../../server/db/seeds/data/barde'
 import { guerrierSubclasses } from '../../server/db/seeds/data/guerrier'
 import { roublardFeatures } from '../../server/db/seeds/data/roublard'
 import { resolveRollMode } from '../../shared/rules/rolls'
+import { fixed } from '../../shared/utils/formula'
 import { baseScores, classFeature, inventoryEntry as entry, mountSheet as mount } from './fixtures/mountSheet'
 
 // Ce que la fiche demande au lanceur de dés : sources d'avantage et de désavantage, relance, plancher, plage de
@@ -209,6 +210,24 @@ describe('fiche — relance, plancher, critique', () => {
     for (const [level, dice] of expected) {
       const s = await mount({ scores: baseScores(16, 10, 14, 10), classes: [{ classId: BARBARIAN, level }], features: [brutal(6 + level)] })
       expect(s.classTraits.value.criticalExtraDice).toBe(dice)
+      expect(s.rollEngine.criticalExtraDice.value).toBe(dice)
+    }
+  })
+})
+
+describe('fiche — dés de critique supplémentaires', () => {
+  const savageAttacks: Effect[] = [{ type: 'critical_extra_dice', value: { dice: fixed(1) } }]
+  const brutal = classFeature(30, 'Critique brutal', BARBARIAN, 9, [{ type: 'critical_extra_dice', value: { dice: BRUTAL_CRITICAL_DICE } }])
+
+  it('Attaques sauvages (espèce) : 1 dé de l\'arme au critique, sans classe qui en donne', async () => {
+    const s = await mount({ scores: baseScores(16, 10, 14, 10), speciesEffects: savageAttacks })
+    expect(s.classTraits.value.criticalExtraDice).toBe(0)
+    expect(s.rollEngine.criticalExtraDice.value).toBe(1)
+  })
+
+  it('s\'ajoute à Critique brutal au lieu de le remplacer', async () => {
+    for (const [level, dice] of [[9, 2], [13, 3], [17, 4]] as const) {
+      const s = await mount({ scores: baseScores(16, 10, 14, 10), classes: [{ classId: BARBARIAN, level }], features: [brutal], speciesEffects: savageAttacks })
       expect(s.rollEngine.criticalExtraDice.value).toBe(dice)
     }
   })

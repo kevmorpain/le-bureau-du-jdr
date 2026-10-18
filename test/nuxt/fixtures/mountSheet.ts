@@ -12,7 +12,7 @@ export const inventoryEntry = (
   itemType: 'armor' | 'weapon' | 'equipment',
   properties: Record<string, unknown>,
   effects: Effect[] = [],
-  state: { attuned?: boolean, requiresAttunement?: boolean } = {},
+  state: { attuned?: boolean, requiresAttunement?: boolean, pactWeapon?: boolean } = {},
 ) => ({
   id,
   characterSheetId: sheetId,
@@ -20,6 +20,7 @@ export const inventoryEntry = (
   quantity: 1,
   equipped: true,
   attuned: state.attuned ?? false,
+  isPactWeapon: state.pactWeapon ?? false,
   magicBonus: 0,
   currentUses: 0,
   notes: null,
@@ -40,9 +41,9 @@ export const classFeature = (id: number, name: string, classId: number, levelReq
   },
 })
 
-export const baseScores = (str: number, dex: number, con: number, wis: number) => [
+export const baseScores = (str: number, dex: number, con: number, wis: number, cha = 10) => [
   { abilityId: 'str', value: str }, { abilityId: 'dex', value: dex }, { abilityId: 'con', value: con },
-  { abilityId: 'int', value: 10 }, { abilityId: 'wis', value: wis }, { abilityId: 'cha', value: 10 },
+  { abilityId: 'int', value: 10 }, { abilityId: 'wis', value: wis }, { abilityId: 'cha', value: cha },
 ]
 
 export interface SheetScenario {

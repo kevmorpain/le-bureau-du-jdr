@@ -3,10 +3,14 @@ import { hasHeavyWeaponDisadvantage } from '~~/shared/rules/creatureSize'
 import { archeryAttackBonus, defenseAcBonus, duelingDamageBonus, twoWeaponOffhandUsesAbilityMod } from '~~/shared/rules/fightingStyleEffects'
 import { bestUnarmoredDefense } from '~~/shared/rules/armorClass'
 import { armorClassBonusParts, sumBonusParts, weaponBonusParts, type BonusPart, type EffectSource } from '~~/shared/rules/effectBonuses'
-import { activeItemEffectSources } from '~~/shared/rules/characterEffects'
-import { damageDiceAppliesToWeapon } from '~~/shared/rules/classResources'
+import { activeItemEffectSources, isItemActive } from '~~/shared/rules/characterEffects'
+import { damageDiceAppliesToWeapon, itemWeaponDamageDice } from '~~/shared/rules/classResources'
 import type { ClassTraits } from '~~/shared/rules/classResources'
+import { canAttune } from '~~/shared/rules/attunement'
+import { pactWeaponBonus, type PactWeaponBonus } from '~~/shared/rules/pactWeapon'
 import type { RollSource } from '~~/shared/rules/rolls'
+import { rangeRollSources, type RangeChoice } from '~~/shared/rules/weaponRange'
+import { useWeaponRange } from './useWeaponRange'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -44,7 +48,18 @@ export interface InventoryEntry {
   notes: string | null
   usingTwoHanded: boolean
   attuned: boolean
+  isPactWeapon: boolean
   item: InventoryItem | null
+}
+
+// Lancer une arme de corps à corps (propriété lancer) : une attaque à distance, à part de l'attaque de mêlée.
+export interface ThrownStats {
+  attackBonus: number
+  damageDice: string
+  damageBonus: number
+  attackRollSources: RollSource[]
+  attackParts: BonusPart[]
+  damageParts: BonusPart[]
 }
 
 export interface WeaponStats {
@@ -67,6 +82,11 @@ export interface WeaponStats {
   // Désavantages propres à l'arme, ajoutés à ceux de la fiche au jet d'attaque.
   attackRollSources: RollSource[]
   rangeText: string | null
+  // Distance de la cible choisie par le joueur ; null pour une arme qui ne frappe pas à distance.
+  rangeChoice: RangeChoice | null
+  thrown: ThrownStats | null
+  // Le joueur a basculé cette arme en mode Lancer : le mode Mêlée reste celui par défaut.
+  throwing: boolean
   magicBonus: number
   isProficient: boolean
   // Part de `damageBonus` due à la Rage (arme de corps à corps maniée avec la Force).
@@ -76,6 +96,10 @@ export interface WeaponStats {
   damageParts: BonusPart[]
   // Dés ajoutés à l'attaque (Attaque sournoise, Châtiment divin amélioré) : jetés à part.
   extraDamageDice: ClassTraits['weaponDamageDice']
+  // Dégâts fixes d'un autre type ajoutés à ceux de l'arme (Buveuse de vie) : à lire, rien à jeter.
+  extraDamageFixed: PactWeaponBonus['extraDamage']
+  // Attaques de l'action Attaquer menées avec cette arme (Lame assoiffée : deux avec l'arme de pacte).
+  attacksPerAction: number
 }
 
 export interface ArmorClassBreakdown {
@@ -99,6 +123,7 @@ export const useCharacterInventory = (
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
+  const weaponRange = useWeaponRange(characterSheet?.value?.id)
   const { offlineMutate } = useOfflineMutation(() => characterId.value ?? 0)
   const { refreshPendingCount } = useOfflineSync()
 
@@ -314,6 +339,8 @@ export const useCharacterInventory = (
 
   const speciesSize = computed(() => characterSheet?.value?.species?.size ?? null)
 
+  const pactWeapon = computed(() => pactWeaponBonus(deps?.allEffects.value ?? [], deps?.abilityModifiers.value.cha ?? 0))
+
   const equippedWeaponStats = computed<WeaponStats[]>(() =>
     equippedWeapons.value
       .filter(e => e.item)
@@ -385,6 +412,24 @@ export const useCharacterInventory = (
           rangeText = `${props.range.normal} m / ${props.range.long} m`
         }
 
+        // Une arme de corps à corps à lancer garde son attaque de mêlée ; le lancer est une attaque à distance à part,
+        // menée avec la même caractéristique mais sans les bonus propres au corps à corps (Rage, Duel, Archerie).
+        const canThrow = isThrown && !isRanged
+        const rangeChoice = isRanged || canThrow ? weaponRange.choiceOf(entry.id) : null
+        const rangeSources = rangeChoice ? rangeRollSources(rangeChoice) : []
+        const throwAttackParts = canThrow ? weaponBonusParts(bonusSources.value, 'attack', { isRanged: true }) : []
+        const throwDamageParts = canThrow ? weaponBonusParts(bonusSources.value, 'damage', { isRanged: true }) : []
+        const thrown: ThrownStats | null = canThrow
+          ? {
+              attackBonus: abilityMod + (proficient ? profBonus : 0) + (entry.magicBonus ?? 0) + sumBonusParts(throwAttackParts),
+              damageDice: props.damage_dice,
+              damageBonus: abilityMod + (entry.magicBonus ?? 0) + sumBonusParts(throwDamageParts),
+              attackRollSources: [...attackRollSources, ...rangeSources],
+              attackParts: throwAttackParts,
+              damageParts: throwDamageParts,
+            }
+          : null
+
         return {
           entryId: entry.id,
           name: item.name,
@@ -401,15 +446,23 @@ export const useCharacterInventory = (
           warnings,
           isRanged,
           usesStrength,
-          attackRollSources,
+          attackRollSources: isRanged ? [...attackRollSources, ...rangeSources] : attackRollSources,
           rangeText,
+          rangeChoice,
+          thrown,
+          throwing: thrown !== null && weaponRange.isThrowing(entry.id),
           magicBonus: entry.magicBonus ?? 0,
           isProficient: proficient,
           rageBonus,
           attackParts,
           damageParts,
-          extraDamageDice: (deps?.classTraits?.value.weaponDamageDice ?? [])
-            .filter(d => damageDiceAppliesToWeapon(d.weapons, { isRanged, isFinesse })),
+          extraDamageDice: [
+            ...(deps?.classTraits?.value.weaponDamageDice ?? [])
+              .filter(d => damageDiceAppliesToWeapon(d.weapons, { isRanged, isFinesse })),
+            ...(isItemActive(entry) ? itemWeaponDamageDice(item.effects ?? []) : []),
+          ],
+          extraDamageFixed: entry.isPactWeapon ? pactWeapon.value.extraDamage : [],
+          attacksPerAction: Math.max(deps?.classTraits?.value.attacksPerAction ?? 1, entry.isPactWeapon ? pactWeapon.value.attacksPerAction : 1),
         }
       }),
   )
@@ -442,6 +495,7 @@ export const useCharacterInventory = (
       notes: notes ?? null,
       usingTwoHanded: false,
       attuned: false,
+      isPactWeapon: false,
       item: optimisticItem ?? null,
     }]
 
@@ -511,14 +565,16 @@ export const useCharacterInventory = (
     return updateEntry(entryId, { equipped: !entry.equipped })
   }
 
+  const attunedCount = computed(() => inventory.value.filter(e => e.attuned).length)
+
+  // La limite se garde ici et dans l'interface, pas sur le serveur : un refus au rejeu resterait en tête de la file
+  // hors-ligne et bloquerait tout ce qui la suit.
   const toggleAttuned = (entryId: number) => {
     const entry = inventory.value.find(e => e.id === entryId)
     if (!entry) return
+    if (!entry.attuned && !canAttune(attunedCount.value)) return
     return updateEntry(entryId, { attuned: !entry.attuned })
   }
-
-  // Nombre d'objets harmonisés (règle 2014 : max 3). Sert d'avertissement non bloquant à l'UI.
-  const attunedCount = computed(() => inventory.value.filter(e => e.attuned).length)
 
   const setUsingTwoHanded = async (entryId: number, value: boolean) => {
     await updateEntry(entryId, { usingTwoHanded: value })
@@ -581,6 +637,8 @@ export const useCharacterInventory = (
     toggleAttuned,
     attunedCount,
     setUsingTwoHanded,
+    setRangeChoice: weaponRange.setChoice,
+    setThrowing: weaponRange.setThrowing,
     addProficiencyOverride,
     removeProficiencyOverride,
     refreshInventory,

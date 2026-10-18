@@ -133,36 +133,51 @@
               class="size-4 text-rose-400"
             />
           </UTooltip>
+          <UBadge
+            v-if="weapon.attacksPerAction > classTraits.attacksPerAction"
+            :label="`${weapon.attacksPerAction} attaques avec cette arme`"
+            color="primary"
+            variant="soft"
+            size="md"
+          />
           <div class="flex gap-1 flex-wrap">
-            <UTooltip
-              :text="bonusBreakdown(weapon.attackParts)"
-              :disabled="!weapon.attackParts.length"
-            >
-              <RollButton
-                size="sm"
-                variant="soft"
-                color="primary"
-                @click="rollAttack(weapon)"
+            <WeaponThrowSwitch
+              :weapon="weapon"
+              :damage-type-label="damageTypeLabels[weapon.damageType] ?? weapon.damageType"
+              :roll="roll"
+              @update:throwing="setThrowing(weapon.entryId, $event)"
+            />
+            <template v-if="!weapon.throwing">
+              <UTooltip
+                :text="bonusBreakdown(weapon.attackParts)"
+                :disabled="!weapon.attackParts.length"
               >
-                Attaque {{ formatModifier(weapon.attackBonus) }}
-              </RollButton>
-            </UTooltip>
-            <UTooltip
-              :text="bonusBreakdown([...(weapon.rageBonus ? [{ label: 'Rage', amount: weapon.rageBonus }] : []), ...weapon.damageParts])"
-              :disabled="!weapon.rageBonus && !weapon.damageParts.length"
-            >
-              <RollButton
-                size="sm"
-                variant="soft"
-                color="neutral"
-                @click="rollDamage(weapon)"
+                <RollButton
+                  size="sm"
+                  variant="soft"
+                  color="primary"
+                  @click="rollAttack(weapon)"
+                >
+                  Attaque {{ formatModifier(weapon.attackBonus) }}
+                </RollButton>
+              </UTooltip>
+              <UTooltip
+                :text="bonusBreakdown([...(weapon.rageBonus ? [{ label: 'Rage', amount: weapon.rageBonus }] : []), ...weapon.damageParts])"
+                :disabled="!weapon.rageBonus && !weapon.damageParts.length"
               >
-                Dégâts {{ weapon.damageDice }}{{ weapon.damageBonus !== 0 ? formatModifier(weapon.damageBonus) : '' }} {{ damageTypeLabels[weapon.damageType] ?? weapon.damageType }}
-              </RollButton>
-            </UTooltip>
+                <RollButton
+                  size="sm"
+                  variant="soft"
+                  color="neutral"
+                  @click="rollDamage(weapon)"
+                >
+                  Dégâts {{ weapon.damageDice }}{{ weapon.damageBonus !== 0 ? formatModifier(weapon.damageBonus) : '' }} {{ damageTypeLabels[weapon.damageType] ?? weapon.damageType }}
+                </RollButton>
+              </UTooltip>
+            </template>
             <UTooltip
-              v-for="dice in weapon.extraDamageDice"
-              :key="dice.name"
+              v-for="(dice, index) in weapon.extraDamageDice"
+              :key="`${dice.name}:${index}`"
               :text="[dice.condition, dice.limit === 'once_per_turn' ? 'Une fois par tour' : 'À chaque attaque', extraDiceStatus(dice)?.hint].filter(Boolean).join(' — ')"
               :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
             >
@@ -176,7 +191,19 @@
               </RollButton>
             </UTooltip>
             <UTooltip
-              v-if="weapon.isLight"
+              v-for="extra in weapon.extraDamageFixed"
+              :key="extra.name"
+              text="Quand vous touchez : s'ajoute aux dégâts de l'arme"
+            >
+              <UBadge
+                :label="`+ ${extra.name} ${extra.amount} ${damageTypeLabels[extra.damageType] ?? extra.damageType}`"
+                color="warning"
+                variant="soft"
+                size="md"
+              />
+            </UTooltip>
+            <UTooltip
+              v-if="weapon.isLight && !weapon.throwing"
               text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
             >
               <RollButton
@@ -190,6 +217,11 @@
             </UTooltip>
           </div>
         </div>
+        <WeaponRange
+          :weapon="weapon"
+          class="mt-1.5"
+          @range-choice="setRangeChoice(weapon.entryId, $event)"
+        />
       </div>
 
       <template
@@ -302,7 +334,7 @@ const bonusBreakdown = (parts: { label: string, amount: number }[]) =>
   `dont ${parts.map(p => `${formatModifier(p.amount)} ${p.label}`).join(', ')}`
 
 const csRef = toRef(props, 'characterSheet')
-const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, elapseDurations } = useCharacterSheet(csRef)
+const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, elapseDurations, setRangeChoice, setThrowing } = useCharacterSheet(csRef)
 
 const slots = inject<Ref<{ spellcasting: Record<number, { max: number, current: number, created?: number }>, pact_magic: Record<number, { max: number, current: number }> }>>('spellSlots')
 const { setActive } = useClassResources(csRef, slots)

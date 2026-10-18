@@ -1,6 +1,17 @@
 <template>
   <div class="flex items-center space-x-4">
     <UFormField
+      label="Nom"
+    >
+      <UInput
+        v-model="filters.name"
+        icon="i-heroicons:magnifying-glass"
+        placeholder="Rechercher un sort"
+        class="w-48"
+      />
+    </UFormField>
+
+    <UFormField
       label="Niveaux"
     >
       <USelect

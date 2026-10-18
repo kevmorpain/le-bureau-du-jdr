@@ -14,20 +14,27 @@
       </UButton>
     </div>
 
+    <UInput
+      v-model="search"
+      icon="i-heroicons:magnifying-glass"
+      placeholder="Rechercher un objet"
+      size="sm"
+      class="w-full"
+    />
+
     <UTabs
       v-model="activeTab"
       :items="tabItems"
       size="sm"
     />
 
-    <!-- Cap d'harmonisation (règle 2014 : max 3) — avertissement non bloquant. -->
     <UAlert
-      v-if="attunedCount > 3"
+      v-if="attunedCount > ATTUNEMENT_LIMIT"
       color="warning"
       variant="subtle"
       icon="i-heroicons:exclamation-triangle"
       :title="`${attunedCount} objets harmonisés`"
-      description="La règle 2014 limite l'harmonisation à 3 objets à la fois."
+      :description="`La règle 2014 limite l'harmonisation à ${ATTUNEMENT_LIMIT} objets à la fois.`"
     />
 
     <template v-if="activeTab === 'weapons'">
@@ -35,7 +42,7 @@
         v-if="weapons.length === 0"
         class="text-sm text-muted text-center py-4"
       >
-        Aucune arme dans l'inventaire
+        {{ emptyText('weapons') }}
       </div>
       <ul
         v-else
@@ -70,35 +77,43 @@
                   class="flex items-center gap-1 flex-wrap"
                   @click.stop
                 >
-                  <RollButton
-                    size="sm"
-                    variant="soft"
-                    color="primary"
-                    @click="rollAttack(entry.id)"
-                  >
-                    Attaque {{ formatModifier(weaponStatsByEntry.get(entry.id)!.attackBonus) }}
-                  </RollButton>
-                  <RollButton
-                    size="sm"
-                    variant="soft"
-                    color="neutral"
-                    @click="rollDamage(entry.id)"
-                  >
-                    Dégâts {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonus !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonus) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
-                  </RollButton>
-                  <UTooltip
-                    v-if="weaponStatsByEntry.get(entry.id)!.isLight"
-                    text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
-                  >
+                  <WeaponThrowSwitch
+                    :weapon="weaponStatsByEntry.get(entry.id)!"
+                    :damage-type-label="damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType"
+                    :roll="roll"
+                    @update:throwing="setThrowing(entry.id, $event)"
+                  />
+                  <template v-if="!weaponStatsByEntry.get(entry.id)!.throwing">
+                    <RollButton
+                      size="sm"
+                      variant="soft"
+                      color="primary"
+                      @click="rollAttack(entry.id)"
+                    >
+                      Attaque {{ formatModifier(weaponStatsByEntry.get(entry.id)!.attackBonus) }}
+                    </RollButton>
                     <RollButton
                       size="sm"
                       variant="soft"
                       color="neutral"
-                      @click="rollOffhand(entry.id)"
+                      @click="rollDamage(entry.id)"
                     >
-                      Main secondaire {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonusOffhand !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonusOffhand) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
+                      Dégâts {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonus !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonus) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
                     </RollButton>
-                  </UTooltip>
+                    <UTooltip
+                      v-if="weaponStatsByEntry.get(entry.id)!.isLight"
+                      text="Dégâts main secondaire — sans modificateur de caractéristique (combat à deux armes)"
+                    >
+                      <RollButton
+                        size="sm"
+                        variant="soft"
+                        color="neutral"
+                        @click="rollOffhand(entry.id)"
+                      >
+                        Main secondaire {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonusOffhand !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonusOffhand) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
+                      </RollButton>
+                    </UTooltip>
+                  </template>
                 </div>
               </template>
 
@@ -205,26 +220,39 @@
 
           <div class="space-y-1.5 mt-1.5">
             <div
-              v-if="weaponPropertiesOf(entry).length"
-              class="flex flex-wrap items-center gap-1"
+              v-if="weaponPropertiesOf(entry).length || (entry.equipped && weaponStatsByEntry.get(entry.id))"
+              class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5"
             >
-              <UTooltip
-                v-for="prop in weaponPropertiesOf(entry)"
-                :key="prop"
-                :text="weaponPropertyTooltips[prop] ?? ''"
+              <div
+                v-if="weaponPropertiesOf(entry).length"
+                class="flex flex-wrap items-center gap-1"
               >
-                <UBadge
-                  :label="weaponPropertyLabels[prop] ?? prop"
-                  variant="soft"
-                  size="md"
-                />
-              </UTooltip>
-              <span
-                v-if="weaponRangeOf(entry)"
-                class="text-sm text-muted ml-1"
-              >
-                Portée : {{ weaponRangeOf(entry) }}
-              </span>
+                <UTooltip
+                  v-for="prop in weaponPropertiesOf(entry)"
+                  :key="prop"
+                  :text="weaponPropertyTooltips[prop] ?? ''"
+                >
+                  <UBadge
+                    :label="weaponPropertyLabels[prop] ?? prop"
+                    variant="soft"
+                    size="md"
+                  />
+                </UTooltip>
+                <span
+                  v-if="weaponRangeOf(entry)"
+                  class="text-sm text-muted ml-1"
+                >
+                  Portée : {{ weaponRangeOf(entry) }}
+                </span>
+              </div>
+
+              <WeaponRange
+                v-if="entry.equipped && weaponStatsByEntry.get(entry.id)"
+                class="ml-auto"
+                :weapon="weaponStatsByEntry.get(entry.id)!"
+                :show-range="false"
+                @range-choice="setRangeChoice(entry.id, $event)"
+              />
             </div>
 
             <UCheckbox
@@ -267,7 +295,7 @@
         v-if="armors.length === 0"
         class="text-sm text-muted text-center py-4"
       >
-        Aucune armure dans l'inventaire
+        {{ emptyText('armors') }}
       </div>
       <ul
         v-else
@@ -371,7 +399,7 @@
         v-if="equipmentItems.length === 0"
         class="text-sm text-muted text-center py-4"
       >
-        Aucun équipement dans l'inventaire
+        {{ emptyText('equipment') }}
       </div>
       <ul
         v-else
@@ -409,6 +437,7 @@
 
             <MagicItemMeta
               :entry="entry"
+              :attunement-full="attunementFull"
               @toggle-attune="toggleAttuned"
             />
 
@@ -480,7 +509,7 @@
         v-if="toolItems.length === 0"
         class="text-sm text-muted text-center py-4"
       >
-        Aucun outil dans l'inventaire
+        {{ emptyText('tools') }}
       </div>
       <ul
         v-else
@@ -516,6 +545,7 @@
             />
             <MagicItemMeta
               :entry="entry"
+              :attunement-full="attunementFull"
               @toggle-attune="toggleAttuned"
             />
             <UBadge
@@ -599,6 +629,8 @@ import type {
   InventoryItem,
 } from '~/composables/character/useCharacterInventory'
 import type { WeaponProperties, ArmorProperties, ToolProperties } from '~~/server/db/schema/items'
+import { ATTUNEMENT_LIMIT, canAttune } from '~~/shared/rules/attunement'
+import { matchesSearch } from '~~/shared/utils/search'
 import { toolTypeLabels, weaponPropertyLabels, weaponPropertyTooltips } from '~~/shared/utils/item'
 import type { RollFn } from '~/composables/useDiceRoller'
 
@@ -621,6 +653,8 @@ const {
   toggleAttuned,
   attunedCount,
   setUsingTwoHanded,
+  setRangeChoice,
+  setThrowing,
 } = useCharacterSheet(characterSheetModel)
 
 const entryToRemove = ref<InventoryEntry | null>(null)
@@ -700,18 +734,26 @@ const tabItems = computed(() => [
   { label: `Outils ${toolItems.value.length ? `(${toolItems.value.length})` : ''}`, value: 'tools' },
 ])
 
-const weapons = computed(() =>
-  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'weapon'),
-)
-const armors = computed(() =>
-  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'armor'),
-)
-const equipmentItems = computed(() =>
-  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'equipment'),
-)
-const toolItems = computed(() =>
-  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === 'tool'),
-)
+const search = ref('')
+
+const ofType = (itemType: InventoryItem['itemType']) =>
+  (inventory.value ?? []).filter((e: InventoryEntry) => e.item?.itemType === itemType && matchesSearch(e.item.name, search.value))
+
+const weapons = computed(() => ofType('weapon'))
+const armors = computed(() => ofType('armor'))
+const equipmentItems = computed(() => ofType('equipment'))
+const toolItems = computed(() => ofType('tool'))
+
+const EMPTY_TEXTS = {
+  weapons: 'Aucune arme dans l\'inventaire',
+  armors: 'Aucune armure dans l\'inventaire',
+  equipment: 'Aucun équipement dans l\'inventaire',
+  tools: 'Aucun outil dans l\'inventaire',
+}
+const emptyText = (tab: keyof typeof EMPTY_TEXTS) =>
+  search.value.trim() ? 'Aucun objet ne correspond à la recherche' : EMPTY_TEXTS[tab]
+
+const attunementFull = computed(() => !canAttune(attunedCount.value))
 
 const damageTypeLabels: Record<string, string> = {
   acid: 'acide', bludgeoning: 'contondant', cold: 'froid', fire: 'feu', force: 'force',

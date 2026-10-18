@@ -27,7 +27,7 @@ import type { LevelUpReplacements } from '~~/shared/rules/duplicateProficiencies
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
-import { activeItemEffectSources, activeTemporaryEffectSources, featLanguageChoiceCount, inventoryEntriesOf } from '~~/shared/rules/characterEffects'
+import { featLanguageChoiceCount, sheetActiveEffectSources, type ActiveEffectsSheet } from '~~/shared/rules/characterEffects'
 import { averageHitDieValue, hitPointGain, maxHitPoints } from '~~/shared/rules/hitPoints'
 import { useAbilityEffectInputs } from './useCharacterSheet'
 
@@ -264,10 +264,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   // La fiche affiche le maximum avec ses objets et effets temporaires : le même calcul, pour que « avant → après » le soit aussi.
   const liveAbilities = useCharacterAbilities(charSheet, {
     ...abilityInputs,
-    activeEffectSources: computed(() => [
-      ...activeItemEffectSources(inventoryEntriesOf((charSheet.value as unknown as { inventory?: Parameters<typeof inventoryEntriesOf>[0] } | null)?.inventory ?? [])),
-      ...activeTemporaryEffectSources(charSheet.value?.temporaryEffects ?? []),
-    ]),
+    activeEffectSources: computed(() => sheetActiveEffectSources(charSheet.value as unknown as ActiveEffectsSheet | null)),
     proficiencyBonus: computed(() => profBonusAtLevel(totalLevel.value)),
   })
 

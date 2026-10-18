@@ -99,6 +99,14 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
+      <UInput
+        v-model="spellSearch"
+        icon="i-heroicons:magnifying-glass"
+        placeholder="Rechercher un sort"
+        size="sm"
+        class="w-48"
+      />
+
       <USwitch
         v-model="showPreparedOnly"
         label="Préparés"
@@ -385,6 +393,7 @@ import { SpellComponent } from '~~/server/db/schema/spells'
 import { classSlugFromName } from '~~/shared/rules/classSlugs'
 import { canCastAsRitual } from '~~/shared/rules/ritualCasting'
 import { countPreparedSpells, preparedSpellsLimit } from '~~/shared/rules/spellsKnown'
+import { matchesSearch } from '~~/shared/utils/search'
 import type { CharacterSpellWithSpell } from '~/composables/character/useCharacterSpells'
 import {
   baseSlotLevel,
@@ -498,8 +507,11 @@ const actionTypeFilters = [
   { value: 'reaction', label: 'Réaction' },
 ]
 
+const spellSearch = ref('')
+
 const filteredSpells = (spells: typeof spellsByLevel.value[number]['spells']) => {
   return spells.filter((cs) => {
+    if (!matchesSearch(cs.spell.name, spellSearch.value)) return false
     if (activeActionFilter.value) {
       const ct = cs.spell.castingTime?.toLowerCase() ?? ''
       if ((activeActionFilter.value === 'action' && !ct.includes('action')) || ct.includes('bonus')) return false

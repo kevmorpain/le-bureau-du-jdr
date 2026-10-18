@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import type { FormulaContext } from '../../shared/utils/formula'
+import type { Effect } from '../../server/db/schema/effects'
+import { fixed, variable, type FormulaContext } from '../../shared/utils/formula'
 import {
-  deriveClassTraits, featureUses, resourceGroups, restRecovery, slotDamageDiceCount, damageDiceAppliesToWeapon,
+  criticalExtraDiceOf, deriveClassTraits, featureUses, itemWeaponDamageDice, resourceGroups, restRecovery, slotDamageDiceCount, damageDiceAppliesToWeapon,
   type OwnerClass, type ResourceFeature,
 } from '../../shared/rules/classResources'
 import type { FeatureDef } from '../../server/db/seeds/lib/seedClass'
@@ -163,6 +164,31 @@ describe('traits dérivés', () => {
     expect(damageDiceAppliesToWeapon('finesse_or_ranged', { isRanged: true, isFinesse: false })).toBe(true)
     expect(damageDiceAppliesToWeapon('finesse_or_ranged', { isRanged: false, isFinesse: false })).toBe(false)
     expect(damageDiceAppliesToWeapon('melee', { isRanged: true, isFinesse: true })).toBe(false)
+  })
+
+  it('« all » vaut pour toute arme (dés propres à l\'arme d\'un objet)', () => {
+    expect(damageDiceAppliesToWeapon('all', { isRanged: true, isFinesse: false })).toBe(true)
+    expect(damageDiceAppliesToWeapon('all', { isRanged: false, isFinesse: false })).toBe(true)
+  })
+
+  it('les dés d\'un objet sont les dés fixes de ses effets, et rien d\'autre', () => {
+    const value = { name: 'Dégâts supplémentaires', dice: fixed(2), sides: 6, damageType: 'fire' as const, weapons: 'all' as const, limit: 'each_hit' as const }
+    const effects: Effect[] = [
+      { type: 'weapon_damage_dice', value },
+      { type: 'weapon_damage_dice', value: { ...value, dice: variable('class_level') } },
+      { type: 'armor_class_bonus', value: { amount: 1 } },
+    ]
+    expect(itemWeaponDamageDice(effects)).toEqual([{ ...value, count: 2 }])
+  })
+
+  it('les dés de critique de sources différentes s\'additionnent', () => {
+    const brutal = (id: number) => ({ ...resource(named(barbareFeatures, 'Critique brutal'), { classId: CLASS_IDS.barbare }), id })
+    const traits = deriveClassTraits([brutal(1), brutal(2)], ctx(), [cls(CLASS_IDS.barbare, 13)])
+    expect(traits.criticalExtraDice).toBe(4)
+
+    const dice = (n: number): Effect => ({ type: 'critical_extra_dice', value: { dice: fixed(n) } })
+    expect(criticalExtraDiceOf([dice(1), dice(2), { type: 'armor_class_bonus', value: { amount: 1 } }], ctx())).toBe(3)
+    expect(criticalExtraDiceOf([], ctx())).toBe(0)
   })
 
   describe('Rage', () => {

@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
 import { CardList, TableList } from '#components'
+import { matchesSearch } from '~~/shared/utils/search'
 
 const listItems: TabsItem[] = [
   { icon: 'heroicons-outline:view-columns', value: 'card' },
@@ -43,6 +44,10 @@ const { filters } = useSpellFilters()
 
 const filteredData = computed(() => {
   let spells = data.value || []
+
+  if (filters.name.trim()) {
+    spells = spells.filter(spell => matchesSearch(spell.name, filters.name))
+  }
 
   if (filters.levels.length > 0) {
     spells = spells.filter(spell => filters.levels.includes(spell.level))

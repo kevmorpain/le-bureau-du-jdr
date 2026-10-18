@@ -14,6 +14,14 @@ describe('labelledEffects', () => {
     ])
   })
 
+  it('nomme les dés supplémentaires d\'un objet, mais pas ceux dont le nombre dépend du niveau', () => {
+    const dice = (value: Extract<Effect, { type: 'weapon_damage_dice' }>['value']): Effect => ({ type: 'weapon_damage_dice', value })
+    const flame = { name: 'Dégâts supplémentaires', dice: { op: 'fixed' as const, value: 2 }, sides: 6, damageType: 'fire' as const, weapons: 'all' as const, limit: 'each_hit' as const }
+    expect(effectLabel(dice(flame))).toBe('+2d6 Feu')
+    expect(labelledEffects([dice(flame)])).toEqual([{ label: '+2d6 Feu', malus: false }])
+    expect(labelledEffects([dice({ ...flame, dice: { op: 'var', name: 'class_level' } })])).toEqual([])
+  })
+
   it('une liste vide ou absente ne donne rien', () => {
     expect(labelledEffects([])).toEqual([])
     expect(labelledEffects(undefined)).toEqual([])

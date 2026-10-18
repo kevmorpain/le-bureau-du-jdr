@@ -23,6 +23,7 @@ import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicatedValues, proficiencyDuplicates } from '~~/shared/rules/duplicateProficiencies'
 import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
+import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
 import type { Effect } from '~~/server/db/schema/effects'
 
@@ -562,7 +563,7 @@ export function useCharacterBuilder() {
         const baseWithRace = base + (raceBonuses.value[ab] ?? 0)
         const asi = asiBonusByAbility.value[ab] ?? 0
         const feat = featBonusByAbility.value[ab] ?? 0
-        result[ab] = Math.min(20, baseWithRace + asi + feat)
+        result[ab] = Math.min(ABILITY_SCORE_MAX, baseWithRace + asi + feat)
       }
     }
     return result

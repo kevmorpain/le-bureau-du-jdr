@@ -10,7 +10,7 @@
 
     <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Carac. / Don</h2>
     <p class="text-sm text-muted mb-5">
-      Augmentez vos caractéristiques (maximum +2, plafond 20) ou prenez un don.
+      Augmentez vos caractéristiques (maximum +2, plafond {{ ABILITY_SCORE_MAX }}) ou prenez un don.
     </p>
 
     <div class="flex gap-2 mb-6">
@@ -80,7 +80,7 @@
               @click="adjust(ab, +1)"
             >+</button>
           </div>
-          <div v-if="baseScore(ab) + (state.asiBonuses[ab] ?? 0) >= 20" class="text-xs text-red-400 text-center mt-1">max 20</div>
+          <div v-if="baseScore(ab) + (state.asiBonuses[ab] ?? 0) >= ABILITY_SCORE_MAX" class="text-xs text-red-400 text-center mt-1">max {{ ABILITY_SCORE_MAX }}</div>
         </div>
       </div>
     </div>
@@ -162,6 +162,7 @@
 <script lang="ts" setup>
 import type { AbilityBonuses } from '~/composables/useLevelUp'
 import type { AbilityKey } from '~/data/character-builder'
+import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
 const {
@@ -205,7 +206,7 @@ function baseScore(ab: AbilityKey): number {
 function canIncrease(ab: AbilityKey): boolean {
   if (remaining.value === 0) return false
   if ((state.value.asiBonuses[ab] ?? 0) >= 2) return false
-  if (baseScore(ab) + (state.value.asiBonuses[ab] ?? 0) >= 20) return false
+  if (baseScore(ab) + (state.value.asiBonuses[ab] ?? 0) >= ABILITY_SCORE_MAX) return false
   return true
 }
 

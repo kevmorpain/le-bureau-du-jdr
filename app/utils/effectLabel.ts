@@ -32,6 +32,11 @@ const labelOf = (effect: Effect): string | undefined => {
       return `${formatModifier(effect.value.amount)} attaque${WEAPON_SCOPE_SUFFIX[effect.value.weapons]}`
     case 'weapon_damage_bonus':
       return `${formatModifier(effect.value.amount)} dégâts${WEAPON_SCOPE_SUFFIX[effect.value.weapons]}`
+    case 'weapon_damage_dice': {
+      const count = fixedAmount(effect.value.dice)
+      if (count === undefined) return undefined
+      return `+${count}d${effect.value.sides}${effect.value.damageType ? ` ${damage(effect.value.damageType)}` : ''}`
+    }
     case 'advantage': {
       const roll = ADVANTAGE_ROLL_LABELS[effect.value.rollType] ?? effect.value.rollType
       const target = effect.value.ability === 'all' || effect.value.rollType === 'initiative' ? '' : ` ${ability(effect.value.ability)}`

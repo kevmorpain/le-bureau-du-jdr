@@ -6,6 +6,7 @@ import { barbareFeatures } from '../../server/db/seeds/data/barbare'
 import { guerrierFeatures } from '../../server/db/seeds/data/guerrier'
 import { paladinFeatures } from '../../server/db/seeds/data/paladin'
 import { roublardFeatures } from '../../server/db/seeds/data/roublard'
+import { warlockInvocationFeatures } from '../../server/db/seeds/data/warlock_invocations'
 import { abilityScores, classSheet, featureRow, named } from '../fixtures/classSheet'
 
 const SHEET_ID = 9301
@@ -80,6 +81,95 @@ describe('Mode combat — attaques par action', () => {
     const cs = classSheet(SHEET_ID, 'Guerrier', 6, 4, [featureRow(named(guerrierFeatures, 'Attaque supplémentaire'), 6)])
     const wrapper = await mount(cs)
     expect(wrapper.text()).not.toContain('attaques par action')
+  })
+})
+
+describe('Mode combat — arme de pacte', () => {
+  const WARLOCK = 7
+  const warlock = (cha: number, ...names: string[]) =>
+    classSheet(SHEET_ID, 'Occultiste', WARLOCK, 12, names.map(name => featureRow(named(warlockInvocationFeatures, name), WARLOCK)), { baseAbilityScores: abilityScores({ cha }) })
+  const pactSword = () => ({ ...longsword(), isPactWeapon: true })
+
+  it('Lame assoiffée : l\'arme de pacte annonce ses deux attaques, pas le bandeau de la classe', async () => {
+    const wrapper = await mount(warlock(16, 'Lame assoiffée'), { weapons: [pactSword()] })
+    expect(wrapper.text()).toContain('2 attaques avec cette arme')
+    expect(wrapper.text()).not.toContain('attaques par action')
+  })
+
+  it('Buveuse de vie : le Charisme en dégâts nécrotiques, 1 au minimum', async () => {
+    const strong = await mount(warlock(16, 'Buveuse de vie'), { weapons: [pactSword()] })
+    expect(strong.text()).toContain('+ Buveuse de vie 3 nécrotique')
+    const weak = await mount(warlock(8, 'Buveuse de vie'), { weapons: [pactSword()] })
+    expect(weak.text()).toContain('+ Buveuse de vie 1 nécrotique')
+  })
+
+  it('une arme qui n\'est pas l\'arme de pacte n\'affiche rien de tout cela', async () => {
+    const wrapper = await mount(warlock(16, 'Lame assoiffée', 'Buveuse de vie'), { weapons: [longsword()] })
+    expect(wrapper.text()).not.toContain('attaques avec cette arme')
+    expect(wrapper.text()).not.toContain('Buveuse de vie')
+  })
+})
+
+describe('Mode combat — lancer et portée', () => {
+  const hatchet = () => weapon(6, 'Hachette', ['light', 'thrown'], 'simple_melee', '1d6', 'slashing')
+  const fighter = () => classSheet(SHEET_ID, 'Guerrier', 6, 4, [], { baseAbilityScores: abilityScores({ str: 16 }) })
+  const buttons = (wrapper: Awaited<ReturnType<typeof mount>>, text: string) =>
+    wrapper.findAll('button').filter(b => b.text().startsWith(text))
+
+  const mode = (wrapper: Awaited<ReturnType<typeof mount>>, label: 'Mêlée' | 'Lancer') =>
+    wrapper.findAll('button').find(b => b.text() === label)
+
+  it('une arme de corps à corps à lancer s\'ouvre en mêlée, avec une bascule Mêlée / Lancer', async () => {
+    const wrapper = await mount(fighter(), { weapons: [hatchet()] })
+    expect(mode(wrapper, 'Mêlée')).toBeDefined()
+    expect(mode(wrapper, 'Lancer')).toBeDefined()
+    expect(buttons(wrapper, 'Attaque')).toHaveLength(1)
+    expect(buttons(wrapper, 'Dégâts 1d6')).toHaveLength(1)
+    expect(wrapper.text()).toContain('Main secondaire')
+  })
+
+  it('le lancer est une attaque à distance : ses dégâts n\'ajoutent aucun dé de critique de mêlée', async () => {
+    const roll = vi.fn()
+    const wrapper = await mount(fighter(), { weapons: [hatchet()], roll })
+
+    await buttons(wrapper, 'Dégâts 1d6')[0]!.trigger('click')
+    expect(roll).toHaveBeenLastCalledWith('Dégâts — Hachette', 3, 6, 1, { damage: { weaponDie: { melee: true } } })
+
+    await mode(wrapper, 'Lancer')!.trigger('click')
+    expect(wrapper.text()).not.toContain('Main secondaire')
+    await buttons(wrapper, 'Attaque')[0]!.trigger('click')
+    expect(roll).toHaveBeenLastCalledWith('Lancer — Hachette', 3, 20, 1, { d20: { type: 'attack', weapon: true, extra: [] } })
+    await buttons(wrapper, 'Dégâts 1d6')[0]!.trigger('click')
+    expect(roll).toHaveBeenLastCalledWith('Dégâts (lancer) — Hachette', 3, 6, 1, { damage: { weaponDie: { melee: false } } })
+  })
+
+  it('« Longue portée » n\'apparaît qu\'en mode Lancer et pèse sur le lancer, pas sur la mêlée', async () => {
+    const roll = vi.fn()
+    const wrapper = await mount(fighter(), { weapons: [hatchet()], roll })
+    expect(wrapper.find('[role="checkbox"]').exists()).toBe(false)
+
+    await mode(wrapper, 'Lancer')!.trigger('click')
+    await wrapper.find('[role="checkbox"]').trigger('click')
+    await buttons(wrapper, 'Attaque')[0]!.trigger('click')
+    expect(roll.mock.lastCall![4].d20.extra).toEqual([{ label: 'Longue portée', mode: 'disadvantage' }])
+
+    await mode(wrapper, 'Mêlée')!.trigger('click')
+    expect(wrapper.find('[role="checkbox"]').exists()).toBe(false)
+    await buttons(wrapper, 'Attaque')[0]!.trigger('click')
+    expect(roll.mock.lastCall![4].d20.extra).toEqual([])
+  })
+
+  it('une arme sans lancer ni portée ne propose rien de tout cela', async () => {
+    const wrapper = await mount(fighter(), { weapons: [longsword()] })
+    expect(wrapper.text()).not.toContain('Lancer')
+    expect(wrapper.text()).not.toContain('Longue portée')
+  })
+
+  it('un arc propose le choix de distance, pas de lancer', async () => {
+    const wrapper = await mount(fighter(), { weapons: [shortbow()] })
+    expect(wrapper.text()).toContain('Longue portée')
+    expect(wrapper.text()).toContain('Ennemi à 1,50 m')
+    expect(wrapper.text()).not.toContain('Lancer')
   })
 })
 
