@@ -96,6 +96,30 @@
         </div>
       </div>
 
+      <div v-if="classChoiceSections.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-6">
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+          Choix de classe
+        </p>
+        <div class="space-y-2.5">
+          <div v-for="section in classChoiceSections" :key="section.title">
+            <p class="text-xs text-muted mb-1">
+              {{ section.title }}
+            </p>
+            <div class="flex flex-wrap gap-1">
+              <UBadge
+                v-for="name in section.names"
+                :key="name"
+                color="neutral"
+                variant="subtle"
+                size="md"
+              >
+                {{ name }}
+              </UBadge>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="state.pactBoon" class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6">
         <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">
           Faveur du Pacte
@@ -160,6 +184,7 @@
 
 <script lang="ts" setup>
 import { ABILITY_LABELS } from '~/data/character-builder'
+import { LABEL_CHOICE_KINDS } from '~~/shared/rules/choices'
 
 defineProps<{ submitting?: boolean }>()
 defineEmits<{ back: [], submit: [] }>()
@@ -179,6 +204,8 @@ const {
   ABILITY_SHORT,
   abilityMod,
   formatMod,
+  classChoices,
+  featurePickChoices,
 } = useCharacterBuilder()
 
 const {
@@ -227,4 +254,22 @@ const pactBoonLabel = computed(() =>
 )
 
 const selectedInvocationNames = computed(() => selectedInvocations.value.map(i => i.name))
+
+// Choix de la classe que la fiche affichera : ennemis jurés et terrains (libellés), puis options de feature (2ᵉ style de
+// combat, manœuvres), dont le catalogue donne les noms.
+const featurePickGroups = computed(() => featurePickChoices.value
+  .map(c => ({ title: choiceTitle(c) ?? 'Choix', ids: (state.value.featurePicks[c.progressionId] ?? []).slice(0, c.count) }))
+  .filter(g => g.ids.length))
+const { data: pickedFeatures } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/feature-options', {
+  query: { ids: computed(() => featurePickGroups.value.flatMap(g => g.ids).join(',')) },
+  default: () => [],
+})
+
+const classChoiceSections = computed(() => [
+  ...classChoices.value
+    .filter(c => (LABEL_CHOICE_KINDS as readonly string[]).includes(c.kind))
+    .map(c => ({ title: choiceTitle(c) ?? 'Choix', names: (state.value.choicePicks[c.progressionId] ?? []).slice(0, c.count).map(String) })),
+  ...featurePickGroups.value
+    .map(g => ({ title: g.title, names: g.ids.flatMap(id => pickedFeatures.value?.find(f => f.id === id)?.name ?? []) })),
+].filter(s => s.names.length))
 </script>
