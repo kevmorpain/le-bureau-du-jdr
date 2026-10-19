@@ -19,11 +19,14 @@ const OWNER = 1
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
 let additionalProgressionId = 0
+let classStyleProgressionId = 0
 const style = { archery: 0, defense: 0, dueling: 0 }
 
-const createInput = (level: number, over: Record<string, unknown> = {}) => createCharacterSchema.parse({
-  name: 'Champion', hpBase: level, classId: FIGHTER, level, speciesId: 1, subclassId: CHAMPION, fightingStyle: 'Duel',
+// Le premier style (celui de la classe) est choisi comme le second : un pick sur son point de choix.
+const createInput = (level: number, { featurePicks = [], ...over }: Record<string, unknown> = {}) => createCharacterSchema.parse({
+  name: 'Champion', hpBase: level, classId: FIGHTER, level, speciesId: 1, subclassId: CHAMPION,
   abilityScores: { str: 15, dex: 14, con: 13 }, classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
+  featurePicks: [{ progressionId: classStyleProgressionId, featureId: style.dueling }, ...featurePicks as unknown[]],
   ...over,
 })
 const levelUpInput = (over: Record<string, unknown> = {}) =>
@@ -49,9 +52,10 @@ beforeAll(async () => {
 
   // Le style de combat de la classe (porteur invisible + options), puis la capacité du Champion, comme le seed les déclare.
   const [carrier] = await db.insert(schema.features).values({ name: 'Style de combat', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 1 }).returning()
-  await db.insert(schema.progression).values({
+  const [classStyleProgression] = await db.insert(schema.progression).values({
     featureId: carrier.id, kind: fightingStyleProgression.kind, count: fightingStyleProgression.count, optionSource: fightingStyleProgression.optionSource, replaceable: false,
-  })
+  }).returning()
+  classStyleProgressionId = classStyleProgression.id
   for (const [key, name] of [['archery', 'Archerie'], ['defense', 'Défense'], ['dueling', 'Duel']] as const) {
     const [option] = await db.insert(schema.features).values({ name, featureType: 'fighting_style', tag: 'fighting_style', classId: FIGHTER, levelRequired: 1 }).returning()
     style[key] = option.id
@@ -78,7 +82,7 @@ describe('création d\'un Champion niveau 10', () => {
   })
 
   it('refuse le premier style une seconde fois, un excédent et un choix que la fiche ne doit pas', async () => {
-    await expect(createCharacter(db, createInput(10, { featurePicks: [pick(style.dueling)] }), OWNER)).rejects.toThrow(/déjà prise/)
+    await expect(createCharacter(db, createInput(10, { featurePicks: [pick(style.dueling)] }), OWNER)).rejects.toThrow(/deux points de choix/)
     await expect(createCharacter(db, createInput(10, { featurePicks: [pick(style.defense), pick(style.archery)] }), OWNER)).rejects.toThrow(/Trop de choix/)
     await expect(createCharacter(db, createInput(9, { featurePicks: [pick(style.defense)] }), OWNER)).rejects.toThrow(/n'est pas proposé/)
     await expect(createCharacter(db, createInput(10, { subclassId: MASTER, featurePicks: [pick(style.defense)] }), OWNER)).rejects.toThrow(/n'est pas proposé/)

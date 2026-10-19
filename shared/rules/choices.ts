@@ -53,9 +53,19 @@ export const LABEL_CHOICE_KINDS = ['terrain', 'favored_enemy', 'spellcasting_abi
 export const PICK_CHOICE_KINDS: readonly ChoiceKind[] = [...VALUE_CHOICE_KINDS, ...SPELL_CHOICE_KINDS, ...LABEL_CHOICE_KINDS]
 
 // Choix d'une option parmi un groupe de features (`feature_group`), par le chemin générique des `featurePicks` : chaque
-// pick est matérialisé sur la fiche. Le style de combat de la classe, la Métamagie, les manifestations et le pacte de
-// l'Occultiste ont chacun leur chemin dédié.
-export const FEATURE_PICK_KINDS = ['additional_fighting_style', 'maneuvers'] as const satisfies readonly ChoiceKind[]
+// pick est matérialisé sur la fiche.
+export const FEATURE_PICK_KINDS = [
+  'fighting_style',
+  'additional_fighting_style',
+  'pact_boon',
+  'invocations',
+  'metamagic',
+  'maneuvers',
+] as const satisfies readonly ChoiceKind[]
+
+// Les manifestations se remplacent à chaque niveau de la classe, même quand le niveau n'en donne aucune nouvelle ; les autres
+// points de choix remplaçables (manœuvres) ne s'échangent qu'en en apprenant de nouvelles.
+export const REPLACEABLE_EVERY_LEVEL_KINDS = ['invocations'] as const satisfies readonly ChoiceKind[]
 
 // `proficient_skills` / `proficient_weapons` se résolvent contre l'état du perso (non cachables) ; le reste via le catalogue.
 export type OptionSource =

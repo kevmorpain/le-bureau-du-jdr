@@ -3,17 +3,18 @@ import { eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
 import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLevelUp'
-import { bootstrapGoldenDb, OWNER, CLASS, SPECIES, FEATURE } from './fixtures/goldenMaster'
+import { bootstrapGoldenDb, featurePick, OWNER, CLASS, SPECIES, FEATURE, type GoldenIds } from './fixtures/goldenMaster'
 
 // Style de combat — autorité serveur, sur ce que le golden-master ne couvre pas : la MONTÉE de
-// niveau (Paladin 1→2), le gating par niveau (un Paladin niv 1 qui envoie un style ne le reçoit pas),
+// niveau (Paladin 1→2), le gating par niveau (un Paladin niv 1 qui envoie un style est refusé),
 // et la matérialisation en character_features + l'écriture en character_choices.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
+let ids: GoldenIds
 
 beforeAll(async () => {
-  ;({ db } = await bootstrapGoldenDb())
+  ;({ db, ids } = await bootstrapGoldenDb())
 }, 60000)
 
 const createPaladin = (level: number, over: Record<string, unknown> = {}) =>
@@ -48,7 +49,7 @@ describe('style de combat — autorité serveur (F2 tranche 2)', () => {
       name: 'Gonzo', hpBase: 10, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
       abilityScores: { str: 16, dex: 14, con: 14, int: 8, wis: 10, cha: 10 },
       classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
-      fightingStyle: 'Archerie',
+      featurePicks: [featurePick(ids.fighterStyleProgressionId, FEATURE.fighterFsArchery)],
     }), OWNER)
 
     const choices = await fightingStyleChoices(id)
@@ -57,10 +58,9 @@ describe('style de combat — autorité serveur (F2 tranche 2)', () => {
     expect(await materializedFeatureIds(id)).toContain(FEATURE.fighterFsArchery)
   })
 
-  it('GATING : Paladin niv 1 qui envoie un style → NON persisté (accès au niv 2)', async () => {
-    const { id } = await createPaladin(1, { fightingStyle: 'Défense' })
-    expect(await fightingStyleChoices(id)).toHaveLength(0)
-    expect(await materializedFeatureIds(id)).not.toContain(FEATURE.paladinFsDefense)
+  it('GATING : Paladin niv 1 qui envoie un style → refusé, rien d\'écrit (accès au niv 2)', async () => {
+    await expect(createPaladin(1, { featurePicks: [featurePick(ids.paladinStyleProgressionId, FEATURE.paladinFsDefense)] }))
+      .rejects.toThrow(/n'est pas proposé à ce personnage/)
   })
 
   it('level-up Paladin 1→2 : « Défense » débloqué → character_choices + matérialisation', async () => {
@@ -68,7 +68,8 @@ describe('style de combat — autorité serveur (F2 tranche 2)', () => {
     expect(await fightingStyleChoices(id)).toHaveLength(0) // rien au niv 1
 
     await characterLevelUp(db, id, levelUpSchema.parse({
-      classId: CLASS.paladin, isMulticlass: false, hpDie: 6, fightingStyle: 'Défense',
+      classId: CLASS.paladin, isMulticlass: false, hpDie: 6,
+      featurePicks: [featurePick(ids.paladinStyleProgressionId, FEATURE.paladinFsDefense)],
     }))
 
     const choices = await fightingStyleChoices(id)
@@ -77,13 +78,22 @@ describe('style de combat — autorité serveur (F2 tranche 2)', () => {
     expect(await materializedFeatureIds(id)).toContain(FEATURE.paladinFsDefense)
   })
 
-  it('classe non martiale (Magicien) : un style envoyé est ignoré (pas de progression)', async () => {
-    const { id } = await createCharacter(db, createCharacterSchema.parse({
+  it('level-up Paladin 2→3 : plus de style à choisir', async () => {
+    const { id } = await createPaladin(2, { featurePicks: [featurePick(ids.paladinStyleProgressionId, FEATURE.paladinFsDefense)] })
+    await expect(characterLevelUp(db, id, levelUpSchema.parse({
+      classId: CLASS.paladin, isMulticlass: false, hpDie: 6,
+      featurePicks: [featurePick(ids.paladinStyleProgressionId, FEATURE.paladinFsDueling)],
+    }))).rejects.toThrow(/n'est pas proposé à ce personnage/)
+  })
+
+  it('un style qui n\'est pas ceux de la classe, ou d\'une classe sans style (Magicien) : refusé', async () => {
+    await expect(createPaladin(2, { featurePicks: [featurePick(ids.paladinStyleProgressionId, FEATURE.fighterFsArchery)] }))
+      .rejects.toThrow(/n'est pas proposée/)
+    await expect(createCharacter(db, createCharacterSchema.parse({
       name: 'Merlin', hpBase: 6, classId: CLASS.wizard, level: 1, speciesId: SPECIES.human,
       abilityScores: { str: 8, dex: 14, con: 12, int: 16, wis: 10, cha: 10 },
       classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
-      fightingStyle: 'Défense',
-    }), OWNER)
-    expect(await fightingStyleChoices(id)).toHaveLength(0)
+      featurePicks: [featurePick(ids.fighterStyleProgressionId, FEATURE.fighterFsDefense)],
+    }), OWNER)).rejects.toThrow(/n'est pas proposé à ce personnage/)
   })
 })

@@ -27,6 +27,11 @@ const OWNER = 1
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
 let terrainProgressionId = 0
+let pactProgressionId = 0
+let invocationsProgressionId = 0
+
+const chain = () => ({ progressionId: pactProgressionId, featureId: 410 })
+const invocations = (...featureIds: number[]) => featureIds.map(featureId => ({ progressionId: invocationsProgressionId, featureId }))
 
 function createInput(over: Record<string, unknown> = {}) {
   return createCharacterSchema.parse({
@@ -69,7 +74,9 @@ beforeAll(async () => {
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
     await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: c.ownerFeatureType, classId: WARLOCK, levelRequired: c.ownerLevelRequired })
-    await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
+    const [progression] = await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable }).returning()
+    if (c.kind === 'pact_boon') pactProgressionId = progression.id
+    if (c.kind === 'invocations') invocationsProgressionId = progression.id
   }
   // Options de pacte : ids 410 (Chaîne), 411 (Lame), 412 (Tome), dans l'ordre du contrat.
   await db.insert(schema.features).values(WARLOCK_PACT_BOON_OPTIONS.map((o, i) => ({
@@ -79,6 +86,18 @@ beforeAll(async () => {
     { id: 401, name: 'Manif A', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
     { id: 402, name: 'Manif B', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
     { id: 403, name: 'Manif C', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
+    { id: 404, name: 'Manif D', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
+    { id: 405, name: 'Manif E', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
+    { id: 406, name: 'Manif F', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 9, tag: 'invocation' },
+  ])
+  // « Manif D » et « Manif E » octroient chacune un sort, que le remplacement de l'une par l'autre déplace.
+  for (const [featureId, spellName] of [[404, 'Fléau'], [405, 'Sanctuaire']] as const) {
+    const [grant] = await db.insert(schema.effects).values({ type: 'spell_grant', value: { level: 1, spellcastingAbility: 'cha', spellName, countPerLongRest: 0 } }).returning()
+    await db.insert(schema.featureEffects).values({ featureId, effectId: grant.id })
+  }
+  await db.insert(schema.spells).values([
+    { id: 504, name: 'Fléau', level: 1, castingTime: '1 action', range: 0, duration: '1 min', schoolId: 1 },
+    { id: 505, name: 'Sanctuaire', level: 1, castingTime: '1 bonus', range: 0, duration: '1 min', schoolId: 1 },
   ])
   await db.insert(schema.spells).values([
     { id: 500, name: 'Appel de familier', level: 1, castingTime: '1 action', range: 0, duration: '1 h', schoolId: 1 },
@@ -111,7 +130,7 @@ beforeAll(async () => {
 
 describe('characterLevelUp — Occultiste 2 → 3 (pacte + recalc des emplacements)', () => {
   it('monte le niveau, pose le pacte, purge l\'ancien emplacement et upsert le nouveau, ajoute la feature de palier', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402) }), OWNER)
 
     // Au niveau 2 : 2 emplacements de pacte de niveau 1
     let slots = await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, id))
@@ -119,7 +138,7 @@ describe('characterLevelUp — Occultiste 2 → 3 (pacte + recalc des emplacemen
     expect(slots[0].slotLevel).toBe(1)
     expect(slots[0].total).toBe(2)
 
-    const res = await characterLevelUp(db, id, luInput({ pactBoon: 'chain', hpDie: 6 }))
+    const res = await characterLevelUp(db, id, luInput({ featurePicks: [chain()], hpDie: 6 }))
     expect(res.newLevel).toBe(3)
 
     const [cc] = await db.select().from(schema.characterClasses).where(eq(schema.characterClasses.characterSheetId, id))
@@ -143,13 +162,71 @@ describe('characterLevelUp — Occultiste 2 → 3 (pacte + recalc des emplacemen
   })
 })
 
-describe('characterLevelUp — ajout d\'une manifestation (applyInvocationChanges DI)', () => {
-  it('ajoute la nouvelle manifestation en feature du personnage', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 4, pactBoon: 'chain', invocationIds: [401, 402] }), OWNER)
-    await characterLevelUp(db, id, luInput({ newInvocationIds: [403] }))
+describe('characterLevelUp — manifestations occultes', () => {
+  const featureIdsOf = async (sheetId: number): Promise<number[]> =>
+    (await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, sheetId)))
+      .map((f: { featureId: number }) => f.featureId)
+  const chosenOf = async (sheetId: number): Promise<number[]> =>
+    (await db.select().from(schema.characterChoices).where(and(
+      eq(schema.characterChoices.characterSheetId, sheetId),
+      eq(schema.characterChoices.progressionId, invocationsProgressionId),
+    ))).map((c: { selectedFeatureId: number }) => c.selectedFeatureId)
+  const grantedSpellIdsOf = async (sheetId: number): Promise<number[]> =>
+    (await db.select().from(schema.characterSpells).where(and(
+      eq(schema.characterSpells.characterSheetId, sheetId),
+      eq(schema.characterSpells.source, 'invocation'),
+    ))).map((s: { spellId: number }) => s.spellId)
+  const replacing = (featureId: number) => [{ progressionId: invocationsProgressionId, featureId }]
 
-    const feats = await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id))
-    expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(403)
+  it('ajoute la nouvelle manifestation en feature du personnage, et la consigne comme choix', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 4, featurePicks: [chain(), ...invocations(401, 402)] }), OWNER)
+    await characterLevelUp(db, id, luInput({ featurePicks: invocations(403) }))
+
+    expect(await featureIdsOf(id)).toContain(403)
+    expect((await chosenOf(id)).sort()).toEqual([401, 402, 403])
+  })
+
+  it('refuse plus de manifestations que le niveau n\'en accorde, et une manifestation déjà prise', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 4, featurePicks: [chain(), ...invocations(401, 402)] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ featurePicks: invocations(403, 404) }))).rejects.toThrow(/Trop de choix/)
+    await expect(characterLevelUp(db, id, luInput({ featurePicks: invocations(401) }))).rejects.toThrow(/déjà prise/)
+  })
+
+  it('refuse une manifestation d\'un niveau de classe que le personnage n\'a pas atteint', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 4, featurePicks: [chain(), ...invocations(401, 402)] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ featurePicks: invocations(406) }))).rejects.toThrow(/n'est pas proposée/)
+  })
+
+  it('une manifestation en remplace une autre à un niveau qui n\'en accorde aucune, et déplace le sort qu\'elle octroie', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 5, featurePicks: [chain(), ...invocations(401, 402, 404)] }), OWNER)
+    expect(await grantedSpellIdsOf(id)).toEqual([504])
+
+    await characterLevelUp(db, id, luInput({ featurePicks: invocations(405), featureReplacements: replacing(404) }))
+
+    const features = await featureIdsOf(id)
+    expect(features).toContain(405)
+    expect(features).not.toContain(404)
+    expect((await chosenOf(id)).sort()).toEqual([401, 402, 405])
+    expect(await grantedSpellIdsOf(id)).toEqual([505])
+  })
+
+  it('refuse un remplacement sans manifestation pour remplacer, ou d\'une manifestation que le personnage n\'a pas choisie ici', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 5, featurePicks: [chain(), ...invocations(401, 402, 403)] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ featureReplacements: replacing(403) }))).rejects.toThrow(/exige une nouvelle option/)
+    await expect(characterLevelUp(db, id, luInput({ featurePicks: invocations(405), featureReplacements: replacing(404) }))).rejects.toThrow(/n'est pas sur la fiche/)
+
+    await db.insert(schema.characterFeatures).values({ characterSheetId: id, featureId: 404, currentUses: 0 })
+    await expect(characterLevelUp(db, id, luInput({ featurePicks: invocations(405), featureReplacements: replacing(404) }))).rejects.toThrow(/n'a pas été choisie/)
+  })
+
+  it('un refus ne laisse aucune trace : la fiche garde sa manifestation et son niveau', async () => {
+    const { id } = await createCharacter(db, createInput({ level: 5, featurePicks: [chain(), ...invocations(401, 402, 404)] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ featurePicks: invocations(401), featureReplacements: replacing(404) }))).rejects.toThrow(/déjà prise/)
+
+    expect(await featureIdsOf(id)).toContain(404)
+    expect(await grantedSpellIdsOf(id)).toEqual([504])
+    const [cc] = await db.select().from(schema.characterClasses).where(eq(schema.characterClasses.characterSheetId, id))
+    expect(cc.level).toBe(5)
   })
 })
 
@@ -163,8 +240,8 @@ describe('characterLevelUp — classe des sorts appris (character_spells.class_i
   }
 
   it('le sort appris au level-up porte la classe montée, et le familier de pacte aussi', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402] }), OWNER)
-    await characterLevelUp(db, id, luInput({ pactBoon: 'chain', newSpellIds: [501] }))
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402) }), OWNER)
+    await characterLevelUp(db, id, luInput({ featurePicks: [chain()], newSpellIds: [501] }))
 
     expect(await classOfSpell(id, 501)).toBe(WARLOCK)
     expect(await classOfSpell(id, 500)).toBe(WARLOCK)
@@ -180,33 +257,33 @@ describe('characterLevelUp — classe des sorts appris (character_spells.class_i
 
 describe('characterLevelUp — autorité serveur sur les sorts (F12)', () => {
   it('refuse un sort hors de la liste de la classe', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402) }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ newSpellIds: [500] })))
       .rejects.toThrow(/n'est pas dans la liste de la classe Occultiste/)
   })
 
   it('refuse plus de sorts connus que le niveau n\'en accorde (Occultiste 2 → 3 : un seul)', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402) }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ newSpellIds: [501, 600] })))
       .rejects.toThrow(/Trop de sorts \(2 pour 1/)
   })
 
   it('arcanum : le sort de niveau 6 au niveau 11 passe, un sort de niveau 9 est refusé', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 10, pactBoon: 'chain', invocationIds: [401, 402] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 10, featurePicks: [chain(), ...invocations(401, 402)] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ arcaneMysteriumSpellId: 601 })))
       .rejects.toThrow(/arcanum mystique/)
     await characterLevelUp(db, id, luInput({ arcaneMysteriumSpellId: 600 }))
   })
 
   it('arcanum : refusé à un niveau qui n\'en accorde pas', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 4, pactBoon: 'chain', invocationIds: [401, 402] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 4, featurePicks: [chain(), ...invocations(401, 402)] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ arcaneMysteriumSpellId: 600 })))
       .rejects.toThrow(/arcanum mystique/)
   })
 
   it('Pacte du grimoire : les sorts mineurs exigent cette faveur', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402] }), OWNER)
-    await expect(characterLevelUp(db, id, luInput({ pactBoon: 'chain', pactBoonCantripIds: [500] })))
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402) }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ featurePicks: [chain()], pactBoonCantripIds: [500] })))
       .rejects.toThrow(/Pacte du grimoire/)
   })
 })
@@ -258,7 +335,7 @@ describe('characterLevelUp — remplacement d\'un sort connu (B11b)', () => {
       .map((r: { spellId: number }) => r.spellId)
 
   it('échange un sort connu contre un autre : l\'ancien disparaît, le nouveau s\'ajoute au sort dû', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402), spellIds: [501] }), OWNER)
     await characterLevelUp(db, id, luInput({ replacedSpellId: 501, newSpellIds: [502, 503] }))
 
     const ids = await knownIds(id)
@@ -267,19 +344,19 @@ describe('characterLevelUp — remplacement d\'un sort connu (B11b)', () => {
   })
 
   it('le remplaçant est compté en plus : sans lui, le remplacement est refusé', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402), spellIds: [501] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 501 })))
       .rejects.toThrow(/sans sort pour le remplacer/)
   })
 
   it('un troisième sort malgré le remplacement : trop de sorts', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402), spellIds: [501] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 501, newSpellIds: [502, 503, 600] })))
       .rejects.toThrow(/Trop de sorts \(3 pour 2/)
   })
 
   it('un sort qui n\'est pas sur la fiche, ou octroyé par autre chose que la classe : refusé', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 3, pactBoon: 'chain', invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 3, featurePicks: [chain(), ...invocations(401, 402)], spellIds: [501] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 503, newSpellIds: [502] })))
       .rejects.toThrow(/n'est pas sur la fiche/)
     await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 500, newSpellIds: [502] })))
@@ -287,7 +364,7 @@ describe('characterLevelUp — remplacement d\'un sort connu (B11b)', () => {
   })
 
   it('un refus ne retire rien de la fiche', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402], spellIds: [501] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402), spellIds: [501] }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ replacedSpellId: 501 }))).rejects.toThrow(CharacterValidationError)
     expect(await knownIds(id)).toContain(501)
   })
@@ -395,14 +472,14 @@ describe('characterLevelUp — terrain du Cercle de la terre', () => {
 
 describe('characterLevelUp — validation serveur', () => {
   it('rejette une sous-classe n\'appartenant pas à la classe', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 2, invocationIds: [401, 402] }), OWNER)
+    const { id } = await createCharacter(db, createInput({ level: 2, featurePicks: invocations(401, 402) }), OWNER)
     await expect(characterLevelUp(db, id, luInput({ subclassId: FIGHTER_SUBCLASS })))
       .rejects.toThrow(CharacterValidationError)
   })
 
   it('cohérence d\'édition (Lot A) : manifestation 5.5 sur une fiche 2014 → 422', async () => {
-    const { id } = await createCharacter(db, createInput({ level: 4, pactBoon: 'chain', invocationIds: [401, 402] }), OWNER)
-    await expect(characterLevelUp(db, id, luInput({ newInvocationIds: [950] })))
+    const { id } = await createCharacter(db, createInput({ level: 4, featurePicks: [chain(), ...invocations(401, 402)] }), OWNER)
+    await expect(characterLevelUp(db, id, luInput({ featurePicks: invocations(950) })))
       .rejects.toThrow(/édition/i)
   })
 })

@@ -98,6 +98,10 @@ export interface GoldenIds {
   elfBaseId: number
   highElfLineageId: number
   soldierGameProgressionId: number
+  pactBoonProgressionId: number
+  invocationsProgressionId: number
+  fighterStyleProgressionId: number
+  paladinStyleProgressionId: number
 }
 
 /**
@@ -265,8 +269,22 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
   const [soldierGame] = await db.select({ id: schema.progression.id }).from(schema.progression)
     .innerJoin(schema.backgroundFeatures, eq(schema.backgroundFeatures.featureId, schema.progression.featureId))
     .where(and(eq(schema.backgroundFeatures.backgroundId, BACKGROUND.soldier), eq(schema.progression.kind, 'tool')))
-  return { elfBaseId: elfBase.id, highElfLineageId: highElf.id, soldierGameProgressionId: soldierGame.id }
+  const progressionOf = async (ownerFeatureId: number): Promise<number> => {
+    const [p] = await db.select({ id: schema.progression.id }).from(schema.progression).where(eq(schema.progression.featureId, ownerFeatureId))
+    return p.id
+  }
+  return {
+    elfBaseId: elfBase.id,
+    highElfLineageId: highElf.id,
+    soldierGameProgressionId: soldierGame.id,
+    pactBoonProgressionId: await progressionOf(FEATURE.warlockProgressionOwnerBase),
+    invocationsProgressionId: await progressionOf(FEATURE.warlockProgressionOwnerBase + 1),
+    fighterStyleProgressionId: await progressionOf(FEATURE.fighterFightingStyle),
+    paladinStyleProgressionId: await progressionOf(FEATURE.paladinFightingStyle),
+  }
 }
+
+export const featurePick = (progressionId: number, featureId: number) => ({ progressionId, featureId })
 
 /** Base + catalogue prêts à l'emploi. */
 export async function bootstrapGoldenDb(): Promise<{ client: Client, db: Db, ids: GoldenIds }> {

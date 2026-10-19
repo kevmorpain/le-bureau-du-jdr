@@ -1,4 +1,4 @@
-import { FEATURE_PICK_KINDS, type ChoiceKind } from './choices'
+import { FEATURE_PICK_KINDS, REPLACEABLE_EVERY_LEVEL_KINDS, type ChoiceKind } from './choices'
 import type { ResolvedChoice } from './resolve'
 
 export interface FeaturePick {
@@ -21,11 +21,14 @@ const groupByProgression = <T extends FeaturePick>(items: T[]): Map<number, T[]>
   return byProgression
 }
 
+export const isReplaceableEveryLevel = (c: Pick<ResolvedChoice, 'kind'>): boolean =>
+  (REPLACEABLE_EVERY_LEVEL_KINDS as readonly ChoiceKind[]).includes(c.kind)
+
 /**
- * Premier pick illégal pour ce personnage, ou `null`. `owned` : les features que la fiche porte déjà (ou reçoit dans la même
- * requête par un autre chemin) ; une option ne se prend pas deux fois, même par deux points de choix (le 2ᵉ style de combat
- * doit différer du premier). Un point de choix `replaceable` dont le niveau donne de nouvelles options permet d'en échanger une :
- * le remplacement ajoute une option à apprendre.
+ * Premier pick illégal pour ce personnage, ou `null`. `owned` : les features que la fiche porte déjà ; une option ne se prend
+ * pas deux fois, ni par un même point de choix ni par deux (le 2ᵉ style de combat doit différer du premier, choisis dans la
+ * même requête). Un point de choix `replaceable` permet d'échanger une option déjà prise : le remplacement ajoute une option à
+ * apprendre, et exige que le niveau en donne de nouvelles sauf pour les types remplaçables à chaque niveau.
  */
 export function featurePicksError(
   picks: FeaturePick[],
@@ -40,7 +43,7 @@ export function featurePicksError(
     const choice = choices.find(c => c.progressionId === progressionId)
     if (!choice || !isFeaturePickChoice(choice) || !choice.replaceable) return `Le point de choix (id=${progressionId}) n'autorise pas de remplacement.`
     if (group.length > 1) return `Un seul remplacement par point de choix (id=${progressionId}).`
-    if (choice.remaining <= 0) return `Aucune option à apprendre sur le point de choix (id=${progressionId}) : rien à remplacer.`
+    if (choice.remaining <= 0 && !isReplaceableEveryLevel(choice)) return `Aucune option à apprendre sur le point de choix (id=${progressionId}) : rien à remplacer.`
     if (!owned.has(group[0]!.featureId)) return `L'option remplacée (id=${group[0]!.featureId}) n'est pas sur la fiche.`
     if (!picksBy.has(progressionId)) return `Un remplacement exige une nouvelle option (point de choix id=${progressionId}).`
   }
@@ -59,5 +62,9 @@ export function featurePicksError(
     const again = featureIds.find(id => owned.has(id))
     if (again != null) return `L'option (id=${again}) est déjà prise par ce personnage.`
   }
+
+  const allFeatureIds = picks.map(p => p.featureId)
+  const twice = allFeatureIds.find((id, i) => allFeatureIds.indexOf(id) !== i)
+  if (twice != null) return `L'option (id=${twice}) est choisie sur deux points de choix.`
   return null
 }

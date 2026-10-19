@@ -31,6 +31,11 @@ let highElfLineageId: number
 let elfLineageProgId: number
 let triadeProgId: number
 let weaponMasteryProgId: number
+let pactProgId: number
+let invocationsProgId: number
+
+const pactPick = (featureId: number) => ({ progressionId: pactProgId, featureId })
+const invocationPicks = (...featureIds: number[]) => featureIds.map(featureId => ({ progressionId: invocationsProgId, featureId }))
 
 // 1 PV par niveau : la borne basse, valable pour toute classe.
 function baseInput(over: Partial<Parameters<typeof createCharacter>[1]> = {}) {
@@ -77,7 +82,9 @@ beforeAll(async () => {
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
     await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: c.ownerFeatureType, classId: WARLOCK, levelRequired: c.ownerLevelRequired })
-    await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
+    const [progression] = await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable }).returning()
+    if (c.kind === 'pact_boon') pactProgId = progression.id
+    if (c.kind === 'invocations') invocationsProgId = progression.id
   }
   // Options de pacte : ids 410 (Chaîne), 411 (Lame), 412 (Tome), dans l'ordre du contrat.
   await db.insert(schema.features).values(WARLOCK_PACT_BOON_OPTIONS.map((o, i) => ({
@@ -299,8 +306,7 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
   it('dérive les emplacements de pacte, persiste le pacte, la manifestation et son sort octroyé', async () => {
     const { id } = await createCharacter(db, baseInput({
       classId: WARLOCK, level: 3,
-      pactBoon: 'chain',
-      invocationIds: [401],
+      featurePicks: [pactPick(410), ...invocationPicks(401)],
     }), OWNER)
 
     const [cc] = await db.select().from(schema.characterClasses).where(eq(schema.characterClasses.characterSheetId, id))
@@ -319,6 +325,11 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
     expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(410) // Pacte de la Chaîne
     expect(feats.map((f: { featureId: number }) => f.featureId)).not.toContain(100) // porteur « Faveur de pacte » invisible
 
+    // Chaque option est aussi une décision, consignée sur son point de choix.
+    const choices = await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, id))
+    expect(choices.map((c: { progressionId: number, selectedFeatureId: number }) => [c.progressionId, c.selectedFeatureId]).sort())
+      .toEqual([[pactProgId, 410], [invocationsProgId, 401]].sort())
+
     const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))
     const bySource = new Map(spells.map((s: { source: string | null, spellId: number }) => [s.source, s.spellId]))
     expect(bySource.get('pact_chain')).toBe(500) // familier (Pacte de la Chaîne)
@@ -329,8 +340,8 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
     const featureIdsOf = async (sheetId: number) => (await db.select().from(schema.characterFeatures)
       .where(eq(schema.characterFeatures.characterSheetId, sheetId)) as { featureId: number }[]).map(f => f.featureId)
 
-    const blade = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, pactBoon: 'blade' }), OWNER)
-    const tome = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, pactBoon: 'tome' }), OWNER)
+    const blade = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, featurePicks: [pactPick(411)] }), OWNER)
+    const tome = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, featurePicks: [pactPick(412)] }), OWNER)
     const none = await createCharacter(db, baseInput({ classId: WARLOCK, level: 2 }), OWNER)
 
     expect((await featureIdsOf(blade.id)).filter(id => id >= 410 && id <= 412)).toEqual([411])
@@ -364,8 +375,7 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
   it('rattache à l\'Occultiste chaque sort qu\'il apprend (colonne class_id)', async () => {
     const { id } = await createCharacter(db, baseInput({
       classId: WARLOCK, level: 3,
-      pactBoon: 'chain',
-      invocationIds: [401],
+      featurePicks: [pactPick(410), ...invocationPicks(401)],
       spellIds: [502],
     }), OWNER)
 
@@ -384,18 +394,18 @@ describe('createCharacter — validation serveur (rejette les choix illégaux)',
   })
 
   it('manifestation inconnue / non taguée → rejet', async () => {
-    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 3, invocationIds: [999999] }), OWNER))
-      .rejects.toThrow(/invocation/i)
+    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 3, featurePicks: invocationPicks(999999) }), OWNER))
+      .rejects.toThrow(/n'est pas proposée/)
   })
 
   it('trop de manifestations pour le niveau (3 pour un max de 2 au niveau 3) → rejet', async () => {
-    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 3, invocationIds: [401, 402, 403] }), OWNER))
-      .rejects.toThrow(/manifestation/i)
+    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 3, featurePicks: invocationPicks(401, 402, 403) }), OWNER))
+      .rejects.toThrow(/Trop de choix/)
   })
 
   it('faveur de pacte à un niveau trop bas (Occultiste 2) → rejet', async () => {
-    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 2, pactBoon: 'blade' }), OWNER))
-      .rejects.toThrow(/pacte/i)
+    await expect(createCharacter(db, baseInput({ classId: WARLOCK, level: 2, featurePicks: [pactPick(411)] }), OWNER))
+      .rejects.toThrow(/n'est pas proposé à ce personnage/)
   })
 
   it('sort d\'arcanum illégal (sort niv. 9 pour l\'arcanum niv. 6 d\'un occultiste 11) → rejet', async () => {
