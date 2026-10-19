@@ -72,9 +72,12 @@
           <span class="text-muted">Sous-classe : </span>
           <span class="text-amber-400 font-semibold">{{ state.newSubclassName }}</span>
         </div>
-        <div v-if="state.fightingStyle">
-          <span class="text-muted">Style : </span>
-          <span class="text-amber-400">{{ state.fightingStyle }}</span>
+        <div
+          v-for="group in pickedFeatureGroups"
+          :key="group.title"
+        >
+          <span class="text-muted">{{ group.title }} : </span>
+          <span class="text-amber-400">{{ group.names.join(', ') }}</span>
         </div>
         <div v-if="state.asiChoice === 'feat' && state.featureId">
           <span class="text-muted">Don : </span>
@@ -128,6 +131,7 @@ const {
   finalAbilities,
   activeSteps,
   isStepComplete,
+  pickedFeatureGroups,
   ABILITIES,
   ABILITY_SHORT,
   profBonusAtLevel,

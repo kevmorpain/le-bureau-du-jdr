@@ -53,7 +53,7 @@ interface BuilderState {
   variantHumanSkill: string | null // compétence bonus ex: 'arcana'
   selectedLanguages: string[]     // langue au choix de l'Humain variant (clé : 'elvish'…)
   choicePicks: Record<number, Array<string | number>> // picks des points de choix (espèce, lignée, historique, classe, règle générale), par id de progression
-  featurePicks: Record<number, number[]> // options de feature (2ᵉ style du Champion, manœuvres du Maître de guerre), par id de progression
+  featurePicks: Record<number, number[]> // options de feature (style de combat, 2ᵉ style du Champion, pacte, manifestations, Métamagie, manœuvres), par id de progression
   dragonAncestry: string | null   // ex: 'red', 'gold'
 
   // Étape 2 — Classe
@@ -61,7 +61,6 @@ interface BuilderState {
   subclass: string | null         // nom de la sous-classe ex: 'École d\'Évocation'
   skills: string[]                // compétences choisies ex: ['arcana', 'history']
   level: number                   // 1–20
-  fightingStyle: string | null    // ex: 'Archerie', 'Duel'
 
   // Étape 3 — Caractéristiques
   abilityMethod: 'standard' | 'pointbuy' | 'roll'
@@ -94,13 +93,9 @@ interface BuilderState {
   equipChoices: (string | null)[]  // choix par groupe d'équipement de classe
   equipment: string[]              // liste finale des noms d'items
 
-  // Faveur de Pacte (Occultiste niv. ≥ 3) — sections inline dans StepClass
-  pactBoon: 'chain' | 'blade' | 'tome' | null
-  pactWeaponItemName: string | null            // nom item si pactBoon='blade'
-  selectedPactBoonCantripIds: number[]         // 3 cantrips si pactBoon='tome'
-
-  // Manifestations occultes (Occultiste niv. ≥ 2)
-  invocationIds: number[]
+  // Accessoires de la faveur de Pacte (le pacte, les manifestations, le style de combat et la Métamagie sont des picks de `featurePicks`)
+  pactWeaponItemName: string | null            // nom item si le pacte pris est celui de la Lame
+  selectedPactBoonCantripIds: number[]         // 3 cantrips si le pacte pris est celui du Tome
 }
 ```
 
@@ -184,10 +179,8 @@ raceId !== null
   2. **Capacités de classe** (liste des features de départ)
   3. **Compétences** (X au choix parmi N) : toggle buttons
   4. **Outils au choix** (Barde, Moine) : point de choix du porteur de maîtrises de la classe, obligatoire
-  5. **Style de combat** si applicable (Guerrier/Paladin/Rôdeur) : cartes radio
+  5. **Options de feature** (`FeaturePickPicker`, un par point de choix de `featurePickChoices`) : style de combat (Guerrier/Paladin/Rôdeur), 2ᵉ style du Champion, faveur du Pacte (Occultiste niveau ≥ 3), manifestations occultes (niveau ≥ 2, nombre = `count` du point de choix), Métamagie (Ensorceleur niveau ≥ 3), manœuvres (Maître de guerre) → `state.featurePicks[progressionId]`. Une carte dont le niveau est atteint mais dont le prérequis (pacte, sort connu, manifestation) ne l'est pas est verrouillée, avec sa raison ; une option prise par un autre point de choix est masquée (le 2ᵉ style diffère du 1er). Le pacte pris se lit dans le nom de l'option choisie (`pactBoon`, calculé), de même que les manifestations choisies (`invocationPickIds`).
   6. **Sous-classe** si niveau atteint : cartes radio
-  7. **Faveur du Pacte** (Occultiste niveau ≥ 3) : cartes radio Chaîne / Lame / Tome → `state.pactBoon`
-  8. **Manifestations occultes** (Occultiste niveau ≥ 2) : `InvocationPicker` partagé avec le level-up, max = `WARLOCK_INVOCATIONS_KNOWN[level - 1]` (2 au niv.2, 3 au niv.5, etc.), filtre par pacte + sorts connus → `state.invocationIds`
 
 **Compétences maîtrisées** (`useCharacterBuilder`) : `proficientSkills` = compétences de classe choisies +
 sources fixes (`grantedSkillSources` : octrois `skill_proficiency` de l'espèce — ex. Sens aiguisés,
@@ -210,9 +203,7 @@ trois usages.
 ```ts
 classId !== null
 && skills.length === CLASSES.find(c => c.id === classId)?.skillChoices.count
-&& (!hasFightingStyle || fightingStyle !== null)
-&& (!needsPactBoon || pactBoon !== null)
-&& (!needsInvocations || invocationIds.length === invocationsExpected)
+&& featurePickChoices.every(c => validFeaturePicks(c).length === c.count)   // une option que le niveau ne propose plus ne compte pas
 ```
 
 **Sidebar** : affiche `${className} niv.${level}`
@@ -489,7 +480,7 @@ Corps accepté :
   skillProficiencies?: string[]              // clés de compétences
   selectedSpellIds?: number[]               // IDs de sorts DB
   inventoryItemNames?: string[]             // noms d'items (résolution silencieuse)
-  fightingStyle?: string                    // texte libre, stocké comme feature
+  featurePicks?: { progressionId: number, featureId: number }[]   // style de combat, pacte, manifestations, Métamagie, manœuvres
 }
 ```
 
@@ -502,5 +493,4 @@ Corps accepté :
 | `character_species` | parentId, abilityBonuses, traits, darkvision — compensé par `app/data/` |
 | `classes` | skillChoiceCount, skillChoiceOptions, role — compensé par `app/data/`. JS et maîtrises d'armes/armures/outils : porteurs `proficiency_grant` / `multiclass_proficiency_grant` en base (seedés depuis `shared/rules/classProficiencies.ts`), lus par le builder via `/api/catalog/classes` (`proficiencies`). `subclass_level` et `spellcasting_type` sont **en base** depuis la migration 0080 ; le builder garde sa copie jusqu'au recâblage front (roadmap `dnd-5.5.md` §3, point 6), sous garde-fou `test/nuxt/classesIdentityFront.test.ts` |
 | `backgrounds` | equipment JSON, suggestions personnalité/idéaux/liens/défauts — compensé par `app/data/` |
-| `character_sheets` | fightingStyle — stocker comme feature à la création ou ignorer V1 |
 | `character_species` | Drow (Elfe Noir) absent de la DB — mapping vers null ou 'Elfe des bois' |

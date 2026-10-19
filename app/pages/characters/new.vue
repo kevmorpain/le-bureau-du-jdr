@@ -62,7 +62,7 @@ const {
   finalAbilities,
   hpBase,
   resetBuilder,
-  needsPactBoon,
+  pactBoon,
   asiLevelsForCharacter,
   isVariantHuman,
   isCustomBackground,
@@ -144,7 +144,7 @@ async function handleSubmit() {
     const speciesId = speciesDbId.value
     const backgroundId = backgroundDbId.value
     const { ids: inventoryItemIds, unresolved: inventoryItemNamesUnresolved } = resolveItemIds(itemNames)
-    const pactWeaponItemId = needsPactBoon.value && state.value.pactBoon === 'blade' && state.value.pactWeaponItemName
+    const pactWeaponItemId = pactBoon.value === 'blade' && state.value.pactWeaponItemName
       ? resolveItemIds([state.value.pactWeaponItemName]).ids[0] ?? null
       : null
 
@@ -155,9 +155,6 @@ async function handleSubmit() {
       hpBase: hpBase.value,
       classId,
       subclassId,
-      // Style de combat choisi (F2 tranche 2) : envoyé au serveur, qui le résout + matérialise (le
-      // choix était auparavant collecté puis PERDU). Le serveur gate par niveau (Paladin/Rôdeur niv 2).
-      fightingStyle: state.value.fightingStyle ?? undefined,
       expertiseSkills: state.value.expertiseSkills,
       level: state.value.level,
       speciesId,
@@ -202,11 +199,8 @@ async function handleSubmit() {
       preparedSpellIds: isGrimoire
         ? [...state.value.selectedCantrips, ...state.value.preparedSpells.filter(id => state.value.selectedSpells.includes(id))]
         : undefined,
-      pactBoon: needsPactBoon.value ? state.value.pactBoon : null,
       pactWeaponItemId,
-      pactBoonCantripIds: needsPactBoon.value && state.value.pactBoon === 'tome' ? state.value.selectedPactBoonCantripIds : [],
-      invocationIds: state.value.invocationIds,
-      metamagicIds: state.value.metamagicIds,
+      pactBoonCantripIds: pactBoon.value === 'tome' ? state.value.selectedPactBoonCantripIds : [],
       inventoryItemIds,
       inventoryItemNamesUnresolved,
       // Seuls les paliers où le joueur a choisi 'asi' (pas 'feat') sont envoyés.

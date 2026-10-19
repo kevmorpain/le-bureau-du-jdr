@@ -84,9 +84,7 @@ async function mountSpellsStep(classes: ClassFixture[], pickedClassId: string, f
         toLevel: fromLevel + 1,
         newCantripIds: [],
         newSpellIds: [],
-        pactBoon: null,
         pactBoonCantripIds: [],
-        newInvocationIds: [],
         bookOfAncientSecretsSpellIds: [],
         ...extraState,
       })

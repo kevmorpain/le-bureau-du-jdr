@@ -221,39 +221,16 @@ const {
   CLASSES,
   SKILLS,
   newPickChoices,
-  newFeaturePickChoices,
+  pickedFeatureGroups,
+  replacedFeatureNames,
   replacementChoices,
 } = useLevelUp(charSheet)
-
-const replacedFeatureIds = computed(() => newFeaturePickChoices.value.flatMap((c) => {
-  const id = state.value.featureReplacements[c.progressionId]
-  return c.replaceable && id != null ? [id] : []
-}))
-const pickedFeatureIds = computed(() => [
-  ...newFeaturePickChoices.value.flatMap(c => state.value.featurePicks[c.progressionId] ?? []),
-  ...replacedFeatureIds.value,
-])
-const { data: pickedFeatures } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/feature-options', {
-  query: { ids: computed(() => pickedFeatureIds.value.join(',')) },
-  default: () => [],
-})
 
 const { getById: getFeatById } = useFeats()
 
 const submitting = ref(false)
 
 const spellNamesById = useState<Record<number, string>>('level-up-spell-names', () => ({}))
-
-const { extendedQuery } = useExtendedContent()
-const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
-  query: extendedQuery,
-  default: () => [],
-})
-const invocationNamesById = computed(() => {
-  const map: Record<number, string> = {}
-  for (const inv of allInvocations.value ?? []) map[inv.id] = inv.name
-  return map
-})
 
 const oldProfBonus = computed(() => profBonusAtLevel(totalLevel.value))
 const newProfBonus = computed(() => profBonusAtLevel(totalLevel.value + 1))
@@ -292,17 +269,11 @@ const gains = computed(() => {
     list.push({ label: `${cls.subclassLabel} : ${s.newSubclassName}`, detail: 'choisie ce niveau' })
   }
 
-  if (s.fightingStyle) {
-    list.push({ label: `Style de combat : ${s.fightingStyle}`, detail: '' })
+  for (const group of pickedFeatureGroups.value) {
+    list.push({ label: group.title, detail: group.names.join(', ') })
   }
-
-  for (const choice of newFeaturePickChoices.value) {
-    const names = (s.featurePicks[choice.progressionId] ?? []).map(id => pickedFeatures.value?.find(f => f.id === id)?.name).filter(Boolean)
-    if (names.length) list.push({ label: choiceTitle(choice) ?? 'Choix', detail: names.join(', ') })
-  }
-  for (const id of replacedFeatureIds.value) {
-    const name = pickedFeatures.value?.find(f => f.id === id)?.name
-    if (name) list.push({ label: 'Option remplacée', detail: name })
+  for (const name of replacedFeatureNames.value) {
+    list.push({ label: 'Option remplacée', detail: name })
   }
 
   if (s.asiChoice === 'asi') {
@@ -335,29 +306,6 @@ const gains = computed(() => {
   if (s.newSpellIds.length) {
     const names = s.newSpellIds.map(id => spellNamesById.value[id]).filter(Boolean).join(', ')
     list.push({ label: `${s.newSpellIds.length} nouveau(x) sort(s)`, detail: names })
-  }
-
-  if (s.pactBoon) {
-    list.push({
-      label: `Faveur du Pacte : ${({ chain: 'Chaîne', blade: 'Lame', tome: 'Tome' } as const)[s.pactBoon]}`,
-      detail: '',
-    })
-  }
-
-  if (s.newInvocationIds.length || s.replacedInvocationId) {
-    const newNames = s.newInvocationIds.map(id => invocationNamesById.value[id]).filter(Boolean)
-    const replacedName = s.replacedInvocationId ? invocationNamesById.value[s.replacedInvocationId] : null
-    if (replacedName && newNames.length) {
-      // Si remplacement actif, distinguer la dernière comme remplacement (par convention picker)
-      const learned = newNames.slice(0, -1)
-      const replacement = newNames[newNames.length - 1]
-      if (learned.length) {
-        list.push({ label: `${learned.length} nouvelle(s) manifestation(s)`, detail: learned.join(', ') })
-      }
-      list.push({ label: `Remplacement : ${replacedName} → ${replacement}`, detail: '' })
-    } else if (newNames.length) {
-      list.push({ label: `${newNames.length} nouvelle(s) manifestation(s)`, detail: newNames.join(', ') })
-    }
   }
 
   if (s.isMulticlass && s.pickedClassId) {

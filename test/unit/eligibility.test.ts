@@ -136,18 +136,18 @@ describe('unmetPrerequisite — ce qui manque à une option', () => {
     expect(unmet({ featureId: 1, prerequisites: { requiredPactBoon: 'blade' } }, { classLevels: {}, pactBoon: 'blade' })).toBeNull()
   })
 
-  it('nomme le niveau, le pacte, le sort et l'invocation requis', () => {
+  it('nomme le niveau, le pacte, le sort et l\'invocation requis', () => {
     expect(unmet({ featureId: 1, levelRequired: 7 })).toEqual({ type: 'level', level: 7 })
     expect(unmet({ featureId: 1, prerequisites: { requiredPactBoon: 'tome' } })).toEqual({ type: 'pact_boon', pactBoon: 'tome' })
     expect(unmet({ featureId: 1, prerequisites: { requiredSpellName: 'Décharge occulte' } })).toEqual({ type: 'spell', name: 'Décharge occulte' })
     expect(unmet({ featureId: 1, prerequisites: { requiredInvocationName: 'Regard de deux esprits' } })).toEqual({ type: 'invocation', name: 'Regard de deux esprits' })
   })
 
-  it('le niveau passe avant les prérequis d'état', () => {
+  it('le niveau passe avant les prérequis d\'état', () => {
     expect(unmet({ featureId: 1, levelRequired: 7, prerequisites: { requiredPactBoon: 'tome' } })).toEqual({ type: 'level', level: 7 })
   })
 
-  it('ignorePrerequisites écarte l'état du personnage, jamais le niveau', () => {
+  it('ignorePrerequisites écarte l\'état du personnage, jamais le niveau', () => {
     const ignoring: CharacterProjection = { classLevels: {}, ignorePrerequisites: true }
     expect(unmet({ featureId: 1, prerequisites: { requiredPactBoon: 'tome', requiredSpellName: 'Décharge occulte' } }, ignoring)).toBeNull()
     expect(unmet({ featureId: 1, levelRequired: 7, prerequisites: { requiredPactBoon: 'tome' } }, ignoring)).toEqual({ type: 'level', level: 7 })

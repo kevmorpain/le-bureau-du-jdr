@@ -108,7 +108,10 @@
         </div>
       </div>
 
-      <div v-if="needsPactBoon && state.pactBoon === 'chain'" class="mb-6">
+      <div
+        v-if="pactBoon === 'chain'"
+        class="mb-6"
+      >
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
           <UBadge color="violet" variant="subtle" size="md">Auto-ajouté</UBadge>
@@ -127,7 +130,10 @@
         </div>
       </div>
 
-      <div v-if="needsPactBoon && state.pactBoon === 'tome'" class="mb-6">
+      <div
+        v-if="pactBoon === 'tome'"
+        class="mb-6"
+      >
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte du Tome</p>
           <span
@@ -371,7 +377,7 @@ const {
   freeListPicks,
   spellListClassName,
   schoolRestriction,
-  needsPactBoon,
+  pactBoon,
   ABILITY_SHORT,
   abilityMod,
   arcaneMysteriumSpellLevels,

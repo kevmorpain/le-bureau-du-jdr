@@ -35,13 +35,9 @@ interface LevelUpState {
   // Aptitudes (step features)
   newSubclassId: number | null       // DB id de la sous-classe choisie
   newSubclassName: string | null     // nom DB (pour résolution server-side)
-  fightingStyle: string | null       // ex: 'Archerie'
   expertiseSkills: string[]          // clés de compétences (Roublard/Barde)
-  pactBoon: 'chain' | 'blade' | 'tome' | null  // Faveur du Pacte (Occultiste niv.3)
-  pactWeaponInventoryId: number | null          // ID inventaire si pactBoon='blade'
-  pactBoonCantripIds: number[]                  // 3 sorts mineurs si pactBoon='tome'
-  newInvocationIds: number[]                    // Manifestations occultes apprises ce level-up
-  replacedInvocationId: number | null           // (Optionnel) ID d'une manifestation à remplacer
+  pactWeaponInventoryId: number | null          // ID inventaire si le pacte pris est celui de la Lame
+  pactBoonCantripIds: number[]                  // 3 sorts mineurs si le pacte pris est celui du Tome
 
   // ASI / Don (step asi)
   asiChoice: 'asi' | 'feat' | null
@@ -52,8 +48,8 @@ interface LevelUpState {
   newSkills: string[]                // compétences gagnées via multiclassage
   featLanguages: string[]            // langues du don Linguiste (step asi)
   choicePicks: Record<number, Array<string | number>> // points de choix gagnés à ce niveau (instrument du Barde rejoint, ennemi juré du Rôdeur)
-  featurePicks: Record<number, number[]>               // options de feature gagnées (2ᵉ style du Champion, manœuvres), par id de progression
-  featureReplacements: Record<number, number | null>   // manœuvre déjà prise échangée contre une nouvelle, par id de progression
+  featurePicks: Record<number, number[]>               // options de feature gagnées (style de combat, pacte, manifestations, Métamagie, manœuvres), par id de progression
+  featureReplacements: Record<number, number | null>   // option déjà prise (manœuvre, manifestation) échangée contre une nouvelle, par id de progression
 
   // Magie (step spells)
   newCantripIds: number[]            // IDs sorts DB
@@ -111,25 +107,21 @@ Le client n'envoie que `hpDie` ; le serveur le borne par le dé de la classe et 
 | Condition | UI affichée |
 |---|---|
 | `isSubclassLevel` (niveau de sous-classe atteint et pas encore de sous-classe) | Grille de sous-classes pour la classe choisie |
-| `needsFightingStyle` (Guerrier niv.1/10, Paladin niv.2, Rôdeur niv.2) | Cartes radio des styles de combat |
+| `newFeaturePickChoices` (style de combat Guerrier niv.1 / Paladin et Rôdeur niv.2, 2ᵉ style du Champion niv.10, pacte de l'Occultiste niv.3, manifestations niv.2/5/7/9/12/15/18, Métamagie niv.3/10/17, manœuvres du Maître de guerre) | Un `FeaturePickPicker` par point de choix : cartes d'options (le niveau et les prérequis verrouillent une carte sans la masquer), puces de remplacement pour un point de choix `replaceable` ; pour le pacte, la suite qui revient au pacte pris (familier, arme, sorts du Tome) |
 | `needsExpertise` (Roublard niv.1/6, Barde niv.3/10) | Picker de 2 compétences parmi les compétences maîtrisées |
-| `needsPactBoon` (Occultiste niv.3, sans boon existant) | Cartes radio Pacte de la Chaîne / Lame / Tome |
-| `needsInvocations` (Occultiste gagne ≥1 invocation au level-up : niv.2/5/7/9/12/15/18) | `InvocationPicker` filtré par niveau / pacte / sorts connus |
-| `canReplaceInvocation` (à chaque level-up d'occultiste mono-classe ayant ≥1 invocation) | Liste des invocations connues, sélection optionnelle pour remplacement |
+| Manifestations déjà portées (Occultiste, à chaque level-up, même sans manifestation de plus) | Puces de remplacement ; un point de choix sans option à prendre ne s'affiche que s'il permet un échange |
 
 Si aucune condition → affiche un résumé des aptitudes débloquées (liste informative).
 
 **Validation :**
 - `isSubclassLevel` → `newSubclassId !== null`
-- `needsFightingStyle` → `fightingStyle !== null`
 - `needsExpertise` → `expertiseSkills.length >= 2`
-- `needsPactBoon` → `pactBoon !== null`
-- Manifestations → `newInvocationIds.length === (newInvocationsCount + (replacedInvocationId ? 1 : 0))`
+- Options de feature → pour chaque point de choix, `validFeaturePicks(c).length === count + (remplacement ? 1 : 0)` (une option que le niveau ne propose plus ne compte pas)
 - Sinon → toujours valide
 
-**Cas Pacte du Tome :** SI `pactBoon === 'tome'` → l'étape "Magie" devient requise pour choisir 3 sorts mineurs de n'importe quelle classe
+**Cas Pacte du Tome :** SI `pickedPactBoon === 'tome'` (lu dans le nom de l'option choisie) → l'étape "Magie" devient requise pour choisir 3 sorts mineurs de n'importe quelle classe
 
-**Cas remplacement de manifestation** : SI `replacedInvocationId !== null`, le picker s'agrandit d'un slot (`totalPickCount = newCount + 1`), masque les invocations déjà connues sauf celle à remplacer, et la dernière invocation choisie est traitée comme remplacement côté serveur. Côté composable `useLevelUp` : `effectivePactBoon = pickedCharClass.pactBoon ?? state.pactBoon`, `knownInvocationIds` extrait depuis `charSheet.features.feature.featureType === 'eldritch_invocation'`, `knownSpellNames` depuis `charSheet.spells.spell.name` (le GET inclut maintenant `spells` + `pactBoon` sur classes).
+**Cas remplacement de manifestation** : le point de choix `invocations` est `replaceable` et se remplace à chaque niveau, même sans manifestation de plus (`choicesGainedAtLevelUp` le renvoie alors avec `count` 0). Le sélecteur propose les manifestations connues (`ownedFeatureIds`) comme puces de remplacement ; en retirer une ajoute une manifestation à choisir (`featurePicksDue = count + 1`). Côté composable `useLevelUp` : `effectivePactBoon = pickedCharClass.pactBoon ?? pickedPactBoon`, `knownInvocationNames` extrait depuis `charSheet.features.feature.featureType === 'eldritch_invocation'`, `knownSpellNames` depuis `charSheet.spells.spell.name`.
 
 ---
 
@@ -202,7 +194,7 @@ hasSpellcasting = pickedClass.spellcasting !== null && toLevel >= spellcasting.s
 - Tri par école + concentration/rituel comme dans le builder
 
 **Validation :**
-- Si `pactBoon === 'tome'` → `pactBoonCantripIds.length >= 3`
+- Si `pickedPactBoon === 'tome'` → `pactBoonCantripIds.length >= 3`
 - Sinon → toujours valide (les sorts sont optionnels pour les préparateurs)
 
 ---
@@ -234,7 +226,6 @@ Corps :
   isMulticlass: boolean             // doit refléter la fiche : true ⇔ classe absente de character_classes
   hpDie: number                     // valeur du dé de vie (1..dé de la classe) ; le serveur en tire le gain
   subclassId?: number | null
-  fightingStyle?: string | null
   expertiseSkills?: SkillKey[]      // clés de SKILL_KEYS, sans doublon (Zod → 422)
   asiChoice?: 'asi' | 'feat' | null
   asiBonuses?: Record<string, number> | null
@@ -242,16 +233,12 @@ Corps :
   featChoices?: { ability?, spellId?, skills?, tools?, languages? } | null
   newSkills?: SkillKey[]            // multiclassage uniquement ; sans doublon (Zod → 422)
   choicePicks?: { progressionId, value? | spellId? }[]  // points de choix gagnés à ce niveau
-  featurePicks?: { progressionId, featureId }[]         // options de feature gagnées à ce niveau
+  featurePicks?: { progressionId, featureId }[]         // options de feature gagnées à ce niveau (style de combat, pacte, manifestations, Métamagie, manœuvres)
   featureReplacements?: { progressionId, featureId }[]  // option déjà prise échangée (un point de choix `replaceable`, un seul)
   newCantripIds?: number[]
   newSpellIds?: number[]
-  pactBoon?: 'chain' | 'blade' | 'tome' | null
   pactWeaponInventoryId?: number | null
   pactBoonCantripIds?: number[]
-  newInvocationIds?: number[]
-  replacedInvocationId?: number | null
-  newMetamagicIds?: number[]
   arcaneMysteriumSpellId?: number | null
   bookOfAncientSecretsSpellIds?: number[]   // 2 au plus
 }
@@ -261,24 +248,25 @@ Corps :
 1. Charger la classe par `classId` (table `classes`) ; la sous-classe éventuelle doit lui appartenir
 2. Charger les `character_classes` actuelles : le niveau atteint est **dérivé de la DB** (niveau actuel de la classe + 1, soit 1 pour une nouvelle classe), jamais du client
 3. Rejeter (422) un `isMulticlass` qui contredit la fiche — `true` sur une classe déjà possédée, `false` sur une classe absente : le reste du payload a été composé pour un autre état (onglet périmé, multiclassage rejoué)
-4. Upsert `character_classes` avec le nouveau niveau + subclassId + pactBoon
+4. Upsert `character_classes` avec le nouveau niveau + subclassId + pactBoon (projection du pacte pris, lu dans `featurePicks`)
 5. Insérer les features de classe au nouveau niveau + features de sous-classe ≤ nouveau niveau
 6. Mettre à jour `character_sheets.hpBase` (+ gain tiré de `hpDie`) et `currentHitDie` (+1 dé de vie)
 7. Insérer les ASI dans `character_ability_score_improvements`
 8. Insérer les nouveaux sorts (`isKnown: true, isPrepared: false`)
-9. Gérer les effets du Pact Boon (chain → Appel de familier, tome → sorts mineurs, blade → isPactWeapon)
+9. Gérer les effets du pacte pris (chain → Appel de familier, tome → sorts mineurs, blade → isPactWeapon)
 9b. **Sorts appris** : `learnedSpellsError` (`server/utils/spellLearning.ts`) borne les sorts choisis — liste de la classe (ou du Magicien pour
     un Chevalier occulte / Escroc arcanique), niveau de sort accessible, nombre au plus égal à ce que les tables accordent,
     Secrets magiques du Barde, écoles de la sous-classe — et `replacedSpellError` le remplacement d'un sort connu
     (`replacedSpellId`). Les emplacements se recalculent avec le type d'incantation effectif de chaque classe (sous-classe comprise).
-10. **Manifestations occultes** : `applyInvocationChanges` (cf. `server/utils/invocations.ts`) — si `replacedInvocationId`, DELETE le `character_features` correspondant + purge des `character_spells` source='invocation' liés aux `spell_grant` de cette invocation. Puis INSERT des `newInvocationIds` dans `character_features`, et matérialisation des `spell_grant` en `character_spells` avec `source: 'invocation'` (idempotent via `onConflictDoNothing`).
+10. **Manifestations occultes** : écrites avec les autres options de feature (11b) dans le lot atomique (`featurePickStmts`, `server/utils/featurePicks.ts`) — le remplacement retire d'abord les `character_spells` `source: 'invocation'` liés aux `spell_grant` de l'ancienne, l'ajout matérialise ceux de la nouvelle (idempotent via `onConflictDoNothing`).
 11. Insérer les nouvelles compétences de multiclassage (validées au préalable : classe rejointe, nombre, liste)
     puis les `choicePicks` en `character_choices`, validés contre les points de choix que ce niveau de classe rend dus
     (`validateLevelUpChoicePicks`, porteur de multiclassage d'une classe rejointe compris). Un point de choix dont le nombre
     grandit (ennemi juré) ne rend dû que son surplus, et une valeur déjà choisie est refusée (`alreadyPickedError`).
 11b. **Options de feature** : `featureReplacements` retire d'abord l'option échangée (`character_choices` et `character_features`),
     puis `featurePicks` s'enregistre en `character_choices.selected_feature_id` et se matérialise en `character_features` ; validé
-    avant toute écriture (`featurePicksError`, `replacedPickError`) contre les points de choix que ce niveau rend dus.
+    avant toute écriture (`featurePicksError`, `replacedPickError`) contre les points de choix que ce niveau rend dus, y compris
+    celui des manifestations détenu sans surplus quand il ne sert qu'à un remplacement.
     Cf. [rules-engine.md](./rules-engine.md#chemin-générique-des-picks-doptions-de-feature).
 12. Upserter les compétences en expertise (`proficiencyLevel: 'expert'`). Validées **avant** toute écriture (`validateLevelUpExpertise`) : au plus le delta du `count` cumulatif de la progression `expertise` entre `newLevel − 1` et `newLevel` (`expertiseGainedAtLevel`, même projection que le front), et aucune compétence déjà `expert` dans `character_skills` (toutes sources). La maîtrise préalable de la compétence reste **front-autoritaire** : la fiche permet déjà de poser `expert` à la main sur n'importe quelle compétence (`PUT /skills`), et le set maîtrisé complet n'est composé que côté front.
 13. Recalculer les emplacements de sort (full=niveau, half=⌊niveau/2⌋ si ≥2, pact=séparé) — **particularité Pact Magic** : tous les emplacements occultistes sont du même niveau, et ce niveau change avec le niveau d'occultiste (niv. 3 → slots niv. 2, niv. 5 → niv. 3, etc.). Le handler DELETE explicitement les anciens `pact_magic` slots aux autres niveaux avant l'upsert, avec préservation du compteur `used` du précédent niveau.
@@ -294,7 +282,7 @@ Toutes exportées pour usage dans les composants d'étape :
 ```ts
 // ASI, style de combat et expertise sont désormais lus dans le CATALOGUE (plus de tables front) :
 //   ASI            → `isAsiLevel` / `asiDueForClassLevel` (progression asi_or_feat par palier)
-//   style de combat → `needsFightingStyle` / `fightingStyleLevelFor` + endpoint /api/catalog/classes/[name]/fighting-styles
+//   style de combat → point de choix `fighting_style` des `featurePicks` ; `fightingStyleLevelFor` pour le badge de la classe
 //   expertise       → `needsExpertise` / `expertiseDueForClassLevel` (count cumulatif)
 //   compétences de multiclassage → `multiclassSkills` / `requiredMulticlassSkillPicks`
 //   maîtrises de multiclassage   → `multiclassGainsOf` (catalogue) ; la fiche les dérive des porteurs (`classEffects`)

@@ -54,7 +54,6 @@ beforeAll(() => {
     return STYLES.filter(s => ids.includes(s.id)).map(s => ({ ...s, description: `Description de ${s.name}` }))
   })
   registerEndpoint('/api/catalog/classes/Guerrier/subclasses', () => [])
-  registerEndpoint('/api/catalog/classes/Guerrier/fighting-styles', () => [])
   registerEndpoint('/api/invocations', () => [])
 })
 

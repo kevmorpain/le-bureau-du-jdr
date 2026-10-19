@@ -96,8 +96,7 @@ function proficiencyBonus(totalLevel: number): number {
   return 2 + Math.floor((Math.max(1, totalLevel) - 1) / 4)
 }
 
-export type UnmetPrerequisite =
-  | { type: 'level', level: number }
+export type UnmetPrerequisite = { type: 'level', level: number }
   | { type: 'pact_boon', pactBoon: PactBoon }
   | { type: 'spell', name: string }
   | { type: 'invocation', name: string }
@@ -123,8 +122,9 @@ export function unmetPrerequisite(option: ResolvedOption, ownerClassLevel: numbe
   return null
 }
 
-export const isOptionEligible = (option: ResolvedOption, ownerClassLevel: number, projection: CharacterProjection): boolean =>
-  unmetPrerequisite(option, ownerClassLevel, projection) === null
+export function isOptionEligible(option: ResolvedOption, ownerClassLevel: number, projection: CharacterProjection): boolean {
+  return unmetPrerequisite(option, ownerClassLevel, projection) === null
+}
 
 // ⚠️ Multiclasse : le `count` s'évalue au niveau de la classe PROPRIÉTAIRE, pas au niveau total
 // (Occultiste 5 / Guerrier 3 → table de niveau 5).

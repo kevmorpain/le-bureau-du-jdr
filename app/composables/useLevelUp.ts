@@ -23,7 +23,8 @@ import {
 } from '~~/shared/rules/multiclass'
 import { proficiencyLabels } from '~~/shared/utils/item'
 import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
-import { isFeaturePickChoice } from '~~/shared/rules/featurePicks'
+import { isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
+import { pactBoonOfName, type PactBoon } from '~~/shared/rules/pactBoon'
 import type { LevelUpReplacements } from '~~/shared/rules/duplicateProficiencies'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
@@ -46,7 +47,6 @@ export interface LevelUpState {
   hpManual: number | null
   newSubclassId: number | null
   newSubclassName: string | null
-  fightingStyle: string | null
   expertiseSkills: string[]
   asiChoice: 'asi' | 'feat' | null
   asiBonuses: AbilityBonuses
@@ -60,20 +60,16 @@ export interface LevelUpState {
   newSkills: string[]
   // Picks des points de choix gagnés à ce niveau (instrument du Barde rejoint), par id de progression.
   choicePicks: Record<number, Array<string | number>>
-  // Options de feature gagnées à ce niveau (2ᵉ style de combat du Champion, manœuvres), par id de progression.
+  // Options de feature gagnées à ce niveau (style de combat, pacte, manifestations, Métamagie, manœuvres), par id de progression.
   featurePicks: Record<number, number[]>
-  // Option déjà prise échangée contre une nouvelle sur un point de choix remplaçable (manœuvres), par id de progression.
+  // Option déjà prise échangée contre une nouvelle sur un point de choix remplaçable (manœuvres, manifestations), par id de progression.
   featureReplacements: Record<number, number | null>
   newCantripIds: number[]
   newSpellIds: number[]
   // Sort connu (Barde, Ensorceleur, Occultiste, Rôdeur) échangé contre un nouveau : ce dernier s'ajoute aux sorts dus.
   replacedSpellId: number | null
-  pactBoon: 'chain' | 'blade' | 'tome' | null
   pactWeaponInventoryId: number | null
   pactBoonCantripIds: number[]
-  newInvocationIds: number[]
-  replacedInvocationId: number | null
-  newMetamagicIds: number[]
   // Sort choisi pour l'Arcane Mystérieux (niveau 11/13/15/17). Le niveau du sort
   // dépend du niveau d'occultiste atteint (cf. arcaneMysteriumSpellLevel, dérivé du catalogue).
   arcaneMysteriumSpellId: number | null
@@ -96,7 +92,6 @@ const INIT_STATE: LevelUpState = {
   hpManual: null,
   newSubclassId: null,
   newSubclassName: null,
-  fightingStyle: null,
   expertiseSkills: [],
   asiChoice: null,
   asiBonuses: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
@@ -112,12 +107,8 @@ const INIT_STATE: LevelUpState = {
   newCantripIds: [],
   newSpellIds: [],
   replacedSpellId: null,
-  pactBoon: null,
   pactWeaponInventoryId: null,
   pactBoonCantripIds: [],
-  newInvocationIds: [],
-  replacedInvocationId: null,
-  newMetamagicIds: [],
   arcaneMysteriumSpellId: null,
   bookOfAncientSecretsSpellIds: [],
   bookOfAncientSecretsRequired: false,
@@ -350,56 +341,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     }
   }
 
-  // ── Pact Boon availability (Warlock level 3) ──────────────────────────────
-
-  const needsPactBoon = computed(() => {
-    const existingPactBoon = (pickedCharClass.value as any)?.pactBoon ?? null
-    if (existingPactBoon) return false
-    // Le pacte se débloque À un niveau précis (owner niv.3) : `ownerLevelRequired === toLevel`
-    // reproduit l'ancien « toLevel === 3 » sans coder le niveau en dur.
-    return choicesAtToLevel.value.some(c => c.kind === 'pact_boon' && c.ownerLevelRequired === state.value.toLevel)
-  })
-
-  // ── Manifestations occultes (Warlock niveaux 2/5/7/9/12/15/18) ─────────────
-
-  const invocationsAtToLevel = computed(() => choicesAtToLevel.value.find(c => c.kind === 'invocations')?.count ?? 0)
-  const invocationsAtFromLevel = computed(() => choicesAtFromLevel.value.find(c => c.kind === 'invocations')?.count ?? 0)
-  const newInvocationsCount = computed(() =>
-    Math.max(0, invocationsAtToLevel.value - invocationsAtFromLevel.value),
-  )
-
-  const needsInvocations = computed(() => newInvocationsCount.value > 0)
-  const canReplaceInvocation = computed(() =>
-    state.value.pickedClassId === 'warlock'
-    && !state.value.isMulticlass
-    && invocationsAtFromLevel.value > 0,
-  )
-
-  const knownInvocationIds = computed<number[]>(() => {
-    const features = (charSheet.value as any)?.features ?? []
-    return features
-      .filter((f: any) => f.feature?.featureType === 'eldritch_invocation')
-      .map((f: any) => f.feature.id)
-  })
-
-  // ── Métamagie (Ensorceleur niveaux 3/10/17) ────────────────────────────────
-  const metamagicAtToLevel = computed(() => choicesAtToLevel.value.find(c => c.kind === 'metamagic')?.count ?? 0)
-  const metamagicAtFromLevel = computed(() => choicesAtFromLevel.value.find(c => c.kind === 'metamagic')?.count ?? 0)
-  const newMetamagicCount = computed(() => Math.max(0, metamagicAtToLevel.value - metamagicAtFromLevel.value))
-  const needsMetamagic = computed(() => newMetamagicCount.value > 0)
-  // NB : pas de `canReplaceMetamagic` — la Métamagie 2014 n'est pas remplaçable au level-up
-  // (contrairement aux invocations occultes). On n'ajoute que de nouvelles options.
-  const knownMetamagicIds = computed<number[]>(() => {
-    const features = (charSheet.value as any)?.features ?? []
-    return features
-      .filter((f: any) => f.feature?.tag === 'metamagic')
-      .map((f: any) => f.feature.id)
-  })
-
-  const effectivePactBoon = computed<'chain' | 'blade' | 'tome' | null>(() => {
-    return ((pickedCharClass.value as any)?.pactBoon ?? null) ?? state.value.pactBoon
-  })
-
   const knownSpellNames = computed<string[]>(() => {
     const spells = (charSheet.value?.spells ?? []) as any[]
     return spells.map(s => s.spell?.name ?? '').filter(Boolean)
@@ -418,7 +359,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const picksBookOfAncientSecrets = (allInvocationsByName: Record<string, number>) => {
     const id = allInvocationsByName[BOOK_OF_ANCIENT_SECRETS_NAME]
     if (!id) return false
-    return state.value.newInvocationIds.includes(id)
+    return invocationPickIds.value.includes(id)
   }
 
   // ── Subclass availability (lue dans le CATALOGUE, F2 tranche 3) ────────────
@@ -451,13 +392,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     if (!dbId) return false
     return choicesForClassLevel(dbId, level).some(c => c.kind === 'asi_or_feat' && c.ownerLevelRequired === level)
   }
-
-  // Style de combat (lu dans le CATALOGUE, F2 tranche 4) — débloqué AU niveau d'arrivée
-  // (`ownerLevelRequired === toLevel`), miroir de isSubclassLevel/needsPactBoon.
-  const needsFightingStyle = computed(() => {
-    if (!state.value.pickedClassId) return false
-    return choicesAtToLevel.value.some(c => c.kind === 'fighting_style' && c.ownerLevelRequired === state.value.toLevel)
-  })
 
   // Niveau d'accès au style de combat d'une classe (par builderId), lu dans le catalogue — sert au
   // badge de LevelUpStepClass. On résout au niveau 20 (le point de choix est alors présent) et on lit
@@ -505,19 +439,55 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     })
   })
   const newPickChoices = computed(() => gainedChoices.value.filter(isPickChoice))
-  // Options de feature à choisir (2ᵉ style de combat…) ; celles que la fiche porte déjà ne se reprennent pas.
+  // Options de feature à choisir (style de combat, pacte, manifestations, Métamagie, manœuvres) ; celles que la fiche porte déjà ne se reprennent pas.
   const newFeaturePickChoices = computed(() => gainedChoices.value.filter(isFeaturePickChoice))
   const ownedFeatureIds = computed<number[]>(() => ((charSheet.value?.features ?? []) as Array<{ featureId: number }>).map(f => f.featureId))
   const featurePicksOf = (progressionId: number): number[] => state.value.featurePicks[progressionId] ?? []
   // Échanger une option déjà prise (manœuvres) ajoute une option à apprendre.
   const featureReplacementOf = (c: ResolvedChoice): number | null => c.replaceable ? state.value.featureReplacements[c.progressionId] ?? null : null
   const featurePicksDue = (c: ResolvedChoice): number => c.count + (featureReplacementOf(c) != null ? 1 : 0)
+  // Une option que le niveau ou la classe ne propose plus ne part pas, pas plus que l'excédent.
+  const validFeaturePicks = (c: ResolvedChoice): number[] => {
+    const allowed = new Set(optionFeatureIds(c))
+    return featurePicksOf(c.progressionId).filter(id => allowed.has(id)).slice(0, featurePicksDue(c))
+  }
   const featurePicksPayload = computed(() => newFeaturePickChoices.value.flatMap(c =>
-    featurePicksOf(c.progressionId).slice(0, featurePicksDue(c)).map(featureId => ({ progressionId: c.progressionId, featureId }))))
+    validFeaturePicks(c).map(featureId => ({ progressionId: c.progressionId, featureId }))))
   const featureReplacementsPayload = computed(() => newFeaturePickChoices.value.flatMap((c) => {
     const featureId = featureReplacementOf(c)
     return featureId != null ? [{ progressionId: c.progressionId, featureId }] : []
   }))
+  // Ce qui n'est plus à prendre sur ce point de choix : ce que la fiche porte, et ce qu'un autre point de choix de ce
+  // level-up a pris (le 2ᵉ style de combat diffère du premier).
+  const featurePicksUnavailable = (progressionId: number): number[] => [
+    ...ownedFeatureIds.value,
+    ...newFeaturePickChoices.value.filter(c => c.progressionId !== progressionId).flatMap(validFeaturePicks),
+  ]
+
+  // Le pacte pris à ce niveau, lu dans le nom de l'option choisie ; sinon celui que la classe a déjà.
+  const pactChoice = computed(() => newFeaturePickChoices.value.find(c => c.kind === 'pact_boon'))
+  const { nameOf: pactOptionName } = useFeatureOptions(() => pactChoice.value ? optionFeatureIds(pactChoice.value) : [])
+  const pickedPactBoon = computed<PactBoon | null>(() =>
+    pactBoonOfName(pactChoice.value ? pactOptionName(validFeaturePicks(pactChoice.value)[0]) : null))
+  const effectivePactBoon = computed<PactBoon | null>(() => pickedCharClass.value?.pactBoon ?? pickedPactBoon.value)
+  const invocationPickIds = computed<number[]>(() => newFeaturePickChoices.value
+    .filter(c => c.kind === 'invocations')
+    .flatMap(validFeaturePicks))
+  // Les manifestations que la fiche porte déjà : certaines en exigent une autre.
+  const knownInvocationNames = computed<string[]>(() =>
+    ((charSheet.value as { features?: Array<{ feature?: { name: string, featureType: string } }> } | null)?.features ?? [])
+      .flatMap(f => f.feature?.featureType === 'eldritch_invocation' ? [f.feature.name] : []))
+
+  // Ce que le joueur a choisi à ce niveau, nommé pour l'aperçu et le récapitulatif.
+  const pickedFeatureIds = computed(() => [
+    ...newFeaturePickChoices.value.flatMap(validFeaturePicks),
+    ...featureReplacementsPayload.value.map(r => r.featureId),
+  ])
+  const { nameOf: pickedFeatureName } = useFeatureOptions(pickedFeatureIds)
+  const pickedFeatureGroups = computed(() => newFeaturePickChoices.value
+    .map(c => ({ title: choiceTitle(c) ?? 'Choix', names: validFeaturePicks(c).flatMap(id => pickedFeatureName(id) ?? []) }))
+    .filter(g => g.names.length))
+  const replacedFeatureNames = computed(() => featureReplacementsPayload.value.flatMap(r => pickedFeatureName(r.featureId) ?? []))
   // Remplacements ouverts par une maîtrise que la classe rejointe double, calculés par le
   // serveur qui seul connaît les picks déjà enregistrés. Facultatifs, comme à la création.
   const NO_REPLACEMENTS: LevelUpReplacements = { choices: [], duplicated: { skills: [], tools: [] } }
@@ -686,13 +656,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
       case 'features': {
         if (isSubclassLevel.value && !s.newSubclassId) return false
-        if (needsFightingStyle.value && !s.fightingStyle) return false
-        if (!newFeaturePickChoices.value.every(c => featurePicksOf(c.progressionId).length === featurePicksDue(c))) return false
+        if (!newFeaturePickChoices.value.every(c => validFeaturePicks(c).length === featurePicksDue(c))) return false
         if (needsExpertise.value && s.expertiseSkills.length < newExpertiseCount.value) return false
-        if (needsPactBoon.value && !s.pactBoon) return false
-        const expectedInvocations = newInvocationsCount.value + (s.replacedInvocationId ? 1 : 0)
-        if (expectedInvocations > 0 && s.newInvocationIds.length < expectedInvocations) return false
-        if (newMetamagicCount.value > 0 && s.newMetamagicIds.length < newMetamagicCount.value) return false
         return true
       }
 
@@ -716,7 +681,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       case 'spells':
         if (s.newCantripIds.length < requiredCantripPicks.value) return false
         if (s.newSpellIds.length < requiredSpellPicks.value) return false
-        if (s.pactBoon === 'tome' && s.pactBoonCantripIds.length < 3) return false
+        if (pickedPactBoon.value === 'tome' && s.pactBoonCantripIds.length < 3) return false
         if (needsArcaneMysterium.value && s.arcaneMysteriumSpellId === null) return false
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
         return true
@@ -730,6 +695,12 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Step summaries ─────────────────────────────────────────────────────────
 
+  // L'option prise quand il n'y en a qu'une, sinon leur nombre.
+  const featureSummary = computed(() => {
+    const names = pickedFeatureGroups.value.flatMap(g => g.names)
+    return names.length === 1 ? names[0]! : names.length ? `${names.length} options` : null
+  })
+
   const stepSummaries = computed<Record<string, string | null>>(() => {
     const s = state.value
     const cls = pickedClass.value
@@ -738,7 +709,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         ? `${cls.name}${s.isMulticlass ? ' (nouveau)' : ` niv.${s.toLevel}`}`
         : null,
       hp: hpGained.value != null ? `+${hpGained.value} PV` : null,
-      features: s.newSubclassName ?? (s.pactBoon ? ({ chain: 'Pacte de la Chaîne', blade: 'Pacte de la Lame', tome: 'Pacte du Tome' })[s.pactBoon] : null) ?? (s.fightingStyle ? `Style: ${s.fightingStyle}` : null),
+      features: s.newSubclassName ?? featureSummary.value,
       asi: s.asiChoice === 'feat'
         ? (s.featureId != null ? 'don' : null)
         : (Object.values(s.asiBonuses).some(v => v > 0) ? '+2 carac.' : null),
@@ -804,7 +775,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         isMulticlass: s.isMulticlass,
         hpDie: hpDie.value,
         subclassId: s.newSubclassId,
-        fightingStyle: s.fightingStyle,
         expertiseSkills: s.expertiseSkills,
         asiChoice: s.asiChoice,
         asiBonuses: s.asiChoice === 'asi' ? s.asiBonuses : null,
@@ -816,13 +786,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         featureReplacements: featureReplacementsPayload.value,
         newCantripIds: s.newCantripIds,
         newSpellIds: s.newSpellIds,
-        pactBoon: s.pactBoon,
         pactWeaponInventoryId: s.pactWeaponInventoryId,
         pactBoonCantripIds: s.pactBoonCantripIds,
-        newInvocationIds: s.newInvocationIds,
         replacedSpellId: s.replacedSpellId,
-        replacedInvocationId: s.replacedInvocationId,
-        newMetamagicIds: s.newMetamagicIds,
         arcaneMysteriumSpellId: s.arcaneMysteriumSpellId,
         bookOfAncientSecretsSpellIds: s.bookOfAncientSecretsSpellIds,
       },
@@ -857,7 +823,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     subclassLevelFor,
     isAsiLevel,
     asiDueForClassLevel,
-    needsFightingStyle,
     fightingStyleLevelFor,
     needsExpertise,
     newExpertiseCount,
@@ -870,6 +835,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     featurePicksPayload,
     featureReplacementsPayload,
     ownedFeatureIds,
+    featurePicksUnavailable,
+    pickedFeatureGroups,
+    replacedFeatureNames,
     replacementChoices,
     duplicatedProficiencies,
     ownedFor,
@@ -898,15 +866,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     outsideSchoolPicks,
     isSchoolBlocked,
     levelUpSpellcasting,
-    needsPactBoon,
-    needsInvocations,
-    canReplaceInvocation,
-    newInvocationsCount,
-    knownInvocationIds,
-    needsMetamagic,
-    newMetamagicCount,
-    knownMetamagicIds,
+    pickedPactBoon,
     effectivePactBoon,
+    knownInvocationNames,
     knownSpellNames,
     needsArcaneMysterium,
     arcaneMysteriumSpellLevel,

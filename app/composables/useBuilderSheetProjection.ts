@@ -22,6 +22,7 @@ export function useBuilderSheetProjection() {
     materializedSkills,
     chosenValues,
     chosenFeatIds,
+    invocationPickIds,
     getFeatById,
     finalAbilities,
     profBonus,
@@ -37,7 +38,7 @@ export function useBuilderSheetProjection() {
   })
   const selectedInvocations = computed<BuilderInvocation[]>(() => {
     const byId = new Map((invocations.value ?? []).map(i => [i.id, i]))
-    return state.value.invocationIds
+    return invocationPickIds.value
       .map(id => byId.get(id))
       .filter((i): i is BuilderInvocation => i != null)
   })
