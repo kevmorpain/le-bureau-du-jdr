@@ -218,6 +218,28 @@
         </div>
       </template>
 
+      <div
+        v-else-if="group.costs.length"
+        class="space-y-1"
+      >
+        <p class="text-xs font-semibold uppercase tracking-wider text-muted">
+          Manœuvres
+        </p>
+        <div class="flex flex-wrap gap-1">
+          <UButton
+            v-for="c in group.costs"
+            :key="c.featureId"
+            size="xs"
+            variant="soft"
+            color="neutral"
+            :disabled="!canSpend(group, Number(c.amount))"
+            @click="spend(group, Number(c.amount))"
+          >
+            {{ c.name }} ({{ c.amount }})
+          </UButton>
+        </div>
+      </div>
+
       <p
         v-if="group.key === 'wild_shape' && classTraits.beastShape"
         class="text-xs text-muted"
@@ -234,7 +256,7 @@
 <script lang="ts" setup>
 import type { Effect } from '~~/server/db/schema/effects'
 import { useClassResources } from '~/composables/character/useClassResources'
-import type { ResourceGroup } from '~~/shared/rules/classResources'
+import { saveDcOf, type ResourceGroup } from '~~/shared/rules/classResources'
 import { SORCERY_MAX_CREATED_SLOT_LEVEL, metamagicCost, slotCreationCost } from '~~/shared/rules/sorcery'
 
 const props = defineProps<{
@@ -259,7 +281,7 @@ const spellLevel = ref(1)
 const costOf = (amount: number | 'spell_level') => metamagicCost(amount, spellLevel.value)
 
 const saveDc = (group: ResourceGroup): number | null =>
-  group.saveDcAbility ? 8 + proficiencyBonus.value + (abilityModifiers.value[group.saveDcAbility] ?? 0) : null
+  saveDcOf(group.saveDcAbility, proficiencyBonus.value, abilityModifiers.value)
 
 const activatable = (group: ResourceGroup) =>
   resolvedFeatures.value.find(f => group.featureIds.includes(f.id) && f.meta?.whileActive)

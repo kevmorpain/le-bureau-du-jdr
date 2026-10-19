@@ -1058,6 +1058,13 @@
       "when": 1793800000000,
       "tag": "0150_champion_additional_fighting_style",
       "breakpoints": true
+    },
+    {
+      "idx": 151,
+      "version": "6",
+      "when": 1793900000000,
+      "tag": "0151_maneuvers_superiority_dice",
+      "breakpoints": true
     }
   ]
 }

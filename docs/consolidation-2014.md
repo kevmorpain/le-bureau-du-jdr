@@ -157,6 +157,8 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
     Les owners VISIBLES de l'Occultiste (Faveur de pacte…) restent des `class_feature` matérialisées —
     _résidu noté_ : par symétrie ils sont eux aussi redondants avec l'option choisie ; les masquer serait
     une décision UX SÉPARÉE (non prise ici, l'utilisateur a choisi B ciblée sous-classe). → F17, [#128](https://github.com/kevmorpain/le-bureau-du-jdr/issues/128).
+    **✅ Résolu (lot 10)** : « Faveur de pacte » est un `choice_carrier` (migration 0148) et le pacte choisi est une ligne de la fiche.
+    « Manifestations occultes » reste visible : elle porte la règle de remplacement.
   - **F2 · sous-classe — tranche 2 (SERVEUR + backfill prod) : ✅ FAIT.** `createCharacter`/
     `characterLevelUp` résolvent la progression `subclass` de la classe et écrivent le pick en
     `character_choices.selected_subclass_id` (LA source, rules-engine.md §4) ; `character_classes.
@@ -198,6 +200,8 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       pré-existant, inchangé par cette tranche), alors que le **level-up l'exige** (`isStepComplete('features')`).
       Le gating catalogue affiche le picker au bon niveau ; rendre le choix obligatoire à la création serait un
       changement de comportement à décider séparément. → F16, [#127](https://github.com/kevmorpain/le-bureau-du-jdr/issues/127).
+      **✅ Résolu (lot 10)** : l'étape Classe exige la sous-classe quand le niveau y donne accès ; le serveur reste permissif, comme
+      pour les autres choix.
   - **F2 · style de combat — chantier en 4 tranches (décision utilisateur : appliquer AUSSI les effets).**
     Contrairement à la sous-classe, le style de combat n'existait NULLE PART comme donnée (choix **perdu**
     aux deux flux, cf. Inventaire cat. A) ET porte des effets mécaniques jamais appliqués → chantier plus gros.
@@ -227,6 +231,7 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       viennent du seed des classes → geste prod `?only=guerrier,paladin,rodeur` (idempotent, après déploiement).
       ⚠️ **Résidu remonté** : le 2e style du **Champion niv 10** (« Style de combat supplémentaire », progression
       possédée par la sous-classe) N'EST PAS câblé — chantier séparé (owner `ownerSubclassId`, cas unique). → P5, [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175).
+      **✅ Résolu (lot 10, migration 0150)** par le chemin générique `featurePicks` (type de choix `additional_fighting_style`).
     - **Tranche 3 (APPLICATION DES EFFETS) : ✅ FAIT.** Le style choisi (feature `fighting_style`
       matérialisée) porte un effet `fighting_style_modifier` qui remonte à `allEffects` (via
       character_features → resolvedFeatures → classFeatureEffects → baseAllEffects, chemin des

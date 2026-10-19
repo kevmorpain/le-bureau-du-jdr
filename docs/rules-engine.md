@@ -192,6 +192,25 @@ contre `resolveChoices` (`choicePicksError` : point de choix proposé, nombre, o
 builder leur restent propres. Un changement d'historique purge les picks de ses points de choix et ceux
 des remplacements de maîtrises en double.
 
+Les libellés `favored_enemy` (ennemi juré) et `terrain` du Rôdeur y passent aussi. Un point de choix dont le nombre grandit
+avec le niveau (un ennemi de plus aux niveaux 6 et 14) revient au level-up avec le seul surplus (`choicesGainedAtLevelUp`),
+et le serveur refuse de reprendre une valeur déjà choisie (`alreadyPickedError`). Les libellés choisis sont lus par
+`deriveLabelPicks` (champ `labelPicks` du GET) : la fiche les affiche sous la capacité qui porte le choix, le level-up ne
+repropose pas ceux qu'elle a déjà.
+
+### Chemin générique des picks d'options de feature
+
+Un point de choix dont les options sont des features (`optionSource: feature_group`) et dont le type n'a pas de chemin dédié
+(`FEATURE_PICK_KINDS` : `additional_fighting_style`, `maneuvers`) passe par `featurePicks` : payload
+`[{ progressionId, featureId }]` à la création et au level-up, validé contre `resolveChoices` (`featurePicksError` : point de choix
+proposé, nombre, options, aucune option déjà portée par la fiche), enregistré en `character_choices.selected_feature_id` **et**
+matérialisé en `character_features`, pour que l'option s'affiche et que ses effets s'appliquent. Le style de combat de la classe,
+la Métamagie, les manifestations et le pacte gardent leur chemin dédié (à migrer, cf. D26).
+
+Un point de choix `replaceable` (manœuvres) permet, à un palier qui donne de nouvelles options, d'en échanger une déjà prise :
+`featureReplacements` au level-up, qui retire l'ancienne (`character_choices` et `character_features`) et ajoute une option à
+apprendre. Le serveur vérifie que l'option a bien été choisie sur ce point de choix (`replacedPickError`).
+
 ---
 
 ### Ressources de classe

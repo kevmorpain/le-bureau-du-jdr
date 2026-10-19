@@ -225,7 +225,14 @@ const {
   replacementChoices,
 } = useLevelUp(charSheet)
 
-const pickedFeatureIds = computed(() => newFeaturePickChoices.value.flatMap(c => state.value.featurePicks[c.progressionId] ?? []))
+const replacedFeatureIds = computed(() => newFeaturePickChoices.value.flatMap((c) => {
+  const id = state.value.featureReplacements[c.progressionId]
+  return c.replaceable && id != null ? [id] : []
+}))
+const pickedFeatureIds = computed(() => [
+  ...newFeaturePickChoices.value.flatMap(c => state.value.featurePicks[c.progressionId] ?? []),
+  ...replacedFeatureIds.value,
+])
 const { data: pickedFeatures } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/feature-options', {
   query: { ids: computed(() => pickedFeatureIds.value.join(',')) },
   default: () => [],
@@ -292,6 +299,10 @@ const gains = computed(() => {
   for (const choice of newFeaturePickChoices.value) {
     const names = (s.featurePicks[choice.progressionId] ?? []).map(id => pickedFeatures.value?.find(f => f.id === id)?.name).filter(Boolean)
     if (names.length) list.push({ label: choiceTitle(choice) ?? 'Choix', detail: names.join(', ') })
+  }
+  for (const id of replacedFeatureIds.value) {
+    const name = pickedFeatures.value?.find(f => f.id === id)?.name
+    if (name) list.push({ label: 'Option remplacée', detail: name })
   }
 
   if (s.asiChoice === 'asi') {

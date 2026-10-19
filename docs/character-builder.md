@@ -53,6 +53,7 @@ interface BuilderState {
   variantHumanSkill: string | null // compétence bonus ex: 'arcana'
   selectedLanguages: string[]     // langue au choix de l'Humain variant (clé : 'elvish'…)
   choicePicks: Record<number, Array<string | number>> // picks des points de choix (espèce, lignée, historique, classe, règle générale), par id de progression
+  featurePicks: Record<number, number[]> // options de feature (2ᵉ style du Champion, manœuvres du Maître de guerre), par id de progression
   dragonAncestry: string | null   // ex: 'red', 'gold'
 
   // Étape 2 — Classe

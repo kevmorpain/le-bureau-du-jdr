@@ -83,9 +83,11 @@
         v-for="choice in newFeaturePickChoices"
         :key="choice.progressionId"
         v-model="state.featurePicks[choice.progressionId]"
+        v-model:replaced="state.featureReplacements[choice.progressionId]"
         :title="choiceTitle(choice) ?? 'Choix'"
         :count="choice.count"
         :option-ids="optionFeatureIds(choice)"
+        :replaceable-ids="choice.replaceable ? ownedFeatureIds : []"
         :excluded-ids="ownedFeatureIds"
         :excluded-names="state.fightingStyle ? [state.fightingStyle] : []"
       />

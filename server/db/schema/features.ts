@@ -43,8 +43,8 @@ export interface FeatureMeta {
   endsOnNewTurn?: boolean
   /** Armure lourde portée : `whileActive` est suspendu (Rage). */
   suspendedByHeavyArmor?: boolean
-  /** DD que propose la réserve : 8 + maîtrise + modificateur (DD de ki). */
-  saveDcAbility?: AbilityScoreKey
+  /** DD que propose la réserve : 8 + maîtrise + modificateur (DD de ki) ; avec plusieurs caractéristiques, la meilleure (Force ou Dextérité). */
+  saveDcAbility?: AbilityScoreKey | AbilityScoreKey[]
   /** Usages que la feature décrit en texte et qu'elle paie à même sa réserve (Défense patiente, Déluge de coups…). */
   spends?: { label: string, amount: number, minClassLevel?: number }[]
   /** Capacité payée par la réserve d'une AUTRE feature (options de Métamagie) ; `spell_level` : coût = niveau du sort, minimum 1. */
