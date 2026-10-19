@@ -194,6 +194,7 @@
 import { useOnline } from '@vueuse/core'
 import type { AbilityKey } from '~/data/character-builder'
 import { languageLabel } from '~~/shared/rules/languages'
+import { LABEL_CHOICE_KINDS } from '~~/shared/rules/choices'
 
 defineEmits<{ back: [] }>()
 
@@ -220,8 +221,22 @@ const {
   CLASSES,
   SKILLS,
   newPickChoices,
+  newFeaturePickChoices,
   replacementChoices,
 } = useLevelUp(charSheet)
+
+const replacedFeatureIds = computed(() => newFeaturePickChoices.value.flatMap((c) => {
+  const id = state.value.featureReplacements[c.progressionId]
+  return c.replaceable && id != null ? [id] : []
+}))
+const pickedFeatureIds = computed(() => [
+  ...newFeaturePickChoices.value.flatMap(c => state.value.featurePicks[c.progressionId] ?? []),
+  ...replacedFeatureIds.value,
+])
+const { data: pickedFeatures } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/feature-options', {
+  query: { ids: computed(() => pickedFeatureIds.value.join(',')) },
+  default: () => [],
+})
 
 const { getById: getFeatById } = useFeats()
 
@@ -279,6 +294,15 @@ const gains = computed(() => {
 
   if (s.fightingStyle) {
     list.push({ label: `Style de combat : ${s.fightingStyle}`, detail: '' })
+  }
+
+  for (const choice of newFeaturePickChoices.value) {
+    const names = (s.featurePicks[choice.progressionId] ?? []).map(id => pickedFeatures.value?.find(f => f.id === id)?.name).filter(Boolean)
+    if (names.length) list.push({ label: choiceTitle(choice) ?? 'Choix', detail: names.join(', ') })
+  }
+  for (const id of replacedFeatureIds.value) {
+    const name = pickedFeatures.value?.find(f => f.id === id)?.name
+    if (name) list.push({ label: 'Option remplacée', detail: name })
   }
 
   if (s.asiChoice === 'asi') {
@@ -349,7 +373,8 @@ const gains = computed(() => {
   }
 
   const picksOf = (choices: typeof newPickChoices.value) => choices.flatMap(c => (s.choicePicks[c.progressionId] ?? []).map(String))
-  const chosen = picksOf(newPickChoices.value.filter(c => c.kind !== 'terrain'))
+  const isLabel = (c: (typeof newPickChoices.value)[number]) => (LABEL_CHOICE_KINDS as readonly string[]).includes(c.kind)
+  const chosen = picksOf(newPickChoices.value.filter(c => !isLabel(c)))
   if (chosen.length) {
     list.push({ label: 'Maîtrises au choix', detail: chosen.map(v => SKILLS.find(sk => sk.key === v)?.label ?? languageLabel(v)).join(', ') })
   }
@@ -357,8 +382,10 @@ const gains = computed(() => {
   if (replacements.length) {
     list.push({ label: 'Maîtrises de remplacement', detail: replacements.map(v => SKILLS.find(sk => sk.key === v)?.label ?? v).join(', ') })
   }
-  const terrain = picksOf(newPickChoices.value.filter(c => c.kind === 'terrain'))
-  if (terrain.length) list.push({ label: 'Terrain du cercle', detail: terrain.join(', ') })
+  for (const choice of newPickChoices.value.filter(isLabel)) {
+    const labels = picksOf([choice])
+    if (labels.length) list.push({ label: choiceTitle(choice) ?? 'Choix', detail: labels.join(', ') })
+  }
 
   if (cls) {
     list.push({ label: `+1 dé de vie`, detail: `d${cls.hitDie}` })

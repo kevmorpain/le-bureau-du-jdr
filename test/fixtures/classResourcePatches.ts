@@ -43,8 +43,14 @@ const carriesResource = (f: FeatureDef) =>
 
 // Les features que le lot « ressources de classe » complète : leur seed est la source, la migration
 // 0120 en est le pendant pour les bases déjà peuplées (test/nuxt/classResourcesMigration.test.ts).
+// Les dés de supériorité et les manœuvres du Maître de guerre arrivent plus tard, par la migration 0151
+// (test/nuxt/maneuversMigration.test.ts).
+const BATTLE_MASTER = 'Maître de guerre'
+
 export const classResourcePatches = (): ResourcePatch[] =>
   CLASSES.flatMap(c => [
     ...c.features.filter(carriesResource).map(feature => ({ className: c.name, subclass: null, feature })),
-    ...c.subclasses.flatMap(s => s.features.filter(carriesResource).map(feature => ({ className: c.name, subclass: s.name, feature }))),
+    ...c.subclasses
+      .filter(s => s.name !== BATTLE_MASTER)
+      .flatMap(s => s.features.filter(carriesResource).map(feature => ({ className: c.name, subclass: s.name, feature }))),
   ])

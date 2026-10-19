@@ -6,7 +6,7 @@ import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
 import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLevelUp'
 import { CharacterValidationError } from '../../server/utils/characterCreate'
-import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
+import { WARLOCK_PACT_BOON_OPTIONS, WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 import { replayMigrations } from '../fixtures/migrations'
 
 // Montée de niveau testée contre libsql (migrations rejouées), sans auth : bump de niveau, recalcul
@@ -68,9 +68,13 @@ beforeAll(async () => {
   terrainProgressionId = terrainProgression.id
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
-    await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: 'class_feature', classId: WARLOCK, levelRequired: c.ownerLevelRequired })
+    await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: c.ownerFeatureType, classId: WARLOCK, levelRequired: c.ownerLevelRequired })
     await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
   }
+  // Options de pacte : ids 410 (Chaîne), 411 (Lame), 412 (Tome), dans l'ordre du contrat.
+  await db.insert(schema.features).values(WARLOCK_PACT_BOON_OPTIONS.map((o, i) => ({
+    id: 410 + i, name: o.name, featureType: o.featureType, classId: WARLOCK, levelRequired: o.levelRequired, tag: o.tag,
+  })))
   await db.insert(schema.features).values([
     { id: 401, name: 'Manif A', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
     { id: 402, name: 'Manif B', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
@@ -128,9 +132,10 @@ describe('characterLevelUp — Occultiste 2 → 3 (pacte + recalc des emplacemen
     expect(slots[0].slotLevel).toBe(2)
     expect(slots[0].total).toBe(2)
 
-    // Feature de palier « Faveur de pacte » (owner niv 3, grant passif) matérialisée
+    // Le pacte choisi est matérialisé, pas son porteur « Faveur de pacte »
     const feats = await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id))
-    expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(100)
+    expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(410)
+    expect(feats.map((f: { featureId: number }) => f.featureId)).not.toContain(100)
 
     // Familier (Pacte de la Chaîne)
     const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))

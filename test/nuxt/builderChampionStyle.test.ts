@@ -1,0 +1,109 @@
+import { describe, it, expect } from 'vitest'
+import { defineComponent, h } from 'vue'
+import { flushPromises } from '@vue/test-utils'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
+import { useCharacterBuilder, type BuilderState } from '../../app/composables/useCharacterBuilder'
+import type { Catalog } from '../../shared/rules/resolve'
+import { fightingStyleProgression } from '../../server/db/seeds/data/fightingStyles'
+import { catalogClasses } from '../fixtures/catalogClasses'
+
+// Champion niveau 10 : le builder demande le deuxième style de combat en plus du premier.
+
+const GUERRIER = 5
+const CHAMPION = 50
+const ARCHERY = 31
+const DEFENSE = 32
+const DUELING = 33
+
+registerEndpoint('/api/catalog/classes', () => [{
+  id: GUERRIER,
+  name: 'Guerrier',
+  subclassLevel: 3,
+  subclasses: [{ id: CHAMPION, name: 'Champion' }],
+  proficiencies: catalogClasses().find(c => c.name === 'Guerrier')!.proficiencies,
+}])
+registerEndpoint('/api/catalog/progressions', (): Catalog => ({
+  progressions: [
+    {
+      progressionId: 3,
+      ownerClassId: GUERRIER,
+      ownerLevelRequired: 3,
+      kind: 'subclass',
+      count: { op: 'fixed', value: 1 },
+      optionSource: { type: 'subclasses' },
+      replaceable: false,
+      options: [{ subclassId: CHAMPION }],
+    },
+    {
+      progressionId: 4,
+      ownerClassId: GUERRIER,
+      ownerLevelRequired: 1,
+      ...fightingStyleProgression,
+      replaceable: false,
+      options: [ARCHERY, DEFENSE, DUELING].map(featureId => ({ featureId })),
+    },
+    {
+      progressionId: 7,
+      ownerClassId: GUERRIER,
+      ownerSubclassId: CHAMPION,
+      ownerLevelRequired: 10,
+      kind: 'additional_fighting_style',
+      count: { op: 'fixed', value: 1 },
+      optionSource: { type: 'feature_group', group: 'fighting_style' },
+      replaceable: false,
+      options: [ARCHERY, DEFENSE, DUELING].map(featureId => ({ featureId })),
+    },
+  ],
+}))
+
+async function waitFor(condition: () => boolean) {
+  for (let i = 0; i < 200 && !condition(); i++) {
+    await flushPromises()
+    await new Promise(r => setTimeout(r, 10))
+  }
+}
+
+async function mountBuilder(partial: Partial<BuilderState>) {
+  let builder!: ReturnType<typeof useCharacterBuilder>
+  const Host = defineComponent({
+    setup() {
+      builder = useCharacterBuilder()
+      builder.resetBuilder()
+      Object.assign(builder.state.value, { classId: 'fighter', skills: ['athletics', 'perception'], ...partial })
+      return () => h('div')
+    },
+  })
+  await mountSuspended(Host)
+  await waitFor(() => builder.subclassOptions.value.length > 0)
+  return builder
+}
+
+describe('Builder — deuxième style de combat du Champion', () => {
+  it('niveau 10 : un choix de plus, exigé pour l\'étape Classe', async () => {
+    const builder = await mountBuilder({ level: 10, subclass: 'Champion', fightingStyle: 'Duel' })
+    await waitFor(() => builder.featurePickChoices.value.length > 0)
+
+    expect(builder.featurePickChoices.value.map(c => [c.kind, c.count])).toEqual([['additional_fighting_style', 1]])
+    expect(builder.isStepComplete.value('class')).toBe(false)
+
+    builder.state.value.featurePicks = { 7: [DEFENSE] }
+    expect(builder.isStepComplete.value('class')).toBe(true)
+    expect(builder.featurePicksPayload.value).toEqual([{ progressionId: 7, featureId: DEFENSE }])
+  })
+
+  // Le builder partage son état entre les montages : chaque cas se lit avant le suivant.
+  it('niveau 9 : pas de deuxième style', async () => {
+    const builder = await mountBuilder({ level: 9, subclass: 'Champion', fightingStyle: 'Duel' })
+    await flushPromises()
+
+    expect(builder.featurePickChoices.value).toEqual([])
+    expect(builder.isStepComplete.value('class')).toBe(true)
+  })
+
+  it('niveau 10 sans sous-classe : pas de deuxième style', async () => {
+    const builder = await mountBuilder({ level: 10, subclass: null, fightingStyle: 'Duel' })
+    await flushPromises()
+
+    expect(builder.featurePickChoices.value).toEqual([])
+  })
+})

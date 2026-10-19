@@ -156,10 +156,10 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 | Code | Suivi | Sujet |
 |---|---|---|
 | **P1** | ✅ résolu (F2 expertise) | Expertise à la création |
-| **P2** | [#172](https://github.com/kevmorpain/le-bureau-du-jdr/issues/172) | Manœuvres du Maître de guerre |
+| **P2** | ✅ résolu ([#172](https://github.com/kevmorpain/le-bureau-du-jdr/issues/172), lot 10) | Manœuvres du Maître de guerre : seize options au choix (3 au niveau 3, puis 5, 7 et 9 aux niveaux 7, 10 et 15, une remplaçable à chaque palier), dés de supériorité en compteur (4, 5 puis 6 ; d8, d10, d12 ; repos court), DD de manœuvre sur la meilleure de Force et de Dextérité, outil d'artisan de Disciple martial. Les effets des manœuvres restent en texte : la fiche dépense le dé, le joueur le lance et l'applique |
 | **P3** | ✅ résolu ([#173](https://github.com/kevmorpain/le-bureau-du-jdr/issues/173), lot 3) | Sorts de domaine (Clerc), de serment (Paladin) et de cercle (Druide : point de choix `terrain`, migration 0115), Secrets magiques du Barde (sorts de n'importe quelle liste) |
-| **P4** | [#174](https://github.com/kevmorpain/le-bureau-du-jdr/issues/174) | Ennemi juré et Explorateur-né (Rôdeur) |
-| **P5** | [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175) | 2ᵉ style de combat du Champion (niveau 10) |
+| **P4** | ✅ résolu ([#174](https://github.com/kevmorpain/le-bureau-du-jdr/issues/174), lot 10) | Ennemi juré et Explorateur-né (Rôdeur) : un ennemi et un terrain dès le niveau 1, un de plus aux niveaux 6 et 14 (ennemis), 6 et 10 (terrains), affichés sous la capacité. Restent hors modèle : les deux races d'« Humanoïdes » (un seul choix), l'avantage contre l'ennemi, la maîtrise doublée sur le terrain et la langue de l'ennemi |
+| **P5** | ✅ résolu ([#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175), lot 10) | 2ᵉ style de combat du Champion (niveau 10), différent du premier ; chemin générique `featurePicks` |
 | **P6** | ✅ résolu ([#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204), lot 2) | Outils au choix de classe jamais proposés (Barde, Moine, Barde rejoint en multiclasse) |
 | **P7** | ✅ résolu ([#205](https://github.com/kevmorpain/le-bureau-du-jdr/issues/205), lot 2) | Maîtrise reçue en double (outil ou compétence) ni signalée ni remplaçable — à la création |
 | **P8** | ✅ résolu ([#225](https://github.com/kevmorpain/le-bureau-du-jdr/issues/225), lot 2) | Choix d'historique (langues, outils) enregistrés comme ajouts manuels |

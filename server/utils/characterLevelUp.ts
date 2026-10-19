@@ -5,6 +5,9 @@ import { isPassiveGrant } from '~~/server/utils/features'
 import { applyInvocationChanges } from '~~/server/utils/invocations'
 import { applyMetamagicChanges } from '~~/server/utils/metamagic'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
+import { resolvePactBoonFeatureId } from '~~/server/utils/pactBoon'
+import { featurePickSchema, featurePickWriteStmts, featureReplacementStmts, ownedFeatureIds, replacedPickError } from '~~/server/utils/featurePicks'
+import { featurePicksError, isFeaturePickChoice, type FeaturePick } from '~~/shared/rules/featurePicks'
 import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { buildCatalog } from '~~/server/utils/catalog'
@@ -21,7 +24,7 @@ import { classSlugFromName } from '~~/shared/rules/classSlugs'
 import { effectiveCasterType } from '~~/shared/rules/subclassCasting'
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import { isValidAsiDistribution } from '~~/shared/rules/composite'
-import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
+import { alreadyPickedError, choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { uniqueSkillKeysSchema, type SkillKey } from '~~/shared/rules/skills'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { Db } from '~~/server/utils/db'
@@ -48,6 +51,9 @@ export const levelUpSchema = z.object({
   newSkills: uniqueSkillKeysSchema.optional(),
   // Maîtrises, sorts mineurs et terrain du cercle choisis à ce niveau (instrument du Barde rejoint par multiclassage).
   choicePicks: z.array(choicePickSchema).optional(),
+  featurePicks: z.array(featurePickSchema).optional(),
+  // Option déjà prise que l'on échange contre une nouvelle (manœuvres) : l'ancienne quitte la fiche.
+  featureReplacements: z.array(featurePickSchema).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
   replacedSpellId: z.number().int().positive().nullable().optional(),
@@ -133,9 +139,16 @@ async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSki
 
 // Les picks portent sur les points de choix que CE niveau de classe rend dus (porteur de multiclassage d'une
 // classe rejointe compris) et sur les remplacements de maîtrises qu'elle double, validés comme à la création.
-async function validateLevelUpChoicePicks(gained: ResolvedChoice[], replacements: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
+async function validateLevelUpChoicePicks(db: Db, characterSheetId: number, gained: ResolvedChoice[], replacements: ResolvedChoice[], picks: ChoicePick[]): Promise<void> {
   if (!picks.length) return
-  const error = choicePicksError(picks, [...gained.filter(isPickChoice), ...replacements])
+  const error = choicePicksError(picks, [...gained.filter(isPickChoice), ...replacements]) ?? await alreadyPickedError(db, characterSheetId, picks)
+  if (error) throw new CharacterValidationError(error)
+}
+
+async function validateLevelUpFeaturePicks(db: Db, characterSheetId: number, gained: ResolvedChoice[], picks: FeaturePick[], replacements: FeaturePick[]): Promise<void> {
+  if (!picks.length && !replacements.length) return
+  const error = featurePicksError(picks, gained.filter(isFeaturePickChoice), await ownedFeatureIds(db, characterSheetId), replacements)
+    ?? await replacedPickError(db, characterSheetId, replacements)
   if (error) throw new CharacterValidationError(error)
 }
 
@@ -301,7 +314,8 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   const replacements = existingClass == null && currentClasses.length > 0
     ? (await levelUpReplacements(db, characterSheetId, cls.id)).choices
     : []
-  await validateLevelUpChoicePicks(gained, replacements, d.choicePicks ?? [])
+  await validateLevelUpChoicePicks(db, characterSheetId, gained, replacements, d.choicePicks ?? [])
+  await validateLevelUpFeaturePicks(db, characterSheetId, gained, d.featurePicks ?? [], d.featureReplacements ?? [])
   await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, subclassAfter ?? null, gained)
   validateLevelUpAsi(d, newLevel, gained)
 
@@ -354,6 +368,8 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   const fightingStylePick = d.fightingStyle
     ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, newLevel)
     : null
+
+  const pactBoonFeatureId = d.pactBoon ? await resolvePactBoonFeatureId(db, cls.id, d.pactBoon) : null
 
   const expertiseProgressionId = d.expertiseSkills?.length
     ? await resolveExpertiseProgressionId(db, cls.id)
@@ -455,6 +471,14 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .onConflictDoNothing())
     stmts.push(db.insert(schema.characterFeatures)
       .values({ characterSheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
+      .onConflictDoNothing())
+  }
+
+  stmts.push(...featureReplacementStmts(db, characterSheetId, d.featureReplacements ?? []), ...featurePickWriteStmts(db, characterSheetId, d.featurePicks ?? []))
+
+  if (pactBoonFeatureId != null) {
+    stmts.push(db.insert(schema.characterFeatures)
+      .values({ characterSheetId, featureId: pactBoonFeatureId, currentUses: 0 })
       .onConflictDoNothing())
   }
 

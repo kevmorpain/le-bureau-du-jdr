@@ -23,6 +23,7 @@ import {
 } from '~~/shared/rules/multiclass'
 import { proficiencyLabels } from '~~/shared/utils/item'
 import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { isFeaturePickChoice } from '~~/shared/rules/featurePicks'
 import type { LevelUpReplacements } from '~~/shared/rules/duplicateProficiencies'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
@@ -59,6 +60,10 @@ export interface LevelUpState {
   newSkills: string[]
   // Picks des points de choix gagnés à ce niveau (instrument du Barde rejoint), par id de progression.
   choicePicks: Record<number, Array<string | number>>
+  // Options de feature gagnées à ce niveau (2ᵉ style de combat du Champion, manœuvres), par id de progression.
+  featurePicks: Record<number, number[]>
+  // Option déjà prise échangée contre une nouvelle sur un point de choix remplaçable (manœuvres), par id de progression.
+  featureReplacements: Record<number, number | null>
   newCantripIds: number[]
   newSpellIds: number[]
   // Sort connu (Barde, Ensorceleur, Occultiste, Rôdeur) échangé contre un nouveau : ce dernier s'ajoute aux sorts dus.
@@ -102,6 +107,8 @@ const INIT_STATE: LevelUpState = {
   featLanguages: [],
   newSkills: [],
   choicePicks: {},
+  featurePicks: {},
+  featureReplacements: {},
   newCantripIds: [],
   newSpellIds: [],
   replacedSpellId: null,
@@ -483,7 +490,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   // Points de choix de maîtrise que ce niveau de classe rend dus : porteur de multiclassage d'une classe
   // rejointe (instrument du Barde)…
   const mainClassDbId = computed(() => charClasses.value.find(c => c.isMain)?.dbClassId ?? charClasses.value[0]?.dbClassId)
-  const newPickChoices = computed<ResolvedChoice[]>(() => {
+  const gainedChoices = computed<ResolvedChoice[]>(() => {
     const classId = luClassDbId.value
     if (classId == null) return []
     const subclassBefore = charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbSubclassId
@@ -495,8 +502,22 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       mainClassId: mainClassDbId.value ?? classId,
       subclassIdsBefore: subclassBefore != null ? [subclassBefore] : [],
       subclassIdsAfter: subclassAfter != null ? [subclassAfter] : [],
-    }).filter(isPickChoice)
+    })
   })
+  const newPickChoices = computed(() => gainedChoices.value.filter(isPickChoice))
+  // Options de feature à choisir (2ᵉ style de combat…) ; celles que la fiche porte déjà ne se reprennent pas.
+  const newFeaturePickChoices = computed(() => gainedChoices.value.filter(isFeaturePickChoice))
+  const ownedFeatureIds = computed<number[]>(() => ((charSheet.value?.features ?? []) as Array<{ featureId: number }>).map(f => f.featureId))
+  const featurePicksOf = (progressionId: number): number[] => state.value.featurePicks[progressionId] ?? []
+  // Échanger une option déjà prise (manœuvres) ajoute une option à apprendre.
+  const featureReplacementOf = (c: ResolvedChoice): number | null => c.replaceable ? state.value.featureReplacements[c.progressionId] ?? null : null
+  const featurePicksDue = (c: ResolvedChoice): number => c.count + (featureReplacementOf(c) != null ? 1 : 0)
+  const featurePicksPayload = computed(() => newFeaturePickChoices.value.flatMap(c =>
+    featurePicksOf(c.progressionId).slice(0, featurePicksDue(c)).map(featureId => ({ progressionId: c.progressionId, featureId }))))
+  const featureReplacementsPayload = computed(() => newFeaturePickChoices.value.flatMap((c) => {
+    const featureId = featureReplacementOf(c)
+    return featureId != null ? [{ progressionId: c.progressionId, featureId }] : []
+  }))
   // Remplacements ouverts par une maîtrise que la classe rejointe double, calculés par le
   // serveur qui seul connaît les picks déjà enregistrés. Facultatifs, comme à la création.
   const NO_REPLACEMENTS: LevelUpReplacements = { choices: [], duplicated: { skills: [], tools: [] } }
@@ -515,9 +536,14 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const picksOf = (progressionId: number): Array<string | number> => state.value.choicePicks[progressionId] ?? []
   const choicePicksPayload = (choices: ResolvedChoice[]) => choices.flatMap(c => picksOf(c.progressionId).slice(0, c.count).map(v =>
     c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string }))
+  // Ennemis et terrains déjà pris sur ce point de choix : un point de choix qui grandit ne les reprend pas.
+  const labelPicks = computed(() => (charSheet.value as { labelPicks?: Array<{ featureId: number, value: string }> } | null | undefined)?.labelPicks ?? [])
   const ownedFor = (choice: ResolvedChoice): string[] => {
     if (choice.kind === 'skill') return proficientSkills.value
     if (choice.kind === 'language') return knownLanguages.value
+    if (choice.kind === 'terrain' || choice.kind === 'favored_enemy') {
+      return labelPicks.value.filter(p => p.featureId === choice.ownerFeatureId).map(p => p.value)
+    }
     return [...ownedTools.value, ...knownLanguages.value]
   }
 
@@ -661,6 +687,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       case 'features': {
         if (isSubclassLevel.value && !s.newSubclassId) return false
         if (needsFightingStyle.value && !s.fightingStyle) return false
+        if (!newFeaturePickChoices.value.every(c => featurePicksOf(c.progressionId).length === featurePicksDue(c))) return false
         if (needsExpertise.value && s.expertiseSkills.length < newExpertiseCount.value) return false
         if (needsPactBoon.value && !s.pactBoon) return false
         const expectedInvocations = newInvocationsCount.value + (s.replacedInvocationId ? 1 : 0)
@@ -785,6 +812,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         featChoices: s.asiChoice === 'feat' ? buildFeatChoices(s) : null,
         newSkills: s.newSkills,
         choicePicks: choicePicksPayload([...newPickChoices.value, ...replacementChoices.value]),
+        featurePicks: featurePicksPayload.value,
+        featureReplacements: featureReplacementsPayload.value,
         newCantripIds: s.newCantripIds,
         newSpellIds: s.newSpellIds,
         pactBoon: s.pactBoon,
@@ -837,6 +866,10 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     multiclassSkills,
     requiredMulticlassSkillPicks,
     newPickChoices,
+    newFeaturePickChoices,
+    featurePicksPayload,
+    featureReplacementsPayload,
+    ownedFeatureIds,
     replacementChoices,
     duplicatedProficiencies,
     ownedFor,

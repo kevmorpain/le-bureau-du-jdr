@@ -22,6 +22,7 @@ import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicatedValues, proficiencyDuplicates } from '~~/shared/rules/duplicateProficiencies'
 import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { isFeaturePickChoice } from '~~/shared/rules/featurePicks'
 import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
@@ -88,6 +89,8 @@ export interface BuilderState {
   // Picks des points de choix d'espèce, de lignée, d'historique ou de classe (compétence, outil, langue :
   // valeur ; sort mineur : id), par id de progression.
   choicePicks: Record<number, Array<string | number>>
+  // Options de feature choisies (2ᵉ style de combat, manœuvres), par id de progression.
+  featurePicks: Record<number, number[]>
 
   // Langues de l'Humain variant (clés de langue), faute d'espèce liée qui porte son choix
   selectedLanguages: string[]
@@ -191,6 +194,7 @@ const INIT_STATE: BuilderState = {
   allies: '',
   portraitUrl: '',
   choicePicks: {},
+  featurePicks: {},
   selectedLanguages: [],
   customBackgroundName: '',
   customBackgroundSkills: [],
@@ -406,8 +410,7 @@ export function useCharacterBuilder() {
   const duplicateSkills = computed(() => duplicatedValues(speciesSkills.value, backgroundFixedSkills.value))
   const duplicateTools = computed(() => duplicatedValues(classFixedTools.value, backgroundFixedTools.value))
 
-  // Les compétences de classe gardent leur propre étape (`state.skills`).
-  const genericChoices = computed<ResolvedChoice[]>(() => choicesFor({
+  const resolvedChoices = computed<ResolvedChoice[]>(() => choicesFor({
     classLevels: classDbId.value != null ? { [classDbId.value]: state.value.level } : {},
     subclassIds: subclassDbId.value != null ? [subclassDbId.value] : [],
     speciesId: speciesDbId.value ?? undefined,
@@ -419,7 +422,10 @@ export function useCharacterBuilder() {
       classTools: [classFixedTools.value],
       backgroundTools: backgroundFixedTools.value,
     }),
-  }).filter(isPickChoice))
+  }))
+  // Les compétences de classe gardent leur propre étape (`state.skills`).
+  const genericChoices = computed<ResolvedChoice[]>(() => resolvedChoices.value.filter(isPickChoice))
+  const featurePickChoices = computed<ResolvedChoice[]>(() => resolvedChoices.value.filter(isFeaturePickChoice))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
   const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))
@@ -436,6 +442,11 @@ export function useCharacterBuilder() {
   // Un nombre dû peut baisser après coup (doublon disparu en changeant d'historique) : l'excédent ne part pas.
   const choicePicksPayload = computed(() => genericChoices.value.flatMap(c => picksOf(c.progressionId).slice(0, c.count).map(v =>
     c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string })))
+
+  const featurePicksOf = (progressionId: number): number[] => state.value.featurePicks[progressionId] ?? []
+  const featurePicksComplete = computed(() => featurePickChoices.value.every(c => featurePicksOf(c.progressionId).length === c.count))
+  const featurePicksPayload = computed(() => featurePickChoices.value.flatMap(c =>
+    featurePicksOf(c.progressionId).slice(0, c.count).map(featureId => ({ progressionId: c.progressionId, featureId }))))
 
   const variantHumanSkills = computed<string[]>(() =>
     isVariantHuman.value && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : [],
@@ -764,8 +775,10 @@ export function useCharacterBuilder() {
         const cls = classData.value
         if (!cls) return false
         if (s.skills.length < cls.skillChoices.count) return false
+        if (needsSubclass.value && !s.subclass) return false
         // Style de combat requis quand le catalogue le rend dû à ce niveau (Guerrier 1, Paladin/Rôdeur 2).
         if (needsFightingStyle.value && !s.fightingStyle) return false
+        if (!featurePicksComplete.value) return false
         if (needsExpertise.value && s.expertiseSkills.length < expertiseExpected.value) return false
         if (needsPactBoon.value && !s.pactBoon) return false
         if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
@@ -1000,6 +1013,8 @@ export function useCharacterBuilder() {
     picksOf,
     chosenValues,
     choicePicksPayload,
+    featurePickChoices,
+    featurePicksPayload,
     // Pacte
     needsPactBoon,
     // Invocations

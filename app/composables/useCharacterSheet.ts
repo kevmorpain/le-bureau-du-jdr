@@ -98,6 +98,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const ownerClasses = computed<OwnerClass[]>(() => characterSheet?.value?.classes ?? [])
   const resourceFeatures = computed(() => resourceFeaturesOf(characterSheet?.value?.features ?? []))
 
+  const labelPicks = computed(() => (characterSheet?.value as { labelPicks?: Array<{ featureId: number, value: string }> } | undefined)?.labelPicks ?? [])
+
   const resolvedFeatures = computed(() =>
     (characterSheet?.value?.features ?? []).map((cf) => {
       const feature = cf.feature!
@@ -115,6 +117,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         source: (cf as any).source as string | null ?? null,
         classLevel: (cf as any).classLevel as number | null ?? null,
         choices: (cf as any).choices as FeatChoices ?? null,
+        picks: labelPicks.value.filter(p => p.featureId === feature.id).map(p => p.value),
         effects: feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? [],
       }
     }),
@@ -160,6 +163,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       ...f,
       currentUses: 0,
       maxUses: null as number | null,
+      picks: [] as string[],
       effects: (f.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? []) as Effect[],
       origin: {
         kind: 'species' as const,

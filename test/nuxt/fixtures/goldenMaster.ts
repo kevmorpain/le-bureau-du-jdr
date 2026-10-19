@@ -136,7 +136,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
     const id = FEATURE.warlockProgressionOwnerBase + i
-    await db.insert(schema.features).values({ id, name: c.ownerName, featureType: 'class_feature', classId: CLASS.warlock, levelRequired: c.ownerLevelRequired })
+    await db.insert(schema.features).values({ id, name: c.ownerName, featureType: c.ownerFeatureType, classId: CLASS.warlock, levelRequired: c.ownerLevelRequired })
     await db.insert(schema.progression).values({ featureId: id, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
   }
 

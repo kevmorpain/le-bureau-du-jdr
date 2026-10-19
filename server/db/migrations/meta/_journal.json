@@ -1037,6 +1037,34 @@
       "when": 1793500000000,
       "tag": "0147_extra_damage_to_dice",
       "breakpoints": true
+    },
+    {
+      "idx": 148,
+      "version": "6",
+      "when": 1793600000000,
+      "tag": "0148_pact_boon_choice_carrier",
+      "breakpoints": true
+    },
+    {
+      "idx": 149,
+      "version": "6",
+      "when": 1793700000000,
+      "tag": "0149_ranger_favorite_choices",
+      "breakpoints": true
+    },
+    {
+      "idx": 150,
+      "version": "6",
+      "when": 1793800000000,
+      "tag": "0150_champion_additional_fighting_style",
+      "breakpoints": true
+    },
+    {
+      "idx": 151,
+      "version": "6",
+      "when": 1793900000000,
+      "tag": "0151_maneuvers_superiority_dice",
+      "breakpoints": true
     }
   ]
 }

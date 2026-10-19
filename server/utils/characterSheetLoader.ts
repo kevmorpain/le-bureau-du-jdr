@@ -6,6 +6,7 @@ import { deriveWeaponMasteries } from '~~/server/utils/weaponMasteryDerivation'
 import { deriveBackgroundProficiencies } from '~~/server/utils/backgroundProficiencyDerivation'
 import { deriveClassGrants } from '~~/server/utils/classProficiencyDerivation'
 import { deriveChoiceProficiencies } from '~~/server/utils/choicePicks'
+import { deriveLabelPicks } from '~~/server/utils/labelPicks'
 import { applySpellcastingAbilityPicks } from '~~/server/utils/spellcastingAbilityPicks'
 import { sheetHitPoints, type SheetHitPoints } from '~~/shared/rules/hitPoints'
 import { inventoryEntriesOf } from '~~/shared/rules/characterEffects'
@@ -117,6 +118,8 @@ export async function loadCharacterSheet(db: Db, id: number): Promise<Loaded | n
   // Maîtrises choisies (compétences, outils, langues) dérivées des picks en character_choices.
   const choiceEffects = await deriveChoiceProficiencies(db, id)
 
+  const labelPicks = await deriveLabelPicks(db, id)
+
   // Le propriétaire est le joueur ; on n'expose que `{ id, name, preferences }` (ni e-mail ni provider) : les défauts du compte
   // que la fiche hérite, résolus côté client avec la fonction partagée pour rester justes dès qu'elle en change un.
   const [owner] = sheet.ownerId != null
@@ -135,6 +138,7 @@ export async function loadCharacterSheet(db: Db, id: number): Promise<Loaded | n
     classEffects,
     classSavingThrowEffects,
     choiceEffects,
+    labelPicks,
   }
 }
 

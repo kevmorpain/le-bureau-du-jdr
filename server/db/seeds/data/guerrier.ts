@@ -3,6 +3,8 @@ import type { AbilityScoreKey } from '../../schema/effects'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
 import { asiFeatures } from './asi'
+import { MANEUVERS_KNOWN, SUPERIORITY_DESCRIPTION, SUPERIORITY_DICE_COUNT, SUPERIORITY_DIE, maneuverFeatures } from './maneuvers'
+import { TOOL_CATEGORIES } from '~~/shared/rules/tools'
 
 export const guerrierName = 'Guerrier'
 
@@ -112,6 +114,7 @@ export const guerrierSubclasses: SubclassDef[] = [
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        progression: { kind: 'additional_fighting_style', count: fixed(1), optionSource: { type: 'feature_group', group: 'fighting_style' } },
       },
       {
         name: 'Critique supérieur',
@@ -212,13 +215,15 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
     features: [
       {
         name: 'Supériorité martiale',
-        description: `Au niveau 3, vous apprenez des manœuvres alimentées par des dés de supériorité. Vous connaissez trois manœuvres de votre choix (comme Attaque désarmante, Riposte, Feinte, Balayage…) et en apprenez deux de plus aux niveaux 7, 10 et 15. Vous disposez de quatre dés de supériorité (d8), récupérés après un repos court ou long ; vous en gagnez un cinquième au niveau 7 et un sixième au niveau 15. La plupart des manœuvres accompagnent une attaque et laissent souvent à la cible un jet de sauvegarde (DD = 8 + votre bonus de maîtrise + votre modificateur de Force ou de Dextérité).`,
+        description: SUPERIORITY_DESCRIPTION,
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: null,
         rechargeType: 'short_rest',
-        maxUsesFormula: null,
-        effects: [],
+        maxUsesFormula: SUPERIORITY_DICE_COUNT,
+        effects: [{ type: 'resource_die', value: { sides: SUPERIORITY_DIE } }],
+        meta: { resource: 'superiority_dice', saveDcAbility: ['str', 'dex'] },
+        progression: { kind: 'maneuvers', count: MANEUVERS_KNOWN, optionSource: { type: 'feature_group', group: 'maneuver' }, replaceable: true },
       },
       {
         name: 'Disciple martial',
@@ -229,7 +234,9 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur d'Intelligenc
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        progression: { kind: 'tool', count: fixed(1), optionSource: { type: 'tools', from: TOOL_CATEGORIES['Outils d\'artisan'] } },
       },
+      ...maneuverFeatures,
       {
         name: 'Observation de l\'ennemi',
         description: `À partir du niveau 7, après 1 minute d'observation d'une créature en dehors d'un combat, vous pouvez connaître une information parmi : Force, Dextérité, Constitution, CA, PV actuels, niveaux de classe ou niveaux de guerrier. Le MD vous dit si c'est supérieur, inférieur ou égal à vous.`,

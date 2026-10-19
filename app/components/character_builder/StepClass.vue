@@ -152,6 +152,7 @@
             :count="choice.count"
             :options="optionValuesOf(choice)"
             :owned="ownedFor(choice)"
+            :title="choiceTitle(choice)"
           />
         </div>
       </template>
@@ -177,6 +178,21 @@
               <div class="text-xs text-muted">{{ style.description }}</div>
             </button>
           </div>
+        </div>
+      </template>
+
+      <template v-if="featurePickChoices.length">
+        <USeparator class="my-6" />
+        <div class="space-y-3">
+          <FeaturePickPicker
+            v-for="choice in featurePickChoices"
+            :key="choice.progressionId"
+            v-model="state.featurePicks[choice.progressionId]"
+            :title="choiceTitle(choice) ?? 'Choix'"
+            :count="choice.count"
+            :option-ids="optionFeatureIds(choice)"
+            :excluded-names="state.fightingStyle ? [state.fightingStyle] : []"
+          />
         </div>
       </template>
 
@@ -382,6 +398,7 @@
 import { type AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
 import { averageBaseHitPoints } from '~~/shared/rules/hitPoints'
+import { optionFeatureIds } from '~~/shared/rules/featurePicks'
 
 const PACT_BOON_OPTIONS = [
   { id: 'chain' as const, name: 'Pacte de la Chaîne', hint: 'Apprend Appel de familier. Peut convoquer un familier spécial.' },
@@ -406,6 +423,7 @@ const {
   classSkillConflicts,
   classSkillConflictLabels,
   classChoices,
+  featurePickChoices,
   ownedFor,
   optionValuesOf,
   needsPactBoon,
@@ -512,6 +530,7 @@ function selectClass(id: string) {
   state.value.subclass = null
   state.value.skills = []
   state.value.fightingStyle = null
+  state.value.featurePicks = {}
   state.value.expertiseSkills = []
   state.value.hpMode = 'average'
   state.value.hpRolled = null

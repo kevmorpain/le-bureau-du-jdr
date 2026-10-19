@@ -51,7 +51,9 @@ interface LevelUpState {
   // Maîtrises (step skills)
   newSkills: string[]                // compétences gagnées via multiclassage
   featLanguages: string[]            // langues du don Linguiste (step asi)
-  choicePicks: Record<number, Array<string | number>> // points de choix gagnés à ce niveau (instrument du Barde rejoint)
+  choicePicks: Record<number, Array<string | number>> // points de choix gagnés à ce niveau (instrument du Barde rejoint, ennemi juré du Rôdeur)
+  featurePicks: Record<number, number[]>               // options de feature gagnées (2ᵉ style du Champion, manœuvres), par id de progression
+  featureReplacements: Record<number, number | null>   // manœuvre déjà prise échangée contre une nouvelle, par id de progression
 
   // Magie (step spells)
   newCantripIds: number[]            // IDs sorts DB
@@ -240,6 +242,8 @@ Corps :
   featChoices?: { ability?, spellId?, skills?, tools?, languages? } | null
   newSkills?: SkillKey[]            // multiclassage uniquement ; sans doublon (Zod → 422)
   choicePicks?: { progressionId, value? | spellId? }[]  // points de choix gagnés à ce niveau
+  featurePicks?: { progressionId, featureId }[]         // options de feature gagnées à ce niveau
+  featureReplacements?: { progressionId, featureId }[]  // option déjà prise échangée (un point de choix `replaceable`, un seul)
   newCantripIds?: number[]
   newSpellIds?: number[]
   pactBoon?: 'chain' | 'blade' | 'tome' | null
@@ -270,7 +274,12 @@ Corps :
 10. **Manifestations occultes** : `applyInvocationChanges` (cf. `server/utils/invocations.ts`) — si `replacedInvocationId`, DELETE le `character_features` correspondant + purge des `character_spells` source='invocation' liés aux `spell_grant` de cette invocation. Puis INSERT des `newInvocationIds` dans `character_features`, et matérialisation des `spell_grant` en `character_spells` avec `source: 'invocation'` (idempotent via `onConflictDoNothing`).
 11. Insérer les nouvelles compétences de multiclassage (validées au préalable : classe rejointe, nombre, liste)
     puis les `choicePicks` en `character_choices`, validés contre les points de choix que ce niveau de classe rend dus
-    (`validateLevelUpChoicePicks`, porteur de multiclassage d'une classe rejointe compris)
+    (`validateLevelUpChoicePicks`, porteur de multiclassage d'une classe rejointe compris). Un point de choix dont le nombre
+    grandit (ennemi juré) ne rend dû que son surplus, et une valeur déjà choisie est refusée (`alreadyPickedError`).
+11b. **Options de feature** : `featureReplacements` retire d'abord l'option échangée (`character_choices` et `character_features`),
+    puis `featurePicks` s'enregistre en `character_choices.selected_feature_id` et se matérialise en `character_features` ; validé
+    avant toute écriture (`featurePicksError`, `replacedPickError`) contre les points de choix que ce niveau rend dus.
+    Cf. [rules-engine.md](./rules-engine.md#chemin-générique-des-picks-doptions-de-feature).
 12. Upserter les compétences en expertise (`proficiencyLevel: 'expert'`). Validées **avant** toute écriture (`validateLevelUpExpertise`) : au plus le delta du `count` cumulatif de la progression `expertise` entre `newLevel − 1` et `newLevel` (`expertiseGainedAtLevel`, même projection que le front), et aucune compétence déjà `expert` dans `character_skills` (toutes sources). La maîtrise préalable de la compétence reste **front-autoritaire** : la fiche permet déjà de poser `expert` à la main sur n'importe quelle compétence (`PUT /skills`), et le set maîtrisé complet n'est composé que côté front.
 13. Recalculer les emplacements de sort (full=niveau, half=⌊niveau/2⌋ si ≥2, pact=séparé) — **particularité Pact Magic** : tous les emplacements occultistes sont du même niveau, et ce niveau change avec le niveau d'occultiste (niv. 3 → slots niv. 2, niv. 5 → niv. 3, etc.). Le handler DELETE explicitement les anciens `pact_magic` slots aux autres niveaux avant l'upsert, avec préservation du compteur `used` du précédent niveau.
 

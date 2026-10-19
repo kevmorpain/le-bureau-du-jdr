@@ -5,7 +5,7 @@ import type { Formula, FormulaContext } from '~~/shared/utils/formula'
 import { REST_RECHARGE_MAP } from '~~/shared/utils/rest'
 import type { RestType } from '~~/shared/utils/rest'
 
-export const RESOURCE_KEYS = ['rage', 'ki', 'sorcery_points', 'bardic_inspiration', 'channel_divinity', 'wild_shape', 'lay_on_hands'] as const
+export const RESOURCE_KEYS = ['rage', 'ki', 'sorcery_points', 'bardic_inspiration', 'channel_divinity', 'wild_shape', 'lay_on_hands', 'superiority_dice'] as const
 export type ResourceKey = typeof RESOURCE_KEYS[number]
 
 export interface ResourceFeature {
@@ -292,6 +292,13 @@ export const resourceGroups = (features: readonly ResourceFeature[], base: Formu
       costs: unlocked.flatMap(f => (f.meta?.cost?.resource === key ? [{ featureId: f.id, name: f.name, amount: f.meta.cost.amount }] : [])),
     }
   })
+}
+
+// DD d'une réserve : 8 + maîtrise + modificateur ; avec plusieurs caractéristiques possibles (Maître de guerre : Force ou
+// Dextérité), la meilleure.
+export const saveDcOf = (ability: FeatureMeta['saveDcAbility'], proficiencyBonus: number, modifiers: Partial<Record<string, number>>): number | null => {
+  if (!ability) return null
+  return 8 + proficiencyBonus + Math.max(...[ability].flat().map(a => modifiers[a] ?? 0))
 }
 
 export interface RestRecovery {

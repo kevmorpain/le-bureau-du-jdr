@@ -12,6 +12,7 @@ export const CHOICE_KINDS = [
   'lineage',
   'pact_boon',
   'fighting_style',
+  'additional_fighting_style',
   'expertise',
   'invocations',
   'asi_or_feat',
@@ -26,6 +27,7 @@ export const CHOICE_KINDS = [
   'ancestry',
   'weapon_mastery',
   'terrain',
+  'favored_enemy',
   'spellcasting_ability',
 ] as const
 
@@ -42,13 +44,18 @@ export interface FeatureChoice {
 }
 
 // Choix dont chaque pick est une maîtrise (valeur typée sans table), un sort mineur ou un simple libellé (terrain
-// du Cercle de la terre, caractéristique d'incantation de la Fadette) : ils passent par un chemin générique
+// du Cercle de la terre ou du Rôdeur, ennemi juré, caractéristique d'incantation de la Fadette) : ils passent par un chemin générique
 // (`choicePicks`). Les autres ont chacun leur champ dédié. Seules les maîtrises se dérivent en effets ; un
 // libellé est lu tel quel par ce qui en dépend.
 export const VALUE_CHOICE_KINDS = ['skill', 'tool', 'language'] as const satisfies readonly ChoiceKind[]
 export const SPELL_CHOICE_KINDS = ['cantrip'] as const satisfies readonly ChoiceKind[]
-export const LABEL_CHOICE_KINDS = ['terrain', 'spellcasting_ability'] as const satisfies readonly ChoiceKind[]
+export const LABEL_CHOICE_KINDS = ['terrain', 'favored_enemy', 'spellcasting_ability'] as const satisfies readonly ChoiceKind[]
 export const PICK_CHOICE_KINDS: readonly ChoiceKind[] = [...VALUE_CHOICE_KINDS, ...SPELL_CHOICE_KINDS, ...LABEL_CHOICE_KINDS]
+
+// Choix d'une option parmi un groupe de features (`feature_group`), par le chemin générique des `featurePicks` : chaque
+// pick est matérialisé sur la fiche. Le style de combat de la classe, la Métamagie, les manifestations et le pacte de
+// l'Occultiste ont chacun leur chemin dédié.
+export const FEATURE_PICK_KINDS = ['additional_fighting_style', 'maneuvers'] as const satisfies readonly ChoiceKind[]
 
 // `proficient_skills` / `proficient_weapons` se résolvent contre l'état du perso (non cachables) ; le reste via le catalogue.
 export type OptionSource =

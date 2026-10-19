@@ -9,7 +9,7 @@ import { CLASS_SKILL_CHOICES } from '../../server/db/seeds/data/classSkills'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
 import { deriveAbilityScoreChoices } from '../../server/utils/abilityScoreDerivation'
 import { deriveWeaponMasteries } from '../../server/utils/weaponMasteryDerivation'
-import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
+import { WARLOCK_PACT_BOON_OPTIONS, WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 import { replayMigrations } from '../fixtures/migrations'
 
 // La logique de création extraite est testée contre libsql, SANS la barrière d'auth (DI du `db`) :
@@ -76,9 +76,13 @@ beforeAll(async () => {
   // Features propriétaires + progressions de l'Occultiste (= contrat 5a → catalogue de validation)
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
-    await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: 'class_feature', classId: WARLOCK, levelRequired: c.ownerLevelRequired })
+    await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: c.ownerFeatureType, classId: WARLOCK, levelRequired: c.ownerLevelRequired })
     await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
   }
+  // Options de pacte : ids 410 (Chaîne), 411 (Lame), 412 (Tome), dans l'ordre du contrat.
+  await db.insert(schema.features).values(WARLOCK_PACT_BOON_OPTIONS.map((o, i) => ({
+    id: 410 + i, name: o.name, featureType: o.featureType, classId: WARLOCK, levelRequired: o.levelRequired, tag: o.tag,
+  })))
 
   await db.insert(schema.features).values([
     { id: 200, name: 'Incantation occulte', featureType: 'class_feature', classId: WARLOCK, levelRequired: 1 }, // passif, non tagué
@@ -312,11 +316,26 @@ describe('createCharacter — round-trip Occultiste niveau 3 (pacte + manifestat
     const feats = await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id))
     expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(401) // manifestation choisie
     expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(200) // passif warlock
+    expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(410) // Pacte de la Chaîne
+    expect(feats.map((f: { featureId: number }) => f.featureId)).not.toContain(100) // porteur « Faveur de pacte » invisible
 
     const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, id))
     const bySource = new Map(spells.map((s: { source: string | null, spellId: number }) => [s.source, s.spellId]))
     expect(bySource.get('pact_chain')).toBe(500) // familier (Pacte de la Chaîne)
     expect(bySource.get('invocation')).toBe(501) // « Armure de mage » octroyé par la manifestation 401
+  })
+
+  it('chaque pacte donne sa propre ligne, et sans pacte aucune n\'est posée', async () => {
+    const featureIdsOf = async (sheetId: number) => (await db.select().from(schema.characterFeatures)
+      .where(eq(schema.characterFeatures.characterSheetId, sheetId)) as { featureId: number }[]).map(f => f.featureId)
+
+    const blade = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, pactBoon: 'blade' }), OWNER)
+    const tome = await createCharacter(db, baseInput({ classId: WARLOCK, level: 3, pactBoon: 'tome' }), OWNER)
+    const none = await createCharacter(db, baseInput({ classId: WARLOCK, level: 2 }), OWNER)
+
+    expect((await featureIdsOf(blade.id)).filter(id => id >= 410 && id <= 412)).toEqual([411])
+    expect((await featureIdsOf(tome.id)).filter(id => id >= 410 && id <= 412)).toEqual([412])
+    expect((await featureIdsOf(none.id)).filter(id => id >= 410 && id <= 412)).toEqual([])
   })
 
   it('preparedSpellIds : seuls ces sorts sont préparés, les autres restent connus (grimoire)', async () => {

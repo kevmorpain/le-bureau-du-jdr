@@ -4,6 +4,9 @@ import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
+import { resolvePactBoonFeatureId } from '~~/server/utils/pactBoon'
+import { featurePickSchema, featurePickWriteStmts } from '~~/server/utils/featurePicks'
+import { featurePicksError } from '~~/shared/rules/featurePicks'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
 import { creationDuplicates } from '~~/server/utils/duplicateProficiencies'
@@ -142,6 +145,8 @@ export const createCharacterSchema = z.object({
   preparedSpellIds: z.array(z.number().int()).optional(),
   // Maîtrises et sorts mineurs choisis sur un point de choix d'espèce, de lignée, d'historique ou de classe.
   choicePicks: z.array(choicePickSchema).optional().default([]),
+  // Options de feature choisies sur un point de choix qui n'a pas de chemin dédié (2ᵉ style de combat, manœuvres).
+  featurePicks: z.array(featurePickSchema).optional().default([]),
   weaponMasteryChoices: z
     .array(z.object({
       progressionId: z.number().int().positive(),
@@ -261,7 +266,8 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   const expertiseSkills = d.expertiseSkills ?? []
   const classSkills = d.classSkills ?? []
   const choicePicks = d.choicePicks ?? []
-  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0 || classSkills.length > 0 || choicePicks.length > 0
+  const featurePicks = d.featurePicks ?? []
+  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0 || classSkills.length > 0 || choicePicks.length > 0 || featurePicks.length > 0
   if (!needsCatalog) return { picks: [], choices: [] }
 
   const speciesId = d.speciesId ?? undefined
@@ -336,6 +342,10 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   const picks = [...classSkillPicks, ...choicePicks]
   const error = choicePicksError(picks, choices)
   if (error) throw new CharacterValidationError(error)
+
+  const firstStyle = featurePicks.length && d.fightingStyle ? await resolveFightingStylePick(db, classId, d.fightingStyle, d.level) : null
+  const featureError = featurePicksError(featurePicks, choices, new Set(firstStyle ? [firstStyle.featureId] : []))
+  if (featureError) throw new CharacterValidationError(featureError)
   return { picks, choices }
 }
 
@@ -500,6 +510,8 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, d.level)
     : null
 
+  const pactBoonFeatureId = d.pactBoon ? await resolvePactBoonFeatureId(db, cls.id, d.pactBoon) : null
+
   const expertiseProgressionId = d.expertiseSkills?.length
     ? await resolveExpertiseProgressionId(db, cls.id)
     : null
@@ -597,6 +609,14 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }).onConflictDoNothing())
     stmts.push(db.insert(schema.characterFeatures)
       .values({ characterSheetId: sheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
+      .onConflictDoNothing())
+  }
+
+  stmts.push(...featurePickWriteStmts(db, sheetId, d.featurePicks ?? []))
+
+  if (pactBoonFeatureId != null) {
+    stmts.push(db.insert(schema.characterFeatures)
+      .values({ characterSheetId: sheetId, featureId: pactBoonFeatureId, currentUses: 0 })
       .onConflictDoNothing())
   }
 
