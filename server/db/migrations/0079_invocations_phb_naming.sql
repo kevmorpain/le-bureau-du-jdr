@@ -88,7 +88,7 @@ INSERT OR IGNORE INTO feature_effects (feature_id, effect_id) SELECT f.id, e.id 
 
 -- ─── 6. Sorts octroyés par les manifestations, absents du catalogue ─────────
 -- Sans ces lignes, les `spell_grant` ne matérialisent rien sur la fiche :
--- applyInvocationChanges() résout les sorts octroyés PAR NOM.
+-- `featurePickStmts` (server/utils/featurePicks.ts) résout les sorts octroyés PAR NOM.
 -- Communication avec les animaux (niveau 1)
 INSERT INTO spells (name, level, casting_time, range, components, material, ritual, duration, concentration, description, school_id, dc, damages, heal, multi_attack)
 SELECT 'Communication avec les animaux', 1, '1 action', 0, '["V","S"]', NULL, 1, '10 minutes', 0, 'Pour la durée du sort, vous comprenez les bêtes et pouvez leur parler. Leur intelligence limite ce qu''elles savent et ce qu''elles peuvent exprimer, mais elles peuvent au minimum vous renseigner sur les lieux et les créatures des environs, ainsi que sur ce qu''elles ont perçu ces derniers jours. Le MD peut vous laisser convaincre une bête de vous rendre un petit service.', ms.id, NULL, NULL, NULL, NULL
