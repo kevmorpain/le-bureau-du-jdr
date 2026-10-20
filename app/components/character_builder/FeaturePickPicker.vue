@@ -72,7 +72,7 @@
         <div class="font-semibold text-sm flex items-center gap-2 flex-wrap">
           <span>{{ entry.name }}</span>
           <span
-            v-if="(entry.option.levelRequired ?? 1) > 1"
+            v-if="(entry.option.levelRequired ?? 1) > unlockLevel"
             class="text-xs font-mono px-2 py-0.5 rounded-full bg-(--ui-bg) border border-(--ui-border) text-muted"
           >
             niv. {{ entry.option.levelRequired }}+
@@ -122,11 +122,13 @@ const props = withDefaults(defineProps<{
   count: number
   options: ResolvedOption[]
   ownerLevel: number
+  /** Niveau qui donne accès au point de choix : une option n'affiche son niveau que si elle exige davantage. */
+  unlockLevel?: number
   accent?: 'red' | 'violet'
   excludedIds?: number[]
   replaceableIds?: number[]
   projection?: EligibilityState
-}>(), { accent: 'red' })
+}>(), { accent: 'red', unlockLevel: 1 })
 const picks = defineModel<number[]>({ default: () => [] })
 const replaced = defineModel<number | null>('replaced', { default: null })
 

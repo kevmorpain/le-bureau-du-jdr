@@ -23,7 +23,7 @@ import {
 } from '~~/shared/rules/multiclass'
 import { proficiencyLabels } from '~~/shared/utils/item'
 import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/shared/rules/resolve'
-import { isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
+import { byFeaturePickOrder, isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
 import { pactBoonOfName, type PactBoon } from '~~/shared/rules/pactBoon'
 import type { LevelUpReplacements } from '~~/shared/rules/duplicateProficiencies'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
@@ -440,7 +440,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   })
   const newPickChoices = computed(() => gainedChoices.value.filter(isPickChoice))
   // Options de feature à choisir (style de combat, pacte, manifestations, Métamagie, manœuvres) ; celles que la fiche porte déjà ne se reprennent pas.
-  const newFeaturePickChoices = computed(() => gainedChoices.value.filter(isFeaturePickChoice))
+  const newFeaturePickChoices = computed(() => gainedChoices.value.filter(isFeaturePickChoice).sort(byFeaturePickOrder))
   const ownedFeatureIds = computed<number[]>(() => ((charSheet.value?.features ?? []) as Array<{ featureId: number }>).map(f => f.featureId))
   const featurePicksOf = (progressionId: number): number[] => state.value.featurePicks[progressionId] ?? []
   // Échanger une option déjà prise (manœuvres) ajoute une option à apprendre.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { featurePicksError, isFeaturePickChoice, optionFeatureIds } from '../../shared/rules/featurePicks'
+import { byFeaturePickOrder, featurePicksError, isFeaturePickChoice, optionFeatureIds } from '../../shared/rules/featurePicks'
 import { choicesGainedAtLevelUp, resolveChoices, type CatalogProgression, type ResolvedChoice } from '../../shared/rules/resolve'
 
 // Choisir des options de feature (2ᵉ style de combat du Champion, manœuvres) : le point de choix dit combien et lesquelles ;
@@ -57,6 +57,13 @@ describe('point de choix d\'option de feature', () => {
     for (const kind of ['subclass', 'skill', 'tool', 'cantrip', 'terrain', 'asi_or_feat'] as const) {
       expect(isFeaturePickChoice({ kind })).toBe(false)
     }
+  })
+})
+
+describe('byFeaturePickOrder', () => {
+  it('met le pacte avant les manifestations qui en dépendent, quel que soit l\'ordre du catalogue', () => {
+    const kinds = [{ kind: 'maneuvers' }, { kind: 'invocations' }, { kind: 'pact_boon' }, { kind: 'fighting_style' }] as const
+    expect([...kinds].sort(byFeaturePickOrder).map(c => c.kind)).toEqual(['fighting_style', 'pact_boon', 'invocations', 'maneuvers'])
   })
 })
 

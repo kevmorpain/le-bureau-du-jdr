@@ -22,7 +22,7 @@ import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicatedValues, proficiencyDuplicates } from '~~/shared/rules/duplicateProficiencies'
 import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
-import { isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
+import { byFeaturePickOrder, isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
 import { pactBoonOfName, type PactBoon } from '~~/shared/rules/pactBoon'
 import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
@@ -394,7 +394,7 @@ export function useCharacterBuilder() {
   }))
   // Les compétences de classe gardent leur propre étape (`state.skills`).
   const genericChoices = computed<ResolvedChoice[]>(() => resolvedChoices.value.filter(isPickChoice))
-  const featurePickChoices = computed<ResolvedChoice[]>(() => resolvedChoices.value.filter(isFeaturePickChoice))
+  const featurePickChoices = computed<ResolvedChoice[]>(() => resolvedChoices.value.filter(isFeaturePickChoice).sort(byFeaturePickOrder))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
   const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))

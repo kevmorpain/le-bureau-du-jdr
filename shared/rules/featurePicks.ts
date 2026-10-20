@@ -12,6 +12,10 @@ export type FeatureReplacement = FeaturePick
 export const isFeaturePickChoice = (c: Pick<ResolvedChoice, 'kind'>): boolean =>
   (FEATURE_PICK_KINDS as readonly ChoiceKind[]).includes(c.kind)
 
+// Le pacte se choisit avant les manifestations, dont certaines en dépendent : l'ordre de `FEATURE_PICK_KINDS` est celui de l'affichage.
+export const byFeaturePickOrder = (a: Pick<ResolvedChoice, 'kind'>, b: Pick<ResolvedChoice, 'kind'>): number =>
+  (FEATURE_PICK_KINDS as readonly ChoiceKind[]).indexOf(a.kind) - (FEATURE_PICK_KINDS as readonly ChoiceKind[]).indexOf(b.kind)
+
 export const optionFeatureIds = (c: Pick<ResolvedChoice, 'options'>): number[] =>
   c.options.flatMap(o => o.featureId != null ? [o.featureId] : [])
 

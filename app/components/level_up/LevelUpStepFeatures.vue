@@ -73,6 +73,7 @@
           :count="choice.count"
           :options="choice.options"
           :owner-level="choice.classLevel"
+          :unlock-level="choice.ownerLevelRequired"
           :accent="choiceAccent(choice)"
           :replaceable-ids="choice.replaceable ? ownedFeatureIds : []"
           :excluded-ids="featurePicksUnavailable(choice.progressionId)"

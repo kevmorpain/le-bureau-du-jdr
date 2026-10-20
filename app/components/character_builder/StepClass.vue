@@ -170,6 +170,7 @@
               :count="choice.count"
               :options="choice.options"
               :owner-level="choice.classLevel"
+              :unlock-level="choice.ownerLevelRequired"
               :accent="choiceAccent(choice)"
               :excluded-ids="featurePicksElsewhere(choice.progressionId)"
               :projection="eligibility"

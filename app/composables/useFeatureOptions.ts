@@ -9,6 +9,8 @@ export function useFeatureOptions(ids: MaybeRefOrGetter<number[]>) {
   const { data } = useFetch<FeatureOptionDetail[]>('/api/catalog/feature-options', {
     query: { ids: computed(() => [...new Set(toValue(ids))].join(',')) },
     default: () => [],
+    // Chaque composable qui lit le pacte ou les picks refait la même requête : une seule part, les autres attendent.
+    dedupe: 'defer',
   })
   const details = computed(() => data.value ?? [])
   const byId = computed(() => new Map(details.value.map(o => [o.id, o])))
