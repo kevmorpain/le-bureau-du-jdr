@@ -3,6 +3,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import BuilderSummary from '../../app/components/character_builder/BuilderSummary.vue'
 import BuilderPreview from '../../app/components/character_builder/BuilderPreview.vue'
 import { useCharacterBuilder, type BuilderState } from '../../app/composables/useCharacterBuilder'
+import type { Catalog } from '../../shared/rules/resolve'
 import { catalogClasses } from '../fixtures/catalogClasses'
 
 // Le récapitulatif (et l'aperçu) doivent afficher ce que la fiche créée affichera : chaque source de
@@ -39,6 +40,21 @@ registerEndpoint('/api/invocations', () => [{
 }])
 // Les JS de classe viennent du catalogue (porteurs en base), comme sur la fiche.
 registerEndpoint('/api/catalog/classes', catalogClasses)
+const WARLOCK = catalogClasses().find(c => c.name === 'Occultiste')!.id
+const INVOCATIONS_PROGRESSION = 8
+registerEndpoint('/api/catalog/progressions', (): Catalog => ({
+  progressions: [{
+    progressionId: INVOCATIONS_PROGRESSION,
+    ownerClassId: WARLOCK,
+    ownerLevelRequired: 2,
+    kind: 'invocations',
+    count: { op: 'fixed', value: 2 },
+    optionSource: { type: 'feature_group', group: 'invocation' },
+    replaceable: true,
+    options: [{ featureId: BEGUILING_INFLUENCE }],
+  }],
+}))
+registerEndpoint('/api/catalog/feature-options', () => [{ id: BEGUILING_INFLUENCE, name: 'Présence captivante', description: null }])
 registerEndpoint('/api/character_species', () => [{ id: 10, name: 'Demi-orc' }, { id: 20, name: 'Elfe' }])
 registerEndpoint('/api/catalog/species/10', () => ({
   id: 10,
@@ -249,7 +265,7 @@ describe('BuilderSummary — manifestations occultes', () => {
       // Humain : +1 partout → INT 13 · SAG 11 · CHA 16.
       abilities: { str: 8, dex: 14, con: 13, int: 12, wis: 10, cha: 15 },
       skills: ['arcana', 'intimidation'],
-      invocationIds: [BEGUILING_INFLUENCE],
+      featurePicks: { [INVOCATIONS_PROGRESSION]: [BEGUILING_INFLUENCE] },
     })
     const wrapper = await mountSuspended(BuilderSummary)
     await vi.waitFor(() => expect(rowText(wrapper, 'Tromperie')).toBe('Tromperie+5')) // CHA +3 + 2

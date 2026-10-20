@@ -132,6 +132,7 @@ const {
   baseAC,
   speed,
   profBonus,
+  pactBoon,
   ABILITIES,
   ABILITY_SHORT,
   abilityMod,
@@ -170,7 +171,7 @@ const selectedSpellNames = computed(() => {
     ...s.selectedSpells.map(id => map[id]).filter(Boolean) as string[],
     ...s.selectedPactBoonCantripIds.map(id => map[id]).filter(Boolean) as string[],
   ]
-  if (s.pactBoon === 'chain') names.push('Appel de familier')
+  if (pactBoon.value === 'chain') names.push('Appel de familier')
   return names
 })
 

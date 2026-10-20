@@ -120,12 +120,18 @@
         </div>
       </div>
 
-      <div v-if="state.pactBoon" class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6">
+      <div
+        v-if="pactBoon"
+        class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6"
+      >
         <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">
           Faveur du Pacte
         </p>
         <div class="text-sm text-(--ui-text)">{{ pactBoonLabel }}</div>
-        <div v-if="state.pactBoon === 'blade' && state.pactWeaponItemName" class="text-xs text-muted mt-1">
+        <div
+          v-if="pactBoon === 'blade' && state.pactWeaponItemName"
+          class="text-xs text-muted mt-1"
+        >
           Arme liée : {{ state.pactWeaponItemName }}
         </div>
       </div>
@@ -185,6 +191,7 @@
 <script lang="ts" setup>
 import { ABILITY_LABELS } from '~/data/character-builder'
 import { LABEL_CHOICE_KINDS } from '~~/shared/rules/choices'
+import { PACT_BOON_NAMES } from '~~/shared/rules/pactBoon'
 
 defineProps<{ submitting?: boolean }>()
 defineEmits<{ back: [], submit: [] }>()
@@ -206,6 +213,8 @@ const {
   formatMod,
   classChoices,
   featurePickChoices,
+  validFeaturePicks,
+  pactBoon,
 } = useCharacterBuilder()
 
 const {
@@ -240,25 +249,20 @@ const selectedSpellNames = computed(() => {
     ...s.selectedSpells.map(id => map[id]).filter(Boolean) as string[],
     ...s.selectedPactBoonCantripIds.map(id => map[id]).filter(Boolean) as string[],
   ]
-  if (s.pactBoon === 'chain') names.push('Appel de familier')
+  if (pactBoon.value === 'chain') names.push('Appel de familier')
   return names
 })
 
-const PACT_BOON_LABELS: Record<string, string> = {
-  chain: 'Pacte de la Chaîne',
-  blade: 'Pacte de la Lame',
-  tome: 'Pacte du Tome',
-}
-const pactBoonLabel = computed(() =>
-  state.value.pactBoon ? PACT_BOON_LABELS[state.value.pactBoon] : '',
-)
+const pactBoonLabel = computed(() => pactBoon.value ? PACT_BOON_NAMES[pactBoon.value] : '')
 
 const selectedInvocationNames = computed(() => selectedInvocations.value.map(i => i.name))
 
-// Choix de la classe que la fiche affichera : ennemis jurés et terrains (libellés), puis options de feature (2ᵉ style de
-// combat, manœuvres), dont le catalogue donne les noms.
+// Choix de la classe que la fiche affichera : ennemis jurés et terrains (libellés), puis options de feature (styles de
+// combat, Métamagie, manœuvres), dont le catalogue donne les noms. Le pacte et les manifestations ont leur encart.
+const ownBlockKinds: ReadonlyArray<string> = ['pact_boon', 'invocations']
 const featurePickGroups = computed(() => featurePickChoices.value
-  .map(c => ({ title: choiceTitle(c) ?? 'Choix', ids: (state.value.featurePicks[c.progressionId] ?? []).slice(0, c.count) }))
+  .filter(c => !ownBlockKinds.includes(c.kind))
+  .map(c => ({ title: choiceTitle(c) ?? 'Choix', ids: validFeaturePicks(c) }))
   .filter(g => g.ids.length))
 const { data: pickedFeatures } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/feature-options', {
   query: { ids: computed(() => featurePickGroups.value.flatMap(g => g.ids).join(',')) },

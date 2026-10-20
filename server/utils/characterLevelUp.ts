@@ -2,12 +2,9 @@ import { and, eq, inArray, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
-import { applyInvocationChanges } from '~~/server/utils/invocations'
-import { applyMetamagicChanges } from '~~/server/utils/metamagic'
-import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
-import { resolvePactBoonFeatureId } from '~~/server/utils/pactBoon'
-import { featurePickSchema, featurePickWriteStmts, featureReplacementStmts, ownedFeatureIds, replacedPickError } from '~~/server/utils/featurePicks'
+import { featurePickSchema, featurePickStmts, ownedFeatureIds, pickedPactBoon, replacedPickError } from '~~/server/utils/featurePicks'
 import { featurePicksError, isFeaturePickChoice, type FeaturePick } from '~~/shared/rules/featurePicks'
+import type { PactBoon } from '~~/shared/rules/pactBoon'
 import { resolveExpertiseProgressionId, expertiseWriteStmts, expertiseGainedAtLevel } from '~~/server/utils/expertise'
 import { CharacterValidationError, featChoicesSchema } from '~~/server/utils/characterCreate'
 import { buildCatalog } from '~~/server/utils/catalog'
@@ -42,7 +39,6 @@ export const levelUpSchema = z.object({
   // Valeur du dé de vie (lancé, saisi ou fixe) : le serveur la borne par le dé de la classe et en tire le gain.
   hpDie: z.number().int().min(1).max(12),
   subclassId: z.number().int().positive().nullable().optional(),
-  fightingStyle: z.string().nullable().optional(),
   expertiseSkills: uniqueSkillKeysSchema.optional(),
   asiChoice: z.enum(['asi', 'feat']).nullable().optional(),
   asiBonuses: z.record(z.string(), z.number().int().min(0).max(2)).nullable().optional(),
@@ -51,18 +47,15 @@ export const levelUpSchema = z.object({
   newSkills: uniqueSkillKeysSchema.optional(),
   // Maîtrises, sorts mineurs et terrain du cercle choisis à ce niveau (instrument du Barde rejoint par multiclassage).
   choicePicks: z.array(choicePickSchema).optional(),
+  // Options de feature choisies à ce niveau : style de combat, pacte, manifestations, Métamagie, manœuvres.
   featurePicks: z.array(featurePickSchema).optional(),
-  // Option déjà prise que l'on échange contre une nouvelle (manœuvres) : l'ancienne quitte la fiche.
+  // Option déjà prise que l'on échange contre une nouvelle (manœuvres, manifestations) : l'ancienne quitte la fiche.
   featureReplacements: z.array(featurePickSchema).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),
   replacedSpellId: z.number().int().positive().nullable().optional(),
-  pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
   pactWeaponInventoryId: z.number().int().nullable().optional(),
   pactBoonCantripIds: z.array(z.number().int()).optional(),
-  newInvocationIds: z.array(z.number().int().positive()).optional(),
-  replacedInvocationId: z.number().int().positive().nullable().optional(),
-  newMetamagicIds: z.array(z.number().int().positive()).optional(),
   arcaneMysteriumSpellId: z.number().int().positive().nullable().optional(),
   bookOfAncientSecretsSpellIds: z.array(z.number().int().positive()).max(2).optional(),
 })
@@ -78,24 +71,6 @@ async function validateLevelUp(db: Db, d: LevelUpInput, classId: number, subclas
       .limit(1)
     if (!sub) throw new CharacterValidationError(`Sous-classe introuvable (id=${subclassId}).`)
     if (sub.classId !== classId) throw new CharacterValidationError(`La sous-classe (id=${subclassId}) n'appartient pas à la classe (id=${classId}).`)
-  }
-
-  const newInv = d.newInvocationIds ?? []
-  if (newInv.length) {
-    const inGroup = await db
-      .select({ id: schema.features.id })
-      .from(schema.features)
-      .where(and(eq(schema.features.tag, 'invocation'), inArray(schema.features.id, newInv)))
-    if (inGroup.length !== newInv.length) throw new CharacterValidationError(`Une manifestation choisie est inconnue ou n'est pas une invocation.`)
-  }
-
-  const newMeta = d.newMetamagicIds ?? []
-  if (newMeta.length) {
-    const inGroup = await db
-      .select({ id: schema.features.id })
-      .from(schema.features)
-      .where(and(eq(schema.features.tag, 'metamagic'), inArray(schema.features.id, newMeta)))
-    if (inGroup.length !== newMeta.length) throw new CharacterValidationError(`Une option de métamagie choisie est inconnue ou n'est pas une métamagie.`)
   }
 }
 
@@ -156,7 +131,7 @@ type LevelUpClass = Parameters<typeof learnedSpellsError>[1]['cls']
 
 const ARCANUM_SPELL_LEVEL: Record<number, number> = { 11: 6, 13: 7, 15: 8, 17: 9 }
 
-async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelUpInput, cls: LevelUpClass, newLevel: number, subclassId: number | null, gained: ResolvedChoice[]): Promise<void> {
+async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelUpInput, cls: LevelUpClass, newLevel: number, subclassId: number | null, gained: ResolvedChoice[], pactBoon: PactBoon | null): Promise<void> {
   const known = await db
     .select({ spellId: schema.characterSpells.spellId })
     .from(schema.characterSpells)
@@ -190,7 +165,7 @@ async function validateLevelUpSpells(db: Db, characterSheetId: number, d: LevelU
   }
 
   const pactCantrips = d.pactBoonCantripIds ?? []
-  if (pactCantrips.length && (d.pactBoon !== 'tome' || pactCantrips.length > 3)) {
+  if (pactCantrips.length && (pactBoon !== 'tome' || pactCantrips.length > 3)) {
     throw new CharacterValidationError(`Les sorts mineurs du Pacte du grimoire ne se choisissent qu'avec cette faveur, au nombre de 3 au plus.`)
   }
   const ritualIds = d.bookOfAncientSecretsSpellIds ?? []
@@ -228,8 +203,7 @@ function validateLevelUpAsi(d: LevelUpInput, newLevel: number, gained: ResolvedC
 async function validateLevelUpRulesetCoherence(db: Db, d: LevelUpInput, ruleset: Ruleset): Promise<void> {
   const featureIds = [
     ...(d.featureId != null ? [d.featureId] : []),
-    ...(d.newInvocationIds ?? []),
-    ...(d.newMetamagicIds ?? []),
+    ...(d.featurePicks ?? []).map(p => p.featureId),
   ]
   if (featureIds.length) {
     const rows = await db
@@ -316,7 +290,8 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
     : []
   await validateLevelUpChoicePicks(db, characterSheetId, gained, replacements, d.choicePicks ?? [])
   await validateLevelUpFeaturePicks(db, characterSheetId, gained, d.featurePicks ?? [], d.featureReplacements ?? [])
-  await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, subclassAfter ?? null, gained)
+  const pactBoon = await pickedPactBoon(db, d.featurePicks ?? [], gained)
+  await validateLevelUpSpells(db, characterSheetId, d, cls, newLevel, subclassAfter ?? null, gained, pactBoon)
   validateLevelUpAsi(d, newLevel, gained)
 
   // 4. Lectures dépendantes (features débloquées, familier, slots)
@@ -345,7 +320,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   const newFeatureIds = [...newClassFeatures, ...newSubclassFeatures].map(f => f.id)
 
   let familiarSpellId: number | null = null
-  if (d.pactBoon === 'chain') {
+  if (pactBoon === 'chain') {
     const [familiar] = await db
       .select({ id: schema.spells.id })
       .from(schema.spells)
@@ -364,12 +339,6 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .limit(1)
     subclassProgressionId = prog?.id ?? null
   }
-
-  const fightingStylePick = d.fightingStyle
-    ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, newLevel)
-    : null
-
-  const pactBoonFeatureId = d.pactBoon ? await resolvePactBoonFeatureId(db, cls.id, d.pactBoon) : null
 
   const expertiseProgressionId = d.expertiseSkills?.length
     ? await resolveExpertiseProgressionId(db, cls.id)
@@ -446,7 +415,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       level: newLevel,
       isMain: existingClass?.isMain ?? (currentClasses.length === 0),
       subclassId: subclassId ?? existingClass?.subclassId ?? null,
-      pactBoon: d.pactBoon ?? null,
+      pactBoon,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
     .onConflictDoUpdate({
@@ -455,7 +424,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
         level: sql`excluded.level`,
         subclassId: subclassId !== null ? sql`excluded.subclass_id` : schema.characterClasses.subclassId,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        pactBoon: d.pactBoon != null ? sql`excluded.pact_boon` : (schema.characterClasses as any).pactBoon,
+        pactBoon: pactBoon != null ? sql`excluded.pact_boon` : (schema.characterClasses as any).pactBoon,
       },
     }))
 
@@ -465,22 +434,14 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .onConflictDoNothing())
   }
 
-  if (fightingStylePick) {
-    stmts.push(db.insert(schema.characterChoices)
-      .values({ characterSheetId, progressionId: fightingStylePick.progressionId, selectedFeatureId: fightingStylePick.featureId })
-      .onConflictDoNothing())
-    stmts.push(db.insert(schema.characterFeatures)
-      .values({ characterSheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
-      .onConflictDoNothing())
-  }
-
-  stmts.push(...featureReplacementStmts(db, characterSheetId, d.featureReplacements ?? []), ...featurePickWriteStmts(db, characterSheetId, d.featurePicks ?? []))
-
-  if (pactBoonFeatureId != null) {
-    stmts.push(db.insert(schema.characterFeatures)
-      .values({ characterSheetId, featureId: pactBoonFeatureId, currentUses: 0 })
-      .onConflictDoNothing())
-  }
+  stmts.push(...await featurePickStmts(db, {
+    characterSheetId,
+    classId: cls.id,
+    ruleset,
+    picks: d.featurePicks ?? [],
+    replacements: d.featureReplacements ?? [],
+    choices: gained,
+  }))
 
   if (newFeatureIds.length) {
     stmts.push(db.insert(schema.characterFeatures)
@@ -521,18 +482,18 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .onConflictDoNothing())
   }
 
-  if (d.pactBoon === 'chain' && familiarSpellId != null) {
+  if (pactBoon === 'chain' && familiarSpellId != null) {
     stmts.push(db.insert(schema.characterSpells)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .values({ characterSheetId, spellId: familiarSpellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
       .onConflictDoNothing())
   }
-  else if (d.pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
+  else if (pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
       .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
       .onConflictDoNothing())
   }
-  else if (d.pactBoon === 'blade' && d.pactWeaponInventoryId) {
+  else if (pactBoon === 'blade' && d.pactWeaponInventoryId) {
     stmts.push(db.update(schema.characterInventory).set({ isPactWeapon: false }).where(eq(schema.characterInventory.characterSheetId, characterSheetId)))
     stmts.push(db.update(schema.characterInventory).set({ isPactWeapon: true }).where(and(
       eq(schema.characterInventory.id, d.pactWeaponInventoryId),
@@ -592,16 +553,6 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db as any).batch(stmts as [any, ...any[]])
-
-  // ── 6. Manifestations occultes (remplacement + ajouts) — util DI, idempotent ──
-  if (d.replacedInvocationId || (d.newInvocationIds && d.newInvocationIds.length)) {
-    await applyInvocationChanges(db, characterSheetId, d.newInvocationIds ?? [], d.replacedInvocationId ?? null, cls.id)
-  }
-
-  // ── 7. Métamagie (ajouts uniquement — non remplaçable en 2014, contrairement aux invocations) ──
-  if (d.newMetamagicIds && d.newMetamagicIds.length) {
-    await applyMetamagicChanges(db, characterSheetId, d.newMetamagicIds)
-  }
 
   return { success: true, newLevel, hpGained }
 }

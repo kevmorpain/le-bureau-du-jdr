@@ -5,7 +5,7 @@ import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
 import { characterRest } from '../../server/utils/characterRest'
-import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
+import { WARLOCK_PACT_BOON_OPTIONS, WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 import { replayMigrations } from '../fixtures/migrations'
 
 // Repos testé contre libsql : recharge (features + emplacements) ET préservation de la dépendance
@@ -17,12 +17,18 @@ const RECHARGE_FEATURE = 210 // feature passive rechargeable (short_rest)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
+const progressionIds: Partial<Record<'pact_boon' | 'invocations', number>> = {}
 
 function newWarlock(over: Record<string, unknown> = {}) {
   return createCharacterSchema.parse({
-    name: 'Occ', hpBase: 24, classId: WARLOCK, level: 3, speciesId: 1, pactBoon: 'chain',
+    name: 'Occ', hpBase: 24, classId: WARLOCK, level: 3, speciesId: 1,
     abilityScores: { cha: 16 }, classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
-    invocationIds: [401, 402], ...over,
+    featurePicks: [
+      { progressionId: progressionIds.pact_boon, featureId: 410 },
+      { progressionId: progressionIds.invocations, featureId: 401 },
+      { progressionId: progressionIds.invocations, featureId: 402 },
+    ],
+    ...over,
   })
 }
 
@@ -45,8 +51,12 @@ beforeAll(async () => {
   for (let i = 0; i < WARLOCK_PROGRESSION_CONTRACT.length; i++) {
     const c = WARLOCK_PROGRESSION_CONTRACT[i]!
     await db.insert(schema.features).values({ id: 100 + i, name: c.ownerName, featureType: 'class_feature', classId: WARLOCK, levelRequired: c.ownerLevelRequired })
-    await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable })
+    const [progression] = await db.insert(schema.progression).values({ featureId: 100 + i, kind: c.kind, count: c.count, optionSource: c.optionSource, replaceable: c.replaceable }).returning()
+    if (c.kind === 'pact_boon' || c.kind === 'invocations') progressionIds[c.kind] = progression.id
   }
+  await db.insert(schema.features).values(WARLOCK_PACT_BOON_OPTIONS.map((o, i) => ({
+    id: 410 + i, name: o.name, featureType: o.featureType, classId: WARLOCK, levelRequired: o.levelRequired, tag: o.tag,
+  })))
   // Feature passive RECHARGEABLE (repos court) → matérialisée d'office par createCharacter
   await db.insert(schema.features).values({ id: RECHARGE_FEATURE, name: 'Récup. arcanique', featureType: 'class_feature', classId: WARLOCK, levelRequired: 1, rechargeType: 'short_rest' })
   await db.insert(schema.features).values([

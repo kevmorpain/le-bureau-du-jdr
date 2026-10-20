@@ -1,7 +1,8 @@
 import { evaluate, type Formula, type FormulaContext } from '../utils/formula'
-import { PICK_CHOICE_KINDS, type ChoiceKind, type OptionSource } from './choices'
+import { PICK_CHOICE_KINDS, REPLACEABLE_EVERY_LEVEL_KINDS, type ChoiceKind, type OptionSource } from './choices'
 import type { SkillKey } from './skills'
 import type { AbilityKey } from './abilities'
+import type { PactBoon } from './pactBoon'
 import type { FeaturePrerequisite } from '../../server/db/schema/features'
 
 // Pur et partagé client/serveur. Doit rester importable par le projet vitest `unit` (sans alias `~~`) :
@@ -67,12 +68,14 @@ export interface CharacterProjection {
   proficientWeapons?: string[]
   picks?: Array<{ progressionId: number }>
   abilityModifiers?: Partial<Record<AbilityKey, number>>
-  pactBoon?: 'chain' | 'blade' | 'tome' | null
+  pactBoon?: PactBoon | null
   knownSpellNames?: string[]
   knownInvocationNames?: string[]
   abilityScores?: Partial<Record<AbilityKey, number>>
   armorProficiencies?: Array<'light' | 'medium' | 'heavy'>
   hasSpellcasting?: boolean
+  /** Ne filtre les options que par niveau : le serveur ignore l'état du personnage, et l'interface montre le verrou plutôt que de masquer l'option. */
+  ignorePrerequisites?: boolean
 }
 
 export interface ResolvedChoice extends ProgressionOwner {
@@ -93,22 +96,34 @@ function proficiencyBonus(totalLevel: number): number {
   return 2 + Math.floor((Math.max(1, totalLevel) - 1) / 4)
 }
 
+export type UnmetPrerequisite = { type: 'level', level: number }
+  | { type: 'pact_boon', pactBoon: PactBoon }
+  | { type: 'spell', name: string }
+  | { type: 'invocation', name: string }
+  | { type: 'ability_score', abilities: AbilityKey[], score: number }
+  | { type: 'armor_proficiency', armor: 'light' | 'medium' | 'heavy' }
+  | { type: 'spellcasting' }
+
 // Dépend de l'état du perso : non cachable, donc évalué ici et pas dans le catalogue.
-export function isOptionEligible(option: ResolvedOption, ownerClassLevel: number, projection: CharacterProjection): boolean {
-  if (option.levelRequired != null && option.levelRequired > ownerClassLevel) return false
+export function unmetPrerequisite(option: ResolvedOption, ownerClassLevel: number, projection: CharacterProjection): UnmetPrerequisite | null {
+  if (option.levelRequired != null && option.levelRequired > ownerClassLevel) return { type: 'level', level: option.levelRequired }
   const pre = option.prerequisites
-  if (!pre) return true
-  if (pre.requiredPactBoon && pre.requiredPactBoon !== (projection.pactBoon ?? null)) return false
-  if (pre.requiredSpellName && !(projection.knownSpellNames ?? []).includes(pre.requiredSpellName)) return false
-  if (pre.requiredInvocationName && !(projection.knownInvocationNames ?? []).includes(pre.requiredInvocationName)) return false
+  if (!pre || projection.ignorePrerequisites) return null
+  if (pre.requiredPactBoon && pre.requiredPactBoon !== (projection.pactBoon ?? null)) return { type: 'pact_boon', pactBoon: pre.requiredPactBoon }
+  if (pre.requiredSpellName && !(projection.knownSpellNames ?? []).includes(pre.requiredSpellName)) return { type: 'spell', name: pre.requiredSpellName }
+  if (pre.requiredInvocationName && !(projection.knownInvocationNames ?? []).includes(pre.requiredInvocationName)) return { type: 'invocation', name: pre.requiredInvocationName }
   if (pre.minAbilityScore) {
     const scores = projection.abilityScores ?? {}
-    const meets = pre.minAbilityScore.abilities.some(a => (scores[a] ?? 0) >= pre.minAbilityScore!.score)
-    if (!meets) return false
+    const { abilities, score } = pre.minAbilityScore
+    if (!abilities.some(a => (scores[a] ?? 0) >= score)) return { type: 'ability_score', abilities, score }
   }
-  if (pre.requiredArmorProficiency && !(projection.armorProficiencies ?? []).includes(pre.requiredArmorProficiency)) return false
-  if (pre.requiresSpellcasting && !projection.hasSpellcasting) return false
-  return true
+  if (pre.requiredArmorProficiency && !(projection.armorProficiencies ?? []).includes(pre.requiredArmorProficiency)) return { type: 'armor_proficiency', armor: pre.requiredArmorProficiency }
+  if (pre.requiresSpellcasting && !projection.hasSpellcasting) return { type: 'spellcasting' }
+  return null
+}
+
+export function isOptionEligible(option: ResolvedOption, ownerClassLevel: number, projection: CharacterProjection): boolean {
+  return unmetPrerequisite(option, ownerClassLevel, projection) === null
 }
 
 // ⚠️ Multiclasse : le `count` s'évalue au niveau de la classe PROPRIÉTAIRE, pas au niveau total
@@ -211,6 +226,8 @@ export function isPickChoice(c: ResolvedChoice): boolean {
 // sous-classe ne se résolvent qu'une fois la sous-classe connue : celle d'avant le level-up pour l'état de départ,
 // celle d'après (peut-être choisie à ce niveau) pour l'état d'arrivée. Un point de choix dont le nombre grandit
 // (ennemi juré du Rôdeur) revient avec le seul surplus : `count` et `remaining` valent le nombre de picks à faire.
+// Les options ne sont filtrées que par niveau (`ignorePrerequisites`). Un point de choix remplaçable à chaque niveau
+// (`REPLACEABLE_EVERY_LEVEL_KINDS`) déjà détenu revient sans surplus (`count` 0) : il reste ouvert au remplacement.
 export function choicesGainedAtLevelUp(
   catalog: Catalog,
   { classId, fromLevel, toLevel, mainClassId, subclassIdsBefore = [], subclassIdsAfter = [] }: {
@@ -223,10 +240,13 @@ export function choicesGainedAtLevelUp(
   },
 ): ResolvedChoice[] {
   const at = (level: number, subclassIds: number[]) =>
-    level > 0 ? resolveChoices({ classLevels: { [classId]: level }, mainClassId, subclassIds }, catalog).choices : []
+    level > 0 ? resolveChoices({ classLevels: { [classId]: level }, mainClassId, subclassIds, ignorePrerequisites: true }, catalog).choices : []
   const before = new Map(at(fromLevel, subclassIdsBefore).map(c => [c.progressionId, c.count]))
   return at(toLevel, subclassIdsAfter).flatMap((c) => {
-    const gained = c.count - (before.get(c.progressionId) ?? 0)
-    return c.ownerClassId === classId && gained > 0 ? [{ ...c, count: gained, remaining: gained }] : []
+    if (c.ownerClassId !== classId) return []
+    const held = before.get(c.progressionId)
+    const gained = c.count - (held ?? 0)
+    if (gained > 0) return [{ ...c, count: gained, remaining: gained }]
+    return held != null && c.replaceable && (REPLACEABLE_EVERY_LEVEL_KINDS as readonly ChoiceKind[]).includes(c.kind) ? [{ ...c, count: 0, remaining: 0 }] : []
   })
 }

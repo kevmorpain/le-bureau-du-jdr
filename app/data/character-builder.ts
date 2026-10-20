@@ -774,8 +774,7 @@ export const CLASSES: ClassData[] = [
   },
 ]
 
-// Les styles de combat (options, descriptions, niveaux d'accès) sont lus dans le catalogue
-// (`/api/catalog/classes/[name]/fighting-styles`), plus dans ce blob.
+// Les styles de combat (options, descriptions, niveaux d'accès) sont lus dans le catalogue des progressions, plus dans ce blob.
 
 export interface AlignmentData {
   id: string

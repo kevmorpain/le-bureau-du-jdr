@@ -10,8 +10,8 @@ import { guerrierSubclasses } from '../../server/db/seeds/data/guerrier'
 import { maneuverFeatures } from '../../server/db/seeds/data/maneuvers'
 import { catalogClasses } from '../fixtures/catalogClasses'
 
-// Le récapitulatif affiche les choix de classe que la fiche affichera : ennemis jurés et terrains du Rôdeur, 2ᵉ style de combat
-// du Champion, manœuvres du Maître de guerre.
+// Le récapitulatif affiche les choix de classe que la fiche affichera : ennemis jurés et terrains du Rôdeur, styles de combat
+// du Guerrier (dont le 2ᵉ, celui du Champion), manœuvres du Maître de guerre.
 
 const RODEUR = 8
 const GUERRIER = 5
@@ -38,6 +38,7 @@ registerEndpoint('/api/catalog/progressions', (): Catalog => ({
   progressions: [
     { progressionId: 1, ownerClassId: RODEUR, ownerLevelRequired: 1, kind: 'favored_enemy', count: FAVORED_ENEMY_COUNT, optionSource: { type: 'enum', values: [...FAVORED_ENEMIES] }, replaceable: false, options: FAVORED_ENEMIES.map(value => ({ value })) },
     { progressionId: 2, ownerClassId: RODEUR, ownerLevelRequired: 1, kind: 'terrain', count: FAVORED_TERRAIN_COUNT, optionSource: { type: 'enum', values: [...FAVORED_TERRAINS] }, replaceable: false, options: FAVORED_TERRAINS.map(value => ({ value })) },
+    { progressionId: 4, ownerClassId: GUERRIER, ownerLevelRequired: 1, kind: 'fighting_style', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feature_group', group: 'fighting_style' }, replaceable: false, options: STYLES.map(s => ({ featureId: s.id })) },
     { progressionId: 7, ownerClassId: GUERRIER, ownerSubclassId: CHAMPION, ownerLevelRequired: 10, kind: 'additional_fighting_style', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feature_group', group: 'fighting_style' }, replaceable: false, options: STYLES.map(s => ({ featureId: s.id })) },
     {
       progressionId: 8,
@@ -76,16 +77,17 @@ describe('Récapitulatif du builder — choix de classe', () => {
     expect(text()).toContain('TerrainfavoriForêtMarais')
   })
 
-  it('Champion 10 : le deuxième style de combat', async () => {
-    const { text } = await summaryOf({ classId: 'fighter', level: 10, subclass: 'Champion', fightingStyle: 'Duel', featurePicks: { 7: [32] } })
+  it('Champion 10 : le style de combat et le deuxième', async () => {
+    const { text } = await summaryOf({ classId: 'fighter', level: 10, subclass: 'Champion', featurePicks: { 4: [33], 7: [32] } })
 
-    await vi.waitFor(() => expect(text()).toContain('StyledecombatsupplémentaireDéfense'))
+    await vi.waitFor(() => expect(text()).toContain('StyledecombatDuel'))
+    expect(text()).toContain('StyledecombatsupplémentaireDéfense')
   })
 
   it('Maître de guerre 7 : les manœuvres choisies', async () => {
     const names = ['Parade', 'Riposte', 'Feinte', 'Balayage', 'Fente']
     const ids = names.map(n => MANEUVERS.find(m => m.name === n)!.id)
-    const { text } = await summaryOf({ classId: 'fighter', level: 7, subclass: 'Maître de guerre', fightingStyle: 'Duel', featurePicks: { 8: ids } })
+    const { text } = await summaryOf({ classId: 'fighter', level: 7, subclass: 'Maître de guerre', featurePicks: { 8: ids } })
 
     await vi.waitFor(() => expect(text()).toContain('Manœuvres'))
     for (const name of names) expect(text()).toContain(name)
@@ -93,7 +95,7 @@ describe('Récapitulatif du builder — choix de classe', () => {
   })
 
   it('un Guerrier de niveau 1 n\'affiche aucun choix de classe', async () => {
-    const { text } = await summaryOf({ classId: 'fighter', level: 1, fightingStyle: 'Duel' })
+    const { text } = await summaryOf({ classId: 'fighter', level: 1 })
     await new Promise(r => setTimeout(r, 300))
 
     expect(text()).toContain('Récapitulatif')

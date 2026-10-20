@@ -104,9 +104,9 @@ describe('Level-up — changement de classe', () => {
       featAbility: 'str',
       featSkills: ['athletics'],
       newSkills: ['perception'],
-      pactBoon: 'tome',
+      featurePicks: { 7: [3] },
+      featureReplacements: { 7: 4 },
       pactBoonCantripIds: [1],
-      newInvocationIds: [3],
       hpMethod: 'roll',
       hpRolled: 9,
     })

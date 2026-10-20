@@ -103,9 +103,9 @@ data.value = data.value.map(item =>
 - Modélisées comme `features` avec `featureType: 'eldritch_invocation'` (et non une table dédiée), liées à la classe Occultiste via `classId`. Catalogue de 33 entrées (PHB 2014 + TCoE).
 - Colonne `features.prerequisites` (JSON) : `{ requiredPactBoon?, requiredSpellName?, requiredInvocationName? }`.
 - `character_spells.source` étendu avec `'invocation'` — les `spell_grant` des invocations sont matérialisés en `character_spells` à l'apprentissage, supprimés au remplacement.
-- Persistance partagée : [server/utils/invocations.ts](../server/utils/invocations.ts) (`applyInvocationChanges`) utilisé par création + level-up.
+- Persistance partagée : `featurePickStmts` ([server/utils/featurePicks.ts](../server/utils/featurePicks.ts)), utilisé par création + level-up (remplacement compris).
 - 3 nouveaux types d'effets : `eldritch_blast_modifier` (agonizing/repelling/range_extended), `pact_weapon_modifier` (extra_attack/lifedrinker), `sight_modifier` (magical_darkness_120/invisible_in_dim_light/true_sight_disguise/read_all_writing).
-- UI : composant partagé [InvocationPicker.vue](../app/components/warlock/InvocationPicker.vue) utilisé dans `StepClass.vue` (création) et `LevelUpStepFeatures.vue` (level-up, avec flow de remplacement).
+- UI : le sélecteur générique [FeaturePickPicker.vue](../app/components/character_builder/FeaturePickPicker.vue) (niveau et prérequis verrouillent une carte), utilisé dans `StepClass.vue` (création) et `LevelUpStepFeatures.vue` (level-up, avec puces de remplacement).
 
 ---
 

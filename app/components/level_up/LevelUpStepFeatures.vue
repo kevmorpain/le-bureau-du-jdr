@@ -58,39 +58,81 @@
       </div>
     </div>
 
-    <div v-if="needsFightingStyle" class="mb-6">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
-        ⚔ Style de combat
-      </p>
-      <div class="flex flex-col gap-2">
-        <button
-          v-for="style in availableStyles"
-          :key="style.id"
-          class="text-left px-4 py-3 rounded-xl border transition-all"
-          :class="state.fightingStyle === style.name
-            ? 'border-red-500/60 bg-red-500/10 text-red-400'
-            : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-(--ui-border-strong) text-(--ui-text)'"
-          @click="state.fightingStyle = style.name"
-        >
-          <div class="font-semibold text-sm">{{ style.name }}</div>
-          <div class="text-xs text-muted mt-0.5">{{ style.description }}</div>
-        </button>
-      </div>
-    </div>
-
-    <div v-if="newFeaturePickChoices.length" class="mb-6 space-y-3">
-      <FeaturePickPicker
-        v-for="choice in newFeaturePickChoices"
+    <div
+      v-if="visiblePickChoices.length"
+      class="mb-6 space-y-3"
+    >
+      <template
+        v-for="choice in visiblePickChoices"
         :key="choice.progressionId"
-        v-model="state.featurePicks[choice.progressionId]"
-        v-model:replaced="state.featureReplacements[choice.progressionId]"
-        :title="choiceTitle(choice) ?? 'Choix'"
-        :count="choice.count"
-        :option-ids="optionFeatureIds(choice)"
-        :replaceable-ids="choice.replaceable ? ownedFeatureIds : []"
-        :excluded-ids="ownedFeatureIds"
-        :excluded-names="state.fightingStyle ? [state.fightingStyle] : []"
-      />
+      >
+        <FeaturePickPicker
+          v-model="state.featurePicks[choice.progressionId]"
+          v-model:replaced="state.featureReplacements[choice.progressionId]"
+          :title="choiceTitle(choice) ?? 'Choix'"
+          :count="choice.count"
+          :options="choice.options"
+          :owner-level="choice.classLevel"
+          :unlock-level="choice.ownerLevelRequired"
+          :accent="choiceAccent(choice)"
+          :replaceable-ids="choice.replaceable ? ownedFeatureIds : []"
+          :excluded-ids="featurePicksUnavailable(choice.progressionId)"
+          :projection="eligibility"
+        />
+
+        <template v-if="choice.kind === 'pact_boon'">
+          <div
+            v-if="pickedPactBoon === 'chain'"
+            class="px-3 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/8 text-xs text-emerald-400"
+          >
+            ✦ Le sort <strong>Appel de familier</strong> sera automatiquement ajouté à votre grimoire.
+          </div>
+
+          <div v-else-if="pickedPactBoon === 'blade'">
+            <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+              Arme de pacte (facultatif)
+            </p>
+            <div
+              v-if="meleeWeapons.length"
+              class="flex flex-col gap-1.5"
+            >
+              <button
+                class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
+                :class="state.pactWeaponInventoryId === null
+                  ? 'border-violet-500/60 bg-violet-500/10 text-violet-400 font-semibold'
+                  : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-(--ui-border-strong)'"
+                @click="state.pactWeaponInventoryId = null"
+              >
+                Choisir plus tard
+              </button>
+              <button
+                v-for="inv in meleeWeapons"
+                :key="inv.inventory.id"
+                class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
+                :class="state.pactWeaponInventoryId === inv.inventory.id
+                  ? 'border-violet-500/60 bg-violet-500/10 text-violet-400 font-semibold'
+                  : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-(--ui-border-strong)'"
+                @click="state.pactWeaponInventoryId = inv.inventory.id"
+              >
+                {{ inv.item.name }}
+              </button>
+            </div>
+            <div
+              v-else
+              class="px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic"
+            >
+              Aucune arme de corps-à-corps dans l'inventaire — vous pourrez lier une arme depuis votre fiche.
+            </div>
+          </div>
+
+          <div
+            v-else-if="pickedPactBoon === 'tome'"
+            class="px-3 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/8 text-xs text-amber-400"
+          >
+            ✦ Rendez-vous à l'étape <strong>Magie</strong> pour choisir vos 3 sorts mineurs du Tome.
+          </div>
+        </template>
+      </template>
     </div>
 
     <div v-if="needsExpertise" class="mb-6">
@@ -122,132 +164,8 @@
       </div>
     </div>
 
-    <div v-if="needsPactBoon" class="mb-6">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
-        🌑 Don du Pacte
-      </p>
-      <div class="flex flex-col gap-2">
-        <button
-          v-for="option in PACT_BOON_OPTIONS"
-          :key="option.id"
-          class="text-left px-4 py-3 rounded-xl border transition-all"
-          :class="state.pactBoon === option.id
-            ? 'border-violet-500/60 bg-violet-500/10 text-violet-400'
-            : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-(--ui-border-strong) text-(--ui-text)'"
-          @click="state.pactBoon = option.id"
-        >
-          <div class="font-semibold text-sm">{{ option.name }}</div>
-          <div class="text-xs text-muted mt-0.5 leading-snug">{{ option.description }}</div>
-        </button>
-      </div>
-
-      <template v-if="state.pactBoon === 'chain'">
-        <div class="mt-3 px-3 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/8 text-xs text-emerald-400">
-          ✦ Le sort <strong>Appel de familier</strong> sera automatiquement ajouté à votre grimoire.
-        </div>
-      </template>
-
-      <template v-else-if="state.pactBoon === 'blade'">
-        <div class="mt-3">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Arme de pacte (facultatif)</p>
-          <div v-if="meleeWeapons.length" class="flex flex-col gap-1.5">
-            <button
-              class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
-              :class="state.pactWeaponInventoryId === null
-                ? 'border-violet-500/60 bg-violet-500/10 text-violet-400 font-semibold'
-                : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-(--ui-border-strong)'"
-              @click="state.pactWeaponInventoryId = null"
-            >
-              Choisir plus tard
-            </button>
-            <button
-              v-for="inv in meleeWeapons"
-              :key="inv.inventory.id"
-              class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
-              :class="state.pactWeaponInventoryId === inv.inventory.id
-                ? 'border-violet-500/60 bg-violet-500/10 text-violet-400 font-semibold'
-                : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-(--ui-border-strong)'"
-              @click="state.pactWeaponInventoryId = inv.inventory.id"
-            >
-              {{ inv.item.name }}
-            </button>
-          </div>
-          <div v-else class="px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic">
-            Aucune arme de corps-à-corps dans l'inventaire — vous pourrez lier une arme depuis votre fiche.
-          </div>
-        </div>
-      </template>
-
-      <template v-else-if="state.pactBoon === 'tome'">
-        <div class="mt-3 px-3 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/8 text-xs text-amber-400">
-          ✦ Rendez-vous à l'étape <strong>Magie</strong> pour choisir vos 3 sorts mineurs du Tome.
-        </div>
-      </template>
-    </div>
-
-    <div v-if="needsInvocations || canReplaceInvocation" class="mb-6 space-y-5">
-
-      <div v-if="canReplaceInvocation">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted">
-            🔁 Remplacer une manifestation existante (optionnel)
-          </p>
-          <button
-            v-if="state.replacedInvocationId !== null"
-            type="button"
-            class="text-xs text-muted hover:text-amber-400 underline"
-            @click="state.replacedInvocationId = null"
-          >
-            Annuler
-          </button>
-        </div>
-        <p class="text-xs text-muted mb-2">
-          Vous pouvez retirer l'une de vos manifestations actuelles pour la remplacer par une nouvelle ci-dessous.
-        </p>
-        <div v-if="!knownInvocationDetails.length" class="px-3 py-2 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic">
-          Vous ne connaissez encore aucune manifestation.
-        </div>
-        <div v-else class="flex flex-wrap gap-2">
-          <button
-            v-for="inv in knownInvocationDetails"
-            :key="inv.id"
-            type="button"
-            class="text-left px-3 py-2 rounded-lg border text-xs transition-all"
-            :class="state.replacedInvocationId === inv.id
-              ? 'border-amber-500/60 bg-amber-500/10 text-amber-400 font-semibold line-through'
-              : 'border-(--ui-border) bg-(--ui-bg-elevated) text-muted hover:border-amber-500/40 cursor-pointer'"
-            @click="state.replacedInvocationId = state.replacedInvocationId === inv.id ? null : inv.id"
-          >
-            {{ inv.name }}
-          </button>
-        </div>
-      </div>
-
-      <div v-if="needsInvocations || state.replacedInvocationId !== null">
-        <InvocationPicker
-          v-model="state.newInvocationIds"
-          :max-count="totalPickCount"
-          :current-level="state.toLevel"
-          :pact-boon="effectivePactBoon"
-          :known-spell-names="knownSpellNames"
-          :known-invocation-ids="knownInvocationIds"
-          :excluded-invocation-ids="excludedInvocationIds"
-          :picker-label="pickerLabel"
-        />
-      </div>
-    </div>
-
-    <!-- Métamagie (Ensorceleur) — ajout de nouvelles options ; NON remplaçable en 2014 -->
-    <div v-if="needsMetamagic" class="mb-6 space-y-5">
-      <MetamagicPicker
-        v-model="state.newMetamagicIds"
-        :max-count="newMetamagicCount"
-        :excluded-ids="knownMetamagicIds"
-      />
-    </div>
-
     <div
-      v-if="!isSubclassLevel && !needsFightingStyle && !newFeaturePickChoices.length && !needsExpertise && !needsPactBoon && !needsInvocations && !canReplaceInvocation && !needsMetamagic"
+      v-if="!isSubclassLevel && !visiblePickChoices.length && !needsExpertise"
       class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted"
     >
       Aucun choix requis à cette étape. Cliquez sur Suivant pour continuer.
@@ -256,35 +174,20 @@
 </template>
 
 <script lang="ts" setup>
-import { optionFeatureIds } from '~~/shared/rules/featurePicks'
-
-const PACT_BOON_OPTIONS = [
-  { id: 'chain' as const, name: 'Pacte de la Chaîne', description: 'Vous apprenez Appel de familier et pouvez invoquer un familier spécial (diablotin, pseudodragon, quasit ou lutin).' },
-  { id: 'blade' as const, name: 'Pacte de la Lame', description: 'Vous pouvez créer une arme de pacte magique dans votre main vide. Vous en choisissez la forme à chaque invocation.' },
-  { id: 'tome' as const, name: 'Pacte du Tome', description: 'Votre Livre des Ombres vous octroie 3 sorts mineurs de n\'importe quelle classe, lancés à volonté.' },
-]
-
 const charSheet = inject('charSheet') as any
 
 const {
   state,
   pickedClass,
-  pickedCharClass,
   isSubclassLevel,
-  needsFightingStyle,
   newFeaturePickChoices,
   ownedFeatureIds,
+  featurePicksUnavailable,
   needsExpertise,
   newExpertiseCount,
-  needsPactBoon,
-  needsInvocations,
-  canReplaceInvocation,
-  newInvocationsCount,
-  knownInvocationIds,
-  needsMetamagic,
-  newMetamagicCount,
-  knownMetamagicIds,
+  pickedPactBoon,
   effectivePactBoon,
+  knownInvocationNames,
   knownSpellNames,
   eligibleExpertiseSkills,
   expertSkills,
@@ -297,38 +200,16 @@ const {
 
 const { extendedQuery } = useExtendedContent()
 
-const { data: allInvocations } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
-  query: extendedQuery,
-  default: () => [],
-})
-const knownInvocationDetails = computed(() => {
-  const known = new Set(knownInvocationIds.value)
-  return (allInvocations.value ?? []).filter(inv => known.has(inv.id))
-})
+// L'état du personnage qui décide des prérequis des manifestations (pacte, sorts connus, manifestations déjà prises).
+const eligibility = computed(() => ({
+  pactBoon: effectivePactBoon.value,
+  knownSpellNames: knownSpellNames.value,
+  knownInvocationNames: knownInvocationNames.value,
+}))
 
-const totalPickCount = computed(() =>
-  newInvocationsCount.value + (state.value.replacedInvocationId ? 1 : 0),
-)
-
-const excludedInvocationIds = computed(() =>
-  knownInvocationIds.value.filter(id => id !== state.value.replacedInvocationId),
-)
-
-const pickerLabel = computed(() => {
-  if (state.value.replacedInvocationId !== null && newInvocationsCount.value === 0) {
-    return '🌑 Choisissez la manifestation de remplacement'
-  }
-  if (state.value.replacedInvocationId !== null) {
-    return `🌑 Nouvelles manifestations occultes — choisissez ${totalPickCount.value} (${newInvocationsCount.value} gain + 1 remplacement)`
-  }
-  return `🌑 Nouvelles manifestations occultes — choisissez ${newInvocationsCount.value}`
-})
-
-watch(() => state.value.replacedInvocationId, (newVal) => {
-  if (newVal === null && state.value.newInvocationIds.length > newInvocationsCount.value) {
-    state.value.newInvocationIds = state.value.newInvocationIds.slice(0, newInvocationsCount.value)
-  }
-})
+// Un point de choix sans option à prendre ne s'affiche que s'il permet d'échanger une option déjà portée.
+const visiblePickChoices = computed(() => newFeaturePickChoices.value.filter(c =>
+  c.count > 0 || (c.replaceable && c.options.some(o => o.featureId != null && ownedFeatureIds.value.includes(o.featureId)))))
 
 const meleeWeapons = computed(() => {
   const inventory: Array<{ inventory: any, item: any }> = (charSheet.value as any)?.inventory ?? []
@@ -356,15 +237,6 @@ const { data: subclassesData } = useFetch(
   { query: extendedQuery, watch: [pickedClass, () => extendedQuery.value], immediate: true },
 )
 const subclasses = computed(() => (subclassesData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>)
-
-// Options de style de combat lues dans le catalogue, plus dans le blob front.
-const { data: fightingStyleData } = useFetch(
-  () => pickedClass.value ? `/api/catalog/classes/${encodeURIComponent(pickedClass.value!.dbName)}/fighting-styles` : '',
-  { watch: [pickedClass], immediate: true },
-)
-const availableStyles = computed(() =>
-  (fightingStyleData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>,
-)
 
 const alreadyExpertLabels = computed(() => {
   const already = new Set(expertSkills.value)

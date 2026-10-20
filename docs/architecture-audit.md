@@ -83,6 +83,10 @@ niveau). Le refactor s'articule là-dessus → [`rules-engine.md`](./rules-engin
 `needsInvocations` / `needsFightingStyle` existent dans `StepClass.vue` **et** dans
 `useLevelUp` (`LU_FIGHTING_STYLE_LEVELS`…). Ajouter une règle = éditer deux implémentations front.
 
+> **Depuis cet audit** : ces trois gardes n'existent plus. Le catalogue des progressions dit quand et parmi quoi, et le pacte, les
+> manifestations, le style de combat et la Métamagie sont des picks `featurePicks` (`character_choices`), rendus par un seul
+> `FeaturePickPicker` ([D26](./decisions.md#d26)).
+
 ---
 
 ## 6. Ensembles fermés définis 3–5×

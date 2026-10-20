@@ -5,3 +5,6 @@ export const PACT_BOON_NAMES: Record<PactBoon, string> = {
   blade: 'Pacte de la Lame',
   tome: 'Pacte du Tome',
 }
+
+export const pactBoonOfName = (name: string | null | undefined): PactBoon | null =>
+  (Object.keys(PACT_BOON_NAMES) as PactBoon[]).find(k => PACT_BOON_NAMES[k] === name) ?? null

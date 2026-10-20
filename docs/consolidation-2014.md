@@ -176,7 +176,7 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
     - `useBuilderEntities` repointé `/api/classes` → **`/api/catalog/classes`** (≡ `loadClasses`, cachable
       au edge — F4) ; son type `DbClass` porte désormais `subclassLevel` + sous-classes imbriquées, et il
       expose `subclassCatalogFor(classDbId)` = source unique du niveau/des options (builder ET level-up).
-    - **Gating = miroir de `needsPactBoon`** : `catalogChoices.some(c => c.kind === 'subclass')` dans
+    - **Gating = miroir de `needsPactBoon`** (disparu depuis : le pacte est un pick `featurePicks`, [D26](./decisions.md#d26)) : `catalogChoices.some(c => c.kind === 'subclass')` dans
       `useCharacterBuilder` (`needsSubclass`) ; `choicesAtToLevel.some(c => c.kind === 'subclass' &&
       c.ownerLevelRequired === toLevel)` dans `useLevelUp` (`isSubclassLevel`). `LevelUpStepClass` dérive
       ses badges via `subclassLevelFor(builderClassId)` (catalogue), `LevelUpStepFeatures` lit ses options
@@ -232,6 +232,8 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       ⚠️ **Résidu remonté** : le 2e style du **Champion niv 10** (« Style de combat supplémentaire », progression
       possédée par la sous-classe) N'EST PAS câblé — chantier séparé (owner `ownerSubclassId`, cas unique). → P5, [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175).
       **✅ Résolu (lot 10, migration 0150)** par le chemin générique `featurePicks` (type de choix `additional_fighting_style`).
+      **↪ Remplacé ([D26](./decisions.md#d26))** : le champ `fightingStyle` du payload et `server/utils/fightingStyle.ts` n'existent
+      plus ; le style de la classe est un pick `featurePicks` comme le deuxième (golden-master A inchangé).
     - **Tranche 3 (APPLICATION DES EFFETS) : ✅ FAIT.** Le style choisi (feature `fighting_style`
       matérialisée) porte un effet `fighting_style_modifier` qui remonte à `allEffects` (via
       character_features → resolvedFeatures → classFeatureEffects → baseAllEffects, chemin des
@@ -256,6 +258,9 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
       de choisir). Tests : `loadFightingStyles` (catalogSources.test) ; gating catalogue déjà couvert par
       `fightingStyleProgression.test`. Suite 468 verte, typecheck 63/10 baseline. **Reste (autres chantiers F2) :
       expertise/ASI (déjà persistés, options front à repointer sur le même patron).**
+      **↪ Remplacé ([D26](./decisions.md#d26))** : `needsFightingStyle`, l'endpoint `/api/catalog/classes/[name]/fighting-styles` et
+      `loadFightingStyles` ont disparu ; le style est un point de choix `feature_group` rendu par `FeaturePickPicker`.
+      `fightingStyleLevelFor` reste, pour les badges du level-up.
 - **Tracks parallèles sûrs** (empreinte disjointe) : **F7** (dragonborn → lignée), **F8/F9**
   (hygiène schéma), **F10** (typecheck baseline + bug mort l.313).
 

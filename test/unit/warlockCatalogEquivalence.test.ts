@@ -9,9 +9,9 @@ import { warlockCatalog, WARLOCK_CLASS_ID } from '../fixtures/resolveCatalog'
 // `classId==='warlock' && level>=3`). On verrouille l'équivalence sur les 20 niveaux avant de
 // débrancher les tables — filet de sécurité en l'absence de vérif visuelle du wizard.
 //
-// La dérivation front (identique dans les deux composables) :
+// La dérivation catalogue-driven :
 //   choicesAt(L)          = resolveChoices({classLevels:{[warlockId]: L}}, catalog).choices
-//   needsPactBoon(L)      = choicesAt(L).some(c => c.kind === 'pact_boon')           // « unlocked » ⟺ L≥3
+//   pactDue(L)            = choicesAt(L).some(c => c.kind === 'pact_boon')           // « unlocked » ⟺ L≥3
 //   invocationsCount(L)   = choicesAt(L).find(c => c.kind === 'invocations')?.count ?? 0
 //   arcanumSpellLevel(L)  = choicesAt(L).find(c => c.kind === 'spell' && c.ownerLevelRequired === L)
 //                             .optionSource.maxLevel                                 // arcanum débloqué À ce niveau
@@ -25,7 +25,7 @@ const choicesAt = (level: number) =>
   resolveChoices({ classLevels: { [WARLOCK_CLASS_ID]: level } }, catalog).choices
 
 describe('6b — équivalence catalogue-driven ⟺ tables Occultiste codées en dur', () => {
-  it('needsPactBoon(L) == (L >= 3) pour L = 1..20', () => {
+  it('pactDue(L) == (L >= 3) pour L = 1..20', () => {
     for (let L = 1; L <= 20; L++) {
       const pactDue = choicesAt(L).some(c => c.kind === 'pact_boon')
       expect(pactDue, `niveau ${L}`).toBe(L >= 3)

@@ -28,7 +28,7 @@ function subclassCatalog(subclassLevel: number, subclassIds: number[]): Catalog 
   }
 }
 
-// Formule EXACTE des composables (useCharacterBuilder / useLevelUp), miroir de needsPactBoon :
+// Formule EXACTE des composables (useCharacterBuilder / useLevelUp), miroir de needsSubclass :
 //   catalogChoices = resolveChoices({classLevels:{[id]: L}}, catalog).choices
 //   needsSubclass  = catalogChoices.some(c => c.kind === 'subclass')
 const choicesAt = (catalog: Catalog, level: number, picks: Array<{ progressionId: number }> = []) =>

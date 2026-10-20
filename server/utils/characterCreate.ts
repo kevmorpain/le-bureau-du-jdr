@@ -3,9 +3,7 @@ import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
 import { buildCatalog } from '~~/server/utils/catalog'
-import { resolveFightingStylePick } from '~~/server/utils/fightingStyle'
-import { resolvePactBoonFeatureId } from '~~/server/utils/pactBoon'
-import { featurePickSchema, featurePickWriteStmts } from '~~/server/utils/featurePicks'
+import { featurePickSchema, featurePickStmts, pickedPactBoon } from '~~/server/utils/featurePicks'
 import { featurePicksError } from '~~/shared/rules/featurePicks'
 import { resolveExpertiseProgressionId, expertiseWriteStmts } from '~~/server/utils/expertise'
 import { choicePickSchema, choicePicksError, choicePickWriteStmts, type ChoicePick } from '~~/server/utils/choicePicks'
@@ -65,7 +63,6 @@ export const createCharacterSchema = z.object({
   hpBase: z.number().int().positive(),
   classId: z.number().int().positive(),
   subclassId: z.number().int().positive().nullable().optional(),
-  fightingStyle: z.string().nullable().optional(),
   expertiseSkills: uniqueSkillKeysSchema.optional().default([]),
   level: z.number().int().min(1).max(20),
   speciesId: z.number().int().positive().nullable().optional(),
@@ -104,11 +101,8 @@ export const createCharacterSchema = z.object({
   pe: z.number().int().min(0).optional(),
   pa: z.number().int().min(0).optional(),
   pc: z.number().int().min(0).optional(),
-  pactBoon: z.enum(['chain', 'blade', 'tome']).nullable().optional(),
   pactWeaponItemId: z.number().int().positive().nullable().optional(),
   pactBoonCantripIds: z.array(z.number().int()).optional(),
-  invocationIds: z.array(z.number().int().positive()).optional(),
-  metamagicIds: z.array(z.number().int().positive()).optional(),
   asiBonuses: z
     .array(z.object({
       classLevel: z.number().int().min(1).max(20),
@@ -145,7 +139,7 @@ export const createCharacterSchema = z.object({
   preparedSpellIds: z.array(z.number().int()).optional(),
   // Maîtrises et sorts mineurs choisis sur un point de choix d'espèce, de lignée, d'historique ou de classe.
   choicePicks: z.array(choicePickSchema).optional().default([]),
-  // Options de feature choisies sur un point de choix qui n'a pas de chemin dédié (2ᵉ style de combat, manœuvres).
+  // Options de feature choisies : style de combat, pacte, manifestations, Métamagie, manœuvres.
   featurePicks: z.array(featurePickSchema).optional().default([]),
   weaponMasteryChoices: z
     .array(z.object({
@@ -181,8 +175,7 @@ async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset
   const featureIds = [
     ...(d.asiFeats ?? []).map(f => f.featureId),
     ...(d.bonusFeatureId != null ? [d.bonusFeatureId] : []),
-    ...(d.invocationIds ?? []),
-    ...(d.metamagicIds ?? []),
+    ...d.featurePicks.map(p => p.featureId),
   ]
   if (featureIds.length) {
     const rows = await db
@@ -261,13 +254,11 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     if (!prog || prog.kind !== 'weapon_mastery') throw new CharacterValidationError(`Le point de choix de maîtrise d'armes (id=${wm.progressionId}) est inconnu ou n'est pas une maîtrise d'armes.`)
   }
 
-  const invocationIds = d.invocationIds ?? []
-  const metamagicIds = d.metamagicIds ?? []
   const expertiseSkills = d.expertiseSkills ?? []
   const classSkills = d.classSkills ?? []
   const choicePicks = d.choicePicks ?? []
   const featurePicks = d.featurePicks ?? []
-  const needsCatalog = invocationIds.length > 0 || metamagicIds.length > 0 || d.pactBoon != null || (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0 || classSkills.length > 0 || choicePicks.length > 0 || featurePicks.length > 0
+  const needsCatalog = (d.arcaneMysteria?.length ?? 0) > 0 || expertiseSkills.length > 0 || classSkills.length > 0 || choicePicks.length > 0 || featurePicks.length > 0
   if (!needsCatalog) return { picks: [], choices: [] }
 
   const speciesId = d.speciesId ?? undefined
@@ -285,33 +276,8 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
     lineageId,
     backgroundId: backgroundId ?? undefined,
     duplicates: await creationDuplicates(db, { classId, speciesId: speciesId ?? null, lineageId: lineageId ?? null, backgroundId }),
+    ignorePrerequisites: true,
   }, catalog)
-
-  if (invocationIds.length > 0) {
-    const invChoice = choices.find(c => c.kind === 'invocations')
-    if (!invChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir de manifestations occultes au niveau ${d.level}.`)
-    const inGroup = await db
-      .select({ id: schema.features.id })
-      .from(schema.features)
-      .where(and(eq(schema.features.tag, 'invocation'), inArray(schema.features.id, invocationIds)))
-    if (inGroup.length !== invocationIds.length) throw new CharacterValidationError(`Une manifestation choisie est inconnue ou n'est pas une invocation.`)
-    if (invocationIds.length > invChoice.count) throw new CharacterValidationError(`Trop de manifestations occultes (${invocationIds.length} pour un maximum de ${invChoice.count}).`)
-  }
-
-  if (metamagicIds.length > 0) {
-    const mmChoice = choices.find(c => c.kind === 'metamagic')
-    if (!mmChoice) throw new CharacterValidationError(`Cette classe ne peut pas choisir d'options de métamagie au niveau ${d.level}.`)
-    const inGroup = await db
-      .select({ id: schema.features.id })
-      .from(schema.features)
-      .where(and(eq(schema.features.tag, 'metamagic'), inArray(schema.features.id, metamagicIds)))
-    if (inGroup.length !== metamagicIds.length) throw new CharacterValidationError(`Une option de métamagie choisie est inconnue ou n'est pas une métamagie.`)
-    if (metamagicIds.length > mmChoice.count) throw new CharacterValidationError(`Trop d'options de métamagie (${metamagicIds.length} pour un maximum de ${mmChoice.count}).`)
-  }
-
-  if (d.pactBoon != null && !choices.some(c => c.kind === 'pact_boon')) {
-    throw new CharacterValidationError(`Cette classe ne peut pas choisir de faveur de pacte au niveau ${d.level}.`)
-  }
 
   // Matcher par maxLevel évite d'accepter un arcanum niv. 9 pour un occultiste 13.
   for (const arc of d.arcaneMysteria ?? []) {
@@ -343,8 +309,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   const error = choicePicksError(picks, choices)
   if (error) throw new CharacterValidationError(error)
 
-  const firstStyle = featurePicks.length && d.fightingStyle ? await resolveFightingStylePick(db, classId, d.fightingStyle, d.level) : null
-  const featureError = featurePicksError(featurePicks, choices, new Set(firstStyle ? [firstStyle.featureId] : []))
+  const featureError = featurePicksError(featurePicks, choices, new Set())
   if (featureError) throw new CharacterValidationError(featureError)
   return { picks, choices }
 }
@@ -417,33 +382,16 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     : []
   const passiveFeatureIds = [...classFeatureRows, ...subclassFeatureRows].map(f => f.id)
 
+  const pactBoon = await pickedPactBoon(db, d.featurePicks, validated.choices)
+
   let familiarSpellId: number | null = null
-  if (d.pactBoon === 'chain') {
+  if (pactBoon === 'chain') {
     const [familiar] = await db
       .select({ id: schema.spells.id })
       .from(schema.spells)
       .where(eq(schema.spells.name, 'Appel de familier'))
       .limit(1)
     familiarSpellId = familiar?.id ?? null
-  }
-
-  let invocationGrantSpellIds: number[] = []
-  if (d.invocationIds?.length) {
-    const grants = await db
-      .select({ value: schema.effects.value })
-      .from(schema.featureEffects)
-      .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
-      .where(and(inArray(schema.featureEffects.featureId, d.invocationIds), eq(schema.effects.type, 'spell_grant')))
-    const spellNames = grants
-      .map(r => (r.value as { spellName?: string } | null)?.spellName)
-      .filter((n): n is string => typeof n === 'string')
-    if (spellNames.length) {
-      const spellRows = await db
-        .select({ id: schema.spells.id })
-        .from(schema.spells)
-        .where(inArray(schema.spells.name, spellNames))
-      invocationGrantSpellIds = spellRows.map(s => s.id)
-    }
   }
 
   // Sorts innés d'espèce (+ lignée) matérialisés en `character_spells`, sinon ils restent en prose.
@@ -505,12 +453,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       .limit(1)
     subclassProgressionId = prog?.id ?? null
   }
-
-  const fightingStylePick = d.fightingStyle
-    ? await resolveFightingStylePick(db, cls.id, d.fightingStyle, d.level)
-    : null
-
-  const pactBoonFeatureId = d.pactBoon ? await resolvePactBoonFeatureId(db, cls.id, d.pactBoon) : null
 
   const expertiseProgressionId = d.expertiseSkills?.length
     ? await resolveExpertiseProgressionId(db, cls.id)
@@ -581,7 +523,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     level: d.level,
     isMain: true,
     subclassId,
-    pactBoon: d.pactBoon ?? null,
+    pactBoon,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any))
 
@@ -601,24 +543,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }).onConflictDoNothing())
   }
 
-  if (fightingStylePick) {
-    stmts.push(db.insert(schema.characterChoices).values({
-      characterSheetId: sheetId,
-      progressionId: fightingStylePick.progressionId,
-      selectedFeatureId: fightingStylePick.featureId,
-    }).onConflictDoNothing())
-    stmts.push(db.insert(schema.characterFeatures)
-      .values({ characterSheetId: sheetId, featureId: fightingStylePick.featureId, currentUses: 0 })
-      .onConflictDoNothing())
-  }
-
-  stmts.push(...featurePickWriteStmts(db, sheetId, d.featurePicks ?? []))
-
-  if (pactBoonFeatureId != null) {
-    stmts.push(db.insert(schema.characterFeatures)
-      .values({ characterSheetId: sheetId, featureId: pactBoonFeatureId, currentUses: 0 })
-      .onConflictDoNothing())
-  }
+  stmts.push(...await featurePickStmts(db, { characterSheetId: sheetId, classId: cls.id, ruleset, picks: d.featurePicks, choices: validated.choices }))
 
   if (d.abilityScoreChoices?.length) {
     stmts.push(db.insert(schema.characterChoices).values(
@@ -779,32 +704,21 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
         characterSheetId: sheetId,
         itemId,
         quantity: 1,
-        isPactWeapon: d.pactBoon === 'blade' && d.pactWeaponItemId === itemId,
+        isPactWeapon: pactBoon === 'blade' && d.pactWeaponItemId === itemId,
       })),
     ))
   }
 
-  if (d.pactBoon === 'chain' && familiarSpellId != null) {
+  if (pactBoon === 'chain' && familiarSpellId != null) {
     stmts.push(db.insert(schema.characterSpells)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .values({ characterSheetId: sheetId, spellId: familiarSpellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
       .onConflictDoNothing())
   }
-  else if (d.pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
+  else if (pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
       .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
       .onConflictDoNothing())
-  }
-
-  if (d.invocationIds?.length) {
-    stmts.push(db.insert(schema.characterFeatures)
-      .values(d.invocationIds.map(featureId => ({ characterSheetId: sheetId, featureId, currentUses: 0 })))
-      .onConflictDoNothing())
-    if (invocationGrantSpellIds.length) {
-      stmts.push(db.insert(schema.characterSpells)
-        .values(invocationGrantSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'invocation' as const })))
-        .onConflictDoNothing())
-    }
   }
 
   // Sort mineur choisi par un trait d'espèce ou de lignée (Haut-elfe) : rangé avec les sorts innés.
@@ -816,12 +730,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   if (speciesSpellIds.length) {
     stmts.push(db.insert(schema.characterSpells)
       .values(speciesSpellIds.map(spellId => ({ characterSheetId: sheetId, spellId, isKnown: true, isPrepared: false, source: 'species' as const })))
-      .onConflictDoNothing())
-  }
-
-  if (d.metamagicIds?.length) {
-    stmts.push(db.insert(schema.characterFeatures)
-      .values(d.metamagicIds.map(featureId => ({ characterSheetId: sheetId, featureId, currentUses: 0 })))
       .onConflictDoNothing())
   }
 

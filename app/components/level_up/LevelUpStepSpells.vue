@@ -145,7 +145,10 @@
       </div>
     </div>
 
-    <div v-if="state.pactBoon === 'chain'" class="mb-6">
+    <div
+      v-if="pickedPactBoon === 'chain'"
+      class="mb-6"
+    >
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
         <UBadge color="violet" variant="subtle" size="md">Auto-ajouté</UBadge>
@@ -164,7 +167,10 @@
       </div>
     </div>
 
-    <div v-if="state.pactBoon === 'tome'" class="mb-6">
+    <div
+      v-if="pickedPactBoon === 'tome'"
+      class="mb-6"
+    >
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte du Tome</p>
         <span
@@ -391,6 +397,7 @@ const {
   outsideSchoolPicks,
   isSchoolBlocked,
   levelUpSpellcasting,
+  pickedPactBoon,
 } = useLevelUp(inject('charSheet') as any)
 
 const { t } = useI18n()

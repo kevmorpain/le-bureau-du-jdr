@@ -1451,6 +1451,39 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
     {
       "classLevel": null,
       "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Armure des ombres",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Regard de deux esprits",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "pact_boon:Faveur de pacte",
+      "selectedAbility": null,
+      "selectedFeature": "Pacte de la Chaîne",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
       "progression": "skill:Compétences de classe",
       "selectedAbility": null,
       "selectedFeature": null,
@@ -1591,7 +1624,7 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
 }
 `;
 
-exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/dons création) > création niv 10 (pacte + manifestations + ASI niv 4, don niv 8, don bonus) puis montée 10→11 (arcanum niv 6) > C2 · niv 11 (manifestation ajoutée + arcanum niv 6) 1`] = `
+exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/dons création) > création niv 10 (pacte + manifestations + ASI niv 4, don niv 8, don bonus) puis montée 10→11 (arcanum niv 6) > C2 · niv 11 (manifestation remplacée + arcanum niv 6) 1`] = `
 {
   "abilityScoreImprovements": [
     {
@@ -1631,6 +1664,39 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
     {
       "classLevel": null,
       "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Maître des masques",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Regard de deux esprits",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "pact_boon:Faveur de pacte",
+      "selectedAbility": null,
+      "selectedFeature": "Pacte de la Chaîne",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
       "progression": "skill:Compétences de classe",
       "selectedAbility": null,
       "selectedFeature": null,
@@ -1665,12 +1731,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
       "choices": null,
       "classLevel": null,
       "feature": "Arcanum mystique (niveau 6)",
-      "source": null,
-    },
-    {
-      "choices": null,
-      "classLevel": null,
-      "feature": "Armure des ombres",
       "source": null,
     },
     {
@@ -1772,12 +1832,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
       "isPrepared": false,
       "source": "pact_chain",
       "spell": "Appel de familier",
-    },
-    {
-      "isKnown": true,
-      "isPrepared": false,
-      "source": "invocation",
-      "spell": "Armure de mage",
     },
     {
       "isKnown": true,
@@ -2123,6 +2177,17 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
     },
   ],
   "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Regard de deux esprits",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
     {
       "classLevel": null,
       "payload": null,

@@ -12,6 +12,7 @@ import {
   ITEM,
   SPELL,
   FEATURE,
+  featurePick,
   type GoldenIds,
 } from './fixtures/goldenMaster'
 
@@ -47,7 +48,7 @@ describe('golden-master · A. Guerrier Champion (martial)', () => {
       classSkills: ['athletics', 'intimidation'],
       classSavingThrows: ['str', 'con'],
       backgroundSkills: ['perception', 'survival'],
-      fightingStyle: 'Défense', // F2 tranche 2 : style choisi au niv 1 → character_choices + matérialisation
+      featurePicks: [featurePick(ids.fighterStyleProgressionId, FEATURE.fighterFsDefense)], // style choisi au niv 1 → character_choices + matérialisation
 
       // Maîtrises d'armes/armures : champs vestigiaux (volet B) — ne doivent PAS se matérialiser.
       weaponProficiencyKeys: ['simple_weapons', 'martial_weapons'],
@@ -110,8 +111,12 @@ describe('golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/do
       classSkills: ['arcana', 'deception'],
       classSavingThrows: ['wis', 'cha'],
       backgroundSkills: ['intimidation', 'investigation'],
-      pactBoon: 'chain',
-      invocationIds: [130, 131], // Regard de deux esprits + Armure des ombres (octroie « Armure de mage »)
+      featurePicks: [
+        featurePick(ids.pactBoonProgressionId, FEATURE.pactChain),
+        // Regard de deux esprits + Armure des ombres (octroie « Armure de mage »)
+        featurePick(ids.invocationsProgressionId, FEATURE.invocationGaze),
+        featurePick(ids.invocationsProgressionId, FEATURE.invocationArmor),
+      ],
       // Paliers d'ASI de l'Occultiste (4 et 8) matérialisés à la création :
       asiBonuses: [{ classLevel: 4, ability: 'cha', amount: 2 }], // +2 CHA au niv 4
       asiFeats: [{ classLevel: 8, featureId: FEATURE.featAlert }], // don « Vigilant » au niv 8 (source 'asi')
@@ -121,10 +126,12 @@ describe('golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/do
 
     await levelUp(id, {
       classId: CLASS.warlock, hpDie: 6,
-      newInvocationIds: [132], // Maître des masques (niv 5)
+      // Le niveau 11 n'accorde aucune manifestation de plus : Armure des ombres (et son sort) cède la place à Maître des masques (niv 5).
+      featurePicks: [featurePick(ids.invocationsProgressionId, FEATURE.invocationMasks)],
+      featureReplacements: [featurePick(ids.invocationsProgressionId, FEATURE.invocationArmor)],
       arcaneMysteriumSpellId: SPELL.circleOfDeath, // arcanum niveau 6
     })
-    expect(await serializeCharacter(db, id)).toMatchSnapshot('C2 · niv 11 (manifestation ajoutée + arcanum niv 6)')
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('C2 · niv 11 (manifestation remplacée + arcanum niv 6)')
   })
 })
 
@@ -147,7 +154,7 @@ describe('golden-master · D. Multiclasse Guerrier/Occultiste', () => {
     expect(await serializeCharacter(db, id)).toMatchSnapshot('D2 · Occultiste 1 (multiclassage, pacte combiné)')
 
     // Occultiste 1 → 2 : « Manifestations occultes » débloquées, emplacement de pacte agrandi.
-    await levelUp(id, { classId: CLASS.warlock, hpDie: 5, newInvocationIds: [130] })
+    await levelUp(id, { classId: CLASS.warlock, hpDie: 5, featurePicks: [featurePick(ids.invocationsProgressionId, FEATURE.invocationGaze)] })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('D3 · Occultiste 2 (manifestation)')
   })
 })

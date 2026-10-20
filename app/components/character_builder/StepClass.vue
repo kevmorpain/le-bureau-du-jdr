@@ -157,42 +157,31 @@
         </div>
       </template>
 
-      <template v-if="needsFightingStyle && fightingStyleOptions.length">
-        <USeparator class="my-6" />
-        <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
-            Style de combat<span v-if="fightingStyleLevel"> — niveau {{ fightingStyleLevel }}</span>
-          </p>
-          <div class="flex flex-col gap-2">
-            <button
-              v-for="style in fightingStyleOptions"
-              :key="style.id"
-              type="button"
-              class="text-left rounded-lg border px-3 py-2.5 transition-colors cursor-pointer"
-              :class="state.fightingStyle === style.name
-                ? 'border-amber-500 bg-amber-500/10 text-amber-400'
-                : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-amber-500/40'"
-              @click="state.fightingStyle = style.name"
-            >
-              <div class="font-bold text-sm mb-0.5">{{ style.name }}</div>
-              <div class="text-xs text-muted">{{ style.description }}</div>
-            </button>
-          </div>
-        </div>
-      </template>
-
       <template v-if="featurePickChoices.length">
         <USeparator class="my-6" />
         <div class="space-y-3">
-          <FeaturePickPicker
+          <template
             v-for="choice in featurePickChoices"
             :key="choice.progressionId"
-            v-model="state.featurePicks[choice.progressionId]"
-            :title="choiceTitle(choice) ?? 'Choix'"
-            :count="choice.count"
-            :option-ids="optionFeatureIds(choice)"
-            :excluded-names="state.fightingStyle ? [state.fightingStyle] : []"
-          />
+          >
+            <FeaturePickPicker
+              v-model="state.featurePicks[choice.progressionId]"
+              :title="choiceTitle(choice) ?? 'Choix'"
+              :count="choice.count"
+              :options="choice.options"
+              :owner-level="choice.classLevel"
+              :unlock-level="choice.ownerLevelRequired"
+              :accent="choiceAccent(choice)"
+              :excluded-ids="featurePicksElsewhere(choice.progressionId)"
+              :projection="eligibility"
+            />
+            <p
+              v-if="choice.kind === 'pact_boon' && pactBoon"
+              class="rounded-xl border border-violet-500/30 bg-violet-500/5 px-3 py-2.5 text-xs text-muted"
+            >
+              {{ PACT_BOON_NOTES[pactBoon] }}
+            </p>
+          </template>
         </div>
       </template>
 
@@ -263,54 +252,6 @@
           Vous choisirez votre
           <strong :style="`color: ${classData.color}`">{{ classData.subclassLabel }}</strong>
           au niveau {{ subclassLevel }}.
-        </div>
-      </template>
-
-      <template v-if="needsPactBoon">
-        <USeparator class="my-6" />
-        <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
-          <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-3">
-            🌑 Don du Pacte — niveau 3
-          </p>
-          <div class="flex flex-col gap-2">
-            <button
-              v-for="option in PACT_BOON_OPTIONS"
-              :key="option.id"
-              type="button"
-              class="text-left px-3 py-2.5 rounded-xl border text-xs font-medium transition-colors cursor-pointer"
-              :class="state.pactBoon === option.id
-                ? 'border-violet-500 bg-violet-500/10 text-violet-400'
-                : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-violet-500/40'"
-              @click="state.pactBoon = option.id"
-            >
-              <div class="font-semibold">{{ option.name }}</div>
-              <div class="text-muted font-normal mt-0.5 leading-snug">{{ option.hint }}</div>
-            </button>
-          </div>
-        </div>
-      </template>
-
-      <template v-if="needsInvocations">
-        <USeparator class="my-6" />
-        <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
-          <InvocationPicker
-            v-model="state.invocationIds"
-            :max-count="invocationsExpected"
-            :current-level="state.level"
-            :pact-boon="state.pactBoon"
-            :known-spell-names="knownSpellNames"
-            :known-invocation-ids="state.invocationIds"
-          />
-        </div>
-      </template>
-
-      <template v-if="needsMetamagic">
-        <USeparator class="my-6" />
-        <div class="rounded-xl border border-violet-500/40 bg-(--ui-bg-elevated) p-4">
-          <MetamagicPicker
-            v-model="state.metamagicIds"
-            :max-count="metamagicExpected"
-          />
         </div>
       </template>
 
@@ -398,13 +339,13 @@
 import { type AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
 import { averageBaseHitPoints } from '~~/shared/rules/hitPoints'
-import { optionFeatureIds } from '~~/shared/rules/featurePicks'
+import type { PactBoon } from '~~/shared/rules/pactBoon'
 
-const PACT_BOON_OPTIONS = [
-  { id: 'chain' as const, name: 'Pacte de la Chaîne', hint: 'Apprend Appel de familier. Peut convoquer un familier spécial.' },
-  { id: 'blade' as const, name: 'Pacte de la Lame', hint: 'Crée une arme magique à volonté. Vous choisirez une arme à l\'étape Équipement.' },
-  { id: 'tome' as const, name: 'Pacte du Tome', hint: 'Livre des Ombres : 3 sorts mineurs de n\'importe quelle classe. Vous les choisirez à l\'étape Sorts.' },
-]
+const PACT_BOON_NOTES: Record<PactBoon, string> = {
+  chain: 'Le sort Appel de familier sera ajouté à votre grimoire.',
+  blade: 'Vous choisirez votre arme de pacte à l\'étape Équipement.',
+  tome: 'Vous choisirez vos 3 sorts mineurs du Tome à l\'étape Sorts.',
+}
 
 const {
   state,
@@ -415,8 +356,6 @@ const {
   needsSubclass,
   subclassLevel,
   subclassOptions,
-  needsFightingStyle,
-  fightingStyleLevel,
   needsExpertise,
   expertiseExpected,
   proficientSkills,
@@ -424,13 +363,10 @@ const {
   classSkillConflictLabels,
   classChoices,
   featurePickChoices,
+  featurePicksElsewhere,
+  pactBoon,
   ownedFor,
   optionValuesOf,
-  needsPactBoon,
-  needsInvocations,
-  invocationsExpected,
-  needsMetamagic,
-  metamagicExpected,
   CLASSES,
   SKILLS,
   ABILITY_SHORT,
@@ -459,14 +395,8 @@ const knownSpellNames = computed(() => {
   return (allSpells.value ?? []).filter(s => ids.has(s.id)).map(s => s.name)
 })
 
-// Options de style de combat lues dans le catalogue, plus dans le blob front.
-const { data: fightingStyleData } = useFetch(
-  () => classData.value ? `/api/catalog/classes/${encodeURIComponent(classData.value.dbName)}/fighting-styles` : '',
-  { watch: [classData], default: () => [] },
-)
-const fightingStyleOptions = computed(() =>
-  (fightingStyleData.value ?? []) as Array<{ id: number, name: string, description: string | null }>,
-)
+// L'état du personnage qui décide des prérequis des manifestations (pacte, sorts connus).
+const eligibility = computed(() => ({ pactBoon: pactBoon.value, knownSpellNames: knownSpellNames.value }))
 
 const availableSkills = computed(() => {
   if (!classData.value) return []
@@ -529,7 +459,6 @@ function selectClass(id: string) {
   state.value.classId = id
   state.value.subclass = null
   state.value.skills = []
-  state.value.fightingStyle = null
   state.value.featurePicks = {}
   state.value.expertiseSkills = []
   state.value.hpMode = 'average'

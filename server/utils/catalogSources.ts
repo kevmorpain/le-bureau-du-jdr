@@ -73,34 +73,6 @@ export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset
     ))
 }
 
-/**
- * Styles de combat (features-options taguées `fighting_style`) d'une classe désignée par son NOM.
- * Classe résolue par `(name, ruleset)` comme `loadSubclasses` ; classe non martiale ou inconnue → `[]`.
- */
-export async function loadFightingStyles(db: Db, className: string, ruleset: Ruleset = '5', extended = false): Promise<{ id: number, name: string, description: string | null }[]> {
-  const [cls] = await db
-    .select({ id: schema.classes.id })
-    .from(schema.classes)
-    .where(and(eq(schema.classes.name, className), eq(schema.classes.ruleset, ruleset)))
-    .limit(1)
-  if (!cls) return []
-
-  return await db
-    .select({
-      id: schema.features.id,
-      name: schema.features.name,
-      description: schema.features.description,
-    })
-    .from(schema.features)
-    .where(and(
-      eq(schema.features.classId, cls.id),
-      eq(schema.features.tag, 'fighting_style'),
-      eq(schema.features.ruleset, ruleset),
-      ...(extended ? [] : [eq(schema.features.source, CORE_SOURCE)]),
-    ))
-    .orderBy(asc(schema.features.id))
-}
-
 export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false) {
   const feats = await db
     .select({
@@ -189,23 +161,6 @@ export async function loadFeatureOptions(db: Db, ids: number[]): Promise<{ id: n
     .select({ id: schema.features.id, name: schema.features.name, description: schema.features.description })
     .from(schema.features)
     .where(and(inArray(schema.features.id, ids), isNotNull(schema.features.tag)))
-    .orderBy(asc(schema.features.name))
-}
-
-// Descriptives : pas d'effets bakés, le joueur applique en jeu.
-export async function loadMetamagic(db: Db, ruleset: Ruleset = '5', extended = false) {
-  return await db
-    .select({
-      id: schema.features.id,
-      name: schema.features.name,
-      description: schema.features.description,
-    })
-    .from(schema.features)
-    .where(and(
-      eq(schema.features.tag, 'metamagic'),
-      eq(schema.features.ruleset, ruleset),
-      ...(extended ? [] : [eq(schema.features.source, CORE_SOURCE)]),
-    ))
     .orderBy(asc(schema.features.name))
 }
 

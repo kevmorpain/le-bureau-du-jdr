@@ -200,16 +200,28 @@ repropose pas ceux qu'elle a déjà.
 
 ### Chemin générique des picks d'options de feature
 
-Un point de choix dont les options sont des features (`optionSource: feature_group`) et dont le type n'a pas de chemin dédié
-(`FEATURE_PICK_KINDS` : `additional_fighting_style`, `maneuvers`) passe par `featurePicks` : payload
-`[{ progressionId, featureId }]` à la création et au level-up, validé contre `resolveChoices` (`featurePicksError` : point de choix
-proposé, nombre, options, aucune option déjà portée par la fiche), enregistré en `character_choices.selected_feature_id` **et**
-matérialisé en `character_features`, pour que l'option s'affiche et que ses effets s'appliquent. Le style de combat de la classe,
-la Métamagie, les manifestations et le pacte gardent leur chemin dédié (à migrer, cf. D26).
+Un point de choix dont les options sont des features (`optionSource: feature_group`) passe par `featurePicks`
+(`FEATURE_PICK_KINDS` : `fighting_style`, `additional_fighting_style`, `pact_boon`, `invocations`, `metamagic`, `maneuvers`) :
+payload `[{ progressionId, featureId }]` à la création et au level-up, validé contre `resolveChoices` (`featurePicksError` : point de
+choix proposé, nombre, options, aucune option déjà portée par la fiche ni prise deux fois dans la requête), enregistré en
+`character_choices.selected_feature_id` **et** matérialisé en `character_features`, pour que l'option s'affiche et que ses effets
+s'appliquent. Ce sont les seuls champs de payload pour ces choix : `fightingStyle`, `pactBoon`, `invocationIds`, `metamagicIds` et leurs
+pendants de level-up n'existent plus. `pactWeaponItemId` / `pactWeaponInventoryId` et `pactBoonCantripIds` restent des champs à part
+(une arme et des sorts, pas des options de feature).
 
-Un point de choix `replaceable` (manœuvres) permet, à un palier qui donne de nouvelles options, d'en échanger une déjà prise :
-`featureReplacements` au level-up, qui retire l'ancienne (`character_choices` et `character_features`) et ajoute une option à
-apprendre. Le serveur vérifie que l'option a bien été choisie sur ce point de choix (`replacedPickError`).
+Les options sont résolues sans l'état du personnage (`ignorePrerequisites` dans `CharacterProjection`, toujours posé par
+`choicesGainedAtLevelUp` et par la création) : le serveur vérifie l'appartenance au groupe et le niveau de classe, pas les prérequis de
+pacte, de sort ou de caractéristique, que l'interface évalue (`unmetPrerequisite`) pour verrouiller la carte sans la masquer.
+
+Effets propres à un type, écrits dans le même lot atomique (`featurePickStmts`) : les sorts octroyés par une manifestation
+(`spell_grant` → `character_spells`, `source: 'invocation'`, retirés avec l'ancienne au remplacement) ; le pacte, lu dans le nom de
+l'option choisie (`pickedPactBoon`), alimente `character_classes.pact_boon` (projection), le familier de la Chaîne et les sorts du Tome.
+
+Un point de choix `replaceable` permet d'échanger une option déjà prise : `featureReplacements` au level-up, qui retire l'ancienne
+(`character_choices` et `character_features`) et ajoute une option à apprendre. Le serveur vérifie que l'option a bien été choisie sur ce
+point de choix (`replacedPickError`, d'où la migration 0152 qui consigne les options des fiches existantes). Les manœuvres ne
+s'échangent qu'à un palier qui en donne de nouvelles ; les manifestations se remplacent à chaque niveau (`REPLACEABLE_EVERY_LEVEL_KINDS`) :
+`choicesGainedAtLevelUp` renvoie alors le point de choix détenu avec `count` 0.
 
 ---
 

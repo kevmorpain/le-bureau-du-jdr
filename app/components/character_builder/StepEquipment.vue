@@ -92,7 +92,10 @@
         </div>
       </div>
 
-      <div v-if="needsPactBoon && state.pactBoon === 'blade'" class="mt-6">
+      <div
+        v-if="pactBoon === 'blade'"
+        class="mt-6"
+      >
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
           🌑 Arme de Pacte (facultatif)
         </p>
@@ -134,13 +137,13 @@ const {
   state,
   classData,
   backgroundData,
-  needsPactBoon,
+  pactBoon,
 } = useCharacterBuilder()
 
 // Armes de mêlée pour le Pacte de la Lame (approximation : filtrage sur les noms d'armes).
 const { data: allItems } = useFetch('/api/items', {
   query: { type: 'weapon' },
-  immediate: computed(() => needsPactBoon.value && state.value.pactBoon === 'blade'),
+  immediate: computed(() => pactBoon.value === 'blade'),
 })
 
 const meleeItemNames = computed(() => {

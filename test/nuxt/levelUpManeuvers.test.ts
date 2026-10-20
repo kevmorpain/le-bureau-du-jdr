@@ -43,7 +43,6 @@ beforeAll(() => {
     return OPTIONS.filter(o => ids.includes(o.id))
   })
   registerEndpoint('/api/catalog/classes/Guerrier/subclasses', () => [])
-  registerEndpoint('/api/catalog/classes/Guerrier/fighting-styles', () => [])
   registerEndpoint('/api/invocations', () => [])
 })
 

@@ -7,7 +7,6 @@ import {
   loadClasses,
   loadSpecies,
   loadSubclasses,
-  loadFightingStyles,
   loadFeats,
   loadInvocations,
   loadBackgrounds,
@@ -182,19 +181,6 @@ describe('loadSubclasses', () => {
 
   it('classe inconnue → []', async () => {
     expect(await loadSubclasses(orm, 'Inconnue')).toEqual([])
-  })
-})
-
-describe('loadFightingStyles', () => {
-  it('styles de combat d\'une classe, triés par id {id, name, description}', async () => {
-    const fs = await loadFightingStyles(orm, 'Guerrier')
-    expect(fs.map(s => s.name)).toEqual(['Archerie', 'Défense', 'Duel'])
-    expect(fs[0]).toEqual({ id: 210, name: 'Archerie', description: 'desc Archerie' })
-  })
-
-  it('classe sans style (Occultiste) ou inconnue → []', async () => {
-    expect(await loadFightingStyles(orm, 'Occultiste')).toEqual([])
-    expect(await loadFightingStyles(orm, 'Inconnue')).toEqual([])
   })
 })
 

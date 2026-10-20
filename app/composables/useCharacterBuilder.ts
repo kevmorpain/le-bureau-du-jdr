@@ -22,7 +22,8 @@ import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicatedValues, proficiencyDuplicates } from '~~/shared/rules/duplicateProficiencies'
 import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
-import { isFeaturePickChoice } from '~~/shared/rules/featurePicks'
+import { byFeaturePickOrder, isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
+import { pactBoonOfName, type PactBoon } from '~~/shared/rules/pactBoon'
 import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
@@ -47,7 +48,6 @@ export interface BuilderState {
   subclass: string | null
   skills: string[]
   level: number
-  fightingStyle: string | null
   expertiseSkills: string[]
   hpMode: 'average' | 'roll' | 'manual'
   hpRolled: number[] | null   // jets pour niveaux 2+ (longueur = level - 1)
@@ -89,7 +89,7 @@ export interface BuilderState {
   // Picks des points de choix d'espèce, de lignée, d'historique ou de classe (compétence, outil, langue :
   // valeur ; sort mineur : id), par id de progression.
   choicePicks: Record<number, Array<string | number>>
-  // Options de feature choisies (2ᵉ style de combat, manœuvres), par id de progression.
+  // Options de feature choisies (style de combat, pacte, manifestations, Métamagie, manœuvres), par id de progression.
   featurePicks: Record<number, number[]>
 
   // Langues de l'Humain variant (clés de langue), faute d'espèce liée qui porte son choix
@@ -104,16 +104,9 @@ export interface BuilderState {
   equipSubChoices: Record<number, string | null>
   equipment: string[]
 
-  // Faveur de Pacte (Occultiste niveau ≥ 3)
-  pactBoon: 'chain' | 'blade' | 'tome' | null
+  // Accessoires de la faveur de pacte (le pacte lui-même est un pick de `featurePicks`)
   pactWeaponItemName: string | null
   selectedPactBoonCantripIds: number[]
-
-  // Manifestations occultes (Occultiste niveau ≥ 2)
-  invocationIds: number[]
-
-  // Options de Métamagie (Ensorceleur niveau ≥ 3)
-  metamagicIds: number[]
 
   // Choix par palier d'ASI (niveau de classe) : carac ('asi') ou don ('feat').
   // Format : { 4: 'asi', 8: 'feat', 12: 'asi', ... }
@@ -145,7 +138,7 @@ export interface BuilderState {
 
   bookOfAncientSecretsSpellIds: number[]
   // Flag positionné par StepSpells via watchEffect : true tant que la
-  // manifestation est dans `invocationIds` → la validation step Sorts exige 2 rituels.
+  // manifestation est choisie → la validation step Sorts exige 2 rituels.
   bookOfAncientSecretsRequired: boolean
 }
 
@@ -163,7 +156,6 @@ const INIT_STATE: BuilderState = {
   subclass: null,
   skills: [],
   level: 1,
-  fightingStyle: null,
   expertiseSkills: [],
   hpMode: 'average',
   hpRolled: null,
@@ -201,11 +193,8 @@ const INIT_STATE: BuilderState = {
   equipChoices: [],
   equipSubChoices: {},
   equipment: [],
-  pactBoon: null,
   pactWeaponItemName: null,
   selectedPactBoonCantripIds: [],
-  invocationIds: [],
-  metamagicIds: [],
   asiChoice: {},
   asiBonuses: {},
   asiFeats: {},
@@ -344,33 +333,12 @@ export function useCharacterBuilder() {
     choicesForClassLevel(classDbId.value, state.value.level),
   )
 
-  const needsPactBoon = computed(() => catalogChoices.value.some(c => c.kind === 'pact_boon'))
-
   // ─── Sous-classe (lue dans le CATALOGUE) ───────────────────────────────────
   const subclassDbId = computed(() => resolveSubclassId(classData.value?.dbName, state.value.subclass))
   const subclassCatalog = computed(() => subclassCatalogFor(classDbId.value))
   const subclassLevel = computed(() => subclassCatalog.value?.subclassLevel ?? null)
   const subclassOptions = computed(() => subclassCatalog.value?.subclasses ?? [])
   const needsSubclass = computed(() => catalogChoices.value.some(c => c.kind === 'subclass'))
-
-  // ─── Style de combat (lu dans le CATALOGUE, F2 tranche 4) — miroir de la sous-classe. ────
-  // Gating dérivé de resolveChoices (le choix n'est dû qu'au palier d'accès : Guerrier 1,
-  // Paladin/Rôdeur 2) ; les OPTIONS (nom + description) viennent de l'endpoint
-  // `/api/catalog/classes/[name]/fighting-styles` (côté StepClass). Le style envoyé au serveur est
-  // son NOM ; le serveur re-gate par niveau. Remplace le blob `FIGHTING_STYLES`.
-  const needsFightingStyle = computed(() => catalogChoices.value.some(c => c.kind === 'fighting_style'))
-  const fightingStyleLevel = computed(() => catalogChoices.value.find(c => c.kind === 'fighting_style')?.ownerLevelRequired ?? null)
-
-  const invocationsExpected = computed(() =>
-    catalogChoices.value.find(c => c.kind === 'invocations')?.count ?? 0,
-  )
-
-  const needsInvocations = computed(() => invocationsExpected.value > 0)
-
-  const metamagicExpected = computed(() =>
-    catalogChoices.value.find(c => c.kind === 'metamagic')?.count ?? 0,
-  )
-  const needsMetamagic = computed(() => metamagicExpected.value > 0)
 
   // ─── Expertise (lue dans le CATALOGUE, miroir de la sous-classe) ───────────
   // Éligibilité = toute compétence maîtrisée (classe, espèce, historique, variante) ; l'appartenance
@@ -416,6 +384,7 @@ export function useCharacterBuilder() {
     speciesId: speciesDbId.value ?? undefined,
     lineageId: selectedLineageId.value ?? undefined,
     backgroundId: backgroundDbId.value ?? undefined,
+    ignorePrerequisites: true,
     duplicates: proficiencyDuplicates({
       speciesSkills: speciesSkills.value,
       backgroundSkills: backgroundFixedSkills.value,
@@ -425,7 +394,7 @@ export function useCharacterBuilder() {
   }))
   // Les compétences de classe gardent leur propre étape (`state.skills`).
   const genericChoices = computed<ResolvedChoice[]>(() => resolvedChoices.value.filter(isPickChoice))
-  const featurePickChoices = computed<ResolvedChoice[]>(() => resolvedChoices.value.filter(isFeaturePickChoice))
+  const featurePickChoices = computed<ResolvedChoice[]>(() => resolvedChoices.value.filter(isFeaturePickChoice).sort(byFeaturePickOrder))
   const speciesChoices = computed(() => genericChoices.value.filter(c => c.ownerSpeciesId != null || c.ownerLineageId != null))
   const backgroundChoices = computed(() => genericChoices.value.filter(c => c.ownerBackgroundId != null))
   const classChoices = computed(() => genericChoices.value.filter(c => c.ownerClassId != null))
@@ -444,9 +413,27 @@ export function useCharacterBuilder() {
     c.kind === 'cantrip' ? { progressionId: c.progressionId, spellId: v as number } : { progressionId: c.progressionId, value: v as string })))
 
   const featurePicksOf = (progressionId: number): number[] => state.value.featurePicks[progressionId] ?? []
-  const featurePicksComplete = computed(() => featurePickChoices.value.every(c => featurePicksOf(c.progressionId).length === c.count))
+  // Un pick d'une option que le niveau ou la classe ne propose plus (niveau baissé) ne part pas, pas plus que l'excédent.
+  const validFeaturePicks = (c: ResolvedChoice): number[] => {
+    const allowed = new Set(optionFeatureIds(c))
+    return featurePicksOf(c.progressionId).filter(id => allowed.has(id)).slice(0, c.count)
+  }
+  const featurePicksComplete = computed(() => featurePickChoices.value.every(c => validFeaturePicks(c).length === c.count))
   const featurePicksPayload = computed(() => featurePickChoices.value.flatMap(c =>
-    featurePicksOf(c.progressionId).slice(0, c.count).map(featureId => ({ progressionId: c.progressionId, featureId }))))
+    validFeaturePicks(c).map(featureId => ({ progressionId: c.progressionId, featureId }))))
+  // Les options prises sur les autres points de choix : le 2ᵉ style de combat diffère du premier.
+  const featurePicksElsewhere = (progressionId: number): number[] => featurePickChoices.value
+    .filter(c => c.progressionId !== progressionId)
+    .flatMap(validFeaturePicks)
+
+  // Le pacte, lu dans le nom de l'option choisie ; les manifestations choisies sont ses picks.
+  const pactChoice = computed(() => featurePickChoices.value.find(c => c.kind === 'pact_boon'))
+  const { nameOf: pactOptionName } = useFeatureOptions(() => pactChoice.value ? optionFeatureIds(pactChoice.value) : [])
+  const pactBoon = computed<PactBoon | null>(() =>
+    pactBoonOfName(pactChoice.value ? pactOptionName(validFeaturePicks(pactChoice.value)[0]) : null))
+  const invocationPickIds = computed<number[]>(() => featurePickChoices.value
+    .filter(c => c.kind === 'invocations')
+    .flatMap(validFeaturePicks))
 
   const variantHumanSkills = computed<string[]>(() =>
     isVariantHuman.value && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : [],
@@ -689,7 +676,7 @@ export function useCharacterBuilder() {
   const picksBookOfAncientSecrets = (allInvocationsByName: Record<string, number>) => {
     const id = allInvocationsByName[BOOK_OF_ANCIENT_SECRETS_NAME]
     if (!id) return false
-    return state.value.invocationIds.includes(id)
+    return invocationPickIds.value.includes(id)
   }
 
   // ─── ASI (paliers de bonus de caractéristique) ────────────────────────────────
@@ -776,13 +763,8 @@ export function useCharacterBuilder() {
         if (!cls) return false
         if (s.skills.length < cls.skillChoices.count) return false
         if (needsSubclass.value && !s.subclass) return false
-        // Style de combat requis quand le catalogue le rend dû à ce niveau (Guerrier 1, Paladin/Rôdeur 2).
-        if (needsFightingStyle.value && !s.fightingStyle) return false
         if (!featurePicksComplete.value) return false
         if (needsExpertise.value && s.expertiseSkills.length < expertiseExpected.value) return false
-        if (needsPactBoon.value && !s.pactBoon) return false
-        if (needsInvocations.value && s.invocationIds.length < invocationsExpected.value) return false
-        if (needsMetamagic.value && s.metamagicIds.length < metamagicExpected.value) return false
         return choicesComplete(classChoices.value)
       }
       case 'abilities': {
@@ -822,7 +804,7 @@ export function useCharacterBuilder() {
         const learning = spellLearningOf(casterSlug.value)
         if (learning !== 'known' && learning !== 'spellbook') return cantripsDone
         const spellsDone = spellsNeeded.value === 0 || s.selectedSpells.length >= spellsNeeded.value
-        if (needsPactBoon.value && s.pactBoon === 'tome' && s.selectedPactBoonCantripIds.length < 3) return false
+        if (pactBoon.value === 'tome' && s.selectedPactBoonCantripIds.length < 3) return false
         return cantripsDone && spellsDone
       }
       case 'description': {
@@ -981,9 +963,6 @@ export function useCharacterBuilder() {
     needsSubclass,
     subclassLevel,
     subclassOptions,
-    // Style de combat (catalogue)
-    needsFightingStyle,
-    fightingStyleLevel,
     // Expertise (catalogue)
     needsExpertise,
     expertiseExpected,
@@ -1015,14 +994,11 @@ export function useCharacterBuilder() {
     choicePicksPayload,
     featurePickChoices,
     featurePicksPayload,
-    // Pacte
-    needsPactBoon,
-    // Invocations
-    needsInvocations,
-    invocationsExpected,
-    // Métamagie
-    needsMetamagic,
-    metamagicExpected,
+    featurePicksElsewhere,
+    validFeaturePicks,
+    // Pacte et manifestations, lus dans les picks
+    pactBoon,
+    invocationPickIds,
     // ASI
     needsAsi,
     asiLevelsForCharacter,
