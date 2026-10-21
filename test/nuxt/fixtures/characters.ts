@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import type { Effect } from '../../../server/db/schema/effects'
 import { useCharacterAbilities } from '../../../app/composables/character/useCharacterAbilities'
+import { overridesFor, type ManualLevel } from '../../fixtures/proficiencyOverrides'
 
 // Fixtures de personnages pour les contrats d'équivalence 2014 : les ENTRÉES de la couche de
 // dérivation, telles qu'elles arriveraient du read-model après assemblage par useCharacterSheet.
@@ -11,8 +12,8 @@ export interface AbilitiesFixture {
   name: string
   /** Caractéristiques de base (avant effets), telles que stockées en base. */
   baseAbilityScores: { abilityId: string, value: number }[]
-  /** Maîtrises de compétences ET jets de sauvegarde (`character_skills` : clé + niveau). */
-  skills: { skillKey: string, proficiencyLevel: 'proficient' | 'expert' }[]
+  /** Maîtrises de compétences ET jets de sauvegarde posées à la main (clé + niveau). */
+  skills: ManualLevel[]
   /** Classes du perso — seul `level` compte ici (total de niveaux → bonus PV des dons). */
   classes: { level: number }[]
   /** Effets d'espèce (ability_increase, skill_proficiency…). */
@@ -188,7 +189,7 @@ type SheetRef = Parameters<typeof useCharacterAbilities>[0]
 export function mountAbilities(f: AbilitiesFixture) {
   const sheet = ref({
     baseAbilityScores: f.baseAbilityScores,
-    skills: f.skills,
+    proficiencyOverrides: overridesFor(f.skills),
     classes: f.classes,
   }) as unknown as SheetRef
 

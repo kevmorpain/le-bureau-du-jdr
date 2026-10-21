@@ -12,8 +12,6 @@ import { classSheet, featureRow, named } from '../fixtures/classSheet'
 // Les sites d'appel du lanceur de dés : chacun doit dire de quel jet il s'agit (attaque, caractéristique, sauvegarde,
 // dégâts liés à une attaque) pour que la fiche y applique avantages, relances et critiques.
 
-registerEndpoint('/api/backgrounds', () => [])
-
 let sheetSeq = 9400
 
 const weapon = (id: number, name: string, properties: string[], category: string, damageDice: string, sheetId: number) => ({
@@ -56,7 +54,7 @@ const mountCombat = async (
   const id = ++sheetSeq
   const inventory = weapons(id)
   registerEndpoint(`/api/character_sheets/${id}/inventory`, () => inventory)
-  registerEndpoint(`/api/character_sheets/${id}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${id}/backgrounds`, () => [])
   registerEndpoint(`/api/character_sheets/${id}/spells`, () => [])
   for (const [suffix, value] of Object.entries(options.storage ?? {})) localStorage.setItem(`char:${id}:${suffix}`, JSON.stringify(value))
   registerEndpoint(`/api/character_sheets/${id}/features`, { method: 'PUT', handler: () => ({}) })
@@ -181,7 +179,7 @@ describe('AbilityScoresSection — type des jets', () => {
     baseAbilityScores: [{ abilityId: 'str', value: 14 }, { abilityId: 'dex', value: 10 }, { abilityId: 'con', value: 10 }, { abilityId: 'int', value: 10 }, { abilityId: 'wis', value: 10 }, { abilityId: 'cha', value: 10 }],
     classes: [{ classId: 1, level: 1 }],
     features: [],
-    skills: [],
+    proficiencyOverrides: [],
     abilityScoreImprovements: [],
     species: null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -190,7 +188,7 @@ describe('AbilityScoresSection — type des jets', () => {
   const mountAbilities = async () => {
     const s = sheet()
     registerEndpoint(`/api/character_sheets/${s.id}/inventory`, () => [])
-    registerEndpoint(`/api/character_sheets/${s.id}/proficiency-overrides`, () => [])
+    registerEndpoint(`/api/character_sheets/${s.id}/backgrounds`, () => [])
     registerEndpoint(`/api/character_sheets/${s.id}/spells`, () => [])
     const roll = vi.fn()
     const wrapper = await mountSuspended(AbilityScoresSection, { props: { characterSheet: s, roll } })
@@ -237,7 +235,7 @@ describe('HitPointsSection — Esquive instinctive', () => {
           feature: { id: 1, name: 'Esquive instinctive', featureType: 'class_feature', classId: 1, subclassId: null, levelRequired: 5, maxUsesFormula: null, rechargeType: null, meta: null, featureEffects: [{ effect: { type: 'halve_damage_reaction', value: {} } }] },
         }]
       : [],
-    skills: [],
+    proficiencyOverrides: [],
     abilityScoreImprovements: [],
     species: null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -246,7 +244,7 @@ describe('HitPointsSection — Esquive instinctive', () => {
   const mountHp = async (withDodge: boolean) => {
     const s = sheet(withDodge)
     registerEndpoint(`/api/character_sheets/${s.id}/inventory`, () => [])
-    registerEndpoint(`/api/character_sheets/${s.id}/proficiency-overrides`, () => [])
+    registerEndpoint(`/api/character_sheets/${s.id}/backgrounds`, () => [])
     registerEndpoint(`/api/character_sheets/${s.id}/spells`, () => [])
     const wrapper = await mountSuspended(HitPointsSection, { props: { characterSheet: s } })
     await wrapper.findAll('button').find(b => b.text().includes('Dégâts'))!.trigger('click')

@@ -47,9 +47,8 @@ registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory`, () => [
   entry(3, 'Anneau rangé au sac', [{ type: 'ability_increase', value: { ability: 'dex', amount: 2 } }], { equipped: false, attuned: false, requiresAttunement: false }),
   entry(4, 'Amulette d\'étude', [{ type: 'ability_increase', value: { ability: 'int', amount: 2, max: 20 } }], { equipped: true, attuned: false, requiresAttunement: false }),
 ])
-registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
-registerEndpoint('/api/backgrounds', () => [])
 
 const sheet = ref({
   id: SHEET_ID,
@@ -63,7 +62,7 @@ const sheet = ref({
   ],
   classes: [],
   features: [],
-  skills: [],
+  proficiencyOverrides: [],
   abilityScoreImprovements: [],
   species: null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -38,8 +38,6 @@ const weapon = (id: number, name: string, properties: string[], category: string
   },
 })
 
-registerEndpoint('/api/backgrounds', () => [])
-
 const slotsOf = (levels: Record<number, number>) => ref({
   spellcasting: Object.fromEntries(Object.entries(levels).map(([l, n]) => [l, { max: n, current: n }])),
   pact_magic: {},
@@ -50,7 +48,7 @@ let sheetSeq = SHEET_ID
 const mount = async (characterSheet: ReturnType<typeof classSheet>, options: { weapons?: ReturnType<typeof weapon>[], slots?: ReturnType<typeof slotsOf>, roll?: ReturnType<typeof vi.fn> } = {}) => {
   characterSheet.id = ++sheetSeq
   registerEndpoint(`/api/character_sheets/${sheetSeq}/inventory`, () => options.weapons ?? [])
-  registerEndpoint(`/api/character_sheets/${sheetSeq}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${sheetSeq}/backgrounds`, () => [])
   registerEndpoint(`/api/character_sheets/${sheetSeq}/spells`, () => [])
   const wrapper = await mountSuspended(CombatModeSection, {
     props: { characterSheet, roll: options.roll ?? vi.fn() },

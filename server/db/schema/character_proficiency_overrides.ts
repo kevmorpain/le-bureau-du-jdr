@@ -1,9 +1,9 @@
 import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 import characterSheets from './character_sheets'
+import type { ProficiencyOverrideAction, ProficiencyOverrideType } from '~~/shared/utils/proficiency_overrides'
 
-export type ProficiencyOverrideType = 'weapon' | 'armor' | 'language' | 'tool'
-export type ProficiencyOverrideAction = 'grant' | 'revoke'
+export type { ProficiencyOverrideAction, ProficiencyOverrideType }
 
 const characterProficiencyOverrides = sqliteTable(
   'character_proficiency_overrides',

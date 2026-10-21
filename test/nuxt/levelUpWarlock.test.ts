@@ -66,7 +66,7 @@ beforeAll(() => {
     return OPTIONS.filter(o => ids.includes(o.id))
   })
   registerEndpoint('/api/catalog/classes/Occultiste/subclasses', () => [])
-  registerEndpoint('/api/invocations', () => [])
+  registerEndpoint('/api/catalog/invocations', () => [])
 })
 
 const held = [INVOCATION.regard, INVOCATION.armure]
@@ -74,7 +74,7 @@ const sheet = (level: number, pactBoon: string | null, owned: number[] = held) =
   id: 1,
   classes: [{ classId: WARLOCK, level, isMain: true, pactBoon, class: { name: 'Occultiste' } }],
   baseAbilityScores: [{ abilityId: 'cha', value: 16 }],
-  skills: [],
+  proficiencyOverrides: [],
   spells: [],
   features: owned.map(featureId => ({
     featureId,

@@ -9,6 +9,15 @@ export type { FeatChoices }
 export const featLanguageChoiceCount = (effects: Effect[]): number =>
   effects.reduce((n, e) => e.type === 'language_proficiency_choice' ? n + e.value.count : n, 0)
 
+export const featNeedsAbilityChoice = (effects: Effect[]): boolean =>
+  effects.some(e => e.type === 'ability_increase_choice')
+
+// Le don Doué accorde des maîtrises au choix, compétences ou outils, portées par ce marqueur.
+const isSkilledChoiceMarker = (e: Effect): boolean =>
+  e.type === 'other' && (e.value as { kind?: string }).kind === 'skilled_choice'
+
+export const featNeedsSkilledChoice = (effects: Effect[]): boolean => effects.some(isSkilledChoiceMarker)
+
 /**
  * Résout les effets « à choix » d'un don selon les choix enregistrés (`character_features.choices`).
  * Sans choix enregistré, l'effet n'accorde rien. `ability_increase_choice`/`saving_throw_proficiency_choice`
@@ -31,7 +40,7 @@ export const resolveFeatEffects = (effects: Effect[], choices: FeatChoices | nul
       if (!ability || e.value.count !== 1) return []
       return [{ type: 'saving_throw_proficiency' as const, value: { ability } }]
     }
-    if (e.type === 'other' && (e.value as { kind?: string }).kind === 'skilled_choice') {
+    if (isSkilledChoiceMarker(e)) {
       return [
         ...(choices?.skills ?? []).map((skill): Effect => ({ type: 'skill_proficiency', value: { skill: skill as SkillKey } })),
         ...(choices?.tools ?? []).map((tool): Effect => ({ type: 'tool_proficiency', value: tool })),

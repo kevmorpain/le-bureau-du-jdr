@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import * as schema from '~~/server/db/schema'
 import { buildCatalog } from '~~/server/utils/catalog'
 import { resolveChoices } from '~~/shared/rules/resolve'
@@ -23,25 +23,10 @@ export async function resolveExpertiseProgressionId(db: Db, classId: number): Pr
   return prog?.id ?? null
 }
 
-// L'upsert ÉLÈVE une maîtrise existante à 'expert' sans jamais la rétrograder. character_choices
-// n'est écrit QUE si la progression existe : entre le déploiement et le re-seed prod des
-// progressions Roublard/Barde, la compétence reste doublée, sans sa source de décision.
+// Le choix seul est stocké : l'expertise en est dérivée à la lecture (deriveChoiceProficiencies).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function expertiseWriteStmts(db: Db, characterSheetId: number, progressionId: number | null, skillKeys: string[]): any[] {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stmts: any[] = []
-  for (const skillKey of skillKeys) {
-    stmts.push(db.insert(schema.characterSkills)
-      .values({ characterSheetId, skillKey, proficiencyLevel: 'expert' as const, source: 'class' as const, isOverride: false })
-      .onConflictDoUpdate({
-        target: [schema.characterSkills.characterSheetId, schema.characterSkills.skillKey, schema.characterSkills.source],
-        set: { proficiencyLevel: sql`'expert'` },
-      }))
-    if (progressionId != null) {
-      stmts.push(db.insert(schema.characterChoices)
-        .values({ characterSheetId, progressionId, selectedValue: skillKey })
-        .onConflictDoNothing())
-    }
-  }
-  return stmts
+export function expertiseWriteStmts(db: Db, characterSheetId: number, progressionId: number, skillKeys: string[]): any[] {
+  return skillKeys.map(skillKey => db.insert(schema.characterChoices)
+    .values({ characterSheetId, progressionId, selectedValue: skillKey })
+    .onConflictDoNothing())
 }

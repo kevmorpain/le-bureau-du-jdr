@@ -12,9 +12,8 @@ import { abilityScores, classSheet, featureRow, named } from '../fixtures/classS
 const SHEET_ID = 9201
 
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory`, () => [])
-registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
-registerEndpoint('/api/backgrounds', () => [])
 const puts: unknown[] = []
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/features`, {
   method: 'PUT',

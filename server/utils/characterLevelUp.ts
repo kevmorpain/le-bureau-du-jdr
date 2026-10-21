@@ -75,7 +75,7 @@ async function validateLevelUp(db: Db, d: LevelUpInput, classId: number, subclas
 }
 
 // « Compétence maîtrisée » reste front-autoritaire : la fiche permet déjà de passer n'importe quelle
-// compétence en 'expert' à la main (PUT /skills), et le set maîtrisé complet n'est composé que côté front.
+// compétence en 'expert' à la main (override), et le set maîtrisé complet n'est composé que côté front.
 // Borne haute seulement, comme à la création : le nombre exact est imposé par l'assistant.
 async function validateLevelUpExpertise(db: Db, characterSheetId: number, classId: number, newLevel: number, skills: SkillKey[]): Promise<void> {
   if (!skills.length) return
@@ -85,22 +85,33 @@ async function validateLevelUpExpertise(db: Db, characterSheetId: number, classI
       ? `Cette classe ne gagne pas d'expertise au niveau ${newLevel}.`
       : `Trop de compétences d'expertise (${skills.length} pour ${gained} gagnée${gained > 1 ? 's' : ''} au niveau ${newLevel}).`)
   }
-  const [alreadyExpert] = await db
-    .select({ skillKey: schema.characterSkills.skillKey })
-    .from(schema.characterSkills)
+  const alreadyExpert = (await expertSkillsOf(db, characterSheetId)).find(s => skills.includes(s as SkillKey))
+  if (alreadyExpert) throw new CharacterValidationError(`La compétence « ${alreadyExpert} » a déjà l'expertise.`)
+}
+
+// Compétences en expertise par un choix de classe ou à la main.
+async function expertSkillsOf(db: Db, characterSheetId: number): Promise<string[]> {
+  const chosen = await db
+    .select({ skill: schema.characterChoices.selectedValue })
+    .from(schema.characterChoices)
+    .innerJoin(schema.progression, eq(schema.progression.id, schema.characterChoices.progressionId))
+    .where(and(eq(schema.characterChoices.characterSheetId, characterSheetId), eq(schema.progression.kind, 'expertise')))
+  const manual = await db
+    .select({ skill: schema.characterProficiencyOverrides.value })
+    .from(schema.characterProficiencyOverrides)
     .where(and(
-      eq(schema.characterSkills.characterSheetId, characterSheetId),
-      eq(schema.characterSkills.proficiencyLevel, 'expert'),
-      inArray(schema.characterSkills.skillKey, skills),
+      eq(schema.characterProficiencyOverrides.characterSheetId, characterSheetId),
+      eq(schema.characterProficiencyOverrides.proficiencyType, 'skill'),
+      eq(schema.characterProficiencyOverrides.action, 'expertise'),
     ))
-    .limit(1)
-  if (alreadyExpert) throw new CharacterValidationError(`La compétence « ${alreadyExpert.skillKey} » a déjà l'expertise.`)
+  return [...chosen, ...manual].flatMap(r => (r.skill ? [r.skill] : []))
 }
 
 // « Déjà maîtrisée » reste front-autoritaire : le set maîtrisé complet (octrois d'espèce, dons) n'est
 // composé que côté front. Borne haute seulement, comme les autres choix : l'assistant impose le nombre exact.
-async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSkillCount: number }, joinsNewClass: boolean, skills: SkillKey[]): Promise<void> {
-  if (!skills.length) return
+// Rend le point « Compétences de classe » de la classe rejointe, sur lequel les compétences sont consignées.
+async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSkillCount: number }, joinsNewClass: boolean, skills: SkillKey[]): Promise<number | null> {
+  if (!skills.length) return null
   if (!joinsNewClass) throw new CharacterValidationError(`Aucune compétence à choisir : seul le multiclassage vers une nouvelle classe en octroie au level-up.`)
   const grant = multiclassSkillGrant(cls.id, cls.multiclassSkillCount, await buildCatalog(db, { classIds: [cls.id] }))
   if (skills.length > grant.count) {
@@ -110,6 +121,7 @@ async function validateMulticlassSkills(db: Db, cls: { id: number, multiclassSki
   }
   const bad = skills.find(s => !grant.options.includes(s))
   if (bad) throw new CharacterValidationError(`La compétence « ${bad} » n'est pas dans la liste de la classe.`)
+  return grant.progressionId!
 }
 
 // Les picks portent sur les points de choix que CE niveau de classe rend dus (porteur de multiclassage d'une
@@ -273,7 +285,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   await validateLevelUpRulesetCoherence(db, d, ruleset)
   await validateLevelUp(db, d, cls.id, subclassId)
   await validateLevelUpExpertise(db, characterSheetId, cls.id, newLevel, d.expertiseSkills ?? [])
-  await validateMulticlassSkills(db, cls, existingClass == null && currentClasses.length > 0, d.newSkills ?? [])
+  const multiclassSkillProgressionId = await validateMulticlassSkills(db, cls, existingClass == null && currentClasses.length > 0, d.newSkills ?? [])
   const mainClassId = currentClasses.find(c => c.isMain)?.classId ?? currentClasses[0]?.classId ?? cls.id
   const subclassIdsBefore = existingClass?.subclassId != null ? [existingClass.subclassId] : []
   const subclassAfter = subclassId ?? existingClass?.subclassId
@@ -522,15 +534,12 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       .onConflictDoNothing())
   }
 
-  if (d.newSkills?.length) {
-    stmts.push(db.insert(schema.characterSkills)
-      .values(d.newSkills.map(skillKey => ({ characterSheetId, skillKey, proficiencyLevel: 'proficient' as const, source: 'class' as const, isOverride: false })))
-      .onConflictDoNothing())
-  }
+  const multiclassSkillPicks = multiclassSkillProgressionId == null
+    ? []
+    : (d.newSkills ?? []).map(value => ({ progressionId: multiclassSkillProgressionId, value }))
+  stmts.push(...choicePickWriteStmts(db, characterSheetId, [...multiclassSkillPicks, ...(d.choicePicks ?? [])]))
 
-  stmts.push(...choicePickWriteStmts(db, characterSheetId, d.choicePicks ?? []))
-
-  if (d.expertiseSkills?.length) {
+  if (d.expertiseSkills?.length && expertiseProgressionId != null) {
     stmts.push(...expertiseWriteStmts(db, characterSheetId, expertiseProgressionId, d.expertiseSkills))
   }
 

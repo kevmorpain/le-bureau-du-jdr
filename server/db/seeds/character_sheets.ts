@@ -3,7 +3,7 @@ import { eq, and, lte, notInArray } from 'drizzle-orm'
 import { characterSheets } from './data/character_sheets'
 
 export default async function seed() {
-  for (const { classes, abilityScores, skills, className, subclassName, classLevel, ...sheetData } of characterSheets) {
+  for (const { classes, abilityScores, className, subclassName, classLevel, ...sheetData } of characterSheets) {
     const existing = await db.query.characterSheets.findFirst({
       where: eq(schema.characterSheets.name, sheetData.name),
     })
@@ -24,12 +24,6 @@ export default async function seed() {
     if (abilityScores?.length) {
       await db.insert(schema.characterAbilityScores).values(
         abilityScores.map(abs => ({ ...abs, characterSheetId: character.id })),
-      )
-    }
-
-    if (skills?.length) {
-      await db.insert(schema.characterSkills).values(
-        skills.map(skill => ({ ...skill, characterSheetId: character.id })),
       )
     }
 

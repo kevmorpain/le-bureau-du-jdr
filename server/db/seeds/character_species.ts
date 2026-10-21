@@ -1,4 +1,5 @@
 import { db, schema } from '~~/server/utils/db'
+import { effectIdFor } from '~~/server/utils/effectRows'
 import { eq, and } from 'drizzle-orm'
 import { characterSpecies } from './data/character_species'
 import { rulesetOf } from './lib/rulesetOf'
@@ -61,25 +62,7 @@ export default async function seed() {
         .get()
 
       for (const effect of effects ?? []) {
-        const existingEffect = await db
-          .select()
-          .from(schema.effects)
-          .where(
-            and(
-              eq(schema.effects.type, effect.type),
-              eq(schema.effects.value, effect.value),
-            ),
-          )
-          .limit(1)
-          .get()
-
-        const effectId = existingEffect?.id ?? await db
-          .insert(schema.effects)
-          .values({ type: effect.type, value: effect.value })
-          .returning()
-          .get()
-          .then(r => r.id)
-
+        const effectId = await effectIdFor(db, effect)
         await db
           .insert(schema.featureEffects)
           .values({ featureId: insertedFeature.id, effectId })

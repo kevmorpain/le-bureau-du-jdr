@@ -10,7 +10,9 @@ import { canAttune } from '~~/shared/rules/attunement'
 import { pactWeaponBonus, type PactWeaponBonus } from '~~/shared/rules/pactWeapon'
 import type { RollSource } from '~~/shared/rules/rolls'
 import { rangeRollSources, type RangeChoice } from '~~/shared/rules/weaponRange'
+import { withProficiencyOverrides, type ProficiencyOverrideRow } from '~~/shared/rules/proficiencyOverrides'
 import { useWeaponRange } from './useWeaponRange'
+import { useSheetResource } from './useSheetResource'
 import type {
   WeaponProperties,
   ArmorProperties,
@@ -120,6 +122,7 @@ export const useCharacterInventory = (
     spellcastingAbility: ComputedRef<string | null>
     temporaryEffectSources?: ComputedRef<EffectSource[]>
     classTraits?: ComputedRef<ClassTraits>
+    proficiencyOverrides?: ComputedRef<ProficiencyOverrideRow[]>
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
@@ -129,29 +132,10 @@ export const useCharacterInventory = (
 
   // ─── Data fetching ────────────────────────────────────────────────────────
 
-  const { data: inventoryData, refresh: refreshInventory } = useFetch<InventoryEntry[]>(
-    () => characterId.value !== undefined ? `/api/character_sheets/${characterId.value}/inventory` : null,
-    {
-      watch: [characterId],
-      default: () => [],
-    },
-  )
+  const { data: inventoryData, refresh: refreshInventory } = useSheetResource<InventoryEntry[]>(characterId, 'inventory', () => [])
 
-  const { data: proficiencyOverridesData, refresh: refreshProficiencyOverrides } = useFetch<Array<{
-    characterSheetId: number
-    proficiencyType: 'weapon' | 'armor'
-    value: string
-    action: 'grant' | 'revoke'
-  }>>(
-    () => characterId.value !== undefined ? `/api/character_sheets/${characterId.value}/proficiency-overrides` : null,
-    {
-      watch: [characterId],
-      default: () => [],
-    },
-  )
-
-  const inventory = computed<InventoryEntry[]>(() => inventoryData.value ?? [])
-  const proficiencyOverrides = computed(() => proficiencyOverridesData.value ?? [])
+  const inventory = computed<InventoryEntry[]>(() => inventoryData.value)
+  const proficiencyOverrides = computed(() => deps?.proficiencyOverrides?.value ?? [])
 
   // ─── Equipped items ───────────────────────────────────────────────────────
 
@@ -185,18 +169,7 @@ export const useCharacterInventory = (
     const fromEffects = (deps?.allEffects.value ?? [])
       .filter(e => e.type === 'weapon_proficiency')
       .map(e => e.value as string)
-
-    const grantedOverrides = proficiencyOverrides.value
-      .filter(o => o.proficiencyType === 'weapon' && o.action === 'grant')
-      .map(o => o.value)
-
-    const revokedOverrides = new Set(
-      proficiencyOverrides.value
-        .filter(o => o.proficiencyType === 'weapon' && o.action === 'revoke')
-        .map(o => o.value),
-    )
-
-    return [...new Set([...fromEffects, ...grantedOverrides])].filter(p => !revokedOverrides.has(p))
+    return withProficiencyOverrides(fromEffects, proficiencyOverrides.value, 'weapon')
   })
 
   const armorProficiencies = computed<string[]>(() => {
@@ -204,18 +177,7 @@ export const useCharacterInventory = (
       .filter(e => e.type === 'proficiency')
       .map(e => e.value as string)
       .filter(v => ['light', 'medium', 'heavy', 'shield', 'all_armor'].some(a => v.includes(a) || v === a))
-
-    const grantedOverrides = proficiencyOverrides.value
-      .filter(o => o.proficiencyType === 'armor' && o.action === 'grant')
-      .map(o => o.value)
-
-    const revokedOverrides = new Set(
-      proficiencyOverrides.value
-        .filter(o => o.proficiencyType === 'armor' && o.action === 'revoke')
-        .map(o => o.value),
-    )
-
-    return [...new Set([...fromEffects, ...grantedOverrides])].filter(p => !revokedOverrides.has(p))
+    return withProficiencyOverrides(fromEffects, proficiencyOverrides.value, 'armor')
   })
 
   const isWeaponProficient = (item: InventoryItem): boolean => {
@@ -484,7 +446,7 @@ export const useCharacterInventory = (
 
     // Insertion optimiste avec id temporaire négatif (pas de collision avec les ids serveur).
     const tempId = -Date.now()
-    inventoryData.value = [...(inventoryData.value ?? []), {
+    inventoryData.value = [...inventoryData.value, {
       id: tempId,
       characterSheetId: characterId.value,
       itemId,
@@ -507,14 +469,14 @@ export const useCharacterInventory = (
       dedupeKey: `inv-new:${tempId}`,
       label: 'Objet ajouté',
       onServerResponse: (res) => {
-        inventoryData.value = (inventoryData.value ?? []).map(e => e.id === tempId ? (res as InventoryEntry) : e)
+        inventoryData.value = inventoryData.value.map(e => e.id === tempId ? (res as InventoryEntry) : e)
       },
     })
   }
 
   const removeItem = async (entryId: number) => {
     if (!characterId.value) return
-    inventoryData.value = (inventoryData.value ?? []).filter(e => e.id !== entryId)
+    inventoryData.value = inventoryData.value.filter(e => e.id !== entryId)
 
     // Objet ajouté hors-ligne puis retiré avant toute synchro : on annule l'ajout en file
     // (sinon il réapparaîtrait à la reconnexion).
@@ -542,7 +504,7 @@ export const useCharacterInventory = (
     attuned?: boolean
   }) => {
     if (!characterId.value) return
-    inventoryData.value = (inventoryData.value ?? []).map(e =>
+    inventoryData.value = inventoryData.value.map(e =>
       e.id === entryId ? { ...e, ...updates } : e,
     )
 
@@ -580,42 +542,8 @@ export const useCharacterInventory = (
     await updateEntry(entryId, { usingTwoHanded: value })
   }
 
-  const addProficiencyOverride = async (proficiencyType: 'weapon' | 'armor' | 'language' | 'tool', value: string, action: 'grant' | 'revoke') => {
-    if (!characterId.value) return
-    if (proficiencyType === 'weapon' || proficiencyType === 'armor') {
-      proficiencyOverridesData.value = [
-        ...(proficiencyOverridesData.value ?? []).filter(o => !(o.proficiencyType === proficiencyType && o.value === value)),
-        { characterSheetId: characterId.value, proficiencyType, value, action },
-      ]
-    }
-
-    await offlineMutate({
-      endpoint: `/api/character_sheets/${characterId.value}/proficiency-overrides`,
-      method: 'PUT',
-      body: { proficiencyType, value, action },
-      dedupeKey: `prof:${proficiencyType}:${value}`,
-      label: 'Maîtrises',
-    })
-  }
-
-  const removeProficiencyOverride = async (proficiencyType: 'weapon' | 'armor' | 'language' | 'tool', value: string) => {
-    if (!characterId.value) return
-    proficiencyOverridesData.value = (proficiencyOverridesData.value ?? []).filter(
-      o => !(o.proficiencyType === proficiencyType && o.value === value),
-    )
-
-    await offlineMutate({
-      endpoint: `/api/character_sheets/${characterId.value}/proficiency-overrides`,
-      method: 'DELETE',
-      body: { proficiencyType, value },
-      dedupeKey: `prof:${proficiencyType}:${value}`,
-      label: 'Maîtrises',
-    })
-  }
-
   return {
     inventory,
-    proficiencyOverrides,
     equippedWeapons,
     equippedBodyArmor,
     equippedShield,
@@ -639,8 +567,6 @@ export const useCharacterInventory = (
     setUsingTwoHanded,
     setRangeChoice: weaponRange.setChoice,
     setThrowing: weaponRange.setThrowing,
-    addProficiencyOverride,
-    removeProficiencyOverride,
     refreshInventory,
   }
 }

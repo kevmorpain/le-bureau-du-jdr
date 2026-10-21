@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { reactive } from 'vue'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
+import type { VueWrapper } from '@vue/test-utils'
 import HitPointsSection from '../../app/components/character_sheet/HitPointsSection.vue'
 import DeathSavingThrowSection from '../../app/components/character_sheet/DeathSavingThrowSection.vue'
 import ConcentrationSection from '../../app/components/character_sheet/ConcentrationSection.vue'
@@ -11,9 +12,8 @@ import ConcentrationSection from '../../app/components/character_sheet/Concentra
 const SHEET_ID = 9301
 
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory`, () => [])
-registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
-registerEndpoint('/api/backgrounds', () => [])
 
 // Niveau 1, CON 10 : maximum de 20 PV.
 const sheet = (over: Record<string, unknown> = {}) => reactive({
@@ -29,14 +29,14 @@ const sheet = (over: Record<string, unknown> = {}) => reactive({
   baseAbilityScores: [],
   classes: [{ classId: 1, level: 1 }],
   features: [],
-  skills: [],
+  proficiencyOverrides: [],
   abilityScoreImprovements: [],
   species: null,
   ...over,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any) as any
 
-const damage = async (wrapper: Awaited<ReturnType<typeof mountSuspended>>, amount: number, { critical = false } = {}) => {
+const damage = async (wrapper: VueWrapper, amount: number, { critical = false } = {}) => {
   await wrapper.findAll('button').find(b => b.text().includes('Dégâts'))!.trigger('click')
   await wrapper.find('input[placeholder="Dégâts bruts"]').setValue(String(amount))
   if (critical) await wrapper.find('button[role="checkbox"]').trigger('click')

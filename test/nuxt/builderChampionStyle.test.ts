@@ -5,7 +5,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { useCharacterBuilder, type BuilderState } from '../../app/composables/useCharacterBuilder'
 import type { Catalog } from '../../shared/rules/resolve'
 import { fightingStyleProgression } from '../../server/db/seeds/data/fightingStyles'
-import { catalogClasses } from '../fixtures/catalogClasses'
+import { catalogClasses, classSkillProgression } from '../fixtures/catalogClasses'
 
 // Champion niveau 10 : le builder demande le deuxième style de combat en plus du premier.
 
@@ -24,6 +24,7 @@ registerEndpoint('/api/catalog/classes', () => [{
 }])
 registerEndpoint('/api/catalog/progressions', (): Catalog => ({
   progressions: [
+    classSkillProgression(99, GUERRIER, 'Guerrier'),
     {
       progressionId: 3,
       ownerClassId: GUERRIER,

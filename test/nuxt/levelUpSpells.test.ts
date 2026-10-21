@@ -45,7 +45,7 @@ beforeAll(() => {
     const { className } = getQuery(event) as { className?: string }
     return className ? SPELLS.filter(s => s.className === className) : SPELLS
   })
-  registerEndpoint('/api/invocations', () => [])
+  registerEndpoint('/api/catalog/invocations', () => [])
 })
 
 type ClassFixture = { id: number, name: string, level: number }
@@ -54,7 +54,7 @@ const sheet = (classes: ClassFixture[], knownSpellIds: number[] = []) => ({
   id: 1,
   classes: classes.map((c, i) => ({ classId: c.id, level: c.level, isMain: i === 0, class: { name: c.name } })),
   baseAbilityScores: [{ abilityId: 'int', value: 16 }, { abilityId: 'wis', value: 16 }, { abilityId: 'cha', value: 16 }],
-  skills: [],
+  proficiencyOverrides: [],
   spells: knownSpellIds.map((spellId) => {
     const known = SPELLS.find(s => s.id === spellId)
     return { spellId, classId: classes[0]!.id, source: null, spell: known && { name: known.name, level: known.level } }

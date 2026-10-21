@@ -10,7 +10,6 @@ import characterAbilityScores from './character_ability_scores'
 import characterAbilityScoreImprovements from './character_ability_score_improvements'
 import characterSpells from './character_spells'
 import characterSpellSlots from './character_spell_slots'
-import characterSkills from './character_skills'
 import characterFeatures from './character_features'
 import characterInventory from './character_inventory'
 import characterProficiencyOverrides from './character_proficiency_overrides'
@@ -103,7 +102,6 @@ export const characterSheetRelations = relations(characterSheets, ({ many, one }
   abilityScoreImprovements: many(characterAbilityScoreImprovements),
   spells: many(characterSpells),
   spellSlots: many(characterSpellSlots),
-  skills: many(characterSkills),
   features: many(characterFeatures),
   inventory: many(characterInventory),
   proficiencyOverrides: many(characterProficiencyOverrides),

@@ -4,7 +4,7 @@ import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { useCharacterBuilder, type BuilderState } from '../../app/composables/useCharacterBuilder'
 import type { Catalog } from '../../shared/rules/resolve'
-import { catalogClasses } from '../fixtures/catalogClasses'
+import { catalogClasses, classSkillProgression } from '../fixtures/catalogClasses'
 
 // Quand le niveau du personnage donne déjà accès à la sous-classe, l'étape Classe l'exige, comme le level-up.
 
@@ -19,7 +19,7 @@ registerEndpoint('/api/catalog/classes', () => [{
   proficiencies: catalogClasses().find(c => c.name === 'Guerrier')!.proficiencies,
 }])
 registerEndpoint('/api/catalog/progressions', (): Catalog => ({
-  progressions: [{
+  progressions: [classSkillProgression(99, GUERRIER, 'Guerrier'), {
     progressionId: 7,
     ownerClassId: GUERRIER,
     ownerLevelRequired: 3,

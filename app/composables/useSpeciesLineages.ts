@@ -31,7 +31,7 @@ interface CatalogSpeciesRich {
 
 export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>) {
   const { extended, extendedQuery } = useExtendedContent()
-  const { data: species, status: speciesStatus } = useFetch<{ id: number, name: string }[]>('/api/character_species', {
+  const { data: species, status: speciesStatus } = useFetch<{ id: number, name: string }[]>('/api/catalog/species', {
     query: extendedQuery,
     default: () => [],
   })

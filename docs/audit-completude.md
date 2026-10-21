@@ -280,7 +280,7 @@ Détail (symptôme, règle sourcée, racine, piste) dans chaque issue.
 ## Suspects à vérifier
 - ~~Level-up en **multiclasse** hors sorts~~ — **audité (2026-09-27)** : compétences (#101) et niveau
   atteint (#102) corrigés ; a révélé B12, B14, B15.
-- Invocations **échangeables** au level-up, jamais testées → [#115](https://github.com/kevmorpain/le-bureau-du-jdr/issues/115).
+- ~~Invocations **échangeables** au level-up, jamais testées~~ → [#115](https://github.com/kevmorpain/le-bureau-du-jdr/issues/115), testées (lot 10 puis lot 12, règle AideDD vérifiée).
 - Choix accordés par une **sous-classe** à plusieurs niveaux : seul cas connu, le 2ᵉ style du Champion → P5 [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175).
 - ~~Complétude des **sorts connus** à la création d'un caster de haut niveau : grimoire du Magicien~~ → [#111](https://github.com/kevmorpain/le-bureau-du-jdr/issues/111), résolu (lot 3).
 - Fiches **prod** abîmées avant #102 → [#116](https://github.com/kevmorpain/le-bureau-du-jdr/issues/116).

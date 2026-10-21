@@ -12,7 +12,7 @@ const SHEET = {
   hpBase: 28,
   classes: [{ classId: 5, level: 3, isMain: true, class: { name: 'Guerrier' } }],
   baseAbilityScores: [{ abilityId: 'str', value: 16 }, { abilityId: 'con', value: 14 }, { abilityId: 'cha', value: 14 }],
-  skills: [],
+  proficiencyOverrides: [],
   spells: [],
 }
 

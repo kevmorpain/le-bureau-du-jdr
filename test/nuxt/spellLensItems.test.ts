@@ -16,7 +16,7 @@ const sheet = (id: number, over: Record<string, unknown> = {}) => ({
   baseAbilityScores: ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(abilityId => ({ abilityId, value: 10 })),
   classes: [{ classId: 1, level: 5, isMain: true, class: { id: 1, name: 'Magicien', spellcastingAbility: 'int' }, subclass: null }],
   features: [],
-  skills: [],
+  proficiencyOverrides: [],
   abilityScoreImprovements: [],
   species: { name: 'Espèce', speed: 9, speciesFeatures: [] },
   temporaryEffects: [],

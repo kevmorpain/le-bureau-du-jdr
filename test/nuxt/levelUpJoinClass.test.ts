@@ -17,9 +17,8 @@ const PALADIN = 7
 beforeAll(() => {
   registerEndpoint('/api/catalog/classes', catalogClasses)
   registerEndpoint('/api/catalog/progressions', () => ({ progressions: [] }))
-  registerEndpoint('/api/character_sheets/1/proficiency-overrides', () => [])
-  registerEndpoint('/api/feats', () => [])
-  registerEndpoint('/api/invocations', () => [])
+  registerEndpoint('/api/catalog/feats', () => [])
+  registerEndpoint('/api/catalog/invocations', () => [])
   registerEndpoint('/api/character_sheets/1/level-up-replacements', () => ({
     choices: [{
       progressionId: 42,
@@ -50,7 +49,7 @@ async function mount(component: Component, cha: number, state: Partial<LevelUpSt
       { abilityId: 'int', value: 8 },
       { abilityId: 'cha', value: cha },
     ],
-    skills: [],
+    proficiencyOverrides: [],
     spells: [],
   })
   let levelUp!: ReturnType<typeof useLevelUp>

@@ -1,5 +1,6 @@
 import { db, schema } from '~~/server/utils/db'
-import { and, eq, sql } from 'drizzle-orm'
+import { effectIdFor } from '~~/server/utils/effectRows'
+import type { Effect } from '~~/server/db/schema/effects'
 import { createItemSchema } from '~~/shared/utils/item'
 import { z } from 'zod'
 
@@ -32,25 +33,8 @@ export default defineEventHandler(async (event) => {
 
   if (!item) throw createError({ statusCode: 500, statusMessage: 'Failed to create item' })
 
-  // Réutilise l'effect existant si même (type, value) ; `value` JSON comparé en string (stocké en text).
   for (const effect of body.effects) {
-    const existing = await db
-      .select({ id: schema.effects.id })
-      .from(schema.effects)
-      .where(and(
-        eq(schema.effects.type, effect.type as any),
-        sql`${schema.effects.value} = ${JSON.stringify(effect.value)}`,
-      ))
-      .limit(1)
-      .get()
-
-    const effectId = existing?.id ?? await db
-      .insert(schema.effects)
-      .values({ type: effect.type as any, value: effect.value as any })
-      .returning()
-      .get()
-      .then(r => r.id)
-
+    const effectId = await effectIdFor(db, effect as Effect)
     await db
       .insert(schema.itemEffects)
       .values({ itemId: item.id, effectId })

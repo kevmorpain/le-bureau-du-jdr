@@ -126,7 +126,7 @@
         <div class="flex items-center gap-1 rounded px-0.5">
           <button
             class="shrink-0 hover:scale-110 transition-transform"
-            @click="cycleProficiency(`${key}_save`)"
+            @click="cycleProficiency('saving_throw', key, `${key}_save`)"
           >
             <ProficiencyIndicator :level="savingThrows[key]!.proficiency" />
           </button>
@@ -177,7 +177,7 @@
           >
             <button
               class="shrink-0 hover:scale-110 transition-transform"
-              @click="cycleProficiency(skillKey)"
+              @click="cycleProficiency('skill', skillKey, skillKey)"
             >
               <ProficiencyIndicator :level="getEffectiveProficiency(skillKey)" />
             </button>
@@ -234,6 +234,8 @@ const {
   saveStatuses,
   skillDisadvantageReasons,
   armorStealthDisadvantage,
+  setProficiencyOverride,
+  removeProficiencyOverride,
 } = useCharacterSheet(characterSheet)
 
 const rollCheck = (key: AbilityKey) =>
@@ -266,29 +268,10 @@ const proficiencyCycle: Record<ProficiencyLevel, ProficiencyLevel> = {
   expert: 'none',
 }
 
-const cycleProficiency = async (skillKey: string) => {
-  const current = getEffectiveProficiency(skillKey)
-  const next = proficiencyCycle[current]
-
-  const existing = characterSheet.value.skills?.find(
-    s => s.skillKey === skillKey && s.source === 'manual',
-  )
-  if (existing) {
-    existing.proficiencyLevel = next
-  } else {
-    characterSheet.value.skills ??= []
-    characterSheet.value.skills.push({
-      skillKey,
-      proficiencyLevel: next,
-      source: 'manual',
-      isOverride: true,
-      characterSheetId: characterSheet.value.id,
-    })
-  }
-
-  await $fetch(`/api/character_sheets/${characterSheet.value.id}/skills`, {
-    method: 'PUT',
-    body: [{ skillKey, proficiencyLevel: next, source: 'manual', isOverride: true }],
-  })
+// Le niveau choisi s'ajoute à ce que les règles accordent ; revenir à « aucune » retire l'ajout manuel.
+const cycleProficiency = async (type: 'skill' | 'saving_throw', value: string, levelKey: string) => {
+  const next = proficiencyCycle[getEffectiveProficiency(levelKey)]
+  if (next === 'none') await removeProficiencyOverride(type, value)
+  else await setProficiencyOverride(type, value, next === 'expert' ? 'expertise' : 'grant')
 }
 </script>

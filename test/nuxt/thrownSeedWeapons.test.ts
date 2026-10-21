@@ -46,13 +46,12 @@ const rowOf = (id: number, name: string, equipped: boolean) => ({
 
 describe('armes de lancer du catalogue — inventaire', () => {
   registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory`, () => [rowOf(1, 'Hachette', true), rowOf(2, 'Javeline', true), rowOf(3, 'Dague', false)])
-  registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
   registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
-  registerEndpoint('/api/backgrounds', () => [])
   registerEndpoint('/api/items', () => [])
 
   const sheet = () => reactive({
-    id: SHEET_ID, name: 'Brom', exhaustionLevel: 0, baseAbilityScores: [], classes: [], features: [], skills: [],
+    id: SHEET_ID, name: 'Brom', exhaustionLevel: 0, baseAbilityScores: [], classes: [], features: [], proficiencyOverrides: [],
     abilityScoreImprovements: [], species: null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as any

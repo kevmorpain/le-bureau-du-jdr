@@ -15,7 +15,8 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:unit": "vitest --project unit",
-    "test:nuxt": "vitest --project nuxt"
+    "test:nuxt": "vitest --project nuxt",
+    "typecheck": "nuxt prepare && tsc --noEmit -p .nuxt/tsconfig.server.json && tsc --noEmit -p .nuxt/tsconfig.app.json && tsc --noEmit -p .nuxt/tsconfig.shared.json && tsc --noEmit -p .nuxt/tsconfig.node.json"
   },
   "dependencies": {
     "@nuxt/eslint": "^1.13.0",

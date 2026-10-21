@@ -1,4 +1,5 @@
 import { sheetTextField } from './sheetField'
+import { useSheetResource } from './useSheetResource'
 
 export type Background = {
   id: number
@@ -18,12 +19,7 @@ export const useCharacterBackground = (characterSheet?: Ref<CharacterSheet>) => 
 
   // ─── Fetch ────────────────────────────────────────────────────────────────
 
-  const { data: backgrounds, refresh: refreshBackgrounds } = useFetch<Background[]>(
-    () => characterId.value !== undefined
-      ? `/api/backgrounds?characterSheetId=${characterId.value}`
-      : null,
-    { watch: [characterId], default: () => [] },
-  )
+  const { data: backgrounds, refresh: refreshBackgrounds } = useSheetResource<Background[]>(characterId, 'backgrounds', () => [])
 
   // ─── Background sélectionné ───────────────────────────────────────────────
 
@@ -50,9 +46,9 @@ export const useCharacterBackground = (characterSheet?: Ref<CharacterSheet>) => 
 
   async function createCustomBackground(data: Omit<Background, 'id' | 'characterSheetId'>) {
     if (!characterId.value) return
-    const created = await $fetch<Background>('/api/backgrounds', {
+    const created = await $fetch<Background>(`/api/character_sheets/${characterId.value}/backgrounds`, {
       method: 'POST',
-      body: { ...data, characterSheetId: characterId.value },
+      body: data,
     })
     await refreshBackgrounds()
     return created

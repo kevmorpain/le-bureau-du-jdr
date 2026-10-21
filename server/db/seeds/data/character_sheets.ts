@@ -13,10 +13,6 @@ export const characterSheets = [
       { abilityId: 'wis', value: 15 },
       { abilityId: 'cha', value: 9 },
     ],
-    skills: [
-      { skillKey: 'wis_save', proficiencyLevel: 'proficient' as const, source: 'class' as const },
-      { skillKey: 'cha_save', proficiencyLevel: 'proficient' as const, source: 'class' as const },
-    ],
     className: 'Occultiste',
     subclassName: 'Le Grand Ancien',
     classLevel: 10,

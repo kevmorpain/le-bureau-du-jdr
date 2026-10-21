@@ -6,6 +6,8 @@ import { hitPointsPerLevelBonus } from '~~/shared/rules/hitPoints'
 import { savingThrowBonusParts, sumBonusParts, type BonusPart, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { ABILITY_SKILLS } from '~~/shared/rules/skills'
 import { halfProficiencyBonus } from '~~/shared/rules/rolls'
+import { proficiencyLevels, type ProficiencyLevel } from '~~/shared/rules/proficiencyLevels'
+import type { ProficiencyOverrideRow } from '~~/shared/rules/proficiencyOverrides'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
@@ -13,15 +15,13 @@ const abilityScoreOrder = ABILITY_KEYS
 
 export const abilitySkillKeys: Record<string, string[]> = ABILITY_SKILLS
 
-export type ProficiencyLevel = 'none' | 'proficient' | 'expert'
-
-const proficiencyPriority: Record<ProficiencyLevel, number> = { none: 0, proficient: 1, expert: 2 }
+export type { ProficiencyLevel }
 
 // Seuls champs de la fiche que lit la couche : le builder y projette son état pour que le récapitulatif
 // affiche ce que la fiche affichera (useBuilderSheetProjection).
 export interface AbilitiesSheet {
   baseAbilityScores?: { abilityId: string, value: number }[]
-  skills?: { skillKey: string, proficiencyLevel: string }[]
+  proficiencyOverrides?: ProficiencyOverrideRow[]
 }
 
 // ─── Composable ──────────────────────────────────────────────────────────────
@@ -85,37 +85,16 @@ export const useCharacterAbilities = (
 
   // ─── Skills & saving throws ───────────────────────────────────────────────
 
-  // Pre-computed Map to avoid O(n) filtering on every getEffectiveProficiency call
-  const skillProficiencies = computed(() => {
-    const map = new Map<string, ProficiencyLevel>()
-    for (const s of characterSheet?.value?.skills ?? []) {
-      const level = s.proficiencyLevel as ProficiencyLevel
-      const current = map.get(s.skillKey)
-      if (!current || proficiencyPriority[level] > proficiencyPriority[current]) {
-        map.set(s.skillKey, level)
-      }
-    }
-    // `saving_throw_proficiency` est projeté sur la même map via la convention `<carac>_save`.
-    // Dérivés (plus matérialisés) : compétences d'historique (`backgroundEffects`), JS de la 1re classe
-    // (`classSavingThrowEffects`), maîtrises choisies sur un point de choix (`choiceEffects`).
-    const effectSources = [
+  const skillProficiencies = computed(() => proficiencyLevels(
+    [
       ...(deps?.speciesEffects.value ?? []),
       ...(deps?.featureEffects.value ?? []),
       ...(deps?.backgroundEffects?.value ?? []),
       ...(deps?.classSavingThrowEffects?.value ?? []),
       ...(deps?.choiceEffects?.value ?? []),
-    ]
-    for (const e of effectSources) {
-      let key: string | null = null
-      if (e.type === 'skill_proficiency') key = e.value.skill
-      else if (e.type === 'saving_throw_proficiency') key = savingThrowKey(e.value.ability)
-      if (key === null) continue
-      if (!map.has(key) || proficiencyPriority['proficient'] > proficiencyPriority[map.get(key)!]) {
-        map.set(key, 'proficient')
-      }
-    }
-    return map
-  })
+    ],
+    characterSheet?.value?.proficiencyOverrides ?? [],
+  ))
 
   const getEffectiveProficiency = (skillKey: string): ProficiencyLevel =>
     skillProficiencies.value.get(skillKey) ?? 'none'

@@ -36,9 +36,8 @@ registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory/1`, {
     return { success: true }
   },
 })
-registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
-registerEndpoint('/api/backgrounds', () => [])
 registerEndpoint('/api/items', () => [])
 
 const sheet = (over: Record<string, unknown> = {}) => reactive({
@@ -48,7 +47,7 @@ const sheet = (over: Record<string, unknown> = {}) => reactive({
   baseAbilityScores: [],
   classes: [],
   features: [],
-  skills: [],
+  proficiencyOverrides: [],
   abilityScoreImprovements: [],
   species: null,
   ...over,
@@ -112,7 +111,7 @@ describe('suppression d\'un objet — confirmation', () => {
     await tab.trigger('click')
     await vi.waitFor(() => expect(wrapper.text()).toContain('Corde de chanvre'))
 
-    const trash = Array.from(wrapper.element.querySelectorAll('button')).find(b => b.querySelector('[class*="trash"]'))!
+    const trash = Array.from((wrapper.element as HTMLElement).querySelectorAll('button')).find(b => b.querySelector('[class*="trash"]'))!
     trash.click()
     await vi.waitFor(() => expect(body().textContent).toContain('Supprimer cet objet ?'))
     expect(body().textContent).toContain('Corde de chanvre quitte l\'inventaire')

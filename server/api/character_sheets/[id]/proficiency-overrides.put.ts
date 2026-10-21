@@ -1,5 +1,5 @@
 import { db, schema } from '~~/server/utils/db'
-import { proficiencyOverrideSchema } from '~~/shared/utils/item'
+import { proficiencyOverrideSchema } from '~~/shared/utils/proficiency_overrides'
 
 export default defineEventHandler(async (event) => {
   const { id } = getRouterParams(event)

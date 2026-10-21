@@ -1,3 +1,5 @@
+import { useSheetResource } from './useSheetResource'
+
 export type CharacterSpellWithSpell = CharacterSpell & { spell: Spell }
 
 type SlotState = { max: number, current: number }
@@ -19,12 +21,7 @@ export const useCharacterSpells = (
 
   // ─── Fetch ────────────────────────────────────────────────────────────────
 
-  const { data: characterSpells, refresh: refreshSpells } = useFetch(
-    () => characterId.value !== undefined
-      ? `/api/character_sheets/${characterId.value}/spells`
-      : null,
-    { watch: [characterId] },
-  )
+  const { data: characterSpells, refresh: refreshSpells } = useSheetResource<CharacterSpellWithSpell[]>(characterId, 'spells', () => [])
 
   // ─── Filters ──────────────────────────────────────────────────────────────
 

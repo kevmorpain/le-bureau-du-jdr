@@ -29,7 +29,8 @@ import type { LevelUpReplacements } from '~~/shared/rules/duplicateProficiencies
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
-import { featLanguageChoiceCount, sheetActiveEffectSources, type ActiveEffectsSheet } from '~~/shared/rules/characterEffects'
+import { sheetActiveEffectSources, type ActiveEffectsSheet } from '~~/shared/rules/characterEffects'
+import { withProficiencyOverrides } from '~~/shared/rules/proficiencyOverrides'
 import { averageHitDieValue, hitPointGain, maxHitPoints } from '~~/shared/rules/hitPoints'
 import { useAbilityEffectInputs } from './useCharacterSheet'
 
@@ -145,17 +146,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const state = useState<LevelUpState>('level-up-state', freshState)
   const toast = useToast()
 
-  const { getById: getFeatById } = useFeats()
-  const featNeedsAbility = (featureId: number | null): boolean => {
-    if (featureId == null) return false
-    return (getFeatById(featureId)?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice')
-  }
-  const featNeedsSkilled = (featureId: number | null): boolean => {
-    if (featureId == null) return false
-    return (getFeatById(featureId)?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'skilled_choice')
-  }
-  const featLanguageCount = (featureId: number | null): number =>
-    featureId == null ? 0 : featLanguageChoiceCount((getFeatById(featureId)?.effects ?? []) as Effect[])
+  const { needsAbility: featNeedsAbility, needsSkilled: featNeedsSkilled, languageCount: featLanguageCount } = useFeats()
   const buildFeatChoices = (s: LevelUpState): { ability?: AbilityKey, skills?: string[], tools?: string[], languages?: string[] } | null => {
     if (s.featureId == null) return null
     if (featNeedsSkilled(s.featureId)) return { skills: s.featSkills, tools: s.featTools }
@@ -214,14 +205,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const proficientSkills = computed<string[]>(() => skillsWhere(l => l !== 'none').map(s => s.key))
   const eligibleExpertiseSkills = computed(() => skillsWhere(l => l === 'proficient'))
 
-  // Outils et langues ajoutés à la main : stockés en overrides, ABSENTS du payload
-  // GET → fetch dédié (comme la fiche). Sert à exclure des pickers de Doué et de Linguiste.
-  const { data: proficiencyOverridesData } = useFetch<Array<{ proficiencyType: string, value: string, action: string }>>(
-    () => (charSheet.value?.id != null ? `/api/character_sheets/${charSheet.value.id}/proficiency-overrides` : null),
-    { default: () => [] },
-  )
 
-  // Maîtrises d'outils ou de langues de la fiche (effets + ajouts manuels), comme la fiche les calcule.
+  // Maîtrises d'outils ou de langues déjà acquises : sans les objets ni les effets temporaires de la fiche,
+  // qui ne donnent pas de maîtrise durable à exclure des choix.
   const ownedProficiencies = (type: 'tool' | 'language') => {
     const effectType = type === 'tool' ? 'tool_proficiency' : 'language_proficiency'
     const classEffects = (charSheet.value as { classEffects?: Effect[] } | null)?.classEffects ?? []
@@ -232,10 +218,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       ...abilityInputs.choiceEffects.value,
       ...classEffects,
     ].filter(e => e.type === effectType).map(e => e.value as string)
-    const ov = proficiencyOverridesData.value ?? []
-    const grants = ov.filter(o => o.proficiencyType === type && o.action === 'grant').map(o => o.value)
-    const revokes = new Set(ov.filter(o => o.proficiencyType === type && o.action === 'revoke').map(o => o.value))
-    return [...new Set([...fromEffects, ...grants])].filter(t => !revokes.has(t))
+    return withProficiencyOverrides(fromEffects, charSheet.value?.proficiencyOverrides ?? [], type)
   }
   const ownedTools = computed<string[]>(() => ownedProficiencies('tool'))
   const knownLanguages = computed<string[]>(() => ownedProficiencies('language'))

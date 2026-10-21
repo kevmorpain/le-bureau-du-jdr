@@ -48,9 +48,8 @@ registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory`, () => [
   entry(2, 'Cape de protection', protection, { equipped: true, attuned: false, requiresAttunement: true }),
   entry(3, 'Talisman de vigilance', [{ type: 'initiative_bonus', value: { amount: 2 } }], { equipped: true, attuned: false, requiresAttunement: false }),
 ])
-registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
-registerEndpoint('/api/backgrounds', () => [])
 
 const sheet = ref({
   id: SHEET_ID,
@@ -64,7 +63,7 @@ const sheet = ref({
   ],
   classes: [],
   features: [],
-  skills: [{ skillKey: 'wis_save', proficiencyLevel: 'proficient' }],
+  proficiencyOverrides: [{ proficiencyType: 'saving_throw', value: 'wis', action: 'grant' }],
   abilityScoreImprovements: [],
   species: null,
   temporaryEffects: [

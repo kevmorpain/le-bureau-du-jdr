@@ -19,7 +19,7 @@ const elfLoaded = new Promise<void>((resolve) => {
   releaseElf = resolve
 })
 
-registerEndpoint('/api/character_species', () => [
+registerEndpoint('/api/catalog/species', () => [
   { id: 10, name: 'Demi-orc' },
   { id: 20, name: 'Elfe' },
   { id: 30, name: 'Humain' },
@@ -87,7 +87,7 @@ registerEndpoint('/api/catalog/progressions', (): Catalog => ({
     },
   ],
 }))
-registerEndpoint('/api/feats', () => [
+registerEndpoint('/api/catalog/feats', () => [
   { id: DOUE, name: 'Doué', description: null, effects: [{ type: 'other', value: { kind: 'skilled_choice' } }] },
 ])
 
@@ -153,7 +153,7 @@ describe('purge de l\'expertise — attend les compétences d\'espèce', () => {
   })
 
   it('une espèce absente du catalogue ne bloque pas la purge', async () => {
-    // Gnome : absent de `/api/character_species` ici → aucun effet à attendre une fois la liste chargée.
+    // Gnome : absent de `/api/catalog/species` ici → aucun effet à attendre une fois la liste chargée.
     const { state, catalogSpeciesId } = buildRogue({
       raceId: 'gnome',
       skills: ['stealth', 'acrobatics', 'deception', 'intimidation'],

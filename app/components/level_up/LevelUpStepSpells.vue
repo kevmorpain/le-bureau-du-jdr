@@ -523,7 +523,7 @@ const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('
   immediate: true,
 })
 
-const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/invocations', {
+const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/invocations', {
   query: extendedQuery,
   default: () => [],
 })

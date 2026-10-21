@@ -4,6 +4,7 @@ import type { Effect } from '../../schema/effects'
 import { skillEnum } from '~~/shared/rules/skills'
 import { backgroundChoices, fixedProficiencies } from '~~/shared/rules/backgroundProficiencies'
 import type { Db } from '~~/server/utils/db'
+import { effectIdFor } from '~~/server/utils/effectRows'
 import { ensureFeatureChoice } from './featureChoice'
 
 // Pose les maîtrises FIXES d'un historique (compétences, outils, langues) en effets sur une feature
@@ -26,14 +27,7 @@ export interface BackgroundProficiencySeedReport {
 }
 
 async function linkEffect(db: Db, featureId: number, effect: Effect): Promise<boolean> {
-  const existingEffect = await db
-    .select({ id: schema.effects.id })
-    .from(schema.effects)
-    .where(and(eq(schema.effects.type, effect.type), eq(schema.effects.value, effect.value)))
-    .limit(1)
-    .get()
-  const effectId = existingEffect?.id
-    ?? (await db.insert(schema.effects).values({ type: effect.type, value: effect.value }).returning().get()).id
+  const effectId = await effectIdFor(db, effect)
   // Check-before-insert (idempotent, D1-safe : pas de `returning` après `onConflictDoNothing`).
   const existingLink = await db
     .select({ featureId: schema.featureEffects.featureId })

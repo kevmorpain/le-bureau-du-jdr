@@ -49,8 +49,8 @@ De même, `resolvedFeatures`, `classFeatureEffects` et `allEffects` sont constru
 
 - Les sous-composables reçoivent leurs dépendances inter-couches via un paramètre `deps` explicite — pas d'imports croisés entre eux.
 - Hors de la fiche (level-up, lentille de sorts), ne jamais reconstruire maîtrises ou caractéristiques à
-  la main : instancier `useCharacterAbilities` avec `useAbilityEffectInputs`. `character_skills` ne porte
-  que les overrides et l'expertise ; le lire seul donne un résultat faux (cf. `audit-completude.md` B9).
+  la main : instancier `useCharacterAbilities` avec `useAbilityEffectInputs`. Seuls les ajouts manuels sont
+  stockés (`proficiencyOverrides`, [D27](./decisions.md#d27)) ; les lire seuls donne un résultat faux (cf. `audit-completude.md` B9).
   Les effets d'objets n'y sont pas (l'inventaire a son propre fetch) : seule la fiche les passe, avec les
   effets temporaires, en `activeEffectSources`, via une forward-declaration car l'inventaire est instancié
   après la couche 2.

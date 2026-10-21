@@ -15,9 +15,8 @@ const grant = (spellcastingAbility: string) => ({
 
 async function mountSheet(speciesAbility: string | null) {
   registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory`, () => [])
-  registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
   registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
-  registerEndpoint('/api/backgrounds', () => [])
   const sheet = classSheet(SHEET_ID, 'Magicien', 3, 1, [], {
     baseAbilityScores: abilityScores({ int: 10, wis: 16, cha: 14 }),
     classes: [{ classId: 3, level: 1, isMain: true, class: { name: 'Magicien', spellcastingAbility: 'int' }, subclass: null }],

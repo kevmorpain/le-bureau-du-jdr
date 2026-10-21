@@ -53,9 +53,9 @@ Affiche les 6 scores (FOR/DEX/CON/INT/SAG/CHA) avec :
 - Modificateur calculé
 - Jets de sauvegarde (maîtrise depuis `character_ability_scores`) + effets `saving_throw_bonus` (signés, une
   caractéristique ou `all`) des capacités, objets actifs et effets temporaires ; l'icône ✨ détaille les sources
-- Compétences regroupées par caractéristique (maîtrise + expertise depuis `character_skills`)
+- Compétences regroupées par caractéristique (maîtrise + expertise dérivées des effets et des choix, plus les ajouts manuels)
 
-**Source :** `character_ability_scores` pour les scores de base, effets d'espèce/classe pour les bonus, `character_skills` pour les maîtrises.
+**Source :** `character_ability_scores` pour les scores de base, effets d'espèce/classe pour les bonus, effets, choix et `proficiencyOverrides` pour les maîtrises ([D27](./decisions.md#d27)).
 **Persistence :** `v-model` → deep watch → PUT.
 
 **Calcul du score** (`shared/rules/abilityScores.ts`, appelé par `useCharacterAbilities`) :

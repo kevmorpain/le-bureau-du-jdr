@@ -55,8 +55,8 @@ registerEndpoint('/api/catalog/feature-options', (event) => {
   const ids = String(getQuery(event).ids ?? '').split(',').map(Number)
   return OPTIONS.filter(o => ids.includes(o.id))
 })
-registerEndpoint('/api/invocations', () => [])
-registerEndpoint('/api/feats', () => [])
+registerEndpoint('/api/catalog/invocations', () => [])
+registerEndpoint('/api/catalog/feats', () => [])
 
 async function summaryOf(partial: Partial<BuilderState>) {
   const { state, resetBuilder } = useCharacterBuilder()

@@ -8,7 +8,6 @@ function settle<T>(promise: Promise<T>): Promise<T | { error: string }> {
 // invocation Worker : les derniers seeds ne sont jamais atteints.
 const SEED_REGISTRY: Record<string, () => Promise<unknown>> = {
   abilityScores: _seed.abilityScores,
-  skills: _seed.skills,
   damageTypes: _seed.damageTypes,
   magicSchools: _seed.magicSchools,
   rollTables: _seed.rollTables, // avant les classes : leurs capacités y renvoient
@@ -60,9 +59,8 @@ export async function runSeeds(only?: string[]) {
     return buildResult(start, summary)
   }
 
-  const [abilityScores, skills, damageTypes, magicSchools, rollTables, characterSpecies, classes, backgrounds] = await Promise.all([
+  const [abilityScores, damageTypes, magicSchools, rollTables, characterSpecies, classes, backgrounds] = await Promise.all([
     settle(_seed.abilityScores()),
-    settle(_seed.skills()),
     settle(_seed.damageTypes()),
     settle(_seed.magicSchools()),
     settle(_seed.rollTables()),
@@ -96,7 +94,7 @@ export async function runSeeds(only?: string[]) {
   // await _seed.characterSheets()
 
   const summary = {
-    abilityScores, skills, damageTypes, magicSchools, rollTables, characterSpecies, classes, backgrounds,
+    abilityScores, damageTypes, magicSchools, rollTables, characterSpecies, classes, backgrounds,
     barbare, barde, clerc, druide, guerrier, magicien, moine, paladin, rodeur, roublard, ensorceleur, warlock,
     spells, items, feats, lineages,
   }

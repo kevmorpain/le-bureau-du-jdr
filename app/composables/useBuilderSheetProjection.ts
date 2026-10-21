@@ -9,17 +9,16 @@ type BuilderInvocation = { id: number, name: string, effects: Effect[] }
 
 /**
  * Ce que la fiche créée affichera, calculé par SON calculateur (`useCharacterAbilities`) : l'état du
- * builder est projeté dans les canaux que le GET de la fiche lui fournit (lignes `character_skills`
- * matérialisées, effets d'espèce, de classe, d'historique, de dons, de manifestations et maîtrises choisies).
+ * builder est projeté dans les canaux que le GET de la fiche lui fournit (ajouts de l'Humain variant,
+ * effets d'espèce, de classe, d'historique, de dons, de manifestations et maîtrises choisies).
  */
 export function useBuilderSheetProjection() {
   const {
     state,
     speciesEffects,
     classDbId,
-    isCustomBackground,
     backgroundSkills,
-    materializedSkills,
+    variantHumanSkills,
     chosenValues,
     chosenFeatIds,
     invocationPickIds,
@@ -32,7 +31,7 @@ export function useBuilderSheetProjection() {
   const { classProficienciesFor } = useBuilderEntities()
 
   const { extendedQuery } = useExtendedContent()
-  const { data: invocations } = useFetch<BuilderInvocation[]>('/api/invocations', {
+  const { data: invocations } = useFetch<BuilderInvocation[]>('/api/catalog/invocations', {
     query: extendedQuery,
     default: () => [],
   })
@@ -49,14 +48,13 @@ export function useBuilderSheetProjection() {
     baseAbilityScores: ABILITY_KEYS
       .filter(ab => finalAbilities.value[ab] != null)
       .map(ab => ({ abilityId: ab, value: finalAbilities.value[ab]! })),
-    skills: [
-      ...materializedSkills.value.map(skillKey => ({ skillKey, proficiencyLevel: 'proficient' })),
-      ...state.value.expertiseSkills.map(skillKey => ({ skillKey, proficiencyLevel: 'expert' })),
-    ],
+    proficiencyOverrides: variantHumanSkills.value.map(value => ({ proficiencyType: 'skill', value, action: 'grant' })),
   }))
   const withoutAbilityIncreases = (effects: Effect[]) => effects.filter(e => e.type !== 'ability_increase')
   const skillEffects = (skills: string[]): Effect[] =>
     skills.map(skill => ({ type: 'skill_proficiency', value: { skill: skill as SkillKey } }))
+  const expertiseEffects = (skills: string[]): Effect[] =>
+    skills.map(skill => ({ type: 'skill_expertise', value: { skill: skill as SkillKey } }))
 
   const abilities = useCharacterAbilities(sheet, {
     speciesEffects: computed(() => withoutAbilityIncreases(speciesEffects.value)),
@@ -64,9 +62,12 @@ export function useBuilderSheetProjection() {
       ...chosenFeatIds.value.flatMap(id => resolveFeatEffects(getFeatById(id)?.effects ?? [], state.value.featChoices[id] ?? null)),
       ...selectedInvocations.value.flatMap(i => i.effects),
     ])),
-    backgroundEffects: computed(() => isCustomBackground.value ? [] : skillEffects(backgroundSkills.value)),
+    backgroundEffects: computed(() => skillEffects(backgroundSkills.value)),
     classSavingThrowEffects: computed(() => classProficienciesFor(classDbId.value).savingThrows),
-    choiceEffects: computed(() => skillEffects([...state.value.skills, ...chosenValues('skill')])),
+    choiceEffects: computed(() => [
+      ...skillEffects([...state.value.skills, ...chosenValues('skill')]),
+      ...expertiseEffects(state.value.expertiseSkills),
+    ]),
     asiEffects: computed(() => []),
     proficiencyBonus: profBonus,
   })
