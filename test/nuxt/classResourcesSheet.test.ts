@@ -16,9 +16,8 @@ let seq = 9400
 const sheetWith = async (build: (id: number) => ReturnType<typeof classSheet>, inventory: unknown[] = []) => {
   const id = ++seq
   registerEndpoint(`/api/character_sheets/${id}/inventory`, () => inventory)
-  registerEndpoint(`/api/character_sheets/${id}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${id}/backgrounds`, () => [])
   registerEndpoint(`/api/character_sheets/${id}/spells`, () => [])
-  registerEndpoint('/api/backgrounds', () => [])
   const cs = build(id)
   let s!: ReturnType<typeof useCharacterSheet>
   await mountSuspended(defineComponent({

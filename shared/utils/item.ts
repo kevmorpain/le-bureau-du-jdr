@@ -84,12 +84,6 @@ export const updateInventoryEntrySchema = z.object({
   attuned: z.boolean().optional(),
 })
 
-export const proficiencyOverrideSchema = z.object({
-  proficiencyType: z.enum(['weapon', 'armor', 'language', 'tool']),
-  value: z.string().min(1),
-  action: z.enum(['grant', 'revoke']),
-})
-
 export const weaponCategoryLabels: Record<string, string> = {
   simple_melee: 'Arme simple de mêlée',
   simple_ranged: 'Arme simple à distance',

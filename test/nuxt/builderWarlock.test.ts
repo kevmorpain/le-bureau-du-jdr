@@ -7,7 +7,7 @@ import { useCharacterBuilder, type BuilderState } from '../../app/composables/us
 import type { Catalog } from '../../shared/rules/resolve'
 import { PACT_BOON_NAMES } from '../../shared/rules/pactBoon'
 import { WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
-import { catalogClasses } from '../fixtures/catalogClasses'
+import { catalogClasses, classSkillProgression } from '../fixtures/catalogClasses'
 
 // Occultiste : le builder demande le pacte (niveau 3) et les manifestations (niveau 2), tous deux des options de feature ;
 // le pacte se lit dans le nom de l'option choisie, et une manifestation que le niveau ne propose pas ne part pas.
@@ -28,6 +28,7 @@ const invocationsContract = WARLOCK_PROGRESSION_CONTRACT.find(c => c.kind === 'i
 registerEndpoint('/api/catalog/classes', catalogClasses)
 registerEndpoint('/api/catalog/progressions', (): Catalog => ({
   progressions: [
+    classSkillProgression(99, WARLOCK, 'Occultiste'),
     {
       progressionId: PACT_PROGRESSION,
       ownerClassId: WARLOCK,

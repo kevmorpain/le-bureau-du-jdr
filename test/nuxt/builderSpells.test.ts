@@ -31,7 +31,7 @@ beforeAll(() => {
     const { className } = getQuery(event) as { className?: string }
     return className ? SPELLS.filter(s => s.className === className) : SPELLS
   })
-  registerEndpoint('/api/invocations', () => [])
+  registerEndpoint('/api/catalog/invocations', () => [])
 })
 
 async function waitFor(condition: () => boolean) {

@@ -107,13 +107,13 @@
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-2 mb-3">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">
-            Compétences — choisissez {{ classData.skillChoices.count }}
+            Compétences — choisissez {{ classSkillCount }}
           </p>
           <span
             class="text-xs font-semibold"
-            :class="state.skills.length >= classData.skillChoices.count ? 'text-green-400' : 'text-amber-400'"
+            :class="state.skills.length >= classSkillCount ? 'text-green-400' : 'text-amber-400'"
           >
-            {{ state.skills.length }}/{{ classData.skillChoices.count }}
+            {{ state.skills.length }}/{{ classSkillCount }}
           </span>
         </div>
         <div class="flex flex-wrap gap-1.5">
@@ -124,7 +124,7 @@
             class="px-2.5 py-1 rounded-md border text-xs transition-all"
             :class="state.skills.includes(skill.key)
               ? 'border-amber-500 bg-amber-500/10 text-amber-400 cursor-pointer'
-              : state.skills.length >= classData.skillChoices.count
+              : state.skills.length >= classSkillCount
                 ? 'border-(--ui-border) text-muted/40 cursor-not-allowed opacity-40'
                 : 'border-(--ui-border) bg-transparent text-muted hover:border-amber-500/40 cursor-pointer'"
             @click="toggleSkill(skill.key)"
@@ -353,6 +353,8 @@ const {
   conMod,
   hpMax,
   profBonus,
+  classSkillCount,
+  classSkillOptions,
   needsSubclass,
   subclassLevel,
   subclassOptions,
@@ -398,12 +400,7 @@ const knownSpellNames = computed(() => {
 // L'état du personnage qui décide des prérequis des manifestations (pacte, sorts connus).
 const eligibility = computed(() => ({ pactBoon: pactBoon.value, knownSpellNames: knownSpellNames.value }))
 
-const availableSkills = computed(() => {
-  if (!classData.value) return []
-  const from = classData.value.skillChoices.from
-  if (from === 'all') return SKILLS
-  return SKILLS.filter(s => from.includes(s.key))
-})
+const availableSkills = computed(() => SKILLS.filter(s => classSkillOptions.value.includes(s.key)))
 
 const eligibleExpertiseSkills = computed(() => SKILLS.filter(s => proficientSkills.value.includes(s.key)))
 function toggleExpertise(skillKey: string) {
@@ -472,7 +469,7 @@ function toggleSkill(key: string) {
   if (idx >= 0) {
     list.splice(idx, 1)
   }
-  else if (classData.value && list.length < classData.value.skillChoices.count) {
+  else if (list.length < classSkillCount.value) {
     list.push(key)
   }
 }

@@ -93,6 +93,7 @@ export type Effect
     | { type: 'saving_throw_proficiency_choice', value: { count: number, from?: ChoiceFrom<AbilityScoreKey> } }
     | { type: 'skill_bonus', value: { skill: string, bonusType: string, multiplier: number, condition: string } }
     | { type: 'skill_proficiency', value: { skill: SkillKey } }
+    | { type: 'skill_expertise', value: { skill: SkillKey } }
     | { type: 'spell_grant', value: { level: number, spellcastingAbility: AbilityScoreKey, spellName: string, countPerLongRest: number, unlockLevel?: number } }
     // Sort de domaine / de serment / de cercle : toujours préparé, hors de la limite quotidienne ; `unlockLevel` =
     // niveau de classe ; `terrain` : seulement pour le personnage qui a choisi ce terrain (Cercle de la terre).

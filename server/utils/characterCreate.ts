@@ -16,11 +16,11 @@ import { abilityEnum } from '~~/shared/rules/abilities'
 import { hitDieSidesOf } from '~~/shared/rules/hitDice'
 import { baseHitPointsBounds } from '~~/shared/rules/hitPoints'
 import { loadSheetRelations, sheetHitPointsOf } from '~~/server/utils/characterSheetLoader'
-import { skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
+import { SKILL_KEYS, skillEnum, uniqueSkillKeysSchema } from '~~/shared/rules/skills'
 import { ALL_TOOLS } from '~~/shared/rules/tools'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { slotsForLevel } from '~~/shared/rules/spellSlots'
-import { resolveChoices, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { classSkillChoice, resolveChoices, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { isValidAbilityDistribution } from '~~/shared/rules/composite'
 import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { AbilityKey } from '~~/shared/rules/abilities'
@@ -88,9 +88,9 @@ export const createCharacterSchema = z.object({
   // classSavingThrows retiré : les JS sont dérivés du porteur de la classe principale (F3 tranche 2).
   armorProficiencyKeys: z.array(z.string()).optional().default([]),
   weaponProficiencyKeys: z.array(z.string()).optional().default([]),
-  // Compétences d'historique SEEDÉ : dérivées (F3), plus envoyées. Ne restent ici que les non-dérivables :
-  // compétences d'un historique custom (sans porteur en base) + compétence d'Humain variant.
-  backgroundSkills: z.array(z.string()).optional().default([]),
+  // Rangées dans l'historique personnalisé, d'où la fiche les dérive comme celles d'un historique seedé.
+  customBackgroundSkills: z.array(skillEnum).max(SKILL_KEYS.length).optional().default([]),
+  variantHumanSkill: skillEnum.nullable().optional(),
   selectedLanguages: z.array(z.string()).optional().default([]),
   spellIds: z.array(z.number().int()),
   // Items non résolus côté client : conservés en texte libre.
@@ -300,7 +300,7 @@ async function validateChoices(db: Db, d: CreateCharacterInput, classId: number,
   // Compétences de classe : un pick sur le point de choix `skill` de la classe, validé comme les autres.
   const classSkillPicks: ChoicePick[] = []
   if (classSkills.length > 0) {
-    const skillChoice = choices.find(c => c.kind === 'skill' && c.ownerClassId === classId)
+    const skillChoice = classSkillChoice(choices, classId)
     if (!skillChoice) throw new CharacterValidationError(`Cette classe ne définit pas de choix de compétences.`)
     classSkillPicks.push(...classSkills.map(value => ({ progressionId: skillChoice.progressionId, value })))
   }
@@ -504,7 +504,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   if (d.customBackgroundName) {
     const [customBg] = await db
       .insert(schema.backgrounds)
-      .values({ name: d.customBackgroundName, characterSheetId: sheetId })
+      .values({ name: d.customBackgroundName, characterSheetId: sheetId, skillProficiencies: d.customBackgroundSkills })
       .returning()
     customBackgroundId = customBg!.id
   }
@@ -650,30 +650,22 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     ))
   }
 
-  // Sont DÉRIVÉS (effets/choix, cf. maîtrises) et ne sont plus matérialisés ici : JS de la 1re classe,
-  // compétences d'historique SEEDÉ, et le CHOIX de compétences de classe (stocké en character_choices,
-  // dérivé par deriveChoiceProficiencies). Reste matérialisé : `backgroundSkills` non-dérivables (historique
-  // custom + Humain variant).
-  const skillRows = [
-    ...d.backgroundSkills.map(key => ({ characterSheetId: sheetId, skillKey: key, proficiencyLevel: 'proficient' as const, source: 'background' as const, isOverride: false })),
-  ]
-  if (skillRows.length) {
-    stmts.push(db.insert(schema.characterSkills).values(skillRows))
-  }
-
   // Picks génériques (compétences de classe comprises) → character_choices ; les maîtrises sont dérivées à la lecture.
   stmts.push(...choicePickWriteStmts(db, sheetId, validated.picks))
 
-  // L'expertise matérialise sa propre ligne 'expert' (upsert, sans dépendre d'une 'proficient' préalable).
-  if (d.expertiseSkills?.length) {
+  if (d.expertiseSkills?.length && expertiseProgressionId != null) {
     stmts.push(...expertiseWriteStmts(db, sheetId, expertiseProgressionId, d.expertiseSkills))
   }
 
-  // Langues de l'Humain variant, faute d'espèce liée qui porte son choix : stockées comme des ajouts.
+  // Langues et compétence de l'Humain variant, faute d'espèce liée qui porte son choix : stockées comme des ajouts.
   // `armorProficiencyKeys` / `weaponProficiencyKeys` sont vestigiaux (acceptés, ignorés).
-  if (d.selectedLanguages.length) {
+  const variantHumanGrants = [
+    ...d.selectedLanguages.map(value => ({ proficiencyType: 'language' as const, value })),
+    ...(d.variantHumanSkill ? [{ proficiencyType: 'skill' as const, value: d.variantHumanSkill }] : []),
+  ]
+  if (variantHumanGrants.length) {
     stmts.push(db.insert(schema.characterProficiencyOverrides).values(
-      d.selectedLanguages.map(value => ({ characterSheetId: sheetId, proficiencyType: 'language' as const, value, action: 'grant' as const })),
+      variantHumanGrants.map(g => ({ characterSheetId: sheetId, ...g, action: 'grant' as const })),
     ))
   }
 

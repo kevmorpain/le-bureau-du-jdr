@@ -9,6 +9,7 @@ import { castDuration, type SpellDurationRow } from '~~/shared/rules/durations'
 import { conditionLabels } from '~~/shared/utils/labels'
 import { armorSpeedPenalty, computeWalkingSpeed, speedBonusParts } from '~~/shared/rules/speed'
 import type { WornArmor } from '~~/shared/rules/speed'
+import { withProficiencyOverrides } from '~~/shared/rules/proficiencyOverrides'
 import type { ArmorProperties } from '~~/server/db/schema/items'
 import { useCharacterClasses } from './character/useCharacterClasses'
 import { useCharacterAbilities } from './character/useCharacterAbilities'
@@ -17,6 +18,7 @@ import { useCharacterVitals } from './character/useCharacterVitals'
 import { useCharacterSpellcasting } from './character/useCharacterSpellcasting'
 import { useCharacterSpells } from './character/useCharacterSpells'
 import { useCharacterInventory } from './character/useCharacterInventory'
+import { useCharacterProficiencyOverrides } from './character/useCharacterProficiencyOverrides'
 import { useCharacterBackground } from './character/useCharacterBackground'
 import { useCharacterIdentity } from './character/useCharacterIdentity'
 import { useCharacterTemporaryEffects } from './character/useCharacterTemporaryEffects'
@@ -243,6 +245,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   // ─── Couche 5 : inventaire, équipement, combat ───────────────────────────
 
+  const overrides = useCharacterProficiencyOverrides(characterSheet)
+
   const inventoryLayer = useCharacterInventory(characterSheet, {
     allEffects: baseAllEffects,
     abilityModifiers: abilities.abilityModifiers,
@@ -250,6 +254,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     spellcastingAbility: spellcasting.spellcastingAbility,
     temporaryEffectSources: temporary.temporaryEffectSources,
     classTraits,
+    proficiencyOverrides: overrides.proficiencyOverrides,
   })
 
   itemSourcesRef.value = inventoryLayer.activeItemSources
@@ -304,33 +309,14 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   // ─── Maîtrises de langues et outils ──────────────────────────────────────
 
-  const languageProficiencies = computed<string[]>(() => {
-    const fromEffects = allEffects.value
-      .filter(e => e.type === 'language_proficiency')
-      .map(e => e.value as string)
-    const overrides = inventoryLayer.proficiencyOverrides.value
-    const grants = overrides
-      .filter(o => o.proficiencyType === 'language' && o.action === 'grant')
-      .map(o => o.value)
-    const revokes = new Set(overrides
-      .filter(o => o.proficiencyType === 'language' && o.action === 'revoke')
-      .map(o => o.value))
-    return [...new Set([...fromEffects, ...grants])].filter(p => !revokes.has(p))
-  })
-
-  const toolProficiencies = computed<string[]>(() => {
-    const fromEffects = allEffects.value
-      .filter(e => e.type === 'tool_proficiency')
-      .map(e => e.value as string)
-    const overrides = inventoryLayer.proficiencyOverrides.value
-    const grants = overrides
-      .filter(o => o.proficiencyType === 'tool' && o.action === 'grant')
-      .map(o => o.value)
-    const revokes = new Set(overrides
-      .filter(o => o.proficiencyType === 'tool' && o.action === 'revoke')
-      .map(o => o.value))
-    return [...new Set([...fromEffects, ...grants])].filter(p => !revokes.has(p))
-  })
+  const proficienciesOf = (effectType: 'language_proficiency' | 'tool_proficiency', type: 'language' | 'tool') =>
+    withProficiencyOverrides(
+      allEffects.value.filter(e => e.type === effectType).map(e => e.value as string),
+      overrides.proficiencyOverrides.value,
+      type,
+    )
+  const languageProficiencies = computed<string[]>(() => proficienciesOf('language_proficiency', 'language'))
+  const toolProficiencies = computed<string[]>(() => proficienciesOf('tool_proficiency', 'tool'))
 
   // ─── Identité, historique & description ───────────────────────────────────
 
@@ -532,7 +518,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     refreshSpells: spells.refreshSpells,
     // Inventaire & combat
     inventory: inventoryLayer.inventory,
-    proficiencyOverrides: inventoryLayer.proficiencyOverrides,
+    proficiencyOverrides: overrides.proficiencyOverrides,
     equippedWeaponStats: inventoryLayer.equippedWeaponStats,
     equippedBodyArmor: inventoryLayer.equippedBodyArmor,
     equippedShield: inventoryLayer.equippedShield,
@@ -555,8 +541,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     setUsingTwoHanded: inventoryLayer.setUsingTwoHanded,
     setRangeChoice: inventoryLayer.setRangeChoice,
     setThrowing: inventoryLayer.setThrowing,
-    addProficiencyOverride: inventoryLayer.addProficiencyOverride,
-    removeProficiencyOverride: inventoryLayer.removeProficiencyOverride,
+    setProficiencyOverride: overrides.setProficiencyOverride,
+    removeProficiencyOverride: overrides.removeProficiencyOverride,
     refreshInventory: inventoryLayer.refreshInventory,
     // Identité & description
     ...identity,

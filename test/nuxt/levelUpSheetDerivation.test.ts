@@ -10,9 +10,9 @@ import { ABILITIES, SKILLS } from '../../app/data/character-builder'
 import { bootstrapGoldenDb, OWNER, CLASS, SPECIES } from './fixtures/goldenMaster'
 
 // Le level-up lit maîtrises et caractéristiques dans la même couche que la fiche. Le stocké ne suffit
-// pas : `character_skills` ne porte que les overrides et l'expertise (le picker d'expertise d'un
-// Roublard/Barde restait vide, étape bloquée), et les scores stockés n'incluent ni les bonus d'espèce
-// fixes ni ceux des dons (PV gagnés, prérequis de multiclassage et plafond d'ASI faux).
+// pas : seuls les ajouts manuels le sont (le picker d'expertise d'un Roublard/Barde restait vide, étape
+// bloquée), et les scores stockés n'incluent ni les bonus d'espèce fixes ni ceux des dons (PV gagnés,
+// prérequis de multiclassage et plafond d'ASI faux).
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any
@@ -26,10 +26,9 @@ const ROGUE = CLASS.rogue
 const effect = (e: Record<string, unknown>) => ({ effect: e })
 const skill = (key: string) => ({ type: 'skill_proficiency', value: { skill: key } })
 
-// Payload tel que le renvoie GET /api/character_sheets/[id], restreint aux champs lus. Sans `id` : le
-// fetch des overrides d'outils n'est pas déclenché.
+// Payload tel que le renvoie GET /api/character_sheets/[id], restreint aux champs lus.
 const payload = (over: Record<string, unknown> = {}) => ref({
-  skills: [],
+  proficiencyOverrides: [],
   features: [],
   abilityScoreImprovements: [],
   baseAbilityScores: [],
@@ -70,12 +69,11 @@ describe('level-up — maîtrises de compétences lues comme la fiche', () => {
       classSkills: ['stealth', 'perception', 'acrobatics', 'deception'], classSavingThrows: ['dex', 'int'],
       backgroundSkills: [], spellIds: [], expertiseSkills: ['stealth', 'perception'],
     }), OWNER)
-    const skills = await db.select().from(schema.characterSkills).where(eq(schema.characterSkills.characterSheetId, id))
+    const proficiencyOverrides = await db.select().from(schema.characterProficiencyOverrides).where(eq(schema.characterProficiencyOverrides.characterSheetId, id))
     const choiceEffects = await deriveChoiceProficiencies(db, id)
-    // Le stocké seul ne contient plus que les deux expertises.
-    expect(skills.map((s: { skillKey: string }) => s.skillKey).sort()).toEqual(['perception', 'stealth'])
+    expect(proficiencyOverrides).toEqual([])
 
-    const { expertSkills, proficientSkills, eligibleExpertiseSkills } = useLevelUp(payload({ skills, choiceEffects }))
+    const { expertSkills, proficientSkills, eligibleExpertiseSkills } = useLevelUp(payload({ proficiencyOverrides, choiceEffects }))
 
     expect([...expertSkills.value].sort()).toEqual(['perception', 'stealth'])
     expect([...proficientSkills.value].sort()).toEqual(['acrobatics', 'deception', 'perception', 'stealth'])
@@ -95,7 +93,7 @@ describe('level-up — maîtrises de compétences lues comme la fiche', () => {
   it('une compétence dérivée déjà experte n\'est plus éligible', () => {
     const { eligibleExpertiseSkills, expertSkills } = useLevelUp(payload({
       species: elf,
-      skills: [{ skillKey: 'perception', proficiencyLevel: 'expert', source: 'class', isOverride: false }],
+      choiceEffects: [{ type: 'skill_expertise', value: { skill: 'perception' } }],
     }))
 
     expect(expertSkills.value).toEqual(['perception'])
@@ -107,12 +105,9 @@ describe('level-up — maîtrises de compétences lues comme la fiche', () => {
       id: 999,
       species: elf,
       features: [beguilingInfluence, skilled, lockedClassFeature],
-      skills: [
-        { skillKey: 'stealth', proficiencyLevel: 'expert', source: 'class', isOverride: false },
-        { skillKey: 'survival', proficiencyLevel: 'proficient', source: 'class', isOverride: false },
-      ],
+      proficiencyOverrides: [{ proficiencyType: 'skill', value: 'survival', action: 'grant' }],
       backgroundEffects: [skill('athletics'), skill('intimidation')],
-      choiceEffects: [skill('stealth'), skill('acrobatics')],
+      choiceEffects: [skill('stealth'), skill('acrobatics'), { type: 'skill_expertise', value: { skill: 'stealth' } }],
       classSavingThrowEffects: [{ type: 'saving_throw_proficiency', value: { ability: 'dex' } }],
     })
     const { getEffectiveProficiency } = useCharacterSheet(sheet)

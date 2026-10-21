@@ -31,7 +31,7 @@ beforeAll(async () => {
 // Helpers — valident l'entrée par les schémas Zod de prod (mêmes portes que les handlers).
 const create = (over: Record<string, unknown>) => createCharacter(db, createCharacterSchema.parse({
   name: 'X', hpBase: 10, classId: CLASS.fighter, level: 1, speciesId: SPECIES.human,
-  abilityScores: {}, classSkills: [], classSavingThrows: [], backgroundSkills: [], spellIds: [],
+  abilityScores: {}, classSkills: [], spellIds: [],
   ...over,
 }), OWNER)
 const levelUp = (id: number, over: Record<string, unknown>) => characterLevelUp(db, id, levelUpSchema.parse({
@@ -47,7 +47,6 @@ describe('golden-master · A. Guerrier Champion (martial)', () => {
       abilityScores: { str: 16, dex: 13, con: 14, int: 8, wis: 12, cha: 10 },
       classSkills: ['athletics', 'intimidation'],
       classSavingThrows: ['str', 'con'],
-      backgroundSkills: ['perception', 'survival'],
       featurePicks: [featurePick(ids.fighterStyleProgressionId, FEATURE.fighterFsDefense)], // style choisi au niv 1 → character_choices + matérialisation
 
       // Maîtrises d'armes/armures : champs vestigiaux (volet B) — ne doivent PAS se matérialiser.
@@ -85,7 +84,7 @@ describe('golden-master · B. Magicien Elfe (lanceur complet, lignée)', () => {
       abilityScores: { str: 8, dex: 14, con: 13, int: 16, wis: 12, cha: 10 },
       classSkills: ['arcana', 'investigation'],
       classSavingThrows: ['int', 'wis'],
-      backgroundSkills: ['history', 'insight'],
+      customBackgroundSkills: ['history', 'insight'],
       subclassId: SUBCLASS.evocation,
       spellIds: [SPELL.fireBolt, SPELL.magicMissile],
     })
@@ -110,7 +109,6 @@ describe('golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/do
       abilityScores: { str: 8, dex: 14, con: 14, int: 10, wis: 11, cha: 17 },
       classSkills: ['arcana', 'deception'],
       classSavingThrows: ['wis', 'cha'],
-      backgroundSkills: ['intimidation', 'investigation'],
       featurePicks: [
         featurePick(ids.pactBoonProgressionId, FEATURE.pactChain),
         // Regard de deux esprits + Armure des ombres (octroie « Armure de mage »)
@@ -144,7 +142,6 @@ describe('golden-master · D. Multiclasse Guerrier/Occultiste', () => {
       abilityScores: { str: 15, dex: 13, con: 14, int: 10, wis: 12, cha: 14 },
       classSkills: ['athletics', 'acrobatics'],
       classSavingThrows: ['str', 'con'],
-      backgroundSkills: ['intimidation', 'perception'],
       subclassId: SUBCLASS.champion,
     })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('D1 · création Guerrier 3 (Champion)')
@@ -172,7 +169,6 @@ describe('golden-master · E. Roublard (expertise, sous-classe)', () => {
       abilityScores: { str: 10, dex: 16, con: 12, int: 13, wis: 11, cha: 14 },
       classSkills: ['stealth', 'perception'],
       classSavingThrows: ['dex', 'int'],
-      backgroundSkills: ['deception', 'insight'],
       expertiseSkills: ['stealth', 'perception'],
     })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('E1 · création niv 1')
@@ -182,5 +178,82 @@ describe('golden-master · E. Roublard (expertise, sous-classe)', () => {
 
     await levelUp(id, { classId: CLASS.rogue, hpDie: 6, subclassId: SUBCLASS.thief })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('E3 · niv 3 (Voleur)')
+  })
+})
+
+// F. Occultiste — pactes de la Lame (création) et du Tome (level-up)
+describe('golden-master · F. Occultiste (pactes de la Lame et du Tome)', () => {
+  it('création niv 3 au Pacte de la Lame : l\'arme choisie devient l\'arme de pacte', async () => {
+    const { id } = await create({
+      name: 'Morn', hpBase: 24, classId: CLASS.warlock, level: 3,
+      abilityScores: { str: 14, dex: 12, con: 14, int: 10, wis: 10, cha: 16 },
+      classSkills: ['intimidation', 'religion'],
+      featurePicks: [
+        featurePick(ids.pactBoonProgressionId, FEATURE.pactBlade),
+        featurePick(ids.invocationsProgressionId, FEATURE.invocationGaze),
+        featurePick(ids.invocationsProgressionId, FEATURE.invocationArmor),
+      ],
+      inventoryItemIds: [ITEM.longsword, ITEM.dagger],
+      pactWeaponItemId: ITEM.longsword,
+    })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('F1 · création niv 3 (Pacte de la Lame, arme de pacte)')
+  })
+
+  it('création niv 2 puis montée 2→3 au Pacte du Tome (trois sorts mineurs de n\'importe quelle classe)', async () => {
+    const { id } = await create({
+      name: 'Ilse', hpBase: 13, classId: CLASS.warlock, level: 2,
+      abilityScores: { str: 8, dex: 14, con: 13, int: 12, wis: 10, cha: 16 },
+      classSkills: ['arcana', 'history'],
+      featurePicks: [
+        featurePick(ids.invocationsProgressionId, FEATURE.invocationGaze),
+        featurePick(ids.invocationsProgressionId, FEATURE.invocationArmor),
+      ],
+    })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('F2 · création niv 2')
+
+    await levelUp(id, {
+      classId: CLASS.warlock, hpDie: 5,
+      featurePicks: [featurePick(ids.pactBoonProgressionId, FEATURE.pactTome)],
+      pactBoonCantripIds: [SPELL.fireBolt, SPELL.mageHand, SPELL.guidance],
+    })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('F3 · niv 3 (Pacte du Tome)')
+  })
+})
+
+// G. Multiclasse de deux lanceurs complets — Magicien 3 / Druide 1
+describe('golden-master · G. Multiclasse Magicien/Druide (plein + plein)', () => {
+  it('création Magicien 3 puis multiclassage Druide (emplacements combinés)', async () => {
+    const { id } = await create({
+      name: 'Orlan', hpBase: 16, classId: CLASS.wizard, level: 3,
+      abilityScores: { str: 8, dex: 14, con: 13, int: 16, wis: 14, cha: 10 },
+      classSkills: ['arcana', 'history'],
+      subclassId: SUBCLASS.evocation,
+      spellIds: [SPELL.fireBolt, SPELL.magicMissile, SPELL.shield],
+    })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('G1 · création Magicien 3')
+
+    await levelUp(id, { classId: CLASS.druid, isMulticlass: true, hpDie: 5 })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('G2 · Druide 1 (multiclassage, emplacements combinés)')
+  })
+})
+
+// H. Demi-lanceur — Paladin 1 → 3, puis multiclassage Magicien (plein + demi)
+describe('golden-master · H. Paladin (demi-lanceur) puis Magicien', () => {
+  it('création Paladin 1, montée 1→3 (incantation au niv 2), puis multiclassage Magicien', async () => {
+    const { id } = await create({
+      name: 'Bertrand', hpBase: 10, classId: CLASS.paladin, level: 1,
+      abilityScores: { str: 15, dex: 10, con: 14, int: 13, wis: 8, cha: 14 },
+      classSkills: ['athletics', 'religion'],
+    })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('H1 · création Paladin 1')
+
+    await levelUp(id, { classId: CLASS.paladin, hpDie: 6, featurePicks: [featurePick(ids.paladinStyleProgressionId, FEATURE.paladinFsDueling)] })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('H2 · niv 2 (style de combat, premiers emplacements)')
+
+    await levelUp(id, { classId: CLASS.paladin, hpDie: 6 })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('H3 · niv 3')
+
+    await levelUp(id, { classId: CLASS.wizard, isMulticlass: true, hpDie: 4 })
+    expect(await serializeCharacter(db, id)).toMatchSnapshot('H4 · Magicien 1 (multiclassage, emplacements combinés)')
   })
 })

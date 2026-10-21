@@ -5,7 +5,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { useCharacterBuilder, type BuilderState } from '../../app/composables/useCharacterBuilder'
 import type { Catalog } from '../../shared/rules/resolve'
 import { guerrierSubclasses } from '../../server/db/seeds/data/guerrier'
-import { catalogClasses } from '../fixtures/catalogClasses'
+import { catalogClasses, classSkillProgression } from '../fixtures/catalogClasses'
 
 // Maître de guerre : le builder demande les manœuvres, en nombre selon le niveau, et l'outil de Disciple martial.
 
@@ -28,6 +28,7 @@ registerEndpoint('/api/catalog/classes', () => [{
 }])
 registerEndpoint('/api/catalog/progressions', (): Catalog => ({
   progressions: [
+    classSkillProgression(99, GUERRIER, 'Guerrier'),
     {
       progressionId: 3,
       ownerClassId: GUERRIER,

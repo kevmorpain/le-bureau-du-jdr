@@ -139,20 +139,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "perception",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "survival",
-      "source": "background",
-    },
-  ],
   "spellSlots": [],
   "spells": [],
 }
@@ -303,20 +289,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "perception",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "survival",
-      "source": "background",
-    },
-  ],
   "spellSlots": [],
   "spells": [],
 }
@@ -484,20 +456,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "perception",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "survival",
-      "source": "background",
-    },
-  ],
   "spellSlots": [],
   "spells": [],
 }
@@ -672,20 +630,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "perception",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "survival",
-      "source": "background",
-    },
-  ],
   "spellSlots": [],
   "spells": [],
 }
@@ -866,20 +810,6 @@ exports[`golden-master · A. Guerrier Champion (martial) > création niv 1 puis 
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "perception",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "survival",
-      "source": "background",
-    },
-  ],
   "spellSlots": [],
   "spells": [],
 }
@@ -995,6 +925,10 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
       },
     ],
     "currentHp": 10,
+    "customBackgroundSkills": [
+      "history",
+      "insight",
+    ],
     "dragonbornAncestry": null,
     "exhaustionLevel": 0,
     "hpBase": 8,
@@ -1011,20 +945,6 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
     "species": "Elfe",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "history",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "insight",
-      "source": "background",
-    },
-  ],
   "spellSlots": [
     {
       "slotLevel": 1,
@@ -1160,6 +1080,10 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
       },
     ],
     "currentHp": 10,
+    "customBackgroundSkills": [
+      "history",
+      "insight",
+    ],
     "dragonbornAncestry": null,
     "exhaustionLevel": 0,
     "hpBase": 13,
@@ -1176,20 +1100,6 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
     "species": "Elfe",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "history",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "insight",
-      "source": "background",
-    },
-  ],
   "spellSlots": [
     {
       "slotLevel": 1,
@@ -1344,6 +1254,10 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
       },
     ],
     "currentHp": 10,
+    "customBackgroundSkills": [
+      "history",
+      "insight",
+    ],
     "dragonbornAncestry": null,
     "exhaustionLevel": 0,
     "hpBase": 18,
@@ -1360,20 +1274,6 @@ exports[`golden-master · B. Magicien Elfe (lanceur complet, lignée) > créatio
     "species": "Elfe",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "history",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "insight",
-      "source": "background",
-    },
-  ],
   "spellSlots": [
     {
       "slotLevel": 1,
@@ -1585,20 +1485,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "intimidation",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "investigation",
-      "source": "background",
-    },
-  ],
   "spellSlots": [
     {
       "slotLevel": 5,
@@ -1804,20 +1690,6 @@ exports[`golden-master · C. Occultiste (pacte, manifestations, arcanum, ASI/don
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "intimidation",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "investigation",
-      "source": "background",
-    },
-  ],
   "spellSlots": [
     {
       "slotLevel": 5,
@@ -1964,20 +1836,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "intimidation",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "perception",
-      "source": "background",
-    },
-  ],
   "spellSlots": [],
   "spells": [],
 }
@@ -2121,20 +1979,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "intimidation",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "perception",
-      "source": "background",
-    },
-  ],
   "spellSlots": [
     {
       "slotLevel": 1,
@@ -2308,20 +2152,6 @@ exports[`golden-master · D. Multiclasse Guerrier/Occultiste > création Guerrie
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "intimidation",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "perception",
-      "source": "background",
-    },
-  ],
   "spellSlots": [
     {
       "slotLevel": 1,
@@ -2460,32 +2290,6 @@ exports[`golden-master · E. Roublard (expertise, sous-classe) > création niv 1
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "deception",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "insight",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "expert",
-      "skillKey": "perception",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "expert",
-      "skillKey": "stealth",
-      "source": "class",
-    },
-  ],
   "spellSlots": [],
   "spells": [],
 }
@@ -2623,32 +2427,6 @@ exports[`golden-master · E. Roublard (expertise, sous-classe) > création niv 1
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "deception",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "insight",
-      "source": "background",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "expert",
-      "skillKey": "perception",
-      "source": "class",
-    },
-    {
-      "isOverride": false,
-      "proficiencyLevel": "expert",
-      "skillKey": "stealth",
-      "source": "class",
-    },
-  ],
   "spellSlots": [],
   "spells": [],
 }
@@ -2803,33 +2581,1334 @@ exports[`golden-master · E. Roublard (expertise, sous-classe) > création niv 1
     "species": "Humain",
     "temporaryHp": 0,
   },
-  "skills": [
+  "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · F. Occultiste (pactes de la Lame et du Tome) > création niv 2 puis montée 2→3 au Pacte du Tome (trois sorts mineurs de n'importe quelle classe) > F2 · création niv 2 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
     {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "deception",
-      "source": "background",
+      "ability": "cha",
+      "value": 16,
     },
     {
-      "isOverride": false,
-      "proficiencyLevel": "proficient",
-      "skillKey": "insight",
-      "source": "background",
+      "ability": "con",
+      "value": 13,
     },
     {
-      "isOverride": false,
-      "proficiencyLevel": "expert",
-      "skillKey": "perception",
-      "source": "class",
+      "ability": "dex",
+      "value": 14,
     },
     {
-      "isOverride": false,
-      "proficiencyLevel": "expert",
-      "skillKey": "stealth",
-      "source": "class",
+      "ability": "int",
+      "value": 12,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 10,
     },
   ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Armure des ombres",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Regard de deux esprits",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "arcana",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "history",
+    },
+  ],
+  "classes": [
+    {
+      "class": "Occultiste",
+      "isMain": true,
+      "level": 2,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Armure des ombres",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Incantation occulte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Manifestations occultes",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Regard de deux esprits",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 2,
+        "die": "8",
+      },
+    ],
+    "currentHp": 15,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 13,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Ilse",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "pact_magic",
+      "total": 2,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "invocation",
+      "spell": "Armure de mage",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · F. Occultiste (pactes de la Lame et du Tome) > création niv 2 puis montée 2→3 au Pacte du Tome (trois sorts mineurs de n'importe quelle classe) > F3 · niv 3 (Pacte du Tome) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 16,
+    },
+    {
+      "ability": "con",
+      "value": 13,
+    },
+    {
+      "ability": "dex",
+      "value": 14,
+    },
+    {
+      "ability": "int",
+      "value": 12,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 10,
+    },
+  ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Armure des ombres",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Regard de deux esprits",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "pact_boon:Faveur de pacte",
+      "selectedAbility": null,
+      "selectedFeature": "Pacte du Tome",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "arcana",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "history",
+    },
+  ],
+  "classes": [
+    {
+      "class": "Occultiste",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": "tome",
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Armure des ombres",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Incantation occulte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Manifestations occultes",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Pacte du Tome",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Regard de deux esprits",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "8",
+      },
+    ],
+    "currentHp": 15,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 18,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Ilse",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "spellSlots": [
+    {
+      "slotLevel": 2,
+      "slotType": "pact_magic",
+      "total": 2,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "invocation",
+      "spell": "Armure de mage",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "pact_tome",
+      "spell": "Assistance",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "pact_tome",
+      "spell": "Main du mage",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "pact_tome",
+      "spell": "Trait de feu",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · F. Occultiste (pactes de la Lame et du Tome) > création niv 3 au Pacte de la Lame : l'arme choisie devient l'arme de pacte > F1 · création niv 3 (Pacte de la Lame, arme de pacte) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 16,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 12,
+    },
+    {
+      "ability": "int",
+      "value": 10,
+    },
+    {
+      "ability": "str",
+      "value": 14,
+    },
+    {
+      "ability": "wis",
+      "value": 10,
+    },
+  ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Armure des ombres",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "invocations:Manifestations occultes",
+      "selectedAbility": null,
+      "selectedFeature": "Regard de deux esprits",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "pact_boon:Faveur de pacte",
+      "selectedAbility": null,
+      "selectedFeature": "Pacte de la Lame",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "intimidation",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "religion",
+    },
+  ],
+  "classes": [
+    {
+      "class": "Occultiste",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": "blade",
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Armure des ombres",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Incantation occulte",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Manifestations occultes",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Pacte de la Lame",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Regard de deux esprits",
+      "source": null,
+    },
+  ],
+  "inventory": [
+    {
+      "equipped": false,
+      "isPactWeapon": false,
+      "item": "Dague",
+      "quantity": 1,
+    },
+    {
+      "equipped": false,
+      "isPactWeapon": true,
+      "item": "Épée longue",
+      "quantity": 1,
+    },
+  ],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "8",
+      },
+    ],
+    "currentHp": 30,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 24,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Morn",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "spellSlots": [
+    {
+      "slotLevel": 2,
+      "slotType": "pact_magic",
+      "total": 2,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": false,
+      "source": "invocation",
+      "spell": "Armure de mage",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · G. Multiclasse Magicien/Druide (plein + plein) > création Magicien 3 puis multiclassage Druide (emplacements combinés) > G1 · création Magicien 3 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 13,
+    },
+    {
+      "ability": "dex",
+      "value": 14,
+    },
+    {
+      "ability": "int",
+      "value": 16,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 14,
+    },
+  ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "arcana",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "history",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Tradition arcanique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "École d'Évocation",
+      "selectedValue": null,
+    },
+  ],
+  "classes": [
+    {
+      "class": "Magicien",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": "École d'Évocation",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Façonnage des sorts",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Récupération arcanique",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "6",
+      },
+    ],
+    "currentHp": 19,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 16,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Orlan",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "spellcasting",
+      "total": 4,
+      "used": 0,
+    },
+    {
+      "slotLevel": 2,
+      "slotType": "spellcasting",
+      "total": 2,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Bouclier",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Projectile magique",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Trait de feu",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · G. Multiclasse Magicien/Druide (plein + plein) > création Magicien 3 puis multiclassage Druide (emplacements combinés) > G2 · Druide 1 (multiclassage, emplacements combinés) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 10,
+    },
+    {
+      "ability": "con",
+      "value": 13,
+    },
+    {
+      "ability": "dex",
+      "value": 14,
+    },
+    {
+      "ability": "int",
+      "value": 16,
+    },
+    {
+      "ability": "str",
+      "value": 8,
+    },
+    {
+      "ability": "wis",
+      "value": 14,
+    },
+  ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "arcana",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "history",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "subclass:Tradition arcanique",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": "École d'Évocation",
+      "selectedValue": null,
+    },
+  ],
+  "classes": [
+    {
+      "class": "Druide",
+      "isMain": false,
+      "level": 1,
+      "pactBoon": null,
+      "subclass": null,
+    },
+    {
+      "class": "Magicien",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": "École d'Évocation",
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Façonnage des sorts",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Récupération arcanique",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "6",
+      },
+      {
+        "count": 1,
+        "die": "8",
+      },
+    ],
+    "currentHp": 19,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 21,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Orlan",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "spellcasting",
+      "total": 4,
+      "used": 0,
+    },
+    {
+      "slotLevel": 2,
+      "slotType": "spellcasting",
+      "total": 3,
+      "used": 0,
+    },
+  ],
+  "spells": [
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Bouclier",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Projectile magique",
+    },
+    {
+      "isKnown": true,
+      "isPrepared": true,
+      "source": null,
+      "spell": "Trait de feu",
+    },
+  ],
+}
+`;
+
+exports[`golden-master · H. Paladin (demi-lanceur) puis Magicien > création Paladin 1, montée 1→3 (incantation au niv 2), puis multiclassage Magicien > H1 · création Paladin 1 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 10,
+    },
+    {
+      "ability": "int",
+      "value": 13,
+    },
+    {
+      "ability": "str",
+      "value": 15,
+    },
+    {
+      "ability": "wis",
+      "value": 8,
+    },
+  ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "athletics",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "religion",
+    },
+  ],
+  "classes": [
+    {
+      "class": "Paladin",
+      "isMain": true,
+      "level": 1,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 1,
+        "die": "10",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 10,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Bertrand",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
   "spellSlots": [],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · H. Paladin (demi-lanceur) puis Magicien > création Paladin 1, montée 1→3 (incantation au niv 2), puis multiclassage Magicien > H2 · niv 2 (style de combat, premiers emplacements) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 10,
+    },
+    {
+      "ability": "int",
+      "value": 13,
+    },
+    {
+      "ability": "str",
+      "value": 15,
+    },
+    {
+      "ability": "wis",
+      "value": 8,
+    },
+  ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "fighting_style:Style de combat",
+      "selectedAbility": null,
+      "selectedFeature": "Duel",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "athletics",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "religion",
+    },
+  ],
+  "classes": [
+    {
+      "class": "Paladin",
+      "isMain": true,
+      "level": 2,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Duel",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 2,
+        "die": "10",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 16,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Bertrand",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "spellcasting",
+      "total": 2,
+      "used": 0,
+    },
+  ],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · H. Paladin (demi-lanceur) puis Magicien > création Paladin 1, montée 1→3 (incantation au niv 2), puis multiclassage Magicien > H3 · niv 3 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 10,
+    },
+    {
+      "ability": "int",
+      "value": 13,
+    },
+    {
+      "ability": "str",
+      "value": 15,
+    },
+    {
+      "ability": "wis",
+      "value": 8,
+    },
+  ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "fighting_style:Style de combat",
+      "selectedAbility": null,
+      "selectedFeature": "Duel",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "athletics",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "religion",
+    },
+  ],
+  "classes": [
+    {
+      "class": "Paladin",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Duel",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "10",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 22,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Bertrand",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "spellcasting",
+      "total": 3,
+      "used": 0,
+    },
+  ],
+  "spells": [],
+}
+`;
+
+exports[`golden-master · H. Paladin (demi-lanceur) puis Magicien > création Paladin 1, montée 1→3 (incantation au niv 2), puis multiclassage Magicien > H4 · Magicien 1 (multiclassage, emplacements combinés) 1`] = `
+{
+  "abilityScoreImprovements": [],
+  "abilityScores": [
+    {
+      "ability": "cha",
+      "value": 14,
+    },
+    {
+      "ability": "con",
+      "value": 14,
+    },
+    {
+      "ability": "dex",
+      "value": 10,
+    },
+    {
+      "ability": "int",
+      "value": 13,
+    },
+    {
+      "ability": "str",
+      "value": 15,
+    },
+    {
+      "ability": "wis",
+      "value": 8,
+    },
+  ],
+  "choices": [
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "fighting_style:Style de combat",
+      "selectedAbility": null,
+      "selectedFeature": "Duel",
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": null,
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "athletics",
+    },
+    {
+      "classLevel": null,
+      "payload": null,
+      "progression": "skill:Compétences de classe",
+      "selectedAbility": null,
+      "selectedFeature": null,
+      "selectedLineage": null,
+      "selectedSpell": null,
+      "selectedSubclass": null,
+      "selectedValue": "religion",
+    },
+  ],
+  "classes": [
+    {
+      "class": "Magicien",
+      "isMain": false,
+      "level": 1,
+      "pactBoon": null,
+      "subclass": null,
+    },
+    {
+      "class": "Paladin",
+      "isMain": true,
+      "level": 3,
+      "pactBoon": null,
+      "subclass": null,
+    },
+  ],
+  "features": [
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Duel",
+      "source": null,
+    },
+    {
+      "choices": null,
+      "classLevel": null,
+      "feature": "Récupération arcanique",
+      "source": null,
+    },
+  ],
+  "inventory": [],
+  "proficiencyOverrides": [],
+  "sheet": {
+    "alignment": "TN",
+    "background": null,
+    "currentHitDie": [
+      {
+        "count": 3,
+        "die": "10",
+      },
+      {
+        "count": 1,
+        "die": "6",
+      },
+    ],
+    "currentHp": 12,
+    "dragonbornAncestry": null,
+    "exhaustionLevel": 0,
+    "hpBase": 26,
+    "inspiration": false,
+    "money": {
+      "pa": 0,
+      "pc": 0,
+      "pe": 0,
+      "po": 0,
+      "pp": 0,
+    },
+    "name": "Bertrand",
+    "ruleset": "5",
+    "species": "Humain",
+    "temporaryHp": 0,
+  },
+  "spellSlots": [
+    {
+      "slotLevel": 1,
+      "slotType": "spellcasting",
+      "total": 3,
+      "used": 0,
+    },
+  ],
   "spells": [],
 }
 `;

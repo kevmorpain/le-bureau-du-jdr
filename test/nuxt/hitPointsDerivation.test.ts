@@ -35,9 +35,8 @@ beforeAll(async () => {
   }), OWNER))
 
   registerEndpoint(`/api/character_sheets/${sheetId}/inventory`, () => [])
-  registerEndpoint(`/api/character_sheets/${sheetId}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${sheetId}/backgrounds`, () => [])
   registerEndpoint(`/api/character_sheets/${sheetId}/spells`, () => [])
-  registerEndpoint('/api/backgrounds', () => [])
 }, 60000)
 
 const sheet = () => db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, sheetId)).then((r: unknown[]) => r[0] as { hpBase: number, currentHp: number })

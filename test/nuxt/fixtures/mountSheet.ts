@@ -4,6 +4,7 @@ import { expect, vi } from 'vitest'
 import type { Effect } from '../../../server/db/schema/effects'
 import type { Preferences } from '../../../shared/rules/preferences'
 import { useCharacterSheet } from '../../../app/composables/useCharacterSheet'
+import { overridesFor, type ManualLevel } from '../../fixtures/proficiencyOverrides'
 
 export const inventoryEntry = (
   sheetId: number,
@@ -53,7 +54,7 @@ export interface SheetScenario {
   speciesEffects?: Effect[]
   temporaryEffects?: { id: number, name: string, active: boolean, effects: Effect[] }[]
   worn?: (sheetId: number) => ReturnType<typeof inventoryEntry>[]
-  skills?: { skillKey: string, proficiencyLevel: 'proficient' | 'expert' }[]
+  skills?: ManualLevel[]
   preferences?: Preferences | null
   ownerPreferences?: Preferences | null
   labelPicks?: { featureId: number, value: string }[]
@@ -66,16 +67,15 @@ export const mountSheet = async (scenario: SheetScenario) => {
   const id = nextSheetId++
   const inventory = scenario.worn?.(id) ?? []
   registerEndpoint(`/api/character_sheets/${id}/inventory`, () => inventory)
-  registerEndpoint(`/api/character_sheets/${id}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${id}/backgrounds`, () => [])
   registerEndpoint(`/api/character_sheets/${id}/spells`, () => [])
-  registerEndpoint('/api/backgrounds', () => [])
 
   const sheet = ref({
     id,
     baseAbilityScores: scenario.scores,
     classes: (scenario.classes ?? []).map(c => ({ ...c, isMain: true, class: { id: c.classId, name: 'Classe', spellcastingAbility: c.spellcastingAbility ?? null }, subclass: null })),
     features: scenario.features ?? [],
-    skills: scenario.skills ?? [],
+    proficiencyOverrides: overridesFor(scenario.skills ?? []),
     abilityScoreImprovements: [],
     species: {
       name: 'Espèce',

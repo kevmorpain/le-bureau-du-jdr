@@ -5,16 +5,15 @@ import TemporaryEffectsSection from '../../app/components/character_sheet/Tempor
 const SHEET_ID = 9104
 
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory`, () => [])
-registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
-registerEndpoint('/api/backgrounds', () => [])
 
 const sheet = (temporaryEffects: unknown[]) => ({
   id: SHEET_ID,
   baseAbilityScores: [],
   classes: [],
   features: [],
-  skills: [],
+  proficiencyOverrides: [],
   abilityScoreImprovements: [],
   species: null,
   temporaryEffects,

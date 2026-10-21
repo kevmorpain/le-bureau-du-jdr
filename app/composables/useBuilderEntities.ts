@@ -24,11 +24,11 @@ export function useBuilderEntities() {
     query: extendedQuery,
     default: () => [],
   })
-  const { data: species } = useFetch<DbSpecies[]>('/api/character_species', {
+  const { data: species } = useFetch<DbSpecies[]>('/api/catalog/species', {
     query: extendedQuery,
     default: () => [],
   })
-  const { data: backgrounds } = useFetch<DbBackground[]>('/api/backgrounds', {
+  const { data: backgrounds } = useFetch<DbBackground[]>('/api/catalog/backgrounds', {
     query: extendedQuery,
     default: () => [],
   })

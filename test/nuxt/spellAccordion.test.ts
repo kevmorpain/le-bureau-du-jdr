@@ -38,8 +38,7 @@ const mountFor = async (sheetId: number, className: string, classId: number, isP
   ])
   registerEndpoint(`/api/catalog/roll-tables/${CONFUSION_TABLE_ID}`, () => confusion)
   registerEndpoint(`/api/character_sheets/${sheetId}/inventory`, () => [])
-  registerEndpoint(`/api/character_sheets/${sheetId}/proficiency-overrides`, () => [])
-  registerEndpoint('/api/backgrounds', () => [])
+  registerEndpoint(`/api/character_sheets/${sheetId}/backgrounds`, () => [])
   const sheet = classSheet(sheetId, className, classId, 5, [], {
     baseAbilityScores: abilityScores({ int: 16, wis: 16 }),
     classes: [{ classId, level: 5, isMain: true, class: { name: className, spellcastingAbility: ability }, subclass: null }],

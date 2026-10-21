@@ -1,4 +1,5 @@
 import { db, schema } from '~~/server/utils/db'
+import { effectIdFor } from '~~/server/utils/effectRows'
 import { eq, and, sql, inArray } from 'drizzle-orm'
 import type { Effect } from '../../schema/effects'
 import type { FeatureType, ActionType, RechargeType, FeatureMeta, FeaturePrerequisite } from '../../schema/features'
@@ -334,18 +335,7 @@ async function _resyncFeatureContent(
 
 async function _seedEffects(featureId: number, effects: Effect[]) {
   for (const effect of effects) {
-    const existing = await db
-      .select()
-      .from(schema.effects)
-      .where(and(eq(schema.effects.type, effect.type), eq(schema.effects.value, effect.value)))
-      .limit(1)
-      .get()
-    const effectId = existing?.id ?? await db
-      .insert(schema.effects)
-      .values({ type: effect.type, value: effect.value })
-      .returning()
-      .get()
-      .then(r => r.id)
+    const effectId = await effectIdFor(db, effect)
     await db.insert(schema.featureEffects).values({ featureId, effectId }).onConflictDoNothing()
   }
 }

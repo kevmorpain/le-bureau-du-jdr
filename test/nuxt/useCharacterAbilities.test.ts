@@ -234,7 +234,7 @@ describe('useCharacterAbilities — dérivation par canal', () => {
         { type: 'skill_proficiency', value: { skill: 'insight' } },
         { type: 'skill_proficiency', value: { skill: 'survival' } },
       ],
-      // Une expertise stockée sur une compétence aussi donnée par l'historique ne doit pas retomber à proficient.
+      // Une expertise posée sur une compétence aussi donnée par l'historique ne doit pas retomber à proficient.
       skills: [{ skillKey: 'insight', proficiencyLevel: 'expert' }],
       proficiencyBonus: 3,
     }
@@ -298,14 +298,14 @@ describe('useCharacterAbilities — dérivation par canal', () => {
     expect(getEffectiveProficiency('athletics')).toBe('none') // ne déborde pas sur les compétences
   })
 
-  it('les JS d\'effet cohabitent avec ceux stockés en `<carac>_save` (JS de classe)', () => {
+  it('les JS d\'effet cohabitent avec ceux posés à la main', () => {
     const f: AbilitiesFixture = {
       ...blankFixture,
       baseAbilityScores: [
         { abilityId: 'wis', value: 16 }, // mod +3
         { abilityId: 'con', value: 12 }, // mod +1
       ],
-      skills: [{ skillKey: 'wis_save', proficiencyLevel: 'proficient' }], // classe (character_skills)
+      skills: [{ skillKey: 'wis_save', proficiencyLevel: 'proficient' }],
       featureEffects: [{ type: 'saving_throw_proficiency', value: { ability: 'con' } }], // don
       proficiencyBonus: 4,
     }

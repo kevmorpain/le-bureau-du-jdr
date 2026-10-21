@@ -3,6 +3,8 @@ import { eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema, CharacterValidationError } from '../../server/utils/characterCreate'
 import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLevelUp'
+import { deriveChoiceProficiencies } from '../../server/utils/choicePicks'
+import { proficiencyLevels } from '../../shared/rules/proficiencyLevels'
 import { bootstrapGoldenDb, OWNER, CLASS, SPECIES, FEATURE } from './fixtures/goldenMaster'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,11 +30,11 @@ const expertiseChoices = async (sheetId: number): Promise<string[]> => {
   return rows.filter((r: { kind: string }) => r.kind === 'expertise').map((r: { selectedValue: string }) => r.selectedValue).sort()
 }
 
+// Ce que la fiche lit : les maîtrises dérivées des choix et les ajouts manuels.
 const expertSkills = async (sheetId: number): Promise<string[]> => {
-  const rows = await db.select({ skillKey: schema.characterSkills.skillKey, level: schema.characterSkills.proficiencyLevel })
-    .from(schema.characterSkills)
-    .where(eq(schema.characterSkills.characterSheetId, sheetId))
-  return rows.filter((r: { level: string }) => r.level === 'expert').map((r: { skillKey: string }) => r.skillKey).sort()
+  const overrides = await db.select().from(schema.characterProficiencyOverrides).where(eq(schema.characterProficiencyOverrides.characterSheetId, sheetId))
+  const levels = proficiencyLevels(await deriveChoiceProficiencies(db, sheetId), overrides)
+  return [...levels].filter(([, level]) => level === 'expert').map(([key]) => key).sort()
 }
 
 const materializedFeatureIds = async (sheetId: number): Promise<number[]> => {
@@ -43,11 +45,10 @@ const materializedFeatureIds = async (sheetId: number): Promise<number[]> => {
 }
 
 describe('expertise — autorité serveur', () => {
-  it('création Roublard niv 1 : 2 expertises → character_choices + compétences \'expert\' + feature « Expertise » matérialisée', async () => {
+  it('création Roublard niv 1 : 2 expertises → choix, dérivés en expertise, + feature « Expertise » matérialisée', async () => {
     const { id } = await createRogue(1, { expertiseSkills: ['stealth', 'perception'] })
 
     expect(await expertiseChoices(id)).toEqual(['perception', 'stealth'])
-    // compétences de classe ÉLEVÉES 'proficient'→'expert' (pas de ligne en double)
     expect(await expertSkills(id)).toEqual(['perception', 'stealth'])
     // L'owner « Expertise » (class_feature visible) est matérialisé par le sweep passif.
     expect(await materializedFeatureIds(id)).toContain(FEATURE.rogueExpertise)
@@ -115,7 +116,7 @@ describe('expertise — validation serveur du level-up', () => {
 
   it('une expertise posée à la main sur la fiche compte comme déjà experte', async () => {
     const { id } = await createRogue(5, { expertiseSkills: ['stealth', 'perception'] })
-    await db.insert(schema.characterSkills).values({ characterSheetId: id, skillKey: 'insight', proficiencyLevel: 'expert', source: 'manual', isOverride: true })
+    await db.insert(schema.characterProficiencyOverrides).values({ characterSheetId: id, proficiencyType: 'skill', value: 'insight', action: 'expertise' })
 
     await expect(levelUpRogue(id, ['deception', 'insight'])).rejects.toThrow(/« insight » a déjà l'expertise/)
   })

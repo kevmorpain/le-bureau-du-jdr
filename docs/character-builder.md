@@ -14,7 +14,7 @@ Accessible via `/characters/new`.
   qui l'emporte à l'hydratation — et la première modification écraserait le brouillon.
   L'étape courante n'est pas persistée : un rechargement repart de l'étape Race, brouillon intact.
 - **Données riches** : `app/data/character-builder.ts` (races, classes, backgrounds) — hardcodées côté frontend car la DB ne stocke pas ces infos détaillées
-- **Soumission** : POST `/api/character_sheets` étendu, crée character_sheets + character_classes + character_ability_scores + character_skills + character_spells + character_inventory
+- **Soumission** : POST `/api/character_sheets` étendu, crée character_sheets + character_classes + character_ability_scores + character_choices + character_proficiency_overrides + character_spells + character_inventory
 
 ---
 
@@ -348,10 +348,10 @@ produit :
 
 | Canal de la fiche | Projection du builder |
 |---|---|
-| `skills` (lignes `character_skills`) | `materializedSkills` (historique perso + Humain variant, = payload `backgroundSkills`) en `proficient`, `expertiseSkills` en `expert` |
-| `choiceEffects` | `state.skills` + compétences des points de choix (Polyvalence, remplacements) |
+| `proficiencyOverrides` | compétence de l'Humain variant (payload `variantHumanSkill`), en ajout |
+| `choiceEffects` | `state.skills` + compétences des points de choix (Polyvalence, remplacements) + `expertiseSkills` en `skill_expertise` |
 | `classSavingThrowEffects` | `proficiencies.savingThrows` de la classe dans `/api/catalog/classes` (porteurs en base, comme la fiche) |
-| `backgroundEffects` | compétences de l'historique seedé |
+| `backgroundEffects` | compétences de l'historique, seedé ou personnalisé (payload `customBackgroundSkills`, rangées dans l'historique créé) |
 | `speciesEffects` | effets du catalogue (`/api/catalog/species/[id]`, base + lignée choisie) ; aucun pour l'Humain variant |
 | `featureEffects` | dons persistés (`chosenFeatIds`, résolus par `resolveFeatEffects`) + manifestations |
 
@@ -463,7 +463,7 @@ Mobile (<lg) :
 1. `character_sheets` insert (name, speciesId, alignment, backgroundId)
 2. `character_classes` insert (classId, level, isMain, subclassId)
 3. `character_ability_scores` × 6 insert (scores de **base** — les bonus d'espèce sont dérivés sur la fiche via les `effects`, PAS stockés ici ; voir `docs/architecture-audit.md` §2. Seuls les bonus de *choix* demi-elfe / humain variant sont cuits dans la base.)
-4. `character_skills` insert (source: 'class' ou 'background')
+4. Compétences : choix de classe et d'expertise en `character_choices` ; compétences d'un historique personnalisé dans cet historique ; compétence et langues de l'Humain variant en `character_proficiency_overrides` ([D27](./decisions.md#d27))
 5. `character_spells` insert (isKnown: true, `classId` = la classe créée ; isPrepared: true, sauf grimoire du Magicien où seuls les sorts de `preparedSpellIds` le sont) — après `learnedSpellsError` (liste, niveau, nombre, écoles)
 6. `character_inventory` insert (résolution nom → itemId via lookup, ignore silencieusement si non trouvé)
 

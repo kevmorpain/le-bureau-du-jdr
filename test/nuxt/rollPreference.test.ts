@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { computed, defineComponent, h, nextTick, reactive, ref } from 'vue'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
+import type { VueWrapper } from '@vue/test-utils'
 import DashboardHeaderSection from '../../app/components/character_sheet/DashboardHeaderSection.vue'
 import DeathSavingThrowSection from '../../app/components/character_sheet/DeathSavingThrowSection.vue'
 import DiceRollerSection from '../../app/components/character_sheet/DiceRollerSection.vue'
@@ -20,8 +21,6 @@ afterEach(() => vi.restoreAllMocks())
 
 let sheetSeq = 9800
 
-registerEndpoint('/api/backgrounds', () => [])
-
 // Le moteur que la page fournit : seul `rollsEnabled` varie.
 const engineOf = (enabled: boolean): RollEngine => ({
   characterId: undefined,
@@ -36,7 +35,7 @@ const rollsOn = { provide: { [rollEngineKey as symbol]: engineOf(true) } }
 
 const registerSheet = (id: number) => {
   registerEndpoint(`/api/character_sheets/${id}/inventory`, () => [])
-  registerEndpoint(`/api/character_sheets/${id}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${id}/backgrounds`, () => [])
   registerEndpoint(`/api/character_sheets/${id}/spells`, () => [])
 }
 
@@ -56,7 +55,7 @@ const dyingSheet = (over: Record<string, unknown> = {}) => {
     baseAbilityScores: [],
     classes: [{ classId: 1, level: 1 }],
     features: [],
-    skills: [],
+    proficiencyOverrides: [],
     abilityScoreImprovements: [],
     species: null,
     ...over,
@@ -64,7 +63,7 @@ const dyingSheet = (over: Record<string, unknown> = {}) => {
   } as any) as any
 }
 
-const buttonWith = (wrapper: Awaited<ReturnType<typeof mountSuspended>>, text: string) =>
+const buttonWith = (wrapper: VueWrapper, text: string) =>
   wrapper.findAll('button').find(b => b.text().includes(text))
 
 describe('préférence de la fiche — fiche ?? compte ?? défaut codé', () => {
@@ -135,7 +134,7 @@ describe('en-tête — réglage par fiche et panneau de jets', () => {
     mountSuspended(DashboardHeaderSection, {
       props: { characterSheet: dyingSheet({ currentHp: 20, preferences: null, owner: { id: 1, name: 'Testeur', preferences: null }, ...over }), isResting: false, combatMode: false, roll: () => 0 },
     })
-  const openPreferences = async (wrapper: Awaited<ReturnType<typeof mountSuspended>>) => {
+  const openPreferences = async (wrapper: VueWrapper) => {
     await wrapper.find('button[aria-label="Préférences"]').trigger('click')
     await vi.waitFor(() => expect(document.body.textContent).toContain('Préférences de cette fiche'))
   }
@@ -201,7 +200,7 @@ describe('jets contre la mort sans jet de l\'application', () => {
     return { s, wrapper, roll }
   }
   const field = 'input[aria-label="Résultat du d20 du jet de mort"]'
-  const enter = async (wrapper: Awaited<ReturnType<typeof mountSuspended>>, value: number) => {
+  const enter = async (wrapper: VueWrapper, value: number) => {
     await wrapper.find(field).setValue(String(value))
     await buttonWith(wrapper, 'Valider')!.trigger('click')
   }
@@ -275,7 +274,7 @@ describe('RollTablePanel sans jet de l\'application', () => {
       { min: 3, max: 4, text: 'Effet haut' },
     ],
   }
-  const highlighted = (wrapper: Awaited<ReturnType<typeof mountSuspended>>) =>
+  const highlighted = (wrapper: VueWrapper) =>
     wrapper.findAll('li').filter(li => li.attributes('aria-current') === 'true').map(li => li.text())
 
   it('le résultat saisi surligne la ligne, comme un jet', async () => {

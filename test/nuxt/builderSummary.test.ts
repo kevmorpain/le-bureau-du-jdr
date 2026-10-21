@@ -13,7 +13,7 @@ import { catalogClasses } from '../fixtures/catalogClasses'
 const FEAT = { vigilant: 901, doue: 902, observateur: 903, resilient: 904, robuste: 905 }
 const BEGUILING_INFLUENCE = 950
 
-registerEndpoint('/api/feats', () => [
+registerEndpoint('/api/catalog/feats', () => [
   { id: FEAT.vigilant, name: 'Vigilant', description: null, effects: [{ type: 'initiative_bonus', value: { amount: 5 } }] },
   { id: FEAT.doue, name: 'Doué', description: null, effects: [{ type: 'other', value: { kind: 'skilled_choice' } }] },
   { id: FEAT.observateur, name: 'Observateur', description: null, effects: [
@@ -27,7 +27,7 @@ registerEndpoint('/api/feats', () => [
   ] },
   { id: FEAT.robuste, name: 'Robuste', description: null, effects: [{ type: 'hp_per_level', value: { amount: 2 } }] },
 ])
-registerEndpoint('/api/invocations', () => [{
+registerEndpoint('/api/catalog/invocations', () => [{
   id: BEGUILING_INFLUENCE,
   name: 'Présence captivante',
   description: null,
@@ -55,7 +55,7 @@ registerEndpoint('/api/catalog/progressions', (): Catalog => ({
   }],
 }))
 registerEndpoint('/api/catalog/feature-options', () => [{ id: BEGUILING_INFLUENCE, name: 'Présence captivante', description: null }])
-registerEndpoint('/api/character_species', () => [{ id: 10, name: 'Demi-orc' }, { id: 20, name: 'Elfe' }])
+registerEndpoint('/api/catalog/species', () => [{ id: 10, name: 'Demi-orc' }, { id: 20, name: 'Elfe' }])
 registerEndpoint('/api/catalog/species/10', () => ({
   id: 10,
   name: 'Demi-orc',

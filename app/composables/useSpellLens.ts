@@ -42,14 +42,12 @@ const defaultStats = (): LensStats => ({
 
 // Classe principale lanceuse sinon la première : la lentille ne gère pas le multiclassage lanceur.
 const deriveSpellcastingAbility = (sheet: CharacterSheet): Ability | null => {
-  const casters = (sheet.classes ?? [])
-    .map((cc) => {
-      const cls = cc.class as { spellcastingAbility?: string | null } | undefined
-      const subclass = (cc as { subclass?: { spellcastingAbility?: string | null } | null }).subclass
-      const ability = subclass?.spellcastingAbility ?? cls?.spellcastingAbility ?? null
-      return ability ? { ability: ability as Ability, isMain: (cc as { isMain?: boolean }).isMain } : null
-    })
-    .filter((c): c is { ability: Ability, isMain?: boolean } => c !== null)
+  const casters = (sheet.classes ?? []).flatMap((cc): { ability: Ability, isMain: boolean }[] => {
+    const cls = cc.class as { spellcastingAbility?: string | null } | undefined
+    const subclass = (cc as { subclass?: { spellcastingAbility?: string | null } | null }).subclass
+    const ability = subclass?.spellcastingAbility ?? cls?.spellcastingAbility ?? null
+    return ability ? [{ ability: ability as Ability, isMain: (cc as { isMain?: boolean }).isMain === true }] : []
+  })
 
   if (casters.length === 0) return null
   return (casters.find(c => c.isMain) ?? casters[0]!).ability

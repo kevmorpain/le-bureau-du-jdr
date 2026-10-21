@@ -436,11 +436,6 @@ export interface ClassFeature {
   description: string
 }
 
-export interface SkillChoices {
-  count: number
-  from: string[] | 'all'
-}
-
 export interface SpellcastingInfo {
   ability: AbilityKey
   type: CasterType
@@ -466,7 +461,6 @@ export interface ClassData {
   role: string
   description: string
   hitDie: number
-  skillChoices: SkillChoices
   spellcasting: SpellcastingInfo | null
   // Affichage seul : le niveau d'accès et la liste des sous-classes viennent du catalogue.
   subclassLabel: string
@@ -486,7 +480,6 @@ export const CLASSES: ClassData[] = [
     role: 'Combattant',
     description: 'Puissance brute et rage primitive. Le barbare encaisse et inflige des dégâts considérables au corps à corps.',
     hitDie: 12,
-    skillChoices: { count: 2, from: ['animal_handling', 'athletics', 'intimidation', 'nature', 'perception', 'survival'] },
     spellcasting: null,
     subclassLabel: 'Voie primitive',
     features: [
@@ -509,7 +502,6 @@ export const CLASSES: ClassData[] = [
     role: 'Soutien / Sorts',
     description: 'Artiste et magicien, le barde inspire ses alliés, manipule ses ennemis et lance des sorts puissants grâce à son charisme naturel.',
     hitDie: 8,
-    skillChoices: { count: 3, from: 'all' },
     spellcasting: { ability: 'cha', type: 'full' },
     subclassLabel: 'Collège bardique',
     features: [
@@ -533,7 +525,6 @@ export const CLASSES: ClassData[] = [
     role: 'Soutien / Soins',
     description: 'Intermédiaire entre les mortels et les dieux, le clerc soigne, protège et frappe au nom de sa divinité grâce à sa sagesse divine.',
     hitDie: 8,
-    skillChoices: { count: 2, from: ['history', 'insight', 'medicine', 'persuasion', 'religion'] },
     spellcasting: { ability: 'wis', type: 'full' },
     subclassLabel: 'Domaine divin',
     features: [
@@ -557,7 +548,6 @@ export const CLASSES: ClassData[] = [
     role: 'Sorts / Métamorphose',
     description: 'Gardien de la nature et maître des métamorphoses, le druide tire sa magie des forces primordiales du monde naturel.',
     hitDie: 8,
-    skillChoices: { count: 2, from: ['arcana', 'animal_handling', 'insight', 'medicine', 'nature', 'perception', 'religion', 'survival'] },
     spellcasting: { ability: 'wis', type: 'full' },
     subclassLabel: 'Cercle druidique',
     features: [
@@ -580,7 +570,6 @@ export const CLASSES: ClassData[] = [
     role: 'Combattant',
     description: 'Maître des armes et armures, le guerrier est le combattant le plus polyvalent, capable de porter plus d\'attaques que quiconque.',
     hitDie: 10,
-    skillChoices: { count: 2, from: ['acrobatics', 'animal_handling', 'athletics', 'history', 'insight', 'intimidation', 'perception', 'survival'] },
     spellcasting: null,
     subclassLabel: 'Archétype martial',
     features: [
@@ -604,7 +593,6 @@ export const CLASSES: ClassData[] = [
     role: 'Mobilité / Dégâts',
     description: 'Artiste martial channelant le ki pour des prouesses physiques extraordinaires — vitesse, esquive et frappes dévastatrices.',
     hitDie: 8,
-    skillChoices: { count: 2, from: ['acrobatics', 'athletics', 'history', 'insight', 'religion', 'stealth'] },
     spellcasting: null,
     subclassLabel: 'Tradition monastique',
     features: [
@@ -627,7 +615,6 @@ export const CLASSES: ClassData[] = [
     role: 'Combattant / Soutien',
     description: 'Guerrier sacré lié par un serment solennel, le paladin combine force martiale et magie divine pour protéger les innocents.',
     hitDie: 10,
-    skillChoices: { count: 2, from: ['athletics', 'insight', 'intimidation', 'medicine', 'persuasion', 'religion'] },
     spellcasting: { ability: 'cha', type: 'half', startsAtLevel: 2 },
     subclassLabel: 'Serment sacré',
     features: [
@@ -650,7 +637,6 @@ export const CLASSES: ClassData[] = [
     role: 'Exploration / Combat',
     description: 'Guerrier des terres sauvages, expert du pistage et du combat naturel. Son ennemi juré et son compagnon animal le définissent.',
     hitDie: 10,
-    skillChoices: { count: 3, from: ['animal_handling', 'athletics', 'insight', 'investigation', 'nature', 'perception', 'stealth', 'survival'] },
     spellcasting: { ability: 'wis', type: 'half', startsAtLevel: 2 },
     subclassLabel: 'Archétype de rôdeur',
     features: [
@@ -673,7 +659,6 @@ export const CLASSES: ClassData[] = [
     role: 'Discret / Dégâts',
     description: 'Expert de la furtivité et du subterfuge, le roublard excelle à frapper là où ça fait mal grâce à son Attaque sournoise dévastatrice.',
     hitDie: 8,
-    skillChoices: { count: 4, from: ['acrobatics', 'athletics', 'deception', 'insight', 'intimidation', 'investigation', 'perception', 'performance', 'persuasion', 'sleight_of_hand', 'stealth'] },
     spellcasting: null,
     subclassLabel: 'Archétype de roublard',
     features: [
@@ -697,7 +682,6 @@ export const CLASSES: ClassData[] = [
     role: 'Incantateur',
     description: 'Magie innée jaillissant du sang ou de l\'âme. L\'ensorceleur façonne les sorts avec une flexibilité unique grâce aux Métamagie.',
     hitDie: 6,
-    skillChoices: { count: 2, from: ['arcana', 'deception', 'insight', 'intimidation', 'persuasion', 'religion'] },
     spellcasting: { ability: 'cha', type: 'full' },
     subclassLabel: 'Origine magique',
     features: [
@@ -720,7 +704,6 @@ export const CLASSES: ClassData[] = [
     role: 'Pacte / Sorts',
     description: 'Pouvoirs obtenus par un pacte avec une entité puissante. Peu de sorts mais récupérés à chaque repos court — une magie explosive et unique.',
     hitDie: 8,
-    skillChoices: { count: 2, from: ['arcana', 'deception', 'history', 'intimidation', 'investigation', 'nature', 'religion'] },
     spellcasting: { ability: 'cha', type: 'pact' },
     subclassLabel: 'Patron d\'Outremonde',
     features: [
@@ -758,7 +741,6 @@ export const CLASSES: ClassData[] = [
     role: 'Incantateur',
     description: 'Érudit de la magie arcanique dont le grimoire lui permet d\'apprendre et de préparer un vaste répertoire de sorts — le maître incontesté de la magie.',
     hitDie: 6,
-    skillChoices: { count: 2, from: ['arcana', 'history', 'insight', 'investigation', 'medicine', 'religion'] },
     spellcasting: { ability: 'int', type: 'full' },
     subclassLabel: 'Tradition arcanique',
     features: [

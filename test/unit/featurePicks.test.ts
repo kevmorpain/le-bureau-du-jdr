@@ -102,6 +102,11 @@ describe('choicesGainedAtLevelUp — point de choix remplaçable à chaque nivea
     expect(gained(1, 2, [{ ...invocations, ownerLevelRequired: 3 }])).toEqual([])
   })
 
+  it('ne s\'ouvre pas quand le niveau est pris dans une autre classe', () => {
+    const FIGHTER = 5
+    expect(choicesGainedAtLevelUp({ progressions: [invocations] }, { classId: FIGHTER, fromLevel: 3, toLevel: 4, mainClassId: WARLOCK })).toEqual([])
+  })
+
   it('ne filtre les options que par niveau : le prérequis d\'état (pacte) reste à l\'interface', () => {
     const [choice] = choicesGainedAtLevelUp({ progressions: [invocations] }, { classId: WARLOCK, fromLevel: 4, toLevel: 5, mainClassId: WARLOCK })
     expect(optionFeatureIds(choice!)).toEqual([1, 3])

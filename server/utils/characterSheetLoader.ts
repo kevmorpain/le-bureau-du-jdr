@@ -33,7 +33,7 @@ export async function loadSheetRelations(db: Db, id: number): Promise<Loaded | n
       spellSlots: true,
       baseAbilityScores: true,
       abilityScoreImprovements: true,
-      skills: true,
+      proficiencyOverrides: true,
       spells: { with: { spell: true } },
     },
   })

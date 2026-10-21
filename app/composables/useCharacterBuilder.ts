@@ -21,10 +21,9 @@ import { cantripsKnownAt, magicalSecretsGained, preparedSpellsLimit, spellLearni
 import type { ChoiceKind } from '~~/shared/rules/choices'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 import { duplicatedValues, proficiencyDuplicates } from '~~/shared/rules/duplicateProficiencies'
-import { isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
+import { classSkillChoice, isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { byFeaturePickOrder, isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
 import { pactBoonOfName, type PactBoon } from '~~/shared/rules/pactBoon'
-import { featLanguageChoiceCount } from '~~/shared/rules/characterEffects'
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
 import type { Effect } from '~~/server/db/schema/effects'
@@ -259,15 +258,9 @@ export function useCharacterBuilder() {
 
   // ─── Dons (liste + helpers pour les choix) ────────────────────────────────────
 
-  const { feats, getById: getFeatById } = useFeats()
+  const { feats, getById: getFeatById, needsAbility: featNeedsAbility, needsSkilled: featNeedsSkilled, languageCount: featLanguageCount } = useFeats()
   const { choicesForClassLevel, choicesFor } = useCatalog()
   const { resolveClassId, resolveSpeciesId, resolveBackgroundId, resolveSubclassId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
-
-  const featNeedsAbility = (featureId: number | null | undefined): boolean => {
-    if (featureId == null) return false
-    const feat = getFeatById(featureId)
-    return (feat?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice')
-  }
 
   // Un don requiert-il un choix de SORT (ex. Faveur des fées) ? Repéré par l'effet marqueur
   // `other:{kind:'fey_touched_spells'}` (data/feats.ts).
@@ -276,17 +269,6 @@ export function useCharacterBuilder() {
     const feat = getFeatById(featureId)
     return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'fey_touched_spells')
   }
-
-  // Le don Doué (`other:{kind:'skilled_choice'}`) accorde 3 maîtrises AU CHOIX (compétences ou outils).
-  const featNeedsSkilled = (featureId: number | null | undefined): boolean => {
-    if (featureId == null) return false
-    const feat = getFeatById(featureId)
-    return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'skilled_choice')
-  }
-
-  // Le don Linguiste accorde des langues au choix (`language_proficiency_choice`).
-  const featLanguageCount = (featureId: number | null | undefined): number =>
-    featureId == null ? 0 : featLanguageChoiceCount(getFeatById(featureId)?.effects ?? [])
 
   const featChoiceComplete = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return true
@@ -332,6 +314,9 @@ export function useCharacterBuilder() {
   const catalogChoices = computed(() =>
     choicesForClassLevel(classDbId.value, state.value.level),
   )
+  const classSkillPoint = computed(() => classDbId.value != null ? classSkillChoice(catalogChoices.value, classDbId.value) : undefined)
+  const classSkillCount = computed(() => classSkillPoint.value?.count ?? 0)
+  const classSkillOptions = computed<string[]>(() => (classSkillPoint.value?.options ?? []).map(o => String(o.value)))
 
   // ─── Sous-classe (lue dans le CATALOGUE) ───────────────────────────────────
   const subclassDbId = computed(() => resolveSubclassId(classData.value?.dbName, state.value.subclass))
@@ -438,12 +423,6 @@ export function useCharacterBuilder() {
   const variantHumanSkills = computed<string[]>(() =>
     isVariantHuman.value && state.value.variantHumanSkill ? [state.value.variantHumanSkill] : [],
   )
-  // Sans porteur en base (historique personnalisé, Humain variant) → matérialisées en `character_skills` ;
-  // celles d'un historique seedé sont dérivées de son porteur (F3).
-  const materializedSkills = computed<string[]>(() => [
-    ...(isCustomBackground.value ? state.value.customBackgroundSkills : []),
-    ...variantHumanSkills.value,
-  ])
   // Maîtrises hors classe, avec leur source (la compétence de l'Humain variant et celles de Polyvalence sont
   // des traits d'espèce).
   const grantedSkillSources = computed(() => {
@@ -758,10 +737,8 @@ export function useCharacterBuilder() {
         return choicesComplete(speciesChoices.value)
       }
       case 'class': {
-        if (!s.classId) return false
-        const cls = classData.value
-        if (!cls) return false
-        if (s.skills.length < cls.skillChoices.count) return false
+        if (!s.classId || !classData.value) return false
+        if (!classSkillPoint.value || s.skills.length < classSkillCount.value) return false
         if (needsSubclass.value && !s.subclass) return false
         if (!featurePicksComplete.value) return false
         if (needsExpertise.value && s.expertiseSkills.length < expertiseExpected.value) return false
@@ -959,6 +936,9 @@ export function useCharacterBuilder() {
     abilityMod,
     formatMod,
     profBonusAtLevel,
+    // Compétences de classe (catalogue)
+    classSkillCount,
+    classSkillOptions,
     // Sous-classe (catalogue)
     needsSubclass,
     subclassLevel,
@@ -969,7 +949,7 @@ export function useCharacterBuilder() {
     isVariantHuman,
     isCustomBackground,
     backgroundSkills,
-    materializedSkills,
+    variantHumanSkills,
     proficientSkills,
     classSkillConflicts,
     classSkillConflictLabels,

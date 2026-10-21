@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema, CharacterValidationError } from '../../server/utils/characterCreate'
 import { characterLevelUp, levelUpSchema } from '../../server/utils/characterLevelUp'
@@ -35,10 +35,15 @@ const levelUp = (id: number, over: Record<string, unknown>) => characterLevelUp(
   isMulticlass: true, hpDie: 5, ...over,
 }))
 
-const skillRows = async (sheetId: number) =>
-  db.select({ skillKey: schema.characterSkills.skillKey, level: schema.characterSkills.proficiencyLevel, source: schema.characterSkills.source })
-    .from(schema.characterSkills)
-    .where(eq(schema.characterSkills.characterSheetId, sheetId))
+// Compétences consignées sur le point « Compétences de classe » d'une classe, d'où la fiche les dérive.
+const classSkillPicks = async (sheetId: number, classId: number): Promise<string[]> =>
+  (await db.select({ value: schema.characterChoices.selectedValue })
+    .from(schema.characterChoices)
+    .innerJoin(schema.progression, eq(schema.progression.id, schema.characterChoices.progressionId))
+    .innerJoin(schema.features, eq(schema.features.id, schema.progression.featureId))
+    .where(and(eq(schema.characterChoices.characterSheetId, sheetId), eq(schema.progression.kind, 'skill'), eq(schema.features.classId, classId))))
+    .map((r: { value: string }) => r.value)
+    .sort()
 
 const classLevels = async (sheetId: number) =>
   db.select({ classId: schema.characterClasses.classId, level: schema.characterClasses.level })
@@ -56,32 +61,32 @@ describe('compétences de multiclassage — schéma', () => {
 })
 
 describe('compétences de multiclassage — autorité serveur', () => {
-  it('Guerrier → Roublard : 1 compétence de la liste du Roublard → maîtrise de classe', async () => {
+  it('Guerrier → Roublard : 1 compétence de la liste du Roublard → choix sur le point du Roublard', async () => {
     const { id } = await createFighter()
     await levelUp(id, { classId: CLASS.rogue, newSkills: ['acrobatics'] })
 
-    expect(await skillRows(id)).toEqual([{ skillKey: 'acrobatics', level: 'proficient', source: 'class' }])
+    expect(await classSkillPicks(id, CLASS.rogue)).toEqual(['acrobatics'])
   })
 
   it('Guerrier → Barde : « au choix » = n\'importe quelle compétence', async () => {
     const { id } = await createFighter()
     await levelUp(id, { classId: BARD, newSkills: ['arcana'] })
 
-    expect(await skillRows(id)).toEqual([{ skillKey: 'arcana', level: 'proficient', source: 'class' }])
+    expect(await classSkillPicks(id, BARD)).toEqual(['arcana'])
   })
 
   it('borne haute seulement : rejoindre le Roublard sans choisir de compétence passe', async () => {
     const { id } = await createFighter()
     await levelUp(id, { classId: CLASS.rogue })
 
-    expect(await skillRows(id)).toEqual([])
+    expect(await classSkillPicks(id, CLASS.rogue)).toEqual([])
   })
 
   it('Guerrier → Roublard : compétence hors de la liste du Roublard → rejet, rien d\'écrit', async () => {
     const { id } = await createFighter()
     await expect(levelUp(id, { classId: CLASS.rogue, newSkills: ['arcana'] })).rejects.toThrow(CharacterValidationError)
 
-    expect(await skillRows(id)).toEqual([])
+    expect(await classSkillPicks(id, CLASS.rogue)).toEqual([])
     expect(await classLevels(id)).toEqual([{ classId: CLASS.fighter, level: 1 }])
   })
 

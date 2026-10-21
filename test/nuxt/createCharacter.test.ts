@@ -105,7 +105,7 @@ beforeAll(async () => {
   // Owner de choix de COMPÉTENCES DE CLASSE (F3 tranche 3) : progression `skill` → le pick va en
   // character_choices, dérivé à la lecture (plus matérialisé en character_skills).
   await db.insert(schema.features).values({ id: 260, name: 'Compétences de classe', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 1 })
-  await db.insert(schema.progression).values({ featureId: 260, kind: 'skill', count: { op: 'fixed', value: CLASS_SKILL_CHOICES.Guerrier.count }, optionSource: { type: 'skills', from: CLASS_SKILL_CHOICES.Guerrier.from }, replaceable: false })
+  await db.insert(schema.progression).values({ featureId: 260, kind: 'skill', count: { op: 'fixed', value: CLASS_SKILL_CHOICES.Guerrier!.count }, optionSource: { type: 'skills', from: CLASS_SKILL_CHOICES.Guerrier!.from }, replaceable: false })
 
   await db.insert(schema.features).values([
     { id: 401, name: 'Regard de deux esprits', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },
@@ -174,6 +174,7 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
   it('persiste fiche, classe, feature passive, caracs, compétences ; pas d\'emplacement de sort', async () => {
     const { id } = await createCharacter(db, baseInput({
       classId: FIGHTER, level: 1, hpBase: 10,
+      // @ts-expect-error champ retiré du schéma : envoyé par un ancien client, il est ignoré
       classSkills: ['athletics'], classSavingThrows: ['str'],
     }), OWNER)
 
@@ -189,11 +190,9 @@ describe('createCharacter — round-trip Guerrier niveau 1', () => {
     const feats = await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, id))
     expect(feats.map((f: { featureId: number }) => f.featureId)).toContain(300) // Second souffle (passif)
 
-    // F3 : rien n'est matérialisé en character_skills à la création ici. La compétence de classe choisie
-    // (athletics) va en character_choices (dérivée à la lecture, tranche 3) ; le JS (str) est dérivé du
-    // porteur (tranche 2, classSavingThrows ignoré). Restent stockés ailleurs : overrides + expertise.
-    const skills = await db.select().from(schema.characterSkills).where(eq(schema.characterSkills.characterSheetId, id))
-    expect(skills).toEqual([])
+    // La compétence de classe choisie est un choix, dérivé à la lecture ; le JS (str) l'est du porteur de la classe.
+    const overrides = await db.select().from(schema.characterProficiencyOverrides).where(eq(schema.characterProficiencyOverrides.characterSheetId, id))
+    expect(overrides).toEqual([])
     const choices = await db.select({ v: schema.characterChoices.selectedValue }).from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, id))
     expect(choices.map((c: { v: string | null }) => c.v).sort()).toEqual(['athletics'])
 
@@ -217,6 +216,7 @@ describe('createCharacter — don Doué (choix compétences/outils)', () => {
 
   it('rejette un outil ou une compétence inconnus (validation de membership)', () => {
     expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { tools: ['Bâton magique'] } })).toThrow()
+    // @ts-expect-error compétence inconnue, que le schéma doit rejeter
     expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { skills: ['voler'] } })).toThrow()
     expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { languages: ['Elfique'] } })).toThrow()
     expect(() => baseInput({ bonusFeatureId: 810, bonusFeatChoices: { languages: ['elvish'] } })).not.toThrow()

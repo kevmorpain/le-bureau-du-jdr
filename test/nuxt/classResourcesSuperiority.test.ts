@@ -12,10 +12,9 @@ const FIGHTER = 5
 const SUBCLASS = 50
 
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/inventory`, () => [])
-registerEndpoint(`/api/character_sheets/${SHEET_ID}/proficiency-overrides`, () => [])
+registerEndpoint(`/api/character_sheets/${SHEET_ID}/backgrounds`, () => [])
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/spells`, () => [])
 registerEndpoint(`/api/character_sheets/${SHEET_ID}/features`, { method: 'PUT', handler: () => ({ success: true }) })
-registerEndpoint('/api/backgrounds', () => [])
 
 const battleMaster = guerrierSubclasses.find(s => s.name === 'Maître de guerre')!.features
 

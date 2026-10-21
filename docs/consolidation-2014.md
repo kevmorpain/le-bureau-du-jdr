@@ -49,16 +49,16 @@ Le rapport complet vit dans le scratchpad de session (local) ; l'essentiel :
 | **F1** | ✅ **résolu (#52)** | Upserts de catalogue par NOM SEUL → un homonyme 5.5 écrasait le 2014. Passé en `(name, ruleset)`. | oui (levé) |
 | **F2** | ✅ sous-classe, style de combat, expertise, ASI | `progression`/`character_choices` généralisé aux 4 points de choix ; le front lit le catalogue partout (plus aucune table front). ASI = une progression `asi_or_feat` par palier (owner discret, `count 1`), source unique le seed [`asi.ts`](../server/db/seeds/data/asi.ts) ; expertise = `count` cumulatif ; style de combat = effets appliqués sur la fiche. | non (levé) |
 | **F3** | ✅ **résolu (#85/#86/#87)** | Compétences classe/historique + JS de classe **dérivés** à la lecture (effets `skill_proficiency`/`saving_throw_proficiency`), plus matérialisés figé. Historique = effets sur le porteur (#85) ; JS = classe **principale** seulement (#86, règle multiclasse) ; compétences de classe = choix `progression skill` + `character_choices` (#87, **migration 0099** pour éviter la fenêtre déploiement→reseed d'un CHOIX). `character_skills` ne garde que overrides joueur + expertise. | non (levé) |
-| **F4** | ✅ partiel (#52, F2) | Suivi : [#117](https://github.com/kevmorpain/le-bureau-du-jdr/issues/117) — Endpoints `/api/catalog/*` sans consommateur, doublés par les legacy | partiellement |
+| **F4** | ✅ **résolu** ([#117](https://github.com/kevmorpain/le-bureau-du-jdr/issues/117), lot 12) | Le front lit `/api/catalog/*` ; `/api/feats`, `/api/invocations`, `/api/character_species`, `/api/classes` et `/api/classes/[name]/subclasses` sont supprimés ; les historiques personnalisés d'une fiche passent sous `/api/character_sheets/[id]/backgrounds`, couvert par le middleware de propriété | levé |
 | **F5** | ✅ **résolu** ([#118](https://github.com/kevmorpain/le-bureau-du-jdr/issues/118)) | Blob front `CLASSES` mort sur les maîtrises : `WEAPON_PROF_KEYS` et le payload vestigial retirés (F2 tranche 3), puis `ARMOR_PROF_KEYS` et les champs `savingThrows`/`armorProficiencies`/`weaponProficiencies` ; l'étape Classe lit les JS dans `CLASS_PROFICIENCIES`, gardée par `classProficiencies.test.ts`. | non |
 | **F6** | moyenne | Suivi : [#119](https://github.com/kevmorpain/le-bureau-du-jdr/issues/119) — Maîtrise d'armes et bonus d'origine : servis par le GET fiche mais jamais lus | non |
 | **F7** | moyenne | Suivi : [#120](https://github.com/kevmorpain/le-bureau-du-jdr/issues/120) — Colonne legacy `dragonborn_ancestry`, parallèle au modèle lignée | oui (Drakéide) |
 | **F8** | ✅ **résolu** ([#121](https://github.com/kevmorpain/le-bureau-du-jdr/issues/121)) | Enums `AbilityScore` / `DamageType` de `spells.ts` supprimés : `AbilityKey` (`shared/rules/abilities.ts`) et `DamageType` (`shared/rules/damageTypes.ts`), dont `DamageTypeKey` dérive | non |
-| **F9** | basse | Suivi : [#122](https://github.com/kevmorpain/le-bureau-du-jdr/issues/122) — Table `skills` référencée par aucune clé étrangère | non |
-| **F10** | basse | Suivi : [#123](https://github.com/kevmorpain/le-bureau-du-jdr/issues/123) — Dette de typecheck (10 serveur / 90 app) | non |
+| **F9** | ✅ **résolu** ([#122](https://github.com/kevmorpain/le-bureau-du-jdr/issues/122), lot 12) | `skills` et `character_skills` supprimées (migration 0153, [D27](./decisions.md#d27)) : maîtrises dérivées plus ajouts manuels validés par Zod | non |
+| **F10** | ✅ **résolu** ([#123](https://github.com/kevmorpain/le-bureau-du-jdr/issues/123), lot 12) | Typecheck à 0 (serveur, app, shared, node) ; `npm run typecheck` et job CI. Les SFC `.vue` n'y passent pas (vue-tsc ne démarre pas avec TypeScript 6) | non |
 | **F11** | basse (by-design) | Snapshots Drizzle figés à `0039` → `db:generate` inutilisable, plus de détection auto de dérive. Garde-fou : `test/unit/migrations.test.ts` rejoue 0000→dernier sur base vierge. | non |
 | **F12** | ✅ **résolu** (2026-10-02) | Suivi : [#124](https://github.com/kevmorpain/le-bureau-du-jdr/issues/124) — Autorité serveur du level-up incomplète. **Sorts et ASI faits (lot 3)** : `server/utils/spellLearning.ts`, `validateLevelUpAsi`. **PV faits (lot 6)** : le level-up n'envoie plus que le dé (`hpDie`), borné par le dé de la classe côté serveur ([D19](./decisions.md#d19)) | non |
-| **F13** | moyenne | Suivi : [#125](https://github.com/kevmorpain/le-bureau-du-jdr/issues/125) — Doublons de règles sans garde-fou | non |
+| **F13** | ✅ **résolu** ([#125](https://github.com/kevmorpain/le-bureau-du-jdr/issues/125), lot 12) | Compétences de classe lues dans le catalogue par le builder (`classSkillChoice`) ; ajouts/retraits manuels (`withProficiencyOverrides`) et prédicats de dons (`featNeedsSkilledChoice`…) partagés ; compétences de multiclassage en choix ([D27](./decisions.md#d27)) | non |
 | **F14** | **haute pour le 5.5** | Suivi : [#106](https://github.com/kevmorpain/le-bureau-du-jdr/issues/106) — Règles indexées par classe sans ruleset, front sans ruleset | **oui** |
 
 **Crédité (propre)** : autorité serveur uniforme create/level-up/rest (`db` injecté, `db.batch()`
@@ -124,9 +124,9 @@ classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHO
     montrera EXACTEMENT le changement de comportement serveur (typiquement : des lignes `choices` qui
     apparaissent). Diff inattendu = régression ; diff attendu = relu puis re-généré (`vitest -u`).
     **Filet NON négociable avant F2, posé.**
-    - _Dette de couverture ASSUMÉE_ (non bloquante — chemins hors du risque F2 direct, à ajouter au
-      besoin) : pactes **Lame/Tome**, multiclassage lanceur **plein+plein / plein+demi** (branche
-      `spellcasting` combinée), **demi-lanceur** (`half`). Hors périmètre : `characterRest`. → F18, [#129](https://github.com/kevmorpain/le-bureau-du-jdr/issues/129).
+    - ~~_Dette de couverture ASSUMÉE_ : pactes Lame/Tome, multiclassage lanceur plein+plein / plein+demi,
+      demi-lanceur~~ → couverts par les scénarios F, G et H (F18, [#129](https://github.com/kevmorpain/le-bureau-du-jdr/issues/129), lot 12).
+      Hors périmètre : `characterRest`.
     - _Non figeable aujourd'hui_ : le **style de combat** n'a AUCUNE sortie serveur (cf. « Inventaire
       front-only », cat. A) — ce n'est PAS « hors périmètre » mais un choix perdu à rapatrier en F2.
       Quand F2 le câblera, l'archétype **Guerrier** du golden-master devra voir apparaître son choix

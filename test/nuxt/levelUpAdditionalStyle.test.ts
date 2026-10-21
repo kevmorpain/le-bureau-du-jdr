@@ -54,14 +54,14 @@ beforeAll(() => {
     return STYLES.filter(s => ids.includes(s.id)).map(s => ({ ...s, description: `Description de ${s.name}` }))
   })
   registerEndpoint('/api/catalog/classes/Guerrier/subclasses', () => [])
-  registerEndpoint('/api/invocations', () => [])
+  registerEndpoint('/api/catalog/invocations', () => [])
 })
 
 const sheet = (level: number) => ({
   id: 1,
   classes: [{ classId: GUERRIER, level, isMain: true, subclassId: CHAMPION, class: { name: 'Guerrier' }, subclass: { name: 'Champion' } }],
   baseAbilityScores: [{ abilityId: 'str', value: 16 }],
-  skills: [],
+  proficiencyOverrides: [],
   spells: [],
   features: [{ featureId: DUELING }],
 })

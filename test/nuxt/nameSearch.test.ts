@@ -30,13 +30,12 @@ const weapon = (id: number, name: string) => ({
 const rope = { ...weapon(3, 'Corde de chanvre'), item: { ...weapon(3, 'Corde de chanvre').item, itemType: 'equipment', properties: { category: 'adventuring_gear' } } }
 
 registerEndpoint('/api/character_sheets/9401/inventory', () => [weapon(1, 'Épée longue'), weapon(2, 'Dague'), rope])
-registerEndpoint('/api/character_sheets/9401/proficiency-overrides', () => [])
+registerEndpoint('/api/character_sheets/9401/backgrounds', () => [])
 registerEndpoint('/api/character_sheets/9401/spells', () => [])
-registerEndpoint('/api/backgrounds', () => [])
 registerEndpoint('/api/items', () => [])
 
 const inventorySheet = () => reactive({
-  id: 9401, name: 'Brom', exhaustionLevel: 0, baseAbilityScores: [], classes: [], features: [], skills: [],
+  id: 9401, name: 'Brom', exhaustionLevel: 0, baseAbilityScores: [], classes: [], features: [], proficiencyOverrides: [],
   abilityScoreImprovements: [], species: null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any) as any
@@ -82,7 +81,7 @@ const mountSpells = async (sheetId: number) => {
     characterSpell('Rayon de givre', 503, 1),
   ])
   registerEndpoint(`/api/character_sheets/${sheetId}/inventory`, () => [])
-  registerEndpoint(`/api/character_sheets/${sheetId}/proficiency-overrides`, () => [])
+  registerEndpoint(`/api/character_sheets/${sheetId}/backgrounds`, () => [])
   const sheet = classSheet(sheetId, 'Magicien', 1, 5, [], {
     baseAbilityScores: abilityScores({ int: 16 }),
     classes: [{ classId: 1, level: 5, isMain: true, class: { name: 'Magicien', spellcastingAbility: 'int' }, subclass: null }],

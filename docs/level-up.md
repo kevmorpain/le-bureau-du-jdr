@@ -173,7 +173,7 @@ de la liste encore non maîtrisées), et chaque point de choix de `newPickChoice
 
 **Serveur :** `newSkills` (clés `skillEnum`, sans doublon) n'est accepté que si la classe est **nouvellement
 rejointe** (déduit de `character_classes`, pas du flag client), en nombre ≤ au dû et dans la liste de la
-classe. « Déjà maîtrisée » reste front-autoritaire.
+classe. « Déjà maîtrisée » reste front-autoritaire. Elles sont consignées en choix sur le point « Compétences de classe » de la classe rejointe.
 
 ---
 
@@ -268,7 +268,7 @@ Corps :
     avant toute écriture (`featurePicksError`, `replacedPickError`) contre les points de choix que ce niveau rend dus, y compris
     celui des manifestations détenu sans surplus quand il ne sert qu'à un remplacement.
     Cf. [rules-engine.md](./rules-engine.md#chemin-générique-des-picks-doptions-de-feature).
-12. Upserter les compétences en expertise (`proficiencyLevel: 'expert'`). Validées **avant** toute écriture (`validateLevelUpExpertise`) : au plus le delta du `count` cumulatif de la progression `expertise` entre `newLevel − 1` et `newLevel` (`expertiseGainedAtLevel`, même projection que le front), et aucune compétence déjà `expert` dans `character_skills` (toutes sources). La maîtrise préalable de la compétence reste **front-autoritaire** : la fiche permet déjà de poser `expert` à la main sur n'importe quelle compétence (`PUT /skills`), et le set maîtrisé complet n'est composé que côté front.
+12. Consigner les compétences en expertise (choix sur le point d'expertise, lus en `skill_expertise`). Validées **avant** toute écriture (`validateLevelUpExpertise`) : au plus le delta du `count` cumulatif de la progression `expertise` entre `newLevel − 1` et `newLevel` (`expertiseGainedAtLevel`, même projection que le front), et aucune compétence déjà en expertise (choix d'expertise ou ajout manuel). La maîtrise préalable de la compétence reste **front-autoritaire** : la fiche permet déjà de poser `expert` à la main sur n'importe quelle compétence (ajout manuel), et le set maîtrisé complet n'est composé que côté front.
 13. Recalculer les emplacements de sort (full=niveau, half=⌊niveau/2⌋ si ≥2, pact=séparé) — **particularité Pact Magic** : tous les emplacements occultistes sont du même niveau, et ce niveau change avec le niveau d'occultiste (niv. 3 → slots niv. 2, niv. 5 → niv. 3, etc.). Le handler DELETE explicitement les anciens `pact_magic` slots aux autres niveaux avant l'upsert, avec préservation du compteur `used` du précédent niveau.
 
 **Retour :** `{ success: true, newLevel, hpGained }` (`hpGained` = part stockée ajoutée à `hpBase`)

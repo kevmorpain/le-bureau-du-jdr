@@ -261,7 +261,7 @@ const {
   languageProficiencies,
   toolProficiencies,
   proficiencyOverrides,
-  addProficiencyOverride,
+  setProficiencyOverride,
   removeProficiencyOverride,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 
@@ -273,14 +273,14 @@ const weaponProficiencyLabel = (prof: string): string =>
 
 const addProficiency = (type: ProficiencyOverrideType, value: string) => {
   if (!value.trim()) return
-  addProficiencyOverride(type, value.trim(), 'grant')
+  setProficiencyOverride(type, value.trim(), 'grant')
 }
 
 const removeProficiency = (type: ProficiencyOverrideType, value: string) => {
   if (isManualGrant(type, value)) {
     removeProficiencyOverride(type, value)
   } else {
-    addProficiencyOverride(type, value, 'revoke')
+    setProficiencyOverride(type, value, 'revoke')
   }
 }
 

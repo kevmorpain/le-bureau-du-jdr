@@ -98,10 +98,11 @@ const PROFICIENCY_EFFECT_BY_KIND = {
   skill: (value: string): Effect => ({ type: 'skill_proficiency', value: { skill: value as SkillKey } }),
   tool: (value: string): Effect => ({ type: 'tool_proficiency', value }),
   language: (value: string): Effect => ({ type: 'language_proficiency', value }),
-} satisfies Record<(typeof VALUE_CHOICE_KINDS)[number], (value: string) => Effect>
+  expertise: (value: string): Effect => ({ type: 'skill_expertise', value: { skill: value as SkillKey } }),
+} satisfies Record<(typeof VALUE_CHOICE_KINDS)[number] | 'expertise', (value: string) => Effect>
 
-// Maîtrises choisies (compétences, outils, langues), quel que soit le propriétaire du point de choix : le pick
-// est la seule donnée stockée, la maîtrise est produite ici à chaque lecture.
+// Maîtrises choisies (compétences, outils, langues, expertise), quel que soit le propriétaire du point de
+// choix : le pick est la seule donnée stockée, la maîtrise est produite ici à chaque lecture.
 export async function deriveChoiceProficiencies(db: Db, characterSheetId: number): Promise<Effect[]> {
   const rows = await db
     .select({ kind: schema.progression.kind, value: schema.characterChoices.selectedValue })
@@ -109,7 +110,7 @@ export async function deriveChoiceProficiencies(db: Db, characterSheetId: number
     .innerJoin(schema.progression, eq(schema.progression.id, schema.characterChoices.progressionId))
     .where(and(
       eq(schema.characterChoices.characterSheetId, characterSheetId),
-      inArray(schema.progression.kind, [...VALUE_CHOICE_KINDS]),
+      inArray(schema.progression.kind, [...VALUE_CHOICE_KINDS, 'expertise']),
       isNotNull(schema.characterChoices.selectedValue),
     ))
   // Un choix d'outil `orLanguages` peut porter une langue : clés de langue et noms d'outils ne se recoupent pas.

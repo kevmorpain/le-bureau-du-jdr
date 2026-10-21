@@ -66,7 +66,6 @@ const {
   asiLevelsForCharacter,
   isVariantHuman,
   isCustomBackground,
-  materializedSkills,
 } = useCharacterBuilder()
 
 const {
@@ -87,7 +86,8 @@ const FIELD_LABELS: Record<string, string> = {
   classId: 'Classe',
   abilityScores: 'Caractéristiques',
   classSkills: 'Compétences de classe',
-  backgroundSkills: 'Compétences d\'historique',
+  customBackgroundSkills: 'Compétences d\'historique',
+  variantHumanSkill: 'Compétence de l\'Humain variant',
   spellIds: 'Sorts',
   inventoryItemIds: 'Équipement',
   alignment: 'Alignement',
@@ -191,8 +191,9 @@ async function handleSubmit() {
       // F5 : plus de `armorProficiencyKeys`/`weaponProficiencyKeys` — les maîtrises de base de
       // classe sont DÉRIVÉES côté serveur du porteur de classe (volet B), ces champs étaient
       // vestigiaux (acceptés puis ignorés par createCharacter). Le schéma les garde optionnels.
-      backgroundSkills: materializedSkills.value,
-      // Humain variant seulement : sans espèce liée, ni son commun ni sa langue au choix ne sont dérivés.
+      customBackgroundSkills: isCustomBackground.value ? state.value.customBackgroundSkills : [],
+      // Humain variant seulement : sans espèce liée, ni son commun, ni sa langue et sa compétence au choix ne sont dérivés.
+      variantHumanSkill: isVariantHuman.value ? state.value.variantHumanSkill : null,
       selectedLanguages: isVariantHuman.value ? ['common', ...state.value.selectedLanguages] : [],
       spellIds: [...state.value.selectedCantrips, ...state.value.selectedSpells],
       // Grimoire : seuls les sorts préparés (et les sorts mineurs) le sont ; les autres restent dans le grimoire.

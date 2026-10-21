@@ -6,7 +6,7 @@ import { useCharacterBuilder, type BuilderState } from '../../app/composables/us
 import type { Catalog } from '../../shared/rules/resolve'
 import { FAVORED_ENEMIES, FAVORED_TERRAINS } from '../../shared/rules/rangerFavorites'
 import { FAVORED_ENEMY_COUNT, FAVORED_TERRAIN_COUNT } from '../../server/db/seeds/data/rodeur'
-import { catalogClasses } from '../fixtures/catalogClasses'
+import { catalogClasses, classSkillProgression } from '../fixtures/catalogClasses'
 
 // Le Rôdeur choisit ses ennemis jurés et ses terrains favoris à la création, en nombre selon son niveau.
 
@@ -23,6 +23,7 @@ registerEndpoint('/api/catalog/classes', () => [{
 }])
 registerEndpoint('/api/catalog/progressions', (): Catalog => ({
   progressions: [
+    classSkillProgression(99, RODEUR, 'Rôdeur'),
     {
       progressionId: ENEMY,
       ownerClassId: RODEUR,

@@ -258,7 +258,7 @@ Au démarrage, Wrangler doit lister les 3 bindings en mode `local` :
 
 ```bash
 curl -X POST -H "x-seed-secret: localdev" \
-  "http://127.0.0.1:8787/api/admin/seed?only=abilityScores,skills,magicSchools"
+  "http://127.0.0.1:8787/api/admin/seed?only=abilityScores,magicSchools"
 # → {"result":"success","summary":{"abilityScores":{"inserted":6,"skipped":0},…}}
 curl http://127.0.0.1:8787/api/magic_schools     # relit les données depuis la D1 locale
 npx wrangler d1 execute DB --local --command "SELECT …"   # inspection directe du SQLite

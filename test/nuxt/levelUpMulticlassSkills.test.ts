@@ -34,7 +34,6 @@ beforeAll(() => {
       classSkillChoice(3, BARD, 3, [...SKILL_KEYS]),
     ],
   }))
-  registerEndpoint('/api/character_sheets/1/proficiency-overrides', () => [])
 })
 
 // Guerrier 3 dont Athlétisme vient du CHOIX de classe (dérivé, plus stocké en character_skills).
@@ -42,7 +41,7 @@ const sheet = (derivedSkills: SkillKey[]) => ({
   id: 1,
   classes: [{ classId: FIGHTER, level: 3, isMain: true, class: { name: 'Guerrier' } }],
   baseAbilityScores: [],
-  skills: [],
+  proficiencyOverrides: [],
   spells: [],
   choiceEffects: derivedSkills.map(skill => ({ type: 'skill_proficiency', value: { skill } })),
 })
@@ -73,7 +72,7 @@ describe('Étape Compétences du level-up — multiclassage', () => {
     const { levelUp, button, text } = await mountSkillsStep('rogue')
 
     expect(levelUp.needsMulticlassSkills.value).toBe(true)
-    expect(levelUp.multiclassSkills.value).toEqual({ count: 1, options: ROGUE_LIST })
+    expect(levelUp.multiclassSkills.value).toEqual({ count: 1, options: ROGUE_LIST, progressionId: 2 })
     expect(text()).toContain('1 compétence au choix parmi la liste ci-dessous')
     expect(button('Acrobaties')).toBeDefined()
     expect(button('Arcanes')).toBeUndefined()

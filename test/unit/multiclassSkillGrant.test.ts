@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { multiclassSkillGrant } from '../../shared/rules/multiclass'
 import { SKILL_KEYS, type SkillKey } from '../../shared/rules/skills'
-import type { Catalog, CatalogProgression } from '../../shared/rules/resolve'
+import { classSkillChoice as classSkillPoint, resolveChoices, type Catalog, type CatalogProgression } from '../../shared/rules/resolve'
 
 const ROGUE = 4
 const BARD = 6
@@ -30,11 +30,11 @@ const catalog: Catalog = {
 
 describe('multiclassSkillGrant — compétences gagnées en rejoignant une classe (PHB 2014)', () => {
   it('Roublard : 1 compétence (pas les 4 du niveau 1), dans la liste de la classe', () => {
-    expect(multiclassSkillGrant(ROGUE, 1, catalog)).toEqual({ count: 1, options: ROGUE_LIST })
+    expect(multiclassSkillGrant(ROGUE, 1, catalog)).toEqual({ count: 1, options: ROGUE_LIST, progressionId: 1 })
   })
 
   it('Barde : 1 compétence au choix = toute sa liste (`all`)', () => {
-    expect(multiclassSkillGrant(BARD, 1, catalog)).toEqual({ count: 1, options: [...SKILL_KEYS] })
+    expect(multiclassSkillGrant(BARD, 1, catalog)).toEqual({ count: 1, options: [...SKILL_KEYS], progressionId: 2 })
   })
 
   it('classe sans compétence de multiclassage : rien, même si elle a une liste de classe', () => {
@@ -47,5 +47,18 @@ describe('multiclassSkillGrant — compétences gagnées en rejoignant une class
 
   it('progression `skill` non seedée : nombre dû, mais aucune option (le serveur refuse tout pick)', () => {
     expect(multiclassSkillGrant(ROGUE, 1, { progressions: [] })).toEqual({ count: 1, options: [] })
+  })
+})
+
+describe('classSkillPoint — le point de compétences porté par une classe', () => {
+  it('ne prend ni le choix d\'une autre classe, ni un choix de compétences d\'espèce', () => {
+    const SPECIES = 7
+    const speciesSkills: CatalogProgression = { ...classSkillChoice(9, ROGUE, 2, ['arcana']), ownerClassId: undefined, ownerSpeciesId: SPECIES }
+    const { choices } = resolveChoices(
+      { classLevels: { [ROGUE]: 1, [FIGHTER]: 1 }, speciesId: SPECIES },
+      { progressions: [speciesSkills, ...catalog.progressions] },
+    )
+    expect(classSkillPoint(choices, FIGHTER)?.progressionId).toBe(3)
+    expect(classSkillPoint(choices, BARD)).toBeUndefined()
   })
 })

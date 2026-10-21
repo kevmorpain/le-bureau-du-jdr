@@ -148,7 +148,7 @@ export default defineNuxtConfig({
         {
           // Données de référence (rarement modifiées) : rapide hors-ligne, revalidé en arrière-plan.
           urlPattern: ({ url }) =>
-            /^\/api\/(catalog|spells|items|backgrounds|classes|magic_schools|invocations|character_species|feats)/.test(url.pathname),
+            /^\/api\/(catalog|spells|items|magic_schools)/.test(url.pathname),
           handler: 'StaleWhileRevalidate',
           options: {
             cacheName: 'api-reference',

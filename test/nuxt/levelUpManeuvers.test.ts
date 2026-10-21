@@ -43,7 +43,7 @@ beforeAll(() => {
     return OPTIONS.filter(o => ids.includes(o.id))
   })
   registerEndpoint('/api/catalog/classes/Guerrier/subclasses', () => [])
-  registerEndpoint('/api/invocations', () => [])
+  registerEndpoint('/api/catalog/invocations', () => [])
 })
 
 const sheet = (level: number) => ({

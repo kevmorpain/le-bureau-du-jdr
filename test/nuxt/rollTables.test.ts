@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
+import type { VueWrapper } from '@vue/test-utils'
 import * as schema from '../../server/db/schema'
 import { seedRollTables } from '../../server/db/seeds/lib/seedRollTables'
 import { rollTables, type RollTableDef } from '../../server/db/seeds/data/rollTables'
@@ -60,7 +61,7 @@ describe('RollTablePanel', () => {
 
   afterEach(() => vi.restoreAllMocks())
 
-  const current = (wrapper: Awaited<ReturnType<typeof mountSuspended>>) =>
+  const current = (wrapper: VueWrapper) =>
     wrapper.findAll('li').filter(li => li.attributes('aria-current') === 'true').map(li => li.text())
 
   it('surligne la ligne du jet, puis garde le jet précédent pour Chaos contrôlé', async () => {

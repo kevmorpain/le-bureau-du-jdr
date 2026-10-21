@@ -32,7 +32,7 @@ export const abilityEnum  = z.enum(ABILITY_KEYS)            // Zod DÉRIVÉ
 |---|---|
 | abilities, damage_types, magic_schools (déjà en table) | **seeder depuis la const**, supprimer les unions/enums fantômes (`enum AbilityScore`, `AbilityScoreKey`, `z.enum` recopiés) |
 | conditions, propriétés d'arme, tailles, alignement (union code) | const seule, pas de table |
-| **compétences** | const canonique **+ table `skills`** ([D7](./decisions.md#d7)) — répare la casse |
+| **compétences** | const canonique seule, validée par Zod aux écritures ([D27](./decisions.md#d27) remplace [D7](./decisions.md#d7)) — répare la casse |
 | langues, outils | strings typées, table plus tard |
 
 `shared/rules/` héberge **aussi** le moteur de règles aujourd'hui dupliqué : tables

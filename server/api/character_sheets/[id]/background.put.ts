@@ -1,5 +1,5 @@
 import { db, schema } from '~~/server/utils/db'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { deleteBackgroundChoicePicks } from '~~/server/utils/choicePicks'
 import { z } from 'zod'
 
@@ -22,19 +22,6 @@ export default defineEventHandler(async (event) => {
     .update(schema.characterSheets)
     .set({ backgroundId, updatedAt: stampSheetVersion(event) })
     .where(eq(schema.characterSheets.id, characterSheetId))
-
-  // Les compétences d'historique sont DÉRIVÉES du nouvel historique (effets skill_proficiency) : rien à
-  // (ré)insérer. On purge d'éventuelles lignes legacy `source:'background'` non-override (matérialisation
-  // d'avant F3) pour ne pas laisser traîner celles de l'ancien historique.
-  await db
-    .delete(schema.characterSkills)
-    .where(
-      and(
-        eq(schema.characterSkills.characterSheetId, characterSheetId),
-        eq(schema.characterSkills.source, 'background'),
-        eq(schema.characterSkills.isOverride, false),
-      ),
-    )
 
   await deleteBackgroundChoicePicks(db, characterSheetId)
 

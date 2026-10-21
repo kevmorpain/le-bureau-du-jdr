@@ -4,6 +4,8 @@ import {
   activeItemEffectSources,
   activeTemporaryEffectSources,
   asiEffectsOf,
+  featNeedsAbilityChoice,
+  featNeedsSkilledChoice,
   featureEffectsOf,
   speciesEffectsOf,
   type EffectInputsSheet,
@@ -85,6 +87,21 @@ describe('asiEffectsOf', () => {
       ],
     }
     expect(asiEffectsOf(sheet)).toEqual([conUp(2)])
+  })
+})
+
+describe('choix demandés par un don', () => {
+  const skilled: Effect = { type: 'other', value: { kind: 'skilled_choice' } } as Effect
+  const resilient: Effect = { type: 'ability_increase_choice', value: { amount: 1 } } as Effect
+
+  it('Doué demande des maîtrises au choix, pas une caractéristique', () => {
+    expect(featNeedsSkilledChoice([skilled])).toBe(true)
+    expect(featNeedsAbilityChoice([skilled])).toBe(false)
+  })
+
+  it('un demi-don demande une caractéristique, pas de maîtrises', () => {
+    expect(featNeedsAbilityChoice([resilient])).toBe(true)
+    expect(featNeedsSkilledChoice([resilient, conUp(1)])).toBe(false)
   })
 })
 

@@ -214,11 +214,16 @@ export function dueChoices(result: { choices: ResolvedChoice[] }): ResolvedChoic
   return result.choices.filter(c => c.remaining > 0)
 }
 
-// Choix de maîtrise, de sort mineur ou de libellé (terrain) passant par le chemin générique des picks. Les
-// compétences de classe ont leur propre étape (création) et leur propre règle de multiclassage
-// (`multiclassSkillGrant`).
+// Les compétences de classe ont leur propre étape (création) et leur propre règle de multiclassage
+// (`multiclassSkillGrant`) : elles ne passent pas par le chemin générique des picks.
+export const isClassSkillChoice = (c: ResolvedChoice): boolean => c.kind === 'skill' && c.ownerClassId != null
+
+export const classSkillChoice = (choices: readonly ResolvedChoice[], classId: number): ResolvedChoice | undefined =>
+  choices.find(c => isClassSkillChoice(c) && c.ownerClassId === classId)
+
+// Choix de maîtrise, de sort mineur ou de libellé (terrain) passant par le chemin générique des picks.
 export function isPickChoice(c: ResolvedChoice): boolean {
-  return PICK_CHOICE_KINDS.includes(c.kind) && !(c.kind === 'skill' && c.ownerClassId != null)
+  return PICK_CHOICE_KINDS.includes(c.kind) && !isClassSkillChoice(c)
 }
 
 // Points de choix d'une classe devenus dus en la passant de `fromLevel` à `toLevel` (level-up). Une classe

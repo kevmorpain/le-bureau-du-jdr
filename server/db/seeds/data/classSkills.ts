@@ -3,7 +3,7 @@ import type { SkillKey } from '~~/shared/rules/skills'
 
 // Choix de compétences de classe (PHB 2014) : N compétences dans une liste (Barde = n'importe laquelle).
 // Owner INVISIBLE (`choice_carrier`) : le pick n'est pas une feature affichée mais une maîtrise dérivée
-// du choix (character_choices), comme les compétences d'historique/JS (F3). Valeurs sourcées du blob CLASSES.
+// du choix (character_choices), comme les compétences d'historique/JS (F3).
 export const CLASS_SKILL_CHOICES: Record<string, { count: number, from: SkillKey[] | 'all' }> = {
   Barbare: { count: 2, from: ['animal_handling', 'athletics', 'intimidation', 'nature', 'perception', 'survival'] },
   Barde: { count: 3, from: 'all' },

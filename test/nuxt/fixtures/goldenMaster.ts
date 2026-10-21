@@ -16,13 +16,12 @@ import { replayMigrations } from '../../fixtures/migrations'
 // stables, et `serializeCharacter()` : un instantané NORMALISÉ de tout l'état `character_*` d'une
 // fiche, FK résolues en noms, id auto-incrément et horodatages retirés.
 // Un `git diff` du snapshot montre alors EXACTEMENT ce qu'un changement de comportement modifie.
-// Trous de couverture assumés : pactes Lame/Tome, multiclassage lanceur plein+plein / plein+demi,
-// demi-lanceur (`half`), `characterRest`.
+// Trou de couverture assumé : `characterRest`.
 
 // Identifiants stables du catalogue
 export const OWNER = 1
 
-export const CLASS = { warlock: 1, fighter: 2, wizard: 3, rogue: 4, paladin: 5 } as const
+export const CLASS = { warlock: 1, fighter: 2, wizard: 3, rogue: 4, paladin: 5, druid: 6 } as const
 export const SUBCLASS = { champion: 10, evocation: 20, thief: 30 } as const
 export const SPECIES = { human: 1 } as const
 export const BACKGROUND = { soldier: 1 } as const
@@ -79,6 +78,8 @@ export const SPELL = {
   fireBolt: 510, // sort mineur de Magicien
   magicMissile: 511, // niv 1 de Magicien
   shield: 512, // niv 1 de Magicien
+  mageHand: 513, // sort mineur de Magicien
+  guidance: 514, // sort mineur de Druide
 } as const
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,6 +130,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { id: CLASS.wizard, name: 'Magicien', hitDice: '1d6', spellcastingType: 'full' },
     { id: CLASS.rogue, name: 'Roublard', hitDice: '1d8', spellcastingType: 'none', multiclassSkillCount: 1 },
     { id: CLASS.paladin, name: 'Paladin', hitDice: '1d10', spellcastingType: 'half' },
+    { id: CLASS.druid, name: 'Druide', hitDice: '1d8', spellcastingType: 'full' },
   ])
   await db.insert(schema.subclasses).values([
     { id: SUBCLASS.champion, classId: CLASS.fighter, name: 'Champion' },
@@ -214,8 +216,8 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
 
   // ── Choix de COMPÉTENCES DE CLASSE (F3 tranche 3) — owner choice_carrier + progression `skill` ──
   // Le pick est enregistré en character_choices (progression skill) ; la maîtrise est dérivée à la
-  // lecture (deriveChoiceProficiencies), plus matérialisée en character_skills. Ids auto : le snapshot résout par nom.
-  for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin]] as const) {
+  // lecture (deriveChoiceProficiencies). Ids auto : le snapshot résout par nom.
+  for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin], ['Druide', CLASS.druid]] as const) {
     const choice = CLASS_SKILL_CHOICES[className]!
     const [f] = await db.insert(schema.features).values({ name: 'Compétences de classe', featureType: 'choice_carrier', classId, levelRequired: 1 }).returning()
     await db.insert(schema.progression).values({ featureId: f!.id, kind: 'skill', count: { op: 'fixed', value: choice.count }, optionSource: { type: 'skills', from: choice.from }, replaceable: false })
@@ -223,7 +225,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
 
   // ── Paliers d'ASI — owners invisibles (choice_carrier) : le serveur les lit pour valider l'ASI du level-up
   // sans qu'ils soient matérialisés sur la fiche (les snapshots ne bougent pas).
-  for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin]] as const) {
+  for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin], ['Druide', CLASS.druid]] as const) {
     for (const level of asiLevels(className)) {
       const [f] = await db.insert(schema.features).values({ name: 'Amélioration de caractéristiques', featureType: 'choice_carrier', classId, levelRequired: level }).returning()
       await db.insert(schema.progression).values({ featureId: f!.id, kind: 'asi_or_feat', count: { op: 'fixed', value: 1 }, optionSource: { type: 'feats' }, replaceable: false })
@@ -244,6 +246,8 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { id: SPELL.fireBolt, name: 'Trait de feu', level: 0, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: MAGIC_SCHOOL.evocation },
     { id: SPELL.magicMissile, name: 'Projectile magique', level: 1, castingTime: '1 action', range: 36, duration: 'Instantané', schoolId: MAGIC_SCHOOL.evocation },
     { id: SPELL.shield, name: 'Bouclier', level: 1, castingTime: '1 réaction', range: 0, duration: '1 round', schoolId: MAGIC_SCHOOL.evocation },
+    { id: SPELL.mageHand, name: 'Main du mage', level: 0, castingTime: '1 action', range: 9, duration: '1 minute', schoolId: MAGIC_SCHOOL.evocation },
+    { id: SPELL.guidance, name: 'Assistance', level: 0, castingTime: '1 action', range: 0, duration: '1 minute', schoolId: MAGIC_SCHOOL.evocation },
   ])
   // Sorts d'Occultiste pour les arcanums mystiques (filtrés par slug de classe « warlock »), sorts de Magicien.
   await db.insert(schema.spellClasses).values([
@@ -252,6 +256,8 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
     { spellId: SPELL.fireBolt, classId: CLASS.wizard },
     { spellId: SPELL.magicMissile, classId: CLASS.wizard },
     { spellId: SPELL.shield, classId: CLASS.wizard },
+    { spellId: SPELL.mageHand, classId: CLASS.wizard },
+    { spellId: SPELL.guidance, classId: CLASS.druid },
   ])
 
   // ── Espèce Elfe base + lignées (D17) — seed réel injectable, pour le chemin `character_choices`
@@ -336,13 +342,14 @@ export async function serializeCharacter(db: Db, sheetId: number) {
   const classes = await db.select().from(schema.characterClasses).where(eq(schema.characterClasses.characterSheetId, sheetId))
   const abilityScores = await db.select().from(schema.characterAbilityScores).where(eq(schema.characterAbilityScores.characterSheetId, sheetId))
   const asis = await db.select().from(schema.characterAbilityScoreImprovements).where(eq(schema.characterAbilityScoreImprovements.characterSheetId, sheetId))
-  const skills = await db.select().from(schema.characterSkills).where(eq(schema.characterSkills.characterSheetId, sheetId))
   const overrides = await db.select().from(schema.characterProficiencyOverrides).where(eq(schema.characterProficiencyOverrides.characterSheetId, sheetId))
   const features = await db.select().from(schema.characterFeatures).where(eq(schema.characterFeatures.characterSheetId, sheetId))
   const choices = await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, sheetId))
   const slots = await db.select().from(schema.characterSpellSlots).where(eq(schema.characterSpellSlots.characterSheetId, sheetId))
   const spells = await db.select().from(schema.characterSpells).where(eq(schema.characterSpells.characterSheetId, sheetId))
   const inventory = await db.select().from(schema.characterInventory).where(eq(schema.characterInventory.characterSheetId, sheetId))
+  const [customBackground] = await db.select({ skills: schema.backgrounds.skillProficiencies }).from(schema.backgrounds)
+    .where(and(eq(schema.backgrounds.characterSheetId, sheetId), eq(schema.backgrounds.id, sheet.backgroundId ?? -1)))
 
   return {
     sheet: {
@@ -350,6 +357,7 @@ export async function serializeCharacter(db: Db, sheetId: number) {
       ruleset: sheet.ruleset,
       species: nullableName(speciesName, sheet.speciesId),
       background: nullableName(backgroundName, sheet.backgroundId),
+      ...(customBackground ? { customBackgroundSkills: [...customBackground.skills].sort() } : {}),
       alignment: sheet.alignment,
       hpBase: sheet.hpBase,
       currentHp: sheet.currentHp,
@@ -374,7 +382,6 @@ export async function serializeCharacter(db: Db, sheetId: number) {
       ability: a.ability,
       amount: a.amount,
     }))),
-    skills: sortStable(skills.map((s: typeof skills[number]) => ({ skillKey: s.skillKey, proficiencyLevel: s.proficiencyLevel, source: s.source, isOverride: s.isOverride }))),
     proficiencyOverrides: sortStable(overrides.map((o: typeof overrides[number]) => ({ type: o.proficiencyType, value: o.value, action: o.action }))),
     features: sortStable(features.map((f: typeof features[number]) => ({
       feature: nullableName(featureName, f.featureId),

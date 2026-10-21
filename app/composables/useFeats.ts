@@ -1,6 +1,7 @@
 import type { Effect } from '~~/server/db/schema/effects'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
+import { featLanguageChoiceCount, featNeedsAbilityChoice, featNeedsSkilledChoice } from '~~/shared/rules/characterEffects'
 
 export interface Feat {
   id: number
@@ -23,7 +24,7 @@ export function featAllowedAbilities(effects: Effect[] | undefined): AbilityKey[
 export function useFeats() {
   // Pas de `key` fixe : l'auto-clé (URL + query) sépare les entrées de cache socle / étendu.
   const { extendedQuery } = useExtendedContent()
-  const { data, refresh, pending } = useFetch<Feat[]>('/api/feats', {
+  const { data, refresh, pending } = useFetch<Feat[]>('/api/catalog/feats', {
     query: extendedQuery,
     default: () => [],
   })
@@ -37,5 +38,10 @@ export function useFeats() {
     return byId.value.get(id) ?? null
   }
 
-  return { feats, getById, pending, refresh }
+  const effectsOf = (id: number | null | undefined): Effect[] => getById(id)?.effects ?? []
+  const needsAbility = (id: number | null | undefined): boolean => featNeedsAbilityChoice(effectsOf(id))
+  const needsSkilled = (id: number | null | undefined): boolean => featNeedsSkilledChoice(effectsOf(id))
+  const languageCount = (id: number | null | undefined): number => featLanguageChoiceCount(effectsOf(id))
+
+  return { feats, getById, needsAbility, needsSkilled, languageCount, pending, refresh }
 }

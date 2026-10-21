@@ -3,6 +3,7 @@ import * as schema from '../../schema'
 import type { CreatureSize } from '../../schema/character_species'
 import type { Effect } from '../../schema/effects'
 import type { Db } from '~~/server/utils/db'
+import { effectIdFor } from '~~/server/utils/effectRows'
 import { ensureFeatureChoice, type FeatureChoice } from './featureChoice'
 
 // Moteur générique du modèle « espèce = base + lignées » (D17) : ajouter une espèce = 1 fichier de
@@ -33,13 +34,7 @@ export interface LineageSpeciesData {
 
 async function linkEffects(db: Db, featureId: number, effects: Effect[]) {
   for (const effect of effects) {
-    const existing = await db
-      .select()
-      .from(schema.effects)
-      .where(and(eq(schema.effects.type, effect.type), eq(schema.effects.value, effect.value)))
-      .limit(1)
-      .get()
-    const effectId = existing?.id ?? (await db.insert(schema.effects).values({ type: effect.type, value: effect.value }).returning().get()).id
+    const effectId = await effectIdFor(db, effect)
     await db.insert(schema.featureEffects).values({ featureId, effectId }).onConflictDoNothing()
   }
 }

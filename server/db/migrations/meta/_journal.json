@@ -1072,6 +1072,13 @@
       "when": 1794000000000,
       "tag": "0152_feature_picks_backfill",
       "breakpoints": true
+    },
+    {
+      "idx": 153,
+      "version": "6",
+      "when": 1794100000000,
+      "tag": "0153_proficiency_overrides_only",
+      "breakpoints": true
     }
   ]
 }
