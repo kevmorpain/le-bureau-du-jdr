@@ -78,9 +78,14 @@ const { effectsText } = useKnEffectText()
 const { character } = useKnCheckContext()
 const { record } = useKnGoalProgress(character)
 
+// Le résultat prend tout de suite la première branche disponible qui lui correspond.
 function onRolled(groupId: number, check: KnCheckKey, success: boolean) {
   suggested.value[groupId] = success
   if (success && props.event && check === 'reason') record({ kind: 'reason' })
+  const wanted = success ? 'success' : 'failure'
+  const branch = groups.value.find(group => group.id === groupId)?.outcomes
+    .find(item => item.outcome.when === wanted && !props.taken.includes(item.index) && knOutcomeAvailable(outcomes.value, props.taken, item.index))
+  if (branch) emit('take', branch.index)
 }
 
 const isResistance = (key: KnCheckKey) => (KN_RESISTANCE_KEYS as readonly string[]).includes(key)

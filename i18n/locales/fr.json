@@ -178,7 +178,14 @@
       "health": "Santé",
       "toughness": "Robustesse",
       "aether": "Éther",
-      "sanity": "Santé mentale"
+      "sanity": "Santé mentale",
+      "exhaustion": "Épuisement"
+    },
+    "exhaustionStages": {
+      "none": "0 à 10 : aucun effet.",
+      "halfHealing": "11 à 15 : vous ne récupérez que la moitié des Blessures, quelle que soit la source.",
+      "disadvantage": "16 à 20 : Désavantage sur tous les tests.",
+      "death": "21 ou plus : le survivant meurt."
     },
     "madnessNames": {
       "fragileMind": "Esprit fragile",
@@ -585,7 +592,8 @@
       "frenzied": "Frénétique : +1 dégât.",
       "skilled": "Compétent : +10 en Combat.",
       "magebane": "Antimage : +10 en Résistance magique.",
-      "resistant": "Résistant : résiste à un type de dégâts tiré au hasard.",
+      "resistant": "Résistant : résiste à un type de dégâts tiré au hasard (type à tirer).",
+      "resistant_typed": "Résistant : résiste aux dégâts {type}.",
       "corrupting": "Corrupteur : à chaque attaque infligeant 5 dégâts ou plus, test de Résolution ou −1 Santé mentale.",
       "unstable": "Instable : inflige 1 dégât Arcanique à sa mort.",
       "alert": "Aux aguets : +20 en Esprit.",

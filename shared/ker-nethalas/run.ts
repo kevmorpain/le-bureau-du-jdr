@@ -5,7 +5,8 @@ import {
   knGrowingDarknessDef,
   type KnGrowingDarknessKey,
 } from './catalog/growingDarkness'
-import { KN_OVERSEER_INFLUENCE_KEYS } from './catalog/overseerInfluence'
+import { KN_DAMAGE_TYPE_DIE, KN_DAMAGE_TYPES, knDamageTypeAt } from './catalog/damageTypes'
+import { KN_OVERSEER_INFLUENCE_KEYS, knPendingResistances } from './catalog/overseerInfluence'
 import { KN_COMBAT_BOUNDS, knCombatCreatureSchema, knCombatSchema, type KnCombatCreature, type KnCreatureBuff } from './combatState'
 import { KN_DIFFICULTY_KEYS, type KnDifficultyKey } from './difficulty'
 import { KN_OBSTACLE_KINDS, knEncounterTriggered, knHasDoor, knIsLocked, knIsTrapped, type KnObstacleKind } from './exploration'
@@ -66,6 +67,7 @@ export const knGrowingDarknessDrawSchema = z.object({
   influence: z.object({
     roll: boundedInt({ min: 1, max: KN_OVERSEER_INFLUENCE_KEYS.length }),
     key: z.enum(KN_OVERSEER_INFLUENCE_KEYS),
+    damageType: z.enum(KN_DAMAGE_TYPES).optional(),
   }).optional(),
 })
 
@@ -164,6 +166,8 @@ export const knDomainSchema = z.object({
   exitDie: knUsageDieSchema,
   exitFound: z.boolean(),
   overseerInfluences: z.array(z.enum(KN_OVERSEER_INFLUENCE_KEYS)).max(KN_RUN_BOUNDS.overseerInfluences),
+  // Les types de dégâts tirés par les influences « Résistant », dans leur ordre (cf. knOverseerInfluenceEntries).
+  overseerResistances: z.array(z.enum(KN_DAMAGE_TYPES)).max(KN_RUN_BOUNDS.overseerInfluences).optional(),
   // Vaincu, l'Overseer ne donne plus d'influence aux adversaires du Domaine ; la liste reste pour mémoire.
   overseerDefeated: z.boolean().optional(),
   // Un marchand a été trouvé dans ce Domaine : il y reste, on peut le revoir depuis une entrée de retour.
@@ -301,23 +305,45 @@ export function knGrowingDarknessKeyForRoll(roll: number): KnGrowingDarknessKey 
   return key
 }
 
+export type KnOverseerInfluenceDraw = NonNullable<KnGrowingDarknessDraw['influence']>
+
+export const knOverseerInfluenceAt = (roll: number): KnOverseerInfluenceDraw => ({ roll, key: KN_OVERSEER_INFLUENCE_KEYS[roll - 1]! })
+
+export function knDrawOverseerInfluence(rng: KnRng = Math.random): KnOverseerInfluenceDraw {
+  const draw = knOverseerInfluenceAt(knRollDie(KN_OVERSEER_INFLUENCE_KEYS.length, rng))
+  return draw.key === 'resistant' ? { ...draw, damageType: knDamageTypeAt(knRollDie(KN_DAMAGE_TYPE_DIE, rng)) } : draw
+}
+
 export function knDrawGrowingDarkness(rng: KnRng = Math.random): KnGrowingDarknessDraw {
   const roll = knRollDie(100, rng)
   const key = knGrowingDarknessKeyForRoll(roll)
   const { paramDie } = knGrowingDarknessDef(key)
   const entry: KnGrowingDarknessEntry = paramDie ? { key, value: knRollDie(paramDie, rng) } : { key }
 
-  if (key !== 'gd_81_100') return { roll, entry }
-  const influenceRoll = knRollDie(KN_OVERSEER_INFLUENCE_KEYS.length, rng)
-  return { roll, entry, influence: { roll: influenceRoll, key: KN_OVERSEER_INFLUENCE_KEYS[influenceRoll - 1]! } }
+  return key === 'gd_81_100' ? { roll, entry, influence: knDrawOverseerInfluence(rng) } : { roll, entry }
 }
+
+const withInfluence = (domain: KnDomain, influence: KnOverseerInfluenceDraw): Partial<KnDomain> => ({
+  overseerInfluences: [...domain.overseerInfluences, influence.key],
+  overseerResistances: influence.damageType ? [...(domain.overseerResistances ?? []), influence.damageType] : domain.overseerResistances,
+})
 
 export function knAddGrowingDarkness(run: KnRun, draw: KnGrowingDarknessDraw): KnRun {
   const domain = knCurrentDomain(run)
   return withCurrentDomain(run, {
     growingDarkness: [...domain.growingDarkness, draw.entry],
-    overseerInfluences: draw.influence ? [...domain.overseerInfluences, draw.influence.key] : domain.overseerInfluences,
+    ...(draw.influence ? withInfluence(domain, draw.influence) : {}),
   })
+}
+
+export const knRecordOverseerInfluence = (run: KnRun, influence: KnOverseerInfluenceDraw): KnRun =>
+  withCurrentDomain(run, withInfluence(knCurrentDomain(run), influence))
+
+export function knRecordResistance(run: KnRun, roll: number): KnRun {
+  const domain = knCurrentDomain(run)
+  return knPendingResistances(domain.overseerInfluences, domain.overseerResistances) > 0
+    ? withCurrentDomain(run, { overseerResistances: [...(domain.overseerResistances ?? []), knDamageTypeAt(roll)] })
+    : run
 }
 
 export const knCurrentVisit = (run: KnRun): KnVisit | undefined => knCurrentDomain(run).visits.at(-1)

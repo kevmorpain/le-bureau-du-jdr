@@ -311,9 +311,16 @@
         <KnInlineCheck
           :key="`${check.purpose}-${check.request.difficulty}-${check.request.bonus ?? 0}`"
           :request="check.request"
-          @rolled="success => result = { purpose: check!.purpose, success }"
+          @rolled="success => applyRoll(check!.purpose, success)"
           @close="check = null"
         />
+        <p
+          v-if="applied"
+          class="mt-1 text-sm font-medium"
+          :class="applied.success ? 'text-success' : 'text-error'"
+        >
+          Appliqué : {{ applied.text }}
+        </p>
       </li>
     </ul>
 
@@ -376,6 +383,27 @@ function openCheck(purpose: Purpose, request: KnRollRequest) {
   }
   check.value = { purpose, request }
   result.value = null
+  applied.value = null
+}
+
+// Le résultat s'applique dès le jet, qui reste affiché pour le relire.
+const applied = ref<{ success: boolean, text: string } | null>(null)
+
+const ROLL_OUTCOMES = {
+  perception: [{ text: 'Perception réussie' }, { text: 'Perception ratée' }],
+  disarm: [{ action: 'disarmed', text: 'piège désamorcé' }, { action: 'disarmFailed', text: 'désamorçage raté, le piège se déclenche' }],
+  bypass: [{ action: 'bypassed', text: 'piège contourné' }, { action: 'bypassFailed', text: 'contournement raté, le piège se déclenche' }],
+  avoid: [{ action: 'avoided', text: 'piège évité' }, { action: 'suffered', text: 'piège subi, ses conséquences s\'appliquent' }],
+  pick: [{ action: 'pickOpened', text: 'verrou crocheté' }, { action: 'pickFailed', text: 'Crochet brisé' }],
+  force: [{ action: 'forceOpened', text: 'verrou forcé' }, { action: 'forceFailed', text: 'forçage raté, du bruit' }],
+} as const satisfies Record<Purpose, readonly [{ action?: KnObstacleAct, text: string }, { action?: KnObstacleAct, text: string }]>
+
+function applyRoll(purpose: Purpose, success: boolean) {
+  const outcome = ROLL_OUTCOMES[purpose][success ? 0 : 1]
+  result.value = { purpose, success }
+  applied.value = { success, text: outcome.text }
+  if (purpose === 'perception') emit('perception', success ? 'passed' : 'failed')
+  else emit('act', (outcome as { action: KnObstacleAct }).action)
 }
 
 const suggest = (purpose: Purpose, success: boolean, fallback: 'soft' | 'outline') =>

@@ -114,7 +114,7 @@
                 </UButton>
                 <UButton
                   size="xs"
-                  :variant="resolveSuggestion === true ? 'solid' : 'soft'"
+                  variant="soft"
                   @click="endResolve(room, true)"
                 >
                   Réussi
@@ -122,7 +122,7 @@
                 <UButton
                   size="xs"
                   color="error"
-                  :variant="resolveSuggestion === false ? 'solid' : 'outline'"
+                  variant="outline"
                   @click="endResolve(room, false)"
                 >
                   Raté : {{ diceText(room.choir.damage) }} dégâts
@@ -131,7 +131,7 @@
               <KnInlineCheck
                 v-if="resolveOpen"
                 :request="{ id: 'resistance:resolve', difficulty: 'normal', note: 'Résister au chœur' }"
-                @rolled="success => resolveSuggestion = success"
+                @rolled="success => endResolve(room, success)"
                 @close="resolveOpen = false"
               />
             </div>
@@ -164,7 +164,7 @@
               <KnInlineCheck
                 v-if="reasonOpen"
                 :request="{ id: 'skill:reason', difficulty: 'normal', note: 'Faire taire le chœur' }"
-                @rolled="success => reasonSuggestion = success"
+                @rolled="success => { reasonSuggestion = success; if (success && loot) silence(room) }"
                 @close="reasonOpen = false"
               />
             </div>
@@ -253,7 +253,6 @@ function enterRoom(room: KnFirstDomainRoom) {
 
 const resolveOpen = ref(false)
 const reasonOpen = ref(false)
-const resolveSuggestion = ref<boolean | null>(null)
 const reasonSuggestion = ref<boolean | null>(null)
 
 const diceText = (dice: KnDice) => `${dice.count > 0 ? `${dice.count > 1 ? dice.count : ''}D${dice.sides}` : ''}${dice.bonus ? `${dice.count > 0 && dice.bonus > 0 ? '+' : ''}${dice.bonus}` : ''}` || '0'
@@ -316,8 +315,8 @@ function take(room: KnFirstDomainRoom) {
 function endResolve(room: KnFirstDomainRoom, success: boolean) {
   if (!room.choir) return
   if (!success) applyEffects([{ kind: 'damage', dice: room.choir.damage }], 'Le chœur')
+  else toast.add({ title: 'Le chœur', description: 'Test de Résolution réussi : aucun dégât.', color: 'success' })
   resolveOpen.value = false
-  resolveSuggestion.value = null
 }
 
 function silence(room: KnFirstDomainRoom) {

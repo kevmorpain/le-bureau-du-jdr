@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { KN_GROWING_DARKNESS, KN_GROWING_DARKNESS_KEYS } from '../../shared/ker-nethalas/catalog/growingDarkness'
+import { knOverseerInfluenceEntries, knPendingResistances, knRemoveInfluence } from '../../shared/ker-nethalas/catalog/overseerInfluence'
 import { updateKnCharacterSchema } from '../../shared/ker-nethalas/character'
 import {
   KN_RUN_BOUNDS,
@@ -10,14 +11,18 @@ import {
   knCurrentDomain,
   knCurrentVisit,
   knDrawGrowingDarkness,
+  knDrawOverseerInfluence,
   knEnterRoom,
   knExitCheck,
   knGrowingDarknessKeyForRoll,
   knLairCheck,
   knLightCost,
   knNewDomain,
+  knOverseerInfluenceAt,
   knRaiseUsageDie,
   knRecordDarkness,
+  knRecordOverseerInfluence,
+  knRecordResistance,
   knRecordTension,
   knRecordUsage,
   knRollDie,
@@ -274,6 +279,59 @@ describe('table de l\'Obscurité Grandissante', () => {
 
     expect(knCurrentDomain(run)).toMatchObject({ growingDarkness: [{ key: 'gd_81_100' }], overseerInfluences: ['vital'] })
     expect(run.domains[0]).toMatchObject({ growingDarkness: [], overseerInfluences: [] })
+  })
+
+  it('un 81-100 qui donne « Résistant » tire aussi son type de dégâts sur le D20', () => {
+    const draw = knDrawGrowingDarkness(rolls([100, 81], [10, 6], [20, 14]))
+
+    expect(draw.influence).toEqual({ roll: 6, key: 'resistant', damageType: 'necrotic' })
+    expect(knCurrentDomain(knAddGrowingDarkness(emptyKnRun(), draw))).toMatchObject({ overseerInfluences: ['resistant'], overseerResistances: ['necrotic'] })
+  })
+})
+
+describe('influence de l\'Overseer du Domaine', () => {
+  it('se tire sur le D10 sans autre jet, sauf « Résistant » qui tire aussi son type', () => {
+    expect(knDrawOverseerInfluence(rolls([10, 3]))).toEqual({ roll: 3, key: 'frenzied' })
+    expect(knDrawOverseerInfluence(rolls([10, 6], [20, 1]))).toEqual({ roll: 6, key: 'resistant', damageType: 'acid' })
+  })
+
+  it('saisie à la main, « Résistant » attend son type : le D20 se saisit à part', () => {
+    const run = knRecordOverseerInfluence(emptyKnRun(), knOverseerInfluenceAt(6))
+    const domain = knCurrentDomain(run)
+
+    expect(domain.overseerInfluences).toEqual(['resistant'])
+    expect(domain.overseerResistances ?? []).toEqual([])
+    expect(knPendingResistances(domain.overseerInfluences, domain.overseerResistances)).toBe(1)
+
+    const typed = knRecordResistance(run, 17)
+    expect(knCurrentDomain(typed).overseerResistances).toEqual(['poison'])
+    expect(knRecordResistance(typed, 3)).toBe(typed)
+  })
+
+  it('un jet de type sans « Résistant » en attente ne change rien', () => {
+    const run = knRecordOverseerInfluence(emptyKnRun(), knOverseerInfluenceAt(2))
+
+    expect(knRecordResistance(run, 5)).toBe(run)
+  })
+
+  it('apparie le n-ième « Résistant » au n-ième type, et retire le type avec son influence', () => {
+    const keys = ['resistant', 'tough', 'resistant'] as const
+    const resistances = ['acid', 'cold'] as const
+
+    expect(knOverseerInfluenceEntries(keys, resistances)).toEqual([{ key: 'resistant', damageType: 'acid' }, { key: 'tough' }, { key: 'resistant', damageType: 'cold' }])
+    expect(knOverseerInfluenceEntries(keys, ['acid'])[2]).toEqual({ key: 'resistant' })
+    expect(knRemoveInfluence(keys, 0, resistances)).toEqual({ keys: ['tough', 'resistant'], resistances: ['cold'] })
+    expect(knRemoveInfluence(keys, 2, resistances)).toEqual({ keys: ['resistant', 'tough'], resistances: ['acid'] })
+    expect(knRemoveInfluence(keys, 1, resistances)).toEqual({ keys: ['resistant', 'resistant'], resistances: ['acid', 'cold'] })
+  })
+
+  it('un Domaine enregistré avant les types de dégâts reste valide et se lit comme une liste vide', () => {
+    const domain = knRunSchema.parse({ ...emptyKnRun(), domains: [{ ...emptyKnDomain(1), overseerInfluences: ['resistant'] }] }).domains[0]!
+
+    expect(domain.overseerResistances).toBeUndefined()
+    expect(knOverseerInfluenceEntries(domain.overseerInfluences, domain.overseerResistances)).toEqual([{ key: 'resistant' }])
+    expect(knPendingResistances(domain.overseerInfluences, domain.overseerResistances)).toBe(1)
+    expect(knCurrentDomain(knRecordResistance({ ...emptyKnRun(), domains: [domain] }, 1)).overseerResistances).toEqual(['acid'])
   })
 })
 

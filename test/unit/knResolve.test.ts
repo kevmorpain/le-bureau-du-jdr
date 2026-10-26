@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import type { KnActiveSource } from '../../shared/ker-nethalas/effects'
+import { knExhaustionStage } from '../../shared/ker-nethalas/catalog/exhaustion'
 import { resolveKnSheet, type KnResolveInput } from '../../shared/ker-nethalas/resolve'
 import { emptyKnDomain, emptyKnRun, knSetImmuneConditions, knStartCombat, type KnDomain } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, type KnStatus } from '../../shared/ker-nethalas/status'
@@ -268,12 +269,27 @@ describe('Growing Darkness', () => {
   })
 })
 
+describe('paliers d\'Épuisement', () => {
+  it('suivent le tableau du livre : 0-10, 11-15, 16-20, 21 ou plus', () => {
+    expect([0, 10, 11, 15, 16, 20, 21, 99].map(knExhaustionStage)).toEqual(['none', 'none', 'halfHealing', 'halfHealing', 'disadvantage', 'disadvantage', 'death', 'death'])
+  })
+})
+
 describe('influence d\'Overseer', () => {
   it('ne produit que des rappels : elle modifie les adversaires, pas le survivant', () => {
     const r = resolveKnSheet(sheet(withDomain({ overseerInfluences: ['skilled'] })))
 
     expect(r.reminders).toEqual([expect.objectContaining({ label: { key: 'ker_nethalas.overseer.skilled' } })])
     expect(r.skills.dodge.effective).toBe(45)
+  })
+
+  it('« Résistant » rappelle le type de dégâts tiré, ou qu\'il reste à tirer', () => {
+    const typed = resolveKnSheet(sheet(withDomain({ overseerInfluences: ['resistant', 'resistant'], overseerResistances: ['fire'] })))
+
+    expect(typed.reminders.map(x => x.label)).toEqual([
+      { key: 'ker_nethalas.overseer.resistant_typed', params: { type: 'ker_nethalas.damageTypes.fire' } },
+      { key: 'ker_nethalas.overseer.resistant' },
+    ])
   })
 
   it('garde chaque influence, doublons compris : un Overseer peut en cumuler plusieurs', () => {
