@@ -276,32 +276,11 @@ describe('paliers d\'Épuisement', () => {
 })
 
 describe('influence d\'Overseer', () => {
-  it('ne produit que des rappels : elle modifie les adversaires, pas le survivant', () => {
+  it('ne change rien à la fiche : elle modifie les adversaires, pas le survivant', () => {
     const r = resolveKnSheet(sheet(withDomain({ overseerInfluences: ['skilled'] })))
 
-    expect(r.reminders).toEqual([expect.objectContaining({ label: { key: 'ker_nethalas.overseer.skilled' } })])
+    expect(r.reminders).toEqual([])
     expect(r.skills.dodge.effective).toBe(45)
-  })
-
-  it('« Résistant » rappelle le type de dégâts tiré, ou qu\'il reste à tirer', () => {
-    const typed = resolveKnSheet(sheet(withDomain({ overseerInfluences: ['resistant', 'resistant'], overseerResistances: ['fire'] })))
-
-    expect(typed.reminders.map(x => x.label)).toEqual([
-      { key: 'ker_nethalas.overseer.resistant_typed', params: { type: 'ker_nethalas.damageTypes.fire' } },
-      { key: 'ker_nethalas.overseer.resistant' },
-    ])
-  })
-
-  it('garde chaque influence, doublons compris : un Overseer peut en cumuler plusieurs', () => {
-    const overseerInfluences = ['skilled' as const, 'piercing' as const, 'piercing' as const]
-    const r = resolveKnSheet(sheet(withDomain({ overseerInfluences })))
-
-    expect(r.reminders.map(x => x.label.key)).toEqual([
-      'ker_nethalas.overseer.skilled',
-      'ker_nethalas.overseer.piercing',
-      'ker_nethalas.overseer.piercing',
-    ])
-    expect(new Set(r.reminders.map(x => x.source.id))).toEqual(new Set(['overseer']))
   })
 })
 

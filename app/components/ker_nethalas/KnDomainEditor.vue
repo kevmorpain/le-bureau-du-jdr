@@ -19,26 +19,6 @@
         :disabled="domain.overseerInfluences.length >= KN_RUN_BOUNDS.overseerInfluences"
         @pick="addInfluence"
       />
-      <ul
-        v-if="domain.overseerInfluences.length"
-        class="space-y-2"
-      >
-        <li
-          v-for="(entry, index) in influenceEntries"
-          :key="index"
-          class="flex items-center gap-3"
-        >
-          <span class="flex-1 text-sm">{{ influenceText(entry) }}</span>
-          <UButton
-            icon="i-heroicons:trash"
-            color="error"
-            variant="ghost"
-            size="sm"
-            :aria-label="`Retirer l'influence : ${influenceText(entry)}`"
-            @click="removeInfluence(index)"
-          />
-        </li>
-      </ul>
     </div>
 
     <div class="space-y-2">
@@ -128,13 +108,7 @@ import {
   knGrowingDarknessDef,
   type KnGrowingDarknessKey,
 } from '~~/shared/ker-nethalas/catalog/growingDarkness'
-import {
-  KN_OVERSEER_INFLUENCE_KEYS,
-  knOverseerInfluenceEntries,
-  knRemoveInfluence,
-  type KnOverseerInfluenceEntry,
-  type KnOverseerInfluenceKey,
-} from '~~/shared/ker-nethalas/catalog/overseerInfluence'
+import { KN_OVERSEER_INFLUENCE_KEYS, type KnOverseerInfluenceKey } from '~~/shared/ker-nethalas/catalog/overseerInfluence'
 import { KN_RUN_BOUNDS, type KnDomain } from '~~/shared/ker-nethalas/run'
 import { KN_SKILL_KEYS, type KnSkillKey } from '~~/shared/ker-nethalas/skills'
 
@@ -179,18 +153,6 @@ const missingInfluences = computed(() => domain.value.overseerDefeated
   ? 0
   : domain.value.growingDarkness.filter(e => e.key === 'gd_81_100').length - domain.value.overseerInfluences.length,
 )
-
-const influenceEntries = computed(() => knOverseerInfluenceEntries(domain.value.overseerInfluences, domain.value.overseerResistances))
-
-const influenceText = ({ key, damageType }: KnOverseerInfluenceEntry) => damageType
-  ? t('ker_nethalas.overseer.resistant_typed', { type: t(`ker_nethalas.damageTypes.${damageType}`) })
-  : t(`ker_nethalas.overseer.${key}`)
-
-function removeInfluence(index: number) {
-  const next = knRemoveInfluence(domain.value.overseerInfluences, index, domain.value.overseerResistances)
-  domain.value.overseerInfluences = next.keys
-  domain.value.overseerResistances = next.resistances
-}
 
 function addInfluence(key: string | number) {
   if (KN_OVERSEER_INFLUENCE_KEYS.includes(key as KnOverseerInfluenceKey)) {

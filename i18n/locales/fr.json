@@ -321,7 +321,6 @@
     "sources": {
       "exhaustion": "Épuisement ({value})",
       "rot": "La Pourriture, stade {stage}",
-      "overseer": "Influence de l'Overseer",
       "equipment": "Équipement porté",
       "thievesToolkit": "Outils de voleur",
       "noLight": "Sans source de lumière"

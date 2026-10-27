@@ -210,16 +210,33 @@
         v-if="influences.length"
         class="flex flex-wrap items-center gap-1.5"
       >
-        <span class="text-xs text-muted">Influences :</span>
-        <UBadge
+        <span class="text-xs text-muted">Influences{{ domain.overseerDefeated ? ' (Overseer vaincu)' : '' }} :</span>
+        <UTooltip
           v-for="(entry, index) in influences"
           :key="index"
-          :label="influenceLabel(entry)"
-          :title="influenceTitle(entry)"
-          color="error"
-          variant="subtle"
-          size="md"
-        />
+          :text="influenceTitle(entry)"
+          :ui="{ content: 'h-auto max-w-xs' }"
+        >
+          <UBadge
+            color="error"
+            variant="subtle"
+            size="md"
+            :class="{ 'line-through opacity-50': domain.overseerDefeated }"
+          >
+            {{ influenceLabel(entry) }}
+            <button
+              type="button"
+              class="-mr-1 cursor-pointer rounded-full hover:bg-error/20"
+              :aria-label="`Retirer l'influence : ${influenceTitle(entry)}`"
+              @click="removeInfluence(index)"
+            >
+              <UIcon
+                name="i-heroicons:x-mark"
+                class="size-3.5"
+              />
+            </button>
+          </UBadge>
+        </UTooltip>
       </div>
 
       <KnDomainEditor
@@ -335,6 +352,7 @@ import {
   KN_OVERSEER_INFLUENCE_DIE,
   knOverseerInfluenceEntries,
   knPendingResistances,
+  knRemoveInfluence,
   type KnOverseerInfluenceEntry,
 } from '~~/shared/ker-nethalas/catalog/overseerInfluence'
 import { KN_OVERSEER_DIE, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
@@ -387,6 +405,13 @@ const overseerOpen = ref(false)
 const { t } = useI18n()
 const influences = computed(() => knOverseerInfluenceEntries(domain.value.overseerInfluences, domain.value.overseerResistances))
 const pendingResistances = computed(() => knPendingResistances(domain.value.overseerInfluences, domain.value.overseerResistances))
+
+function removeInfluence(index: number) {
+  const target = character.value.run.domains[character.value.run.current]!
+  const next = knRemoveInfluence(target.overseerInfluences, index, target.overseerResistances)
+  target.overseerInfluences = next.keys
+  target.overseerResistances = next.resistances
+}
 
 function influenceTitle({ key, damageType }: KnOverseerInfluenceEntry) {
   return damageType

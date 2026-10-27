@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import { knCannotBeSurprised, knFearLoss } from '../../shared/ker-nethalas/creatures'
 import { knMasteryEntries } from '../../shared/ker-nethalas/amulets'
 import { knAbilitiesToLose, knApplyFateDenied, knFateDeniedIssues, type KnFateDeniedSheet } from '../../shared/ker-nethalas/fateDenied'
@@ -7,20 +6,9 @@ import { KN_DUAL_WIELD, knAttackOptions, knBreakItem, knDefenseOptions, knDualPa
 import { knUseBandage, type KnBandageInput } from '../../shared/ker-nethalas/healing'
 import { knInventorySchema, type KnItem } from '../../shared/ker-nethalas/inventory'
 import { knIsWorn } from '../../shared/ker-nethalas/magicEffects'
-import { resolveKnSheet } from '../../shared/ker-nethalas/resolve'
 import { emptyKnRun, knCurrentDomain, knDefeatOverseer, knNewDomain, knNextCombatRound, knResolveCombatFear, knRunSchema, knSetCombatDual, knSetCombatLamp, knSpillLamp, knStartCombat, knUseFreeParry, type KnRun } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, knStatusSchema } from '../../shared/ker-nethalas/status'
 import { knResetUses } from '../../shared/ker-nethalas/vitals'
-
-const resolve = (run: KnRun) => resolveKnSheet({
-  skills: defaultKnSkills(),
-  extraSkills: [],
-  resistances: { endurance: 40, resolve: 20, spellward: 20 },
-  exhaustion: 0,
-  maxVitals: { health: 15, toughness: 25, aether: 12, sanity: 14 },
-  status: emptyKnStatus(),
-  run,
-})
 
 const withInfluences = (): KnRun => {
   const run = emptyKnRun()
@@ -28,12 +16,9 @@ const withInfluences = (): KnRun => {
 }
 
 describe('Overseer vaincu', () => {
-  it('ses influences ne sont plus rappelées sur la fiche, mais restent dans le Domaine', () => {
-    const run = withInfluences()
-    const defeated = knDefeatOverseer(run)
+  it('ses influences restent dans le Domaine, pour mémoire', () => {
+    const defeated = knDefeatOverseer(withInfluences())
 
-    expect(JSON.stringify(resolve(run).reminders)).toContain('ker_nethalas.overseer.tough')
-    expect(JSON.stringify(resolve(defeated).reminders)).not.toContain('ker_nethalas.overseer.tough')
     expect(knCurrentDomain(defeated).overseerInfluences).toHaveLength(1)
     expect(knRunSchema.safeParse(defeated).success).toBe(true)
   })

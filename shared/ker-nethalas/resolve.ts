@@ -4,7 +4,6 @@ import { knExhaustionSource } from './catalog/exhaustion'
 import { knGrowingDarknessDef } from './catalog/growingDarkness'
 import { knNoLightSource } from './catalog/light'
 import { knMadnessSources } from './catalog/madness'
-import { knOverseerInfluenceEntries } from './catalog/overseerInfluence'
 import { KN_ROT_EXHAUSTION_IMMUNITY_STAGE, KN_ROT_NO_LIGHT_STAGE, knRotSource } from './catalog/rot'
 import {
   KN_VITAL_KEYS,
@@ -124,20 +123,6 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
       reminders: [{ label, severity: def.kind === 'immediate' ? 'warning' : 'info' }],
     })
   })
-
-  if (domain.overseerInfluences.length && !domain.overseerDefeated) {
-    sources.push({
-      id: 'overseer',
-      label: { key: 'ker_nethalas.sources.overseer' },
-      effects: [],
-      reminders: knOverseerInfluenceEntries(domain.overseerInfluences, domain.overseerResistances).map(({ key, damageType }) => ({
-        label: damageType
-          ? { key: 'ker_nethalas.overseer.resistant_typed', params: { type: `ker_nethalas.damageTypes.${damageType}` } }
-          : { key: `ker_nethalas.overseer.${key}` },
-        severity: 'info' as const,
-      })),
-    })
-  }
 
   for (const custom of status.custom) {
     if (!custom.active) continue

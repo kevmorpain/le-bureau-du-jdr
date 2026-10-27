@@ -57,12 +57,20 @@
                 :class="{ 'text-warning': exhaustionStage === 'halfHealing', 'text-error': exhaustionStage === 'disadvantage' || exhaustionStage === 'death' }"
               >{{ character.exhaustion }} / {{ KN_EXHAUSTION_THRESHOLDS.death }}</span>
             </div>
-            <UProgress
-              :model-value="Math.min(character.exhaustion, KN_EXHAUSTION_THRESHOLDS.death)"
-              :max="KN_EXHAUSTION_THRESHOLDS.death"
-              size="xs"
-              :color="EXHAUSTION_COLORS[exhaustionStage]"
-            />
+            <div class="relative">
+              <UProgress
+                :model-value="Math.min(character.exhaustion, KN_EXHAUSTION_THRESHOLDS.death)"
+                :max="KN_EXHAUSTION_THRESHOLDS.death"
+                size="xs"
+                color="warning"
+              />
+              <span
+                v-for="threshold in EXHAUSTION_TICKS"
+                :key="threshold"
+                class="absolute inset-y-0 w-px bg-default"
+                :style="{ left: `${threshold / KN_EXHAUSTION_THRESHOLDS.death * 100}%` }"
+              />
+            </div>
           </div>
           <template #content>
             <ul class="space-y-1 p-2 text-sm">
@@ -265,7 +273,7 @@ const { t } = useI18n()
 
 const VITALS = ['health', 'toughness', 'aether', 'sanity'] as const
 const VITAL_COLORS = { health: 'error', toughness: 'neutral', aether: 'info', sanity: 'secondary' } as const
-const EXHAUSTION_COLORS = { none: 'success', halfHealing: 'warning', disadvantage: 'error', death: 'error' } as const
+const EXHAUSTION_TICKS = [KN_EXHAUSTION_THRESHOLDS.halfHealing, KN_EXHAUSTION_THRESHOLDS.disadvantage]
 
 const vitalsOpen = ref(false)
 const restOpen = ref(false)

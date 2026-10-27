@@ -633,16 +633,17 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   « Réussi » / « Raté » restent pour les dés physiques.
 - **Influence de l'Overseer** : elle se tire une seule fois, en entrant dans le Domaine (livre p. 96-98, et p. 243 pour le Domaine d'introduction). `KnDungeonPanel`
   offre une ligne D10 « Tirer / Saisir » tant que le Domaine n'a aucune influence (`knDrawOverseerInfluence`, `knOverseerInfluenceAt`) ; les influences
-  s'affichent en badges sous la carte de l'Overseer, qu'il soit déjà tiré ou non.
+  s'affichent en badges sous la carte de l'Overseer, qu'il soit déjà tiré ou non : la croix retire l'influence, l'infobulle donne son texte. C'est leur
+  seul affichage : ni liste dans les réglages du Domaine (qui gardent la saisie d'une influence), ni rappel sur la fiche. Un Overseer vaincu les barre.
 - **« Résistant » tire son type de dégâts** sur le D20 de la table des types (p. 225, `knDamageTypeAt`, déplacée dans `catalog/damageTypes.ts` : `run.ts` en a
   besoin et `magic.ts` importe `run.ts`). Le type est rangé dans `domain.overseerResistances`, apparié dans l'ordre aux influences « Résistant »
   (`knOverseerInfluenceEntries`) ; le champ est **optionnel** (absent tant qu'aucun type n'est tiré, donc aussi dans les Domaines enregistrés avant : il se lit comme vide). Un « Résistant » sans
   type (saisi à la main, ou ajouté dans les réglages) fait apparaître sa ligne D20 ; l'événement d'Obscurité 81-100 tire les deux d'un coup.
-  Retirer l'influence dans les réglages retire aussi son type (`knRemoveInfluence`).
-- **Jauge d'Épuisement** : cinquième jauge de la barre d'état, de 0 à 21, colorée selon le palier du livre (p. 90 : 0-10, 11-15, 16-20, 21 ou plus ;
-  `knExhaustionStage`), avec une infobulle qui liste les quatre paliers. Elle remplace le badge, qui n'apparaissait qu'au-dessus de zéro.
-- Laissé de côté : les influences restent des rappels (la résistance n'est pas retranchée des dégâts reçus par les créatures du Domaine, comme les autres
-  influences) ; l'alerte des réglages « un événement 81-100 sans influence » compte l'influence de début de Domaine comme une influence d'événement
+  Retirer l'influence retire aussi son type (`knRemoveInfluence`).
+- **Jauge d'Épuisement** : cinquième jauge de la barre d'état, de 0 à 21, d'une couleur à elle (les autres jauges ont déjà rouge, bleu, violet et gris), avec un repère
+  à chaque seuil du livre (p. 90 : 0-10, 11-15, 16-20, 21 ou plus ; `knExhaustionStage`) et une infobulle qui liste les quatre paliers. Elle remplace le badge, qui n'apparaissait qu'au-dessus de zéro.
+- Laissé de côté : les influences ne modifient rien dans le moteur (la résistance n'est pas retranchée des dégâts reçus par les créatures du Domaine,
+  comme les autres influences) ; l'alerte des réglages « un événement 81-100 sans influence » compte l'influence de début de Domaine comme une influence d'événement
   et ne se déclenche donc plus quand elle est tirée.
 
 ### KN55 — Arme à terre, maximum qui grandit avec le niveau, projection de l'esprit
