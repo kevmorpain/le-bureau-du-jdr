@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { emptyKnProvisions } from '../../shared/ker-nethalas/camp'
 import { KN_CREATURE_TYPES } from '../../shared/ker-nethalas/catalog/creatureTypes'
-import { KN_DAMAGE_TYPES } from '../../shared/ker-nethalas/catalog/damageTypes'
+import { KN_DAMAGE_TYPES, knDamageTypeAt } from '../../shared/ker-nethalas/catalog/damageTypes'
 import { knItemSchema, type KnItem } from '../../shared/ker-nethalas/inventory'
 import type { KnCatalogItem } from '../../shared/ker-nethalas/items'
 import { knApplyLoot, knRollLoot, type KnLootContent } from '../../shared/ker-nethalas/loot'
 import {
-  knDamageTypeAt,
   knEnemyTypeAt,
   knIdentifyMagic,
   knInstantiateProperty,

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { defaultKnSkills } from '../../shared/ker-nethalas/character'
 import type { KnActiveSource } from '../../shared/ker-nethalas/effects'
+import { knExhaustionStage } from '../../shared/ker-nethalas/catalog/exhaustion'
 import { resolveKnSheet, type KnResolveInput } from '../../shared/ker-nethalas/resolve'
 import { emptyKnDomain, emptyKnRun, knSetImmuneConditions, knStartCombat, type KnDomain } from '../../shared/ker-nethalas/run'
 import { emptyKnStatus, type KnStatus } from '../../shared/ker-nethalas/status'
@@ -268,24 +269,18 @@ describe('Growing Darkness', () => {
   })
 })
 
+describe('paliers d\'Épuisement', () => {
+  it('suivent le tableau du livre : 0-10, 11-15, 16-20, 21 ou plus', () => {
+    expect([0, 10, 11, 15, 16, 20, 21, 99].map(knExhaustionStage)).toEqual(['none', 'none', 'halfHealing', 'halfHealing', 'disadvantage', 'disadvantage', 'death', 'death'])
+  })
+})
+
 describe('influence d\'Overseer', () => {
-  it('ne produit que des rappels : elle modifie les adversaires, pas le survivant', () => {
+  it('ne change rien à la fiche : elle modifie les adversaires, pas le survivant', () => {
     const r = resolveKnSheet(sheet(withDomain({ overseerInfluences: ['skilled'] })))
 
-    expect(r.reminders).toEqual([expect.objectContaining({ label: { key: 'ker_nethalas.overseer.skilled' } })])
+    expect(r.reminders).toEqual([])
     expect(r.skills.dodge.effective).toBe(45)
-  })
-
-  it('garde chaque influence, doublons compris : un Overseer peut en cumuler plusieurs', () => {
-    const overseerInfluences = ['skilled' as const, 'piercing' as const, 'piercing' as const]
-    const r = resolveKnSheet(sheet(withDomain({ overseerInfluences })))
-
-    expect(r.reminders.map(x => x.label.key)).toEqual([
-      'ker_nethalas.overseer.skilled',
-      'ker_nethalas.overseer.piercing',
-      'ker_nethalas.overseer.piercing',
-    ])
-    expect(new Set(r.reminders.map(x => x.source.id))).toEqual(new Set(['overseer']))
   })
 })
 

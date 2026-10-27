@@ -27,7 +27,7 @@
 
       <button
         type="button"
-        class="grid min-w-0 flex-1 cursor-pointer grid-cols-2 gap-x-5 gap-y-1 rounded-md p-1 text-left hover:bg-elevated sm:grid-cols-4"
+        class="grid min-w-0 flex-1 cursor-pointer grid-cols-2 gap-x-5 gap-y-1 rounded-md p-1 text-left hover:bg-elevated sm:grid-cols-5"
         aria-label="Modifier les jauges"
         @click="vitalsOpen = true"
       >
@@ -47,6 +47,43 @@
             :color="VITAL_COLORS[vital]"
           />
         </div>
+
+        <UTooltip :ui="{ content: 'h-auto max-w-xs' }">
+          <div class="min-w-0 space-y-1">
+            <div class="flex justify-between gap-2 text-xs">
+              <span class="text-muted">{{ $t('ker_nethalas.vitals.exhaustion') }}</span>
+              <span
+                class="font-semibold tabular-nums"
+                :class="{ 'text-warning': exhaustionStage === 'halfHealing', 'text-error': exhaustionStage === 'disadvantage' || exhaustionStage === 'death' }"
+              >{{ character.exhaustion }} / {{ KN_EXHAUSTION_THRESHOLDS.death }}</span>
+            </div>
+            <div class="relative">
+              <UProgress
+                :model-value="Math.min(character.exhaustion, KN_EXHAUSTION_THRESHOLDS.death)"
+                :max="KN_EXHAUSTION_THRESHOLDS.death"
+                size="xs"
+                color="warning"
+              />
+              <span
+                v-for="threshold in EXHAUSTION_TICKS"
+                :key="threshold"
+                class="absolute inset-y-0 w-px bg-default"
+                :style="{ left: `${threshold / KN_EXHAUSTION_THRESHOLDS.death * 100}%` }"
+              />
+            </div>
+          </div>
+          <template #content>
+            <ul class="space-y-1 p-2 text-sm">
+              <li
+                v-for="stage in KN_EXHAUSTION_STAGES"
+                :key="stage"
+                :class="stage === exhaustionStage ? 'font-medium' : 'text-muted'"
+              >
+                {{ $t(`ker_nethalas.exhaustionStages.${stage}`) }}
+              </li>
+            </ul>
+          </template>
+        </UTooltip>
       </button>
     </div>
 
@@ -57,13 +94,6 @@
         variant="subtle"
         size="md"
         :label="`${unspentPoints} point${unspentPoints > 1 ? 's' : ''} d'Aptitude`"
-      />
-      <UBadge
-        v-if="character.exhaustion > 0"
-        color="warning"
-        variant="subtle"
-        size="md"
-        :label="`Épuisement ${character.exhaustion}`"
       />
       <UBadge
         v-if="character.sanityCurrent === 0"
@@ -221,6 +251,7 @@
 <script lang="ts" setup>
 import { useStorage } from '@vueuse/core'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_EXHAUSTION_STAGES, KN_EXHAUSTION_THRESHOLDS, knExhaustionStage } from '~~/shared/ker-nethalas/catalog/exhaustion'
 import { KN_MADNESS_COUNTER_KEYS } from '~~/shared/ker-nethalas/catalog/madness'
 import type { KnMagicContent } from '~~/shared/ker-nethalas/magic'
 import { knAbilityPointsUnspent, type KnMastery } from '~~/shared/ker-nethalas/masteries'
@@ -242,11 +273,13 @@ const { t } = useI18n()
 
 const VITALS = ['health', 'toughness', 'aether', 'sanity'] as const
 const VITAL_COLORS = { health: 'error', toughness: 'neutral', aether: 'info', sanity: 'secondary' } as const
+const EXHAUSTION_TICKS = [KN_EXHAUSTION_THRESHOLDS.halfHealing, KN_EXHAUSTION_THRESHOLDS.disadvantage]
 
 const vitalsOpen = ref(false)
 const restOpen = ref(false)
 
 const domain = computed(() => knCurrentDomain(character.value.run))
+const exhaustionStage = computed(() => knExhaustionStage(character.value.exhaustion))
 const entriesText = computed(() => domain.value.visits.length ? `entrée ${domain.value.visits.length}` : 'aucune entrée')
 
 const madness = computed(() => [

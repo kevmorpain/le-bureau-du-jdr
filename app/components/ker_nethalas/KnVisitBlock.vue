@@ -295,7 +295,7 @@
       </KnTableRoll>
 
       <li
-        v-if="visit.kind !== 'revisit' && active && !visit.scavenge"
+        v-if="visit.kind !== 'revisit' && active && (!visit.scavenge || scavengeCheckOpen)"
         class="space-y-2"
       >
         <div class="flex flex-wrap items-center gap-2">
@@ -308,6 +308,7 @@
             size="sm"
             :variant="scavengeCheckOpen ? 'solid' : 'outline'"
             icon="i-heroicons:cube"
+            :disabled="!!visit.scavenge"
             @click="scavengeCheckOpen = !scavengeCheckOpen"
           >
             Tester
@@ -316,8 +317,15 @@
         <KnInlineCheck
           v-if="scavengeCheckOpen"
           :request="{ id: 'skill:scavenge', difficulty: 'normal', note: 'Fouiller la pièce' }"
+          @rolled="success => { if (success && !visit.scavenge) emit('table', 'scavenge') }"
           @close="scavengeCheckOpen = false"
         />
+        <p
+          v-if="visit.scavenge"
+          class="text-sm font-medium text-success"
+        >
+          Appliqué : le tirage de Fouille est fait.
+        </p>
       </li>
 
       <KnTableRoll

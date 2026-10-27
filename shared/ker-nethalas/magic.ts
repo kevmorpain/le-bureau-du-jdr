@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { KnCreatureType } from './catalog/creatureTypes'
-import type { KnDamageType } from './catalog/damageTypes'
+import { KN_DAMAGE_TYPE_DIE, knDamageTypeAt, type KnDamageType } from './catalog/damageTypes'
 import { knRollDice } from './dice'
 import { knDiceSchema } from './diceSchema'
 import { KN_ITEM_KINDS } from './inventory'
@@ -38,14 +38,6 @@ export function knRarityAt(roll: number): KnRarity {
 }
 
 export const knPropertyCount = (rarity: KnRarity): number => ({ uncommon: 1, rare: 2, epic: 3 })[rarity]
-
-// D20 des types de dégâts, dans l'ordre du livre : chaque entrée donne la dernière face du type.
-const DAMAGE_TYPE_BANDS: readonly [number, KnDamageType][] = [
-  [1, 'acid'], [3, 'arcane'], [5, 'bludgeoning'], [6, 'cold'], [8, 'force'], [9, 'fire'], [10, 'holy'],
-  [11, 'infernal'], [12, 'lightning'], [14, 'necrotic'], [16, 'piercing'], [17, 'poison'], [18, 'psychic'], [20, 'slashing'],
-]
-
-export const knDamageTypeAt = (roll: number): KnDamageType => DAMAGE_TYPE_BANDS.find(([last]) => roll <= last)![1]
 
 // D8 des types d'adversaire.
 const ENEMY_TYPES: readonly KnCreatureType[] = ['animal', 'astral', 'plant', 'demon', 'elemental', 'undead', 'humanoid', 'construct']
@@ -170,7 +162,7 @@ export const knEntryAt = (table: { entries: readonly KnMagicEntry[] } | undefine
 export function knInstantiateProperty(entry: KnMagicEntry, rarity: KnRarity, labels: KnMagicLabels, rng: KnRng = Math.random): KnMagicProperty {
   const context: Context = {
     n: entry.amount ? ('byRarity' in entry.amount ? entry.amount.byRarity[RARITY_INDEX[rarity]] : knRollDice(entry.amount.dice, rng).total) : 0,
-    ...(entry.roll === 'damage' ? { damage: knDamageTypeAt(knRollDie(20, rng)) } : {}),
+    ...(entry.roll === 'damage' ? { damage: knDamageTypeAt(knRollDie(KN_DAMAGE_TYPE_DIE, rng)) } : {}),
     ...(entry.roll === 'enemy' ? { enemy: knEnemyTypeAt(knRollDie(KN_MAGIC_TYPE_DIE, rng)) } : {}),
   }
   const mech = (entry.mech ?? []).flatMap((template) => {

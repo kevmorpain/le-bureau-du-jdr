@@ -124,18 +124,6 @@ export function collectKnSources(input: KnResolveInput): KnActiveSource[] {
     })
   })
 
-  if (domain.overseerInfluences.length && !domain.overseerDefeated) {
-    sources.push({
-      id: 'overseer',
-      label: { key: 'ker_nethalas.sources.overseer' },
-      effects: [],
-      reminders: domain.overseerInfluences.map(key => ({
-        label: { key: `ker_nethalas.overseer.${key}` },
-        severity: 'info' as const,
-      })),
-    })
-  }
-
   for (const custom of status.custom) {
     if (!custom.active) continue
     sources.push({

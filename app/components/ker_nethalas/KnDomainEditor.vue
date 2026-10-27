@@ -19,26 +19,6 @@
         :disabled="domain.overseerInfluences.length >= KN_RUN_BOUNDS.overseerInfluences"
         @pick="addInfluence"
       />
-      <ul
-        v-if="domain.overseerInfluences.length"
-        class="space-y-2"
-      >
-        <li
-          v-for="(influence, index) in domain.overseerInfluences"
-          :key="index"
-          class="flex items-center gap-3"
-        >
-          <span class="flex-1 text-sm">{{ $t(`ker_nethalas.overseer.${influence}`) }}</span>
-          <UButton
-            icon="i-heroicons:trash"
-            color="error"
-            variant="ghost"
-            size="sm"
-            :aria-label="`Retirer l'influence : ${$t(`ker_nethalas.overseer.${influence}`)}`"
-            @click="domain.overseerInfluences.splice(index, 1)"
-          />
-        </li>
-      </ul>
     </div>
 
     <div class="space-y-2">

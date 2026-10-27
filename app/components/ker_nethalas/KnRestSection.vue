@@ -59,7 +59,7 @@
             </UButton>
             <UButton
               size="sm"
-              :variant="bandageSuggested ? 'solid' : 'soft'"
+              variant="soft"
               :disabled="character.provisions.bandages < 1 || bandageUsed"
               @click="useBandage"
             >
@@ -77,7 +77,7 @@
           <KnInlineCheck
             v-if="bandageCheckOpen"
             :request="{ id: 'skill:medicine', difficulty: 'normal', note: 'Soigner avec un Bandage' }"
-            @rolled="success => bandageSuggested = success"
+            @rolled="success => success ? useBandage() : bandageLine = 'Test raté : le Bandage n\'est pas dépensé.'"
             @close="bandageCheckOpen = false"
           />
           <p
@@ -131,7 +131,6 @@ const { takeBreather, lines: breatherLines } = useKnBreather(character, () => pr
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
 const bandageCheckOpen = ref(false)
-const bandageSuggested = ref(false)
 const bandageLine = ref('')
 const bandageUsed = computed(() => knIsUsedUp(character.value.status, KN_BANDAGE.key))
 
@@ -149,7 +148,6 @@ function useBandage() {
   c.provisions = { ...c.provisions, bandages: result.bandages }
   c.status = result.status
   bandageLine.value = `Bandage : D4 → ${result.roll}, Robustesse ${signed(gained)}${gained < result.roll ? ' (limitée au maximum)' : ''}.`
-  bandageSuggested.value = false
   bandageCheckOpen.value = false
 }
 </script>

@@ -20,7 +20,7 @@
       </UButton>
       <UButton
         size="sm"
-        :variant="suggestion === true ? 'solid' : 'soft'"
+        variant="soft"
         @click="finish(true)"
       >
         Réussi
@@ -28,7 +28,7 @@
       <UButton
         size="sm"
         color="error"
-        :variant="suggestion === false ? 'solid' : 'outline'"
+        variant="outline"
         @click="finish(false)"
       >
         Raté : −{{ fear.loss }} Santé mentale
@@ -37,7 +37,7 @@
     <KnInlineCheck
       v-if="checkOpen"
       :request="{ id: 'resistance:resolve', difficulty: 'normal', note: 'Résister à la peur' }"
-      @rolled="success => suggestion = success"
+      @rolled="finish"
       @close="checkOpen = false"
     />
   </div>
@@ -56,17 +56,17 @@ const props = defineProps<{
 const character = defineModel<KnCharacter>('character', { required: true })
 
 const { applyEffects } = useKnApplyEffects(character, () => props.resolved)
+const toast = useToast()
 
 const fear = computed(() => character.value.run.combat?.fear)
 const checkOpen = ref(false)
-const suggestion = ref<boolean | null>(null)
 
 function finish(success: boolean) {
   const loss = fear.value?.loss
   if (!loss) return
   if (!success) applyEffects([{ kind: 'vital', vital: 'sanity', dice: { count: 0, sides: 0, bonus: loss }, sign: 'loss' }], 'Peur')
+  else toast.add({ title: 'Peur', description: 'Test de Résolution réussi : aucune perte.', color: 'success' })
   character.value.run = knResolveCombatFear(character.value.run)
   checkOpen.value = false
-  suggestion.value = null
 }
 </script>

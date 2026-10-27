@@ -174,20 +174,6 @@
             </UButton>
           </div>
         </div>
-        <div
-          v-if="domain.overseerInfluences.length"
-          class="flex flex-wrap gap-1.5"
-        >
-          <UBadge
-            v-for="(key, index) in domain.overseerInfluences"
-            :key="index"
-            :label="$t(`ker_nethalas.overseer.${key}`).split(' :')[0]"
-            :title="$t(`ker_nethalas.overseer.${key}`)"
-            color="error"
-            variant="subtle"
-            size="md"
-          />
-        </div>
         <KnCreatureCard
           v-if="overseerOpen"
           :creature="overseer.creature"
@@ -197,6 +183,60 @@
           :can-engage="!run.combat"
           @engage="creature => engageAndShow(creature, true)"
         />
+      </div>
+
+      <ul
+        v-if="!domain.overseerDefeated && (!domain.overseerInfluences.length || pendingResistances)"
+        class="text-sm"
+      >
+        <KnTableRoll
+          v-if="!domain.overseerInfluences.length"
+          label="Influence de l'Overseer (une fois en entrant dans le Domaine)"
+          :die="KN_OVERSEER_INFLUENCE_DIE"
+          plain
+          active
+          @roll="drawInfluence"
+        />
+        <KnTableRoll
+          v-if="pendingResistances"
+          label="Résistant : type de dégâts"
+          :die="KN_DAMAGE_TYPE_DIE"
+          plain
+          active
+          @roll="drawResistance"
+        />
+      </ul>
+      <div
+        v-if="influences.length"
+        class="flex flex-wrap items-center gap-1.5"
+      >
+        <span class="text-xs text-muted">Influences{{ domain.overseerDefeated ? ' (Overseer vaincu)' : '' }} :</span>
+        <UTooltip
+          v-for="(entry, index) in influences"
+          :key="index"
+          :text="influenceTitle(entry)"
+          :ui="{ content: 'h-auto max-w-xs' }"
+        >
+          <UBadge
+            color="error"
+            variant="subtle"
+            size="md"
+            :class="{ 'line-through opacity-50': domain.overseerDefeated }"
+          >
+            {{ influenceLabel(entry) }}
+            <button
+              type="button"
+              class="-mr-1 cursor-pointer rounded-full hover:bg-error/20"
+              :aria-label="`Retirer l'influence : ${influenceTitle(entry)}`"
+              @click="removeInfluence(index)"
+            >
+              <UIcon
+                name="i-heroicons:x-mark"
+                class="size-3.5"
+              />
+            </button>
+          </UBadge>
+        </UTooltip>
       </div>
 
       <KnDomainEditor
@@ -307,6 +347,14 @@
 <script lang="ts" setup>
 import type { SelectItem } from '@nuxt/ui'
 import type { KnCharacter } from '~~/server/utils/drizzle'
+import { KN_DAMAGE_TYPE_DIE } from '~~/shared/ker-nethalas/catalog/damageTypes'
+import {
+  KN_OVERSEER_INFLUENCE_DIE,
+  knOverseerInfluenceEntries,
+  knPendingResistances,
+  knRemoveInfluence,
+  type KnOverseerInfluenceEntry,
+} from '~~/shared/ker-nethalas/catalog/overseerInfluence'
 import { KN_OVERSEER_DIE, knFindCreature, type KnCreature } from '~~/shared/ker-nethalas/creatures'
 import { KN_SHAPE_DIE, knShapeKind } from '~~/shared/ker-nethalas/exploration'
 import { knReturnableDomains } from '~~/shared/ker-nethalas/firstDomain'
@@ -339,7 +387,7 @@ const selected = defineModel<number | null>('selected', { required: true })
 
 provideKnCheckContext({ character, resolved: computed(() => props.resolved) })
 
-const { newDomain, drawOverseer } = useKnExploration(character, () => props.resolved, () => props.tables)
+const { newDomain, drawOverseer, drawInfluence, drawResistance } = useKnExploration(character, () => props.resolved, () => props.tables)
 const permanent = useKnPermanent(character)
 watch(() => permanent.value.tensionStart, (die) => {
   character.value.run = knSetTensionStart(character.value.run, die)
@@ -353,6 +401,28 @@ const run = computed(() => character.value.run)
 const domain = computed(() => knCurrentDomain(character.value.run))
 const settingsOpen = ref(false)
 const overseerOpen = ref(false)
+
+const { t } = useI18n()
+const influences = computed(() => knOverseerInfluenceEntries(domain.value.overseerInfluences, domain.value.overseerResistances))
+const pendingResistances = computed(() => knPendingResistances(domain.value.overseerInfluences, domain.value.overseerResistances))
+
+function removeInfluence(index: number) {
+  const target = character.value.run.domains[character.value.run.current]!
+  const next = knRemoveInfluence(target.overseerInfluences, index, target.overseerResistances)
+  target.overseerInfluences = next.keys
+  target.overseerResistances = next.resistances
+}
+
+function influenceTitle({ key, damageType }: KnOverseerInfluenceEntry) {
+  return damageType
+    ? t('ker_nethalas.overseer.resistant_typed', { type: t(`ker_nethalas.damageTypes.${damageType}`) })
+    : t(`ker_nethalas.overseer.${key}`)
+}
+
+function influenceLabel({ key, damageType }: KnOverseerInfluenceEntry) {
+  const name = t(`ker_nethalas.overseer.${key}`).split(' :')[0]
+  return damageType ? `${name} · ${t(`ker_nethalas.damageTypes.${damageType}`)}` : name
+}
 
 const settingsSummary = computed(() => {
   const d = domain.value

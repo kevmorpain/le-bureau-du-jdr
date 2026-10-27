@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import type { KnCharacter } from '~~/server/utils/drizzle'
 import { KN_BOUNDS } from '~~/shared/ker-nethalas/character'
+import { KN_DAMAGE_TYPE_DIE } from '~~/shared/ker-nethalas/catalog/damageTypes'
 import { KN_OVERSEER_DIE } from '~~/shared/ker-nethalas/creatures'
 import type { KnDifficultyKey } from '~~/shared/ker-nethalas/difficulty'
 import {
@@ -40,7 +41,11 @@ import {
   knRecordExtraDarkness,
   knRecordExtraTension,
   knRecordLock,
+  knDrawOverseerInfluence,
+  knOverseerInfluenceAt,
   knRecordOverseer,
+  knRecordOverseerInfluence,
+  knRecordResistance,
   knRecordScavenge,
   knRecordTrap,
   knRecordTrapType,
@@ -251,9 +256,17 @@ export function useKnExploration(character: Ref<KnCharacter>, resolved: () => Kn
     character.value.run = knRecordOverseer(character.value.run, manual ?? knRollDie(KN_OVERSEER_DIE))
   }
 
+  function drawInfluence(manual?: number) {
+    character.value.run = knRecordOverseerInfluence(character.value.run, manual === undefined ? knDrawOverseerInfluence() : knOverseerInfluenceAt(manual))
+  }
+
+  function drawResistance(manual?: number) {
+    character.value.run = knRecordResistance(character.value.run, manual ?? knRollDie(KN_DAMAGE_TYPE_DIE))
+  }
+
   function rollEntry() {
     character.value.run = knRollEntry(character.value.run)
   }
 
-  return { rollEntry, tableRoll, adjustScavenge, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct, newDomain, drawCreature, drawOverseer }
+  return { rollEntry, tableRoll, adjustScavenge, applyScavenge, takeOutcome, addDoor, addRoomTrap, deepSearch, deepSearchContent, perception, obstacleRoll, noise, extraDraw, obstacleAct, newDomain, drawCreature, drawOverseer, drawInfluence, drawResistance }
 }

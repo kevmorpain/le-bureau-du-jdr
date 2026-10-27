@@ -626,6 +626,26 @@ Santé mentale (p. 96) ; à partir du stade 3 de la Pourriture il n'a plus besoi
   pas de réglage par survivant (confirmé par le PM). ⚠️ hypothèses : « 2 Aptitudes au choix » se retire par le haut, pour que les
   paliers restent consécutifs ; les Conditions et la Pourriture ne changent pas.
 
+### KN56 — Retours de séance : jets appliqués d'eux-mêmes, influence de l'Overseer, jauge d'Épuisement
+- **Le résultat d'un test s'applique tout de suite**, sans bouton à repérer : fouille (`KnVisitBlock` : la réussite tire la table de Fouille), perception,
+  désamorçage, contournement, évitement, crochetage et forçage (`KnObstacleBlock`, table `ROLL_OUTCOMES`), branches « réussite » et « échec » d'un
+  événement (`KnOutcomePanel.onRolled`), Peur, Bandage et chœur du premier Domaine. Le jet reste affiché, suivi de « Appliqué : … » ; les boutons
+  « Réussi » / « Raté » restent pour les dés physiques.
+- **Influence de l'Overseer** : elle se tire une seule fois, en entrant dans le Domaine (livre p. 96-98, et p. 243 pour le Domaine d'introduction). `KnDungeonPanel`
+  offre une ligne D10 « Tirer / Saisir » tant que le Domaine n'a aucune influence (`knDrawOverseerInfluence`, `knOverseerInfluenceAt`) ; les influences
+  s'affichent en badges sous la carte de l'Overseer, qu'il soit déjà tiré ou non : la croix retire l'influence, l'infobulle donne son texte. C'est leur
+  seul affichage : ni liste dans les réglages du Domaine (qui gardent la saisie d'une influence), ni rappel sur la fiche. Un Overseer vaincu les barre.
+- **« Résistant » tire son type de dégâts** sur le D20 de la table des types (p. 225, `knDamageTypeAt`, déplacée dans `catalog/damageTypes.ts` : `run.ts` en a
+  besoin et `magic.ts` importe `run.ts`). Le type est rangé dans `domain.overseerResistances`, apparié dans l'ordre aux influences « Résistant »
+  (`knOverseerInfluenceEntries`) ; le champ est **optionnel** (absent tant qu'aucun type n'est tiré, donc aussi dans les Domaines enregistrés avant : il se lit comme vide). Un « Résistant » sans
+  type (saisi à la main, ou ajouté dans les réglages) fait apparaître sa ligne D20 ; l'événement d'Obscurité 81-100 tire les deux d'un coup.
+  Retirer l'influence retire aussi son type (`knRemoveInfluence`).
+- **Jauge d'Épuisement** : cinquième jauge de la barre d'état, de 0 à 21, d'une couleur à elle (les autres jauges ont déjà rouge, bleu, violet et gris), avec un repère
+  à chaque seuil du livre (p. 90 : 0-10, 11-15, 16-20, 21 ou plus ; `knExhaustionStage`) et une infobulle qui liste les quatre paliers. Elle remplace le badge, qui n'apparaissait qu'au-dessus de zéro.
+- Laissé de côté : les influences ne modifient rien dans le moteur (la résistance n'est pas retranchée des dégâts reçus par les créatures du Domaine,
+  comme les autres influences) ; l'alerte des réglages « un événement 81-100 sans influence » compte l'influence de début de Domaine comme une influence d'événement
+  et ne se déclenche donc plus quand elle est tirée.
+
 ### KN55 — Arme à terre, maximum qui grandit avec le niveau, projection de l'esprit
 - **Arme lâchée ou fichée au sol** (`KnItem.dropped`, `knDropItem`, `knPickUpItem`) : une maladresse du survivant qui lui fait lâcher son arme (À terre) ou
   la plante hors de portée (Fichée au sol), ou qui heurte la pierre avec une arme magique sans la briser, la rend inutilisable comme une arme brisée
@@ -1224,7 +1244,8 @@ solution laisse de côté (`CLAUDE.md`, « Avant d'implémenter »).
 | **U13c — Revue de la fiche** | cartes repliables, compacité, couleurs, repos, dés d'entrée, repères (KN51) | écrite |
 | **Folie automatique** | « Les ténèbres approchent » et « Mémoire défaillante » appliqués aux pertes de Santé mentale et aux gains d'XP, Armure d'effet, Outils de voleur (KN52) | mergée (#293) |
 | **Aptitudes d'attaque** | aptitudes cochées dans l'attaque : bonus, dés typés, critique, défense interdite, seconde attaque, toutes les cibles, marque (KN53) | mergée (#294) |
-| **Restes d'aptitudes** | arme à terre, maximum par niveau, projection de l'esprit (KN55) | écrite, non mergée |
+| **Restes d'aptitudes** | arme à terre, maximum par niveau, projection de l'esprit (KN55) | mergée (#296) |
+| **Retours de séance — lot A** | jets appliqués d'eux-mêmes, influence de l'Overseer et type de « Résistant », jauge d'Épuisement (KN56) | écrite |
 | **Mouvements défensifs, maladresses et passifs** | mouvements défensifs et maladresses du survivant et des créatures, réaction à l'Esquive, retrait d'Armure, passifs, gravure, dés typés (KN54) | mergée (#295) |
 | **U13b — Pièces persistantes** | actions sur une pièce passée : fouille, piège, fuite et reprise du combat ; issue X34 (#290) ; KN50 | écrite |
 
