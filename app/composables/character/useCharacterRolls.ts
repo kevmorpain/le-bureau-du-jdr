@@ -40,6 +40,7 @@ export const useCharacterRolls = (deps: {
   exhaustionLevel: Ref<number>
   armorNonProficient: ComputedRef<boolean>
   stealthArmor: ComputedRef<boolean>
+  heavilyEncumbered?: ComputedRef<boolean>
   effectSources: ComputedRef<EffectSource[]>
   allEffects: ComputedRef<Effect[]>
   getEffectiveProficiency: (skillKey: string) => ProficiencyLevel
@@ -51,6 +52,7 @@ export const useCharacterRolls = (deps: {
     exhaustion: deps.exhaustionLevel.value,
     armorNonProficient: deps.armorNonProficient.value,
     stealthArmor: deps.stealthArmor.value,
+    heavilyEncumbered: deps.heavilyEncumbered?.value ?? false,
   }))
 
   const policy = (kind: D20Kind, situations: readonly string[]): RolledPolicy => {

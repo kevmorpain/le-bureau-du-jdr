@@ -50,6 +50,7 @@ export interface RollFacts {
   exhaustion: number
   armorNonProficient: boolean
   stealthArmor: boolean
+  heavilyEncumbered?: boolean
 }
 
 // Armures : sans maîtrise, désavantage aux jets de caractéristique, de sauvegarde et d'attaque basés sur la
@@ -61,6 +62,10 @@ const armorPenaltyApplies = (kind: D20Kind): boolean => {
     default: return kind.ability === 'str' || kind.ability === 'dex'
   }
 }
+
+// Variante d'encombrement : mêmes jets, avec la Constitution en plus.
+const encumbrancePenaltyApplies = (kind: D20Kind): boolean =>
+  armorPenaltyApplies(kind) || ((kind.type === 'check' || kind.type === 'save') && kind.ability === 'con')
 
 const isCheck = (kind: D20Kind) => kind.type === 'check' || kind.type === 'initiative'
 
@@ -86,6 +91,7 @@ export const factRollSources = (kind: D20Kind, facts: RollFacts): RollSource[] =
 
   if (facts.armorNonProficient && armorPenaltyApplies(kind)) add('Armure non maîtrisée')
   if (facts.stealthArmor && kind.type === 'check' && kind.skill === 'stealth') add('Armure : désavantage en Discrétion')
+  if (facts.heavilyEncumbered && encumbrancePenaltyApplies(kind)) add('Fortement encombré')
 
   if (kind.type === 'attack') sources.push(...(kind.extra ?? []))
   return sources

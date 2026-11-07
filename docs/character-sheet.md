@@ -191,6 +191,8 @@ Liste tous les objets du personnage avec quantité, état équipé, bonus magiqu
 **Équiper/déséquiper :** `PUT /api/character_sheets/{id}/inventory/{entryId}`
 **Supprimer :** `DELETE /api/character_sheets/{id}/inventory/{entryId}`
 
+**Poids porté ([D29](./decisions.md#d29)) :** `useCharacterSheet` somme `quantité × weight_g / lot_size` des objets, plus 10 g par pièce de la bourse (monture et véhicule exclus), et le compare à la capacité de charge (Force × 7,5 kg, selon la taille de l'espèce) ; `InventorySection` l'affiche en tête avec une jauge, et `ItemWeightPrice` donne le poids et le prix de chaque ligne. Le réglage `encumbrance` (désactivé par défaut) applique la variante : vitesse -3 m / -6 m (partie « Encombré » du détail de vitesse), désavantage aux jets de Force, Dextérité et Constitution quand la fiche est fortement encombrée, colonne Force des armures ignorée.
+
 Les effets des objets **actifs** — équipés, et **liés** quand l'objet exige un lien (`requiresAttunement`) — (`item_effects` → `effects`, exposés par le GET inventaire) sont injectés dans `allEffects` et dans le calcul des caractéristiques ; ils modifient résistances/immunités/vulnérabilités, DD/attaque de sort, scores de caractéristique, CA, jets de sauvegarde, initiative et scores passifs. ⚠️ L'éditeur d'objet propose encore des types que la fiche ne lit pas depuis un objet (vitesse, vision dans le noir, maîtrises d'arme/armure, PV par niveau, dégâts supplémentaires). La limite de 3 objets liés reste un avertissement non bloquant (cf. O1, [#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158)).
 
 ### Identité (`IdentitySection`)

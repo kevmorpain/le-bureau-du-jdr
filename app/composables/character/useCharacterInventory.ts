@@ -39,6 +39,9 @@ export interface InventoryItem {
   rarity: Rarity | null
   requiresAttunement: boolean
   attunementNote: string | null
+  weightG: number | null
+  costCp: number | null
+  lotSize: number
 }
 
 export interface InventoryEntry {
