@@ -157,6 +157,27 @@
               />
             </UFormField>
 
+            <div class="grid grid-cols-2 gap-3">
+              <UFormField label="Poids (kg)">
+                <UInput
+                  v-model.number="createForm.weightKg"
+                  type="number"
+                  :min="0"
+                  step="0.1"
+                  size="sm"
+                />
+              </UFormField>
+              <UFormField label="Prix (po)">
+                <UInput
+                  v-model.number="createForm.costPo"
+                  type="number"
+                  :min="0"
+                  step="0.01"
+                  size="sm"
+                />
+              </UFormField>
+            </div>
+
             <template v-if="createForm.itemType === 'weapon'">
               <div class="grid grid-cols-2 gap-3">
                 <UFormField label="Dés de dégâts">
@@ -434,6 +455,8 @@ const createForm = ref({
   name: '',
   itemType: 'equipment' as 'weapon' | 'armor' | 'equipment' | 'tool',
   description: '',
+  weightKg: null as number | null,
+  costPo: null as number | null,
   quantity: 1,
   category: 'Aventure',
   categoryOther: '',
@@ -573,12 +596,18 @@ const buildItemBody = () => {
     itemType: form.itemType,
     properties,
     description: form.description || undefined,
+    weightG: scaled(form.weightKg, 1000),
+    costCp: scaled(form.costPo, 100),
     effects: form.effects,
     maxUses: hasCharges ? form.maxUses : null,
     rechargeType,
     rechargeDice,
   }
 }
+
+// Un champ numérique vidé rend '' : seul un nombre fini est un poids ou un prix.
+const scaled = (value: unknown, factor: number) =>
+  typeof value === 'number' && Number.isFinite(value) ? Math.round(value * factor) : null
 
 const submit = async () => {
   isSubmitting.value = true
@@ -637,6 +666,8 @@ const resetForm = () => {
     name: '',
     itemType: 'equipment',
     description: '',
+    weightKg: null,
+    costPo: null,
     quantity: 1,
     category: 'Aventure',
     categoryOther: '',
@@ -660,6 +691,8 @@ const prefillFromItem = (item: InventoryItem) => {
     name: item.name,
     itemType: item.itemType,
     description: item.description ?? '',
+    weightKg: item.weightG == null ? null : item.weightG / 1000,
+    costPo: item.costCp == null ? null : item.costCp / 100,
     quantity: 1,
     category: item.itemType === 'equipment'
       ? (knownCategory ? p.category : '__other__')

@@ -41,6 +41,8 @@ export default defineEventHandler(async (event) => {
       itemType: body.itemType,
       properties: body.properties as typeof schema.items.$inferInsert['properties'],
       description: body.description ?? null,
+      weightG: body.weightG ?? null,
+      costCp: body.costCp ?? null,
       maxUses: body.maxUses ?? null,
       rechargeType: body.rechargeType ?? null,
       rechargeDice: body.rechargeDice ?? null,

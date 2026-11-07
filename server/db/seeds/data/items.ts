@@ -2,6 +2,7 @@ import type { ItemType, ItemProperties, WeaponProperties, ArmorProperties, Equip
 import type { Source } from '~~/shared/rules/source'
 import type { Rarity } from '~~/shared/rules/itemRarity'
 import type { AmmunitionType } from '~~/shared/rules/ammunition'
+import { itemPricing } from './itemPricing'
 
 interface ItemSeed {
   id: number
@@ -13,6 +14,9 @@ interface ItemSeed {
   rarity?: Rarity
   requiresAttunement?: boolean
   attunementNote?: string
+  weightG?: number | null
+  costCp?: number | null
+  lotSize?: number
 }
 
 function weapon(
@@ -585,4 +589,4 @@ export const itemsData: ItemSeed[] = [
   ...equipmentItems,
   ...startingGear,
   ...toolItems,
-]
+].map(item => ({ ...item, ...itemPricing[item.name] }))

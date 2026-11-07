@@ -9,6 +9,8 @@ import { castDuration, type SpellDurationRow } from '~~/shared/rules/durations'
 import { conditionLabels } from '~~/shared/utils/labels'
 import { armorSpeedPenalty, computeWalkingSpeed, speedBonusParts } from '~~/shared/rules/speed'
 import type { WornArmor } from '~~/shared/rules/speed'
+import { ENCUMBRANCE_LABELS, carriedWeightG, encumbranceOf, encumbranceSpeedPenalty, isCarried, isHeavilyEncumbered } from '~~/shared/rules/encumbrance'
+import { coinCount } from '~~/shared/rules/currency'
 import { withProficiencyOverrides } from '~~/shared/rules/proficiencyOverrides'
 import type { ArmorProperties } from '~~/server/db/schema/items'
 import { useCharacterClasses } from './character/useCharacterClasses'
@@ -273,6 +275,24 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const climbingSpeed = movementSpeed('climbing_speed')
   const burrowingSpeed = movementSpeed('burrowing_speed')
 
+  // ─── Poids porté ; l'encombrement n'a d'effet que sous la variante ───────
+
+  const carriedWeight = computed(() => carriedWeightG(
+    inventoryLayer.inventory.value.map(entry => ({
+      quantity: entry.quantity,
+      weightG: entry.item?.weightG ?? null,
+      lotSize: entry.item?.lotSize ?? 1,
+      carried: !entry.item || isCarried(entry.item.itemType, (entry.item.properties as { category?: string }).category),
+    })),
+    characterSheet?.value ? coinCount(characterSheet.value) : 0,
+  ))
+  const encumbrance = computed(() => encumbranceOf(carriedWeight.value, abilities.abilityScores.value.str?.total ?? 10, characterSheet?.value?.species?.size))
+  const encumbranceVariant = computed(() => prefs.preferences.value.encumbrance)
+  const encumbranceSpeedPart = computed(() => {
+    const penalty = encumbranceVariant.value ? encumbranceSpeedPenalty(encumbrance.value.level) : 0
+    return penalty && encumbrance.value.level !== 'none' ? [{ label: ENCUMBRANCE_LABELS[encumbrance.value.level], amount: -penalty }] : []
+  })
+
   // ─── Vitesse de marche : espèce + bonus − pénalité d'armure ──────────────
 
   const wornArmor = computed<WornArmor>(() => ({
@@ -291,6 +311,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   ], wornArmor.value))
 
   const armorPenalty = computed(() => {
+    if (encumbranceVariant.value) return null
     const armor = inventoryLayer.equippedBodyArmor.value
     const props = armor?.item?.properties as ArmorProperties | undefined
     return armorSpeedPenalty(
@@ -300,11 +321,13 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     )
   })
 
-  const walkingSpeed = computed(() => computeWalkingSpeed(classes.speed.value, speedBonuses.value, armorPenalty.value))
+  const speedParts = computed(() => [...speedBonuses.value, ...encumbranceSpeedPart.value])
+
+  const walkingSpeed = computed(() => computeWalkingSpeed(classes.speed.value, speedParts.value, armorPenalty.value))
 
   const speedDetail = computed(() => [
     `${classes.speed.value} m`,
-    ...speedBonuses.value.map(b => `${formatModifier(b.amount)} m ${b.label}`),
+    ...speedParts.value.map(b => `${formatModifier(b.amount)} m ${b.label}`),
     ...(armorPenalty.value ? [`-${armorPenalty.value.amount} m ${armorPenalty.value.source}`] : []),
   ].join(' '))
 
@@ -353,6 +376,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     exhaustionLevel: conditions.exhaustionLevel,
     armorNonProficient: computed(() => inventoryLayer.equippedArmorProficiencyWarning.value !== null),
     stealthArmor: inventoryLayer.armorStealthDisadvantage,
+    heavilyEncumbered: computed(() => encumbranceVariant.value && isHeavilyEncumbered(encumbrance.value.level)),
     effectSources: computed<EffectSource[]>(() => [{ label: 'Capacités', effects: capabilityEffects.value }, ...activeEffectSources.value]),
     allEffects: computed<Effect[]>(() => [...capabilityEffects.value, ...activeEffects.value]),
     getEffectiveProficiency: abilities.getEffectiveProficiency,
@@ -541,6 +565,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     attunedCount: inventoryLayer.attunedCount,
     setUsingTwoHanded: inventoryLayer.setUsingTwoHanded,
     spendAmmunition: inventoryLayer.spendAmmunition,
+    carriedWeight,
+    encumbrance,
+    encumbranceVariant,
     setRangeChoice: inventoryLayer.setRangeChoice,
     setThrowing: inventoryLayer.setThrowing,
     setProficiencyOverride: overrides.setProficiencyOverride,

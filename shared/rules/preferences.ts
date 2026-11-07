@@ -12,6 +12,11 @@ export const PREFERENCES = {
     label: 'Décompter les munitions',
     description: 'Chaque attaque avec une arme à munitions en consomme une, et l\'arme ne tire plus sans. Désactivé, les munitions restent à l\'inventaire sans être décomptées.',
   },
+  encumbrance: {
+    default: false,
+    label: 'Appliquer l\'encombrement',
+    description: 'Variante facultative : au-delà de 2,5 fois la Force en kilogrammes la vitesse baisse de 3 m, au-delà de 5 fois de 6 m avec un désavantage aux jets de Force, de Dextérité et de Constitution, et la colonne Force des armures est ignorée. Désactivé, le poids porté s\'affiche sans effet.',
+  },
 } as const satisfies Record<string, { default: boolean, label: string, description: string }>
 
 export type PreferenceKey = keyof typeof PREFERENCES

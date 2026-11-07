@@ -69,6 +69,11 @@ const items = sqliteTable('items', {
   rarity: text('rarity').$type<Rarity>(),
   requiresAttunement: integer('requires_attunement', { mode: 'boolean' }).default(false).notNull(),
   attunementNote: text('attunement_note'),
+  // NULL = la règle n'en donne pas. Poids en grammes, prix en pièces de cuivre, pour un lot de `lot_size` unités
+  // (munitions : 20 flèches pour 1 po, donc 37,5 g le carreau, que des entiers par unité ne rendent pas).
+  weightG: integer('weight_g'),
+  costCp: integer('cost_cp'),
+  lotSize: integer('lot_size').default(1).notNull(),
   isCustom: integer('is_custom', { mode: 'boolean' }).default(false).notNull(),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').$onUpdateFn(() => new Date().toISOString()),

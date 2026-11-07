@@ -91,6 +91,24 @@ describe('factRollSources — états, épuisement, armure', () => {
     expect(factRollSources({ type: 'save', ability: 'int' }, f)).toEqual([])
   })
 
+  it('fortement encombré : jets basés sur la Force, la Dextérité ou la Constitution', () => {
+    const f = facts({ heavilyEncumbered: true })
+    expect(factRollSources({ type: 'attack', weapon: true }, f)).toHaveLength(1)
+    expect(factRollSources({ type: 'attack', weapon: false }, f)).toEqual([])
+    expect(factRollSources({ type: 'initiative' }, f)).toHaveLength(1)
+    expect(factRollSources({ type: 'check', ability: 'str', skill: 'athletics' }, f)).toHaveLength(1)
+    expect(factRollSources({ type: 'check', ability: 'con' }, f)).toHaveLength(1)
+    expect(factRollSources({ type: 'save', ability: 'con' }, f)).toHaveLength(1)
+    expect(factRollSources({ type: 'save', ability: 'dex' }, f)).toHaveLength(1)
+    expect(factRollSources({ type: 'check', ability: 'wis', skill: 'perception' }, f)).toEqual([])
+    expect(factRollSources({ type: 'save', ability: 'cha' }, f)).toEqual([])
+  })
+
+  it('une armure non maîtrisée laisse la Constitution tranquille, l\'encombrement non', () => {
+    expect(factRollSources({ type: 'save', ability: 'con' }, facts({ armorNonProficient: true }))).toEqual([])
+    expect(factRollSources({ type: 'save', ability: 'con' }, facts({ heavilyEncumbered: true }))).toHaveLength(1)
+  })
+
   it('armure à Discrétion désavantageuse : seulement le jet de Discrétion', () => {
     const f = facts({ stealthArmor: true })
     expect(factRollSources({ type: 'check', ability: 'dex', skill: 'stealth' }, f)).toHaveLength(1)

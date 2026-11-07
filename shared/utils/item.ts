@@ -65,6 +65,8 @@ export const createItemSchema = z.object({
   properties: itemPropertiesSchema,
   // Limite généreuse : les descriptions d'objets magiques peuvent être longues.
   description: z.string().max(5000).nullable().optional(),
+  weightG: z.number().int().min(0).max(10_000_000).nullable().optional(),
+  costCp: z.number().int().min(0).max(1_000_000_000).nullable().optional(),
   maxUses: z.number().int().min(1).max(99).nullable().optional(),
   rechargeType: itemRechargeTypeSchema.nullable().optional(),
   // null = recharge complète ; sinon expression de dés "XdY±Z" (recharge partielle).

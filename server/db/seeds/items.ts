@@ -11,6 +11,9 @@ export default async function seed() {
       rarity: schema.items.rarity,
       requiresAttunement: schema.items.requiresAttunement,
       attunementNote: schema.items.attunementNote,
+      weightG: schema.items.weightG,
+      costCp: schema.items.costCp,
+      lotSize: schema.items.lotSize,
     })
     .from(schema.items)
   const byId = new Map(existing.map(i => [i.id, i]))
@@ -27,6 +30,9 @@ export default async function seed() {
       rarity: item.rarity ?? null,
       requiresAttunement: item.requiresAttunement ?? false,
       attunementNote: item.attunementNote ?? null,
+      weightG: item.weightG ?? null,
+      costCp: item.costCp ?? null,
+      lotSize: item.lotSize ?? 1,
     }
 
     const cur = byId.get(item.id)
@@ -37,6 +43,9 @@ export default async function seed() {
         || cur.rarity !== content.rarity
         || cur.requiresAttunement !== content.requiresAttunement
         || cur.attunementNote !== content.attunementNote
+        || cur.weightG !== content.weightG
+        || cur.costCp !== content.costCp
+        || cur.lotSize !== content.lotSize
       if (changed) {
         await db.update(schema.items).set(content).where(eq(schema.items.id, item.id))
         updated++

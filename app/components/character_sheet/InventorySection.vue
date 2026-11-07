@@ -37,6 +37,30 @@
       :description="`La règle 2014 limite l'harmonisation à ${ATTUNEMENT_LIMIT} objets à la fois.`"
     />
 
+    <div class="space-y-1">
+      <div class="flex items-center justify-between gap-2 text-sm">
+        <span class="text-muted">Poids porté</span>
+        <span
+          class="font-medium tabular-nums"
+          :class="{ 'text-warning': encumbrance.level !== 'none' }"
+        >{{ formatWeightKg(encumbrance.weightG) }} / {{ formatWeightKg(encumbrance.capacityG) }}</span>
+      </div>
+      <UProgress
+        :model-value="encumbrance.capacityG > 0 ? Math.min(100, encumbrance.weightG / encumbrance.capacityG * 100) : 100"
+        :color="encumbrance.level === 'none' ? 'primary' : 'warning'"
+        size="xs"
+      />
+    </div>
+
+    <UAlert
+      v-if="encumbranceNote"
+      color="warning"
+      variant="subtle"
+      icon="i-heroicons:scale"
+      :title="encumbranceNote.title"
+      :description="encumbranceNote.description"
+    />
+
     <template v-if="activeTab === 'weapons'">
       <div
         v-if="weapons.length === 0"
@@ -71,6 +95,7 @@
                   class="text-primary text-sm"
                 > +{{ entry.magicBonus }}</span>
               </span>
+              <ItemWeightPrice :entry="entry" />
 
               <template v-if="entry.equipped && weaponStatsByEntry.get(entry.id)">
                 <div
@@ -321,6 +346,7 @@
                 class="text-primary text-xs"
               > +{{ entry.magicBonus }}</span>
             </span>
+            <ItemWeightPrice :entry="entry" />
 
             <span
               v-if="entry.equipped"
@@ -425,6 +451,7 @@
             </div>
 
             <span class="flex-1 font-medium text-sm">{{ entry.item?.name }}</span>
+            <ItemWeightPrice :entry="entry" />
 
             <UBadge
               v-if="hasMagicEffects(entry) && entry.equipped"
@@ -535,6 +562,7 @@
             </div>
 
             <span class="flex-1 font-medium text-sm">{{ entry.item?.name }}</span>
+            <ItemWeightPrice :entry="entry" />
             <UBadge
               v-if="hasMagicEffects(entry) && entry.equipped"
               label="Effets actifs"
@@ -630,6 +658,7 @@ import type {
 } from '~/composables/character/useCharacterInventory'
 import type { WeaponProperties, ArmorProperties, ToolProperties } from '~~/server/db/schema/items'
 import { ATTUNEMENT_LIMIT, canAttune } from '~~/shared/rules/attunement'
+import { ENCUMBRANCE_LABELS, formatWeightKg } from '~~/shared/rules/encumbrance'
 import { matchesSearch } from '~~/shared/utils/search'
 import { toolTypeLabels, weaponPropertyLabels, weaponPropertyTooltips } from '~~/shared/utils/item'
 import type { RollFn } from '~/composables/useDiceRoller'
@@ -654,10 +683,31 @@ const {
   attunedCount,
   setUsingTwoHanded,
   spendAmmunition,
+  encumbrance,
+  encumbranceVariant,
   setRangeChoice,
   setThrowing,
 } = useCharacterSheet(characterSheetModel)
 const toast = useToast()
+
+const ENCUMBRANCE_EFFECTS = {
+  encumbered: 'vitesse -3 m',
+  heavily: 'vitesse -6 m, désavantage aux jets de Force, de Dextérité et de Constitution',
+  overloaded: 'vitesse -6 m, désavantage aux jets de Force, de Dextérité et de Constitution',
+} as const
+
+const encumbranceNote = computed(() => {
+  const level = encumbrance.value.level
+  if (level === 'none') return null
+  const title = ENCUMBRANCE_LABELS[level]
+  const overload = level === 'overloaded' ? 'La charge dépasse la capacité de charge (Force × 7,5 kg). ' : ''
+  return {
+    title,
+    description: encumbranceVariant.value
+      ? `${overload}Variante d'encombrement : ${ENCUMBRANCE_EFFECTS[level]}.`
+      : `${overload}Variante d'encombrement désactivée (réglages de la fiche) : sans effet sur la vitesse ni sur les jets.`,
+  }
+})
 
 const entryToRemove = ref<InventoryEntry | null>(null)
 const confirmingRemoval = ref(false)
