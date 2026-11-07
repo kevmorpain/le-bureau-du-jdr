@@ -87,9 +87,11 @@ par gravité — la plupart se résolvent AVEC F2 (généralisation `progression
     F5). Ils étaient acceptés par le schéma (toujours optionnels) mais **ignorés** par `createCharacter`
     (maîtrises DÉRIVÉES du porteur de classe, volet B). La map morte `WEAPON_PROF_KEYS` est supprimée du blob.
 - **C. Envoyé mais abandonné en fallback silencieux.**
-  - `inventoryItemNamesUnresolved` (création) : items non résolus en id côté client → **loggés puis
-    non persistés**. Un objet custom / de la monnaie-en-texte peut disparaître sans bruit.
+  - ~~`inventoryItemNamesUnresolved` (création)~~ : items non résolus en id côté client → **loggés puis
+    non persistés**. Un objet custom / de la monnaie-en-texte pouvait disparaître sans bruit.
     → F15, [#126](https://github.com/kevmorpain/le-bureau-du-jdr/issues/126).
+    **✅ Résolu (lot 16, [D28](./decisions.md#d28))** : le builder envoie `inventory: [{ itemId, quantity }]`, résolu contre le
+    catalogue avant l'envoi (un objet introuvable bloque la création avec un message) ; le serveur refuse un id inconnu.
 
 **Hors de cette liste** (pour lever l'ambiguïté) : les **listes d'options** de sous-classe/ASI des 10
 classes non-Occultiste viennent d'`app/data` (front-dupliqué = F2), mais le CHOIX résultant

@@ -6,26 +6,26 @@ import { ALIGNMENTS as CANONICAL_ALIGNMENTS } from '~~/shared/rules/alignments'
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import type { CasterType } from '~~/shared/rules/spellcasting'
 import type { Source } from '~~/shared/rules/source'
+import {
+  ARCANE_FOCUS, ARTISAN_TOOL, CON_TOOL, DRUIDIC_FOCUS, HOLY_SYMBOL, MARTIAL_MELEE_WEAPON, MARTIAL_WEAPON, MUSICAL_INSTRUMENT,
+  SIMPLE_MELEE_WEAPON, SIMPLE_WEAPON,
+  type EquipmentGroup, type EquipmentOption, type EquipmentRef, type ItemSelector, type PackKey, type StackRef,
+} from '~~/shared/rules/startingEquipment'
+import type { ItemType } from '~~/server/db/schema/items'
 
 export type { AbilityKey }
 export type { CasterType }
 
 export const ABILITIES: AbilityKey[] = [...ABILITY_KEYS]
 
-// Options génériques d'équipement → liste d'items spécifiques disponibles en DB
-export const GENERIC_ITEM_OPTIONS: Record<string, string[]> = {
-  'Arme courante': ['Gourdin', 'Dague', 'Massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Serpe', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
-  'Arme courante de corps à corps': ['Gourdin', 'Dague', 'Massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Serpe', 'Lance'],
-  'Arme courante à distance': ['Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
-  'Arme courante au choix': ['Gourdin', 'Dague', 'Massue', 'Hachette', 'Javeline', 'Marteau léger', "Masse d'armes", 'Bâton', 'Serpe', 'Lance', 'Arbalète légère', 'Fléchette', 'Fronde', 'Arc court'],
-  'Arme de guerre': ["Hache d'armes", "Fléau d'armes", 'Coutille', 'Hache à deux mains', 'Épée à deux mains', 'Hallebarde', "Lance d'arçon", 'Maillet', 'Pique', 'Épée longue', 'Morgenstern', 'Pic de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre', 'Arbalète de poing', 'Arbalète lourde', 'Arc long', 'Filet', 'Sarbacane'],
-  'Arme de guerre de corps à corps': ["Hache d'armes", "Fléau d'armes", 'Coutille', 'Hache à deux mains', 'Épée à deux mains', 'Hallebarde', "Lance d'arçon", 'Maillet', 'Pique', 'Épée longue', 'Morgenstern', 'Pic de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre'],
-  'Arme de guerre au choix': ["Hache d'armes", "Fléau d'armes", 'Coutille', 'Hache à deux mains', 'Épée à deux mains', 'Hallebarde', "Lance d'arçon", 'Maillet', 'Pique', 'Épée longue', 'Morgenstern', 'Pic de guerre', 'Rapière', 'Cimeterre', 'Épée courte', 'Trident', 'Fouet', 'Marteau de guerre', 'Arbalète de poing', 'Arbalète lourde', 'Arc long', 'Filet', 'Sarbacane'],
-  'Instrument de musique au choix': ['Cornemuse', 'Cor', 'Flûte', 'Luth', 'Lyre', 'Tambour', 'Viole', 'Chalemie', 'Flûte de pan', 'Tympanon'],
-  'Outil d\'artisan au choix': ['Outils de forgeron', 'Outils de charpentier', 'Outils de cordonnier', 'Ustensiles de cuisinier', 'Outils de bijoutier', 'Outils de maçon', 'Matériel de peintre', 'Outils de potier', 'Outils de tanneur', 'Outils de tisserand', 'Outils de souffleur de verre', "Matériel d'alchimiste", 'Matériel de brasseur', 'Matériel de calligraphe', 'Outils de cartographe', 'Outils de bricoleur', 'Outils de menuisier'],
-  'Jeux au choix': ['Jeu de dés', 'Jeu de cartes', "Jeu d'échecs draconiques", 'Jeu des Dragons'],
-  'Un jeu au choix': ['Jeu de dés', 'Jeu de cartes', "Jeu d'échecs draconiques", 'Jeu des Dragons'],
-}
+const item = (name: string, quantity?: number, itemType?: ItemType): StackRef =>
+  ({ item: name, ...(quantity ? { quantity } : {}), ...(itemType ? { itemType } : {}) })
+const fixed = (...refs: EquipmentRef[]): EquipmentGroup => ({ fixed: refs })
+const options = (...choices: (EquipmentRef[] | EquipmentOption)[]): EquipmentGroup =>
+  ({ options: choices.map(c => Array.isArray(c) ? { refs: c } : c) })
+const pick = (selector: ItemSelector): EquipmentRef => ({ pick: selector })
+const pack = (key: PackKey): EquipmentRef => ({ pack: key })
+const po = (amount: number): EquipmentRef => ({ po: amount })
 
 export const ABILITY_LABELS: Record<AbilityKey, string> = {
   str: 'Force',
@@ -442,12 +442,6 @@ export interface SpellcastingInfo {
   startsAtLevel?: number              // Paladin/Rôdeur commencent niveau 2
 }
 
-export interface EquipmentGroup {
-  choice: boolean
-  options?: string[]
-  items?: string[]
-}
-
 export interface LevelMilestones {
   [level: number]: string
 }
@@ -487,9 +481,9 @@ export const CLASSES: ClassData[] = [
       { name: 'Défense sans armure', description: 'CA = 10 + mod DEX + mod CON quand vous ne portez pas d\'armure.' },
     ],
     equipment: [
-      { choice: true, options: ['Hache à deux mains', '2 hachettes'] },
-      { choice: true, options: ['Paquetage d\'exploration', 'Paquetage du voyageur'] },
-      { choice: false, items: ['4 javelines'] },
+      options([item('Hache à deux mains')], [pick(MARTIAL_MELEE_WEAPON)]),
+      options([item('Hachette', 2)], [pick(SIMPLE_WEAPON)]),
+      fixed(pack('explorer'), item('Javeline', 4)),
     ],
     levelMilestones: { 2: 'Attaque téméraire', 3: 'Voie primitive', 4: 'ASI', 5: 'Attaque supplémentaire', 7: 'Instinct sauvage', 9: 'Critique brutal' },
   },
@@ -509,10 +503,10 @@ export const CLASSES: ClassData[] = [
       { name: 'Inspiration bardique (d6)', description: 'Action bonus : accordez un d6 à un allié pour l\'ajouter à un jet d\'attaque, de compétence ou de sauvegarde.' },
     ],
     equipment: [
-      { choice: true, options: ['Rapière', 'Épée longue', 'Arme courante au choix'] },
-      { choice: true, options: ['Paquetage du diplomate', 'Paquetage du bateleur'] },
-      { choice: true, options: ['Luth', 'Instrument de musique au choix'] },
-      { choice: false, items: ['Armure de cuir', 'Dague'] },
+      options([item('Rapière')], [item('Épée longue')], [pick(SIMPLE_WEAPON)]),
+      options([pack('diplomat')], [pack('artist')]),
+      options([item('Luth')], [pick({ tool: 'musical', except: ['Luth'] })]),
+      fixed(item('Armure de cuir'), item('Dague')),
     ],
     levelMilestones: { 3: 'Collège bardique', 4: 'ASI', 5: 'Source d\'inspiration', 6: 'Expertise', 10: 'Secrets magiques' },
   },
@@ -532,10 +526,11 @@ export const CLASSES: ClassData[] = [
       { name: 'Renvoi des morts-vivants', description: 'Action : morts-vivants visibles dans 9m — JS SAG ou renvoyés pendant 1 minute.' },
     ],
     equipment: [
-      { choice: true, options: ['Masse d\'armes', 'Marteau de guerre (si maîtrisé)'] },
-      { choice: true, options: ['Armure d\'écailles', 'Armure de cuir', 'Cotte de mailles (si maîtrisée)'] },
-      { choice: true, options: ['Arbalète légère + 20 carreaux', 'Arme courante'] },
-      { choice: false, items: ['Bouclier', 'Symbole sacré', 'Paquetage d\'ecclésiastique'] },
+      options([item('Masse d\'armes')], { refs: [item('Marteau de guerre')], label: 'Marteau de guerre (si vous le maîtrisez)' }),
+      options([item('Armure d\'écailles')], [item('Armure de cuir')], { refs: [item('Cotte de mailles')], label: 'Cotte de mailles (si vous la maîtrisez)' }),
+      options([item('Arbalète légère'), item('Carreau d\'arbalète', 20)], [pick(SIMPLE_WEAPON)]),
+      options([pack('priest')], [pack('explorer')]),
+      fixed(item('Bouclier'), pick(HOLY_SYMBOL)),
     ],
     levelMilestones: { 1: 'Domaine divin', 2: 'Intervention divine (canalisation)', 4: 'ASI', 5: 'Destruction des morts-vivants' },
   },
@@ -555,9 +550,9 @@ export const CLASSES: ClassData[] = [
       { name: 'Forme sauvage (niv.2)', description: 'À partir du niv.2 : transformation en animal. 2 utilisations / repos court.' },
     ],
     equipment: [
-      { choice: true, options: ['Bouclier de bois', 'Arme courante'] },
-      { choice: true, options: ['Cimeterre', 'Arme de corps à corps courante'] },
-      { choice: false, items: ['Armure de cuir', 'Paquetage d\'explorateur', 'Focalisateur druidique'] },
+      options({ refs: [item('Bouclier')], label: 'Bouclier en bois' }, [pick(SIMPLE_WEAPON)]),
+      options([item('Cimeterre')], [pick(SIMPLE_MELEE_WEAPON)]),
+      fixed(item('Armure de cuir'), pack('explorer'), pick(DRUIDIC_FOCUS)),
     ],
     levelMilestones: { 2: 'Cercle druidique + Forme sauvage', 4: 'ASI', 6: 'Forme sauvage améliorée', 18: 'Corps de la bête' },
   },
@@ -577,10 +572,10 @@ export const CLASSES: ClassData[] = [
       { name: 'Second souffle', description: 'Action bonus : récupérez 1d10 + niveau PV. 1 utilisation / repos court.' },
     ],
     equipment: [
-      { choice: true, options: ['Cotte de mailles', 'Armure de cuir + arc long + 20 flèches'] },
-      { choice: true, options: ['Arme de guerre + bouclier', '2 armes de guerre'] },
-      { choice: true, options: ['Arbalète légère + 20 carreaux', '2 hachettes'] },
-      { choice: true, options: ['Paquetage du donjon', 'Paquetage d\'explorateur'] },
+      options([item('Cotte de mailles')], [item('Armure de cuir'), item('Arc long'), item('Flèche', 20)]),
+      options([pick(MARTIAL_WEAPON), item('Bouclier')], [pick(MARTIAL_WEAPON), pick(MARTIAL_WEAPON)]),
+      options([item('Arbalète légère'), item('Carreau d\'arbalète', 20)], [item('Hachette', 2)]),
+      options([pack('dungeoneer')], [pack('explorer')]),
     ],
     levelMilestones: { 3: 'Archétype martial', 4: 'ASI', 5: 'Attaque supplémentaire', 6: 'ASI', 9: 'Indomptable', 11: '3 attaques' },
   },
@@ -600,9 +595,9 @@ export const CLASSES: ClassData[] = [
       { name: 'Défense sans armure', description: 'CA = 10 + mod DEX + mod SAG sans armure ni bouclier.' },
     ],
     equipment: [
-      { choice: true, options: ['Épée courte', 'Arme courante de corps à corps'] },
-      { choice: true, options: ['Paquetage du donjon', 'Paquetage d\'explorateur'] },
-      { choice: false, items: ['10 fléchettes'] },
+      options([item('Épée courte')], [pick(SIMPLE_WEAPON)]),
+      options([pack('dungeoneer')], [pack('explorer')]),
+      fixed(item('Fléchette', 10)),
     ],
     levelMilestones: { 2: 'Ki + Déplacement sans armure', 3: 'Tradition monastique', 4: 'ASI + Chute ralentie', 5: 'Attaque supplémentaire + Frappe étourdissante' },
   },
@@ -622,9 +617,10 @@ export const CLASSES: ClassData[] = [
       { name: 'Imposition des mains', description: 'Réservoir = niveau×5 PV. Soignez par portions ou neutralisez maladies/poisons (5 PV).' },
     ],
     equipment: [
-      { choice: true, options: ['Arme de guerre + bouclier', '2 armes de guerre'] },
-      { choice: true, options: ['5 javelines', 'Arme courante de corps à corps'] },
-      { choice: false, items: ['Cotte de mailles', 'Symbole sacré', 'Paquetage du prêtre'] },
+      options([pick(MARTIAL_WEAPON), item('Bouclier')], [pick(MARTIAL_WEAPON), pick(MARTIAL_WEAPON)]),
+      options([item('Javeline', 5)], [pick(SIMPLE_MELEE_WEAPON)]),
+      options([pack('priest')], [pack('explorer')]),
+      fixed(item('Cotte de mailles'), pick(HOLY_SYMBOL)),
     ],
     levelMilestones: { 2: 'Style de combat + Incantation + Châtiment divin', 3: 'Serment sacré', 4: 'ASI', 5: 'Attaque supplémentaire' },
   },
@@ -644,9 +640,10 @@ export const CLASSES: ClassData[] = [
       { name: 'Explorateur-né', description: 'Choisissez un terrain. Nombreux avantages pour voyager et survivre dans ce milieu.' },
     ],
     equipment: [
-      { choice: true, options: ['Armure d\'écailles', 'Armure de cuir'] },
-      { choice: true, options: ['2 épées courtes', '2 armes courantes de corps à corps'] },
-      { choice: false, items: ['Arc long', '20 flèches', 'Paquetage d\'explorateur'] },
+      options([item('Armure d\'écailles')], [item('Armure de cuir')]),
+      options([item('Épée courte', 2)], [pick(SIMPLE_MELEE_WEAPON), pick(SIMPLE_MELEE_WEAPON)]),
+      options([pack('dungeoneer')], [pack('explorer')]),
+      fixed(item('Arc long'), item('Carquois'), item('Flèche', 20)),
     ],
     levelMilestones: { 2: 'Style de combat + Incantation', 3: 'Archétype de rôdeur + Vigilance primitive', 4: 'ASI', 5: 'Attaque supplémentaire' },
   },
@@ -666,10 +663,10 @@ export const CLASSES: ClassData[] = [
       { name: 'Attaque sournoise (1d6)', description: '+1d6 dégâts si avantage OU allié adjacent sans désavantage. Armes de finesse ou à distance.' },
     ],
     equipment: [
-      { choice: true, options: ['Rapière', 'Épée courte'] },
-      { choice: true, options: ['Arc court + 20 flèches', '2 épées courtes'] },
-      { choice: true, options: ['Paquetage du cambrioleur', 'Paquetage du donjon', 'Paquetage d\'explorateur'] },
-      { choice: false, items: ['Armure de cuir', '2 dagues', 'Outils de voleur'] },
+      options([item('Rapière')], [item('Épée courte')]),
+      options([item('Arc court'), item('Carquois'), item('Flèche', 20)], [item('Épée courte')]),
+      options([pack('burglar')], [pack('dungeoneer')], [pack('explorer')]),
+      fixed(item('Armure de cuir'), item('Dague', 2), item('Outils de voleur', undefined, 'tool')),
     ],
     levelMilestones: { 3: 'Archétype de roublard', 4: 'ASI', 5: 'Attaque sournoise 3d6 + Pas d\'esquive', 7: 'Esquive totale' },
   },
@@ -689,9 +686,10 @@ export const CLASSES: ClassData[] = [
       { name: 'Incantation (CHA)', description: 'Lanceur complet. Connaît un nombre limité de sorts (4 au niv.1). 2 emplacements niv.1.' },
     ],
     equipment: [
-      { choice: true, options: ['Arbalète légère + 20 carreaux', 'Arme courante'] },
-      { choice: true, options: ['Sacoche à composantes', 'Focalisateur arcanique'] },
-      { choice: false, items: ['2 dagues', 'Paquetage du donjon'] },
+      options([item('Arbalète légère'), item('Carreau d\'arbalète', 20)], [pick(SIMPLE_WEAPON)]),
+      options([item('Sacoche à composantes')], [pick(ARCANE_FOCUS)]),
+      options([pack('dungeoneer')], [pack('explorer')]),
+      fixed(item('Dague', 2)),
     ],
     levelMilestones: { 1: 'Origine sorcière', 2: 'Points de sorcellerie + Métamagie', 4: 'ASI', 6: 'Capacités d\'origine' },
   },
@@ -711,9 +709,10 @@ export const CLASSES: ClassData[] = [
       { name: 'Magie de pacte', description: '1 emplacement / repos court au niv.1. L\'emplacement récupère au repos court !' },
     ],
     equipment: [
-      { choice: true, options: ['Arbalète légère + 20 carreaux', 'Arme courante'] },
-      { choice: true, options: ['Sacoche à composantes', 'Focalisateur arcanique'] },
-      { choice: false, items: ['Armure de cuir', 'Arme courante', '2 dagues', 'Paquetage du donjon'] },
+      options([item('Arbalète légère'), item('Carreau d\'arbalète', 20)], [pick(SIMPLE_WEAPON)]),
+      options([item('Sacoche à composantes')], [pick(ARCANE_FOCUS)]),
+      options([pack('scholar')], [pack('dungeoneer')]),
+      fixed(item('Armure de cuir'), pick(SIMPLE_WEAPON), item('Dague', 2)),
     ],
     levelMilestones: {
       1: 'Patron d\'Outremonde',
@@ -748,9 +747,10 @@ export const CLASSES: ClassData[] = [
       { name: 'Restauration arcanique', description: 'Repos court : récupérez emplacements (total ≤ ½ niveau arrondi sup, pas niv.6+). 1×/jour.' },
     ],
     equipment: [
-      { choice: true, options: ['Bâton', 'Dague'] },
-      { choice: true, options: ['Sacoche à composantes', 'Focalisateur arcanique'] },
-      { choice: false, items: ['Grimoire', 'Paquetage du savant'] },
+      options([item('Bâton')], [item('Dague')]),
+      options([item('Sacoche à composantes')], [pick(ARCANE_FOCUS)]),
+      options([pack('scholar')], [pack('explorer')]),
+      fixed(item('Grimoire')),
     ],
     levelMilestones: { 2: 'Tradition arcanique', 4: 'ASI', 6: 'Capacité de tradition', 14: 'Maîtrise du grimoire' },
   },
@@ -788,7 +788,7 @@ export interface BackgroundData {
   skillProficiencies: string[]
   toolProficiencies: string[]
   languages: number
-  equipment: string[]
+  equipment: EquipmentGroup[]
   featureName: string
   featureDescription: string
   suggestions: BackgroundSuggestions
@@ -842,7 +842,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['insight', 'religion'],
     toolProficiencies: [],
     languages: 2,
-    equipment: ['Symbole sacré', 'Livre de prières', '5 bâtonnets d\'encens', 'Vêtements de cérémonie', '15 po'],
+    equipment: [fixed(pick(HOLY_SYMBOL), item('Livre de prières'), item('Bâtonnet d\'encens', 5), item('Habits de cérémonie'), item('Vêtements, communs'), po(15))],
     featureName: 'Abri du fidèle',
     featureDescription: 'Logement, nourriture et soins dans les temples de votre foi. Les prêtres sont des alliés.',
     suggestions: {
@@ -890,7 +890,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['deception', 'sleight_of_hand'],
     toolProficiencies: ['Kit de déguisement', 'Kit de contrefaçon'],
     languages: 0,
-    equipment: ['Vêtements fins', 'Kit de déguisement', 'Kit de contrefaçon', '15 po'],
+    equipment: [fixed(item('Vêtements, fins'), item('Kit de déguisement'), pick(CON_TOOL), po(15))],
     featureName: 'Fausse identité',
     featureDescription: 'Vous disposez d\'une seconde identité avec documents, vêtements et contacts.',
     suggestions: {
@@ -938,7 +938,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['deception', 'stealth'],
     toolProficiencies: ['Un jeu au choix', 'Outils de voleur'],
     languages: 0,
-    equipment: ['Pied-de-biche', 'Vêtements sombres à capuche', '15 po'],
+    equipment: [fixed(item('Pied-de-biche'), item('Vêtements, communs sombres avec capuche'), po(15))],
     featureName: 'Accointances avec la pègre',
     featureDescription: 'Un contact fiable dans le milieu peut transmettre des informations sensibles.',
     suggestions: {
@@ -986,7 +986,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['acrobatics', 'performance'],
     toolProficiencies: ['Kit de déguisement', 'Instrument de musique'],
     languages: 0,
-    equipment: ['Instrument de musique', 'Faveur d\'un admirateur', 'Costume', '15 po'],
+    equipment: [fixed(pick(MUSICAL_INSTRUMENT), item('Cadeau d\'un admirateur'), item('Vêtements, costume'), po(15))],
     featureName: 'À la demande du public',
     featureDescription: 'Trouvez toujours une scène pour vous produire, souvent avec gîte et couvert.',
     suggestions: {
@@ -1034,7 +1034,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['animal_handling', 'survival'],
     toolProficiencies: ['Outil d\'artisan au choix', 'Véhicule terrestre'],
     languages: 0,
-    equipment: ['Outil d\'artisan', 'Pelle', 'Pot de fer', 'Vêtements communs', '10 po'],
+    equipment: [fixed(pick(ARTISAN_TOOL), item('Pelle'), item('Pot en fer'), item('Vêtements, communs'), po(10))],
     featureName: 'Hospitalité rustique',
     featureDescription: 'Les gens du peuple vous accueillent, vous nourrissent et vous cachent au besoin.',
     suggestions: {
@@ -1082,7 +1082,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['insight', 'persuasion'],
     toolProficiencies: ['Outil d\'artisan au choix'],
     languages: 1,
-    equipment: ['Outils d\'artisan', 'Lettre de la guilde', 'Vêtements de voyage', '15 po'],
+    equipment: [fixed(pick(ARTISAN_TOOL), item('Lettre de recommandation de la guilde'), item('Vêtements, voyage'), po(15))],
     featureName: 'Membre de guilde',
     featureDescription: 'Logement et assistance auprès des membres de votre guilde dans n\'importe quelle ville.',
     suggestions: GUILD_SUGGESTIONS,
@@ -1095,7 +1095,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['insight', 'persuasion'],
     toolProficiencies: ['Outils de navigateur ou langue au choix'],
     languages: 1,
-    equipment: ['Mule', 'Charrette', 'Lettre de la guilde', 'Vêtements de voyage', '15 po'],
+    equipment: [fixed(item('Mule'), item('Charrette'), item('Lettre de recommandation de la guilde'), item('Vêtements, voyage'), po(15))],
     featureName: 'Membre de guilde',
     featureDescription: 'Logement et assistance auprès des membres de votre guilde dans n\'importe quelle ville.',
     suggestions: GUILD_SUGGESTIONS,
@@ -1108,7 +1108,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['medicine', 'religion'],
     toolProficiencies: ['Kit d\'herboriste'],
     languages: 1,
-    equipment: ['Étui à parchemins avec notes', 'Couverture d\'hiver', 'Kit d\'herboriste', '5 po'],
+    equipment: [fixed(item('Étui à cartes ou parchemins'), item('Couverture'), item('Vêtements, communs'), item('Kit d\'herboriste'), po(5))],
     featureName: 'Découverte',
     featureDescription: 'Vous avez fait une découverte unique lors de votre réclusion — connaissance, lieu ou vérité cachée.',
     suggestions: {
@@ -1156,7 +1156,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['history', 'persuasion'],
     toolProficiencies: ['Un jeu au choix'],
     languages: 1,
-    equipment: ['Vêtements fins', 'Chevalière de famille', 'Parchemin de lignée', '25 po'],
+    equipment: [fixed(item('Vêtements, fins'), item('Chevalière'), item('Lettre de noblesse'), po(25))],
     featureName: 'Apanage de la noblesse',
     featureDescription: 'Votre statut ouvre les portes de la noblesse. On vous traite en égal.',
     suggestions: {
@@ -1204,7 +1204,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['athletics', 'survival'],
     toolProficiencies: ['Instrument de musique au choix'],
     languages: 1,
-    equipment: ['Bâton', 'Piège de chasse', 'Trophée animal', 'Vêtements de voyage', '10 po'],
+    equipment: [fixed(item('Bâton'), item('Piège à mâchoires'), item('Trophée d\'animal'), item('Vêtements, voyage'), po(10))],
     featureName: 'Éternel vagabond',
     featureDescription: 'Mémoire infaillible des cartes ; trouvez nourriture et eau douce pour 6 personnes en terrain sauvage.',
     suggestions: {
@@ -1252,7 +1252,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['arcana', 'history'],
     toolProficiencies: [],
     languages: 2,
-    equipment: ['Bouteille d\'encre', 'Plume d\'écriture', 'Petit couteau', 'Lettre d\'un collègue décédé', '10 po'],
+    equipment: [fixed(item('Encre (bouteille de 30 ml)'), item('Plume d\'écriture'), item('Petit couteau'), item('Lettre d\'un collègue mort'), item('Vêtements, communs'), po(10))],
     featureName: 'Chercheur',
     featureDescription: 'Si vous ne connaissez pas l\'info, vous savez où la trouver (bibliothèques, experts).',
     suggestions: {
@@ -1300,7 +1300,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['athletics', 'perception'],
     toolProficiencies: ['Outils de navigateur', 'Véhicule aquatique'],
     languages: 0,
-    equipment: ['Gourdin', 'Corde de soie 15m', 'Porte-bonheur', '10 po'],
+    equipment: [fixed(item('Gourdin'), item('Corde en soie (15 m)'), item('Porte-bonheur'), item('Vêtements, communs'), po(10))],
     featureName: 'Place à bord',
     featureDescription: 'Obtenez un passage gratuit pour vous et vos compagnons sur n\'importe quel navire.',
     suggestions: {
@@ -1348,7 +1348,11 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['athletics', 'intimidation'],
     toolProficiencies: ['Un jeu au choix', 'Véhicule terrestre'],
     languages: 0,
-    equipment: ['Insigne de rang', 'Trophée de guerre', 'Jeu de dés', 'Vêtements communs', '10 po'],
+    equipment: [
+      fixed(item('Insigne de grade'), item('Trophée pris sur un ennemi')),
+      options([item('Jeu de dés')], [item('Jeu de cartes')]),
+      fixed(item('Vêtements, communs'), po(10)),
+    ],
     featureName: 'Grade militaire',
     featureDescription: 'Les soldats et mercenaires reconnaissent votre rang et peuvent vous obéir.',
     suggestions: {
@@ -1396,7 +1400,7 @@ export const BACKGROUNDS: BackgroundData[] = [
     skillProficiencies: ['sleight_of_hand', 'stealth'],
     toolProficiencies: ['Kit de déguisement', 'Outils de voleur'],
     languages: 0,
-    equipment: ['Petit couteau', 'Carte de la ville', 'Jeton de bonne chance', 'Vêtements communs', '10 po'],
+    equipment: [fixed(item('Petit couteau'), item('Carte de la ville'), item('Souris domestiquée'), item('Souvenir de vos parents'), item('Vêtements, communs'), po(10))],
     featureName: 'Secrets de la ville',
     featureDescription: 'Déplacez-vous deux fois plus vite entre deux points d\'une ville grâce aux passages dérobés.',
     suggestions: {

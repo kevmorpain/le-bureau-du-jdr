@@ -1,4 +1,4 @@
-import { and, eq, inArray, lte, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import * as schema from '~~/server/db/schema'
 import { isPassiveGrant } from '~~/server/utils/features'
@@ -93,9 +93,10 @@ export const createCharacterSchema = z.object({
   variantHumanSkill: skillEnum.nullable().optional(),
   selectedLanguages: z.array(z.string()).optional().default([]),
   spellIds: z.array(z.number().int()),
-  // Items non résolus côté client : conservés en texte libre.
-  inventoryItemIds: z.array(z.number().int().positive()).optional().default([]),
-  inventoryItemNamesUnresolved: z.array(z.string()).optional().default([]),
+  inventory: z.array(z.object({
+    itemId: z.number().int().positive(),
+    quantity: z.number().int().min(1).max(1000),
+  })).optional().default([]),
   pp: z.number().int().min(0).optional(),
   po: z.number().int().min(0).optional(),
   pe: z.number().int().min(0).optional(),
@@ -200,6 +201,18 @@ async function validateRulesetCoherence(db: Db, d: CreateCharacterInput, ruleset
     const bad = rows.find(r => r.ruleset !== ruleset)
     if (bad) throw new CharacterValidationError(`Un sort référencé (id=${bad.id}, éd. ${bad.ruleset}) est incompatible avec l'édition de la fiche (${ruleset}).`)
   }
+}
+
+async function validateInventory(db: Db, inventory: CreateCharacterInput['inventory']): Promise<void> {
+  if (!inventory.length) return
+  const ids = [...new Set(inventory.map(e => e.itemId))]
+  const rows = await db
+    .select({ id: schema.items.id })
+    .from(schema.items)
+    .where(and(inArray(schema.items.id, ids), isNull(schema.items.deletedAt)))
+  const known = new Set(rows.map(r => r.id))
+  const unknown = ids.find(id => !known.has(id))
+  if (unknown != null) throw new CharacterValidationError(`Objet introuvable (id=${unknown}).`)
 }
 
 interface ValidatedPicks {
@@ -340,14 +353,10 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
     }
   }
 
-  const itemIds: number[] = d.inventoryItemIds ?? []
-  if (d.inventoryItemNamesUnresolved?.length) {
-    console.warn('[createCharacter] items non résolus côté client :', d.inventoryItemNamesUnresolved)
-  }
-
   // 2. Validation serveur (autorité) — AVANT toute écriture
   const ruleset: Ruleset = cls.ruleset
   await validateRulesetCoherence(db, d, ruleset)
+  await validateInventory(db, d.inventory)
   const validated = await validateChoices(db, d, cls.id, subclassId, backgroundId)
   const hitDieSides = hitDieSidesOf(cls.hitDice)
   if (hitDieSides) {
@@ -690,12 +699,12 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   }
 
   // isPactWeapon posé à l'insert pour éviter un read+update.
-  if (itemIds.length) {
+  if (d.inventory.length) {
     stmts.push(db.insert(schema.characterInventory).values(
-      itemIds.map(itemId => ({
+      d.inventory.map(({ itemId, quantity }) => ({
         characterSheetId: sheetId,
         itemId,
-        quantity: 1,
+        quantity,
         isPactWeapon: pactBoon === 'blade' && d.pactWeaponItemId === itemId,
       })),
     ))

@@ -47,6 +47,7 @@
 <script lang="ts" setup>
 import { useOnline } from '@vueuse/core'
 import { spellLearningOf } from '~~/shared/rules/spellsKnown'
+import { resolveLines } from '~~/shared/rules/startingEquipment'
 
 definePageMeta({ layout: 'blank' })
 
@@ -54,6 +55,7 @@ const {
   currentStepId,
   state,
   classData,
+  startingEquipment,
   selectedLineageId,
   speciesDbId,
   backgroundDbId,
@@ -69,6 +71,7 @@ const {
 } = useCharacterBuilder()
 
 const {
+  items,
   resolveClassId,
   resolveSubclassId,
   resolveItemIds,
@@ -89,7 +92,7 @@ const FIELD_LABELS: Record<string, string> = {
   customBackgroundSkills: 'Compétences d\'historique',
   variantHumanSkill: 'Compétence de l\'Humain variant',
   spellIds: 'Sorts',
-  inventoryItemIds: 'Équipement',
+  inventory: 'Équipement',
   alignment: 'Alignement',
   speciesId: 'Race',
   backgroundId: 'Historique',
@@ -104,18 +107,16 @@ async function handleSubmit() {
   submitting.value = true
 
   try {
-    const CURRENCY_RE = /^(\d+)\s*(pp|po|pe|pa|pc)$/i
-    const CURRENCY_FIELDS: Record<string, string> = { pp: 'pp', po: 'po', pe: 'pe', pa: 'pa', pc: 'pc' }
-    const currency: Record<string, number> = {}
-    const itemNames = state.value.equipment.filter((name) => {
-      const m = name.match(CURRENCY_RE)
-      if (m) {
-        const field = CURRENCY_FIELDS[m[2].toLowerCase()]
-        if (field) currency[field] = (currency[field] ?? 0) + parseInt(m[1])
-        return false
-      }
-      return true
-    })
+    const { entries: inventory, unresolved } = resolveLines(startingEquipment.value.lines, items.value)
+    if (unresolved.length) {
+      toast.add({
+        title: 'Équipement introuvable en base',
+        description: `${unresolved.join(', ')} — vérifier le catalogue d'objets.`,
+        color: 'error',
+      })
+      submitting.value = false
+      return
+    }
 
     // Résolution name → dbId au moment du submit
     const classId = resolveClassId(classData.value.dbName)
@@ -143,7 +144,6 @@ async function handleSubmit() {
     const lineageId = selectedLineageId.value
     const speciesId = speciesDbId.value
     const backgroundId = backgroundDbId.value
-    const { ids: inventoryItemIds, unresolved: inventoryItemNamesUnresolved } = resolveItemIds(itemNames)
     const pactWeaponItemId = pactBoon.value === 'blade' && state.value.pactWeaponItemName
       ? resolveItemIds([state.value.pactWeaponItemName]).ids[0] ?? null
       : null
@@ -202,8 +202,7 @@ async function handleSubmit() {
         : undefined,
       pactWeaponItemId,
       pactBoonCantripIds: pactBoon.value === 'tome' ? state.value.selectedPactBoonCantripIds : [],
-      inventoryItemIds,
-      inventoryItemNamesUnresolved,
+      inventory,
       // Seuls les paliers où le joueur a choisi 'asi' (pas 'feat') sont envoyés.
       asiBonuses: asiLevelsForCharacter.value
         .filter(lvl => state.value.asiChoice[lvl] === 'asi')
@@ -231,7 +230,7 @@ async function handleSubmit() {
       arcaneMysteria: Object.entries(state.value.arcaneMysteriumSpellIds)
         .map(([spellLevel, spellId]) => ({ spellLevel: Number(spellLevel), spellId })),
       bookOfAncientSecretsSpellIds: state.value.bookOfAncientSecretsSpellIds,
-      ...currency,
+      ...(startingEquipment.value.po ? { po: startingEquipment.value.po } : {}),
     }
 
     const result = await $fetch<{ id: number }>('/api/character_sheets', {

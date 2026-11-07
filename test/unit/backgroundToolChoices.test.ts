@@ -3,6 +3,7 @@ import { BACKGROUNDS } from '../../app/data/character-builder'
 import { backgroundsData } from '../../server/db/seeds/data/backgrounds'
 import { backgroundChoices, fixedProficiencies } from '../../shared/rules/backgroundProficiencies'
 import { TOOL_CATEGORIES } from '../../shared/rules/tools'
+import { groupOptions } from '../../shared/rules/startingEquipment'
 
 // Entrées « au choix » des historiques → points de choix. Marchand de guilde : outils de navigateur OU
 // une langue (Artisan de guilde, variante), en plus de sa langue au choix.
@@ -62,9 +63,10 @@ describe('Marchand de guilde', () => {
   })
 
   it('mule et charrette remplacent les outils d\'artisan', () => {
-    expect(blob.equipment).toContain('Mule')
-    expect(blob.equipment).toContain('Charrette')
-    expect(blob.equipment).not.toContain('Outils d\'artisan')
+    const refs = blob.equipment.flatMap(g => groupOptions(g).flatMap(o => o.refs))
+    expect(refs).toContainEqual({ item: 'Mule' })
+    expect(refs).toContainEqual({ item: 'Charrette' })
+    expect(refs.some(r => 'pick' in r)).toBe(false)
   })
 })
 

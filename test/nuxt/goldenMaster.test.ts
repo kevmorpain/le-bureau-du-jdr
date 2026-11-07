@@ -54,7 +54,7 @@ describe('golden-master · A. Guerrier Champion (martial)', () => {
       armorProficiencyKeys: ['all_armor', 'shield'],
       choicePicks: [{ progressionId: ids.soldierGameProgressionId, value: 'Jeu de cartes' }],
       selectedLanguages: ['Orc'],
-      inventoryItemIds: [ITEM.longsword],
+      inventory: [{ itemId: ITEM.longsword, quantity: 1 }],
     })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('A1 · création niv 1')
 
@@ -193,7 +193,7 @@ describe('golden-master · F. Occultiste (pactes de la Lame et du Tome)', () => 
         featurePick(ids.invocationsProgressionId, FEATURE.invocationGaze),
         featurePick(ids.invocationsProgressionId, FEATURE.invocationArmor),
       ],
-      inventoryItemIds: [ITEM.longsword, ITEM.dagger],
+      inventory: [{ itemId: ITEM.longsword, quantity: 1 }, { itemId: ITEM.dagger, quantity: 1 }],
       pactWeaponItemId: ITEM.longsword,
     })
     expect(await serializeCharacter(db, id)).toMatchSnapshot('F1 · création niv 3 (Pacte de la Lame, arme de pacte)')

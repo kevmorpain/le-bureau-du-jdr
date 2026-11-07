@@ -1,6 +1,7 @@
 import type { ItemType, ItemProperties, WeaponProperties, ArmorProperties, EquipmentProperties, ToolProperties } from '../../schema/items'
 import type { Source } from '~~/shared/rules/source'
 import type { Rarity } from '~~/shared/rules/itemRarity'
+import type { AmmunitionType } from '~~/shared/rules/ammunition'
 
 interface ItemSeed {
   id: number
@@ -39,6 +40,14 @@ function equipment(
   description?: string,
 ): ItemSeed {
   return { id, name, itemType: 'equipment', properties: { category } satisfies EquipmentProperties, description }
+}
+
+function ammunition(
+  id: number,
+  name: string,
+  ammunition_type: AmmunitionType,
+): ItemSeed {
+  return { id, name, itemType: 'equipment', properties: { category: 'Munition', ammunition_type } satisfies EquipmentProperties }
 }
 
 function tool(
@@ -130,6 +139,7 @@ const simpleRangedWeapons: ItemSeed[] = [
     weapon_category: 'simple_ranged',
     weapon_properties: ['ammunition', 'loading', 'two_handed'],
     range: { normal: 24, long: 96 },
+    ammunition_type: 'bolt',
   }),
   weapon(12, 'Fléchette', {
     damage_dice: '1d4',
@@ -144,6 +154,7 @@ const simpleRangedWeapons: ItemSeed[] = [
     weapon_category: 'simple_ranged',
     weapon_properties: ['ammunition'],
     range: { normal: 9, long: 36 },
+    ammunition_type: 'bullet',
   }),
   weapon(14, 'Arc court', {
     damage_dice: '1d6',
@@ -151,6 +162,7 @@ const simpleRangedWeapons: ItemSeed[] = [
     weapon_category: 'simple_ranged',
     weapon_properties: ['ammunition', 'two_handed'],
     range: { normal: 24, long: 96 },
+    ammunition_type: 'arrow',
   }),
 ]
 
@@ -278,6 +290,7 @@ const martialRangedWeapons: ItemSeed[] = [
     weapon_category: 'martial_ranged',
     weapon_properties: ['ammunition', 'light', 'loading'],
     range: { normal: 9, long: 36 },
+    ammunition_type: 'bolt',
   }),
   weapon(33, 'Arbalète lourde', {
     damage_dice: '1d10',
@@ -285,6 +298,7 @@ const martialRangedWeapons: ItemSeed[] = [
     weapon_category: 'martial_ranged',
     weapon_properties: ['ammunition', 'heavy', 'loading', 'two_handed'],
     range: { normal: 30, long: 120 },
+    ammunition_type: 'bolt',
   }),
   weapon(34, 'Arc long', {
     damage_dice: '1d8',
@@ -292,6 +306,7 @@ const martialRangedWeapons: ItemSeed[] = [
     weapon_category: 'martial_ranged',
     weapon_properties: ['ammunition', 'heavy', 'two_handed'],
     range: { normal: 45, long: 180 },
+    ammunition_type: 'arrow',
   }),
   // Ajouts PHB 2014 (armes spéciales) — ids dans le trou 37-38.
   // Filet : sans dégâts (le schéma exige un dé → "0"), effet d'entrave en description.
@@ -309,6 +324,7 @@ const martialRangedWeapons: ItemSeed[] = [
     weapon_category: 'martial_ranged',
     weapon_properties: ['ammunition', 'loading'],
     range: { normal: 7.5, long: 30 },
+    ammunition_type: 'needle',
   }, 'Dégâts fixes de 1 (aiguille de sarbacane), sans jet de dé.'),
 ]
 
@@ -414,6 +430,86 @@ const equipmentItems: ItemSeed[] = [
   equipment(69, 'Outils de voleur', 'Outil', 'Nécessaires pour crocheter des serrures et désamorcer des pièges. Maîtrise requise.'),
 ]
 
+// Contenu des sacs d'équipement, focaliseurs, munitions et équipement d'historique (ids 120-194).
+// Rattrapés par la migration 0154 : toute modification se répercute dans les deux.
+const startingGear: ItemSeed[] = [
+  ammunition(120, 'Flèche', 'arrow'),
+  ammunition(121, 'Carreau d\'arbalète', 'bolt'),
+  ammunition(122, 'Bille de fronde', 'bullet'),
+  ammunition(123, 'Aiguille de sarbacane', 'needle'),
+  equipment(124, 'Carquois', 'Conteneur'),
+  equipment(125, 'Gourde (pleine)', 'Conteneur'),
+  equipment(126, 'Boite d\'allume-feu', 'Outil'),
+  equipment(127, 'Gamelle', 'Outil'),
+  equipment(128, 'Pied-de-biche', 'Outil'),
+  equipment(129, 'Marteau', 'Outil'),
+  equipment(130, 'Piton', 'Outil'),
+  equipment(131, 'Billes (sac de 1000)', 'Outil'),
+  equipment(132, 'Chaîne (3 m)', 'Outil'),
+  equipment(133, 'Cloche', 'Outil'),
+  equipment(134, 'Bougie', 'Éclairage'),
+  equipment(135, 'Lampe', 'Éclairage'),
+  equipment(136, 'Coffre', 'Conteneur'),
+  equipment(137, 'Étui à cartes ou parchemins', 'Conteneur'),
+  equipment(138, 'Encre (bouteille de 30 ml)', 'Écriture'),
+  equipment(139, 'Plume d\'écriture', 'Écriture'),
+  equipment(140, 'Papier (une feuille)', 'Écriture'),
+  equipment(141, 'Parchemin (une feuille)', 'Écriture'),
+  equipment(142, 'Cire à cacheter', 'Écriture'),
+  equipment(143, 'Parfum (fiole)', 'Divers'),
+  equipment(144, 'Savon', 'Divers'),
+  equipment(145, 'Couverture', 'Repos'),
+  equipment(146, 'Boîte pour l\'aumône', 'Divers'),
+  equipment(147, 'Bâtonnet d\'encens', 'Divers'),
+  equipment(148, 'Encensoir', 'Divers'),
+  equipment(149, 'Livre', 'Divers'),
+  equipment(150, 'Petit sac de sable', 'Divers'),
+  equipment(151, 'Petit couteau', 'Outil'),
+  equipment(152, 'Vêtements, communs', 'Vêtements'),
+  equipment(153, 'Vêtements, voyage', 'Vêtements'),
+  equipment(154, 'Vêtements, fins', 'Vêtements'),
+  equipment(155, 'Vêtements, costume', 'Vêtements'),
+  equipment(156, 'Vêtements, communs sombres avec capuche', 'Vêtements'),
+  equipment(157, 'Habits de cérémonie', 'Vêtements'),
+  equipment(158, 'Focaliseur arcanique (baguette)', 'Focaliseur arcanique'),
+  equipment(159, 'Focaliseur arcanique (bâton)', 'Focaliseur arcanique'),
+  equipment(160, 'Focaliseur arcanique (boule de cristal)', 'Focaliseur arcanique'),
+  equipment(161, 'Focaliseur arcanique (orbe)', 'Focaliseur arcanique'),
+  equipment(162, 'Focaliseur arcanique (sceptre)', 'Focaliseur arcanique'),
+  equipment(163, 'Focaliseur druidique (baguette d\'if)', 'Focaliseur druidique'),
+  equipment(164, 'Focaliseur druidique (bâton)', 'Focaliseur druidique'),
+  equipment(165, 'Focaliseur druidique (branche de gui)', 'Focaliseur druidique'),
+  equipment(166, 'Focaliseur druidique (totem)', 'Focaliseur druidique'),
+  equipment(167, 'Symbole sacré (amulette)', 'Symbole sacré'),
+  equipment(168, 'Symbole sacré (emblème)', 'Symbole sacré'),
+  equipment(169, 'Symbole sacré (reliquaire)', 'Symbole sacré'),
+  equipment(170, 'Sacoche à composantes', 'Composantes'),
+  equipment(171, 'Grimoire', 'Divers'),
+  equipment(172, 'Livre de prières', 'Divers'),
+  equipment(173, 'Lettre de recommandation de la guilde', 'Divers'),
+  equipment(174, 'Pelle', 'Outil'),
+  equipment(175, 'Pot en fer', 'Conteneur'),
+  equipment(176, 'Chevalière', 'Divers'),
+  equipment(177, 'Lettre de noblesse', 'Divers'),
+  equipment(178, 'Lettre d\'un collègue mort', 'Divers'),
+  equipment(179, 'Corde en soie (15 m)', 'Outil'),
+  equipment(180, 'Porte-bonheur', 'Divers'),
+  equipment(181, 'Insigne de grade', 'Divers'),
+  equipment(182, 'Trophée pris sur un ennemi', 'Divers'),
+  equipment(183, 'Carte de la ville', 'Divers'),
+  equipment(184, 'Souris domestiquée', 'Divers'),
+  equipment(185, 'Souvenir de vos parents', 'Divers'),
+  equipment(186, 'Piège à mâchoires', 'Outil'),
+  equipment(187, 'Trophée d\'animal', 'Divers'),
+  equipment(188, 'Cadeau d\'un admirateur', 'Divers'),
+  equipment(189, 'Mule', 'Monture'),
+  equipment(190, 'Charrette', 'Véhicule'),
+  equipment(191, 'Bouteilles bouchonnées remplies d\'un liquide coloré (10)', 'Outils d\'escroquerie'),
+  equipment(192, 'Dés truqués', 'Outils d\'escroquerie'),
+  equipment(193, 'Cartes marquées', 'Outils d\'escroquerie'),
+  equipment(194, 'Fausse chevalière de duc', 'Outils d\'escroquerie'),
+]
+
 const toolItems: ItemSeed[] = [
   // Outils d'artisan
   tool(70, 'Outils de forgeron', 'artisan', 'Outils d\'artisan'),
@@ -487,5 +583,6 @@ export const itemsData: ItemSeed[] = [
   ...martialRangedWeapons,
   ...armors,
   ...equipmentItems,
+  ...startingGear,
   ...toolItems,
 ]

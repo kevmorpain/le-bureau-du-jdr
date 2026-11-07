@@ -26,6 +26,7 @@ import { byFeaturePickOrder, isFeaturePickChoice, optionFeatureIds } from '~~/sh
 import { pactBoonOfName, type PactBoon } from '~~/shared/rules/pactBoon'
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
+import { emptySelection, expandEquipment, type EquipmentSelection, type EquipmentSources } from '~~/shared/rules/startingEquipment'
 import type { Effect } from '~~/server/db/schema/effects'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -99,9 +100,7 @@ export interface BuilderState {
   customBackgroundSkills: string[]
 
   // Étape 6 — Équipement
-  equipChoices: (string | null)[]
-  equipSubChoices: Record<number, string | null>
-  equipment: string[]
+  equipmentSelection: EquipmentSelection
 
   // Accessoires de la faveur de pacte (le pacte lui-même est un pick de `featurePicks`)
   pactWeaponItemName: string | null
@@ -189,9 +188,7 @@ const INIT_STATE: BuilderState = {
   selectedLanguages: [],
   customBackgroundName: '',
   customBackgroundSkills: [],
-  equipChoices: [],
-  equipSubChoices: {},
-  equipment: [],
+  equipmentSelection: emptySelection(),
   pactWeaponItemName: null,
   selectedPactBoonCantripIds: [],
   asiChoice: {},
@@ -308,6 +305,11 @@ export function useCharacterBuilder() {
   }, { immediate: true })
   const classData = computed(() => CLASSES.find(c => c.id === state.value.classId) ?? null)
   const backgroundData = computed(() => BACKGROUNDS.find(b => b.id === state.value.backgroundId) ?? null)
+  const equipmentSources = computed<EquipmentSources>(() => ({
+    ...(classData.value ? { [`class:${classData.value.id}`]: classData.value.equipment } : {}),
+    ...(backgroundData.value ? { [`background:${backgroundData.value.id}`]: backgroundData.value.equipment } : {}),
+  }))
+  const startingEquipment = computed(() => expandEquipment(equipmentSources.value, state.value.equipmentSelection))
 
   // Points de choix lus dans le catalogue et résolus localement.
   const classDbId = computed(() => resolveClassId(classData.value?.dbName))
@@ -793,7 +795,7 @@ export function useCharacterBuilder() {
         return choicesComplete(backgroundChoices.value)
       }
       case 'equipment': {
-        return s.equipment.length > 0
+        return classData.value != null && startingEquipment.value.missingPicks.length === 0
       }
       default:
         return false
@@ -856,7 +858,7 @@ export function useCharacterBuilder() {
       feats: s.bonusFeatureId != null ? 'don bonus' : null,
       spells: cantripCount + spellCount > 0 ? `${cantripCount + spellCount} sorts` : null,
       description: s.name.trim() || null,
-      equipment: s.equipment.length > 0 ? `${s.equipment.length} objets` : null,
+      equipment: startingEquipment.value.lines.length > 0 ? `${startingEquipment.value.lines.length} objets` : null,
     }
   })
 
@@ -886,6 +888,8 @@ export function useCharacterBuilder() {
     classData,
     classDbId,
     backgroundData,
+    equipmentSources,
+    startingEquipment,
     alignmentData,
     raceBonuses,
     finalAbilities,

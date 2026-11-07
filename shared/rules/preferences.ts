@@ -7,6 +7,11 @@ export const PREFERENCES = {
     label: 'Lancer les dés dans l\'application',
     description: 'Désactivé, la fiche n\'affiche que les modificateurs : vous lancez vos dés à la table et saisissez le résultat quand la fiche en a besoin.',
   },
+  ammunition: {
+    default: false,
+    label: 'Décompter les munitions',
+    description: 'Chaque attaque avec une arme à munitions en consomme une, et l\'arme ne tire plus sans. Désactivé, les munitions restent à l\'inventaire sans être décomptées.',
+  },
 } as const satisfies Record<string, { default: boolean, label: string, description: string }>
 
 export type PreferenceKey = keyof typeof PREFERENCES

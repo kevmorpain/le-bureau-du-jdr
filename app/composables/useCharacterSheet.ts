@@ -255,6 +255,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     temporaryEffectSources: temporary.temporaryEffectSources,
     classTraits,
     proficiencyOverrides: overrides.proficiencyOverrides,
+    ammunitionTracked: computed(() => prefs.preferences.value.ammunition),
   })
 
   itemSourcesRef.value = inventoryLayer.activeItemSources
@@ -539,6 +540,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     toggleAttuned: inventoryLayer.toggleAttuned,
     attunedCount: inventoryLayer.attunedCount,
     setUsingTwoHanded: inventoryLayer.setUsingTwoHanded,
+    spendAmmunition: inventoryLayer.spendAmmunition,
     setRangeChoice: inventoryLayer.setRangeChoice,
     setThrowing: inventoryLayer.setThrowing,
     setProficiencyOverride: overrides.setProficiencyOverride,

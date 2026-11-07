@@ -653,9 +653,11 @@ const {
   toggleAttuned,
   attunedCount,
   setUsingTwoHanded,
+  spendAmmunition,
   setRangeChoice,
   setThrowing,
 } = useCharacterSheet(characterSheetModel)
+const toast = useToast()
 
 const entryToRemove = ref<InventoryEntry | null>(null)
 const confirmingRemoval = ref(false)
@@ -687,6 +689,10 @@ const parseDice = (dice: string): { count: number, sides: number } => {
 const rollAttack = (entryId: number) => {
   const w = weaponStatsByEntry.value.get(entryId)
   if (!w) return
+  if (!spendAmmunition(entryId)) {
+    toast.add({ title: `Plus de ${w.ammunition?.label}`, description: `${w.name} ne peut pas tirer sans munition.`, color: 'warning' })
+    return
+  }
   props.roll?.(`Attaque — ${w.name}`, w.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, strengthMelee: w.usesStrength, extra: w.attackRollSources } })
 }
 
