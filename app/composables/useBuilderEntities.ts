@@ -1,5 +1,6 @@
 import type { MulticlassPrerequisites } from '~~/shared/rules/multiclass'
 import type { ClassProficiencyGrants } from '~~/server/utils/classProficiencyDerivation'
+import { resolveLines, type CatalogItem } from '~~/shared/rules/startingEquipment'
 
 // Unique point de résolution « slug/name → dbId » : le reste du builder ne manipule que des ids.
 export type DbSubclass = { id: number, name: string, description?: string | null }
@@ -16,7 +17,7 @@ export type DbClass = {
 const NO_PROFICIENCIES: ClassProficiencyGrants = { start: [], savingThrows: [], multiclass: [] }
 type DbSpecies = { id: number, name: string }
 type DbBackground = { id: number, name: string }
-type DbItem = { id: number, name: string }
+type DbItem = CatalogItem
 
 export function useBuilderEntities() {
   const { extendedQuery } = useExtendedContent()
@@ -86,17 +87,8 @@ export function useBuilderEntities() {
   }
 
   function resolveItemIds(itemNames: string[]): { ids: number[], unresolved: string[] } {
-    if (!itemNames.length || !items.value?.length) return { ids: [], unresolved: itemNames }
-    const map = new Map<string, number>()
-    for (const it of items.value) map.set(norm(it.name), it.id)
-    const ids: number[] = []
-    const unresolved: string[] = []
-    for (const name of itemNames) {
-      const id = map.get(norm(name))
-      if (id != null) ids.push(id)
-      else unresolved.push(name)
-    }
-    return { ids, unresolved }
+    const { entries, unresolved } = resolveLines(itemNames.map(name => ({ name, quantity: 1 })), items.value ?? [])
+    return { ids: entries.map(e => e.itemId), unresolved }
   }
 
   return {

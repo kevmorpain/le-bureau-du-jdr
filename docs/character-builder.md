@@ -90,8 +90,10 @@ interface BuilderState {
   portraitUrl: string
 
   // Étape 6 — Équipement
-  equipChoices: (string | null)[]  // choix par groupe d'équipement de classe
-  equipment: string[]              // liste finale des noms d'items
+  equipmentSelection: {
+    options: Record<string, number>   // option choisie par groupe, clé `class:fighter:2` ; absent = première option
+    picks: Record<string, string>     // objet choisi pour un « au choix », clé `class:fighter:0:1:0` (groupe:option:position)
+  }                                   // la liste finale (`startingEquipment`) se dérive, elle n'est pas stockée
 
   // Accessoires de la faveur de Pacte (le pacte, les manifestations, le style de combat et la Métamagie sont des picks de `featurePicks`)
   pactWeaponItemName: string | null            // nom item si le pacte pris est celui de la Lame
@@ -310,22 +312,26 @@ name.trim().length >= 1 && backgroundId !== null && alignment !== null
 
 ### Étape 6 — Équipement (`StepEquipment.vue`)
 
-**But** : Choisir l'équipement de départ de la classe + équipement automatique de l'historique.
+**But** : Choisir l'équipement de départ de la classe + celui de l'historique, tels que les écrit AideDD.
+
+**Données** : `equipment` de chaque classe et historique dans `app/data/character-builder.ts`, des
+**références** typées par `shared/rules/startingEquipment.ts` ([D28](./decisions.md#d28)) : un objet du
+catalogue (nom, quantité), un choix d'objet par sélecteur (`SIMPLE_WEAPON`, `HOLY_SYMBOL`, `ARTISAN_TOOL`…),
+un sac (`EQUIPMENT_PACKS`, déplié en objets), de l'or. Un groupe est fixe (`fixed`) ou à options (`options`).
 
 **UI** :
-- **Équipement de classe** : groupes de choix (option A / option B via boutons radio)
-- **Équipement automatique** : items inclus sans choix (affichés grisés)
-- **Équipement d'historique** : liste automatique selon historique choisi
-- **Récapitulatif** : tous les items sélectionnés en chips
+- **Un bloc par groupe** : options en boutons (libellé dérivé des références), puis, pour l'option choisie, le
+  contenu du sac et un sélecteur d'objet par choix (armes, instruments, outils, focaliseurs, symboles sacrés), lus dans le catalogue
+- **Groupe fixe** : « Inclus automatiquement »
+- **Récapitulatif** : l'inventaire final avec quantités, et l'or
 
-**Validation step** :
-```ts
-equipment.length > 0
-```
+**Validation step** : tous les choix d'objet sont faits (`startingEquipment.missingPicks` vide).
 
-**DB mapping** : résolution des noms d'items vers `itemId` dans la table `items` (lookup par nom). Si non trouvé, l'item est ignoré silencieusement.
+**DB mapping** : `resolveLines` joint chaque ligne au catalogue (nom exact, `itemType` si la référence le précise) ; une
+ligne introuvable bloque la création avec un message, rien n'est jeté. Les choix mémorisés sont préfixés par l'origine
+(`class:<id>`, `background:<id>`) : changer de classe ne garde pas les choix de la précédente.
 
-**Sidebar** : affiche le nombre d'items
+**Sidebar** : affiche le nombre d'objets
 
 ---
 
@@ -465,7 +471,7 @@ Mobile (<lg) :
 3. `character_ability_scores` × 6 insert (scores de **base** — les bonus d'espèce sont dérivés sur la fiche via les `effects`, PAS stockés ici ; voir `docs/architecture-audit.md` §2. Seuls les bonus de *choix* demi-elfe / humain variant sont cuits dans la base.)
 4. Compétences : choix de classe et d'expertise en `character_choices` ; compétences d'un historique personnalisé dans cet historique ; compétence et langues de l'Humain variant en `character_proficiency_overrides` ([D27](./decisions.md#d27))
 5. `character_spells` insert (isKnown: true, `classId` = la classe créée ; isPrepared: true, sauf grimoire du Magicien où seuls les sorts de `preparedSpellIds` le sont) — après `learnedSpellsError` (liste, niveau, nombre, écoles)
-6. `character_inventory` insert (résolution nom → itemId via lookup, ignore silencieusement si non trouvé)
+6. `character_inventory` insert (`inventory: [{ itemId, quantity }]`, ids vérifiés au catalogue par `validateInventory` avant toute écriture)
 
 Corps accepté :
 ```ts
@@ -479,7 +485,7 @@ Corps accepté :
   abilityScores?: Record<string, number>     // scores de BASE (bonus d'espèce dérivés via effects, pas ici)
   skillProficiencies?: string[]              // clés de compétences
   selectedSpellIds?: number[]               // IDs de sorts DB
-  inventoryItemNames?: string[]             // noms d'items (résolution silencieuse)
+  inventory?: { itemId: number, quantity: number }[]   // équipement de départ, quantité 1 à 1000
   featurePicks?: { progressionId: number, featureId: number }[]   // style de combat, pacte, manifestations, Métamagie, manœuvres
 }
 ```
@@ -492,5 +498,5 @@ Corps accepté :
 |---|---|
 | `character_species` | parentId, abilityBonuses, traits, darkvision — compensé par `app/data/` |
 | `classes` | skillChoiceCount, skillChoiceOptions, role — compensé par `app/data/`. JS et maîtrises d'armes/armures/outils : porteurs `proficiency_grant` / `multiclass_proficiency_grant` en base (seedés depuis `shared/rules/classProficiencies.ts`), lus par le builder via `/api/catalog/classes` (`proficiencies`). `subclass_level` et `spellcasting_type` sont **en base** depuis la migration 0080 ; le builder garde sa copie jusqu'au recâblage front (roadmap `dnd-5.5.md` §3, point 6), sous garde-fou `test/nuxt/classesIdentityFront.test.ts` |
-| `backgrounds` | equipment JSON, suggestions personnalité/idéaux/liens/défauts — compensé par `app/data/` |
+| `backgrounds` | equipment (références au catalogue d'objets), suggestions personnalité/idéaux/liens/défauts — compensé par `app/data/` |
 | `character_species` | Drow (Elfe Noir) absent de la DB — mapping vers null ou 'Elfe des bois' |

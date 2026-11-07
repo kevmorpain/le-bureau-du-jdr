@@ -10,12 +10,14 @@ import { canAttune } from '~~/shared/rules/attunement'
 import { pactWeaponBonus, type PactWeaponBonus } from '~~/shared/rules/pactWeapon'
 import type { RollSource } from '~~/shared/rules/rolls'
 import { rangeRollSources, type RangeChoice } from '~~/shared/rules/weaponRange'
+import { AMMUNITION_LABELS, ammunitionAvailable, stackToSpend, type AmmunitionStack, type AmmunitionType } from '~~/shared/rules/ammunition'
 import { withProficiencyOverrides, type ProficiencyOverrideRow } from '~~/shared/rules/proficiencyOverrides'
 import { useWeaponRange } from './useWeaponRange'
 import { useSheetResource } from './useSheetResource'
 import type {
   WeaponProperties,
   ArmorProperties,
+  EquipmentProperties,
   ToolProperties,
 } from '~~/server/db/schema/items'
 import type { Rarity } from '~~/shared/rules/itemRarity'
@@ -102,6 +104,8 @@ export interface WeaponStats {
   extraDamageFixed: PactWeaponBonus['extraDamage']
   // Attaques de l'action Attaquer menées avec cette arme (Lame assoiffée : deux avec l'arme de pacte).
   attacksPerAction: number
+  // Munition tirée à chaque attaque ; null sans propriété munitions, si le type n'est pas renseigné (arme sur mesure) ou si la fiche ne décompte pas les munitions.
+  ammunition: { type: AmmunitionType, label: string, available: number } | null
 }
 
 export interface ArmorClassBreakdown {
@@ -123,6 +127,7 @@ export const useCharacterInventory = (
     temporaryEffectSources?: ComputedRef<EffectSource[]>
     classTraits?: ComputedRef<ClassTraits>
     proficiencyOverrides?: ComputedRef<ProficiencyOverrideRow[]>
+    ammunitionTracked?: ComputedRef<boolean>
   },
 ) => {
   const characterId = computed(() => characterSheet?.value?.id)
@@ -303,6 +308,13 @@ export const useCharacterInventory = (
 
   const pactWeapon = computed(() => pactWeaponBonus(deps?.allEffects.value ?? [], deps?.abilityModifiers.value.cha ?? 0))
 
+  const ammunitionStacks = computed<AmmunitionStack[]>(() =>
+    inventory.value.flatMap((entry) => {
+      const type = entry.item?.itemType === 'equipment' ? (entry.item.properties as EquipmentProperties).ammunition_type : undefined
+      return type ? [{ entryId: entry.id, quantity: entry.quantity, ammunitionType: type }] : []
+    }),
+  )
+
   const equippedWeaponStats = computed<WeaponStats[]>(() =>
     equippedWeapons.value
       .filter(e => e.item)
@@ -368,6 +380,13 @@ export const useCharacterInventory = (
         if (isLoading) {
           warnings.push('Une attaque par action quel que soit le nombre d\'attaques disponibles')
         }
+        const ammunitionType = propList.includes('ammunition') && (deps?.ammunitionTracked?.value ?? true) ? props.ammunition_type ?? null : null
+        const ammunition = ammunitionType
+          ? { type: ammunitionType, label: AMMUNITION_LABELS[ammunitionType], available: ammunitionAvailable(ammunitionStacks.value, ammunitionType) }
+          : null
+        if (ammunition?.available === 0) {
+          warnings.push(`Plus de ${ammunition.label} : impossible de tirer`)
+        }
 
         let rangeText: string | null = null
         if (props.range && (isRanged || isThrown)) {
@@ -425,6 +444,7 @@ export const useCharacterInventory = (
           ],
           extraDamageFixed: entry.isPactWeapon ? pactWeapon.value.extraDamage : [],
           attacksPerAction: Math.max(deps?.classTraits?.value.attacksPerAction ?? 1, entry.isPactWeapon ? pactWeapon.value.attacksPerAction : 1),
+          ammunition,
         }
       }),
   )
@@ -542,6 +562,15 @@ export const useCharacterInventory = (
     await updateEntry(entryId, { usingTwoHanded: value })
   }
 
+  const spendAmmunition = (weaponEntryId: number): boolean => {
+    const ammunition = equippedWeaponStats.value.find(w => w.entryId === weaponEntryId)?.ammunition
+    if (!ammunition) return true
+    const stack = stackToSpend(ammunitionStacks.value, ammunition.type)
+    if (!stack) return false
+    updateEntry(stack.entryId, { quantity: stack.quantity - 1 })
+    return true
+  }
+
   return {
     inventory,
     equippedWeapons,
@@ -565,6 +594,7 @@ export const useCharacterInventory = (
     toggleAttuned,
     attunedCount,
     setUsingTwoHanded,
+    spendAmmunition,
     setRangeChoice: weaponRange.setChoice,
     setThrowing: weaponRange.setThrowing,
     refreshInventory,

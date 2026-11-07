@@ -4,7 +4,7 @@
       <span class="text-4xl">🎒</span>
       <div>
         <h2 class="text-xl font-bold text-(--ui-text)">Équipement</h2>
-        <p class="text-sm text-muted mt-0.5">Choisissez l'équipement de départ de votre classe. L'équipement d'historique est ajouté automatiquement.</p>
+        <p class="text-sm text-muted mt-0.5">Choisissez l'équipement de départ de votre classe. L'équipement d'historique s'y ajoute.</p>
       </div>
     </div>
 
@@ -13,81 +13,75 @@
     </div>
 
     <template v-else>
-      <div class="mb-6">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Équipement — {{ classData.name }}</p>
+      <div v-for="section in sections" :key="section.source" class="mb-6">
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Équipement — {{ section.title }}</p>
         <div class="flex flex-col gap-3">
           <div
-            v-for="(grp, i) in classData.equipment"
-            :key="i"
+            v-for="(group, g) in section.groups"
+            :key="g"
             class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4"
           >
-            <template v-if="grp.choice && grp.options">
+            <template v-if="groupOptions(group).length > 1">
               <p class="text-xs text-muted mb-2">Choisissez une option</p>
               <div class="flex flex-wrap gap-2 mb-2">
                 <button
-                  v-for="opt in grp.options"
-                  :key="opt"
+                  v-for="(opt, o) in groupOptions(group)"
+                  :key="o"
                   type="button"
                   class="px-3 py-1.5 rounded-lg border text-xs transition-colors cursor-pointer"
-                  :class="choices[i] === opt
+                  :class="chosenOptionIndex(group, selection, section.source, g) === o
                     ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-medium'
                     : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-amber-500/40'"
-                  @click="setChoice(i, opt)"
+                  @click="setOption(section.source, g, o)"
                 >
-                  {{ opt }}
+                  {{ optionLabel(opt) }}
                 </button>
               </div>
+            </template>
+            <template v-else>
+              <p class="text-xs text-muted/60 mb-1.5">Inclus automatiquement</p>
+              <p class="text-sm text-(--ui-text)">{{ optionLabel(groupOptions(group)[0]!) }}</p>
+            </template>
 
-              <template v-if="choices[i] && genericOptions(choices[i]!)">
-                <p class="text-xs text-muted/70 mb-2 mt-1">Choisissez un item spécifique :</p>
+            <template v-for="(ref, r) in chosenRefs(section.source, group, g)" :key="r">
+              <p v-if="'pack' in ref" class="text-xs text-muted/70 mt-2">
+                {{ packName(ref.pack) }} : {{ packContents(ref.pack) }}
+              </p>
+              <div v-else-if="'pick' in ref" class="mt-2">
+                <p class="text-xs text-muted/70 mb-2">Choisissez : {{ selectorLabel(ref.pick) }}</p>
                 <div class="flex flex-wrap gap-1.5">
                   <button
-                    v-for="item in genericOptions(choices[i]!)"
-                    :key="item"
+                    v-for="candidate in candidatesFor(ref.pick, items)"
+                    :key="candidate.id"
                     type="button"
                     class="px-2.5 py-1 rounded-lg border text-xs transition-colors cursor-pointer"
-                    :class="subChoices[i] === item
+                    :class="selection.picks[pickKey(section.source, g, chosenOptionIndex(group, selection, section.source, g), r)] === candidate.name
                       ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400 font-medium'
                       : 'border-(--ui-border) bg-(--ui-bg) text-muted hover:border-emerald-500/40'"
-                    @click="setSubChoice(i, item)"
+                    @click="setPick(pickKey(section.source, g, chosenOptionIndex(group, selection, section.source, g), r), candidate.name)"
                   >
-                    {{ item }}
+                    {{ candidate.name }}
                   </button>
                 </div>
-              </template>
-            </template>
-
-            <template v-else-if="grp.items">
-              <p class="text-xs text-muted/60 mb-1.5">Inclus automatiquement</p>
-              <p class="text-sm text-(--ui-text)">{{ grp.items.join(' · ') }}</p>
+              </div>
             </template>
           </div>
-        </div>
-      </div>
-
-      <div v-if="backgroundData" class="mb-6">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Équipement — {{ backgroundData.name }}</p>
-        <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
-          <div v-for="(item, i) in backgroundData.equipment" :key="i" class="flex items-center gap-2 py-0.5">
-            <span class="text-amber-400/60 text-xs">·</span>
-            <span class="text-sm text-muted">{{ item }}</span>
-          </div>
-          <div v-if="!backgroundData.equipment.length" class="text-xs text-muted/60 italic">Aucun équipement d'historique.</div>
         </div>
       </div>
 
       <div>
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
           Inventaire final
-          <span class="text-amber-400 ml-1.5">{{ state.equipment.length }} objets</span>
+          <span class="text-amber-400 ml-1.5">{{ startingEquipment.lines.length }} objets</span>
+          <span v-if="startingEquipment.po" class="text-amber-400 ml-1.5">· {{ startingEquipment.po }} po</span>
         </p>
         <div class="flex flex-wrap gap-1.5">
           <span
-            v-for="(item, i) in state.equipment"
-            :key="i"
+            v-for="line in startingEquipment.lines"
+            :key="line.name"
             class="text-xs px-2.5 py-1 rounded-full border border-(--ui-border) bg-(--ui-bg-elevated) text-(--ui-text)"
           >
-            {{ item }}
+            {{ line.quantity > 1 ? `${line.name} ×${line.quantity}` : line.name }}
           </span>
         </div>
       </div>
@@ -131,86 +125,60 @@
 </template>
 
 <script lang="ts" setup>
-import { GENERIC_ITEM_OPTIONS } from '~/data/character-builder'
+import {
+  EQUIPMENT_PACKS,
+  candidatesFor,
+  chosenOptionIndex,
+  groupKey,
+  groupOptions,
+  optionLabel,
+  pickKey,
+  refLabel,
+  selectorLabel,
+  type EquipmentGroup,
+  type PackKey,
+} from '~~/shared/rules/startingEquipment'
 
 const {
   state,
   classData,
   backgroundData,
+  equipmentSources,
+  startingEquipment,
   pactBoon,
 } = useCharacterBuilder()
 
-// Armes de mêlée pour le Pacte de la Lame (approximation : filtrage sur les noms d'armes).
-const { data: allItems } = useFetch('/api/items', {
-  query: { type: 'weapon' },
-  immediate: computed(() => pactBoon.value === 'blade'),
-})
+const { items } = useBuilderEntities()
 
-const meleeItemNames = computed(() => {
-  const items = (allItems.value ?? []) as any[]
-  return new Set(items
-    .filter((it: any) => {
-      const cat = it.properties?.weapon_category
-      return cat === 'simple_melee' || cat === 'martial_melee'
-    })
-    .map((it: any) => it.name as string),
-  )
-})
+const selection = computed(() => state.value.equipmentSelection)
+
+const sections = computed(() => [
+  classData.value && { source: `class:${classData.value.id}`, title: classData.value.name, groups: classData.value.equipment },
+  backgroundData.value && { source: `background:${backgroundData.value.id}`, title: backgroundData.value.name, groups: backgroundData.value.equipment },
+].filter(s => s && equipmentSources.value[s.source]?.length) as { source: string, title: string, groups: EquipmentGroup[] }[])
+
+const chosenRefs = (source: string, group: EquipmentGroup, g: number) =>
+  groupOptions(group)[chosenOptionIndex(group, selection.value, source, g)]!.refs
+
+const packName = (key: PackKey) => EQUIPMENT_PACKS[key].name
+const packContents = (key: PackKey) => EQUIPMENT_PACKS[key].items.map(refLabel).join(' · ')
+
+function setOption(source: string, group: number, option: number) {
+  state.value.equipmentSelection.options[groupKey(source, group)] = option
+}
+
+function setPick(key: string, name: string) {
+  state.value.equipmentSelection.picks[key] = name
+}
+
+const meleeItemNames = computed(() => new Set(items.value
+  .filter((it) => {
+    const category = (it.properties as { weapon_category?: string }).weapon_category
+    return it.itemType === 'weapon' && (category === 'simple_melee' || category === 'martial_melee')
+  })
+  .map(it => it.name)))
 
 const meleEquipmentItems = computed(() =>
-  state.value.equipment.filter(name => meleeItemNames.value.has(name)),
+  startingEquipment.value.lines.map(l => l.name).filter(name => meleeItemNames.value.has(name)),
 )
-
-const choices = ref<(string | null)[]>([])
-const subChoices = ref<Record<number, string | null>>({})
-
-function genericOptions(opt: string): string[] | null {
-  return GENERIC_ITEM_OPTIONS[opt] ?? null
-}
-
-watch(classData, (cls) => {
-  if (!cls) { choices.value = []; subChoices.value = {}; return }
-  choices.value = cls.equipment.map((grp, i) =>
-    grp.choice ? (state.value.equipChoices[i] ?? grp.options?.[0] ?? null) : null,
-  )
-  subChoices.value = { ...(state.value.equipSubChoices ?? {}) }
-  syncEquipment()
-}, { immediate: true })
-
-function setChoice(i: number, opt: string) {
-  choices.value[i] = opt
-  subChoices.value[i] = null
-  syncEquipment()
-}
-
-function setSubChoice(i: number, item: string) {
-  subChoices.value[i] = item
-  syncEquipment()
-}
-
-function syncEquipment() {
-  const cls = classData.value
-  if (!cls) { state.value.equipment = []; return }
-
-  const items: string[] = []
-  cls.equipment.forEach((grp, i) => {
-    if (grp.choice) {
-      const chosen = choices.value[i]
-      if (chosen) {
-        const sub = subChoices.value[i]
-        items.push(sub ?? chosen)
-      }
-    }
-    else {
-      grp.items?.forEach(it => items.push(it))
-    }
-  })
-  backgroundData.value?.equipment.forEach(it => items.push(it))
-
-  state.value.equipChoices = [...choices.value]
-  state.value.equipSubChoices = { ...subChoices.value }
-  state.value.equipment = items
-}
-
-watch(() => backgroundData.value, syncEquipment)
 </script>

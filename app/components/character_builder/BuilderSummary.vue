@@ -151,18 +151,19 @@
         </div>
       </div>
 
-      <div v-if="state.equipment.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-8">
+      <div v-if="startingEquipment.lines.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-8">
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
-          Équipement <span class="text-amber-400 ml-1">{{ state.equipment.length }} objets</span>
+          Équipement <span class="text-amber-400 ml-1">{{ startingEquipment.lines.length }} objets</span>
+          <span v-if="startingEquipment.po" class="text-amber-400 ml-1.5">· {{ startingEquipment.po }} po</span>
         </p>
         <div class="flex flex-wrap gap-1">
           <UBadge
-            v-for="(item, i) in state.equipment"
-            :key="i"
+            v-for="line in startingEquipment.lines"
+            :key="line.name"
             color="neutral"
             variant="subtle"
             size="md"
-          >{{ item }}</UBadge>
+          >{{ line.quantity > 1 ? `${line.name} ×${line.quantity}` : line.name }}</UBadge>
         </div>
       </div>
 
@@ -200,6 +201,7 @@ const {
   state,
   classData,
   backgroundData,
+  startingEquipment,
   alignmentData,
   raceData,
   subraceData,

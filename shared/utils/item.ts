@@ -1,5 +1,8 @@
 import { z } from 'zod'
 import type { Effect } from '~~/server/db/schema/effects'
+import { AMMUNITION_TYPES } from '~~/shared/rules/ammunition'
+
+const ammunitionTypeSchema = z.enum(AMMUNITION_TYPES)
 
 export const weaponPropertySchema = z.enum([
   'finesse', 'light', 'heavy', 'two_handed', 'thrown',
@@ -17,6 +20,7 @@ export const weaponPropertiesSchema = z.object({
   weapon_properties: z.array(weaponPropertySchema),
   range: z.object({ normal: z.number(), long: z.number() }).optional(),
   versatile_damage: z.string().optional(),
+  ammunition_type: ammunitionTypeSchema.optional(),
 })
 
 export const armorTypeSchema = z.enum(['light', 'medium', 'heavy', 'shield'])
@@ -31,6 +35,7 @@ export const armorPropertiesSchema = z.object({
 
 export const equipmentPropertiesSchema = z.object({
   category: z.string().min(1),
+  ammunition_type: ammunitionTypeSchema.optional(),
 })
 
 export const toolTypeSchema = z.enum(['artisan', 'gaming', 'musical', 'other'])
@@ -75,7 +80,8 @@ export const createInventoryEntrySchema = z.object({
 })
 
 export const updateInventoryEntrySchema = z.object({
-  quantity: z.number().int().min(1).optional(),
+  // 0 : pile épuisée (dernière munition tirée), gardée pour en récupérer ou en ajouter.
+  quantity: z.number().int().min(0).optional(),
   equipped: z.boolean().optional(),
   magicBonus: z.number().int().min(0).max(3).optional(),
   currentUses: z.number().int().min(0).optional(),

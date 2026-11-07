@@ -140,6 +140,13 @@
             variant="soft"
             size="md"
           />
+          <UBadge
+            v-if="weapon.ammunition"
+            :label="`${weapon.ammunition.available} ${weapon.ammunition.label}`"
+            :color="weapon.ammunition.available ? 'neutral' : 'error'"
+            variant="soft"
+            size="md"
+          />
           <div class="flex gap-1 flex-wrap">
             <WeaponThrowSwitch
               :weapon="weapon"
@@ -334,7 +341,8 @@ const bonusBreakdown = (parts: { label: string, amount: number }[]) =>
   `dont ${parts.map(p => `${formatModifier(p.amount)} ${p.label}`).join(', ')}`
 
 const csRef = toRef(props, 'characterSheet')
-const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, elapseDurations, setRangeChoice, setThrowing } = useCharacterSheet(csRef)
+const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, elapseDurations, setRangeChoice, setThrowing, spendAmmunition } = useCharacterSheet(csRef)
+const toast = useToast()
 
 const slots = inject<Ref<{ spellcasting: Record<number, { max: number, current: number, created?: number }>, pact_magic: Record<number, { max: number, current: number }> }>>('spellSlots')
 const { setActive } = useClassResources(csRef, slots)
@@ -417,6 +425,10 @@ const parseDice = (dice: string) => {
 }
 
 const rollAttack = (weapon: WeaponStat) => {
+  if (!spendAmmunition(weapon.entryId)) {
+    toast.add({ title: `Plus de ${weapon.ammunition?.label}`, description: `${weapon.name} ne peut pas tirer sans munition.`, color: 'warning' })
+    return
+  }
   props.roll?.(`Attaque — ${weapon.name}`, weapon.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, strengthMelee: weapon.usesStrength, extra: weapon.attackRollSources } })
 }
 

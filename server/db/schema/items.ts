@@ -3,6 +3,7 @@ import { relations } from 'drizzle-orm'
 import type { MasteryProperty } from '~~/shared/rules/masteryProperties'
 import type { Source } from '~~/shared/rules/source'
 import type { Rarity } from '~~/shared/rules/itemRarity'
+import type { AmmunitionType } from '~~/shared/rules/ammunition'
 import type { DamageTypeKey } from './effects'
 import characterInventory from './character_inventory'
 import itemEffects from './item_effects'
@@ -20,6 +21,7 @@ export interface WeaponProperties {
   weapon_properties: WeaponProperty[]
   range?: { normal: number; long: number }
   versatile_damage?: string // "1d10" pour les armes polyvalentes
+  ammunition_type?: AmmunitionType
 }
 
 export type ArmorType = 'light' | 'medium' | 'heavy' | 'shield'
@@ -34,6 +36,7 @@ export interface ArmorProperties {
 
 export interface EquipmentProperties {
   category: string
+  ammunition_type?: AmmunitionType
 }
 
 export type ToolType = 'artisan' | 'gaming' | 'musical' | 'other'
