@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
-import { spells } from '../../server/db/seeds/data/spells'
+import { baseSpells as spells } from '../../server/db/seeds/data/spells'
 import { applyMigration, readMigration, replayMigrations } from '../fixtures/migrations'
 
 // Migration 0129 : pose sur les sorts déployés la durée structurée que le seed déclare. Les deux chemins doivent

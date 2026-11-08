@@ -22,7 +22,7 @@
 | [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S7 | Rituel, limite de préparation, zone d'effet |
 | [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P9 | Choix jamais proposés |
-| [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 118 sorts sur ~360, dons, objets magiques |
+| [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 147 sorts seedés sur ~360, dons, objets magiques |
 | [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U12 | Lecture des sorts, ~~montée en puissance~~, historique de jets |
 | [N — Contrôle manuel & préférences](#n--contrôle-manuel--préférences) | N1–N6 | L'app décide tout, le joueur ne peut rien reprendre |
 | [X — Surface produit](#x--surface-produit) | X1–X7 | XP, partage, export, EN, groupe |
@@ -125,7 +125,7 @@ donc là où la fiche est objectivement fausse, pas juste incomplète.
 | Code | Suivi | Sujet |
 |---|---|---|
 | **O1** | ✅ résolu ([#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158), lot 9) | Harmonisation : la limite de 3 objets bloque (`shared/rules/attunement.ts`) — l'interrupteur d'un quatrième objet est grisé et `toggleAttuned` ne fait rien ; on peut toujours en retirer un. Côté fiche seulement : un refus serveur au rejeu resterait en tête de la file hors-ligne ([D25](./decisions.md#d25)). L'alerte ne reste que pour une fiche déjà au-dessus de la limite |
-| **O2** | ✅ résolu ([#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159), lot 14) | Poids et prix des objets : `weight_g`, `cost_cp` et `lot_size` (migration 0155), valeurs d'AideDD pour les 149 objets que la règle chiffre, affichés sur chaque ligne de l'inventaire ; poids et prix saisissables sur un objet sur mesure ([D29](./decisions.md#d29)). **Non porté** : l'achat et la vente avec la bourse |
+| **O2** | ✅ résolu ([#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159), lot 14) | Poids et prix des objets : `weight_g`, `cost_cp` et `lot_size` (migration 0155), valeurs d'AideDD pour les 149 objets que la règle chiffre, affichés sur chaque ligne de l'inventaire ; poids et prix saisissables sur un objet sur mesure ([D29](./decisions.md#d29)). **Non porté** : l'achat et la vente avec la bourse, suivis par [#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159) (mode marchand) |
 | **O3** | ✅ résolu ([#160](https://github.com/kevmorpain/le-bureau-du-jdr/issues/160), lot 4) | Pénalité de vitesse des armures lourdes : même règle que R10 (AideDD : seule une Force insuffisante réduit la vitesse) |
 | **O4** | ✅ résolu ([#161](https://github.com/kevmorpain/le-bureau-du-jdr/issues/161), lot 16) | Munitions : flèches, carreaux, billes et aiguilles au catalogue (`ammunition_type` sur l'objet et sur chaque arme à munitions) ; chaque attaque consomme une pile du bon type, l'arme ne tire plus sans (`spendAmmunition`), badge du reste en Mode Combat. Réglage `ammunition` (défaut : désactivé, au compte ou à la fiche) pour les tables qui décomptent, comme [D23](./decisions.md#d23) le prévoyait. **Non porté** : la récupération de la moitié des munitions (saisie manuelle de la quantité), les armes sur mesure (pas de type de munition à choisir dans l'éditeur d'objet), les armes de lancer ([D28](./decisions.md#d28)) |
 | **O5** | ✅ résolu ([#162](https://github.com/kevmorpain/le-bureau-du-jdr/issues/162), lot 9) | Armes lancées et longue portée : une arme de corps à corps à lancer garde son attaque de mêlée et gagne un lancer, qui est une attaque à distance (même caractéristique, bonus « à distance » des effets ; ni Rage, ni Duel, ni dés de critique de mêlée). Une bascule Mêlée / Lancer par arme (`WeaponThrowSwitch`, mêlée par défaut) montre l'un ou l'autre jeu de boutons, à l'inventaire comme en Mode Combat. « Longue portée » et « Ennemi à 1,50 m » sont des choix du joueur par arme (`useWeaponRange`, dans le navigateur, lus après le montage : la fiche est rendue côté serveur) qui nomment un désavantage au jet de tir ou de lancer ; ils ne s'affichent qu'en mode Lancer, ou sur une arme à distance. **Non porté** : le style Archerie n'est pas appliqué au lancer (règle non vérifiée) ; la portée maximale n'est pas imposée ; les munitions restent à O4 |
@@ -180,10 +180,10 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 
 | Code | Suivi | Sujet |
 |---|---|---|
-| **D1** | [#176](https://github.com/kevmorpain/le-bureau-du-jdr/issues/176) | Sorts : 118 seedés sur ~360 |
+| **D1** | [#176](https://github.com/kevmorpain/le-bureau-du-jdr/issues/176) | Sorts : 147 seedés sur ~360. Le niveau 4 du socle (PHB, SRD) est complet ([D35](./decisions.md#d35)). Restent, d'après la liste AideDD 2014, 111 sorts du socle aux niveaux 5 à 9 (39, 25, 14, 18 et 15) et le hors socle (Xanathar, Tasha), plus les niveaux 0 à 3 non mesurés |
 | **D2** | [#177](https://github.com/kevmorpain/le-bureau-du-jdr/issues/177) | Objets magiques quasi absents du catalogue |
-| **D3** | [#178](https://github.com/kevmorpain/le-bureau-du-jdr/issues/178) | Drow absent de la base |
-| **D4** | [#179](https://github.com/kevmorpain/le-bureau-du-jdr/issues/179) | Sous-classes incomplètes |
+| **D3** | ✅ périmé ([#178](https://github.com/kevmorpain/le-bureau-du-jdr/issues/178), fermée le 2026-11-09) | Le Drow existe : lignée `Drow` (`server/db/seeds/data/elf.ts`) et espèce « Elfe noir » dans le catalogue de prod |
+| **D4** | [#179](https://github.com/kevmorpain/le-bureau-du-jdr/issues/179) | Sous-classes hors socle : cinq manquantes (Voie de la magie sauvage, Domaine de la forge, Le Génie, Gardien de drake, Conspirateur — Tasha, Xanathar, Fizban). Le socle est complet |
 
 ---
 
