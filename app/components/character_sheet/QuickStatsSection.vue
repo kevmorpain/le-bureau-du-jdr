@@ -102,18 +102,37 @@
       </StatCard>
     </UTooltip>
 
-    <StatCard
-      label="Perc. passive"
+    <UTooltip
       class="flex-1"
+      :text="senses.join('\n')"
+      :disabled="!senses.length"
+      :ui="{ text: 'whitespace-pre-line max-w-56', content: 'h-auto' }"
     >
-      <UIcon
-        name="i-heroicons:eye"
-        class="size-4 mx-auto mb-0.5 text-muted"
-      />
-      <p class="text-xl font-bold leading-none">
-        {{ passivePerception }}
-      </p>
-    </StatCard>
+      <StatCard
+        label="Perc. passive"
+        class="h-full"
+      >
+        <UIcon
+          name="i-heroicons:eye"
+          class="size-4 mx-auto mb-0.5 text-muted"
+        />
+        <p class="text-xl font-bold leading-none">
+          {{ passivePerception }}
+        </p>
+        <p
+          v-if="visionRange"
+          class="text-[11px] font-semibold leading-none text-sky-400 mt-1"
+        >
+          Vision {{ visionRange }}m
+        </p>
+        <p
+          v-if="senses.length > (visionRange ? 1 : 0)"
+          class="text-[11px] font-semibold leading-none text-sky-400 mt-1"
+        >
+          {{ senses.length - (visionRange ? 1 : 0) }} sens
+        </p>
+      </StatCard>
+    </UTooltip>
 
     <StatCard
       label="Maîtrise"
@@ -175,6 +194,8 @@ const {
   swimmingSpeed,
   climbingSpeed,
   burrowingSpeed,
+  senses,
+  visionRange,
   speedModifiers,
   passivePerception,
   proficiencyBonus,
