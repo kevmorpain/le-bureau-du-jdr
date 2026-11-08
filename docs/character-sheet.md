@@ -63,8 +63,11 @@ Affiche les 6 scores (FOR/DEX/CON/INT/SAG/CHA) avec :
 2. **score naturel** = base + espèce + capacités + ASI/dons, **plafonné au maximum**. Le plafond borne ce que
    les sources ajoutent : une base saisie au-delà n'est jamais baissée ;
 3. **objets actifs** (cf. Inventaire) : `ability_increase` ajoute sans dépasser son `max` propre (Pierre de
-   Ioun : 20), ou à défaut le maximum du personnage ; puis `ability_score_set` relève le score à sa valeur
-   s'il est inférieur (Gantelets de puissance d'ogre : 19).
+   Ioun : 20), ou à défaut le maximum du personnage ; `ability_score_set` relève le score à sa valeur s'il est
+   inférieur (Gantelets de puissance d'ogre : 19). Aucune source ne dit lequel s'applique en premier : la fiche
+   calcule les deux ordres et garde le meilleur pour le joueur ([D34](./decisions.md#d34)) ;
+4. les **faveurs permanentes** (manuels et tomes : +2 au score et à son maximum, [D34](./decisions.md#d34)) entrent
+   à l'étape 2, comme un don.
 
 La décomposition au survol du modificateur affiche les lignes « Plafond » (points perdus) et « Objets & effets ».
 Les effets temporaires de la fiche (cf. colonne droite) suivent la même règle que les objets actifs (étape 3).

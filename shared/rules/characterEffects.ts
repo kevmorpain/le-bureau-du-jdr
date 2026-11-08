@@ -79,7 +79,7 @@ export const featureEffectsOf = (sheet: EffectInputsSheet | null | undefined): E
     const feature = cf.feature
     if (!feature) return []
     const effects = effectsOf(feature)
-    if (feature.featureType === 'species_trait' || feature.featureType === 'eldritch_invocation') return effects
+    if (feature.featureType === 'species_trait' || feature.featureType === 'eldritch_invocation' || feature.featureType === 'boon') return effects
     if (feature.featureType === 'feat') return resolveFeatEffects(effects, cf.choices ?? null)
     const owner = feature.featureType === 'class_feature'
       ? classes.find(c => c.classId === feature.classId)

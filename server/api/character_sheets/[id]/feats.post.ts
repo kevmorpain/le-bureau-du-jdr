@@ -1,9 +1,9 @@
 import { db, schema } from '~~/server/utils/db'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { abilityEnum } from '~~/shared/rules/abilities'
 
-// source 'bonus' = don homebrew attribué par le MJ.
+// source 'bonus' = don homebrew attribué par le MJ, ou faveur permanente (manuel, tome) acquise hors de la progression.
 const schemaBody = z.object({
   featureId: z.number().int().positive(),
   source: z.enum(['asi', 'bonus']).default('bonus'),
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const [feat] = await db
     .select({ id: schema.features.id })
     .from(schema.features)
-    .where(and(eq(schema.features.id, featureId), eq(schema.features.featureType, 'feat')))
+    .where(and(eq(schema.features.id, featureId), inArray(schema.features.featureType, ['feat', 'boon'])))
     .limit(1)
 
   if (!feat) throw createError({ statusCode: 404, statusMessage: 'Don introuvable' })

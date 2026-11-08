@@ -74,7 +74,8 @@ export async function loadSubclasses(db: Db, className: string, ruleset: Ruleset
     ))
 }
 
-export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false) {
+// Dons et faveurs permanentes (manuels, tomes) : mêmes lignes `features`, deux types, deux catalogues.
+async function loadFeatLike(db: Db, featureType: 'feat' | 'boon', ruleset: Ruleset, extended: boolean) {
   const feats = await db
     .select({
       id: schema.features.id,
@@ -85,7 +86,7 @@ export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false
     })
     .from(schema.features)
     .where(and(
-      eq(schema.features.featureType, 'feat'),
+      eq(schema.features.featureType, featureType),
       eq(schema.features.ruleset, ruleset),
       ...(extended ? [] : [eq(schema.features.source, CORE_SOURCE)]),
     ))
@@ -109,6 +110,10 @@ export async function loadFeats(db: Db, ruleset: Ruleset = '5', extended = false
     .map(f => ({ ...f, effects: effectsByFeat.get(f.id) ?? [] }))
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
 }
+
+export const loadFeats = (db: Db, ruleset: Ruleset = '5', extended = false) => loadFeatLike(db, 'feat', ruleset, extended)
+
+export const loadBoons = (db: Db, ruleset: Ruleset = '5', extended = false) => loadFeatLike(db, 'boon', ruleset, extended)
 
 export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended = false) {
   const features = await db

@@ -13,15 +13,24 @@
         class="flex-1 min-w-0"
       />
       <div v-else class="flex-1" />
-      <UButton
-        icon="i-heroicons:plus"
-        size="xs"
-        variant="ghost"
-        class="shrink-0"
-        @click="addFeatOpen = true"
-      >
-        Ajouter un don
-      </UButton>
+      <div class="flex shrink-0 items-center gap-1">
+        <UButton
+          icon="i-heroicons:plus"
+          size="xs"
+          variant="ghost"
+          @click="addFeatOpen = true"
+        >
+          Ajouter un don
+        </UButton>
+        <UButton
+          icon="i-heroicons:plus"
+          size="xs"
+          variant="ghost"
+          @click="addBoonOpen = true"
+        >
+          Ajouter une faveur
+        </UButton>
+      </div>
     </div>
 
     <ul class="space-y-1">
@@ -80,13 +89,13 @@
               </UButton>
 
               <UButton
-                v-if="isFeat(feature)"
+                v-if="isFeat(feature) || isBoon(feature)"
                 icon="i-heroicons:trash"
                 size="xs"
                 variant="ghost"
                 color="error"
                 :aria-label="`Retirer ${feature.name}`"
-                @click.stop="removeFeat(feature.id)"
+                @click.stop="removeFeat(feature.id, isBoon(feature))"
               />
 
               <div
@@ -222,6 +231,14 @@
       :owned-feature-ids="ownedFeatIds"
       @added="emit('refresh')"
     />
+
+    <AddFeatSlideover
+      v-model:open="addBoonOpen"
+      kind="boon"
+      :character-sheet-id="characterSheet.id"
+      :owned-feature-ids="ownedBoonIds"
+      @added="emit('refresh')"
+    />
   </div>
 </template>
 
@@ -278,7 +295,7 @@ const visibleFeatures = computed(() =>
 )
 
 const originColor = (kind: 'species' | 'class' | 'subclass', label?: string) => {
-  if (label === 'Don') return 'warning' as const
+  if (label === 'Don' || label === 'Faveur') return 'warning' as const
   if (label === 'Manifestation') return 'violet' as const
   if (kind === 'species') return 'success' as const
   if (kind === 'subclass') return 'info' as const
@@ -286,12 +303,18 @@ const originColor = (kind: 'species' | 'class' | 'subclass', label?: string) => 
 }
 
 const addFeatOpen = ref(false)
+const addBoonOpen = ref(false)
 
 const ownedFeatIds = computed(() =>
   allCharacterFeatures.value.filter(f => (f as any).featureType === 'feat').map(f => f.id),
 )
 
+const ownedBoonIds = computed(() =>
+  allCharacterFeatures.value.filter(f => (f as { featureType?: string }).featureType === 'boon').map(f => f.id),
+)
+
 const isFeat = (feature: { featureType?: string }) => feature.featureType === 'feat'
+const isBoon = (feature: { featureType?: string }) => feature.featureType === 'boon'
 
 const sheetEffects = (feature: { effects?: unknown[] }) => labelledEffects(feature.effects as Effect[] | undefined)
 
@@ -315,15 +338,15 @@ const setAbilityChoice = async (featureId: number, ability: AbilityKey) => {
   }
 }
 
-const removeFeat = async (featureId: number) => {
+const removeFeat = async (featureId: number, boon = false) => {
   try {
     await $fetch(`/api/character_sheets/${props.characterSheet.id}/feats/${featureId}`, {
       method: 'DELETE',
     })
     emit('refresh')
-    toaster.add({ title: 'Don retiré', color: 'success' })
+    toaster.add({ title: boon ? 'Faveur retirée' : 'Don retiré', color: 'success' })
   } catch {
-    toaster.add({ title: 'Erreur lors du retrait du don', color: 'error' })
+    toaster.add({ title: boon ? 'Erreur lors du retrait de la faveur' : 'Erreur lors du retrait du don', color: 'error' })
   }
 }
 

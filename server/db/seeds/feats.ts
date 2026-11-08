@@ -2,18 +2,25 @@ import { db, schema } from '~~/server/utils/db'
 import { effectIdFor } from '~~/server/utils/effectRows'
 import { and, eq } from 'drizzle-orm'
 import type { Effect } from '../schema/effects'
+import { boonsData } from './data/boons'
 import { featsData } from './data/feats'
 import { rulesetOf } from './lib/rulesetOf'
+
+// Les faveurs permanentes (manuels et tomes) se sèment avec les dons : même table, même chemin d'ajout à une fiche.
+const SEEDED = [
+  ...featsData.map(entry => ({ feat: entry, featureType: 'feat' as const })),
+  ...boonsData.map(entry => ({ feat: { ...entry, prerequisites: null }, featureType: 'boon' as const })),
+]
 
 export default async function seed() {
   let inserted = 0
 
-  for (const feat of featsData) {
+  for (const { feat, featureType } of SEEDED) {
     // Keyé par (name, featureType, ruleset) : un don 5.5 homonyme est une ligne DISTINCTE (D2).
     const existing = await db.query.features.findFirst({
       where: and(
         eq(schema.features.name, feat.name),
-        eq(schema.features.featureType, 'feat'),
+        eq(schema.features.featureType, featureType),
         eq(schema.features.ruleset, rulesetOf(feat)),
       ),
     })
@@ -43,7 +50,7 @@ export default async function seed() {
           ruleset: rulesetOf(feat),
           source: feat.source ?? 'core',
           description: feat.description,
-          featureType: 'feat',
+          featureType,
           classId: null,
           subclassId: null,
           levelRequired: null,
@@ -61,7 +68,7 @@ export default async function seed() {
     await _seedEffects(feature.id, feat.effects)
   }
 
-  return { inserted, skipped: featsData.length - inserted }
+  return { inserted, skipped: SEEDED.length - inserted }
 }
 
 async function _seedEffects(featureId: number, effects: Effect[]) {

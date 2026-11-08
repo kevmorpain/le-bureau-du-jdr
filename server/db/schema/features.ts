@@ -22,7 +22,7 @@ import characterFeatures from './character_features'
 // `choice_carrier` : porteur d'un point de choix dont le résultat est déjà rendu ailleurs (choix de
 // sous-classe) — lu par le catalogue, jamais matérialisé.
 // `fighting_style` : feature-OPTION d'un style ; seule l'option CHOISIE est copiée sur la fiche.
-export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'background_feature' | 'proficiency_grant' | 'multiclass_proficiency_grant' | 'choice_carrier' | 'fighting_style'
+export type FeatureType = 'species_trait' | 'class_feature' | 'subclass_feature' | 'lineage_feature' | 'eldritch_invocation' | 'feat' | 'boon' | 'background_feature' | 'proficiency_grant' | 'multiclass_proficiency_grant' | 'choice_carrier' | 'fighting_style'
 export type ActionType = 'action' | 'bonus_action' | 'reaction' | 'free'
 export const RECHARGE_TYPES = ['short_rest', 'long_rest', 'dawn'] as const
 export type RechargeType = typeof RECHARGE_TYPES[number]
