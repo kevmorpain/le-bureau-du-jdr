@@ -18,6 +18,7 @@ export const CHOICE_KINDS = [
   'asi_or_feat',
   'metamagic',
   'maneuvers',
+  'elemental_disciplines',
   'ability_scores',
   'skill',
   'language',
@@ -61,10 +62,11 @@ export const FEATURE_PICK_KINDS = [
   'invocations',
   'metamagic',
   'maneuvers',
+  'elemental_disciplines',
 ] as const satisfies readonly ChoiceKind[]
 
 // Les manifestations se remplacent à chaque niveau de la classe, même quand le niveau n'en donne aucune nouvelle ; les autres
-// points de choix remplaçables (manœuvres) ne s'échangent qu'en en apprenant de nouvelles.
+// points de choix remplaçables (manœuvres, disciplines) ne s'échangent qu'en en apprenant de nouvelles.
 export const REPLACEABLE_EVERY_LEVEL_KINDS = ['invocations'] as const satisfies readonly ChoiceKind[]
 
 // `proficient_skills` / `proficient_weapons` se résolvent contre l'état du perso (non cachables) ; le reste via le catalogue.

@@ -1100,6 +1100,27 @@
       "when": 1794400000000,
       "tag": "0156_dwarven_toughness",
       "breakpoints": true
+    },
+    {
+      "idx": 157,
+      "version": "6",
+      "when": 1794500000000,
+      "tag": "0157_feature_counters",
+      "breakpoints": true
+    },
+    {
+      "idx": 158,
+      "version": "6",
+      "when": 1794600000000,
+      "tag": "0158_elemental_disciplines",
+      "breakpoints": true
+    },
+    {
+      "idx": 159,
+      "version": "6",
+      "when": 1794700000000,
+      "tag": "0159_rage_endings",
+      "breakpoints": true
     }
   ]
 }

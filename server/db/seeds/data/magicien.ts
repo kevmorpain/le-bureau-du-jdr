@@ -1,3 +1,4 @@
+import { fixed, lookup } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 
@@ -30,7 +31,7 @@ Vous pouvez lancer un sort comme rituel s'il a l'étiquette rituel et est dans v
     levelRequired: 1,
     actionType: null,
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
+    maxUsesFormula: fixed(1),
     effects: [],
   },
   ...asiFeatures('Magicien'),
@@ -51,7 +52,8 @@ Vous pouvez lancer un sort comme rituel s'il a l'étiquette rituel et est dans v
     levelRequired: 20,
     actionType: null,
     rechargeType: 'short_rest',
-    maxUsesFormula: null,
+    // Deux sorts distincts, une fois chacun : une pastille par sort.
+    maxUsesFormula: fixed(2),
     effects: [],
   },
 ]
@@ -80,7 +82,7 @@ export const magicienSubclasses: SubclassDef[] = [
         levelRequired: 2,
         actionType: null,
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
       },
       {
@@ -127,7 +129,8 @@ export const magicienSubclasses: SubclassDef[] = [
         levelRequired: 2,
         actionType: null,
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        // Un d20 par pastille : deux dés, trois au niveau 14.
+        maxUsesFormula: lookup([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3]),
         effects: [],
       },
       {
@@ -173,7 +176,7 @@ export const magicienSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 2,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
         effects: [],
       },
@@ -183,7 +186,7 @@ export const magicienSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 6,
         actionType: 'reaction',
-        rechargeType: 'long_rest',
+        rechargeType: null,
         maxUsesFormula: null,
         effects: [],
       },
@@ -251,7 +254,8 @@ export const magicienSubclasses: SubclassDef[] = [
         levelRequired: 14,
         actionType: null,
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        // Compte l'usage gratuit ; les suivants coûtent des dégâts (voir la description).
+        maxUsesFormula: fixed(1),
         effects: [],
       },
     ],
@@ -288,7 +292,7 @@ export const magicienSubclasses: SubclassDef[] = [
         levelRequired: 10,
         actionType: 'reaction',
         rechargeType: 'short_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
       },
       {

@@ -237,7 +237,9 @@ Ce qui s'y ajoute vit dans `features.meta` (`FeatureMeta`) et dans des effets ty
 | `meta.pool` | réserve dépensée par paquets : « n / N » avec Dépenser / Regagner plutôt qu'une pastille par point |
 | `meta.unlimitedFromClassLevel` | plus de limite (Rage 20) |
 | `meta.whileActive` + `character_features.active` | effets en vigueur tant que la capacité est active (Rage) ; `suspendedByHeavyArmor` ; un repos (court ou long) y met fin |
-| `meta.spends` / `meta.cost` | usages décrits en texte et payés par la réserve (ki) / capacités d'une autre feature payées par elle (Métamagie, `spell_level` = niveau du sort) |
+| `meta.endsWhenUnconscious` / `meta.endsWithoutCombat` + `persistentFromClassLevel` / `meta.blocksSpellcasting` | fin de la capacité active à l'inconscience / faute de combat depuis le tour précédent (question posée au « Nouveau tour », levée au niveau indiqué) / sorts interdits tant qu'elle dure (Rage, [D33](./decisions.md#d33)) |
+| `meta.spends` / `meta.cost` | usages décrits en texte et payés par la réserve (ki) / capacités d'une autre feature payées par elle (Métamagie, `spell_level` = niveau du sort ; options de Conduit divin, disciplines élémentaires) |
+| `meta.regains` | points que la réserve regagne sur décision du joueur, éventuellement à réserve vide (Perfection de l'être : 4 ki) |
 | `meta.saveDcAbility` | DD de la réserve (DD de ki) |
 
 **Formules au niveau de la classe propriétaire** : `featureFormulaContext` remplace `class_level` par le niveau de la classe qui
@@ -251,7 +253,11 @@ Les dérivations pures — `deriveClassTraits`, `resourceGroups`, `restRecovery`
 (client **et** serveur : le repos lit la même règle) ; conversion de points de sorcellerie et coûts dans `shared/rules/sorcery.ts`.
 
 Le seed et la migration 0120 portent les mêmes données ; `test/fixtures/classResourcePatches.ts` énumère les features concernées
-et `test/nuxt/classResourcesMigration.test.ts` garde l'égalité.
+et `test/nuxt/classResourcesMigration.test.ts` garde l'égalité. Les compteurs des capacités à usages limités et les coûts de
+Conduit divin et de ki de sous-classe viennent de la migration 0157 ([D32](./decisions.md#d32)) : `test/fixtures/featureCounterPatches.ts`
+et `test/nuxt/featureCountersMigration.test.ts` ; les disciplines de la Voie des quatre éléments par la 0158
+(`test/nuxt/elementalDisciplinesMigration.test.ts`). Une capacité qui déclare un `rechargeType` doit porter un compteur ou payer une réserve
+(`test/unit/featureCounters.test.ts`).
 
 ### CA sans armure, vitesse et bonus fixes
 

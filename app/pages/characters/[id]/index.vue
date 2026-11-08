@@ -128,6 +128,7 @@
 import { useEventListener } from '@vueuse/core'
 import { idlePending, rollEngineKey } from '~/composables/character/useCharacterRolls'
 import { useCombatTracker } from '~/composables/character/useCombatTracker'
+import { useUnconsciousEndings } from '~/composables/character/useUnconsciousEndings'
 
 definePageMeta({
   layout: 'sheet',
@@ -170,7 +171,11 @@ async function refreshSheet() {
 
 const toaster = useToast()
 
-const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine } = useCharacterSheet(characterSheet)
+const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine, featuresEndingWhenUnconscious, isDying, activeConditions } = useCharacterSheet(characterSheet)
+useUnconsciousEndings(characterSheet, {
+  unconscious: computed(() => isDying.value || activeConditions.value.includes('unconscious')),
+  ending: featuresEndingWhenUnconscious,
+})
 provide('spellSlots', spellSlots)
 provide(rollEngineKey, rollEngine)
 const { roll } = useDiceRoller(rollEngine)

@@ -47,9 +47,9 @@ export const levelUpSchema = z.object({
   newSkills: uniqueSkillKeysSchema.optional(),
   // Maîtrises, sorts mineurs et terrain du cercle choisis à ce niveau (instrument du Barde rejoint par multiclassage).
   choicePicks: z.array(choicePickSchema).optional(),
-  // Options de feature choisies à ce niveau : style de combat, pacte, manifestations, Métamagie, manœuvres.
+  // Options de feature choisies à ce niveau : style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires.
   featurePicks: z.array(featurePickSchema).optional(),
-  // Option déjà prise que l'on échange contre une nouvelle (manœuvres, manifestations) : l'ancienne quitte la fiche.
+  // Option déjà prise que l'on échange contre une nouvelle (manœuvres, disciplines, manifestations) : l'ancienne quitte la fiche.
   featureReplacements: z.array(featurePickSchema).optional(),
   newCantripIds: z.array(z.number().int()).optional(),
   newSpellIds: z.array(z.number().int()).optional(),

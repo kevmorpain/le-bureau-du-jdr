@@ -52,7 +52,9 @@ Pendant la rage, vous bénéficiez des avantages suivants si vous ne portez pas 
 - Lorsque vous effectuez une attaque de mêlée avec une arme, vous gagnez un bonus aux jets de dégâts qui augmente à mesure que vous gagnez des niveaux en tant que barbare.
 - Vous avez la résistance aux dégâts contondants, perforants et tranchants.
 
-La rage se termine si vous êtes inconscient ou si votre tour se termine et que vous n'avez pas attaqué de créature hostile depuis votre dernier tour, et que vous n'avez pas subi de dégâts depuis lors. Vous pouvez aussi mettre fin à votre rage au prix d'une action bonus.`,
+La rage se termine si vous êtes inconscient ou si votre tour se termine et que vous n'avez pas attaqué de créature hostile depuis votre dernier tour, et que vous n'avez pas subi de dégâts depuis lors. Vous pouvez aussi mettre fin à votre rage au prix d'une action bonus.
+
+Si vous pouvez lancer des sorts, vous ne pouvez ni les lancer ni vous concentrer sur eux pendant la rage.`,
     featureType: 'class_feature',
     levelRequired: 1,
     actionType: 'bonus_action',
@@ -63,6 +65,10 @@ La rage se termine si vous êtes inconscient ou si votre tour se termine et que 
       resource: 'rage',
       unlimitedFromClassLevel: 20,
       suspendedByHeavyArmor: true,
+      endsWhenUnconscious: true,
+      endsWithoutCombat: true,
+      persistentFromClassLevel: 15,
+      blocksSpellcasting: true,
       whileActive: [
         { type: 'damage_resistance', value: { damageType: 'bludgeoning' } },
         { type: 'damage_resistance', value: { damageType: 'piercing' } },

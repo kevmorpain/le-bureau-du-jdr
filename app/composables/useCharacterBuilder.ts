@@ -89,7 +89,7 @@ export interface BuilderState {
   // Picks des points de choix d'espèce, de lignée, d'historique ou de classe (compétence, outil, langue :
   // valeur ; sort mineur : id), par id de progression.
   choicePicks: Record<number, Array<string | number>>
-  // Options de feature choisies (style de combat, pacte, manifestations, Métamagie, manœuvres), par id de progression.
+  // Options de feature choisies (style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires), par id de progression.
   featurePicks: Record<number, number[]>
 
   // Langues de l'Humain variant (clés de langue), faute d'espèce liée qui porte son choix

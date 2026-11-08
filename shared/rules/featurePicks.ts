@@ -6,7 +6,7 @@ export interface FeaturePick {
   featureId: number
 }
 
-/** Une option déjà prise que le joueur échange contre une nouvelle, en apprenant celle-ci (manœuvres). */
+/** Une option déjà prise que le joueur échange contre une nouvelle, en apprenant celle-ci (manœuvres, disciplines). */
 export type FeatureReplacement = FeaturePick
 
 export const isFeaturePickChoice = (c: Pick<ResolvedChoice, 'kind'>): boolean =>

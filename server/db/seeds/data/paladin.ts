@@ -1,4 +1,4 @@
-import { fixed, mul, variable } from '~~/shared/utils/formula'
+import { add, fixed, max, mul, variable } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { fightingStyleProgression } from './fightingStyles'
 import { asiFeatures } from './asi'
@@ -16,7 +16,7 @@ Vous pouvez utiliser cette capacité un nombre de fois égal à 1 + votre modifi
     levelRequired: 1,
     actionType: 'action',
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
+    maxUsesFormula: add(fixed(1), variable('cha_mod')),
     effects: [],
   },
   {
@@ -162,7 +162,7 @@ Au niveau 18, le rayon passe à 9 mètres.`,
     levelRequired: 14,
     actionType: 'action',
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
+    maxUsesFormula: max(fixed(1), variable('cha_mod')),
     effects: [],
   },
 ]
@@ -193,8 +193,9 @@ export const paladinSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -203,8 +204,9 @@ export const paladinSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -234,7 +236,7 @@ export const paladinSubclasses: SubclassDef[] = [
         levelRequired: 20,
         actionType: 'action',
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
       },
     ],
@@ -264,8 +266,9 @@ export const paladinSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -274,8 +277,9 @@ export const paladinSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -295,7 +299,7 @@ export const paladinSubclasses: SubclassDef[] = [
         levelRequired: 15,
         actionType: null,
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
       },
       {
@@ -305,7 +309,7 @@ export const paladinSubclasses: SubclassDef[] = [
         levelRequired: 20,
         actionType: 'action',
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
       },
     ],
@@ -335,8 +339,9 @@ export const paladinSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -345,8 +350,9 @@ export const paladinSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 3,
         actionType: 'bonus_action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -376,7 +382,7 @@ export const paladinSubclasses: SubclassDef[] = [
         levelRequired: 20,
         actionType: 'action',
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
       },
     ],

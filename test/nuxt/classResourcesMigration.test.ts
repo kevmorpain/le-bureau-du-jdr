@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
-import { CLASS_RESOURCE_EFFECT_TYPES, classResourcePatches } from '../fixtures/classResourcePatches'
+import { CLASS_RESOURCE_EFFECT_TYPES, LATER_KI_SPENDS, classResourcePatches } from '../fixtures/classResourcePatches'
 import { paladinFeatures } from '../../server/db/seeds/data/paladin'
 import { applyMigration, replayMigrations } from '../fixtures/migrations'
 
@@ -20,6 +20,18 @@ const key = (p: { className: string, subclass: string | null, feature: { name: s
 // La Rage a gagné ses avantages (migration 0124, moteur de jets) après la 0120 : on compare ce que la 0120 pose.
 const withoutLaterEffects = <T extends { whileActive?: { type: string }[] } | null>(meta: T): T =>
   meta?.whileActive ? { ...meta, whileActive: meta.whileActive.filter(e => e.type !== 'advantage') } : meta
+
+// La Rage a gagné ses fins automatiques et l'interdiction des sorts avec la migration 0159.
+const LATER_RAGE_FLAGS = ['endsWhenUnconscious', 'endsWithoutCombat', 'persistentFromClassLevel', 'blocksSpellcasting']
+const withoutLaterRageFlags = <T extends object | null>(meta: T): T =>
+  meta ? Object.fromEntries(Object.entries(meta).filter(([k]) => !LATER_RAGE_FLAGS.includes(k))) as T : meta
+
+// « Ki » a gagné des dépenses et un regain avec la migration 0157.
+const withoutLaterSpends = <T extends { spends?: { label: string }[], regains?: unknown } | null>(meta: T): T => {
+  if (!meta?.spends) return meta
+  const { regains: _later, ...rest } = meta
+  return { ...rest, spends: meta.spends.filter(s => !LATER_KI_SPENDS.includes(s.label)) } as T
+}
 
 // L'Attaque sournoise a gagné `needsAdvantage` avec la migration 0125.
 const withoutLaterFields = <T extends { type: string, value: unknown }>(effect: T): T => {
@@ -104,7 +116,7 @@ describe('migration 0120 — ressources de classe', () => {
       const fid = featureIds.get(key(p))!
       const row = await rowOf(fid)
       expect(row.maxUsesFormula).toEqual(p.feature.maxUsesFormula ?? null)
-      expect(row.meta).toEqual(withoutLaterEffects(p.feature.meta ?? null))
+      expect(row.meta).toEqual(withoutLaterRageFlags(withoutLaterSpends(withoutLaterEffects(p.feature.meta ?? null))))
       const expected = (p.feature.effects ?? []).filter(e => CLASS_RESOURCE_EFFECT_TYPES.includes(e.type)).map(withoutLaterFields)
       const actual = await resourceEffectsOf(fid)
       const sortKey = (e: { type: string, value: unknown }) => `${e.type}:${JSON.stringify(e.value)}`
