@@ -359,12 +359,15 @@ produit :
 | `classSavingThrowEffects` | `proficiencies.savingThrows` de la classe dans `/api/catalog/classes` (porteurs en base, comme la fiche) |
 | `backgroundEffects` | compétences de l'historique, seedé ou personnalisé (payload `customBackgroundSkills`, rangées dans l'historique créé) |
 | `speciesEffects` | effets du catalogue (`/api/catalog/species/[id]`, base + lignée choisie) ; aucun pour l'Humain variant |
-| `featureEffects` | dons persistés (`chosenFeatIds`, résolus par `resolveFeatEffects`) + manifestations |
+| `featureEffects` | capacités de classe et de sous-classe acquises au niveau choisi (`/api/catalog/class-features`, `useClassFeatureEffects`, même garde de niveau que la fiche) + dons persistés (`chosenFeatIds`, résolus par `resolveFeatEffects`) + manifestations |
 
 Les scores de base projetés sont `finalAbilities` : les `ability_increase` sont retirés des effets pour
-ne pas être comptés deux fois. `BuilderPreview` lit la même projection. Hors projection : la CA (armure
-équipée) et le plafond de 20 (appliqué par `finalAbilities` ; la fiche l'applique aussi, via
-`shared/rules/abilityScores.ts`).
+ne pas être comptés deux fois. `finalAbilities` ajoute les `ability_increase` des capacités de classe
+(Champion primitif) aux bonus d'espèce, d'ASI et de dons, et borne le total par `resolveAbilityScore`
+(`shared/rules/abilityScores.ts`) : 20, relevé par les `ability_max_increase` de l'espèce, des dons et des
+capacités. Le plafond de 20 des paliers d'ASI (`StepAsi`) reste celui de la règle des ASI.
+`BuilderPreview` lit la même projection. Hors projection : la CA (armure équipée) et la vitesse
+(`speed_bonus` de classe, qui dépend de l'armure portée).
 
 ---
 

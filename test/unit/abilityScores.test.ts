@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { resolveAbilityScore, type AbilityScoreInput } from '../../shared/rules/abilityScores'
+import type { Effect } from '../../server/db/schema/effects'
+import { resolveAbilityScore, sumAbilityIncreases, sumAbilityMaxIncreases, type AbilityScoreInput } from '../../shared/rules/abilityScores'
 
 // Valeurs vérifiées à la main : ASI et demi-dons plafonnés à 20, Champion
 // primitif (+4, maximum 24), Pierre de Ioun (+2, « pour un total maximum de 20 »), Gantelets de
@@ -70,5 +71,35 @@ describe('resolveAbilityScore — objets', () => {
 
   it('score fixé appliqué après les bonus : Ioun (15 → 17) puis Gantelets → 19', () => {
     expect(score({ base: 15, itemIncreases: [{ amount: 2, max: 20 }], itemSets: [19] }).total).toBe(19)
+  })
+})
+
+describe('sommes d\'effets de caractéristiques', () => {
+  const championPrimitif: Effect[] = [
+    { type: 'ability_increase', value: { ability: 'str', amount: 4 } },
+    { type: 'ability_increase', value: { ability: 'con', amount: 4 } },
+    { type: 'ability_max_increase', value: { ability: 'str', amount: 4 } },
+    { type: 'ability_max_increase', value: { ability: 'con', amount: 4 } },
+  ]
+
+  it('sépare les relèvements du score de ceux du maximum', () => {
+    expect(sumAbilityIncreases(championPrimitif)).toEqual({ str: 4, con: 4 })
+    expect(sumAbilityMaxIncreases(championPrimitif)).toEqual({ str: 4, con: 4 })
+  })
+
+  it('additionne plusieurs sources sur la même caractéristique et ignore les autres effets', () => {
+    const effects: Effect[] = [
+      ...championPrimitif,
+      { type: 'ability_increase', value: { ability: 'str', amount: 1 } },
+      { type: 'ability_max_increase', value: { ability: 'str', amount: 2 } },
+      { type: 'skill_proficiency', value: { skill: 'athletics' } },
+    ]
+    expect(sumAbilityIncreases(effects)).toEqual({ str: 5, con: 4 })
+    expect(sumAbilityMaxIncreases(effects)).toEqual({ str: 6, con: 4 })
+  })
+
+  it('rien à sommer : objet vide', () => {
+    expect(sumAbilityIncreases([])).toEqual({})
+    expect(sumAbilityMaxIncreases([])).toEqual({})
   })
 })

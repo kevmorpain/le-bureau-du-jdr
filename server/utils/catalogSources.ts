@@ -8,6 +8,7 @@ import type { AbilityKey } from '~~/shared/rules/abilities'
 import type { RollTable } from '~~/shared/rules/rollTables'
 import { loadClassProficiencyGrants, type ClassProficiencyGrants } from '~~/server/utils/classProficiencyDerivation'
 import type { Db } from '~~/server/utils/db'
+import { isPassiveGrant } from '~~/server/utils/features'
 
 type ClassRow = typeof schema.classes.$inferSelect
 type SubclassRow = typeof schema.subclasses.$inferSelect
@@ -153,6 +154,61 @@ export async function loadInvocations(db: Db, ruleset: Ruleset = '5', extended =
     prerequisites: f.prerequisites as FeaturePrerequisite | null,
     effects: effectsByFeature.get(f.id) ?? [],
   }))
+}
+
+export interface CatalogClassFeature {
+  featureType: 'class_feature' | 'subclass_feature'
+  classId: number | null
+  subclassId: number | null
+  levelRequired: number
+  effects: Effect[]
+}
+
+// Les capacités que `createCharacter` attribue d'office (même sélection, `isPassiveGrant`), réduites à celles qui portent
+// des effets : le builder en projette ce que la fiche créée en dérivera.
+export async function loadClassFeatures(db: Db, ruleset: Ruleset = '5'): Promise<CatalogClassFeature[]> {
+  const features = await db
+    .select({
+      id: schema.features.id,
+      featureType: schema.features.featureType,
+      classId: schema.features.classId,
+      subclassId: schema.features.subclassId,
+      levelRequired: schema.features.levelRequired,
+    })
+    .from(schema.features)
+    .where(and(
+      inArray(schema.features.featureType, ['class_feature', 'subclass_feature']),
+      isPassiveGrant(),
+      eq(schema.features.ruleset, ruleset),
+    ))
+    .orderBy(asc(schema.features.id))
+
+  if (features.length === 0) return []
+
+  const effectRows = await db
+    .select({ featureId: schema.featureEffects.featureId, type: schema.effects.type, value: schema.effects.value })
+    .from(schema.featureEffects)
+    .innerJoin(schema.effects, eq(schema.featureEffects.effectId, schema.effects.id))
+    .where(inArray(schema.featureEffects.featureId, features.map(f => f.id)))
+
+  const effectsByFeature = new Map<number, Effect[]>()
+  for (const row of effectRows) {
+    const list = effectsByFeature.get(row.featureId) ?? []
+    list.push({ type: row.type, value: row.value } as Effect)
+    effectsByFeature.set(row.featureId, list)
+  }
+
+  return features.flatMap((f) => {
+    const effects = effectsByFeature.get(f.id)
+    if (!effects?.length) return []
+    return [{
+      featureType: f.featureType as CatalogClassFeature['featureType'],
+      classId: f.classId,
+      subclassId: f.subclassId,
+      levelRequired: f.levelRequired ?? 1,
+      effects,
+    }]
+  })
 }
 
 /** Options de point de choix (features taguées) par identifiant ; une feature sans tag n'est pas une option. */

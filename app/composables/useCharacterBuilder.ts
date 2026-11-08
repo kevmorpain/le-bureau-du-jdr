@@ -24,7 +24,7 @@ import { duplicatedValues, proficiencyDuplicates } from '~~/shared/rules/duplica
 import { classSkillChoice, isPickChoice, optionPickValue, type ResolvedChoice } from '~~/shared/rules/resolve'
 import { byFeaturePickOrder, isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
 import { pactBoonOfName, type PactBoon } from '~~/shared/rules/pactBoon'
-import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
+import { resolveAbilityScore, sumAbilityIncreases, sumAbilityMaxIncreases } from '~~/shared/rules/abilityScores'
 import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
 import { emptySelection, expandEquipment, type EquipmentSelection, type EquipmentSources } from '~~/shared/rules/startingEquipment'
 import type { Effect } from '~~/server/db/schema/effects'
@@ -257,6 +257,7 @@ export function useCharacterBuilder() {
 
   const { feats, getById: getFeatById, needsAbility: featNeedsAbility, needsSkilled: featNeedsSkilled, languageCount: featLanguageCount } = useFeats()
   const { choicesForClassLevel, choicesFor } = useCatalog()
+  const { effectsAt: classFeatureEffectsAt } = useClassFeatureEffects()
   const { resolveClassId, resolveSpeciesId, resolveBackgroundId, resolveSubclassId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
 
   // Un don requiert-il un choix de SORT (ex. Faveur des fées) ? Repéré par l'effet marqueur
@@ -322,6 +323,7 @@ export function useCharacterBuilder() {
 
   // ─── Sous-classe (lue dans le CATALOGUE) ───────────────────────────────────
   const subclassDbId = computed(() => resolveSubclassId(classData.value?.dbName, state.value.subclass))
+  const classFeatureEffects = computed<Effect[]>(() => classFeatureEffectsAt(classDbId.value, subclassDbId.value, state.value.level))
   const subclassCatalog = computed(() => subclassCatalogFor(classDbId.value))
   const subclassLevel = computed(() => subclassCatalog.value?.subclassLevel ?? null)
   const subclassOptions = computed(() => subclassCatalog.value?.subclasses ?? [])
@@ -533,16 +535,20 @@ export function useCharacterBuilder() {
     return bonuses
   })
 
-  // Scores finaux (base + racial + ASI + bonus de dons). PHB plafonne à 20.
+  // Scores finaux, plafonnés comme la fiche les plafonne : 20, relevé par les capacités (Champion primitif).
   const finalAbilities = computed<Partial<Record<AbilityKey, number>>>(() => {
     const result: Partial<Record<AbilityKey, number>> = {}
+    const classBonus = sumAbilityIncreases(classFeatureEffects.value)
+    const maxIncrease = sumAbilityMaxIncreases([
+      ...speciesEffects.value,
+      ...classFeatureEffects.value,
+      ...chosenFeatIds.value.flatMap(id => getFeatById(id)?.effects ?? []),
+    ])
     for (const ab of ABILITIES) {
       const base = state.value.abilities[ab]
       if (base != null) {
-        const baseWithRace = base + (raceBonuses.value[ab] ?? 0)
-        const asi = asiBonusByAbility.value[ab] ?? 0
-        const feat = featBonusByAbility.value[ab] ?? 0
-        result[ab] = Math.min(ABILITY_SCORE_MAX, baseWithRace + asi + feat)
+        const naturalBonus = (raceBonuses.value[ab] ?? 0) + (asiBonusByAbility.value[ab] ?? 0) + (featBonusByAbility.value[ab] ?? 0) + (classBonus[ab] ?? 0)
+        result[ab] = resolveAbilityScore({ base, naturalBonus, maxIncrease: maxIncrease[ab] ?? 0, itemIncreases: [], itemSets: [] }).total
       }
     }
     return result
@@ -885,6 +891,7 @@ export function useCharacterBuilder() {
     selectedLineageId,
     catalogSpeciesId,
     speciesEffects,
+    classFeatureEffects,
     classData,
     classDbId,
     backgroundData,
