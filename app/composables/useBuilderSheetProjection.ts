@@ -16,6 +16,7 @@ export function useBuilderSheetProjection() {
   const {
     state,
     speciesEffects,
+    classFeatureEffects,
     classDbId,
     backgroundSkills,
     variantHumanSkills,
@@ -42,7 +43,7 @@ export function useBuilderSheetProjection() {
       .filter((i): i is BuilderInvocation => i != null)
   })
 
-  // Les scores projetés sont déjà finaux (`finalAbilities` inclut espèce, ASI et dons) : aucun
+  // Les scores projetés sont déjà finaux (`finalAbilities` inclut espèce, ASI, dons et capacités de classe) : aucun
   // `ability_increase` ne doit être rejoué par le calculateur.
   const sheet = computed<AbilitiesSheet>(() => ({
     baseAbilityScores: ABILITY_KEYS
@@ -59,6 +60,7 @@ export function useBuilderSheetProjection() {
   const abilities = useCharacterAbilities(sheet, {
     speciesEffects: computed(() => withoutAbilityIncreases(speciesEffects.value)),
     featureEffects: computed(() => withoutAbilityIncreases([
+      ...classFeatureEffects.value,
       ...chosenFeatIds.value.flatMap(id => resolveFeatEffects(getFeatById(id)?.effects ?? [], state.value.featChoices[id] ?? null)),
       ...selectedInvocations.value.flatMap(i => i.effects),
     ])),

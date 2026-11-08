@@ -59,10 +59,18 @@ export interface AbilityScoreSources {
   activeEffects: Effect[]
 }
 
-const sumAbilityIncreases = (effects: readonly Effect[]): Partial<Record<AbilityKey, number>> => {
+export const sumAbilityIncreases = (effects: readonly Effect[]): Partial<Record<AbilityKey, number>> => {
   const out: Partial<Record<AbilityKey, number>> = {}
   for (const e of effects) {
     if (e.type === 'ability_increase') out[e.value.ability] = (out[e.value.ability] ?? 0) + e.value.amount
+  }
+  return out
+}
+
+export const sumAbilityMaxIncreases = (effects: readonly Effect[]): Partial<Record<AbilityKey, number>> => {
+  const out: Partial<Record<AbilityKey, number>> = {}
+  for (const e of effects) {
+    if (e.type === 'ability_max_increase') out[e.value.ability] = (out[e.value.ability] ?? 0) + e.value.amount
   }
   return out
 }
@@ -72,10 +80,7 @@ export function computeAbilityScores(sources: AbilityScoreSources): Record<Abili
   const feature = sumAbilityIncreases(sources.featureEffects)
   const asi = sumAbilityIncreases(sources.asiEffects)
 
-  const maxIncreases: Partial<Record<AbilityKey, number>> = {}
-  for (const e of [...sources.speciesEffects, ...sources.featureEffects, ...sources.asiEffects, ...sources.activeEffects]) {
-    if (e.type === 'ability_max_increase') maxIncreases[e.value.ability] = (maxIncreases[e.value.ability] ?? 0) + e.value.amount
-  }
+  const maxIncreases = sumAbilityMaxIncreases([...sources.speciesEffects, ...sources.featureEffects, ...sources.asiEffects, ...sources.activeEffects])
 
   const active: Partial<Record<AbilityKey, { increases: { amount: number, max?: number }[], sets: number[] }>> = {}
   for (const e of sources.activeEffects) {

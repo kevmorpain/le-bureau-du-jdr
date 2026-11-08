@@ -9,6 +9,7 @@ import {
   loadSubclasses,
   loadFeats,
   loadInvocations,
+  loadClassFeatures,
   loadBackgrounds,
   loadSpells,
 } from '../../server/utils/catalogSources'
@@ -91,6 +92,30 @@ beforeAll(async () => {
     { id: 211, name: 'Défense', featureType: 'fighting_style', classId: FIGHTER, tag: 'fighting_style', description: 'desc Défense' },
   ])
 
+  // Capacités passives (loadClassFeatures) : l'une de classe, l'une de sous-classe (Champion), l'une sans niveau ;
+  // puis les exclues : option taguée, sans effet, d'un autre type, d'une autre édition.
+  await orm.insert(schema.effects).values([
+    { id: 20, type: 'ability_increase', value: { ability: 'str', amount: 4 } },
+    { id: 21, type: 'ability_max_increase', value: { ability: 'str', amount: 4 } },
+    { id: 22, type: 'half_proficiency', value: { abilities: ['str', 'dex', 'con'], rounding: 'up' } },
+    { id: 23, type: 'initiative_bonus', value: { amount: 1 } },
+  ])
+  await orm.insert(schema.features).values([
+    { id: 400, name: 'Capacité de classe', featureType: 'class_feature', classId: FIGHTER, levelRequired: 20 },
+    { id: 401, name: 'Capacité de sous-classe', featureType: 'subclass_feature', classId: FIGHTER, subclassId: 10, levelRequired: 7 },
+    { id: 402, name: 'Capacité sans niveau', featureType: 'class_feature', classId: FIGHTER },
+    { id: 403, name: 'Option taguée', featureType: 'class_feature', classId: FIGHTER, levelRequired: 1, tag: 'fighting_style' },
+    { id: 404, name: 'Capacité sans effet', featureType: 'class_feature', classId: FIGHTER, levelRequired: 1 },
+  ])
+  await orm.insert(schema.featureEffects).values([
+    { featureId: 400, effectId: 20 },
+    { featureId: 400, effectId: 21 },
+    { featureId: 401, effectId: 22 },
+    { featureId: 402, effectId: 23 },
+    { featureId: 403, effectId: 23 },
+    { featureId: 200, effectId: 23 }, // une manifestation n'est pas une capacité de classe
+  ])
+
   // Historiques : 2 globaux (character_sheet_id NULL) + 1 homebrew rattaché à la fiche 42.
   await orm.insert(schema.backgrounds).values([
     { id: 1, name: 'Sage' },
@@ -109,6 +134,8 @@ beforeAll(async () => {
   // (nom, ruleset) — sans le filtre, `.limit(1)` sur le nom seul serait non déterministe.
   await orm.insert(schema.classes).values({ id: 5, name: 'Guerrier', hitDice: '1d10', ruleset: '5.5' })
   await orm.insert(schema.subclasses).values({ id: 50, classId: 5, name: 'Arcaniste (2024)', description: 'desc 5.5' })
+  await orm.insert(schema.features).values({ id: 405, name: 'Capacité 5.5', featureType: 'class_feature', classId: 5, levelRequired: 1, ruleset: '5.5' })
+  await orm.insert(schema.featureEffects).values({ featureId: 405, effectId: 23 })
 
   // Sorts : « Projectile magique » DUPLIQUÉ par édition (contenu divergent, 0089) + un cantrip
   // 2014. Listes de classe datées : Guerrier 2014 → sort '5', Guerrier 5.5 → sort '5.5'.
@@ -212,6 +239,42 @@ describe('loadInvocations', () => {
     expect(lame.levelRequired).toBe(1) // null → défaut 1
     expect(lame.prerequisites).toEqual({ requiredPactBoon: 'blade' })
     expect(lame.effects).toEqual([{ type: 'proficiency', value: 'armes de guerre' }])
+  })
+})
+
+describe('loadClassFeatures', () => {
+  it('capacités passives de classe et de sous-classe qui portent des effets, avec leur niveau (option taguée, capacité sans effet et manifestation exclues)', async () => {
+    expect(await loadClassFeatures(orm)).toEqual([
+      {
+        featureType: 'class_feature',
+        classId: FIGHTER,
+        subclassId: null,
+        levelRequired: 20,
+        effects: [
+          { type: 'ability_increase', value: { ability: 'str', amount: 4 } },
+          { type: 'ability_max_increase', value: { ability: 'str', amount: 4 } },
+        ],
+      },
+      {
+        featureType: 'subclass_feature',
+        classId: FIGHTER,
+        subclassId: 10,
+        levelRequired: 7,
+        effects: [{ type: 'half_proficiency', value: { abilities: ['str', 'dex', 'con'], rounding: 'up' } }],
+      },
+      {
+        featureType: 'class_feature',
+        classId: FIGHTER,
+        subclassId: null,
+        levelRequired: 1,
+        effects: [{ type: 'initiative_bonus', value: { amount: 1 } }],
+      },
+    ])
+  })
+
+  it('le 5.5 reste invisible par défaut', async () => {
+    expect((await loadClassFeatures(orm)).some(f => f.classId === 5)).toBe(false)
+    expect((await loadClassFeatures(orm, '5.5')).map(f => f.classId)).toEqual([5])
   })
 })
 

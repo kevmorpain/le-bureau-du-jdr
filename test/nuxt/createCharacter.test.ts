@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { createCharacter, createCharacterSchema, CharacterValidationError } from '../../server/utils/characterCreate'
+import { loadClassFeatures } from '../../server/utils/catalogSources'
 import { seedElfLineages } from '../../server/db/seeds/lib/seedElfLineages'
 import { CLASS_SKILL_CHOICES } from '../../server/db/seeds/data/classSkills'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
@@ -554,5 +555,55 @@ describe('createCharacter — lignée (D17)', () => {
     const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level: 1, speciesId: 1 }), OWNER)
     const choices = await db.select().from(schema.characterChoices).where(eq(schema.characterChoices.characterSheetId, id))
     expect(choices).toHaveLength(0)
+  })
+})
+
+// Le builder projette les effets annoncés par /api/catalog/class-features : ce sont ceux que la création attribue.
+describe('createCharacter — capacités passives annoncées au builder (loadClassFeatures)', () => {
+  beforeAll(async () => {
+    await db.insert(schema.effects).values([
+      { id: 9101, type: 'initiative_bonus', value: { amount: 1 } },
+      { id: 9102, type: 'ability_increase', value: { ability: 'str', amount: 4 } },
+      { id: 9103, type: 'hp_per_level', value: { amount: 1 } },
+    ])
+    await db.insert(schema.features).values([
+      { id: 910, name: 'Capacité niveau 1', featureType: 'class_feature', classId: FIGHTER, levelRequired: 1 },
+      { id: 911, name: 'Capacité niveau 5', featureType: 'class_feature', classId: FIGHTER, levelRequired: 5 },
+      { id: 912, name: 'Capacité de sous-classe', featureType: 'subclass_feature', subclassId: FIGHTER_SUBCLASS, levelRequired: 3 },
+      { id: 913, name: 'Option taguée', featureType: 'class_feature', classId: FIGHTER, levelRequired: 1, tag: 'fighting_style' },
+    ])
+    await db.insert(schema.featureEffects).values([
+      { featureId: 910, effectId: 9101 },
+      { featureId: 911, effectId: 9102 },
+      { featureId: 912, effectId: 9103 },
+      { featureId: 913, effectId: 9101 },
+    ])
+  })
+
+  const byJson = (a: unknown, b: unknown) => JSON.stringify(a).localeCompare(JSON.stringify(b))
+
+  const attributedEffects = async (sheetId: number) =>
+    (await db.select({ type: schema.effects.type, value: schema.effects.value })
+      .from(schema.characterFeatures)
+      .innerJoin(schema.featureEffects, eq(schema.featureEffects.featureId, schema.characterFeatures.featureId))
+      .innerJoin(schema.effects, eq(schema.effects.id, schema.featureEffects.effectId))
+      .where(eq(schema.characterFeatures.characterSheetId, sheetId)) as { type: string, value: unknown }[]).sort(byJson)
+
+  const announcedEffects = async (level: number, subclassId: number | null) =>
+    (await loadClassFeatures(db))
+      .filter(f => f.levelRequired <= level
+        && (f.featureType === 'class_feature' ? f.classId === FIGHTER : f.subclassId === subclassId))
+      .flatMap(f => f.effects)
+      .sort(byJson)
+
+  it.each([
+    { level: 1, subclassId: null, types: ['initiative_bonus'] },
+    { level: 3, subclassId: FIGHTER_SUBCLASS, types: ['hp_per_level', 'initiative_bonus'] },
+    { level: 5, subclassId: FIGHTER_SUBCLASS, types: ['ability_increase', 'hp_per_level', 'initiative_bonus'] },
+  ])('niveau $level : le catalogue annonce ce que la fiche reçoit', async ({ level, subclassId, types }) => {
+    const { id } = await createCharacter(db, baseInput({ classId: FIGHTER, level, subclassId }), OWNER)
+    const attributed = await attributedEffects(id)
+    expect(attributed.map(e => e.type).sort()).toEqual(types)
+    expect(await announcedEffects(level, subclassId)).toEqual(attributed)
   })
 })
