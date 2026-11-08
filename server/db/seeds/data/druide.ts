@@ -116,7 +116,7 @@ export const druideSubclasses: SubclassDef[] = [
         levelRequired: 2,
         actionType: null,
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
       },
       {

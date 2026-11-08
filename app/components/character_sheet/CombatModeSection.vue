@@ -1,5 +1,18 @@
 <template>
   <div class="space-y-4">
+    <UAlert
+      v-if="lapseQuestion.length"
+      color="warning"
+      variant="soft"
+      icon="i-heroicons:question-mark-circle"
+      :title="`${lapseQuestion.map(f => f.name).join(', ')} : toujours en cours ?`"
+      description="Depuis votre tour précédent, avez-vous attaqué une créature hostile ou subi des dégâts ?"
+      :actions="[
+        { label: 'Oui, elle continue', color: 'neutral', variant: 'outline', onClick: dismissLapse },
+        { label: 'Non, elle prend fin', color: 'warning', onClick: endLapsed },
+      ]"
+    />
+
     <div class="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 space-y-3">
       <div class="flex items-center justify-between gap-2 flex-wrap">
         <span class="text-sm font-bold text-primary">Ton tour</span>
@@ -341,7 +354,7 @@ const bonusBreakdown = (parts: { label: string, amount: number }[]) =>
   `dont ${parts.map(p => `${formatModifier(p.amount)} ${p.label}`).join(', ')}`
 
 const csRef = toRef(props, 'characterSheet')
-const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, elapseDurations, setRangeChoice, setThrowing, spendAmmunition } = useCharacterSheet(csRef)
+const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, featuresLapsingWithoutCombat, elapseDurations, setRangeChoice, setThrowing, spendAmmunition } = useCharacterSheet(csRef)
 const toast = useToast()
 
 const slots = inject<Ref<{ spellcasting: Record<number, { max: number, current: number, created?: number }>, pact_magic: Record<number, { max: number, current: number }> }>>('spellSlots')
@@ -372,6 +385,18 @@ const advanceRound = () => {
   elapseDurations()
 }
 
+// La fiche ne sait ni qui est hostile ni ce qui a été frappé : c'est au joueur de dire si la capacité (Rage) a été entretenue.
+const lapseAsked = ref<number[]>([])
+const lapseQuestion = computed(() => featuresLapsingWithoutCombat.value.filter(f => lapseAsked.value.includes(f.id)))
+const dismissLapse = () => {
+  lapseAsked.value = []
+}
+const endLapsed = async () => {
+  const lapsed = lapseQuestion.value
+  lapseAsked.value = []
+  for (const feature of lapsed) await setActive(feature.id, false, undefined)
+}
+
 const newTurn = () => {
   usedActions.value = { action: false, bonus_action: false, reaction: false }
   movementUsed.value = 0
@@ -379,6 +404,7 @@ const newTurn = () => {
   for (const feature of resolvedFeatures.value) {
     if (feature.active && feature.meta?.endsOnNewTurn) setActive(feature.id, false, undefined)
   }
+  lapseAsked.value = featuresLapsingWithoutCombat.value.map(f => f.id)
 }
 
 // Dés qui dépendent de l'avantage (Attaque sournoise) : le mode du dernier jet d'attaque dit si la condition est remplie.

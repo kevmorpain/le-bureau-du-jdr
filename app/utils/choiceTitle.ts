@@ -8,6 +8,7 @@ const TITLES: Partial<Record<ResolvedChoice['kind'], string>> = {
   invocations: 'Manifestations occultes',
   metamagic: 'Métamagie',
   maneuvers: 'Manœuvres',
+  elemental_disciplines: 'Disciplines élémentaires',
 }
 
 // Le Rôdeur et le Druide partagent le type de choix « terrain » : seul le propriétaire les distingue.

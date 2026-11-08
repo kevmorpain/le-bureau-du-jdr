@@ -48,7 +48,7 @@ interface LevelUpState {
   newSkills: string[]                // compétences gagnées via multiclassage
   featLanguages: string[]            // langues du don Linguiste (step asi)
   choicePicks: Record<number, Array<string | number>> // points de choix gagnés à ce niveau (instrument du Barde rejoint, ennemi juré du Rôdeur)
-  featurePicks: Record<number, number[]>               // options de feature gagnées (style de combat, pacte, manifestations, Métamagie, manœuvres), par id de progression
+  featurePicks: Record<number, number[]>               // options de feature gagnées (style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires), par id de progression
   featureReplacements: Record<number, number | null>   // option déjà prise (manœuvre, manifestation) échangée contre une nouvelle, par id de progression
 
   // Magie (step spells)
@@ -233,7 +233,7 @@ Corps :
   featChoices?: { ability?, spellId?, skills?, tools?, languages? } | null
   newSkills?: SkillKey[]            // multiclassage uniquement ; sans doublon (Zod → 422)
   choicePicks?: { progressionId, value? | spellId? }[]  // points de choix gagnés à ce niveau
-  featurePicks?: { progressionId, featureId }[]         // options de feature gagnées à ce niveau (style de combat, pacte, manifestations, Métamagie, manœuvres)
+  featurePicks?: { progressionId, featureId }[]         // options de feature gagnées à ce niveau (style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires)
   featureReplacements?: { progressionId, featureId }[]  // option déjà prise échangée (un point de choix `replaceable`, un seul)
   newCantripIds?: number[]
   newSpellIds?: number[]

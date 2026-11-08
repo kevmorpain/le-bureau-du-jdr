@@ -53,7 +53,7 @@ interface BuilderState {
   variantHumanSkill: string | null // compétence bonus ex: 'arcana'
   selectedLanguages: string[]     // langue au choix de l'Humain variant (clé : 'elvish'…)
   choicePicks: Record<number, Array<string | number>> // picks des points de choix (espèce, lignée, historique, classe, règle générale), par id de progression
-  featurePicks: Record<number, number[]> // options de feature (style de combat, 2ᵉ style du Champion, pacte, manifestations, Métamagie, manœuvres), par id de progression
+  featurePicks: Record<number, number[]> // options de feature (style de combat, 2ᵉ style du Champion, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires), par id de progression
   dragonAncestry: string | null   // ex: 'red', 'gold'
 
   // Étape 2 — Classe
@@ -489,7 +489,7 @@ Corps accepté :
   skillProficiencies?: string[]              // clés de compétences
   selectedSpellIds?: number[]               // IDs de sorts DB
   inventory?: { itemId: number, quantity: number }[]   // équipement de départ, quantité 1 à 1000
-  featurePicks?: { progressionId: number, featureId: number }[]   // style de combat, pacte, manifestations, Métamagie, manœuvres
+  featurePicks?: { progressionId: number, featureId: number }[]   // style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires
 }
 ```
 

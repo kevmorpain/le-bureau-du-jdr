@@ -8,6 +8,14 @@
       icon="i-heroicons:no-symbol"
     />
 
+    <UAlert
+      v-if="spellcastingBlockedWarning"
+      :title="spellcastingBlockedWarning"
+      color="warning"
+      variant="soft"
+      icon="i-heroicons:exclamation-triangle"
+    />
+
     <div
       v-if="spellcasterClasses.length > 1"
       class="flex items-center gap-2"
@@ -367,6 +375,7 @@
       :spell-slots="spellSlots"
       :caster-choices="spellcasterClasses"
       :initial-caster-class-id="selectedCasterClassId ?? activeCasterClass?.classId ?? null"
+      :warning="spellcastingBlockedWarning"
       @cast="handleCast"
     />
 
@@ -434,6 +443,7 @@ const {
   selectedCasterClassId,
   setSelectedCaster,
   armorSpellcastingWarning,
+  spellcastingBlockedWarning,
   characterLevel,
   spellDamageBonus,
   activeConditions,

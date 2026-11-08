@@ -1,4 +1,4 @@
-import { variable } from '~~/shared/utils/formula'
+import { fixed, variable } from '~~/shared/utils/formula'
 import type { AbilityScoreKey } from '../../schema/effects'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
@@ -22,7 +22,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     featureType: 'class_feature',
     levelRequired: 1,
     actionType: null,
-    rechargeType: 'long_rest',
+    rechargeType: null,
     maxUsesFormula: null,
     effects: [],
   },
@@ -68,7 +68,7 @@ Modificateur d'attaque de sort = bonus de maîtrise + modificateur de Charisme.`
     featureType: 'class_feature',
     levelRequired: 20,
     actionType: null,
-    rechargeType: 'short_rest',
+    rechargeType: null,
     maxUsesFormula: null,
     effects: [{ type: 'resource_regain', value: { resource: 'sorcery_points', amount: 4, on: 'short_rest' } }],
   },
@@ -161,7 +161,7 @@ Tant que vous n'avez pas récupéré cette capacité, si vous lancez un sort d'e
         levelRequired: 1,
         actionType: null,
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
         rollTable: 'wild_magic_surge',
       },

@@ -143,6 +143,23 @@
         </UButton>
       </div>
 
+      <div
+        v-if="group.regains.length"
+        class="flex flex-wrap gap-1"
+      >
+        <UButton
+          v-for="r in group.regains"
+          :key="r.label"
+          size="xs"
+          variant="soft"
+          color="neutral"
+          :disabled="group.spent === 0 || (r.whenEmpty && remaining(group) !== 0)"
+          @click="regain(group, r.amount)"
+        >
+          {{ r.label }} (+{{ r.amount }})
+        </UButton>
+      </div>
+
       <template v-if="group.key === 'sorcery_points'">
         <div
           v-if="group.costs.length"
@@ -223,7 +240,7 @@
         class="space-y-1"
       >
         <p class="text-xs font-semibold uppercase tracking-wider text-muted">
-          Manœuvres
+          {{ COSTS_TITLES[group.key] ?? 'Capacités' }}
         </p>
         <div class="flex flex-wrap gap-1">
           <UButton
@@ -273,6 +290,12 @@ const { remaining, canSpend, spend, regain, setSpent, setActive, convertSlotToPo
 
 const RECHARGE_LABELS = { short_rest: 'Repos court', long_rest: 'Repos long', dawn: 'À l\'aube' } as const
 const rechargeLabel = (type: ResourceGroup['rechargeType']) => (type ? RECHARGE_LABELS[type] : '')
+
+const COSTS_TITLES: Partial<Record<ResourceGroup['key'], string>> = {
+  superiority_dice: 'Manœuvres',
+  channel_divinity: 'Conduit divin',
+  ki: 'Capacités de ki',
+}
 
 const amounts = reactive<Record<string, number>>({})
 const amountOf = (group: ResourceGroup) => amounts[group.key] ?? 1

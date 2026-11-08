@@ -9,6 +9,14 @@
         </template>
 
         <div class="space-y-4">
+          <UAlert
+            v-if="warning"
+            :title="warning"
+            color="warning"
+            variant="soft"
+            icon="i-heroicons:exclamation-triangle"
+          />
+
           <div
             v-if="casterChoices.length > 1 && selected?.slotType === 'spellcasting'"
             class="space-y-2"
@@ -124,6 +132,7 @@ const props = defineProps<{
   spellSlots: SlotsByType
   casterChoices?: CasterChoice[]
   initialCasterClassId?: number | null
+  warning?: string | null
 }>()
 
 const emit = defineEmits<{

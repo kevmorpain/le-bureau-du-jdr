@@ -61,9 +61,9 @@ export interface LevelUpState {
   newSkills: string[]
   // Picks des points de choix gagnés à ce niveau (instrument du Barde rejoint), par id de progression.
   choicePicks: Record<number, Array<string | number>>
-  // Options de feature gagnées à ce niveau (style de combat, pacte, manifestations, Métamagie, manœuvres), par id de progression.
+  // Options de feature gagnées à ce niveau (style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires), par id de progression.
   featurePicks: Record<number, number[]>
-  // Option déjà prise échangée contre une nouvelle sur un point de choix remplaçable (manœuvres, manifestations), par id de progression.
+  // Option déjà prise échangée contre une nouvelle sur un point de choix remplaçable (manœuvres, disciplines, manifestations), par id de progression.
   featureReplacements: Record<number, number | null>
   newCantripIds: number[]
   newSpellIds: number[]
@@ -422,11 +422,11 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     })
   })
   const newPickChoices = computed(() => gainedChoices.value.filter(isPickChoice))
-  // Options de feature à choisir (style de combat, pacte, manifestations, Métamagie, manœuvres) ; celles que la fiche porte déjà ne se reprennent pas.
+  // Options de feature à choisir (style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires) ; celles que la fiche porte déjà ne se reprennent pas.
   const newFeaturePickChoices = computed(() => gainedChoices.value.filter(isFeaturePickChoice).sort(byFeaturePickOrder))
   const ownedFeatureIds = computed<number[]>(() => ((charSheet.value?.features ?? []) as Array<{ featureId: number }>).map(f => f.featureId))
   const featurePicksOf = (progressionId: number): number[] => state.value.featurePicks[progressionId] ?? []
-  // Échanger une option déjà prise (manœuvres) ajoute une option à apprendre.
+  // Échanger une option déjà prise (manœuvres, disciplines) ajoute une option à apprendre.
   const featureReplacementOf = (c: ResolvedChoice): number | null => c.replaceable ? state.value.featureReplacements[c.progressionId] ?? null : null
   const featurePicksDue = (c: ResolvedChoice): number => c.count + (featureReplacementOf(c) != null ? 1 : 0)
   // Une option que le niveau ou la classe ne propose plus ne part pas, pas plus que l'excédent.

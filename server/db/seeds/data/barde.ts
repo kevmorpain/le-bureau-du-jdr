@@ -86,7 +86,7 @@ Au niveau 10, vous pouvez choisir deux autres maîtrises de compétence à amél
     featureType: 'class_feature',
     levelRequired: 5,
     actionType: null,
-    rechargeType: 'short_rest',
+    rechargeType: null,
     maxUsesFormula: null,
     effects: [{ type: 'resource_regain', value: { resource: 'bardic_inspiration', amount: 'all', on: 'short_rest' } }],
   },

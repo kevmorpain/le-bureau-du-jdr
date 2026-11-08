@@ -3,7 +3,7 @@ import type { FormulaContext } from '~~/shared/utils/formula'
 import type { Effect } from '~~/server/db/schema/effects'
 import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, type FeatChoices } from '~~/shared/rules/characterEffects'
 import { spellDamageBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
-import { criticalExtraDiceOf, deriveClassTraits, featureFormulaContext, featureUses, isFeatureUnlocked, resourceFeaturesOf, resourceGroups as deriveResourceGroups } from '~~/shared/rules/classResources'
+import { criticalExtraDiceOf, deriveClassTraits, endingWhenUnconscious, featureFormulaContext, featureUses, isFeatureUnlocked, lapsingWithoutCombat, resourceFeaturesOf, resourceGroups as deriveResourceGroups, spellcastingBlockedBy } from '~~/shared/rules/classResources'
 import type { OwnerClass } from '~~/shared/rules/classResources'
 import { castDuration, type SpellDurationRow } from '~~/shared/rules/durations'
 import { conditionLabels } from '~~/shared/utils/labels'
@@ -148,6 +148,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     deriveResourceGroups(resourceFeatures.value, formulaContext.value, ownerClasses.value),
   )
 
+  const featuresEndingWhenUnconscious = computed(() => endingWhenUnconscious(resourceFeatures.value, ownerClasses.value))
+  const featuresLapsingWithoutCombat = computed(() => lapsingWithoutCombat(resourceFeatures.value, ownerClasses.value))
+
   // Effets en vigueur tant qu'une capacité est active (Rage : résistances) ; suspendus par une armure lourde.
   featureSourcesRef.value = computed<EffectSource[]>(() =>
     resourceFeatures.value.flatMap(f =>
@@ -244,6 +247,13 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
 
   const spells = useCharacterSpells(characterSheet, {
     spellSlots: spellcasting.spellSlots,
+  })
+
+  // Seul un lanceur de sorts est gêné par une capacité qui l'interdit (Rage).
+  const spellcastingBlockedWarning = computed<string | null>(() => {
+    const names = spellcastingBlockedBy(resourceFeatures.value, ownerClasses.value)
+    if (!names.length || !spellcasting.spellcastingAbility.value) return null
+    return `${names.join(', ')} : vous ne pouvez ni lancer de sorts ni vous concentrer sur eux.`
   })
 
   // ─── Couche 5 : inventaire, équipement, combat ───────────────────────────
@@ -456,6 +466,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     allCharacterFeatures,
     classTraits,
     resourceGroups,
+    featuresEndingWhenUnconscious,
+    featuresLapsingWithoutCombat,
+    spellcastingBlockedWarning,
     wearsHeavyArmor: computed(() => heavyArmorRef.value?.value ?? false),
     allEffects,
     // Caractéristiques

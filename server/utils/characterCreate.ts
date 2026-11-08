@@ -140,7 +140,7 @@ export const createCharacterSchema = z.object({
   preparedSpellIds: z.array(z.number().int()).optional(),
   // Maîtrises et sorts mineurs choisis sur un point de choix d'espèce, de lignée, d'historique ou de classe.
   choicePicks: z.array(choicePickSchema).optional().default([]),
-  // Options de feature choisies : style de combat, pacte, manifestations, Métamagie, manœuvres.
+  // Options de feature choisies : style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires.
   featurePicks: z.array(featurePickSchema).optional().default([]),
   weaponMasteryChoices: z
     .array(z.object({

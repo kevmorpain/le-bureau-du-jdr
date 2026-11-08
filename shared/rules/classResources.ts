@@ -108,6 +108,18 @@ const unlockedEffects = (features: readonly ResourceFeature[], classes: readonly
 const activeEffectsOf = (feature: ResourceFeature, heavyArmor: boolean): Effect[] =>
   feature.active && !(feature.meta?.suspendedByHeavyArmor && heavyArmor) ? feature.meta?.whileActive ?? [] : []
 
+// Capacités actives qui prennent fin d'elles-mêmes (Rage) : à l'inconscience, ou faute de combat depuis le tour précédent
+// (la fiche ne sait ni qui est hostile ni ce qui a été frappé : le joueur répond). `persistentFromClassLevel` lève le second cas.
+export const endingWhenUnconscious = (features: readonly ResourceFeature[], classes: readonly OwnerClass[]): ResourceFeature[] =>
+  unlockedEffects(features, classes).filter(f => f.active && f.meta?.endsWhenUnconscious)
+
+export const lapsingWithoutCombat = (features: readonly ResourceFeature[], classes: readonly OwnerClass[]): ResourceFeature[] =>
+  unlockedEffects(features, classes).filter(f => f.active && f.meta?.endsWithoutCombat
+    && (ownerClassOf(f, classes)?.level ?? 0) < (f.meta.persistentFromClassLevel ?? Infinity))
+
+export const spellcastingBlockedBy = (features: readonly ResourceFeature[], classes: readonly OwnerClass[]): string[] =>
+  unlockedEffects(features, classes).filter(f => f.active && f.meta?.blocksSpellcasting).map(f => f.name)
+
 export interface WeaponDamageDice {
   name: string
   count: number
@@ -253,6 +265,7 @@ export interface ResourceGroup {
   rechargeType: RechargeType | null
   saveDcAbility: FeatureMeta['saveDcAbility']
   spends: NonNullable<FeatureMeta['spends']>
+  regains: NonNullable<FeatureMeta['regains']>
   // Capacités d'AUTRES features payées par cette réserve (options de Métamagie).
   costs: { featureId: number, name: string, amount: number | 'spell_level' }[]
 }
@@ -289,6 +302,8 @@ export const resourceGroups = (features: readonly ResourceFeature[], base: Formu
       saveDcAbility: members.find(m => m.feature.meta?.saveDcAbility)?.feature.meta?.saveDcAbility,
       spends: members.flatMap(m => (m.feature.meta?.spends ?? [])
         .filter(s => (ownerClassOf(m.feature, classes)?.level ?? 0) >= (s.minClassLevel ?? 0))),
+      regains: members.flatMap(m => (m.feature.meta?.regains ?? [])
+        .filter(r => (ownerClassOf(m.feature, classes)?.level ?? 0) >= (r.minClassLevel ?? 0))),
       costs: unlocked.flatMap(f => (f.meta?.cost?.resource === key ? [{ featureId: f.id, name: f.name, amount: f.meta.cost.amount }] : [])),
     }
   })

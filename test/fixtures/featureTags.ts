@@ -16,6 +16,7 @@ export const FEATURE_TAG_CONTRACT: FeatureTagContract[] = [
   { tag: 'invocation', featureType: 'eldritch_invocation', seeded: true },
   { tag: 'metamagic', featureType: null, seeded: false },
   { tag: 'maneuver', featureType: null, seeded: false },
+  { tag: 'elemental_discipline', featureType: null, seeded: false },
   { tag: 'fighting_style', featureType: null, seeded: false },
   { tag: 'pact_boon', featureType: null, seeded: false },
 ]

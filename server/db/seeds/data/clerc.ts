@@ -1,4 +1,4 @@
-import { lookup } from '~~/shared/utils/formula'
+import { fixed, lookup, max, variable } from '~~/shared/utils/formula'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
 import { alwaysPreparedEffects, CLERIC_DOMAIN_SPELLS } from './alwaysPreparedSpells'
@@ -41,8 +41,9 @@ Vous devez terminer un repos court ou long pour pouvoir l'utiliser à nouveau. �
     featureType: 'class_feature',
     levelRequired: 2,
     actionType: 'action',
-    rechargeType: 'short_rest',
+    rechargeType: null,
     maxUsesFormula: null,
+    meta: { cost: { resource: 'channel_divinity', amount: 1 } },
     effects: [],
   },
   {
@@ -62,7 +63,8 @@ Vous devez terminer un repos court ou long pour pouvoir l'utiliser à nouveau. �
     levelRequired: 10,
     actionType: 'action',
     rechargeType: 'long_rest',
-    maxUsesFormula: null,
+    // Un usage : après un succès le blocage dure 7 jours (l'application n'a pas d'horloge de jeu), après un échec jusqu'au repos long.
+    maxUsesFormula: fixed(1),
     effects: [],
   },
   ...asiFeatures('Clerc'),
@@ -109,8 +111,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 2,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -176,7 +179,7 @@ export const clercSubclasses: SubclassDef[] = [
         levelRequired: 1,
         actionType: 'reaction',
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: max(fixed(1), variable('wis_mod')),
         effects: [],
       },
       {
@@ -185,8 +188,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 2,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -252,7 +256,7 @@ export const clercSubclasses: SubclassDef[] = [
         levelRequired: 1,
         actionType: 'bonus_action',
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: max(fixed(1), variable('wis_mod')),
         effects: [],
       },
       {
@@ -261,8 +265,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 2,
         actionType: null,
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -271,8 +276,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 6,
         actionType: 'reaction',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -328,7 +334,7 @@ export const clercSubclasses: SubclassDef[] = [
         levelRequired: 1,
         actionType: 'reaction',
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: max(fixed(1), variable('wis_mod')),
         effects: [],
       },
       {
@@ -337,8 +343,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 2,
         actionType: null,
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -413,8 +420,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 2,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -479,8 +487,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 2,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -489,8 +498,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 6,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -545,8 +555,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 2,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {
@@ -555,8 +566,9 @@ export const clercSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 6,
         actionType: 'action',
-        rechargeType: 'short_rest',
+        rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'channel_divinity', amount: 1 } },
         effects: [],
       },
       {

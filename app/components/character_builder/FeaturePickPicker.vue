@@ -110,7 +110,7 @@
 <script lang="ts" setup>
 import { unmetPrerequisite, type CharacterProjection, type ResolvedOption, type UnmetPrerequisite } from '~~/shared/rules/resolve'
 
-// Choix d'une ou plusieurs options d'un groupe de features (style de combat, pacte, manifestations, Métamagie, manœuvres).
+// Choix d'une ou plusieurs options d'un groupe de features (style de combat, pacte, manifestations, Métamagie, manœuvres, disciplines élémentaires).
 // Les options viennent du point de choix (identifiants, niveau, prérequis) ; leurs noms et descriptions, du catalogue.
 // `excludedIds` : options déjà prises ailleurs, masquées. `replaceableIds` : options déjà prises que l'on peut échanger ;
 // en échanger une ajoute une option à choisir. `projection` : l'état du personnage qui décide des prérequis ; sans lui,

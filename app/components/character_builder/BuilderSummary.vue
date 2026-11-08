@@ -260,7 +260,7 @@ const pactBoonLabel = computed(() => pactBoon.value ? PACT_BOON_NAMES[pactBoon.v
 const selectedInvocationNames = computed(() => selectedInvocations.value.map(i => i.name))
 
 // Choix de la classe que la fiche affichera : ennemis jurés et terrains (libellés), puis options de feature (styles de
-// combat, Métamagie, manœuvres), dont le catalogue donne les noms. Le pacte et les manifestations ont leur encart.
+// combat, Métamagie, manœuvres, disciplines élémentaires), dont le catalogue donne les noms. Le pacte et les manifestations ont leur encart.
 const ownBlockKinds: ReadonlyArray<string> = ['pact_boon', 'invocations']
 const featurePickGroups = computed(() => featurePickChoices.value
   .filter(c => !ownBlockKinds.includes(c.kind))

@@ -2,6 +2,7 @@ import { fixed, lookup, variable } from '~~/shared/utils/formula'
 import type { AbilityScoreKey } from '../../schema/effects'
 import type { FeatureDef, SubclassDef } from '../lib/seedClass'
 import { asiFeatures } from './asi'
+import { DISCIPLE_DESCRIPTION, ELEMENTAL_DISCIPLINES_KNOWN, elementalDisciplineFeatures } from './elemental_disciplines'
 
 export const moineName = 'Moine'
 
@@ -66,7 +67,11 @@ DD de sauvegarde de ki = 8 + votre bonus de maîtrise + votre modificateur de Sa
         { label: 'Déplacement aérien', amount: 1 },
         { label: 'Parade de projectiles (renvoi)', amount: 1, minClassLevel: 3 },
         { label: 'Frappe étourdissante', amount: 1, minClassLevel: 5 },
+        { label: 'Âme de diamant', amount: 1, minClassLevel: 14 },
+        { label: 'Vide immaculé', amount: 4, minClassLevel: 18 },
+        { label: 'Projection astrale', amount: 8, minClassLevel: 18 },
       ],
+      regains: [{ label: 'Perfection de l\'être', amount: 4, minClassLevel: 20, whenEmpty: true }],
     },
   },
   {
@@ -245,7 +250,7 @@ export const moineSubclasses: SubclassDef[] = [
         levelRequired: 6,
         actionType: 'action',
         rechargeType: 'long_rest',
-        maxUsesFormula: null,
+        maxUsesFormula: fixed(1),
         effects: [],
       },
       {
@@ -254,7 +259,7 @@ export const moineSubclasses: SubclassDef[] = [
         featureType: 'subclass_feature',
         levelRequired: 11,
         actionType: null,
-        rechargeType: 'long_rest',
+        rechargeType: null,
         maxUsesFormula: null,
         effects: [],
       },
@@ -266,6 +271,7 @@ export const moineSubclasses: SubclassDef[] = [
         actionType: 'action',
         rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'ki', amount: 3 } },
         effects: [],
       },
     ],
@@ -282,6 +288,7 @@ export const moineSubclasses: SubclassDef[] = [
         actionType: 'action',
         rechargeType: null,
         maxUsesFormula: null,
+        meta: { cost: { resource: 'ki', amount: 2 } },
         effects: [],
       },
       {
@@ -322,24 +329,16 @@ export const moineSubclasses: SubclassDef[] = [
     features: [
       {
         name: 'Disciple des éléments',
-        description: `Au niveau 3, vous apprenez des disciplines magiques qui exploitent la puissance des quatre éléments. Vous connaissez la discipline Lien élémentaire et une autre discipline élémentaire de votre choix. Vous en apprenez une supplémentaire aux niveaux 6, 11 et 17.
-
-**Lien élémentaire :** Action pour créer de petits effets élémentaires inoffensifs (flamme, vent doux, courant d'eau, tremblement mineur).
-
-Exemples de disciplines disponibles (coût en ki) :
-- **Crochets du serpent de feu (2 ki) :** Portée +3 m et dégâts de feu supplémentaires lors des attaques.
-- **Poing de l'Air (2 ki) :** Explosion d'air — la cible subit 3d10 dégâts contondants et est repoussée de 6 m (jet de sauvegarde de Force).
-- **Fouet de l'Onde (2 ki) :** La cible subit 3d10 dégâts contondants et est tirée vers vous (jet de sauvegarde de Dextérité).
-- **Frappe de cendres (2 ki) :** Lance mains brûlantes.
-- **Destrier des vents (4 ki, niv 11) :** Lance vol sur vous-même.
-- **Flammes du phénix (4 ki, niv 11) :** Lance boule de feu.`,
+        description: DISCIPLE_DESCRIPTION,
         featureType: 'subclass_feature',
         levelRequired: 3,
-        actionType: 'action',
+        actionType: null,
         rechargeType: null,
         maxUsesFormula: null,
         effects: [],
+        progression: { kind: 'elemental_disciplines', count: ELEMENTAL_DISCIPLINES_KNOWN, optionSource: { type: 'feature_group', group: 'elemental_discipline' }, replaceable: true },
       },
+      ...elementalDisciplineFeatures,
     ],
   },
 ]

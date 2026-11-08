@@ -43,10 +43,20 @@ export interface FeatureMeta {
   endsOnNewTurn?: boolean
   /** Armure lourde portée : `whileActive` est suspendu (Rage). */
   suspendedByHeavyArmor?: boolean
+  /** La capacité active prend fin quand le personnage tombe inconscient (0 PV ou état Inconscient) : Rage. */
+  endsWhenUnconscious?: boolean
+  /** Au « Nouveau tour », la capacité active prend fin si le joueur n'a ni attaqué une créature hostile ni subi de dégâts depuis son tour précédent (Rage). */
+  endsWithoutCombat?: boolean
+  /** À partir de ce niveau de la classe propriétaire, `endsWithoutCombat` ne s'applique plus (Rage persistante). */
+  persistentFromClassLevel?: number
+  /** Tant que la capacité est active, on ne lance ni ne maintient de sort (Rage). */
+  blocksSpellcasting?: boolean
   /** DD que propose la réserve : 8 + maîtrise + modificateur (DD de ki) ; avec plusieurs caractéristiques, la meilleure (Force ou Dextérité). */
   saveDcAbility?: AbilityScoreKey | AbilityScoreKey[]
   /** Usages que la feature décrit en texte et qu'elle paie à même sa réserve (Défense patiente, Déluge de coups…). */
   spends?: { label: string, amount: number, minClassLevel?: number }[]
+  /** Points que la réserve regagne sur décision du joueur ; `whenEmpty` : seulement réserve vide (Perfection de l'être : 4 ki à l'initiative). */
+  regains?: { label: string, amount: number, minClassLevel?: number, whenEmpty?: boolean }[]
   /** Capacité payée par la réserve d'une AUTRE feature (options de Métamagie) ; `spell_level` : coût = niveau du sort, minimum 1. */
   cost?: { resource: ResourceKey, amount: number | 'spell_level' }
 }
