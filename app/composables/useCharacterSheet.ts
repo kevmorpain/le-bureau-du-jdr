@@ -11,6 +11,7 @@ import { armorSpeedPenalty, computeWalkingSpeed, speedBonusParts } from '~~/shar
 import type { WornArmor } from '~~/shared/rules/speed'
 import { ENCUMBRANCE_LABELS, carriedWeightG, encumbranceOf, encumbranceSpeedPenalty, isCarried, isHeavilyEncumbered } from '~~/shared/rules/encumbrance'
 import { coinCount } from '~~/shared/rules/currency'
+import { darkvisionRange, sensesOf } from '~~/shared/rules/senses'
 import { withProficiencyOverrides } from '~~/shared/rules/proficiencyOverrides'
 import type { ArmorProperties } from '~~/server/db/schema/items'
 import { useCharacterClasses } from './character/useCharacterClasses'
@@ -274,6 +275,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   const swimmingSpeed = movementSpeed('swimming_speed')
   const climbingSpeed = movementSpeed('climbing_speed')
   const burrowingSpeed = movementSpeed('burrowing_speed')
+  const senses = computed(() => sensesOf(allEffects.value))
+  const visionRange = computed(() => darkvisionRange(allEffects.value))
 
   // ─── Poids porté ; l'encombrement n'a d'effet que sous la variante ───────
 
@@ -380,6 +383,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     effectSources: computed<EffectSource[]>(() => [{ label: 'Capacités', effects: capabilityEffects.value }, ...activeEffectSources.value]),
     allEffects: computed<Effect[]>(() => [...capabilityEffects.value, ...activeEffects.value]),
     getEffectiveProficiency: abilities.getEffectiveProficiency,
+    proficiencyBonus: classes.proficiencyBonus,
     criticalExtraDice: computed(() => classTraits.value.criticalExtraDice + criticalExtraDiceOf(speciesEffects.value, formulaContext.value)),
     rollsEnabled: computed(() => prefs.preferences.value.diceRolls),
   })
@@ -437,6 +441,8 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     swimmingSpeed,
     climbingSpeed,
     burrowingSpeed,
+    senses,
+    visionRange,
     speciesTraits: classes.speciesTraits,
     speciesEffects,
     characterLevel: classes.characterLevel,

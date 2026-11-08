@@ -3,6 +3,7 @@ import { conditionMechanics } from '~~/shared/utils/condition-effects'
 import { conditionLabels, rollSituationLabels } from '~~/shared/utils/labels'
 import type { AbilityKey } from './abilities'
 import type { EffectSource } from './effectBonuses'
+import type { ProficiencyLevel } from './proficiencyLevels'
 
 export type RollMode = 'normal' | 'advantage' | 'disadvantage'
 
@@ -138,9 +139,43 @@ export const advantageEffectSources = (
   }))
 }
 
-// Situations que le joueur peut désigner : celles que ses effets d'avantage conditionnent.
+// Situations que le joueur peut désigner : celles que ses effets d'avantage et de bonus de compétence conditionnent.
 export const availableSituations = (sources: readonly EffectSource[]): string[] =>
-  [...new Set(sources.flatMap(s => s.effects.flatMap(e => (e.type === 'advantage' && e.value.condition ? [e.value.condition] : []))))]
+  [...new Set(sources.flatMap(s => s.effects.flatMap((e) => {
+    if (e.type === 'advantage' && e.value.condition) return [e.value.condition]
+    return e.type === 'skill_bonus' && e.value.condition ? [e.value.condition] : []
+  })))]
+
+export interface SkillBonus {
+  amount: number
+  label: string
+}
+
+export interface AppliedProficiency {
+  level: ProficiencyLevel
+  proficiencyBonus: number
+  // Moitié du bonus de maîtrise que Touche-à-tout ajoute à une compétence non maîtrisée.
+  half: number
+}
+
+// Connaissance de la pierre, Connaissance en ingénierie : « le double de votre bonus de maîtrise au test, au lieu du simple
+// bonus », même sans maîtrise. Le jet gagne ce qui manque à ce que la compétence applique déjà ; l'expertise a déjà le double.
+export const conditionalSkillBonus = (
+  sources: readonly EffectSource[],
+  kind: D20Kind,
+  situations: readonly string[],
+  applied: AppliedProficiency,
+): SkillBonus | null => {
+  if (kind.type !== 'check' || !kind.skill) return null
+  const current = applied.level === 'expert' ? 2 * applied.proficiencyBonus : applied.level === 'proficient' ? applied.proficiencyBonus : applied.half
+  const reached = sources.flatMap(source => source.effects.flatMap((effect) => {
+    if (effect.type !== 'skill_bonus' || effect.value.skill !== kind.skill || effect.value.bonusType !== 'proficiency') return []
+    if (!situations.includes(effect.value.condition)) return []
+    const amount = effect.value.multiplier * applied.proficiencyBonus - current
+    return amount > 0 ? [{ amount, label: `${source.label} — ${situationLabel(effect.value.condition).toLowerCase()}` }] : []
+  }))
+  return reached.sort((a, b) => b.amount - a.amount)[0] ?? null
+}
 
 // Attaque sournoise : l'avantage au jet d'attaque suffit, le désavantage l'interdit ; sans l'un ni l'autre, tout dépend d'un
 // ennemi adjacent à la cible, que la fiche ne connaît pas.

@@ -18,6 +18,7 @@ export const rollNotes = (roll: DiceRoll): string[] => {
   else if (advantage.length && disadvantage.length) notes.push('Avantage et désavantage s\'annulent')
   if (roll.rerolled) notes.push(`Relance : ${roll.rerolled.from} → ${roll.rerolled.to}`)
   if (roll.floored !== undefined) notes.push(`${roll.floored} compte pour ${roll.natural}`)
+  if (roll.bonus) notes.push(`${formatModifier(roll.bonus.amount)} : ${roll.bonus.label}`)
   if (roll.autoFail?.length) notes.push(`Échec automatique (${roll.autoFail.join(', ')})`)
   if (roll.critDamage) notes.push('Coup critique : dés doublés')
   return notes

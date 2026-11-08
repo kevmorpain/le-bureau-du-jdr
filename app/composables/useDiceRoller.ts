@@ -30,6 +30,8 @@ export interface DiceRoll {
   rerolled?: { from: number, to: number }
   // Dé retenu avant le plancher de Savoir-faire.
   floored?: number
+  // Part du modificateur due à une situation désignée par le joueur.
+  bonus?: { amount: number, label: string }
   autoFail?: string[]
   critDamage?: boolean
   replay: { label: string, modifier: number, sides: number, count: number, options: RollOptions }
@@ -58,7 +60,8 @@ export const useDiceRoller = (provided?: RollEngine) => {
     const pending = engine.pending.value
     const policy = engine.policy(kind, pending.situations)
     const r = rollD20({ ...policy, sources: applyRollOverride(policy.sources, pending.override) }, Math.random)
-    const result = r.used + base.modifier
+    const modifier = base.modifier + (policy.bonus?.amount ?? 0)
+    const result = r.used + modifier
 
     engine.pending.value = {
       override: 'auto',
@@ -70,6 +73,8 @@ export const useDiceRoller = (provided?: RollEngine) => {
 
     return {
       ...base,
+      modifier,
+      bonus: policy.bonus ?? undefined,
       rolls: r.dice,
       keptIndex: r.keptIndex,
       natural: r.used,

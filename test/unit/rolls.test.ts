@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Effect } from '../../server/db/schema/effects'
 import {
-  advantageEffectSources, advantageEligibility, applyRollOverride, isUnderCondition, availableSituations, criticalDamageDiceCount, criticalFrom, factRollSources,
+  advantageEffectSources, advantageEligibility, applyRollOverride, conditionalSkillBonus, isUnderCondition, availableSituations, criticalDamageDiceCount, criticalFrom, factRollSources,
   halfProficiencyBonus, proficientCheckMinimum, rerollTrigger, resolveRollMode, rollD20, saveAutoFailSources,
   type D20Policy, type RollFacts, type RollSource,
 } from '../../shared/rules/rolls'
@@ -119,6 +119,49 @@ describe('factRollSources — états, épuisement, armure', () => {
   it('reprend les sources propres à l\'arme', () => {
     const extra: RollSource = { label: 'Arme lourde + Petite taille', mode: 'disadvantage' }
     expect(factRollSources({ type: 'attack', weapon: true, extra: [extra] }, facts())).toEqual([extra])
+  })
+})
+
+describe('conditionalSkillBonus — expertise conditionnelle du Nain et du Gnome des roches', () => {
+  const stonecunning: Effect = { type: 'skill_bonus', value: { skill: 'history', bonusType: 'proficiency', multiplier: 2, condition: 'masonry_origins' } }
+  const sources = [{ label: 'Capacités', effects: [stonecunning] }]
+  const history = { type: 'check', ability: 'int', skill: 'history' } as const
+  const proficiency = (level: 'none' | 'proficient' | 'expert', half = 0) => ({ level, proficiencyBonus: 3, half })
+
+  it('double le bonus de maîtrise, même sans maîtrise de la compétence', () => {
+    expect(conditionalSkillBonus(sources, history, ['masonry_origins'], proficiency('none'))?.amount).toBe(6)
+  })
+
+  it('ajoute ce qui manque à une compétence maîtrisée', () => {
+    expect(conditionalSkillBonus(sources, history, ['masonry_origins'], proficiency('proficient'))?.amount).toBe(3)
+  })
+
+  it('ne change rien à l\'expertise, qui a déjà le double', () => {
+    expect(conditionalSkillBonus(sources, history, ['masonry_origins'], proficiency('expert'))).toBeNull()
+  })
+
+  it('remplace la moitié de Touche-à-tout au lieu de s\'y ajouter', () => {
+    expect(conditionalSkillBonus(sources, history, ['masonry_origins'], proficiency('none', 1))?.amount).toBe(5)
+  })
+
+  it('exige que le joueur désigne la situation', () => {
+    expect(conditionalSkillBonus(sources, history, [], proficiency('none'))).toBeNull()
+    expect(conditionalSkillBonus(sources, history, ['magic'], proficiency('none'))).toBeNull()
+  })
+
+  it('ne vaut que pour la compétence nommée, et pour un test de compétence', () => {
+    expect(conditionalSkillBonus(sources, { type: 'check', ability: 'int', skill: 'arcana' }, ['masonry_origins'], proficiency('none'))).toBeNull()
+    expect(conditionalSkillBonus(sources, { type: 'save', ability: 'int' }, ['masonry_origins'], proficiency('none'))).toBeNull()
+    expect(conditionalSkillBonus(sources, { type: 'check', ability: 'int' }, ['masonry_origins'], proficiency('none'))).toBeNull()
+  })
+
+  it('nomme la source et la situation', () => {
+    expect(conditionalSkillBonus(sources, history, ['masonry_origins'], proficiency('none'))?.label).toBe('Capacités — origines d\'un travail de maçonnerie')
+  })
+
+  it('propose la situation au joueur, au côté de celles de l\'avantage', () => {
+    const advantage: Effect = { type: 'advantage', value: { rollType: 'saving_throw', ability: 'all', condition: 'poison' } }
+    expect(availableSituations([{ label: 'x', effects: [stonecunning, advantage] }])).toEqual(['masonry_origins', 'poison'])
   })
 })
 

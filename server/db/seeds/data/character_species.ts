@@ -337,7 +337,7 @@ const hillDwarf: SpeciesSeed = {
     {
       name: 'Ténacité naine',
       description: `Votre maximum de points de vie augmente de 1, et il augmente encore de 1 chaque fois que vous gagnez un niveau.`,
-      effects: [],
+      effects: [{ type: 'hp_per_level', value: { amount: 1 } }],
     },
   ],
 }

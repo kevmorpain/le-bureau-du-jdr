@@ -43,6 +43,8 @@ export const rollSituationLabels: Record<string, string> = {
   concentration: 'Concentration',
   concentration_after_damage: 'Concentration (après des dégâts)',
   visible_effects: 'Effets visibles',
+  masonry_origins: 'Origines d\'un travail de maçonnerie',
+  magical_alchemical_technological_origins: 'Objets magiques, alchimiques ou technologiques',
 }
 
 export const immunityLabels: Record<ImmunityKey, string> = {

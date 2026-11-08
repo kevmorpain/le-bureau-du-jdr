@@ -51,6 +51,11 @@ describe('rollNotes', () => {
     expect(rollNotes(roll({ autoFail: ['Étourdi'] }))).toEqual(['Échec automatique (Étourdi)'])
     expect(rollNotes(roll({ critDamage: true }))).toEqual(['Coup critique : dés doublés'])
   })
+
+  it('nomme ce qu\'une situation désignée ajoute au modificateur', () => {
+    expect(rollNotes(roll({ bonus: { amount: 6, label: 'Capacités — origines d\'un travail de maçonnerie' } })))
+      .toEqual(['+6 : Capacités — origines d\'un travail de maçonnerie'])
+  })
 })
 
 describe('rollText', () => {

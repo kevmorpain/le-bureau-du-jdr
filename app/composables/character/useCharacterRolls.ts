@@ -2,9 +2,9 @@ import type { InjectionKey } from 'vue'
 import type { ConditionKey, Effect } from '~~/server/db/schema/effects'
 import type { EffectSource } from '~~/shared/rules/effectBonuses'
 import {
-  advantageEffectSources, availableSituations, criticalFrom, DEFAULT_CRITICAL_FROM, factRollSources, proficientCheckMinimum,
-  rerollTrigger, saveAutoFailSources,
-  type D20Kind, type D20Policy, type RollFacts, type RollMode, type RollOverride,
+  advantageEffectSources, availableSituations, conditionalSkillBonus, criticalFrom, DEFAULT_CRITICAL_FROM, factRollSources,
+  halfProficiencyBonus, proficientCheckMinimum, rerollTrigger, saveAutoFailSources,
+  type D20Kind, type D20Policy, type RollFacts, type RollMode, type RollOverride, type SkillBonus,
 } from '~~/shared/rules/rolls'
 import type { ProficiencyLevel } from './useCharacterAbilities'
 
@@ -17,7 +17,8 @@ export interface PendingRoll {
   attackMode: RollMode | null
 }
 
-export type RolledPolicy = D20Policy & { autoFail: string[] }
+// `bonus` : ce qu'une situation désignée par le joueur ajoute au modificateur du jet (expertise conditionnelle).
+export type RolledPolicy = D20Policy & { autoFail: string[], bonus?: SkillBonus | null }
 
 // Ce que le lanceur de dés demande à la fiche : la politique d'un jet de d20 et le surplus de dés d'un critique.
 export interface RollEngine {
@@ -44,6 +45,7 @@ export const useCharacterRolls = (deps: {
   effectSources: ComputedRef<EffectSource[]>
   allEffects: ComputedRef<Effect[]>
   getEffectiveProficiency: (skillKey: string) => ProficiencyLevel
+  proficiencyBonus?: ComputedRef<number>
   criticalExtraDice: ComputedRef<number>
   rollsEnabled: ComputedRef<boolean>
 }): RollEngine => {
@@ -58,7 +60,16 @@ export const useCharacterRolls = (deps: {
   const policy = (kind: D20Kind, situations: readonly string[]): RolledPolicy => {
     const effects = deps.allEffects.value
     const proficientSkill = kind.type === 'check' && !!kind.skill && deps.getEffectiveProficiency(kind.skill) !== 'none'
+    const proficiencyBonus = deps.proficiencyBonus?.value ?? 0
+    const bonus = kind.type === 'check' && kind.skill && proficiencyBonus > 0
+      ? conditionalSkillBonus(deps.effectSources.value, kind, situations, {
+          level: deps.getEffectiveProficiency(kind.skill),
+          proficiencyBonus,
+          half: halfProficiencyBonus(effects, kind.ability, proficiencyBonus),
+        })
+      : null
     return {
+      bonus,
       sources: [
         ...factRollSources(kind, facts.value),
         ...advantageEffectSources(deps.effectSources.value, kind, situations, deps.activeConditions.value),
