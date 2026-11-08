@@ -1,7 +1,7 @@
 <template>
   <USlideover
     v-model:open="open"
-    title="Ajouter un don"
+    :title="isBoon ? 'Ajouter une faveur' : 'Ajouter un don'"
     :ui="{ body: 'overflow-y-auto' }"
   >
     <template #body>
@@ -9,7 +9,7 @@
         <UInput
           v-model="search"
           icon="i-heroicons:magnifying-glass"
-          placeholder="Rechercher un don..."
+          :placeholder="isBoon ? 'Rechercher une faveur...' : 'Rechercher un don...'"
         />
 
         <div class="space-y-1.5 max-h-72 overflow-y-auto">
@@ -36,7 +36,7 @@
             v-if="filteredFeats.length === 0"
             class="text-sm text-muted text-center py-6"
           >
-            Aucun don disponible.
+            {{ isBoon ? 'Aucune faveur disponible.' : 'Aucun don disponible.' }}
           </p>
         </div>
 
@@ -75,7 +75,7 @@
           :loading="submitting"
           @click="submit"
         >
-          Ajouter le don
+          {{ isBoon ? 'Ajouter la faveur' : 'Ajouter le don' }}
         </UButton>
       </div>
     </template>
@@ -89,7 +89,11 @@ const props = defineProps<{
   characterSheetId: number
   // featureIds déjà possédés par le perso (pour les exclure de la liste).
   ownedFeatureIds: number[]
+  // Faveurs permanentes (manuels, tomes) plutôt que dons.
+  kind?: 'feat' | 'boon'
 }>()
+
+const isBoon = computed(() => props.kind === 'boon')
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -97,7 +101,7 @@ const emit = defineEmits<{
   added: []
 }>()
 
-const { feats } = useFeats()
+const { feats } = useFeats(props.kind)
 const toast = useToast()
 
 const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [
@@ -158,7 +162,7 @@ async function submit() {
       },
     })
     emit('added')
-    toast.add({ title: 'Don ajouté', color: 'success' })
+    toast.add({ title: isBoon.value ? 'Faveur ajoutée' : 'Don ajouté', color: 'success' })
     open.value = false
     selectedId.value = null
     chosenAbility.value = null
@@ -166,7 +170,7 @@ async function submit() {
   }
   catch (e) {
     console.error('[feats] add error:', e)
-    toast.add({ title: 'Erreur lors de l\'ajout du don', color: 'error' })
+    toast.add({ title: isBoon.value ? 'Erreur lors de l\'ajout de la faveur' : 'Erreur lors de l\'ajout du don', color: 'error' })
   }
   finally {
     submitting.value = false

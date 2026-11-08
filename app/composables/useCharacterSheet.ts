@@ -199,6 +199,10 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         kind = 'class'
         label = 'Don'
       }
+      else if (f.featureType === 'boon') {
+        kind = 'class'
+        label = 'Faveur'
+      }
       return { ...f, origin: { kind, label } }
     })
 

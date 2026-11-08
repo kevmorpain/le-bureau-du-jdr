@@ -21,10 +21,11 @@ export function featAllowedAbilities(effects: Effect[] | undefined): AbilityKey[
   return abilities && abilities.length ? abilities : ALL_ABILITIES
 }
 
-export function useFeats() {
+// `kind: 'boon'` : les faveurs permanentes (manuels, tomes), un catalogue à part qui n'entre jamais dans les choix de dons.
+export function useFeats(kind: 'feat' | 'boon' = 'feat') {
   // Pas de `key` fixe : l'auto-clé (URL + query) sépare les entrées de cache socle / étendu.
   const { extendedQuery } = useExtendedContent()
-  const { data, refresh, pending } = useFetch<Feat[]>('/api/catalog/feats', {
+  const { data, refresh, pending } = useFetch<Feat[]>(kind === 'boon' ? '/api/catalog/boons' : '/api/catalog/feats', {
     query: extendedQuery,
     default: () => [],
   })

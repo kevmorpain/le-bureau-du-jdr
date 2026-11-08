@@ -1,5 +1,5 @@
 import { db, schema } from '~~/server/utils/db'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const { id, featureId } = getRouterParams(event)
@@ -10,11 +10,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid id' })
   }
 
-  // Les features de classe/sous-classe/espèce ont leur propre cycle de vie : on ne retire que les dons.
+  // Les features de classe/sous-classe/espèce ont leur propre cycle de vie : on ne retire que les dons et les faveurs.
   const [feat] = await db
     .select({ id: schema.features.id })
     .from(schema.features)
-    .where(and(eq(schema.features.id, featId), eq(schema.features.featureType, 'feat')))
+    .where(and(eq(schema.features.id, featId), inArray(schema.features.featureType, ['feat', 'boon'])))
     .limit(1)
 
   if (!feat) throw createError({ statusCode: 404, statusMessage: 'Don introuvable' })

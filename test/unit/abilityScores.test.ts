@@ -69,8 +69,26 @@ describe('resolveAbilityScore — objets', () => {
     expect(score({ base: 15, itemSets: [19, 21] }).total).toBe(21)
   })
 
-  it('score fixé appliqué après les bonus : Ioun (15 → 17) puis Gantelets → 19', () => {
-    expect(score({ base: 15, itemIncreases: [{ amount: 2, max: 20 }], itemSets: [19] }).total).toBe(19)
+  // #299 : aucune source ne tranche l'ordre d'un score fixé et d'un bonus d'objet ; le meilleur des deux ordres est retenu.
+  it('Gantelets + Pierre de Ioun de Force sur FOR 8 : bonus puis fixé donne 19, fixé puis bonus donne 20 → 20', () => {
+    expect(score({ base: 8, itemIncreases: [{ amount: 2, max: 20 }], itemSets: [19] }).total).toBe(20)
+  })
+
+  it('même cas avec FOR 15 : 20, et non 19', () => {
+    expect(score({ base: 15, itemIncreases: [{ amount: 2, max: 20 }], itemSets: [19] }).total).toBe(20)
+  })
+
+  it('le bonus ne dépasse pas son propre maximum : un score fixé à 21 reste 21', () => {
+    expect(score({ base: 8, itemIncreases: [{ amount: 2, max: 20 }], itemSets: [21] }).total).toBe(21)
+  })
+
+  it('un malus d\'objet n\'abaisse pas un score fixé : le meilleur des deux ordres reste 19', () => {
+    expect(score({ base: 8, itemIncreases: [{ amount: -2 }], itemSets: [19] }).total).toBe(19)
+  })
+
+  it('sans score fixé, ou sans bonus, rien ne change', () => {
+    expect(score({ base: 8, itemIncreases: [{ amount: 2, max: 20 }] }).total).toBe(10)
+    expect(score({ base: 8, itemSets: [19] }).total).toBe(19)
   })
 })
 

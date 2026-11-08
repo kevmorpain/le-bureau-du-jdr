@@ -28,11 +28,13 @@ const addCapped = (score: number, amount: number, cap: number): number =>
 export function resolveAbilityScore(input: AbilityScoreInput): ResolvedAbilityScore {
   const maximum = ABILITY_SCORE_MAX + input.maxIncrease
   const natural = addCapped(input.base, input.naturalBonus, maximum)
-  let total = natural
-  for (const { amount, max } of input.itemIncreases) total = addCapped(total, amount, max ?? maximum)
+  const increased = (from: number) =>
+    input.itemIncreases.reduce((score, { amount, max }) => addCapped(score, amount, max ?? maximum), from)
   // Gantelets de puissance d'ogre : « aucun effet sur vous si votre Force est de 19 ou plus sans eux ».
-  // Appliqué après les bonus d'objets : le score « sans eux » inclut les autres objets portés.
-  for (const score of input.itemSets) total = Math.max(total, score)
+  const floored = (from: number) => input.itemSets.reduce((score, set) => Math.max(score, set), from)
+  // Aucune source ne dit si un bonus d'objet s'applique avant ou après un score fixé : on garde celui des deux ordres
+  // qui sert le mieux le joueur (#299).
+  const total = Math.max(floored(increased(natural)), increased(floored(natural)))
   return { maximum, natural, total }
 }
 

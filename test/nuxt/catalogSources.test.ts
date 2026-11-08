@@ -8,6 +8,7 @@ import {
   loadSpecies,
   loadSubclasses,
   loadFeats,
+  loadBoons,
   loadInvocations,
   loadClassFeatures,
   loadBackgrounds,
@@ -60,6 +61,14 @@ beforeAll(async () => {
     { id: 101, name: 'Alerte', featureType: 'feat', description: 'desc Alerte', prerequisites: { minAbilityScore: { abilities: ['dex'], score: 13 } } },
   ])
   await orm.insert(schema.featureEffects).values({ featureId: 100, effectId: 1 })
+
+  // Faveur permanente (feature_type='boon') : son propre catalogue, jamais mêlée aux dons.
+  await orm.insert(schema.effects).values([
+    { id: 30, type: 'ability_increase', value: { ability: 'con', amount: 2 } },
+    { id: 31, type: 'ability_max_increase', value: { ability: 'con', amount: 2 } },
+  ])
+  await orm.insert(schema.features).values({ id: 105, name: 'Manuel de vitalité', featureType: 'boon', description: 'desc Manuel' })
+  await orm.insert(schema.featureEffects).values([{ featureId: 105, effectId: 30 }, { featureId: 105, effectId: 31 }])
 
   // Porteurs de maîtrises du Guerrier : départ (JS + armure) et multiclassage. L'Occultiste n'en a pas.
   await orm.insert(schema.effects).values([
@@ -224,6 +233,15 @@ describe('loadFeats', () => {
     expect(chanceux.effects).toHaveLength(1)
     expect(chanceux.effects[0]!.type).toBe('skill_proficiency')
     expect(chanceux.effects[0]!.value).toEqual({ skill: 'perception' })
+  })
+})
+
+describe('loadBoons', () => {
+  it('rend les faveurs et leurs effets, sans les dons ; les dons ne rendent jamais de faveur', async () => {
+    const boons = await loadBoons(orm)
+    expect(boons.map(b => b.name)).toEqual(['Manuel de vitalité'])
+    expect(boons[0]!.effects.map(e => e.type).sort()).toEqual(['ability_increase', 'ability_max_increase'])
+    expect((await loadFeats(orm)).map(f => f.name)).not.toContain('Manuel de vitalité')
   })
 })
 
