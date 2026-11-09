@@ -58,6 +58,35 @@ describe('parseMarkdown', () => {
     ])
   })
 
+  it('forme un tableau à partir de sa ligne de séparation, avec le formatage dans les cellules', () => {
+    expect(parseMarkdown('| Matériau | Durée |\n| --- | --- |\n| *Pierre* | **12** heures |\n| Gemmes | 10 minutes |')).toEqual([
+      {
+        type: 'table',
+        header: [[{ text: 'Matériau' }], [{ text: 'Durée' }]],
+        rows: [
+          [[{ text: 'Pierre', italic: true }], [{ text: '12', bold: true }, { text: ' heures' }]],
+          [[{ text: 'Gemmes' }], [{ text: '10 minutes' }]],
+        ],
+      },
+    ])
+  })
+
+  it('coupe le paragraphe qui précède un tableau et laisse le texte qui le suit à part', () => {
+    const blocks = parseMarkdown('Voir ci-dessous :\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\nSuite.')
+    expect(blocks.map(b => b.type)).toEqual(['paragraph', 'table', 'paragraph'])
+  })
+
+  it('enchaîne deux tableaux séparés par une ligne vide', () => {
+    const blocks = parseMarkdown('| A |\n| --- |\n| 1 |\n\n| B |\n| --- |\n| 2 |')
+    expect(blocks.map(b => b.type)).toEqual(['table', 'table'])
+  })
+
+  it('laisse en paragraphe une ligne à barres sans ligne de séparation', () => {
+    expect(parseMarkdown('| pas | un tableau |')).toEqual([
+      { type: 'paragraph', inline: [{ text: '| pas | un tableau |' }] },
+    ])
+  })
+
   it('ignore les lignes vides superflues et un texte vide', () => {
     expect(parseMarkdown('\n\n  \n')).toEqual([])
     expect(parseMarkdown('')).toEqual([])

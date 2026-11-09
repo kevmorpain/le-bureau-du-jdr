@@ -22,7 +22,7 @@
 | [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
 | [S — Sorts & incantation](#s--sorts--incantation) | S1–S7 | Rituel, limite de préparation, zone d'effet |
 | [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P9 | Choix jamais proposés |
-| [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 147 sorts seedés sur ~360, dons, objets magiques |
+| [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 479 sorts seedés (liste AideDD 2014 complète), dons, objets magiques |
 | [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U12 | Lecture des sorts, ~~montée en puissance~~, historique de jets |
 | [N — Contrôle manuel & préférences](#n--contrôle-manuel--préférences) | N1–N6 | L'app décide tout, le joueur ne peut rien reprendre |
 | [X — Surface produit](#x--surface-produit) | X1–X7 | XP, partage, export, EN, groupe |
@@ -180,7 +180,7 @@ cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
 
 | Code | Suivi | Sujet |
 |---|---|---|
-| **D1** | [#176](https://github.com/kevmorpain/le-bureau-du-jdr/issues/176) | Sorts : 147 seedés sur ~360. Le niveau 4 du socle (PHB, SRD) est complet ([D35](./decisions.md#d35)). Restent, d'après la liste AideDD 2014, 111 sorts du socle aux niveaux 5 à 9 (39, 25, 14, 18 et 15) et le hors socle (Xanathar, Tasha), plus les niveaux 0 à 3 non mesurés |
+| **D1** | [#176](https://github.com/kevmorpain/le-bureau-du-jdr/issues/176) | Sorts : 479 seedés. La liste AideDD 2014 (477 sorts) est complète du niveau 0 au niveau 9 : 361 sorts du socle (PHB, SRD), dont 188 posés aux niveaux 0 à 3 et 6 à 9, et 116 sorts hors socle de Xanathar et de Tasha, dont 105 posés en même temps ([D35](./decisions.md#d35), [D36](./decisions.md#d36), [D37](./decisions.md#d37)). Restent les descriptions des 118 sorts d'origine à aligner sur le texte exact ([#222](https://github.com/kevmorpain/le-bureau-du-jdr/issues/222)), les sorts des autres livres (Fizban, Strixhaven…) et les effets chiffrés des sorts actifs ([#245](https://github.com/kevmorpain/le-bureau-du-jdr/issues/245)) |
 | **D2** | [#177](https://github.com/kevmorpain/le-bureau-du-jdr/issues/177) | Objets magiques quasi absents du catalogue |
 | **D3** | ✅ périmé ([#178](https://github.com/kevmorpain/le-bureau-du-jdr/issues/178), fermée le 2026-11-09) | Le Drow existe : lignée `Drow` (`server/db/seeds/data/elf.ts`) et espèce « Elfe noir » dans le catalogue de prod |
 | **D4** | [#179](https://github.com/kevmorpain/le-bureau-du-jdr/issues/179) | Sous-classes hors socle : cinq manquantes (Voie de la magie sauvage, Domaine de la forge, Le Génie, Gardien de drake, Conspirateur — Tasha, Xanathar, Fizban). Le socle est complet |

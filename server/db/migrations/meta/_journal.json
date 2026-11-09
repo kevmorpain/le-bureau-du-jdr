@@ -1135,6 +1135,139 @@
       "when": 1794900000000,
       "tag": "0161_spells_level_4",
       "breakpoints": true
+    },
+    {
+      "idx": 162,
+      "version": "6",
+      "when": 1795000000000,
+      "tag": "0162_spells_level_5",
+      "breakpoints": true
+    },
+    {
+      "idx": 163,
+      "version": "6",
+      "when": 1795100000000,
+      "tag": "0163_spells_level_6",
+      "breakpoints": true
+    },
+    {
+      "idx": 164,
+      "version": "6",
+      "when": 1795200000000,
+      "tag": "0164_spells_level_7",
+      "breakpoints": true
+    },
+    {
+      "idx": 165,
+      "version": "6",
+      "when": 1795300000000,
+      "tag": "0165_spells_level_8",
+      "breakpoints": true
+    },
+    {
+      "idx": 166,
+      "version": "6",
+      "when": 1795400000000,
+      "tag": "0166_spells_level_9",
+      "breakpoints": true
+    },
+    {
+      "idx": 167,
+      "version": "6",
+      "when": 1795500000000,
+      "tag": "0167_spells_level_3",
+      "breakpoints": true
+    },
+    {
+      "idx": 168,
+      "version": "6",
+      "when": 1795600000000,
+      "tag": "0168_spells_level_2",
+      "breakpoints": true
+    },
+    {
+      "idx": 169,
+      "version": "6",
+      "when": 1795700000000,
+      "tag": "0169_spells_level_1",
+      "breakpoints": true
+    },
+    {
+      "idx": 170,
+      "version": "6",
+      "when": 1795800000000,
+      "tag": "0170_spells_level_0",
+      "breakpoints": true
+    },
+    {
+      "idx": 171,
+      "version": "6",
+      "when": 1795900000000,
+      "tag": "0171_spells_level_0_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 172,
+      "version": "6",
+      "when": 1796000000000,
+      "tag": "0172_spells_level_1_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 173,
+      "version": "6",
+      "when": 1796100000000,
+      "tag": "0173_spells_level_2_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 174,
+      "version": "6",
+      "when": 1796200000000,
+      "tag": "0174_spells_level_3_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 175,
+      "version": "6",
+      "when": 1796300000000,
+      "tag": "0175_spells_level_4_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 176,
+      "version": "6",
+      "when": 1796400000000,
+      "tag": "0176_spells_level_5_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 177,
+      "version": "6",
+      "when": 1796500000000,
+      "tag": "0177_spells_level_6_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 178,
+      "version": "6",
+      "when": 1796600000000,
+      "tag": "0178_spells_level_7_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 179,
+      "version": "6",
+      "when": 1796700000000,
+      "tag": "0179_spells_level_8_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 180,
+      "version": "6",
+      "when": 1796800000000,
+      "tag": "0180_spells_level_9_non_core",
+      "breakpoints": true
     }
   ]
 }

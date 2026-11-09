@@ -54,16 +54,29 @@ const SEEDED_FORMS: Record<string, SpellDuration> = {
   'Concentration, jusqu\'à 10 minutes': { durationUnit: 'minute', durationValue: 10 },
   '1 heure': { durationUnit: 'hour', durationValue: 1 },
   'Concentration, jusqu\'à 1 heure': { durationUnit: 'hour', durationValue: 1 },
+  '6 heures': { durationUnit: 'hour', durationValue: 6 },
   '8 heures': { durationUnit: 'hour', durationValue: 8 },
   'Concentration, jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
   'Jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
   '24 heures': { durationUnit: 'hour', durationValue: 24 },
+  '1 jour': { durationUnit: 'day', durationValue: 1 },
+  '7 jours': { durationUnit: 'day', durationValue: 7 },
+  '10 jours': { durationUnit: 'day', durationValue: 10 },
+  '30 jours': { durationUnit: 'day', durationValue: 30 },
+  'Concentration, jusqu\'à 2 heures': { durationUnit: 'hour', durationValue: 2 },
+  'Concentration, jusqu\'à 24 heures': { durationUnit: 'hour', durationValue: 24 },
+  'Concentration, jusqu\'à 6 rounds': { durationUnit: 'round', durationValue: 6 },
+  'Concentration, jusqu\'à 1 round': { durationUnit: 'round', durationValue: 1 },
+  'Jusqu\'à 1 minute': { durationUnit: 'minute', durationValue: 1 },
+  'Concentration, jusqu\'à 1 jour': { durationUnit: 'day', durationValue: 1 },
+  'Jusqu\'à dissipation': { durationUnit: 'until_dispelled', durationValue: null },
   'Jusqu\'à dissipation ou déclenchement': { durationUnit: 'until_dispelled', durationValue: null },
   'Instantanée ou 1 heure': { durationUnit: 'special', durationValue: null },
+  'Spéciale': { durationUnit: 'special', durationValue: null },
 }
 
 // Formulations que le texte dérivé de la structure ne reproduit pas mot pour mot : le seed garde sa formulation d'origine.
-const VERBATIM = ['Jusqu\'à 8 heures', 'Jusqu\'à dissipation ou déclenchement', 'Instantanée ou 1 heure']
+const VERBATIM = ['Jusqu\'à 8 heures', 'Jusqu\'à dissipation ou déclenchement', 'Instantanée ou 1 heure', 'Spéciale', 'Jusqu\'à 1 minute']
 
 describe('seed sorts — durées structurées', () => {
   it('chaque sort déclare la structure de son texte, et la concentration suit le texte', () => {

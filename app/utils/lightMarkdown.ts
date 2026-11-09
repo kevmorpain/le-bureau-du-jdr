@@ -3,10 +3,13 @@ export type InlineNode = { text: string, bold?: boolean, italic?: boolean }
 export type MarkdownBlock
   = | { type: 'paragraph', inline: InlineNode[] }
     | { type: 'list', ordered: boolean, items: InlineNode[][] }
+    | { type: 'table', header: InlineNode[][], rows: InlineNode[][][] }
 
 const INLINE = /\*\*(.+?)\*\*|\*(\S(?:.*?\S)?)\*/g
 const BULLET = /^- (.*)$/
 const ORDERED = /^\d+\. (.*)$/
+const TABLE_ROW = /^\|.*\|$/
+const TABLE_SEPARATOR = /^\|(?:\s*:?-{3,}:?\s*\|)+$/
 
 // Pas de HTML ni de lien : le rendu ne produit que des nœuds de texte, donc rien à assainir.
 export function parseInline(source: string): InlineNode[] {
@@ -21,6 +24,11 @@ export function parseInline(source: string): InlineNode[] {
   return nodes
 }
 
+// Un tableau n'existe qu'avec sa ligne de séparation (`| --- | --- |`) : une ligne qui commence par une barre dans un
+// texte plus ancien reste un paragraphe.
+const startsTable = (lines: string[], i: number) => TABLE_ROW.test(lines[i]!.trim()) && TABLE_SEPARATOR.test((lines[i + 1] ?? '').trim())
+const tableCells = (line: string) => line.trim().slice(1, -1).split('|').map(cell => parseInline(cell.trim()))
+
 // Des lignes consécutives de même nature forment un bloc, même sans ligne vide : les textes écrits avant ce format
 // (retours à la ligne simples, puces « - ») s'affichent comme avant.
 export function parseMarkdown(source: string): MarkdownBlock[] {
@@ -34,9 +42,18 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
       continue
     }
 
+    if (startsTable(lines, i)) {
+      const header = tableCells(line)
+      const rows: InlineNode[][][] = []
+      i += 2
+      while (i < lines.length && TABLE_ROW.test(lines[i]!.trim())) rows.push(tableCells(lines[i++]!))
+      blocks.push({ type: 'table', header, rows })
+      continue
+    }
+
     const kind = [BULLET, ORDERED].find(re => re.test(line))
     const group: string[] = []
-    while (i < lines.length && lines[i]!.trim() && (kind ? kind.test(lines[i]!) : ![BULLET, ORDERED].some(re => re.test(lines[i]!)))) {
+    while (i < lines.length && lines[i]!.trim() && !startsTable(lines, i) && (kind ? kind.test(lines[i]!) : ![BULLET, ORDERED].some(re => re.test(lines[i]!)))) {
       group.push(lines[i]!)
       i++
     }

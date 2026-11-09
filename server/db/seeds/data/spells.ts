@@ -1,6 +1,25 @@
 import type { RollTableKey } from '~~/shared/rules/rollTables'
 import { SpellComponent } from '../../schema/spells'
 import { spellsLevel4 } from './spells_niveau_4'
+import { spellsLevel5 } from './spells_niveau_5'
+import { spellsLevel6 } from './spells_niveau_6'
+import { spellsLevel7 } from './spells_niveau_7'
+import { spellsLevel8 } from './spells_niveau_8'
+import { spellsLevel9 } from './spells_niveau_9'
+import { spellsLevel3 } from './spells_niveau_3'
+import { spellsLevel2 } from './spells_niveau_2'
+import { spellsLevel1 } from './spells_niveau_1'
+import { spellsLevel0 } from './spells_niveau_0'
+import { spellsLevelHorsSocle0 } from './spells_hors_socle_niveau_0'
+import { spellsLevelHorsSocle1 } from './spells_hors_socle_niveau_1'
+import { spellsLevelHorsSocle2 } from './spells_hors_socle_niveau_2'
+import { spellsLevelHorsSocle3 } from './spells_hors_socle_niveau_3'
+import { spellsLevelHorsSocle4 } from './spells_hors_socle_niveau_4'
+import { spellsLevelHorsSocle5 } from './spells_hors_socle_niveau_5'
+import { spellsLevelHorsSocle6 } from './spells_hors_socle_niveau_6'
+import { spellsLevelHorsSocle7 } from './spells_hors_socle_niveau_7'
+import { spellsLevelHorsSocle8 } from './spells_hors_socle_niveau_8'
+import { spellsLevelHorsSocle9 } from './spells_hors_socle_niveau_9'
 
 export type SpellSeed = Omit<InsertSpell, 'rollTableId'> & { rollTable?: RollTableKey }
 
@@ -1878,4 +1897,4 @@ export const baseSpells: SpellSeed[] = [
 ]
 
 // Un fichier par tranche de niveau : chaque tranche vient avec ses liens de classes (spell_class_mappings.ts).
-export const spells: SpellSeed[] = [...baseSpells, ...spellsLevel4]
+export const spells: SpellSeed[] = [...baseSpells, ...spellsLevel4, ...spellsLevel5, ...spellsLevel6, ...spellsLevel7, ...spellsLevel8, ...spellsLevel9, ...spellsLevel3, ...spellsLevel2, ...spellsLevel1, ...spellsLevel0, ...spellsLevelHorsSocle0, ...spellsLevelHorsSocle1, ...spellsLevelHorsSocle2, ...spellsLevelHorsSocle3, ...spellsLevelHorsSocle4, ...spellsLevelHorsSocle5, ...spellsLevelHorsSocle6, ...spellsLevelHorsSocle7, ...spellsLevelHorsSocle8, ...spellsLevelHorsSocle9]
