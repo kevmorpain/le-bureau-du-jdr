@@ -13,6 +13,7 @@ import { spellsLevel0 } from './spells_niveau_0'
 import { spellsLevelHorsSocle0 } from './spells_hors_socle_niveau_0'
 import { spellsLevelHorsSocle1 } from './spells_hors_socle_niveau_1'
 import { spellsLevelHorsSocle2 } from './spells_hors_socle_niveau_2'
+import { spellsLevelHorsSocle3 } from './spells_hors_socle_niveau_3'
 
 export type SpellSeed = Omit<InsertSpell, 'rollTableId'> & { rollTable?: RollTableKey }
 
@@ -1890,4 +1891,4 @@ export const baseSpells: SpellSeed[] = [
 ]
 
 // Un fichier par tranche de niveau : chaque tranche vient avec ses liens de classes (spell_class_mappings.ts).
-export const spells: SpellSeed[] = [...baseSpells, ...spellsLevel4, ...spellsLevel5, ...spellsLevel6, ...spellsLevel7, ...spellsLevel8, ...spellsLevel9, ...spellsLevel3, ...spellsLevel2, ...spellsLevel1, ...spellsLevel0, ...spellsLevelHorsSocle0, ...spellsLevelHorsSocle1, ...spellsLevelHorsSocle2]
+export const spells: SpellSeed[] = [...baseSpells, ...spellsLevel4, ...spellsLevel5, ...spellsLevel6, ...spellsLevel7, ...spellsLevel8, ...spellsLevel9, ...spellsLevel3, ...spellsLevel2, ...spellsLevel1, ...spellsLevel0, ...spellsLevelHorsSocle0, ...spellsLevelHorsSocle1, ...spellsLevelHorsSocle2, ...spellsLevelHorsSocle3]

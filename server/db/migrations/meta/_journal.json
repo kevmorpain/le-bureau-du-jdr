@@ -1219,6 +1219,13 @@
       "when": 1796100000000,
       "tag": "0173_spells_level_2_non_core",
       "breakpoints": true
+    },
+    {
+      "idx": 174,
+      "version": "6",
+      "when": 1796200000000,
+      "tag": "0174_spells_level_3_non_core",
+      "breakpoints": true
     }
   ]
 }
