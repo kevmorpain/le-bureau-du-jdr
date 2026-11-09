@@ -132,6 +132,7 @@ Ces fichiers font autorité sur les valeurs de référence — en cas de diverge
 Descriptions de capacités, sorts et tables s'affichent telles quelles sur la fiche. Le texte vient
 d'AideDD ([D16](./decisions.md#d16), méthode : [`dnd-5.5.md`](./dnd-5.5.md) §4), avec ces conventions :
 
+- **Sorts : le PHB et le SRD au texte exact, le hors-PHB réécrit.** La description d'un sort du PHB ou du SRD est celle de la fiche AideDD, extraite du HTML brut, sans paraphrase ; un sort d'un autre livre (Xanathar, Tasha…) se réécrit en français en gardant tous les nombres ([D35](./decisions.md#d35)). Les sous-agents rendent les faits ; le texte ne passe pas par eux.
 - **Quantités de ressources en chiffres** : « 1 action », « 1 action bonus », « 2 points de
   sorcellerie ». Une action ou un point se dépense : le chiffre dit d'un coup d'œil combien il en
   faut. Pas d'élision devant un chiffre : « est **de** 1 action », jamais « d'1 action » (précédent :
