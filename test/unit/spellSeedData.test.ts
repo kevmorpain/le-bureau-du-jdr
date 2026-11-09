@@ -80,6 +80,7 @@ describe('seed sorts — faits de fiche déclarés', () => {
     'Illusion programmée', 'Mur de glace', 'Protections et sceaux', 'Terraformage',
     'Téléportation', 'Aversion/Attirance', 'Mur prismatique',
     'Image majeure', 'Façonnage de la terre', 'Pyrotechnie',
+    'Transmutation de la pierre',
   ]
 
   it('chaque sort dont le texte décrit une zone chiffrée la déclare, ou figure parmi les plafonds de taille', () => {
