@@ -78,7 +78,7 @@ describe('seed sorts — faits de fiche déclarés', () => {
     'Prestidigitation', 'Image silencieuse', 'Illusion mineure', 'Invocation d\'élémentaire', 'Force fantasmagorique',
     'Druidisme', 'Désintégration', 'Cage de force', 'Contrôle des flammes', 'Fabrication', 'Création',
     'Illusion programmée', 'Mur de glace', 'Protections et sceaux', 'Terraformage',
-    'Téléportation', 'Aversion/Attirance',
+    'Téléportation', 'Aversion/Attirance', 'Mur prismatique',
   ]
 
   it('chaque sort dont le texte décrit une zone chiffrée la déclare, ou figure parmi les plafonds de taille', () => {
