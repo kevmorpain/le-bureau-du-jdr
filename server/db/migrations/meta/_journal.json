@@ -1128,6 +1128,13 @@
       "when": 1794800000000,
       "tag": "0160_permanent_boons",
       "breakpoints": true
+    },
+    {
+      "idx": 161,
+      "version": "6",
+      "when": 1794900000000,
+      "tag": "0161_spells_level_4",
+      "breakpoints": true
     }
   ]
 }

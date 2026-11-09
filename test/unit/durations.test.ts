@@ -44,7 +44,7 @@ describe('durée structurée d\'un sort', () => {
   })
 })
 
-// Les formulations seedées et la structure qui les décrit : la migration 0129 en pose la même table.
+// Les formulations seedées et la structure qui les décrit : la migration 0129 en pose la même table pour les sorts d'alors.
 const SEEDED_FORMS: Record<string, SpellDuration> = {
   'Instantanée': { durationUnit: 'instant', durationValue: null },
   '1 round': { durationUnit: 'round', durationValue: 1 },
@@ -57,6 +57,7 @@ const SEEDED_FORMS: Record<string, SpellDuration> = {
   '8 heures': { durationUnit: 'hour', durationValue: 8 },
   'Concentration, jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
   'Jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
+  '24 heures': { durationUnit: 'hour', durationValue: 24 },
   'Jusqu\'à dissipation ou déclenchement': { durationUnit: 'until_dispelled', durationValue: null },
   'Instantanée ou 1 heure': { durationUnit: 'special', durationValue: null },
 }
