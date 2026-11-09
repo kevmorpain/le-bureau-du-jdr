@@ -1,5 +1,6 @@
 import { spellClassMappingsLevel4 } from './spells_niveau_4'
 import { spellClassMappingsLevel5 } from './spells_niveau_5'
+import { spellClassMappingsLevel6 } from './spells_niveau_6'
 
 // `classNames` doit correspondre exactement aux noms de data/classes.ts.
 
@@ -144,4 +145,4 @@ const baseMappings: { spellName: string, classNames: string[] }[] = [
   { spellName: 'Barbes argentées', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
 ]
 
-export const spellClassMappings: { spellName: string, classNames: string[] }[] = [...baseMappings, ...spellClassMappingsLevel4, ...spellClassMappingsLevel5]
+export const spellClassMappings: { spellName: string, classNames: string[] }[] = [...baseMappings, ...spellClassMappingsLevel4, ...spellClassMappingsLevel5, ...spellClassMappingsLevel6]
