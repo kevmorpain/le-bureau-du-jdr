@@ -54,6 +54,7 @@ const SEEDED_FORMS: Record<string, SpellDuration> = {
   'Concentration, jusqu\'à 10 minutes': { durationUnit: 'minute', durationValue: 10 },
   '1 heure': { durationUnit: 'hour', durationValue: 1 },
   'Concentration, jusqu\'à 1 heure': { durationUnit: 'hour', durationValue: 1 },
+  '6 heures': { durationUnit: 'hour', durationValue: 6 },
   '8 heures': { durationUnit: 'hour', durationValue: 8 },
   'Concentration, jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
   'Jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },

@@ -1247,6 +1247,27 @@
       "when": 1796500000000,
       "tag": "0177_spells_level_6_non_core",
       "breakpoints": true
+    },
+    {
+      "idx": 178,
+      "version": "6",
+      "when": 1796600000000,
+      "tag": "0178_spells_level_7_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 179,
+      "version": "6",
+      "when": 1796700000000,
+      "tag": "0179_spells_level_8_non_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 180,
+      "version": "6",
+      "when": 1796800000000,
+      "tag": "0180_spells_level_9_non_core",
+      "breakpoints": true
     }
   ]
 }
