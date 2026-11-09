@@ -1156,6 +1156,13 @@
       "when": 1795200000000,
       "tag": "0164_spells_level_7",
       "breakpoints": true
+    },
+    {
+      "idx": 165,
+      "version": "6",
+      "when": 1795300000000,
+      "tag": "0165_spells_level_8",
+      "breakpoints": true
     }
   ]
 }

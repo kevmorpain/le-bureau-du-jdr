@@ -63,6 +63,8 @@ const SEEDED_FORMS: Record<string, SpellDuration> = {
   '10 jours': { durationUnit: 'day', durationValue: 10 },
   '30 jours': { durationUnit: 'day', durationValue: 30 },
   'Concentration, jusqu\'à 2 heures': { durationUnit: 'hour', durationValue: 2 },
+  'Concentration, jusqu\'à 24 heures': { durationUnit: 'hour', durationValue: 24 },
+  'Concentration, jusqu\'à 6 rounds': { durationUnit: 'round', durationValue: 6 },
   'Concentration, jusqu\'à 1 jour': { durationUnit: 'day', durationValue: 1 },
   'Jusqu\'à dissipation': { durationUnit: 'until_dispelled', durationValue: null },
   'Jusqu\'à dissipation ou déclenchement': { durationUnit: 'until_dispelled', durationValue: null },
