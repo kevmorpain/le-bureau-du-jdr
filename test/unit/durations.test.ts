@@ -58,12 +58,16 @@ const SEEDED_FORMS: Record<string, SpellDuration> = {
   'Concentration, jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
   'Jusqu\'à 8 heures': { durationUnit: 'hour', durationValue: 8 },
   '24 heures': { durationUnit: 'hour', durationValue: 24 },
+  '7 jours': { durationUnit: 'day', durationValue: 7 },
+  '30 jours': { durationUnit: 'day', durationValue: 30 },
+  'Jusqu\'à dissipation': { durationUnit: 'until_dispelled', durationValue: null },
   'Jusqu\'à dissipation ou déclenchement': { durationUnit: 'until_dispelled', durationValue: null },
   'Instantanée ou 1 heure': { durationUnit: 'special', durationValue: null },
+  'Spéciale': { durationUnit: 'special', durationValue: null },
 }
 
 // Formulations que le texte dérivé de la structure ne reproduit pas mot pour mot : le seed garde sa formulation d'origine.
-const VERBATIM = ['Jusqu\'à 8 heures', 'Jusqu\'à dissipation ou déclenchement', 'Instantanée ou 1 heure']
+const VERBATIM = ['Jusqu\'à 8 heures', 'Jusqu\'à dissipation ou déclenchement', 'Instantanée ou 1 heure', 'Spéciale']
 
 describe('seed sorts — durées structurées', () => {
   it('chaque sort déclare la structure de son texte, et la concentration suit le texte', () => {

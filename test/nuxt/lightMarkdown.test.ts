@@ -12,6 +12,16 @@ describe('LightMarkdown', () => {
     expect(wrapper.find('li span.font-semibold').text()).toBe('Un')
   })
 
+  it('rend un tableau avec son en-tête, et le HTML d\'une cellule reste du texte', async () => {
+    const wrapper = await mountSuspended(LightMarkdown, {
+      props: { source: 'Avant.\n\n| Taille | PV |\n| --- | --- |\n| **TP** | 20 |\n| P | <b>25</b> |' },
+    })
+    expect(wrapper.findAll('th').map(th => th.text())).toEqual(['Taille', 'PV'])
+    expect(wrapper.findAll('tbody tr').map(tr => tr.findAll('td').map(td => td.text()))).toEqual([['TP', '20'], ['P', '<b>25</b>']])
+    expect(wrapper.find('td span.font-semibold').text()).toBe('TP')
+    expect(wrapper.find('td b').exists()).toBe(false)
+  })
+
   it('n\'interprète pas le HTML : il s\'affiche comme du texte', async () => {
     const wrapper = await mountSuspended(LightMarkdown, { props: { source: '<img src=x onerror=alert(1)>' } })
     expect(wrapper.find('img').exists()).toBe(false)

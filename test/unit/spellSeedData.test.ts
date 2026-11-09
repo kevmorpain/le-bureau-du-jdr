@@ -76,7 +76,7 @@ describe('seed sorts — faits de fiche déclarés', () => {
   // Plafonds de taille d'une création ou rayons de détection, pas des zones affectées.
   const SIZE_LIMIT_NOT_AREA = [
     'Prestidigitation', 'Image silencieuse', 'Illusion mineure', 'Invocation d\'élémentaire', 'Force fantasmagorique',
-    'Druidisme', 'Désintégration', 'Cage de force', 'Contrôle des flammes', 'Fabrication',
+    'Druidisme', 'Désintégration', 'Cage de force', 'Contrôle des flammes', 'Fabrication', 'Création',
   ]
 
   it('chaque sort dont le texte décrit une zone chiffrée la déclare, ou figure parmi les plafonds de taille', () => {

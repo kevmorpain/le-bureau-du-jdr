@@ -4,7 +4,7 @@ import { drizzle } from 'drizzle-orm/libsql'
 import * as schema from '../../server/db/schema'
 import { seedRollTables } from '../../server/db/seeds/lib/seedRollTables'
 import { rollTables } from '../../server/db/seeds/data/rollTables'
-import { spells } from '../../server/db/seeds/data/spells'
+import { baseSpells } from '../../server/db/seeds/data/spells'
 import type { Db } from '../../server/utils/db'
 import { applyMigration, readMigration, replayMigrations } from '../fixtures/migrations'
 
@@ -13,7 +13,7 @@ import { applyMigration, readMigration, replayMigrations } from '../fixtures/mig
 
 const MIGRATION = '0128_spell_roll_tables.sql'
 const STALE = 'ancienne valeur'
-const linked = spells.filter(s => s.rollTable)
+const linked = baseSpells.filter(s => s.rollTable)
 
 let client: Client
 let homonym55: number
