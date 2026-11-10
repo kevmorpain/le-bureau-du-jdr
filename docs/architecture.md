@@ -105,6 +105,6 @@ niveau 3 de leur classe alors que `classes.spellcasting_type` reste `none`. Leur
 Magicien) sont indexés par nom de sous-classe, comme `CLASS_DB_NAMES` l'est pour les classes ; le type d'incantation effectif
 d'une classe s'obtient par `effectiveCasterType`, utilisé partout où le serveur calcule les emplacements.
 
-Le setter du computed writable écrit sur `character_classes.spellcastingAbility` de la classe principale. Le deep watch de `[id].vue` persiste via `PUT /api/character_sheets/{id}`.
+Le setter du computed writable écrit sur `character_classes.spellcastingAbility` de la classe principale. Le deep watch de la page fiche persiste via `PUT /api/character_sheets/{id}`.
 
 > Le cas occultiste multiclasse (emplacement de pacte → Cha obligatoire vs emplacement d'une autre classe → caractéristique de cette classe) est une règle UI à gérer séparément, non modélisée pour l'instant.

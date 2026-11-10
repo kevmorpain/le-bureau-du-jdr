@@ -18,8 +18,8 @@
 | Fichier du portrait | **R2** (bucket `le-bureau-du-jdr-media`, binding `BLOB`) | Binaire : la fiche n'en garde que l'URL |
 | `preferences` (fiche) | DB (`character_sheets`, JSON nullable) | Réglage propre à la fiche ; clé absente = hérite du compte ([D18](decisions.md#d18), [D23](decisions.md#d23)) |
 | `preferences` (compte) | DB (`users`, JSON nullable) | Défauts du joueur, via `/api/account/preferences` |
-| Fiche d'un survivant Ker Nethalas (jauges, compétences, résistances, état en cours, run, provisions, textes) | DB (`kn_characters`, compétences, résistances, état en cours, run et provisions en JSON) | Suit le survivant d'un appareil à l'autre ; sauvegarde par PUT avec debounce d'une seconde, sans file hors-ligne : [ker-nethalas.md](ker-nethalas.md) (KN10) |
-| Contenu du livre Ker Nethalas (Maîtrises, bestiaire, tables…), commun à tous les comptes | DB (`kn_content`, un jeu de données JSON par ligne) | Chargé depuis des fichiers privés hors du dépôt par `npm run kn:content` ; jamais versionné : [ker-nethalas.md](ker-nethalas.md) (KN27) |
+| Fiche d'un survivant Ker Nethalas (jauges, compétences, résistances, état en cours, run, provisions, textes) | DB (`kn_characters`, compétences, résistances, état en cours, run et provisions en JSON) | Suit le survivant d'un appareil à l'autre ; sauvegarde par PUT avec debounce d'une seconde, sans file hors-ligne : [ker-nethalas-decisions.md](ker-nethalas-decisions.md) (KN10) |
+| Contenu du livre Ker Nethalas (Maîtrises, bestiaire, tables…), commun à tous les comptes | DB (`kn_content`, un jeu de données JSON par ligne) | Chargé depuis des fichiers privés hors du dépôt par `npm run kn:content` ; jamais versionné : [ker-nethalas-decisions.md](ker-nethalas-decisions.md) (KN27) |
 | `activeConditions` | localStorage | État d'encounter, remis à zéro entre sessions |
 | `conditionRounds` | localStorage | Rounds restants des états à durée, décomptés au « Nouveau tour » |
 | Modificateurs de caractéristique | computed | Dérivés des scores, jamais stockés |
@@ -41,7 +41,7 @@ const exhaustionLevel = computed({
 })
 ```
 
-Le deep watch dans `app/pages/characters/[id].vue` (debounce 1000ms) appelle `PUT /api/character_sheets/{id}` et persiste automatiquement toute mutation sur `characterSheet.value`.
+Le deep watch de la page fiche (`app/pages/characters/[id]/index.vue`, cf. « Auto-save » plus bas) appelle `PUT /api/character_sheets/{id}` et persiste automatiquement toute mutation sur `characterSheet.value`.
 
 Pour les colonnes **texte**, ne pas réécrire ce computed à la main : utiliser la fabrique
 `sheetTextField` (`app/composables/character/sheetField.ts`), qui porte le pattern une seule fois.
@@ -56,7 +56,7 @@ const name = sheetTextField(characterSheet, 'name', v => v.trim() ? v : null)
 (`characterSheet.value = { ...characterSheet.value, [key]: v }`). C'est volontaire : les sections
 qui reçoivent la fiche par `toRef(props, 'characterSheet')` (props en lecture seule, ex.
 `QuickNotesSection`) verraient une réassignation de `.value` silencieusement perdue. Le deep watch
-de `[id].vue` se déclenche dans les deux cas.
+de la page fiche se déclenche dans les deux cas.
 
 Pour exposer un nouveau champ via ce pattern :
 1. Ajouter la colonne dans `server/db/schema/character_sheets.ts` + une migration
@@ -71,32 +71,14 @@ Pour exposer un nouveau champ via ce pattern :
 
 ### 2. Tables dédiées — watcher dédié
 
-Pour les données avec leur propre table (ex. `character_spell_slots`) :
+Pour les données avec leur propre table et leur propre endpoint (ex. `character_spell_slots`,
+`PUT /api/character_sheets/{id}/spell-slots`), le composable de domaine initialise son état depuis
+la fiche, puis le synchronise par un watcher dédié (debounce 500 ms) — référence :
+`useCharacterSpellcasting.ts`. L'écriture passe par `offlineMutate` (file hors-ligne, avec une
+`dedupeKey` pour qu'un état complet remplace le précédent en file) après un snapshot local, et est
+sautée quand l'état ne diffère pas de celui du serveur.
 
-```ts
-// Init depuis DB via watchEffect
-watchEffect(() => {
-  const dbSlots = characterSheet?.value?.spellSlots ?? []
-  for (const slot of dbSlots) {
-    spellSlots.value[slot.slotLevel] = { max: slot.total, current: slot.total - slot.used }
-  }
-})
-
-// Sync vers DB via watcher dédié (debounce 500ms)
-let syncTimeout: ReturnType<typeof setTimeout> | null = null
-watch(spellSlots, () => {
-  if (!characterSheet?.value?.id) return
-  if (syncTimeout) clearTimeout(syncTimeout)
-  syncTimeout = setTimeout(async () => {
-    await $fetch(`/api/character_sheets/${characterSheet!.value!.id}/spell-slots`, {
-      method: 'PUT',
-      body: [ ... ],
-    })
-  }, 500)
-}, { deep: true })
-```
-
-Ne pas utiliser le deep watch de `[id].vue` pour ces données — elles ont leur propre endpoint.
+Ne pas utiliser le deep watch de la page fiche pour ces données — elles ont leur propre endpoint.
 
 ### 3. Fichiers — R2 (binding `BLOB`)
 
@@ -138,7 +120,7 @@ La clé est scopée par personnage via `characterStorageKey(characterSheet?.valu
 
 ---
 
-## Auto-save dans `[id].vue`
+## Auto-save de la page fiche (`[id]/index.vue`)
 
 ```ts
 const { status, schedule, flush } = useAutoSave(updateCharacterSheet, { delay: 2000, maxWait: 10_000 })
@@ -160,3 +142,20 @@ Côté client, le plugin `app/plugins/sheet-version.client.ts` enveloppe `$fetch
 `test/unit/sheetVersion.test.ts` garde le contrat : aucune écriture d'`updatedAt` hors de l'utilitaire (`server/api` et `server/utils`), et aucun handler d'écriture de la fiche qui ne l'annonce pas. `test/nuxt/offlineVersionTracking.test.ts` rejoue le scénario de bout en bout avec de vrais en-têtes.
 
 La pose de la version est une écriture de plus après la mutation, hors du `db.batch` des handlers à base injectée (`rest`, `level-up`) : un échec entre les deux laisserait la mutation faite sans version avancée.
+
+## Reprise de la PWA après éviction
+
+Sur tablette, l'OS tue une PWA installée passée en arrière-plan ; au retour, elle redémarre à froid
+sur le `start_url` du manifeste (`/`), et aucune API web ne l'empêche. L'app mémorise donc la
+dernière route et y revient elle-même :
+
+| Fichier | Rôle |
+|---|---|
+| `app/utils/lastRoute.ts` | Logique pure + localStorage (`bjdr:last-route`), péremption 24 h |
+| `app/plugins/last-route.client.ts` | `router.afterEach` + `visibilitychange` → écrit la route |
+| `app/middleware/restore-route.global.ts` | Au démarrage à froid sur `/`, redirige vers la route mémorisée |
+
+Garde-fous : PWA installée uniquement (un onglet restaure déjà sa page) ; premier rendu uniquement
+(`isHydrating`), pour ne jamais détourner un clic sur le logo ; aller à l'accueil efface la mémoire ;
+chemins internes seulement. `auth.global.ts` passe avant `restore-route.global.ts` (ordre
+alphabétique) : une route restaurée qui exige une session repasse par la garde d'auth.

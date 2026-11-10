@@ -2,7 +2,7 @@
 
 Page : `app/pages/characters/[id]/index.vue`
 
-La fiche charge le personnage via `GET /api/character_sheets/{id}` (include toutes les relations Drizzle sauf les sorts). Un deep watch avec debounce 1 s persiste les changements via `PUT /api/character_sheets/{id}`. Les sections qui font leurs propres fetches (inventaire, sorts) ont leurs propres composables.
+La fiche charge le personnage via `GET /api/character_sheets/{id}` (include toutes les relations Drizzle sauf les sorts). Un deep watch persiste les changements via `PUT /api/character_sheets/{id}` (`useAutoSave` : 2 s d'inactivité, 10 s au plus en saisie continue). Les sections qui font leurs propres fetches (inventaire, sorts) ont leurs propres composables.
 
 ---
 
@@ -22,6 +22,8 @@ La page utilise un **dashboard 3 colonnes** (`dashboard-grid`) :
 | | | `QuickNotesSection` |
 
 La plupart des sections de la colonne centrale sont enveloppées dans `CollapsibleSection` (état persisté en localStorage via `storage-key`). En-tête fixe : `DashboardHeaderSection`.
+
+Le dashboard a remplacé les anciennes sections « une stat par carte » (`ArmorClassSection`, `SpeedSection`, `InitiativeSection`…), supprimées : une nouvelle stat s'ajoute à `QuickStatsSection`, pas dans une section à part.
 
 ---
 
@@ -302,7 +304,7 @@ Fin de durée : une entrée qui n'est que du suivi est retirée ; si le joueur y
 
 Bulles interactives par niveau de sort. Visible uniquement si le personnage a des emplacements.
 
-**Source :** `inject('spellSlots')` — injecté depuis `[id].vue` via `provide('spellSlots', spellSlots)`.
+**Source :** `inject('spellSlots')` — injecté par la page via `provide('spellSlots', spellSlots)`.
 Affiche aussi DD de sauvegarde et bonus d'attaque de sort.
 **Sync DB :** debounce 500 ms via `useCharacterSpellcasting`.
 
@@ -315,19 +317,25 @@ Toujours affichée, avec les rounds restants du sort concentré quand ils se com
 ### Notes de session (`QuickNotesSection`)
 
 Zone de texte libre pour notes rapides (PNJ rencontrés, rappels…), liée au personnage.
-**Source :** colonne `notes` sur `character_sheets` (computed get/set via `useCharacterSheet`, auto-save par le deep watch de `[id].vue`).
+**Source :** colonne `notes` sur `character_sheets` (computed get/set via `useCharacterSheet`, auto-save par le deep watch de la page).
 
 ---
 
 ## Patterns clés
 
-**Auto-save :** Le deep watch sur `characterSheet` (debounce 1 s) persiste via `PUT /api/character_sheets/{id}`. Ne couvre **pas** l'inventaire, les sorts ni les emplacements — ces domaines ont leurs propres endpoints et composables.
+**Auto-save :** Le deep watch sur `characterSheet` (`useAutoSave`, cf. [`persistence.md`](./persistence.md)) persiste via `PUT /api/character_sheets/{id}`. Ne couvre **pas** l'inventaire, les sorts ni les emplacements — ces domaines ont leurs propres endpoints et composables.
 
-**`spellSlots` (provide/inject) :** `[id].vue` fournit `spellSlots` via `provide('spellSlots', spellSlots)`. `SpellSlotsSection` l'injecte pour afficher et modifier les emplacements sans passer par tout l'arbre de props.
+**`spellSlots` (provide/inject) :** la page fournit `spellSlots` via `provide('spellSlots', spellSlots)`. `SpellSlotsSection` et `MagicSection` l'injectent (sinon deux instances indépendantes), pour afficher et modifier les emplacements sans passer par tout l'arbre de props.
 
 **`spellContext` (provide/inject) :** `MagicSection` fournit `{ characterLevel, spellcastingModifier }` via `provide('spellContext', ...)`. `DamageSection` et `HealSection` l'injectent pour éviter d'instancier tout l'arbre `useCharacterSheet` depuis un composant leaf.
 
 **Montée en puissance des sorts :** la résolution « quelle valeur à quel niveau » (tables `damage_at_*`, `heal_at_*`, `count_at_*`) vit dans le module pur [`shared/rules/spellScaling.ts`](../shared/rules/spellScaling.ts) — source unique du **jet** (`rollSpellEffect`) comme de l'**affichage** (`CharacterSpellRow`, `DamageSection`, `HealSection`, `SpellCardBuilder`). Les sections affichent le niveau de **base** ; la progression complète est rendue par `UpcastSection` (encart « Aux niveaux supérieurs » de `SpellCard`) et, au moment de choisir un niveau, par les deux modales qui annoncent le résultat de chacun : `CastSpellModal` (l'emplacement qu'on dépense) et `RollDamageModal` (le niveau auquel on jette les dégâts d'un sort d'attaque, sans rien dépenser). Leur libellé commun vient de `useSpellEffectPreview`.
+
+Pièges de la montée en puissance : `upcastRows` ne liste que les niveaux où la valeur **change** (Arme spirituelle : 4, 6, 8) ; `parseDiceNotation` accepte un bonus fixe (`10d6+40`) et une valeur plate, qui ne se jette pas ; le test-contrat `spellSeedData.test.ts` garde qu'une table par emplacement commence au niveau du sort. Un sort d'**attaque** jette ses dégâts en deux gestes : le bouton « Dégâts (niv. N) » hérite du niveau du lancement (`MagicSection.lastCastLevel`, mémoire de session), et le chevron ouvre `RollDamageModal`, qui ne dépense rien et propose les niveaux même épuisés.
+
+**Pastilles (emplacements, épuisement, usages) :** plein = utilisé / actif, vide = disponible ; style `bg-{color}/60 border-{color} hover:bg-{color}/80`.
+
+**Défenses :** `defenseEntries` (`useCharacterConditions`) indexe par `dmg:<type>` (dont `dmg:all`) et `cond:<état>` ; `HitPointsSection` cherche `dmg:${damageType}` puis `dmg:all`.
 
 **`useFetch` et réactivité :** `useFetch` retourne un `shallowRef`. Pour déclencher la réactivité sur une mise à jour d'élément dans un tableau, toujours réassigner `data.value` entier (ex. `.map(...)`) — ne pas muter un élément en place.
 

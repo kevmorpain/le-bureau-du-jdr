@@ -318,72 +318,80 @@ No need to write the matching snapshot `.json` by hand; the next successful `db:
 
 ## Architecture
 
-**Le Bureau du JDR** is a D&D 5e (2014) character sheet and spell database app. Full-stack Nuxt 4 app deployed to Cloudflare Workers (Wrangler); in local dev, Nitro's `cloudflare-dev` emulation (Miniflare) provides the D1/R2 bindings.
+**Le Bureau du JDR** : fiche de personnage et base de sorts D&D 5e (2014, la 5.5 en préparation). App Nuxt 4
+full-stack déployée sur un Cloudflare Worker (Wrangler) ; en dev local, l'émulation `cloudflare-dev` de Nitro
+(Miniflare) fournit les bindings D1/R2.
 
-**Stack:** Nuxt 4 + Nitro (cloudflare_module preset) + Vue 3 + TypeScript + Drizzle ORM + Cloudflare D1 (SQLite) + Nuxt UI
+**Stack :** Nuxt 4 + Nitro (preset cloudflare_module) + Vue 3 + TypeScript + Drizzle ORM + Cloudflare D1 (SQLite) + Nuxt UI
 
-**Module Ker Nethalas** (JDR solo, système distinct, isolé du modèle D&D — le `ruleset` ne distingue que `'5'` / `'5.5'`) : pages `/ker-nethalas`, API `/api/ker-nethalas/**` (default-deny par `server/middleware/ker-nethalas-authz.ts`), tables `kn_*`, règles dans `shared/ker-nethalas/` (moteur de modificateurs pur `resolveKnSheet`, catalogues dans `catalog/`), composants dans `app/components/ker_nethalas/`. Plan, décisions, licence et journal : [`docs/ker-nethalas.md`](docs/ker-nethalas.md) ; suivi : issues X10 à X16 et U13. Ne pas réutiliser les types D&D (`Effect`, `ruleset`, `CharacterSheet`) pour ce module. **Le contenu rédigé à partir du livre (Maîtrises, bestiaire, tables, descriptions) ne se versionne jamais** : il vit hors du dépôt public et se charge dans `kn_content` par `npm run kn:content` (KN27) ; les tests utilisent de fausses tables.
+**Module Ker Nethalas** (JDR solo, système distinct, isolé du modèle D&D — le `ruleset` ne distingue que `'5'` / `'5.5'`) : pages `/ker-nethalas`, API `/api/ker-nethalas/**` (default-deny par `server/middleware/ker-nethalas-authz.ts`), tables `kn_*`, règles dans `shared/ker-nethalas/` (moteur de modificateurs pur `resolveKnSheet`, catalogues dans `catalog/`), composants dans `app/components/ker_nethalas/`. Plan, licence et interprétations : [`docs/ker-nethalas.md`](docs/ker-nethalas.md) ; décisions KN : [`docs/ker-nethalas-decisions.md`](docs/ker-nethalas-decisions.md) ; suivi : issues X10 à X16 et U13. Ne pas réutiliser les types D&D (`Effect`, `ruleset`, `CharacterSheet`) pour ce module. **Le contenu rédigé à partir du livre (Maîtrises, bestiaire, tables, descriptions) ne se versionne jamais** : il vit hors du dépôt public et se charge dans `kn_content` par `npm run kn:content` (KN27) ; les tests utilisent de fausses tables.
 
-### Data flow
+### Flux de données
 
 ```
-Vue pages/components → composables (useFetch) → Nitro server routes → Drizzle ORM → Cloudflare D1 (SQLite)
+pages/composants Vue → composables (useFetch) → routes Nitro → Drizzle ORM → Cloudflare D1 (SQLite)
 ```
 
-### Key directories
+### Répertoires clés
 
-- `app/pages/` — file-based routing (Nuxt 4 app dir structure)
-- `app/components/` — domain-organized components (`character_sheet/`, `character_builder/`, `level_up/`, `characters/`, `spells/`, `wizard/`, `icons/`)
-- `app/composables/` — `useCharacterSheet`, `useCharacterBuilder`, `useLevelUp`, `useSpellFilters`, `useSpellbook`
-- `server/api/` — Nitro route handlers using `defineEventHandler`
-- `server/db/schema/` — Drizzle ORM schema (source of truth for all types)
-- `server/db/seeds/` — Seed data for initial population
-- `shared/utils/` — Zod validation schemas shared between client and server
+- `app/pages/` — routage par fichier
+- `app/components/` — par domaine (`character_sheet/`, `character_builder/`, `level_up/`, `characters/`, `spells/`, `wizard/`, `icons/`, `ker_nethalas/`)
+- `app/composables/` — `useCharacterSheet` et ses sous-composables (`character/`), `useCharacterBuilder`, `useLevelUp`, `useCatalog`, `useSpellbook`, `useKn*`
+- `app/data/character-builder.ts` — textes d'affichage du builder ; aucune règle n'y est lue par le serveur
+- `shared/rules/` — règles pures partagées client/serveur (ensembles fermés, résolution des choix, calculs) : voir [`docs/rules-engine.md`](docs/rules-engine.md)
+- `shared/utils/` — schémas Zod partagés client/serveur
+- `server/api/` — handlers Nitro (`defineEventHandler`) ; `server/utils/` — autorité serveur (création, level-up, repos, catalogue)
+- `server/db/schema/` — schéma Drizzle, source de vérité des types ; `server/db/migrations/` ; `server/db/seeds/` (voir [`docs/seeds.md`](docs/seeds.md))
 
-### Database schema
+### Schéma de base
 
-Tables: `character_sheets`, `character_species`, `character_classes`, `character_ability_scores`, `spells`, `magic_schools`, `traits`, `effects`, `damage_types`, `ability_scores` (plus join/relation tables). Types are inferred from the Drizzle schema — don't define separate types for DB entities.
+- **Catalogue** : `classes`, `subclasses`, `character_species` + `species_lineages`, `backgrounds`, `features`
+  (capacités, dons, manifestations, options), `progression` (points de choix), `effects` et leurs jointures
+  (`feature_effects`, `item_effects`…), `spells` + `spell_classes`, `items`, `roll_tables`, tables de référence
+  (`ability_scores`, `damage_types`, `magic_schools`).
+- **Personnage** : `character_sheets` et ses tables `character_*` (classes, scores de base, choix, overrides de
+  maîtrises, capacités, sorts, emplacements, inventaire).
+- **Comptes** : `users`. **Ker Nethalas** : `kn_*`.
 
-### API conventions
+Les types se dérivent du schéma Drizzle : ne pas redéfinir de types pour les entités en base.
 
-- Route files in `server/api/` generate REST endpoints automatically by filename
-- Use `readValidatedBody` with Zod schemas for POST request validation
-- Zod schemas with i18n error messages live in `shared/utils/`
+### Conventions d'API
 
-### State management
+- Les fichiers de `server/api/` deviennent des endpoints REST par leur nom
+- Valider les corps avec `readValidatedBody` et un schéma Zod de `shared/utils/`
 
-- Persistent data: Cloudflare D1 (SQLite) — see `docs/persistence.md` for the full matrix and sync patterns
-- Encounter state (active conditions, death saves, armor class): `useStorage()` (localStorage)
-- Derived values (ability modifiers, proficiency bonus, spell save DC): computed properties — never stored
+### État
+
+- Données persistantes : D1 (et R2 pour les portraits) — matrice et patterns dans [`docs/persistence.md`](docs/persistence.md)
+- État de rencontre (états actifs, initiative, round, historique des jets) : `useStorage()` (localStorage), par fiche
+- Valeurs dérivées (modificateurs, bonus de maîtrise, DD, PV max) : calculées, jamais stockées
 
 ### Composables
 
-`useCharacterSheet` is a thin coordinator over layered sub-composables (`useCharacterClasses`, `useCharacterAbilities`, `useCharacterConditions`, `useCharacterSpellcasting`, `useCharacterSpells`, `useCharacterInventory`). See `docs/architecture.md` for the layer diagram, dependency injection pattern, and where to add new content.
+`useCharacterSheet` coordonne des sous-composables en couches (`useCharacterClasses`, `useCharacterAbilities`, `useCharacterConditions`, `useCharacterSpellcasting`, `useCharacterSpells`, `useCharacterInventory`). Schéma des couches, injection de dépendances et où ajouter du contenu : [`docs/architecture.md`](docs/architecture.md).
 
-### Character sheet
+### Fiche de personnage
 
-`app/pages/characters/[id]/index.vue` — See `docs/character-sheet.md` for the full breakdown of each section: what it displays, where data comes from, which API endpoints it uses, and what's not yet implemented.
+`app/pages/characters/[id]/index.vue` — sections, sources de données et endpoints : [`docs/character-sheet.md`](docs/character-sheet.md).
 
-### Character creation
+### Création de personnage
 
-`app/pages/characters/new.vue` — 6-step wizard. See `docs/character-builder.md` for the steps (Race → Classe → Carac. → Sorts → Description → Équipement), the `BuilderState` shape, UI conventions, and the POST endpoint.
+`app/pages/characters/new.vue` — assistant de 6 à 8 étapes (Race → Classe → Carac. → Bonus carac. → Don bonus → Sorts → Description → Équipement ; Bonus carac. et Sorts selon le niveau et la classe) : [`docs/character-builder.md`](docs/character-builder.md).
 
-### Level-up
+### Montée de niveau
 
-`app/pages/characters/[id]/level-up.vue` — Wizard conditionnel (2 à 6 étapes selon la classe et le niveau). See `docs/level-up.md` for the `LevelUpState` shape, which steps are active and when, the validation rules by step, and what the POST endpoint does.
+`app/pages/characters/[id]/level-up.vue` — assistant de 3 à 6 étapes (Classe, PV, Aptitudes, puis Carac. / Don, Maîtrises et Magie selon la classe et le niveau) : [`docs/level-up.md`](docs/level-up.md).
 
-See `docs/context.md` for accumulated development context: dashboard v2 architecture, UI conventions (dots, spellSlots provide/inject), key bug fixes, and decisions made across sessions.
+### Déploiement
 
-### Deployment
+La prod tourne sur un Cloudflare Worker (config dans [wrangler.jsonc](wrangler.jsonc) — binding D1 `DB`, binding R2 `BLOB` → bucket `le-bureau-du-jdr-media`, portraits de personnage).
 
-Production runs on a Cloudflare Worker (config in [wrangler.jsonc](wrangler.jsonc) — D1 binding `DB`, R2 binding `BLOB` → bucket `le-bureau-du-jdr-media`, portraits de personnage).
+**Le déploiement est automatique par Cloudflare Workers Builds sur `git push`** vers la branche par défaut — configuré côté Cloudflare (intégration Git), ni dans le dépôt ni dans GitHub Actions. Commande de build : `npm run build && npx wrangler d1 migrations apply DB --remote` — elle **applique les migrations D1 en attente** de `server/db/migrations/`, suivies par nom de fichier dans la table `_hub_migrations` (nom hérité de NuxtHub : la renommer rejouerait toutes les migrations). Commande de déploiement : `npx wrangler deploy`. Le seul workflow GitHub Actions, [.github/workflows/tests.yml](.github/workflows/tests.yml), lance la suite Vitest et le typecheck sur push vers `main` et sur chaque PR ; il ne build ni ne déploie. `npm run deploy` (`nuxt build` + `wrangler deploy`) reste disponible en secours manuel.
 
-**Deployment is automatic via Cloudflare Workers Builds (CI) on `git push`** to the default branch — configured on Cloudflare's side via the Git integration, not in the repo nor in GitHub Actions. Build command: `npm run build && npx wrangler d1 migrations apply DB --remote` — it **applies pending D1 migrations** from `server/db/migrations/`, tracked by file name in the `_hub_migrations` table (a name inherited from NuxtHub: renaming it would replay every migration). Deploy command: `npx wrangler deploy`. The only GitHub Actions workflow is [.github/workflows/tests.yml](.github/workflows/tests.yml), which runs the Vitest suite (`unit` + `nuxt` projects) on push to `main` and on every PR; it does **not** build or deploy. `npm run deploy` (`nuxt build` + `wrangler deploy`) remains available as a manual fallback.
+Le code serveur atteint les bindings par `server/utils/` : `db` (`db.ts`, Drizzle sur D1) et `useBinding('BLOB')` (`bindings.ts`, R2). Les deux lisent `globalThis.__env__`, que Nitro pose à chaque requête en prod et au démarrage en dev.
 
-Server code reaches the bindings through `server/utils/`: `db` (`db.ts`, Drizzle over D1) and `useBinding('BLOB')` (`bindings.ts`, R2). Both read `globalThis.__env__`, which Nitro sets per request in production and at boot in dev.
+**Seed de prod :** le seed complet (`POST /api/admin/seed`) peut dépasser la limite de requêtes D1 par invocation. Passer `?only=<seed>[,<seed>]` (ex. `?only=feats`) pour n'en lancer qu'une partie, en séquence — voir `server/db/seeds/run.ts`. Les seeds sont idempotentes.
 
-**Seeding prod:** the full seed (`POST /api/admin/seed`) can exceed D1's per-invocation query limit. Pass `?only=<seed>[,<seed>]` (e.g. `?only=feats`) to run only a subset sequentially — see `server/db/seeds/run.ts`. Seeds are idempotent.
+### Tests
 
-### Testing
-
-Two Vitest projects: `unit` (happy-dom) and `nuxt` (Nuxt Test Utils). Tests live in `test/unit/` and `test/nuxt/`.
+Deux projets Vitest : `unit` (environnement `node`, `test/unit/`) et `nuxt` (Nuxt Test Utils sur happy-dom, `test/nuxt/`).

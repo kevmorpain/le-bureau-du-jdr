@@ -1,8 +1,7 @@
 # D&D 5.5 (2024) — vue d'ensemble & roadmap
 
 > **Point d'entrée** du chantier. Ce qui change en 5.5, le principe de cohabitation, et le
-> plan. Le design technique est dans [`rules-engine.md`](./rules-engine.md), les constats
-> d'audit dans [`architecture-audit.md`](./architecture-audit.md), les décisions dans
+> plan. Le design technique est dans [`rules-engine.md`](./rules-engine.md), les décisions dans
 > [`decisions.md`](./decisions.md).
 
 Sources (à revalider entrée par entrée au moment de seeder) :
@@ -45,73 +44,25 @@ Bouleversement central : **les bonus de caractéristiques passent de l'espèce v
 
 ---
 
-## 3. Roadmap
+## 3. État et suite
 
-> **Séquencement révisé** : le **nettoyage d'abord**, le `ruleset` **ensuite**. Le flag
-> `ruleset` ne sert qu'à *distinguer* les éditions — c'est de l'**enablement**, pas une
-> fondation. On le pose donc juste avant d'introduire le contenu 5.5. (Un prototype de
-> migration `ruleset` avait été fait puis retiré pour repartir sur une base propre.)
-
-> **Bugs de complétude 2014 (hors iso-comportement)** : les correctifs de *parcours* découverts
-> en cours de route (arcanums non cumulatifs, base d'ASI par palier…) sont tracés à part dans
-> [`audit-completude.md`](./audit-completude.md). La Phase 1 étant iso-comportement, elle ne les
-> corrige pas ; ils forment des chantiers de correction 2014 dédiés.
-
-> **Avancement : suivi dans le projet [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2)**
-> (label `5.5`). Épopée du contenu 2024 : [#201](https://github.com/kevmorpain/le-bureau-du-jdr/issues/201) —
-> elle liste les prérequis (F14 [#106](https://github.com/kevmorpain/le-bureau-du-jdr/issues/106),
-> F7 [#120](https://github.com/kevmorpain/le-bureau-du-jdr/issues/120),
-> F19 [#130](https://github.com/kevmorpain/le-bureau-du-jdr/issues/130),
-> F6 [#119](https://github.com/kevmorpain/le-bureau-du-jdr/issues/119)) et les décisions à trancher
-> ([#200](https://github.com/kevmorpain/le-bureau-du-jdr/issues/200)).
->
-> Point de départ au 2026-09-27 : Phase 1 ✅, `ruleset` ✅ (PR #25, #43, migration `0089`), moteur 5.5
-> construit mais dormant (triade `ability_scores`, `asi_or_feat`, lignées, `weapon_mastery`), contenu
-> 2024 à **0 %**.
-
-**Phase 1 — base propre (clean), iso-2014, test-guardée** (migration additive, cf. [D9](./decisions.md#d9), [D13](./decisions.md#d13))
-1. **Tests d'équivalence 2014** (le filet, *en premier*) — contrat de valeurs vérifiées
-   (Ambroise + 1 martial + 1 caster), cf. [D12](./decisions.md#d12) et `rules-engine.md` §8.
-2. **`shared/rules/`** : `skills` (+ table + micro-migration de casse) puis `abilities`
-   (tue la duplication + les Zod en dur).
-3. **Union `Effect` étendue** (`saving_throw_proficiency`, `skill_proficiency_choice {count,from}`).
-4. **Schéma (sans `ruleset`)** : colonnes d'identité `classes` + `progression` +
-   `character_choices` + `features.tag` + alignement `backgrounds` + `items.mastery_property`
-   + table `skills` (détails : `rules-engine.md` §6).
-5. **API + résolution** — découpé en sous-lots (cf. `rules-engine.md` §5/§7) :
-   - **5a** ✅ — `resolve()` pur (volet choix) dans `shared/rules/resolve.ts` :
-     `resolveChoices(projection, catalog)`, fonction pure serveur+client ([D10](./decisions.md#d10)). *(PR #10, mergé.)*
-   - **5b** — **substrat d'autorité** : loader `server/utils/catalog.ts` (`buildCatalog`) +
-     **filtrage d'éligibilité** des options (prérequis + `levelRequired` propre à l'option,
-     gating sous-classe) dans `resolve.ts`, testés contre les vraies données Occultiste.
-     Ferme la boucle seed↔migration↔loader↔resolve.
-   - **5c** — `db.batch()` (atomicité D1) sur create/level-up/rest — robustesse **indépendante**
-     ([D14](./decisions.md#d14) ; jamais `db.transaction()`).
-   - **5d** — **dérivation + validation serveur** via `resolve()` (sous-classe∈classe,
-     compétences∈autorisé, sort/invocation légal) ; consolide au passage les tables de slots/PV
-     dupliquées en double côté serveur (`architecture-audit.md` §7).
-   - **⏸️ 5e (REPORTÉ, adjacent au point 6)** — **consolidation `/api/catalog/*` + cache edge**
-     (KV/`routeRules`). Priorité 🟢/🔵 (perf/surface, `rules-engine.md` §7 items 7 & 9), **au
-     service du front** (son seul consommateur = point 6), pas du chemin critique d'autorité. Les
-     endpoints catalogue épars (`classes.get`, `character_species.get`, `feats/index.get`,
-     `invocations/index.get`, `backgrounds/index.get`, subclasses…) restent en place jusque-là.
-     **À ne pas oublier avant/avec le point 6.**
-6. **Front** : builder **et** level-up lisent le catalogue via l'API ;
-   `app/data/character-builder.ts` réduit au flavor ; rendu générique des `progression`.
-
-**Phase 2 — enablement 5.5**
-1. **Poser le discriminant `ruleset`** (`'5'`/`'5.5'`, cf. [D2](./decisions.md#d2)) sur
-   `character_sheets` + le catalogue (`character_species`, `classes`, `backgrounds`,
-   `features`, `spell_classes`) + backfill `'5'`.
-   - **Lot A (durcissement, migration `0089`)** : `ruleset` posé AUSSI sur `spells` (la
-     description/les effets d'un sort divergent entre 2014 et 2024 → lignes séparées par
-     édition, pas de partage). La **résolution** (`catalog.resolveOptions` : feats /
-     feature_group / spells filtrés par l'édition du propriétaire), le **picker**
-     `/api/spells` (2 branches) et `loadSubclasses` (classe résolue par `(nom, ruleset)`)
-     + l'**écriture** (`createCharacter`/`characterLevelUp` : garde de cohérence d'édition,
-     fiche estampillée) filtrent/valident par `ruleset`. Additif, no-op tant que tout est `'5'`.
-2. **Contenu 5.5** : seed (espèces, historiques + triade + don, classes, maîtrise d'armes,
-   dons) + UI d'origines (bonus portés par l'historique) + fiche ruleset-aware.
+- **Phase 1 — base propre, iso-2014** ✅ : `shared/rules/`, union `Effect` étendue, `progression` /
+  `character_choices`, résolution pure `resolveChoices` ([D10](./decisions.md#d10)), autorité serveur
+  en `db.batch()` ([D14](./decisions.md#d14)), front lisant `/api/catalog/*`, sous tests
+  d'équivalence ([D12](./decisions.md#d12), [D13](./decisions.md#d13)).
+- **Phase 2.1 — discriminant `ruleset`** ✅ ([D2](./decisions.md#d2)) : posé sur les fiches et le
+  catalogue, sorts compris ; résolution, pickers et écritures filtrent par édition. Moteur 5.5
+  construit mais dormant : triade `ability_scores`, `asi_or_feat`, lignées ([D17](./decisions.md#d17)),
+  `weapon_mastery`.
+- **Phase 2.2 — contenu 5.5** : aucun contenu 2024 n'est seedé. Épopée
+  [#201](https://github.com/kevmorpain/le-bureau-du-jdr/issues/201) (label `5.5`), qui liste les
+  prérequis (F14 [#106](https://github.com/kevmorpain/le-bureau-du-jdr/issues/106),
+  F7 [#120](https://github.com/kevmorpain/le-bureau-du-jdr/issues/120),
+  F19 [#130](https://github.com/kevmorpain/le-bureau-du-jdr/issues/130),
+  F6 [#119](https://github.com/kevmorpain/le-bureau-du-jdr/issues/119)) et les décisions à trancher
+  ([#200](https://github.com/kevmorpain/le-bureau-du-jdr/issues/200)). Périmètre : espèces,
+  historiques + triade + don d'origine, classes, maîtrise d'armes, dons, UI d'origines, fiche
+  ruleset-aware.
 
 ---
 

@@ -1,336 +1,114 @@
-# Registre des fonctionnalités manquantes
+# Fonctionnalités manquantes — index E, C, R, O, S, P, D, U, N, X
 
-> **Index et archive depuis le 2026-09-27.** Chaque entrée ouverte est une issue du projet GitHub
-> [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2) (label `manquant`), qui porte son détail, son effort et son
-> statut : ce fichier ne les tient plus à jour. Il garde la correspondance code → issue, les
-> entrées résolues ou écartées, et les notes de conception transverses. Contenu complet avant
-> migration : [version `b584f44`](https://github.com/kevmorpain/le-bureau-du-jdr/blob/b584f44e940e15adb77f8dd526750c3ab390f7ca/docs/fonctionnalites-manquantes.md).
->
-> **Registres voisins** : [`audit-completude.md`](./audit-completude.md) (bugs, label `bug`),
-> [`consolidation-2014.md`](./consolidation-2014.md) (dette, label `dette`),
-> [`dnd-5.5.md`](./dnd-5.5.md) (règles 2024, label `5.5`).
+> Index des fonctionnalités absentes (label `manquant` du projet
+> [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2)) : l'issue porte le détail,
+> l'effort et le statut ; la décision, quand il y en a une, est dans [`decisions.md`](./decisions.md).
+> Ce qui existe mais se comporte mal relève de [`audit-completude.md`](./audit-completude.md).
+> Détail des entrées résolues avant nettoyage :
+> [version `4cc089c`](https://github.com/kevmorpain/le-bureau-du-jdr/blob/4cc089c102ae2316f8eee79069036894519a41b9/docs/fonctionnalites-manquantes.md).
 
----
+**À savoir avant de piocher**
 
-## Sommaire
+- Une capacité de classe sans mécanique se règle par un effet nommé dans l'union `Effect` puis
+  du seed, jamais par un `if` sur la classe ([North Star](./rules-engine.md#north-star)).
+- **U1 (mise en page mobile) est écarté** par décision du 2026-09-14 : ne pas le re-proposer sans
+  décision de design.
 
-| Famille | Entrées | En un mot |
-|---|---|---|
-| [E — Effets déclarés, jamais appliqués](#e--effets-déclarés-jamais-appliqués) | E1–E13 | La donnée est seedée, le type existe, **personne ne la lit** |
-| [C — Capacités de classe sans mécanique](#c--capacités-de-classe-sans-mécanique) | C1–C13 | ~340 features n'ont qu'une `description` |
-| [R — Mécaniques de règles générales](#r--mécaniques-de-règles-générales) | R1–R10 | Avantage, critique, concentration, encombrement… |
-| [O — Objets & inventaire](#o--objets--inventaire) | O1–O7 | Harmonisation non gardée, pas de poids ni de prix |
-| [S — Sorts & incantation](#s--sorts--incantation) | S1–S7 | Rituel, limite de préparation, zone d'effet |
-| [P — Parcours création / level-up](#p--parcours-création--level-up) | P1–P9 | Choix jamais proposés |
-| [D — Contenu (données) manquant](#d--contenu-données-manquant) | D1–D4 | 479 sorts seedés (liste AideDD 2014 complète), dons, objets magiques |
-| [U — Interface de la fiche](#u--interface-de-la-fiche) | U1–U12 | Lecture des sorts, ~~montée en puissance~~, historique de jets |
-| [N — Contrôle manuel & préférences](#n--contrôle-manuel--préférences) | N1–N6 | L'app décide tout, le joueur ne peut rien reprendre |
-| [X — Surface produit](#x--surface-produit) | X1–X7 | XP, partage, export, EN, groupe |
-
----
-
-## E — Effets déclarés, jamais appliqués
-
-Ces types existent dans l'union `Effect` (`server/db/schema/effects.ts`) **et** sont posés par les
-seeds sur de vraies features — mais **aucun consommateur** ne les lit côté fiche. Le joueur voit le
-trait dans « Capacités », et rien ne bouge sur ses stats. C'est la famille la plus rentable : la
-donnée est déjà là, il ne manque que la projection.
+## Ouvertes
 
 | Code | Suivi | Sujet |
 |---|---|---|
-| **E1** | ✅ résolu ([#131](https://github.com/kevmorpain/le-bureau-du-jdr/issues/131)) | Bonus de compétence conditionnel (`skill_bonus`, Nain/Gnome) : le joueur désigne la situation dans le lanceur de dés (« origines d'un travail de maçonnerie », « objets magiques, alchimiques ou technologiques »), le test d'Histoire gagne ce qui manque au double du bonus de maîtrise (aucun gain à l'expertise, la moitié de Touche-à-tout est remplacée) et le jet le note ([D30](./decisions.md#d30)) |
-| **E2** | ✅ résolu ([#132](https://github.com/kevmorpain/le-bureau-du-jdr/issues/132), lot 5) | Relance du 1 naturel (`reroll`, Chanceux du Halfelin) : appliquée à tout jet d'attaque, de caractéristique et de sauvegarde, sur un seul dé avec avantage ou désavantage (AideDD, Caractéristiques) |
-| **E3** | ✅ résolu ([#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133), lot 2) | Choix de maîtrise d'outil d'espèce jamais proposé : point de choix `tool` du Nain |
-| **E4** | ✅ résolu ([#134](https://github.com/kevmorpain/le-bureau-du-jdr/issues/134), lot 2) | Choix de langues d'espèce et de dons jamais proposé : points de choix `language` (Humain, Demi-elfe, Haut-elfe, Fadette), langues du don Linguiste |
-| **E5** | ✅ résolu ([#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107), lot 2) | Choix de compétences d'espèce jamais proposé : point de choix `skill` (Polyvalence du Demi-elfe) |
-| **E6** | ✅ résolu ([#135](https://github.com/kevmorpain/le-bureau-du-jdr/issues/135), lot 2) | Choix de sort d'espèce jamais proposé : point de choix `cantrip` du Haut-elfe |
-| **E7** | ✅ résolu ([#136](https://github.com/kevmorpain/le-bureau-du-jdr/issues/136), lot 4) | Neutralisation de la pénalité d'armure lourde du Nain (`equipment_penalty`) : lue par `armorSpeedPenalty` |
-| **E8** | ✅ résolu ([#137](https://github.com/kevmorpain/le-bureau-du-jdr/issues/137)) | Vision étendue des manifestations (`sight_modifier`) : la carte « Perc. passive » de la fiche donne la vision dans le noir et, au survol, tous les sens (`shared/rules/senses.ts`) ([D30](./decisions.md#d30)) |
-| **E9** | ✅ résolu ([#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138), lot 9) | Modificateurs d'arme de pacte (`pact_weapon_modifier`), lus depuis les effets par `shared/rules/pactWeapon.ts` et appliqués à l'entrée `is_pact_weapon` seulement : Lame assoiffée (2 attaques avec cette arme, sans cumul avec Attaque supplémentaire) et Buveuse de vie (modificateur de Charisme en nécrotique, minimum 1, affiché à côté des dégâts de l'arme puisqu'il n'y a rien à jeter) |
-| **E10** | ✅ résolu ([#139](https://github.com/kevmorpain/le-bureau-du-jdr/issues/139), lot 9) | `extra_damage` supprimé : Attaques sauvages du Demi-orc passe en `critical_extra_dice`, dont les sources s'additionnent désormais (Critique brutal + Attaques sauvages, AideDD ne dit rien du cumul : lecture, pas citation) ; l'éditeur d'objet écrit `weapon_damage_dice` (`weapons: 'all'`), jeté à part en Mode Combat et propre à l'arme qui le porte, lié si l'objet l'exige. Migration 0147 pour les objets déjà saisis ; une notation autre que « NdM » reste telle quelle |
-| **E11** | ✅ résolu ([#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140), lots 4 et 5) | Types d'effet absents de l'union : bonus de CA et de JS (`armor_class_bonus`, `saving_throw_bonus`), bonus d'attaque et de dégâts d'arme hors `magicBonus` (`weapon_attack_bonus`, `weapon_damage_bonus`, par portée), vitesses de nage / d'escalade / de creusement, bonus de vitesse (`speed_bonus`) ; l'éditeur d'objets propose aussi `advantage` avec sa condition en texte libre, affichée dans les défenses. **Lot 5** : l'avantage est *appliqué* au jet — sans `condition`, toujours ; avec, quand le joueur désigne la situation ; `unless` et `scope` en font un modèle interprétable là où la fiche connaît la condition (états actifs, arme de mêlée à la Force) ; bonus de dégâts de sorts (`spell_damage_bonus`) ([D22](./decisions.md#d22)). **Non porté** : un bonus d'attaque ou de dégâts à mains nues — l'application n'a aucune attaque à mains nues |
-| **E12** | ✅ résolu ([#227](https://github.com/kevmorpain/le-bureau-du-jdr/issues/227), suite du lot 2) | Fadette : caractéristique d'incantation de la Magie des fées figée au Charisme — point de choix `spellcasting_ability` (migration 0122), lu sur la fiche pour les sorts d'espèce |
-| **E13** | ✅ résolu ([#235](https://github.com/kevmorpain/le-bureau-du-jdr/issues/235)) | Ténacité naine (Nain des collines) : effet `hp_per_level` +1 posé dans les deux seeds et par la migration 0156, qui retranche le niveau total du `hp_base` des fiches existantes pour que leur maximum affiché ne bouge pas ([D30](./decisions.md#d30)) |
-
-**✅ résolu pendant la rédaction** — `fighting_style_modifier` : la **tranche 3** du chantier F2
-(PR #63, mergée le 2026-09-14) applique désormais les bonus statiques sur la fiche — Défense +1 CA,
-Archerie +2 à distance, Duel +2 à une main, Combat à deux armes (mod en main secondaire) — via le
-module pur `shared/rules/fightingStyleEffects.ts`. `great_weapon` et `protection` restent rendus en
-texte, par conception (relance de dés / réaction, non réductibles à un bonus statique).
-
----
-
-## C — Capacités de classe sans mécanique
-
-**~340 features** sont seedées avec `effects: []` : leur `description` est fidèle, mais elles ne
-changent **rien** aux valeurs de la fiche.
-
-| Fichier seed | Features sans effet | Fichier seed | Features sans effet |
-|---|---|---|---|
-| `clerc.ts` | 52 | `paladin.ts` | 30 |
-| `magicien.ts` | 36 | `moine.ts` | 26 |
-| `roublard.ts` | 26 | `guerrier.ts` | 22 |
-| `warlock.ts` | 22 | `barbare.ts` | 20 |
-| `rodeur.ts` | 19 | `barde.ts` / `druide.ts` | 17 chacun |
-| `ensorceleur.ts` | 14 | `character_species.ts` | 14 |
-
-C'est **normal** pour la majorité (une capacité narrative ou situationnelle n'a pas à être
-calculée). Les entrées ci-dessous sont celles où l'absence **se voit sur une valeur affichée** —
-donc là où la fiche est objectivement fausse, pas juste incomplète.
-
-| Code | Suivi | Sujet |
-|---|---|---|
-| **C1** | ✅ résolu ([#141](https://github.com/kevmorpain/le-bureau-du-jdr/issues/141), lot 4) | Défense sans armure (Barbare, Moine) et Résistance draconique de l'Ensorceleur : effet `unarmored_defense`, meilleure source retenue ([D21](./decisions.md#d21)) |
-| **C2** | ✅ résolu ([#142](https://github.com/kevmorpain/le-bureau-du-jdr/issues/142), lot 11) | Attaque supplémentaire : effet `extra_attack` (Guerrier 2/3/4, Barbare, Moine, Paladin, Rôdeur, Collège de la vaillance), maximum entre classes (pas de cumul), affiché en Mode Combat |
-| **C3** | ✅ résolu ([#143](https://github.com/kevmorpain/le-bureau-du-jdr/issues/143), lot 11) | Attaque sournoise : effet `weapon_damage_dice` (niveau ÷ 2, arrondi au supérieur, d6), proposé sur les armes à finesse ou à distance, jeté à part ; même effet pour le Châtiment divin amélioré |
-| **C4** | ✅ résolu ([#144](https://github.com/kevmorpain/le-bureau-du-jdr/issues/144), lot 11) | Rage : compteur par niveau de barbare (illimité au 20), état « actif » (`character_features.active`), résistances et bonus de dégâts en vigueur tant qu'elle dure, suspendus par une armure lourde ; tout repos y met fin |
-| **C5** | ✅ résolu ([#145](https://github.com/kevmorpain/le-bureau-du-jdr/issues/145), lot 11) | Points de ki : réserve = niveau de moine, DD de ki, usages (Défense patiente, Déluge de coups, Déplacement aérien, Parade, Frappe étourdissante) |
-| **C6** | ✅ résolu ([#146](https://github.com/kevmorpain/le-bureau-du-jdr/issues/146), lot 11) | Points de sorcellerie : réserve = niveau d'ensorceleur, coûts de la Métamagie, conversion emplacement ⇄ points, emplacements créés (`character_spell_slots.created`, disparaissent au repos long), regain de 4 points au niveau 20 |
-| **C7** | ✅ résolu ([#147](https://github.com/kevmorpain/le-bureau-du-jdr/issues/147), lot 11) | Inspiration bardique (utilisations, dé d6→d12, repos court dès le 5), Conduit divin (réserve partagée Clerc/Paladin), Forme sauvage (utilisations, FP et durée, Cercle de la lune), Châtiment divin (dés par niveau d'emplacement), Imposition des mains (réserve), Fougue / Second souffle / Inflexible |
-| **C8** | ✅ résolu ([#148](https://github.com/kevmorpain/le-bureau-du-jdr/issues/148), lot 4) | Déplacement rapide (+3 m sans armure lourde) et Déplacement sans armure du Moine (+3 m au 2, +4,5 au 6, +6 au 10, +7,5 au 14, +9 au 18) : effet `speed_bonus`. Le don Mobile (+3 m) était lui aussi sans effet |
-| **C9** | ✅ résolu ([#149](https://github.com/kevmorpain/le-bureau-du-jdr/issues/149), lot 5) | Touche-à-tout (`half_proficiency`, arrondi inférieur) et Athlète accompli du Champion (arrondi supérieur) ; Savoir-faire du Roublard (`proficient_check_minimum`, le « Talent fiable » du ticket) ; Critique brutal du Barbare (`critical_extra_dice`) dont la description disait « lors d'une rage », ce qu'AideDD ne dit pas ; Esquive instinctive du Roublard (`halve_damage_reaction`, case de la saisie de dégâts). **Non porté** : l'Esquive instinctive offerte par la Défense supérieure du Rôdeur (choix de capacité) |
-| **C10** | ✅ résolu ([#231](https://github.com/kevmorpain/le-bureau-du-jdr/issues/231), [D32](./decisions.md#d32)) | Capacités à repos déclaré mais sans compteur : 26 reçoivent un compteur (`maxUsesFormula`), 7 perdent une recharge sans effet (les 19 autres paient une réserve, cf. C11) ; un test-contrat garde le trou fermé. Le relevé du ticket omettait l'Occultiste |
-| **C11** | ✅ résolu ([#232](https://github.com/kevmorpain/le-bureau-du-jdr/issues/232), [D32](./decisions.md#d32)) | Les 17 options de Conduit divin et les capacités de ki (Âme de diamant, Désertion de l'âme, Paume frémissante, Arts des ombres) se paient sur la réserve ; les seize disciplines de la Voie des quatre éléments sont des options au choix (niveau, coût en ki) ; Perfection de l'être se déclenche à la main (`meta.regains`) |
 | **C12** | [#233](https://github.com/kevmorpain/le-bureau-du-jdr/issues/233) | Forme sauvage : PV de la bête et retour à la forme normale |
-| **C13** | ✅ résolu ([#234](https://github.com/kevmorpain/le-bureau-du-jdr/issues/234), [D33](./decisions.md#d33)) | Rage : fin à l'inconscience (0 PV ou état Inconscient), question au « Nouveau tour » faute de combat (levée par Rage persistante, niveau 15), avertissement sur les sorts. **Non porté** : Rage implacable, durée d'une minute, épuisement de la Frénésie |
-
-> **Note de conception** : le North Star du repo (`consolidation-2014.md`) interdit le code bespoke
-> par classe. Ces entrées demandent donc d'abord de **nommer les effets manquants** dans l'union
-> (`unarmored_defense`, `extra_attack_count`, `scaling_damage_dice`, `resource_pool`…), puis de les
-> seeder. C'est ce qui rend C4–C7 structurants : il manque le **concept de pool de ressource**
-> (points de ki / sorcellerie / châtiment), qui n'a pas d'équivalent dans le schéma actuel
-> (`character_features.currentUses` est un compteur d'usages, pas un pool dépensable par paquets).
-
----
-
-## R — Mécaniques de règles générales
-
-| Code | Suivi | Sujet |
-|---|---|---|
-| **R1** | ✅ résolu ([#108](https://github.com/kevmorpain/le-bureau-du-jdr/issues/108), lot 5) | Avantage / désavantage appliqués au jet : états, épuisement, armure non maîtrisée (Force et Dextérité seulement), armure à Discrétion désavantageuse, arme lourde en Petite taille, effets d'avantage (Rage, Instinct sauvage, Brave…), et choix du joueur pour le prochain jet ([D22](./decisions.md#d22)) |
-| **R2** | ✅ résolu ([#150](https://github.com/kevmorpain/le-bureau-du-jdr/issues/150), lot 5) | Coup critique : dés doublés (Attaque sournoise, Châtiment divin compris), plage élargie du Champion (19, puis 18), dés de Critique brutal. Critique automatique (cible paralysée) : bascule manuelle dans le panneau des jets |
-| **R3** | ✅ résolu (2026-10-02) — [#151](https://github.com/kevmorpain/le-bureau-du-jdr/issues/151) | Épuisement : niveau 6 (mort, affiché) et réduction de 1 au repos long, si le personnage a mangé et bu (case de la confirmation) |
-| **R4** | ✅ résolu (2026-10-02) — [#152](https://github.com/kevmorpain/le-bureau-du-jdr/issues/152) | Concentration : le JS de CON existait ; rupture à 0 PV, sur un état d'incapacité et au lancement d'un autre sort à concentration, annoncée par un message |
-| **R5** | ✅ résolu ([#153](https://github.com/kevmorpain/le-bureau-du-jdr/issues/153), lot 14) | Encombrement et capacité de charge : poids porté sur capacité (Force × 7,5 kg, selon la taille) en tête de l'inventaire, pièces comprises. La variante facultative d'encombrement (vitesse -3/-6 m, désavantage aux jets de Force, Dextérité, Constitution, colonne Force des armures ignorée) passe par le réglage `encumbrance`, désactivé par défaut ([D29](./decisions.md#d29)) |
-| **R6** | ✅ résolu (2026-10-02) — [#154](https://github.com/kevmorpain/le-bureau-du-jdr/issues/154) | Jets de mort portés par la fiche (`death_save_*`, migration 0118) ; 20 et 1 naturels, stabilisation, dégâts à 0 PV (critique : deux échecs) et mort instantanée dans `shared/rules/damage.ts` |
 | **R7** | [#155](https://github.com/kevmorpain/le-bureau-du-jdr/issues/155) | Économie d'action décorative en Mode Combat |
-| **R8** | ✅ résolu (2026-10-02), sauf une limite — [#156](https://github.com/kevmorpain/le-bureau-du-jdr/issues/156) | Repos long : PV temporaires vidés, jets de mort remis à zéro, épuisement réduit, charges d'objets à dés tirées au repos. **Non porté** : un seul repos long par période de 24 h (l'app n'a pas d'horloge de jeu) |
-| **R9** | ✅ résolu : maîtrises (B12 [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104)), prérequis non bloquants (B14 [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109)), compétences (#101) | Prérequis et maîtrises de multiclassage |
-| **R10** | ✅ résolu ([#157](https://github.com/kevmorpain/le-bureau-du-jdr/issues/157), lot 4) | Force requise des armures lourdes : -3 m et avertissement au survol de la vitesse quand la Force est inférieure à la colonne Force |
-
----
-
-## O — Objets & inventaire
-
-| Code | Suivi | Sujet |
-|---|---|---|
-| **O1** | ✅ résolu ([#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158), lot 9) | Harmonisation : la limite de 3 objets bloque (`shared/rules/attunement.ts`) — l'interrupteur d'un quatrième objet est grisé et `toggleAttuned` ne fait rien ; on peut toujours en retirer un. Côté fiche seulement : un refus serveur au rejeu resterait en tête de la file hors-ligne ([D25](./decisions.md#d25)). L'alerte ne reste que pour une fiche déjà au-dessus de la limite |
-| **O2** | ✅ résolu ([#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159), lot 14) | Poids et prix des objets : `weight_g`, `cost_cp` et `lot_size` (migration 0155), valeurs d'AideDD pour les 149 objets que la règle chiffre, affichés sur chaque ligne de l'inventaire ; poids et prix saisissables sur un objet sur mesure ([D29](./decisions.md#d29)). **Non porté** : l'achat et la vente avec la bourse, suivis par [#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159) (mode marchand) |
-| **O3** | ✅ résolu ([#160](https://github.com/kevmorpain/le-bureau-du-jdr/issues/160), lot 4) | Pénalité de vitesse des armures lourdes : même règle que R10 (AideDD : seule une Force insuffisante réduit la vitesse) |
-| **O4** | ✅ résolu ([#161](https://github.com/kevmorpain/le-bureau-du-jdr/issues/161), lot 16) | Munitions : flèches, carreaux, billes et aiguilles au catalogue (`ammunition_type` sur l'objet et sur chaque arme à munitions) ; chaque attaque consomme une pile du bon type, l'arme ne tire plus sans (`spendAmmunition`), badge du reste en Mode Combat. Réglage `ammunition` (défaut : désactivé, au compte ou à la fiche) pour les tables qui décomptent, comme [D23](./decisions.md#d23) le prévoyait. **Non porté** : la récupération de la moitié des munitions (saisie manuelle de la quantité), les armes sur mesure (pas de type de munition à choisir dans l'éditeur d'objet), les armes de lancer ([D28](./decisions.md#d28)) |
-| **O5** | ✅ résolu ([#162](https://github.com/kevmorpain/le-bureau-du-jdr/issues/162), lot 9) | Armes lancées et longue portée : une arme de corps à corps à lancer garde son attaque de mêlée et gagne un lancer, qui est une attaque à distance (même caractéristique, bonus « à distance » des effets ; ni Rage, ni Duel, ni dés de critique de mêlée). Une bascule Mêlée / Lancer par arme (`WeaponThrowSwitch`, mêlée par défaut) montre l'un ou l'autre jeu de boutons, à l'inventaire comme en Mode Combat. « Longue portée » et « Ennemi à 1,50 m » sont des choix du joueur par arme (`useWeaponRange`, dans le navigateur, lus après le montage : la fiche est rendue côté serveur) qui nomment un désavantage au jet de tir ou de lancer ; ils ne s'affichent qu'en mode Lancer, ou sur une arme à distance. **Non porté** : le style Archerie n'est pas appliqué au lancer (règle non vérifiée) ; la portée maximale n'est pas imposée ; les munitions restent à O4 |
+| **O2** (reste) | [#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159) | Achat et vente avec la bourse (mode marchand) |
 | **O6** | [#163](https://github.com/kevmorpain/le-bureau-du-jdr/issues/163) | Objets magiques à effets actifs (une charge → un effet) |
-| **O7** | ✅ résolu (2026-09-26) ; restes soldés : O7a [#164](https://github.com/kevmorpain/le-bureau-du-jdr/issues/164) et O7c [#299](https://github.com/kevmorpain/le-bureau-du-jdr/issues/299) ([D34](./decisions.md#d34)), O7b [#165](https://github.com/kevmorpain/le-bureau-du-jdr/issues/165) (lot 9 et D34) | Caractéristiques : effets d'objets et plafond. **O7b, lot 9** : (3) la lentille de sorts lit désormais les objets et effets temporaires de la fiche (`sheetActiveEffectSources`, aussi lu par le level-up) ; (5) déjà couvert par les PV max dérivés (`hitPointsDerivation.test.ts`, Amulette de santé) ; (2) le plafond des étapes d'ASI passe par `ABILITY_SCORE_MAX` et le builder projette désormais les effets de classe (F20, [#298](https://github.com/kevmorpain/le-bureau-du-jdr/issues/298), [D31](./decisions.md#d31)) : Champion primitif s'applique à une création au niveau 20 ; (4) l'ordre score fixé / bonus n'a pas de source : la fiche garde le meilleur des deux ordres ([D34](./decisions.md#d34), #299). **O7a** : manuels et tomes en faveurs permanentes, de type `boon` (D34, #164) |
-
----
-
-## S — Sorts & incantation
-
-| Code | Suivi | Sujet |
-|---|---|---|
-| **S1** | ✅ résolu ([#166](https://github.com/kevmorpain/le-bureau-du-jdr/issues/166), lot 3) | Limite de sorts préparés (compteur non bloquant) et sorts de domaine / de serment toujours préparés, dérivés de la sous-classe (`always_prepared_spell`, migration 0114) |
-| **S2** | ✅ résolu ([#167](https://github.com/kevmorpain/le-bureau-du-jdr/issues/167), lot 8) | Incantation rituelle : « Lancer en rituel » dans le sort ouvert, sans emplacement ni montée en puissance ; offert selon la capacité Rituel de la classe lanceuse (`shared/rules/ritualCasting.ts`, AideDD : Barde, Magicien, Clerc et Druide préparé ; Occultiste pour le Livre des Ombres et l'Appel de familier du pacte de la chaîne). Le +10 minutes est un rappel, l'app n'a pas d'horloge |
-| **S3** | ✅ résolu ([#168](https://github.com/kevmorpain/le-bureau-du-jdr/issues/168), lot 8) | Zone d'effet : colonne `spells.area_of_effect` (forme, taille en mètres, hauteur du cylindre), posée sur les 18 sorts qui affectent une zone (migration 0127). Le plafond de taille d'une création (Image silencieuse…) et les rayons de détection n'en sont pas ; la taille est celle du niveau de base (Confusion grossit à haut niveau) |
-| **S4** | ✅ résolu ([#169](https://github.com/kevmorpain/le-bureau-du-jdr/issues/169), lot 8) | Type d'attaque explicite : colonne `spells.attack_type` (`melee` / `ranged`), qui remplace l'inférence « dégâts sans DD ». Corrige Maléfice, Transfert de vie et Armure d'Agathys (faux jet pour toucher), Rayon affaiblissant, Éclair de chaos et Changement de plan (jet manquant). Lame aux flammes vertes et Lame retentissante attaquent avec l'arme, pas avec un sort : plus de jet de sort. Le désavantage à 1,50 m est un rappel (AideDD), pas un calcul : la position des créatures est inconnue |
-| **S5** | ✅ résolu ([#170](https://github.com/kevmorpain/le-bureau-du-jdr/issues/170), lot 8) | Composante chiffrée ou consommée : colonne `spells.material_cost` (montant, unité `pa`/`po`, consommée) sur 17 sorts ; rappel que le focaliseur ne la remplace pas (AideDD, règles de la magie). Quatre textes de `material` corrigés sur AideDD (Identification : « au moins » ; Création de mort-vivant : mauvais objet ; Vision suprême : « consommée » ; Changement de plan). Le lancement n'est pas bloqué faute de la composante |
-| **S6** | ✅ résolu ([#171](https://github.com/kevmorpain/le-bureau-du-jdr/issues/171), lot 9), sauf les effets chiffrés | Sorts actifs : durée structurée des sorts (colonnes `duration_unit` / `duration_value`, migration 0129 ; saisie libre pour les cas spéciaux) ; lancer un sort non instantané crée une entrée suivie dans les effets temporaires (durée, concentration), décomptée au « Nouveau tour » ; dix sorts à concentration dont le texte de durée omettait « Concentration, jusqu'à » sont corrigés ; relancer la réarme, la fin de la concentration la retire. **Non porté** : les bonus du sort restent saisis à la main, suivis par [#245](https://github.com/kevmorpain/le-bureau-du-jdr/issues/245) (S7) |
-| **S7** | [#245](https://github.com/kevmorpain/le-bureau-du-jdr/issues/245) | Effets chiffrés des sorts actifs non préremplis (reliquat de S6) |
-
----
-
-## P — Parcours création / level-up
-
-Ce qui suit sont des **choix que le joueur ne peut pas faire du tout** (à distinguer des bugs de
-cumul de `audit-completude.md`, où le choix existe mais se comporte mal).
-
-| Code | Suivi | Sujet |
-|---|---|---|
-| **P1** | ✅ résolu (F2 expertise) | Expertise à la création |
-| **P2** | ✅ résolu ([#172](https://github.com/kevmorpain/le-bureau-du-jdr/issues/172), lot 10) | Manœuvres du Maître de guerre : seize options au choix (3 au niveau 3, puis 5, 7 et 9 aux niveaux 7, 10 et 15, une remplaçable à chaque palier), dés de supériorité en compteur (4, 5 puis 6 ; d8, d10, d12 ; repos court), DD de manœuvre sur la meilleure de Force et de Dextérité, outil d'artisan de Disciple martial. Les effets des manœuvres restent en texte : la fiche dépense le dé, le joueur le lance et l'applique |
-| **P3** | ✅ résolu ([#173](https://github.com/kevmorpain/le-bureau-du-jdr/issues/173), lot 3) | Sorts de domaine (Clerc), de serment (Paladin) et de cercle (Druide : point de choix `terrain`, migration 0115), Secrets magiques du Barde (sorts de n'importe quelle liste) |
-| **P4** | ✅ résolu ([#174](https://github.com/kevmorpain/le-bureau-du-jdr/issues/174), lot 10) | Ennemi juré et Explorateur-né (Rôdeur) : un ennemi et un terrain dès le niveau 1, un de plus aux niveaux 6 et 14 (ennemis), 6 et 10 (terrains), affichés sous la capacité. Restent hors modèle : les deux races d'« Humanoïdes » (un seul choix), l'avantage contre l'ennemi, la maîtrise doublée sur le terrain et la langue de l'ennemi |
-| **P5** | ✅ résolu ([#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175), lot 10) | 2ᵉ style de combat du Champion (niveau 10), différent du premier ; chemin générique `featurePicks` |
-| **P6** | ✅ résolu ([#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204), lot 2) | Outils au choix de classe jamais proposés (Barde, Moine, Barde rejoint en multiclasse) |
-| **P7** | ✅ résolu ([#205](https://github.com/kevmorpain/le-bureau-du-jdr/issues/205), lot 2) | Maîtrise reçue en double (outil ou compétence) ni signalée ni remplaçable — à la création |
-| **P8** | ✅ résolu ([#225](https://github.com/kevmorpain/le-bureau-du-jdr/issues/225), lot 2) | Choix d'historique (langues, outils) enregistrés comme ajouts manuels |
-| **P9** | ✅ résolu ([#226](https://github.com/kevmorpain/le-bureau-du-jdr/issues/226), suite du lot 2) | Maîtrise reçue en double au level-up (multiclassage) ni signalée ni remplaçable |
-| **P8** (équipement) | ✅ résolu ([#207](https://github.com/kevmorpain/le-bureau-du-jdr/issues/207), lot 16) | Équipement de départ du builder : sacs dépliés en objets, focaliseurs et symboles sacrés au choix, armes et outils « au choix » lus dans le catalogue, quantités conservées, listes de départ recoupées avec AideDD ([D28](./decisions.md#d28)). Même code que [#225](https://github.com/kevmorpain/le-bureau-du-jdr/issues/225) |
-
-> **Généralisation** (recompté pour #227) : sur les 19 `ChoiceKind` canoniques, **15** sont seedés en
-> `progression` (`subclass`, `lineage`, `pact_boon`, `fighting_style`, `expertise`, `invocations`,
-> `asi_or_feat`, `metamagic`, `skill`, `spell`, `language`, `tool`, `cantrip`, `terrain`,
-> `spellcasting_ability`). Restent sans aucune
-> donnée : `maneuvers`, `ancestry`, `weapon_mastery` (5.5), `ability_scores` (5.5). Un point de choix
-> appartient à une classe (porteur de départ ou de multiclassage), une espèce, une lignée, un historique
-> ou une règle générale (maîtrise en double) : cf. [`rules-engine.md`](./rules-engine.md).
-
----
-
-## D — Contenu (données) manquant
-
-| Code | Suivi | Sujet |
-|---|---|---|
-| **D1** | [#176](https://github.com/kevmorpain/le-bureau-du-jdr/issues/176) | Sorts : 479 seedés. La liste AideDD 2014 (477 sorts) est complète du niveau 0 au niveau 9 : 361 sorts du socle (PHB, SRD), dont 188 posés aux niveaux 0 à 3 et 6 à 9, et 116 sorts hors socle de Xanathar et de Tasha, dont 105 posés en même temps ([D35](./decisions.md#d35), [D36](./decisions.md#d36), [D37](./decisions.md#d37)). Restent les descriptions des 118 sorts d'origine à aligner sur le texte exact ([#222](https://github.com/kevmorpain/le-bureau-du-jdr/issues/222)), les sorts des autres livres (Fizban, Strixhaven…) et les effets chiffrés des sorts actifs ([#245](https://github.com/kevmorpain/le-bureau-du-jdr/issues/245)) |
+| **S7** | [#245](https://github.com/kevmorpain/le-bureau-du-jdr/issues/245) | Effets chiffrés des sorts actifs non préremplis |
+| **D1** (reste) | [#222](https://github.com/kevmorpain/le-bureau-du-jdr/issues/222) | Descriptions des sorts d'origine à aligner sur le texte exact d'AideDD |
+| **D6** | [#315](https://github.com/kevmorpain/le-bureau-du-jdr/issues/315) | Sorts des autres suppléments 2014 (Fizban, Strixhaven…) |
 | **D2** | [#177](https://github.com/kevmorpain/le-bureau-du-jdr/issues/177) | Objets magiques quasi absents du catalogue |
-| **D3** | ✅ périmé ([#178](https://github.com/kevmorpain/le-bureau-du-jdr/issues/178), fermée le 2026-11-09) | Le Drow existe : lignée `Drow` (`server/db/seeds/data/elf.ts`) et espèce « Elfe noir » dans le catalogue de prod |
-| **D4** | [#179](https://github.com/kevmorpain/le-bureau-du-jdr/issues/179) | Sous-classes hors socle : cinq manquantes (Voie de la magie sauvage, Domaine de la forge, Le Génie, Gardien de drake, Conspirateur — Tasha, Xanathar, Fizban). Le socle est complet |
-
----
-
-## U — Interface de la fiche
-
-Trouvailles de la relecture des 38 composants de `app/components/character_sheet/`. Contrairement
-aux familles précédentes, rien ici ne dépend du moteur de règles : ce sont des manques de la couche
-présentation/interaction.
-
-> **Ce qui va bien, pour cadrer** : les jets sont largement couverts (carac., compétences, JS,
-> armes, sorts, dés de vie, jets de mort, charges d'objets), les dégâts appliquent le type et la
-> résistance, les descriptions de capacités sont rendues en `whitespace-pre-line`, l'accessibilité
-> de base tient (39 vrais `<button>`, les deux seuls `<div @click>` sont des gardes d'événement),
-> et le hors-ligne est traité sérieusement (file de mutations, snapshot local, modale de conflit).
-> Les entrées ci-dessous sont les creux dans ce tableau, pas un procès général.
-
-| Code | Suivi | Sujet |
-|---|---|---|
-| **U1** | 🚫 écarté (décision du 2026-09-14) — ne pas re-proposer sans décision de design | Mise en page mobile |
-| **U2** | ✅ résolu ([#180](https://github.com/kevmorpain/le-bureau-du-jdr/issues/180), lot 8) | Lecture d'un sort sur la ligne (`UCollapsible`, `SpellDetails`) à la place du tiroir : encart de faits (`SpellFacts` : attaque + bonus, JdS + DD, zone, composante, concentration, rituel), description en Markdown léger, actions de lancement |
-| **U3** | ✅ résolu ([#181](https://github.com/kevmorpain/le-bureau-du-jdr/issues/181), lot 9) | Effets d'objet : le JSON brut avait déjà disparu (`effectLabel`) ; les dés supplémentaires d'un objet se lisent désormais `+2d6 Feu` au lieu de la clé machine. Un type que la fiche ne sait pas nommer s'affiche toujours par sa clé (`app/utils/effectLabel.ts`) |
-| **U4** | ✅ résolu ([#182](https://github.com/kevmorpain/le-bureau-du-jdr/issues/182), lot 5) | Historique des 100 derniers jets par fiche (navigateur), avec relance et copie |
-| **U5** | ✅ résolu ([#183](https://github.com/kevmorpain/le-bureau-du-jdr/issues/183), lot 5) | Initiative conservée et affichée (fiche, Mode Combat), compteur de round. Pas d'ordre de tour : la fiche ne connaît pas les autres combattants |
-| **U6** | ✅ résolu ([#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184), lot 9) | Durée en rounds des états (champ du menu « Ajouter un état », décompte au « Nouveau tour », fin signalée) et des effets temporaires (champ « Durée » de l'éditeur). Au-delà de 10 minutes rien ne se décompte : pas d'horloge de jeu, la durée du sort s'affiche et l'arrêt est manuel |
-| **U12** | ✅ résolu ([#238](https://github.com/kevmorpain/le-bureau-du-jdr/issues/238), lot 9) | Compteur de tour : il existait déjà (U5, `useCombatTracker`) — le constat de l'issue était périmé. Ce qui manquait était un consommateur : « Nouveau tour » et « Round suivant » font désormais avancer les durées (S6, U6). « Round précédent » ne les rend pas : corriger se fait dans l'éditeur de l'effet |
-| **U7** | ✅ résolu (2026-10-02) — [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Confirmation avant un repos long et avant la suppression d'un objet (`ConfirmActionModal`) ; l'annulation d'un repos reste sans objet (pas d'historique, U4) |
-| **U8** | ✅ résolu ([#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186), lot 9) | Recherche par nom, sans casse ni accents (`shared/utils/search.ts`) : inventaire (les quatre onglets, avec leurs effectifs), liste de sorts de la fiche et catalogue `/spells`. Le tri de l'inventaire n'est pas porté |
-| **U9** | ✅ résolu (2026-10-01) | Clé localStorage `armorClass` morte — supprimée de `useCharacterClasses` ([#187](https://github.com/kevmorpain/le-bureau-du-jdr/issues/187)) |
-| **U10** | ✅ résolu (2026-09-15), voir la note plus bas | Montée en puissance des dégâts affichés |
-
-**✅ résolu — U10 + U2 (c) : montée en puissance (2026-09-15)**
-
-La résolution « quelle valeur à quel niveau » était réimplémentée **quatre fois** (le jet dans
-`MagicSection`, `CharacterSpellRow`, `DamageSection`/`HealSection`, `SpellCardBuilder`), avec des
-comportements divergents — la cause racine de l'écart affiché ≠ jeté. Elle est désormais **unique**,
-dans le module pur [`shared/rules/spellScaling.ts`](../shared/rules/spellScaling.ts), consommé par
-les quatre. Côté lecture : `UpcastSection` rend l'encart « Aux niveaux supérieurs » dans `SpellCard`
-(un palier par niveau où la valeur **change** : Arme spirituelle affiche 4/6/8, pas 3/5/7/9), et
-`CastSpellModal` annonce, **sur chaque emplacement proposé**, ce que ce niveau donnera — c'est là que
-le joueur choisit, donc là que l'affiché doit correspondre au jeté.
-
-Effets de bord traités au passage, même famille : le soin d'un sort à progression **par niveau de
-personnage** était indexé par le niveau du sort (jamais rencontré en seed, faux dès la première
-donnée) ; la fourchette min~max du grimoire rendait `NaN` sur une notation à bonus fixe (`10d6+40`) ;
-et « Simulacre de vie » retrouve son bloc `heal` (`1d4+4`), que l'ancien parseur ne savait pas
-représenter. Re-seed prod `?only=spells` fait (vérifié par l'API publique le 2026-09-27).
-
-**Cas des sorts d'attaque** : leurs dégâts se jettent en **deux gestes** (« Lancer » = jet pour
-toucher, puis « Dégâts »), donc le second doit savoir à quel niveau le sort a été lancé — sinon la
-modale annonce 6d6 au niveau 3 et le bouton jette 4d6. Le niveau choisi au lancement est donc
-**hérité** par le jet de dégâts, et affiché sur le bouton (« Dégâts (niv. 3) ») : un clic, pas de
-question — on ne redemande pas ce qu'on vient de répondre. Un **chevron** à côté (seulement pour les
-sorts qui montent en puissance) ouvre `RollDamageModal` pour jeter à un autre niveau : utile quand
-le lancement n'est pas passé par l'app, ou après un rechargement (la mémoire est de session).
-Composant distinct de `CastSpellModal` pour deux raisons : **aucun emplacement n'est dépensé** (il
-l'a été au lancement) et les niveaux sont proposés **même épuisés** — après avoir lancé son dernier
-emplacement de niveau 3, c'est précisément à ce niveau qu'il faut pouvoir jeter.
-
-**Voisins déjà listés ailleurs, rappelés pour le contexte UI** : R1 (les boutons de jet sont
-*à côté* des avertissements de désavantage qu'ils ignorent — l'incohérence est visible à l'œil nu),
-R2 (résolu au lot 5 : le critique double les dégâts), R6 (résolu : les jets de mort suivent l'appareil),
-R7 (l'économie d'action du Mode Combat est purement manuelle).
-
----
-
-## N — Contrôle manuel & préférences
-
-Famille née de deux demandes de l'auteur (désactiver les jets de dés ; activer la concentration
-sans lancer de sort). Elles ont la **même racine** : l'app suppose partout qu'elle pilote, et
-n'offre aucune porte de sortie quand le joueur veut faire autrement ou quand le modèle ne sait pas
-exprimer sa situation.
-
-**Constat de fond : il n'existe aucune couche de préférences.** Ni table, ni colonne, ni composable.
-`useStorage` sert à de l'état de jeu (conditions, jets de mort, sections repliées), jamais à un
-réglage. Toute entrée ci-dessous suppose de trancher d'abord **où vit une préférence** — cf. N6.
-
-| Code | Suivi | Sujet |
-|---|---|---|
-| **N1** | ✅ résolu ([#188](https://github.com/kevmorpain/le-bureau-du-jdr/issues/188), lot 7) | Préférence « lancer les dés dans l'application » : colonne `preferences` sur la fiche et le compte (migration 0126), héritage `fiche ?? compte ?? défaut` ([D23](./decisions.md#d23)) |
-| **N2** | ✅ résolu ([#189](https://github.com/kevmorpain/le-bureau-du-jdr/issues/189), lot 7) | Saisie du résultat quand les jets sont désactivés : d20 du jet contre la mort, résultat d'une table aléatoire, total d'initiative ; concentration et recharge d'objet se tranchaient déjà à la main |
-| **N3** | ✅ résolu (2026-10-02) — [#190](https://github.com/kevmorpain/le-bureau-du-jdr/issues/190) | Concentration libre : libellé `concentrating_on` à côté de la clé étrangère (migration 0119) |
-| **N4** | ✅ résolu ([#191](https://github.com/kevmorpain/le-bureau-du-jdr/issues/191), lot 7) | Ajustements manuels de CA, vitesse, initiative et DD : les effets temporaires couvraient déjà CA, initiative et DD ; `speed_bonus` y est ajouté pour la vitesse ([D23](./decisions.md#d23)). Pas de surcharge absolue |
-| **N5** | ✅ résolu ([#192](https://github.com/kevmorpain/le-bureau-du-jdr/issues/192), lot 8) | Encart « Sur la fiche » des capacités : les effets que la fiche applique, libellés par `labelledEffects`. Les effets sans libellé (`extra_attack`, `resource_die`…) et les effets « tant que la capacité est active » (`meta.whileActive`) n'y figurent pas |
-| **N6** | ✅ tranché → [D18](./decisions.md#d18), voir plus bas | Où vit une préférence ? |
-
-### N6 — ce que la décision implique
-
-Préférence **par fiche**, **défauts par compte** (décision de l'auteur). Le détail et le
-*pourquoi* sont en [D18](./decisions.md#d18) ; le strict nécessaire pour lire les entrées N :
-
-- **`NULL` sur la fiche = « hérite du compte »**, pas « désactivé ». Chaque préférence est donc
-  **tri-état** (`oui` / `non` / `hérité`) — une colonne **nullable sans DEFAULT**. La typer
-  `boolean NOT NULL DEFAULT false` détruirait l'état « hérité » de façon irréversible.
-- **Aucun backfill** : les fiches existantes restent à `NULL` et héritent immédiatement.
-- La résolution `fiche ?? compte ?? défaut codé` est une **fonction pure partagée**
-  (serveur + client), comme le reste du moteur ([D10](./decisions.md#d10)).
-
-> **Bonne nouvelle pour U2b / N5** (et vérifiée par U10, désormais fait) : aucun de ces encarts n'est un problème de *design*. Les
-> données structurées existent déjà (`spell.damages`, `spell.heal`, `spell.dc`,
-> `spell.concentration`, `spell.multiAttack`, `damage_at_slot_level`) — l'encart est le **rendu
-> d'un JSON déjà en base**, pas un système visuel à inventer. Sa complétude était en revanche
-> plafonnée par S3 (pas de zone d'effet) et S4 (type d'attaque seulement déduit) : levés au lot 8.
-
----
-
-## X — Surface produit
-
-| Code | Suivi | Sujet |
-|---|---|---|
+| **D4** | [#179](https://github.com/kevmorpain/le-bureau-du-jdr/issues/179) | Sous-classes hors socle (Tasha, Xanathar, Fizban) |
 | **X1** | [#193](https://github.com/kevmorpain/le-bureau-du-jdr/issues/193) | Points d'expérience |
 | **X2** | [#194](https://github.com/kevmorpain/le-bureau-du-jdr/issues/194) | Partage / lecture seule d'une fiche |
 | **X3** | [#195](https://github.com/kevmorpain/le-bureau-du-jdr/issues/195) | Export / impression de la fiche |
 | **X4** | [#196](https://github.com/kevmorpain/le-bureau-du-jdr/issues/196) | Groupe / campagne |
 | **X5** | [#197](https://github.com/kevmorpain/le-bureau-du-jdr/issues/197) | Initiative de rencontre multi-participants |
 | **X6** | [#198](https://github.com/kevmorpain/le-bureau-du-jdr/issues/198) | Version anglaise |
-| **X7** | [#199](https://github.com/kevmorpain/le-bureau-du-jdr/issues/199) (partiel : l'historique des jets est livré avec U4, lot 5) | Journal de session au-delà des jets et des notes libres |
+| **X7** | [#199](https://github.com/kevmorpain/le-bureau-du-jdr/issues/199) | Journal de session au-delà des jets et des notes libres |
 
----
+## Résolues
 
-## Ce qu'il faut savoir avant de piocher
-
-1. **E1–E10 sont les moins chers.** La donnée est seedée et typée ; il manque un lecteur. Aucun
-   schéma à toucher, aucune migration. C'est aussi la famille la plus visible pour le joueur
-   (« mon trait est écrit sur la fiche mais il ne fait rien »).
-2. ~~**R1 (avantage/désavantage) est le plus gros écart perçu.**~~ ✅ **Résolu au lot 5** : le jet applique les
-   sources que la fiche affichait ([D22](./decisions.md#d22)).
-3. ~~**C1 (Défense sans armure) rend une valeur affichée fausse**~~ ✅ **Résolu au lot 4** : la CA sans armure
-   et la vitesse sont calculées par des effets nommés ([D21](./decisions.md#d21)).
-4. ~~**C5–C7 (pools de ressources) réclament un concept neuf** dans le schéma.~~ ✅ **Résolu au lot 11** : pas de
-   concept neuf — `currentUses` (dépensé) + `maxUsesFormula` portent déjà une réserve ; le manque était les formules
-   seedées, le niveau de la classe propriétaire et l'affichage par paquets. Voir [D20](./decisions.md#d20) et
-   [`rules-engine.md`](./rules-engine.md#ressources-de-classe).
-   **Restes** : C10 ([#231](https://github.com/kevmorpain/le-bureau-du-jdr/issues/231), features à `rechargeType` sans compteur) et C11 ([#232](https://github.com/kevmorpain/le-bureau-du-jdr/issues/232), options de
-   Conduit divin et ki de sous-classe) sont résolus, ainsi que C13 ([#234](https://github.com/kevmorpain/le-bureau-du-jdr/issues/234), fin de la Rage) et E13 ([#235](https://github.com/kevmorpain/le-bureau-du-jdr/issues/235), Ténacité naine) ; reste
-   C12 ([#233](https://github.com/kevmorpain/le-bureau-du-jdr/issues/233), PV de la bête en Forme sauvage). La Lame assoiffée (attaque d'arme de pacte) relève de E9 ([#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138)).
-5. **Respecter le North Star** (`consolidation-2014.md`) : aucune règle spécifique à une classe
-   dans le code. Toute entrée C ci-dessus se traduit d'abord par « quel effet manque à l'union »,
-   puis par du seed — jamais par un `if (className === 'Barbare')`.
-6. ~~**U10 est le seul écart où l'affiché contredit le jeté.**~~ ✅ **Résolu le 2026-09-15** : la
-   résolution des progressions est passée en module pur partagé (`shared/rules/spellScaling.ts`),
-   affichage et jet la lisent au même endroit. Reste une leçon : avant d'écrire un calcul de règle
-   dans un composant, chercher qui le fait déjà — celui-ci existait en quatre exemplaires.
-7. **N1 + N4 sont le meilleur rapport valeur/effort du document.** Désactiver les jets coûte un
-   `v-if`, et les surcharges manuelles débloquent *aujourd'hui* tout ce que le modèle d'effets ne
-   sait pas exprimer (E11) — sans attendre le chantier qui le lui apprendra. Ni l'un ni l'autre ne
-   demande de décision de règles ni de travail de design. **N6 étant tranché ([D18](./decisions.md#d18)),
-   N1 n'a plus de préalable** : le premier réglage pose le substrat, les suivants sont une clé de plus.
-8. **Le mobile (U1) est écarté par décision** — pas oublié. Ne pas le re-proposer.
-9. ~~**O1 (harmonisation non gardée) est un one-liner**~~ — ✅ fait avec O7 (2026-09-26) : le filtre
-   sur `attuned` est dans `inventoryEffects`. Reste la limite de 3 objets liés, toujours non bloquante.
+| Code | Suivi | Sujet |
+|---|---|---|
+| **E1** | [#131](https://github.com/kevmorpain/le-bureau-du-jdr/issues/131) | Bonus de compétence conditionnel (`skill_bonus`, Nain/Gnome) — [D30](./decisions.md#d30) |
+| **E2** | [#132](https://github.com/kevmorpain/le-bureau-du-jdr/issues/132) | Relance du 1 naturel (Chanceux) |
+| **E3** | [#133](https://github.com/kevmorpain/le-bureau-du-jdr/issues/133) | Choix d'outil d'espèce |
+| **E4** | [#134](https://github.com/kevmorpain/le-bureau-du-jdr/issues/134) | Choix de langues d'espèce et de dons |
+| **E5** | [#107](https://github.com/kevmorpain/le-bureau-du-jdr/issues/107) | Choix de compétences d'espèce |
+| **E6** | [#135](https://github.com/kevmorpain/le-bureau-du-jdr/issues/135) | Choix de sort mineur d'espèce |
+| **E7** | [#136](https://github.com/kevmorpain/le-bureau-du-jdr/issues/136) | Armure lourde sans pénalité pour le Nain |
+| **E8** | [#137](https://github.com/kevmorpain/le-bureau-du-jdr/issues/137) | Vision étendue et sens (`shared/rules/senses.ts`) — [D30](./decisions.md#d30) |
+| **E9** | [#138](https://github.com/kevmorpain/le-bureau-du-jdr/issues/138) | Modificateurs d'arme de pacte |
+| **E10** | [#139](https://github.com/kevmorpain/le-bureau-du-jdr/issues/139) | `extra_damage` remplacé par `critical_extra_dice` / `weapon_damage_dice` |
+| **E11** | [#140](https://github.com/kevmorpain/le-bureau-du-jdr/issues/140) | Bonus de CA, JS, attaque, dégâts, vitesses et avantage appliqués — [D22](./decisions.md#d22) |
+| **E12** | [#227](https://github.com/kevmorpain/le-bureau-du-jdr/issues/227) | Caractéristique d'incantation de la Fadette au choix |
+| **E13** | [#235](https://github.com/kevmorpain/le-bureau-du-jdr/issues/235) | Ténacité naine — [D30](./decisions.md#d30) |
+| **C1** | [#141](https://github.com/kevmorpain/le-bureau-du-jdr/issues/141) | Défense sans armure — [D21](./decisions.md#d21) |
+| **C2** | [#142](https://github.com/kevmorpain/le-bureau-du-jdr/issues/142) | Attaque supplémentaire |
+| **C3** | [#143](https://github.com/kevmorpain/le-bureau-du-jdr/issues/143) | Attaque sournoise |
+| **C4** | [#144](https://github.com/kevmorpain/le-bureau-du-jdr/issues/144) | Rage |
+| **C5** | [#145](https://github.com/kevmorpain/le-bureau-du-jdr/issues/145) | Points de ki — [D20](./decisions.md#d20) |
+| **C6** | [#146](https://github.com/kevmorpain/le-bureau-du-jdr/issues/146) | Points de sorcellerie |
+| **C7** | [#147](https://github.com/kevmorpain/le-bureau-du-jdr/issues/147) | Inspiration bardique, Conduit divin, Forme sauvage, Châtiment, Imposition des mains… |
+| **C8** | [#148](https://github.com/kevmorpain/le-bureau-du-jdr/issues/148) | Déplacement rapide, déplacement sans armure, don Mobile |
+| **C9** | [#149](https://github.com/kevmorpain/le-bureau-du-jdr/issues/149) | Touche-à-tout, Savoir-faire, Critique brutal, Esquive instinctive |
+| **C10** | [#231](https://github.com/kevmorpain/le-bureau-du-jdr/issues/231) | Compteurs des capacités à repos — [D32](./decisions.md#d32) |
+| **C11** | [#232](https://github.com/kevmorpain/le-bureau-du-jdr/issues/232) | Coûts sur réserve, disciplines des quatre éléments — [D32](./decisions.md#d32) |
+| **C13** | [#234](https://github.com/kevmorpain/le-bureau-du-jdr/issues/234) | Fin de la Rage — [D33](./decisions.md#d33) |
+| **R1** | [#108](https://github.com/kevmorpain/le-bureau-du-jdr/issues/108) | Avantage / désavantage appliqués au jet — [D22](./decisions.md#d22) |
+| **R2** | [#150](https://github.com/kevmorpain/le-bureau-du-jdr/issues/150) | Coup critique |
+| **R3** | [#151](https://github.com/kevmorpain/le-bureau-du-jdr/issues/151) | Épuisement |
+| **R4** | [#152](https://github.com/kevmorpain/le-bureau-du-jdr/issues/152) | Concentration |
+| **R5** | [#153](https://github.com/kevmorpain/le-bureau-du-jdr/issues/153) | Encombrement — [D29](./decisions.md#d29) |
+| **R6** | [#154](https://github.com/kevmorpain/le-bureau-du-jdr/issues/154) | Jets de mort portés par la fiche |
+| **R8** | [#156](https://github.com/kevmorpain/le-bureau-du-jdr/issues/156) | Repos long complet (sauf la limite de 24 h : pas d'horloge de jeu) |
+| **R9** | [#104](https://github.com/kevmorpain/le-bureau-du-jdr/issues/104), [#109](https://github.com/kevmorpain/le-bureau-du-jdr/issues/109) | Prérequis et maîtrises de multiclassage |
+| **R10** | [#157](https://github.com/kevmorpain/le-bureau-du-jdr/issues/157) | Force requise des armures lourdes |
+| **O1** | [#158](https://github.com/kevmorpain/le-bureau-du-jdr/issues/158) | Limite d'harmonisation bloquante — [D25](./decisions.md#d25) |
+| **O2** | [#159](https://github.com/kevmorpain/le-bureau-du-jdr/issues/159) | Poids et prix des objets — [D29](./decisions.md#d29) |
+| **O3** | [#160](https://github.com/kevmorpain/le-bureau-du-jdr/issues/160) | Pénalité de vitesse des armures lourdes |
+| **O4** | [#161](https://github.com/kevmorpain/le-bureau-du-jdr/issues/161) | Munitions — [D28](./decisions.md#d28) |
+| **O5** | [#162](https://github.com/kevmorpain/le-bureau-du-jdr/issues/162) | Armes lancées et longue portée |
+| **O7** | [#164](https://github.com/kevmorpain/le-bureau-du-jdr/issues/164), [#165](https://github.com/kevmorpain/le-bureau-du-jdr/issues/165), [#299](https://github.com/kevmorpain/le-bureau-du-jdr/issues/299) | Caractéristiques : effets d'objets, plafond, faveurs — [D34](./decisions.md#d34) |
+| **S1** | [#166](https://github.com/kevmorpain/le-bureau-du-jdr/issues/166) | Limite de sorts préparés, sorts toujours préparés |
+| **S2** | [#167](https://github.com/kevmorpain/le-bureau-du-jdr/issues/167) | Incantation rituelle — [D24](./decisions.md#d24) |
+| **S3** | [#168](https://github.com/kevmorpain/le-bureau-du-jdr/issues/168) | Zone d'effet |
+| **S4** | [#169](https://github.com/kevmorpain/le-bureau-du-jdr/issues/169) | Type d'attaque explicite |
+| **S5** | [#170](https://github.com/kevmorpain/le-bureau-du-jdr/issues/170) | Composante chiffrée ou consommée |
+| **S6** | [#171](https://github.com/kevmorpain/le-bureau-du-jdr/issues/171) | Sorts actifs et durée structurée (effets chiffrés : S7) |
+| **P1** | F2 | Expertise à la création |
+| **P2** | [#172](https://github.com/kevmorpain/le-bureau-du-jdr/issues/172) | Manœuvres du Maître de guerre — [D26](./decisions.md#d26) |
+| **P3** | [#173](https://github.com/kevmorpain/le-bureau-du-jdr/issues/173) | Sorts de domaine, de serment, de cercle ; Secrets magiques |
+| **P4** | [#174](https://github.com/kevmorpain/le-bureau-du-jdr/issues/174) | Ennemi juré et Explorateur-né |
+| **P5** | [#175](https://github.com/kevmorpain/le-bureau-du-jdr/issues/175) | 2ᵉ style de combat du Champion |
+| **P6** | [#204](https://github.com/kevmorpain/le-bureau-du-jdr/issues/204) | Outils au choix de classe |
+| **P7** | [#205](https://github.com/kevmorpain/le-bureau-du-jdr/issues/205) | Maîtrise reçue en double à la création |
+| **P8** | [#225](https://github.com/kevmorpain/le-bureau-du-jdr/issues/225), [#207](https://github.com/kevmorpain/le-bureau-du-jdr/issues/207) | Choix d'historique enregistrés comme ajouts manuels ; équipement de départ ([D28](./decisions.md#d28)) |
+| **P9** | [#226](https://github.com/kevmorpain/le-bureau-du-jdr/issues/226) | Maîtrise reçue en double au level-up |
+| **D1** | [#176](https://github.com/kevmorpain/le-bureau-du-jdr/issues/176) | Sorts : liste AideDD 2014 complète, niveaux 0 à 9 (479 seedés) — [D35](./decisions.md#d35) |
+| **D3** | [#178](https://github.com/kevmorpain/le-bureau-du-jdr/issues/178) | Drow (périmé : la lignée existait) |
+| **U2** | [#180](https://github.com/kevmorpain/le-bureau-du-jdr/issues/180) | Lecture d'un sort sur la ligne — [D24](./decisions.md#d24) |
+| **U3** | [#181](https://github.com/kevmorpain/le-bureau-du-jdr/issues/181) | Effets d'objet libellés |
+| **U4** | [#182](https://github.com/kevmorpain/le-bureau-du-jdr/issues/182) | Historique des jets |
+| **U5** | [#183](https://github.com/kevmorpain/le-bureau-du-jdr/issues/183) | Initiative et compteur de round |
+| **U6** | [#184](https://github.com/kevmorpain/le-bureau-du-jdr/issues/184) | Durée en rounds des états et effets temporaires |
+| **U7** | [#185](https://github.com/kevmorpain/le-bureau-du-jdr/issues/185) | Confirmations (repos long, suppression d'objet) |
+| **U8** | [#186](https://github.com/kevmorpain/le-bureau-du-jdr/issues/186) | Recherche par nom |
+| **U9** | [#187](https://github.com/kevmorpain/le-bureau-du-jdr/issues/187) | Clé localStorage `armorClass` morte |
+| **U10** | — | Montée en puissance : une seule résolution (`shared/rules/spellScaling.ts`), cf. [`character-sheet.md`](./character-sheet.md#patterns-clés) |
+| **U12** | [#238](https://github.com/kevmorpain/le-bureau-du-jdr/issues/238) | Le compteur de tour fait avancer les durées |
+| **N1** | [#188](https://github.com/kevmorpain/le-bureau-du-jdr/issues/188) | Préférence « lancer les dés dans l'application » — [D23](./decisions.md#d23) |
+| **N2** | [#189](https://github.com/kevmorpain/le-bureau-du-jdr/issues/189) | Saisie du résultat quand les jets sont désactivés |
+| **N3** | [#190](https://github.com/kevmorpain/le-bureau-du-jdr/issues/190) | Concentration libre |
+| **N4** | [#191](https://github.com/kevmorpain/le-bureau-du-jdr/issues/191) | Ajustements manuels de CA, vitesse, initiative, DD — [D23](./decisions.md#d23) |
+| **N5** | [#192](https://github.com/kevmorpain/le-bureau-du-jdr/issues/192) | Encart « Sur la fiche » des capacités |
+| **N6** | — | Où vit une préférence : [D18](./decisions.md#d18) |
