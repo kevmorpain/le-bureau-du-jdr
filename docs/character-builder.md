@@ -1,6 +1,6 @@
 # Character Builder — Document de référence
 
-Formulaire de création de personnage D&D 5e (2014) en 6 étapes, inspiré de l'interface de Baldur's Gate 3.
+Formulaire de création de personnage D&D 5e (2014) en 6 à 8 étapes, inspiré de l'interface de Baldur's Gate 3.
 Accessible via `/characters/new`.
 
 ## Contexte technique
@@ -471,7 +471,7 @@ Mobile (<lg) :
 `server/api/character_sheets/index.post.ts` crée en séquence :
 1. `character_sheets` insert (name, speciesId, alignment, backgroundId)
 2. `character_classes` insert (classId, level, isMain, subclassId)
-3. `character_ability_scores` × 6 insert (scores de **base** — les bonus d'espèce sont dérivés sur la fiche via les `effects`, PAS stockés ici ; voir `docs/architecture-audit.md` §2. Seuls les bonus de *choix* demi-elfe / humain variant sont cuits dans la base.)
+3. `character_ability_scores` × 6 insert (scores de **base** — les bonus d'espèce sont dérivés sur la fiche via les `effects`, PAS stockés ici. Seuls les bonus d'espèce *au choix* (Demi-elfe, Humain variant, Fadette : `chosenRaceAbilityBonuses`) sont cuits dans la base.)
 4. Compétences : choix de classe et d'expertise en `character_choices` ; compétences d'un historique personnalisé dans cet historique ; compétence et langues de l'Humain variant en `character_proficiency_overrides` ([D27](./decisions.md#d27))
 5. `character_spells` insert (isKnown: true, `classId` = la classe créée ; isPrepared: true, sauf grimoire du Magicien où seuls les sorts de `preparedSpellIds` le sont) — après `learnedSpellsError` (liste, niveau, nombre, écoles)
 6. `character_inventory` insert (`inventory: [{ itemId, quantity }]`, ids vérifiés au catalogue par `validateInventory` avant toute écriture)
@@ -495,11 +495,12 @@ Corps accepté :
 
 ---
 
-## Lacunes DB connues
+## Ce qui reste dans `app/data/character-builder.ts`
 
-| Table | Colonnes manquantes |
+Le blob ne porte plus que de l'affichage ; aucune règle n'y est lue par le serveur.
+
+| Entité | Champs propres au blob |
 |---|---|
-| `character_species` | parentId, abilityBonuses, traits, darkvision — compensé par `app/data/` |
-| `classes` | skillChoiceCount, skillChoiceOptions, role — compensé par `app/data/`. JS et maîtrises d'armes/armures/outils : porteurs `proficiency_grant` / `multiclass_proficiency_grant` en base (seedés depuis `shared/rules/classProficiencies.ts`), lus par le builder via `/api/catalog/classes` (`proficiencies`). `subclass_level` et `spellcasting_type` sont **en base** depuis la migration 0080 ; le builder garde sa copie jusqu'au recâblage front (roadmap `dnd-5.5.md` §3, point 6), sous garde-fou `test/nuxt/classesIdentityFront.test.ts` |
-| `backgrounds` | equipment (références au catalogue d'objets), suggestions personnalité/idéaux/liens/défauts — compensé par `app/data/` |
-| `character_species` | Drow (Elfe Noir) absent de la DB — mapping vers null ou 'Elfe des bois' |
+| Espèces (`RACES`) | description, emoji, bonus, vision et traits résumés pour les cartes ; les vraies valeurs de la fiche viennent des effets en base |
+| Classes (`CLASSES`) | rôle, couleur, emoji, description, aptitudes et jalons résumés, libellé de sous-classe, équipement de départ ; `spellcasting.type` doit rester égal à `classes.spellcasting_type`, gardé par `test/nuxt/classesIdentityFront.test.ts` |
+| Historiques (`BACKGROUNDS`) | équipement, suggestions de personnalité / idéaux / liens / défauts |

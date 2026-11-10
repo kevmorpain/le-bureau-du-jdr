@@ -1,8 +1,7 @@
 # Rules Engine — design cible
 
-> La **spec durable** que l'implémentation suit. Les constats qui la motivent sont dans
-> [`architecture-audit.md`](./architecture-audit.md) ; les décisions et leur pourquoi dans
-> [`decisions.md`](./decisions.md) ; le plan/roadmap dans [`dnd-5.5.md`](./dnd-5.5.md).
+> La **spec durable** que l'implémentation suit. Les décisions et leur pourquoi sont dans
+> [`decisions.md`](./decisions.md) ; le chantier 2024 dans [`dnd-5.5.md`](./dnd-5.5.md).
 
 ## Principe
 
@@ -11,6 +10,15 @@ applique ses **choix** (sous-classe, dons, ASI…) et ses **overrides** (grant/r
 logique de dérivation et de résolution est **pure et partagée** (`shared/rules/`), lancée
 côté serveur (autorité) *et* client (UX). Cf. [D3](./decisions.md#d3), [D8](./decisions.md#d8),
 [D10](./decisions.md#d10).
+
+### <a id="north-star"></a>North Star
+
+> **Aucune règle spécifique à une classe/espèce/historique dans le code ; tout se dérive des données.**
+
+Critère de validation posé par le PM, pas une feature : si une entité a un chemin de code
+bespoke, c'est un bug de modularité. Une capacité sans mécanique se traduit d'abord par « quel
+effet manque à l'union `Effect` », puis par du seed — jamais par un `if (className === 'Barbare')`.
+Ce critère tranche les décisions ouvertes vers l'option propre.
 
 ---
 

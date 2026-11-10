@@ -8,7 +8,7 @@ Un fichier court est lu à chaque session ; un fichier de deux cents entrées ne
   et le seul qui soit observable de façon fiable. Les bourdes rattrapées seules n'ont rien coûté
   et ne sont pas le sujet.
 - **Quand on relit** : à ~10 entrées, ou sur demande. Pas à date fixe sans déclencheur réel — ce
-  dépôt a déjà un « Protocole d'audit proposé (~30 min) » en bas de
+  dépôt a déjà un « Protocole d'audit (~30 min) » dans
   [`audit-completude.md`](./audit-completude.md), ajouté le 2026-08-02 (`63e39e8`) et jamais
   exécuté depuis.
 - **Ce qu'on en fait** : ajouter, reformuler, déplacer ou **supprimer** une règle de `CLAUDE.md`,

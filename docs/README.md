@@ -2,52 +2,45 @@
 
 Carte des documents. Commence par le sujet qui te concerne.
 
-## Chantier D&D 5.5 (support des règles 2024)
+## Référence durable
 
-| Doc | Rôle | Cycle de vie |
-|---|---|---|
-| [`dnd-5.5.md`](./dnd-5.5.md) | **Point d'entrée** : ce qui change en 5.5, principe de cohabitation, **roadmap** (Phases 0/1/2) | vivant |
-| [`architecture-audit.md`](./architecture-audit.md) | **Constats** de l'audit du socle actuel (effets, dérivation, choix, API) — le « pourquoi on refactore » | instant T |
-| [`rules-engine.md`](./rules-engine.md) | **Design cible durable** : `shared/rules/`, effets, `progression`/`character_choices`, résolution, API — la spec que l'implémentation suit | durable |
-| [`decisions.md`](./decisions.md) | **Journal de décisions** (ADR) : chaque choix d'architecture + son pourquoi | durable |
-| [`consolidation-2014.md`](./consolidation-2014.md) | **Plan de nettoyage** du socle 2014 avant le contenu 5.5 : constats F1–F19 (ouverts suivis en issues), North Star | archive + index |
+| Doc | Rôle |
+|---|---|
+| [`rules-engine.md`](./rules-engine.md) | **Design du moteur de règles** : North Star, `shared/rules/`, effets, `progression`/`character_choices`, résolution, API |
+| [`decisions.md`](./decisions.md) | **Journal de décisions** (ADR D1…) : chaque choix d'architecture et son pourquoi |
+| [`architecture.md`](./architecture.md) | Architecture des composables (couches, injection de dépendances) |
+| [`persistence.md`](./persistence.md) | Matrice de persistance (D1 / R2 / localStorage), auto-save, version de fiche, reprise PWA |
+| [`seeds.md`](./seeds.md) | Seeds : lancement, ordre, patterns, rédaction du contenu |
 
-**Ordre de lecture pour reprendre le chantier** : `dnd-5.5.md` (contexte + plan) → `architecture-audit.md` (constats) → `rules-engine.md` (quoi construire) → `decisions.md` (pourquoi).
-
-## Module Ker Nethalas (autre système, hors D&D)
-
-| Doc | Rôle | Cycle de vie |
-|---|---|---|
-| [`ker-nethalas.md`](./ker-nethalas.md) | **Plan, décisions (KN1…), licence et sourcing, inventaire des modificateurs, journal** — issue [#242](https://github.com/kevmorpain/le-bureau-du-jdr/issues/242) | vivant |
-
-## Fonctionnalités existantes
+## Fonctionnalités
 
 | Doc | Sujet |
 |---|---|
-| [`architecture.md`](./architecture.md) | Architecture des composables (couches, injection de dépendances) |
-| [`character-builder.md`](./character-builder.md) | Création de personnage (wizard 6 étapes) |
+| [`character-builder.md`](./character-builder.md) | Création de personnage (assistant de 6 à 8 étapes) |
 | [`character-sheet.md`](./character-sheet.md) | Fiche de personnage (dashboard 3 colonnes) |
 | [`level-up.md`](./level-up.md) | Montée de niveau (wizard conditionnel) |
-| [`persistence.md`](./persistence.md) | Matrice de persistance (SQLite / localStorage) |
-| [`seeds.md`](./seeds.md) | Données de seed |
-| [`context.md`](./context.md) | Contexte de dev accumulé (bugs, conventions, décisions passées) |
+
+## Chantier D&D 5.5 (règles 2024)
+
+[`dnd-5.5.md`](./dnd-5.5.md) : ce qui change en 5.5, cohabitation des éditions, état du chantier, règles de
+sourcing du contenu 2024.
+
+## Module Ker Nethalas (autre système, hors D&D)
+
+| Doc | Rôle |
+|---|---|
+| [`ker-nethalas.md`](./ker-nethalas.md) | Objectif, licence et sourcing, inventaire des modificateurs, plan, interprétations à confirmer |
+| [`ker-nethalas-decisions.md`](./ker-nethalas-decisions.md) | Décisions KN1… |
 
 ## Suivi : le projet GitHub
 
 Bugs, fonctionnalités manquantes, dette et chantier 5.5 se suivent en issues dans le projet
-[Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2) (statut, effort, famille,
-ruleset, décision requise). Conventions : section « Suivi du projet » de [`CLAUDE.md`](../CLAUDE.md).
+[Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2). Conventions : section « Suivi du
+projet » de [`CLAUDE.md`](../CLAUDE.md). Les registres ne gardent que la correspondance code → issue :
 
-Les anciens registres restent comme **index et archive** : correspondance code → issue, entrées
-résolues, notes de conception.
-
-| Doc | Sujet | Label des issues |
+| Doc | Codes | Label des issues |
 |---|---|---|
-| [`audit-completude.md`](./audit-completude.md) | **Bugs** des parcours 2014 (le comportement existe mais il est faux) | `bug` |
-| [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md) | **Fonctionnalités absentes** : effets jamais appliqués, capacités sans mécanique, règles, contenu, interface | `manquant` |
-| [`consolidation-2014.md`](./consolidation-2014.md) | **Dette** du socle 2014 (constats F1–F19), North Star | `dette` |
-| [`torts.md`](./torts.md) | **Erreurs de méthode** relevées en session, en file jusqu'à la révision groupée des conventions | — (reste un fichier) |
-
-> ⚠️ Certains docs de fonctionnalités précèdent l'audit et peuvent contenir des
-> affirmations datées (signalées inline quand repérées). En cas de conflit, `rules-engine.md`
-> et `decisions.md` font foi.
+| [`audit-completude.md`](./audit-completude.md) | B — bugs de parcours, classe de risque, protocole d'audit | `bug` |
+| [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md) | E, C, R, O, S, P, D, U, N, X — fonctionnalités absentes | `manquant` |
+| [`consolidation-2014.md`](./consolidation-2014.md) | F — dette du socle 2014 | `dette` |
+| [`torts.md`](./torts.md) | Erreurs de méthode relevées en session, en file jusqu'à la révision des conventions | — |

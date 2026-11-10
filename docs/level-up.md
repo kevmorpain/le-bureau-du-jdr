@@ -277,17 +277,16 @@ Corps :
 
 ## Constantes clés dans `useLevelUp.ts`
 
-Toutes exportées pour usage dans les composants d'étape :
+Exposées aux composants d'étape :
 
 ```ts
-// ASI, style de combat et expertise sont désormais lus dans le CATALOGUE (plus de tables front) :
+// Tout est lu dans le CATALOGUE (plus de tables front) :
 //   ASI            → `isAsiLevel` / `asiDueForClassLevel` (progression asi_or_feat par palier)
 //   style de combat → point de choix `fighting_style` des `featurePicks` ; `fightingStyleLevelFor` pour le badge de la classe
 //   expertise       → `needsExpertise` / `expertiseDueForClassLevel` (count cumulatif)
 //   compétences de multiclassage → `multiclassSkills` / `requiredMulticlassSkillPicks`
 //   maîtrises de multiclassage   → `multiclassGainsOf` (catalogue) ; la fiche les dérive des porteurs (`classEffects`)
 //   prérequis de multiclassage   → `currentClassesPrerequisites` / `meetsCurrentClassesPrerequisites` / `multiclassPrerequisitesOf` / `meetsTargetPrerequisites`
-LU_FEATS                 // liste des 12 dons disponibles
 ```
 
 ---

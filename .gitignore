@@ -24,7 +24,7 @@ logs
 .dev.vars
 .dev.vars.*
 
-# Contenu du livre Ker Nethalas : jamais dans le dépôt public (docs/ker-nethalas.md, KN27)
+# Contenu du livre Ker Nethalas : jamais dans le dépôt public (docs/ker-nethalas-decisions.md, KN27)
 /ker-nethalas-content/
 
 # Claude
