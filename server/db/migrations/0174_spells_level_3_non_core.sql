@@ -162,7 +162,7 @@ WHERE s.name = 'Raz-de-marée' AND s.ruleset = '5';
 
 -- Serviteur miniature
 INSERT INTO spells (name, level, casting_time, range, components, material, material_cost, ritual, duration, duration_unit, duration_value, concentration, description, school_id, dc, attack_type, area_of_effect, damages, heal, source)
-SELECT 'Serviteur miniature', 3, '1 minute', 1.5, '["V","S"]', NULL, NULL, 0, '8 heures', 'hour', 8, 0, 'Vous touchez un objet non magique, qui n''est ni attaché à un autre objet ou à une surface, ni porté ou transporté par une créature. Il s''anime, de minuscules jambes et bras lui poussent, et il devient une créature sous votre contrôle jusqu''à la fin du sort ou jusqu''à ce que ses points de vie tombent à 0. Il utilise les statistiques d''un serviteur miniature.
+SELECT 'Serviteur miniature', 3, '1 minute', 1.5, '["V","S"]', NULL, NULL, 0, '8 heures', 'hour', 8, 0, 'Vous touchez un objet non magique de taille TP, qui n''est ni attaché à un autre objet ou à une surface, ni porté ou transporté par une créature. Il s''anime, de minuscules jambes et bras lui poussent, et il devient une créature sous votre contrôle jusqu''à la fin du sort ou jusqu''à ce que ses points de vie tombent à 0. Il utilise les statistiques d''un serviteur miniature.
 
 Par une action bonus, vous pouvez lui donner mentalement un ordre s''il est à 36 mètres ou moins de vous (avec plusieurs créatures issues de ce sort, vous pouvez donner un ordre à chacune ou à toutes). Vous décidez de son action et de son déplacement au prochain tour, ou vous donnez un ordre général (aller chercher une clé, monter la garde, ranger des livres). Sans ordre, le serviteur reste inactif et se défend seulement contre les créatures hostiles. Il suit un ordre jusqu''à son accomplissement.
 

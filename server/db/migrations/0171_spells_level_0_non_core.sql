@@ -125,7 +125,7 @@ WHERE s.name = 'Mot de radiance' AND s.ruleset = '5';
 
 -- Pierre magique
 INSERT INTO spells (name, level, casting_time, range, components, material, material_cost, ritual, duration, duration_unit, duration_value, concentration, description, school_id, dc, attack_type, area_of_effect, damages, heal, source)
-SELECT 'Pierre magique', 0, '1 action bonus', 1.5, '["V","S"]', NULL, NULL, 0, '1 minute', 'minute', 1, 0, 'Vous imprégnez de magie un à trois cailloux que vous touchez. Vous, ou une autre créature, pouvez attaquer avec l''un d''eux par une attaque à distance avec un sort, en le jetant (portée de 18 mètres) ou en le lançant avec une fronde. Un autre lanceur ajoute à son jet d''attaque le modificateur de votre caractéristique d''incantation, pas le sien. En cas de réussite, la cible subit 1d6 dégâts contondants + le modificateur de votre caractéristique d''incantation. Quoi qu''il arrive, le caillou perd sa magie après l''attaque.
+SELECT 'Pierre magique', 0, '1 action bonus', 1.5, '["V","S"]', NULL, NULL, 0, '1 minute', 'minute', 1, 0, 'Vous imprégnez de magie un à trois cailloux que vous touchez. Vous, ou une autre créature, pouvez attaquer avec l''un d''eux par une attaque à distance avec un sort, en le jetant (portée de 18 mètres) ou en le lançant avec une fronde. Une autre créature ajoute à son jet d''attaque le modificateur de votre caractéristique d''incantation, pas le sien. En cas de réussite, la cible subit 1d6 dégâts contondants + le modificateur de votre caractéristique d''incantation. Quoi qu''il arrive, le caillou perd sa magie après l''attaque.
 
 Si vous relancez ce sort, la magie des cailloux encore imprégnés prend fin.', 8, NULL, 'ranged', NULL, '[{"damage_type":"bludgeoning","isSpellcastingModifierAdded":true,"damage_at_character_level":{"1":"1d6"}}]', NULL, 'xanathar'
 WHERE EXISTS (SELECT 1 FROM spells)
@@ -139,8 +139,8 @@ WHERE s.name = 'Pierre magique' AND s.ruleset = '5';
 INSERT INTO spells (name, level, casting_time, range, components, material, material_cost, ritual, duration, duration_unit, duration_value, concentration, description, school_id, dc, attack_type, area_of_effect, damages, heal, source)
 SELECT 'Saute de vent', 0, '1 action', 9, '["V","S"]', NULL, NULL, 0, 'Instantanée', 'instant', NULL, 0, 'Vous saisissez l''air pour produire, en un point que vous voyez à portée, l''un de ces effets :
 
-- Une créature de taille M ou inférieure que vous choisissez doit réussir un jet de sauvegarde de Force, sans quoi elle est repoussée de 1,50 mètre.
-- Une brève explosion d''air déplace de 3 mètres un objet non tenu ni porté pesant 2,5 kg au plus, sans force suffisante pour blesser.
+- Une créature de taille M ou inférieure que vous choisissez doit réussir un jet de sauvegarde de Force, sans quoi elle est repoussée de 1,50 mètre en s''éloignant de vous.
+- Une brève explosion d''air repousse de 3 mètres, en l''éloignant de vous, un objet non tenu ni porté pesant 2,5 kg au plus, sans force suffisante pour blesser.
 - Un effet sensoriel inoffensif, comme faire bruisser des feuilles, claquer des volets ou onduler des vêtements.', 8, '{"ability":"str","success":"none"}', NULL, NULL, NULL, NULL, 'xanathar'
 WHERE EXISTS (SELECT 1 FROM spells)
   AND NOT EXISTS (SELECT 1 FROM spells WHERE name = 'Saute de vent' AND ruleset = '5');
