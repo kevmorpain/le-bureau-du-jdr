@@ -7,7 +7,7 @@ import SpellCard from '../../app/components/spells/SpellCard.vue'
 import CastSpellModal from '../../app/components/character_sheet/CastSpellModal.vue'
 import RollDamageModal from '../../app/components/character_sheet/RollDamageModal.vue'
 
-// Garde-fou de rendu pour U10 (docs/fonctionnalites-manquantes.md) : l'affichage d'un sort doit
+// Garde-fou de rendu : l'affichage d'un sort doit
 // dire la même chose que le jet. Les sections rendent le niveau de BASE, et la montée en puissance
 // — la table `*_at_slot_level`, dont seule la première ligne était lue — est rendue par
 // `UpcastSection`. La résolution elle-même est testée en isolation (test/unit/spellScaling.test.ts).

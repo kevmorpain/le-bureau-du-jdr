@@ -365,5 +365,23 @@ Auth/ownership **déjà correct** (middleware `character-sheets-authz`). Amélio
 Contrat de valeurs D&D vérifiées, pas snapshots aveugles ([D12](./decisions.md#d12)).
 Fixtures : Ambroise + 1 martial + 1 caster. Cible = la dérivation, testée d'abord sur les
 sous-composables purs (`useCharacterAbilities`, `useCharacterClasses`) puis re-pointée sur
-les fonctions extraites en `shared/rules/`. Le projet `nuxt` (happy-dom) est configuré mais
-vide → premier test à créer.
+les fonctions extraites en `shared/rules/`.
+
+### <a id="bugs-de-parcours"></a>Bugs de parcours : la classe de risque
+
+Les bugs de parcours (codes B, label `bug`) partagent une forme : des choix qui **se répètent par
+palier de niveau**, où la création à un niveau élevé doit configurer **plusieurs** instances (ou
+refléter celles déjà appliquées), alors que le flux a été écrit pour une seule instance ou pour le
+palier exact. Ils échappent aux tests d'équivalence (qui figent le comportement) **et** aux audits
+de contenu (qui vérifient les données) : seul un test **fonctionnel** les révèle.
+
+Variante fréquente : une valeur de règle **recalculée à la main** dans un composant (mod de carac.,
+maîtrises) au lieu d'être lue dans la couche de la fiche ; chaque copie oublie une source (espèce,
+dons, effets). Avant d'écrire un calcul de règle, chercher qui le fait déjà.
+
+### <a id="protocole-audit-parcours"></a>Protocole d'audit de parcours (~30 min)
+
+Pour **chaque** classe : créer un personnage **niveau 20**, dérouler l'assistant, vérifier que
+**chaque** choix par palier (ASI, dons, sous-classe, invocations, arcanums, style de combat,
+expertise, métamagie, manœuvres, sorts connus) est **configurable** et **affiché cumulativement**.
+Puis un **level-up** de chaque type (palier de sous-classe, ASI, invocation, arcanum, multiclasse).

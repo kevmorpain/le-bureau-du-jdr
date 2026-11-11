@@ -9,7 +9,7 @@ Un fichier court est lu à chaque session ; un fichier de deux cents entrées ne
   et ne sont pas le sujet.
 - **Quand on relit** : à ~10 entrées, ou sur demande. Pas à date fixe sans déclencheur réel — ce
   dépôt a déjà un « Protocole d'audit (~30 min) » dans
-  [`audit-completude.md`](./audit-completude.md), ajouté le 2026-08-02 (`63e39e8`) et jamais
+  [`rules-engine.md`](./rules-engine.md#protocole-audit-parcours), ajouté le 2026-08-02 (`63e39e8`) et jamais
   exécuté depuis.
 - **Ce qu'on en fait** : ajouter, reformuler, déplacer ou **supprimer** une règle de `CLAUDE.md`,
   d'un bloc — jamais PR par PR. Le succès se mesure en règles modifiées, pas en entrées

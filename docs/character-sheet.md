@@ -25,6 +25,10 @@ La plupart des sections de la colonne centrale sont enveloppées dans `Collapsib
 
 Le dashboard a remplacé les anciennes sections « une stat par carte » (`ArmorClassSection`, `SpeedSection`, `InitiativeSection`…), supprimées : une nouvelle stat s'ajoute à `QuickStatsSection`, pas dans une section à part.
 
+Une mise en page mobile dédiée (U1) est **écartée** par décision du 2026-09-14 : ne pas la
+re-proposer sans décision de design. La colonne centrale écrasée sur téléphone est suivie à part
+([#216](https://github.com/kevmorpain/le-bureau-du-jdr/issues/216), U11).
+
 ---
 
 ## En-tête (`DashboardHeaderSection`)

@@ -36,11 +36,8 @@ sourcing du contenu 2024.
 
 Bugs, fonctionnalités manquantes, dette et chantier 5.5 se suivent en issues dans le projet
 [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2). Conventions : section « Suivi du
-projet » de [`CLAUDE.md`](../CLAUDE.md). Les registres ne gardent que la correspondance code → issue :
+projet » de [`CLAUDE.md`](../CLAUDE.md). Le code d'une entrée (`B16`, `E12`…) se retrouve par le
+titre de son issue ; aucun doc n'en tient la liste.
 
-| Doc | Codes | Label des issues |
-|---|---|---|
-| [`audit-completude.md`](./audit-completude.md) | B — bugs de parcours, classe de risque, protocole d'audit | `bug` |
-| [`fonctionnalites-manquantes.md`](./fonctionnalites-manquantes.md) | E, C, R, O, S, P, D, U, N, X — fonctionnalités absentes | `manquant` |
-| [`consolidation-2014.md`](./consolidation-2014.md) | F — dette du socle 2014 | `dette` |
-| [`torts.md`](./torts.md) | Erreurs de méthode relevées en session, en file jusqu'à la révision des conventions | — |
+[`torts.md`](./torts.md) : erreurs de méthode relevées en session, en file jusqu'à la révision des
+conventions.

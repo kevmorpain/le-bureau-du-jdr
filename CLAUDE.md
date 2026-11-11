@@ -142,9 +142,8 @@ existante aurait dû l'attraper — auquel cas en ajouter une n'est pas la répo
 
 Bugs, fonctionnalités manquantes, dette et chantier 5.5 se suivent en **issues**, rassemblées dans
 le projet GitHub [Le Bureau du JDR](https://github.com/users/kevmorpain/projects/2) — pas dans
-`docs/`. Les registres `audit-completude.md`, `fonctionnalites-manquantes.md` et
-`consolidation-2014.md` ne gardent que l'archive des entrées résolues et la correspondance code →
-issue ; la connaissance durable (`decisions.md`, `rules-engine.md`, `architecture.md`…) reste ici.
+`docs/`, et aucun doc n'en tient la liste : une liste recopiée à la main diverge. La connaissance
+durable (`decisions.md`, `rules-engine.md`, `architecture.md`…) reste dans `docs/`.
 
 - **Une entrée = une issue**, titre préfixé par son code (`B16 — …`) : B bug de parcours, F dette
   du socle, E effet non appliqué, C capacité de classe, R règle générale, O objets, S sorts,

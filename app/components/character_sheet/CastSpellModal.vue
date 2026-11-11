@@ -167,8 +167,7 @@ const availableSlots = computed<SlotOption[]>(() => {
 })
 
 // Récapitulatif de la montée en puissance, au moment où l'emplacement est choisi : sans lui,
-// l'affichage du sort reste au niveau de base pendant que le jet applique le niveau choisi
-// (U10 de docs/fonctionnalites-manquantes.md).
+// l'affichage du sort reste au niveau de base pendant que le jet applique le niveau choisi.
 const { previewAt } = useSpellEffectPreview()
 const effectAt = (slotLevel: number): string => previewAt(props.spell, slotLevel)
 
