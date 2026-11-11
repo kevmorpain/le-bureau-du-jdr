@@ -5,34 +5,71 @@
       ? 'border-amber-500 bg-amber-500/10'
       : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-amber-500/40'"
   >
-    <div class="flex items-center gap-2 px-2.5 py-2 cursor-pointer" @click="$emit('click')">
+    <div
+      class="flex items-center gap-2 px-2.5 py-2 cursor-pointer"
+      @click="$emit('click')"
+    >
       <span
         class="w-2.5 h-2.5 rounded-full shrink-0 border transition-colors"
         :class="selected ? 'bg-amber-500 border-amber-500' : 'bg-transparent border-muted'"
       />
 
       <div class="flex-1 min-w-0">
-        <div class="font-semibold text-xs text-(--ui-text) leading-snug">{{ spell.name }}</div>
+        <div class="font-semibold text-xs text-(--ui-text) leading-snug">
+          {{ spell.name }}
+        </div>
         <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-          <span class="text-xs" :style="`color: ${schoolColor}`">{{ schoolName }}</span>
-          <span v-if="rangeDisplay" class="text-xs text-muted">{{ rangeDisplay }}</span>
+          <span
+            class="text-xs"
+            :style="`color: ${schoolColor}`"
+          >{{ schoolName }}</span>
+          <span
+            v-if="rangeDisplay"
+            class="text-xs text-muted"
+          >{{ rangeDisplay }}</span>
         </div>
       </div>
 
       <div class="flex items-center gap-1 shrink-0">
-        <UTooltip v-if="spell.concentration" :text="$t('concentration')" :delay-duration="0">
+        <UTooltip
+          v-if="spell.concentration"
+          :text="$t('concentration')"
+          :delay-duration="0"
+        >
           <ConcentrationIcon class="size-4 text-amber-400" />
         </UTooltip>
-        <UTooltip v-if="spell.ritual" :text="$t('ritual')" :delay-duration="0">
+        <UTooltip
+          v-if="spell.ritual"
+          :text="$t('ritual')"
+          :delay-duration="0"
+        >
           <MagicSquareIcon class="size-4 text-emerald-400" />
         </UTooltip>
-        <UTooltip v-if="spell.dc" :text="`JdS ${$t('ability_scores.' + spell.dc.ability)}`" :delay-duration="0">
+        <UTooltip
+          v-if="spell.dc"
+          :text="`JdS ${$t('ability_scores.' + spell.dc.ability)}`"
+          :delay-duration="0"
+        >
           <ShieldIcon class="size-4 text-blue-400" />
         </UTooltip>
-        <UTooltip v-for="comp in (spell.components ?? [])" :key="comp" :text="componentLabel(comp)" :delay-duration="0">
-          <VoiceActivateIcon v-if="comp === 'V'" class="size-4 text-muted" />
-          <HandGestureIcon v-else-if="comp === 'S'" class="size-4 text-muted" />
-          <CauldronIcon v-else-if="comp === 'M'" class="size-4 text-muted" />
+        <UTooltip
+          v-for="comp in (spell.components ?? [])"
+          :key="comp"
+          :text="componentLabel(comp)"
+          :delay-duration="0"
+        >
+          <VoiceActivateIcon
+            v-if="comp === 'V'"
+            class="size-4 text-muted"
+          />
+          <HandGestureIcon
+            v-else-if="comp === 'S'"
+            class="size-4 text-muted"
+          />
+          <CauldronIcon
+            v-else-if="comp === 'M'"
+            class="size-4 text-muted"
+          />
         </UTooltip>
       </div>
 
@@ -40,21 +77,37 @@
         class="w-7 h-7 flex items-center justify-center rounded-md text-sm text-muted hover:text-(--ui-text) hover:bg-(--ui-bg) transition-all shrink-0 cursor-pointer"
         :class="expanded ? 'rotate-180' : ''"
         @click.stop="expanded = !expanded"
-      >▾</button>
+      >
+        ▾
+      </button>
     </div>
 
-    <div v-if="expanded" class="border-t border-(--ui-border) px-3 py-2.5 space-y-2">
+    <div
+      v-if="expanded"
+      class="border-t border-(--ui-border) px-3 py-2.5 space-y-2"
+    >
       <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
         <span v-if="spell.castingTime">⏱ {{ spell.castingTime }}</span>
         <span v-if="spell.duration">⌛ {{ spell.duration }}</span>
         <span v-if="spell.dc">
           JdS {{ $t('ability_scores.' + spell.dc.ability) }}
-          <span v-if="spellSaveDC" class="text-amber-400 font-semibold"> DD {{ spellSaveDC }}</span>
-          <span v-if="spell.dc.success" class="text-muted"> ({{ spell.dc.success === 'half' ? 'demi dégâts' : 'annulé' }})</span>
+          <span
+            v-if="spellSaveDC"
+            class="text-amber-400 font-semibold"
+          > DD {{ spellSaveDC }}</span>
+          <span
+            v-if="spell.dc.success"
+            class="text-muted"
+          > ({{ spell.dc.success === 'half' ? 'demi dégâts' : 'annulé' }})</span>
         </span>
       </div>
 
-      <p v-if="spell.material" class="text-xs text-muted italic">{{ spell.material }}</p>
+      <p
+        v-if="spell.material"
+        class="text-xs text-muted italic"
+      >
+        {{ spell.material }}
+      </p>
 
       <div
         v-for="(dmg, i) in damageDisplays"
@@ -62,7 +115,10 @@
         class="text-xs font-semibold"
         :class="`text-${dmg.color}`"
       >
-        <span v-if="dmg.label" class="text-muted font-normal">{{ dmg.label }} : </span>
+        <span
+          v-if="dmg.label"
+          class="text-muted font-normal"
+        >{{ dmg.label }} : </span>
         {{ dmg.die }}
         <span v-if="spellcastingMod != null && dmg.addsMod">
           {{ spellcastingMod >= 0 ? ` +${spellcastingMod}` : ` ${spellcastingMod}` }}
@@ -70,7 +126,10 @@
         <span class="text-muted font-normal ml-1">{{ dmg.type }}</span>
       </div>
 
-      <div v-if="healDisplay" class="text-xs font-semibold text-heal">
+      <div
+        v-if="healDisplay"
+        class="text-xs font-semibold text-heal"
+      >
         {{ healDisplay.die }}
         <span v-if="spellcastingMod != null && spell.heal!.isSpellcastingModifierAdded">
           {{ spellcastingMod >= 0 ? ` +${spellcastingMod}` : ` ${spellcastingMod}` }}
@@ -97,9 +156,9 @@ import { baseSlotLevel, resolveAtLevel } from '~~/shared/rules/spellScaling'
 const { t } = useI18n()
 
 const COMPONENT_KEYS: Record<string, string> = {
-  'V': 'new_spell.components_options.Vocal',
-  'S': 'new_spell.components_options.Somatic',
-  'M': 'new_spell.components_options.Material',
+  V: 'new_spell.components_options.Vocal',
+  S: 'new_spell.components_options.Somatic',
+  M: 'new_spell.components_options.Material',
 }
 
 function componentLabel(comp: string): string {
@@ -107,14 +166,14 @@ function componentLabel(comp: string): string {
 }
 
 const SCHOOL_COLORS: Record<string, string> = {
-  'Abjuration': '#60a5fa',
-  'Conjuration': '#34d399',
-  'Divination': '#a78bfa',
-  'Enchantment': '#f472b6',
-  'Evocation': '#f97316',
-  'Illusion': '#818cf8',
-  'Necromancy': '#6b7280',
-  'Transmutation': '#fbbf24',
+  Abjuration: '#60a5fa',
+  Conjuration: '#34d399',
+  Divination: '#a78bfa',
+  Enchantment: '#f472b6',
+  Evocation: '#f97316',
+  Illusion: '#818cf8',
+  Necromancy: '#6b7280',
+  Transmutation: '#fbbf24',
 }
 
 const props = defineProps<{

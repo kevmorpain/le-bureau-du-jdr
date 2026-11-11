@@ -3,8 +3,12 @@
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">✨</span>
       <div>
-        <h2 class="text-xl font-bold text-(--ui-text)">Sorts</h2>
-        <p class="text-sm text-muted mt-0.5">Choisissez les sorts que vous maîtrisez. Cliquez sur ▾ pour voir la description complète.</p>
+        <h2 class="text-xl font-bold text-(--ui-text)">
+          Sorts
+        </h2>
+        <p class="text-sm text-muted mt-0.5">
+          Choisissez les sorts que vous maîtrisez. Cliquez sur ▾ pour voir la description complète.
+        </p>
       </div>
     </div>
 
@@ -22,15 +26,31 @@
           :key="stat.label"
           class="px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-center"
         >
-          <div class="font-mono font-bold text-sm text-amber-400">{{ stat.value }}</div>
-          <div class="text-xs text-muted/60 uppercase tracking-wider mt-0.5" style="font-size:12px">{{ stat.label }}</div>
+          <div class="font-mono font-bold text-sm text-amber-400">
+            {{ stat.value }}
+          </div>
+          <div
+            class="text-xs text-muted/60 uppercase tracking-wider mt-0.5"
+            style="font-size:12px"
+          >
+            {{ stat.label }}
+          </div>
         </div>
       </div>
 
-      <div v-if="slotsWithCount.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-5">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Emplacements de sorts</p>
+      <div
+        v-if="slotsWithCount.length"
+        class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-5"
+      >
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+          Emplacements de sorts
+        </p>
         <div class="space-y-1.5">
-          <div v-for="row in slotsWithCount" :key="row.level" class="flex items-center gap-2">
+          <div
+            v-for="row in slotsWithCount"
+            :key="row.level"
+            class="flex items-center gap-2"
+          >
             <span class="text-xs text-muted w-4 text-right font-mono">{{ row.level }}</span>
             <div class="flex gap-1">
               <span
@@ -46,7 +66,11 @@
         </div>
       </div>
 
-      <div v-for="lvl in arcaneMysteriumSpellLevels" :key="`arcanum-${lvl}`" class="mb-6">
+      <div
+        v-for="lvl in arcaneMysteriumSpellLevels"
+        :key="`arcanum-${lvl}`"
+        class="mb-6"
+      >
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">
             ✨ Arcanum mystique (niv.&nbsp;{{ lvl }})
@@ -60,11 +84,22 @@
           Choisissez un sort de niveau {{ lvl }} dans la liste de sorts d'occultiste.
           Vous pourrez le lancer une fois par repos long sans dépenser d'emplacement.
         </p>
-        <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
-        <div v-else-if="!arcanumCandidates(lvl).length" class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400">
+        <div
+          v-if="pending"
+          class="text-sm text-muted py-4 text-center"
+        >
+          Chargement…
+        </div>
+        <div
+          v-else-if="!arcanumCandidates(lvl).length"
+          class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400"
+        >
           Aucun sort de niveau {{ lvl }} dans la liste d'occultiste — relancez les seeds.
         </div>
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+        <div
+          v-else
+          class="grid grid-cols-1 sm:grid-cols-2 gap-1.5"
+        >
           <SpellCardBuilder
             v-for="spell in arcanumCandidates(lvl)"
             :key="spell.id"
@@ -77,7 +112,10 @@
         </div>
       </div>
 
-      <div v-if="showBookOfAncientSecrets" class="mb-6">
+      <div
+        v-if="showBookOfAncientSecrets"
+        class="mb-6"
+      >
         <div class="flex items-center justify-between mb-2">
           <p class="text-xs font-bold uppercase tracking-widest text-muted">
             📜 Livre des secrets anciens — sorts rituels
@@ -91,11 +129,22 @@
           Choisissez 2 sorts <strong>rituels</strong> de niveau 1 dans la liste de n'importe quelle classe.
           Ils seront inscrits dans votre Livre des Ombres et lançables uniquement en tant que rituel.
         </p>
-        <div v-if="ritualsPending" class="text-sm text-muted py-4 text-center">Chargement…</div>
-        <div v-else-if="!ritualSpellsLvl1.length" class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400">
+        <div
+          v-if="ritualsPending"
+          class="text-sm text-muted py-4 text-center"
+        >
+          Chargement…
+        </div>
+        <div
+          v-else-if="!ritualSpellsLvl1.length"
+          class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400"
+        >
           Aucun sort rituel de niveau 1 dans la base — relancez les seeds.
         </div>
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+        <div
+          v-else
+          class="grid grid-cols-1 sm:grid-cols-2 gap-1.5"
+        >
           <SpellCardBuilder
             v-for="spell in ritualSpellsLvl1"
             :key="spell.id"
@@ -113,8 +162,16 @@
         class="mb-6"
       >
         <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
-          <UBadge color="violet" variant="subtle" size="md">Auto-ajouté</UBadge>
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">
+            Sorts du Pacte de la Chaîne
+          </p>
+          <UBadge
+            color="violet"
+            variant="subtle"
+            size="md"
+          >
+            Auto-ajouté
+          </UBadge>
         </div>
         <div v-if="familiarSpell">
           <SpellCardBuilder
@@ -125,7 +182,10 @@
             @click="() => {}"
           />
         </div>
-        <div v-else class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic">
+        <div
+          v-else
+          class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic"
+        >
           Sort "Appel de familier" introuvable — relancez les seeds.
         </div>
       </div>
@@ -135,15 +195,27 @@
         class="mb-6"
       >
         <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte du Tome</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">
+            Sorts du Pacte du Tome
+          </p>
           <span
             class="text-xs font-semibold"
             :class="state.selectedPactBoonCantripIds.length >= 3 ? 'text-green-400' : 'text-amber-400'"
           >{{ state.selectedPactBoonCantripIds.length }}/3</span>
         </div>
-        <p class="text-xs text-muted mb-3">Choisissez 3 sorts mineurs de n'importe quelle classe.</p>
-        <div v-if="pactCantripsPending" class="text-sm text-muted py-4 text-center">Chargement…</div>
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+        <p class="text-xs text-muted mb-3">
+          Choisissez 3 sorts mineurs de n'importe quelle classe.
+        </p>
+        <div
+          v-if="pactCantripsPending"
+          class="text-sm text-muted py-4 text-center"
+        >
+          Chargement…
+        </div>
+        <div
+          v-else
+          class="grid grid-cols-1 sm:grid-cols-2 gap-1.5"
+        >
           <UTooltip
             v-for="spell in filteredPactCantrips"
             :key="spell.id"
@@ -160,7 +232,12 @@
             </div>
           </UTooltip>
         </div>
-        <p v-if="!pactCantripsPending && filteredPactCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
+        <p
+          v-if="!pactCantripsPending && filteredPactCantrips.length === 0"
+          class="text-sm text-muted italic py-3"
+        >
+          Aucun sort mineur correspondant.
+        </p>
       </div>
 
       <div class="flex gap-2 mb-4">
@@ -174,7 +251,10 @@
           @click="activeTab = 'cantrips'"
         >
           Sorts mineurs
-          <span class="ml-1" :class="state.selectedCantrips.length >= cantripsNeeded ? 'text-green-400' : ''">
+          <span
+            class="ml-1"
+            :class="state.selectedCantrips.length >= cantripsNeeded ? 'text-green-400' : ''"
+          >
             {{ state.selectedCantrips.length }}/{{ cantripsNeeded }}
           </span>
         </button>
@@ -189,7 +269,10 @@
           @click="activeTab = 'spells'"
         >
           {{ spellsTabLabel }}
-          <span class="ml-1" :class="state.selectedSpells.length >= spellsNeeded ? 'text-green-400' : ''">
+          <span
+            class="ml-1"
+            :class="state.selectedSpells.length >= spellsNeeded ? 'text-green-400' : ''"
+          >
             {{ state.selectedSpells.length }}/{{ spellsNeeded }}
           </span>
         </button>
@@ -218,7 +301,9 @@
         class="mb-4 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
       >
         <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts préparés</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-muted">
+            Sorts préparés
+          </p>
           <span
             class="text-xs font-semibold"
             :class="state.preparedSpells.length >= (preparedLimit ?? 0) ? 'text-green-400' : 'text-amber-400'"
@@ -277,7 +362,12 @@
         </button>
       </div>
 
-      <div v-if="pending" class="text-sm text-muted py-8 text-center">Chargement des sorts…</div>
+      <div
+        v-if="pending"
+        class="text-sm text-muted py-8 text-center"
+      >
+        Chargement des sorts…
+      </div>
 
       <template v-if="activeTab === 'cantrips' && !pending">
         <div class="text-xs text-muted mb-3">
@@ -304,18 +394,29 @@
             </div>
           </UTooltip>
         </div>
-        <div v-if="!filteredCantrips.length" class="text-sm text-muted italic py-4">Aucun sort mineur correspondant.</div>
+        <div
+          v-if="!filteredCantrips.length"
+          class="text-sm text-muted italic py-4"
+        >
+          Aucun sort mineur correspondant.
+        </div>
       </template>
 
       <template v-if="activeTab === 'spells' && !pending">
-        <p v-if="schoolRestriction" class="text-xs text-muted mb-3">
+        <p
+          v-if="schoolRestriction"
+          class="text-xs text-muted mb-3"
+        >
           Les sorts viennent de la liste du Magicien, des écoles
           {{ schoolRestriction.schools.map(school => $t(`schools.${school}`, school)).join(' et ') }}.
           <template v-if="schoolRestriction.freePicks > 0">
             {{ schoolRestriction.freePicks }} {{ $t('sort', schoolRestriction.freePicks) }} peu{{ schoolRestriction.freePicks > 1 ? 'vent' : 't' }} venir d'une autre école ({{ outsideSchoolPicks }}/{{ schoolRestriction.freePicks }}).
           </template>
         </p>
-        <p v-if="freeListPicks > 0" class="text-xs text-muted mb-3">
+        <p
+          v-if="freeListPicks > 0"
+          class="text-xs text-muted mb-3"
+        >
           Secrets magiques : jusqu'à {{ freeListPicks }} de ces sorts peuvent venir de la liste de n'importe quelle classe.
         </p>
         <div class="text-xs text-muted mb-3">
@@ -325,7 +426,10 @@
             :class="state.selectedSpells.length >= spellsNeeded ? 'text-green-400' : 'text-amber-400'"
           >{{ state.selectedSpells.length }}/{{ spellsNeeded }}</span>
         </div>
-        <template v-for="(list, lvl) in filteredSpellsByLevel" :key="lvl">
+        <template
+          v-for="(list, lvl) in filteredSpellsByLevel"
+          :key="lvl"
+        >
           <div class="mb-4">
             <div class="text-xs font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-2">
               <span>Niveau {{ lvl }}</span>
@@ -354,7 +458,12 @@
             </div>
           </div>
         </template>
-        <div v-if="!Object.keys(filteredSpellsByLevel).length" class="text-sm text-muted italic py-4">Aucun sort correspondant.</div>
+        <div
+          v-if="!Object.keys(filteredSpellsByLevel).length"
+          class="text-sm text-muted italic py-4"
+        >
+          Aucun sort correspondant.
+        </div>
       </template>
     </template>
   </div>
@@ -392,14 +501,14 @@ const filterRitual = ref(false)
 
 const { extendedQuery } = useExtendedContent()
 
-const { data: allSpells, pending } = useFetch('/api/spells', {
+const { data: allSpells, pending } = useFetch<Spell[]>('/api/spells', {
   query: computed(() => ({ className: spellListClassName.value, ...extendedQuery.value })),
   immediate: true,
 })
 
 const spellNamesById = useState<Record<number, string>>('builder-spell-names', () => ({}))
 
-function mergeSpellNames(spells: any[] | null) {
+function mergeSpellNames(spells: Spell[] | null | undefined) {
   if (!spells?.length) return
   const map = { ...spellNamesById.value }
   for (const s of spells) map[s.id] = s.name
@@ -408,16 +517,16 @@ function mergeSpellNames(spells: any[] | null) {
 
 watch(allSpells, mergeSpellNames, { immediate: true })
 
-const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
+const { data: allCantripsData, pending: pactCantripsPending } = useFetch<Spell[]>('/api/spells', {
   query: extendedQuery,
   immediate: true,
 })
 const pactCantrips = computed(() =>
-  ((allCantripsData.value ?? []) as any[]).filter((s: any) => s.level === 0),
+  (allCantripsData.value ?? []).filter(s => s.level === 0),
 )
 const filteredPactCantrips = computed(() =>
   filterText.value
-    ? pactCantrips.value.filter((s: any) => s.name.toLowerCase().includes(filterText.value.toLowerCase()))
+    ? pactCantrips.value.filter(s => s.name.toLowerCase().includes(filterText.value.toLowerCase()))
     : pactCantrips.value,
 )
 watch(allCantripsData, mergeSpellNames, { immediate: true })
@@ -426,20 +535,20 @@ function isRegularCantrip(id: number): boolean {
   return state.value.selectedCantrips.includes(id)
 }
 
-const { data: magicianSpells } = useFetch('/api/spells', {
+const { data: magicianSpells } = useFetch<Spell[]>('/api/spells', {
   query: computed(() => ({ className: 'Magicien', ...extendedQuery.value })),
   immediate: true,
 })
 const familiarSpell = computed(() =>
-  ((magicianSpells.value ?? []) as any[]).find((s: any) => s.name === 'Appel de familier') ?? null,
+  (magicianSpells.value ?? []).find(s => s.name === 'Appel de familier') ?? null,
 )
 watch(magicianSpells, mergeSpellNames, { immediate: true })
 
-const cantrips = computed(() => (allSpells.value ?? []).filter((s: any) => s.level === 0))
+const cantrips = computed(() => (allSpells.value ?? []).filter(s => s.level === 0))
 
 const spellsByLevel = computed(() => {
   const max = maxSpellLevel.value
-  const result: Record<number, any[]> = {}
+  const result: Record<number, Spell[]> = {}
   for (const spell of (freeListPicks.value > 0 ? allCantripsData.value : allSpells.value) ?? []) {
     if (spell.level >= 1 && spell.level <= max) {
       if (!result[spell.level]) result[spell.level] = []
@@ -449,7 +558,7 @@ const spellsByLevel = computed(() => {
   return result
 })
 
-function applyFilters(list: any[]) {
+function applyFilters(list: Spell[]) {
   return list.filter((s) => {
     if (filterText.value && !s.name.toLowerCase().includes(filterText.value.toLowerCase())) return false
     if (filterSchool.value != null && s.school?.name !== filterSchool.value) return false
@@ -462,9 +571,9 @@ function applyFilters(list: any[]) {
 const filteredCantrips = computed(() => applyFilters(cantrips.value))
 
 const filteredSpellsByLevel = computed(() => {
-  const result: Record<number, any[]> = {}
+  const result: Record<number, Spell[]> = {}
   for (const [lvl, list] of Object.entries(spellsByLevel.value)) {
-    const filtered = applyFilters(list as any[])
+    const filtered = applyFilters(list)
     if (filtered.length) result[Number(lvl)] = filtered
   }
   return result
@@ -497,19 +606,19 @@ const spellsTabLabel = computed(() => {
   return 'Sorts connus'
 })
 
-const classSpellIds = computed(() => new Set((allSpells.value ?? []).map((s: any) => s.id as number)))
+const classSpellIds = computed(() => new Set((allSpells.value ?? []).map(s => s.id as number)))
 const isOutsideClassList = (id: number) => freeListPicks.value > 0 && !classSpellIds.value.has(id)
 const canPickOutsideClassList = computed(() => state.value.selectedSpells.filter(isOutsideClassList).length < freeListPicks.value)
 const isOutsideBlocked = (id: number) =>
   isOutsideClassList(id) && !state.value.selectedSpells.includes(id) && !canPickOutsideClassList.value
 
 // Chevalier occulte, Escroc arcanique : la plupart des sorts viennent de deux écoles ; quelques-uns sont d'école libre.
-const isOutsideSchool = (spell: any) => !!schoolRestriction.value && !schoolRestriction.value.schools.includes(spell.school?.name)
+const isOutsideSchool = (spell: Spell) => !!schoolRestriction.value && !schoolRestriction.value.schools.includes(spell.school?.name)
 const outsideSchoolPicks = computed(() => state.value.selectedSpells
-  .filter(id => (allSpells.value ?? []).some((s: any) => s.id === id && isOutsideSchool(s))).length)
-const isSchoolBlocked = (spell: any) =>
+  .filter(id => (allSpells.value ?? []).some(s => s.id === id && isOutsideSchool(s))).length)
+const isSchoolBlocked = (spell: Spell) =>
   isOutsideSchool(spell) && !state.value.selectedSpells.includes(spell.id) && outsideSchoolPicks.value >= (schoolRestriction.value?.freePicks ?? 0)
-const isBlocked = (spell: any) => isOutsideBlocked(spell.id) || isSchoolBlocked(spell)
+const isBlocked = (spell: Spell) => isOutsideBlocked(spell.id) || isSchoolBlocked(spell)
 
 const spellcastingMod = computed(() => {
   const ab = spellcastingInfo.value?.ability
@@ -558,9 +667,8 @@ function toggleSpell(id: number) {
   if (idx >= 0) {
     list.splice(idx, 1)
     state.value.preparedSpells = state.value.preparedSpells.filter(p => p !== id)
-  }
-  else if (list.length < spellsNeeded.value && !isOutsideBlocked(id)) {
-    const spell = (allSpells.value ?? []).find((s: any) => s.id === id)
+  } else if (list.length < spellsNeeded.value && !isOutsideBlocked(id)) {
+    const spell = (allSpells.value ?? []).find(s => s.id === id)
     if (!spell || !isSchoolBlocked(spell)) list.push(id)
   }
 }
@@ -573,21 +681,21 @@ function togglePreparedSpell(id: number) {
 }
 
 function arcanumCandidates(level: number) {
-  return ((allSpells.value ?? []) as any[]).filter(s => s.level === level)
+  return (allSpells.value ?? []).filter(s => s.level === level)
 }
 
 function toggleArcanumSpell(level: number, id: number) {
   if (state.value.arcaneMysteriumSpellIds[level] === id) {
-    delete state.value.arcaneMysteriumSpellIds[level]
-  }
-  else {
+    const { [level]: _cleared, ...others } = state.value.arcaneMysteriumSpellIds
+    state.value.arcaneMysteriumSpellIds = others
+  } else {
     state.value.arcaneMysteriumSpellIds[level] = id
   }
 }
 
 // Livre des secrets anciens : sorts rituels niv 1 toutes classes
 
-const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('/api/spells', {
+const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<Spell[]>('/api/spells', {
   query: extendedQuery,
   immediate: true,
 })
@@ -611,7 +719,7 @@ watchEffect(() => {
 })
 
 const ritualSpellsLvl1 = computed(() =>
-  ((allRitualSpellsData.value ?? []) as any[])
+  (allRitualSpellsData.value ?? [])
     .filter(s => s.level === 1 && s.ritual === true),
 )
 

@@ -42,7 +42,10 @@
       </UButton>
 
       <!-- Recharge partielle : jet de dés (auto ou saisie IRL) -->
-      <UPopover v-else v-model:open="popoverOpen">
+      <UPopover
+        v-else
+        v-model:open="popoverOpen"
+      >
         <UButton
           icon="i-heroicons:arrow-path"
           size="xs"
@@ -155,8 +158,7 @@ function rollRecharge() {
   let total: number
   if (props.roll) {
     total = props.roll(label, modifier, sides, count)
-  }
-  else {
+  } else {
     total = modifier
     for (let i = 0; i < count; i++) total += Math.floor(Math.random() * sides) + 1
   }

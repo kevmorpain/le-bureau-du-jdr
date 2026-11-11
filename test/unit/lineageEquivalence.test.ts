@@ -29,7 +29,7 @@ function effectSet(traits: Trait[]): string[] {
  * homonyme (« Nain des collines » … == l'ancienne espèce) ; le Tieffelin a la base homonyme de
  * l'ancienne espèce mono → celle-ci est renommée « Tieffelin (Asmodée) ».
  */
-const LEGACY_ALIAS: Record<string, string> = { 'Asmodée': 'Tieffelin (Asmodée)' }
+const LEGACY_ALIAS: Record<string, string> = { Asmodée: 'Tieffelin (Asmodée)' }
 
 const SPECIES: LineageSpeciesData[] = [dwarf, halfling, gnome, tiefling]
 

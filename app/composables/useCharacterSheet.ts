@@ -1,7 +1,7 @@
 import { useStorage } from '@vueuse/core'
 import type { FormulaContext } from '~~/shared/utils/formula'
 import type { Effect } from '~~/server/db/schema/effects'
-import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf, type FeatChoices } from '~~/shared/rules/characterEffects'
+import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf } from '~~/shared/rules/characterEffects'
 import { spellDamageBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { criticalExtraDiceOf, deriveClassTraits, endingWhenUnconscious, featureFormulaContext, featureUses, isFeatureUnlocked, lapsingWithoutCombat, resourceFeaturesOf, resourceGroups as deriveResourceGroups, spellcastingBlockedBy } from '~~/shared/rules/classResources'
 import type { OwnerClass } from '~~/shared/rules/classResources'
@@ -119,9 +119,9 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
         active: cf.active ?? false,
         maxUses,
         unlimited,
-        source: (cf as any).source as string | null ?? null,
-        classLevel: (cf as any).classLevel as number | null ?? null,
-        choices: (cf as any).choices as FeatChoices ?? null,
+        source: cf.source ?? null,
+        classLevel: cf.classLevel ?? null,
+        choices: cf.choices ?? null,
         picks: labelPicks.value.filter(p => p.featureId === feature.id).map(p => p.value),
         effects: feature.featureEffects?.map(fe => fe.effect).filter(Boolean) ?? [],
       }
@@ -184,22 +184,17 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
       let kind: 'class' | 'subclass' = 'class'
       if (f.featureType === 'class_feature') {
         label = ccs.find(c => c.classId === f.classId)?.class?.name ?? ''
-      }
-      else if (f.featureType === 'subclass_feature') {
+      } else if (f.featureType === 'subclass_feature') {
         kind = 'subclass'
         label = ccs.find(c => c.subclass?.id === f.subclassId)?.subclass?.name ?? ''
-      }
-      else if (f.featureType === 'eldritch_invocation') {
+      } else if (f.featureType === 'eldritch_invocation') {
         label = 'Manifestation'
-      }
-      else if (f.featureType === 'fighting_style') {
+      } else if (f.featureType === 'fighting_style') {
         label = 'Style de combat'
-      }
-      else if (f.featureType === 'feat') {
+      } else if (f.featureType === 'feat') {
         kind = 'class'
         label = 'Don'
-      }
-      else if (f.featureType === 'boon') {
+      } else if (f.featureType === 'boon') {
         kind = 'class'
         label = 'Faveur'
       }

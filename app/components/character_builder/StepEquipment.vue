@@ -3,18 +3,31 @@
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">🎒</span>
       <div>
-        <h2 class="text-xl font-bold text-(--ui-text)">Équipement</h2>
-        <p class="text-sm text-muted mt-0.5">Choisissez l'équipement de départ de votre classe. L'équipement d'historique s'y ajoute.</p>
+        <h2 class="text-xl font-bold text-(--ui-text)">
+          Équipement
+        </h2>
+        <p class="text-sm text-muted mt-0.5">
+          Choisissez l'équipement de départ de votre classe. L'équipement d'historique s'y ajoute.
+        </p>
       </div>
     </div>
 
-    <div v-if="!classData" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-8 text-center text-sm text-muted">
+    <div
+      v-if="!classData"
+      class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-8 text-center text-sm text-muted"
+    >
       Veuillez d'abord choisir une classe.
     </div>
 
     <template v-else>
-      <div v-for="section in sections" :key="section.source" class="mb-6">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Équipement — {{ section.title }}</p>
+      <div
+        v-for="section in sections"
+        :key="section.source"
+        class="mb-6"
+      >
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+          Équipement — {{ section.title }}
+        </p>
         <div class="flex flex-col gap-3">
           <div
             v-for="(group, g) in section.groups"
@@ -22,7 +35,9 @@
             class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4"
           >
             <template v-if="groupOptions(group).length > 1">
-              <p class="text-xs text-muted mb-2">Choisissez une option</p>
+              <p class="text-xs text-muted mb-2">
+                Choisissez une option
+              </p>
               <div class="flex flex-wrap gap-2 mb-2">
                 <button
                   v-for="(opt, o) in groupOptions(group)"
@@ -39,16 +54,31 @@
               </div>
             </template>
             <template v-else>
-              <p class="text-xs text-muted/60 mb-1.5">Inclus automatiquement</p>
-              <p class="text-sm text-(--ui-text)">{{ optionLabel(groupOptions(group)[0]!) }}</p>
+              <p class="text-xs text-muted/60 mb-1.5">
+                Inclus automatiquement
+              </p>
+              <p class="text-sm text-(--ui-text)">
+                {{ optionLabel(groupOptions(group)[0]!) }}
+              </p>
             </template>
 
-            <template v-for="(ref, r) in chosenRefs(section.source, group, g)" :key="r">
-              <p v-if="'pack' in ref" class="text-xs text-muted/70 mt-2">
+            <template
+              v-for="(ref, r) in chosenRefs(section.source, group, g)"
+              :key="r"
+            >
+              <p
+                v-if="'pack' in ref"
+                class="text-xs text-muted/70 mt-2"
+              >
                 {{ packName(ref.pack) }} : {{ packContents(ref.pack) }}
               </p>
-              <div v-else-if="'pick' in ref" class="mt-2">
-                <p class="text-xs text-muted/70 mb-2">Choisissez : {{ selectorLabel(ref.pick) }}</p>
+              <div
+                v-else-if="'pick' in ref"
+                class="mt-2"
+              >
+                <p class="text-xs text-muted/70 mb-2">
+                  Choisissez : {{ selectorLabel(ref.pick) }}
+                </p>
                 <div class="flex flex-wrap gap-1.5">
                   <button
                     v-for="candidate in candidatesFor(ref.pick, items)"
@@ -73,7 +103,10 @@
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
           Inventaire final
           <span class="text-amber-400 ml-1.5">{{ startingEquipment.lines.length }} objets</span>
-          <span v-if="startingEquipment.po" class="text-amber-400 ml-1.5">· {{ startingEquipment.po }} po</span>
+          <span
+            v-if="startingEquipment.po"
+            class="text-amber-400 ml-1.5"
+          >· {{ startingEquipment.po }} po</span>
         </p>
         <div class="flex flex-wrap gap-1.5">
           <span
@@ -93,7 +126,9 @@
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
           🌑 Arme de Pacte (facultatif)
         </p>
-        <p class="text-xs text-muted mb-3">Désignez une arme de corps-à-corps comme arme de pacte.</p>
+        <p class="text-xs text-muted mb-3">
+          Désignez une arme de corps-à-corps comme arme de pacte.
+        </p>
         <div class="flex flex-col gap-1.5">
           <button
             type="button"
@@ -117,7 +152,12 @@
           >
             {{ item }}
           </button>
-          <p v-if="!meleEquipmentItems.length" class="text-xs text-muted italic px-2">Aucune arme dans l'équipement sélectionné — ajoutez-en une ou choisissez plus tard.</p>
+          <p
+            v-if="!meleEquipmentItems.length"
+            class="text-xs text-muted italic px-2"
+          >
+            Aucune arme dans l'équipement sélectionné — ajoutez-en une ou choisissez plus tard.
+          </p>
         </div>
       </div>
     </template>

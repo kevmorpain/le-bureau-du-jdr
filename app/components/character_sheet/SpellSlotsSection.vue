@@ -25,11 +25,11 @@
             class="size-3.5 rounded-full border-2 transition-all cursor-pointer"
             :class="row.slotType === 'pact_magic'
               ? (i <= row.slot.max - row.slot.current
-                  ? 'bg-violet-500/60 border-violet-500 hover:bg-violet-500/80'
-                  : 'bg-transparent border-violet-400/40 hover:border-violet-400')
+                ? 'bg-violet-500/60 border-violet-500 hover:bg-violet-500/80'
+                : 'bg-transparent border-violet-400/40 hover:border-violet-400')
               : (i <= row.slot.max - row.slot.current
-                  ? 'bg-primary/60 border-primary hover:bg-primary/80'
-                  : 'bg-transparent border-muted hover:border-muted')"
+                ? 'bg-primary/60 border-primary hover:bg-primary/80'
+                : 'bg-transparent border-muted hover:border-muted')"
             :aria-label="`Emplacement ${row.slotType} niveau ${row.level} ${i}`"
             @click="toggleSlot(row.level, row.slotType, i, row.slot)"
           />

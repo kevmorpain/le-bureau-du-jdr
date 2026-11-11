@@ -1,7 +1,9 @@
 <template>
   <div class="space-y-3">
     <div class="flex items-center justify-between">
-      <h3 class="text-sm font-medium">{{ title }}</h3>
+      <h3 class="text-sm font-medium">
+        {{ title }}
+      </h3>
       <UButton
         icon="i-heroicons:plus"
         size="xs"
@@ -41,7 +43,10 @@
         />
       </div>
 
-      <div v-if="effect.type === 'weapon_damage_dice'" class="grid grid-cols-3 gap-2">
+      <div
+        v-if="effect.type === 'weapon_damage_dice'"
+        class="grid grid-cols-3 gap-2"
+      >
         <UFormField label="Nombre de dés">
           <UInput
             v-model.number="(effect.value as ExtraDiceValue).dice.value"
@@ -77,7 +82,10 @@
         </UFormField>
       </div>
 
-      <div v-else-if="effect.type === 'ability_increase'" class="grid grid-cols-3 gap-2">
+      <div
+        v-else-if="effect.type === 'ability_increase'"
+        class="grid grid-cols-3 gap-2"
+      >
         <UFormField label="Caractéristique">
           <USelect
             v-model="(effect.value as AbilityIncreaseValue).ability"
@@ -131,7 +139,10 @@
       </div>
 
       <div v-else-if="effect.type === 'speed_bonus'">
-        <UFormField label="Bonus de vitesse (m)" hint="négatif = malus">
+        <UFormField
+          label="Bonus de vitesse (m)"
+          hint="négatif = malus"
+        >
           <UInput
             :model-value="fixedAmount((effect.value as SpeedBonusValue).amount)"
             type="number"
@@ -191,7 +202,10 @@
         </UFormField>
       </div>
 
-      <div v-else-if="effect.type === 'saving_throw_bonus'" class="grid grid-cols-2 gap-2">
+      <div
+        v-else-if="effect.type === 'saving_throw_bonus'"
+        class="grid grid-cols-2 gap-2"
+      >
         <UFormField label="Jets de sauvegarde">
           <USelect
             v-model="(effect.value as SavingThrowBonusValue).ability"
@@ -199,7 +213,10 @@
             size="sm"
           />
         </UFormField>
-        <UFormField label="Bonus" hint="négatif = malus">
+        <UFormField
+          label="Bonus"
+          hint="négatif = malus"
+        >
           <UInput
             v-model.number="(effect.value as SavingThrowBonusValue).amount"
             type="number"
@@ -213,7 +230,10 @@
       <div
         v-else-if="['armor_class_bonus', 'spell_save_dc_bonus', 'spell_attack_bonus', 'spell_damage_bonus', 'initiative_bonus', 'hp_per_level'].includes(effect.type)"
       >
-        <UFormField label="Bonus" hint="négatif = malus">
+        <UFormField
+          label="Bonus"
+          hint="négatif = malus"
+        >
           <UInput
             v-model.number="(effect.value as { amount: number }).amount"
             type="number"
@@ -235,7 +255,10 @@
             size="sm"
           />
         </UFormField>
-        <UFormField label="Bonus" hint="négatif = malus">
+        <UFormField
+          label="Bonus"
+          hint="négatif = malus"
+        >
           <UInput
             v-model.number="(effect.value as WeaponBonusValue).amount"
             type="number"
@@ -246,7 +269,10 @@
         </UFormField>
       </div>
 
-      <div v-else-if="effect.type === 'advantage'" class="grid grid-cols-2 gap-2">
+      <div
+        v-else-if="effect.type === 'advantage'"
+        class="grid grid-cols-2 gap-2"
+      >
         <UFormField label="Jets concernés">
           <USelect
             v-model="(effect.value as AdvantageValue).rollType"
@@ -274,7 +300,10 @@
         </UFormField>
       </div>
 
-      <div v-else-if="effect.type === 'passive_skill_bonus'" class="grid grid-cols-2 gap-2">
+      <div
+        v-else-if="effect.type === 'passive_skill_bonus'"
+        class="grid grid-cols-2 gap-2"
+      >
         <UFormField label="Compétence">
           <USelect
             v-model="(effect.value as { skill: string }).skill"
@@ -342,7 +371,9 @@ let syncing = false
 watch(localEffects, (val) => {
   syncing = true
   emit('update:modelValue', val.map(e => ({ type: e.type, value: e.value })) as Effect[])
-  nextTick(() => { syncing = false })
+  nextTick(() => {
+    syncing = false
+  })
 }, { deep: true })
 
 watch(() => props.modelValue, (val) => {

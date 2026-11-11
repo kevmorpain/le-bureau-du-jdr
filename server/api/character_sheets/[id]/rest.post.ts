@@ -15,8 +15,7 @@ export default defineEventHandler(async (event) => {
     const summary = await characterRest(db, characterSheetId, input)
     await touchCharacterSheet(event, characterSheetId)
     return summary
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof CharacterValidationError) {
       throw createError({ statusCode: 422, statusMessage: e.message })
     }

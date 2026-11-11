@@ -3,8 +3,12 @@
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">⚔️</span>
       <div>
-        <h2 class="text-xl font-bold text-(--ui-text)">Classe</h2>
-        <p class="text-sm text-muted mt-0.5">La classe définit votre rôle, votre dé de vie, vos aptitudes et votre style de jeu.</p>
+        <h2 class="text-xl font-bold text-(--ui-text)">
+          Classe
+        </h2>
+        <p class="text-sm text-muted mt-0.5">
+          La classe définit votre rôle, votre dé de vie, vos aptitudes et votre style de jeu.
+        </p>
       </div>
     </div>
 
@@ -22,19 +26,38 @@
         <div class="flex items-center gap-2.5 mb-2">
           <span class="text-2xl leading-none">{{ cls.emoji }}</span>
           <div class="flex-1 min-w-0">
-            <div class="font-bold text-(--ui-text) text-sm">{{ cls.name }}</div>
+            <div class="font-bold text-(--ui-text) text-sm">
+              {{ cls.name }}
+            </div>
             <div class="flex gap-1.5 mt-1 flex-wrap">
-              <UBadge :color="cls.id" variant="subtle" size="md">{{ cls.role }}</UBadge>
-              <UBadge :color="cls.id" variant="subtle" size="md">d{{ cls.hitDie }}</UBadge>
+              <UBadge
+                :color="cls.id"
+                variant="subtle"
+                size="md"
+              >
+                {{ cls.role }}
+              </UBadge>
+              <UBadge
+                :color="cls.id"
+                variant="subtle"
+                size="md"
+              >
+                d{{ cls.hitDie }}
+              </UBadge>
             </div>
           </div>
         </div>
-        <div class="text-xs text-muted leading-relaxed mb-2">{{ cls.description }}</div>
+        <div class="text-xs text-muted leading-relaxed mb-2">
+          {{ cls.description }}
+        </div>
         <div class="flex gap-3 text-xs">
           <span class="text-muted">
             JS : <span :style="`color: ${cls.color}`">{{ savingThrowsLabel(cls.dbName) }}</span>
           </span>
-          <span v-if="cls.spellcasting" class="text-violet-400">
+          <span
+            v-if="cls.spellcasting"
+            class="text-violet-400"
+          >
             Sorts {{ ABILITY_SHORT[cls.spellcasting.ability as AbilityKey] }}
           </span>
         </div>
@@ -42,11 +65,12 @@
     </div>
 
     <template v-if="classData">
-
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-2.5 mb-3">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted flex-1">Niveau de départ</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-muted flex-1">
+            Niveau de départ
+          </p>
           <span class="font-mono font-bold text-xl text-amber-400">{{ state.level }}</span>
           <span class="text-xs text-muted">· Maîtrise +{{ profBonus }}</span>
         </div>
@@ -72,8 +96,15 @@
           </button>
         </div>
 
-        <div v-if="milestonesUpToLevel.length" class="flex flex-col gap-1 mb-3">
-          <div v-for="[lv, feat] in milestonesUpToLevel" :key="lv" class="flex gap-2 text-xs">
+        <div
+          v-if="milestonesUpToLevel.length"
+          class="flex flex-col gap-1 mb-3"
+        >
+          <div
+            v-for="[lv, feat] in milestonesUpToLevel"
+            :key="lv"
+            class="flex gap-2 text-xs"
+          >
             <span class="font-mono text-amber-400 w-5 shrink-0">{{ lv }}</span>
             <span class="text-muted">{{ feat }}</span>
           </div>
@@ -90,15 +121,21 @@
 
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Capacités de classe</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+          Capacités de classe
+        </p>
         <ul class="space-y-3">
           <li
             v-for="(feat, i) in classData.features"
             :key="feat.name"
             :class="i < classData.features.length - 1 ? 'pb-3 border-b border-(--ui-border)' : ''"
           >
-            <div class="font-bold text-sm text-(--ui-text) mb-1">{{ feat.name }}</div>
-            <div class="text-xs text-muted leading-relaxed">{{ feat.description }}</div>
+            <div class="font-bold text-sm text-(--ui-text) mb-1">
+              {{ feat.name }}
+            </div>
+            <div class="text-xs text-muted leading-relaxed">
+              {{ feat.description }}
+            </div>
           </li>
         </ul>
       </div>
@@ -199,8 +236,13 @@
               {{ state.expertiseSkills.length }}/{{ expertiseExpected }}
             </span>
           </div>
-          <p class="text-xs text-muted mb-3">Doublez le bonus de maîtrise sur des compétences déjà maîtrisées.</p>
-          <div v-if="eligibleExpertiseSkills.length" class="flex flex-wrap gap-1.5">
+          <p class="text-xs text-muted mb-3">
+            Doublez le bonus de maîtrise sur des compétences déjà maîtrisées.
+          </p>
+          <div
+            v-if="eligibleExpertiseSkills.length"
+            class="flex flex-wrap gap-1.5"
+          >
             <button
               v-for="sk in eligibleExpertiseSkills"
               :key="sk.key"
@@ -217,7 +259,12 @@
               {{ sk.label }}
             </button>
           </div>
-          <p v-else class="text-xs italic text-muted">Choisissez d'abord vos compétences de classe ci-dessus.</p>
+          <p
+            v-else
+            class="text-xs italic text-muted"
+          >
+            Choisissez d'abord vos compétences de classe ci-dessus.
+          </p>
         </div>
       </template>
 
@@ -258,7 +305,9 @@
       <USeparator class="my-6" />
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-3 mb-3">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted flex-1">Points de vie</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-muted flex-1">
+            Points de vie
+          </p>
           <span class="font-black font-mono text-xl text-amber-400">{{ hpMax ?? '—' }}</span>
           <span class="text-xs text-muted">PV max</span>
         </div>
@@ -278,12 +327,18 @@
           </button>
         </div>
 
-        <p v-if="state.hpMode === 'average'" class="text-xs text-muted">
+        <p
+          v-if="state.hpMode === 'average'"
+          class="text-xs text-muted"
+        >
           Niveau 1 : {{ classData.hitDie }} (maximum). Niveaux suivants : {{ Math.ceil(classData.hitDie / 2) + 1 }} par niveau.
         </p>
 
         <template v-if="state.hpMode === 'roll'">
-          <div v-if="state.level === 1" class="text-xs text-muted">
+          <div
+            v-if="state.level === 1"
+            class="text-xs text-muted"
+          >
             Niveau 1 : toujours le maximum ({{ classData.hitDie }}).
           </div>
           <template v-else>
@@ -319,7 +374,10 @@
           </template>
         </template>
 
-        <div v-if="state.hpMode === 'manual'" class="flex items-center gap-3">
+        <div
+          v-if="state.hpMode === 'manual'"
+          class="flex items-center gap-3"
+        >
           <input
             type="number"
             :min="1"
@@ -330,13 +388,12 @@
           <span class="text-xs text-muted">Saisissez votre total de PV max</span>
         </div>
       </div>
-
     </template>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { type AbilityKey } from '~/data/character-builder'
+import type { AbilityKey } from '~/data/character-builder'
 import { isGatedSource } from '~~/shared/rules/source'
 import { averageBaseHitPoints } from '~~/shared/rules/hitPoints'
 import type { PactBoon } from '~~/shared/rules/pactBoon'
@@ -468,8 +525,7 @@ function toggleSkill(key: string) {
   const idx = list.indexOf(key)
   if (idx >= 0) {
     list.splice(idx, 1)
-  }
-  else if (list.length < classSkillCount.value) {
+  } else if (list.length < classSkillCount.value) {
     list.push(key)
   }
 }

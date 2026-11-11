@@ -33,7 +33,10 @@
               v-if="isSearching"
               class="text-center py-8 text-muted"
             >
-              <UIcon name="i-heroicons:arrow-path" class="size-5 animate-spin" />
+              <UIcon
+                name="i-heroicons:arrow-path"
+                class="size-5 animate-spin"
+              />
             </div>
 
             <div
@@ -43,7 +46,10 @@
               Aucun objet trouvé
             </div>
 
-            <div v-else class="space-y-1 max-h-56 overflow-y-auto">
+            <div
+              v-else
+              class="space-y-1 max-h-56 overflow-y-auto"
+            >
               <button
                 v-for="item in filteredItems"
                 :key="item.id"
@@ -74,7 +80,10 @@
               </button>
             </div>
 
-            <div v-if="selectedEntries.length > 0" class="space-y-2">
+            <div
+              v-if="selectedEntries.length > 0"
+              class="space-y-2"
+            >
               <p class="text-sm font-medium text-muted">
                 {{ selectedEntries.length }} objet{{ selectedEntries.length > 1 ? 's' : '' }} sélectionné{{ selectedEntries.length > 1 ? 's' : '' }}
               </p>
@@ -114,7 +123,10 @@
                     class="text-muted hover:text-default flex-shrink-0"
                     @click.stop="deselectItem(entry.item.id)"
                   >
-                    <UIcon name="i-heroicons:x-mark" class="size-4" />
+                    <UIcon
+                      name="i-heroicons:x-mark"
+                      class="size-4"
+                    />
                   </button>
                 </div>
               </div>
@@ -125,7 +137,10 @@
         <template v-if="isEdit || activeTab === 'create'">
           <div class="space-y-3">
             <div class="grid grid-cols-2 gap-3">
-              <UFormField label="Nom" class="col-span-2">
+              <UFormField
+                label="Nom"
+                class="col-span-2"
+              >
                 <UInput
                   v-model="createForm.name"
                   placeholder="Nom de l'objet"
@@ -181,28 +196,52 @@
             <template v-if="createForm.itemType === 'weapon'">
               <div class="grid grid-cols-2 gap-3">
                 <UFormField label="Dés de dégâts">
-                  <UInput v-model="createForm.weaponProps.damage_dice" placeholder="1d6" size="sm" />
+                  <UInput
+                    v-model="createForm.weaponProps.damage_dice"
+                    placeholder="1d6"
+                    size="sm"
+                  />
                 </UFormField>
                 <UFormField label="Type de dégâts">
-                  <USelect v-model="createForm.weaponProps.damage_type" :items="damageTypeOptions" size="sm" />
+                  <USelect
+                    v-model="createForm.weaponProps.damage_type"
+                    :items="damageTypeOptions"
+                    size="sm"
+                  />
                 </UFormField>
               </div>
               <UFormField label="Catégorie d'arme">
-                <USelect v-model="createForm.weaponProps.weapon_category" :items="weaponCategoryOptions" size="sm" />
+                <USelect
+                  v-model="createForm.weaponProps.weapon_category"
+                  :items="weaponCategoryOptions"
+                  size="sm"
+                />
               </UFormField>
             </template>
 
             <template v-if="createForm.itemType === 'armor'">
               <div class="grid grid-cols-2 gap-3">
                 <UFormField label="Type d'armure">
-                  <USelect v-model="createForm.armorProps.armor_type" :items="armorTypeOptions" size="sm" />
+                  <USelect
+                    v-model="createForm.armorProps.armor_type"
+                    :items="armorTypeOptions"
+                    size="sm"
+                  />
                 </UFormField>
                 <UFormField label="CA de base">
-                  <UInput v-model.number="createForm.armorProps.base_ac" type="number" :min="1" size="sm" />
+                  <UInput
+                    v-model.number="createForm.armorProps.base_ac"
+                    type="number"
+                    :min="1"
+                    size="sm"
+                  />
                 </UFormField>
               </div>
               <UFormField label="Désavantage Discrétion">
-                <UCheckbox v-model="createForm.armorProps.stealth_disadvantage" label="Oui" />
+                <UCheckbox
+                  v-model="createForm.armorProps.stealth_disadvantage"
+                  label="Oui"
+                />
               </UFormField>
             </template>
 
@@ -246,9 +285,14 @@
             </template>
 
             <div class="rounded-lg ring ring-default p-3 space-y-3">
-              <p class="text-sm font-medium">Charges</p>
+              <p class="text-sm font-medium">
+                Charges
+              </p>
               <div class="grid grid-cols-2 gap-3">
-                <UFormField label="Charges max" help="Vide = objet sans charge">
+                <UFormField
+                  label="Charges max"
+                  help="Vide = objet sans charge"
+                >
                   <UInput
                     v-model.number="createForm.maxUses"
                     type="number"
@@ -258,7 +302,10 @@
                     size="sm"
                   />
                 </UFormField>
-                <UFormField v-if="createForm.maxUses" label="Recharge">
+                <UFormField
+                  v-if="createForm.maxUses"
+                  label="Recharge"
+                >
                   <USelect
                     v-model="createForm.rechargeType"
                     :items="rechargeTypeOptions"
@@ -277,7 +324,10 @@
                     size="sm"
                   />
                 </UFormField>
-                <UFormField v-if="createForm.rechargeMode === 'dice'" label="Dés de recharge">
+                <UFormField
+                  v-if="createForm.rechargeMode === 'dice'"
+                  label="Dés de recharge"
+                >
                   <UInput
                     v-model="createForm.rechargeDice"
                     placeholder="ex: 1d6+4"
@@ -323,6 +373,7 @@
 <script lang="ts" setup>
 import { weaponCategoryLabels, armorTypeLabels, toolTypeLabels } from '~~/shared/utils/item'
 import type { Effect } from '~~/server/db/schema/effects'
+import type { ArmorProperties, EquipmentProperties, ToolProperties, WeaponProperties } from '~~/server/db/schema/items'
 import type { InventoryItem } from '~/composables/character/useCharacterInventory'
 
 interface ItemResult {
@@ -683,7 +734,7 @@ const resetForm = () => {
 }
 
 const prefillFromItem = (item: InventoryItem) => {
-  const p = item.properties as Record<string, any>
+  const p: Partial<WeaponProperties & ArmorProperties & EquipmentProperties & ToolProperties> = item.properties
   const knownCategory = item.itemType === 'equipment'
     && equipmentCategoryOptions.some(o => o.value === p.category)
 

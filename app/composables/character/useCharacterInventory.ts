@@ -75,7 +75,7 @@ export interface WeaponStats {
   attackBonus: number
   damageDice: string
   damageBonus: number
-  damageBonusOffhand: number  // dégâts main secondaire (pas de mod sauf si négatif)
+  damageBonusOffhand: number // dégâts main secondaire (pas de mod sauf si négatif)
   damageType: string
   properties: string[]
   versatileDamage?: string
@@ -152,7 +152,7 @@ export const useCharacterInventory = (
   )
 
   const equippedBodyArmor = computed(() =>
-    inventory.value.find(e => {
+    inventory.value.find((e) => {
       if (!e.equipped || e.item?.itemType !== 'armor') return false
       const props = e.item.properties as ArmorProperties
       return props.armor_type !== 'shield'
@@ -160,7 +160,7 @@ export const useCharacterInventory = (
   )
 
   const equippedShield = computed(() =>
-    inventory.value.find(e => {
+    inventory.value.find((e) => {
       if (!e.equipped || e.item?.itemType !== 'armor') return false
       const props = e.item.properties as ArmorProperties
       return props.armor_type === 'shield'

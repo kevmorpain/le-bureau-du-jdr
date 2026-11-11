@@ -1,7 +1,7 @@
 name: Tests
 
-# Joue la suite Vitest (projets `unit` + `nuxt`) et le typecheck sur les push vers main et sur
-# chaque pull request. Indépendant du déploiement Cloudflare Workers Builds
+# Joue la suite Vitest (projets `unit` + `nuxt`), le typecheck et ESLint sur les push vers main et
+# sur chaque pull request. Indépendant du déploiement Cloudflare Workers Builds
 # (configuré côté Cloudflare, qui build/déploie/migre sur push de la branche par défaut).
 
 on:
@@ -60,3 +60,21 @@ jobs:
       # Les SFC (.vue) n'y passent pas : vue-tsc ne démarre pas avec TypeScript 6.
       - name: Typecheck
         run: npm run typecheck
+
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint .

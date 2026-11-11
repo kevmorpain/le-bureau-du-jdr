@@ -123,9 +123,18 @@
         :delay-duration="0"
         text="Toujours préparé : ne compte pas dans votre limite de sorts préparés"
       >
-        <UBadge color="primary" variant="subtle" size="md">Toujours préparé</UBadge>
+        <UBadge
+          color="primary"
+          variant="subtle"
+          size="md"
+        >
+          Toujours préparé
+        </UBadge>
       </UTooltip>
-      <div v-else @click.stop>
+      <div
+        v-else
+        @click.stop
+      >
         <UCheckbox
           v-model="prepared"
           label="Préparé"

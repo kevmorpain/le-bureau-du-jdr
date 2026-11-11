@@ -6,7 +6,9 @@
 
     <div class="space-y-2">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium">Armes</h3>
+        <h3 class="text-sm font-medium">
+          Armes
+        </h3>
         <UPopover v-model:open="addWeaponOpen">
           <UButton
             icon="i-heroicons:plus"
@@ -57,7 +59,10 @@
             :aria-label="`Retirer ${weaponProficiencyLabel(prof)}`"
             @click="removeProficiency('weapon', prof)"
           >
-            <UIcon name="i-heroicons:x-mark" class="size-3" />
+            <UIcon
+              name="i-heroicons:x-mark"
+              class="size-3"
+            />
           </button>
         </UBadge>
       </div>
@@ -65,7 +70,9 @@
 
     <div class="space-y-2">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium">Armures</h3>
+        <h3 class="text-sm font-medium">
+          Armures
+        </h3>
         <UPopover v-model:open="addArmorOpen">
           <UButton
             icon="i-heroicons:plus"
@@ -116,7 +123,10 @@
             :aria-label="`Retirer ${armorProficiencyLabels[prof] ?? prof}`"
             @click="removeProficiency('armor', prof)"
           >
-            <UIcon name="i-heroicons:x-mark" class="size-3" />
+            <UIcon
+              name="i-heroicons:x-mark"
+              class="size-3"
+            />
           </button>
         </UBadge>
       </div>
@@ -124,7 +134,9 @@
 
     <div class="space-y-2">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium">Langues</h3>
+        <h3 class="text-sm font-medium">
+          Langues
+        </h3>
         <UPopover v-model:open="addLanguageOpen">
           <UButton
             icon="i-heroicons:plus"
@@ -175,7 +187,10 @@
             :aria-label="`Retirer ${languageLabel(lang)}`"
             @click="removeProficiency('language', lang)"
           >
-            <UIcon name="i-heroicons:x-mark" class="size-3" />
+            <UIcon
+              name="i-heroicons:x-mark"
+              class="size-3"
+            />
           </button>
         </UBadge>
       </div>
@@ -183,7 +198,9 @@
 
     <div class="space-y-2">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium">Outils</h3>
+        <h3 class="text-sm font-medium">
+          Outils
+        </h3>
         <UPopover v-model:open="addToolOpen">
           <UButton
             icon="i-heroicons:plus"
@@ -234,7 +251,10 @@
             :aria-label="`Retirer ${tool}`"
             @click="removeProficiency('tool', tool)"
           >
-            <UIcon name="i-heroicons:x-mark" class="size-3" />
+            <UIcon
+              name="i-heroicons:x-mark"
+              class="size-3"
+            />
           </button>
         </UBadge>
       </div>
@@ -295,7 +315,7 @@ const weaponAddOptions = [
   { label: 'Hachette', value: 'Hachette' },
   { label: 'Javeline', value: 'Javeline' },
   { label: 'Marteau léger', value: 'Marteau léger' },
-  { label: "Masse d'armes", value: "Masse d'armes" },
+  { label: 'Masse d\'armes', value: 'Masse d\'armes' },
   { label: 'Bâton', value: 'Bâton' },
   { label: 'Serpe', value: 'Serpe' },
   { label: 'Lance', value: 'Lance' },
@@ -307,13 +327,13 @@ const weaponAddOptions = [
   { label: 'Arc court', value: 'Arc court' },
   { type: 'separator' as const },
   { type: 'label' as const, label: 'Armes de guerre de mêlée' },
-  { label: "Hache d'armes", value: "Hache d'armes" },
-  { label: "Fléau d'armes", value: "Fléau d'armes" },
+  { label: 'Hache d\'armes', value: 'Hache d\'armes' },
+  { label: 'Fléau d\'armes', value: 'Fléau d\'armes' },
   { label: 'Coutille', value: 'Coutille' },
   { label: 'Hache à deux mains', value: 'Hache à deux mains' },
   { label: 'Épée à deux mains', value: 'Épée à deux mains' },
   { label: 'Hallebarde', value: 'Hallebarde' },
-  { label: "Lance d'arçon", value: "Lance d'arçon" },
+  { label: 'Lance d\'arçon', value: 'Lance d\'arçon' },
   { label: 'Maillet', value: 'Maillet' },
   { label: 'Pique', value: 'Pique' },
   { label: 'Épée longue', value: 'Épée longue' },

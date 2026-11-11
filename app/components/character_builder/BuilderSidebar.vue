@@ -13,8 +13,15 @@
     >
       <div class="flex items-center gap-2">
         <span class="shrink-0 text-base leading-none">
-          <span v-if="isStepComplete(step.id) && step.id !== currentStepId" class="text-green-400">✓</span>
-          <UIcon v-else :name="step.icon" class="size-4" />
+          <span
+            v-if="isStepComplete(step.id) && step.id !== currentStepId"
+            class="text-green-400"
+          >✓</span>
+          <UIcon
+            v-else
+            :name="step.icon"
+            class="size-4"
+          />
         </span>
         <span class="text-sm font-medium truncate">{{ step.label }}</span>
         <span
@@ -40,8 +47,15 @@
       :class="stepPillClass(step.id)"
       @click="goTo(step.id)"
     >
-      <span v-if="isStepComplete(step.id) && step.id !== currentStepId" class="text-green-400 leading-none">✓</span>
-      <UIcon v-else :name="step.icon" class="size-3.5" />
+      <span
+        v-if="isStepComplete(step.id) && step.id !== currentStepId"
+        class="text-green-400 leading-none"
+      >✓</span>
+      <UIcon
+        v-else
+        :name="step.icon"
+        class="size-3.5"
+      />
       {{ step.label }}
     </button>
   </nav>

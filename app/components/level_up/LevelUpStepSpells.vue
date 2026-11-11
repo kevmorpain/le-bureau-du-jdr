@@ -8,41 +8,74 @@
       subtitle="Nouveaux sorts et emplacements"
     />
 
-    <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Magie</h2>
+    <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">
+      Magie
+    </h2>
 
-    <div v-if="spellCastStats.length" class="flex flex-wrap gap-2 mb-4">
+    <div
+      v-if="spellCastStats.length"
+      class="flex flex-wrap gap-2 mb-4"
+    >
       <div
         v-for="stat in spellCastStats"
         :key="stat.label"
         class="px-3 py-1.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-center"
       >
-        <div class="font-mono font-bold text-sm text-amber-400">{{ stat.value }}</div>
-        <div class="text-muted uppercase tracking-wider mt-0.5" style="font-size:12px">{{ stat.label }}</div>
+        <div class="font-mono font-bold text-sm text-amber-400">
+          {{ stat.value }}
+        </div>
+        <div
+          class="text-muted uppercase tracking-wider mt-0.5"
+          style="font-size:12px"
+        >
+          {{ stat.label }}
+        </div>
       </div>
     </div>
 
     <div class="mb-5">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Emplacements de sorts</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Emplacements de sorts
+      </p>
       <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-2 mb-2.5">
           <span class="text-xs text-muted w-10 shrink-0">Avant</span>
           <div class="flex gap-3 flex-1 flex-wrap">
-            <template v-for="(count, i) in oldSlots" :key="i">
-              <div v-if="count > 0" class="flex items-center gap-1">
+            <template
+              v-for="(count, i) in oldSlots"
+              :key="i"
+            >
+              <div
+                v-if="count > 0"
+                class="flex items-center gap-1"
+              >
                 <span class="text-xs font-mono text-muted w-3 text-right">{{ i + 1 }}</span>
                 <div class="flex gap-0.5">
-                  <span v-for="n in count" :key="n" class="size-3 rounded-full border border-muted/40" />
+                  <span
+                    v-for="n in count"
+                    :key="n"
+                    class="size-3 rounded-full border border-muted/40"
+                  />
                 </div>
               </div>
             </template>
-            <span v-if="oldSlots.every(n => n === 0)" class="text-xs text-muted italic">Aucun emplacement</span>
+            <span
+              v-if="oldSlots.every(n => n === 0)"
+              class="text-xs text-muted italic"
+            >Aucun emplacement</span>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-xs text-amber-400 w-10 shrink-0 font-semibold">Après</span>
           <div class="flex gap-3 flex-1 flex-wrap">
-            <template v-for="(count, i) in newSlots" :key="i">
-              <div v-if="count > 0" class="flex items-center gap-1">
+            <template
+              v-for="(count, i) in newSlots"
+              :key="i"
+            >
+              <div
+                v-if="count > 0"
+                class="flex items-center gap-1"
+              >
                 <span
                   class="text-xs font-mono w-3 text-right font-bold"
                   :class="(oldSlots[i] ?? 0) < count ? 'text-amber-400' : 'text-(--ui-text)'"
@@ -57,12 +90,18 @@
                       : 'border-amber-500/60'"
                   />
                 </div>
-                <span v-if="(oldSlots[i] ?? 0) < count" class="text-xs text-amber-400 font-semibold">
+                <span
+                  v-if="(oldSlots[i] ?? 0) < count"
+                  class="text-xs text-amber-400 font-semibold"
+                >
                   +{{ count - (oldSlots[i] ?? 0) }}
                 </span>
               </div>
             </template>
-            <span v-if="newSlots.every(n => n === 0)" class="text-xs text-muted italic">Aucun emplacement</span>
+            <span
+              v-if="newSlots.every(n => n === 0)"
+              class="text-xs text-muted italic"
+            >Aucun emplacement</span>
           </div>
         </div>
       </div>
@@ -83,7 +122,10 @@
       </template>
     </div>
 
-    <div v-if="needsArcaneMysterium" class="mb-6">
+    <div
+      v-if="needsArcaneMysterium"
+      class="mb-6"
+    >
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">
           ✨ Arcane Mystérieux (niv.&nbsp;{{ arcaneMysteriumSpellLevel }})
@@ -97,11 +139,22 @@
         Choisissez un sort de niveau {{ arcaneMysteriumSpellLevel }} dans la liste de sorts d'occultiste.
         Vous pourrez le lancer une fois par repos long sans dépenser d'emplacement.
       </p>
-      <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
-      <div v-else-if="!arcanumSpellsCandidates.length" class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400">
+      <div
+        v-if="pending"
+        class="text-sm text-muted py-4 text-center"
+      >
+        Chargement…
+      </div>
+      <div
+        v-else-if="!arcanumSpellsCandidates.length"
+        class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400"
+      >
         Aucun sort de niveau {{ arcaneMysteriumSpellLevel }} dans la liste d'occultiste — relancez les seeds.
       </div>
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+      <div
+        v-else
+        class="grid grid-cols-1 sm:grid-cols-2 gap-1.5"
+      >
         <SpellCardBuilder
           v-for="spell in arcanumSpellsCandidates"
           :key="spell.id"
@@ -114,7 +167,10 @@
       </div>
     </div>
 
-    <div v-if="showBookOfAncientSecrets" class="mb-6">
+    <div
+      v-if="showBookOfAncientSecrets"
+      class="mb-6"
+    >
       <div class="flex items-center justify-between mb-2">
         <p class="text-xs font-bold uppercase tracking-widest text-muted">
           📜 Livre des anciens secrets — sorts rituels
@@ -128,11 +184,22 @@
         Choisissez 2 sorts <strong>rituels</strong> de niveau 1 dans la liste de n'importe quelle classe.
         Ils seront inscrits dans votre Livre des Ombres et lançables uniquement en tant que rituel.
       </p>
-      <div v-if="ritualsPending" class="text-sm text-muted py-4 text-center">Chargement…</div>
-      <div v-else-if="!ritualSpellsLvl1.length" class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400">
+      <div
+        v-if="ritualsPending"
+        class="text-sm text-muted py-4 text-center"
+      >
+        Chargement…
+      </div>
+      <div
+        v-else-if="!ritualSpellsLvl1.length"
+        class="px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/8 text-xs text-rose-400"
+      >
         Aucun sort rituel de niveau 1 dans la base — relancez les seeds.
       </div>
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+      <div
+        v-else
+        class="grid grid-cols-1 sm:grid-cols-2 gap-1.5"
+      >
         <SpellCardBuilder
           v-for="spell in ritualSpellsLvl1"
           :key="spell.id"
@@ -150,8 +217,16 @@
       class="mb-6"
     >
       <div class="flex items-center justify-between mb-2">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte de la Chaîne</p>
-        <UBadge color="violet" variant="subtle" size="md">Auto-ajouté</UBadge>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">
+          Sorts du Pacte de la Chaîne
+        </p>
+        <UBadge
+          color="violet"
+          variant="subtle"
+          size="md"
+        >
+          Auto-ajouté
+        </UBadge>
       </div>
       <div v-if="familiarSpell">
         <SpellCardBuilder
@@ -162,7 +237,10 @@
           @click="() => {}"
         />
       </div>
-      <div v-else class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic">
+      <div
+        v-else
+        class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-xs text-muted italic"
+      >
         Sort "Appel de familier" introuvable — relancez les seeds.
       </div>
     </div>
@@ -172,15 +250,27 @@
       class="mb-6"
     >
       <div class="flex items-center justify-between mb-2">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts du Pacte du Tome</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">
+          Sorts du Pacte du Tome
+        </p>
         <span
           class="text-xs font-semibold"
           :class="state.pactBoonCantripIds.length >= 3 ? 'text-green-400' : 'text-amber-400'"
         >{{ state.pactBoonCantripIds.length }}/3</span>
       </div>
-      <p class="text-xs text-muted mb-3">Choisissez 3 sorts mineurs de n'importe quelle classe.</p>
-      <div v-if="pactCantripsPending" class="text-sm text-muted py-4 text-center">Chargement…</div>
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+      <p class="text-xs text-muted mb-3">
+        Choisissez 3 sorts mineurs de n'importe quelle classe.
+      </p>
+      <div
+        v-if="pactCantripsPending"
+        class="text-sm text-muted py-4 text-center"
+      >
+        Chargement…
+      </div>
+      <div
+        v-else
+        class="grid grid-cols-1 sm:grid-cols-2 gap-1.5"
+      >
         <UTooltip
           v-for="spell in filteredPactCantrips"
           :key="spell.id"
@@ -197,12 +287,22 @@
           </div>
         </UTooltip>
       </div>
-      <p v-if="!pactCantripsPending && filteredPactCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
+      <p
+        v-if="!pactCantripsPending && filteredPactCantrips.length === 0"
+        class="text-sm text-muted italic py-3"
+      >
+        Aucun sort mineur correspondant.
+      </p>
     </div>
 
-    <div v-if="replaceableSpells.length" class="mb-5">
+    <div
+      v-if="replaceableSpells.length"
+      class="mb-5"
+    >
       <div class="flex items-center justify-between mb-2">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted">Remplacer un sort connu (facultatif)</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">
+          Remplacer un sort connu (facultatif)
+        </p>
         <button
           v-if="state.replacedSpellId != null"
           type="button"
@@ -231,7 +331,10 @@
       </div>
     </div>
 
-    <div v-if="cantripsToLearn > 0 || showSpellPicker" class="flex flex-wrap items-center gap-2 mb-4">
+    <div
+      v-if="cantripsToLearn > 0 || showSpellPicker"
+      class="flex flex-wrap items-center gap-2 mb-4"
+    >
       <input
         v-model="filterText"
         type="text"
@@ -261,19 +364,35 @@
       </button>
     </div>
 
-    <div v-if="cantripsToLearn > 0" class="mb-6">
+    <div
+      v-if="cantripsToLearn > 0"
+      class="mb-6"
+    >
       <div class="flex items-center justify-between mb-2">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted">Sorts mineurs</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">
+          Sorts mineurs
+        </p>
         <span
           class="text-xs font-semibold"
           :class="state.newCantripIds.length >= requiredCantripPicks ? 'text-green-400' : 'text-amber-400'"
         >{{ state.newCantripIds.length }}/{{ cantripsToLearn }}</span>
       </div>
-      <p v-if="!pending && requiredCantripPicks < cantripsToLearn" class="text-xs text-muted mb-2">
+      <p
+        v-if="!pending && requiredCantripPicks < cantripsToLearn"
+        class="text-xs text-muted mb-2"
+      >
         Seulement {{ requiredCantripPicks }} sort(s) mineur(s) encore disponible(s) dans le catalogue.
       </p>
-      <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+      <div
+        v-if="pending"
+        class="text-sm text-muted py-4 text-center"
+      >
+        Chargement…
+      </div>
+      <div
+        v-else
+        class="grid grid-cols-1 sm:grid-cols-2 gap-1.5"
+      >
         <UTooltip
           v-for="spell in filteredCantrips"
           :key="spell.id"
@@ -290,30 +409,54 @@
           </div>
         </UTooltip>
       </div>
-      <p v-if="!pending && filteredCantrips.length === 0" class="text-sm text-muted italic py-3">Aucun sort mineur correspondant.</p>
+      <p
+        v-if="!pending && filteredCantrips.length === 0"
+        class="text-sm text-muted italic py-3"
+      >
+        Aucun sort mineur correspondant.
+      </p>
     </div>
 
-    <div v-if="showSpellPicker" class="mb-5">
+    <div
+      v-if="showSpellPicker"
+      class="mb-5"
+    >
       <div class="flex items-center justify-between mb-2">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted">{{ spellsTabLabel }}</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted">
+          {{ spellsTabLabel }}
+        </p>
         <span
           class="text-xs font-semibold"
           :class="state.newSpellIds.length >= requiredSpellPicks ? 'text-green-400' : 'text-amber-400'"
         >{{ state.newSpellIds.length }}/{{ spellPicksDue }}</span>
       </div>
-      <p v-if="schoolRestriction" class="text-xs text-muted mb-2">
+      <p
+        v-if="schoolRestriction"
+        class="text-xs text-muted mb-2"
+      >
         Liste du Magicien, écoles {{ schoolRestriction.schools.map(school => $t(`schools.${school}`, school)).join(' et ') }}.
         <template v-if="schoolRestriction.freePicks > 0">
           {{ schoolRestriction.freePicks }} {{ $t('sort', schoolRestriction.freePicks) }} peu{{ schoolRestriction.freePicks > 1 ? 'vent' : 't' }} venir d'une autre école ({{ outsideSchoolPicks }}/{{ schoolRestriction.freePicks }}).
         </template>
       </p>
-      <p v-if="freeListPicks > 0" class="text-xs text-muted mb-2">
+      <p
+        v-if="freeListPicks > 0"
+        class="text-xs text-muted mb-2"
+      >
         Secrets magiques : jusqu'à {{ freeListPicks }} de ces sorts peuvent venir de la liste de n'importe quelle classe.
       </p>
-      <p v-if="!pending && requiredSpellPicks < spellPicksDue" class="text-xs text-muted mb-2">
+      <p
+        v-if="!pending && requiredSpellPicks < spellPicksDue"
+        class="text-xs text-muted mb-2"
+      >
         Seulement {{ requiredSpellPicks }} sort(s) encore disponible(s) dans le catalogue.
       </p>
-      <div v-if="pending" class="text-sm text-muted py-4 text-center">Chargement…</div>
+      <div
+        v-if="pending"
+        class="text-sm text-muted py-4 text-center"
+      >
+        Chargement…
+      </div>
       <template v-else>
         <div
           v-for="[lvl, list] in Object.entries(filteredSpellsByLevel)"
@@ -348,7 +491,12 @@
             </UTooltip>
           </div>
         </div>
-        <p v-if="Object.keys(filteredSpellsByLevel).length === 0" class="text-sm text-muted italic py-3">Aucun sort correspondant.</p>
+        <p
+          v-if="Object.keys(filteredSpellsByLevel).length === 0"
+          class="text-sm text-muted italic py-3"
+        >
+          Aucun sort correspondant.
+        </p>
       </template>
     </div>
 
@@ -357,8 +505,12 @@
       class="px-4 py-4 rounded-xl border text-sm text-muted"
       style="border-color: rgba(96,165,250,0.2); background: rgba(96,165,250,0.06)"
     >
-      <p class="text-(--ui-text) font-semibold mb-1">Emplacements mis à jour</p>
-      <p class="text-xs leading-relaxed">Vos emplacements de sorts seront automatiquement mis à jour après validation.</p>
+      <p class="text-(--ui-text) font-semibold mb-1">
+        Emplacements mis à jour
+      </p>
+      <p class="text-xs leading-relaxed">
+        Vos emplacements de sorts seront automatiquement mis à jour après validation.
+      </p>
     </div>
   </div>
 </template>
@@ -398,7 +550,7 @@ const {
   isSchoolBlocked,
   levelUpSpellcasting,
   pickedPactBoon,
-} = useLevelUp(inject('charSheet') as any)
+} = useLevelUp(injectLevelUpSheet())
 
 const { t } = useI18n()
 
@@ -475,50 +627,49 @@ const spellsTabLabel = computed(() => {
 
 const { extendedQuery } = useExtendedContent()
 
-const { data: allCantripsData, pending: pactCantripsPending } = useFetch('/api/spells', {
+const { data: allCantripsData, pending: pactCantripsPending } = useFetch<Spell[]>('/api/spells', {
   query: extendedQuery,
   immediate: true,
 })
 
 const pactCantrips = computed(() =>
-  ((allCantripsData.value ?? []) as any[]).filter((s: any) => s.level === 0),
+  (allCantripsData.value ?? []).filter(s => s.level === 0),
 )
 
 const filteredPactCantrips = computed(() =>
   filterText.value
-    ? pactCantrips.value.filter((s: any) => s.name.toLowerCase().includes(filterText.value.toLowerCase()))
+    ? pactCantrips.value.filter(s => s.name.toLowerCase().includes(filterText.value.toLowerCase()))
     : pactCantrips.value,
 )
 
-const { data: magicianSpells } = useFetch('/api/spells', {
+const { data: magicianSpells } = useFetch<Spell[]>('/api/spells', {
   query: computed(() => ({ className: 'Magicien', ...extendedQuery.value })),
   immediate: true,
 })
 
 const familiarSpell = computed(() =>
-  ((magicianSpells.value ?? []) as any[]).find((s: any) => s.name === 'Appel de familier') ?? null,
+  (magicianSpells.value ?? []).find(s => s.name === 'Appel de familier') ?? null,
 )
 
 // Arcane Mystérieux : sorts du niveau correspondant pour Occultiste
 
 const arcanumSpellsCandidates = computed(() => {
   const lvl = arcaneMysteriumSpellLevel.value
-  if (!lvl) return [] as any[]
+  if (!lvl) return [] as Spell[]
   return allSpells.value.filter(s => s.level === lvl)
 })
 
 function toggleArcanumSpell(id: number) {
   if (state.value.arcaneMysteriumSpellId === id) {
     state.value.arcaneMysteriumSpellId = null
-  }
-  else {
+  } else {
     state.value.arcaneMysteriumSpellId = id
   }
 }
 
 // Livre des anciens secrets : sorts rituels de niveau 1 toutes classes
 
-const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<any[]>('/api/spells', {
+const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<Spell[]>('/api/spells', {
   query: extendedQuery,
   immediate: true,
 })
@@ -542,7 +693,7 @@ watchEffect(() => {
 })
 
 const ritualSpellsLvl1 = computed(() =>
-  ((allRitualSpellsData.value ?? []) as any[])
+  (allRitualSpellsData.value ?? [])
     .filter(s => s.level === 1 && s.ritual === true),
 )
 
@@ -556,12 +707,12 @@ function toggleRitualSpell(id: number) {
 watch(allSpells, (spells) => {
   if (!spells) return
   const map: Record<number, string> = { ...spellNamesById.value }
-  for (const s of spells as any[]) map[s.id] = s.name
+  for (const s of spells) map[s.id] = s.name
   spellNamesById.value = map
 }, { immediate: true })
 
 const spellsByLevel = computed(() => {
-  const result: Record<number, any[]> = {}
+  const result: Record<number, Spell[]> = {}
   for (const spell of learnableSpells.value) {
     if (!result[spell.level]) result[spell.level] = []
     result[spell.level]!.push(spell)
@@ -581,8 +732,8 @@ const schoolOptions = computed(() => {
   return options
 })
 
-function applyFilters(list: any[]) {
-  return list.filter(s => {
+function applyFilters(list: Spell[]) {
+  return list.filter((s) => {
     if (filterText.value && !s.name.toLowerCase().includes(filterText.value.toLowerCase())) return false
     if (filterSchool.value != null && s.school?.name !== filterSchool.value) return false
     if (filterConc.value && !s.concentration) return false
@@ -594,9 +745,9 @@ function applyFilters(list: any[]) {
 const filteredCantrips = computed(() => applyFilters(learnableCantrips.value))
 
 const filteredSpellsByLevel = computed(() => {
-  const result: Record<number, any[]> = {}
+  const result: Record<number, Spell[]> = {}
   for (const [lvl, list] of Object.entries(spellsByLevel.value)) {
-    const filtered = applyFilters(list as any[])
+    const filtered = applyFilters(list)
     if (filtered.length) result[Number(lvl)] = filtered
   }
   return result

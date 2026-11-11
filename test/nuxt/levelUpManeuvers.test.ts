@@ -4,7 +4,7 @@ import { getQuery } from 'h3'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import LevelUpStepFeatures from '../../app/components/level_up/LevelUpStepFeatures.vue'
-import { useLevelUp, type CharacterSheetWithASI } from '../../app/composables/useLevelUp'
+import { useLevelUp, type CharacterSheetWithASI, levelUpSheetKey } from '../../app/composables/useLevelUp'
 import type { Catalog } from '../../shared/rules/resolve'
 import { guerrierSubclasses } from '../../server/db/seeds/data/guerrier'
 import { maneuverFeatures } from '../../server/db/seeds/data/maneuvers'
@@ -68,7 +68,7 @@ async function mountFeaturesStep(fromLevel: number) {
   let levelUp!: ReturnType<typeof useLevelUp>
   const Host = defineComponent({
     setup() {
-      provide('charSheet', charSheet)
+      provide(levelUpSheetKey, charSheet as unknown as Ref<CharacterSheetWithASI | null>)
       levelUp = useLevelUp(charSheet as unknown as Ref<CharacterSheetWithASI | null>)
       levelUp.resetWizard()
       Object.assign(levelUp.state.value, { pickedClassId: 'fighter', isMulticlass: false, fromLevel, toLevel: fromLevel + 1 })

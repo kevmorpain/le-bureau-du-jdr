@@ -14,8 +14,7 @@ export default defineEventHandler(async (event) => {
     const { id } = await createCharacter(db, result.data, (user as any).id)
     setResponseStatus(event, 201)
     return { id }
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof CharacterValidationError) {
       throw createError({ statusCode: 422, statusMessage: e.message })
     }

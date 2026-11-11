@@ -43,7 +43,12 @@
             niv. {{ fromLevel }} → <span class="text-[22px]">{{ toLevel }}</span>
           </span>
         </div>
-        <div v-if="subtitle" class="text-xs text-muted mt-1">{{ subtitle }}</div>
+        <div
+          v-if="subtitle"
+          class="text-xs text-muted mt-1"
+        >
+          {{ subtitle }}
+        </div>
       </div>
     </div>
   </div>

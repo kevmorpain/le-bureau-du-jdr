@@ -554,7 +554,7 @@ export const baseSpells: SpellSeed[] = [
     attackType: 'ranged',
     damages: [{
       damage_type: 'fire',
-      damage_at_character_level: { '1': '1d10', '5': '2d10', '11': '3d10', '17': '4d10' },
+      damage_at_character_level: { 1: '1d10', 5: '2d10', 11: '3d10', 17: '4d10' },
     }],
   },
   {
@@ -586,7 +586,7 @@ export const baseSpells: SpellSeed[] = [
     attackType: 'ranged',
     damages: [{
       damage_type: 'necrotic',
-      damage_at_character_level: { '1': '1d8', '5': '2d8', '11': '3d8', '17': '4d8' },
+      damage_at_character_level: { 1: '1d8', 5: '2d8', 11: '3d8', 17: '4d8' },
     }],
   },
   {
@@ -618,7 +618,7 @@ export const baseSpells: SpellSeed[] = [
     schoolId: 4,
     damages: [{
       damage_type: 'necrotic',
-      damage_at_slot_level: { '1': '1d6' },
+      damage_at_slot_level: { 1: '1d6' },
     }],
   },
   {
@@ -651,7 +651,7 @@ export const baseSpells: SpellSeed[] = [
     schoolId: 1,
     damages: [{
       damage_type: 'cold',
-      damage_at_slot_level: { '1': '5', '2': '10', '3': '15', '4': '20', '5': '25' },
+      damage_at_slot_level: { 1: '5', 2: '10', 3: '15', 4: '20', 5: '25' },
     }],
   },
   {
@@ -720,7 +720,7 @@ export const baseSpells: SpellSeed[] = [
     },
     damages: [{
       damage_type: 'bludgeoning',
-      damage_at_slot_level: { '4': '3d6' },
+      damage_at_slot_level: { 4: '3d6' },
     }],
   },
 
@@ -837,7 +837,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'str' },
     damages: [{
       damage_type: 'necrotic',
-      damage_at_slot_level: { '1': '2d6', '2': '3d6', '3': '4d6', '4': '5d6', '5': '6d6' },
+      damage_at_slot_level: { 1: '2d6', 2: '3d6', 3: '4d6', 4: '5d6', 5: '6d6' },
     }],
   },
   {
@@ -880,7 +880,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'int', success: 'none' },
     damages: [{
       damage_type: 'psychic',
-      damage_at_slot_level: { '2': '1d6' },
+      damage_at_slot_level: { 2: '1d6' },
     }],
   },
   {
@@ -902,12 +902,12 @@ export const baseSpells: SpellSeed[] = [
       {
         damage_type: 'cold',
         label: 'Début de tour dans la zone',
-        damage_at_slot_level: { '3': '2d6' },
+        damage_at_slot_level: { 3: '2d6' },
       },
       {
         damage_type: 'acid',
         label: 'Fin de tour (JdS Dextérité)',
-        damage_at_slot_level: { '3': '2d6' },
+        damage_at_slot_level: { 3: '2d6' },
       },
     ],
   },
@@ -978,7 +978,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'con' },
     damages: [{
       damage_type: 'necrotic',
-      damage_at_slot_level: { '4': '8d8', '5': '9d8', '6': '10d8', '7': '11d8', '8': '12d8', '9': '13d8' },
+      damage_at_slot_level: { 4: '8d8', 5: '9d8', 6: '10d8', 7: '11d8', 8: '12d8', 9: '13d8' },
     }],
   },
   {
@@ -995,7 +995,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'int', success: 'none' },
     damages: [{
       damage_type: 'psychic',
-      damage_at_slot_level: { '5': '8d6' },
+      damage_at_slot_level: { 5: '8d6' },
     }],
   },
   {
@@ -1013,7 +1013,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'int', success: 'none' },
     damages: [{
       damage_type: 'psychic',
-      damage_at_slot_level: { '6': '5d10' },
+      damage_at_slot_level: { 6: '5d10' },
     }],
   },
   {
@@ -1062,7 +1062,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'con' },
     damages: [{
       damage_type: 'necrotic',
-      damage_at_slot_level: { '6': '8d6', '7': '10d6', '8': '12d6', '9': '14d6' },
+      damage_at_slot_level: { 6: '8d6', 7: '10d6', 8: '12d6', 9: '14d6' },
     }],
   },
   {
@@ -1105,7 +1105,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'dex' },
     damages: [{
       damage_type: 'force',
-      damage_at_slot_level: { '6': '10d6+40', '7': '13d6+40', '8': '16d6+40', '9': '19d6+40' },
+      damage_at_slot_level: { 6: '10d6+40', 7: '13d6+40', 8: '16d6+40', 9: '19d6+40' },
     }],
   },
   {
@@ -1166,7 +1166,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'con' },
     damages: [{
       damage_type: 'necrotic',
-      damage_at_slot_level: { '7': '7d8+30' },
+      damage_at_slot_level: { 7: '7d8+30' },
     }],
   },
   {
@@ -1325,7 +1325,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'wis', success: 'half' },
     damages: [{
       damage_type: 'radiant',
-      damage_at_slot_level: { '3': '3d8', '4': '4d8', '5': '5d8', '6': '6d8', '7': '7d8', '8': '8d8', '9': '9d8' },
+      damage_at_slot_level: { 3: '3d8', 4: '4d8', 5: '5d8', 6: '6d8', 7: '7d8', 8: '8d8', 9: '9d8' },
     }],
   },
   {
@@ -1357,7 +1357,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'dex', success: 'half' },
     damages: [{
       damage_type: 'fire',
-      damage_at_slot_level: { '3': '5d8', '4': '6d8', '5': '7d8', '6': '8d8', '7': '9d8', '8': '10d8', '9': '11d8' },
+      damage_at_slot_level: { 3: '5d8', 4: '6d8', 5: '7d8', 6: '8d8', 7: '9d8', 8: '10d8', 9: '11d8' },
     }],
   },
   {
@@ -1426,7 +1426,7 @@ export const baseSpells: SpellSeed[] = [
     schoolId: 5,
     heal: {
       heal_type: 'hit_points',
-      heal_at_slot_level: { '3': '1d4', '4': '2d4', '5': '3d4', '6': '4d4', '7': '5d4', '8': '6d4', '9': '7d4' },
+      heal_at_slot_level: { 3: '1d4', 4: '2d4', 5: '3d4', 6: '4d4', 7: '5d4', 8: '6d4', 9: '7d4' },
       isSpellcastingModifierAdded: true,
     },
   },
@@ -1470,7 +1470,7 @@ export const baseSpells: SpellSeed[] = [
     schoolId: 7,
     damages: [{
       damage_type: 'necrotic',
-      damage_at_slot_level: { '3': '4d8', '4': '5d8', '5': '6d8', '6': '7d8', '7': '8d8', '8': '9d8', '9': '10d8' },
+      damage_at_slot_level: { 3: '4d8', 4: '5d8', 5: '6d8', 6: '7d8', 7: '8d8', 8: '9d8', 9: '10d8' },
     }],
   },
 
@@ -1705,7 +1705,7 @@ export const baseSpells: SpellSeed[] = [
     attackType: 'ranged',
     damages: [{
       damage_type: 'cold',
-      damage_at_character_level: { '1': '1d8', '5': '2d8', '11': '3d8', '17': '4d8' },
+      damage_at_character_level: { 1: '1d8', 5: '2d8', 11: '3d8', 17: '4d8' },
     }],
   },
   {
@@ -1762,7 +1762,7 @@ export const baseSpells: SpellSeed[] = [
     dc: { ability: 'dex', success: 'half' },
     damages: [{
       damage_type: 'fire',
-      damage_at_slot_level: { '3': '8d6', '4': '9d6', '5': '10d6', '6': '11d6', '7': '12d6', '8': '13d6', '9': '14d6' },
+      damage_at_slot_level: { 3: '8d6', 4: '9d6', 5: '10d6', 6: '11d6', 7: '12d6', 8: '13d6', 9: '14d6' },
     }],
   },
   {

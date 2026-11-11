@@ -4,7 +4,7 @@ import { getQuery } from 'h3'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import LevelUpStepSpells from '../../app/components/level_up/LevelUpStepSpells.vue'
-import { useLevelUp, type CharacterSheetWithASI } from '../../app/composables/useLevelUp'
+import { useLevelUp, type CharacterSheetWithASI, levelUpSheetKey } from '../../app/composables/useLevelUp'
 
 // Garde-fou du bug « multiclasser vers un lanceur ne propose aucun sort » : en multiclasse la classe
 // part du niveau 0, et les sorts se choisissent classe par classe (règle de multiclassage PHB 2014).
@@ -74,7 +74,7 @@ async function mountSpellsStep(classes: ClassFixture[], pickedClassId: string, f
   let levelUp!: ReturnType<typeof useLevelUp>
   const Host = defineComponent({
     setup() {
-      provide('charSheet', charSheet)
+      provide(levelUpSheetKey, charSheet as unknown as Ref<CharacterSheetWithASI | null>)
       levelUp = useLevelUp(charSheet as unknown as Ref<CharacterSheetWithASI | null>)
       levelUp.resetWizard()
       Object.assign(levelUp.state.value, {

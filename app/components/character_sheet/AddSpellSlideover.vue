@@ -1,5 +1,8 @@
 <template>
-  <USlideover v-model:open="open" title="Ajouter un sort">
+  <USlideover
+    v-model:open="open"
+    title="Ajouter un sort"
+  >
     <template #body>
       <div class="space-y-4 p-4">
         <UInput
@@ -25,7 +28,10 @@
           v-if="pending"
           class="flex justify-center py-8"
         >
-          <UIcon name="i-heroicons:arrow-path" class="animate-spin size-6 text-muted" />
+          <UIcon
+            name="i-heroicons:arrow-path"
+            class="animate-spin size-6 text-muted"
+          />
         </div>
 
         <ul
@@ -48,7 +54,10 @@
                 >
                   {{ spell.level === 0 ? 'Tour' : `Niv ${spell.level}` }}
                 </UBadge>
-                <span class="truncate" :class="{ 'text-muted': alreadyAddedIds.has(spell.id) }">
+                <span
+                  class="truncate"
+                  :class="{ 'text-muted': alreadyAddedIds.has(spell.id) }"
+                >
                   {{ spell.name }}
                 </span>
               </div>
@@ -80,7 +89,7 @@
 </template>
 
 <script lang="ts" setup>
-const props = defineProps<{
+defineProps<{
   alreadyAddedIds: Set<number>
 }>()
 

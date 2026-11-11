@@ -3,8 +3,12 @@
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">💪</span>
       <div>
-        <h2 class="text-xl font-bold text-(--ui-text)">Caractéristiques</h2>
-        <p class="text-sm text-muted mt-0.5">Définissez vos 6 caractéristiques. Les bonus raciaux s'ajoutent automatiquement.</p>
+        <h2 class="text-xl font-bold text-(--ui-text)">
+          Caractéristiques
+        </h2>
+        <p class="text-sm text-muted mt-0.5">
+          Définissez vos 6 caractéristiques. Les bonus raciaux s'ajoutent automatiquement.
+        </p>
       </div>
     </div>
 
@@ -33,7 +37,10 @@
         </template>
       </div>
 
-      <div v-if="state.abilityMethod === 'roll'" class="flex items-center gap-3 mb-4 flex-wrap">
+      <div
+        v-if="state.abilityMethod === 'roll'"
+        class="flex items-center gap-3 mb-4 flex-wrap"
+      >
         <button
           type="button"
           class="px-4 py-2 rounded-lg border border-amber-500 bg-amber-500/15 text-amber-400 text-sm font-bold cursor-pointer hover:bg-amber-500/25 transition-colors"
@@ -51,13 +58,23 @@
         >
           ✏️ Saisie manuelle
         </button>
-        <span v-if="state.rolledSets && !manualMode" class="text-xs text-muted">
+        <span
+          v-if="state.rolledSets && !manualMode"
+          class="text-xs text-muted"
+        >
           Total : {{ rolledTotal }}
         </span>
       </div>
 
-      <div v-if="state.abilityMethod === 'roll' && manualMode" class="flex gap-2 flex-wrap mb-4">
-        <div v-for="(_, idx) in 6" :key="idx" class="flex flex-col items-center gap-1">
+      <div
+        v-if="state.abilityMethod === 'roll' && manualMode"
+        class="flex gap-2 flex-wrap mb-4"
+      >
+        <div
+          v-for="(_, idx) in 6"
+          :key="idx"
+          class="flex flex-col items-center gap-1"
+        >
           <span class="text-xs text-muted">{{ idx + 1 }}</span>
           <input
             type="number"
@@ -78,7 +95,10 @@
         </button>
       </div>
 
-      <div v-if="scores.length && !manualMode" class="flex gap-2 flex-wrap mb-5">
+      <div
+        v-if="scores.length && !manualMode"
+        class="flex gap-2 flex-wrap mb-5"
+      >
         <button
           v-for="(sc, idx) in scores"
           :key="idx"
@@ -128,7 +148,10 @@
       >
         <div class="flex justify-between items-baseline mb-1">
           <span class="text-xs font-bold uppercase tracking-wider text-muted">{{ ABILITY_SHORT[ab] }}</span>
-          <span v-if="(raceBonuses[ab] ?? 0) !== 0" class="text-xs text-amber-400">+{{ raceBonuses[ab] }} racial</span>
+          <span
+            v-if="(raceBonuses[ab] ?? 0) !== 0"
+            class="text-xs text-amber-400"
+          >+{{ raceBonuses[ab] }} racial</span>
         </div>
 
         <div class="flex items-baseline gap-1.5 mb-0.5">
@@ -138,31 +161,46 @@
           >
             {{ finalScore(ab) != null ? finalScore(ab) : (isTarget ? '?' : '—') }}
           </span>
-          <span v-if="baseScore(ab) != null && (raceBonuses[ab] ?? 0) !== 0" class="text-xs text-muted">
+          <span
+            v-if="baseScore(ab) != null && (raceBonuses[ab] ?? 0) !== 0"
+            class="text-xs text-muted"
+          >
             {{ baseScore(ab) }}+{{ raceBonuses[ab] }}
           </span>
         </div>
 
-        <div v-if="finalScore(ab) != null" class="text-xs text-muted mb-1">
+        <div
+          v-if="finalScore(ab) != null"
+          class="text-xs text-muted mb-1"
+        >
           mod {{ formatMod(abilityMod(finalScore(ab)!)) }}
         </div>
 
-        <div class="text-xs text-muted/60">{{ ABILITY_LABELS[ab] }}</div>
+        <div class="text-xs text-muted/60">
+          {{ ABILITY_LABELS[ab] }}
+        </div>
 
-        <div v-if="state.abilityMethod === 'pointbuy'" class="flex items-center gap-2 mt-2">
+        <div
+          v-if="state.abilityMethod === 'pointbuy'"
+          class="flex items-center gap-2 mt-2"
+        >
           <button
             type="button"
             class="w-6 h-6 rounded border border-(--ui-border) text-muted text-sm leading-none cursor-pointer hover:border-amber-500/40 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             :disabled="(state.pbScores[ab] ?? 8) <= 8"
             @click.stop="pbChange(ab, -1)"
-          >−</button>
+          >
+            −
+          </button>
           <span class="text-xs font-mono text-amber-400 w-4 text-center">{{ state.pbScores[ab] }}</span>
           <button
             type="button"
             class="w-6 h-6 rounded border border-(--ui-border) text-muted text-sm leading-none cursor-pointer hover:border-amber-500/40 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             :disabled="(state.pbScores[ab] ?? 8) >= 15 || pbRemaining <= 0"
             @click.stop="pbChange(ab, +1)"
-          >+</button>
+          >
+            +
+          </button>
         </div>
       </div>
     </div>
@@ -243,8 +281,7 @@ function syncAbilities() {
   for (const ab of ABILITIES) {
     if (state.value.abilityMethod === 'pointbuy') {
       abilities[ab] = state.value.pbScores[ab]
-    }
-    else {
+    } else {
       const idx = state.value.abilityAssigns[ab]
       abilities[ab] = idx !== undefined && scores.value.length ? (scores.value[idx] ?? null) : null
     }
@@ -267,14 +304,13 @@ function switchMethod(m: 'standard' | 'pointbuy' | 'roll') {
 
 function clickAbility(ab: AbilityKey) {
   if (selected.value === null) {
-    const newAssigns = { ...state.value.abilityAssigns }
-    delete newAssigns[ab]
+    const { [ab]: _cleared, ...newAssigns } = state.value.abilityAssigns
     state.value.abilityAssigns = newAssigns
-  }
-  else {
-    const newAssigns = { ...state.value.abilityAssigns }
+  } else {
+    const newAssigns: Partial<Record<AbilityKey, number>> = {}
     for (const k of ABILITIES) {
-      if (newAssigns[k] === selected.value) delete newAssigns[k]
+      const value = state.value.abilityAssigns[k]
+      if (value !== undefined && value !== selected.value) newAssigns[k] = value
     }
     newAssigns[ab] = selected.value
     state.value.abilityAssigns = newAssigns

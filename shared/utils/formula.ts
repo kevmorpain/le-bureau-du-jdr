@@ -1,23 +1,23 @@
-export type FormulaVar =
-  | 'level'
-  | 'class_level'
-  | 'prof_bonus'
-  | 'str_mod'
-  | 'dex_mod'
-  | 'con_mod'
-  | 'int_mod'
-  | 'wis_mod'
-  | 'cha_mod'
-  | 'duplicate_skills'
-  | 'duplicate_tools'
+export type FormulaVar
+  = | 'level'
+    | 'class_level'
+    | 'prof_bonus'
+    | 'str_mod'
+    | 'dex_mod'
+    | 'con_mod'
+    | 'int_mod'
+    | 'wis_mod'
+    | 'cha_mod'
+    | 'duplicate_skills'
+    | 'duplicate_tools'
 
-export type Formula =
-  | { op: 'fixed'; value: number }
-  | { op: 'var'; name: FormulaVar }
-  | { op: 'add' | 'sub' | 'mul' | 'div'; left: Formula; right: Formula }
-  | { op: 'max' | 'min'; left: Formula; right: Formula }
-  | { op: 'floor' | 'ceil'; value: Formula }
-  | { op: 'lookup'; table: number[] } // index = class_level - 1
+export type Formula
+  = | { op: 'fixed', value: number }
+    | { op: 'var', name: FormulaVar }
+    | { op: 'add' | 'sub' | 'mul' | 'div', left: Formula, right: Formula }
+    | { op: 'max' | 'min', left: Formula, right: Formula }
+    | { op: 'floor' | 'ceil', value: Formula }
+    | { op: 'lookup', table: number[] } // index = class_level - 1
 
 export interface FormulaContext {
   level: number

@@ -59,35 +59,35 @@ export default async function seed() {
         materialCost: spell.materialCost ?? null,
         attackType: spell.attackType ?? null,
         areaOfEffect: spell.areaOfEffect ?? null,
-        damages: (spell as any).damages ?? null,
-        heal: (spell as any).heal ?? null,
-        multiAttack: (spell as any).multiAttack ?? null,
-        dc: (spell as any).dc ?? null,
+        damages: spell.damages ?? null,
+        heal: spell.heal ?? null,
+        multiAttack: spell.multiAttack ?? null,
+        dc: spell.dc ?? null,
         description: spell.description ?? null,
         ritual: spell.ritual ?? false,
         concentration: spell.concentration ?? false,
       }
       const changed
         = existing.level !== next.level
-        || existing.schoolId !== next.schoolId
-        || existing.castingTime !== next.castingTime
-        || existing.range !== next.range
-        || existing.duration !== next.duration
-        || existing.durationUnit !== next.durationUnit
-        || existing.durationValue !== next.durationValue
-        || JSON.stringify(existing.components) !== JSON.stringify(next.components)
-        || existing.material !== next.material
-        || existing.rollTableId !== next.rollTableId
-        || JSON.stringify(existing.materialCost) !== JSON.stringify(next.materialCost)
-        || existing.attackType !== next.attackType
-        || JSON.stringify(existing.areaOfEffect) !== JSON.stringify(next.areaOfEffect)
-        || JSON.stringify(existing.damages) !== JSON.stringify(next.damages)
-        || JSON.stringify(existing.heal) !== JSON.stringify(next.heal)
-        || JSON.stringify(existing.multiAttack) !== JSON.stringify(next.multiAttack)
-        || JSON.stringify(existing.dc) !== JSON.stringify(next.dc)
-        || existing.description !== next.description
-        || existing.ritual !== next.ritual
-        || existing.concentration !== next.concentration
+          || existing.schoolId !== next.schoolId
+          || existing.castingTime !== next.castingTime
+          || existing.range !== next.range
+          || existing.duration !== next.duration
+          || existing.durationUnit !== next.durationUnit
+          || existing.durationValue !== next.durationValue
+          || JSON.stringify(existing.components) !== JSON.stringify(next.components)
+          || existing.material !== next.material
+          || existing.rollTableId !== next.rollTableId
+          || JSON.stringify(existing.materialCost) !== JSON.stringify(next.materialCost)
+          || existing.attackType !== next.attackType
+          || JSON.stringify(existing.areaOfEffect) !== JSON.stringify(next.areaOfEffect)
+          || JSON.stringify(existing.damages) !== JSON.stringify(next.damages)
+          || JSON.stringify(existing.heal) !== JSON.stringify(next.heal)
+          || JSON.stringify(existing.multiAttack) !== JSON.stringify(next.multiAttack)
+          || JSON.stringify(existing.dc) !== JSON.stringify(next.dc)
+          || existing.description !== next.description
+          || existing.ritual !== next.ritual
+          || existing.concentration !== next.concentration
 
       if (changed) {
         await db
@@ -95,13 +95,11 @@ export default async function seed() {
           .set(next)
           .where(eq(schema.spells.id, existing.id))
         updated++
-      }
-      else {
+      } else {
         skipped++
       }
       spellId = existing.id
-    }
-    else {
+    } else {
       const { rollTable: _, ...columns } = spell
       spellId = await db.insert(schema.spells).values({ ...columns, rollTableId: rollTableIdOf(spell) }).returning().get().then(r => (inserted++, r.id))
     }

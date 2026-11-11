@@ -102,7 +102,6 @@ defineProps<{
   spell: Spell
 }>()
 
-
 const getComponent = (component: SpellComponent): Component => {
   switch (component) {
     case SpellComponent.Vocal:

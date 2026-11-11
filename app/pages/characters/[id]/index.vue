@@ -61,7 +61,10 @@
           :badge="availableFeaturesCount"
           storage-key="features"
         >
-          <FeaturesSection :character-sheet="characterSheet" @refresh="refreshSheet" />
+          <FeaturesSection
+            :character-sheet="characterSheet"
+            @refresh="refreshSheet"
+          />
         </CollapsibleSection>
 
         <CollapsibleSection
@@ -101,7 +104,7 @@
           :roll="roll"
         />
         <HitDiceSection
-          :character-sheet="characterSheet"
+          v-model:character-sheet="characterSheet"
           :roll="roll"
         />
         <DefensesSection :character-sheet="characterSheet" />
@@ -201,9 +204,18 @@ function reconcileAfterConflict() {
 // Le repos recharge aussi les charges d'objets (recharge complète, côté serveur).
 // L'inventaire est un useFetch séparé → on le rafraîchit après chaque repos.
 const { shortRest: _shortRest, longRest: _longRest, dawn: _dawn, isResting } = useRest(characterSheet, spellSlots, maxHitPointsFor)
-const shortRest = async (...args: Parameters<typeof _shortRest>) => { await _shortRest(...args); await refreshInventory() }
-const longRest = async (fedAndWatered?: boolean) => { await _longRest(fedAndWatered); await refreshInventory() }
-const dawn = async () => { await _dawn(); await refreshInventory() }
+const shortRest = async (...args: Parameters<typeof _shortRest>) => {
+  await _shortRest(...args)
+  await refreshInventory()
+}
+const longRest = async (fedAndWatered?: boolean) => {
+  await _longRest(fedAndWatered)
+  await refreshInventory()
+}
+const dawn = async () => {
+  await _dawn()
+  await refreshInventory()
+}
 
 const combatMode = ref(false)
 

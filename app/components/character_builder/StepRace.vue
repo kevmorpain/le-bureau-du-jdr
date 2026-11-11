@@ -3,8 +3,12 @@
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">🧬</span>
       <div>
-        <h2 class="text-xl font-bold text-(--ui-text)">Race</h2>
-        <p class="text-sm text-muted mt-0.5">La race détermine vos bonus de caractéristiques, vos traits naturels, votre vitesse et vos langues.</p>
+        <h2 class="text-xl font-bold text-(--ui-text)">
+          Race
+        </h2>
+        <p class="text-sm text-muted mt-0.5">
+          La race détermine vos bonus de caractéristiques, vos traits naturels, votre vitesse et vos langues.
+        </p>
       </div>
     </div>
 
@@ -22,28 +26,65 @@
         <div class="flex items-center gap-3 mb-2">
           <span class="text-3xl leading-none">{{ race.emoji }}</span>
           <div class="flex-1 min-w-0">
-            <div class="font-bold text-(--ui-text)">{{ race.name }}</div>
+            <div class="font-bold text-(--ui-text)">
+              {{ race.name }}
+            </div>
             <div class="text-xs font-semibold text-amber-400 mt-0.5">
               {{ formatBonuses(race.abilityBonuses) }}
-              <span v-if="race.hasHalfElfBonuses" class="text-amber-400/70"> · +1+1 au choix</span>
+              <span
+                v-if="race.hasHalfElfBonuses"
+                class="text-amber-400/70"
+              > · +1+1 au choix</span>
             </div>
           </div>
         </div>
 
-        <div class="text-xs text-muted leading-relaxed">{{ race.description }}</div>
+        <div class="text-xs text-muted leading-relaxed">
+          {{ race.description }}
+        </div>
 
-        <div v-if="state.raceId === race.id" class="mt-3 pt-3 border-t border-(--ui-border) w-full">
-          <div class="text-xs font-bold uppercase tracking-wider text-muted mb-2">Traits raciaux</div>
+        <div
+          v-if="state.raceId === race.id"
+          class="mt-3 pt-3 border-t border-(--ui-border) w-full"
+        >
+          <div class="text-xs font-bold uppercase tracking-wider text-muted mb-2">
+            Traits raciaux
+          </div>
           <ul class="space-y-1 mb-3">
-            <li v-for="trait in race.traits" :key="trait" class="text-xs text-(--ui-text) flex gap-1.5">
+            <li
+              v-for="trait in race.traits"
+              :key="trait"
+              class="text-xs text-(--ui-text) flex gap-1.5"
+            >
               <span class="text-amber-400 shrink-0">·</span>
               <span>{{ trait }}</span>
             </li>
           </ul>
           <div class="flex flex-wrap gap-1.5">
-            <UBadge v-if="race.darkvision" color="info" variant="subtle" size="md">Vision {{ race.darkvision }}m</UBadge>
-            <UBadge color="neutral" variant="subtle" size="md">{{ race.size }} · {{ race.speed }}m</UBadge>
-            <UBadge v-for="lang in race.languages" :key="lang" color="amber" variant="subtle" size="md">{{ lang }}</UBadge>
+            <UBadge
+              v-if="race.darkvision"
+              color="info"
+              variant="subtle"
+              size="md"
+            >
+              Vision {{ race.darkvision }}m
+            </UBadge>
+            <UBadge
+              color="neutral"
+              variant="subtle"
+              size="md"
+            >
+              {{ race.size }} · {{ race.speed }}m
+            </UBadge>
+            <UBadge
+              v-for="lang in race.languages"
+              :key="lang"
+              color="amber"
+              variant="subtle"
+              size="md"
+            >
+              {{ lang }}
+            </UBadge>
           </div>
         </div>
       </button>
@@ -51,7 +92,9 @@
 
     <template v-if="subraces.length">
       <USeparator class="my-6" />
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Sous-race — choisissez une spécialisation</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Sous-race — choisissez une spécialisation
+      </p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <button
           v-for="sub in subraces"
@@ -63,16 +106,30 @@
             : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-amber-500/40'"
           @click="state.subraceId = sub.id"
         >
-          <div class="font-bold text-(--ui-text) text-sm">{{ sub.name }}</div>
+          <div class="font-bold text-(--ui-text) text-sm">
+            {{ sub.name }}
+          </div>
           <div class="text-xs font-semibold text-amber-400 mt-0.5">
             {{ formatBonuses(sub.abilityBonuses) }}
-            <span v-if="sub.speed && sub.speed !== raceData.speed" class="text-amber-400/70"> · Vit. {{ sub.speed }}m</span>
+            <span
+              v-if="sub.speed && sub.speed !== raceData.speed"
+              class="text-amber-400/70"
+            > · Vit. {{ sub.speed }}m</span>
           </div>
-          <div class="text-xs text-muted mt-1 leading-relaxed">{{ sub.description }}</div>
+          <div class="text-xs text-muted mt-1 leading-relaxed">
+            {{ sub.description }}
+          </div>
 
-          <div v-if="state.subraceId === sub.id" class="mt-3 pt-3 border-t border-(--ui-border) w-full">
+          <div
+            v-if="state.subraceId === sub.id"
+            class="mt-3 pt-3 border-t border-(--ui-border) w-full"
+          >
             <ul class="space-y-1">
-              <li v-for="trait in sub.traits" :key="trait" class="text-xs text-(--ui-text) flex gap-1.5">
+              <li
+                v-for="trait in sub.traits"
+                :key="trait"
+                class="text-xs text-(--ui-text) flex gap-1.5"
+              >
                 <span class="text-amber-400 shrink-0">·</span>
                 <span>{{ trait }}</span>
               </li>
@@ -84,7 +141,9 @@
 
     <template v-if="state.raceId === 'human'">
       <USeparator class="my-6" />
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Variante humaine</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Variante humaine
+      </p>
       <div class="flex gap-2 mb-4">
         <button
           type="button"
@@ -95,7 +154,9 @@
           @click="state.isVariantHuman = false"
         >
           Humain classique
-          <div class="text-xs font-normal text-amber-400 mt-0.5">+1 à toutes les caractéristiques</div>
+          <div class="text-xs font-normal text-amber-400 mt-0.5">
+            +1 à toutes les caractéristiques
+          </div>
         </button>
         <button
           type="button"
@@ -106,12 +167,16 @@
           @click="state.isVariantHuman = true"
         >
           Humain variante
-          <div class="text-xs font-normal text-amber-400 mt-0.5">+1+1 au choix + compétence bonus</div>
+          <div class="text-xs font-normal text-amber-400 mt-0.5">
+            +1+1 au choix + compétence bonus
+          </div>
         </button>
       </div>
 
       <template v-if="state.isVariantHuman">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Choisissez 2 caractéristiques (+1 chacune)</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+          Choisissez 2 caractéristiques (+1 chacune)
+        </p>
         <div class="flex flex-wrap gap-2 mb-4">
           <button
             v-for="ab in ABILITIES"
@@ -127,7 +192,9 @@
           </button>
         </div>
 
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Compétence bonus</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+          Compétence bonus
+        </p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
           <button
             v-for="skill in SKILLS"
@@ -159,7 +226,9 @@
       <USeparator class="my-6" />
       <div class="rounded-xl border border-amber-500/40 bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-2 mb-3">
-          <p class="text-xs font-semibold text-amber-400">Bonus Demi-Elfe · choisissez 2 caractéristiques pour +1 (pas CHA)</p>
+          <p class="text-xs font-semibold text-amber-400">
+            Bonus Demi-Elfe · choisissez 2 caractéristiques pour +1 (pas CHA)
+          </p>
           <span
             class="text-xs font-semibold"
             :class="state.halfElfBonuses.length === 2 ? 'text-green-400' : 'text-muted'"
@@ -189,13 +258,17 @@
       <USeparator class="my-6" />
       <div class="rounded-xl border border-amber-500/40 bg-(--ui-bg-elevated) p-4">
         <div class="flex items-center gap-2 mb-1">
-          <p class="text-xs font-semibold text-amber-400">Bonus de caractéristiques · répartissez +3 (un +2 et un +1, ou trois +1)</p>
+          <p class="text-xs font-semibold text-amber-400">
+            Bonus de caractéristiques · répartissez +3 (un +2 et un +1, ou trois +1)
+          </p>
           <span
             class="text-xs font-semibold"
             :class="fairyAsiTotal === 3 ? 'text-green-400' : 'text-muted'"
           >{{ fairyAsiTotal }}/3</span>
         </div>
-        <p class="text-xs text-muted mb-3">Cliquez une caractéristique pour cycler +0 → +1 → +2.</p>
+        <p class="text-xs text-muted mb-3">
+          Cliquez une caractéristique pour cycler +0 → +1 → +2.
+        </p>
         <div class="flex flex-wrap gap-2">
           <button
             v-for="ab in ABILITIES"
@@ -208,7 +281,10 @@
             @click="cycleFairyBonus(ab)"
           >
             {{ ABILITY_SHORT[ab] }}
-            <span v-if="(state.fairyAsiBonuses[ab] ?? 0) > 0" class="ml-1 font-mono">+{{ state.fairyAsiBonuses[ab] }}</span>
+            <span
+              v-if="(state.fairyAsiBonuses[ab] ?? 0) > 0"
+              class="ml-1 font-mono"
+            >+{{ state.fairyAsiBonuses[ab] }}</span>
           </button>
         </div>
       </div>
@@ -293,9 +369,8 @@ function cycleFairyBonus(ab: AbilityKey) {
   let next = cur + 1
   if (next > 2) next = 0
   if (others + next > 3) next = 0 // dépasserait le budget de 3 → on remet à 0
-  const map = { ...state.value.fairyAsiBonuses }
-  if (next === 0) delete map[ab]
-  else map[ab] = next
+  const { [ab]: _previous, ...map } = state.value.fairyAsiBonuses
+  if (next !== 0) map[ab] = next
   state.value.fairyAsiBonuses = map
 }
 
@@ -304,8 +379,7 @@ function toggleHalfElfBonus(ab: AbilityKey) {
   const idx = list.indexOf(ab)
   if (idx >= 0) {
     list.splice(idx, 1)
-  }
-  else if (list.length < 2) {
+  } else if (list.length < 2) {
     list.push(ab)
   }
 }
@@ -315,8 +389,7 @@ function toggleVariantHumanBonus(ab: AbilityKey) {
   const idx = list.indexOf(ab)
   if (idx >= 0) {
     list.splice(idx, 1)
-  }
-  else if (list.length < 2) {
+  } else if (list.length < 2) {
     list.push(ab)
   }
 }

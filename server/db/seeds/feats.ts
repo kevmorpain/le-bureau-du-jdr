@@ -30,7 +30,7 @@ export default async function seed() {
     let feature
     if (existing) {
       feature = existing
-      const patch: Record<string, unknown> = {}
+      const patch: Partial<typeof schema.features.$inferInsert> = {}
       if (existing.description !== feat.description) patch.description = feat.description
       if (JSON.stringify(existing.prerequisites ?? null) !== JSON.stringify(prerequisites)) {
         patch.prerequisites = prerequisites
@@ -38,11 +38,10 @@ export default async function seed() {
       if (Object.keys(patch).length > 0) {
         await db
           .update(schema.features)
-          .set(patch as any)
+          .set(patch)
           .where(eq(schema.features.id, existing.id))
       }
-    }
-    else {
+    } else {
       feature = await db
         .insert(schema.features)
         .values({
@@ -59,7 +58,7 @@ export default async function seed() {
           maxUsesFormula: null,
           meta: null,
           prerequisites,
-        } as any)
+        })
         .returning()
         .get()
       inserted++

@@ -77,8 +77,7 @@ export async function seedBackgroundProficiencies(
     let carrierId: number
     if (existingCarrier) {
       carrierId = existingCarrier.id
-    }
-    else {
+    } else {
       const carrier = await db
         .insert(schema.features)
         .values({ name: BACKGROUND_PROFICIENCY_CARRIER_NAME, featureType: 'proficiency_grant', ruleset: '5', levelRequired: 1 })

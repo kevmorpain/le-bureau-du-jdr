@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
       source,
       classLevel: classLevel ?? null,
       choices: choices ?? null,
-    } as any)
+    })
     .onConflictDoUpdate({
       target: [schema.characterFeatures.characterSheetId, schema.characterFeatures.featureId],
       set: { choices: choices ?? null },

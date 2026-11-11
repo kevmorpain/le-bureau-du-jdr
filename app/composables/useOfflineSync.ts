@@ -56,8 +56,7 @@ async function flushCharacter(characterId: number, force = false): Promise<void>
     let serverVersion: string | null
     try {
       serverVersion = await fetchServerVersion(characterId)
-    }
-    catch {
+    } catch {
       return // hors-ligne / réseau instable : on retentera
     }
     if (baseVersion && serverVersion && serverVersion !== baseVersion) {
@@ -74,8 +73,7 @@ async function flushCharacter(characterId: number, force = false): Promise<void>
       removeMutation(characterId, op.id)
       refreshPendingCount()
       replayed++
-    }
-    catch (err) {
+    } catch (err) {
       lastError.value = err instanceof Error ? err.message : String(err)
       return // on garde l'ordre : on retentera la file restante plus tard
     }
@@ -104,8 +102,7 @@ export function useOfflineSync() {
         if (conflicts.value.includes(id)) continue // attend une résolution explicite
         await flushCharacter(id)
       }
-    }
-    finally {
+    } finally {
       isSyncing.value = false
       refreshPendingCount()
     }
@@ -116,13 +113,11 @@ export function useOfflineSync() {
       isSyncing.value = true
       try {
         await flushCharacter(characterId, true) // écrase le serveur
-      }
-      finally {
+      } finally {
         isSyncing.value = false
         refreshPendingCount()
       }
-    }
-    else {
+    } else {
       clearQueue(characterId) // abandonne les modifs locales en attente
       refreshPendingCount()
     }

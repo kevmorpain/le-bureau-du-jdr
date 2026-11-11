@@ -16,7 +16,10 @@
     @submit="handleSubmit"
   />
 
-  <BuilderShell v-else @finish="showSummary = true">
+  <BuilderShell
+    v-else
+    @finish="showSummary = true"
+  >
     <div v-if="currentStepId === 'race'">
       <StepRace />
     </div>
@@ -61,7 +64,6 @@ const {
   backgroundDbId,
   choicePicksPayload,
   featurePicksPayload,
-  finalAbilities,
   hpBase,
   resetBuilder,
   pactBoon,
@@ -240,19 +242,22 @@ async function handleSubmit() {
 
     await router.push(`/characters/${result.id}`)
     resetBuilder()
-  }
-  catch (e: any) {
-    const issues = e?.data?.issues ?? e?.cause?.data?.issues
+  } catch (e) {
+    type ValidationIssue = { path?: PropertyKey[] }
+    const error = e as { data?: { issues?: ValidationIssue[] }, cause?: { data?: { issues?: ValidationIssue[] } } } | null
+    const issues = error?.data?.issues ?? error?.cause?.data?.issues
     if (issues?.length) {
-      const fields = [...new Set(issues.map((i: any) => FIELD_LABELS[i.path?.[0]] ?? i.path?.[0] ?? 'Champ inconnu'))]
+      const fields = [...new Set(issues.map((i) => {
+        const field = i.path?.[0]
+        return field == null ? 'Champ inconnu' : FIELD_LABELS[String(field)] ?? String(field)
+      }))]
       toast.add({
         title: 'Impossible de créer le personnage',
         description: `Champ(s) manquant(s) ou invalide(s) : ${fields.join(', ')}`,
         color: 'error',
         duration: 6000,
       })
-    }
-    else {
+    } else {
       toast.add({
         title: 'Erreur lors de la création',
         description: 'Une erreur inattendue s\'est produite.',

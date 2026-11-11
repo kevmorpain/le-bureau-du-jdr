@@ -39,13 +39,13 @@ export default async function seed() {
     if (cur) {
       const changed
         = cur.description !== content.description
-        || cur.source !== content.source
-        || cur.rarity !== content.rarity
-        || cur.requiresAttunement !== content.requiresAttunement
-        || cur.attunementNote !== content.attunementNote
-        || cur.weightG !== content.weightG
-        || cur.costCp !== content.costCp
-        || cur.lotSize !== content.lotSize
+          || cur.source !== content.source
+          || cur.rarity !== content.rarity
+          || cur.requiresAttunement !== content.requiresAttunement
+          || cur.attunementNote !== content.attunementNote
+          || cur.weightG !== content.weightG
+          || cur.costCp !== content.costCp
+          || cur.lotSize !== content.lotSize
       if (changed) {
         await db.update(schema.items).set(content).where(eq(schema.items.id, item.id))
         updated++
