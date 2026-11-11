@@ -26,8 +26,7 @@
 <script lang="ts" setup>
 import { upcastRows, type ScalingEntry } from '~~/shared/rules/spellScaling'
 
-// Encart « Aux niveaux supérieurs » : rend la table `*_at_slot_level` déjà présente en base, que
-// seule sa première ligne était lue jusqu'ici (cf. U10 de docs/fonctionnalites-manquantes.md).
+// Encart « Aux niveaux supérieurs » : rend la table `*_at_slot_level` déjà présente en base.
 // Un palier par niveau d'emplacement où la valeur CHANGE — rien pour un sort qui ne monte pas.
 const props = defineProps<{
   spell: Spell
