@@ -5,7 +5,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import LevelUpStepClass from '../../app/components/level_up/LevelUpStepClass.vue'
 import LevelUpStepSkills from '../../app/components/level_up/LevelUpStepSkills.vue'
 import LevelUpSummary from '../../app/components/level_up/LevelUpSummary.vue'
-import { useLevelUp, type CharacterSheetWithASI, type LevelUpState } from '../../app/composables/useLevelUp'
+import { useLevelUp, type CharacterSheetWithASI, type LevelUpState, levelUpSheetKey } from '../../app/composables/useLevelUp'
 import { catalogClasses } from '../fixtures/catalogClasses'
 
 // Rejoindre une classe par multiclassage : il faut les valeurs requises par la classe ACTUELLE et par
@@ -55,7 +55,7 @@ async function mount(component: Component, cha: number, state: Partial<LevelUpSt
   let levelUp!: ReturnType<typeof useLevelUp>
   const Host = defineComponent({
     setup() {
-      provide('charSheet', charSheet)
+      provide(levelUpSheetKey, charSheet as unknown as Ref<CharacterSheetWithASI | null>)
       levelUp = useLevelUp(charSheet as unknown as Ref<CharacterSheetWithASI | null>)
       levelUp.resetWizard()
       Object.assign(levelUp.state.value, state)

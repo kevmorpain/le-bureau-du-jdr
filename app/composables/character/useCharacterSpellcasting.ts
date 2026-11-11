@@ -29,7 +29,7 @@ type SpellStats = {
 type SpellcasterClass = {
   classId: number
   className: string
-  ability: string  // 'str' | 'dex' | ... — la stat effective (subclass override > class default)
+  ability: string // 'str' | 'dex' | ... — la stat effective (subclass override > class default)
   fromSubclass: boolean
 }
 

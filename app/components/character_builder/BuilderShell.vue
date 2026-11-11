@@ -51,15 +51,24 @@
   <UModal v-model:open="showResetConfirm">
     <template #content>
       <div class="p-6">
-        <h3 class="font-bold text-(--ui-text) mb-2">Recommencer ?</h3>
+        <h3 class="font-bold text-(--ui-text) mb-2">
+          Recommencer ?
+        </h3>
         <p class="text-sm text-muted mb-4">
           Toutes vos sélections seront effacées.
         </p>
         <div class="flex justify-end gap-2">
-          <UButton variant="ghost" color="neutral" @click="showResetConfirm = false">
+          <UButton
+            variant="ghost"
+            color="neutral"
+            @click="showResetConfirm = false"
+          >
             Annuler
           </UButton>
-          <UButton color="error" @click="confirmReset">
+          <UButton
+            color="error"
+            @click="confirmReset"
+          >
             Recommencer
           </UButton>
         </div>

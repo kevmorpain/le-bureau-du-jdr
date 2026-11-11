@@ -1,6 +1,12 @@
 <template>
-  <div class="flex flex-col gap-3" :class="mobile ? 'py-2' : 'py-1'">
-    <p v-if="!mobile" class="text-xs font-bold uppercase tracking-widest text-muted">
+  <div
+    class="flex flex-col gap-3"
+    :class="mobile ? 'py-2' : 'py-1'"
+  >
+    <p
+      v-if="!mobile"
+      class="text-xs font-bold uppercase tracking-widest text-muted"
+    >
       Aperçu
     </p>
 
@@ -18,7 +24,10 @@
     </div>
 
     <div class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-      <p class="font-bold text-sm" :class="state.name ? 'text-(--ui-text)' : 'text-muted italic'">
+      <p
+        class="font-bold text-sm"
+        :class="state.name ? 'text-(--ui-text)' : 'text-muted italic'"
+      >
         {{ state.name || 'Nom à définir…' }}
       </p>
       <div class="flex flex-wrap gap-1 mt-1.5">
@@ -42,30 +51,50 @@
           {{ alignmentData.short }}
         </span>
       </div>
-      <p v-if="backgroundData" class="text-xs text-muted mt-1">
+      <p
+        v-if="backgroundData"
+        class="text-xs text-muted mt-1"
+      >
         {{ backgroundData.name }}
       </p>
-      <p v-if="state.subclass" class="text-xs text-amber-400 mt-0.5">
+      <p
+        v-if="state.subclass"
+        class="text-xs text-amber-400 mt-0.5"
+      >
         {{ state.subclass }}
       </p>
     </div>
 
-    <div v-if="classData" class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Stats</p>
+    <div
+      v-if="classData"
+      class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
+    >
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+        Stats
+      </p>
       <div class="grid grid-cols-3 gap-1">
         <div
           v-for="stat in keyStats"
           :key="stat.label"
           class="text-center bg-(--ui-bg) rounded-md py-1.5"
         >
-          <p class="font-bold font-mono text-sm leading-none">{{ stat.value }}</p>
-          <p class="text-xs text-muted mt-0.5 leading-none">{{ stat.label }}</p>
+          <p class="font-bold font-mono text-sm leading-none">
+            {{ stat.value }}
+          </p>
+          <p class="text-xs text-muted mt-0.5 leading-none">
+            {{ stat.label }}
+          </p>
         </div>
       </div>
     </div>
 
-    <div v-if="hasAbilities" class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Caractéristiques</p>
+    <div
+      v-if="hasAbilities"
+      class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
+    >
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+        Caractéristiques
+      </p>
       <div class="grid grid-cols-3 gap-1">
         <div
           v-for="ab in ABILITIES"
@@ -81,13 +110,20 @@
           >
             {{ finalAbilities[ab] != null ? formatMod(abilityMod(finalAbilities[ab]!)) : '' }}
           </p>
-          <p class="text-xs text-muted mt-0.5 leading-none">{{ ABILITY_SHORT[ab] }}</p>
+          <p class="text-xs text-muted mt-0.5 leading-none">
+            {{ ABILITY_SHORT[ab] }}
+          </p>
         </div>
       </div>
     </div>
 
-    <div v-if="masteredSkills.length" class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Compétences</p>
+    <div
+      v-if="masteredSkills.length"
+      class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
+    >
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+        Compétences
+      </p>
       <div class="flex flex-wrap gap-1">
         <span
           v-for="sk in masteredSkills"
@@ -103,7 +139,9 @@
       v-if="selectedSpellNames.length > 0"
       class="rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) p-3"
     >
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Sorts</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+        Sorts
+      </p>
       <div class="flex flex-wrap gap-1">
         <span
           v-for="name in selectedSpellNames"
@@ -143,9 +181,6 @@ const { masteredSkills, passivePerception, initiative, maxHp } = useBuilderSheet
 
 const completedCount = computed(() =>
   activeSteps.value.filter(s => isStepComplete.value(s.id)).length,
-)
-const progressPercent = computed(() =>
-  Math.round((completedCount.value / activeSteps.value.length) * 100),
 )
 
 const raceName = computed(() => {

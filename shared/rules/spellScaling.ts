@@ -117,10 +117,10 @@ export type ScalableSpell = {
   multiAttack?: MultiAttack | null
 }
 
-export type ScalingEntry =
-  | { kind: 'damage', damageType: string, label?: string, die: string }
-  | { kind: 'heal', healType: string, die: string }
-  | { kind: 'attacks', label: string, count: number }
+export type ScalingEntry
+  = | { kind: 'damage', damageType: string, label?: string, die: string }
+    | { kind: 'heal', healType: string, die: string }
+    | { kind: 'attacks', label: string, count: number }
 
 /** Une ligne de l'encart : ce que donne le sort lancé avec un emplacement de ce niveau. */
 export type ScalingRow = { level: number, entries: ScalingEntry[] }

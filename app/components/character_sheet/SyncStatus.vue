@@ -24,7 +24,9 @@
       name="i-heroicons:signal-slash"
       class="size-3.5"
     />
-    Hors-ligne<template v-if="pendingCount"> · {{ pendingCount }} en attente</template>
+    Hors-ligne<template v-if="pendingCount">
+      · {{ pendingCount }} en attente
+    </template>
   </UBadge>
 
   <UBadge

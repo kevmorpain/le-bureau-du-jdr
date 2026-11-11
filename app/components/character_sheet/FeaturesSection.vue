@@ -12,7 +12,10 @@
         size="xs"
         class="flex-1 min-w-0"
       />
-      <div v-else class="flex-1" />
+      <div
+        v-else
+        class="flex-1"
+      />
       <div class="flex shrink-0 items-center gap-1">
         <UButton
           icon="i-heroicons:plus"
@@ -306,7 +309,7 @@ const addFeatOpen = ref(false)
 const addBoonOpen = ref(false)
 
 const ownedFeatIds = computed(() =>
-  allCharacterFeatures.value.filter(f => (f as any).featureType === 'feat').map(f => f.id),
+  allCharacterFeatures.value.filter(f => f.featureType === 'feat').map(f => f.id),
 )
 
 const ownedBoonIds = computed(() =>

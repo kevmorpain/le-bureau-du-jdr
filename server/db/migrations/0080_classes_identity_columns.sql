@@ -3,7 +3,7 @@
 -- choix ») et docs/decisions.md D3. `classes` ne portait que hit_dice +
 -- spellcasting_ability ; ces deux faits vivaient dans le front
 -- (app/data/character-builder.ts) et, pour le type d'incantation, dans DEUX tables
--- `CASTER_TYPE` recopiées côté serveur (cf. architecture-audit.md §7).
+-- `CASTER_TYPE` recopiées côté serveur.
 --
 -- Migration AUTO-SUFFISANTE (cf. decisions.md D9/D13) : elle pose les colonnes ET
 -- les remplit, donc aucun re-seed n'est nécessaire en production. Les valeurs sont

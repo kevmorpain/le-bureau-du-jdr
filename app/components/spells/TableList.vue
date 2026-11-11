@@ -122,8 +122,6 @@ const toggleSpell = (spell: Spell): void => {
   }
 }
 
-
-
 const getComponent = (component: SpellComponent): Component => {
   switch (component) {
     case SpellComponent.Vocal:

@@ -7,10 +7,14 @@
       :is-multiclass="state.isMulticlass"
     />
 
-    <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Aptitudes</h2>
+    <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">
+      Aptitudes
+    </h2>
 
     <div class="mb-5">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Nouvelles aptitudes</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Nouvelles aptitudes
+      </p>
       <template v-if="newFeatures.length">
         <div class="flex flex-col gap-2">
           <div
@@ -23,7 +27,10 @@
           </div>
         </div>
       </template>
-      <div v-else class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm text-muted italic">
+      <div
+        v-else
+        class="px-4 py-3 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) text-sm text-muted italic"
+      >
         Pas de nouvelle aptitude à ce niveau — vous gagnez néanmoins +PV et la progression continue.
       </div>
     </div>
@@ -38,7 +45,10 @@
       <span class="text-amber-400 font-bold font-mono">{{ formatMod(profBonusChange) }}</span>
     </div>
 
-    <div v-if="isSubclassLevel && subclasses.length" class="mb-6">
+    <div
+      v-if="isSubclassLevel && subclasses.length"
+      class="mb-6"
+    >
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
         ⚡ Choisissez votre {{ pickedClass?.subclassLabel ?? 'sous-classe' }}
       </p>
@@ -52,8 +62,15 @@
             : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-(--ui-border-strong) text-(--ui-text)'"
           @click="selectSubclass(sub)"
         >
-          <div class="font-semibold text-sm">{{ sub.name }}</div>
-          <div v-if="sub.description" class="text-xs text-muted mt-0.5 leading-snug line-clamp-2">{{ sub.description }}</div>
+          <div class="font-semibold text-sm">
+            {{ sub.name }}
+          </div>
+          <div
+            v-if="sub.description"
+            class="text-xs text-muted mt-0.5 leading-snug line-clamp-2"
+          >
+            {{ sub.description }}
+          </div>
         </button>
       </div>
     </div>
@@ -135,7 +152,10 @@
       </template>
     </div>
 
-    <div v-if="needsExpertise" class="mb-6">
+    <div
+      v-if="needsExpertise"
+      class="mb-6"
+    >
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
         ★ Expertise
         <span class="ml-1 text-muted/60 normal-case font-normal tracking-normal">
@@ -145,7 +165,10 @@
       <p class="text-xs text-muted mb-3">
         Sélectionné : <span :class="state.expertiseSkills.length >= newExpertiseCount ? 'text-green-400' : 'text-amber-400'">{{ state.expertiseSkills.length }}/{{ newExpertiseCount }}</span>
       </p>
-      <p v-if="alreadyExpertLabels.length" class="text-xs text-muted/70 mb-3">
+      <p
+        v-if="alreadyExpertLabels.length"
+        class="text-xs text-muted/70 mb-3"
+      >
         Déjà expert : {{ alreadyExpertLabels.join(', ') }}
       </p>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
@@ -174,7 +197,11 @@
 </template>
 
 <script lang="ts" setup>
-const charSheet = inject('charSheet') as any
+import type { ItemProperties } from '~~/server/db/schema/items'
+
+type SheetInventoryRow = { inventory: { id: number }, item: { name: string, properties: ItemProperties } | null }
+
+const charSheet = injectLevelUpSheet()
 
 const {
   state,
@@ -191,7 +218,6 @@ const {
   knownSpellNames,
   eligibleExpertiseSkills,
   expertSkills,
-  CLASSES,
   SKILLS,
   profBonusAtLevel,
   formatMod,
@@ -212,10 +238,12 @@ const visiblePickChoices = computed(() => newFeaturePickChoices.value.filter(c =
   c.count > 0 || (c.replaceable && c.options.some(o => o.featureId != null && ownedFeatureIds.value.includes(o.featureId)))))
 
 const meleeWeapons = computed(() => {
-  const inventory: Array<{ inventory: any, item: any }> = (charSheet.value as any)?.inventory ?? []
-  return inventory.filter((inv) => {
-    const props = inv.item?.properties as any
-    return props?.weapon_category === 'simple_melee' || props?.weapon_category === 'martial_melee'
+  // Le GET sert l'inventaire en `{ inventory, item }`, pas sous la forme que lui prête le type Drizzle de la fiche.
+  const rows = (charSheet.value?.inventory ?? []) as unknown as SheetInventoryRow[]
+  return rows.filter((row) => {
+    const props = row.item?.properties
+    return props != null && 'weapon_category' in props
+      && (props.weapon_category === 'simple_melee' || props.weapon_category === 'martial_melee')
   })
 })
 

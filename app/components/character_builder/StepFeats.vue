@@ -1,7 +1,9 @@
 <template>
   <div class="space-y-6">
     <header>
-      <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Don bonus</h2>
+      <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">
+        Don bonus
+      </h2>
       <p class="text-sm text-muted">
         Optionnel — votre MJ peut accorder un don supplémentaire au début de l'aventure,
         en plus des dons obtenus aux paliers d'amélioration de caractéristique.
@@ -24,11 +26,17 @@
         </UBadge>
       </header>
 
-      <div v-if="pending" class="text-sm text-muted text-center py-6">
+      <div
+        v-if="pending"
+        class="text-sm text-muted text-center py-6"
+      >
         Chargement…
       </div>
 
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div
+        v-else
+        class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+      >
         <button
           v-for="feat in feats"
           :key="feat.id"
@@ -39,10 +47,15 @@
             : 'border-(--ui-border) bg-(--ui-bg) hover:border-(--ui-border-strong)'"
           @click="toggle(feat.id)"
         >
-          <div class="font-semibold text-sm" :class="state.bonusFeatureId === feat.id ? 'text-amber-400' : 'text-(--ui-text)'">
+          <div
+            class="font-semibold text-sm"
+            :class="state.bonusFeatureId === feat.id ? 'text-amber-400' : 'text-(--ui-text)'"
+          >
             {{ feat.name }}
           </div>
-          <div class="text-xs text-muted mt-0.5 leading-snug">{{ feat.description }}</div>
+          <div class="text-xs text-muted mt-0.5 leading-snug">
+            {{ feat.description }}
+          </div>
         </button>
       </div>
 

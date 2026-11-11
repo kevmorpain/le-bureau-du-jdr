@@ -106,7 +106,7 @@ const {
   duplicatedProficiencies,
   ownedFor,
   SKILLS,
-} = useLevelUp(inject('charSheet') as any)
+} = useLevelUp(injectLevelUpSheet())
 
 const needed = computed(() => multiclassSkills.value.count)
 const poolIsAll = computed(() => multiclassSkills.value.options.length === SKILL_KEYS.length)

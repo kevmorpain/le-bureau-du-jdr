@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-import { NuxtLayout } from '#components';
+import { NuxtLayout } from '#components'
 
 const toaster = { position: 'top-right' }
 </script>

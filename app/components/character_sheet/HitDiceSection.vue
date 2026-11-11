@@ -30,29 +30,29 @@
 </template>
 
 <script lang="ts" setup>
+const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
+
 const props = defineProps<{
-  characterSheet: CharacterSheet
   roll?: (label: string, modifier: number, sides?: number, count?: number) => number
 }>()
 
-const { hitDice, abilityModifiers } = useCharacterSheet(toRef(props, 'characterSheet'))
+const { hitDice, abilityModifiers } = useCharacterSheet(characterSheet)
 
 const getRemaining = (die: string): number => {
-  const entry = props.characterSheet.currentHitDie?.find(d => d.die === die)
+  const entry = characterSheet.value.currentHitDie?.find(d => d.die === die)
   if (entry !== undefined) return entry.count
   return hitDice.value.find(h => h.hitDie === die)?.count ?? 0
 }
 
 const setRemaining = (die: string, count: number) => {
-  if (!props.characterSheet.currentHitDie) {
-    props.characterSheet.currentHitDie = hitDice.value.map(h => ({ die: h.hitDie, count: h.count }))
+  if (!characterSheet.value.currentHitDie) {
+    characterSheet.value.currentHitDie = hitDice.value.map(h => ({ die: h.hitDie, count: h.count }))
   }
-  const entry = props.characterSheet.currentHitDie.find(d => d.die === die)
+  const entry = characterSheet.value.currentHitDie.find(d => d.die === die)
   if (entry) {
     entry.count = count
-  }
-  else {
-    props.characterSheet.currentHitDie.push({ die, count })
+  } else {
+    characterSheet.value.currentHitDie.push({ die, count })
   }
 }
 
@@ -67,8 +67,7 @@ const toggleDie = (die: string, i: number, max: number) => {
     if (Number.isFinite(sides) && sides > 0) {
       props.roll?.(`Dé de vie d${die}`, conMod, sides, 1)
     }
-  }
-  else {
+  } else {
     setRemaining(die, Math.min(max, remaining + 1))
   }
 }

@@ -82,25 +82,25 @@ export const SKILLS: SkillDef[] = [
 export interface SubraceData {
   id: string
   name: string
-  dbName: string | null                  // nom exact dans character_species (null si absent de la DB)
+  dbName: string | null // nom exact dans character_species (null si absent de la DB)
   abilityBonuses: Partial<Record<AbilityKey, number>>
-  speed?: number                          // en mètres, si différent de la race parente
-  darkvision?: number                     // portée en mètres
+  speed?: number // en mètres, si différent de la race parente
+  darkvision?: number // portée en mètres
   description: string
   traits: string[]
-  lineageId?: number                     // species_lineages.id si la sous-race vient du catalogue (D17, lot 5b)
+  lineageId?: number // species_lineages.id si la sous-race vient du catalogue (D17, lot 5b)
 }
 
 export interface RaceData {
   id: string
   name: string
   emoji: string
-  dbName: string | null                  // nom exact dans character_species (null si virtual)
+  dbName: string | null // nom exact dans character_species (null si virtual)
   description: string
   abilityBonuses: Partial<Record<AbilityKey, number>>
-  speed: number                           // en mètres
+  speed: number // en mètres
   size: 'Petite' | 'Moyenne'
-  darkvision?: number                     // portée en mètres
+  darkvision?: number // portée en mètres
   traits: string[]
   languages: string[]
   subraces?: SubraceData[]
@@ -108,8 +108,8 @@ export interface RaceData {
   // sous-race est PILOTÉ PAR LE CATALOGUE (useSpeciesLineages) au lieu du `subraces` hardcodé.
   lineageBaseSpeciesName?: string
   // Cas spéciaux
-  hasHalfElfBonuses?: boolean             // Demi-Elfe : +1+1 aux carac. hors CHA
-  hasVariantOption?: boolean              // Humain : option variante disponible
+  hasHalfElfBonuses?: boolean // Demi-Elfe : +1+1 aux carac. hors CHA
+  hasVariantOption?: boolean // Humain : option variante disponible
   source?: Source
 }
 
@@ -439,7 +439,7 @@ export interface ClassFeature {
 export interface SpellcastingInfo {
   ability: AbilityKey
   type: CasterType
-  startsAtLevel?: number              // Paladin/Rôdeur commencent niveau 2
+  startsAtLevel?: number // Paladin/Rôdeur commencent niveau 2
 }
 
 export interface LevelMilestones {
@@ -449,9 +449,9 @@ export interface LevelMilestones {
 export interface ClassData {
   id: string
   name: string
-  dbName: string                      // nom exact dans la table classes
+  dbName: string // nom exact dans la table classes
   emoji: string
-  color: string                       // couleur hex pour les badges
+  color: string // couleur hex pour les badges
   role: string
   description: string
   hitDie: number

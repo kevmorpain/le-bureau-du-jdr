@@ -84,11 +84,9 @@ export const useRest = (
       }
 
       toaster.add({ title: 'Repos court terminé', description: summary, color: 'success' })
-    }
-    catch {
+    } catch {
       toaster.add({ title: 'Erreur lors du repos', color: 'error' })
-    }
-    finally {
+    } finally {
       isResting.value = false
     }
   }
@@ -128,11 +126,9 @@ export const useRest = (
       )
 
       toaster.add({ title: 'Repos long terminé — PV restaurés', description: summary, color: 'success' })
-    }
-    catch {
+    } catch {
       toaster.add({ title: 'Erreur lors du repos', color: 'error' })
-    }
-    finally {
+    } finally {
       isResting.value = false
     }
   }
@@ -152,11 +148,9 @@ export const useRest = (
       recoverFeatures('dawn')
 
       toaster.add({ title: 'Nouvelle aube — aptitudes rechargées', description: summary, color: 'success' })
-    }
-    catch {
+    } catch {
       toaster.add({ title: 'Erreur lors de l\'aube', color: 'error' })
-    }
-    finally {
+    } finally {
       isResting.value = false
     }
   }

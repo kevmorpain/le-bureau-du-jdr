@@ -1,13 +1,14 @@
 <template>
   <div class="space-y-6">
     <header>
-      <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Carac. / Don</h2>
+      <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">
+        Carac. / Don
+      </h2>
       <p class="text-sm text-muted">
         À chaque palier d'ASI, vous pouvez augmenter vos caractéristiques
         (+2 max par palier, plafond {{ ABILITY_SCORE_MAX }}) <strong>ou</strong> prendre un don.
       </p>
     </header>
-
 
     <section
       v-for="lvl in asiLevelsForCharacter"
@@ -51,7 +52,10 @@
         </button>
       </div>
 
-      <div v-if="state.asiChoice[lvl] === 'asi'" class="space-y-3">
+      <div
+        v-if="state.asiChoice[lvl] === 'asi'"
+        class="space-y-3"
+      >
         <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-(--ui-border) bg-(--ui-bg) text-sm">
           <span class="text-muted flex-1">Distribuez <strong class="text-amber-400">2 points</strong>.</span>
           <span
@@ -76,8 +80,14 @@
 
             <div class="flex items-baseline gap-2 mb-2">
               <span class="font-mono text-xs text-muted">{{ baseScore(ab) }}</span>
-              <span v-if="otherAsiBonus(lvl, ab) > 0" class="font-mono text-xs text-muted">(+{{ otherAsiBonus(lvl, ab) }})</span>
-              <span v-if="getBonus(lvl, ab) > 0" class="font-mono text-xs text-amber-400">+{{ getBonus(lvl, ab) }}</span>
+              <span
+                v-if="otherAsiBonus(lvl, ab) > 0"
+                class="font-mono text-xs text-muted"
+              >(+{{ otherAsiBonus(lvl, ab) }})</span>
+              <span
+                v-if="getBonus(lvl, ab) > 0"
+                class="font-mono text-xs text-amber-400"
+              >+{{ getBonus(lvl, ab) }}</span>
               <span class="text-muted text-sm">→</span>
               <span
                 class="font-mono text-2xl font-black leading-none"
@@ -98,7 +108,9 @@
                   : 'border-(--ui-border) text-muted/30 cursor-not-allowed'"
                 :disabled="getBonus(lvl, ab) === 0"
                 @click="adjust(lvl, ab, -1)"
-              >−</button>
+              >
+                −
+              </button>
               <button
                 type="button"
                 class="flex-1 py-1 rounded-lg border text-sm font-bold transition-all"
@@ -107,14 +119,24 @@
                   : 'border-(--ui-border) text-muted/30 cursor-not-allowed'"
                 :disabled="!canIncrease(lvl, ab)"
                 @click="adjust(lvl, ab, +1)"
-              >+</button>
+              >
+                +
+              </button>
             </div>
-            <div v-if="finalAfterAsi(lvl, ab) >= ABILITY_SCORE_MAX" class="text-xs text-red-400 text-center mt-1">max {{ ABILITY_SCORE_MAX }}</div>
+            <div
+              v-if="finalAfterAsi(lvl, ab) >= ABILITY_SCORE_MAX"
+              class="text-xs text-red-400 text-center mt-1"
+            >
+              max {{ ABILITY_SCORE_MAX }}
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-else-if="state.asiChoice[lvl] === 'feat'" class="space-y-3">
+      <div
+        v-else-if="state.asiChoice[lvl] === 'feat'"
+        class="space-y-3"
+      >
         <p class="text-xs text-muted">
           Liste complète des dons. Effets mécaniques appliqués automatiquement quand disponibles.
         </p>
@@ -129,10 +151,15 @@
               : 'border-(--ui-border) bg-(--ui-bg) hover:border-(--ui-border-strong)'"
             @click="state.asiFeats = { ...state.asiFeats, [lvl]: feat.id }"
           >
-            <div class="font-semibold text-sm" :class="state.asiFeats[lvl] === feat.id ? 'text-amber-400' : 'text-(--ui-text)'">
+            <div
+              class="font-semibold text-sm"
+              :class="state.asiFeats[lvl] === feat.id ? 'text-amber-400' : 'text-(--ui-text)'"
+            >
               {{ feat.name }}
             </div>
-            <div class="text-xs text-muted mt-0.5 leading-snug">{{ feat.description }}</div>
+            <div class="text-xs text-muted mt-0.5 leading-snug">
+              {{ feat.description }}
+            </div>
           </button>
         </div>
 
@@ -166,7 +193,9 @@
           <p class="text-sm font-semibold text-(--ui-text)">
             Sort de niveau 1 au choix (Divination ou Enchantement)
           </p>
-          <p class="text-xs text-muted">Foulée brumeuse est octroyée en plus, automatiquement.</p>
+          <p class="text-xs text-muted">
+            Foulée brumeuse est octroyée en plus, automatiquement.
+          </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-60 overflow-y-auto">
             <button
               v-for="sp in feyTouchedSpells"
@@ -250,14 +279,14 @@ const { feats, getById: getFeatById } = useFeats()
 // Sorts éligibles au don Faveur des fées : niveau 1, école Divination ou Enchantement (en plus
 // de Foulée brumeuse, octroyée d'office). Le drapeau `extended` inclut le contenu gaté si actif.
 const { extendedQuery } = useExtendedContent()
-const { data: allSpellsForFeat } = useFetch<any[]>('/api/spells', {
+const { data: allSpellsForFeat } = useFetch<Spell[]>('/api/spells', {
   query: extendedQuery,
   default: () => [],
 })
 const feyTouchedSpells = computed(() =>
   (allSpellsForFeat.value ?? [])
-    .filter((s: any) => s.level === 1 && (s.school?.name === 'Divination' || s.school?.name === 'Enchantment'))
-    .sort((a: any, b: any) => a.name.localeCompare(b.name, 'fr')),
+    .filter(s => s.level === 1 && (s.school?.name === 'Divination' || s.school?.name === 'Enchantment'))
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr')),
 )
 const featSpellFor = (featureId: number | undefined) =>
   featureId != null ? (state.value.featChoices[featureId]?.spellId ?? null) : null
@@ -334,28 +363,23 @@ function adjust(lvl: number, ab: AbilityKey, delta: number) {
   const next = cur + delta
   if (next < 0 || next > 2) return
   if (delta > 0 && !canIncrease(lvl, ab)) return
-  const bonuses = { ...(state.value.asiBonuses[lvl] ?? {}) }
-  if (next === 0) delete bonuses[ab]
-  else bonuses[ab] = next
+  const { [ab]: _previous, ...bonuses } = state.value.asiBonuses[lvl] ?? {}
+  if (next !== 0) bonuses[ab] = next
   state.value.asiBonuses = { ...state.value.asiBonuses, [lvl]: bonuses }
 }
 
 function setChoice(lvl: number, choice: 'asi' | 'feat') {
   if (state.value.asiChoice[lvl] === choice) {
-    const next = { ...state.value.asiChoice }
-    delete next[lvl]
+    const { [lvl]: _cleared, ...next } = state.value.asiChoice
     state.value.asiChoice = next
     return
   }
   state.value.asiChoice = { ...state.value.asiChoice, [lvl]: choice }
   if (choice === 'asi') {
-    const feats = { ...state.value.asiFeats }
-    delete feats[lvl]
+    const { [lvl]: _feat, ...feats } = state.value.asiFeats
     state.value.asiFeats = feats
-  }
-  else {
-    const bonuses = { ...state.value.asiBonuses }
-    delete bonuses[lvl]
+  } else {
+    const { [lvl]: _bonuses, ...bonuses } = state.value.asiBonuses
     state.value.asiBonuses = bonuses
   }
 }

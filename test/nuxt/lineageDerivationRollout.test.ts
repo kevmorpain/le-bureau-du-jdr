@@ -26,7 +26,7 @@ const asSet = (effs: Eff[]) => effs.map(e => stable({ type: e.type, value: e.val
 
 const ROLLOUT = [dwarf, halfling, gnome, tiefling]
 // Alias lignée → ancienne espèce (quand le nom diffère, ex. Asmodée → « Tieffelin (Asmodée) »).
-const LEGACY_ALIAS: Record<string, string> = { 'Asmodée': 'Tieffelin (Asmodée)' }
+const LEGACY_ALIAS: Record<string, string> = { Asmodée: 'Tieffelin (Asmodée)' }
 
 let orm: ReturnType<typeof drizzle>
 const info: Record<string, { baseId: number, baseEffects: Eff[], sheetByLineage: Record<string, number> }> = {}

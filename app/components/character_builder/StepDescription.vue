@@ -3,8 +3,12 @@
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">📜</span>
       <div>
-        <h2 class="text-xl font-bold text-(--ui-text)">Description</h2>
-        <p class="text-sm text-muted mt-0.5">Donnez vie à votre personnage avec un nom, une histoire et une vision du monde.</p>
+        <h2 class="text-xl font-bold text-(--ui-text)">
+          Description
+        </h2>
+        <p class="text-sm text-muted mt-0.5">
+          Donnez vie à votre personnage avec un nom, une histoire et une vision du monde.
+        </p>
       </div>
     </div>
 
@@ -20,7 +24,9 @@
     </div>
 
     <div class="mb-6">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Historique</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Historique
+      </p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <button
           v-for="bg in filteredBackgrounds"
@@ -32,8 +38,12 @@
             : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-amber-500/40'"
           @click="state.backgroundId = bg.id"
         >
-          <div class="font-bold text-sm text-(--ui-text) mb-1">{{ bg.name }}</div>
-          <div class="text-xs text-muted leading-relaxed mb-2">{{ bg.description }}</div>
+          <div class="font-bold text-sm text-(--ui-text) mb-1">
+            {{ bg.name }}
+          </div>
+          <div class="text-xs text-muted leading-relaxed mb-2">
+            {{ bg.description }}
+          </div>
           <div class="flex flex-wrap gap-1">
             <span
               v-for="sk in bg.skillProficiencies"
@@ -51,9 +61,16 @@
             >+{{ bg.languages }} langue{{ bg.languages > 1 ? 's' : '' }}</span>
           </div>
 
-          <div v-if="state.backgroundId === bg.id && bg.featureName" class="mt-3 pt-3 border-t border-(--ui-border) w-full">
-            <div class="text-xs font-semibold text-amber-400 mb-0.5">{{ bg.featureName }}</div>
-            <div class="text-xs text-muted leading-relaxed">{{ bg.featureDescription }}</div>
+          <div
+            v-if="state.backgroundId === bg.id && bg.featureName"
+            class="mt-3 pt-3 border-t border-(--ui-border) w-full"
+          >
+            <div class="text-xs font-semibold text-amber-400 mb-0.5">
+              {{ bg.featureName }}
+            </div>
+            <div class="text-xs text-muted leading-relaxed">
+              {{ bg.featureDescription }}
+            </div>
           </div>
         </button>
       </div>
@@ -86,7 +103,10 @@
         </button>
       </p>
 
-      <div v-if="state.backgroundId === 'custom'" class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 flex flex-col gap-4">
+      <div
+        v-if="state.backgroundId === 'custom'"
+        class="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 flex flex-col gap-4"
+      >
         <div>
           <label class="block text-xs font-bold uppercase tracking-widest text-muted mb-2">Nom de l'historique</label>
           <input
@@ -120,7 +140,10 @@
       </div>
     </div>
 
-    <div v-if="backgroundChoices.length" class="mb-6">
+    <div
+      v-if="backgroundChoices.length"
+      class="mb-6"
+    >
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
         Choix de l'historique
       </p>
@@ -137,7 +160,10 @@
       </div>
     </div>
 
-    <div v-if="replacementChoices.length" class="mb-6">
+    <div
+      v-if="replacementChoices.length"
+      class="mb-6"
+    >
       <p class="text-xs font-bold uppercase tracking-widest text-muted mb-1">
         Maîtrise en double
       </p>
@@ -160,7 +186,9 @@
     </div>
 
     <div class="mb-6">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Alignement</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Alignement
+      </p>
       <div class="grid grid-cols-3 gap-2">
         <button
           v-for="al in ALIGNMENTS"
@@ -175,15 +203,23 @@
           <div
             class="font-black font-mono text-base mb-0.5"
             :class="state.alignment === al.id ? 'text-amber-400' : 'text-(--ui-text)'"
-          >{{ al.short }}</div>
-          <div class="font-semibold text-xs text-(--ui-text)">{{ al.name }}</div>
-          <div class="text-xs text-muted mt-0.5 leading-snug">{{ al.description }}</div>
+          >
+            {{ al.short }}
+          </div>
+          <div class="font-semibold text-xs text-(--ui-text)">
+            {{ al.name }}
+          </div>
+          <div class="text-xs text-muted mt-0.5 leading-snug">
+            {{ al.description }}
+          </div>
         </button>
       </div>
     </div>
 
     <div>
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Traits de personnalité</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+        Traits de personnalité
+      </p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <TraitField
           v-for="field in traitFields"
@@ -255,7 +291,6 @@
 </template>
 
 <script lang="ts" setup>
-import type { BuilderState } from '~/composables/useCharacterBuilder'
 import { isGatedSource } from '~~/shared/rules/source'
 
 type TraitKey = 'personality' | 'ideals' | 'bonds' | 'flaws'
@@ -320,8 +355,7 @@ function toggleCustomSkill(key: string) {
   const idx = state.value.customBackgroundSkills.indexOf(key)
   if (idx >= 0) {
     state.value.customBackgroundSkills.splice(idx, 1)
-  }
-  else if (state.value.customBackgroundSkills.length < 2) {
+  } else if (state.value.customBackgroundSkills.length < 2) {
     state.value.customBackgroundSkills.push(key)
   }
 }

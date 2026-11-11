@@ -1,6 +1,14 @@
 <template>
-  <div class="flex flex-col gap-3" :class="mobile ? 'py-2' : 'py-1'">
-    <p v-if="!mobile" class="text-xs font-bold uppercase tracking-widest text-muted">Aperçu</p>
+  <div
+    class="flex flex-col gap-3"
+    :class="mobile ? 'py-2' : 'py-1'"
+  >
+    <p
+      v-if="!mobile"
+      class="text-xs font-bold uppercase tracking-widest text-muted"
+    >
+      Aperçu
+    </p>
 
     <div>
       <div class="flex justify-between text-xs text-muted mb-1">
@@ -17,7 +25,10 @@
 
     <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <div class="flex items-center gap-2 mb-2">
-        <span v-if="pickedClass" class="text-xl">{{ pickedClass.emoji }}</span>
+        <span
+          v-if="pickedClass"
+          class="text-xl"
+        >{{ pickedClass.emoji }}</span>
         <div class="flex-1 min-w-0">
           <p class="font-bold text-sm text-(--ui-text) truncate">
             {{ charSheet?.name ?? '—' }}
@@ -42,7 +53,10 @@
         >
           {{ cc.className }}
           <span class="font-mono">{{ cc.level }}</span>
-          <span v-if="cc.changed" class="ml-1 text-xs">▲</span>
+          <span
+            v-if="cc.changed"
+            class="ml-1 text-xs"
+          >▲</span>
         </span>
       </div>
 
@@ -53,16 +67,24 @@
     </div>
 
     <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Changements</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+        Changements
+      </p>
       <div class="flex flex-col gap-1.5 text-xs">
         <div class="flex items-center gap-1">
           <span class="text-muted w-12 shrink-0">PV max</span>
           <span class="font-mono text-(--ui-text)">{{ currentHpMax }}</span>
           <span class="text-muted">→</span>
           <span class="font-mono font-bold text-green-400">{{ currentHpMax + (hpGained ?? 0) }}</span>
-          <span v-if="hpGained" class="text-green-400 text-xs">+{{ hpGained }}</span>
+          <span
+            v-if="hpGained"
+            class="text-green-400 text-xs"
+          >+{{ hpGained }}</span>
         </div>
-        <div v-if="profBonusChanged" class="flex items-center gap-1">
+        <div
+          v-if="profBonusChanged"
+          class="flex items-center gap-1"
+        >
           <span class="text-muted w-12 shrink-0">Maîtrise</span>
           <span class="font-mono text-(--ui-text)">+{{ oldProfBonus }}</span>
           <span class="text-muted">→</span>
@@ -97,7 +119,9 @@
     </div>
 
     <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Caractéristiques</p>
+      <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
+        Caractéristiques
+      </p>
       <div class="grid grid-cols-3 gap-1">
         <div
           v-for="ab in ABILITIES"
@@ -105,10 +129,15 @@
           class="text-center py-1.5 rounded-lg"
           :class="(state.asiBonuses[ab] ?? 0) > 0 ? 'bg-amber-500/10' : 'bg-(--ui-bg)'"
         >
-          <p class="font-bold font-mono text-sm leading-none" :class="(state.asiBonuses[ab] ?? 0) > 0 ? 'text-amber-400' : 'text-(--ui-text)'">
+          <p
+            class="font-bold font-mono text-sm leading-none"
+            :class="(state.asiBonuses[ab] ?? 0) > 0 ? 'text-amber-400' : 'text-(--ui-text)'"
+          >
             {{ (finalAbilities[ab] ?? 10) + (state.asiBonuses[ab] ?? 0) }}
           </p>
-          <p class="text-xs text-muted mt-0.5 uppercase tracking-wide">{{ ABILITY_SHORT[ab] }}</p>
+          <p class="text-xs text-muted mt-0.5 uppercase tracking-wide">
+            {{ ABILITY_SHORT[ab] }}
+          </p>
         </div>
       </div>
     </div>
@@ -120,7 +149,7 @@ import type { AbilityKey } from '~/data/character-builder'
 
 defineProps<{ mobile?: boolean }>()
 
-const charSheet = inject('charSheet') as any
+const charSheet = injectLevelUpSheet()
 const {
   state,
   charClasses,
@@ -142,7 +171,6 @@ const { getById: getFeatById } = useFeats()
 const completedCount = computed(() =>
   activeSteps.value.filter(s => isStepComplete.value(s.id)).length,
 )
-
 
 const oldProfBonus = computed(() => profBonusAtLevel(totalLevel.value))
 const newProfBonus = computed(() => profBonusAtLevel(totalLevel.value + 1))

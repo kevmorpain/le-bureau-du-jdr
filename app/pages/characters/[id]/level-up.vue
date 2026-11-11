@@ -22,15 +22,24 @@
   >
     <template #header-subtitle>
       <span class="text-xs text-amber-400">D&amp;D 5e 2014</span>
-      <span v-if="charSheet" class="text-xs text-muted ml-3 truncate">
+      <span
+        v-if="charSheet"
+        class="text-xs text-muted ml-3 truncate"
+      >
         {{ charSheet.name }} · {{ charClasses.map(c => `${c.className} ${c.level}`).join(' / ') }}
       </span>
     </template>
 
-    <div v-if="status === 'pending'" class="flex items-center justify-center h-48 text-muted text-sm">
+    <div
+      v-if="status === 'pending'"
+      class="flex items-center justify-center h-48 text-muted text-sm"
+    >
       Chargement du personnage…
     </div>
-    <div v-else-if="!charSheet" class="flex items-center justify-center h-48 text-muted text-sm">
+    <div
+      v-else-if="!charSheet"
+      class="flex items-center justify-center h-48 text-muted text-sm"
+    >
       Personnage introuvable.
     </div>
     <template v-else>
@@ -46,13 +55,16 @@
       <LevelUpPreview v-if="charSheet" />
     </template>
     <template #preview-mobile>
-      <LevelUpPreview v-if="charSheet" mobile />
+      <LevelUpPreview
+        v-if="charSheet"
+        mobile
+      />
     </template>
   </WizardShell>
 </template>
 
 <script lang="ts" setup>
-import type { CharacterSheetWithASI } from '~/composables/useLevelUp'
+import { levelUpSheetKey, type CharacterSheetWithASI } from '~/composables/useLevelUp'
 
 definePageMeta({ layout: 'blank' })
 
@@ -65,7 +77,7 @@ const { data: charSheetData, status } = await useFetch<CharacterSheetWithASI>(
 
 const charSheet = computed(() => charSheetData.value ?? null)
 
-provide('charSheet', charSheet)
+provide(levelUpSheetKey, charSheet)
 
 const {
   activeSteps,

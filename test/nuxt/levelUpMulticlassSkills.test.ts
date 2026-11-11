@@ -3,7 +3,7 @@ import { defineComponent, h, provide, ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import LevelUpStepSkills from '../../app/components/level_up/LevelUpStepSkills.vue'
-import { useLevelUp, type CharacterSheetWithASI } from '../../app/composables/useLevelUp'
+import { useLevelUp, type CharacterSheetWithASI, levelUpSheetKey } from '../../app/composables/useLevelUp'
 import { SKILL_KEYS, type SkillKey } from '../../shared/rules/skills'
 import type { Catalog, CatalogProgression } from '../../shared/rules/resolve'
 
@@ -51,7 +51,7 @@ async function mountSkillsStep(pickedClassId: string, derivedSkills: SkillKey[] 
   let levelUp!: ReturnType<typeof useLevelUp>
   const Host = defineComponent({
     setup() {
-      provide('charSheet', charSheet)
+      provide(levelUpSheetKey, charSheet as unknown as Ref<CharacterSheetWithASI | null>)
       levelUp = useLevelUp(charSheet as unknown as Ref<CharacterSheetWithASI | null>)
       levelUp.resetWizard()
       Object.assign(levelUp.state.value, { pickedClassId, isMulticlass: true, fromLevel: 0, toLevel: 1, newSkills: [] })

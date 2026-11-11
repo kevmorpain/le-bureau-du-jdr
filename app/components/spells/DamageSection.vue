@@ -102,11 +102,9 @@ const lines = computed<Line[]>(() => {
     if (bonus !== 0) {
       if (isSpellbook) {
         dieText += ` ${formatModifier(bonus)}`
-      }
-      else if (entry.isSpellcastingModifierAdded && eldritchBlastBonus.value === 0) {
+      } else if (entry.isSpellcastingModifierAdded && eldritchBlastBonus.value === 0) {
         dieText += ' + mod'
-      }
-      else {
+      } else {
         dieText += ` ${formatModifier(bonus)}`
       }
     }

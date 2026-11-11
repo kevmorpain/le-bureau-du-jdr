@@ -3,8 +3,12 @@
     <div class="flex items-center gap-3 mb-6">
       <span class="text-4xl">{{ icon }}</span>
       <div>
-        <h2 class="text-xl font-bold text-(--ui-text)">{{ label }}</h2>
-        <p class="text-sm text-muted mt-0.5">{{ description }}</p>
+        <h2 class="text-xl font-bold text-(--ui-text)">
+          {{ label }}
+        </h2>
+        <p class="text-sm text-muted mt-0.5">
+          {{ description }}
+        </p>
       </div>
     </div>
 

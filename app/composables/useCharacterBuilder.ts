@@ -50,7 +50,7 @@ export interface BuilderState {
   level: number
   expertiseSkills: string[]
   hpMode: 'average' | 'roll' | 'manual'
-  hpRolled: number[] | null   // jets pour niveaux 2+ (longueur = level - 1)
+  hpRolled: number[] | null // jets pour niveaux 2+ (longueur = level - 1)
   hpManual: number | null
 
   // Étape 3 — Caractéristiques
@@ -238,8 +238,9 @@ export function useCharacterBuilder() {
         // Merge avec INIT_STATE pour que les nouveaux champs (ex : featChoices)
         // ne soient pas undefined sur un état sauvegardé par une version antérieure.
         if (saved) return { ...freshState(), ...(JSON.parse(saved) as BuilderState) }
+      } catch {
+        // État sauvegardé illisible ou stockage indisponible : on repart d'un état neuf.
       }
-      catch {}
     }
     return freshState()
   })
@@ -248,8 +249,9 @@ export function useCharacterBuilder() {
     watch(state, (val) => {
       try {
         localStorage.setItem(LS_KEY, JSON.stringify(val))
+      } catch {
+        // Stockage plein ou indisponible (navigation privée) : l'état reste en mémoire.
       }
-      catch {}
     }, { deep: true })
   }
 
@@ -265,7 +267,7 @@ export function useCharacterBuilder() {
   const featNeedsSpell = (featureId: number | null | undefined): boolean => {
     if (featureId == null) return false
     const feat = getFeatById(featureId)
-    return (feat?.effects ?? []).some((e: any) => e.type === 'other' && (e.value as any)?.kind === 'fey_touched_spells')
+    return (feat?.effects ?? []).some(e => e.type === 'other' && e.value.kind === 'fey_touched_spells')
   }
 
   const featChoiceComplete = (featureId: number | null | undefined): boolean => {
@@ -703,12 +705,11 @@ export function useCharacterBuilder() {
   const featBonusByAbility = computed<Partial<Record<AbilityKey, number>>>(() => {
     const sum: Partial<Record<AbilityKey, number>> = {}
     for (const id of chosenFeatIds.value) {
-      for (const e of (getFeatById(id)?.effects ?? []) as any[]) {
+      for (const e of getFeatById(id)?.effects ?? []) {
         if (e.type === 'ability_increase') {
           const ab = e.value.ability as AbilityKey
           sum[ab] = (sum[ab] ?? 0) + e.value.amount
-        }
-        else if (e.type === 'ability_increase_choice') {
+        } else if (e.type === 'ability_increase_choice') {
           const ab = state.value.featChoices[id]?.ability
           if (ab) sum[ab] = (sum[ab] ?? 0) + (e.value.amount ?? 0)
         }
@@ -720,7 +721,7 @@ export function useCharacterBuilder() {
   // ─── Étapes actives ───────────────────────────────────────────────────────────
 
   const activeSteps = computed<BuilderStep[]>(() => {
-    return ALL_STEPS.filter(s => {
+    return ALL_STEPS.filter((s) => {
       if (s.id === 'spells') return !!spellcastingInfo.value
       if (s.id === 'asi') return needsAsi.value
       return true
@@ -765,8 +766,7 @@ export function useCharacterBuilder() {
             if (total !== 2) return false
             // Garde-fou : pas plus de +2 sur une seule carac à chaque ASI.
             if (Object.values(bonuses).some(v => (v ?? 0) > 2)) return false
-          }
-          else if (choice === 'feat') {
+          } else if (choice === 'feat') {
             if (s.asiFeats[lvl] == null) return false
             if (!featChoiceComplete(s.asiFeats[lvl])) return false
           }
@@ -843,7 +843,6 @@ export function useCharacterBuilder() {
     const s = state.value
     const raceName = subraceData.value ? subraceData.value.name : raceData.value?.name
     const className = classData.value?.name
-    const bgName = backgroundData.value?.name
 
     const abilitiesDone = ABILITIES.filter(ab => s.abilities[ab] != null).length
     const cantripCount = s.selectedCantrips.length
@@ -874,8 +873,11 @@ export function useCharacterBuilder() {
     state.value = freshState()
     currentStepId.value = 'race'
     if (import.meta.client) {
-      try { localStorage.removeItem(LS_KEY) }
-      catch {}
+      try {
+        localStorage.removeItem(LS_KEY)
+      } catch {
+        // Stockage indisponible : rien à effacer.
+      }
     }
   }
 

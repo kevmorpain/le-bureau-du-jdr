@@ -165,11 +165,9 @@ async function computeDiff() {
     const local = readSnapshot<Record<string, unknown>>(props.characterSheetId) ?? {}
     const localSlots = readSnapshot<SnapshotSlots>(props.characterSheetId, 'slots')
     diffs.value = buildDiffs(local, server, localSlots)
-  }
-  catch {
+  } catch {
     // Réseau de nouveau indisponible : on laisse le message générique.
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -180,8 +178,7 @@ watch(
     if (isConflict) {
       open.value = true
       await computeDiff()
-    }
-    else {
+    } else {
       open.value = false
     }
   },
@@ -192,8 +189,7 @@ async function resolve(choice: 'local' | 'server') {
   try {
     await resolveConflict(props.characterSheetId, choice)
     emit('resolved')
-  }
-  finally {
+  } finally {
     resolving.value = false
     open.value = false
   }

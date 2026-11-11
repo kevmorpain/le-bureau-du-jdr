@@ -1,21 +1,34 @@
 <template>
   <div class="min-h-screen bg-(--ui-bg) flex flex-col">
     <header class="sticky top-0 z-50 flex items-center gap-3 px-4 h-11 bg-(--ui-bg-elevated) border-b border-(--ui-border) shadow-sm">
-      <button class="text-xs text-muted hover:text-(--ui-text) transition-colors cursor-pointer" @click="$emit('back')">
+      <button
+        class="text-xs text-muted hover:text-(--ui-text) transition-colors cursor-pointer"
+        @click="$emit('back')"
+      >
         ← Modifier
       </button>
-      <USeparator orientation="vertical" class="h-4" />
+      <USeparator
+        orientation="vertical"
+        class="h-4"
+      />
       <span class="text-sm font-bold text-(--ui-text)">Récapitulatif</span>
     </header>
 
     <div class="flex-1 px-4 py-8 max-w-2xl mx-auto w-full">
-
       <div class="text-center mb-8">
-        <div class="text-5xl mb-3">{{ classData?.emoji ?? '⚔️' }}</div>
-        <h1 class="text-3xl font-black text-(--ui-text) mb-2">{{ state.name }}</h1>
+        <div class="text-5xl mb-3">
+          {{ classData?.emoji ?? '⚔️' }}
+        </div>
+        <h1 class="text-3xl font-black text-(--ui-text) mb-2">
+          {{ state.name }}
+        </h1>
         <div class="text-sm text-muted flex flex-wrap justify-center items-center gap-2">
           <span>{{ raceName }}</span>
-          <span v-if="classData" class="font-medium" :style="`color: ${classData.color}`">
+          <span
+            v-if="classData"
+            class="font-medium"
+            :style="`color: ${classData.color}`"
+          >
             {{ classData.name }} niveau {{ state.level }}
           </span>
           <span v-if="backgroundData">{{ backgroundData.name }}</span>
@@ -24,7 +37,12 @@
             class="px-2 py-0.5 rounded-lg border border-(--ui-border) bg-(--ui-bg-elevated) text-xs"
           >{{ alignmentData.name }}</span>
         </div>
-        <div v-if="state.subclass" class="text-sm text-amber-400 mt-1">{{ state.subclass }}</div>
+        <div
+          v-if="state.subclass"
+          class="text-sm text-amber-400 mt-1"
+        >
+          {{ state.subclass }}
+        </div>
       </div>
 
       <div class="grid grid-cols-3 gap-2.5 mb-4">
@@ -33,8 +51,15 @@
           :key="stat.label"
           class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 text-center"
         >
-          <div class="font-black font-mono text-2xl text-(--ui-text)">{{ stat.value }}</div>
-          <div class="text-xs text-muted uppercase tracking-wider mt-1" style="font-size:12px">{{ stat.label }}</div>
+          <div class="font-black font-mono text-2xl text-(--ui-text)">
+            {{ stat.value }}
+          </div>
+          <div
+            class="text-xs text-muted uppercase tracking-wider mt-1"
+            style="font-size:12px"
+          >
+            {{ stat.label }}
+          </div>
         </div>
       </div>
 
@@ -44,20 +69,35 @@
           :key="ab"
           class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-2 text-center"
         >
-          <div class="font-black font-mono text-xl text-(--ui-text) leading-none">{{ finalAbilities[ab] ?? '—' }}</div>
+          <div class="font-black font-mono text-xl text-(--ui-text) leading-none">
+            {{ finalAbilities[ab] ?? '—' }}
+          </div>
           <div
             class="text-xs font-mono mt-0.5 leading-none"
             :class="finalAbilities[ab] != null && abilityMod(finalAbilities[ab]!) >= 0 ? 'text-amber-400' : 'text-red-400'"
-          >{{ finalAbilities[ab] != null ? formatMod(abilityMod(finalAbilities[ab]!)) : '' }}</div>
-          <div class="text-muted mt-1 leading-none" style="font-size:12px">{{ ABILITY_SHORT[ab] }}</div>
+          >
+            {{ finalAbilities[ab] != null ? formatMod(abilityMod(finalAbilities[ab]!)) : '' }}
+          </div>
+          <div
+            class="text-muted mt-1 leading-none"
+            style="font-size:12px"
+          >
+            {{ ABILITY_SHORT[ab] }}
+          </div>
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Jets de sauvegarde</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+            Jets de sauvegarde
+          </p>
           <div class="space-y-1.5">
-            <div v-for="ab in ABILITIES" :key="ab" class="flex items-center gap-2">
+            <div
+              v-for="ab in ABILITIES"
+              :key="ab"
+              class="flex items-center gap-2"
+            >
               <ProficiencyIndicator :level="savingThrows[ab]!.proficiency" />
               <span class="text-xs text-muted flex-1">{{ ABILITY_LABELS[ab] }}</span>
               <span
@@ -69,19 +109,36 @@
         </div>
 
         <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">Compétences maîtrisées</p>
-          <div v-if="masteredSkills.length" class="space-y-1.5">
-            <div v-for="sk in masteredSkills" :key="sk.key" class="flex items-center gap-2">
+          <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
+            Compétences maîtrisées
+          </p>
+          <div
+            v-if="masteredSkills.length"
+            class="space-y-1.5"
+          >
+            <div
+              v-for="sk in masteredSkills"
+              :key="sk.key"
+              class="flex items-center gap-2"
+            >
               <ProficiencyIndicator :level="sk.proficiency" />
               <span class="text-xs text-muted flex-1">{{ sk.label }}</span>
               <span class="text-xs font-mono font-bold text-amber-400">{{ formatMod(sk.modifier) }}</span>
             </div>
           </div>
-          <p v-else class="text-xs text-muted italic">Aucune compétence</p>
+          <p
+            v-else
+            class="text-xs text-muted italic"
+          >
+            Aucune compétence
+          </p>
         </div>
       </div>
 
-      <div v-if="selectedSpellNames.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-6">
+      <div
+        v-if="selectedSpellNames.length"
+        class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-6"
+      >
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
           Sorts <span class="text-amber-400 ml-1">{{ selectedSpellNames.length }}</span>
         </p>
@@ -92,16 +149,24 @@
             color="neutral"
             variant="subtle"
             size="md"
-          >{{ name }}</UBadge>
+          >
+            {{ name }}
+          </UBadge>
         </div>
       </div>
 
-      <div v-if="classChoiceSections.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-6">
+      <div
+        v-if="classChoiceSections.length"
+        class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-6"
+      >
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3">
           Choix de classe
         </p>
         <div class="space-y-2.5">
-          <div v-for="section in classChoiceSections" :key="section.title">
+          <div
+            v-for="section in classChoiceSections"
+            :key="section.title"
+          >
             <p class="text-xs text-muted mb-1">
               {{ section.title }}
             </p>
@@ -127,7 +192,9 @@
         <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">
           Faveur du Pacte
         </p>
-        <div class="text-sm text-(--ui-text)">{{ pactBoonLabel }}</div>
+        <div class="text-sm text-(--ui-text)">
+          {{ pactBoonLabel }}
+        </div>
         <div
           v-if="pactBoon === 'blade' && state.pactWeaponItemName"
           class="text-xs text-muted mt-1"
@@ -136,7 +203,10 @@
         </div>
       </div>
 
-      <div v-if="selectedInvocationNames.length" class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6">
+      <div
+        v-if="selectedInvocationNames.length"
+        class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 mb-6"
+      >
         <p class="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2">
           Manifestations occultes <span class="ml-1">{{ selectedInvocationNames.length }}</span>
         </p>
@@ -147,14 +217,22 @@
             color="violet"
             variant="subtle"
             size="md"
-          >{{ name }}</UBadge>
+          >
+            {{ name }}
+          </UBadge>
         </div>
       </div>
 
-      <div v-if="startingEquipment.lines.length" class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-8">
+      <div
+        v-if="startingEquipment.lines.length"
+        class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-3 mb-8"
+      >
         <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">
           Équipement <span class="text-amber-400 ml-1">{{ startingEquipment.lines.length }} objets</span>
-          <span v-if="startingEquipment.po" class="text-amber-400 ml-1.5">· {{ startingEquipment.po }} po</span>
+          <span
+            v-if="startingEquipment.po"
+            class="text-amber-400 ml-1.5"
+          >· {{ startingEquipment.po }} po</span>
         </p>
         <div class="flex flex-wrap gap-1">
           <UBadge
@@ -163,7 +241,9 @@
             color="neutral"
             variant="subtle"
             size="md"
-          >{{ line.quantity > 1 ? `${line.name} ×${line.quantity}` : line.name }}</UBadge>
+          >
+            {{ line.quantity > 1 ? `${line.name} ×${line.quantity}` : line.name }}
+          </UBadge>
         </div>
       </div>
 

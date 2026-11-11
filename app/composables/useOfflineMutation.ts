@@ -33,8 +33,7 @@ export function useOfflineMutation(characterId: MaybeRefOrGetter<number>) {
         })
         args.onServerResponse?.(res)
         return 'sent'
-      }
-      catch (err) {
+      } catch (err) {
         // ofetch : une `response` présente = le serveur a répondu (erreur métier) → ne pas enfiler.
         if ((err as { response?: unknown })?.response) throw err
         // Sinon = échec réseau → on bascule sur la file.

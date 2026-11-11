@@ -26,6 +26,7 @@ import { choicesGainedAtLevelUp, isPickChoice, type ResolvedChoice } from '~~/sh
 import { byFeaturePickOrder, isFeaturePickChoice, optionFeatureIds } from '~~/shared/rules/featurePicks'
 import { pactBoonOfName, type PactBoon } from '~~/shared/rules/pactBoon'
 import type { LevelUpReplacements } from '~~/shared/rules/duplicateProficiencies'
+import type { InjectionKey } from 'vue'
 import type { CharacterSheet, Spell } from '~~/server/utils/drizzle'
 import type { Effect } from '~~/server/db/schema/effects'
 import { useCharacterAbilities, type ProficiencyLevel } from './character/useCharacterAbilities'
@@ -142,6 +143,14 @@ export type CharacterSheetWithASI = CharacterSheet & {
 
 // ─── Composable ───────────────────────────────────────────────────────────────
 
+export const levelUpSheetKey: InjectionKey<Ref<CharacterSheetWithASI | null>> = Symbol('levelUpSheet')
+
+export function injectLevelUpSheet(): Ref<CharacterSheetWithASI | null> {
+  const sheet = inject(levelUpSheetKey)
+  if (!sheet) throw new Error('La fiche du level-up n\'est pas fournie (levelUpSheetKey).')
+  return sheet
+}
+
 export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const state = useState<LevelUpState>('level-up-state', freshState)
   const toast = useToast()
@@ -165,21 +174,21 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   const charClasses = computed(() => {
     return (charSheet.value?.classes ?? []).map((cc) => {
-      const cls = CLASSES.find(c => c.dbName === (cc as any).class?.name)
+      const cls = CLASSES.find(c => c.dbName === cc.class?.name)
       return {
         dbClassId: cc.classId,
-        classId: cls?.id ?? (cc as any).class?.name?.toLowerCase() ?? '',
-        className: (cc as any).class?.name ?? '',
+        classId: cls?.id ?? cc.class?.name?.toLowerCase() ?? '',
+        className: cc.class?.name ?? '',
         level: cc.level,
         isMain: cc.isMain,
-        dbSubclassId: (cc as any).subclassId ?? null,
-        subclassName: (cc as any).subclass?.name ?? null,
-        pactBoon: (cc as any).pactBoon ?? null,
+        dbSubclassId: cc.subclassId ?? null,
+        subclassName: cc.subclass?.name ?? null,
+        pactBoon: cc.pactBoon ?? null,
         hitDie: cls?.hitDie ?? 8,
         color: cls?.color ?? '#a1a1aa',
         emoji: cls?.emoji ?? '⚔️',
         data: cls ?? null,
-        spellcasting: cls?.spellcasting ?? castingOfSubclass(cls?.id ?? '', (cc as any).subclass?.name),
+        spellcasting: cls?.spellcasting ?? castingOfSubclass(cls?.id ?? '', cc.subclass?.name),
       }
     })
   })
@@ -205,7 +214,6 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const proficientSkills = computed<string[]>(() => skillsWhere(l => l !== 'none').map(s => s.key))
   const eligibleExpertiseSkills = computed(() => skillsWhere(l => l === 'proficient'))
 
-
   // Maîtrises d'outils ou de langues déjà acquises : sans les objets ni les effets temporaires de la fiche,
   // qui ne donnent pas de maîtrise durable à exclure des choix.
   const ownedProficiencies = (type: 'tool' | 'language') => {
@@ -224,7 +232,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const knownLanguages = computed<string[]>(() => ownedProficiencies('language'))
 
   const currentSpellIds = computed<number[]>(() => {
-    return (charSheet.value?.spells ?? []).map((s: any) => s.spellId ?? s.id)
+    return (charSheet.value?.spells ?? []).map(s => s.spellId)
   })
 
   // ── Picked class data ──────────────────────────────────────────────────────
@@ -325,8 +333,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   }
 
   const knownSpellNames = computed<string[]>(() => {
-    const spells = (charSheet.value?.spells ?? []) as any[]
-    return spells.map(s => s.spell?.name ?? '').filter(Boolean)
+    return (charSheet.value?.spells ?? []).map(s => s.spell?.name ?? '').filter(Boolean)
   })
 
   // ── Arcane Mystérieux (Occultiste niveaux 11 / 13 / 15 / 17) ───────────────
@@ -601,16 +608,17 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const replaceableSpells = computed(() => {
     const classId = charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId
     if (spellLearning.value !== 'known' || state.value.isMulticlass || !hasSpellcasting.value || classId == null) return []
-    return ((charSheet.value?.spells ?? []) as any[])
-      .filter(cs => cs.spell?.level >= 1 && cs.source == null && (cs.classId === classId || cs.classId == null))
-      .map(cs => ({ id: cs.spellId as number, name: cs.spell.name as string, level: cs.spell.level as number }))
+    return (charSheet.value?.spells ?? []).flatMap(cs =>
+      cs.spell && cs.spell.level >= 1 && cs.source == null && (cs.classId === classId || cs.classId == null)
+        ? [{ id: cs.spellId, name: cs.spell.name, level: cs.spell.level }]
+        : [])
   })
   const spellPicksDue = computed(() => spellsToLearn.value + secrets.value.extra + (state.value.replacedSpellId != null ? 1 : 0))
   const requiredSpellPicks = computed(() => requiredPicks(spellPicksDue.value, learnableSpells.value))
 
   // ── Active steps ───────────────────────────────────────────────────────────
 
-  const activeSteps = computed(() => ALL_LU_STEPS.filter(s => {
+  const activeSteps = computed(() => ALL_LU_STEPS.filter((s) => {
     if (s.id === 'asi') return isAsiLevel.value
     if (s.id === 'skills') return needsMulticlassSkills.value || newPickChoices.value.length > 0 || replacementChoices.value.length > 0
     if (s.id === 'spells') return hasSpellcasting.value

@@ -51,9 +51,9 @@ export function isValidAsiDistribution(payload: Partial<Record<AbilityKey, numbe
   return { ok: true }
 }
 
-export type AsiOrFeatPick =
-  | { branch: 'asi', payload: Partial<Record<AbilityKey, number>> }
-  | { branch: 'feat', featureId: number }
+export type AsiOrFeatPick
+  = | { branch: 'asi', payload: Partial<Record<AbilityKey, number>> }
+    | { branch: 'feat', featureId: number }
 
 // L'éligibilité du don (catégorie, prérequis) est vérifiée par `isOptionEligible`, pas ici.
 export function isValidAsiOrFeat(pick: AsiOrFeatPick): DistributionCheck {
@@ -62,9 +62,9 @@ export function isValidAsiOrFeat(pick: AsiOrFeatPick): DistributionCheck {
   return { ok: true }
 }
 
-export type CompositeShape =
-  | { kind: 'ability_scores', abilities: AbilityKey[], distributions: AbilityDistribution[] }
-  | { kind: 'asi_or_feat', asiDistributions: readonly AsiDistribution[], featCategory?: string }
+export type CompositeShape
+  = | { kind: 'ability_scores', abilities: AbilityKey[], distributions: AbilityDistribution[] }
+    | { kind: 'asi_or_feat', asiDistributions: readonly AsiDistribution[], featCategory?: string }
 
 /** `null` = choix « N dans une liste » classique. */
 export function describeCompositeChoice(kind: ChoiceKind, optionSource: OptionSource): CompositeShape | null {

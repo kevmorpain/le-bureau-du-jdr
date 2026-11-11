@@ -33,8 +33,7 @@ export function readQueue(characterId: number): QueuedMutation[] {
     const raw = localStorage.getItem(queueKey(characterId))
     const parsed = raw ? JSON.parse(raw) : []
     return Array.isArray(parsed) ? parsed as QueuedMutation[] : []
-  }
-  catch {
+  } catch {
     return []
   }
 }
@@ -43,8 +42,7 @@ export function writeQueue(characterId: number, ops: QueuedMutation[]): void {
   if (import.meta.server) return
   try {
     localStorage.setItem(queueKey(characterId), JSON.stringify(ops))
-  }
-  catch {
+  } catch {
     // Quota dépassé / stockage indisponible : on n'a pas mieux à faire ici.
   }
 }
@@ -101,8 +99,7 @@ export function readSnapshot<T = unknown>(characterId: number, suffix = 'sheet')
   try {
     const raw = localStorage.getItem(snapshotKey(characterId, suffix))
     return raw ? JSON.parse(raw) as T : null
-  }
-  catch {
+  } catch {
     return null
   }
 }
@@ -111,8 +108,7 @@ export function writeSnapshot(characterId: number, data: unknown, suffix = 'shee
   if (import.meta.server) return
   try {
     localStorage.setItem(snapshotKey(characterId, suffix), JSON.stringify(data))
-  }
-  catch {
+  } catch {
     // Quota dépassé / indisponible.
   }
 }

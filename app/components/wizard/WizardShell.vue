@@ -7,7 +7,10 @@
       >
         {{ backLabel ?? '←' }}
       </NuxtLink>
-      <USeparator orientation="vertical" class="h-4" />
+      <USeparator
+        orientation="vertical"
+        class="h-4"
+      />
       <span class="text-sm font-bold text-(--ui-text)">{{ title }}</span>
       <slot name="header-subtitle" />
       <div class="ml-auto flex items-center gap-2">
@@ -23,15 +26,24 @@
         :class="pillClass(step.id)"
         @click="$emit('go-to', step.id)"
       >
-        <span v-if="isStepComplete(step.id) && step.id !== currentStepId" class="text-green-400">✓</span>
-        <UIcon v-else :name="step.icon" class="size-3.5" />
+        <span
+          v-if="isStepComplete(step.id) && step.id !== currentStepId"
+          class="text-green-400"
+        >✓</span>
+        <UIcon
+          v-else
+          :name="step.icon"
+          class="size-3.5"
+        />
         {{ step.label }}
       </button>
     </nav>
 
     <div class="flex flex-1 min-h-0">
       <nav class="hidden lg:flex flex-col gap-1 py-4 px-3 border-r border-(--ui-border) w-48 shrink-0 sticky top-11 h-[calc(100vh-2.75rem)] overflow-y-auto">
-        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3 px-2">Étapes</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-muted mb-3 px-2">
+          Étapes
+        </p>
         <button
           v-for="step in steps"
           :key="step.id"
@@ -41,8 +53,15 @@
         >
           <div class="flex items-center gap-2">
             <span class="text-sm leading-none shrink-0">
-              <span v-if="isStepComplete(step.id) && step.id !== currentStepId" class="text-green-400 text-base">✓</span>
-              <UIcon v-else :name="step.icon" class="size-4" />
+              <span
+                v-if="isStepComplete(step.id) && step.id !== currentStepId"
+                class="text-green-400 text-base"
+              >✓</span>
+              <UIcon
+                v-else
+                :name="step.icon"
+                class="size-4"
+              />
             </span>
             <span class="text-sm font-medium truncate">{{ step.label }}</span>
             <span
@@ -106,7 +125,10 @@
           :class="previewOpen ? 'rotate-180' : ''"
         />
       </button>
-      <div v-show="previewOpen" class="px-4 pb-4">
+      <div
+        v-show="previewOpen"
+        class="px-4 pb-4"
+      >
         <slot name="preview-mobile" />
       </div>
     </div>
@@ -134,8 +156,8 @@ const props = defineProps<{
 }>()
 
 defineEmits<{
-  next: []
-  prev: []
+  'next': []
+  'prev': []
   'go-to': [stepId: string]
 }>()
 

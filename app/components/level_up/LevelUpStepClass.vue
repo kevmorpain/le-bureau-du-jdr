@@ -1,6 +1,8 @@
 <template>
   <div>
-    <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Quelle voie suivre ?</h2>
+    <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">
+      Quelle voie suivre ?
+    </h2>
     <p class="text-sm text-muted mb-5 leading-relaxed">
       Approfondissez une classe existante ou prenez un premier niveau dans une nouvelle classe
       (<em>multi-classage</em>). Les prérequis D&amp;D 5e 2014 sont indiqués à titre indicatif — le MJ a le dernier mot.
@@ -17,7 +19,10 @@
         >
           {{ cc.className }}
           <span class="font-mono">{{ cc.level }}</span>
-          <span v-if="cc.subclassName" class="ml-1 opacity-70 text-xs">· {{ cc.subclassName }}</span>
+          <span
+            v-if="cc.subclassName"
+            class="ml-1 opacity-70 text-xs"
+          >· {{ cc.subclassName }}</span>
         </span>
       </div>
       <span class="text-xs text-muted shrink-0">
@@ -46,27 +51,72 @@
         <div class="flex items-center gap-3 mb-2">
           <span class="text-2xl">{{ cc.emoji }}</span>
           <div class="flex-1 min-w-0">
-            <div class="font-bold text-sm text-(--ui-text)">{{ cc.className }}</div>
-            <div class="text-xs font-mono mt-0.5" :style="{ color: cc.color }">
+            <div class="font-bold text-sm text-(--ui-text)">
+              {{ cc.className }}
+            </div>
+            <div
+              class="text-xs font-mono mt-0.5"
+              :style="{ color: cc.color }"
+            >
               niv. {{ cc.level }} → {{ cc.level + 1 }}
             </div>
           </div>
-          <UBadge :color="cc.classId" variant="subtle" size="md">d{{ cc.hitDie }}</UBadge>
+          <UBadge
+            :color="cc.classId"
+            variant="subtle"
+            size="md"
+          >
+            d{{ cc.hitDie }}
+          </UBadge>
         </div>
 
         <div class="text-xs text-muted leading-snug">
           <template v-if="getFeaturesAt(cc.classId, cc.level + 1).length">
-            <span :style="{ color: cc.color }" class="font-semibold">Débloque :</span>
+            <span
+              :style="{ color: cc.color }"
+              class="font-semibold"
+            >Débloque :</span>
             {{ getFeaturesAt(cc.classId, cc.level + 1).join(' · ') }}
           </template>
-          <span v-else class="italic">Pas de nouvelle aptitude · +PV et progression.</span>
+          <span
+            v-else
+            class="italic"
+          >Pas de nouvelle aptitude · +PV et progression.</span>
         </div>
 
         <div class="flex flex-wrap gap-1.5 mt-2.5">
-          <UBadge v-if="isSubclassDue(cc)" color="warning" variant="subtle" size="md">⚡ Sous-classe</UBadge>
-          <UBadge v-if="isAsiDue(cc.classId, cc.level + 1)" color="violet" variant="subtle" size="md">✦ ASI / Don</UBadge>
-          <UBadge v-if="isFightingStyleDue(cc.classId, cc.level + 1)" color="error" variant="subtle" size="md">⚔ Style de combat</UBadge>
-          <UBadge v-if="isExpertiseDue(cc.classId, cc.level + 1)" color="success" variant="subtle" size="md">★ Expertise</UBadge>
+          <UBadge
+            v-if="isSubclassDue(cc)"
+            color="warning"
+            variant="subtle"
+            size="md"
+          >
+            ⚡ Sous-classe
+          </UBadge>
+          <UBadge
+            v-if="isAsiDue(cc.classId, cc.level + 1)"
+            color="violet"
+            variant="subtle"
+            size="md"
+          >
+            ✦ ASI / Don
+          </UBadge>
+          <UBadge
+            v-if="isFightingStyleDue(cc.classId, cc.level + 1)"
+            color="error"
+            variant="subtle"
+            size="md"
+          >
+            ⚔ Style de combat
+          </UBadge>
+          <UBadge
+            v-if="isExpertiseDue(cc.classId, cc.level + 1)"
+            color="success"
+            variant="subtle"
+            size="md"
+          >
+            ★ Expertise
+          </UBadge>
         </div>
       </button>
     </div>
@@ -110,13 +160,29 @@
         <div class="flex items-center gap-2 mb-1.5">
           <span class="text-xl">{{ cls.emoji }}</span>
           <div class="flex-1 min-w-0">
-            <div class="font-bold text-sm text-(--ui-text)">{{ cls.name }}</div>
-            <div class="text-xs font-mono" :style="{ color: cls.color }">d{{ cls.hitDie }}</div>
+            <div class="font-bold text-sm text-(--ui-text)">
+              {{ cls.name }}
+            </div>
+            <div
+              class="text-xs font-mono"
+              :style="{ color: cls.color }"
+            >
+              d{{ cls.hitDie }}
+            </div>
           </div>
         </div>
 
-        <div v-if="subclassLevelFor(cls.id) === 1" class="mb-1.5">
-          <UBadge color="warning" variant="subtle" size="md">⚡ Sous-classe dès le niv.1</UBadge>
+        <div
+          v-if="subclassLevelFor(cls.id) === 1"
+          class="mb-1.5"
+        >
+          <UBadge
+            color="warning"
+            variant="subtle"
+            size="md"
+          >
+            ⚡ Sous-classe dès le niv.1
+          </UBadge>
         </div>
 
         <LevelUpPrerequisiteBadges
@@ -155,7 +221,7 @@ const {
   asiDueForClassLevel,
   selectClass,
   CLASSES,
-} = useLevelUp(inject('charSheet') as any)
+} = useLevelUp(injectLevelUpSheet())
 
 const currentClassIds = computed(() => new Set(charClasses.value.map(c => c.classId)))
 const otherClasses = computed(() => CLASSES.filter(c => !currentClassIds.value.has(c.id)))

@@ -499,13 +499,11 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .values({ characterSheetId, spellId: familiarSpellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
       .onConflictDoNothing())
-  }
-  else if (pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
+  } else if (pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
       .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
       .onConflictDoNothing())
-  }
-  else if (pactBoon === 'blade' && d.pactWeaponInventoryId) {
+  } else if (pactBoon === 'blade' && d.pactWeaponInventoryId) {
     stmts.push(db.update(schema.characterInventory).set({ isPactWeapon: false }).where(eq(schema.characterInventory.characterSheetId, characterSheetId)))
     stmts.push(db.update(schema.characterInventory).set({ isPactWeapon: true }).where(and(
       eq(schema.characterInventory.id, d.pactWeaponInventoryId),

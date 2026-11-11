@@ -91,8 +91,7 @@ export async function seedLineages(db: Db, data: LineageSpeciesData): Promise<Li
   let choiceFeatureId: number
   if (existingChoice) {
     choiceFeatureId = existingChoice.id
-  }
-  else {
+  } else {
     const cf = await db.insert(schema.features).values({ name: lineageChoice.name, description: lineageChoice.description, featureType: 'species_trait', ruleset, levelRequired: 1 }).returning().get()
     featuresInserted++
     await db.insert(schema.speciesFeatures).values({ speciesId: base.id, featureId: cf.id }).onConflictDoNothing()

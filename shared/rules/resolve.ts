@@ -147,8 +147,7 @@ export function resolveChoices(projection: CharacterProjection, catalog: Catalog
       if (p.classGrant === 'start' && !isMain) continue
       if (p.classGrant === 'multiclass' && isMain) continue
       ownerLevel = classLevels[p.ownerClassId] ?? 0
-    }
-    else {
+    } else {
       if (p.ownerSpeciesId != null && projection.speciesId !== p.ownerSpeciesId) continue
       if (p.ownerLineageId != null && projection.lineageId !== p.ownerLineageId) continue
       if (p.ownerBackgroundId != null && projection.backgroundId !== p.ownerBackgroundId) continue

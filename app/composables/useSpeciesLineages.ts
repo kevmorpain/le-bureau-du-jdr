@@ -49,7 +49,9 @@ export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>) {
     { query: extendedQuery, default: () => null, immediate: false, watch: false },
   )
   // Refetch quand la base OU le drapeau étendu change (les lignées gatées apparaissent/disparaissent).
-  watch([baseSpeciesId, extended], ([id]) => { if (id) refresh() }, { immediate: true })
+  watch([baseSpeciesId, extended], ([id]) => {
+    if (id) refresh()
+  }, { immediate: true })
 
   const lineageSubraces = computed<SubraceData[]>(() => {
     // Ne rend les lignées que si la structure chargée correspond à la base courante (anti-flash).

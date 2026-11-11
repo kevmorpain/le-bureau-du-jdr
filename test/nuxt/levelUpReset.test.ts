@@ -4,7 +4,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { clearNuxtState } from '#app'
 import LevelUpPage from '../../app/pages/characters/[id]/level-up.vue'
 import LevelUpStepClass from '../../app/components/level_up/LevelUpStepClass.vue'
-import { useLevelUp, type CharacterSheetWithASI } from '../../app/composables/useLevelUp'
+import { useLevelUp, type CharacterSheetWithASI, levelUpSheetKey } from '../../app/composables/useLevelUp'
 
 const SHEET = {
   id: 1,
@@ -27,7 +27,7 @@ async function mountLevelUp(child?: Component) {
   const charSheet = ref(SHEET) as unknown as Ref<CharacterSheetWithASI | null>
   const Host = defineComponent({
     setup() {
-      provide('charSheet', charSheet)
+      provide(levelUpSheetKey, charSheet)
       levelUp = useLevelUp(charSheet)
       return () => (child ? h(child) : h('div'))
     },

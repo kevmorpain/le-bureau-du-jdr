@@ -1,13 +1,20 @@
 <template>
   <div class="rounded-lg border border-(--ui-border) bg-(--ui-bg) p-3">
     <div class="flex items-center gap-2 mb-2">
-      <p class="text-xs font-bold uppercase tracking-widest text-muted">Doué — 3 maîtrises au choix</p>
-      <span class="text-xs font-semibold" :class="total >= SKILLED_FEAT_COUNT ? 'text-green-400' : 'text-amber-400'">
+      <p class="text-xs font-bold uppercase tracking-widest text-muted">
+        Doué — 3 maîtrises au choix
+      </p>
+      <span
+        class="text-xs font-semibold"
+        :class="total >= SKILLED_FEAT_COUNT ? 'text-green-400' : 'text-amber-400'"
+      >
         {{ total }}/{{ SKILLED_FEAT_COUNT }}
       </span>
     </div>
 
-    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted/70 mb-1">Compétences</p>
+    <p class="text-[11px] font-semibold uppercase tracking-wide text-muted/70 mb-1">
+      Compétences
+    </p>
     <div class="flex flex-wrap gap-1.5 mb-3">
       <button
         v-for="s in availableSkills"
@@ -25,9 +32,20 @@
       </button>
     </div>
 
-    <template v-for="(catTools, category) in availableToolsByCategory" :key="category">
-      <p v-if="catTools.length" class="text-[11px] font-semibold uppercase tracking-wide text-muted/70 mb-1">{{ category }}</p>
-      <div v-if="catTools.length" class="flex flex-wrap gap-1.5 mb-3">
+    <template
+      v-for="(catTools, category) in availableToolsByCategory"
+      :key="category"
+    >
+      <p
+        v-if="catTools.length"
+        class="text-[11px] font-semibold uppercase tracking-wide text-muted/70 mb-1"
+      >
+        {{ category }}
+      </p>
+      <div
+        v-if="catTools.length"
+        class="flex flex-wrap gap-1.5 mb-3"
+      >
         <button
           v-for="tool in catTools"
           :key="tool"

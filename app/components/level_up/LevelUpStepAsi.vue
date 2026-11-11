@@ -8,14 +8,16 @@
       subtitle="Amélioration de caractéristiques ou don"
     />
 
-    <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">Carac. / Don</h2>
+    <h2 class="text-xl font-extrabold text-(--ui-text) mb-1.5">
+      Carac. / Don
+    </h2>
     <p class="text-sm text-muted mb-5">
       Augmentez vos caractéristiques (maximum +2, plafond {{ ABILITY_SCORE_MAX }}) ou prenez un don.
     </p>
 
     <div class="flex gap-2 mb-6">
       <button
-        v-for="opt in [['asi','✦ Caractéristiques'], ['feat','📜 Don']]"
+        v-for="opt in [['asi', '✦ Caractéristiques'], ['feat', '📜 Don']]"
         :key="opt[0]"
         class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border"
         :class="state.asiChoice === opt[0]
@@ -55,7 +57,10 @@
               class="font-mono text-2xl font-black leading-none"
               :class="(state.asiBonuses[ab] ?? 0) > 0 ? 'text-amber-400' : 'text-(--ui-text)'"
             >{{ baseScore(ab) + (state.asiBonuses[ab] ?? 0) }}</span>
-            <span v-if="(state.asiBonuses[ab] ?? 0) > 0" class="text-xs text-amber-400 font-mono">+{{ state.asiBonuses[ab] }}</span>
+            <span
+              v-if="(state.asiBonuses[ab] ?? 0) > 0"
+              class="text-xs text-amber-400 font-mono"
+            >+{{ state.asiBonuses[ab] }}</span>
           </div>
 
           <div class="text-xs text-muted mb-3">
@@ -70,7 +75,9 @@
                 : 'border-(--ui-border) text-muted/30 cursor-not-allowed'"
               :disabled="(state.asiBonuses[ab] ?? 0) === 0"
               @click="adjust(ab, -1)"
-            >−</button>
+            >
+              −
+            </button>
             <button
               class="flex-1 py-1 rounded-lg border text-sm font-bold transition-all"
               :class="canIncrease(ab)
@@ -78,9 +85,16 @@
                 : 'border-(--ui-border) text-muted/30 cursor-not-allowed'"
               :disabled="!canIncrease(ab)"
               @click="adjust(ab, +1)"
-            >+</button>
+            >
+              +
+            </button>
           </div>
-          <div v-if="baseScore(ab) + (state.asiBonuses[ab] ?? 0) >= ABILITY_SCORE_MAX" class="text-xs text-red-400 text-center mt-1">max {{ ABILITY_SCORE_MAX }}</div>
+          <div
+            v-if="baseScore(ab) + (state.asiBonuses[ab] ?? 0) >= ABILITY_SCORE_MAX"
+            class="text-xs text-red-400 text-center mt-1"
+          >
+            max {{ ABILITY_SCORE_MAX }}
+          </div>
         </div>
       </div>
     </div>
@@ -99,10 +113,15 @@
             : 'border-(--ui-border) bg-(--ui-bg-elevated) hover:border-(--ui-border-strong)'"
           @click="pickFeat(feat.id)"
         >
-          <div class="font-semibold text-sm" :class="state.featureId === feat.id ? 'text-amber-400' : 'text-(--ui-text)'">
+          <div
+            class="font-semibold text-sm"
+            :class="state.featureId === feat.id ? 'text-amber-400' : 'text-(--ui-text)'"
+          >
             {{ feat.name }}
           </div>
-          <div class="text-xs text-muted mt-0.5 leading-snug">{{ feat.description }}</div>
+          <div class="text-xs text-muted mt-0.5 leading-snug">
+            {{ feat.description }}
+          </div>
         </button>
       </div>
 
@@ -160,7 +179,6 @@
 </template>
 
 <script lang="ts" setup>
-import type { AbilityBonuses } from '~/composables/useLevelUp'
 import type { AbilityKey } from '~/data/character-builder'
 import { ABILITY_SCORE_MAX } from '~~/shared/rules/abilityScores'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
@@ -180,7 +198,7 @@ const {
   ABILITY_LABELS,
   abilityMod,
   formatMod,
-} = useLevelUp(inject('charSheet') as any)
+} = useLevelUp(injectLevelUpSheet())
 
 const { feats, getById: getFeatById } = useFeats()
 

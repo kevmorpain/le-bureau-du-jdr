@@ -29,7 +29,9 @@
               />
               <span class="flex-1 font-medium text-sm">{{ feat.name }}</span>
             </div>
-            <p class="text-sm text-muted mt-1 leading-snug">{{ feat.description }}</p>
+            <p class="text-sm text-muted mt-1 leading-snug">
+              {{ feat.description }}
+            </p>
           </button>
 
           <p
@@ -67,7 +69,10 @@
 
     <template #footer>
       <div class="flex justify-end gap-2 p-4">
-        <UButton variant="ghost" @click="open = false">
+        <UButton
+          variant="ghost"
+          @click="open = false"
+        >
           Annuler
         </UButton>
         <UButton
@@ -130,7 +135,7 @@ const filteredFeats = computed(() => {
 const selectedFeat = computed(() => feats.value.find(f => f.id === selectedId.value) ?? null)
 
 const needsAbilityChoice = computed(() =>
-  (selectedFeat.value?.effects ?? []).some((e: any) => e.type === 'ability_increase_choice'),
+  (selectedFeat.value?.effects ?? []).some(e => e.type === 'ability_increase_choice'),
 )
 
 const allowedAbilityOptions = computed(() => {
@@ -167,12 +172,10 @@ async function submit() {
     selectedId.value = null
     chosenAbility.value = null
     search.value = ''
-  }
-  catch (e) {
+  } catch (e) {
     console.error('[feats] add error:', e)
     toast.add({ title: isBoon.value ? 'Erreur lors de l\'ajout de la faveur' : 'Erreur lors de l\'ajout du don', color: 'error' })
-  }
-  finally {
+  } finally {
     submitting.value = false
   }
 }

@@ -73,7 +73,7 @@
           class="flex flex-col items-center gap-1"
         >
           <UInput
-            :ref="(el: any) => setInputRef(el, idx)"
+            :ref="(el) => setInputRef(el, idx)"
             v-model="deltas[coin.key]"
             type="number"
             min="0"
@@ -133,6 +133,8 @@
 </template>
 
 <script lang="ts" setup>
+import type { ComponentPublicInstance } from 'vue'
+
 type CoinKey = 'pp' | 'po' | 'pe' | 'pa' | 'pc'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
@@ -150,9 +152,9 @@ const mode = ref<'gain' | 'spend' | null>(null)
 const deltas = ref<Record<CoinKey, string>>({ pp: '', po: '', pe: '', pa: '', pc: '' })
 const flashResult = ref<string | null>(null)
 
-const inputRefs: any[] = []
-const setInputRef = (el: any, idx: number) => {
-  if (el) inputRefs[idx] = el
+const inputRefs: Array<{ input?: HTMLInputElement }> = []
+const setInputRef = (el: Element | ComponentPublicInstance | null, idx: number) => {
+  if (el) inputRefs[idx] = el as { input?: HTMLInputElement }
 }
 
 const resetDeltas = () => {

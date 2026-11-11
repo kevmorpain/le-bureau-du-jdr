@@ -65,10 +65,16 @@
       class="flex items-center gap-2 text-sm"
     >
       <span class="text-muted">Sorts préparés</span>
-      <span class="font-semibold" :class="preparedCount > preparedLimit ? 'text-warning' : ''">
+      <span
+        class="font-semibold"
+        :class="preparedCount > preparedLimit ? 'text-warning' : ''"
+      >
         {{ preparedCount }} / {{ preparedLimit }}
       </span>
-      <span v-if="preparedCount > preparedLimit" class="text-xs text-warning">
+      <span
+        v-if="preparedCount > preparedLimit"
+        class="text-xs text-warning"
+      >
         au-dessus de la limite du jour
       </span>
     </div>
@@ -78,7 +84,13 @@
       class="flex gap-x-6 rounded-lg border border-violet-500/30 bg-violet-500/5 p-2"
     >
       <div class="flex items-center pr-2">
-        <UBadge color="violet" variant="subtle" size="md">Pacte</UBadge>
+        <UBadge
+          color="violet"
+          variant="subtle"
+          size="md"
+        >
+          Pacte
+        </UBadge>
       </div>
       <div>
         <p class="text-sm text-muted">
@@ -224,7 +236,12 @@
             </template>
 
             <template v-if="spellSlots.pact_magic[group.level] && spellSlots.pact_magic[group.level]!.max > 0">
-              <UBadge color="violet" variant="subtle" size="md" class="ml-2">
+              <UBadge
+                color="violet"
+                variant="subtle"
+                size="md"
+                class="ml-2"
+              >
                 Pacte
               </UBadge>
               <button
@@ -707,8 +724,7 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
   if (!lvl) return
 
   const wantedName = ARCANUM_FEATURE_NAME_BY_LEVEL[lvl]
-  const charFeatures = (characterSheetRef.value as any)?.features ?? []
-  const cf = charFeatures.find((f: any) => f.feature?.name === wantedName)
+  const cf = (characterSheetRef.value?.features ?? []).find(f => f.feature?.name === wantedName)
 
   if (!cf) {
     useToast().add({
@@ -734,8 +750,7 @@ async function castArcanumSpell(cs: CharacterSpellWithSpell) {
       body: [{ featureId: cf.featureId, currentUses: currentUses + 1 }],
     })
     cf.currentUses = currentUses + 1
-  }
-  catch {
+  } catch {
     useToast().add({ title: 'Erreur lors de la mise à jour de la feature', color: 'error' })
     return
   }
@@ -814,7 +829,7 @@ const alreadyAddedIds = computed(() =>
 const charismaModifier = computed<number>(() => abilityModifiers.value.cha ?? 0)
 
 const eldritchBlastMods = computed(() => {
-  const features = (characterSheetRef.value as any)?.features ?? []
+  const features = characterSheetRef.value?.features ?? []
   const sourceNames: string[] = []
   let agonizing = false, repelling = false, rangeExtended = false
   for (const cf of features) {
@@ -824,9 +839,11 @@ const eldritchBlastMods = computed(() => {
       const eff = fe.effect
       if (!eff || eff.type !== 'eldritch_blast_modifier') continue
       const kind = eff.value?.kind
-      if (kind === 'agonizing') { agonizing = true; sourceNames.push(f.name) }
-      else if (kind === 'repelling') { repelling = true; sourceNames.push(f.name) }
-      else if (kind === 'range_extended') { rangeExtended = true; sourceNames.push(f.name) }
+      if (kind === 'agonizing') agonizing = true
+      else if (kind === 'repelling') repelling = true
+      else if (kind === 'range_extended') rangeExtended = true
+      else continue
+      sourceNames.push(f.name)
     }
   }
   return { agonizing, repelling, rangeExtended, sourceNames: [...new Set(sourceNames)] }

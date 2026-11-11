@@ -65,7 +65,7 @@ describe('resolveAtLevel — progression creuse', () => {
   })
 
   it('tolère les clés chaînes (JSON relu depuis la base) comme numériques (seeds)', () => {
-    expect(resolveAtLevel({ '1': '1d6', '3': '2d6' }, 4)).toBe('2d6')
+    expect(resolveAtLevel({ 1: '1d6', 3: '2d6' }, 4)).toBe('2d6')
   })
 
   it('accepte une table absente', () => {

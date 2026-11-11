@@ -70,17 +70,17 @@ export const FEATURE_PICK_KINDS = [
 export const REPLACEABLE_EVERY_LEVEL_KINDS = ['invocations'] as const satisfies readonly ChoiceKind[]
 
 // `proficient_skills` / `proficient_weapons` se résolvent contre l'état du perso (non cachables) ; le reste via le catalogue.
-export type OptionSource =
-  | { type: 'enum', values: string[] }
-  | { type: 'subclasses' }
-  | { type: 'lineages' } // sous-races 2014 / lignées 2024 de l'espèce propriétaire (D17)
-  | { type: 'feature_group', group: FeatureTag }
-  | { type: 'skills', from: SkillKey[] | 'all' }
-  | { type: 'proficient_skills' }
-  | { type: 'proficient_weapons' } // maîtrise d'armes 5.5 : N armes parmi celles déjà maîtrisées
-  | { type: 'languages', from?: string[] }
+export type OptionSource
+  = | { type: 'enum', values: string[] }
+    | { type: 'subclasses' }
+    | { type: 'lineages' } // sous-races 2014 / lignées 2024 de l'espèce propriétaire (D17)
+    | { type: 'feature_group', group: FeatureTag }
+    | { type: 'skills', from: SkillKey[] | 'all' }
+    | { type: 'proficient_skills' }
+    | { type: 'proficient_weapons' } // maîtrise d'armes 5.5 : N armes parmi celles déjà maîtrisées
+    | { type: 'languages', from?: string[] }
   // `orLanguages` : une langue au choix peut remplacer l'outil (Marchand de guilde).
-  | { type: 'tools', from?: string[], orLanguages?: boolean }
-  | { type: 'abilities', from: AbilityKey[], distributions: ('2+1' | '1+1+1')[] }
-  | { type: 'spells', spellClass: string, maxLevel?: number, cantripsOnly?: boolean }
-  | { type: 'feats', category?: FeatCategory }
+    | { type: 'tools', from?: string[], orLanguages?: boolean }
+    | { type: 'abilities', from: AbilityKey[], distributions: ('2+1' | '1+1+1')[] }
+    | { type: 'spells', spellClass: string, maxLevel?: number, cantripsOnly?: boolean }
+    | { type: 'feats', category?: FeatCategory }

@@ -177,7 +177,7 @@ npm run db:generate  # Generate Drizzle migrations
 npm run db:migrate   # Apply pending migrations to the local D1 (also run by `predev`)
 ```
 
-ESLint runs automatically via Nuxt's ESLint module — no separate lint command needed.
+ESLint runs automatically via Nuxt's ESLint module, and the CI runs `npx eslint .` on every PR (zero errors expected).
 Pour linter un fichier précis hors dev server : `npx eslint <fichier>`.
 
 ### Build et tests depuis un environnement cloud (Claude Code on the web)
@@ -385,7 +385,7 @@ Les types se dérivent du schéma Drizzle : ne pas redéfinir de types pour les 
 
 La prod tourne sur un Cloudflare Worker (config dans [wrangler.jsonc](wrangler.jsonc) — binding D1 `DB`, binding R2 `BLOB` → bucket `le-bureau-du-jdr-media`, portraits de personnage).
 
-**Le déploiement est automatique par Cloudflare Workers Builds sur `git push`** vers la branche par défaut — configuré côté Cloudflare (intégration Git), ni dans le dépôt ni dans GitHub Actions. Commande de build : `npm run build && npx wrangler d1 migrations apply DB --remote` — elle **applique les migrations D1 en attente** de `server/db/migrations/`, suivies par nom de fichier dans la table `_hub_migrations` (nom hérité de NuxtHub : la renommer rejouerait toutes les migrations). Commande de déploiement : `npx wrangler deploy`. Le seul workflow GitHub Actions, [.github/workflows/tests.yml](.github/workflows/tests.yml), lance la suite Vitest et le typecheck sur push vers `main` et sur chaque PR ; il ne build ni ne déploie. `npm run deploy` (`nuxt build` + `wrangler deploy`) reste disponible en secours manuel.
+**Le déploiement est automatique par Cloudflare Workers Builds sur `git push`** vers la branche par défaut — configuré côté Cloudflare (intégration Git), ni dans le dépôt ni dans GitHub Actions. Commande de build : `npm run build && npx wrangler d1 migrations apply DB --remote` — elle **applique les migrations D1 en attente** de `server/db/migrations/`, suivies par nom de fichier dans la table `_hub_migrations` (nom hérité de NuxtHub : la renommer rejouerait toutes les migrations). Commande de déploiement : `npx wrangler deploy`. Le seul workflow GitHub Actions, [.github/workflows/tests.yml](.github/workflows/tests.yml), lance la suite Vitest, le typecheck et ESLint sur push vers `main` et sur chaque PR ; il ne build ni ne déploie. `npm run deploy` (`nuxt build` + `wrangler deploy`) reste disponible en secours manuel.
 
 Le code serveur atteint les bindings par `server/utils/` : `db` (`db.ts`, Drizzle sur D1) et `useBinding('BLOB')` (`bindings.ts`, R2). Les deux lisent `globalThis.__env__`, que Nitro pose à chaque requête en prod et au démarrage en dev.
 

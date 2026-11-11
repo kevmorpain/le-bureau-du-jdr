@@ -715,8 +715,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .values({ characterSheetId: sheetId, spellId: familiarSpellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_chain' } as any)
       .onConflictDoNothing())
-  }
-  else if (pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
+  } else if (pactBoon === 'tome' && d.pactBoonCantripIds?.length) {
     stmts.push(db.insert(schema.characterSpells)
       .values(d.pactBoonCantripIds.map(spellId => ({ characterSheetId: sheetId, spellId, classId: cls.id, isKnown: true, isPrepared: false, source: 'pact_tome' as const })))
       .onConflictDoNothing())

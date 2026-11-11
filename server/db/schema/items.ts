@@ -19,7 +19,7 @@ export interface WeaponProperties {
   damage_type: DamageTypeKey
   weapon_category: WeaponCategory
   weapon_properties: WeaponProperty[]
-  range?: { normal: number; long: number }
+  range?: { normal: number, long: number }
   versatile_damage?: string // "1d10" pour les armes polyvalentes
   ammunition_type?: AmmunitionType
 }

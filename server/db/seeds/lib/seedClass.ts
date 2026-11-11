@@ -93,7 +93,7 @@ export async function seedClass(
   baseFeatures: FeatureDef[],
   subclassDefs: SubclassDef[],
   ruleset: Ruleset = '5',
-): Promise<{ featuresInserted: number; subclassesInserted: number }> {
+): Promise<{ featuresInserted: number, subclassesInserted: number }> {
   let featuresInserted = 0
   let subclassesInserted = 0
 
@@ -159,8 +159,7 @@ export async function seedClass(
       if (prerequisites !== undefined && JSON.stringify(existing.prerequisites) !== JSON.stringify(prerequisites)) {
         await db.run(sql`UPDATE features SET prerequisites = ${prerequisites ? JSON.stringify(prerequisites) : null} WHERE id = ${existing.id}`)
       }
-    }
-    else {
+    } else {
       feature = await db
         .insert(schema.features)
         .values({
@@ -195,8 +194,7 @@ export async function seedClass(
       if (seedAbility !== null && existingSubclass.spellcastingAbility !== seedAbility) {
         await db.update(schema.subclasses).set({ spellcastingAbility: seedAbility }).where(eq(schema.subclasses.id, existingSubclass.id))
       }
-    }
-    else {
+    } else {
       subclass = await db
         .insert(schema.subclasses)
         .values({
@@ -229,8 +227,7 @@ export async function seedClass(
         if (meta !== undefined && meta !== null && JSON.stringify(existing.meta) !== JSON.stringify(meta)) {
           await db.run(sql`UPDATE features SET meta = ${JSON.stringify(meta)} WHERE id = ${existing.id}`)
         }
-      }
-      else {
+      } else {
         feature = await db
           .insert(schema.features)
           .values({
@@ -296,8 +293,7 @@ async function _syncProgression(featureId: number, prog: ProgressionDef | null |
   }
   if (existing) {
     await db.update(schema.progression).set(values).where(eq(schema.progression.id, existing.id))
-  }
-  else {
+  } else {
     await db.insert(schema.progression).values({ featureId, kind: prog.kind, ...values })
   }
 }
