@@ -231,6 +231,7 @@
     <AddFeatSlideover
       v-model:open="addFeatOpen"
       :character-sheet-id="characterSheet.id"
+      :ruleset="characterSheet.ruleset"
       :owned-feature-ids="ownedFeatIds"
       @added="emit('refresh')"
     />
@@ -239,6 +240,7 @@
       v-model:open="addBoonOpen"
       kind="boon"
       :character-sheet-id="characterSheet.id"
+      :ruleset="characterSheet.ruleset"
       :owned-feature-ids="ownedBoonIds"
       @added="emit('refresh')"
     />

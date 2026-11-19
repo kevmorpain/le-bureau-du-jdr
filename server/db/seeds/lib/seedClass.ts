@@ -27,8 +27,8 @@ function toolChoiceProgression(set: ProficiencySet): ProgressionDef | null {
   return { kind: 'tool', count: fixed(set.toolChoice.count), optionSource: { type: 'tools', from: set.toolChoice.from } }
 }
 
-function buildProficiencyCarrier(className: string): FeatureDef | null {
-  const prof = CLASS_PROFICIENCIES[className]
+function buildProficiencyCarrier(className: string, ruleset: Ruleset): FeatureDef | null {
+  const prof = CLASS_PROFICIENCIES[ruleset][className]
   if (!prof) return null
   return {
     name: CLASS_PROFICIENCY_CARRIER_NAME,
@@ -43,8 +43,8 @@ function buildProficiencyCarrier(className: string): FeatureDef | null {
   }
 }
 
-function buildMulticlassProficiencyCarrier(className: string): FeatureDef | null {
-  const multiclass = CLASS_PROFICIENCIES[className]?.multiclass
+function buildMulticlassProficiencyCarrier(className: string, ruleset: Ruleset): FeatureDef | null {
+  const multiclass = CLASS_PROFICIENCIES[ruleset][className]?.multiclass
   const effects = multiclass ? proficiencyEffects(multiclass) : []
   const progression = multiclass ? toolChoiceProgression(multiclass) : null
   if (!effects.length && !progression) return null
@@ -107,17 +107,17 @@ export async function seedClass(
     return { featuresInserted, subclassesInserted }
   }
 
-  const carrier = buildProficiencyCarrier(className)
-  const multiclassCarrier = buildMulticlassProficiencyCarrier(className)
+  const carrier = buildProficiencyCarrier(className, ruleset)
+  const multiclassCarrier = buildMulticlassProficiencyCarrier(className, ruleset)
 
   // Feature « choix de sous-classe » injectée à la volée depuis la source unique (niveau =
   // `classes.subclass_level`) : pas de câblage dupliqué dans les 12 wrappers.
-  const subclassChoice = subclassDefs.length > 0 && SUBCLASS_CHOICE_FEATURE_NAMES[className]
-    ? subclassChoiceFeature(className)
+  const subclassChoice = subclassDefs.length > 0 && SUBCLASS_CHOICE_FEATURE_NAMES[ruleset][className]
+    ? subclassChoiceFeature(className, ruleset)
     : null
 
-  const fightingStyleOptions = fightingStyleOptionFeatures(className)
-  const classSkillChoice = classSkillChoiceFeature(className)
+  const fightingStyleOptions = fightingStyleOptionFeatures(className, ruleset)
+  const classSkillChoice = classSkillChoiceFeature(className, ruleset)
 
   const allBaseFeatures = [
     ...baseFeatures,

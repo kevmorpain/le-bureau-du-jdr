@@ -3,10 +3,8 @@ import { CLASSES } from '../../app/data/character-builder'
 import { CLASS_IDENTITY } from '../fixtures/classIdentity'
 import { resolveChoices, dueChoices, type Catalog } from '../../shared/rules/resolve'
 
-// Faits d'identité de classe, côté FRONT. Le niveau et les options de sous-classe viennent désormais
-// du catalogue : on vérifie ici la dérivation par la formule EXACTE des composables, verrouillée
-// contre `CLASS_IDENTITY`. Le TYPE d'incantation, lui, reste une copie front (emplacements de sorts
-// front-driven) qui ne doit pas diverger de la base.
+// Faits d'identité de classe, côté FRONT. Le niveau et les options de sous-classe viennent du catalogue :
+// on vérifie ici la dérivation par la formule EXACTE des composables, verrouillée contre `CLASS_IDENTITY`.
 
 // 1. Sous-classe : dérivation catalogue-driven (F2 tranche 3)
 
@@ -66,21 +64,10 @@ describe('sous-classe — dérivation catalogue-driven (F2 tranche 3)', () => {
   })
 })
 
-// 2. Type d'incantation : copie front (emplacements de sorts front-driven)
+// 2. Les classes du builder sont celles du contrat
 
-describe('type d\'incantation — copie du builder', () => {
+describe('classes du builder', () => {
   it('couvre exactement les 12 classes du contrat', () => {
     expect(CLASSES.map(c => c.id).sort()).toEqual(CLASS_IDENTITY.map(c => c.builderId).sort())
-  })
-
-  it('type d\'incantation identique à la base', () => {
-    const byBuilderId = new Map(CLASSES.map(c => [c.id, c]))
-
-    for (const expected of CLASS_IDENTITY) {
-      const cls = byBuilderId.get(expected.builderId)
-      expect(cls, `classe ${expected.builderId} absente du builder`).toBeDefined()
-      // Côté front, « pas d'incantation » s'écrit `spellcasting: null`.
-      expect(cls!.spellcasting?.type ?? 'none', expected.builderId).toBe(expected.spellcastingType)
-    }
   })
 })

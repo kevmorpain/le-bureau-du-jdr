@@ -14,7 +14,6 @@ export const damageTypeLabels: Record<DamageTypeKey, string> = {
   radiant: 'Rayonnant',
   slashing: 'Tranchant',
   thunder: 'Tonnerre',
-  draconic_ancestry: 'Ancestral',
 }
 
 export const conditionLabels: Record<ConditionKey, string> = {

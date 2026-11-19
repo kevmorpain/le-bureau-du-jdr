@@ -106,7 +106,7 @@ beforeAll(async () => {
   // Owner de choix de COMPÉTENCES DE CLASSE (F3 tranche 3) : progression `skill` → le pick va en
   // character_choices, dérivé à la lecture (plus matérialisé en character_skills).
   await db.insert(schema.features).values({ id: 260, name: 'Compétences de classe', featureType: 'choice_carrier', classId: FIGHTER, levelRequired: 1 })
-  await db.insert(schema.progression).values({ featureId: 260, kind: 'skill', count: { op: 'fixed', value: CLASS_SKILL_CHOICES.Guerrier!.count }, optionSource: { type: 'skills', from: CLASS_SKILL_CHOICES.Guerrier!.from }, replaceable: false })
+  await db.insert(schema.progression).values({ featureId: 260, kind: 'skill', count: { op: 'fixed', value: CLASS_SKILL_CHOICES['5'].Guerrier!.count }, optionSource: { type: 'skills', from: CLASS_SKILL_CHOICES['5'].Guerrier!.from }, replaceable: false })
 
   await db.insert(schema.features).values([
     { id: 401, name: 'Regard de deux esprits', featureType: 'eldritch_invocation', classId: WARLOCK, levelRequired: 1, tag: 'invocation' },

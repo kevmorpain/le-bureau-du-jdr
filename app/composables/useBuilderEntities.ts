@@ -1,4 +1,9 @@
+import type { MaybeRefOrGetter } from 'vue'
 import type { MulticlassPrerequisites } from '~~/shared/rules/multiclass'
+import type { Ruleset } from '~~/shared/rules/ruleset'
+import type { SpellcastingType } from '~~/shared/rules/spellcasting'
+import { classCastingOf, type ClassCasting } from '~~/shared/rules/classCasting'
+import { hitDieValueOf } from '~~/shared/rules/hitDice'
 import type { ClassProficiencyGrants } from '~~/server/utils/classProficiencyDerivation'
 import { resolveLines, type CatalogItem } from '~~/shared/rules/startingEquipment'
 
@@ -7,6 +12,9 @@ export type DbSubclass = { id: number, name: string, description?: string | null
 export type DbClass = {
   id: number
   name: string
+  hitDice: string
+  spellcastingType: SpellcastingType
+  spellcastingAbility: string | null
   subclassLevel: number
   multiclassSkillCount: number
   multiclassPrerequisites: MulticlassPrerequisites
@@ -19,18 +27,18 @@ type DbSpecies = { id: number, name: string }
 type DbBackground = { id: number, name: string }
 type DbItem = CatalogItem
 
-export function useBuilderEntities() {
-  const { extendedQuery } = useExtendedContent()
+export function useBuilderEntities(ruleset: MaybeRefOrGetter<Ruleset>) {
+  const query = useCatalogQuery(ruleset)
   const { data: classes } = useFetch<DbClass[]>('/api/catalog/classes', {
-    query: extendedQuery,
+    query,
     default: () => [],
   })
   const { data: species } = useFetch<DbSpecies[]>('/api/catalog/species', {
-    query: extendedQuery,
+    query,
     default: () => [],
   })
   const { data: backgrounds } = useFetch<DbBackground[]>('/api/catalog/backgrounds', {
-    query: extendedQuery,
+    query,
     default: () => [],
   })
   // `/api/items` n'a pas (encore) de filtre `source` côté serveur → pas de query extended ici.
@@ -81,6 +89,18 @@ export function useBuilderEntities() {
     return classes.value?.find(c => c.id === classDbId)?.multiclassPrerequisites ?? []
   }
 
+  // Dé de vie et incantation : `null` tant que la classe n'est pas résolue dans le catalogue.
+  function hitDieFor(classDbId: number | null | undefined): number | null {
+    if (classDbId == null) return null
+    return hitDieValueOf(classes.value?.find(c => c.id === classDbId)?.hitDice)
+  }
+
+  function castingFor(classDbId: number | null | undefined): ClassCasting | null {
+    if (classDbId == null) return null
+    const cls = classes.value?.find(c => c.id === classDbId)
+    return cls ? classCastingOf(cls) : null
+  }
+
   function classProficienciesFor(classDbId: number | null | undefined): ClassProficiencyGrants {
     if (classDbId == null) return NO_PROFICIENCIES
     return classes.value?.find(c => c.id === classDbId)?.proficiencies ?? NO_PROFICIENCIES
@@ -105,5 +125,7 @@ export function useBuilderEntities() {
     multiclassSkillCountFor,
     multiclassPrerequisitesFor,
     classProficienciesFor,
+    hitDieFor,
+    castingFor,
   }
 }

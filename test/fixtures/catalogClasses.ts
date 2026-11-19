@@ -3,11 +3,12 @@ import { CLASS_PROFICIENCIES, type ProficiencySet } from '../../shared/rules/cla
 import { SKILL_KEYS } from '../../shared/rules/skills'
 import type { CatalogProgression } from '../../shared/rules/resolve'
 import { CLASS_SKILL_CHOICES } from '../../server/db/seeds/data/classSkills'
+import { classesData } from '../../server/db/seeds/data/classes'
 import { CLASS_IDENTITY } from './classIdentity'
 
 /** Point « Compétences de classe » de `/api/catalog/progressions`, liste `all` développée comme le fait `buildCatalog`. */
 export function classSkillProgression(progressionId: number, ownerClassId: number, className: string): CatalogProgression {
-  const { count, from } = CLASS_SKILL_CHOICES[className]!
+  const { count, from } = CLASS_SKILL_CHOICES['5'][className]!
   return {
     progressionId,
     ownerClassId,
@@ -31,15 +32,19 @@ export function proficiencyEffects(set: ProficiencySet): Effect[] {
 
 /**
  * Réponse de `/api/catalog/classes` pour les 12 classes 2014, telle que la produit une base seedée : identité
- * du contrat `classIdentity.ts`, maîtrises des porteurs construits depuis `CLASS_PROFICIENCIES`.
+ * du contrat `classIdentity.ts`, dé de vie et incantation du seed, maîtrises des porteurs construits depuis `CLASS_PROFICIENCIES`.
  * Id = rang dans `CLASS_IDENTITY` + 1 (Guerrier 5, Paladin 7, Roublard 9, Magicien 12).
  */
 export function catalogClasses() {
   return CLASS_IDENTITY.map((c, i) => {
-    const prof = CLASS_PROFICIENCIES[c.dbName]!
+    const prof = CLASS_PROFICIENCIES['5'][c.dbName]!
+    const seeded = classesData.find(d => d.name === c.dbName)!
     return {
       id: i + 1,
       name: c.dbName,
+      hitDice: seeded.hitDice,
+      spellcastingType: seeded.spellcastingType,
+      spellcastingAbility: seeded.spellcastingAbility,
       subclassLevel: c.subclassLevel,
       multiclassSkillCount: c.multiclassSkillCount,
       multiclassPrerequisites: c.multiclassPrerequisites,

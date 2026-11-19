@@ -222,9 +222,10 @@ const {
   profBonusAtLevel,
   formatMod,
   totalLevel,
+  ruleset,
 } = useLevelUp(charSheet)
 
-const { extendedQuery } = useExtendedContent()
+const catalogQuery = useCatalogQuery(ruleset)
 
 // L'état du personnage qui décide des prérequis des manifestations (pacte, sorts connus, manifestations déjà prises).
 const eligibility = computed(() => ({
@@ -262,7 +263,7 @@ const profBonusChange = computed(() =>
 
 const { data: subclassesData } = useFetch(
   () => pickedClass.value ? `/api/catalog/classes/${encodeURIComponent(pickedClass.value!.dbName)}/subclasses` : '',
-  { query: extendedQuery, watch: [pickedClass, () => extendedQuery.value], immediate: true },
+  { query: catalogQuery, watch: [pickedClass, () => catalogQuery.value], immediate: true },
 )
 const subclasses = computed(() => (subclassesData.value ?? []) as Array<{ id: number, name: string, description?: string | null }>)
 

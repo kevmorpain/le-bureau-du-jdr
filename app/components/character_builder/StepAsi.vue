@@ -272,15 +272,16 @@ const {
   featChoiceComplete,
   proficientSkills,
   ownedTools,
+  ruleset,
 } = useCharacterBuilder()
 
-const { feats, getById: getFeatById } = useFeats()
+const { feats, getById: getFeatById } = useFeats(ruleset)
 
 // Sorts éligibles au don Faveur des fées : niveau 1, école Divination ou Enchantement (en plus
 // de Foulée brumeuse, octroyée d'office). Le drapeau `extended` inclut le contenu gaté si actif.
-const { extendedQuery } = useExtendedContent()
+const catalogQuery = useCatalogQuery(ruleset)
 const { data: allSpellsForFeat } = useFetch<Spell[]>('/api/spells', {
-  query: extendedQuery,
+  query: catalogQuery,
   default: () => [],
 })
 const feyTouchedSpells = computed(() =>

@@ -19,7 +19,6 @@ const LEGACY = [
   { id: 2, species: 'Haut-elfe', trait: 'Ascendance féerique', type: 'advantage', value: '{"ability":"saving_throws","condition":"charmed"}' },
   { id: 3, species: 'Nain des collines', trait: 'Résistance naine', type: 'advantage', value: '{"ability":"saving_throws","condition":"poison"}' },
   { id: 4, species: 'Halfelin pied-léger', trait: 'Brave', type: 'advantage', value: '{"ability":"saving_throws","condition":"frightened"}' },
-  { id: 5, species: 'Drakéide (2014)', trait: 'Résistance aux dégâts', type: 'damage_resistance', value: '"draconic_ancestry"' },
   { id: 6, species: 'Gnome des roches', trait: 'Ruse gnome', type: 'advantage', ability: 'int', value: '{"type":"saving_throw","ability":"int","condition":"magic"}' },
   { id: 7, species: 'Gnome des roches', trait: 'Ruse gnome', type: 'advantage', ability: 'wis', value: '{"type":"saving_throw","ability":"wis","condition":"magic"}' },
   { id: 8, species: 'Gnome des roches', trait: 'Ruse gnome', type: 'advantage', ability: 'cha', value: '{"type":"saving_throw","ability":"cha","condition":"magic"}' },
@@ -128,8 +127,8 @@ describe('migration 0100 — ce que la fiche relit', () => {
     expect(proficiency(after, 'perception')).toBe('proficient')
   })
 
-  it('rend les avantages aux JdS et la résistance draconique aux défenses', async () => {
-    const expected = ['dmg:draconic_ancestry', 'jds:charmed', 'jds:frightened', 'jds:magic', 'jds:poison']
+  it('rend les avantages aux JdS aux défenses', async () => {
+    const expected = ['jds:charmed', 'jds:frightened', 'jds:magic', 'jds:poison']
 
     expect((await defenseKeys(before)).filter(k => expected.includes(k))).toEqual([])
     expect(await defenseKeys(after)).toEqual(expected)

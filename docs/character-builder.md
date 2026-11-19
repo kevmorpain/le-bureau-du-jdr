@@ -253,7 +253,7 @@ ABILITIES.every(ab => abilities[ab] !== null)
 
 **But** : Choisir les sorts de départ pour les classes incantateurs.
 
-**Affiché uniquement si** : `CLASSES.find(c => c.id === classId)?.spellcasting !== null`
+**Affiché uniquement si** : la classe incante (`classes.spellcasting_type` du catalogue, lu par `classCastingOf`) ou sa sous-classe est lanceuse
 
 **UI** :
 - Bandeau stats d'incantation : DD de sort, bonus d'attaque, carac. d'incantation, emplacements par niveau
@@ -502,5 +502,5 @@ Le blob ne porte plus que de l'affichage ; aucune règle n'y est lue par le serv
 | Entité | Champs propres au blob |
 |---|---|
 | Espèces (`RACES`) | description, emoji, bonus, vision et traits résumés pour les cartes ; les vraies valeurs de la fiche viennent des effets en base |
-| Classes (`CLASSES`) | rôle, couleur, emoji, description, aptitudes et jalons résumés, libellé de sous-classe, équipement de départ ; `spellcasting.type` doit rester égal à `classes.spellcasting_type`, gardé par `test/nuxt/classesIdentityFront.test.ts` |
+| Classes (`CLASSES`) | rôle, couleur, emoji, description, aptitudes et jalons résumés, libellé de sous-classe, équipement de départ ; le dé de vie et l'incantation viennent du catalogue (`/api/catalog/classes`, [D38](decisions.md#d38)) |
 | Historiques (`BACKGROUNDS`) | équipement, suggestions de personnalité / idéaux / liens / défauts |

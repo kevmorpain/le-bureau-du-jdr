@@ -1,5 +1,6 @@
 import type { AbilityKey } from './abilities'
 import type { ClassSlug } from './classSlugs'
+import type { Ruleset } from './ruleset'
 import type { SpellcastingType } from './spellcasting'
 
 // Sous-classes lanceuses de sorts du tiers, dont la classe n'incante pas (Chevalier occulte du Guerrier,
@@ -19,40 +20,43 @@ export interface SubclassCasting {
   schools: readonly string[]
 }
 
-export const SUBCLASS_CASTING: Record<string, SubclassCasting> = {
-  'Chevalier occulte': {
-    slug: 'eldritch_knight',
-    classSlug: 'fighter',
-    ability: 'int',
-    type: 'third',
-    startsAtLevel: 3,
-    listClass: 'wizard',
-    schools: ['Abjuration', 'Evocation'],
+export const SUBCLASS_CASTING: Record<Ruleset, Record<string, SubclassCasting>> = {
+  5: {
+    'Chevalier occulte': {
+      slug: 'eldritch_knight',
+      classSlug: 'fighter',
+      ability: 'int',
+      type: 'third',
+      startsAtLevel: 3,
+      listClass: 'wizard',
+      schools: ['Abjuration', 'Evocation'],
+    },
+    'Escroc arcanique': {
+      slug: 'arcane_trickster',
+      classSlug: 'rogue',
+      ability: 'int',
+      type: 'third',
+      startsAtLevel: 3,
+      listClass: 'wizard',
+      schools: ['Enchantment', 'Illusion'],
+    },
   },
-  'Escroc arcanique': {
-    slug: 'arcane_trickster',
-    classSlug: 'rogue',
-    ability: 'int',
-    type: 'third',
-    startsAtLevel: 3,
-    listClass: 'wizard',
-    schools: ['Enchantment', 'Illusion'],
-  },
+  5.5: {},
 }
 
-export function subclassCastingOf(classSlug: string, subclassName: string | null | undefined): SubclassCasting | null {
-  const casting = subclassName ? SUBCLASS_CASTING[subclassName] : undefined
+export function subclassCastingOf(ruleset: Ruleset, classSlug: string, subclassName: string | null | undefined): SubclassCasting | null {
+  const casting = subclassName ? SUBCLASS_CASTING[ruleset][subclassName] : undefined
   return casting && casting.classSlug === classSlug ? casting : null
 }
 
 /** Clé des tables de sorts connus : celle de la sous-classe lanceuse, sinon celle de la classe. */
-export function casterSlugOf(classSlug: string, subclassName: string | null | undefined): string {
-  return subclassCastingOf(classSlug, subclassName)?.slug ?? classSlug
+export function casterSlugOf(ruleset: Ruleset, classSlug: string, subclassName: string | null | undefined): string {
+  return subclassCastingOf(ruleset, classSlug, subclassName)?.slug ?? classSlug
 }
 
 /** Un guerrier ou un roublard n'incante qu'à travers sa sous-classe. */
-export function effectiveCasterType(classType: SpellcastingType, classSlug: string, subclassName: string | null | undefined): SpellcastingType {
-  return classType === 'none' && subclassCastingOf(classSlug, subclassName) ? 'third' : classType
+export function effectiveCasterType(ruleset: Ruleset, classType: SpellcastingType, classSlug: string, subclassName: string | null | undefined): SpellcastingType {
+  return classType === 'none' && subclassCastingOf(ruleset, classSlug, subclassName) ? 'third' : classType
 }
 
 // Au niveau 3, un des trois sorts de niveau 1 est de n'importe quelle école ; ceux appris aux niveaux 8, 14

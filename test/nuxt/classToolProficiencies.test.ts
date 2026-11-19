@@ -31,7 +31,7 @@ beforeAll(async () => {
   const carrier = (classId: number) => orm.insert(schema.features)
     .values({ name: 'Maîtrises de la classe', featureType: 'proficiency_grant', classId, levelRequired: 1 })
     .returning().get()
-  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+  for (const className of Object.keys(CLASS_PROFICIENCIES['5'])) {
     const cls = await orm.insert(schema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
     carrierIdByClass.set(className, (await carrier(cls.id)).id)
   }
@@ -45,9 +45,9 @@ beforeAll(async () => {
 })
 
 describe('migration 0104 — outils de classe sur les porteurs déployés', () => {
-  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+  for (const className of Object.keys(CLASS_PROFICIENCIES['5'])) {
     it(`${className} : lie exactement les outils du seed, même rejouée`, async () => {
-      const expected = CLASS_PROFICIENCIES[className]!.tools.map(tool => JSON.stringify(tool)).sort()
+      const expected = CLASS_PROFICIENCIES['5'][className]!.tools.map(tool => JSON.stringify(tool)).sort()
       expect(await linkedTools(carrierIdByClass.get(className)!)).toEqual(expected)
     })
   }

@@ -20,7 +20,7 @@ let multiclassProgressionId: number
 beforeAll(async () => {
   ;({ db } = await bootstrapGoldenDb())
   await db.insert(schema.classes).values({ id: BARD, name: 'Barde', hitDice: '1d8', spellcastingType: 'full' })
-  const bard = CLASS_PROFICIENCIES.Barde!
+  const bard = CLASS_PROFICIENCIES['5'].Barde!
   const carrier = async (name: string, featureType: 'proficiency_grant' | 'multiclass_proficiency_grant', count: number) => {
     const [f] = await db.insert(schema.features).values({ name, featureType, classId: BARD, levelRequired: 1 }).returning()
     const [p] = await db.insert(schema.progression)

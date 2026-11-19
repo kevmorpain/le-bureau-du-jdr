@@ -4,7 +4,6 @@ import { ALIGNMENTS as CANONICAL_ALIGNMENTS } from '~~/shared/rules/alignments'
 // bonus de carac., ni les descriptions détaillées. Cf. docs/character-builder.md.
 
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
-import type { CasterType } from '~~/shared/rules/spellcasting'
 import type { Source } from '~~/shared/rules/source'
 import {
   ARCANE_FOCUS, ARTISAN_TOOL, CON_TOOL, DRUIDIC_FOCUS, HOLY_SYMBOL, MARTIAL_MELEE_WEAPON, MARTIAL_WEAPON, MUSICAL_INSTRUMENT,
@@ -14,7 +13,6 @@ import {
 import type { ItemType } from '~~/server/db/schema/items'
 
 export type { AbilityKey }
-export type { CasterType }
 
 export const ABILITIES: AbilityKey[] = [...ABILITY_KEYS]
 
@@ -394,9 +392,7 @@ export const RACES: RaceData[] = [
     id: 'dragonborn',
     name: 'Drakéide',
     emoji: '🐉',
-    // `dbName` pointe la LEGACY renommée (migration 0088) : résolvable même avant le seed de la base ;
-    // ensuite `lineageBaseSpeciesName` prend le relais.
-    dbName: 'Drakéide (2014)',
+    dbName: null,
     lineageBaseSpeciesName: 'Drakéide',
     description: 'Descendants orgueilleux des dragons, les drakéides possèdent une arme de souffle dévastatrice et une résistance élémentaire innée selon leur ascendance draconique.',
     abilityBonuses: { str: 2, cha: 1 },
@@ -436,12 +432,6 @@ export interface ClassFeature {
   description: string
 }
 
-export interface SpellcastingInfo {
-  ability: AbilityKey
-  type: CasterType
-  startsAtLevel?: number // Paladin/Rôdeur commencent niveau 2
-}
-
 export interface LevelMilestones {
   [level: number]: string
 }
@@ -454,8 +444,6 @@ export interface ClassData {
   color: string // couleur hex pour les badges
   role: string
   description: string
-  hitDie: number
-  spellcasting: SpellcastingInfo | null
   // Affichage seul : le niveau d'accès et la liste des sous-classes viennent du catalogue.
   subclassLabel: string
   features: ClassFeature[]
@@ -473,8 +461,6 @@ export const CLASSES: ClassData[] = [
     color: '#ef4444',
     role: 'Combattant',
     description: 'Puissance brute et rage primitive. Le barbare encaisse et inflige des dégâts considérables au corps à corps.',
-    hitDie: 12,
-    spellcasting: null,
     subclassLabel: 'Voie primitive',
     features: [
       { name: 'Rage', description: 'Action bonus : entrez en rage — +2 dégâts FOR, résistance contondant/perçant/tranchant, avantage JS FOR. 2 utilisations / repos long.' },
@@ -495,8 +481,6 @@ export const CLASSES: ClassData[] = [
     color: '#f59e0b',
     role: 'Soutien / Sorts',
     description: 'Artiste et magicien, le barde inspire ses alliés, manipule ses ennemis et lance des sorts puissants grâce à son charisme naturel.',
-    hitDie: 8,
-    spellcasting: { ability: 'cha', type: 'full' },
     subclassLabel: 'Collège bardique',
     features: [
       { name: 'Incantation (CHA)', description: 'Lanceur de sorts complet. Connaît 4 sorts + 2 tours de magie au niv.1. 2 emplacements niv.1.' },
@@ -518,8 +502,6 @@ export const CLASSES: ClassData[] = [
     color: '#fbbf24',
     role: 'Soutien / Soins',
     description: 'Intermédiaire entre les mortels et les dieux, le clerc soigne, protège et frappe au nom de sa divinité grâce à sa sagesse divine.',
-    hitDie: 8,
-    spellcasting: { ability: 'wis', type: 'full' },
     subclassLabel: 'Domaine divin',
     features: [
       { name: 'Incantation (SAG)', description: 'Lanceur complet. Prépare niv+mod SAG sorts/jour. Sorts de domaine toujours préparés.' },
@@ -542,8 +524,6 @@ export const CLASSES: ClassData[] = [
     color: '#22c55e',
     role: 'Sorts / Métamorphose',
     description: 'Gardien de la nature et maître des métamorphoses, le druide tire sa magie des forces primordiales du monde naturel.',
-    hitDie: 8,
-    spellcasting: { ability: 'wis', type: 'full' },
     subclassLabel: 'Cercle druidique',
     features: [
       { name: 'Incantation (SAG)', description: 'Lanceur complet. Prépare ses sorts chaque jour. Parle le Druidique, langue secrète.' },
@@ -564,8 +544,6 @@ export const CLASSES: ClassData[] = [
     color: '#dc2626',
     role: 'Combattant',
     description: 'Maître des armes et armures, le guerrier est le combattant le plus polyvalent, capable de porter plus d\'attaques que quiconque.',
-    hitDie: 10,
-    spellcasting: null,
     subclassLabel: 'Archétype martial',
     features: [
       { name: 'Style de combat', description: 'Archerie (+2 attaque à distance), Combat à 2 armes, Défense (+1 CA), Duel (+2 dégâts), Grande arme (relancer 1 ou 2), Protection (réaction).' },
@@ -587,8 +565,6 @@ export const CLASSES: ClassData[] = [
     color: '#a78bfa',
     role: 'Mobilité / Dégâts',
     description: 'Artiste martial channelant le ki pour des prouesses physiques extraordinaires — vitesse, esquive et frappes dévastatrices.',
-    hitDie: 8,
-    spellcasting: null,
     subclassLabel: 'Tradition monastique',
     features: [
       { name: 'Arts martiaux', description: 'Attaques à mains nues/armes de moine avec DEX ou FOR, dégâts 1d4 (niv.1). Attaque bonus à mains nues après attaque d\'arme de moine.' },
@@ -609,8 +585,6 @@ export const CLASSES: ClassData[] = [
     color: '#eab308',
     role: 'Combattant / Soutien',
     description: 'Guerrier sacré lié par un serment solennel, le paladin combine force martiale et magie divine pour protéger les innocents.',
-    hitDie: 10,
-    spellcasting: { ability: 'cha', type: 'half', startsAtLevel: 2 },
     subclassLabel: 'Serment sacré',
     features: [
       { name: 'Sens divin', description: 'Action : détectez fiélons, célestes et morts-vivants dans 18m. 1+mod CHA utilisations / repos long.' },
@@ -632,8 +606,6 @@ export const CLASSES: ClassData[] = [
     color: '#34d399',
     role: 'Exploration / Combat',
     description: 'Guerrier des terres sauvages, expert du pistage et du combat naturel. Son ennemi juré et son compagnon animal le définissent.',
-    hitDie: 10,
-    spellcasting: { ability: 'wis', type: 'half', startsAtLevel: 2 },
     subclassLabel: 'Archétype de rôdeur',
     features: [
       { name: 'Ennemi juré', description: 'Choisissez un type d\'ennemi. Avantage aux vérifications pour le traquer et rappeler des infos à son sujet.' },
@@ -655,8 +627,6 @@ export const CLASSES: ClassData[] = [
     color: '#71717a',
     role: 'Discret / Dégâts',
     description: 'Expert de la furtivité et du subterfuge, le roublard excelle à frapper là où ça fait mal grâce à son Attaque sournoise dévastatrice.',
-    hitDie: 8,
-    spellcasting: null,
     subclassLabel: 'Archétype de roublard',
     features: [
       { name: 'Expertise', description: 'Doublez le bonus de maîtrise pour 2 compétences (parmi maîtrisées). Outils de voleur inclus.' },
@@ -678,8 +648,6 @@ export const CLASSES: ClassData[] = [
     color: '#f97316',
     role: 'Incantateur',
     description: 'Magie innée jaillissant du sang ou de l\'âme. L\'ensorceleur façonne les sorts avec une flexibilité unique grâce aux Métamagie.',
-    hitDie: 6,
-    spellcasting: { ability: 'cha', type: 'full' },
     subclassLabel: 'Origine magique',
     features: [
       { name: 'Origine magique', description: 'Votre magie innée vient d\'une source précise qui confère des pouvoirs dès le niveau 1.' },
@@ -701,8 +669,6 @@ export const CLASSES: ClassData[] = [
     color: '#7c3aed',
     role: 'Pacte / Sorts',
     description: 'Pouvoirs obtenus par un pacte avec une entité puissante. Peu de sorts mais récupérés à chaque repos court — une magie explosive et unique.',
-    hitDie: 8,
-    spellcasting: { ability: 'cha', type: 'pact' },
     subclassLabel: 'Patron d\'Outremonde',
     features: [
       { name: 'Patron d\'Outremonde', description: 'Choisissez votre patron : il vous accorde des capacités supplémentaires et des sorts étendus.' },
@@ -739,8 +705,6 @@ export const CLASSES: ClassData[] = [
     color: '#60a5fa',
     role: 'Incantateur',
     description: 'Érudit de la magie arcanique dont le grimoire lui permet d\'apprendre et de préparer un vaste répertoire de sorts — le maître incontesté de la magie.',
-    hitDie: 6,
-    spellcasting: { ability: 'int', type: 'full' },
     subclassLabel: 'Tradition arcanique',
     features: [
       { name: 'Incantation (INT)', description: 'Grimoire : 6 sorts niv.1 + 2 tours de magie. Prépare niv+mod INT sorts/jour. 2 emplacements niv.1.' },

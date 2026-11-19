@@ -33,6 +33,8 @@ import { useCharacterAbilities, type ProficiencyLevel } from './character/useCha
 import { sheetActiveEffectSources, type ActiveEffectsSheet } from '~~/shared/rules/characterEffects'
 import { withProficiencyOverrides } from '~~/shared/rules/proficiencyOverrides'
 import { averageHitDieValue, hitPointGain, maxHitPoints } from '~~/shared/rules/hitPoints'
+import { hitDieValueOf } from '~~/shared/rules/hitDice'
+import { classCastingOf } from '~~/shared/rules/classCasting'
 import { useAbilityEffectInputs } from './useCharacterSheet'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -155,7 +157,17 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const state = useState<LevelUpState>('level-up-state', freshState)
   const toast = useToast()
 
-  const { needsAbility: featNeedsAbility, needsSkilled: featNeedsSkilled, languageCount: featLanguageCount } = useFeats()
+  const ruleset = computed(() => charSheet.value?.ruleset ?? '5')
+  const { needsAbility: featNeedsAbility, needsSkilled: featNeedsSkilled, languageCount: featLanguageCount } = useFeats(ruleset)
+  const {
+    resolveClassId,
+    subclassCatalogFor,
+    multiclassSkillCountFor,
+    multiclassPrerequisitesFor,
+    classProficienciesFor,
+    hitDieFor,
+    castingFor,
+  } = useBuilderEntities(ruleset)
   const buildFeatChoices = (s: LevelUpState): { ability?: AbilityKey, skills?: string[], tools?: string[], languages?: string[] } | null => {
     if (s.featureId == null) return null
     if (featNeedsSkilled(s.featureId)) return { skills: s.featSkills, tools: s.featTools }
@@ -168,7 +180,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // Chevalier occulte, Escroc arcanique : le Guerrier et le Roublard n'incantent qu'à travers leur sous-classe.
   const castingOfSubclass = (classSlug: string, subclassName: string | null | undefined) => {
-    const casting = subclassCastingOf(classSlug, subclassName)
+    const casting = subclassCastingOf(ruleset.value, classSlug, subclassName)
     return casting ? { ability: casting.ability, type: casting.type, startsAtLevel: casting.startsAtLevel } : null
   }
 
@@ -184,11 +196,11 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         dbSubclassId: cc.subclassId ?? null,
         subclassName: cc.subclass?.name ?? null,
         pactBoon: cc.pactBoon ?? null,
-        hitDie: cls?.hitDie ?? 8,
+        hitDie: hitDieValueOf(cc.class?.hitDice) ?? 8,
         color: cls?.color ?? '#a1a1aa',
         emoji: cls?.emoji ?? '⚔️',
         data: cls ?? null,
-        spellcasting: cls?.spellcasting ?? castingOfSubclass(cls?.id ?? '', cc.subclass?.name),
+        spellcasting: (cc.class ? classCastingOf(cc.class) : null) ?? castingOfSubclass(cls?.id ?? '', cc.subclass?.name),
       }
     })
   })
@@ -269,7 +281,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   // Valeur du dé de vie envoyée au serveur, qui en tire le gain (minimum 1 PV par niveau compris).
   const hpDie = computed<number | null>(() => {
     const s = state.value
-    if (s.hpMethod === 'average') return pickedClass.value ? averageHitDieValue(pickedClass.value.hitDie) : null
+    if (s.hpMethod === 'average') return pickedHitDie.value != null ? averageHitDieValue(pickedHitDie.value) : null
     return s.hpMethod === 'manual' ? s.hpManual : s.hpRolled
   })
 
@@ -278,7 +290,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
       ? null
       : maxHpAtLevel(totalLevel.value + 1, (charSheet.value?.hpBase ?? 0) + hitPointGain(die, conMod.value)) - currentHpMax.value
 
-  const averageHpGain = computed(() => pickedClass.value ? hpIncreaseFor(averageHitDieValue(pickedClass.value.hitDie)) ?? 0 : 0)
+  const averageHpGain = computed(() => pickedHitDie.value != null ? hpIncreaseFor(averageHitDieValue(pickedHitDie.value)) ?? 0 : 0)
 
   // Augmentation du maximum affiché : dé, CON et bonus par niveau du niveau gagné.
   const hpGained = computed(() => hpIncreaseFor(hpDie.value))
@@ -287,18 +299,16 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   // Choix résolus aux niveaux d'ARRIVÉE et de DÉPART : le delta pilote le nombre de nouvelles
   // invocations et compétences d'expertise.
   const { catalog, choicesForClassLevel } = useCatalog()
-  const {
-    resolveClassId,
-    subclassCatalogFor,
-    multiclassSkillCountFor,
-    multiclassPrerequisitesFor,
-    classProficienciesFor,
-  } = useBuilderEntities()
   const classDbIdOf = (classSlug: string) => resolveClassId(CLASSES.find(c => c.id === classSlug)?.dbName)
   const luClassDbId = computed(() =>
     charClasses.value.find(c => c.classId === state.value.pickedClassId)?.dbClassId
     ?? resolveClassId(pickedClass.value?.dbName),
   )
+  // Classe déjà sur la fiche : sa ligne servie par le GET ; classe rejointe : le catalogue.
+  const pickedHitDie = computed(() =>
+    hitDieValueOf(charSheet.value?.classes?.find(cc => cc.classId === luClassDbId.value)?.class?.hitDice)
+    ?? hitDieFor(luClassDbId.value))
+  const hitDieOfClass = (classSlug: string) => hitDieFor(classDbIdOf(classSlug))
   const choicesAtToLevel = computed(() => choicesForClassLevel(luClassDbId.value, state.value.toLevel))
   const choicesAtFromLevel = computed(() => choicesForClassLevel(luClassDbId.value, state.value.fromLevel))
 
@@ -516,9 +526,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   const subclassNameAfter = computed(() =>
     state.value.newSubclassName ?? charClasses.value.find(c => c.classId === state.value.pickedClassId)?.subclassName ?? null)
-  const subclassCasting = computed(() => subclassCastingOf(state.value.pickedClassId ?? '', subclassNameAfter.value))
+  const subclassCasting = computed(() => subclassCastingOf(ruleset.value, state.value.pickedClassId ?? '', subclassNameAfter.value))
   // Incantation de la classe montée, ou de sa sous-classe lanceuse (la sous-classe peut être choisie à ce niveau).
-  const levelUpSpellcasting = computed(() => pickedClass.value?.spellcasting
+  const levelUpSpellcasting = computed(() => castingFor(luClassDbId.value)
     ?? castingOfSubclass(state.value.pickedClassId ?? '', subclassNameAfter.value))
   // Clé des tables de sorts connus : celle de la sous-classe lanceuse, sinon celle de la classe.
   const casterSlug = computed(() => subclassCasting.value?.slug ?? state.value.pickedClassId ?? '')
@@ -531,16 +541,16 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
 
   // ── Nouveaux sorts (étape Magie) ──────────────────────────────────────────
 
-  const spellLearning = computed(() => spellLearningOf(casterSlug.value))
+  const spellLearning = computed(() => spellLearningOf(ruleset.value, casterSlug.value))
   const spellsLearned = computed(() => hasSpellcasting.value
-    ? spellsLearnedOnLevelUp(casterSlug.value, state.value.fromLevel, state.value.toLevel)
+    ? spellsLearnedOnLevelUp(ruleset.value, casterSlug.value, state.value.fromLevel, state.value.toLevel)
     : { cantrips: 0, spells: 0 })
   const cantripsToLearn = computed(() => spellsLearned.value.cantrips)
   const spellsToLearn = computed(() => spellsLearned.value.spells)
 
   // Secrets magiques du Barde : des sorts de n'importe quelle classe, dont deux de plus, hors décompte, au Collège du savoir.
   const secrets = computed(() => hasSpellcasting.value
-    ? magicalSecretsGained(state.value.pickedClassId ?? '', state.value.fromLevel, state.value.toLevel, subclassNameAfter.value)
+    ? magicalSecretsGained(ruleset.value, state.value.pickedClassId ?? '', state.value.fromLevel, state.value.toLevel, subclassNameAfter.value)
     : { anyList: 0, extra: 0 })
   const freeListPicks = computed(() => secrets.value.anyList + secrets.value.extra)
 
@@ -550,12 +560,12 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
     return type && hasSpellcasting.value ? maxSpellLevelForLevel(type, state.value.toLevel) : 0
   })
 
-  const { extendedQuery } = useExtendedContent()
+  const catalogQuery = useCatalogQuery(ruleset)
   const classSpellsQuery = computed(() => ({
     className: hasSpellcasting.value
       ? subclassCasting.value ? classNameFromSlug(subclassCasting.value.listClass) ?? '' : pickedClass.value?.dbName ?? ''
       : '',
-    ...extendedQuery.value,
+    ...catalogQuery.value,
   }))
   const { data: classSpellsData, pending: classSpellsPending } = useAsyncData<Spell[]>(
     () => `level-up-class-spells:${JSON.stringify(classSpellsQuery.value)}`,
@@ -567,8 +577,8 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   const classSpells = computed<Spell[]>(() => classSpellsData.value ?? [])
 
   const { data: anySpellsData, pending: anySpellsPending } = useAsyncData<Spell[]>(
-    () => `level-up-any-spells:${freeListPicks.value > 0}:${JSON.stringify(extendedQuery.value)}`,
-    () => (freeListPicks.value > 0 ? $fetch<Spell[]>('/api/spells', { query: extendedQuery.value }) : Promise.resolve([])),
+    () => `level-up-any-spells:${freeListPicks.value > 0}:${JSON.stringify(catalogQuery.value)}`,
+    () => (freeListPicks.value > 0 ? $fetch<Spell[]>('/api/spells', { query: catalogQuery.value }) : Promise.resolve([])),
     { default: () => [] },
   )
   const classSpellIds = computed(() => new Set(classSpells.value.map(s => s.id)))
@@ -643,7 +653,7 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
         return !!s.pickedClassId
 
       case 'hp':
-        return hpDie.value != null && hpDie.value >= 1 && hpDie.value <= (pickedClass.value?.hitDie ?? 12)
+        return hpDie.value != null && hpDie.value >= 1 && hpDie.value <= (pickedHitDie.value ?? 12)
 
       case 'features': {
         if (isSubclassLevel.value && !s.newSubclassId) return false
@@ -789,6 +799,9 @@ export function useLevelUp(charSheet: Ref<CharacterSheetWithASI | null>) {
   return {
     // State
     state,
+    ruleset,
+    pickedHitDie,
+    hitDieOfClass,
     // Character data
     charClasses,
     totalLevel,

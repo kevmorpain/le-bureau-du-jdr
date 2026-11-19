@@ -550,6 +550,7 @@ const {
   isSchoolBlocked,
   levelUpSpellcasting,
   pickedPactBoon,
+  ruleset,
 } = useLevelUp(injectLevelUpSheet())
 
 const { t } = useI18n()
@@ -625,10 +626,10 @@ const spellsTabLabel = computed(() => {
   return 'Sorts connus'
 })
 
-const { extendedQuery } = useExtendedContent()
+const catalogQuery = useCatalogQuery(ruleset)
 
 const { data: allCantripsData, pending: pactCantripsPending } = useFetch<Spell[]>('/api/spells', {
-  query: extendedQuery,
+  query: catalogQuery,
   immediate: true,
 })
 
@@ -643,7 +644,7 @@ const filteredPactCantrips = computed(() =>
 )
 
 const { data: magicianSpells } = useFetch<Spell[]>('/api/spells', {
-  query: computed(() => ({ className: 'Magicien', ...extendedQuery.value })),
+  query: computed(() => ({ className: 'Magicien', ...catalogQuery.value })),
   immediate: true,
 })
 
@@ -670,12 +671,12 @@ function toggleArcanumSpell(id: number) {
 // Livre des anciens secrets : sorts rituels de niveau 1 toutes classes
 
 const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<Spell[]>('/api/spells', {
-  query: extendedQuery,
+  query: catalogQuery,
   immediate: true,
 })
 
 const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/invocations', {
-  query: extendedQuery,
+  query: catalogQuery,
   default: () => [],
 })
 const invocationsByName = computed<Record<string, number>>(() => {

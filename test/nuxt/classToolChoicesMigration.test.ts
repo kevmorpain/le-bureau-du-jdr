@@ -28,7 +28,7 @@ beforeAll(async () => {
 
   const carrier = (classId: number, name: string, featureType: 'proficiency_grant' | 'multiclass_proficiency_grant') =>
     orm.insert(schema.features).values({ name, featureType, classId, levelRequired: 1 }).returning().get()
-  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+  for (const className of Object.keys(CLASS_PROFICIENCIES['5'])) {
     const cls = await orm.insert(schema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
     carriers.set(className, {
       start: (await carrier(cls.id, CLASS_PROFICIENCY_CARRIER_NAME, 'proficiency_grant')).id,
@@ -42,7 +42,7 @@ beforeAll(async () => {
 })
 
 describe('migration 0111 — outils au choix de classe', () => {
-  for (const [className, prof] of Object.entries(CLASS_PROFICIENCIES)) {
+  for (const [className, prof] of Object.entries(CLASS_PROFICIENCIES['5'])) {
     it(`${className} : le choix d'outil du seed sur chaque porteur, même rejouée`, async () => {
       const ids = carriers.get(className)!
       expect(await toolChoiceOf(ids.start)).toEqual(expected(prof))

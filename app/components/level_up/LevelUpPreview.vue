@@ -164,9 +164,11 @@ const {
   ABILITIES,
   ABILITY_SHORT,
   profBonusAtLevel,
+  ruleset,
+  pickedHitDie,
 } = useLevelUp(charSheet)
 
-const { getById: getFeatById } = useFeats()
+const { getById: getFeatById } = useFeats(ruleset)
 
 const completedCount = computed(() =>
   activeSteps.value.filter(s => isStepComplete.value(s.id)).length,
@@ -199,7 +201,7 @@ const newClassesList = computed(() => {
       isMain: false,
       dbSubclassId: null,
       subclassName: null,
-      hitDie: pickedClass.value.hitDie,
+      hitDie: pickedHitDie.value ?? 8,
       emoji: pickedClass.value.emoji,
       data: pickedClass.value,
     })

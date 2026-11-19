@@ -64,7 +64,6 @@ const characterSheets = sqliteTable('character_sheets', {
   exhaustionLevel: integer('exhaustion_level').default(0).notNull(),
   deathSaveSuccesses: integer('death_save_successes').default(0).notNull(),
   deathSaveFailures: integer('death_save_failures').default(0).notNull(),
-  dragonbornAncestry: text('dragonborn_ancestry'),
   pp: integer('pp').default(0).notNull(),
   po: integer('po').default(0).notNull(),
   pe: integer('pe').default(0).notNull(),

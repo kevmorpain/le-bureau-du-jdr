@@ -2,30 +2,20 @@ import { CreatureSize } from '../../schema/character_species'
 import type { LineageData, LineageSpeciesData, SpeciesTraitData } from '../lib/seedLineages'
 import type { AbilityScoreKey, DamageTypeKey, Effect } from '../../schema/effects'
 
-/**
- * Cas PARTICULIER : en 2014 l'ascendance draconique était une COLONNE
- * (`character_sheets.dragonbornAncestry`) résolue à l'affichage ; elle est matérialisée ici en 10
- * lignées portant chacune son type de dégâts concret. Conséquence voulue : l'ascendance est FIXÉE à la
- * création et le sélecteur de la fiche se masque de lui-même.
- */
+// L'ascendance draconique est une lignée : chacune porte son type de dégâts concret, fixé à la création.
 
 const DRAGONS = [
-  { key: 'black', name: 'Dragon noir', damage: 'acid', area: 'line', save: 'dex' },
-  { key: 'blue', name: 'Dragon bleu', damage: 'lightning', area: 'line', save: 'dex' },
-  { key: 'brass', name: 'Dragon d\'airain', damage: 'fire', area: 'line', save: 'dex' },
-  { key: 'bronze', name: 'Dragon de bronze', damage: 'lightning', area: 'line', save: 'dex' },
-  { key: 'copper', name: 'Dragon de cuivre', damage: 'acid', area: 'line', save: 'dex' },
-  { key: 'gold', name: 'Dragon d\'or', damage: 'fire', area: 'cone', save: 'dex' },
-  { key: 'green', name: 'Dragon vert', damage: 'poison', area: 'cone', save: 'con' },
-  { key: 'red', name: 'Dragon rouge', damage: 'fire', area: 'cone', save: 'dex' },
-  { key: 'silver', name: 'Dragon d\'argent', damage: 'cold', area: 'cone', save: 'con' },
-  { key: 'white', name: 'Dragon blanc', damage: 'cold', area: 'cone', save: 'con' },
+  { name: 'Dragon noir', damage: 'acid', area: 'line', save: 'dex' },
+  { name: 'Dragon bleu', damage: 'lightning', area: 'line', save: 'dex' },
+  { name: 'Dragon d\'airain', damage: 'fire', area: 'line', save: 'dex' },
+  { name: 'Dragon de bronze', damage: 'lightning', area: 'line', save: 'dex' },
+  { name: 'Dragon de cuivre', damage: 'acid', area: 'line', save: 'dex' },
+  { name: 'Dragon d\'or', damage: 'fire', area: 'cone', save: 'dex' },
+  { name: 'Dragon vert', damage: 'poison', area: 'cone', save: 'con' },
+  { name: 'Dragon rouge', damage: 'fire', area: 'cone', save: 'dex' },
+  { name: 'Dragon d\'argent', damage: 'cold', area: 'cone', save: 'con' },
+  { name: 'Dragon blanc', damage: 'cold', area: 'cone', save: 'con' },
 ] as const
-
-/** Clé d'ascendance (colonne legacy) → nom de lignée. */
-export const DRAGONBORN_LINEAGE_BY_ANCESTRY: Record<string, string> = Object.fromEntries(
-  DRAGONS.map(d => [d.key, d.name]),
-)
 
 function breathEffect(damage: DamageTypeKey, area: 'line' | 'cone', save: AbilityScoreKey): Effect {
   return {

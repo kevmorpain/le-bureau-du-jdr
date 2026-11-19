@@ -28,10 +28,12 @@ import { resolveAbilityScore, sumAbilityIncreases, sumAbilityMaxIncreases } from
 import { averageBaseHitPoints, averageHitDieValue, baseHitPoints, baseHitPointsBounds } from '~~/shared/rules/hitPoints'
 import { emptySelection, expandEquipment, type EquipmentSelection, type EquipmentSources } from '~~/shared/rules/startingEquipment'
 import type { Effect } from '~~/server/db/schema/effects'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface BuilderState {
+  ruleset: Ruleset
   // Étape 1 — Race
   raceId: string | null
   isVariantHuman: boolean
@@ -143,6 +145,7 @@ export interface BuilderState {
 export const BOOK_OF_ANCIENT_SECRETS_NAME = 'Livre des secrets anciens'
 
 const INIT_STATE: BuilderState = {
+  ruleset: '5',
   raceId: null,
   isVariantHuman: false,
   subraceId: null,
@@ -257,10 +260,11 @@ export function useCharacterBuilder() {
 
   // ─── Dons (liste + helpers pour les choix) ────────────────────────────────────
 
-  const { feats, getById: getFeatById, needsAbility: featNeedsAbility, needsSkilled: featNeedsSkilled, languageCount: featLanguageCount } = useFeats()
+  const ruleset = computed(() => state.value.ruleset)
+  const { feats, getById: getFeatById, needsAbility: featNeedsAbility, needsSkilled: featNeedsSkilled, languageCount: featLanguageCount } = useFeats(ruleset)
   const { choicesForClassLevel, choicesFor } = useCatalog()
-  const { effectsAt: classFeatureEffectsAt } = useClassFeatureEffects()
-  const { resolveClassId, resolveSpeciesId, resolveBackgroundId, resolveSubclassId, subclassCatalogFor, classProficienciesFor } = useBuilderEntities()
+  const { effectsAt: classFeatureEffectsAt } = useClassFeatureEffects(ruleset)
+  const { resolveClassId, resolveSpeciesId, resolveBackgroundId, resolveSubclassId, subclassCatalogFor, classProficienciesFor, hitDieFor, castingFor } = useBuilderEntities(ruleset)
 
   // Un don requiert-il un choix de SORT (ex. Faveur des fées) ? Repéré par l'effet marqueur
   // `other:{kind:'fey_touched_spells'}` (data/feats.ts).
@@ -290,7 +294,7 @@ export function useCharacterBuilder() {
   const lineageBaseName = computed(() => raceData.value?.lineageBaseSpeciesName ?? null)
   // Espèce du catalogue de la race, avec ou sans lignée : ses effets alimentent le récapitulatif.
   const catalogSpeciesName = computed(() => lineageBaseName.value ?? raceData.value?.dbName ?? null)
-  const { baseSpeciesId: catalogSpeciesId, lineageSubraces, effectsFor, effectsLoaded: speciesEffectsLoaded } = useSpeciesLineages(catalogSpeciesName)
+  const { baseSpeciesId: catalogSpeciesId, lineageSubraces, effectsFor, effectsLoaded: speciesEffectsLoaded } = useSpeciesLineages(catalogSpeciesName, ruleset)
   const subraces = computed<SubraceData[]>(() => {
     if (lineageBaseName.value && lineageSubraces.value.length) return lineageSubraces.value
     return raceData.value?.subraces ?? []
@@ -316,6 +320,7 @@ export function useCharacterBuilder() {
 
   // Points de choix lus dans le catalogue et résolus localement.
   const classDbId = computed(() => resolveClassId(classData.value?.dbName))
+  const classHitDie = computed(() => hitDieFor(classDbId.value))
   const catalogChoices = computed(() =>
     choicesForClassLevel(classDbId.value, state.value.level),
   )
@@ -573,8 +578,8 @@ export function useCharacterBuilder() {
 
   // Part « dés » des PV, la seule que le serveur stocke ; un dé non lancé compte pour sa valeur moyenne.
   const hpBase = computed(() => {
-    if (!classData.value) return null
-    const { hitDie } = classData.value
+    const hitDie = classHitDie.value
+    if (hitDie == null) return null
     const s = state.value
 
     if (s.hpMode === 'manual' && s.hpManual != null) {
@@ -599,7 +604,7 @@ export function useCharacterBuilder() {
 
   // Chevalier occulte, Escroc arcanique : le Guerrier et le Roublard n'incantent qu'à travers leur sous-classe.
   const subclassCasting = computed(() => {
-    const casting = subclassCastingOf(state.value.classId ?? '', state.value.subclass)
+    const casting = subclassCastingOf(ruleset.value, state.value.classId ?? '', state.value.subclass)
     return casting && level.value >= casting.startsAtLevel ? casting : null
   })
   // Clé des tables de sorts connus : celle de la sous-classe lanceuse, sinon celle de la classe.
@@ -607,7 +612,7 @@ export function useCharacterBuilder() {
   const spellListClassName = computed(() => subclassCasting.value
     ? classNameFromSlug(subclassCasting.value.listClass) ?? ''
     : classData.value?.dbName ?? '')
-  const spellcastingInfo = computed(() => classData.value?.spellcasting
+  const spellcastingInfo = computed(() => castingFor(classDbId.value)
     ?? (subclassCasting.value
       ? { ability: subclassCasting.value.ability, type: subclassCasting.value.type, startsAtLevel: subclassCasting.value.startsAtLevel }
       : null))
@@ -631,22 +636,22 @@ export function useCharacterBuilder() {
 
   const cantripsNeeded = computed(() => {
     if (!classData.value?.id) return 0
-    return cantripsKnownAt(casterSlug.value, level.value)
+    return cantripsKnownAt(ruleset.value, casterSlug.value, level.value)
   })
 
   const preparedLimit = computed(() => {
     const ability = spellcastingInfo.value?.ability
     const mod = ability ? abilityMod(finalAbilities.value[ability] ?? 10) : 0
-    return preparedSpellsLimit(state.value.classId ?? '', level.value, mod)
+    return preparedSpellsLimit(ruleset.value, state.value.classId ?? '', level.value, mod)
   })
   // Secrets magiques du Barde : des sorts de n'importe quelle classe, dont deux de plus hors décompte au Collège du savoir.
-  const magicalSecrets = computed(() => magicalSecretsGained(state.value.classId ?? '', 0, level.value, state.value.subclass))
+  const magicalSecrets = computed(() => magicalSecretsGained(ruleset.value, state.value.classId ?? '', 0, level.value, state.value.subclass))
   const freeListPicks = computed(() => magicalSecrets.value.anyList + magicalSecrets.value.extra)
   // Sorts à choisir : sorts connus (grimoire compris) ou sorts préparés.
   const spellsNeeded = computed(() => {
     const cls = casterSlug.value
-    const learning = spellLearningOf(cls)
-    if (learning === 'known' || learning === 'spellbook') return spellsKnownAt(cls, level.value) + magicalSecrets.value.extra
+    const learning = spellLearningOf(ruleset.value, cls)
+    if (learning === 'known' || learning === 'spellbook') return spellsKnownAt(ruleset.value, cls, level.value) + magicalSecrets.value.extra
     return preparedLimit.value ?? 0
   })
 
@@ -786,7 +791,7 @@ export function useCharacterBuilder() {
         // Livre des secrets anciens : 2 sorts rituels obligatoires si l'invocation est choisie.
         // (Flag positionné par le composant via watchEffect — cf. StepSpells.)
         if (s.bookOfAncientSecretsRequired && s.bookOfAncientSecretsSpellIds.length < 2) return false
-        const learning = spellLearningOf(casterSlug.value)
+        const learning = spellLearningOf(ruleset.value, casterSlug.value)
         if (learning !== 'known' && learning !== 'spellbook') return cantripsDone
         const spellsDone = spellsNeeded.value === 0 || s.selectedSpells.length >= spellsNeeded.value
         if (pactBoon.value === 'tome' && s.selectedPactBoonCantripIds.length < 3) return false
@@ -911,6 +916,7 @@ export function useCharacterBuilder() {
     hpBase,
     hpMax,
     baseAC,
+    classHitDie,
     // Sorts
     spellcastingInfo,
     subclassCasting,
@@ -923,6 +929,7 @@ export function useCharacterBuilder() {
     preparedLimit,
     freeListPicks,
     variantHumanLanguageCount,
+    ruleset,
     // Navigation
     activeSteps,
     currentStepId,

@@ -409,6 +409,7 @@
     <AddSpellSlideover
       v-model:open="showAddSpell"
       :already-added-ids
+      :ruleset="characterSheet.ruleset"
       @add="spellId => addSpell(spellId, activeCasterClass?.classId ?? null)"
     />
   </div>
@@ -484,7 +485,7 @@ const preparedLimit = computed<number | null>(() => {
   const slug = caster ? classSlugFromName(caster.className) : undefined
   const classLevel = characterSheetRef.value.classes?.find(c => c.classId === caster?.classId)?.level
   if (!caster || !slug || !classLevel) return null
-  return preparedSpellsLimit(slug, classLevel, statsForCasterClass(caster.classId)?.modifier ?? 0)
+  return preparedSpellsLimit(props.characterSheet.ruleset, slug, classLevel, statsForCasterClass(caster.classId)?.modifier ?? 0)
 })
 
 const preparedCount = computed(() => {

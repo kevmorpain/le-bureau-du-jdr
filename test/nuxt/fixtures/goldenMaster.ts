@@ -218,7 +218,7 @@ export async function seedGoldenCatalog(db: Db): Promise<GoldenIds> {
   // Le pick est enregistré en character_choices (progression skill) ; la maîtrise est dérivée à la
   // lecture (deriveChoiceProficiencies). Ids auto : le snapshot résout par nom.
   for (const [className, classId] of [['Occultiste', CLASS.warlock], ['Guerrier', CLASS.fighter], ['Magicien', CLASS.wizard], ['Roublard', CLASS.rogue], ['Paladin', CLASS.paladin], ['Druide', CLASS.druid]] as const) {
-    const choice = CLASS_SKILL_CHOICES[className]!
+    const choice = CLASS_SKILL_CHOICES['5'][className]!
     const [f] = await db.insert(schema.features).values({ name: 'Compétences de classe', featureType: 'choice_carrier', classId, levelRequired: 1 }).returning()
     await db.insert(schema.progression).values({ featureId: f!.id, kind: 'skill', count: { op: 'fixed', value: choice.count }, optionSource: { type: 'skills', from: choice.from }, replaceable: false })
   }
@@ -363,7 +363,6 @@ export async function serializeCharacter(db: Db, sheetId: number) {
       currentHp: sheet.currentHp,
       temporaryHp: sheet.temporaryHp,
       currentHitDie: sheet.currentHitDie,
-      dragonbornAncestry: sheet.dragonbornAncestry,
       inspiration: sheet.inspiration,
       exhaustionLevel: sheet.exhaustionLevel,
       money: { pp: sheet.pp, po: sheet.po, pe: sheet.pe, pa: sheet.pa, pc: sheet.pc },

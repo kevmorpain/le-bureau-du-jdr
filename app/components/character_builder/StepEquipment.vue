@@ -186,9 +186,10 @@ const {
   equipmentSources,
   startingEquipment,
   pactBoon,
+  ruleset,
 } = useCharacterBuilder()
 
-const { items } = useBuilderEntities()
+const { items } = useBuilderEntities(ruleset)
 
 const selection = computed(() => state.value.equipmentSelection)
 

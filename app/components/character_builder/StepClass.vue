@@ -38,11 +38,12 @@
                 {{ cls.role }}
               </UBadge>
               <UBadge
+                v-if="classRules.get(cls.id)?.hitDie"
                 :color="cls.id"
                 variant="subtle"
                 size="md"
               >
-                d{{ cls.hitDie }}
+                d{{ classRules.get(cls.id)?.hitDie }}
               </UBadge>
             </div>
           </div>
@@ -55,10 +56,10 @@
             JS : <span :style="`color: ${cls.color}`">{{ savingThrowsLabel(cls.dbName) }}</span>
           </span>
           <span
-            v-if="cls.spellcasting"
+            v-if="classRules.get(cls.id)?.casting"
             class="text-violet-400"
           >
-            Sorts {{ ABILITY_SHORT[cls.spellcasting.ability as AbilityKey] }}
+            Sorts {{ ABILITY_SHORT[classRules.get(cls.id)!.casting!.ability] }}
           </span>
         </div>
       </button>
@@ -303,7 +304,10 @@
       </template>
 
       <USeparator class="my-6" />
-      <div class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4">
+      <div
+        v-if="classHitDie"
+        class="rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) p-4"
+      >
         <div class="flex items-center gap-3 mb-3">
           <p class="text-xs font-bold uppercase tracking-widest text-muted flex-1">
             Points de vie
@@ -331,7 +335,7 @@
           v-if="state.hpMode === 'average'"
           class="text-xs text-muted"
         >
-          Niveau 1 : {{ classData.hitDie }} (maximum). Niveaux suivants : {{ Math.ceil(classData.hitDie / 2) + 1 }} par niveau.
+          Niveau 1 : {{ classHitDie }} (maximum). Niveaux suivants : {{ Math.ceil(classHitDie / 2) + 1 }} par niveau.
         </p>
 
         <template v-if="state.hpMode === 'roll'">
@@ -339,11 +343,11 @@
             v-if="state.level === 1"
             class="text-xs text-muted"
           >
-            Niveau 1 : toujours le maximum ({{ classData.hitDie }}).
+            Niveau 1 : toujours le maximum ({{ classHitDie }}).
           </div>
           <template v-else>
             <p class="text-xs text-muted mb-3">
-              Niveau 1 : {{ classData.hitDie }} (max). Lancez 1d{{ classData.hitDie }} pour chaque niveau suivant ; un niveau non lancé compte pour la valeur moyenne ({{ Math.ceil(classData.hitDie / 2) + 1 }}).
+              Niveau 1 : {{ classHitDie }} (max). Lancez 1d{{ classHitDie }} pour chaque niveau suivant ; un niveau non lancé compte pour la valeur moyenne ({{ Math.ceil(classHitDie / 2) + 1 }}).
             </p>
             <div class="flex flex-wrap gap-2">
               <div
@@ -356,7 +360,7 @@
                   <input
                     type="number"
                     :min="1"
-                    :max="classData.hitDie"
+                    :max="classHitDie"
                     :value="state.hpRolled?.[i - 1] ?? ''"
                     class="w-12 h-10 rounded-lg border border-(--ui-border) bg-(--ui-bg) text-center text-sm font-bold font-mono text-(--ui-text) focus:border-amber-500 focus:outline-none"
                     @change="setRolledHp(i - 1, ($event.target as HTMLInputElement).valueAsNumber)"
@@ -429,21 +433,27 @@ const {
   CLASSES,
   SKILLS,
   ABILITY_SHORT,
+  ruleset,
+  classHitDie,
 } = useCharacterBuilder()
 
 // Gating : les classes d'extension (source gatée) ne sont visibles qu'avec le toggle « Étendu ».
-const { extended, extendedQuery } = useExtendedContent()
+const { extended } = useExtendedContent()
 const filteredClasses = computed(() =>
   CLASSES.filter(c => !c.source || !isGatedSource(c.source) || extended.value),
 )
 
-const { resolveClassId, classProficienciesFor } = useBuilderEntities()
+const { resolveClassId, classProficienciesFor, hitDieFor, castingFor } = useBuilderEntities(ruleset)
+const classRules = computed(() => new Map(filteredClasses.value.map((c) => {
+  const dbId = resolveClassId(c.dbName)
+  return [c.id, { hitDie: hitDieFor(dbId), casting: castingFor(dbId) }]
+})))
 const savingThrowsLabel = (dbName: string) => classProficienciesFor(resolveClassId(dbName)).savingThrows
   .flatMap(e => e.type === 'saving_throw_proficiency' ? [ABILITY_SHORT[e.value.ability]] : [])
   .join('+')
 
 const { data: allSpells } = useFetch<Array<{ id: number, name: string }>>('/api/spells', {
-  query: extendedQuery,
+  query: useCatalogQuery(ruleset),
 })
 const knownSpellNames = computed(() => {
   const ids = new Set<number>([
@@ -481,8 +491,8 @@ const HP_MODES = [
 
 // Maximum obtenu avec les valeurs fixes, CON comprise : ce que le mode manuel propose au départ.
 const hpAverage = computed(() => {
-  if (!classData.value) return 0
-  return averageBaseHitPoints(classData.value.hitDie, state.value.level, conMod.value) + conMod.value * state.value.level
+  if (classHitDie.value == null) return 0
+  return averageBaseHitPoints(classHitDie.value, state.value.level, conMod.value) + conMod.value * state.value.level
 })
 
 function switchHpMode(mode: 'average' | 'roll' | 'manual') {
@@ -494,7 +504,7 @@ function switchHpMode(mode: 'average' | 'roll' | 'manual') {
 }
 
 function setRolledHp(idx: number, value: number) {
-  const hitDie = classData.value?.hitDie ?? 8
+  const hitDie = classHitDie.value ?? 8
   const clamped = Math.max(1, Math.min(hitDie, value || 1))
   const arr = [...(state.value.hpRolled ?? Array(state.value.level - 1).fill(null))]
   arr[idx] = clamped
@@ -502,7 +512,7 @@ function setRolledHp(idx: number, value: number) {
 }
 
 function rollAllHp() {
-  const hitDie = classData.value?.hitDie ?? 8
+  const hitDie = classHitDie.value ?? 8
   state.value.hpRolled = Array.from(
     { length: state.value.level - 1 },
     () => Math.floor(Math.random() * hitDie) + 1,

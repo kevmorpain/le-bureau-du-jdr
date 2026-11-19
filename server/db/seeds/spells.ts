@@ -5,14 +5,11 @@ import { spellClassMappings } from './data/spell_class_mappings'
 import { nameRulesetKey, rulesetOf } from './lib/rulesetOf'
 
 export default async function seed() {
-  // ⚠️ SUIVI (lot sorts 5.5) : keyé par NOM seul → quand deux « Magicien » (2014+2024) coexisteront,
-  // le lien sort↔classe deviendra ambigu. À reprendre en (nom, ruleset du sort) au moment du seed 5.5
-  // des sorts (hors périmètre P0 : aucun sort ni classe 5.5 seedé aujourd'hui).
-  const allClasses = await db.select({ id: schema.classes.id, name: schema.classes.name }).from(schema.classes)
-  const classIdByName = Object.fromEntries(allClasses.map(c => [c.name, c.id]))
+  const allClasses = await db.select({ id: schema.classes.id, name: schema.classes.name, ruleset: schema.classes.ruleset }).from(schema.classes)
+  const classIdByKey = new Map(allClasses.map(c => [nameRulesetKey(c), c.id]))
 
-  const classesBySpellName = Object.fromEntries(
-    spellClassMappings.map(m => [m.spellName, m.classNames]),
+  const classesBySpellKey = new Map(
+    spellClassMappings.map(m => [nameRulesetKey({ name: m.spellName, ruleset: m.ruleset }), m.classNames]),
   )
 
   // Préchargement en 2 requêtes (sinon le seed explose la limite de requêtes D1). Dédup keyée par
@@ -104,15 +101,16 @@ export default async function seed() {
       spellId = await db.insert(schema.spells).values({ ...columns, rollTableId: rollTableIdOf(spell) }).returning().get().then(r => (inserted++, r.id))
     }
 
-    for (const className of classesBySpellName[spell.name] ?? []) {
-      const classId = classIdByName[className]
+    const ruleset = rulesetOf(spell)
+    for (const className of classesBySpellKey.get(nameRulesetKey(spell)) ?? []) {
+      const classId = classIdByKey.get(nameRulesetKey({ name: className, ruleset }))
       if (!classId) {
-        console.warn(`[spells seed] Classe "${className}" introuvable pour le sort "${spell.name}"`)
+        console.warn(`[spells seed] Classe "${className}" (${ruleset}) introuvable pour le sort "${spell.name}"`)
         continue
       }
       const key = `${spellId}:${classId}`
       if (linkSet.has(key)) continue
-      await db.insert(schema.spellClasses).values({ spellId, classId }).onConflictDoNothing()
+      await db.insert(schema.spellClasses).values({ spellId, classId, ruleset }).onConflictDoNothing()
       linkSet.add(key)
       classLinksInserted++
     }

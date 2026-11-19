@@ -10,8 +10,7 @@ import type { RechargeType } from './features'
 
 export type AbilityScoreKey = AbilityKey
 
-// 'draconic_ancestry' : dynamique, résolu par le choix de lignée du personnage.
-export type DamageTypeKey = DamageType | 'draconic_ancestry'
+export type DamageTypeKey = DamageType
 
 export type ConditionKey
   = | 'blinded' | 'charmed' | 'deafened' | 'exhaustion' | 'frightened' | 'grappled'
@@ -21,15 +20,14 @@ export type ConditionKey
 // Ni un type de dégâts ni un état : « la magie ne peut pas vous endormir » ≠ immunité à l'état inconscient.
 export type ImmunityKey = 'sleep_magic'
 
-// 'draconic_ancestry' : résolu à l'affichage (espèce 2014) ; valeur concrète : fixée par la lignée.
 type BreathWeaponAction = {
   type: 'breathe_weapon'
   countPerRest: number
   damage: {
     damageType: DamageTypeKey
-    areaOfEffect: 'line' | 'cone' | 'draconic_ancestry'
+    areaOfEffect: 'line' | 'cone'
     damageAtCharacterLevel: Record<string, string>
-    savingThrowAbility: AbilityScoreKey | 'draconic_ancestry'
+    savingThrowAbility: AbilityScoreKey
     saveDcBase: number
     saveDcModifiers: string[]
     halfOnSave: boolean

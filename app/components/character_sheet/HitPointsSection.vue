@@ -287,9 +287,7 @@ const toggleMode = (m: 'heal' | 'damage') => {
 // Types de dégâts
 const damageTypeOptions = computed(() => [
   { label: 'Type non spécifié', value: 'none' },
-  ...Object.entries(damageTypeLabels)
-    .filter(([key]) => key !== 'draconic_ancestry')
-    .map(([value, label]) => ({ label, value })),
+  ...Object.entries(damageTypeLabels).map(([value, label]) => ({ label, value })),
 ])
 
 const activeDefense = computed(() => {

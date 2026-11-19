@@ -43,6 +43,7 @@ export const classSheet = (
   extra: Record<string, unknown> = {},
 ) => reactive({
   id: sheetId,
+  ruleset: '5',
   baseAbilityScores: abilityScores(),
   classes: [{ classId, level, isMain: true, class: { name: className }, subclass: null }],
   features,

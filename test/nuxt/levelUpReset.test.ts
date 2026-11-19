@@ -1,16 +1,18 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest'
 import { defineComponent, h, provide, ref, toRaw, type Component, type Ref } from 'vue'
+import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { clearNuxtState } from '#app'
 import LevelUpPage from '../../app/pages/characters/[id]/level-up.vue'
 import LevelUpStepClass from '../../app/components/level_up/LevelUpStepClass.vue'
 import { useLevelUp, type CharacterSheetWithASI, levelUpSheetKey } from '../../app/composables/useLevelUp'
+import { catalogClasses } from '../fixtures/catalogClasses'
 
 const SHEET = {
   id: 1,
   name: 'Brom',
   hpBase: 28,
-  classes: [{ classId: 5, level: 3, isMain: true, class: { name: 'Guerrier' } }],
+  classes: [{ classId: 5, level: 3, isMain: true, class: { name: 'Guerrier', hitDice: '1d10' } }],
   baseAbilityScores: [{ abilityId: 'str', value: 16 }, { abilityId: 'con', value: 14 }, { abilityId: 'cha', value: 14 }],
   proficiencyOverrides: [],
   spells: [],
@@ -18,6 +20,7 @@ const SHEET = {
 
 beforeAll(() => {
   registerEndpoint('/api/character_sheets/1', () => SHEET)
+  registerEndpoint('/api/catalog/classes', catalogClasses)
 })
 
 const mounted: { unmount: () => void }[] = []
@@ -34,6 +37,7 @@ async function mountLevelUp(child?: Component) {
   })
   const wrapper = await mountSuspended(Host)
   mounted.push(wrapper)
+  await flushPromises()
   const clickButton = (label: string) => wrapper.findAll('button').find(b => b.text().includes(label))!.trigger('click')
   return { levelUp, clickButton }
 }

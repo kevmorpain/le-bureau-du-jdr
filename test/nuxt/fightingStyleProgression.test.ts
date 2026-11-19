@@ -52,7 +52,7 @@ beforeAll(async () => {
     })
     progressionOwnerCount++
 
-    for (const opt of fightingStyleOptionFeatures(className)) {
+    for (const opt of fightingStyleOptionFeatures(className, '5')) {
       await orm.insert(schema.features).values({
         id: featureId++,
         name: opt.name,

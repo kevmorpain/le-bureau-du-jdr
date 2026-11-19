@@ -13,26 +13,26 @@ import { CLASS_IDENTITY } from '../fixtures/classIdentity'
 
 describe('subclassChoiceFeature — contrat de sous-classe', () => {
   it('couvre EXACTEMENT les 12 classes du contrat (aucune oubliée, aucune en trop)', () => {
-    expect(Object.keys(SUBCLASS_CHOICE_FEATURE_NAMES).sort())
+    expect(Object.keys(SUBCLASS_CHOICE_FEATURE_NAMES['5']).sort())
       .toEqual(CLASS_IDENTITY.map(c => c.dbName).sort())
   })
 
   it('couvre toutes les classes seedées (classesData) — `seedClass` saute en silence une classe non mappée', () => {
     // Garde-fou du choix « injection centralisée dans seedClass » : une classe ajoutée à
     // classesData mais oubliée dans la map ne recevrait AUCUN choix de sous-classe, sans erreur.
-    expect(Object.keys(SUBCLASS_CHOICE_FEATURE_NAMES).sort())
+    expect(Object.keys(SUBCLASS_CHOICE_FEATURE_NAMES['5']).sort())
       .toEqual([...classesData.map(c => c.name)].sort())
   })
 
   for (const { dbName, subclassLevel } of CLASS_IDENTITY) {
     it(`${dbName} : owner à niv ${subclassLevel} + progression subclass bien formée`, () => {
-      const f = subclassChoiceFeature(dbName)
+      const f = subclassChoiceFeature(dbName, '5')
 
       // Niveau = source unique `classes.subclass_level` (jamais recopié) → doit matcher le contrat.
       expect(f.levelRequired, `${dbName} : niveau d'accès à la sous-classe`).toBe(subclassLevel)
       // `choice_carrier` = owner invisible (option B) : lu par le catalogue, jamais matérialisé.
       expect(f.featureType).toBe('choice_carrier')
-      expect(f.name).toBe(SUBCLASS_CHOICE_FEATURE_NAMES[dbName])
+      expect(f.name).toBe(SUBCLASS_CHOICE_FEATURE_NAMES['5'][dbName])
 
       // Progression = décision « quelle sous-classe » : une, parmi les sous-classes de la classe.
       expect(f.progression).toEqual({
@@ -45,6 +45,6 @@ describe('subclassChoiceFeature — contrat de sous-classe', () => {
   }
 
   it('classe inconnue → throw fail-fast (plutôt que seeder un orphelin)', () => {
-    expect(() => subclassChoiceFeature('Artificier')).toThrow(/classe absente/i)
+    expect(() => subclassChoiceFeature('Artificier', '5')).toThrow(/classe absente/i)
   })
 })

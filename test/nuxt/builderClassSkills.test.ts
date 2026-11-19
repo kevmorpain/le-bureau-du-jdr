@@ -42,8 +42,8 @@ async function mountBuilder(partial: Partial<BuilderState>) {
 describe('Builder — compétences de classe lues dans le catalogue', () => {
   it('Roublard : quatre compétences, dans la liste de la classe', async () => {
     const builder = await mountBuilder({ classId: 'rogue', skills: ['stealth', 'acrobatics', 'deception'] })
-    expect(builder.classSkillCount.value).toBe(CLASS_SKILL_CHOICES.Roublard!.count)
-    expect(builder.classSkillOptions.value).toEqual(CLASS_SKILL_CHOICES.Roublard!.from)
+    expect(builder.classSkillCount.value).toBe(CLASS_SKILL_CHOICES['5'].Roublard!.count)
+    expect(builder.classSkillOptions.value).toEqual(CLASS_SKILL_CHOICES['5'].Roublard!.from)
     expect(builder.isStepComplete.value('class')).toBe(false)
 
     builder.state.value.skills.push('perception')

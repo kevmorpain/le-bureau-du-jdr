@@ -58,7 +58,6 @@ export const featChoicesSchema = z.object({
 export const createCharacterSchema = z.object({
   name: z.string().min(1).max(100),
   alignment: z.string().optional(),
-  dragonbornAncestry: z.string().nullable().optional(),
   // Part « dés » des PV max (hors CON et bonus par niveau) : bornée par les dés de la classe à la création.
   hpBase: z.number().int().positive(),
   classId: z.number().int().positive(),
@@ -483,7 +482,6 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
       hpBase: d.hpBase,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       currentHitDie: currentHitDie as any,
-      dragonbornAncestry: d.dragonbornAncestry ?? null,
       personalityTraits: d.personality ?? '',
       ideals: d.ideals ?? '',
       bonds: d.bonds ?? '',
@@ -679,7 +677,7 @@ export async function createCharacter(db: Db, d: CreateCharacterInput, ownerId: 
   }
 
   const subclassName = (await subclassNamesById(db, [subclassId])).get(subclassId ?? -1) ?? null
-  const casterType = effectiveCasterType(cls.spellcastingType, classSlugFromName(cls.name) ?? '', subclassName)
+  const casterType = effectiveCasterType(cls.ruleset, cls.spellcastingType, classSlugFromName(cls.name) ?? '', subclassName)
   if (casterType !== 'none') {
     const slots = slotsForLevel(casterType, d.level)
     const slotType = casterType === 'pact' ? 'pact_magic' : 'spellcasting'

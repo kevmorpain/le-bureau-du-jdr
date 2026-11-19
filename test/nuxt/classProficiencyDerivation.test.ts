@@ -23,11 +23,11 @@ const norm = (es: Effect[]) => es.map(e => `${e.type}:${JSON.stringify(e.value)}
 
 /** JS attendus du porteur (saving_throw_proficiency), accordés par la 1re classe. */
 function expectedSaves(className: string): Effect[] {
-  return CLASS_PROFICIENCIES[className]!.savingThrows.map((ability): Effect => ({ type: 'saving_throw_proficiency', value: { ability } }))
+  return CLASS_PROFICIENCIES['5'][className]!.savingThrows.map((ability): Effect => ({ type: 'saving_throw_proficiency', value: { ability } }))
 }
 
-const expectedStart = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES[className]!)
-const expectedMulticlass = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES[className]!.multiclass)
+const expectedStart = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES['5'][className]!)
+const expectedMulticlass = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES['5'][className]!.multiclass)
 
 /** Classes de la fiche : la 1re nommée est la principale. */
 const sheet = (main: string, ...others: string[]) => [
@@ -53,7 +53,7 @@ beforeAll(async () => {
 
   // Une classe + ses porteurs par entrée de CLASS_PROFICIENCIES (celui de multiclassage seulement s'il
   // accorde quelque chose, comme le seed).
-  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+  for (const className of Object.keys(CLASS_PROFICIENCIES['5'])) {
     const cls = await orm.insert(schema.classes)
       .values({ name: className, hitDice: '1d8' }).returning().get()
     classIdByName.set(className, cls.id)
@@ -70,7 +70,7 @@ beforeAll(async () => {
 
 describe('loadClassProficiencyGrants — les deux porteurs de chaque classe (source du catalogue)', () => {
   it('rend, pour chaque classe, ses maîtrises de départ, ses JS et son sous-ensemble du multiclassage', async () => {
-    const names = Object.keys(CLASS_PROFICIENCIES)
+    const names = Object.keys(CLASS_PROFICIENCIES['5'])
     const grants = await loadClassProficiencyGrants(orm, [...names.map(n => classIdByName.get(n)!), classIdByName.get(BARE)!])
     for (const className of names) {
       const g = grants.get(classIdByName.get(className)!)!
@@ -83,7 +83,7 @@ describe('loadClassProficiencyGrants — les deux porteurs de chaque classe (sou
 })
 
 describe('deriveClassGrants — classe principale : maîtrises de départ et JS', () => {
-  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+  for (const className of Object.keys(CLASS_PROFICIENCIES['5'])) {
     it(`${className} : dérive exactement ses maîtrises de départ (armes/armures/outils) et ses JS`, async () => {
       const grants = await deriveClassGrants(orm, sheet(className))
       expect(norm(grants.proficiencies)).toEqual(norm(expectedStart(className)))
@@ -93,7 +93,7 @@ describe('deriveClassGrants — classe principale : maîtrises de départ et JS'
 })
 
 describe('deriveClassGrants — classe rejointe : sous-ensemble du multiclassage, sans JS', () => {
-  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+  for (const className of Object.keys(CLASS_PROFICIENCIES['5'])) {
     it(`${className} : dérive exactement ses maîtrises de multiclassage`, async () => {
       const grants = await deriveClassGrants(orm, sheet(BARE, className))
       expect(norm(grants.proficiencies)).toEqual(norm(expectedMulticlass(className)))

@@ -5,6 +5,7 @@ import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import StepSpells from '../../app/components/character_builder/StepSpells.vue'
 import { useCharacterBuilder } from '../../app/composables/useCharacterBuilder'
+import { catalogClasses } from '../fixtures/catalogClasses'
 
 // Le Rôdeur 2014 CONNAÎT ses sorts (2 au niveau 2, 3 au niveau 3) — il était traité
 // comme un lanceur à sorts préparés, sans nombre exigé à la création.
@@ -32,6 +33,7 @@ beforeAll(() => {
     return className ? SPELLS.filter(s => s.className === className) : SPELLS
   })
   registerEndpoint('/api/catalog/invocations', () => [])
+  registerEndpoint('/api/catalog/classes', catalogClasses)
 })
 
 async function waitFor(condition: () => boolean) {

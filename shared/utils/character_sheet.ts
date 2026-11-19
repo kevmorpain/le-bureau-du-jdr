@@ -33,7 +33,6 @@ export const updateCharacterSheetSchema = z.object({
   exhaustionLevel: z.number().int().min(0).max(6).optional(),
   deathSaveSuccesses: z.number().int().min(0).max(DEATH_SAVE_LIMIT).optional(),
   deathSaveFailures: z.number().int().min(0).max(DEATH_SAVE_LIMIT).optional(),
-  dragonbornAncestry: z.string().nullable().optional(),
   pp: z.number().int().min(0).optional(),
   po: z.number().int().min(0).optional(),
   pe: z.number().int().min(0).optional(),
