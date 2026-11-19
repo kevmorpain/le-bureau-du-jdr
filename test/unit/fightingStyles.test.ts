@@ -23,12 +23,12 @@ describe('fightingStyles — contrat des données', () => {
   })
 
   it('sous-ensembles par classe (PHB 2014) : Guerrier 6, Paladin 4, Rôdeur 4 (Duel inclus)', () => {
-    expect(FIGHTING_STYLES_BY_CLASS.Guerrier).toEqual(['archery', 'two_weapon', 'defense', 'dueling', 'great_weapon', 'protection'])
-    expect(FIGHTING_STYLES_BY_CLASS.Paladin).toEqual(['defense', 'dueling', 'great_weapon', 'protection'])
+    expect(FIGHTING_STYLES_BY_CLASS['5'].Guerrier).toEqual(['archery', 'two_weapon', 'defense', 'dueling', 'great_weapon', 'protection'])
+    expect(FIGHTING_STYLES_BY_CLASS['5'].Paladin).toEqual(['defense', 'dueling', 'great_weapon', 'protection'])
     // Le Rôdeur inclut Duel — le blob front `app/data/character-builder.ts` l'omettait (bug).
-    expect(FIGHTING_STYLES_BY_CLASS.Rôdeur).toEqual(['archery', 'two_weapon', 'defense', 'dueling'])
+    expect(FIGHTING_STYLES_BY_CLASS['5'].Rôdeur).toEqual(['archery', 'two_weapon', 'defense', 'dueling'])
     // Toute clé référencée doit exister dans les définitions.
-    for (const [cls, kinds] of Object.entries(FIGHTING_STYLES_BY_CLASS)) {
+    for (const [cls, kinds] of Object.entries(FIGHTING_STYLES_BY_CLASS['5'])) {
       for (const k of kinds) expect(ALL_KINDS, `${cls} référence un kind inconnu ${k}`).toContain(k)
     }
   })
@@ -47,7 +47,7 @@ describe('fightingStyles — contrat des données', () => {
   })
 
   it('features-options : type `fighting_style`, tag, effet `fighting_style_modifier` par style', () => {
-    const guerrier = fightingStyleOptionFeatures('Guerrier')
+    const guerrier = fightingStyleOptionFeatures('Guerrier', '5')
     expect(guerrier).toHaveLength(6)
     for (const f of guerrier) {
       expect(f.featureType).toBe('fighting_style')
@@ -58,14 +58,14 @@ describe('fightingStyles — contrat des données', () => {
     }
     // Le kind de l'effet correspond au style de la classe (dans l'ordre).
     const kinds = guerrier.map(f => (f.effects![0]!.value as { kind: FightingStyleKind }).kind)
-    expect(kinds).toEqual(FIGHTING_STYLES_BY_CLASS.Guerrier)
+    expect(kinds).toEqual(FIGHTING_STYLES_BY_CLASS['5'].Guerrier)
 
     // Paladin : 4 options, PAS Archerie.
-    const paladin = fightingStyleOptionFeatures('Paladin')
+    const paladin = fightingStyleOptionFeatures('Paladin', '5')
     expect(paladin.map(f => f.name)).not.toContain('Archerie')
     expect(paladin).toHaveLength(4)
 
     // Classe sans style de combat → [].
-    expect(fightingStyleOptionFeatures('Magicien')).toEqual([])
+    expect(fightingStyleOptionFeatures('Magicien', '5')).toEqual([])
   })
 })

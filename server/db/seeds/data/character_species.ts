@@ -646,106 +646,6 @@ const human: SpeciesSeed = {
   ],
 }
 
-// LEGACY : la base « Drakéide » et ses 10 lignées vivent dans data/dragonborn.ts (migration 0088 renomme cette ligne).
-const dragonborn: SpeciesSeed = {
-  name: 'Drakéide (2014)',
-  size: CreatureSize.Medium,
-  speed: 9,
-  traits: [
-    {
-      name: 'Augmentation de caractéristiques',
-      description: `Votre valeur de Force augmente de 2 et votre valeur de Charisme augmente de 1.`,
-      effects: [
-        {
-          type: 'ability_increase',
-          value: {
-            ability: 'str',
-            amount: 2,
-          },
-        },
-        {
-          type: 'ability_increase',
-          value: {
-            ability: 'cha',
-            amount: 1,
-          },
-        },
-      ],
-    },
-    {
-      name: 'Vitesse',
-      description: `Votre vitesse de base au sol est de 9 m.`,
-      effects: [
-        {
-          type: 'walking_speed',
-          value: 9,
-        },
-      ],
-    },
-    {
-      name: 'Ascendance draconique',
-      description: `Vous avez des ancêtres draconiques. Choisissez un type de dragon dans la table Ascendance draconique. Ce choix détermine votre souffle et votre résistance aux dégâts, comme indiqué dans la table.`,
-      effects: [
-        {
-          type: 'choice',
-          value: 'draconic_ancestry',
-        },
-      ],
-    },
-    {
-      name: 'Souffle',
-      description: `Vous pouvez consacrer votre action à exhaler une vague d'énergie destructrice. Votre ascendance draconique détermine la taille, la forme et le type de dégâts de ce souffle. Quand vous utilisez votre souffle, chaque créature dans la zone d'effet effectue un jet de sauvegarde dont le type est déterminé par votre ascendance draconique. Le DD du jet de sauvegarde contre ce souffle est égal à 8 + votre modificateur de Constitution + votre bonus de maîtrise. Une créature subit 2d6 dégâts en cas d'échec, la moitié en cas de réussite. La quantité de dégâts passe à 3d6 au niveau 6, à 4d6 au niveau 11 et à 5d6 au niveau 16. Une fois votre souffle utilisé, vous ne pouvez plus y recourir avant d'avoir terminé un repos court ou long.`,
-      effects: [
-        {
-          type: 'action',
-          value: {
-            type: 'breathe_weapon',
-            countPerRest: 1,
-            damage: {
-              damageType: 'draconic_ancestry',
-              areaOfEffect: 'draconic_ancestry',
-              damageAtCharacterLevel: {
-                1: '2d6',
-                6: '3d6',
-                11: '4d6',
-                16: '5d6',
-              },
-              savingThrowAbility: 'draconic_ancestry',
-              saveDcBase: 8,
-              saveDcModifiers: ['con', 'proficiency'],
-              halfOnSave: true,
-            },
-          },
-        },
-      ],
-    },
-    {
-      name: 'Résistance aux dégâts',
-      description: `Vous bénéficiez de la résistance au type de dégâts associé à votre ascendance draconique.`,
-      effects: [
-        {
-          type: 'damage_resistance',
-          value: { damageType: 'draconic_ancestry' },
-        },
-      ],
-    },
-    {
-      name: 'Langues',
-      description: `Vous parlez, lisez et écrivez le commun et le draconique. Le draconique, considéré comme l'une des langues les plus anciennes, est souvent utilisé pour étudier la magie. Comprenant de nombreuses consonnes dures et autres sifflements, cette langue heurte les tympans de nombre des créatures qui ne la parlent pas.`,
-      effects: [
-        {
-          type: 'language_proficiency',
-          value: 'draconic',
-        },
-        {
-          type: 'language_proficiency',
-          value: 'common',
-        },
-      ],
-    },
-  ],
-}
-
 const rockGnome: SpeciesSeed = {
   name: 'Gnome des roches',
   size: CreatureSize.Small,
@@ -1365,7 +1265,6 @@ export const characterSpecies = [
   lightfootHalfling,
   stoutHalfling,
   human,
-  dragonborn,
   rockGnome,
   forestGnome,
   halfElf,

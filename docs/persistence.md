@@ -8,8 +8,6 @@
 | `hpBase` (part « dés » des PV max) | DB (`character_sheets`) | Le maximum est dérivé à la lecture (CON × niveau, bonus par niveau, épuisement) : [D19](decisions.md#d19) |
 | `deathSaveSuccesses`, `deathSaveFailures` | DB (`character_sheets`) | Suivent le personnage d'un appareil à l'autre ; remis à zéro par les soins et le repos long (`shared/rules/damage.ts`) |
 | `concentratingSpellId`, `concentratingOn` | DB (`character_sheets`) | Sort du catalogue (clé étrangère) ou libellé libre, jamais les deux |
-| `dragonbornAncestry` | DB (`character_sheets`) | Persistance cross-session |
-| `spellcastingAbility` | DB (`character_classes`) | Dérivé de la classe, voir [architecture.md](architecture.md) |
 | `spellSlots` | DB (`character_spell_slots`) | Persistance cross-session |
 | `currentHitDie` (dés de vie restants) | DB (`character_sheets`, JSON) | Persistance cross-session ; rendus par le repos long (`shared/rules/hitDice.ts`) |
 | `notes` (notes de session) | DB (`character_sheets`) | Persistance cross-device, cross-session |

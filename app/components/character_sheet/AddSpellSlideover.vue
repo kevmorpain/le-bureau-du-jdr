@@ -89,8 +89,11 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{
+import type { Ruleset } from '~~/shared/rules/ruleset'
+
+const props = defineProps<{
   alreadyAddedIds: Set<number>
+  ruleset: Ruleset
 }>()
 
 const emit = defineEmits<{
@@ -103,8 +106,7 @@ const search = ref('')
 const selectedLevels = ref<number[]>([])
 const addingIds = ref<Set<number>>(new Set())
 
-const { extendedQuery } = useExtendedContent()
-const { data: allSpells, pending } = useFetch<Spell[]>('/api/spells', { query: extendedQuery })
+const { data: allSpells, pending } = useFetch<Spell[]>('/api/spells', { query: useCatalogQuery(() => props.ruleset) })
 
 const levelOptions = [
   { label: 'Tour', value: 0 },

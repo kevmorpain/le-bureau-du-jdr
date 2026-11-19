@@ -17,15 +17,15 @@ const ARMOR_TOKENS = new Set(['light', 'medium', 'heavy', 'shield', 'all_armor']
 // Clés EN du mapping historique du builder : elles ne matchent aucun item FR.
 const FORBIDDEN_WEAPON_KEYS = new Set(['longsword', 'rapier', 'shortsword', 'hand_crossbow', 'light_crossbow', 'longbow', 'shortbow'])
 
-const entries = Object.entries(CLASS_PROFICIENCIES)
+const entries = Object.entries(CLASS_PROFICIENCIES['5'])
 const setsOf = (name: string): Array<[string, ProficiencySet]> => [
-  [`${name} (départ)`, CLASS_PROFICIENCIES[name]!],
-  [`${name} (multiclassage)`, CLASS_PROFICIENCIES[name]!.multiclass],
+  [`${name} (départ)`, CLASS_PROFICIENCIES['5'][name]!],
+  [`${name} (multiclassage)`, CLASS_PROFICIENCIES['5'][name]!.multiclass],
 ]
 
 describe('CLASS_PROFICIENCIES — contrat', () => {
   it('couvre exactement les 12 classes', () => {
-    expect(Object.keys(CLASS_PROFICIENCIES).sort()).toEqual(Object.values(CLASS_DB_NAMES).sort())
+    expect(Object.keys(CLASS_PROFICIENCIES['5']).sort()).toEqual(Object.values(CLASS_DB_NAMES).sort())
   })
 
   it('les armures sont des jetons consommés par la fiche', () => {
@@ -94,7 +94,7 @@ describe('builder — étape Classe', () => {
     const cardText = (name: string) => wrapper.findAll('button').find(b => b.text().includes(name))?.text()
     await vi.waitFor(() => expect(cardText('Barbare')).toContain('JS : FOR+CON'))
     for (const cls of CLASSES) {
-      const expected = CLASS_PROFICIENCIES[cls.dbName]!.savingThrows.map(s => ABILITY_SHORT[s]).join('+')
+      const expected = CLASS_PROFICIENCIES['5'][cls.dbName]!.savingThrows.map(s => ABILITY_SHORT[s]).join('+')
       expect(cardText(cls.name), cls.name).toContain(`JS : ${expected}`)
     }
   })

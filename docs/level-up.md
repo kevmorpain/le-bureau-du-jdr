@@ -181,8 +181,9 @@ classe. « Déjà maîtrisée » reste front-autoritaire. Elles sont consignées
 
 **Affiché si** `hasSpellcasting` :
 ```ts
-hasSpellcasting = pickedClass.spellcasting !== null && toLevel >= spellcasting.startsAtLevel
-// startsAtLevel = 1 pour les lanceurs complets, 2 pour les demi-lanceurs
+hasSpellcasting = levelUpSpellcasting !== null && toLevel >= levelUpSpellcasting.startsAtLevel
+// levelUpSpellcasting : classCastingOf(classe du catalogue), sinon la sous-classe lanceuse ([D38](decisions.md#d38))
+// startsAtLevel = premier niveau à emplacement : 1 (complet, pacte), 2 (demi-lanceur), 3 (tiers)
 ```
 
 **But :** Choisir les nouveaux sorts/sorts mineurs gagnés ce niveau (et les 3 sorts mineurs du Pacte du Tome si applicable).

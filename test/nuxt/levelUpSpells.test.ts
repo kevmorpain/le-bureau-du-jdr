@@ -5,6 +5,7 @@ import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import LevelUpStepSpells from '../../app/components/level_up/LevelUpStepSpells.vue'
 import { useLevelUp, type CharacterSheetWithASI, levelUpSheetKey } from '../../app/composables/useLevelUp'
+import { catalogClasses } from '../fixtures/catalogClasses'
 
 // Garde-fou du bug « multiclasser vers un lanceur ne propose aucun sort » : en multiclasse la classe
 // part du niveau 0, et les sorts se choisissent classe par classe (règle de multiclassage PHB 2014).
@@ -46,13 +47,20 @@ beforeAll(() => {
     return className ? SPELLS.filter(s => s.className === className) : SPELLS
   })
   registerEndpoint('/api/catalog/invocations', () => [])
+  registerEndpoint('/api/catalog/classes', () => CATALOG_CLASSES)
 })
 
 type ClassFixture = { id: number, name: string, level: number }
 
+// Ids des classes de ce fichier, que le catalogue doit porter : la fiche et le catalogue désignent la même ligne.
+const CLASS_IDS: Record<string, number> = { Clerc: 3, Guerrier: 5, Magicien: 6, Barde: 7, Rôdeur: 9 }
+const CATALOG_CLASSES = catalogClasses().map(c => ({ ...c, id: CLASS_IDS[c.name] ?? c.id + 100 }))
+const classRow = (name: string) => CATALOG_CLASSES.find(c => c.name === name) ?? { name }
+
 const sheet = (classes: ClassFixture[], knownSpellIds: number[] = []) => ({
   id: 1,
-  classes: classes.map((c, i) => ({ classId: c.id, level: c.level, isMain: i === 0, class: { name: c.name } })),
+  ruleset: '5',
+  classes: classes.map((c, i) => ({ classId: c.id, level: c.level, isMain: i === 0, class: classRow(c.name) })),
   baseAbilityScores: [{ abilityId: 'int', value: 16 }, { abilityId: 'wis', value: 16 }, { abilityId: 'cha', value: 16 }],
   proficiencyOverrides: [],
   spells: knownSpellIds.map((spellId) => {
@@ -277,7 +285,7 @@ describe('Étape Magie du level-up — Chevalier occulte (lanceur du tiers)', ()
   })
 
   it('niveau 3 → 4 : aucune école libre, un seul sort', async () => {
-    const charSheet = ref({ ...sheet([{ id: 5, name: 'Guerrier', level: 3 }]), classes: [{ classId: 5, level: 3, isMain: true, class: { name: 'Guerrier' }, subclass: { name: 'Chevalier occulte' } }] })
+    const charSheet = ref({ ...sheet([{ id: 5, name: 'Guerrier', level: 3 }]), classes: [{ classId: 5, level: 3, isMain: true, class: classRow('Guerrier'), subclass: { name: 'Chevalier occulte' } }] })
     let levelUp!: ReturnType<typeof useLevelUp>
     const Host = defineComponent({
       setup() {

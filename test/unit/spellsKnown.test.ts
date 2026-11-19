@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cantripsKnownAt, countPreparedSpells, LORE_COLLEGE_NAME, magicalSecretsGained, preparedSpellsLimit, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
+import { cantripsKnownAt, countPreparedSpells, hasSpellTables, LORE_COLLEGE_NAME, magicalSecretsGained, preparedSpellsLimit, spellLearningOf, spellsKnownAt, spellsLearnedOnLevelUp } from '../../shared/rules/spellsKnown'
 
 // Valeurs vérifiées à la main sur les tables de classe (PHB 2014) et la règle de multiclassage :
 // « Vous choisissez les sorts que vous connaissez et que vous préparez pour chacune de vos classes
@@ -7,106 +7,106 @@ import { cantripsKnownAt, countPreparedSpells, LORE_COLLEGE_NAME, magicalSecrets
 
 describe('spellsLearnedOnLevelUp — multiclassage (classe prise au niveau 1, fromLevel = 0)', () => {
   it('Occultiste 1 : 2 sorts mineurs et 2 sorts connus', () => {
-    expect(spellsLearnedOnLevelUp('warlock', 0, 1)).toEqual({ cantrips: 2, spells: 2 })
+    expect(spellsLearnedOnLevelUp('5', 'warlock', 0, 1)).toEqual({ cantrips: 2, spells: 2 })
   })
 
   it('Magicien 1 : 3 sorts mineurs et un grimoire de six sorts', () => {
-    expect(spellsLearnedOnLevelUp('wizard', 0, 1)).toEqual({ cantrips: 3, spells: 6 })
+    expect(spellsLearnedOnLevelUp('5', 'wizard', 0, 1)).toEqual({ cantrips: 3, spells: 6 })
   })
 
   it('Clerc 1 : 3 sorts mineurs, aucun sort connu (il prépare)', () => {
-    expect(spellsLearnedOnLevelUp('cleric', 0, 1)).toEqual({ cantrips: 3, spells: 0 })
+    expect(spellsLearnedOnLevelUp('5', 'cleric', 0, 1)).toEqual({ cantrips: 3, spells: 0 })
   })
 
   it('Ensorceleur 1 : 4 sorts mineurs et 2 sorts connus ; Barde 1 : 2 et 4', () => {
-    expect(spellsLearnedOnLevelUp('sorcerer', 0, 1)).toEqual({ cantrips: 4, spells: 2 })
-    expect(spellsLearnedOnLevelUp('bard', 0, 1)).toEqual({ cantrips: 2, spells: 4 })
+    expect(spellsLearnedOnLevelUp('5', 'sorcerer', 0, 1)).toEqual({ cantrips: 4, spells: 2 })
+    expect(spellsLearnedOnLevelUp('5', 'bard', 0, 1)).toEqual({ cantrips: 2, spells: 4 })
   })
 
   it('Rôdeur et Paladin 1 : rien (incantation au niveau 2)', () => {
-    expect(spellsLearnedOnLevelUp('ranger', 0, 1)).toEqual({ cantrips: 0, spells: 0 })
-    expect(spellsLearnedOnLevelUp('paladin', 0, 1)).toEqual({ cantrips: 0, spells: 0 })
+    expect(spellsLearnedOnLevelUp('5', 'ranger', 0, 1)).toEqual({ cantrips: 0, spells: 0 })
+    expect(spellsLearnedOnLevelUp('5', 'paladin', 0, 1)).toEqual({ cantrips: 0, spells: 0 })
   })
 })
 
 describe('spellsLearnedOnLevelUp — classe déjà possédée', () => {
   it('Occultiste 1→2 : 1 sort connu, pas de sort mineur', () => {
-    expect(spellsLearnedOnLevelUp('warlock', 1, 2)).toEqual({ cantrips: 0, spells: 1 })
+    expect(spellsLearnedOnLevelUp('5', 'warlock', 1, 2)).toEqual({ cantrips: 0, spells: 1 })
   })
 
   it('Occultiste 17→18 : rien (14 sorts connus aux deux niveaux), 18→19 : 1', () => {
-    expect(spellsLearnedOnLevelUp('warlock', 17, 18)).toEqual({ cantrips: 0, spells: 0 })
-    expect(spellsLearnedOnLevelUp('warlock', 18, 19)).toEqual({ cantrips: 0, spells: 1 })
+    expect(spellsLearnedOnLevelUp('5', 'warlock', 17, 18)).toEqual({ cantrips: 0, spells: 0 })
+    expect(spellsLearnedOnLevelUp('5', 'warlock', 18, 19)).toEqual({ cantrips: 0, spells: 1 })
   })
 
   it('Magicien : deux sorts de grimoire par niveau, un sort mineur au niveau 4', () => {
-    expect(spellsLearnedOnLevelUp('wizard', 1, 2)).toEqual({ cantrips: 0, spells: 2 })
-    expect(spellsLearnedOnLevelUp('wizard', 3, 4)).toEqual({ cantrips: 1, spells: 2 })
+    expect(spellsLearnedOnLevelUp('5', 'wizard', 1, 2)).toEqual({ cantrips: 0, spells: 2 })
+    expect(spellsLearnedOnLevelUp('5', 'wizard', 3, 4)).toEqual({ cantrips: 1, spells: 2 })
   })
 
   it('Rôdeur 2014 : sorts CONNUS — 2 au niveau 2, puis 3 au niveau 3, stable au niveau 4', () => {
-    expect(spellLearningOf('ranger')).toBe('known')
-    expect(spellsLearnedOnLevelUp('ranger', 1, 2)).toEqual({ cantrips: 0, spells: 2 })
-    expect(spellsLearnedOnLevelUp('ranger', 2, 3)).toEqual({ cantrips: 0, spells: 1 })
-    expect(spellsLearnedOnLevelUp('ranger', 3, 4)).toEqual({ cantrips: 0, spells: 0 })
+    expect(spellLearningOf('5', 'ranger')).toBe('known')
+    expect(spellsLearnedOnLevelUp('5', 'ranger', 1, 2)).toEqual({ cantrips: 0, spells: 2 })
+    expect(spellsLearnedOnLevelUp('5', 'ranger', 2, 3)).toEqual({ cantrips: 0, spells: 1 })
+    expect(spellsLearnedOnLevelUp('5', 'ranger', 3, 4)).toEqual({ cantrips: 0, spells: 0 })
   })
 
   it('Barde 9→10 : 1 sort mineur et 2 sorts (Secrets magiques)', () => {
-    expect(spellsLearnedOnLevelUp('bard', 9, 10)).toEqual({ cantrips: 1, spells: 2 })
+    expect(spellsLearnedOnLevelUp('5', 'bard', 9, 10)).toEqual({ cantrips: 1, spells: 2 })
   })
 
   it('Clerc 9→10 : 1 sort mineur ; Paladin 1→2 : rien à choisir (il prépare)', () => {
-    expect(spellsLearnedOnLevelUp('cleric', 9, 10)).toEqual({ cantrips: 1, spells: 0 })
-    expect(spellsLearnedOnLevelUp('paladin', 1, 2)).toEqual({ cantrips: 0, spells: 0 })
+    expect(spellsLearnedOnLevelUp('5', 'cleric', 9, 10)).toEqual({ cantrips: 1, spells: 0 })
+    expect(spellsLearnedOnLevelUp('5', 'paladin', 1, 2)).toEqual({ cantrips: 0, spells: 0 })
   })
 
   it('classe non lanceuse : rien', () => {
-    expect(spellLearningOf('fighter')).toBeNull()
-    expect(spellsLearnedOnLevelUp('fighter', 2, 3)).toEqual({ cantrips: 0, spells: 0 })
+    expect(spellLearningOf('5', 'fighter')).toBeNull()
+    expect(spellsLearnedOnLevelUp('5', 'fighter', 2, 3)).toEqual({ cantrips: 0, spells: 0 })
   })
 })
 
 describe('cantripsKnownAt / spellsKnownAt', () => {
   it('niveau 0 (classe pas encore prise) : rien de connu', () => {
-    expect(cantripsKnownAt('warlock', 0)).toBe(0)
-    expect(spellsKnownAt('warlock', 0)).toBe(0)
-    expect(spellsKnownAt('wizard', 0)).toBe(0)
+    expect(cantripsKnownAt('5', 'warlock', 0)).toBe(0)
+    expect(spellsKnownAt('5', 'warlock', 0)).toBe(0)
+    expect(spellsKnownAt('5', 'wizard', 0)).toBe(0)
   })
 
   it('grimoire : 6 au niveau 1, puis +2 par niveau', () => {
-    expect(spellsKnownAt('wizard', 1)).toBe(6)
-    expect(spellsKnownAt('wizard', 3)).toBe(10) // l'exemple rôdeur 4/magicien 3 : dix sorts
-    expect(spellsKnownAt('wizard', 20)).toBe(44)
+    expect(spellsKnownAt('5', 'wizard', 1)).toBe(6)
+    expect(spellsKnownAt('5', 'wizard', 3)).toBe(10) // l'exemple rôdeur 4/magicien 3 : dix sorts
+    expect(spellsKnownAt('5', 'wizard', 20)).toBe(44)
   })
 
   it('lanceur à sorts préparés : aucun sort « connu »', () => {
-    expect(spellsKnownAt('cleric', 5)).toBe(0)
-    expect(spellsKnownAt('druid', 5)).toBe(0)
+    expect(spellsKnownAt('5', 'cleric', 5)).toBe(0)
+    expect(spellsKnownAt('5', 'druid', 5)).toBe(0)
   })
 })
 
 describe('preparedSpellsLimit — sorts préparés par jour', () => {
   it('Clerc, Druide, Magicien : modificateur + niveau de classe', () => {
-    expect(preparedSpellsLimit('cleric', 5, 3)).toBe(8)
-    expect(preparedSpellsLimit('druid', 1, 2)).toBe(3)
-    expect(preparedSpellsLimit('wizard', 4, 3)).toBe(7)
+    expect(preparedSpellsLimit('5', 'cleric', 5, 3)).toBe(8)
+    expect(preparedSpellsLimit('5', 'druid', 1, 2)).toBe(3)
+    expect(preparedSpellsLimit('5', 'wizard', 4, 3)).toBe(7)
   })
 
   it('Paladin : modificateur de Charisme + la moitié du niveau, arrondie à l\'inférieur', () => {
-    expect(preparedSpellsLimit('paladin', 5, 3)).toBe(5)
-    expect(preparedSpellsLimit('paladin', 2, 2)).toBe(3)
+    expect(preparedSpellsLimit('5', 'paladin', 5, 3)).toBe(5)
+    expect(preparedSpellsLimit('5', 'paladin', 2, 2)).toBe(3)
   })
 
   it('au moins un sort, même avec un modificateur négatif', () => {
-    expect(preparedSpellsLimit('wizard', 1, -2)).toBe(1)
-    expect(preparedSpellsLimit('paladin', 2, -3)).toBe(1)
+    expect(preparedSpellsLimit('5', 'wizard', 1, -2)).toBe(1)
+    expect(preparedSpellsLimit('5', 'paladin', 2, -3)).toBe(1)
   })
 
   it('classe qui ne prépare pas (sorts connus, non lanceuse) ou classe pas encore prise : null', () => {
-    expect(preparedSpellsLimit('sorcerer', 5, 3)).toBeNull()
-    expect(preparedSpellsLimit('ranger', 5, 3)).toBeNull()
-    expect(preparedSpellsLimit('fighter', 5, 3)).toBeNull()
-    expect(preparedSpellsLimit('wizard', 0, 3)).toBeNull()
+    expect(preparedSpellsLimit('5', 'sorcerer', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('5', 'ranger', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('5', 'fighter', 5, 3)).toBeNull()
+    expect(preparedSpellsLimit('5', 'wizard', 0, 3)).toBeNull()
   })
 })
 
@@ -135,28 +135,39 @@ describe('countPreparedSpells — consommation de la limite quotidienne', () => 
 
 describe('magicalSecretsGained — Secrets magiques du Barde', () => {
   it('niveaux 10, 14 et 18 : deux sorts de n\'importe quelle liste, déjà dans le décompte des sorts connus', () => {
-    expect(magicalSecretsGained('bard', 9, 10)).toEqual({ anyList: 2, extra: 0 })
-    expect(magicalSecretsGained('bard', 13, 14)).toEqual({ anyList: 2, extra: 0 })
-    expect(magicalSecretsGained('bard', 17, 18)).toEqual({ anyList: 2, extra: 0 })
-    expect(spellsLearnedOnLevelUp('bard', 9, 10).spells).toBe(2)
+    expect(magicalSecretsGained('5', 'bard', 9, 10)).toEqual({ anyList: 2, extra: 0 })
+    expect(magicalSecretsGained('5', 'bard', 13, 14)).toEqual({ anyList: 2, extra: 0 })
+    expect(magicalSecretsGained('5', 'bard', 17, 18)).toEqual({ anyList: 2, extra: 0 })
+    expect(spellsLearnedOnLevelUp('5', 'bard', 9, 10).spells).toBe(2)
   })
 
   it('les autres niveaux : rien', () => {
-    expect(magicalSecretsGained('bard', 10, 11)).toEqual({ anyList: 0, extra: 0 })
-    expect(magicalSecretsGained('bard', 5, 6)).toEqual({ anyList: 0, extra: 0 })
+    expect(magicalSecretsGained('5', 'bard', 10, 11)).toEqual({ anyList: 0, extra: 0 })
+    expect(magicalSecretsGained('5', 'bard', 5, 6)).toEqual({ anyList: 0, extra: 0 })
   })
 
   it('Collège du savoir, niveau 6 : deux sorts de plus, hors décompte', () => {
-    expect(magicalSecretsGained('bard', 5, 6, LORE_COLLEGE_NAME)).toEqual({ anyList: 0, extra: 2 })
-    expect(magicalSecretsGained('bard', 5, 6, 'Collège de la vaillance')).toEqual({ anyList: 0, extra: 0 })
+    expect(magicalSecretsGained('5', 'bard', 5, 6, LORE_COLLEGE_NAME)).toEqual({ anyList: 0, extra: 2 })
+    expect(magicalSecretsGained('5', 'bard', 5, 6, 'Collège de la vaillance')).toEqual({ anyList: 0, extra: 0 })
   })
 
   it('une création à un niveau élevé cumule les paliers franchis', () => {
-    expect(magicalSecretsGained('bard', 0, 14, LORE_COLLEGE_NAME)).toEqual({ anyList: 4, extra: 2 })
-    expect(magicalSecretsGained('bard', 0, 20)).toEqual({ anyList: 6, extra: 0 })
+    expect(magicalSecretsGained('5', 'bard', 0, 14, LORE_COLLEGE_NAME)).toEqual({ anyList: 4, extra: 2 })
+    expect(magicalSecretsGained('5', 'bard', 0, 20)).toEqual({ anyList: 6, extra: 0 })
   })
 
   it('une autre classe : rien', () => {
-    expect(magicalSecretsGained('wizard', 0, 20, LORE_COLLEGE_NAME)).toEqual({ anyList: 0, extra: 0 })
+    expect(magicalSecretsGained('5', 'wizard', 0, 20, LORE_COLLEGE_NAME)).toEqual({ anyList: 0, extra: 0 })
+  })
+})
+
+describe('édition sans tables', () => {
+  it('les tables 2014 ne s\'appliquent pas à une classe 2024 homonyme', () => {
+    expect(hasSpellTables('5')).toBe(true)
+    expect(hasSpellTables('5.5')).toBe(false)
+    expect(spellLearningOf('5.5', 'wizard')).toBeNull()
+    expect(cantripsKnownAt('5.5', 'wizard', 5)).toBe(0)
+    expect(preparedSpellsLimit('5.5', 'cleric', 5, 3)).toBeNull()
+    expect(magicalSecretsGained('5.5', 'bard', 0, 20)).toEqual({ anyList: 0, extra: 0 })
   })
 })

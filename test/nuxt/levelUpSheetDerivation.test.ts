@@ -37,7 +37,7 @@ const payload = (over: Record<string, unknown> = {}) => ref({
   classSavingThrowEffects: [],
   choiceEffects: [],
   species: null,
-  classes: [{ classId: ROGUE, level: 5, isMain: true, class: { name: 'Roublard' }, subclass: null }],
+  classes: [{ classId: ROGUE, level: 5, isMain: true, class: { name: 'Roublard', hitDice: '1d8' }, subclass: null }],
   ...over,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any)

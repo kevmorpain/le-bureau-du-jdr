@@ -1,10 +1,13 @@
 import type { FeatureDef } from '../lib/seedClass'
 import type { SkillKey } from '~~/shared/rules/skills'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 
 // Choix de compétences de classe (PHB 2014) : N compétences dans une liste (Barde = n'importe laquelle).
 // Owner INVISIBLE (`choice_carrier`) : le pick n'est pas une feature affichée mais une maîtrise dérivée
 // du choix (character_choices), comme les compétences d'historique/JS (F3).
-export const CLASS_SKILL_CHOICES: Record<string, { count: number, from: SkillKey[] | 'all' }> = {
+type ClassSkillChoice = { count: number, from: SkillKey[] | 'all' }
+
+const CLASS_SKILL_CHOICES_2014: Record<string, ClassSkillChoice> = {
   Barbare: { count: 2, from: ['animal_handling', 'athletics', 'intimidation', 'nature', 'perception', 'survival'] },
   Barde: { count: 3, from: 'all' },
   Clerc: { count: 2, from: ['history', 'insight', 'medicine', 'persuasion', 'religion'] },
@@ -19,10 +22,15 @@ export const CLASS_SKILL_CHOICES: Record<string, { count: number, from: SkillKey
   Magicien: { count: 2, from: ['arcana', 'history', 'insight', 'investigation', 'medicine', 'religion'] },
 }
 
+export const CLASS_SKILL_CHOICES: Record<Ruleset, Record<string, ClassSkillChoice>> = {
+  5: CLASS_SKILL_CHOICES_2014,
+  5.5: {},
+}
+
 export const CLASS_SKILL_CHOICE_OWNER_NAME = 'Compétences de classe'
 
-export function classSkillChoiceFeature(className: string): FeatureDef | null {
-  const choice = CLASS_SKILL_CHOICES[className]
+export function classSkillChoiceFeature(className: string, ruleset: Ruleset): FeatureDef | null {
+  const choice = CLASS_SKILL_CHOICES[ruleset][className]
   if (!choice) return null
   return {
     name: CLASS_SKILL_CHOICE_OWNER_NAME,

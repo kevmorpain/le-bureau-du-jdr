@@ -1,4 +1,5 @@
 import type { FeatureDef, ProgressionDef } from '../lib/seedClass'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 
 // Options DUPLIQUÉES par classe (une feature « Défense » par classe qui la propose) : chaque classe
 // offre un sous-ensemble différent et `buildCatalog` filtre `feature_group` par classe propriétaire.
@@ -21,10 +22,13 @@ export const FIGHTING_STYLE_DEFS: FightingStyleDef[] = [
   { kind: 'protection', name: 'Protection', description: 'Réaction : quand une créature attaque une cible autre que vous à portée, imposez le désavantage à ce jet d\'attaque (bouclier requis).' },
 ]
 
-export const FIGHTING_STYLES_BY_CLASS: Record<string, FightingStyleKind[]> = {
-  Guerrier: ['archery', 'two_weapon', 'defense', 'dueling', 'great_weapon', 'protection'],
-  Paladin: ['defense', 'dueling', 'great_weapon', 'protection'],
-  Rôdeur: ['archery', 'two_weapon', 'defense', 'dueling'],
+export const FIGHTING_STYLES_BY_CLASS: Record<Ruleset, Record<string, FightingStyleKind[]>> = {
+  5: {
+    Guerrier: ['archery', 'two_weapon', 'defense', 'dueling', 'great_weapon', 'protection'],
+    Paladin: ['defense', 'dueling', 'great_weapon', 'protection'],
+    Rôdeur: ['archery', 'two_weapon', 'defense', 'dueling'],
+  },
+  5.5: {},
 }
 
 export const FIGHTING_STYLE_LEVEL_BY_CLASS: Record<string, number> = {
@@ -44,8 +48,8 @@ export const fightingStyleProgression: ProgressionDef = {
 
 const defByKind = new Map(FIGHTING_STYLE_DEFS.map(d => [d.kind, d]))
 
-export function fightingStyleOptionFeatures(className: string): FeatureDef[] {
-  const kinds = FIGHTING_STYLES_BY_CLASS[className]
+export function fightingStyleOptionFeatures(className: string, ruleset: Ruleset): FeatureDef[] {
+  const kinds = FIGHTING_STYLES_BY_CLASS[ruleset][className]
   if (!kinds) return []
   return kinds.map((kind): FeatureDef => {
     const def = defByKind.get(kind)!

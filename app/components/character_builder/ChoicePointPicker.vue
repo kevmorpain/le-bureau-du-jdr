@@ -62,9 +62,10 @@ const DEFAULT_TITLES: Partial<Record<ChoiceKind, string>> = {
   spellcasting_ability: 'Caractéristique d\'incantation',
 }
 
-const { extendedQuery } = useExtendedContent()
+const { ruleset } = useCharacterBuilder()
+const catalogQuery = useCatalogQuery(ruleset)
 const { data: spells } = useFetch<Array<{ id: number, name: string }>>('/api/spells', {
-  query: extendedQuery,
+  query: catalogQuery,
   default: () => [],
   immediate: props.kind === 'cantrip',
 })

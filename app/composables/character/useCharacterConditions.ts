@@ -1,8 +1,6 @@
 import { useStorage } from '@vueuse/core'
-import type { Effect, DamageTypeKey, ConditionKey } from '~~/server/db/schema/effects'
+import type { Effect, ConditionKey } from '~~/server/db/schema/effects'
 import { damageTypeLabels, conditionLabels, immunityLabels, allConditions } from '~~/shared/utils/labels'
-import { dragonbornAncestryDamageType } from '~~/shared/utils/draconic_ancestry'
-import type { DragonbornAncestry } from '~~/shared/utils/draconic_ancestry'
 import { conditionMechanics, exhaustionImpactLines } from '~~/shared/utils/condition-effects'
 import { elapseConditionRounds } from '~~/shared/rules/durations'
 import { maxHitPoints } from '~~/shared/rules/hitPoints'
@@ -123,24 +121,6 @@ export const useCharacterConditions = (
     exhaustionImpactLines.slice(0, exhaustionLevel.value).join('\n'),
   )
 
-  // ─── Draconic ancestry ────────────────────────────────────────────────────
-
-  const dragonbornAncestry = computed({
-    get: () => (characterSheet?.value?.dragonbornAncestry as DragonbornAncestry | null) ?? null,
-    set: (v: DragonbornAncestry | null) => { if (characterSheet?.value) characterSheet.value.dragonbornAncestry = v },
-  })
-
-  const hasDraconicAncestry = computed(() =>
-    (deps?.allEffects.value ?? []).some(e => e.type === 'choice' && e.value === 'draconic_ancestry'),
-  )
-
-  const resolveDamageType = (key: DamageTypeKey): DamageTypeKey => {
-    if (key !== 'draconic_ancestry') return key
-    return dragonbornAncestry.value
-      ? dragonbornAncestryDamageType[dragonbornAncestry.value]
-      : 'draconic_ancestry'
-  }
-
   // ─── Defense entries ──────────────────────────────────────────────────────
 
   const defenseEntries = computed((): DefenseEntry[] => {
@@ -155,13 +135,13 @@ export const useCharacterConditions = (
 
     for (const effect of (deps?.allEffects.value ?? [])) {
       if (effect.type === 'damage_immunity') {
-        const dt = resolveDamageType(effect.value.damageType)
+        const dt = effect.value.damageType
         add(`dmg:${dt}`, damageTypeLabels[dt], 'immunity')
       } else if (effect.type === 'damage_resistance') {
-        const dt = resolveDamageType(effect.value.damageType)
+        const dt = effect.value.damageType
         add(`dmg:${dt}`, damageTypeLabels[dt], 'resistance')
       } else if (effect.type === 'vulnerability') {
-        const dt = resolveDamageType(effect.value.damageType)
+        const dt = effect.value.damageType
         add(`dmg:${dt}`, damageTypeLabels[dt], 'vulnerability')
       } else if (effect.type === 'condition_immunity') {
         const cond = effect.value.condition
@@ -289,8 +269,6 @@ export const useCharacterConditions = (
     setFreeConcentration,
     exhaustionLevel,
     exhaustionTooltip,
-    hasDraconicAncestry,
-    dragonbornAncestry,
     defenseEntries,
     effectiveSpeed,
     speedModifiers,

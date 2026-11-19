@@ -1,4 +1,5 @@
 import type { AbilityKey } from './abilities'
+import type { Ruleset } from './ruleset'
 import { TOOL_CATEGORIES } from './tools'
 
 // Convention : catégorie d'arme = token EN (`simple_weapons`/`martial_weapons`), arme précise = nom FR de l'item
@@ -21,11 +22,11 @@ export interface ClassProficiencies extends ProficiencySet {
   multiclass: ProficiencySet
 }
 
-// Clé = nom de classe en base (`classes.name`), tel que passé à `seedClass`. Source du SEED seulement : le front
-// lit les porteurs en base via `/api/catalog/classes` (`proficiencies`), comme la fiche.
+// Clé = édition, puis nom de classe en base (`classes.name`), tels que passés à `seedClass`. Source du SEED
+// seulement : le front lit les porteurs en base via `/api/catalog/classes` (`proficiencies`), comme la fiche.
 // `savingThrows` : les 2 JS maîtrisés (PHB 2014) — accordés par la 1re classe SEULEMENT (le multiclassage
 // n'en donne pas), d'où une dérivation scopée à la classe principale (cf. deriveClassGrants).
-export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
+const CLASS_PROFICIENCIES_2014: Record<string, ClassProficiencies> = {
   Barbare: {
     savingThrows: ['str', 'con'],
     armor: ['light', 'medium', 'shield'],
@@ -112,4 +113,9 @@ export const CLASS_PROFICIENCIES: Record<string, ClassProficiencies> = {
     tools: [],
     multiclass: { armor: [], weapon: [], tools: [] },
   },
+}
+
+export const CLASS_PROFICIENCIES: Record<Ruleset, Record<string, ClassProficiencies>> = {
+  5: CLASS_PROFICIENCIES_2014,
+  5.5: {},
 }

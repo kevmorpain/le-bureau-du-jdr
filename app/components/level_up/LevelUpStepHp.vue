@@ -40,7 +40,7 @@
         +{{ averageHpGain }}
       </div>
       <div class="text-xs text-muted mt-2">
-        ⌈d{{ pickedClass?.hitDie ?? '?' }}/2⌉ + 1 {{ conMod >= 0 ? '+' : '' }}{{ conMod }} CON
+        ⌈d{{ pickedHitDie ?? '?' }}/2⌉ + 1 {{ conMod >= 0 ? '+' : '' }}{{ conMod }} CON
       </div>
     </div>
 
@@ -55,7 +55,7 @@
       <div class="flex items-center justify-center gap-4 mb-5">
         <div class="text-center">
           <div class="text-xs text-muted mb-1">
-            Jet (1d{{ pickedClass?.hitDie ?? '?' }})
+            Jet (1d{{ pickedHitDie ?? '?' }})
           </div>
           <div
             class="size-16 rounded-xl border-2 flex items-center justify-center font-mono text-3xl font-black"
@@ -92,7 +92,7 @@
         color="warning"
         @click="rollDie"
       >
-        🎲 Lancer 1d{{ pickedClass?.hitDie ?? '?' }}
+        🎲 Lancer 1d{{ pickedHitDie ?? '?' }}
       </UButton>
 
       <div class="mt-4 flex items-center gap-2">
@@ -101,7 +101,7 @@
           v-model.number="state.hpRolled"
           type="number"
           :min="1"
-          :max="pickedClass?.hitDie ?? 12"
+          :max="pickedHitDie ?? 12"
           class="w-16 px-2 py-1 rounded-lg border border-(--ui-border) bg-(--ui-bg) text-sm font-mono text-center text-(--ui-text) focus:border-amber-500/60 focus:outline-none"
         >
       </div>
@@ -123,7 +123,7 @@
             v-model.number="state.hpManual"
             type="number"
             :min="1"
-            :max="pickedClass?.hitDie ?? 12"
+            :max="pickedHitDie ?? 12"
             placeholder="—"
             class="w-20 px-2 py-2 rounded-xl border border-(--ui-border) bg-(--ui-bg) text-2xl font-mono font-bold text-center text-(--ui-text) focus:border-amber-500/60 focus:outline-none"
           >
@@ -180,7 +180,7 @@
 
 <script lang="ts" setup>
 const lu = useLevelUp(injectLevelUpSheet())
-const { state, pickedClass, conMod, averageHpGain, hpGained, hpPerLevelBonus, currentHpMax, formatMod } = lu
+const { state, pickedClass, pickedHitDie, conMod, averageHpGain, hpGained, hpPerLevelBonus, currentHpMax, formatMod } = lu
 
 const methods = [
   { id: 'average', label: 'Moyenne' },
@@ -189,7 +189,7 @@ const methods = [
 ]
 
 function rollDie() {
-  const die = pickedClass.value?.hitDie ?? 8
+  const die = pickedHitDie.value ?? 8
   state.value.hpRolled = Math.floor(Math.random() * die) + 1
 }
 </script>

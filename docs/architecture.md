@@ -102,9 +102,7 @@ choisie sur la fiche ne servant que de repli (sort d'espèce, de don, ou antéri
 
 **Lanceurs du tiers** (`shared/rules/subclassCasting.ts`) : le Chevalier occulte et l'Escroc arcanique incantent à partir du
 niveau 3 de leur classe alors que `classes.spellcasting_type` reste `none`. Leurs faits (table de sorts, école, liste du
-Magicien) sont indexés par nom de sous-classe, comme `CLASS_DB_NAMES` l'est pour les classes ; le type d'incantation effectif
+Magicien) sont indexés par édition puis par nom de sous-classe ([D38](decisions.md#d38)) ; le type d'incantation effectif
 d'une classe s'obtient par `effectiveCasterType`, utilisé partout où le serveur calcule les emplacements.
-
-Le setter du computed writable écrit sur `character_classes.spellcastingAbility` de la classe principale. Le deep watch de la page fiche persiste via `PUT /api/character_sheets/{id}`.
 
 > Le cas occultiste multiclasse (emplacement de pacte → Cha obligatoire vs emplacement d'une autre classe → caractéristique de cette classe) est une règle UI à gérer séparément, non modélisée pour l'instant.

@@ -1,6 +1,7 @@
 import type { MaybeRefOrGetter } from 'vue'
 import type { SubraceData } from '~/data/character-builder'
 import type { Effect } from '~~/server/db/schema/effects'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 
 /**
  * Picker de sous-race PILOTÉ PAR LE CATALOGUE pour les espèces « base + lignée » (D17) : expose les
@@ -29,10 +30,11 @@ interface CatalogSpeciesRich {
   lineages: CatalogLineage[]
 }
 
-export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>) {
+export function useSpeciesLineages(baseName: MaybeRefOrGetter<string | null>, ruleset: MaybeRefOrGetter<Ruleset>) {
   const { extended, extendedQuery } = useExtendedContent()
+  const speciesQuery = useCatalogQuery(ruleset)
   const { data: species, status: speciesStatus } = useFetch<{ id: number, name: string }[]>('/api/catalog/species', {
-    query: extendedQuery,
+    query: speciesQuery,
     default: () => [],
   })
   const baseSpeciesId = computed(() => {

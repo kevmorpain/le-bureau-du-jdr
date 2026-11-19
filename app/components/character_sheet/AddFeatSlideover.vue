@@ -88,10 +88,13 @@
 </template>
 
 <script lang="ts" setup>
+import type { Ruleset } from '~~/shared/rules/ruleset'
+
 type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
 
 const props = defineProps<{
   characterSheetId: number
+  ruleset: Ruleset
   // featureIds déjà possédés par le perso (pour les exclure de la liste).
   ownedFeatureIds: number[]
   // Faveurs permanentes (manuels, tomes) plutôt que dons.
@@ -106,7 +109,7 @@ const emit = defineEmits<{
   added: []
 }>()
 
-const { feats } = useFeats(props.kind)
+const { feats } = useFeats(() => props.ruleset, props.kind)
 const toast = useToast()
 
 const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [

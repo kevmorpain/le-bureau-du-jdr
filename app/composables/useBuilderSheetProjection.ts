@@ -29,11 +29,10 @@ export function useBuilderSheetProjection() {
     hpBase,
     SKILLS,
   } = useCharacterBuilder()
-  const { classProficienciesFor } = useBuilderEntities()
+  const { classProficienciesFor } = useBuilderEntities(() => state.value.ruleset)
 
-  const { extendedQuery } = useExtendedContent()
   const { data: invocations } = useFetch<BuilderInvocation[]>('/api/catalog/invocations', {
-    query: extendedQuery,
+    query: useCatalogQuery(() => state.value.ruleset),
     default: () => [],
   })
   const selectedInvocations = computed<BuilderInvocation[]>(() => {

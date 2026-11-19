@@ -5,12 +5,22 @@ import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
 import { seedLineages } from '../../server/db/seeds/lib/seedLineages'
 import { deriveChosenLineage } from '../../server/utils/lineageDerivation'
-import { dragonborn, DRAGONBORN_LINEAGE_BY_ANCESTRY } from '../../server/db/seeds/data/dragonborn'
-import { dragonbornAncestryDamageType, allDragonbornAncestries } from '../../shared/utils/draconic_ancestry'
+import { dragonborn } from '../../server/db/seeds/data/dragonborn'
 import { replayMigrations } from '../fixtures/migrations'
 
-// Seed base + 10 lignées et dérivation : la résistance dérivée est CONCRÈTE et vaut ce que
-// l'ancienne colonne `dragonbornAncestry` résolvait à l'affichage.
+// Seed base + 10 lignées et dérivation : la résistance dérivée est le type de dégâts concret de l'ascendance.
+const RESISTANCE_BY_LINEAGE: Record<string, string> = {
+  'Dragon noir': 'acid',
+  'Dragon bleu': 'lightning',
+  'Dragon d\'airain': 'fire',
+  'Dragon de bronze': 'lightning',
+  'Dragon de cuivre': 'acid',
+  'Dragon d\'or': 'fire',
+  'Dragon vert': 'poison',
+  'Dragon rouge': 'fire',
+  'Dragon d\'argent': 'cold',
+  'Dragon blanc': 'cold',
+}
 
 let orm: ReturnType<typeof drizzle>
 let baseId: number
@@ -47,14 +57,18 @@ beforeAll(async () => {
 })
 
 describe('Drakéide — seed + dérivation (D17, lot 6)', () => {
-  for (const key of allDragonbornAncestries) {
-    it(`base + « ${DRAGONBORN_LINEAGE_BY_ANCESTRY[key]} » dérive la résistance ${dragonbornAncestryDamageType[key]}`, async () => {
-      const lineageId = lineageIdByName.get(DRAGONBORN_LINEAGE_BY_ANCESTRY[key]!)!
-      const sheet = await orm.insert(schema.characterSheets).values({ name: `Drk ${key}`, speciesId: baseId }).returning().get()
+  it('seede exactement les 10 ascendances', () => {
+    expect([...lineageIdByName.keys()].sort()).toEqual(Object.keys(RESISTANCE_BY_LINEAGE).sort())
+  })
+
+  for (const [lineageName, damageType] of Object.entries(RESISTANCE_BY_LINEAGE)) {
+    it(`base + « ${lineageName} » dérive la résistance ${damageType}`, async () => {
+      const lineageId = lineageIdByName.get(lineageName)!
+      const sheet = await orm.insert(schema.characterSheets).values({ name: `Drk ${lineageName}`, speciesId: baseId }).returning().get()
       await orm.insert(schema.characterChoices).values({ characterSheetId: sheet.id, progressionId: progId, selectedLineageId: lineageId })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const derived = await deriveChosenLineage(orm as any, sheet.id, baseId, 20)
-      expect(resistanceOf(derived)).toBe(dragonbornAncestryDamageType[key])
+      expect(resistanceOf(derived)).toBe(damageType)
       expect(derived.speedOverride).toBeNull()
     })
   }

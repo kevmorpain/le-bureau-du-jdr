@@ -362,7 +362,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   newClassesList.push({ classId: cls.id, level: newLevel })
 
   const classRows = await db
-    .select({ id: schema.classes.id, name: schema.classes.name, spellcastingType: schema.classes.spellcastingType })
+    .select({ id: schema.classes.id, name: schema.classes.name, ruleset: schema.classes.ruleset, spellcastingType: schema.classes.spellcastingType })
     .from(schema.classes)
     .where(inArray(schema.classes.id, newClassesList.map(c => c.classId)))
   const subclassOfClass = new Map<number, number | null>(currentClasses.map(c => [c.classId, c.subclassId]))
@@ -371,7 +371,7 @@ export async function characterLevelUp(db: Db, characterSheetId: number, d: Leve
   const classesForSlots = newClassesList.map((c) => {
     const row = classRows.find(r => r.id === c.classId)
     const subclassName = subclassNames.get(subclassOfClass.get(c.classId) ?? -1) ?? null
-    return { casterType: row ? effectiveCasterType(row.spellcastingType, classSlugFromName(row.name) ?? '', subclassName) : 'none' as const, level: c.level }
+    return { casterType: row ? effectiveCasterType(row.ruleset, row.spellcastingType, classSlugFromName(row.name) ?? '', subclassName) : 'none' as const, level: c.level }
   })
   const { regular: regSlots, pact: pactSlots } = combinedSpellSlots(classesForSlots)
 

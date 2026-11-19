@@ -198,9 +198,10 @@ const {
   ABILITY_LABELS,
   abilityMod,
   formatMod,
+  ruleset,
 } = useLevelUp(injectLevelUpSheet())
 
-const { feats, getById: getFeatById } = useFeats()
+const { feats, getById: getFeatById } = useFeats(ruleset)
 
 const allowedAbilities = (featureId: number | null): AbilityKey[] =>
   featAllowedAbilities(getFeatById(featureId)?.effects) as AbilityKey[]

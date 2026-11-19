@@ -77,7 +77,7 @@ const {
   resolveClassId,
   resolveSubclassId,
   resolveItemIds,
-} = useBuilderEntities()
+} = useBuilderEntities(() => state.value.ruleset)
 
 const router = useRouter()
 const online = useOnline()
@@ -150,7 +150,7 @@ async function handleSubmit() {
       ? resolveItemIds([state.value.pactWeaponItemName]).ids[0] ?? null
       : null
 
-    const isGrimoire = spellLearningOf(state.value.classId ?? '') === 'spellbook'
+    const isGrimoire = spellLearningOf(state.value.ruleset, state.value.classId ?? '') === 'spellbook'
     const payload = {
       name: state.value.name,
       alignment: state.value.alignment ?? undefined,

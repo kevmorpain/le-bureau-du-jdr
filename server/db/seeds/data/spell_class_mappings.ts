@@ -19,7 +19,10 @@ import { spellClassMappingsLevelHorsSocle7 } from './spells_hors_socle_niveau_7'
 import { spellClassMappingsLevelHorsSocle8 } from './spells_hors_socle_niveau_8'
 import { spellClassMappingsLevelHorsSocle9 } from './spells_hors_socle_niveau_9'
 
-// `classNames` doit correspondre exactement aux noms de data/classes.ts.
+import type { Ruleset } from '~~/shared/rules/ruleset'
+
+// `classNames` doit correspondre exactement aux noms de data/classes.ts ; sort et classes partagent l'édition.
+export type SpellClassMapping = { spellName: string, classNames: string[], ruleset?: Ruleset }
 
 const baseMappings: { spellName: string, classNames: string[] }[] = [
   { spellName: 'Assistance', classNames: ['Clerc', 'Druide', 'Magicien'] },
@@ -162,4 +165,4 @@ const baseMappings: { spellName: string, classNames: string[] }[] = [
   { spellName: 'Barbes argentées', classNames: ['Barde', 'Ensorceleur', 'Magicien'] },
 ]
 
-export const spellClassMappings: { spellName: string, classNames: string[] }[] = [...baseMappings, ...spellClassMappingsLevel4, ...spellClassMappingsLevel5, ...spellClassMappingsLevel6, ...spellClassMappingsLevel7, ...spellClassMappingsLevel8, ...spellClassMappingsLevel9, ...spellClassMappingsLevel3, ...spellClassMappingsLevel2, ...spellClassMappingsLevel1, ...spellClassMappingsLevel0, ...spellClassMappingsLevelHorsSocle0, ...spellClassMappingsLevelHorsSocle1, ...spellClassMappingsLevelHorsSocle2, ...spellClassMappingsLevelHorsSocle3, ...spellClassMappingsLevelHorsSocle4, ...spellClassMappingsLevelHorsSocle5, ...spellClassMappingsLevelHorsSocle6, ...spellClassMappingsLevelHorsSocle7, ...spellClassMappingsLevelHorsSocle8, ...spellClassMappingsLevelHorsSocle9]
+export const spellClassMappings: SpellClassMapping[] = [...baseMappings, ...spellClassMappingsLevel4, ...spellClassMappingsLevel5, ...spellClassMappingsLevel6, ...spellClassMappingsLevel7, ...spellClassMappingsLevel8, ...spellClassMappingsLevel9, ...spellClassMappingsLevel3, ...spellClassMappingsLevel2, ...spellClassMappingsLevel1, ...spellClassMappingsLevel0, ...spellClassMappingsLevelHorsSocle0, ...spellClassMappingsLevelHorsSocle1, ...spellClassMappingsLevelHorsSocle2, ...spellClassMappingsLevelHorsSocle3, ...spellClassMappingsLevelHorsSocle4, ...spellClassMappingsLevelHorsSocle5, ...spellClassMappingsLevelHorsSocle6, ...spellClassMappingsLevelHorsSocle7, ...spellClassMappingsLevelHorsSocle8, ...spellClassMappingsLevelHorsSocle9]

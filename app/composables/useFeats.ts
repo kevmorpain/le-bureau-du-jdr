@@ -1,4 +1,6 @@
+import type { MaybeRefOrGetter } from 'vue'
 import type { Effect } from '~~/server/db/schema/effects'
+import type { Ruleset } from '~~/shared/rules/ruleset'
 import type { FeaturePrerequisite } from '~~/server/db/schema/features'
 import { ABILITY_KEYS, type AbilityKey } from '~~/shared/rules/abilities'
 import { featLanguageChoiceCount, featNeedsAbilityChoice, featNeedsSkilledChoice } from '~~/shared/rules/characterEffects'
@@ -22,11 +24,11 @@ export function featAllowedAbilities(effects: Effect[] | undefined): AbilityKey[
 }
 
 // `kind: 'boon'` : les faveurs permanentes (manuels, tomes), un catalogue à part qui n'entre jamais dans les choix de dons.
-export function useFeats(kind: 'feat' | 'boon' = 'feat') {
-  // Pas de `key` fixe : l'auto-clé (URL + query) sépare les entrées de cache socle / étendu.
-  const { extendedQuery } = useExtendedContent()
+export function useFeats(ruleset: MaybeRefOrGetter<Ruleset>, kind: 'feat' | 'boon' = 'feat') {
+  // Pas de `key` fixe : l'auto-clé (URL + query) sépare les entrées de cache par édition et socle / étendu.
+  const query = useCatalogQuery(ruleset)
   const { data, refresh, pending } = useFetch<Feat[]>(kind === 'boon' ? '/api/catalog/boons' : '/api/catalog/feats', {
-    query: extendedQuery,
+    query,
     default: () => [],
   })
 

@@ -24,7 +24,7 @@ let bareClassId = 0
 
 const norm = (es: Effect[]) => es.map(e => `${e.type}:${JSON.stringify(e.value)}`).sort()
 
-const expectedMulticlass = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES[className]!.multiclass)
+const expectedMulticlass = (className: string): Effect[] => proficiencyEffects(CLASS_PROFICIENCIES['5'][className]!.multiclass)
 
 async function carriersOf(classId: number): Promise<string[]> {
   const res = await client.execute({
@@ -40,7 +40,7 @@ beforeAll(async () => {
   await replayMigrations(client)
   orm = drizzle(client, { schema, casing: 'snake_case' })
 
-  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+  for (const className of Object.keys(CLASS_PROFICIENCIES['5'])) {
     const cls = await orm.insert(schema.classes).values({ name: className, hitDice: '1d8' }).returning().get()
     classIdByName.set(className, cls.id)
   }
@@ -60,7 +60,7 @@ beforeAll(async () => {
 })
 
 describe('migration 0105 — porteurs de maîtrises de multiclassage', () => {
-  for (const className of Object.keys(CLASS_PROFICIENCIES)) {
+  for (const className of Object.keys(CLASS_PROFICIENCIES['5'])) {
     it(`${className} : la dérivation rend exactement le sous-ensemble du seed, même rejouée`, async () => {
       const classId = classIdByName.get(className)!
       const expected = expectedMulticlass(className)

@@ -286,9 +286,11 @@ const {
   pickedFeatureGroups,
   replacedFeatureNames,
   replacementChoices,
+  ruleset,
+  pickedHitDie,
 } = useLevelUp(charSheet)
 
-const { getById: getFeatById } = useFeats()
+const { getById: getFeatById } = useFeats(ruleset)
 
 const submitting = ref(false)
 
@@ -398,7 +400,7 @@ const gains = computed(() => {
   }
 
   if (cls) {
-    list.push({ label: `+1 dé de vie`, detail: `d${cls.hitDie}` })
+    list.push({ label: `+1 dé de vie`, detail: `d${pickedHitDie.value ?? '?'}` })
   }
 
   return list

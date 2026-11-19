@@ -164,10 +164,11 @@
               {{ cls.name }}
             </div>
             <div
+              v-if="hitDieOfClass(cls.id)"
               class="text-xs font-mono"
               :style="{ color: cls.color }"
             >
-              d{{ cls.hitDie }}
+              d{{ hitDieOfClass(cls.id) }}
             </div>
           </div>
         </div>
@@ -221,6 +222,7 @@ const {
   asiDueForClassLevel,
   selectClass,
   CLASSES,
+  hitDieOfClass,
 } = useLevelUp(injectLevelUpSheet())
 
 const currentClassIds = computed(() => new Set(charClasses.value.map(c => c.classId)))

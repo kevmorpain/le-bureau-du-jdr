@@ -17,7 +17,7 @@ const BARD = 60
 beforeAll(async () => {
   ;({ db } = await bootstrapGoldenDb())
   await db.insert(schema.classes).values({ id: BARD, name: 'Barde', hitDice: '1d8', spellcastingType: 'full', multiclassSkillCount: 1 })
-  const choice = CLASS_SKILL_CHOICES.Barde!
+  const choice = CLASS_SKILL_CHOICES['5'].Barde!
   const [f] = await db.insert(schema.features).values({ name: 'Compétences de classe', featureType: 'choice_carrier', classId: BARD, levelRequired: 1 }).returning()
   await db.insert(schema.progression).values({ featureId: f!.id, kind: 'skill', count: { op: 'fixed', value: choice.count }, optionSource: { type: 'skills', from: choice.from }, replaceable: false })
 }, 60000)

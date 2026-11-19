@@ -55,11 +55,8 @@ Bouleversement central : **les bonus de caractéristiques passent de l'espèce v
   construit mais dormant : triade `ability_scores`, `asi_or_feat`, lignées ([D17](./decisions.md#d17)),
   `weapon_mastery`.
 - **Phase 2.2 — contenu 5.5** : aucun contenu 2024 n'est seedé. Épopée
-  [#201](https://github.com/kevmorpain/le-bureau-du-jdr/issues/201) (label `5.5`), qui liste les
-  prérequis (F14 [#106](https://github.com/kevmorpain/le-bureau-du-jdr/issues/106),
-  F7 [#120](https://github.com/kevmorpain/le-bureau-du-jdr/issues/120),
-  F19 [#130](https://github.com/kevmorpain/le-bureau-du-jdr/issues/130),
-  F6 [#119](https://github.com/kevmorpain/le-bureau-du-jdr/issues/119)) et les décisions à trancher
+  [#201](https://github.com/kevmorpain/le-bureau-du-jdr/issues/201) (label `5.5`), qui porte les
+  prérequis restants en sous-issues et les décisions à trancher
   ([#200](https://github.com/kevmorpain/le-bureau-du-jdr/issues/200)). Périmètre : espèces,
   historiques + triade + don d'origine, classes, maîtrise d'armes, dons, UI d'origines, fiche
   ruleset-aware.

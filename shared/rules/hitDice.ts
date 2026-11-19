@@ -17,6 +17,11 @@ export const hitDieSidesOf = (hitDice: string | null | undefined): HitDieSides |
   return HIT_DIE_SIDES.find(s => s === sides)
 }
 
+export const hitDieValueOf = (hitDice: string | null | undefined): number | null => {
+  const sides = hitDieSidesOf(hitDice)
+  return sides ? Number(sides) : null
+}
+
 export const hitDiceTotals = (classes: { level: number, hitDice?: string | null }[]): CurrentHitDie[] => {
   const totals = new Map<HitDieSides, number>()
   for (const cls of classes) {

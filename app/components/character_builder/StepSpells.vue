@@ -491,6 +491,7 @@ const {
   abilityMod,
   arcaneMysteriumSpellLevels,
   picksBookOfAncientSecrets,
+  ruleset,
 } = useCharacterBuilder()
 
 const activeTab = ref<'cantrips' | 'spells'>('cantrips')
@@ -499,10 +500,10 @@ const filterSchool = ref<string | null>(null)
 const filterConc = ref(false)
 const filterRitual = ref(false)
 
-const { extendedQuery } = useExtendedContent()
+const catalogQuery = useCatalogQuery(ruleset)
 
 const { data: allSpells, pending } = useFetch<Spell[]>('/api/spells', {
-  query: computed(() => ({ className: spellListClassName.value, ...extendedQuery.value })),
+  query: computed(() => ({ className: spellListClassName.value, ...catalogQuery.value })),
   immediate: true,
 })
 
@@ -518,7 +519,7 @@ function mergeSpellNames(spells: Spell[] | null | undefined) {
 watch(allSpells, mergeSpellNames, { immediate: true })
 
 const { data: allCantripsData, pending: pactCantripsPending } = useFetch<Spell[]>('/api/spells', {
-  query: extendedQuery,
+  query: catalogQuery,
   immediate: true,
 })
 const pactCantrips = computed(() =>
@@ -536,7 +537,7 @@ function isRegularCantrip(id: number): boolean {
 }
 
 const { data: magicianSpells } = useFetch<Spell[]>('/api/spells', {
-  query: computed(() => ({ className: 'Magicien', ...extendedQuery.value })),
+  query: computed(() => ({ className: 'Magicien', ...catalogQuery.value })),
   immediate: true,
 })
 const familiarSpell = computed(() =>
@@ -593,7 +594,7 @@ const schoolOptions = computed(() => {
   return options
 })
 
-const spellLearning = computed(() => spellLearningOf(state.value.classId ?? ''))
+const spellLearning = computed(() => spellLearningOf(ruleset.value, state.value.classId ?? ''))
 const isPrepared = computed(() => spellLearning.value === 'prepared' || spellLearning.value === 'spellbook')
 const isGrimoire = computed(() => spellLearning.value === 'spellbook')
 const isHalfCaster = computed(() => spellcastingInfo.value?.type === 'half')
@@ -696,12 +697,12 @@ function toggleArcanumSpell(level: number, id: number) {
 // Livre des secrets anciens : sorts rituels niv 1 toutes classes
 
 const { data: allRitualSpellsData, pending: ritualsPending } = useFetch<Spell[]>('/api/spells', {
-  query: extendedQuery,
+  query: catalogQuery,
   immediate: true,
 })
 
 const { data: allInvocationsData } = useFetch<Array<{ id: number, name: string }>>('/api/catalog/invocations', {
-  query: extendedQuery,
+  query: catalogQuery,
   default: () => [],
 })
 const invocationsByName = computed<Record<string, number>>(() => {

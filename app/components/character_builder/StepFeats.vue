@@ -116,8 +116,8 @@
 import type { AbilityKey } from '~/data/character-builder'
 import { LANGUAGE_KEYS } from '~~/shared/rules/languages'
 
-const { state, featNeedsAbility, featNeedsSkilled, featLanguageCount, ownedLanguagesForFeat, proficientSkills, ownedTools } = useCharacterBuilder()
-const { feats, pending, getById } = useFeats()
+const { state, ruleset, featNeedsAbility, featNeedsSkilled, featLanguageCount, ownedLanguagesForFeat, proficientSkills, ownedTools } = useCharacterBuilder()
+const { feats, pending, getById } = useFeats(ruleset)
 
 const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [
   { label: 'FOR', value: 'str' },

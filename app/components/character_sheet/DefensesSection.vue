@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="defenseEntries.length || hasDraconicAncestry"
+    v-if="defenseEntries.length"
     class="rounded-xl border border-default bg-default p-3 space-y-2"
   >
     <span class="text-xs font-bold uppercase tracking-widest text-muted">Résistances & Défenses</span>
@@ -26,32 +26,16 @@
         />
       </li>
     </ul>
-
-    <template v-if="hasDraconicAncestry">
-      <p class="text-xs text-muted">
-        Ascendance draconique
-      </p>
-      <USelect
-        v-model="dragonbornAncestry"
-        :items="ancestryOptions"
-        placeholder="Choisir…"
-        size="xs"
-      />
-    </template>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { dragonbornAncestryLabels, allDragonbornAncestries } from '~~/shared/utils/draconic_ancestry'
-
 const props = defineProps<{
   characterSheet: CharacterSheet
 }>()
 
 const {
   defenseEntries,
-  hasDraconicAncestry,
-  dragonbornAncestry,
 } = useCharacterSheet(toRef(props, 'characterSheet'))
 
 const defenseIcon: Record<string, string> = {
@@ -59,9 +43,4 @@ const defenseIcon: Record<string, string> = {
   resistance: 'i-heroicons:chevron-up-16-solid',
   vulnerability: 'i-heroicons:chevron-down-16-solid',
 }
-
-const ancestryOptions = allDragonbornAncestries.map(a => ({
-  label: dragonbornAncestryLabels[a],
-  value: a,
-}))
 </script>

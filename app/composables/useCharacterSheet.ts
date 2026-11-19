@@ -506,8 +506,6 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     concentrationName,
     exhaustionLevel: conditions.exhaustionLevel,
     exhaustionTooltip: conditions.exhaustionTooltip,
-    hasDraconicAncestry: conditions.hasDraconicAncestry,
-    dragonbornAncestry: conditions.dragonbornAncestry,
     defenseEntries: conditions.defenseEntries,
     effectiveSpeed: conditions.effectiveSpeed,
     speedDetail,
