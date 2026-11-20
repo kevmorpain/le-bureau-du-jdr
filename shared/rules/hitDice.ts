@@ -32,14 +32,21 @@ export const hitDiceTotals = (classes: { level: number, hitDice?: string | null 
 }
 
 // Fiche sans `currentHitDie` (créée avant la colonne) : tous les dés sont dépensables.
-// Moitié des dés arrondie au supérieur : comportement historique, règle non resourcée.
+// Le budget (moitié du total, arrondie à l'inférieur, minimum 1) est partagé entre les types
+// de dés, les plus gros d'abord : choix de répartition, la règle ne tranche pas.
 export const recoverHitDice = (
   current: CurrentHitDie[] | null | undefined,
   totals: CurrentHitDie[],
 ): CurrentHitDie[] => {
   const max = new Map(totals.map(t => [t.die, t.count]))
-  return (current ?? totals).map(({ die, count }) => {
+  let budget = Math.max(1, Math.floor(totals.reduce((sum, t) => sum + t.count, 0) / 2))
+  const recovered = new Map<HitDieSides, number>()
+  for (const { die, count } of [...(current ?? totals)].sort((a, b) => Number(b.die) - Number(a.die))) {
     const total = max.get(die)
-    return { die, count: Math.min(total ?? count, count + Math.ceil((total ?? 0) / 2)) }
-  })
+    if (total === undefined) continue
+    const gain = Math.min(budget, Math.max(0, total - count))
+    budget -= gain
+    recovered.set(die, count + gain)
+  }
+  return (current ?? totals).map(({ die, count }) => ({ die, count: recovered.get(die) ?? count }))
 }

@@ -24,11 +24,33 @@ describe('dés de vie — repos long', () => {
   const totals = hitDiceTotals([{ level: 5, hitDice: '1d10' }])
 
   it('rend des dés dépensés (les clés « 10 » de la fiche concordent avec celles du seed)', () => {
-    expect(recoverHitDice([{ die: '10', count: 0 }], totals)).toEqual([{ die: '10', count: 3 }])
+    expect(recoverHitDice([{ die: '10', count: 0 }], totals)).toEqual([{ die: '10', count: 2 }])
   })
 
   it('ne dépasse jamais le total', () => {
     expect(recoverHitDice([{ die: '10', count: 4 }], totals)).toEqual([{ die: '10', count: 5 }])
+  })
+
+  it('niveau 1 : minimum 1 dé', () => {
+    const one = hitDiceTotals([{ level: 1, hitDice: '1d8' }])
+    expect(recoverHitDice([{ die: '8', count: 0 }], one)).toEqual([{ die: '8', count: 1 }])
+  })
+
+  it('total impair : arrondi à l\'inférieur (11 → 5)', () => {
+    const eleven = hitDiceTotals([{ level: 11, hitDice: '1d8' }])
+    expect(recoverHitDice([{ die: '8', count: 0 }], eleven)).toEqual([{ die: '8', count: 5 }])
+  })
+
+  it('aucun dé dépensé : rien ne change', () => {
+    expect(recoverHitDice([{ die: '10', count: 5 }], totals)).toEqual([{ die: '10', count: 5 }])
+  })
+
+  it('multiclasse : un seul budget partagé, les plus gros dés d\'abord', () => {
+    const multi = hitDiceTotals([{ level: 5, hitDice: '1d10' }, { level: 3, hitDice: '1d6' }])
+    expect(recoverHitDice([{ die: '10', count: 0 }, { die: '6', count: 0 }], multi))
+      .toEqual([{ die: '10', count: 4 }, { die: '6', count: 0 }])
+    expect(recoverHitDice([{ die: '6', count: 0 }, { die: '10', count: 3 }], multi))
+      .toEqual([{ die: '6', count: 2 }, { die: '10', count: 5 }])
   })
 
   it('fiche sans colonne : tous les dés sont disponibles', () => {

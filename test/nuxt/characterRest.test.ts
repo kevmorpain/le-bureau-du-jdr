@@ -102,7 +102,7 @@ describe('characterRest — repos long', () => {
     await characterRest(db, id, { type: 'long', hitDiceSpent: [] })
 
     const [sheet] = await db.select().from(schema.characterSheets).where(eq(schema.characterSheets.id, id))
-    expect(sheet.currentHitDie).toEqual([{ die: '8', count: 2 }]) // niveau 3 → moitié arrondie au supérieur
+    expect(sheet.currentHitDie).toEqual([{ die: '8', count: 1 }]) // niveau 3 → moitié arrondie à l'inférieur
   })
 
   it('PRÉSERVE la dépendance d\'ordre : long + dés de vie → min(currentHp lu + soin, maxHp), pas maxHp', async () => {
