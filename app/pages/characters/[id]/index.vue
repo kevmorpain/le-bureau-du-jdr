@@ -144,7 +144,7 @@ const charId = computed(() => Number(route.params.id))
 const { characterSheet, refreshSheet, switchSheetDesign } = await useSheetPersistence(charId)
 
 if (resolvePreferences(characterSheet.value.preferences, characterSheet.value.owner?.preferences).newSheet) {
-  await navigateTo(newSheetPath(charId.value), { replace: true })
+  await navigateTo(getNewSheetPath(charId.value), { replace: true })
 }
 
 const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine, featuresEndingWhenUnconscious, isDying, activeConditions } = useCharacterSheet(characterSheet)

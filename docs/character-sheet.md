@@ -4,7 +4,7 @@ Page : `app/pages/characters/[id]/index.vue`
 
 La refonte (épopée U14) monte la nouvelle fiche à côté, sur la route provisoire `/characters/{id}/nouvelle`
 (`app/pages/characters/[id]/nouvelle.vue`, composants `app/components/sheet/`) : tranche de navigation, rail
-personnage et vues choisies par `?vue=`. La préférence `newSheet` (fiche, sinon compte, sinon ancienne fiche) choisit
+personnage et vues choisies par `?view=`. La préférence `newSheet` (fiche, sinon compte, sinon ancienne fiche) choisit
 le design : l'ancienne page redirige vers la nouvelle quand elle est activée, et chacune a de quoi basculer vers
 l'autre. Les deux partagent le chargement et la sauvegarde (`useSheetPersistence`, voir [`persistence.md`](./persistence.md)).
 

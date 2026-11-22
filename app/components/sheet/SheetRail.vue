@@ -4,11 +4,11 @@
       <div class="identity">
         <div class="identity__head">
           <img
-            v-if="portraitSrc && !portraitFailed"
+            v-if="portraitSrc && !hasPortraitLoadError"
             :src="portraitSrc"
             alt=""
             class="identity__portrait"
-            @error="portraitFailed = true"
+            @error="hasPortraitLoadError = true"
           >
           <div class="identity__who">
             <p class="identity__name">
@@ -89,7 +89,7 @@
           v-for="effect in effects"
           :key="effect.key"
           class="effects__item"
-          :class="{ 'effects__item--bad': effect.bad }"
+          :class="{ 'effects__item--bad': effect.isHarmful }"
         >
           <div class="effects__head">
             <span class="effects__name">{{ effect.name }}</span>
@@ -128,9 +128,9 @@ const {
   conditionRounds, exhaustionLevel,
 } = useCharacterSheet(toRef(() => characterSheet))
 
-const portraitFailed = ref(false)
+const hasPortraitLoadError = ref(false)
 watch(portraitSrc, () => {
-  portraitFailed.value = false
+  hasPortraitLoadError.value = false
 })
 
 const classesText = computed(() => {
@@ -139,10 +139,10 @@ const classesText = computed(() => {
   return classes.map(cls => `${cls!.name} ${cls!.level}`).join(' · ')
 })
 
-const roundsText = (n: number | undefined) => (n ? t('sheet.rail.rounds', n) : undefined)
+const getRoundsText = (n: number | undefined) => (n ? t('sheet.rail.rounds', n) : undefined)
 
 const concentrationRounds = computed(() =>
-  roundsText(temporaryEffects.value.find(e => e.concentration && e.spellId === concentratingSpellId.value)?.countdown?.remaining),
+  getRoundsText(temporaryEffects.value.find(e => e.concentration && e.spellId === concentratingSpellId.value)?.countdown?.remaining),
 )
 
 const effects = computed(() => [
@@ -151,16 +151,16 @@ const effects = computed(() => [
     .map(entry => ({
       key: `effect-${entry.id}`,
       name: entry.name,
-      remaining: roundsText(entry.countdown?.remaining),
+      remaining: getRoundsText(entry.countdown?.remaining),
       lines: entry.effects.map(effectLabel),
-      bad: false,
+      isHarmful: false,
     })),
   ...activeConditions.value.map(condition => ({
     key: `condition-${condition}`,
     name: conditionLabels[condition],
-    remaining: roundsText(conditionRounds.value[condition]),
+    remaining: getRoundsText(conditionRounds.value[condition]),
     lines: [t('sheet.rail.condition')],
-    bad: true,
+    isHarmful: true,
   })),
   ...(exhaustionLevel.value > 0
     ? [{
@@ -168,7 +168,7 @@ const effects = computed(() => [
         name: t('sheet.rail.exhaustion'),
         remaining: undefined,
         lines: [t('sheet.rail.exhaustion_level', { n: exhaustionLevel.value })],
-        bad: true,
+        isHarmful: true,
       }]
     : []),
 ])

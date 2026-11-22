@@ -73,7 +73,7 @@
           size="sm"
           @click="$emit('openNewSheet')"
         >
-          Nouvelle fiche
+          {{ $t('sheet.open_new') }}
         </UButton>
         <UPopover :content="{ side: 'bottom', align: 'end' }">
           <UButton

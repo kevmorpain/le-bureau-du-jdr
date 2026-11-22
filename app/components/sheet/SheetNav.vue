@@ -8,7 +8,7 @@
       :key="view.key"
       :label="$t(`sheet.views.${view.key}`)"
       :active="view.key === active"
-      :to="{ query: sheetViewQuery(view.key) }"
+      :to="{ query: getSheetViewQuery(view.key) }"
       :class="{ nav__settings: view.key === 'settings' }"
     >
       <template #icon>
@@ -50,10 +50,10 @@
               {{ $t(`sheet.save.descriptions.${state}`, pendingCount) }}
             </p>
             <DsLinkButton
-              v-if="action"
+              v-if="availableAction"
               class="detail__action"
-              :label="$t(`sheet.save.actions.${action}`)"
-              @click="act(action)"
+              :label="$t(`sheet.save.actions.${availableAction}`)"
+              @click="handleAction(availableAction)"
             />
           </DsFrame>
         </template>
@@ -72,11 +72,11 @@ const { state, pendingCount, flushAll } = useSaveState()
 const ACTIONS = ['pending', 'failed', 'conflict'] as const
 type SaveAction = typeof ACTIONS[number]
 
-const action = computed(() => ACTIONS.find(candidate => candidate === state.value))
+const availableAction = computed(() => ACTIONS.find(action => action === state.value))
 
-const act = (chosen: SaveAction) => {
-  if (chosen === 'pending') void flushAll()
-  else if (chosen === 'failed') emit('retry')
+const handleAction = (action: SaveAction) => {
+  if (action === 'pending') void flushAll()
+  else if (action === 'failed') emit('retry')
   else emit('resolve')
 }
 </script>

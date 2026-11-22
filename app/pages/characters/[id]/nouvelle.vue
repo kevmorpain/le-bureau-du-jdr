@@ -3,7 +3,7 @@
     <SheetNav
       :active="view"
       @retry="retrySave"
-      @resolve="conflictOpen = true"
+      @resolve="isConflictOpen = true"
     />
 
     <SheetRail :character-sheet="characterSheet" />
@@ -19,13 +19,13 @@
         <DsLinkButton
           class="ml-auto"
           :label="$t('sheet.conflict_banner.action')"
-          @click="conflictOpen = true"
+          @click="isConflictOpen = true"
         />
       </div>
 
       <SheetSettingsView
         v-if="view === 'settings'"
-        :new-sheet="preferences.newSheet"
+        :is-new-sheet="preferences.newSheet"
         @choose-design="switchSheetDesign"
       />
       <DsBlock
@@ -40,7 +40,7 @@
 
     <ClientOnly>
       <SyncConflictModal
-        v-model:open="conflictOpen"
+        v-model:open="isConflictOpen"
         :character-sheet-id="charId"
         @resolved="reconcile"
       />
@@ -49,7 +49,6 @@
 </template>
 
 <script lang="ts" setup>
-// Plein écran sur l'iPad : la fiche occupe toute la hauteur, un pied de page la ferait défiler.
 definePageMeta({
   layout: 'blank',
   footer: false,
@@ -57,7 +56,7 @@ definePageMeta({
 
 const route = useRoute()
 const charId = computed(() => Number(route.params.id))
-const view = computed(() => sheetViewOf(route.query.vue))
+const view = computed(() => getSheetView(route.query.view))
 
 const { characterSheet, refreshSheet, retrySave, switchSheetDesign } = await useSheetPersistence(charId)
 
@@ -67,7 +66,7 @@ const { reconcile } = useSheetReconciliation(charId, [refreshSheet, refreshInven
 
 const { conflicts } = useOfflineSync()
 const hasConflict = computed(() => conflicts.value.includes(charId.value))
-const conflictOpen = ref(false)
+const isConflictOpen = ref(false)
 </script>
 
 <style scoped>

@@ -6,7 +6,7 @@
           {{ $t('sheet.settings.design') }}
         </p>
         <DsSegmented
-          :model-value="newSheet ? 'new' : 'old'"
+          :model-value="isNewSheet ? 'new' : 'old'"
           :options="designOptions"
           :label="$t('sheet.settings.design')"
           @update:model-value="value => emit('chooseDesign', value === 'new')"
@@ -20,9 +20,9 @@
 </template>
 
 <script lang="ts" setup>
-const { newSheet } = defineProps<{ newSheet: boolean }>()
+const { isNewSheet } = defineProps<{ isNewSheet: boolean }>()
 
-const emit = defineEmits<{ chooseDesign: [newSheet: boolean] }>()
+const emit = defineEmits<{ chooseDesign: [isNewSheet: boolean] }>()
 
 const { t } = useI18n()
 

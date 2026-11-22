@@ -17,7 +17,7 @@ let stored: Record<string, unknown>
 const events: string[] = []
 const puts: Record<string, unknown>[] = []
 
-const sheet = (over: Record<string, unknown> = {}) => ({
+const buildSheet = (over: Record<string, unknown> = {}) => ({
   id: SHEET_ID,
   name: 'Ambroise',
   updatedAt: '2026-11-22T10:00:00.000Z',
@@ -59,24 +59,24 @@ for (const part of ['inventory', 'backgrounds', 'spells', 'spell_slots']) regist
 registerEndpoint('/api/items', () => [])
 
 beforeEach(() => {
-  // Même adresse d'un test à l'autre : sans purge, `useFetch` resservirait la fiche du test précédent.
+  // Every test fetches the same URL: without a purge, `useFetch` would serve the previous test's sheet.
   clearNuxtData()
-  stored = sheet()
+  stored = buildSheet()
   events.length = 0
   puts.length = 0
   navigateToMock.mockReset()
-  // Le montage avec `route` passe aussi par navigateTo, avec un objet : seuls les chemins écrits par la fiche comptent.
+  // Mounting with `route` also calls navigateTo, with an object: only the sheet's own string paths count.
   navigateToMock.mockImplementation((to: unknown) => {
     if (typeof to === 'string') events.push(`navigate ${to}`)
   })
   useOfflineSync().conflicts.value = []
 })
 
-const navigations = () => events.filter(event => event.startsWith('navigate'))
+const getNavigations = () => events.filter(event => event.startsWith('navigate'))
 
 const mountNew = (query = '') => mountSuspended(NewSheetPage, { route: `/characters/${SHEET_ID}/nouvelle${query}` })
 
-// UTooltip exige un UApp parent : sans objet ici, on le remplace par son contenu.
+// UTooltip requires a UApp parent, irrelevant here: render its content only.
 const mountOld = () => mountSuspended(OldSheetPage, {
   route: `/characters/${SHEET_ID}`,
   global: { stubs: { UTooltip: { template: '<div><slot /></div>' } } },
@@ -84,7 +84,7 @@ const mountOld = () => mountSuspended(OldSheetPage, {
 
 describe('nouvelle fiche — coquille', () => {
   it('la tranche liste les six vues et le retour aux personnages, la vue courante marquée', async () => {
-    const wrapper = await mountNew('?vue=inventaire')
+    const wrapper = await mountNew('?view=inventory')
 
     const nav = wrapper.get('nav')
     const labels = nav.findAll('a').map(link => link.text())
@@ -94,7 +94,7 @@ describe('nouvelle fiche — coquille', () => {
   })
 
   it('le rail montre le personnage : nom, classe, PV et effets en cours', async () => {
-    stored = sheet({
+    stored = buildSheet({
       temporaryEffects: [{ id: 'b', name: 'Bénédiction', active: true, effects: [], countdown: { rounds: 10, remaining: 3 } }],
     })
     const wrapper = await mountNew()
@@ -134,14 +134,14 @@ describe('nouvelle fiche — coquille', () => {
 
 describe('choix du design de la fiche', () => {
   it('« Ancien » enregistre puis relit la fiche avant de rouvrir l\'ancienne, qui sinon renverrait ici', async () => {
-    stored = sheet({ preferences: { newSheet: true } })
-    const wrapper = await mountNew('?vue=reglages')
+    stored = buildSheet({ preferences: { newSheet: true } })
+    const wrapper = await mountNew('?view=settings')
     events.length = 0
 
-    const option = (label: string) => wrapper.findAll('[role="radio"]').find(button => button.text() === label)!
-    expect(option('Nouveau').attributes('aria-checked')).toBe('true')
+    const findOption = (label: string) => wrapper.findAll('[role="radio"]').find(button => button.text() === label)!
+    expect(findOption('Nouveau').attributes('aria-checked')).toBe('true')
 
-    await option('Ancien').trigger('click')
+    await findOption('Ancien').trigger('click')
     await vi.waitFor(() => expect(events).toHaveLength(3))
 
     expect(puts.at(-1)?.preferences).toEqual({ newSheet: false })
@@ -149,7 +149,7 @@ describe('choix du design de la fiche', () => {
   })
 
   it('« Nouveau » depuis la nouvelle fiche enregistre sans quitter les Réglages', async () => {
-    const wrapper = await mountNew('?vue=reglages')
+    const wrapper = await mountNew('?view=settings')
     events.length = 0
 
     await wrapper.findAll('[role="radio"]').find(button => button.text() === 'Nouveau')!.trigger('click')
@@ -160,22 +160,22 @@ describe('choix du design de la fiche', () => {
   })
 
   it('l\'ancienne fiche renvoie vers la nouvelle quand la fiche l\'a choisie', async () => {
-    stored = sheet({ preferences: { newSheet: true } })
+    stored = buildSheet({ preferences: { newSheet: true } })
     await mountOld()
 
     expect(navigateToMock).toHaveBeenCalledWith(`/characters/${SHEET_ID}/nouvelle`, { replace: true })
-    expect(navigations()).toEqual([`navigate /characters/${SHEET_ID}/nouvelle`])
+    expect(getNavigations()).toEqual([`navigate /characters/${SHEET_ID}/nouvelle`])
   })
 
   it('le défaut du compte suffit, et sans choix l\'ancienne fiche reste', async () => {
-    stored = sheet({ owner: { id: 1, name: 'PM', preferences: { newSheet: true } } })
+    stored = buildSheet({ owner: { id: 1, name: 'PM', preferences: { newSheet: true } } })
     await mountOld()
-    expect(navigations()).toEqual([`navigate /characters/${SHEET_ID}/nouvelle`])
+    expect(getNavigations()).toEqual([`navigate /characters/${SHEET_ID}/nouvelle`])
 
     events.length = 0
     clearNuxtData()
-    stored = sheet()
+    stored = buildSheet()
     await mountOld()
-    expect(navigations()).toEqual([])
+    expect(getNavigations()).toEqual([])
   })
 })

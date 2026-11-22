@@ -1,41 +1,41 @@
 import { describe, it, expect } from 'vitest'
-import { saveStateOf } from '../../app/composables/useSaveState'
-import { sheetViewOf, sheetViewQuery } from '../../app/utils/sheetViews'
+import { getSaveState } from '../../app/composables/useSaveState'
+import { getSheetView, getSheetViewQuery } from '../../app/utils/sheetViews'
 
-const calm = { conflict: false, online: true, syncing: false, pending: 0, autoSave: 'idle' } as const
+const calm = { hasConflict: false, isOnline: true, isSyncing: false, pendingCount: 0, autoSave: 'idle' } as const
 
-describe('saveStateOf — un seul état pour l\'indicateur de sauvegarde', () => {
+describe('getSaveState — un seul état pour l\'indicateur de sauvegarde', () => {
   it('rien en cours : enregistré, que l\'autosave vienne de finir ou non', () => {
-    expect(saveStateOf(calm)).toBe('saved')
-    expect(saveStateOf({ ...calm, autoSave: 'saved' })).toBe('saved')
+    expect(getSaveState(calm)).toBe('saved')
+    expect(getSaveState({ ...calm, autoSave: 'saved' })).toBe('saved')
   })
 
   it('l\'autosave en cours ou en échec', () => {
-    expect(saveStateOf({ ...calm, autoSave: 'saving' })).toBe('saving')
-    expect(saveStateOf({ ...calm, autoSave: 'error' })).toBe('failed')
+    expect(getSaveState({ ...calm, autoSave: 'saving' })).toBe('saving')
+    expect(getSaveState({ ...calm, autoSave: 'error' })).toBe('failed')
   })
 
   it('une file en attente l\'emporte sur un échec de l\'autosave, et le rejeu sur la file', () => {
-    expect(saveStateOf({ ...calm, pending: 3, autoSave: 'error' })).toBe('pending')
-    expect(saveStateOf({ ...calm, pending: 3, syncing: true })).toBe('saving')
+    expect(getSaveState({ ...calm, pendingCount: 3, autoSave: 'error' })).toBe('pending')
+    expect(getSaveState({ ...calm, pendingCount: 3, isSyncing: true })).toBe('saving')
   })
 
   it('hors ligne passe avant la file, le conflit avant tout', () => {
-    expect(saveStateOf({ ...calm, online: false, pending: 3, syncing: true })).toBe('offline')
-    expect(saveStateOf({ ...calm, conflict: true, online: false, pending: 3 })).toBe('conflict')
+    expect(getSaveState({ ...calm, isOnline: false, pendingCount: 3, isSyncing: true })).toBe('offline')
+    expect(getSaveState({ ...calm, hasConflict: true, isOnline: false, pendingCount: 3 })).toBe('conflict')
   })
 })
 
 describe('vues de la nouvelle fiche dans l\'adresse', () => {
   it('lit la vue du paramètre, En jeu par défaut et pour une valeur inconnue', () => {
-    expect(sheetViewOf('inventaire')).toBe('inventory')
-    expect(sheetViewOf('reglages')).toBe('settings')
-    expect(sheetViewOf(undefined)).toBe('play')
-    expect(sheetViewOf('nimporte')).toBe('play')
+    expect(getSheetView('inventory')).toBe('inventory')
+    expect(getSheetView('settings')).toBe('settings')
+    expect(getSheetView(undefined)).toBe('play')
+    expect(getSheetView('unknown')).toBe('play')
   })
 
   it('En jeu n\'a pas de paramètre, les autres vues ont le leur', () => {
-    expect(sheetViewQuery('play')).toEqual({})
-    expect(sheetViewQuery('grimoire')).toEqual({ vue: 'grimoire' })
+    expect(getSheetViewQuery('play')).toEqual({})
+    expect(getSheetViewQuery('grimoire')).toEqual({ view: 'grimoire' })
   })
 })

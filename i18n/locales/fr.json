@@ -870,6 +870,7 @@
       "settings": "Réglages"
     },
     "coming": "Cette vue arrive avec un prochain lot de la refonte.",
+    "not_found": "Fiche de personnage introuvable",
     "rail": {
       "class_level": "{name} · niv. {level}",
       "temp_hp": "+{n} temp.",
@@ -913,7 +914,8 @@
         "pending": "Envoyer maintenant",
         "failed": "Réessayer",
         "conflict": "Résoudre"
-      }
+      },
+      "error_toast": "Erreur lors de la sauvegarde"
     },
     "conflict_banner": {
       "title": "Conflit de synchronisation",
