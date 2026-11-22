@@ -73,6 +73,17 @@ describe('étiquettes', () => {
     const wrapper = await mountSuspended(DsBadge, { props: { label: 'Équipé', variant: 'equipped' } })
     expect(wrapper.text()).toBe('Équipé')
   })
+
+  it('badge à bord seul : bord en deux couches, jamais un trait intérieur que la découpe rognerait', async () => {
+    const wrapper = await mountSuspended(DsBadge, { props: { label: 'Rare', surface: 'panel-raised' } })
+    const outer = wrapper.element as HTMLElement
+    const inner = outer.firstElementChild as HTMLElement
+
+    expect(outer.classList).toContain('bg-ds-gold-dim')
+    expect(outer.classList).toContain('p-px')
+    expect(inner.classList).toContain('bg-ds-panel-raised')
+    expect(outer.outerHTML).not.toContain('shadow-[inset')
+  })
 })
 
 describe('formes', () => {
