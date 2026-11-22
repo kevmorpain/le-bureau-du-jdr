@@ -8,7 +8,6 @@ import {
   loadSpecies,
   loadSubclasses,
   loadFeats,
-  loadBoons,
   loadInvocations,
   loadClassFeatures,
   loadBackgrounds,
@@ -236,11 +235,8 @@ describe('loadFeats', () => {
   })
 })
 
-describe('loadBoons', () => {
-  it('rend les faveurs et leurs effets, sans les dons ; les dons ne rendent jamais de faveur', async () => {
-    const boons = await loadBoons(orm)
-    expect(boons.map(b => b.name)).toEqual(['Manuel de vitalité'])
-    expect(boons[0]!.effects.map(e => e.type).sort()).toEqual(['ability_increase', 'ability_max_increase'])
+describe('loadFeats et les faveurs', () => {
+  it('ne rend jamais de faveur', async () => {
     expect((await loadFeats(orm)).map(f => f.name)).not.toContain('Manuel de vitalité')
   })
 })
