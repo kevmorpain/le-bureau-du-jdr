@@ -49,8 +49,10 @@
 </template>
 
 <script lang="ts" setup>
+// Plein écran sur l'iPad : la fiche occupe toute la hauteur, un pied de page la ferait défiler.
 definePageMeta({
   layout: 'blank',
+  footer: false,
 })
 
 const route = useRoute()
