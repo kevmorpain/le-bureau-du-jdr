@@ -1,0 +1,151 @@
+/* Design system de la fiche en jeu : voir docs/design-system.md. */
+
+@font-face {
+  font-family: 'Bodoni Moda';
+  src: url('/fonts/bodoni-moda-400-900.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* `static` : les composants lisent ces variables dans leur CSS, sans passer par des classes utilitaires. */
+@theme static {
+  --font-bodoni: 'Bodoni Moda', serif;
+  --font-atkinson: 'Atkinson Hyperlegible', sans-serif;
+
+  --color-ds-bg: #0a0a0b;
+  --color-ds-panel: #141416;
+  --color-ds-panel-raised: #1d1d20;
+  --color-ds-line: #36363b;
+  --color-ds-ink: #efe9dd;
+  --color-ds-mute: #aaa69e;
+  --color-ds-faint: #6d6a70;
+
+  --color-ds-gold: #d8ad5c;
+  --color-ds-gold-dim: #7e6a3e;
+  --color-ds-gold-hi: #f0cf86;
+  --color-ds-glow: rgb(216 173 92 / 0.32);
+  --color-ds-hp: #c9a24f;
+  --color-ds-gain: #7fb5a3;
+  --color-ds-bad: #e0705a;
+
+  --color-ds-action: #d8ad5c;
+  --color-ds-bonus: #7fb5a3;
+  --color-ds-reaction: #c3c7cc;
+
+  --color-ds-spell: #c7a6ee;
+  --color-ds-feature: #e39fb0;
+  --color-ds-weapon: #d9785f;
+  --color-ds-item: #b9c97a;
+
+  --color-coin-pp: #f4f6f8;
+  --color-coin-po: #e8a933;
+  --color-coin-pe: #b5d266;
+  --color-coin-pa: #959ea6;
+  --color-coin-pc: #d0693a;
+}
+
+:root {
+  --ds-cut-tag: 4px;
+  --ds-cut-input: 6px;
+  --ds-cut-control: 7px;
+  --ds-cut-step: 8px;
+  --ds-cut-panel: 10px;
+  --ds-cut-card: 11px;
+  --ds-cut-button: 12px;
+}
+
+/* Posé sur <html> et non sur la fiche : les fenêtres de Nuxt UI sont téléportées dans <body>. */
+:root[data-ds-theme='prune'] {
+  --color-ds-bg: #140c15;
+  --color-ds-panel: #1e1420;
+  --color-ds-panel-raised: #291c2c;
+}
+
+:root[data-ds-theme='sapin'] {
+  --color-ds-bg: #0b1512;
+  --color-ds-panel: #12201b;
+  --color-ds-panel-raised: #1a2c25;
+}
+
+@layer components {
+  /* Bord biseauté en deux couches : `.ds-bevel` porte la couleur du bord, son enfant `.ds-fill` le fond, découpé un peu
+     plus petit. Un trait intérieur (box-shadow inset, border) serait rogné par la découpe. */
+  .ds-bevel {
+    --ds-edge: 1px;
+    --ds-edge-color: var(--color-ds-gold);
+    --ds-fill: var(--color-ds-panel);
+    /* Un biseau à 45° rentre de (√2 − 1) fois l'épaisseur du bord pour garder un trait régulier. */
+    --ds-inset: 0.4142;
+    --ds-inner-cut: calc(var(--ds-cut) - var(--ds-edge) * var(--ds-inset));
+    padding: var(--ds-edge);
+    background: var(--ds-edge-color);
+  }
+
+  .ds-bevel > .ds-fill {
+    --c: var(--ds-inner-cut);
+    background: var(--ds-fill);
+  }
+
+  .ds-shape-corner { --c: var(--ds-cut); }
+  .ds-shape-corner,
+  .ds-shape-corner > .ds-fill {
+    clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c));
+  }
+
+  .ds-shape-octagon { --c: var(--ds-cut); }
+  .ds-shape-octagon,
+  .ds-shape-octagon > .ds-fill {
+    clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c));
+  }
+
+  .ds-shape-card { --c: var(--ds-cut); }
+  .ds-shape-card,
+  .ds-shape-card > .ds-fill {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%);
+  }
+
+  /* Gradins : des marches droites, la couche de fond garde la même découpe. */
+  .ds-shape-stepped { --c: var(--ds-cut); --ds-inset: 0; }
+  .ds-shape-stepped,
+  .ds-shape-stepped > .ds-fill {
+    clip-path: polygon(0 var(--c), var(--c) var(--c), var(--c) 0, calc(100% - var(--c)) 0, calc(100% - var(--c)) var(--c), 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, var(--c) calc(100% - var(--c)), 0 calc(100% - var(--c)));
+  }
+
+  /* Pointes : la pente dépend de la hauteur ; 0,5 est le retrait relevé sur la planche pour un bouton de 2 px de bord. */
+  .ds-shape-point { --c: var(--ds-cut); --ds-inset: 0.5; }
+  .ds-shape-point,
+  .ds-shape-point > .ds-fill {
+    clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% 50%, calc(100% - var(--c)) 100%, var(--c) 100%, 0 50%);
+  }
+
+  .ds-shape-hex,
+  .ds-shape-hex > .ds-fill {
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+
+  .ds-shape-shield,
+  .ds-shape-shield > .ds-fill {
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+  }
+
+  .ds-label {
+    font-family: var(--font-atkinson);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ds-mute);
+  }
+
+  .ds-number {
+    font-family: var(--font-bodoni);
+    font-weight: 700;
+  }
+}
+
+@keyframes ds-save-pulse {
+  50% {
+    background: var(--color-ds-gold);
+  }
+}

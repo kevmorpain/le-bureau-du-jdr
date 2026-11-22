@@ -334,7 +334,7 @@ pages/composants Vue → composables (useFetch) → routes Nitro → Drizzle ORM
 ### Répertoires clés
 
 - `app/pages/` — routage par fichier
-- `app/components/` — par domaine (`character_sheet/`, `character_builder/`, `level_up/`, `characters/`, `spells/`, `wizard/`, `icons/`, `ker_nethalas/`)
+- `app/components/` — par domaine (`character_sheet/`, `character_builder/`, `level_up/`, `characters/`, `spells/`, `wizard/`, `icons/`, `ker_nethalas/`, et `ds/` : design system de la refonte de la fiche, en CSS scopé et textes i18n, voir [`docs/design-system.md`](docs/design-system.md))
 - `app/composables/` — `useCharacterSheet` et ses sous-composables (`character/`), `useCharacterBuilder`, `useLevelUp`, `useCatalog`, `useSpellbook`, `useKn*`
 - `app/data/character-builder.ts` — textes d'affichage du builder ; aucune règle n'y est lue par le serveur
 - `shared/rules/` — règles pures partagées client/serveur (ensembles fermés, résolution des choix, calculs) : voir [`docs/rules-engine.md`](docs/rules-engine.md)

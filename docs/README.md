@@ -19,6 +19,7 @@ Carte des documents. Commence par le sujet qui te concerne.
 | [`character-builder.md`](./character-builder.md) | Création de personnage (assistant de 6 à 8 étapes) |
 | [`character-sheet.md`](./character-sheet.md) | Fiche de personnage (dashboard 3 colonnes) |
 | [`level-up.md`](./level-up.md) | Montée de niveau (wizard conditionnel) |
+| [`design-system.md`](./design-system.md) | Design system de la fiche en jeu (refonte U14) : conventions, formes, quel composant prendre |
 
 ## Chantier D&D 5.5 (règles 2024)
 
