@@ -1,0 +1,116 @@
+/* Design system de la fiche en jeu. Préfixe `ds-` : l'ancienne fiche garde les couleurs Nuxt UI jusqu'à la bascule. */
+
+@font-face {
+  font-family: 'Bodoni Moda';
+  src: url('/fonts/bodoni-moda-400-900.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* `static` : les composants lisent aussi ces variables dans leur CSS, pas seulement par des classes utilitaires. */
+@theme static {
+  --font-bodoni: 'Bodoni Moda', serif;
+  --font-atkinson: 'Atkinson Hyperlegible', sans-serif;
+
+  --color-ds-bg: #0a0a0b;
+  --color-ds-panel: #141416;
+  --color-ds-panel-raised: #1d1d20;
+  --color-ds-line: #36363b;
+  --color-ds-ink: #efe9dd;
+  --color-ds-mute: #aaa69e;
+  --color-ds-faint: #6d6a70;
+
+  --color-ds-gold: #d8ad5c;
+  --color-ds-gold-dim: #7e6a3e;
+  --color-ds-gold-hi: #f0cf86;
+  --color-ds-glow: rgb(216 173 92 / 0.32);
+  --color-ds-hp: #c9a24f;
+  --color-ds-gain: #7fb5a3;
+  --color-ds-bad: #e0705a;
+
+  --color-ds-action: #d8ad5c;
+  --color-ds-bonus: #7fb5a3;
+  --color-ds-reaction: #c3c7cc;
+
+  --color-ds-spell: #c7a6ee;
+  --color-ds-feature: #e39fb0;
+  --color-ds-weapon: #d9785f;
+  --color-ds-item: #b9c97a;
+
+  --color-coin-pp: #f4f6f8;
+  --color-coin-po: #e8a933;
+  --color-coin-pe: #b5d266;
+  --color-coin-pa: #959ea6;
+  --color-coin-pc: #d0693a;
+}
+
+/* Posé sur <html> et non sur la fiche : les fenêtres de Nuxt UI sont téléportées dans <body>. */
+:root[data-ds-theme='prune'] {
+  --color-ds-bg: #140c15;
+  --color-ds-panel: #1e1420;
+  --color-ds-panel-raised: #291c2c;
+}
+
+:root[data-ds-theme='sapin'] {
+  --color-ds-bg: #0b1512;
+  --color-ds-panel: #12201b;
+  --color-ds-panel-raised: #1a2c25;
+}
+
+/* Découpes biseautées, réglées par `--ds-cut`. Un bord se fait en deux couches de la même découpe (bord dessous,
+   fond un peu plus petit dessus) : un trait intérieur en box-shadow serait rogné par le clip-path. */
+@utility ds-cut-corner {
+  clip-path: polygon(var(--ds-cut) 0, 100% 0, 100% calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) 100%, 0 100%, 0 var(--ds-cut));
+}
+
+@utility ds-cut-octagon {
+  clip-path: polygon(var(--ds-cut) 0, calc(100% - var(--ds-cut)) 0, 100% var(--ds-cut), 100% calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) 100%, var(--ds-cut) 100%, 0 calc(100% - var(--ds-cut)), 0 var(--ds-cut));
+}
+
+@utility ds-cut-stepped {
+  clip-path: polygon(0 var(--ds-cut), var(--ds-cut) var(--ds-cut), var(--ds-cut) 0, calc(100% - var(--ds-cut)) 0, calc(100% - var(--ds-cut)) var(--ds-cut), 100% var(--ds-cut), 100% calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) 100%, var(--ds-cut) 100%, var(--ds-cut) calc(100% - var(--ds-cut)), 0 calc(100% - var(--ds-cut)));
+}
+
+@utility ds-cut-card {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) 100%, 0 100%);
+}
+
+@utility ds-cut-point {
+  clip-path: polygon(var(--ds-cut) 0, calc(100% - var(--ds-cut)) 0, 100% 50%, calc(100% - var(--ds-cut)) 100%, var(--ds-cut) 100%, 0 50%);
+}
+
+@utility ds-cut-hex {
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+
+@utility ds-cut-shield {
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+}
+
+@utility ds-cut-ribbon {
+  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%, 8px 50%);
+}
+
+@utility ds-label {
+  font-family: var(--font-atkinson);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ds-mute);
+}
+
+@utility ds-hatch-lost {
+  background: repeating-linear-gradient(45deg, var(--color-ds-bad) 0 3px, transparent 3px 6px);
+}
+
+@utility ds-hatch-absorbed {
+  background: repeating-linear-gradient(45deg, var(--color-ds-mute) 0 3px, transparent 3px 6px);
+}
+
+@keyframes ds-save-pulse {
+  50% {
+    background: var(--color-ds-gold);
+  }
+}

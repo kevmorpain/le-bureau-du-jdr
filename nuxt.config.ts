@@ -82,6 +82,17 @@ export default defineNuxtConfig({
         weights: ['400'],
         styles: ['normal', 'italic'],
       },
+      // Police variable : le fournisseur local ne lit pas une plage de graisses, son @font-face est dans ds.css.
+      {
+        name: 'Bodoni Moda',
+        provider: 'none',
+      },
+      {
+        name: 'Atkinson Hyperlegible',
+        provider: 'local',
+        weights: ['400', '700'],
+        styles: ['normal'],
+      },
     ],
   },
 
