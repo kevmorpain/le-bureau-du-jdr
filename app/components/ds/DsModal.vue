@@ -38,13 +38,12 @@
 </template>
 
 <script lang="ts" setup>
-withDefaults(defineProps<{
+const { title, description, dismissible = true, width = 'md' } = defineProps<{
   title: string
-  // Lu par les lecteurs d'écran seulement : le corps de la fenêtre dit le reste.
   description?: string
   dismissible?: boolean
   width?: 'md' | 'lg'
-}>(), { description: undefined, dismissible: true, width: 'md' })
+}>()
 
 defineSlots<{
   default?: (props: { close: () => void }) => unknown
@@ -54,5 +53,6 @@ defineSlots<{
 
 const open = defineModel<boolean>('open', { default: false })
 
+// Nuxt UI se règle par classes Tailwind : elles doivent figurer en entier dans le source.
 const WIDTH = { md: 'max-w-lg', lg: 'max-w-2xl' }
 </script>

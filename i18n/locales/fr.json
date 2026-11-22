@@ -803,6 +803,61 @@
     "class_already_added": "Cette classe est déjà ajoutée"
   },
 
+  "ds": {
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "count_of": "{value} sur {max}",
+    "concentration": "Concentration",
+    "cost": {
+      "action": { "letter": "A", "name": "Action" },
+      "bonus": { "letter": "B", "name": "Action bonus" },
+      "reaction": { "letter": "R", "name": "Réaction" }
+    },
+    "death_saves": {
+      "successes": "Succès",
+      "failures": "Échecs",
+      "success_n": "{n} succès sur 3",
+      "failure_n": "{n} échec sur 3"
+    },
+    "hit_die": {
+      "available": "Dé de vie {die} à dépenser",
+      "chosen": "Dé de vie {die} choisi",
+      "rolled": "Dé de vie {die} choisi : {value}",
+      "spent": "Dé de vie {die} déjà dépensé"
+    },
+    "hp": {
+      "label": "Points de vie",
+      "value": "{current} sur {max}",
+      "with_temp": "{value}, {temp} temporaires",
+      "previewed": "{value} (actuellement {current})",
+      "legend": {
+        "hp": "PV",
+        "lost": "perdus",
+        "temp": "temporaires",
+        "absorbed": "absorbés",
+        "recovered": "récupérés"
+      }
+    },
+    "roll": {
+      "crit": "Critique",
+      "fumble": "Échec critique"
+    },
+    "save": {
+      "aria": "Sauvegarde : {state}",
+      "aria_pending": "{state}, {n} en attente",
+      "pending_count": "{n} en attente",
+      "pending_line": "en attente",
+      "states": {
+        "saved": "Enregistré",
+        "saving": "En cours",
+        "pending": "En attente",
+        "offline": "Hors ligne",
+        "failed": "Échec",
+        "conflict": "Conflit"
+      }
+    }
+  },
+
   "zodI18n": {
     "errors": {
       "too_small": {

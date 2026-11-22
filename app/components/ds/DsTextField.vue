@@ -6,19 +6,28 @@
       :aria-label="label"
       :placeholder="placeholder"
       :maxlength="maxlength"
-      class="block h-8 bg-transparent px-2.5 text-[13px] text-ds-ink placeholder:text-ds-faint focus:outline-none"
+      class="text"
       :style="{ width: `${width}px` }"
     >
   </DsField>
 </template>
 
 <script lang="ts" setup>
-withDefaults(defineProps<{
+const { label, placeholder, maxlength, width = 190 } = defineProps<{
   label: string
   placeholder?: string
   maxlength?: number
   width?: number
-}>(), { placeholder: undefined, maxlength: undefined, width: 190 })
+}>()
 
 const model = defineModel<string>({ default: '' })
 </script>
+
+<style scoped>
+.text {
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.text::placeholder { color: var(--color-ds-faint); }
+</style>

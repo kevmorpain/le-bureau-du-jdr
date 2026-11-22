@@ -1,4 +1,4 @@
-/* Design system de la fiche en jeu. Préfixe `ds-` : l'ancienne fiche garde les couleurs Nuxt UI jusqu'à la bascule. */
+/* Design system de la fiche en jeu : voir docs/design-system.md. */
 
 @font-face {
   font-family: 'Bodoni Moda';
@@ -8,7 +8,7 @@
   font-display: swap;
 }
 
-/* `static` : les composants lisent aussi ces variables dans leur CSS, pas seulement par des classes utilitaires. */
+/* `static` : les composants lisent ces variables dans leur CSS, sans passer par des classes utilitaires. */
 @theme static {
   --font-bodoni: 'Bodoni Moda', serif;
   --font-atkinson: 'Atkinson Hyperlegible', sans-serif;
@@ -45,6 +45,16 @@
   --color-coin-pc: #d0693a;
 }
 
+:root {
+  --ds-cut-tag: 4px;
+  --ds-cut-input: 6px;
+  --ds-cut-control: 7px;
+  --ds-cut-step: 8px;
+  --ds-cut-panel: 10px;
+  --ds-cut-card: 11px;
+  --ds-cut-button: 12px;
+}
+
 /* Posé sur <html> et non sur la fiche : les fenêtres de Nuxt UI sont téléportées dans <body>. */
 :root[data-ds-theme='prune'] {
   --color-ds-bg: #140c15;
@@ -58,55 +68,80 @@
   --color-ds-panel-raised: #1a2c25;
 }
 
-/* Découpes biseautées, réglées par `--ds-cut`. Un bord se fait en deux couches de la même découpe (bord dessous,
-   fond un peu plus petit dessus) : un trait intérieur en box-shadow serait rogné par le clip-path. */
-@utility ds-cut-corner {
-  clip-path: polygon(var(--ds-cut) 0, 100% 0, 100% calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) 100%, 0 100%, 0 var(--ds-cut));
-}
+@layer components {
+  /* Bord biseauté en deux couches : `.ds-bevel` porte la couleur du bord, son enfant `.ds-fill` le fond, découpé un peu
+     plus petit. Un trait intérieur (box-shadow inset, border) serait rogné par la découpe. */
+  .ds-bevel {
+    --ds-edge: 1px;
+    --ds-edge-color: var(--color-ds-gold);
+    --ds-fill: var(--color-ds-panel);
+    /* Un biseau à 45° rentre de (√2 − 1) fois l'épaisseur du bord pour garder un trait régulier. */
+    --ds-inset: 0.4142;
+    --ds-inner-cut: calc(var(--ds-cut) - var(--ds-edge) * var(--ds-inset));
+    padding: var(--ds-edge);
+    background: var(--ds-edge-color);
+  }
 
-@utility ds-cut-octagon {
-  clip-path: polygon(var(--ds-cut) 0, calc(100% - var(--ds-cut)) 0, 100% var(--ds-cut), 100% calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) 100%, var(--ds-cut) 100%, 0 calc(100% - var(--ds-cut)), 0 var(--ds-cut));
-}
+  .ds-bevel > .ds-fill {
+    --c: var(--ds-inner-cut);
+    background: var(--ds-fill);
+  }
 
-@utility ds-cut-stepped {
-  clip-path: polygon(0 var(--ds-cut), var(--ds-cut) var(--ds-cut), var(--ds-cut) 0, calc(100% - var(--ds-cut)) 0, calc(100% - var(--ds-cut)) var(--ds-cut), 100% var(--ds-cut), 100% calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) 100%, var(--ds-cut) 100%, var(--ds-cut) calc(100% - var(--ds-cut)), 0 calc(100% - var(--ds-cut)));
-}
+  .ds-shape-corner { --c: var(--ds-cut); }
+  .ds-shape-corner,
+  .ds-shape-corner > .ds-fill {
+    clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c));
+  }
 
-@utility ds-cut-card {
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--ds-cut)), calc(100% - var(--ds-cut)) 100%, 0 100%);
-}
+  .ds-shape-octagon { --c: var(--ds-cut); }
+  .ds-shape-octagon,
+  .ds-shape-octagon > .ds-fill {
+    clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c));
+  }
 
-@utility ds-cut-point {
-  clip-path: polygon(var(--ds-cut) 0, calc(100% - var(--ds-cut)) 0, 100% 50%, calc(100% - var(--ds-cut)) 100%, var(--ds-cut) 100%, 0 50%);
-}
+  .ds-shape-card { --c: var(--ds-cut); }
+  .ds-shape-card,
+  .ds-shape-card > .ds-fill {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%);
+  }
 
-@utility ds-cut-hex {
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-}
+  /* Gradins : des marches droites, la couche de fond garde la même découpe. */
+  .ds-shape-stepped { --c: var(--ds-cut); --ds-inset: 0; }
+  .ds-shape-stepped,
+  .ds-shape-stepped > .ds-fill {
+    clip-path: polygon(0 var(--c), var(--c) var(--c), var(--c) 0, calc(100% - var(--c)) 0, calc(100% - var(--c)) var(--c), 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, var(--c) calc(100% - var(--c)), 0 calc(100% - var(--c)));
+  }
 
-@utility ds-cut-shield {
-  clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
-}
+  /* Pointes : la pente dépend de la hauteur ; 0,5 est le retrait relevé sur la planche pour un bouton de 2 px de bord. */
+  .ds-shape-point { --c: var(--ds-cut); --ds-inset: 0.5; }
+  .ds-shape-point,
+  .ds-shape-point > .ds-fill {
+    clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% 50%, calc(100% - var(--c)) 100%, var(--c) 100%, 0 50%);
+  }
 
-@utility ds-cut-ribbon {
-  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%, 8px 50%);
-}
+  .ds-shape-hex,
+  .ds-shape-hex > .ds-fill {
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
 
-@utility ds-label {
-  font-family: var(--font-atkinson);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-ds-mute);
-}
+  .ds-shape-shield,
+  .ds-shape-shield > .ds-fill {
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+  }
 
-@utility ds-hatch-lost {
-  background: repeating-linear-gradient(45deg, var(--color-ds-bad) 0 3px, transparent 3px 6px);
-}
+  .ds-label {
+    font-family: var(--font-atkinson);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ds-mute);
+  }
 
-@utility ds-hatch-absorbed {
-  background: repeating-linear-gradient(45deg, var(--color-ds-mute) 0 3px, transparent 3px 6px);
+  .ds-number {
+    font-family: var(--font-bodoni);
+    font-weight: 700;
+  }
 }
 
 @keyframes ds-save-pulse {

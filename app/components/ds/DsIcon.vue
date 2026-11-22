@@ -1,7 +1,7 @@
 <template>
   <span
     v-if="name === 'favorite'"
-    class="inline-flex items-center justify-center leading-none text-ds-gold"
+    class="icon icon--star"
     :style="{ fontSize: `${size}px`, width: `${size}px`, height: `${size}px` }"
     :role="label ? 'img' : undefined"
     :aria-label="label"
@@ -15,7 +15,7 @@
     :role="label ? 'img' : undefined"
     :aria-label="label"
     :aria-hidden="label ? undefined : 'true'"
-    class="shrink-0"
+    class="icon"
     v-bind="ICONS[name].attrs"
   >
     <circle
@@ -32,12 +32,11 @@
 </template>
 
 <script lang="ts" setup>
-// L'étoile est réservée aux favoris, le rituel a sa bougie ; les icônes de navigation prennent la couleur du texte.
 type SheetIcon = 'spell' | 'feature' | 'weapon' | 'item' | 'concentration' | 'ritual' | 'favorite'
 type NavIcon = 'nav-play' | 'nav-character' | 'nav-inventory' | 'nav-grimoire' | 'nav-notes' | 'nav-settings' | 'nav-characters'
 export type DsIconName = SheetIcon | NavIcon
 
-withDefaults(defineProps<{ name: DsIconName, size?: number, label?: string }>(), { size: 16, label: undefined })
+const { name, size = 16, label } = defineProps<{ name: DsIconName, size?: number, label?: string }>()
 
 interface IconDef {
   viewBox?: string
@@ -78,3 +77,15 @@ const ICONS: Record<Exclude<DsIconName, 'favorite'>, IconDef> = {
   ),
 }
 </script>
+
+<style scoped>
+.icon { flex-shrink: 0; }
+
+.icon--star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: var(--color-ds-gold);
+}
+</style>

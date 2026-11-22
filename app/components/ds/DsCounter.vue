@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+  <div class="counter">
     <span
       v-if="label"
       :id="labelId"
@@ -7,11 +7,11 @@
     >{{ label }}</span>
     <span
       v-if="showCount"
-      class="text-xs text-ds-mute"
-    >{{ model }} sur {{ max }}</span>
+      class="counter__count"
+    >{{ $t('ds.count_of', { value: model, max }) }}</span>
     <div
       role="group"
-      class="flex items-center"
+      class="counter__cells"
       :aria-labelledby="label ? labelId : undefined"
       :aria-label="label ? undefined : ariaLabel"
     >
@@ -20,9 +20,8 @@
         v-for="index in max"
         :key="index"
         :type="readonly ? undefined : 'button'"
-        class="flex size-6 items-center justify-center"
-        :class="{ 'cursor-pointer focus-visible:outline-2 focus-visible:outline-ds-gold': !readonly }"
-        :aria-label="readonly ? undefined : `${index} sur ${max}`"
+        class="counter__cell"
+        :aria-label="readonly ? undefined : $t('ds.count_of', { value: index, max })"
         :aria-pressed="readonly ? undefined : index <= model"
         @click="readonly ? undefined : toggle(index)"
       >
@@ -36,40 +35,69 @@
 </template>
 
 <script lang="ts" setup>
-import type { DsDiamondState } from './DsDiamond.vue'
+import type { DsDiamondColor, DsDiamondState } from './DsDiamond.vue'
 
-const props = withDefaults(defineProps<{
+const {
+  max,
+  label,
+  ariaLabel,
+  showCount = false,
+  readonly = false,
+  regained = 0,
+  possible = 0,
+  color,
+} = defineProps<{
   max: number
   label?: string
   ariaLabel?: string
   showCount?: boolean
   readonly?: boolean
-  // Parmi les cases pleines, les dernières sont rendues (repos, aperçu) ; après elles, des cases possibles selon le jet.
-  gained?: number
+  regained?: number
   possible?: number
-  color?: 'gold' | 'gain' | 'bad'
-}>(), {
-  label: undefined,
-  ariaLabel: undefined,
-  showCount: false,
-  readonly: false,
-  gained: 0,
-  possible: 0,
-  color: undefined,
-})
+  color?: DsDiamondColor
+}>()
 
 const model = defineModel<number>({ default: 0 })
 const labelId = useId()
 
 const stateOf = (index: number): DsDiamondState => {
-  if (index <= model.value - props.gained) return 'full'
-  if (index <= model.value) return 'gain'
-  if (index <= model.value + props.possible) return 'maybe'
+  if (index <= model.value - regained) return 'filled'
+  if (index <= model.value) return 'regained'
+  if (index <= model.value + possible) return 'possible'
   return 'empty'
 }
 
-// Toucher la dernière case pleine la vide ; toucher une autre case remplit jusqu'à elle.
 const toggle = (index: number) => {
   model.value = index === model.value ? index - 1 : index
 }
 </script>
+
+<style scoped>
+.counter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.counter__count {
+  font-size: 12px;
+  color: var(--color-ds-mute);
+}
+
+.counter__cells {
+  display: flex;
+  align-items: center;
+}
+
+.counter__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+button.counter__cell { cursor: pointer; }
+button.counter__cell:focus-visible { outline: 2px solid var(--color-ds-gold); }
+</style>

@@ -2,24 +2,59 @@
   <button
     :type="type"
     :disabled="disabled"
-    class="inline-flex cursor-pointer items-center gap-1.5 px-2 py-1 text-xs font-bold text-ds-gold hover:text-ds-gold-hi focus-visible:underline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+    class="link"
   >
     <span
       v-if="plus"
-      class="ds-cut-corner inline-flex size-4 items-center justify-center bg-ds-gold-dim p-px [--ds-cut:4px]"
+      class="ds-bevel ds-shape-corner link__plus"
       aria-hidden="true"
     >
-      <span class="ds-cut-corner flex size-full items-center justify-center bg-ds-bg text-xs leading-none [--ds-cut:3.6px]">+</span>
+      <span class="ds-fill link__plus-fill">+</span>
     </span>
     <slot>{{ label }}</slot>
   </button>
 </template>
 
 <script lang="ts" setup>
-withDefaults(defineProps<{
+const { label, plus = false, type = 'button', disabled = false } = defineProps<{
   label?: string
   plus?: boolean
   type?: 'button' | 'submit'
   disabled?: boolean
-}>(), { label: undefined, plus: false, type: 'button', disabled: false })
+}>()
 </script>
+
+<style scoped>
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-ds-gold);
+  cursor: pointer;
+}
+
+.link:hover { color: var(--color-ds-gold-hi); }
+.link:focus-visible { outline: none; text-decoration: underline; }
+.link:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.link__plus {
+  --ds-cut: var(--ds-cut-tag);
+  --ds-edge-color: var(--color-ds-gold-dim);
+  --ds-fill: var(--color-ds-bg);
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+.link__plus-fill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 12px;
+  line-height: 1;
+}
+</style>

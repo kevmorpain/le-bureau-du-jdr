@@ -4,13 +4,11 @@
     :to="to"
     :type="to ? undefined : 'button'"
     :aria-current="active ? 'page' : undefined"
-    class="flex w-16 cursor-pointer flex-col items-center gap-1 pb-[9px] pt-2.5 text-[10px] font-bold focus-visible:outline-2 focus-visible:outline-ds-gold"
-    :class="active
-      ? 'bg-[radial-gradient(ellipse_at_50%_38%,var(--color-ds-glow),transparent_70%)] text-ds-gold'
-      : 'text-ds-faint hover:text-ds-mute'"
+    class="nav"
+    :class="{ 'nav--active': active }"
   >
     <span
-      class="flex size-[22px] items-center justify-center"
+      class="nav__icon"
       aria-hidden="true"
     ><slot name="icon" /></span>
     {{ label }}
@@ -21,5 +19,37 @@
 import { NuxtLink } from '#components'
 import type { RouteLocationRaw } from 'vue-router'
 
-withDefaults(defineProps<{ label: string, active?: boolean, to?: RouteLocationRaw }>(), { active: false, to: undefined })
+const { label, active = false, to } = defineProps<{ label: string, active?: boolean, to?: RouteLocationRaw }>()
 </script>
+
+<style scoped>
+.nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 64px;
+  padding: 10px 0 9px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-ds-faint);
+  cursor: pointer;
+}
+
+.nav:hover { color: var(--color-ds-mute); }
+.nav:focus-visible { outline: 2px solid var(--color-ds-gold); }
+
+.nav--active,
+.nav--active:hover {
+  color: var(--color-ds-gold);
+  background: radial-gradient(ellipse at 50% 38%, var(--color-ds-glow), transparent 70%);
+}
+
+.nav__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+</style>

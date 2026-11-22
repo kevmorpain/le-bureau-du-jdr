@@ -1,45 +1,77 @@
 <template>
   <span
-    class="ds-cut-corner inline-flex whitespace-nowrap font-bold uppercase [--ds-cut:4px]"
-    :class="[STYLE[variant].edge, STYLE[variant].outer]"
+    class="ds-bevel ds-shape-corner badge"
+    :class="[`badge--${variant}`, `badge--on-${surface}`]"
     :data-variant="variant"
   >
-    <span
-      class="ds-cut-corner inline-flex h-full items-center [--ds-cut:3.6px]"
-      :class="[STYLE[variant].text, STYLE[variant].inner, STYLE[variant].outlined ? FILL[surface] : '']"
-    >
+    <span class="ds-fill badge__fill">
       <slot>{{ label }}</slot>
     </span>
   </span>
 </template>
 
 <script lang="ts" setup>
-// badge : rareté, niveau, lien ; equipped, attuned, bag : état d'un objet ; new : ce qui n'existe pas encore dans l'appli.
-export type DsBadgeVariant = 'badge' | 'equipped' | 'attuned' | 'bag' | 'new'
-type Surface = 'panel' | 'panel-raised' | 'bg'
+export type DsBadgeVariant = 'default' | 'equipped' | 'attuned' | 'stowed' | 'new'
+export type DsSurface = 'panel' | 'panel-raised' | 'bg'
 
-// Un badge à bord seul se fait en deux couches : son fond doit être celui de la surface où il est posé.
-withDefaults(defineProps<{ label?: string, variant?: DsBadgeVariant, surface?: Surface }>(), {
-  label: undefined,
-  variant: 'badge',
-  surface: 'panel',
-})
-
-// La hauteur se fixe sur la couche extérieure : sans elle, une rangée en flex l'étirerait sous la couche de fond.
-const OUTLINED = { outer: 'h-[18px] p-px', inner: 'px-1.5 text-[10px] tracking-[0.06em]', outlined: true }
-const FILLED = { outer: 'h-[18px]', inner: 'px-[7px] text-[10px] tracking-[0.06em]', outlined: false }
-
-const STYLE: Record<DsBadgeVariant, { edge: string, text: string, outer: string, inner: string, outlined: boolean }> = {
-  badge: { edge: 'bg-ds-gold-dim', text: 'text-ds-gold', ...OUTLINED },
-  equipped: { edge: 'bg-ds-gold', text: 'text-ds-bg', ...FILLED },
-  attuned: { edge: 'bg-ds-gain', text: 'text-ds-bg', ...FILLED },
-  bag: { edge: 'bg-ds-line', text: 'text-ds-mute', ...OUTLINED },
-  new: { edge: 'bg-ds-gain', text: 'text-ds-gain', outer: 'h-4 p-px', inner: 'px-[5px] text-[9.5px] tracking-[0.08em]', outlined: true },
-}
-
-const FILL: Record<Surface, string> = {
-  'panel': 'bg-ds-panel',
-  'panel-raised': 'bg-ds-panel-raised',
-  'bg': 'bg-ds-bg',
-}
+const { label, variant = 'default', surface = 'panel' } = defineProps<{
+  label?: string
+  variant?: DsBadgeVariant
+  surface?: DsSurface
+}>()
 </script>
+
+<style scoped>
+/* La hauteur se fixe sur la couche extérieure : sinon une rangée en flex l'étire sous la couche de fond. */
+.badge {
+  --ds-cut: var(--ds-cut-tag);
+  --text: var(--color-ds-gold);
+  display: inline-flex;
+  height: 18px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge--on-panel { --ds-fill: var(--color-ds-panel); }
+.badge--on-panel-raised { --ds-fill: var(--color-ds-panel-raised); }
+.badge--on-bg { --ds-fill: var(--color-ds-bg); }
+
+.badge--default { --ds-edge-color: var(--color-ds-gold-dim); }
+
+.badge--stowed {
+  --ds-edge-color: var(--color-ds-line);
+  --text: var(--color-ds-mute);
+}
+
+.badge--new {
+  --ds-edge-color: var(--color-ds-gain);
+  --text: var(--color-ds-gain);
+  height: 16px;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+}
+
+.badge--equipped,
+.badge--attuned {
+  --ds-edge: 0px;
+  --text: var(--color-ds-bg);
+}
+
+.badge--equipped { --ds-fill: var(--color-ds-gold); }
+.badge--attuned { --ds-fill: var(--color-ds-gain); }
+
+.badge__fill {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 6px;
+  color: var(--text);
+}
+
+.badge--new .badge__fill { padding: 0 5px; }
+.badge--equipped .badge__fill,
+.badge--attuned .badge__fill { padding: 0 7px; }
+</style>

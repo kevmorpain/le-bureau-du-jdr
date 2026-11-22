@@ -1,49 +1,108 @@
 <template>
   <button
     type="button"
-    class="box-border flex w-16 cursor-pointer flex-col items-center gap-[3px] pb-1 pt-1.5 text-center text-[10px] font-bold leading-[1.15] focus-visible:outline-2 focus-visible:outline-ds-gold"
-    :class="STATES[state].text"
+    class="save"
+    :class="`save--${state}`"
     :aria-label="ariaLabel"
     :data-state="state"
   >
     <span
-      class="mb-0.5 size-[9px] rotate-45"
-      :class="STATES[state].mark"
+      class="save__mark"
       aria-hidden="true"
     />
     <span
+      class="save__label"
       aria-hidden="true"
-      :class="{ 'text-[13px]': state === 'pending' }"
-    >{{ state === 'pending' ? pending : STATES[state].label }}</span>
+    >{{ state === 'pending' ? pending : $t(`ds.save.states.${state}`) }}</span>
     <span
       v-if="pendingLine"
-      class="font-normal text-ds-mute"
+      class="save__pending"
       aria-hidden="true"
     >{{ pendingLine }}</span>
   </button>
 </template>
 
 <script lang="ts" setup>
-// Seul endroit où voir l'état de la sauvegarde ; au toucher, la page ouvre le détail et l'action utile.
 export type DsSaveState = 'saved' | 'saving' | 'pending' | 'offline' | 'failed' | 'conflict'
 
-const props = withDefaults(defineProps<{ state: DsSaveState, pending?: number }>(), { pending: 0 })
+const { state, pending = 0 } = defineProps<{ state: DsSaveState, pending?: number }>()
 
-const STATES: Record<DsSaveState, { label: string, text: string, mark: string }> = {
-  saved: { label: 'Enregistré', text: 'text-ds-faint', mark: 'bg-ds-gain' },
-  saving: { label: 'En cours', text: 'text-ds-gold', mark: 'shadow-[inset_0_0_0_1.5px_var(--color-ds-gold)] motion-safe:animate-[ds-save-pulse_1.1s_ease-in-out_infinite]' },
-  pending: { label: 'En attente', text: 'text-ds-gold', mark: 'bg-ds-gold' },
-  offline: { label: 'Hors ligne', text: 'text-ds-mute', mark: 'shadow-[inset_0_0_0_1.5px_var(--color-ds-mute)]' },
-  failed: { label: 'Échec', text: 'text-ds-bad', mark: 'bg-ds-bad' },
-  conflict: { label: 'Conflit', text: 'text-ds-bad', mark: 'bg-ds-bad' },
-}
+const { t } = useI18n()
 
-const pendingLine = computed(() =>
-  props.state === 'pending' ? 'en attente' : props.state === 'offline' && props.pending > 0 ? `${props.pending} en attente` : null)
+const pendingLine = computed(() => {
+  if (state === 'pending') return t('ds.save.pending_line')
+  if (state === 'offline' && pending > 0) return t('ds.save.pending_count', { n: pending })
+  return null
+})
 
 const ariaLabel = computed(() => {
-  if (props.state === 'pending') return `Sauvegarde : ${props.pending} en attente`
-  const base = `Sauvegarde : ${STATES[props.state].label.toLowerCase()}`
-  return props.pending > 0 && props.state !== 'saved' ? `${base}, ${props.pending} en attente` : base
+  if (state === 'pending') return t('ds.save.aria', { state: t('ds.save.pending_count', { n: pending }) })
+  const label = t(`ds.save.states.${state}`).toLowerCase()
+  const withPending = pending > 0 && state !== 'saved' ? t('ds.save.aria_pending', { state: label, n: pending }) : label
+  return t('ds.save.aria', { state: withPending })
 })
 </script>
+
+<style scoped>
+.save {
+  --mark: transparent;
+  --mark-ring: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 64px;
+  padding: 6px 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--color-ds-faint);
+  cursor: pointer;
+}
+
+.save:focus-visible { outline: 2px solid var(--color-ds-gold); }
+
+.save__mark {
+  width: 9px;
+  height: 9px;
+  margin-bottom: 2px;
+  transform: rotate(45deg);
+  background: var(--mark);
+  box-shadow: inset 0 0 0 1.5px var(--mark-ring);
+}
+
+.save__pending {
+  font-weight: 400;
+  color: var(--color-ds-mute);
+}
+
+.save--saved { --mark: var(--color-ds-gain); }
+
+.save--saving {
+  --mark-ring: var(--color-ds-gold);
+  color: var(--color-ds-gold);
+}
+
+.save--pending {
+  --mark: var(--color-ds-gold);
+  color: var(--color-ds-gold);
+}
+
+.save--pending .save__label { font-size: 13px; }
+
+.save--offline {
+  --mark-ring: var(--color-ds-mute);
+  color: var(--color-ds-mute);
+}
+
+.save--failed,
+.save--conflict {
+  --mark: var(--color-ds-bad);
+  color: var(--color-ds-bad);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .save--saving .save__mark { animation: ds-save-pulse 1.1s ease-in-out infinite; }
+}
+</style>

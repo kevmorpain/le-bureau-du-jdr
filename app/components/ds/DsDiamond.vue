@@ -1,27 +1,42 @@
 <template>
   <span
-    class="box-border inline-block shrink-0 rotate-45"
-    :class="[SIZE[size], TONE[tone], { 'border-dashed': state === 'maybe', [FILLED[tone]]: filled }]"
+    class="diamond"
+    :class="[`diamond--${size}`, `diamond--${tone}`, { 'diamond--filled': filled, 'diamond--possible': state === 'possible' }]"
     :data-state="state"
     aria-hidden="true"
   />
 </template>
 
 <script lang="ts" setup>
-// full : coché ; gain : rendu ou regagné ; maybe : possible selon le jet ; lost : perdu.
-export type DsDiamondState = 'empty' | 'full' | 'gain' | 'maybe' | 'lost'
-type Tone = 'gold' | 'gain' | 'bad'
+export type DsDiamondState = 'empty' | 'filled' | 'regained' | 'possible' | 'lost'
+export type DsDiamondColor = 'gold' | 'gain' | 'bad'
 
-const props = withDefaults(defineProps<{
+const { state = 'empty', size = 'sm', color } = defineProps<{
   state?: DsDiamondState
   size?: 'sm' | 'lg'
-  color?: Tone
-}>(), { state: 'empty', size: 'sm', color: undefined })
+  color?: DsDiamondColor
+}>()
 
-const SIZE = { sm: 'size-3 border-[1.5px]', lg: 'size-5 border-2' }
-const TONE: Record<Tone, string> = { gold: 'border-ds-gold', gain: 'border-ds-gain', bad: 'border-ds-bad' }
-const FILLED: Record<Tone, string> = { gold: 'bg-ds-gold', gain: 'bg-ds-gain', bad: 'bg-ds-bad' }
-
-const tone = computed<Tone>(() => props.color ?? (props.state === 'gain' ? 'gain' : props.state === 'lost' ? 'bad' : 'gold'))
-const filled = computed(() => props.state === 'full' || props.state === 'gain')
+const tone = computed<DsDiamondColor>(() => color ?? (state === 'regained' ? 'gain' : state === 'lost' ? 'bad' : 'gold'))
+const filled = computed(() => state === 'filled' || state === 'regained')
 </script>
+
+<style scoped>
+.diamond {
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transform: rotate(45deg);
+  border: 1.5px solid var(--tone);
+}
+
+.diamond--sm { width: 12px; height: 12px; }
+.diamond--lg { width: 20px; height: 20px; border-width: 2px; }
+
+.diamond--gold { --tone: var(--color-ds-gold); }
+.diamond--gain { --tone: var(--color-ds-gain); }
+.diamond--bad { --tone: var(--color-ds-bad); }
+
+.diamond--filled { background: var(--tone); }
+.diamond--possible { border-style: dashed; }
+</style>

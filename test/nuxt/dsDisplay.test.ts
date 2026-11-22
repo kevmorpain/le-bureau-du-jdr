@@ -79,31 +79,27 @@ describe('étiquettes', () => {
     const outer = wrapper.element as HTMLElement
     const inner = outer.firstElementChild as HTMLElement
 
-    expect(outer.classList).toContain('bg-ds-gold-dim')
-    expect(outer.classList).toContain('p-px')
-    expect(inner.classList).toContain('bg-ds-panel-raised')
-    expect(outer.outerHTML).not.toContain('shadow-[inset')
+    expect(outer.classList).toContain('ds-bevel')
+    expect(outer.classList).toContain('badge--on-panel-raised')
+    expect(inner.classList).toContain('ds-fill')
   })
 })
 
 describe('formes', () => {
-  it('cadre biseauté en deux couches : la couche de fond rentre de (√2 − 1) fois le bord', async () => {
+  it('cadre biseauté en deux couches : bord dessous, fond dessus, même découpe', async () => {
     const wrapper = await mountSuspended(DsFrame, { props: { shape: 'octagon' }, slots: { default: () => 'Contenu' } })
     const outer = wrapper.element as HTMLElement
     const inner = outer.firstElementChild as HTMLElement
 
-    expect(outer.style.getPropertyValue('--ds-cut')).toBe('10px')
-    expect(outer.style.padding).toBe('1px')
-    expect(Number.parseFloat(inner.style.getPropertyValue('--ds-cut'))).toBeCloseTo(10 - (Math.SQRT2 - 1), 3)
-    expect(outer.classList).toContain('bg-ds-gold')
-    expect(inner.classList).toContain('bg-ds-panel')
+    expect([...outer.classList]).toEqual(expect.arrayContaining(['ds-bevel', 'ds-shape-octagon', 'frame--edge-gold', 'frame--fill-panel']))
+    expect(inner.classList).toContain('ds-fill')
     expect(wrapper.text()).toBe('Contenu')
   })
 
-  it('le gradin garde la même découpe sur les deux couches', async () => {
-    const wrapper = await mountSuspended(DsFrame, { props: { shape: 'stepped' } })
-    const inner = (wrapper.element as HTMLElement).firstElementChild as HTMLElement
-    expect(inner.style.getPropertyValue('--ds-cut')).toBe('8px')
+  it('forme et teintes se choisissent par props', async () => {
+    const wrapper = await mountSuspended(DsFrame, { props: { shape: 'stepped', tone: 'gold-dim', fill: 'bg', padded: false } })
+    expect(wrapper.classes()).toEqual(expect.arrayContaining(['ds-shape-stepped', 'frame--edge-gold-dim', 'frame--fill-bg']))
+    expect(wrapper.get('.ds-fill').classes()).not.toContain('frame__fill--padded')
   })
 
   it('bloc à ruban : le ruban nomme la section', async () => {
@@ -130,10 +126,10 @@ describe('boutons', () => {
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
-  it('destructif : bord et libellé rouges', async () => {
+  it('destructif : variante danger, en deux couches', async () => {
     const wrapper = await mountSuspended(DsButton, { props: { label: 'Supprimer', variant: 'danger' } })
-    expect(wrapper.classes()).toContain('bg-ds-bad')
-    expect(wrapper.get('b').classes()).toContain('text-ds-bad')
+    expect(wrapper.classes()).toEqual(expect.arrayContaining(['ds-bevel', 'ds-shape-point', 'button--danger']))
+    expect(wrapper.find('b').exists()).toBe(false)
   })
 
   it('bouton de coin : toujours nommé ; en bascule, son état est exposé', async () => {

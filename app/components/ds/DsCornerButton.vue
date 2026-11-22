@@ -3,11 +3,11 @@
     type="button"
     :aria-label="label"
     :aria-pressed="toggle ? active : undefined"
-    class="group ds-cut-corner inline-flex size-[30px] shrink-0 cursor-pointer bg-ds-gold-dim p-px [--ds-cut:7px] focus-visible:bg-ds-gold"
+    class="ds-bevel ds-shape-corner corner"
+    :class="{ 'corner--active': active }"
   >
     <span
-      class="ds-cut-corner flex size-full items-center justify-center bg-ds-panel-raised text-sm [--ds-cut:6.6px]"
-      :class="active ? 'text-ds-gold' : 'text-ds-mute group-hover:text-ds-ink'"
+      class="ds-fill corner__fill"
       aria-hidden="true"
     >
       <slot>{{ ICONS[icon] }}</slot>
@@ -18,15 +18,41 @@
 <script lang="ts" setup>
 export type DsCornerIcon = 'close' | 'favorite'
 
-withDefaults(defineProps<{
+const { label, icon = 'close', active = false, toggle = false } = defineProps<{
   label: string
   icon?: DsCornerIcon
   active?: boolean
   toggle?: boolean
-}>(), { icon: 'close', active: false, toggle: false })
+}>()
 
 const ICONS: Record<DsCornerIcon, string> = {
   close: '✕',
   favorite: '★',
 }
 </script>
+
+<style scoped>
+.corner {
+  --ds-cut: var(--ds-cut-control);
+  --ds-edge-color: var(--color-ds-gold-dim);
+  --ds-fill: var(--color-ds-panel-raised);
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  color: var(--color-ds-mute);
+  cursor: pointer;
+}
+
+.corner:hover { color: var(--color-ds-ink); }
+.corner:focus-visible { outline: none; --ds-edge-color: var(--color-ds-gold); }
+.corner--active { color: var(--color-ds-gold); }
+
+.corner__fill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 14px;
+}
+</style>

@@ -10,7 +10,7 @@
       :aria-label="label"
       :aria-invalid="invalid || undefined"
       :placeholder="placeholder"
-      class="block h-8 bg-transparent text-center font-bodoni text-lg font-bold text-ds-ink placeholder:text-ds-faint focus:outline-none"
+      class="ds-number number"
       :style="{ width: `${width}px` }"
       @input="onInput"
     >
@@ -18,19 +18,19 @@
 </template>
 
 <script lang="ts" setup>
-const props = withDefaults(defineProps<{
+const { label, min, max, step = 1, placeholder, width = 76 } = defineProps<{
   label: string
   min?: number
   max?: number
   step?: number
   placeholder?: string
   width?: number
-}>(), { min: undefined, max: undefined, step: 1, placeholder: undefined, width: 76 })
+}>()
 
 const model = defineModel<number | null>({ default: null })
 
 const invalid = computed(() => model.value !== null
-  && ((props.min !== undefined && model.value < props.min) || (props.max !== undefined && model.value > props.max)))
+  && ((min !== undefined && model.value < min) || (max !== undefined && model.value > max)))
 
 const onInput = (event: Event) => {
   const raw = (event.target as HTMLInputElement).value
@@ -38,3 +38,12 @@ const onInput = (event: Event) => {
   model.value = raw === '' || Number.isNaN(parsed) ? null : parsed
 }
 </script>
+
+<style scoped>
+.number {
+  font-size: 18px;
+  text-align: center;
+}
+
+.number::placeholder { color: var(--color-ds-faint); }
+</style>

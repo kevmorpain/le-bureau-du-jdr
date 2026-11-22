@@ -81,10 +81,10 @@ describe('compteur en cases', () => {
   })
 
   it('montre les cases rendues puis les cases possibles', async () => {
-    const wrapper = await mountSuspended(DsCounter, { props: { max: 4, modelValue: 2, gained: 1, possible: 1, readonly: true, ariaLabel: 'Emplacements' } })
+    const wrapper = await mountSuspended(DsCounter, { props: { max: 4, modelValue: 2, regained: 1, possible: 1, readonly: true, ariaLabel: 'Emplacements' } })
 
     expect(wrapper.findAll('button')).toHaveLength(0)
-    expect(wrapper.findAll('[data-state]').map(c => c.attributes('data-state'))).toEqual(['full', 'gain', 'maybe', 'empty'])
+    expect(wrapper.findAll('[data-state]').map(c => c.attributes('data-state'))).toEqual(['filled', 'regained', 'possible', 'empty'])
   })
 })
 
@@ -95,7 +95,7 @@ describe('case à cocher losange', () => {
     expect(wrapper.text()).toContain('A mangé et bu')
     await wrapper.get('input[type="checkbox"]').setValue(true)
     expect(wrapper.emitted('update:modelValue')).toEqual([[true]])
-    expect(wrapper.get('[data-state]').attributes('data-state')).toBe('full')
+    expect(wrapper.get('[data-state]').attributes('data-state')).toBe('filled')
   })
 })
 

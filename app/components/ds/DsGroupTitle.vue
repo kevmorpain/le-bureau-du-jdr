@@ -1,18 +1,29 @@
 <template>
   <component
     :is="as"
-    class="ds-group-title flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ds-gold"
+    class="group-title"
   >
     <slot>{{ label }}</slot>
   </component>
 </template>
 
 <script lang="ts" setup>
-withDefaults(defineProps<{ label?: string, as?: string }>(), { label: undefined, as: 'h3' })
+const { label, as = 'h3' } = defineProps<{ label?: string, as?: string }>()
 </script>
 
 <style scoped>
-.ds-group-title::after {
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ds-gold);
+}
+
+.group-title::after {
   content: '';
   flex: 1;
   height: 7px;

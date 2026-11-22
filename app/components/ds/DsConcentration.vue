@@ -1,18 +1,42 @@
 <template>
   <div
-    class="bg-ds-ink px-[11px] pb-[7px] pt-1.5 text-ds-panel"
+    class="concentration"
     role="status"
   >
-    <div class="flex justify-between text-[9.5px] font-bold uppercase tracking-[0.16em] opacity-75">
-      <span>Concentration</span>
+    <div class="concentration__head">
+      <span>{{ $t('ds.concentration') }}</span>
       <span v-if="remaining">{{ remaining }}</span>
     </div>
-    <div class="mt-px text-[14.5px] font-bold">
+    <div class="concentration__spell">
       {{ spell }}
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-defineProps<{ spell: string, remaining?: string }>()
+const { spell, remaining } = defineProps<{ spell: string, remaining?: string }>()
 </script>
+
+<style scoped>
+.concentration {
+  padding: 6px 11px 7px;
+  background: var(--color-ds-ink);
+  color: var(--color-ds-panel);
+}
+
+.concentration__head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.concentration__spell {
+  margin-top: 1px;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+</style>

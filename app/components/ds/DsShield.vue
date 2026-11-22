@@ -1,22 +1,41 @@
 <template>
   <div
-    class="ds-cut-shield box-border h-[62px] w-[58px] bg-ds-gold px-px pb-[3px] pt-px"
+    class="ds-bevel ds-shape-shield shield"
     role="group"
     :aria-label="`${label} ${value}`"
   >
-    <div class="ds-cut-shield box-border flex h-full flex-col items-center bg-ds-panel-raised pt-[7px]">
-      <span
-        class="ds-label text-[9px]"
-        aria-hidden="true"
-      >{{ label }}</span>
-      <span
-        class="font-bodoni text-[17px] font-bold leading-tight text-ds-ink"
-        aria-hidden="true"
-      >{{ value }}</span>
+    <div
+      class="ds-fill shield__fill"
+      aria-hidden="true"
+    >
+      <span class="ds-label shield__label">{{ label }}</span>
+      <span class="ds-number shield__value">{{ value }}</span>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-defineProps<{ label: string, value: string | number }>()
+const { label, value } = defineProps<{ label: string, value: string | number }>()
 </script>
+
+<style scoped>
+.shield {
+  --ds-fill: var(--color-ds-panel-raised);
+  box-sizing: border-box;
+  width: 58px;
+  height: 62px;
+  padding: 1px 1px 3px;
+}
+
+.shield__fill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding-top: 7px;
+  box-sizing: border-box;
+}
+
+.shield__label { font-size: 9px; }
+.shield__value { font-size: 17px; line-height: 1.15; color: var(--color-ds-ink); }
+</style>

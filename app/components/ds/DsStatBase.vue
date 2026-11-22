@@ -1,20 +1,38 @@
 <template>
   <div
-    class="flex h-[50px] min-w-[72px] flex-col items-center justify-center gap-0.5 border-b-[3px] border-ds-gold-dim bg-ds-panel-raised px-2"
+    class="stat"
     role="group"
     :aria-label="`${label} ${value}`"
   >
     <span
-      class="ds-label text-[9px]"
+      class="ds-label stat__label"
       aria-hidden="true"
     >{{ label }}</span>
     <span
-      class="font-bodoni text-base font-bold leading-tight text-ds-ink"
+      class="ds-number stat__value"
       aria-hidden="true"
     >{{ value }}</span>
   </div>
 </template>
 
 <script lang="ts" setup>
-defineProps<{ label: string, value: string | number }>()
+const { label, value } = defineProps<{ label: string, value: string | number }>()
 </script>
+
+<style scoped>
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 72px;
+  height: 50px;
+  padding: 0 8px;
+  background: var(--color-ds-panel-raised);
+  border-bottom: 3px solid var(--color-ds-gold-dim);
+}
+
+.stat__label { font-size: 9px; }
+.stat__value { font-size: 16px; line-height: 1.15; color: var(--color-ds-ink); }
+</style>

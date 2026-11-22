@@ -1,21 +1,54 @@
 <template>
-  <label class="group inline-flex cursor-pointer items-center gap-2.5 text-[12.5px] text-ds-ink has-disabled:cursor-not-allowed has-disabled:opacity-50">
+  <label
+    class="checkbox"
+    :class="{ 'checkbox--disabled': disabled }"
+  >
     <input
       v-model="model"
       type="checkbox"
-      class="peer sr-only"
+      class="checkbox__input"
       :disabled="disabled"
     >
     <DsDiamond
-      class="mx-0.5 group-has-focus-visible:outline-2 group-has-focus-visible:outline-offset-2 group-has-focus-visible:outline-ds-gold"
-      :state="model ? 'full' : 'empty'"
+      class="checkbox__box"
+      :state="model ? 'filled' : 'empty'"
     />
     <slot>{{ label }}</slot>
   </label>
 </template>
 
 <script lang="ts" setup>
-withDefaults(defineProps<{ label?: string, disabled?: boolean }>(), { label: undefined, disabled: false })
+const { label, disabled = false } = defineProps<{ label?: string, disabled?: boolean }>()
 
 const model = defineModel<boolean>({ default: false })
 </script>
+
+<style scoped>
+.checkbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  color: var(--color-ds-ink);
+  cursor: pointer;
+}
+
+.checkbox--disabled { cursor: not-allowed; opacity: 0.5; }
+
+.checkbox__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.checkbox__box { margin: 0 2px; }
+
+.checkbox__input:focus-visible + .checkbox__box {
+  outline: 2px solid var(--color-ds-gold);
+  outline-offset: 2px;
+}
+</style>

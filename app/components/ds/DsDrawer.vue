@@ -39,11 +39,11 @@
 </template>
 
 <script lang="ts" setup>
-withDefaults(defineProps<{
+const { title, description, dismissible = true } = defineProps<{
   title: string
   description?: string
   dismissible?: boolean
-}>(), { description: undefined, dismissible: true })
+}>()
 
 defineSlots<{
   default?: (props: { close: () => void }) => unknown

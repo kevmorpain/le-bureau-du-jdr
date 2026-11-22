@@ -2,7 +2,7 @@
   <div
     role="tablist"
     :aria-label="label"
-    class="flex flex-wrap gap-x-[18px] border-b border-ds-line"
+    class="tabs"
   >
     <button
       v-for="option in options"
@@ -10,16 +10,15 @@
       type="button"
       role="tab"
       :aria-selected="option.value === model"
-      class="-mb-px inline-flex cursor-pointer items-center gap-[5px] border-b-[3px] pb-[7px] pt-1.5 text-sm font-bold focus-visible:outline-2 focus-visible:outline-ds-gold"
-      :class="option.value === model ? 'border-ds-gold text-ds-ink' : 'border-transparent text-ds-mute hover:text-ds-ink'"
+      class="tab"
+      :class="{ 'tab--on': option.value === model }"
       @click="model = option.value"
     >
       {{ option.label }}
-      <em
+      <span
         v-if="option.count !== undefined"
-        class="text-[11px] not-italic"
-        :class="option.value === model ? 'text-ds-gold' : 'text-ds-faint'"
-      >{{ option.count }}</em>
+        class="tab__count"
+      >{{ option.count }}</span>
     </button>
   </div>
 </template>
@@ -27,6 +26,43 @@
 <script lang="ts" setup generic="T extends string | number">
 import type { DsOption } from './DsSegmented.vue'
 
-defineProps<{ options: (DsOption<T> & { count?: number })[], label: string }>()
+const { options, label } = defineProps<{ options: (DsOption<T> & { count?: number })[], label: string }>()
 const model = defineModel<T>()
 </script>
+
+<style scoped>
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  border-bottom: 1px solid var(--color-ds-line);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: -1px;
+  padding: 6px 0 7px;
+  border-bottom: 3px solid transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ds-mute);
+  cursor: pointer;
+}
+
+.tab:hover { color: var(--color-ds-ink); }
+.tab:focus-visible { outline: 2px solid var(--color-ds-gold); }
+
+.tab--on {
+  border-bottom-color: var(--color-ds-gold);
+  color: var(--color-ds-ink);
+}
+
+.tab__count {
+  font-size: 11px;
+  color: var(--color-ds-faint);
+}
+
+.tab--on .tab__count { color: var(--color-ds-gold); }
+</style>

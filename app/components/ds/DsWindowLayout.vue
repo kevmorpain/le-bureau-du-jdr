@@ -1,24 +1,24 @@
 <template>
-  <div class="ds-cut-octagon flex min-h-0 flex-1 flex-col bg-ds-gold p-px font-atkinson [--ds-cut:10px]">
-    <div class="ds-cut-octagon flex min-h-0 flex-1 flex-col gap-2.5 bg-ds-panel px-4 py-3.5 text-ds-ink [--ds-cut:9.6px]">
-      <header class="flex items-center gap-2.5">
-        <h2 class="font-bodoni text-2xl font-bold leading-tight">
+  <div class="ds-bevel ds-shape-octagon window">
+    <div class="ds-fill window__fill">
+      <header class="window__head">
+        <h2 class="window__title">
           {{ title }}
         </h2>
         <DsCornerButton
           v-if="closable"
-          class="ml-auto"
-          label="Fermer"
+          class="window__close"
+          :label="$t('ds.close')"
           @click="emit('close')"
         />
       </header>
       <slot name="modes" />
-      <div class="-mx-1 flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-1">
+      <div class="window__body">
         <slot />
       </div>
       <footer
         v-if="$slots.footer"
-        class="flex items-center justify-end gap-2.5"
+        class="window__foot"
       >
         <slot name="footer" />
       </footer>
@@ -27,8 +27,61 @@
 </template>
 
 <script lang="ts" setup>
-// Anatomie commune de la fenêtre et du tiroir : titre et fermeture, barre de modes, corps qui défile, pied fixe.
-withDefaults(defineProps<{ title: string, closable?: boolean }>(), { closable: true })
+const { title, closable = true } = defineProps<{ title: string, closable?: boolean }>()
 
 const emit = defineEmits<{ close: [] }>()
 </script>
+
+<style scoped>
+.window {
+  --ds-cut: var(--ds-cut-panel);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  font-family: var(--font-atkinson);
+}
+
+.window__fill {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 14px 16px;
+  color: var(--color-ds-ink);
+}
+
+.window__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.window__title {
+  font-family: var(--font-bodoni);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.window__close { margin-left: auto; }
+
+.window__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  margin: 0 -4px;
+  padding: 0 4px;
+  overflow-y: auto;
+}
+
+.window__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+</style>

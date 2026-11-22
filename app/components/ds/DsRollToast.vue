@@ -3,29 +3,26 @@
     shape="corner"
     :tone="roll.isCrit ? 'gold' : roll.isFumble ? 'bad' : 'line'"
     fill="panel-raised"
-    class="w-72 font-atkinson"
+    class="toast"
+    :class="{ 'toast--crit': roll.isCrit, 'toast--fumble': roll.isFumble }"
     role="status"
   >
-    <p class="text-xs text-ds-mute">
+    <p class="toast__label">
       {{ roll.label }}
     </p>
-    <div class="flex flex-wrap items-baseline gap-x-2">
-      <span
-        class="font-bodoni text-3xl font-bold leading-none"
-        :class="roll.isCrit ? 'text-ds-gold' : roll.isFumble ? 'text-ds-bad' : 'text-ds-ink'"
-      >{{ roll.result }}</span>
-      <span class="text-xs text-ds-mute">{{ rollDiceText(roll) }}</span>
+    <div class="toast__line">
+      <span class="ds-number toast__result">{{ roll.result }}</span>
+      <span class="toast__dice">{{ rollDiceText(roll) }}</span>
       <span
         v-if="roll.isCrit || roll.isFumble"
-        class="ds-label"
-        :class="roll.isCrit ? 'text-ds-gold' : 'text-ds-bad'"
-      >{{ roll.isCrit ? 'Critique' : 'Échec critique' }}</span>
+        class="ds-label toast__outcome"
+      >{{ $t(roll.isCrit ? 'ds.roll.crit' : 'ds.roll.fumble') }}</span>
     </div>
     <p
       v-for="note in rollNotes(roll)"
       :key="note"
-      class="mt-1 text-xs"
-      :class="roll.autoFail?.length ? 'text-ds-bad' : 'text-ds-mute'"
+      class="toast__note"
+      :class="{ 'toast__note--fail': roll.autoFail?.length }"
     >
       {{ note }}
     </p>
@@ -35,5 +32,40 @@
 <script lang="ts" setup>
 import type { DiceRoll } from '~/composables/useDiceRoller'
 
-defineProps<{ roll: DiceRoll }>()
+const { roll } = defineProps<{ roll: DiceRoll }>()
 </script>
+
+<style scoped>
+.toast {
+  --outcome: var(--color-ds-ink);
+  width: 288px;
+  font-family: var(--font-atkinson);
+}
+
+.toast--crit { --outcome: var(--color-ds-gold); }
+.toast--fumble { --outcome: var(--color-ds-bad); }
+
+.toast__label,
+.toast__dice,
+.toast__note {
+  font-size: 12px;
+  color: var(--color-ds-mute);
+}
+
+.toast__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+}
+
+.toast__result {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--outcome);
+}
+
+.toast__outcome { color: var(--outcome); }
+.toast__note { margin-top: 4px; }
+.toast__note--fail { color: var(--color-ds-bad); }
+</style>

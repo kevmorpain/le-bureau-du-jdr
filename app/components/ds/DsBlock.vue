@@ -1,12 +1,12 @@
 <template>
   <section
-    class="relative flex flex-col gap-2 border-[1.5px] border-ds-gold-dim bg-ds-panel px-3.5 pb-3 pt-3.5 shadow-[inset_0_0_0_3px_var(--color-ds-panel),inset_0_0_0_4px_var(--color-ds-line)]"
-    :class="{ 'mt-2.5': ribbon }"
+    class="block"
+    :class="{ 'block--ribbon': ribbon }"
     :aria-label="ribbon"
   >
     <DsRibbon
       v-if="ribbon"
-      class="-mt-6 self-center"
+      class="block__ribbon"
       :label="ribbon"
     />
     <slot />
@@ -14,5 +14,25 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{ ribbon?: string }>()
+const { ribbon } = defineProps<{ ribbon?: string }>()
 </script>
+
+<style scoped>
+.block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px 14px 12px;
+  background: var(--color-ds-panel);
+  border: 1.5px solid var(--color-ds-gold-dim);
+  box-shadow: inset 0 0 0 3px var(--color-ds-panel), inset 0 0 0 4px var(--color-ds-line);
+}
+
+.block--ribbon { margin-top: 10px; }
+
+.block__ribbon {
+  align-self: center;
+  margin-top: -24px;
+}
+</style>

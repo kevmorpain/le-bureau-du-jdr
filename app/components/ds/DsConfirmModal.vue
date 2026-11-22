@@ -5,13 +5,13 @@
     :description="description"
   >
     <template #default>
-      <div class="flex flex-col gap-1.5 bg-ds-panel-raised px-3 py-2.5 text-[13px] leading-normal">
+      <div class="confirm__body">
         <slot>{{ description }}</slot>
       </div>
     </template>
     <template #footer="{ close }">
       <DsLinkButton
-        :label="cancelLabel"
+        :label="cancelLabel ?? $t('ds.cancel')"
         @click="close"
       />
       <DsButton
@@ -24,13 +24,12 @@
 </template>
 
 <script lang="ts" setup>
-// Toute action destructive passe par ici : le corps rappelle ce qui sera perdu.
-withDefaults(defineProps<{
+const { title, confirmLabel, description, cancelLabel } = defineProps<{
   title: string
   confirmLabel: string
   description?: string
   cancelLabel?: string
-}>(), { description: undefined, cancelLabel: 'Annuler' })
+}>()
 
 const emit = defineEmits<{ confirm: [] }>()
 const open = defineModel<boolean>('open', { default: false })
@@ -40,3 +39,15 @@ const confirm = (close: () => void) => {
   close()
 }
 </script>
+
+<style scoped>
+.confirm__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--color-ds-panel-raised);
+  font-size: 13px;
+  line-height: 1.5;
+}
+</style>
