@@ -4,7 +4,7 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <AppFooter />
+    <AppFooter v-if="route.meta.footer !== false" />
   </UApp>
 </template>
 
@@ -12,4 +12,5 @@
 import { NuxtLayout } from '#components'
 
 const toaster = { position: 'top-right' }
+const route = useRoute()
 </script>

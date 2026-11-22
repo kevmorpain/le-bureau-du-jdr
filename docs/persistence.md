@@ -118,16 +118,21 @@ La clé est scopée par personnage via `characterStorageKey(characterSheet?.valu
 
 ---
 
-## Auto-save de la page fiche (`[id]/index.vue`)
+## Auto-save de la fiche (`useSheetPersistence`)
 
 ```ts
-const { status, schedule, flush } = useAutoSave(updateCharacterSheet, { delay: 2000, maxWait: 10_000 })
-watch(characterSheet, schedule, { deep: true })
+const { characterSheet, refreshSheet } = await useSheetPersistence(charId)
+useSheetReconciliation(charId, [refreshSheet, refreshInventory, refreshSpells])
 ```
+
+Les deux pages de la fiche (l'ancienne, `[id]/index.vue`, et la nouvelle, `[id]/nouvelle.vue`) chargent et
+sauvegardent par ce composable : chargement, instantané hors ligne, version de référence, `useAutoSave` et son deep
+watch. `useSheetReconciliation` re-fetch la fiche quand sa file hors ligne vient d'être vidée ou qu'un conflit est
+résolu.
 
 Toute mutation sur `characterSheet.value` (y compris les sous-objets) déclenche un PUT après 2 secondes d'inactivité (au plus 10 s en saisie continue). C'est le mécanisme central de persistance pour les données de la table `character_sheets` et ses relations directes (`classes`, etc.).
 
-`useAutoSave` n'a qu'un PUT en vol à la fois (une modif arrivée pendant l'envoi en relance un autre après coup) et vide la sauvegarde en attente quand l'onglet est masqué ou la page quittée. Son `status` (`idle` / `saving` / `saved` / `error`) est fourni à `SyncStatus`, le badge de l'en-tête.
+`useAutoSave` n'a qu'un PUT en vol à la fois (une modif arrivée pendant l'envoi en relance un autre après coup) et vide la sauvegarde en attente quand l'onglet est masqué ou la page quittée. Son `status` (`idle` / `saving` / `saved` / `error`) est fourni par `autoSaveStatusKey` ; `useSaveState` le combine à la file hors ligne en un seul état, lu par `SyncStatus` (badge de l'ancienne fiche) et `DsSaveIndicator` (tranche de la nouvelle).
 
 ## Version de la fiche et garde-fou anti-écrasement
 

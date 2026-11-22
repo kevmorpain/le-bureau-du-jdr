@@ -12,6 +12,7 @@
       @long-rest="longRest"
       @dawn="dawn()"
       @toggle-combat="toggleCombat"
+      @open-new-sheet="switchSheetDesign(true)"
     />
 
     <div class="dashboard-grid">
@@ -120,58 +121,30 @@
     <ClientOnly>
       <SyncConflictModal
         :character-sheet-id="charId"
-        @resolved="reconcileAfterConflict"
+        @resolved="reconcile"
       />
     </ClientOnly>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { useEventListener } from '@vueuse/core'
 import { idlePending, rollEngineKey } from '~/composables/character/useCharacterRolls'
 import { useCombatTracker } from '~/composables/character/useCombatTracker'
 import { useUnconsciousEndings } from '~/composables/character/useUnconsciousEndings'
+import { resolvePreferences } from '~~/shared/rules/preferences'
 
 definePageMeta({
   layout: 'sheet',
 })
 
 const route = useRoute()
-const id = computed(() => route.params.id as string)
-const charId = computed(() => Number(id.value))
-// Créé avant le `await` pour conserver le contexte de composable (scope d'effet).
-const { offlineMutate } = useOfflineMutation(charId)
+const charId = computed(() => Number(route.params.id))
 
-const { data: characterSheetData, refresh: refreshSheetData } = await useFetch<CharacterSheet>(() => `/api/character_sheets/${id.value}`)
+const { characterSheet, refreshSheet, switchSheetDesign } = await useSheetPersistence(charId)
 
-if (!characterSheetData.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Fiche de personnage introuvable' })
+if (resolvePreferences(characterSheet.value.preferences, characterSheet.value.owner?.preferences).newSheet) {
+  await navigateTo(getNewSheetPath(charId.value), { replace: true })
 }
-
-const characterSheet = ref(characterSheetData.value)
-
-// Reload hors-ligne : si des modifs sont en attente pour ce perso, repartir de l'état local
-// optimiste (le cache ne contient que l'état serveur d'avant les modifs).
-if (import.meta.client && hasPending(charId.value)) {
-  const snap = readSnapshot<CharacterSheet>(charId.value)
-  if (snap) characterSheet.value = snap
-}
-// Version de référence (dernier état serveur connu) pour le garde-fou anti-écrasement.
-setBaseVersion(charId.value, characterSheetData.value.updatedAt)
-
-async function refreshSheet() {
-  await refreshSheetData()
-  if (characterSheetData.value) {
-    // Évite que le watch deep redéclenche un save vers le serveur (boucle).
-    pauseAutoSave.value = true
-    characterSheet.value = characterSheetData.value
-    setBaseVersion(charId.value, characterSheetData.value.updatedAt)
-    await nextTick()
-    pauseAutoSave.value = false
-  }
-}
-
-const toaster = useToast()
 
 const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine, featuresEndingWhenUnconscious, isDying, activeConditions } = useCharacterSheet(characterSheet)
 useUnconsciousEndings(characterSheet, {
@@ -183,22 +156,7 @@ provide(rollEngineKey, rollEngine)
 const { roll } = useDiceRoller(rollEngine)
 const combatTracker = useCombatTracker(characterSheet.value.id)
 
-// Réconciliation : quand la file de synchro d'un perso vient d'être vidée, on re-fetch pour
-// récupérer l'état serveur canonique (vrais ids des objets ajoutés, recalcul du repos…).
-const { lastSynced } = useOfflineSync()
-watch(lastSynced, (s) => {
-  if (!s || s.characterId !== charId.value) return
-  if (hasPending(charId.value)) return // de nouvelles modifs sont déjà en file → on attend
-  refreshSheet()
-  refreshInventory()
-  refreshSpells()
-})
-
-function reconcileAfterConflict() {
-  refreshSheet()
-  refreshInventory()
-  refreshSpells()
-}
+const { reconcile } = useSheetReconciliation(charId, [refreshSheet, refreshInventory, refreshSpells])
 
 // Le repos recharge aussi les charges d'objets (recharge complète, côté serveur).
 // L'inventaire est un useFetch séparé → on le rafraîchit après chaque repos.
@@ -235,44 +193,6 @@ const availableFeaturesCount = computed(() =>
 const preparedSpellsCount = computed(() =>
   (characterSpells.value ?? []).filter(s => s.prepared).length || null,
 )
-
-const pauseAutoSave = ref(false)
-
-// Hors-ligne, le PUT est mis en file : l'indicateur de synchro prend alors le relais.
-const updateCharacterSheet = async () => {
-  if (!characterSheet.value) return
-  await offlineMutate({
-    endpoint: `/api/character_sheets/${id.value}`,
-    method: 'PUT',
-    body: characterSheet.value,
-    dedupeKey: 'sheet',
-    label: 'Fiche',
-  })
-}
-
-const { status: autoSaveStatus, schedule: scheduleSave, flush: flushSave } = useAutoSave(updateCharacterSheet, {
-  delay: 2000,
-  maxWait: 10_000,
-  onError: () => toaster.add({ title: 'Erreur lors de la sauvegarde', color: 'error' }),
-})
-provide(autoSaveStatusKey, autoSaveStatus)
-
-watch(characterSheet, () => {
-  if (pauseAutoSave.value) return
-  // Snapshot local immédiat pour survivre à un reload hors-ligne.
-  if (import.meta.client) writeSnapshot(charId.value, characterSheet.value)
-  scheduleSave()
-}, { deep: true })
-
-// Le debounce laisse une fenêtre où la modif n'est pas partie : on la vide avant de quitter la fiche.
-if (import.meta.client) {
-  useEventListener(document, 'visibilitychange', () => {
-    if (document.hidden) void flushSave()
-  })
-}
-onBeforeUnmount(() => {
-  void flushSave()
-})
 </script>
 
 <style scoped>

@@ -858,6 +858,79 @@
     }
   },
 
+  "sheet": {
+    "nav_label": "Vues de la fiche",
+    "characters": "Personnages",
+    "views": {
+      "play": "En jeu",
+      "character": "Personnage",
+      "inventory": "Inventaire",
+      "grimoire": "Grimoire",
+      "notes": "Notes",
+      "settings": "Réglages"
+    },
+    "coming": "Cette vue arrive avec un prochain lot de la refonte.",
+    "not_found": "Fiche de personnage introuvable",
+    "rail": {
+      "class_level": "{name} · niv. {level}",
+      "temp_hp": "+{n} temp.",
+      "armor_class": "CA",
+      "initiative": "Initiative",
+      "speed": "Vitesse",
+      "speed_value": "{n} m",
+      "effects": "Effets",
+      "no_effects": "Aucun effet en cours",
+      "condition": "État",
+      "exhaustion": "Épuisement",
+      "exhaustion_level": "Niveau {n}",
+      "rounds": "{n} round | {n} rounds",
+      "abilities": {
+        "str": "For",
+        "dex": "Dex",
+        "con": "Con",
+        "int": "Int",
+        "wis": "Sag",
+        "cha": "Cha"
+      }
+    },
+    "save": {
+      "titles": {
+        "saved": "Tout est enregistré",
+        "saving": "Enregistrement en cours",
+        "pending": "{n} changement en attente | {n} changements en attente",
+        "offline": "Hors ligne",
+        "failed": "Échec de l'enregistrement",
+        "conflict": "Conflit de synchronisation"
+      },
+      "descriptions": {
+        "saved": "Chaque changement part tout seul vers le serveur, deux secondes après la dernière modification.",
+        "saving": "Les derniers changements partent vers le serveur.",
+        "pending": "Ils partent dès que le serveur répond. Rien n'est perdu : ils sont gardés sur cet appareil.",
+        "offline": "Tu peux continuer à jouer : tes changements seront gardés sur cet appareil et partiront au retour du réseau. | Tu peux continuer à jouer : le changement en attente est gardé sur cet appareil et partira au retour du réseau. | Tu peux continuer à jouer : les {n} changements en attente sont gardés sur cet appareil et partiront au retour du réseau.",
+        "failed": "Le serveur a refusé le dernier envoi. Les changements ne sont que sur cette page tant qu'ils ne sont pas repartis.",
+        "conflict": "La fiche a été modifiée sur un autre appareil depuis ta dernière synchronisation."
+      },
+      "actions": {
+        "pending": "Envoyer maintenant",
+        "failed": "Réessayer",
+        "conflict": "Résoudre"
+      },
+      "error_toast": "Erreur lors de la sauvegarde"
+    },
+    "conflict_banner": {
+      "title": "Conflit de synchronisation",
+      "body": "La fiche a été modifiée sur un autre appareil.",
+      "action": "Résoudre"
+    },
+    "settings": {
+      "appearance": "Apparence",
+      "design": "Design de la fiche",
+      "design_new": "Nouveau",
+      "design_old": "Ancien",
+      "design_help": "Le temps de la refonte, l'ancienne fiche reste disponible. Le choix vaut pour ce personnage ; l'ancienne fiche garde un bouton pour revenir ici."
+    },
+    "open_new": "Nouvelle fiche"
+  },
   "zodI18n": {
     "errors": {
       "too_small": {

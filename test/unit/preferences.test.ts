@@ -5,9 +5,9 @@ import { updateCharacterSheetSchema } from '../../shared/utils/character_sheet'
 // D18 : `fiche ?? compte ?? défaut codé`, où une clé absente — et non `false` — veut dire « hérite ».
 
 describe('resolvePreferences — héritage live', () => {
-  it('sans rien de posé, le défaut codé s\'applique (jets activés, munitions et encombrement sans effet)', () => {
-    expect(resolvePreferences(null, null)).toEqual({ diceRolls: true, ammunition: false, encumbrance: false })
-    expect(resolvePreferences(undefined, {})).toEqual({ diceRolls: true, ammunition: false, encumbrance: false })
+  it('sans rien de posé, le défaut codé s\'applique (jets activés, munitions et encombrement sans effet, ancienne fiche)', () => {
+    expect(resolvePreferences(null, null)).toEqual({ diceRolls: true, ammunition: false, encumbrance: false, newSheet: false })
+    expect(resolvePreferences(undefined, {})).toEqual({ diceRolls: true, ammunition: false, encumbrance: false, newSheet: false })
   })
 
   it('le compte l\'emporte sur le défaut codé, la fiche sur le compte', () => {

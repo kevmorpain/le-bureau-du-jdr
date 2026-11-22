@@ -17,6 +17,11 @@ export const PREFERENCES = {
     label: 'Appliquer l\'encombrement',
     description: 'Variante facultative : au-delà de 2,5 fois la Force en kilogrammes la vitesse baisse de 3 m, au-delà de 5 fois de 6 m avec un désavantage aux jets de Force, de Dextérité et de Constitution, et la colonne Force des armures est ignorée. Désactivé, le poids porté s\'affiche sans effet.',
   },
+  newSheet: {
+    default: false,
+    label: 'Utiliser la nouvelle fiche',
+    description: 'Le temps de la refonte, l\'ancienne fiche reste disponible. Désactivé, la fiche s\'ouvre dans l\'ancien design.',
+  },
 } as const satisfies Record<string, { default: boolean, label: string, description: string }>
 
 export type PreferenceKey = keyof typeof PREFERENCES
