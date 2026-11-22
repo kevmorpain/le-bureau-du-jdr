@@ -142,7 +142,7 @@ emplacements créés via `PUT …/spell-slots` (`created`). Les capacités qui p
 
 Liste **toutes** les aptitudes du personnage — traits d'espèce, aptitudes de classe et de
 sous-classe, dons, manifestations occultes — avec compteur d'utilisations, filtre par origine
-(badge coloré par type). Les dons s'obtiennent à la création ou à la montée de niveau : la fiche n'en ajoute ni n'en retire. Badge dans le titre = nombre
+(badge coloré par type). Les dons s'obtiennent à la création ou à la montée de niveau : la fiche n'en ajoute, n'en modifie ni n'en retire ; elle affiche la caractéristique choisie pour un don à +1. Badge dans le titre = nombre
 d'aptitudes encore disponibles (utilisations restantes).
 
 **Source :** `allCharacterFeatures` (`useCharacterSheet`), assemblé depuis

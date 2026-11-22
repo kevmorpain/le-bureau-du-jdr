@@ -111,28 +111,13 @@
               {{ feature.description }}
             </p>
 
-            <div
-              v-if="isFeat(feature) && needsAbility(feature)"
-              class="mt-3 space-y-1.5"
+            <p
+              v-if="isFeat(feature) && needsAbility(feature) && feature.choices?.ability"
+              class="mt-3 text-sm"
             >
-              <p class="text-xs font-semibold uppercase tracking-wider text-muted">
-                Caractéristique augmentée (+1)
-              </p>
-              <div class="grid grid-cols-6 gap-1.5">
-                <button
-                  v-for="ab in allowedAbilityOptions(feature)"
-                  :key="ab.value"
-                  type="button"
-                  class="py-1.5 rounded-lg ring text-xs font-semibold transition-colors"
-                  :class="feature.choices?.ability === ab.value
-                    ? 'ring-primary bg-primary/10 text-primary'
-                    : 'ring-default text-muted hover:bg-elevated'"
-                  @click="setAbilityChoice(feature.id, ab.value)"
-                >
-                  {{ ab.label }}
-                </button>
-              </div>
-            </div>
+              <span class="text-muted">Caractéristique augmentée :</span>
+              <span class="font-mono">{{ abilityIncreaseLabel(feature) }}</span>
+            </p>
 
             <div
               v-if="isASIFeature(feature)"
@@ -178,29 +163,14 @@
 <script lang="ts" setup>
 import type { Effect } from '~~/server/db/schema/effects'
 
-type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
-
 const props = defineProps<{
   characterSheet: CharacterSheet
-}>()
-
-const emit = defineEmits<{
-  refresh: []
 }>()
 
 const characterSheetRef = toRef(props, 'characterSheet')
 const { allCharacterFeatures } = useCharacterSheet(characterSheetRef)
 
 const toaster = useToast()
-
-const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [
-  { label: 'FOR', value: 'str' },
-  { label: 'DEX', value: 'dex' },
-  { label: 'CON', value: 'con' },
-  { label: 'INT', value: 'int' },
-  { label: 'SAG', value: 'wis' },
-  { label: 'CHA', value: 'cha' },
-]
 
 // Filtre par origine
 
@@ -242,21 +212,11 @@ const sheetEffects = (feature: { effects?: unknown[] }) => labelledEffects(featu
 const needsAbility = (feature: { effects?: unknown[] }) =>
   (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'ability_increase_choice') ?? false
 
-const allowedAbilityOptions = (feature: { effects?: unknown[] }) => {
-  const allowed = featAllowedAbilities(feature.effects as Effect[] | undefined)
-  return ABILITY_OPTIONS.filter(o => allowed.includes(o.value))
-}
-
-const setAbilityChoice = async (featureId: number, ability: AbilityKey) => {
-  try {
-    await $fetch(`/api/character_sheets/${props.characterSheet.id}/feats`, {
-      method: 'POST',
-      body: { featureId, source: 'bonus', choices: { ability } },
-    })
-    emit('refresh')
-  } catch {
-    toaster.add({ title: 'Erreur lors de la mise à jour du don', color: 'error' })
-  }
+const abilityIncreaseLabel = (feature: { effects?: unknown[], choices?: { ability?: string } | null }) => {
+  const effect = (feature.effects as Effect[] | undefined)?.find(e => e?.type === 'ability_increase_choice')
+  const amount = (effect?.value as { amount?: number } | undefined)?.amount ?? 1
+  const ability = feature.choices?.ability ?? ''
+  return `${abilityShortLabels[ability] ?? ability.toUpperCase()} +${amount}`
 }
 
 const rollTable = reactive({

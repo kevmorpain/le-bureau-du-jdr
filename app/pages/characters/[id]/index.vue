@@ -63,7 +63,6 @@
         >
           <FeaturesSection
             :character-sheet="characterSheet"
-            @refresh="refreshSheet"
           />
         </CollapsibleSection>
 
