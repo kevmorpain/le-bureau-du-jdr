@@ -23,11 +23,10 @@ export function featAllowedAbilities(effects: Effect[] | undefined): AbilityKey[
   return abilities && abilities.length ? abilities : ALL_ABILITIES
 }
 
-// `kind: 'boon'` : les faveurs permanentes (manuels, tomes), un catalogue à part qui n'entre jamais dans les choix de dons.
-export function useFeats(ruleset: MaybeRefOrGetter<Ruleset>, kind: 'feat' | 'boon' = 'feat') {
+export function useFeats(ruleset: MaybeRefOrGetter<Ruleset>) {
   // Pas de `key` fixe : l'auto-clé (URL + query) sépare les entrées de cache par édition et socle / étendu.
   const query = useCatalogQuery(ruleset)
-  const { data, refresh, pending } = useFetch<Feat[]>(kind === 'boon' ? '/api/catalog/boons' : '/api/catalog/feats', {
+  const { data, refresh, pending } = useFetch<Feat[]>('/api/catalog/feats', {
     query,
     default: () => [],
   })
