@@ -1,6 +1,6 @@
 <template>
   <UBadge
-    v-if="hasConflict"
+    v-if="state === 'conflict'"
     color="error"
     variant="subtle"
     size="md"
@@ -14,7 +14,7 @@
   </UBadge>
 
   <UBadge
-    v-else-if="!online"
+    v-else-if="state === 'offline'"
     color="warning"
     variant="subtle"
     size="md"
@@ -30,7 +30,7 @@
   </UBadge>
 
   <UBadge
-    v-else-if="isSyncing"
+    v-else-if="state === 'saving' && isSyncing"
     color="info"
     variant="subtle"
     size="md"
@@ -44,7 +44,7 @@
   </UBadge>
 
   <UBadge
-    v-else-if="pendingCount"
+    v-else-if="state === 'pending'"
     color="warning"
     variant="subtle"
     size="md"
@@ -58,7 +58,7 @@
   </UBadge>
 
   <UBadge
-    v-else-if="autoSaveStatus === 'error'"
+    v-else-if="state === 'failed'"
     color="error"
     variant="subtle"
     size="md"
@@ -72,7 +72,7 @@
   </UBadge>
 
   <UBadge
-    v-else-if="autoSaveStatus === 'saving'"
+    v-else-if="state === 'saving'"
     color="info"
     variant="subtle"
     size="md"
@@ -101,6 +101,5 @@
 </template>
 
 <script lang="ts" setup>
-const { online, pendingCount, isSyncing, hasConflict } = useOfflineSync()
-const autoSaveStatus = inject(autoSaveStatusKey, ref<AutoSaveStatus>('idle'))
+const { state, pendingCount, isSyncing, autoSaveStatus } = useSaveState()
 </script>

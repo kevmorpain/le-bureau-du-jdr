@@ -96,7 +96,7 @@ const emit = defineEmits<{
 
 const { conflicts, resolveConflict } = useOfflineSync()
 
-const open = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 const loading = ref(false)
 const resolving = ref(false)
 const diffs = ref<Array<{ label: string, local: string, server: string }>>([])
@@ -174,15 +174,14 @@ async function computeDiff() {
 
 watch(
   () => conflicts.value.includes(props.characterSheetId),
-  async (isConflict) => {
-    if (isConflict) {
-      open.value = true
-      await computeDiff()
-    } else {
-      open.value = false
-    }
+  (isConflict) => {
+    open.value = isConflict
   },
 )
+
+watch(open, (isOpen) => {
+  if (isOpen) void computeDiff()
+})
 
 async function resolve(choice: 'local' | 'server') {
   resolving.value = true

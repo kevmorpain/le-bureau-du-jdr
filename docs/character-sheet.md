@@ -2,6 +2,12 @@
 
 Page : `app/pages/characters/[id]/index.vue`
 
+La refonte (épopée U14) monte la nouvelle fiche à côté, sur la route provisoire `/characters/{id}/nouvelle`
+(`app/pages/characters/[id]/nouvelle.vue`, composants `app/components/sheet/`) : tranche de navigation, rail
+personnage et vues choisies par `?vue=`. La préférence `newSheet` (fiche, sinon compte, sinon ancienne fiche) choisit
+le design : l'ancienne page redirige vers la nouvelle quand elle est activée, et chacune a de quoi basculer vers
+l'autre. Les deux partagent le chargement et la sauvegarde (`useSheetPersistence`, voir [`persistence.md`](./persistence.md)).
+
 La fiche charge le personnage via `GET /api/character_sheets/{id}` (include toutes les relations Drizzle sauf les sorts). Un deep watch persiste les changements via `PUT /api/character_sheets/{id}` (`useAutoSave` : 2 s d'inactivité, 10 s au plus en saisie continue). Les sections qui font leurs propres fetches (inventaire, sorts) ont leurs propres composables.
 
 ---

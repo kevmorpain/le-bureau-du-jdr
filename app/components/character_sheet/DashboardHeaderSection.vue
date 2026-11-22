@@ -66,6 +66,15 @@
         <ClientOnly>
           <SyncStatus />
         </ClientOnly>
+        <UButton
+          icon="i-heroicons:sparkles"
+          variant="soft"
+          color="primary"
+          size="sm"
+          @click="$emit('openNewSheet')"
+        >
+          Nouvelle fiche
+        </UButton>
         <UPopover :content="{ side: 'bottom', align: 'end' }">
           <UButton
             icon="i-heroicons:cog-6-tooth"
@@ -176,6 +185,7 @@ defineEmits<{
   longRest: [fedAndWatered: boolean]
   dawn: []
   toggleCombat: []
+  openNewSheet: []
 }>()
 
 const {
