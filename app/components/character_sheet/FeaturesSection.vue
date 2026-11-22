@@ -1,40 +1,16 @@
 <template>
   <div class="space-y-2">
-    <div class="flex items-center justify-between gap-2">
-      <URadioGroup
-        v-if="originOptions.length > 2"
-        v-model="selectedOrigin"
-        :items="originOptions"
-        value-key="value"
-        orientation="horizontal"
-        variant="table"
-        indicator="hidden"
-        size="xs"
-        class="flex-1 min-w-0"
-      />
-      <div
-        v-else
-        class="flex-1"
-      />
-      <div class="flex shrink-0 items-center gap-1">
-        <UButton
-          icon="i-heroicons:plus"
-          size="xs"
-          variant="ghost"
-          @click="addFeatOpen = true"
-        >
-          Ajouter un don
-        </UButton>
-        <UButton
-          icon="i-heroicons:plus"
-          size="xs"
-          variant="ghost"
-          @click="addBoonOpen = true"
-        >
-          Ajouter une faveur
-        </UButton>
-      </div>
-    </div>
+    <URadioGroup
+      v-if="originOptions.length > 2"
+      v-model="selectedOrigin"
+      :items="originOptions"
+      value-key="value"
+      orientation="horizontal"
+      variant="table"
+      indicator="hidden"
+      size="xs"
+      class="min-w-0"
+    />
 
     <ul class="space-y-1">
       <li
@@ -80,26 +56,6 @@
               >
                 Table
               </UButton>
-
-              <UButton
-                v-if="isASIFeature(feature)"
-                variant="soft"
-                size="sm"
-                icon="i-lucide-sliders-horizontal"
-                @click.stop="openASIModal(feature)"
-              >
-                Choisir
-              </UButton>
-
-              <UButton
-                v-if="isFeat(feature) || isBoon(feature)"
-                icon="i-heroicons:trash"
-                size="xs"
-                variant="ghost"
-                color="error"
-                :aria-label="`Retirer ${feature.name}`"
-                @click.stop="removeFeat(feature.id, isBoon(feature))"
-              />
 
               <div
                 v-if="feature.maxUses !== null && !hasHiddenCounter(feature)"
@@ -155,28 +111,13 @@
               {{ feature.description }}
             </p>
 
-            <div
-              v-if="isFeat(feature) && needsAbility(feature)"
-              class="mt-3 space-y-1.5"
+            <p
+              v-if="isFeat(feature) && needsAbility(feature) && feature.choices?.ability"
+              class="mt-3 text-sm"
             >
-              <p class="text-xs font-semibold uppercase tracking-wider text-muted">
-                Caractéristique augmentée (+1)
-              </p>
-              <div class="grid grid-cols-6 gap-1.5">
-                <button
-                  v-for="ab in allowedAbilityOptions(feature)"
-                  :key="ab.value"
-                  type="button"
-                  class="py-1.5 rounded-lg ring text-xs font-semibold transition-colors"
-                  :class="feature.choices?.ability === ab.value
-                    ? 'ring-primary bg-primary/10 text-primary'
-                    : 'ring-default text-muted hover:bg-elevated'"
-                  @click="setAbilityChoice(feature.id, ab.value)"
-                >
-                  {{ ab.label }}
-                </button>
-              </div>
-            </div>
+              <span class="text-muted">Caractéristique augmentée :</span>
+              <span class="font-mono">{{ abilityIncreaseLabel(feature) }}</span>
+            </p>
 
             <div
               v-if="isASIFeature(feature)"
@@ -210,39 +151,11 @@
       </li>
     </ul>
 
-    <EditASIModal
-      v-if="asiModal.classId !== null"
-      v-model:open="asiModal.open"
-      :character-sheet-id="characterSheet.id"
-      :class-id="asiModal.classId"
-      :class-name="asiModal.className"
-      :class-level="asiModal.classLevel"
-      :all-improvements="characterSheet.abilityScoreImprovements ?? []"
-      @saved="onASISaved"
-    />
-
     <RollTableSlideover
       v-if="rollTable.id !== null"
       :key="rollTable.id"
       v-model:open="rollTable.open"
       :roll-table-id="rollTable.id"
-    />
-
-    <AddFeatSlideover
-      v-model:open="addFeatOpen"
-      :character-sheet-id="characterSheet.id"
-      :ruleset="characterSheet.ruleset"
-      :owned-feature-ids="ownedFeatIds"
-      @added="emit('refresh')"
-    />
-
-    <AddFeatSlideover
-      v-model:open="addBoonOpen"
-      kind="boon"
-      :character-sheet-id="characterSheet.id"
-      :ruleset="characterSheet.ruleset"
-      :owned-feature-ids="ownedBoonIds"
-      @added="emit('refresh')"
     />
   </div>
 </template>
@@ -250,29 +163,14 @@
 <script lang="ts" setup>
 import type { Effect } from '~~/server/db/schema/effects'
 
-type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
-
 const props = defineProps<{
   characterSheet: CharacterSheet
-}>()
-
-const emit = defineEmits<{
-  refresh: []
 }>()
 
 const characterSheetRef = toRef(props, 'characterSheet')
 const { allCharacterFeatures } = useCharacterSheet(characterSheetRef)
 
 const toaster = useToast()
-
-const ABILITY_OPTIONS: { label: string, value: AbilityKey }[] = [
-  { label: 'FOR', value: 'str' },
-  { label: 'DEX', value: 'dex' },
-  { label: 'CON', value: 'con' },
-  { label: 'INT', value: 'int' },
-  { label: 'SAG', value: 'wis' },
-  { label: 'CHA', value: 'cha' },
-]
 
 // Filtre par origine
 
@@ -307,52 +205,18 @@ const originColor = (kind: 'species' | 'class' | 'subclass', label?: string) => 
   return 'primary' as const
 }
 
-const addFeatOpen = ref(false)
-const addBoonOpen = ref(false)
-
-const ownedFeatIds = computed(() =>
-  allCharacterFeatures.value.filter(f => f.featureType === 'feat').map(f => f.id),
-)
-
-const ownedBoonIds = computed(() =>
-  allCharacterFeatures.value.filter(f => (f as { featureType?: string }).featureType === 'boon').map(f => f.id),
-)
-
 const isFeat = (feature: { featureType?: string }) => feature.featureType === 'feat'
-const isBoon = (feature: { featureType?: string }) => feature.featureType === 'boon'
 
 const sheetEffects = (feature: { effects?: unknown[] }) => labelledEffects(feature.effects as Effect[] | undefined)
 
 const needsAbility = (feature: { effects?: unknown[] }) =>
   (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'ability_increase_choice') ?? false
 
-const allowedAbilityOptions = (feature: { effects?: unknown[] }) => {
-  const allowed = featAllowedAbilities(feature.effects as Effect[] | undefined)
-  return ABILITY_OPTIONS.filter(o => allowed.includes(o.value))
-}
-
-const setAbilityChoice = async (featureId: number, ability: AbilityKey) => {
-  try {
-    await $fetch(`/api/character_sheets/${props.characterSheet.id}/feats`, {
-      method: 'POST',
-      body: { featureId, source: 'bonus', choices: { ability } },
-    })
-    emit('refresh')
-  } catch {
-    toaster.add({ title: 'Erreur lors de la mise à jour du don', color: 'error' })
-  }
-}
-
-const removeFeat = async (featureId: number, boon = false) => {
-  try {
-    await $fetch(`/api/character_sheets/${props.characterSheet.id}/feats/${featureId}`, {
-      method: 'DELETE',
-    })
-    emit('refresh')
-    toaster.add({ title: boon ? 'Faveur retirée' : 'Don retiré', color: 'success' })
-  } catch {
-    toaster.add({ title: boon ? 'Erreur lors du retrait de la faveur' : 'Erreur lors du retrait du don', color: 'error' })
-  }
+const abilityIncreaseLabel = (feature: { effects?: unknown[], choices?: { ability?: string } | null }) => {
+  const effect = (feature.effects as Effect[] | undefined)?.find(e => e?.type === 'ability_increase_choice')
+  const amount = (effect?.value as { amount?: number } | undefined)?.amount ?? 1
+  const ability = feature.choices?.ability ?? ''
+  return `${abilityShortLabels[ability] ?? ability.toUpperCase()} +${amount}`
 }
 
 const rollTable = reactive({
@@ -364,15 +228,6 @@ const openRollTable = (id: number) => {
   rollTable.id = id
   rollTable.open = true
 }
-
-// ASI modal state
-
-const asiModal = reactive({
-  open: false,
-  classId: null as number | null,
-  className: '',
-  classLevel: 0,
-})
 
 const isASIFeature = (feature: { effects?: unknown[] }) =>
   (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'asi_or_feat') ?? false
@@ -405,19 +260,6 @@ const asiSummary = (feature: { classId?: number | null }) => {
         .join(', ')
       return { classLevel, label }
     })
-}
-
-const openASIModal = (feature: { classId?: number | null }) => {
-  const cls = props.characterSheet.classes?.find(c => c.classId === feature.classId)
-  if (!cls) return
-  asiModal.classId = cls.classId
-  asiModal.className = cls.class?.name ?? ''
-  asiModal.classLevel = cls.level
-  asiModal.open = true
-}
-
-const onASISaved = (improvements: { classId: number, classLevel: number, ability: string, amount: number }[]) => {
-  ;(props.characterSheet as unknown as { abilityScoreImprovements?: unknown[] }).abilityScoreImprovements = improvements
 }
 
 const validActionTypes = new Set(['action', 'bonus_action', 'reaction', 'free'])

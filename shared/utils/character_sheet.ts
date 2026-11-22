@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { abilityEnum } from '~~/shared/rules/abilities'
 import { ALIGNMENT_CODES } from '~~/shared/rules/alignments'
 import { DEATH_SAVE_LIMIT } from '~~/shared/rules/damage'
 import { currentHitDieSchema } from '~~/shared/rules/hitDice'
@@ -61,13 +60,4 @@ export const updateCharacterSheetSchema = z.object({
   temporaryEffects: temporaryEffectsSchema.optional(),
   // `null` : la fiche hérite des défauts du compte — le client renvoie la fiche telle quelle.
   preferences: preferencesSchema.nullable().optional(),
-})
-
-export const setASISchema = z.object({
-  improvements: z.array(z.object({
-    classId: z.number().int().positive(),
-    classLevel: z.number().int().min(1).max(20),
-    ability: abilityEnum,
-    amount: z.number().int().min(1).max(2),
-  })),
 })
