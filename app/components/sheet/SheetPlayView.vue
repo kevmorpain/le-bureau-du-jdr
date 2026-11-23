@@ -13,6 +13,7 @@
           v-model="cost"
           :options="costOptions"
           :label="$t('sheet.play.filters.cost')"
+          class="play__cost"
         />
         <DsTextField
           v-model="search"
@@ -22,12 +23,17 @@
         />
       </div>
 
-      <DsChips
+      <div
         v-if="facetOptions.length"
-        v-model="facets"
-        :options="facetOptions"
-        :label="$t('sheet.play.filters.facets')"
-      />
+        class="play__row"
+      >
+        <span class="ds-label">{{ $t(`sheet.play.facet_titles.${kind}`) }}</span>
+        <DsChips
+          v-model="facets"
+          :options="facetOptions"
+          :label="$t(`sheet.play.facet_titles.${kind}`)"
+        />
+      </div>
 
       <p
         v-if="!groups.length"
@@ -224,6 +230,10 @@ const handleAction = (key: PlayActionKey) => {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+}
+
+.play__row .play__cost {
+  width: auto;
 }
 
 .play__search {

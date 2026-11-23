@@ -860,11 +860,17 @@
 
   "sheet": {
     "play": {
+      "facet_titles": {
+        "all": "Pour tout",
+        "spell": "Sorts",
+        "feature": "Capacités",
+        "weapon": "Armes",
+        "item": "Objets"
+      },
       "filters": {
         "kind": "Catégorie",
         "cost": "Coût",
         "search": "Rechercher",
-        "facets": "Filtres",
         "kinds": {
           "all": "Tout",
           "spell": "Sorts",
