@@ -133,7 +133,7 @@
                         size="sm"
                         variant="soft"
                         color="neutral"
-                        @click="rollOffhand(entry.id)"
+                        @click="rollOffhandDamage(entry.id)"
                       >
                         Main secondaire {{ weaponStatsByEntry.get(entry.id)!.damageDice }}{{ weaponStatsByEntry.get(entry.id)!.damageBonusOffhand !== 0 ? formatModifier(weaponStatsByEntry.get(entry.id)!.damageBonusOffhand) : '' }} {{ damageTypeLabels[weaponStatsByEntry.get(entry.id)!.damageType] ?? weaponStatsByEntry.get(entry.id)!.damageType }}
                       </RollButton>
@@ -662,6 +662,7 @@ import { ENCUMBRANCE_LABELS, formatWeightKg } from '~~/shared/rules/encumbrance'
 import { matchesSearch } from '~~/shared/utils/search'
 import { toolTypeLabels, weaponPropertyLabels, weaponPropertyTooltips } from '~~/shared/utils/item'
 import type { RollFn } from '~/composables/useDiceRoller'
+import { useWeaponAttacks } from '~/composables/character/useWeaponAttacks'
 
 const props = defineProps<{
   roll?: RollFn
@@ -688,7 +689,6 @@ const {
   setRangeChoice,
   setThrowing,
 } = useCharacterSheet(characterSheetModel)
-const toast = useToast()
 
 const ENCUMBRANCE_EFFECTS = {
   encumbered: 'vitesse -3 m',
@@ -725,41 +725,7 @@ const confirmRemoval = () => {
 const hasMagicEffects = (entry: InventoryEntry): boolean =>
   (entry.item?.effects?.length ?? 0) > 0
 
-const weaponStatsByEntry = computed(() => {
-  const map = new Map<number, typeof equippedWeaponStats.value[number]>()
-  for (const w of equippedWeaponStats.value) map.set(w.entryId, w)
-  return map
-})
-
-const parseDice = (dice: string): { count: number, sides: number } => {
-  const [c, s] = dice.split('d').map(Number)
-  return { count: c || 1, sides: s || 6 }
-}
-
-const rollAttack = (entryId: number) => {
-  const w = weaponStatsByEntry.value.get(entryId)
-  if (!w) return
-  if (!spendAmmunition(entryId)) {
-    toast.add({ title: `Plus de ${w.ammunition?.label}`, description: `${w.name} ne peut pas tirer sans munition.`, color: 'warning' })
-    return
-  }
-  props.roll?.(`Attaque — ${w.name}`, w.attackBonus, 20, 1, { d20: { type: 'attack', weapon: true, strengthMelee: w.usesStrength, extra: w.attackRollSources } })
-}
-
-const rollDamage = (entryId: number) => {
-  const w = weaponStatsByEntry.value.get(entryId)
-  if (!w) return
-  const { count, sides } = parseDice(w.damageDice)
-  const label = w.usingTwoHanded ? `Dégâts (2 mains) — ${w.name}` : `Dégâts — ${w.name}`
-  props.roll?.(label, w.damageBonus, sides, count, { damage: { weaponDie: { melee: !w.isRanged } } })
-}
-
-const rollOffhand = (entryId: number) => {
-  const w = weaponStatsByEntry.value.get(entryId)
-  if (!w) return
-  const { count, sides } = parseDice(w.damageDice)
-  props.roll?.(`Dégâts main sec. — ${w.name}`, w.damageBonusOffhand, sides, count, { damage: { weaponDie: { melee: !w.isRanged } } })
-}
+const { weaponStatsByEntry, rollAttack, rollDamage, rollOffhandDamage } = useWeaponAttacks({ equippedWeaponStats, spendAmmunition, roll: props.roll })
 
 const slideoverOpen = ref(false)
 

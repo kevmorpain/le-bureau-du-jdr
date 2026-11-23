@@ -90,13 +90,13 @@ Le pied d'une fenêtre aligne à droite : action légère, puis action principal
 
 | Composant | Quand | Pas quand |
 |---|---|---|
-| `DsSegmented` | un choix exclusif : mode, onglet de fenêtre, Oui / Non | plusieurs choix possibles → `DsChips` |
+| `DsSegmented` | un choix exclusif : mode, onglet de fenêtre, Oui / Non ; le slot `option` ajoute une étiquette (coût A / B / R) devant le libellé | plusieurs choix possibles → `DsChips` |
 | `DsChips` | plusieurs choix cochés ou non : états, conditions | un seul choix → `DsSegmented` |
 | `DsCheckbox` | une option isolée à cocher | une liste d'options → `DsChips` |
-| `DsCategoryTabs` | filtrer une liste par catégorie, avec compteur | changer de mode dans une fenêtre → `DsSegmented` |
+| `DsCategoryTabs` | filtrer une liste par catégorie, avec compteur et icône de catégorie (`icon`) | changer de mode dans une fenêtre → `DsSegmented` |
 | `DsNumberField` | saisir un nombre, dont un jet saisi à la main | un compte de ressource → `DsCounter` |
 | `DsSelectField` | choisir dans une liste longue (type de dégâts) | trois options ou moins → `DsSegmented` *(à valider)* |
-| `DsTextField` | texte libre court (nom d'un effet) | — |
+| `DsTextField` | texte libre court (nom d'un effet), recherche (`icon="search"`) | — |
 
 ### Ressources
 
@@ -115,14 +115,14 @@ Le pied d'une fenêtre aligne à droite : action légère, puis action principal
 |---|---|
 | `DsCostTag` | le coût d'une action : A, B, R |
 | `DsBadge` | rareté, niveau, lien (`default`) ; état d'un objet (`equipped`, `attuned`, `stowed`) ; `new` pour ce qui n'existe pas encore dans l'appli |
-| `DsIcon` | catégorie (sort, capacité, arme, objet), concentration, rituel, favori, onglets de navigation. L'étoile est réservée aux favoris, le rituel a sa bougie. |
+| `DsIcon` | catégorie (sort, capacité, arme, objet), concentration, rituel, favori, onglets de navigation ; faits d'une carte (portée, attaque, sauvegarde) et loupe de recherche, à la couleur du texte. L'étoile est réservée aux favoris, le rituel a sa bougie. |
 
 ### Fenêtres et retours
 
 | Composant | Quand | Pas quand |
 |---|---|---|
 | `DsModal` | une tâche qui se termine (repos, dégâts) ou une gestion (états : un seul bouton « Terminé ») | consulter un détail en gardant la fiche visible → `DsDrawer` *(à valider)* |
-| `DsDrawer` | le détail d'un élément (sort, objet), à côté de la fiche *(à valider)* | — |
+| `DsDrawer` | le détail d'un élément (sort, objet), à côté de la fiche *(à valider)* | le détail d'une carte de la vue En jeu, posé dans la page à côté de la grille (maquette « Tour 7 ») → `SheetPlayDrawer` |
 | `DsConfirmModal` | toute action destructive ; le corps dit ce qui sera perdu | — |
 | `DsRollToast` | le résultat d'un jet (`DiceRoll`) | — |
 | `DsSaveIndicator` | l'état de la sauvegarde, sous « Personnages » dans la tranche ; seul endroit où le voir. Au toucher, la page ouvre le détail et l'action utile (Envoyer maintenant, Réessayer, Résoudre). | — |

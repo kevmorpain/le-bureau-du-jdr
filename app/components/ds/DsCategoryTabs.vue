@@ -14,6 +14,11 @@
       :class="{ 'tab--on': option.value === model }"
       @click="model = option.value"
     >
+      <DsIcon
+        v-if="option.icon"
+        :name="option.icon"
+        :size="14"
+      />
       {{ option.label }}
       <span
         v-if="option.count !== undefined"
@@ -24,9 +29,10 @@
 </template>
 
 <script lang="ts" setup generic="T extends string | number">
+import type { DsIconName } from './DsIcon.vue'
 import type { DsOption } from './DsSegmented.vue'
 
-const { options, label } = defineProps<{ options: (DsOption<T> & { count?: number })[], label: string }>()
+const { options, label } = defineProps<{ options: (DsOption<T> & { count?: number, icon?: DsIconName })[], label: string }>()
 const model = defineModel<T>()
 </script>
 

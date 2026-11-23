@@ -6,8 +6,8 @@ import type { Effect } from '~~/server/db/schema/effects'
 import { speciesSpellcastingAbility } from '~~/shared/rules/speciesSpellcasting'
 
 // `max` inclut les emplacements `created` par les points de sorcellerie.
-type SlotState = { max: number, current: number, created?: number }
-type SlotsByType = {
+export type SlotState = { max: number, current: number, created?: number }
+export type SlotsByType = {
   spellcasting: Record<number, SlotState>
   pact_magic: Record<number, SlotState>
 }
@@ -19,7 +19,7 @@ type ResolvedFeature = {
   meta: FeatureMeta | null
 }
 
-type SpellStats = {
+export type SpellStats = {
   ability: string
   modifier: number
   dc: number

@@ -232,13 +232,9 @@ const openRollTable = (id: number) => {
 const isASIFeature = (feature: { effects?: unknown[] }) =>
   (feature.effects as Effect[] | undefined)?.some(e => e?.type === 'asi_or_feat') ?? false
 
-/**
- * Compteur masqué quand `maxUsesFormula` est purement informatif : emplacements de Magie du Pacte
- * (section dédiée) et nombre d'invocations connues (`meta.hideCounter`) ; et quand la capacité porte une
- * réserve (`meta.resource`) : son compteur et ses actions vivent dans « Ressources de classe ».
- */
-const hasHiddenCounter = (feature: { meta?: { slotLevelFormula?: unknown, hideCounter?: boolean, resource?: string } | null }) =>
-  Boolean(feature.meta?.slotLevelFormula) || Boolean(feature.meta?.hideCounter) || Boolean(feature.meta?.resource)
+// Une réserve (`meta.resource`) a son compteur et ses actions dans « Ressources de classe ».
+const hasHiddenCounter = (feature: { meta?: Parameters<typeof hasInformativeCounter>[0] }) =>
+  hasInformativeCounter(feature.meta) || hasPoolCounter(feature.meta)
 
 const abilityShortLabels: Record<string, string> = {
   str: 'FOR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'SAG', cha: 'CHA',

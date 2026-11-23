@@ -859,6 +859,121 @@
   },
 
   "sheet": {
+    "play": {
+      "facet_titles": {
+        "all": "Pour tout",
+        "spell": "Sorts",
+        "feature": "Capacités",
+        "weapon": "Armes",
+        "item": "Objets"
+      },
+      "filters": {
+        "kind": "Catégorie",
+        "cost": "Coût",
+        "search": "Rechercher",
+        "kinds": {
+          "all": "Tout",
+          "spell": "Sorts",
+          "feature": "Capacités",
+          "weapon": "Armes",
+          "item": "Objets"
+        },
+        "costs": {
+          "all": "Tous",
+          "action": "Action",
+          "bonus": "Bonus",
+          "reaction": "Réaction",
+          "other": "Autres"
+        }
+      },
+      "facets": {
+        "available": "Disponibles",
+        "concentration": "Concentration",
+        "ritual": "Rituel",
+        "cantrip": "Tours de magie",
+        "leveled": "Sorts de niveau",
+        "short_rest": "Repos court",
+        "long_rest": "Repos long",
+        "melee": "Corps à corps",
+        "ranged": "Distance"
+      },
+      "empty": "Rien à jouer pour l'instant : ni sort, ni capacité active, ni arme équipée, ni objet à charges.",
+      "empty_filtered": "Aucune carte ne correspond aux filtres.",
+      "kinds": {
+        "spell": "Sort",
+        "feature": "Capacité",
+        "weapon": "Arme",
+        "item": "Objet"
+      },
+      "costs": {
+        "action": "Action",
+        "bonus": "Action bonus",
+        "reaction": "Réaction",
+        "other": "Autres"
+      },
+      "no_cost": "Aucun",
+      "cantrip": "Tour de magie",
+      "spell_level": "Niv. {level}",
+      "concentration": "Concentration",
+      "yes": "Oui",
+      "save_dc": "{ability} · DD {dc}",
+      "recharge": {
+        "short_rest": "Repos court",
+        "long_rest": "Repos long",
+        "dawn": "À l'aube"
+      },
+      "uses_with_recharge": "{count} · {recharge}",
+      "tiles": {
+        "casting_time": "Incantation",
+        "range": "Portée",
+        "area": "Zone",
+        "duration": "Durée",
+        "attack": "Attaque",
+        "save": "Sauvegarde",
+        "damage": "Dégâts",
+        "healing": "Soins",
+        "cost": "Coût",
+        "recharge": "Recharge"
+      },
+      "components": {
+        "verbal": "Verbale",
+        "verbal_letter": "V",
+        "somatic": "Somatique",
+        "somatic_letter": "S",
+        "material": "Matérielle",
+        "material_letter": "M"
+      },
+      "resources": {
+        "slot": "Emplacements",
+        "arcanum": "Arcanum mystique",
+        "uses": "Utilisations",
+        "charges": "Charges",
+        "ammunition": "Munitions"
+      },
+      "cast_at_level": "Lancer au niveau",
+      "slot_dc": "DD {dc} · {ability}",
+      "arcanum_recharge": "Arcanum · repos long",
+      "slot": {
+        "pact": "Pacte · niv. {level}",
+        "level": "Niveau {level}"
+      },
+      "actions": {
+        "cast": "Lancer",
+        "cast_ritual": "Lancer en rituel",
+        "no_slot": "Sans emplacement",
+        "arcanum": "Arcanum mystique",
+        "attack": "Attaquer",
+        "damage": "Dégâts",
+        "offhand_damage": "Dégâts, main secondaire",
+        "use": "Utiliser",
+        "activate": "Activer",
+        "end": "Mettre fin",
+        "spend": {
+          "uses": "1 utilisation",
+          "charges": "1 charge"
+        }
+      }
+    },
     "nav_label": "Vues de la fiche",
     "characters": "Personnages",
     "views": {
@@ -872,6 +987,14 @@
     "coming": "Cette vue arrive avec un prochain lot de la refonte.",
     "not_found": "Fiche de personnage introuvable",
     "rail": {
+      "inspiration": "Inspiration",
+      "inspiration_on": "disponible",
+      "inspiration_off": "aucune",
+      "inspiration_toggle": "Inspiration : toucher pour la gagner ou la dépenser",
+      "magic": "Magie",
+      "magic_of": "Magie · {name}",
+      "spell_save_dc": "DD des sorts",
+      "spell_attack": "Attaque de sort",
       "class_level": "{name} · niv. {level}",
       "temp_hp": "+{n} temp.",
       "armor_class": "CA",
@@ -930,6 +1053,40 @@
       "design_help": "Le temps de la refonte, l'ancienne fiche reste disponible. Le choix vaut pour ce personnage ; l'ancienne fiche garde un bouton pour revenir ici."
     },
     "open_new": "Nouvelle fiche"
+  },
+  "spell_casting": {
+    "roll": {
+      "attack": "{spell} · attaque",
+      "attack_numbered": "{spell} · attaque {index}",
+      "attack_part": "{spell} · {label} {index}",
+      "damage": "{spell} · dégâts {type}",
+      "labelled_damage": "{spell} · {label} ({type})",
+      "heal": "{spell} · soin"
+    },
+    "ritual": {
+      "title": "{spell} lancé en rituel",
+      "description": "Aucun emplacement dépensé · +10 minutes d'incantation"
+    },
+    "arcanum": {
+      "missing": "Capacité {name} introuvable sur la fiche",
+      "used": "Arcane Mystérieux déjà utilisé — récupéré au prochain repos long.",
+      "error": "Erreur lors de la mise à jour de la capacité"
+    }
+  },
+  "weapon_attack": {
+    "no_ammunition": {
+      "title": "Plus de {ammunition}",
+      "description": "{weapon} ne peut pas tirer sans munition."
+    },
+    "roll": {
+      "attack": "Attaque — {weapon}",
+      "damage": "Dégâts — {weapon}",
+      "damage_two_handed": "Dégâts (2 mains) — {weapon}",
+      "damage_offhand": "Dégâts main sec. — {weapon}"
+    }
+  },
+  "class_resources": {
+    "update_error": "Erreur lors de la mise à jour"
   },
   "zodI18n": {
     "errors": {
