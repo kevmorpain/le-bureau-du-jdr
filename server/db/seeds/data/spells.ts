@@ -179,7 +179,7 @@ export const baseSpells: SpellSeed[] = [
   {
     name: 'Mot de guérison',
     level: 1,
-    castingTime: '1 action',
+    castingTime: '1 action bonus',
     range: 18,
     components: [SpellComponent.Vocal],
     duration: 'Instantanée',
@@ -1068,7 +1068,7 @@ export const baseSpells: SpellSeed[] = [
   {
     name: 'Invocation de fée',
     level: 6,
-    castingTime: '1 action',
+    castingTime: '1 minute',
     range: 27,
     components: [SpellComponent.Vocal, SpellComponent.Somatic],
     duration: 'Concentration, jusqu\'à 1 heure',

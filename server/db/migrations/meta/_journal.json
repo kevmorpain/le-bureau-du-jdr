@@ -1289,6 +1289,13 @@
       "when": 1797100000000,
       "tag": "0183_drop_character_classes_spellcasting_ability",
       "breakpoints": true
+    },
+    {
+      "idx": 184,
+      "version": "6",
+      "when": 1797200000000,
+      "tag": "0184_spell_casting_time_fixes",
+      "breakpoints": true
     }
   ]
 }
