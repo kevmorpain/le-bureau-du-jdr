@@ -5,6 +5,13 @@ import { matchesSearch } from '~~/shared/utils/search'
 export const PLAY_CARD_KINDS = ['spell', 'feature', 'weapon', 'item'] as const
 export type PlayCardKind = typeof PLAY_CARD_KINDS[number]
 
+export const PLAY_CARD_ICONS = {
+  spell: 'spell',
+  feature: 'feature',
+  weapon: 'weapon',
+  item: 'item',
+} as const satisfies Record<PlayCardKind, string>
+
 // What a card spends when used: a spell slot, a feature's uses, an item's charges or a piece of ammunition.
 export type PlayCardResource = 'slot' | 'arcanum' | 'uses' | 'charges' | 'ammunition'
 

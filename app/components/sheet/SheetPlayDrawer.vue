@@ -190,12 +190,12 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  align-self: flex-start;
-  max-height: calc(100dvh - 24px);
+  height: calc(100dvh - 24px);
 }
 
 .drawer :deep(.frame__fill) {
   display: flex;
+  height: 100%;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
@@ -224,6 +224,7 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
 
 .drawer__body {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 12px;
   min-height: 0;
@@ -372,6 +373,7 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
 
 .drawer__actions {
   display: flex;
+  margin-top: auto;
   flex-direction: column;
   gap: 8px;
 }

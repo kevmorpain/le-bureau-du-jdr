@@ -14,11 +14,21 @@
           :options="costOptions"
           :label="$t('sheet.play.filters.cost')"
           class="play__cost"
-        />
+        >
+          <template #option="{ option }">
+            <DsCostTag
+              v-if="option.value !== 'all' && option.value !== 'other'"
+              :cost="option.value"
+            />
+            {{ option.label }}
+          </template>
+        </DsSegmented>
         <DsTextField
           v-model="search"
           :label="$t('sheet.play.filters.search')"
           :placeholder="$t('sheet.play.filters.search')"
+          icon="search"
+          :width="150"
           class="play__search"
         />
       </div>
@@ -96,6 +106,7 @@ import { useWeaponAttacks } from '~/composables/character/useWeaponAttacks'
 import { ACTION_COSTS, type ActionCost } from '~~/shared/rules/actionCost'
 import {
   FACETS_BY_KIND,
+  PLAY_CARD_ICONS,
   PLAY_CARD_KINDS,
   filterPlayCards,
   groupPlayCardsByCost,
@@ -131,6 +142,7 @@ watch(kind, () => {
 const kindOptions = computed(() => (['all', ...PLAY_CARD_KINDS] as const).map(value => ({
   value,
   label: t(`sheet.play.filters.kinds.${value}`),
+  icon: value === 'all' ? undefined : PLAY_CARD_ICONS[value],
   count: value === 'all' ? cards.value.length : cards.value.filter(card => card.kind === value).length,
 })))
 

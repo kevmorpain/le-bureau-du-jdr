@@ -17,7 +17,12 @@
       @click="model = option.value"
       @keydown="onKeydown($event, index)"
     >
-      {{ option.label }}
+      <slot
+        name="option"
+        :option="option"
+      >
+        {{ option.label }}
+      </slot>
     </button>
   </div>
 </template>
@@ -58,6 +63,7 @@ const onKeydown = (event: KeyboardEvent, index: number) => {
   flex: 1;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   padding: 8px 10px;
   font-size: 12.5px;
   font-weight: 700;

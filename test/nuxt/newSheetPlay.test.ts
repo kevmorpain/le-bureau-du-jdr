@@ -121,7 +121,7 @@ describe('nouvelle fiche — vue En jeu', () => {
     await tabs[1]!.trigger('click')
     expect(getCardNames(wrapper)).toEqual(['Boule de feu', 'Décharge occulte', 'Maléfice'])
 
-    await wrapper.findAll('[role="radio"]').find(radio => radio.text() === 'Bonus')!.trigger('click')
+    await wrapper.findAll('[role="radio"]').find(radio => radio.text().endsWith('Bonus'))!.trigger('click')
     expect(getCardNames(wrapper)).toEqual(['Maléfice'])
 
     await wrapper.findAll('[role="radio"]').find(radio => radio.text() === 'Tous')!.trigger('click')

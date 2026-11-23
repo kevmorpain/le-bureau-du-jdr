@@ -1,5 +1,11 @@
 <template>
   <DsField>
+    <DsIcon
+      v-if="icon"
+      :name="icon"
+      :size="13"
+      class="text__icon"
+    />
     <input
       v-model="model"
       type="text"
@@ -13,11 +19,14 @@
 </template>
 
 <script lang="ts" setup>
-const { label, placeholder, maxlength, width = 190 } = defineProps<{
+import type { DsIconName } from './DsIcon.vue'
+
+const { label, placeholder, maxlength, width = 190, icon } = defineProps<{
   label: string
   placeholder?: string
   maxlength?: number
   width?: number
+  icon?: DsIconName
 }>()
 
 const model = defineModel<string>({ default: '' })
@@ -30,4 +39,12 @@ const model = defineModel<string>({ default: '' })
 }
 
 .text::placeholder { color: var(--color-ds-faint); }
+
+.text__icon {
+  align-self: center;
+  margin-left: 10px;
+  color: var(--color-ds-faint);
+}
+
+.text__icon + .text { padding-left: 6px; }
 </style>

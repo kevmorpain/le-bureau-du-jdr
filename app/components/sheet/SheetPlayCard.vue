@@ -11,7 +11,7 @@
         :cost="costTag"
       />
       <DsIcon
-        :name="KIND_ICONS[card.kind]"
+        :name="PLAY_CARD_ICONS[card.kind]"
         :size="13"
       />
       <span>{{ $t(`sheet.play.kinds.${card.kind}`) }}</span>
@@ -35,8 +35,8 @@
         :style="fact.damageType ? { color: `var(--color-${fact.damageType})` } : undefined"
       >
         <DsIcon
-          v-if="fact.icon === 'concentration' || fact.icon === 'ritual'"
-          :name="fact.icon"
+          v-if="FACT_ICONS[fact.icon]"
+          :name="FACT_ICONS[fact.icon]!"
           :size="12"
         />
         {{ fact.text }}
@@ -57,8 +57,8 @@
 <script lang="ts" setup>
 import type { DsCost } from '~/components/ds/DsCostTag.vue'
 import type { DsIconName } from '~/components/ds/DsIcon.vue'
-import type { PlayFact } from '~/composables/character/usePlayCardDetails'
-import type { PlayCard, PlayCardKind } from '~/utils/playCards'
+import type { PlayFact, PlayFactIcon } from '~/composables/character/usePlayCardDetails'
+import { PLAY_CARD_ICONS, type PlayCard } from '~/utils/playCards'
 
 const { card, facts, isSelected = false } = defineProps<{
   card: PlayCard
@@ -66,11 +66,12 @@ const { card, facts, isSelected = false } = defineProps<{
   isSelected?: boolean
 }>()
 
-const KIND_ICONS: Record<PlayCardKind, DsIconName> = {
-  spell: 'spell',
-  feature: 'feature',
-  weapon: 'weapon',
-  item: 'item',
+const FACT_ICONS: Partial<Record<PlayFactIcon, DsIconName>> = {
+  range: 'range',
+  attack: 'attack',
+  save: 'save',
+  concentration: 'concentration',
+  ritual: 'ritual',
 }
 
 const costTag = computed<DsCost | null>(() => (card.cost === 'other' ? null : card.cost))
