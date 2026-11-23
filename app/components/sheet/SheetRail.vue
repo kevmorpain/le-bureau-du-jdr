@@ -78,6 +78,42 @@
     />
 
     <DsBlock
+      v-if="spellcastingStats || slotRows.length"
+      :ribbon="activeCasterClass ? $t('sheet.rail.magic_of', { name: activeCasterClass.className }) : $t('sheet.rail.magic')"
+    >
+      <dl
+        v-if="spellcastingStats"
+        class="magic"
+      >
+        <div class="magic__row">
+          <dt class="ds-label">
+            {{ $t('sheet.rail.spell_save_dc') }}
+          </dt>
+          <dd class="ds-number magic__value">
+            {{ spellcastingStats.dc }}
+          </dd>
+        </div>
+        <div class="magic__row">
+          <dt class="ds-label">
+            {{ $t('sheet.rail.spell_attack') }}
+          </dt>
+          <dd class="ds-number magic__value">
+            {{ formatModifier(spellcastingStats.attackBonus) }}
+          </dd>
+        </div>
+      </dl>
+      <DsCounter
+        v-for="row in slotRows"
+        :key="row.key"
+        :model-value="row.slot.current"
+        :max="row.slot.max"
+        :label="row.label"
+        class="magic__slots"
+        @update:model-value="row.slot.current = $event"
+      />
+    </DsBlock>
+
+    <DsBlock
       :ribbon="$t('sheet.rail.effects')"
       class="rail__effects"
     >
@@ -117,6 +153,7 @@
 <script lang="ts" setup>
 import { ABILITY_KEYS } from '~~/shared/rules/abilities'
 import { conditionLabels } from '~~/shared/utils/labels'
+import type { SlotsByType } from '~/composables/character/useCharacterSpellcasting'
 
 const { characterSheet } = defineProps<{ characterSheet: CharacterSheet }>()
 
@@ -125,8 +162,19 @@ const { t } = useI18n()
 const {
   characterLevel, mainClass, multiClass, portraitSrc, effectiveMaxHp, armorClass, initiativeBonus, effectiveSpeed,
   abilityModifiers, isConcentrating, concentrationName, concentratingSpellId, temporaryEffects, activeConditions,
-  conditionRounds, exhaustionLevel,
+  conditionRounds, exhaustionLevel, spellcastingStats, activeCasterClass,
 } = useCharacterSheet(toRef(() => characterSheet))
+
+const spellSlots = inject<Ref<SlotsByType> | null>('spellSlots', null)
+
+const slotRows = computed(() => (['pact_magic', 'spellcasting'] as const).flatMap(slotType =>
+  Object.entries(spellSlots?.value[slotType] ?? {})
+    .filter(([, slot]) => slot.max > 0)
+    .map(([level, slot]) => ({
+      key: `${slotType}-${level}`,
+      label: t(slotType === 'pact_magic' ? 'sheet.play.slot.pact' : 'sheet.play.slot.level', { level }),
+      slot,
+    }))))
 
 const hasPortraitLoadError = ref(false)
 watch(portraitSrc, () => {
@@ -270,6 +318,24 @@ const effects = computed(() => [
 .abilities__item abbr { text-decoration: none; }
 
 .abilities__item dd { font-size: 14px; }
+
+.magic {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.magic__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.magic__value { font-size: 16px; }
+
+.magic__slots {
+  margin-top: 6px;
+}
 
 .rail__effects {
   flex: 1;

@@ -288,9 +288,9 @@
                 class="shrink-0"
                 @click.stop="
                   cs.spell.level === 0
-                    ? castCantripDirect(cs)
+                    ? castCantrip(cs)
                     : isArcanumSpell(cs)
-                      ? castArcanumSpell(cs)
+                      ? castArcanum(cs)
                       : openCastModalFor(cs)
                 "
               >
@@ -307,7 +307,7 @@
                   variant="soft"
                   color="warning"
                   icon="i-game-icons:blood"
-                  @click.stop="rollSpellEffect(cs, castLevelFor(cs))"
+                  @click.stop="rollSpellEffect(cs, getCastLevel(cs))"
                 >
                   {{ damageButtonLabel(cs) }}
                 </RollButton>
@@ -339,7 +339,7 @@
                   <UButton
                     v-if="isArcanumSpell(cs)"
                     icon="i-game-icons:magic-swirl"
-                    @click="castArcanumSpell(cs)"
+                    @click="castArcanum(cs)"
                   >
                     Lancer (Arcane Mystérieux — 1/repos long)
                   </UButton>
@@ -353,7 +353,7 @@
                   <UButton
                     v-else
                     icon="i-game-icons:magic-swirl"
-                    @click="castCantripDirect(cs)"
+                    @click="castCantrip(cs)"
                   >
                     Lancer (aucun emplacement requis)
                   </UButton>
@@ -402,7 +402,7 @@
       v-model:open="showDamageModal"
       :spell="selectedSpell.spell"
       :owned-levels="ownedSlotLevels"
-      :initial-level="castLevelFor(selectedSpell)"
+      :initial-level="getCastLevel(selectedSpell)"
       @roll="handleRollDamage"
     />
 
@@ -417,20 +417,13 @@
 
 <script lang="ts" setup>
 import { SpellComponent } from '~~/server/db/schema/spells'
+import type { ActionCost } from '~~/shared/rules/actionCost'
 import { classSlugFromName } from '~~/shared/rules/classSlugs'
-import { canCastAsRitual } from '~~/shared/rules/ritualCasting'
 import { countPreparedSpells, preparedSpellsLimit } from '~~/shared/rules/spellsKnown'
-import { matchesSearch } from '~~/shared/utils/search'
-import type { CharacterSpellWithSpell } from '~/composables/character/useCharacterSpells'
-import {
-  baseSlotLevel,
-  parseDiceNotation,
-  resolveAttackCount,
-  resolveDamageDie,
-  resolveHealDie,
-  upcastRows,
-  type CastLevels,
-} from '~~/shared/rules/spellScaling'
+import { baseSlotLevel } from '~~/shared/rules/spellScaling'
+import type { CharacterSpellWithSpell, SlotType } from '~/composables/character/useCharacterSpells'
+import type { SlotsByType } from '~/composables/character/useCharacterSpellcasting'
+import { useSpellCasting } from '~/composables/character/useSpellCasting'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
@@ -440,39 +433,47 @@ const characterSheetRef = toRef(props, 'characterSheet')
 
 provide('isSpellbook', true)
 
-type SlotState = { max: number, current: number }
-type SlotsByType = {
-  spellcasting: Record<number, SlotState>
-  pact_magic: Record<number, SlotState>
-}
-type SlotType = 'spellcasting' | 'pact_magic'
-
 const spellSlots = inject<Ref<SlotsByType>>('spellSlots')!
 
+const characterSheetApi = useCharacterSheet(characterSheetRef)
 const {
-  abilityModifiers,
   spellcastingModifier,
-  spellcastingStats,
-  pactMagicStats,
   statsForCasterClass,
   statsForSpell,
   spellcasterClasses,
   activeCasterClass,
   selectedCasterClassId,
-  setSelectedCaster,
   armorSpellcastingWarning,
   spellcastingBlockedWarning,
+  spellcastingStats,
+  pactMagicStats,
+  setSelectedCaster,
   characterLevel,
-  spellDamageBonus,
   activeConditions,
-  activateSpell,
   characterSpells,
   spellsByLevel,
   showPreparedOnly,
   togglePrepared,
   addSpell,
   removeSpell,
-} = useCharacterSheet(characterSheetRef)
+} = characterSheetApi
+
+const {
+  isAttackSpell,
+  isArcanumSpell,
+  canRitual,
+  getCastLevel,
+  rememberCastLevel,
+  ownedSlotLevels,
+  scalingSpellIds,
+  charismaModifier,
+  eldritchBlastMods,
+  rollSpellEffect,
+  castWithSlot,
+  castCantrip,
+  castAsRitual,
+  castArcanum,
+} = useSpellCasting(characterSheetRef, { ...characterSheetApi, spellSlots })
 
 const abilityShortLabels: Record<string, string> = {
   str: 'FOR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'SAG', cha: 'CHA',
@@ -501,14 +502,9 @@ const casterClassItems = computed(() =>
   })),
 )
 
-const castSpell = (slotLevel: number, slotType: SlotType) => {
-  const slot = spellSlots.value[slotType][slotLevel]
-  if (slot && slot.current > 0) slot.current--
-}
-
 const isIncapacitated = computed(() => activeConditions.value.includes('incapacitated'))
 
-const activeActionFilter = ref<string | null>(null)
+const activeActionFilter = ref<ActionCost | null>(null)
 const activeComponentFilters = ref<string[]>([])
 const activeLevelFilters = ref<number[]>([])
 const collapsedLevels = ref(new Set<number>())
@@ -529,7 +525,7 @@ const toggleLevelCollapse = (level: number) => {
   collapsedLevels.value = s
 }
 
-const actionTypeFilters = [
+const actionTypeFilters: { value: ActionCost, label: string }[] = [
   { value: 'action', label: 'Action' },
   { value: 'bonus', label: 'Bonus' },
   { value: 'reaction', label: 'Réaction' },
@@ -537,22 +533,12 @@ const actionTypeFilters = [
 
 const spellSearch = ref('')
 
-const filteredSpells = (spells: typeof spellsByLevel.value[number]['spells']) => {
-  return spells.filter((cs) => {
-    if (!matchesSearch(cs.spell.name, spellSearch.value)) return false
-    if (activeActionFilter.value) {
-      const ct = cs.spell.castingTime?.toLowerCase() ?? ''
-      if ((activeActionFilter.value === 'action' && !ct.includes('action')) || ct.includes('bonus')) return false
-      if (activeActionFilter.value === 'bonus' && !ct.includes('bonus')) return false
-      if (activeActionFilter.value === 'reaction' && !ct.includes('réaction') && !ct.includes('reaction')) return false
-    }
-    if (activeComponentFilters.value.length) {
-      if (!activeComponentFilters.value.every(f => cs.spell.components.includes(f as SpellComponent)))
-        return false
-    }
-    return true
-  })
-}
+const filteredSpells = (spells: typeof spellsByLevel.value[number]['spells']) =>
+  spells.filter(cs => matchesSpellFilters(cs.spell, {
+    search: spellSearch.value,
+    cost: activeActionFilter.value,
+    components: activeComponentFilters.value as SpellComponent[],
+  }))
 
 const selectedSpell = ref<CharacterSpellWithSpell | null>(null)
 
@@ -563,53 +549,15 @@ const openCastModalFor = (cs: CharacterSpellWithSpell) => {
   showCastModal.value = true
 }
 
-const { roll, rollsEnabled } = useDiceRoller()
-
-// Niveau d'emplacement du DERNIER lancement, par sort. Pour un sort d'attaque, le jet de dégâts
-// est un second geste (bouton « Dégâts », après le jet pour toucher) : sans cette mémoire, il
-// repartirait du niveau de base et contredirait le niveau que CastSpellModal vient d'annoncer.
-// État de session volontairement non persisté : au rechargement, on retombe sur le niveau de base.
-const lastCastLevel = ref<Record<number, number>>({})
-
-const castLevelFor = (cs: CharacterSpellWithSpell): number =>
-  lastCastLevel.value[cs.spellId] ?? baseSlotLevel(cs.spell)
-
-const castLevelsFor = (cs: CharacterSpellWithSpell): CastLevels => ({
-  characterLevel: characterLevel.value,
-  slotLevel: castLevelFor(cs),
-})
-
-const rememberCastLevel = (spellId: number, slotLevel: number) => {
-  lastCastLevel.value = { ...lastCastLevel.value, [spellId]: slotLevel }
-}
-
-// Niveaux d'emplacement que le personnage possède, tous types confondus — proposés au jet de
-// dégâts même épuisés (l'emplacement vient justement d'être dépensé par le lancement).
-const ownedSlotLevels = computed<number[]>(() => {
-  const levels = new Set<number>()
-  for (const byLevel of [spellSlots.value.spellcasting, spellSlots.value.pact_magic]) {
-    for (const [level, slot] of Object.entries(byLevel)) {
-      if (slot.max > 0) levels.add(Number(level))
-    }
-  }
-  return [...levels].sort((a, b) => a - b)
-})
+const { rollsEnabled } = useDiceRoller()
 
 const showDamageModal = ref(false)
 
 // Le niveau retenu est affiché : un niveau mémorisé en silence serait un piège.
 const damageButtonLabel = (cs: CharacterSpellWithSpell): string => {
-  const level = castLevelFor(cs)
+  const level = getCastLevel(cs)
   return level > baseSlotLevel(cs.spell) ? `Dégâts (niv. ${level})` : 'Dégâts'
 }
-
-// Sorts dont les dégâts dépendent de l'emplacement dépensé : les seuls où changer de niveau veut
-// dire quelque chose (un tour de magie suit le niveau du PERSONNAGE, il n'y a rien à choisir).
-const scalingSpellIds = computed<Set<number>>(() =>
-  new Set((characterSpells.value ?? [])
-    .filter(cs => upcastRows(cs.spell).length > 0)
-    .map(cs => cs.spellId)),
-)
 
 const openDamageLevelPicker = (cs: CharacterSpellWithSpell) => {
   selectedSpell.value = cs
@@ -622,184 +570,8 @@ const handleRollDamage = (slotLevel: number) => {
   rollSpellEffect(selectedSpell.value, slotLevel)
 }
 
-function rollSpellEffect(cs: CharacterSpellWithSpell, castAtLevel: number) {
-  const spell = cs.spell
-  const spellcastingMod = casterStatsOf(cs)?.modifier ?? null
-  // Niveaux de résolution : l'emplacement RÉELLEMENT dépensé pilote la montée en puissance
-  // (c'est ce que l'encart « Aux niveaux supérieurs » et CastSpellModal affichent).
-  const levels: CastLevels = { characterLevel: characterLevel.value, slotLevel: castAtLevel }
-
-  // Seuls les sorts d'attaque ont des dégâts doublés par un critique ; ceux d'un jet de sauvegarde n'en ont pas.
-  const attackDamage = isAttackSpell(cs) ? { damage: {} } : undefined
-
-  // Un sort peut cumuler plusieurs types de dégâts (ex. Voracité de Hadar :
-  // froid + acide). On jette chaque composante séparément.
-  const damages = spell.damages ?? []
-  if (damages.length) {
-    for (const dmg of damages) {
-      const die = resolveDamageDie(dmg, levels)
-      if (!die) continue
-      const parsed = parseDiceNotation(die)
-      // Valeur plate sans dé (« 5 » d'Aide) : rien à jeter, la fiche l'affiche déjà.
-      if (!parsed || parsed.count === 0) continue
-
-      // Sorts multi-attaques (Décharge occulte, Rayon ardent, Trait magique…)
-      // Convention : les dés déclarés (NdM+K) représentent le TOTAL pour toutes
-      // les attaques. Per-attaque = (N/count)d(M) + (K/count). Les modificateurs
-      // (CHA via Coup agonisant, spellcasting mod) sont appliqués PAR attaque.
-      const multi = resolveAttackCount(spell.multiAttack, levels)
-      if (multi) {
-        const diePerAttack = Math.max(1, Math.floor(parsed.count / multi.count))
-        const flatPerAttack = Math.floor(parsed.flat / multi.count)
-        let perAttackBonus = flatPerAttack + spellDamageBonus.value
-        if (dmg.isSpellcastingModifierAdded && spellcastingMod !== null) {
-          perAttackBonus += spellcastingMod
-        }
-        // Coup éldritique agonisant — appliqué par rayon de Décharge occulte
-        if (spell.name === 'Décharge occulte' && eldritchBlastMods.value.agonizing) {
-          perAttackBonus += charismaModifier.value
-        }
-        for (let r = 1; r <= multi.count; r++) {
-          roll(`${spell.name} · ${multi.label} ${r}`, perAttackBonus, parsed.sides, diePerAttack, attackDamage)
-        }
-        continue
-      }
-
-      let bonus = parsed.flat + spellDamageBonus.value
-      if (dmg.isSpellcastingModifierAdded && spellcastingMod !== null) {
-        bonus += spellcastingMod
-      }
-      const label = dmg.label
-        ? `${spell.name} · ${dmg.label} (${dmg.damage_type})`
-        : `${spell.name} · dégâts ${dmg.damage_type}`
-      roll(label, bonus, parsed.sides, parsed.count, attackDamage)
-    }
-    return
-  }
-
-  if (spell.heal) {
-    const heal = spell.heal
-    const die = resolveHealDie(heal, levels)
-    if (!die) return
-    const parsed = parseDiceNotation(die)
-    if (!parsed || parsed.count === 0) return // valeur plate : rien à jeter (cf. ci-dessus)
-
-    let bonus = parsed.flat
-    if (heal.isSpellcastingModifierAdded && spellcastingMod !== null) {
-      bonus += spellcastingMod
-    }
-    roll(`${spell.name} · soin`, bonus, parsed.sides, parsed.count)
-  }
-}
-
-// Sort à ATTAQUE (Décharge occulte, Trait de feu…) : un jet pour toucher (d20 + bonus d'attaque de sort), séparé du jet de dégâts.
-const isAttackSpell = (cs: CharacterSpellWithSpell): boolean => cs.spell.attackType != null
-
-// Jet pour toucher : un d20 + bonus d'attaque PAR attaque (un par rayon pour les multi-attaques).
-function rollSpellAttack(cs: CharacterSpellWithSpell) {
-  const atk = casterStatsOf(cs)?.attackBonus
-  if (atk == null) return
-  const n = resolveAttackCount(cs.spell.multiAttack, castLevelsFor(cs))?.count ?? 1
-  for (let r = 1; r <= n; r++) {
-    roll(n > 1 ? `${cs.spell.name} · attaque ${r}` : `${cs.spell.name} · attaque`, atk, 20, 1, { d20: { type: 'attack', weapon: false } })
-  }
-}
-
-// Cast Arcane Mystérieux (sans emplacement, 1×/repos long)
-
-const ARCANUM_FEATURE_NAME_BY_LEVEL: Record<number, string> = {
-  6: 'Arcanum mystique (niveau 6)',
-  7: 'Arcanum mystique (niveau 7)',
-  8: 'Arcanum mystique (niveau 8)',
-  9: 'Arcanum mystique (niveau 9)',
-}
-
-function arcanumLevelFromSource(source: string | null | undefined): number | null {
-  if (!source?.startsWith('arcanum_')) return null
-  const lvl = Number(source.split('_')[1])
-  return Number.isFinite(lvl) ? lvl : null
-}
-
-async function castArcanumSpell(cs: CharacterSpellWithSpell) {
-  const lvl = arcanumLevelFromSource(cs.source)
-  if (!lvl) return
-
-  const wantedName = ARCANUM_FEATURE_NAME_BY_LEVEL[lvl]
-  const cf = (characterSheetRef.value?.features ?? []).find(f => f.feature?.name === wantedName)
-
-  if (!cf) {
-    useToast().add({
-      title: `Feature ${wantedName} introuvable sur la fiche`,
-      color: 'error',
-    })
-    return
-  }
-
-  const currentUses = cf.currentUses ?? 0
-  const maxUses = 1
-  if (currentUses >= maxUses) {
-    useToast().add({
-      title: 'Arcane Mystérieux déjà utilisé — récupéré au prochain repos long.',
-      color: 'warning',
-    })
-    return
-  }
-
-  try {
-    await $fetch(`/api/character_sheets/${props.characterSheet.id}/features`, {
-      method: 'PUT',
-      body: [{ featureId: cf.featureId, currentUses: currentUses + 1 }],
-    })
-    cf.currentUses = currentUses + 1
-  } catch {
-    useToast().add({ title: 'Erreur lors de la mise à jour de la feature', color: 'error' })
-    return
-  }
-
-  activateSpell(cs.spell)
-
-  // Sort d'attaque → jet pour toucher ; sinon effet direct (Arcanum lancé au niveau de base).
-  rememberCastLevel(cs.spellId, cs.spell.level || lvl)
-  if (isAttackSpell(cs)) rollSpellAttack(cs)
-  else rollSpellEffect(cs, cs.spell.level || lvl)
-}
-
-const isArcanumSpell = (cs: CharacterSpellWithSpell) => arcanumLevelFromSource(cs.source) !== null
-
-const castCantripDirect = (cs: CharacterSpellWithSpell) => {
-  activateSpell(cs.spell)
-  if (isAttackSpell(cs)) rollSpellAttack(cs)
-  else rollSpellEffect(cs, cs.spell.level || 0)
-}
-
-const canRitual = (cs: CharacterSpellWithSpell): boolean => {
-  const className = spellcasterClasses.value.find(c => c.classId === cs.classId)?.className
-  return canCastAsRitual(cs.spell, {
-    classSlug: className ? classSlugFromName(className) : undefined,
-    isPrepared: cs.isPrepared,
-    source: cs.source,
-  })
-}
-
-const castAsRitual = (cs: CharacterSpellWithSpell) => {
-  const level = baseSlotLevel(cs.spell)
-  activateSpell(cs.spell)
-  rememberCastLevel(cs.spellId, level)
-  if (isAttackSpell(cs)) rollSpellAttack(cs)
-  else rollSpellEffect(cs, level)
-  useToast().add({ title: `${cs.spell.name} lancé en rituel`, description: 'Aucun emplacement dépensé · +10 minutes d\'incantation', color: 'success' })
-}
-
 const handleCast = (slotLevel: number, slotType: SlotType, casterClassId: number | null) => {
-  castSpell(slotLevel, slotType)
-  if (casterClassId !== null) setSelectedCaster(casterClassId)
-  if (selectedSpell.value) {
-    activateSpell(selectedSpell.value.spell)
-    // Avant de jeter : le bouton « Dégâts » doit retrouver CET emplacement, pas le niveau de base.
-    rememberCastLevel(selectedSpell.value.spellId, slotLevel)
-    if (isAttackSpell(selectedSpell.value)) rollSpellAttack(selectedSpell.value)
-    else rollSpellEffect(selectedSpell.value, slotLevel)
-  }
+  if (selectedSpell.value) castWithSlot(selectedSpell.value, slotLevel, slotType, casterClassId)
 }
 
 const toggleSlot = (level: number, slotType: SlotType, n: number) => {
@@ -825,32 +597,6 @@ const alreadyAddedIds = computed(() =>
   new Set((characterSpells.value ?? []).map(cs => cs.spellId)),
 )
 
-// Mod canonique de CHA (total : espèce + ASI + effets). NE PAS le recalculer à la main depuis
-// baseAbilityScores + ASI — ça omettait le bonus d'espèce (Coup agonisant sous-évalué).
-const charismaModifier = computed<number>(() => abilityModifiers.value.cha ?? 0)
-
-const eldritchBlastMods = computed(() => {
-  const features = characterSheetRef.value?.features ?? []
-  const sourceNames: string[] = []
-  let agonizing = false, repelling = false, rangeExtended = false
-  for (const cf of features) {
-    const f = cf.feature
-    if (!f || f.featureType !== 'eldritch_invocation') continue
-    for (const fe of (f.featureEffects ?? [])) {
-      const eff = fe.effect
-      if (!eff || eff.type !== 'eldritch_blast_modifier') continue
-      const kind = eff.value?.kind
-      if (kind === 'agonizing') agonizing = true
-      else if (kind === 'repelling') repelling = true
-      else if (kind === 'range_extended') rangeExtended = true
-      else continue
-      sourceNames.push(f.name)
-    }
-  }
-  return { agonizing, repelling, rangeExtended, sourceNames: [...new Set(sourceNames)] }
-})
-
-// Doit être après les déclarations de eldritchBlastMods et charismaModifier
 provide<SpellContext>('spellContext', {
   characterLevel,
   spellcastingModifier,

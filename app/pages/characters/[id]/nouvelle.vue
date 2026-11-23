@@ -23,8 +23,12 @@
         />
       </div>
 
+      <SheetPlayView
+        v-if="view === 'play'"
+        :character-sheet="characterSheet"
+      />
       <SheetSettingsView
-        v-if="view === 'settings'"
+        v-else-if="view === 'settings'"
         :is-new-sheet="preferences.newSheet"
         @choose-design="switchSheetDesign"
       />
@@ -38,6 +42,17 @@
       </DsBlock>
     </main>
 
+    <div
+      class="sheet__rolls"
+      aria-live="polite"
+    >
+      <DsRollToast
+        v-for="toast in toasts"
+        :key="toast.id"
+        :roll="toast"
+      />
+    </div>
+
     <ClientOnly>
       <SyncConflictModal
         v-model:open="isConflictOpen"
@@ -49,6 +64,8 @@
 </template>
 
 <script lang="ts" setup>
+import { rollEngineKey } from '~/composables/character/useCharacterRolls'
+
 definePageMeta({
   layout: 'blank',
   footer: false,
@@ -60,7 +77,10 @@ const view = computed(() => getSheetView(route.query.view))
 
 const { characterSheet, refreshSheet, retrySave, switchSheetDesign } = await useSheetPersistence(charId)
 
-const { refreshInventory, refreshSpells, preferences } = useCharacterSheet(characterSheet)
+const { refreshInventory, refreshSpells, preferences, spellSlots, rollEngine } = useCharacterSheet(characterSheet)
+provide('spellSlots', spellSlots)
+provide(rollEngineKey, rollEngine)
+const { toasts } = useDiceRoller(rollEngine)
 
 const { reconcile } = useSheetReconciliation(charId, [refreshSheet, refreshInventory, refreshSpells])
 
@@ -99,6 +119,17 @@ const isConflictOpen = ref(false)
 }
 
 .sheet__conflict strong { color: var(--color-ds-bad); }
+
+.sheet__rolls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .sheet__coming {
   font-size: 13px;

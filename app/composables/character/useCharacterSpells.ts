@@ -10,6 +10,10 @@ type SlotsByType = {
 
 export type SlotType = 'spellcasting' | 'pact_magic'
 
+export const hasAvailableSlot = (slots: SlotsByType, spellLevel: number): boolean =>
+  [...Object.entries(slots.spellcasting), ...Object.entries(slots.pact_magic)]
+    .some(([level, slot]) => Number(level) >= spellLevel && slot.current > 0)
+
 export const useCharacterSpells = (
   characterSheet?: Ref<CharacterSheet>,
   deps?: {
@@ -33,12 +37,7 @@ export const useCharacterSpells = (
   const isSpellAvailable = (spell: Spell): boolean => {
     if (spell.level === 0) return true
     const slots = deps?.spellSlots.value
-    if (!slots) return false
-    const allEntries = [
-      ...Object.entries(slots.spellcasting),
-      ...Object.entries(slots.pact_magic),
-    ]
-    return allEntries.some(([lvl, s]) => Number(lvl) >= spell.level && s.current > 0)
+    return slots ? hasAvailableSlot(slots, spell.level) : false
   }
 
   // ─── Computed: grouped by level ───────────────────────────────────────────

@@ -122,7 +122,7 @@ Le pied d'une fenêtre aligne à droite : action légère, puis action principal
 | Composant | Quand | Pas quand |
 |---|---|---|
 | `DsModal` | une tâche qui se termine (repos, dégâts) ou une gestion (états : un seul bouton « Terminé ») | consulter un détail en gardant la fiche visible → `DsDrawer` *(à valider)* |
-| `DsDrawer` | le détail d'un élément (sort, objet), à côté de la fiche *(à valider)* | — |
+| `DsDrawer` | le détail d'un élément (sort, objet), à côté de la fiche *(à valider)* | le détail d'une carte de la vue En jeu, posé dans la page à côté de la grille (maquette « Tour 7 ») → `SheetPlayDrawer` |
 | `DsConfirmModal` | toute action destructive ; le corps dit ce qui sera perdu | — |
 | `DsRollToast` | le résultat d'un jet (`DiceRoll`) | — |
 | `DsSaveIndicator` | l'état de la sauvegarde, sous « Personnages » dans la tranche ; seul endroit où le voir. Au toucher, la page ouvre le détail et l'action utile (Envoyer maintenant, Réessayer, Résoudre). | — |

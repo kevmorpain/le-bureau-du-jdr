@@ -8,6 +8,16 @@ personnage et vues choisies par `?view=`. La préférence `newSheet` (fiche, sin
 le design : l'ancienne page redirige vers la nouvelle quand elle est activée, et chacune a de quoi basculer vers
 l'autre. Les deux partagent le chargement et la sauvegarde (`useSheetPersistence`, voir [`persistence.md`](./persistence.md)).
 
+Vue **En jeu** de la nouvelle fiche (`SheetPlayView`) : sorts lançables, capacités qui coûtent une action ou ont des
+utilisations, armes équipées et objets à charges, projetés en cartes par les fonctions pures de `app/utils/playCards.ts`
+(catégorie, coût A / B / R ou autre, ressource consommée, disponibilité) via `usePlayCards`, filtrés par catégorie,
+coût, facettes et recherche, groupés par coût. Le tiroir de détail (`SheetPlayDrawer`) est le même pour les quatre
+types ; il s'ouvre à côté de la grille, pas en fenêtre, et ses tuiles et actions viennent de `usePlayCardDetails`. Les
+gestes reprennent la logique de l'ancienne fiche, extraite et non copiée : `useSpellCasting` (lancement, emplacement,
+Arcanum, rituel, jets ; partagé avec `MagicSection`), `useWeaponAttacks` (partagé avec `InventorySection`),
+`useClassResources.setFeatureSpent`. Les emplacements sont ceux que la page fournit (`provide('spellSlots')`), comme
+sur l'ancienne fiche.
+
 La fiche charge le personnage via `GET /api/character_sheets/{id}` (include toutes les relations Drizzle sauf les sorts). Un deep watch persiste les changements via `PUT /api/character_sheets/{id}` (`useAutoSave` : 2 s d'inactivité, 10 s au plus en saisie continue). Les sections qui font leurs propres fetches (inventaire, sorts) ont leurs propres composables.
 
 ---

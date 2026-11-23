@@ -11,6 +11,7 @@ export const useClassResources = (
   spellSlots?: Ref<SlotsByType>,
 ) => {
   const toaster = useToast()
+  const { t } = useI18n()
   const { offlineMutate } = useOfflineMutation(() => characterSheet.value.id)
 
   const rows = (featureIds: number[]) =>
@@ -35,6 +36,21 @@ export const useClassResources = (
     } catch {
       for (const { cf, uses } of previous) cf.currentUses = uses
       toaster.add({ title: `Erreur lors de la mise à jour — ${group.name}`, color: 'error' })
+    }
+  }
+
+  // A feature outside any pool has its own uses; one inside a pool spends the pool.
+  const setFeatureSpent = async (featureId: number, spent: number, group?: ResourceGroup) => {
+    if (group) return setSpent(group, spent)
+    const characterFeature = rows([featureId])[0]
+    if (!characterFeature) return
+    const previous = characterFeature.currentUses
+    characterFeature.currentUses = Math.max(0, spent)
+    try {
+      await persist(featureId, { currentUses: characterFeature.currentUses }, characterFeature.feature?.name ?? '')
+    } catch {
+      characterFeature.currentUses = previous
+      toaster.add({ title: t('class_resources.update_error'), color: 'error' })
     }
   }
 
@@ -90,5 +106,5 @@ export const useClassResources = (
     slot.created = (slot.created ?? 0) + 1
   }
 
-  return { remaining, canSpend, spend, regain, setSpent, setActive, convertSlotToPoints, createSlot }
+  return { remaining, canSpend, spend, regain, setSpent, setFeatureSpent, setActive, convertSlotToPoints, createSlot }
 }
