@@ -951,6 +951,8 @@
         "ammunition": "Munitions"
       },
       "cast_at_level": "Lancer au niveau",
+      "slot_dc": "DD {dc} · {ability}",
+      "arcanum_recharge": "Arcanum · repos long",
       "slot": {
         "pact": "Pacte · niv. {level}",
         "level": "Niveau {level}"
@@ -964,6 +966,8 @@
         "damage": "Dégâts",
         "offhand_damage": "Dégâts, main secondaire",
         "use": "Utiliser",
+        "activate": "Activer",
+        "end": "Mettre fin",
         "spend": {
           "uses": "1 utilisation",
           "charges": "1 charge"

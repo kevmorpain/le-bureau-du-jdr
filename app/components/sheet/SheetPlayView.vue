@@ -65,15 +65,13 @@
           />
           {{ $t(`sheet.play.costs.${group.cost}`) }}
         </DsGroupTitle>
-        <div
-          class="play__grid"
-          :class="{ 'play__grid--narrow': selectedCard }"
-        >
+        <div class="play__grid">
           <SheetPlayCard
             v-for="card in group.cards"
             :key="card.key"
             :card="card"
             :facts="getFacts(card)"
+            :uses-label="getCardUsesLabel(card)"
             :is-selected="card.key === selectedKey"
             @click="handleSelect(card.key)"
           />
@@ -125,10 +123,10 @@ const sheet = useCharacterSheet(characterSheetRef)
 const { resourceGroups, spellcastingBlockedWarning, updateInventoryEntry } = sheet
 const spellCasting = useSpellCasting(characterSheetRef, { ...sheet, spellSlots })
 const { cards, getSource } = usePlayCards({ ...sheet, spellSlots, spellCasting })
-const { getCardFacts, getDetail, getActions } = usePlayCardDetails({ ...sheet, spellSlots, spellCasting })
+const { getCardFacts, getCardUsesLabel, getDetail, getActions } = usePlayCardDetails({ ...sheet, spellSlots, spellCasting })
 const { roll } = useDiceRoller()
 const { rollAttack, rollDamage, rollOffhandDamage } = useWeaponAttacks({ ...sheet, roll })
-const { setFeatureSpent } = useClassResources(characterSheetRef, spellSlots)
+const { setFeatureSpent, setActive } = useClassResources(characterSheetRef, spellSlots)
 
 const kind = ref<PlayCardKind | 'all'>('all')
 const cost = ref<ActionCost | 'all'>('all')
@@ -190,13 +188,15 @@ const handleSelect = (key: string) => {
   selectedSlotKey.value = getDefaultSlotKey()
 }
 
+const getPool = (featureId: number) => resourceGroups.value.find(group => group.featureIds.includes(featureId))
+
 const handleSetRemaining = async (remaining: number) => {
   const card = selectedCard.value
   const source = selectedSource.value
   if (!card?.uses || !source) return
   const spent = card.uses.max - remaining
   if (source.kind === 'feature') {
-    await setFeatureSpent(card.id, spent, resourceGroups.value.find(group => group.featureIds.includes(card.id)))
+    await setFeatureSpent(card.id, spent, getPool(card.id))
   } else if (source.kind === 'weapon' || source.kind === 'item') {
     await updateInventoryEntry(card.id, { currentUses: spent })
   }
@@ -219,6 +219,7 @@ const handleAction = (key: PlayActionKey) => {
   else if (key === 'damage') rollDamage(card.id)
   else if (key === 'offhand-damage') rollOffhandDamage(card.id)
   else if (key === 'use' && card.uses) void handleSetRemaining(card.uses.remaining - 1)
+  else if (key === 'activate' || key === 'end') void setActive(card.id, key === 'activate', getPool(card.id))
 }
 </script>
 
@@ -246,6 +247,8 @@ const handleAction = (key: PlayActionKey) => {
 
 .play__row .play__cost {
   width: auto;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .play__search {
@@ -271,11 +274,7 @@ const handleAction = (key: PlayActionKey) => {
 
 .play__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 8px;
-}
-
-.play__grid--narrow {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 </style>

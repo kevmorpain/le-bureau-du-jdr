@@ -120,8 +120,14 @@
             @click="selectedSlotKey = slot.key"
           >
             <span class="ds-fill drawer__slot-fill">
-              <span class="drawer__slot-name">{{ slot.label }}</span>
-              <span class="drawer__slot-effect">{{ slot.effect }}</span>
+              <span class="drawer__slot-name">
+                {{ slot.label }}
+                <small v-if="slot.detail">{{ slot.detail }}</small>
+              </span>
+              <span
+                class="drawer__slot-effect"
+                :style="slot.damageType ? { color: `var(--color-${slot.damageType})` } : undefined"
+              >{{ slot.effect }}</span>
               <DsCounter
                 :model-value="slot.current"
                 :max="slot.max"
@@ -153,6 +159,7 @@
           :variant="action.variant"
           :disabled="action.isDisabled"
           block
+          class="drawer__action"
           @click="emit('action', action.key)"
         />
       </div>
@@ -186,7 +193,7 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
 .drawer {
   display: flex;
   flex-direction: column;
-  width: 360px;
+  width: 350px;
   flex-shrink: 0;
   position: sticky;
   top: 0;
@@ -209,11 +216,20 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
 .drawer__band {
   position: relative;
   flex-shrink: 0;
-  height: 56px;
+  height: 84px;
+  overflow: hidden;
   background:
     radial-gradient(ellipse at 50% 130%, color-mix(in srgb, var(--drawer-color) 32%, transparent), transparent 70%),
     var(--color-ds-panel-raised);
   border-bottom: 1px solid var(--color-ds-gold-dim);
+}
+
+.drawer__band::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: repeating-conic-gradient(from -90deg at 50% 115%, color-mix(in srgb, var(--drawer-color) 26%, transparent) 0 3deg, transparent 3deg 10deg);
+  mask: radial-gradient(circle at 50% 115%, #000 0 70%, transparent 71%);
 }
 
 .drawer__close {
@@ -236,17 +252,15 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  font-size: 11.5px;
-  color: var(--color-ds-mute);
-}
-
-.drawer__type {
+  gap: 7px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--drawer-color);
+  color: var(--color-ds-mute);
 }
+
+.drawer__type { color: var(--drawer-color); }
 
 .drawer__name {
   margin-top: -4px;
@@ -258,23 +272,31 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
 
 .drawer__tiles {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
 .drawer__tile {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 7px 9px;
+  gap: 2px;
+  padding: 7px 8px 8px;
   background: var(--color-ds-panel-raised);
+  border-top: 2px solid var(--color-ds-gold-dim);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
+}
+
+.drawer__tile .ds-label {
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--color-ds-faint);
 }
 
 .drawer__tile-value {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 5px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
@@ -287,20 +309,22 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
 
 .drawer__component {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   font-size: 11px;
   font-weight: 700;
   text-decoration: none;
   color: var(--color-ds-ink);
-  background: var(--color-ds-panel-raised);
+  box-shadow: inset 0 0 0 1px var(--color-ds-gold-dim);
 }
 
 .drawer__component--off {
   color: var(--color-ds-faint);
-  text-decoration: line-through;
+  box-shadow: inset 0 0 0 1px var(--color-ds-line);
+  opacity: 0.6;
 }
 
 .drawer__material,
@@ -357,12 +381,22 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
 }
 
 .drawer__slot-name {
+  display: flex;
+  flex-direction: column;
   font-weight: 700;
   white-space: nowrap;
 }
 
+.drawer__slot-name small {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--color-ds-mute);
+}
+
 .drawer__slot-effect {
   flex: 1;
+  font-weight: 700;
+  text-align: right;
   color: var(--color-ds-mute);
 }
 
@@ -375,6 +409,11 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
   display: flex;
   margin-top: auto;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
+}
+
+.drawer__action {
+  width: 240px;
 }
 </style>

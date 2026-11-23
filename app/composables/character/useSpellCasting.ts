@@ -26,6 +26,9 @@ const ARCANUM_FEATURE_NAME_BY_LEVEL: Record<number, string> = {
   9: 'Arcanum mystique (niveau 9)',
 }
 
+export const isArcanumFeature = (name: string): boolean =>
+  Object.values(ARCANUM_FEATURE_NAME_BY_LEVEL).includes(name)
+
 const getArcanumLevel = (source: string | null | undefined): number | null => {
   if (!source?.startsWith('arcanum_')) return null
   const level = Number(source.split('_')[1])

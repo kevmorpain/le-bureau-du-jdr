@@ -43,14 +43,18 @@
       </span>
     </span>
 
-    <DsCounter
+    <span
       v-if="card.uses"
-      :model-value="card.uses.remaining"
-      :max="card.uses.max"
-      :aria-label="$t('ds.count_of', { value: card.uses.remaining, max: card.uses.max })"
-      readonly
       class="play-card__uses"
-    />
+    >
+      <DsCounter
+        :model-value="card.uses.remaining"
+        :max="card.uses.max"
+        :aria-label="$t('ds.count_of', { value: card.uses.remaining, max: card.uses.max })"
+        readonly
+      />
+      <span v-if="usesLabel">{{ usesLabel }}</span>
+    </span>
   </DsCard>
 </template>
 
@@ -60,9 +64,10 @@ import type { DsIconName } from '~/components/ds/DsIcon.vue'
 import type { PlayFact, PlayFactIcon } from '~/composables/character/usePlayCardDetails'
 import { PLAY_CARD_ICONS, type PlayCard } from '~/utils/playCards'
 
-const { card, facts, isSelected = false } = defineProps<{
+const { card, facts, usesLabel = null, isSelected = false } = defineProps<{
   card: PlayCard
   facts: PlayFact[]
+  usesLabel?: string | null
   isSelected?: boolean
 }>()
 
@@ -83,7 +88,7 @@ const costTag = computed<DsCost | null>(() => (card.cost === 'other' ? null : ca
 }
 
 .play-card--spent {
-  opacity: 0.55;
+  opacity: 0.4;
 }
 
 .play-card__top {
@@ -103,12 +108,13 @@ const costTag = computed<DsCost | null>(() => (card.cost === 'other' ? null : ca
 
 .play-card__level {
   margin-left: auto;
-  color: var(--color-ds-mute);
+  letter-spacing: 0.06em;
+  color: var(--color-ds-gold);
 }
 
 .play-card__name {
   font-family: var(--font-bodoni);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.15;
   color: var(--color-ds-ink);
@@ -133,6 +139,11 @@ const costTag = computed<DsCost | null>(() => (card.cost === 'other' ? null : ca
 }
 
 .play-card__uses {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   margin-top: 2px;
+  font-size: 11px;
+  color: var(--color-ds-mute);
 }
 </style>

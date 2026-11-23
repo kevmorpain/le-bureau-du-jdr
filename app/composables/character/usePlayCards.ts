@@ -2,10 +2,10 @@ import { isPlayableFeature, toFeatureCard, toItemCard, toSpellCard, toWeaponCard
 import { hasAvailableSlot, type CharacterSpellWithSpell } from './useCharacterSpells'
 import type { SlotsByType } from './useCharacterSpellcasting'
 import type { InventoryEntry, WeaponStats } from './useCharacterInventory'
-import type { useSpellCasting } from './useSpellCasting'
+import { isArcanumFeature, type useSpellCasting } from './useSpellCasting'
 
 type CharacterSheetApi = ReturnType<typeof useCharacterSheet>
-type PlayCardsDeps = Pick<CharacterSheetApi, 'characterSpells' | 'allCharacterFeatures' | 'equippedWeaponStats' | 'inventory'> & {
+type PlayCardsDeps = Pick<CharacterSheetApi, 'characterSpells' | 'allCharacterFeatures' | 'resourceGroups' | 'equippedWeaponStats' | 'inventory'> & {
   spellSlots: Ref<SlotsByType>
   spellCasting: Pick<ReturnType<typeof useSpellCasting>, 'isCastable' | 'isArcanumSpell' | 'getArcanumRemaining'>
 }
@@ -19,7 +19,7 @@ export type PlayCardSource
     | { kind: 'weapon', weapon: WeaponStats, entry: InventoryEntry | undefined }
     | { kind: 'item', entry: InventoryEntry }
 
-export const usePlayCards = ({ characterSpells, allCharacterFeatures, equippedWeaponStats, inventory, spellSlots, spellCasting }: PlayCardsDeps) => {
+export const usePlayCards = ({ characterSpells, allCharacterFeatures, resourceGroups, equippedWeaponStats, inventory, spellSlots, spellCasting }: PlayCardsDeps) => {
   const entryById = computed(() => new Map((inventory.value ?? []).map(entry => [entry.id, entry])))
 
   const spellCards = computed(() => (characterSpells.value ?? [])
@@ -36,19 +36,25 @@ export const usePlayCards = ({ characterSpells, allCharacterFeatures, equippedWe
       return { card, source: { kind: 'spell', characterSpell } as const }
     }))
 
+  // Pact Magic and Mystic Arcanum are spent from the spell cards; a pooled feature counts its pool's uses.
   const featureCards = computed(() => allCharacterFeatures.value
-    .map(feature => ({
-      feature,
-      projected: {
-        id: feature.id,
-        name: feature.name,
-        actionType: feature.actionType ?? null,
-        rechargeType: feature.rechargeType ?? null,
-        maxUses: feature.maxUses ?? null,
-        currentUses: feature.currentUses ?? 0,
-        unlimited: 'unlimited' in feature ? feature.unlimited : false,
-      },
-    }))
+    .filter(feature => !isSpellSlotFeature(feature.meta) && !isArcanumFeature(feature.name))
+    .map((feature) => {
+      const pool = resourceGroups.value.find(group => group.featureIds.includes(feature.id))
+      const ownMaxUses = hasInformativeCounter(feature.meta) ? null : feature.maxUses ?? null
+      return {
+        feature,
+        projected: {
+          id: feature.id,
+          name: feature.name,
+          actionType: feature.actionType ?? null,
+          rechargeType: pool?.rechargeType ?? feature.rechargeType ?? null,
+          maxUses: pool ? pool.max : ownMaxUses,
+          currentUses: pool ? pool.spent : feature.currentUses ?? 0,
+          unlimited: pool ? pool.unlimited : 'unlimited' in feature ? feature.unlimited : false,
+        },
+      }
+    })
     .filter(({ projected }) => isPlayableFeature(projected))
     .map(({ feature, projected }) => ({ card: toFeatureCard(projected), source: { kind: 'feature', feature } as const })))
 

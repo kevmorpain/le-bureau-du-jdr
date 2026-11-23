@@ -109,7 +109,7 @@
         :max="row.slot.max"
         :label="row.label"
         class="magic__slots"
-        @update:model-value="row.slot.current = $event"
+        @update:model-value="handleSlotChange(row.slot, $event)"
       />
     </DsBlock>
 
@@ -153,7 +153,7 @@
 <script lang="ts" setup>
 import { ABILITY_KEYS } from '~~/shared/rules/abilities'
 import { conditionLabels } from '~~/shared/utils/labels'
-import type { SlotsByType } from '~/composables/character/useCharacterSpellcasting'
+import type { SlotState, SlotsByType } from '~/composables/character/useCharacterSpellcasting'
 
 const { characterSheet } = defineProps<{ characterSheet: CharacterSheet }>()
 
@@ -175,6 +175,10 @@ const slotRows = computed(() => (['pact_magic', 'spellcasting'] as const).flatMa
       label: t(slotType === 'pact_magic' ? 'sheet.play.slot.pact' : 'sheet.play.slot.level', { level }),
       slot,
     }))))
+
+const handleSlotChange = (slot: SlotState, current: number) => {
+  slot.current = current
+}
 
 const hasPortraitLoadError = ref(false)
 watch(portraitSrc, () => {

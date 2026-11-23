@@ -38,12 +38,14 @@ export interface PlaySlotOption {
   slotType: SlotType
   level: number
   label: string
+  detail: string | null
+  damageType: string | undefined
   max: number
   current: number
   effect: string
 }
 
-export type PlayActionKey = 'cast-slot' | 'cast-cantrip' | 'cast-arcanum' | 'cast-ritual' | 'spell-damage' | 'attack' | 'damage' | 'offhand-damage' | 'use'
+export type PlayActionKey = 'cast-slot' | 'cast-cantrip' | 'cast-arcanum' | 'cast-ritual' | 'spell-damage' | 'attack' | 'damage' | 'offhand-damage' | 'use' | 'activate' | 'end'
 
 export interface PlayAction {
   key: PlayActionKey
@@ -126,7 +128,7 @@ export const usePlayCardDetails = ({ statsForSpell, characterLevel, spellSlots, 
         ]
       default: {
         const recharge = getRechargeLabel(card)
-        return recharge ? [{ icon: 'recharge', text: recharge }] : []
+        return recharge && !card.uses ? [{ icon: 'recharge', text: recharge }] : []
       }
     }
   }
@@ -137,6 +139,9 @@ export const usePlayCardDetails = ({ statsForSpell, characterLevel, spellSlots, 
   const getSlotOptions = (characterSpell: CharacterSpellWithSpell): PlaySlotOption[] => {
     const { spell } = characterSpell
     if (spell.level === 0 || spellCasting.isArcanumSpell(characterSpell)) return []
+    const stats = statsForSpell(characterSpell)
+    const detail = stats ? t('sheet.play.slot_dc', { dc: stats.dc, ability: t(`sheet.rail.abilities.${stats.ability}`) }) : null
+    const damageType = spell.damages?.[0]?.damage_type ?? (spell.heal ? 'heal' : undefined)
     return (['pact_magic', 'spellcasting'] as const).flatMap(slotType =>
       Object.entries(spellSlots.value[slotType])
         .map(([level, slot]) => ({ level: Number(level), slot }))
@@ -146,10 +151,18 @@ export const usePlayCardDetails = ({ statsForSpell, characterLevel, spellSlots, 
           slotType,
           level,
           label: getSlotLabel(slotType, level),
+          detail,
+          damageType,
           max: slot.max,
           current: slot.current,
           effect: previewAt(spell, level),
         })))
+  }
+
+  const getCardUsesLabel = (card: PlayCard): string | null => {
+    if (!card.uses) return null
+    if (card.resource === 'arcanum') return t('sheet.play.arcanum_recharge')
+    return getRechargeLabel(card) ?? (card.resource ? t(`sheet.play.resources.${card.resource}`) : null)
   }
 
   const getUsesLabel = (card: PlayCard): string | null => {
@@ -268,6 +281,16 @@ export const usePlayCardDetails = ({ statsForSpell, characterLevel, spellSlots, 
           { key: 'damage', label: t('sheet.play.actions.damage'), variant: 'secondary', isDisabled: false },
           ...(source.weapon.isLight ? [{ key: 'offhand-damage' as const, label: t('sheet.play.actions.offhand_damage'), variant: 'secondary' as const, isDisabled: false }] : []),
         ]
+      case 'feature':
+        if (source.feature.meta?.whileActive) {
+          const isActive = 'active' in source.feature && source.feature.active
+          return [isActive
+            ? { key: 'end', label: t('sheet.play.actions.end'), variant: 'secondary', isDisabled: false }
+            : { key: 'activate', label: t('sheet.play.actions.activate'), detail: card.uses ? t('sheet.play.actions.spend.uses') : undefined, variant: 'primary', isDisabled: !card.isAvailable }]
+        }
+        return card.uses
+          ? [{ key: 'use', label: t('sheet.play.actions.use'), detail: t(`sheet.play.actions.spend.${card.resource}`), variant: 'primary', isDisabled: !card.isAvailable }]
+          : []
       default:
         return card.uses
           ? [{ key: 'use', label: t('sheet.play.actions.use'), detail: t(`sheet.play.actions.spend.${card.resource}`), variant: 'primary', isDisabled: !card.isAvailable }]
@@ -275,5 +298,5 @@ export const usePlayCardDetails = ({ statsForSpell, characterLevel, spellSlots, 
     }
   }
 
-  return { getCardFacts, getDetail, getActions }
+  return { getCardFacts, getCardUsesLabel, getDetail, getActions }
 }

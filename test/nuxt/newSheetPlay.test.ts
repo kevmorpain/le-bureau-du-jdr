@@ -173,14 +173,15 @@ describe('nouvelle fiche — vue En jeu', () => {
     expect(findButton(getDrawer(wrapper), 'Utiliser').attributes('disabled')).toBeDefined()
   })
 
-  it('fermer le tiroir rend la grille à trois colonnes', async () => {
+  it('toucher la carte ouverte ou la croix referme le tiroir', async () => {
     const wrapper = await mountPlay()
 
     await findCard(wrapper, 'Dague').trigger('click')
-    expect(wrapper.find('.play__grid--narrow').exists()).toBe(true)
-
     await getDrawer(wrapper).get('button[aria-label="Fermer"]').trigger('click')
     expect(wrapper.find('aside.drawer').exists()).toBe(false)
-    expect(wrapper.find('.play__grid--narrow').exists()).toBe(false)
+
+    await findCard(wrapper, 'Dague').trigger('click')
+    await findCard(wrapper, 'Dague').trigger('click')
+    expect(wrapper.find('aside.drawer').exists()).toBe(false)
   })
 })
