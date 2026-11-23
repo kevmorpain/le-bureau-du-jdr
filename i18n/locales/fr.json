@@ -987,6 +987,10 @@
     "coming": "Cette vue arrive avec un prochain lot de la refonte.",
     "not_found": "Fiche de personnage introuvable",
     "rail": {
+      "inspiration": "Inspiration",
+      "inspiration_on": "disponible",
+      "inspiration_off": "aucune",
+      "inspiration_toggle": "Inspiration : toucher pour la gagner ou la dépenser",
       "magic": "Magie",
       "magic_of": "Magie · {name}",
       "spell_save_dc": "DD des sorts",

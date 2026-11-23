@@ -45,38 +45,40 @@
         />
       </div>
 
-      <p
-        v-if="!groups.length"
-        class="play__empty"
-      >
-        {{ cards.length ? $t('sheet.play.empty_filtered') : $t('sheet.play.empty') }}
-      </p>
+      <div class="play__list">
+        <p
+          v-if="!groups.length"
+          class="play__empty"
+        >
+          {{ cards.length ? $t('sheet.play.empty_filtered') : $t('sheet.play.empty') }}
+        </p>
 
-      <section
-        v-for="group in groups"
-        :key="group.cost"
-        class="play__group"
-        :aria-label="$t(`sheet.play.costs.${group.cost}`)"
-      >
-        <DsGroupTitle class="play__group-title">
-          <DsCostTag
-            v-if="group.cost !== 'other'"
-            :cost="group.cost"
-          />
-          {{ $t(`sheet.play.costs.${group.cost}`) }}
-        </DsGroupTitle>
-        <div class="play__grid">
-          <SheetPlayCard
-            v-for="card in group.cards"
-            :key="card.key"
-            :card="card"
-            :facts="getFacts(card)"
-            :uses-label="getCardUsesLabel(card)"
-            :is-selected="card.key === selectedKey"
-            @click="handleSelect(card.key)"
-          />
-        </div>
-      </section>
+        <section
+          v-for="group in groups"
+          :key="group.cost"
+          class="play__group"
+          :aria-label="$t(`sheet.play.costs.${group.cost}`)"
+        >
+          <DsGroupTitle class="play__group-title">
+            <DsCostTag
+              v-if="group.cost !== 'other'"
+              :cost="group.cost"
+            />
+            {{ $t(`sheet.play.costs.${group.cost}`) }}
+          </DsGroupTitle>
+          <div class="play__grid">
+            <SheetPlayCard
+              v-for="card in group.cards"
+              :key="card.key"
+              :card="card"
+              :facts="getFacts(card)"
+              :uses-label="getCardUsesLabel(card)"
+              :is-selected="card.key === selectedKey"
+              @click="handleSelect(card.key)"
+            />
+          </div>
+        </section>
+      </div>
     </section>
 
     <SheetPlayDrawer
@@ -226,6 +228,7 @@ const handleAction = (key: PlayActionKey) => {
 <style scoped>
 .play {
   display: flex;
+  flex: 1;
   gap: 12px;
   min-height: 0;
 }
@@ -236,6 +239,18 @@ const handleAction = (key: PlayActionKey) => {
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  min-height: 0;
+}
+
+.play__list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  margin-right: -6px;
+  padding-right: 6px;
+  overflow-y: auto;
 }
 
 .play__row {

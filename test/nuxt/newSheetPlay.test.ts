@@ -173,6 +173,19 @@ describe('nouvelle fiche — vue En jeu', () => {
     expect(findButton(getDrawer(wrapper), 'Utiliser').attributes('disabled')).toBeDefined()
   })
 
+  it('l\'inspiration se gagne et se dépense depuis le rail', async () => {
+    const wrapper = await mountPlay()
+    const getToggle = () => wrapper.get('[aria-label^="Inspiration"] button')
+
+    expect(wrapper.get('.identity__inspiration').text()).toContain('aucune')
+    await getToggle().trigger('click')
+    expect(wrapper.get('.identity__inspiration').text()).toContain('disponible')
+    expect(getToggle().attributes('aria-pressed')).toBe('true')
+
+    await getToggle().trigger('click')
+    expect(wrapper.get('.identity__inspiration').text()).toContain('aucune')
+  })
+
   it('toucher la carte ouverte ou la croix referme le tiroir', async () => {
     const wrapper = await mountPlay()
 

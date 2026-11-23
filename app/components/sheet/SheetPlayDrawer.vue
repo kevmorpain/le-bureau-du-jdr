@@ -146,23 +146,23 @@
       >
         {{ warning }}
       </p>
+    </div>
 
-      <div
-        v-if="actions.length"
-        class="drawer__actions"
-      >
-        <DsButton
-          v-for="action in actions"
-          :key="action.key"
-          :label="action.label"
-          :detail="action.detail"
-          :variant="action.variant"
-          :disabled="action.isDisabled"
-          block
-          class="drawer__action"
-          @click="emit('action', action.key)"
-        />
-      </div>
+    <div
+      v-if="actions.length"
+      class="drawer__actions"
+    >
+      <DsButton
+        v-for="action in actions"
+        :key="action.key"
+        :label="action.label"
+        :detail="action.detail"
+        :variant="action.variant"
+        :disabled="action.isDisabled"
+        block
+        class="drawer__action"
+        @click="emit('action', action.key)"
+      />
     </div>
   </DsFrame>
 </template>
@@ -195,9 +195,7 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
   flex-direction: column;
   width: 350px;
   flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  height: calc(100dvh - 24px);
+  min-height: 0;
 }
 
 .drawer :deep(.frame__fill) {
@@ -407,8 +405,10 @@ const COMPONENTS = ['verbal', 'somatic', 'material'] as const
 
 .drawer__actions {
   display: flex;
-  margin-top: auto;
+  flex-shrink: 0;
   flex-direction: column;
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--color-ds-line);
   align-items: center;
   gap: 6px;
 }

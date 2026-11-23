@@ -6,7 +6,7 @@
       @resolve="isConflictOpen = true"
     />
 
-    <SheetRail :character-sheet="characterSheet" />
+    <SheetRail v-model:character-sheet="characterSheet" />
 
     <main class="sheet__main">
       <div

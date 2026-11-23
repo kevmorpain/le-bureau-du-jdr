@@ -54,6 +54,19 @@
           />
         </div>
 
+        <div class="identity__row identity__inspiration">
+          <span class="ds-label">{{ $t('sheet.rail.inspiration') }}</span>
+          <span class="identity__inspiration-state">
+            {{ characterSheet.inspiration ? $t('sheet.rail.inspiration_on') : $t('sheet.rail.inspiration_off') }}
+            <DsCounter
+              :model-value="characterSheet.inspiration ? 1 : 0"
+              :max="1"
+              :aria-label="$t('sheet.rail.inspiration_toggle')"
+              @update:model-value="handleInspirationChange"
+            />
+          </span>
+        </div>
+
         <dl class="abilities">
           <div
             v-for="ability in ABILITY_KEYS"
@@ -155,7 +168,7 @@ import { ABILITY_KEYS } from '~~/shared/rules/abilities'
 import { conditionLabels } from '~~/shared/utils/labels'
 import type { SlotState, SlotsByType } from '~/composables/character/useCharacterSpellcasting'
 
-const { characterSheet } = defineProps<{ characterSheet: CharacterSheet }>()
+const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
 const { t } = useI18n()
 
@@ -163,7 +176,11 @@ const {
   characterLevel, mainClass, multiClass, portraitSrc, effectiveMaxHp, armorClass, initiativeBonus, effectiveSpeed,
   abilityModifiers, isConcentrating, concentrationName, concentratingSpellId, temporaryEffects, activeConditions,
   conditionRounds, exhaustionLevel, spellcastingStats, activeCasterClass,
-} = useCharacterSheet(toRef(() => characterSheet))
+} = useCharacterSheet(characterSheet)
+
+const handleInspirationChange = (value: number) => {
+  characterSheet.value.inspiration = value > 0
+}
 
 const spellSlots = inject<Ref<SlotsByType> | null>('spellSlots', null)
 
@@ -296,6 +313,16 @@ const effects = computed(() => [
 .identity__hp-temp {
   font-size: 10.5px;
   font-weight: 700;
+  color: var(--color-ds-mute);
+}
+
+.identity__inspiration { align-items: center; }
+
+.identity__inspiration-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
   color: var(--color-ds-mute);
 }
 
