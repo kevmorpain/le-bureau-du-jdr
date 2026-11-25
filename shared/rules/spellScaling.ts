@@ -24,6 +24,14 @@ export type CastLevels = {
 /** Niveau d'emplacement d'un sort lancé SANS montée en puissance (plancher à 1 pour les tours de magie). */
 export const baseSlotLevel = (spell: { level: number }): number => Math.max(1, spell.level)
 
+// Levels offered for a spell's damage roll: the slot was spent at casting, so a level with no slot left still counts.
+export const damageRollLevels = (spell: { level: number }, ownedLevels: readonly number[], castLevel?: number): number[] => {
+  const base = baseSlotLevel(spell)
+  const candidates = new Set<number>([base, ...ownedLevels])
+  if (castLevel !== undefined) candidates.add(castLevel)
+  return [...candidates].filter(level => level >= base).sort((a, b) => a - b)
+}
+
 export const baseCastLevels = (spell: { level: number }, characterLevel: number): CastLevels => ({
   characterLevel,
   slotLevel: baseSlotLevel(spell),

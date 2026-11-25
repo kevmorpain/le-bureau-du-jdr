@@ -56,7 +56,7 @@
 </template>
 
 <script lang="ts" setup>
-import { baseSlotLevel } from '~~/shared/rules/spellScaling'
+import { baseSlotLevel, damageRollLevels } from '~~/shared/rules/spellScaling'
 
 // Choix du niveau pour le JET DE DÉGÂTS d'un sort d'attaque. Distinct de `CastSpellModal` :
 // l'emplacement a déjà été dépensé au lancement, donc on ne consomme rien et on propose les
@@ -77,13 +77,7 @@ const open = defineModel<boolean>('open', { default: false })
 
 const { previewAt } = useSpellEffectPreview()
 
-const levels = computed<number[]>(() => {
-  const base = baseSlotLevel(props.spell)
-  const candidates = new Set<number>([base, ...props.ownedLevels])
-  if (props.initialLevel !== undefined) candidates.add(props.initialLevel)
-
-  return [...candidates].filter(level => level >= base).sort((a, b) => a - b)
-})
+const levels = computed(() => damageRollLevels(props.spell, props.ownedLevels, props.initialLevel))
 
 const selected = ref<number>(baseSlotLevel(props.spell))
 

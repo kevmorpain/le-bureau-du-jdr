@@ -92,6 +92,15 @@
       @action="handleAction"
       @set-remaining="handleSetRemaining"
     />
+
+    <SheetSpellDamageWindow
+      v-if="damageSpell"
+      v-model:open="isSpellDamageOpen"
+      :spell="damageSpell.spell"
+      :owned-levels="spellCasting.ownedSlotLevels.value"
+      :cast-level="spellCasting.getCastLevel(damageSpell)"
+      @roll="handleRollSpellDamage"
+    />
   </div>
 </template>
 
@@ -99,6 +108,7 @@
 import type { DsOption } from '~/components/ds/DsSegmented.vue'
 import type { SlotsByType } from '~/composables/character/useCharacterSpellcasting'
 import { useClassResources } from '~/composables/character/useClassResources'
+import type { CharacterSpellWithSpell } from '~/composables/character/useCharacterSpells'
 import { usePlayCardDetails, type PlayActionKey } from '~/composables/character/usePlayCardDetails'
 import { usePlayCards } from '~/composables/character/usePlayCards'
 import { useSpellCasting } from '~/composables/character/useSpellCasting'
@@ -190,6 +200,15 @@ const handleSelect = (key: string) => {
   selectedSlotKey.value = getDefaultSlotKey()
 }
 
+const damageSpell = ref<CharacterSpellWithSpell | null>(null)
+const isSpellDamageOpen = ref(false)
+
+const handleRollSpellDamage = (slotLevel: number) => {
+  if (!damageSpell.value) return
+  spellCasting.rememberCastLevel(damageSpell.value.spellId, slotLevel)
+  spellCasting.rollSpellEffect(damageSpell.value, slotLevel)
+}
+
 const getPool = (featureId: number) => resourceGroups.value.find(group => group.featureIds.includes(featureId))
 
 const handleSetRemaining = async (remaining: number) => {
@@ -214,7 +233,10 @@ const handleAction = (key: PlayActionKey) => {
     else if (key === 'cast-cantrip') spellCasting.castCantrip(characterSpell)
     else if (key === 'cast-arcanum') void spellCasting.castArcanum(characterSpell)
     else if (key === 'cast-ritual') spellCasting.castAsRitual(characterSpell)
-    else if (key === 'spell-damage') spellCasting.rollSpellEffect(characterSpell, spellCasting.getCastLevel(characterSpell))
+    else if (key === 'spell-damage') {
+      damageSpell.value = characterSpell
+      isSpellDamageOpen.value = true
+    }
     return
   }
   if (key === 'attack') rollAttack(card.id)

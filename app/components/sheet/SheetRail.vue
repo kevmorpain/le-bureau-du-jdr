@@ -20,7 +20,12 @@
           </div>
         </div>
 
-        <div class="identity__hp">
+        <button
+          type="button"
+          class="identity__hp"
+          :aria-label="$t(isDying ? 'sheet.rail.open_death_saves' : 'sheet.rail.open_hit_points')"
+          @click="handleOpenVitals"
+        >
           <div class="identity__row">
             <span class="ds-label">{{ $t('ds.hp.label') }}</span>
             <span class="identity__hp-value">
@@ -37,7 +42,7 @@
             :current="characterSheet.currentHp"
             :temp="characterSheet.temporaryHp ?? 0"
           />
-        </div>
+        </button>
 
         <div class="identity__stats">
           <DsShield
@@ -130,6 +135,12 @@
       :ribbon="$t('sheet.rail.effects')"
       class="rail__effects"
     >
+      <button
+        type="button"
+        class="effects__open"
+        :aria-label="$t('sheet.rail.manage_effects')"
+        @click="isEffectsOpen = true"
+      />
       <ul
         v-if="effects.length"
         class="effects"
@@ -160,6 +171,35 @@
         {{ $t('sheet.rail.no_effects') }}
       </p>
     </DsBlock>
+
+    <DsButton
+      variant="secondary"
+      block
+      :label="$t('sheet.rail.rest')"
+      @click="isRestOpen = true"
+    />
+
+    <ClientOnly>
+      <SheetHitPointsWindow
+        v-model:open="isHitPointsOpen"
+        v-model:character-sheet="characterSheet"
+        :initial-mode="hitPointsMode"
+      />
+      <SheetDeathSavesWindow
+        v-model:open="isDeathSavesOpen"
+        v-model:character-sheet="characterSheet"
+        @open-hit-points="handleOpenHitPoints"
+      />
+      <SheetConcentrationWindow v-model:character-sheet="characterSheet" />
+      <SheetRestWindow
+        v-model:open="isRestOpen"
+        v-model:character-sheet="characterSheet"
+      />
+      <SheetEffectsWindow
+        v-model:open="isEffectsOpen"
+        v-model:character-sheet="characterSheet"
+      />
+    </ClientOnly>
   </aside>
 </template>
 
@@ -175,8 +215,25 @@ const { t } = useI18n()
 const {
   characterLevel, mainClass, multiClass, portraitSrc, effectiveMaxHp, armorClass, initiativeBonus, effectiveSpeed,
   abilityModifiers, isConcentrating, concentrationName, concentratingSpellId, temporaryEffects, activeConditions,
-  conditionRounds, exhaustionLevel, spellcastingStats, activeCasterClass,
+  conditionRounds, exhaustionLevel, spellcastingStats, activeCasterClass, isDying, isDead,
 } = useCharacterSheet(characterSheet)
+
+const isHitPointsOpen = ref(false)
+const isDeathSavesOpen = ref(false)
+const isRestOpen = ref(false)
+const isEffectsOpen = ref(false)
+const hitPointsMode = ref<'damage' | 'heal'>('damage')
+
+const handleOpenVitals = () => {
+  if (isDying.value && !isDead.value) isDeathSavesOpen.value = true
+  else handleOpenHitPoints('damage')
+}
+
+const handleOpenHitPoints = (mode: 'damage' | 'heal') => {
+  isDeathSavesOpen.value = false
+  hitPointsMode.value = mode
+  isHitPointsOpen.value = true
+}
 
 const handleInspirationChange = (value: number) => {
   characterSheet.value.inspiration = value > 0
@@ -289,7 +346,12 @@ const effects = computed(() => [
   display: flex;
   flex-direction: column;
   gap: 5px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
 }
+
+.identity__hp:focus-visible { outline: 2px solid var(--color-ds-gold); }
 
 .identity__row {
   display: flex;
@@ -369,9 +431,19 @@ const effects = computed(() => [
 }
 
 .rail__effects {
+  position: relative;
   flex: 1;
   min-height: 0;
 }
+
+.effects__open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.effects__open:focus-visible { outline: 2px solid var(--color-ds-gold); }
 
 .effects {
   display: flex;

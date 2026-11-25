@@ -5,6 +5,7 @@ import { conditionMechanics, exhaustionImpactLines } from '~~/shared/utils/condi
 import { elapseConditionRounds } from '~~/shared/rules/durations'
 import { maxHitPoints } from '~~/shared/rules/hitPoints'
 import { situationLabel } from '~~/shared/rules/rolls'
+import type { DefenseLevel } from '~~/shared/rules/damage'
 
 // ─── Module-level constants ──────────────────────────────────────────────────
 
@@ -12,7 +13,6 @@ export const binaryConditions = allConditions.filter(c => c !== 'exhaustion')
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type DefenseLevel = 'immunity' | 'resistance' | 'vulnerability'
 type DefenseEntry = { key: string, label: string, level: DefenseLevel, temporary?: boolean }
 type SaveStatus = { disadvantage: boolean, autoFail: boolean, reasons: string[] }
 
@@ -260,6 +260,7 @@ export const useCharacterConditions = (
   return {
     activeConditions,
     conditionRounds,
+    setConditionRounds,
     toggleCondition,
     elapseConditionRound,
     concentratingSpellId,

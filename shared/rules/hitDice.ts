@@ -50,3 +50,16 @@ export const recoverHitDice = (
   }
   return (current ?? totals).map(({ die, count }) => ({ die, count: recovered.get(die) ?? count }))
 }
+
+export const remainingHitDice = (current: CurrentHitDie[] | null | undefined, totals: CurrentHitDie[]): CurrentHitDie[] =>
+  totals.map(({ die, count }) => ({ die, count: Math.min(count, current?.find(c => c.die === die)?.count ?? count) }))
+
+export const spendHitDice = (
+  current: CurrentHitDie[] | null | undefined,
+  totals: CurrentHitDie[],
+  spent: readonly { die: string, count: number }[],
+): CurrentHitDie[] =>
+  remainingHitDice(current, totals).map(({ die, count }) => ({
+    die,
+    count: Math.max(0, count - spent.filter(s => s.die === die).reduce((sum, s) => sum + s.count, 0)),
+  }))

@@ -18,6 +18,15 @@ Arcanum, rituel, jets ; partagé avec `MagicSection`), `useWeaponAttacks` (parta
 `useClassResources.setFeatureSpent`. Les emplacements sont ceux que la page fournit (`provide('spellSlots')`), comme
 sur l'ancienne fiche.
 
+Fenêtres de jeu de la nouvelle fiche (`app/components/sheet/Sheet*Window.vue`, ouvertes depuis le rail) : points de
+vie (dégâts par source et par type, soins, PV temporaires), jets contre la mort, jet de concentration, repos (court,
+long, aube, avec le récapitulatif de `useRestRecap`), états et effets ; plus la fenêtre de dégâts d'un sort (depuis le
+tiroir) et le panneau de jets (`SheetRollPanel` : mode, situations, critique, historique, notifications). Leur logique
+est partagée avec l'ancienne fiche : `useHitPointActions` et `useConcentrationCheck` (`HitPointsSection`),
+`useDeathSaves`, `useTemporaryEffectDraft`, `useRollPanel` (`DiceRollerSection`), `useRest`, `damageRollLevels`
+(`RollDamageModal`). Une source de dégâts = un appel à `applyDamage` : un échec aux jets contre la mort et un jet de
+concentration par source (`applyDamageSources`).
+
 La fiche charge le personnage via `GET /api/character_sheets/{id}` (include toutes les relations Drizzle sauf les sorts). Un deep watch persiste les changements via `PUT /api/character_sheets/{id}` (`useAutoSave` : 2 s d'inactivité, 10 s au plus en saisie continue). Les sections qui font leurs propres fetches (inventaire, sorts) ont leurs propres composables.
 
 ---

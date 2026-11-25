@@ -228,9 +228,10 @@
 
 <script lang="ts" setup>
 import type { RollFn } from '~/composables/useDiceRoller'
+import { useHitPointActions } from '~/composables/character/useHitPointActions'
+import type { DamageTypeKey } from '~~/server/db/schema/effects'
 import { damageTypeLabels } from '~~/shared/utils/labels'
 import { hpBaseFromTotal } from '~~/shared/rules/hitPoints'
-import { applyDamage, applyHealing, concentrationSaveDc, gainTemporaryHp } from '~~/shared/rules/damage'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
@@ -239,11 +240,9 @@ const props = defineProps<{
 }>()
 
 const {
-  fullMaxHp, effectiveMaxHp, defenseEntries, isConcentrating, concentrationName, setConcentration, savingThrows,
-  characterLevel, abilityModifiers, hpPerLevelBonus, hitPointState, setHitPointState, isDying, isDead, allEffects,
+  fullMaxHp, effectiveMaxHp, concentrationName, characterLevel, abilityModifiers, hpPerLevelBonus, isDying, isDead,
 } = useCharacterSheet(characterSheet)
-
-const canDodge = computed(() => allEffects.value.some(e => e.type === 'halve_damage_reaction'))
+const { canDodge, defenseFor, damageOf, applyDamage, heal, gainTemporary, concentration } = useHitPointActions(characterSheet)
 
 // On saisit le maximum affiché ; la fiche ne stocke que ce qui reste hors CON et hors bonus par niveau.
 const maxHpInput = computed({
@@ -267,7 +266,7 @@ const hpColor = computed(() => {
 // Mode soin / dégâts
 const mode = ref<'heal' | 'damage' | null>(null)
 const amount = ref('')
-const damageType = ref('none')
+const damageType = ref<DamageTypeKey | 'none'>('none')
 const isTemporary = ref(false)
 const isCritical = ref(false)
 const dodged = ref(false)
@@ -284,115 +283,64 @@ const toggleMode = (m: 'heal' | 'damage') => {
   nextTick(() => inputRef.value?.input?.focus())
 }
 
-// Types de dégâts
 const damageTypeOptions = computed(() => [
   { label: 'Type non spécifié', value: 'none' },
   ...Object.entries(damageTypeLabels).map(([value, label]) => ({ label, value })),
 ])
 
-const activeDefense = computed(() => {
-  if (damageType.value === 'none') return null
-  return defenseEntries.value.find(e => e.key === `dmg:${damageType.value}`)
-    ?? defenseEntries.value.find(e => e.key === 'dmg:all')
-    ?? null
-})
+const activeDefense = computed(() => defenseFor(damageType.value === 'none' ? null : damageType.value))
 
 const resistanceLabel = computed(() => {
   const d = activeDefense.value
   if (!d) return null
-  return { immunity: 'Immunité → 0 dégât', resistance: 'Résistance → dégâts ÷ 2', vulnerability: 'Vulnérabilité → dégâts × 2' }[d.level] ?? null
+  return { immunity: 'Immunité → 0 dégât', resistance: 'Résistance → dégâts ÷ 2', vulnerability: 'Vulnérabilité → dégâts × 2' }[d]
 })
 
 const resistanceColor = computed(() => {
   const d = activeDefense.value
   if (!d) return ''
-  return { immunity: 'text-green-400', resistance: 'text-blue-400', vulnerability: 'text-red-400' }[d.level] ?? ''
+  return { immunity: 'text-green-400', resistance: 'text-blue-400', vulnerability: 'text-red-400' }[d]
 })
 
-// Sauvegarde de concentration
-const showConcentrationCheck = ref(false)
-const concentrationDamage = ref(0)
-const concentrationDC = ref(10)
-
-const conSaveMod = computed(() => savingThrows.value.con?.modifier ?? 0)
+const showConcentrationCheck = computed({
+  get: () => !!concentration.current.value,
+  set: (open: boolean) => {
+    if (!open && concentration.current.value) concentration.dismiss()
+  },
+})
+const concentrationDamage = computed(() => concentration.current.value?.damage ?? 0)
+const concentrationDC = computed(() => concentration.current.value?.dc ?? 10)
+const conSaveMod = concentration.saveModifier
 const rollsEnabled = useRollsEnabled()
 
 const rollConcentrationSave = () => {
-  const result = props.roll?.(
-    `JS Constitution — Concentration (DD ${concentrationDC.value})`,
-    conSaveMod.value,
-    20,
-    1,
-    { d20: { type: 'save', ability: 'con', situations: ['concentration', 'concentration_after_damage'] } },
-  ) ?? 0
-  if (result >= concentrationDC.value) concentrationSuccess()
-  else concentrationFail()
+  if (props.roll) concentration.rollSave(props.roll)
 }
+const concentrationSuccess = () => concentration.succeed()
+const concentrationFail = () => concentration.fail()
 
-const concentrationSuccess = () => {
-  showConcentrationCheck.value = false
-  useToast().add({ title: 'Concentration maintenue', color: 'success' })
-}
-
-const breakConcentration = (reason?: string) => {
-  const name = concentrationName.value
-  setConcentration(null)
-  showConcentrationCheck.value = false
-  useToast().add({
-    title: 'Concentration perdue',
-    description: [name ? `Vous n'êtes plus concentré sur ${name}.` : null, reason].filter(Boolean).join(' ') || undefined,
-    color: 'error',
-  })
-}
-
-const concentrationFail = () => breakConcentration()
-
-// Commit action soins / dégâts
 const commit = () => {
   const raw = parseInt(amount.value) || 0
   if (!raw) {
     mode.value = null
     return
   }
-  const maxHp = effectiveMaxHp.value
 
   if (mode.value === 'heal') {
     if (isTemporary.value) {
-      setHitPointState(gainTemporaryHp(hitPointState.value, raw))
+      gainTemporary(raw)
       showFlash(`+${raw} PV temp`)
     } else {
-      setHitPointState(applyHealing(hitPointState.value, raw, { maxHp }))
+      heal(raw)
       showFlash(`+${raw} PV`)
     }
   } else if (mode.value === 'damage') {
-    // Combat : la résistance et la vulnérabilité s'appliquent après tout autre modificateur de dégâts.
-    let final = dodged.value ? Math.floor(raw / 2) : raw
+    const source = { lines: [{ amount: raw, type: damageType.value === 'none' ? null : damageType.value }], dodged: dodged.value }
+    const final = damageOf(source)
+    applyDamage([source], { critical: isCritical.value })
     const d = activeDefense.value
-    if (d?.level === 'immunity') final = 0
-    else if (d?.level === 'resistance') final = Math.floor(final / 2)
-    else if (d?.level === 'vulnerability') final = final * 2
-
-    const result = applyDamage(hitPointState.value, final, { maxHp, critical: isCritical.value })
-    setHitPointState(result.state)
-
-    const defenseSuffix = d?.level === 'immunity' ? ' (immunité)' : d?.level === 'resistance' ? ' (résistance)' : d?.level === 'vulnerability' ? ' (vulnérabilité)' : ''
-    const suffix = (dodged.value ? ' (esquive)' : '') + defenseSuffix
-    showFlash(`−${final} PV${suffix}`)
-
-    if (result.instantDeath) {
-      useToast().add({ title: 'Mort instantanée', description: 'Les dégâts restants atteignent le maximum de PV.', color: 'error' })
-    } else if (result.deathSaveFailuresAdded > 0) {
-      useToast().add({ title: `${result.deathSaveFailuresAdded} échec${result.deathSaveFailuresAdded > 1 ? 's' : ''} aux jets contre la mort`, color: 'error' })
-    }
-
-    // Inconscient ou mort : la concentration s'arrête d'elle-même ; sinon, un jet de CON.
-    if (isConcentrating.value && (result.droppedToZero || result.instantDeath || result.state.currentHp === 0)) {
-      breakConcentration('Vous êtes tombé à 0 PV.')
-    } else if (isConcentrating.value && final - result.absorbedByTemporary > 0) {
-      concentrationDamage.value = final - result.absorbedByTemporary
-      concentrationDC.value = concentrationSaveDc(concentrationDamage.value)
-      showConcentrationCheck.value = true
-    }
+    const defenseSuffix = d === 'immunity' ? ' (immunité)' : d === 'resistance' ? ' (résistance)' : d === 'vulnerability' ? ' (vulnérabilité)' : ''
+    showFlash(`−${final} PV${dodged.value ? ' (esquive)' : ''}${defenseSuffix}`)
   }
 
   amount.value = ''

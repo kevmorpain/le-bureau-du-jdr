@@ -173,53 +173,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { DiceRoll } from '~/composables/useDiceRoller'
-import { situationLabel, type RollOverride } from '~~/shared/rules/rolls'
+import { situationLabel } from '~~/shared/rules/rolls'
 
-const { toasts, roll, engine, history, rollsEnabled } = useDiceRoller()
-const pending = engine.pending
-const situations = engine.situations
+const {
+  toasts, history, rollsEnabled, pending, situations, modeLabel, toggleSituation, hasPending, pendingLabel, timeOf, replay, copy,
+} = useRollPanel()
 
-const modes: { value: RollOverride, label: string }[] = [
-  { value: 'auto', label: 'Auto' },
-  { value: 'advantage', label: 'Avantage' },
-  { value: 'disadvantage', label: 'Désavantage' },
-  { value: 'normal', label: 'Normal' },
-]
-
-const toggleSituation = (situation: string) => {
-  const selected = pending.value.situations
-  pending.value.situations = selected.includes(situation) ? selected.filter(s => s !== situation) : [...selected, situation]
-}
-
-const hasPending = computed(() => pending.value.override !== 'auto' || pending.value.situations.length > 0 || pending.value.crit)
-
-// Le prochain jet est toujours visible depuis le bouton, même fenêtre fermée.
-const pendingLabel = computed(() => {
-  if (!hasPending.value) return null
-  return [
-    ...(pending.value.override === 'auto' ? [] : [modes.find(m => m.value === pending.value.override)!.label]),
-    ...pending.value.situations.map(situationLabel),
-    ...(pending.value.crit ? ['Critique'] : []),
-  ].join(' · ')
-})
-
-const timeOf = (entry: DiceRoll) =>
-  new Date(entry.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-
-const replay = (entry: DiceRoll) => {
-  const { label, modifier, sides, count, options } = entry.replay
-  roll(label, modifier, sides, count, options)
-}
-
-const copy = async (entry: DiceRoll) => {
-  try {
-    await navigator.clipboard.writeText(rollText(entry))
-    useToast().add({ title: 'Jet copié', color: 'success' })
-  } catch {
-    useToast().add({ title: 'Copie impossible', color: 'error' })
-  }
-}
+const modes = ROLL_OVERRIDES.map(value => ({ value, label: modeLabel(value) }))
 </script>
 
 <style scoped>

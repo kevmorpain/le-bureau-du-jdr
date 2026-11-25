@@ -130,7 +130,7 @@
 <script lang="ts" setup>
 import { idlePending, rollEngineKey } from '~/composables/character/useCharacterRolls'
 import { useCombatTracker } from '~/composables/character/useCombatTracker'
-import { useUnconsciousEndings } from '~/composables/character/useUnconsciousEndings'
+import { useSheetUnconsciousEndings } from '~/composables/character/useUnconsciousEndings'
 import { resolvePreferences } from '~~/shared/rules/preferences'
 
 definePageMeta({
@@ -146,11 +146,8 @@ if (resolvePreferences(characterSheet.value.preferences, characterSheet.value.ow
   await navigateTo(getNewSheetPath(charId.value), { replace: true })
 }
 
-const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine, featuresEndingWhenUnconscious, isDying, activeConditions } = useCharacterSheet(characterSheet)
-useUnconsciousEndings(characterSheet, {
-  unconscious: computed(() => isDying.value || activeConditions.value.includes('unconscious')),
-  ending: featuresEndingWhenUnconscious,
-})
+const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine } = useCharacterSheet(characterSheet)
+useSheetUnconsciousEndings(characterSheet)
 provide('spellSlots', spellSlots)
 provide(rollEngineKey, rollEngine)
 const { roll } = useDiceRoller(rollEngine)
@@ -158,21 +155,7 @@ const combatTracker = useCombatTracker(characterSheet.value.id)
 
 const { reconcile } = useSheetReconciliation(charId, [refreshSheet, refreshInventory, refreshSpells])
 
-// Le repos recharge aussi les charges d'objets (recharge complète, côté serveur).
-// L'inventaire est un useFetch séparé → on le rafraîchit après chaque repos.
-const { shortRest: _shortRest, longRest: _longRest, dawn: _dawn, isResting } = useRest(characterSheet, spellSlots, maxHitPointsFor)
-const shortRest = async (...args: Parameters<typeof _shortRest>) => {
-  await _shortRest(...args)
-  await refreshInventory()
-}
-const longRest = async (fedAndWatered?: boolean) => {
-  await _longRest(fedAndWatered)
-  await refreshInventory()
-}
-const dawn = async () => {
-  await _dawn()
-  await refreshInventory()
-}
+const { shortRest, longRest, dawn, isResting } = useRest(characterSheet, spellSlots, maxHitPointsFor, { onRested: refreshInventory })
 
 const combatMode = ref(false)
 

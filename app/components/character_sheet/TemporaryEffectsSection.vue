@@ -201,54 +201,27 @@
 </template>
 
 <script lang="ts" setup>
-import type { Effect } from '~~/server/db/schema/effects'
+import { useTemporaryEffectDraft } from '~/composables/character/useTemporaryEffectDraft'
 import { MAX_COUNTED_ROUNDS } from '~~/shared/rules/durations'
-import { TEMPORARY_EFFECT_TYPES, temporaryEffectSchema, type TemporaryEffect } from '~~/shared/utils/temporary_effects'
+import { TEMPORARY_EFFECT_TYPES, type TemporaryEffect } from '~~/shared/utils/temporary_effects'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
 }>()
 
-const {
-  temporaryEffects,
-  saveTemporaryEffect,
-  toggleTemporaryEffect,
-  removeTemporaryEffect,
-} = useCharacterSheet(toRef(props, 'characterSheet'))
-
-const draftSchema = temporaryEffectSchema.omit({ id: true })
-
-type Draft = Omit<TemporaryEffect, 'id' | 'description' | 'effects'> & {
-  id?: number
-  description: string
-  effects: Effect[]
-  // Champs de saisie du décompte : `''` quand l'input est vidé.
-  rounds: number | ''
-  remaining: number | ''
-}
+const characterSheetRef = toRef(props, 'characterSheet')
+const { temporaryEffects, toggleTemporaryEffect, removeTemporaryEffect } = useCharacterSheet(characterSheetRef)
+const { draft, parsedDraft, resetDraft, editDraft, submitDraft } = useTemporaryEffectDraft(characterSheetRef)
 
 const modalOpen = ref(false)
-const emptyDraft = (): Draft => ({ name: '', description: '', active: true, effects: [], rounds: '', remaining: '' })
-const draft = ref<Draft>(emptyDraft())
-
-const asRounds = (v: number | '') => (typeof v === 'number' && v > 0 ? v : undefined)
-
-// Même schéma que le PUT de la fiche : une entrée invalide ferait échouer toute la sauvegarde.
-const draftEntry = computed(() => {
-  const { rounds, remaining, ...entry } = draft.value
-  const total = asRounds(rounds)
-  return { ...entry, countdown: total ? { rounds: total, remaining: typeof remaining === 'number' ? remaining : total } : undefined }
-})
-const parsedDraft = computed(() => draftSchema.safeParse(draftEntry.value))
 
 const openCreate = () => {
-  draft.value = emptyDraft()
+  resetDraft()
   modalOpen.value = true
 }
 
 const openEdit = (entry: TemporaryEffect) => {
-  // Copie profonde : annuler l'édition ne doit pas muter la fiche.
-  draft.value = { ...emptyDraft(), ...JSON.parse(JSON.stringify(entry)), rounds: entry.countdown?.rounds ?? '', remaining: entry.countdown?.remaining ?? '' }
+  editDraft(entry)
   modalOpen.value = true
 }
 
@@ -257,8 +230,6 @@ const closeModal = () => {
 }
 
 const submit = () => {
-  if (!parsedDraft.value.success) return
-  saveTemporaryEffect({ ...parsedDraft.value.data, id: draft.value.id })
-  closeModal()
+  if (submitDraft()) closeModal()
 }
 </script>
