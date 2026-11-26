@@ -95,8 +95,6 @@
       :remaining="concentrationRounds"
     />
 
-    <SheetTurnBlock :character-id="characterSheet.id" />
-
     <DsBlock
       v-if="spellcastingStats || slotRows.length"
       :ribbon="activeCasterClass ? $t('sheet.rail.magic_of', { name: activeCasterClass.className }) : $t('sheet.rail.magic')"

@@ -5,7 +5,6 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { useState, useToast } from '#imports'
 import SheetCombatStartWindow from '../../app/components/sheet/SheetCombatStartWindow.vue'
 import SheetCombatBar from '../../app/components/sheet/SheetCombatBar.vue'
-import SheetTurnBlock from '../../app/components/sheet/SheetTurnBlock.vue'
 import SheetRail from '../../app/components/sheet/SheetRail.vue'
 import { useCombatTracker } from '../../app/composables/character/useCombatTracker'
 import { barbareFeatures } from '../../server/db/seeds/data/barbare'
@@ -231,11 +230,12 @@ describe('bandeau de combat', () => {
   })
 })
 
-describe('bloc « Ce tour »', () => {
+describe('« Ce tour » dans le bandeau', () => {
   it('une case touchée marque l\'action dépensée', async () => {
     const cs = barbarian()
     const tracker = useCombatTracker(cs.id)
-    await mount(SheetTurnBlock, { characterId: cs.id })
+    tracker.start({ total: 17, natural: 15 })
+    await mount(SheetCombatBar, { characterSheet: cs })
 
     const bonus = buttonOf('Action bonus disponible')!
     expect(bonus.getAttribute('aria-pressed')).toBe('false')
