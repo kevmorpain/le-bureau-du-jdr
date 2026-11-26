@@ -8,7 +8,7 @@
       :title="`${lapseQuestion.map(f => f.name).join(', ')} : toujours en cours ?`"
       description="Depuis votre tour précédent, avez-vous attaqué une créature hostile ou subi des dégâts ?"
       :actions="[
-        { label: 'Oui, elle continue', color: 'neutral', variant: 'outline', onClick: dismissLapse },
+        { label: 'Oui, elle continue', color: 'neutral', variant: 'outline', onClick: keepLapsed },
         { label: 'Non, elle prend fin', color: 'warning', onClick: endLapsed },
       ]"
     />
@@ -61,7 +61,7 @@
             ? 'line-through opacity-40 border-current/20 bg-current/5'
             : 'border-current hover:opacity-80'"
           :style="{ color: action.color, borderColor: usedActions[action.key] ? `${action.color}33` : action.color }"
-          @click="usedActions[action.key] = !usedActions[action.key]"
+          @click="toggleAction(action.key)"
         >
           <ActionTypeIcon
             :type="action.key"
@@ -85,13 +85,13 @@
         <div class="flex gap-1">
           <button
             class="flex-1 py-1 text-xs rounded border border-default hover:bg-elevated transition-colors"
-            @click="moveBy(1.5)"
+            @click="moveBy(1, effectiveSpeed)"
           >
             +1,5m
           </button>
           <button
             class="flex-1 py-1 text-xs rounded border border-default hover:bg-elevated transition-colors"
-            @click="moveBy(-1.5)"
+            @click="moveBy(-1, effectiveSpeed)"
           >
             −1,5m
           </button>
@@ -334,7 +334,7 @@
 import { weaponPropertyLabels } from '~~/shared/utils/item'
 import { slotDamageDiceCount, type SlotDamage } from '~~/shared/rules/classResources'
 import { useClassResources } from '~/composables/character/useClassResources'
-import { useCombatTracker } from '~/composables/character/useCombatTracker'
+import { useCombatTurn } from '~/composables/character/useCombatTurn'
 import { rollEngineKey } from '~/composables/character/useCharacterRolls'
 import { advantageEligibility } from '~~/shared/rules/rolls'
 import type { RollFn } from '~/composables/useDiceRoller'
@@ -354,7 +354,7 @@ const bonusBreakdown = (parts: { label: string, amount: number }[]) =>
   `dont ${parts.map(p => `${formatModifier(p.amount)} ${p.label}`).join(', ')}`
 
 const csRef = toRef(props, 'characterSheet')
-const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, featuresLapsingWithoutCombat, elapseDurations, setRangeChoice, setThrowing, spendAmmunition } = useCharacterSheet(csRef)
+const { equippedWeaponStats, resolvedFeatures, effectiveSpeed, characterSpells, classTraits, resourceGroups, setRangeChoice, setThrowing, spendAmmunition } = useCharacterSheet(csRef)
 const toast = useToast()
 
 const slots = inject<Ref<{ spellcasting: Record<number, { max: number, current: number, created?: number }>, pact_magic: Record<number, { max: number, current: number }> }>>('spellSlots')
@@ -375,37 +375,10 @@ const actionTypes = [
   { key: 'reaction' as const, label: 'Réaction', color: '#f472b6' },
 ]
 
-const usedActions = ref({ action: false, bonus_action: false, reaction: false })
-
-const { initiative, round, nextRound, previousRound } = useCombatTracker(props.characterSheet.id)
-
-// Chaque round qui passe fait aussi avancer les durées des sorts, effets et états suivis.
-const advanceRound = () => {
-  nextRound()
-  elapseDurations()
-}
-
-// La fiche ne sait ni qui est hostile ni ce qui a été frappé : c'est au joueur de dire si la capacité (Rage) a été entretenue.
-const lapseAsked = ref<number[]>([])
-const lapseQuestion = computed(() => featuresLapsingWithoutCombat.value.filter(f => lapseAsked.value.includes(f.id)))
-const dismissLapse = () => {
-  lapseAsked.value = []
-}
-const endLapsed = async () => {
-  const lapsed = lapseQuestion.value
-  lapseAsked.value = []
-  for (const feature of lapsed) await setActive(feature.id, false, undefined)
-}
-
-const newTurn = () => {
-  usedActions.value = { action: false, bonus_action: false, reaction: false }
-  movementUsed.value = 0
-  advanceRound()
-  for (const feature of resolvedFeatures.value) {
-    if (feature.active && feature.meta?.endsOnNewTurn) setActive(feature.id, false, undefined)
-  }
-  lapseAsked.value = featuresLapsingWithoutCombat.value.map(f => f.id)
-}
+const {
+  initiative, round, previousRound, advanceRound, usedActions, toggleAction, movementUsed, moveBy, newTurn,
+  lapseQuestion, keepLapsed, endLapsed,
+} = useCombatTurn(csRef, { slots })
 
 // Dés qui dépendent de l'avantage (Attaque sournoise) : le mode du dernier jet d'attaque dit si la condition est remplie.
 const rollEngine = inject(rollEngineKey, null)
@@ -417,17 +390,12 @@ const ELIGIBILITY = {
 const extraDiceStatus = (dice: { needsAdvantage?: boolean }) =>
   dice.needsAdvantage ? ELIGIBILITY[advantageEligibility(rollEngine?.pending.value.attackMode ?? null)] : null
 
-const movementUsed = ref(0)
 const remainingMovement = computed(() => Math.max(0, effectiveSpeed.value - movementUsed.value))
 const movementPercent = computed(() =>
   effectiveSpeed.value > 0
     ? Math.min(100, (movementUsed.value / effectiveSpeed.value) * 100)
     : 0,
 )
-
-const moveBy = (delta: number) => {
-  movementUsed.value = Math.max(0, Math.min(effectiveSpeed.value * 2, movementUsed.value + delta))
-}
 
 // Capacités triées par type d'action
 const featuresByActionType = computed(() => {

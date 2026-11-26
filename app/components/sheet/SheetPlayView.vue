@@ -1,6 +1,11 @@
 <template>
   <div class="play">
     <section class="play__main">
+      <SheetCombatBar
+        v-if="isInCombat"
+        :character-sheet="characterSheet"
+      />
+
       <DsCategoryTabs
         v-model="kind"
         :options="kindOptions"
@@ -108,6 +113,7 @@
 import type { DsOption } from '~/components/ds/DsSegmented.vue'
 import type { SlotsByType } from '~/composables/character/useCharacterSpellcasting'
 import { useClassResources } from '~/composables/character/useClassResources'
+import { useCombatTracker } from '~/composables/character/useCombatTracker'
 import type { CharacterSpellWithSpell } from '~/composables/character/useCharacterSpells'
 import { usePlayCardDetails, type PlayActionKey } from '~/composables/character/usePlayCardDetails'
 import { usePlayCards } from '~/composables/character/usePlayCards'
@@ -139,6 +145,7 @@ const { getCardFacts, getCardUsesLabel, getDetail, getActions } = usePlayCardDet
 const { roll } = useDiceRoller()
 const { rollAttack, rollDamage, rollOffhandDamage } = useWeaponAttacks({ ...sheet, roll })
 const { setFeatureSpent, setActive } = useClassResources(characterSheetRef, spellSlots)
+const { isActive: isInCombat } = useCombatTracker(characterSheet.id)
 
 const kind = ref<PlayCardKind | 'all'>('all')
 const cost = ref<ActionCost | 'all'>('all')

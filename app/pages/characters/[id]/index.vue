@@ -128,8 +128,8 @@
 </template>
 
 <script lang="ts" setup>
-import { idlePending, rollEngineKey } from '~/composables/character/useCharacterRolls'
-import { useCombatTracker } from '~/composables/character/useCombatTracker'
+import { rollEngineKey } from '~/composables/character/useCharacterRolls'
+import { useCombatTurn } from '~/composables/character/useCombatTurn'
 import { useSheetUnconsciousEndings } from '~/composables/character/useUnconsciousEndings'
 import { resolvePreferences } from '~~/shared/rules/preferences'
 
@@ -146,26 +146,21 @@ if (resolvePreferences(characterSheet.value.preferences, characterSheet.value.ow
   await navigateTo(getNewSheetPath(charId.value), { replace: true })
 }
 
-const { allCharacterFeatures, characterSpells, initiativeBonus, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine } = useCharacterSheet(characterSheet)
+const { allCharacterFeatures, characterSpells, spellSlots, maxHitPointsFor, refreshInventory, refreshSpells, resourceGroups, rollEngine } = useCharacterSheet(characterSheet)
 useSheetUnconsciousEndings(characterSheet)
 provide('spellSlots', spellSlots)
 provide(rollEngineKey, rollEngine)
 const { roll } = useDiceRoller(rollEngine)
-const combatTracker = useCombatTracker(characterSheet.value.id)
 
 const { reconcile } = useSheetReconciliation(charId, [refreshSheet, refreshInventory, refreshSpells])
 
 const { shortRest, longRest, dawn, isResting } = useRest(characterSheet, spellSlots, maxHitPointsFor, { onRested: refreshInventory })
 
-const combatMode = ref(false)
+const { isActive: combatMode, rollInitiative, startCombat, endCombat } = useCombatTurn(characterSheet, { engine: rollEngine, slots: spellSlots })
 
 const toggleCombat = () => {
-  combatMode.value = !combatMode.value
-  rollEngine.pending.value = idlePending()
-  combatTracker.reset()
-  if (combatMode.value) {
-    roll('Initiative', initiativeBonus.value, 20, 1, { d20: { type: 'initiative' } })
-  }
+  if (combatMode.value) endCombat()
+  else startCombat(rollInitiative())
 }
 
 // Badges pour les sections collapsibles

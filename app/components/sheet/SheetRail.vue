@@ -95,6 +95,8 @@
       :remaining="concentrationRounds"
     />
 
+    <SheetTurnBlock :character-id="characterSheet.id" />
+
     <DsBlock
       v-if="spellcastingStats || slotRows.length"
       :ribbon="activeCasterClass ? $t('sheet.rail.magic_of', { name: activeCasterClass.className }) : $t('sheet.rail.magic')"
@@ -172,12 +174,18 @@
       </p>
     </DsBlock>
 
-    <DsButton
-      variant="secondary"
-      block
-      :label="$t('sheet.rail.rest')"
-      @click="isRestOpen = true"
-    />
+    <div class="rail__actions">
+      <DsButton
+        variant="secondary"
+        :label="$t('sheet.rail.rest')"
+        @click="isRestOpen = true"
+      />
+      <DsButton
+        :variant="isInCombat ? 'primary' : 'secondary'"
+        :label="isInCombat ? $t('sheet.rail.end_combat') : $t('sheet.rail.combat')"
+        @click="handleToggleCombat"
+      />
+    </div>
 
     <ClientOnly>
       <SheetHitPointsWindow
@@ -199,6 +207,10 @@
         v-model:open="isEffectsOpen"
         v-model:character-sheet="characterSheet"
       />
+      <SheetCombatStartWindow
+        v-model:open="isCombatStartOpen"
+        v-model:character-sheet="characterSheet"
+      />
     </ClientOnly>
   </aside>
 </template>
@@ -206,6 +218,7 @@
 <script lang="ts" setup>
 import { ABILITY_KEYS } from '~~/shared/rules/abilities'
 import { conditionLabels } from '~~/shared/utils/labels'
+import { useCombatTurn } from '~/composables/character/useCombatTurn'
 import type { SlotState, SlotsByType } from '~/composables/character/useCharacterSpellcasting'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
@@ -222,6 +235,7 @@ const isHitPointsOpen = ref(false)
 const isDeathSavesOpen = ref(false)
 const isRestOpen = ref(false)
 const isEffectsOpen = ref(false)
+const isCombatStartOpen = ref(false)
 const hitPointsMode = ref<'damage' | 'heal'>('damage')
 
 const handleOpenVitals = () => {
@@ -233,6 +247,13 @@ const handleOpenHitPoints = (mode: 'damage' | 'heal') => {
   isDeathSavesOpen.value = false
   hitPointsMode.value = mode
   isHitPointsOpen.value = true
+}
+
+const { isActive: isInCombat, endCombat } = useCombatTurn(characterSheet)
+
+const handleToggleCombat = () => {
+  if (isInCombat.value) endCombat()
+  else isCombatStartOpen.value = true
 }
 
 const handleInspirationChange = (value: number) => {
@@ -429,6 +450,14 @@ const effects = computed(() => [
 .magic__slots {
   margin-top: 6px;
 }
+
+.rail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rail__actions > * { flex: 1 1 auto; }
 
 .rail__effects {
   position: relative;
