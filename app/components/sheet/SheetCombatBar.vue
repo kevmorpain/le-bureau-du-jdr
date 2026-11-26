@@ -75,7 +75,13 @@
                 >
                   <i :style="{ width: `${movementPercent}%` }" />
                 </span>
-                <span class="combat__distance">{{ $t('sheet.combat.movement_value', { used: formatNumber(movementUsed), speed: formatNumber(effectiveSpeed) }) }}</span>
+                <span class="combat__distance">
+                  <span>{{ $t('sheet.combat.movement_value', { used: formatNumber(movementUsed), speed: formatNumber(effectiveSpeed) }) }}</span>
+                  <span
+                    class="combat__distance-sizer"
+                    aria-hidden="true"
+                  >{{ $t('sheet.combat.movement_value', { used: formatNumber(widestMovement), speed: formatNumber(effectiveSpeed) }) }}</span>
+                </span>
                 <DsCornerButton
                   :label="$t('sheet.combat.move_less')"
                   @click="moveBy(-1, effectiveSpeed)"
@@ -148,6 +154,9 @@ const movementPercent = computed(() =>
   effectiveSpeed.value > 0 ? Math.min(100, (movementUsed.value / effectiveSpeed.value) * 100) : 0)
 
 const formatNumber = (n: number) => new Intl.NumberFormat('fr-FR').format(n)
+
+// Reserves the width of the longest value (a decimal just under the Dash cap) so the buttons beside it stay put.
+const widestMovement = computed(() => Math.max(0, effectiveSpeed.value * 2 - 0.5))
 
 const turnActions = computed(() => TURN_ACTIONS.map(key => ({
   key,
@@ -259,10 +268,17 @@ const handleEnd = async () => {
 }
 
 .combat__distance {
+  display: inline-grid;
+  justify-items: end;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   color: var(--color-ds-mute);
 }
+
+.combat__distance > * { grid-area: 1 / 1; }
+
+.combat__distance-sizer { visibility: hidden; }
 
 .combat__note,
 .combat__lapse {
