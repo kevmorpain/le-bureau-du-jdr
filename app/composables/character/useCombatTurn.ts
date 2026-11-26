@@ -10,10 +10,10 @@ export const useCombatTurn = (characterSheet: Ref<CharacterSheet>, options: { en
   const { setActive } = useClassResources(characterSheet, options.slots ?? inject<Ref<SlotsByType> | undefined>('spellSlots', undefined))
   const { roll, engine, history, rollsEnabled } = useDiceRoller(options.engine)
 
-  const rollInitiative = (): InitiativeRecord | null => {
+  const rollInitiative = ({ silent = false } = {}): InitiativeRecord | null => {
     engine.pending.value = idlePending()
     if (!rollsEnabled.value) return null
-    roll('Initiative', initiativeBonus.value, 20, 1, { d20: { type: 'initiative' } })
+    roll('Initiative', initiativeBonus.value, 20, 1, { d20: { type: 'initiative' }, silent })
     const entry = history.entries.value[0]!
     return { total: entry.result, natural: entry.natural }
   }
@@ -29,9 +29,9 @@ export const useCombatTurn = (characterSheet: Ref<CharacterSheet>, options: { en
   }
 
   // Chaque round qui passe fait aussi avancer les durées des sorts, effets et états suivis.
-  const advanceRound = () => {
+  const advanceRound = ({ announce = true } = {}) => {
     tracker.nextRound()
-    elapseDurations()
+    return elapseDurations({ announce })
   }
 
   // La fiche ne sait ni qui est hostile ni ce qui a été frappé : c'est au joueur de dire si la capacité (Rage) a été entretenue.
@@ -47,13 +47,14 @@ export const useCombatTurn = (characterSheet: Ref<CharacterSheet>, options: { en
     for (const feature of lapsed) await setActive(feature.id, false, undefined)
   }
 
-  const newTurn = () => {
+  const newTurn = ({ announce = true } = {}) => {
     tracker.resetTurn()
-    advanceRound()
+    const elapsed = advanceRound({ announce })
     for (const feature of resolvedFeatures.value) {
       if (feature.active && feature.meta?.endsOnNewTurn) setActive(feature.id, false, undefined)
     }
     tracker.lapseAsked.value = featuresLapsingWithoutCombat.value.map(f => f.id)
+    return elapsed
   }
 
   return { ...tracker, rollInitiative, startCombat, endCombat, advanceRound, newTurn, lapseQuestion, keepLapsed, endLapsed }

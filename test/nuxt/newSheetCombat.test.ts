@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
+import { useState, useToast } from '#imports'
 import SheetCombatStartWindow from '../../app/components/sheet/SheetCombatStartWindow.vue'
 import SheetCombatBar from '../../app/components/sheet/SheetCombatBar.vue'
 import SheetTurnBlock from '../../app/components/sheet/SheetTurnBlock.vue'
@@ -49,6 +50,8 @@ const mounted: { unmount: () => void }[] = []
 afterEach(() => {
   mounted.splice(0).forEach(w => w.unmount())
   localStorage.clear()
+  useState('dice-toasts').value = []
+  useToast().clear()
   vi.restoreAllMocks()
 })
 
@@ -82,6 +85,7 @@ describe('fenêtre « Début du combat »', () => {
     expect(dialog()!.textContent).toContain('Initiative · d20 +2')
     expect(dialog()!.querySelector('[role="status"]')!.textContent).toBe('17')
     expect(dialog()!.textContent).toContain('Jet : 15 +2')
+    expect(useState('dice-toasts').value).toEqual([])
 
     await click('Commencer le combat')
     await nextTick()
@@ -155,6 +159,28 @@ describe('bandeau de combat', () => {
     expect(tracker.usedActions.value).toEqual({ action: false, bonus_action: false, reaction: false })
     expect(body().textContent).toContain('0 / 9 m')
     expect(body().querySelector('[role="status"]')!.textContent).toContain('Round 2 : actions et déplacement remis à zéro')
+  })
+
+  it('le compte rendu détaille les durées décomptées, sans notification', async () => {
+    const cs = barbarian()
+    cs.temporaryEffects = [
+      { id: 1, name: 'Bénédiction', active: true, effects: [], countdown: { rounds: 10, remaining: 3 } },
+      { id: 2, name: 'Maléfice', active: true, effects: [], countdown: { rounds: 10, remaining: 1 } },
+      { id: 3, name: 'Armure du mage', active: true, effects: [], durationLabel: '8 heures' },
+    ]
+    startCombat(cs)
+    await mount(SheetCombatBar, { characterSheet: cs })
+
+    await click('Nouveau tour')
+    await tick()
+    expect(body().querySelector('[role="status"]')!.textContent).toContain('durées décomptées d\'un round (Bénédiction 3 → 2, Maléfice prend fin).')
+    expect(useToast().toasts.value).toEqual([])
+
+    await click('Round suivant')
+    await tick()
+    expect(barValue('Round')).toBe('3')
+    expect(body().querySelector('[role="status"]')!.textContent).toContain('Round 3 : durées décomptées d\'un round (Bénédiction 2 → 1).')
+    expect(useToast().toasts.value).toEqual([])
   })
 
   it('le déplacement va jusqu\'au double de la vitesse (Foncer) et pas sous zéro', async () => {

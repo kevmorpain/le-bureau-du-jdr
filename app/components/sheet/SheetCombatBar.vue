@@ -20,7 +20,7 @@
           <span class="ds-number combat__value">{{ round }}</span>
           <DsCornerButton
             :label="$t('sheet.combat.next_round')"
-            @click="advanceRound"
+            @click="handleNextRound"
           >+</DsCornerButton>
         </span>
 
@@ -93,6 +93,7 @@
 
 <script lang="ts" setup>
 import { useCombatTurn } from '~/composables/character/useCombatTurn'
+import type { ElapsedDuration } from '~~/shared/rules/durations'
 
 const { characterSheet } = defineProps<{ characterSheet: CharacterSheet }>()
 const characterSheetRef = toRef(() => characterSheet)
@@ -112,9 +113,21 @@ const formatNumber = (n: number) => new Intl.NumberFormat('fr-FR').format(n)
 
 const lapsingNames = computed(() => lapseQuestion.value.map(f => f.name).join(', '))
 
+const describeDurations = (elapsed: ElapsedDuration[]) => elapsed
+  .map(d => (d.to > 0 ? t('sheet.combat.duration_tick', d) : t('sheet.combat.duration_end', { name: d.name })))
+  .join(', ')
+
+const getRoundNote = (key: 'turn' | 'round', elapsed: ElapsedDuration[]) => {
+  const durations = describeDurations(elapsed)
+  return t(`sheet.combat.${key}_note${durations ? '_durations' : ''}`, { round: round.value, durations })
+}
+
 const handleNewTurn = () => {
-  newTurn()
-  note.value = t('sheet.combat.turn_note', { round: round.value })
+  note.value = getRoundNote('turn', newTurn({ announce: false }))
+}
+
+const handleNextRound = () => {
+  note.value = getRoundNote('round', advanceRound({ announce: false }))
 }
 
 const handleKeep = () => {

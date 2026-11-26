@@ -8,6 +8,8 @@ export interface RollOptions {
   d20?: D20Kind
   // Dégâts d'une attaque : les dés doublent sur un critique (`weaponDie` : dé de l'arme, que Critique brutal complète).
   damage?: { weaponDie?: { melee: boolean } }
+  // The caller shows the result itself: the roll joins the history without a toast.
+  silent?: boolean
 }
 
 export type RollFn = (label: string, modifier: number, sides?: number, count?: number, options?: RollOptions) => number
@@ -114,7 +116,7 @@ export const useDiceRoller = (provided?: RollEngine) => {
   }
 
   // Jets désactivés : ni dé, ni toast, ni état touché. Un appelant qui décide d'après le résultat doit proposer une saisie à la place.
-  const roll: RollFn = (label, modifier, sides = 20, count = 1, options = {}) => {
+  const roll: RollFn = (label, modifier, sides = 20, count = 1, { silent, ...options } = {}) => {
     if (!rollsEnabled.value) return 0
     const at = Date.now()
     const base = { id: at + (rollCounter++ % 1000) / 1000, at, label, modifier, replay: { label, modifier, sides, count, options } }
@@ -123,6 +125,7 @@ export const useDiceRoller = (provided?: RollEngine) => {
       : rollDiceSum(base, sides, count, options.damage)
 
     history.push(entry)
+    if (silent) return entry.result
     toasts.value = [...toasts.value.slice(-4), entry]
     setTimeout(() => {
       toasts.value = toasts.value.filter(t => t.id !== entry.id)

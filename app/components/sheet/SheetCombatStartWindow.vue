@@ -87,7 +87,7 @@ const handleOpen = () => {
   isStarted = false
   isManual.value = false
   natural.value = null
-  rolled.value = rollsEnabled.value ? rollInitiative() : null
+  rolled.value = rollsEnabled.value ? rollInitiative({ silent: true }) : null
 }
 
 watch(open, (isOpen) => {
@@ -102,7 +102,7 @@ onMounted(() => {
 
 const handleToggleManual = () => {
   isManual.value = !isManual.value
-  if (!isManual.value) rolled.value = rollInitiative()
+  if (!isManual.value) rolled.value = rollInitiative({ silent: true })
 }
 
 const handleStart = () => {
