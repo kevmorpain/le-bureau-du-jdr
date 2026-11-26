@@ -1161,6 +1161,7 @@
       "die_n": "Dé {n}",
       "die_result": "Résultat du dé {n}",
       "rolls": "Jets : {rolls} = {total} PV",
+      "recharge_roll": "Charges rendues : {item} ({dice})",
       "enter_manually": "Saisir les jets à la main",
       "use_app": "Lancer les dés dans l'appli",
       "fed_and_watered": "Le personnage a mangé et bu : l'épuisement passe du niveau {from} au niveau {to}",

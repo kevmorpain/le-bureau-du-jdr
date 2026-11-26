@@ -53,7 +53,8 @@ export const useHitPointActions = (characterSheet: Ref<CharacterSheet>) => {
     if (isConcentrating.value && result.state.currentHp === 0) {
       concentration.breakConcentration(t('hit_points.concentration.dropped'))
     } else if (isConcentrating.value) {
-      concentration.enqueue(result.sources.map((source, index) => damageOf(sources[index]!) - source.absorbedByTemporary))
+      // Damage absorbed by temporary HP still calls for the save, and counts in its DC (D39).
+      concentration.enqueue(result.sources.map((_, index) => damageOf(sources[index]!)))
     }
     return result
   }
