@@ -495,6 +495,7 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
     activeConditions: conditions.activeConditions,
     toggleCondition: conditions.toggleCondition,
     conditionRounds: conditions.conditionRounds,
+    setConditionRounds: conditions.setConditionRounds,
     concentratingSpellId: conditions.concentratingSpellId,
     concentratingOn: conditions.concentratingOn,
     isConcentrating: conditions.isConcentrating,

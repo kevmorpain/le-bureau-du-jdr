@@ -111,43 +111,33 @@
 </template>
 
 <script lang="ts" setup>
-import { DEATH_SAVE_LIMIT, rollDeathSave } from '~~/shared/rules/damage'
+import type { RollFn } from '~/composables/useDiceRoller'
+import { useDeathSaves } from '~/composables/character/useDeathSaves'
+import { DEATH_SAVE_LIMIT } from '~~/shared/rules/damage'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
-  roll?: (label: string, modifier: number, sides?: number, count?: number) => number
+  roll?: RollFn
 }>()
 
-const { hitPointState, setHitPointState, isDead, isDying, isStable } = useCharacterSheet(toRef(props, 'characterSheet'))
-
-const successes = computed(() => hitPointState.value.deathSaveSuccesses)
-const failures = computed(() => hitPointState.value.deathSaveFailures)
+const { successes, failures, isDead, isDying, isStable, applyNatural, rollSave: rollDeathSave } = useDeathSaves(toRef(props, 'characterSheet'))
 
 const toggleSave = (type: 'success' | 'failure', n: number) => {
-  const key = type === 'success' ? 'deathSaveSuccesses' : 'deathSaveFailures'
-  const current = hitPointState.value[key]
-  setHitPointState({ ...hitPointState.value, [key]: current === n ? n - 1 : n })
+  const counter = type === 'success' ? successes : failures
+  counter.value = counter.value === n ? n - 1 : n
 }
-
-const toaster = useToast()
 
 const rollsEnabled = useRollsEnabled()
 const enteredNatural = ref<number | null>(null)
 const validNatural = computed(() => Number.isInteger(enteredNatural.value) && enteredNatural.value! >= 1 && enteredNatural.value! <= 20)
 
-const rollSave = () => applySave(props.roll?.('Jet de mort', 0) ?? 0)
-
-// Un d20 saisi à la table suit la même règle qu'un jet de l'application (20 : 1 PV, 1 : deux échecs).
-const enterSave = () => {
-  if (!validNatural.value) return
-  applySave(enteredNatural.value!)
-  enteredNatural.value = null
+const rollSave = () => {
+  if (props.roll) rollDeathSave(props.roll)
 }
 
-const applySave = (natural: number) => {
-  const { state, outcome } = rollDeathSave(hitPointState.value, natural)
-  setHitPointState(state)
-  if (outcome === 'recovered') toaster.add({ title: '20 naturel — récupéré à 1 PV !', color: 'success' })
-  else if (outcome === 'two-failures') toaster.add({ title: '1 naturel — 2 échecs !', color: 'error' })
+const enterSave = () => {
+  if (!validNatural.value) return
+  applyNatural(enteredNatural.value!)
+  enteredNatural.value = null
 }
 </script>

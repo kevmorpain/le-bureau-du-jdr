@@ -959,7 +959,7 @@
       },
       "actions": {
         "cast": "Lancer",
-        "cast_ritual": "Lancer en rituel",
+        "cast_ritual": "Rituel",
         "no_slot": "Sans emplacement",
         "arcanum": "Arcanum mystique",
         "attack": "Attaquer",
@@ -1007,6 +1007,10 @@
       "exhaustion": "Épuisement",
       "exhaustion_level": "Niveau {n}",
       "rounds": "{n} round | {n} rounds",
+      "open_hit_points": "Points de vie : dégâts, soins, PV temporaires",
+      "open_death_saves": "Jets contre la mort",
+      "manage_effects": "Gérer les états et effets",
+      "rest": "Repos",
       "abilities": {
         "str": "For",
         "dex": "Dex",
@@ -1052,7 +1056,201 @@
       "design_old": "Ancien",
       "design_help": "Le temps de la refonte, l'ancienne fiche reste disponible. Le choix vaut pour ce personnage ; l'ancienne fiche garde un bouton pour revenir ici."
     },
-    "open_new": "Nouvelle fiche"
+    "open_new": "Nouvelle fiche",
+    "hit_points": {
+      "title": "Points de vie",
+      "mode": "Dégâts, soins ou PV temporaires",
+      "modes": {
+        "damage": "Dégâts",
+        "heal": "Soins",
+        "temp": "PV temporaires"
+      },
+      "summary_temp": "{value} · +{temp} temp.",
+      "source_single": "Source 1 · une attaque, un sort…",
+      "source": "Source {n}",
+      "damage_amount": "Dégâts",
+      "damage_type": "Type de dégâts",
+      "no_type": "Type non précisé",
+      "remove_line": "Retirer cette ligne",
+      "add_line": "Autre type de dégâts, même coup",
+      "add_source": "Autre source de dégâts",
+      "dodge": "Esquive instinctive (réaction) : dégâts de ce coup divisés par 2",
+      "critical_at_zero": "Coup critique (deux échecs aux jets contre la mort)",
+      "defense": {
+        "resistance": "Résistance ({type}) : {from} → {to}",
+        "immunity": "Immunité ({type}) : {from} → {to}",
+        "vulnerability": "Vulnérabilité ({type}) : {from} → {to}"
+      },
+      "heal_amount": "PV récupérés",
+      "heal_note": "Plafonné au maximum ; un soin remet aussi les jets contre la mort à zéro.",
+      "temp_amount": "PV temporaires",
+      "temp_note": "Ils ne se cumulent pas : la fiche garde le plus grand des deux lots.",
+      "preview": "PV {from} → {to}",
+      "preview_temp": "PV temp. {from} → {to}",
+      "alerts": {
+        "instant_death": "Mort instantanée : les dégâts restants atteignent le maximum de PV.",
+        "death_save_failures": "{n} échec aux jets contre la mort | {n} échecs aux jets contre la mort",
+        "concentration_ends": "Concentration ({spell}) : à 0 PV, elle prend fin.",
+        "concentration_save": "Concentration ({spell}){source} : jet de sauvegarde de Constitution, DD {dc}."
+      },
+      "apply": "Appliquer"
+    },
+    "death_saves": {
+      "title": "Jets contre la mort",
+      "intro": "{name} est à 0 PV et inconscient : un jet au début de chacun de ses tours.",
+      "roll": "Lancer le jet",
+      "natural": "d20 obtenu",
+      "validate": "Valider",
+      "enter_manually": "Saisir le d20 à la main",
+      "use_app": "Lancer le dé dans l'appli",
+      "reading": "Lecture du d20",
+      "legend": {
+        "success": {
+          "value": "10",
+          "qualifier": "ou plus",
+          "effect": "un succès"
+        },
+        "failure": {
+          "value": "9",
+          "qualifier": "ou moins",
+          "effect": "un échec"
+        },
+        "twenty": {
+          "value": "20",
+          "qualifier": "naturel",
+          "effect": "1 PV, les jets repartent de zéro"
+        },
+        "one": {
+          "value": "1",
+          "qualifier": "naturel",
+          "effect": "deux échecs"
+        }
+      },
+      "rules": "Des dégâts à 0 PV ajoutent un échec (deux sur un coup critique) ; un soin remet les jets à zéro. Trois succès : stable. Trois échecs : mort.",
+      "status": {
+        "waiting": "En attente du prochain jet.",
+        "dead": "Mort : trois échecs.",
+        "stable": "Stable : trois succès.",
+        "recovered": "{natural} naturel : de retour avec 1 PV.",
+        "two-failures": "{natural} naturel : deux échecs.",
+        "success": "{natural} : un succès.",
+        "failure": "{natural} : un échec."
+      }
+    },
+    "concentration": {
+      "title": "Jet de concentration",
+      "intro": "Tu maintiens la concentration sur {spell}. Les {damage} dégâts reçus demandent un jet de sauvegarde de Constitution.",
+      "dc": "DD de Constitution",
+      "save": "Jet de sauvegarde de Constitution {modifier} · réussite à {dc} ou plus",
+      "failure_note": "« Raté » met fin à la concentration : {spell} disparaît du rail.",
+      "roll": "Lancer le jet",
+      "success": "Réussi",
+      "failure": "Raté"
+    },
+    "rest": {
+      "title": "Repos",
+      "types": {
+        "short": "Repos court",
+        "long": "Repos long",
+        "dawn": "Aube"
+      },
+      "hit_dice_title": "Dés de vie · d{die} {modifier} (Con)",
+      "hit_dice_summary": "{chosen} à dépenser · {left} restants",
+      "no_hit_dice": "Aucun dé de vie.",
+      "hit_die_roll": "Dé de vie d{die}",
+      "die_n": "Dé {n}",
+      "die_result": "Résultat du dé {n}",
+      "rolls": "Jets : {rolls} = {total} PV",
+      "enter_manually": "Saisir les jets à la main",
+      "use_app": "Lancer les dés dans l'appli",
+      "fed_and_watered": "Le personnage a mangé et bu : l'épuisement passe du niveau {from} au niveau {to}",
+      "recap": {
+        "title": {
+          "short": "Récupéré au repos court",
+          "long": "Ce que le repos long rétablit",
+          "dawn": "Rechargé à l'aube"
+        },
+        "nothing": "Rien à récupérer.",
+        "hit_dice": "Dés de vie · d{die}",
+        "rolled_on_rest": "{dice}, lancé à la validation",
+        "ends": "prend fin",
+        "death_saves": "Jets contre la mort",
+        "reset": "remis à zéro",
+        "exhaustion": "Épuisement",
+        "exhaustion_down": "niveau {from} → {to}",
+        "exhaustion_kept": "inchangé",
+        "legend": {
+          "available": "déjà disponible",
+          "regained": "rendu par le repos",
+          "possible": "possible, selon le jet"
+        }
+      },
+      "note": {
+        "short": "Chaque dé dépensé est retiré des dés de vie restants.",
+        "long": "Rien n'est appliqué tant que tu n'as pas touché « Terminer ». Les PV temporaires disparaissent.",
+        "dawn": "L'aube est séparée du repos long : on ne dort pas toujours au lever du jour. Les charges tirées aux dés ne dépassent pas le maximum."
+      },
+      "confirm": {
+        "short": "Terminer le repos court",
+        "long": "Terminer le repos long",
+        "dawn": "Passer l'aube"
+      }
+    },
+    "effects": {
+      "title": "États et effets",
+      "active": "Actifs",
+      "none": "Aucun état ni effet actif.",
+      "rounds": "rounds",
+      "rounds_left": "Rounds restants : {name}",
+      "remove": "Retirer",
+      "add_or_remove": "Ajouter ou retirer",
+      "tabs": {
+        "condition": "État",
+        "custom": "Effet"
+      },
+      "condition_hint": "Touche un état pour l'activer ou le retirer ; sa durée se règle dans la liste des actifs.",
+      "conditions": "États",
+      "applies": "{name} · ce qui s'applique",
+      "automatic": "La fiche applique d'elle-même : {effects}.",
+      "and": " et ",
+      "auto": {
+        "speed_zero": "vitesse à 0",
+        "skill_disadvantage": "désavantage aux jets de caractéristique",
+        "attack_disadvantage": "désavantage aux jets d'attaque",
+        "attack_advantage": "avantage aux jets d'attaque",
+        "save_disadvantage": "désavantage aux sauvegardes de {abilities}",
+        "save_auto_fail": "échec automatique aux sauvegardes de {abilities}",
+        "resist_all_damage": "résistance à tous les dégâts",
+        "immune_poison": "immunité au poison",
+        "incapacitating": "fin de la concentration"
+      },
+      "name": "Nom",
+      "duration": "Durée (rounds)",
+      "description": "Description (ce que la fiche ne chiffre pas)",
+      "numeric": "Effets chiffrés",
+      "remove_effect": "Retirer : {type}",
+      "fields": {
+        "ability": "Caractéristique",
+        "damage_type": "Type de dégâts",
+        "skill": "Compétence",
+        "weapons": "Armes",
+        "meters": "Mètres",
+        "score": "Valeur",
+        "amount": "Bonus"
+      },
+      "invalid": "Une valeur d'effet ou de durée est invalide.",
+      "add_effect": "Ajouter l'effet",
+      "done": "Terminé"
+    },
+    "spell_damage": {
+      "title": "Dégâts · {spell}",
+      "intro": "À quel niveau le sort a-t-il été lancé ? Aucun emplacement n'est dépensé ici : il l'a été au lancement.",
+      "level_label": "Niveau du sort",
+      "level": "Niveau {level}",
+      "critical": "Coup critique (dés doublés)",
+      "note": "Le résultat s'affiche comme tout jet, et rejoint l'historique.",
+      "roll": "Jeter les dégâts"
+    }
   },
   "spell_casting": {
     "roll": {
@@ -1087,6 +1285,45 @@
   },
   "class_resources": {
     "update_error": "Erreur lors de la mise à jour"
+  },
+  "hit_points": {
+    "instant_death": {
+      "title": "Mort instantanée",
+      "description": "Les dégâts restants atteignent le maximum de PV."
+    },
+    "death_save_failures": "{n} échec aux jets contre la mort | {n} échecs aux jets contre la mort",
+    "concentration": {
+      "lost": "Concentration perdue",
+      "lost_spell": "Tu n'es plus concentré sur {name}.",
+      "dropped": "Tu es tombé à 0 PV.",
+      "kept": "Concentration maintenue",
+      "roll_label": "JS Constitution — Concentration (DD {dc})"
+    },
+    "death_saves": {
+      "recovered": "20 naturel : de retour à 1 PV !",
+      "two_failures": "1 naturel : deux échecs !",
+      "roll_label": "Jet contre la mort"
+    }
+  },
+  "rolls": {
+    "button": "Jets",
+    "button_aria": "Jets : prochain jet et historique",
+    "modes": {
+      "auto": "Auto",
+      "advantage": "Avantage",
+      "disadvantage": "Désavantage",
+      "normal": "Normal"
+    },
+    "crit_short": "Critique",
+    "copied": "Jet copié",
+    "copy_failed": "Copie impossible",
+    "next": "Prochain jet",
+    "situations": "Contre quoi ? (pour les avantages conditionnels)",
+    "crit": "Dégâts critiques (dés doublés)",
+    "history": "Historique",
+    "empty": "Aucun jet pour l'instant.",
+    "replay": "Relancer",
+    "clear": "Effacer l'historique"
   },
   "zodI18n": {
     "errors": {

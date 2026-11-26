@@ -27,3 +27,11 @@ export const useUnconsciousEndings = (
     })
   })
 }
+
+export const useSheetUnconsciousEndings = (characterSheet: Ref<CharacterSheet>) => {
+  const { isDying, activeConditions, featuresEndingWhenUnconscious } = useCharacterSheet(characterSheet)
+  useUnconsciousEndings(characterSheet, {
+    unconscious: computed(() => isDying.value || activeConditions.value.includes('unconscious')),
+    ending: featuresEndingWhenUnconscious,
+  })
+}

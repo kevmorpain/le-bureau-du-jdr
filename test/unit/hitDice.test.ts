@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { hitDiceTotals, hitDieSidesOf, recoverHitDice } from '../../shared/rules/hitDice'
+import { hitDiceTotals, hitDieSidesOf, recoverHitDice, remainingHitDice, spendHitDice } from '../../shared/rules/hitDice'
 import { updateCharacterSheetSchema } from '../../shared/utils/character_sheet'
 
 describe('dés de vie — format', () => {
@@ -78,5 +78,21 @@ describe('dés de vie — PUT /character_sheets/:id', () => {
     for (const currentHitDie of [[{ die: '7', count: 1 }], [{ die: '8', count: -1 }], [{ die: '8', count: 21 }]]) {
       expect(updateCharacterSheetSchema.safeParse({ ...sheet, currentHitDie }).success).toBe(false)
     }
+  })
+})
+
+describe('dés de vie — repos court', () => {
+  const totals = [{ die: '8' as const, count: 5 }, { die: '10' as const, count: 2 }]
+
+  it('sans suivi, tous les dés restent', () => {
+    expect(remainingHitDice(null, totals)).toEqual(totals)
+  })
+
+  it('les dés dépensés quittent les dés restants, jamais sous zéro', () => {
+    expect(spendHitDice([{ die: '8', count: 3 }, { die: '10', count: 1 }], totals, [
+      { die: '8', count: 1 },
+      { die: '8', count: 1 },
+      { die: '10', count: 4 },
+    ])).toEqual([{ die: '8', count: 1 }, { die: '10', count: 0 }])
   })
 })

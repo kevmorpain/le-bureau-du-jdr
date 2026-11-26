@@ -42,16 +42,7 @@
       </DsBlock>
     </main>
 
-    <div
-      class="sheet__rolls"
-      aria-live="polite"
-    >
-      <DsRollToast
-        v-for="toast in toasts"
-        :key="toast.id"
-        :roll="toast"
-      />
-    </div>
+    <SheetRollPanel />
 
     <ClientOnly>
       <SyncConflictModal
@@ -65,6 +56,7 @@
 
 <script lang="ts" setup>
 import { rollEngineKey } from '~/composables/character/useCharacterRolls'
+import { useSheetUnconsciousEndings } from '~/composables/character/useUnconsciousEndings'
 
 definePageMeta({
   layout: 'blank',
@@ -80,7 +72,7 @@ const { characterSheet, refreshSheet, retrySave, switchSheetDesign } = await use
 const { refreshInventory, refreshSpells, preferences, spellSlots, rollEngine } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)
 provide(rollEngineKey, rollEngine)
-const { toasts } = useDiceRoller(rollEngine)
+useSheetUnconsciousEndings(characterSheet)
 
 const { reconcile } = useSheetReconciliation(charId, [refreshSheet, refreshInventory, refreshSpells])
 
@@ -119,17 +111,6 @@ const isConflictOpen = ref(false)
 }
 
 .sheet__conflict strong { color: var(--color-ds-bad); }
-
-.sheet__rolls {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
 .sheet__coming {
   font-size: 13px;

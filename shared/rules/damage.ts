@@ -91,3 +91,55 @@ export function rollDeathSave(state: HitPointState, natural: number): { state: H
 
 // Concentration : « Le DD est égal à 10 ou à la moitié des dégâts que vous subissez, si ce chiffre est supérieur. »
 export const concentrationSaveDc = (damage: number): number => Math.max(10, Math.floor(damage / 2))
+
+export type DefenseLevel = 'immunity' | 'resistance' | 'vulnerability'
+
+export interface DamageLine {
+  amount: number
+  defense: DefenseLevel | null
+}
+
+// Combat : la résistance puis la vulnérabilité s'appliquent après tout autre modificateur (ici l'Esquive instinctive).
+export const adjustDamageLine = ({ amount, defense }: DamageLine, { halved = false } = {}): number => {
+  const raw = Math.max(0, halved ? Math.floor(amount / 2) : amount)
+  if (defense === 'immunity') return 0
+  if (defense === 'resistance') return Math.floor(raw / 2)
+  if (defense === 'vulnerability') return raw * 2
+  return raw
+}
+
+export const sourceDamage = (lines: readonly DamageLine[], options: { halved?: boolean } = {}): number =>
+  lines.reduce((sum, line) => sum + adjustDamageLine(line, options), 0)
+
+export interface SourcesResult {
+  state: HitPointState
+  sources: DamageResult[]
+  absorbedByTemporary: number
+  droppedToZero: boolean
+  instantDeath: boolean
+  deathSaveFailuresAdded: number
+}
+
+// Chaque source est un coup à part : un échec aux jets contre la mort et un jet de concentration par source.
+export function applyDamageSources(
+  state: HitPointState,
+  damages: readonly number[],
+  options: { maxHp: number, critical?: boolean },
+): SourcesResult {
+  const sources: DamageResult[] = []
+  let current = state
+  for (const damage of damages) {
+    if (isDead(current)) break
+    const result = applyDamage(current, damage, options)
+    sources.push(result)
+    current = result.state
+  }
+  return {
+    state: current,
+    sources,
+    absorbedByTemporary: sources.reduce((sum, r) => sum + r.absorbedByTemporary, 0),
+    droppedToZero: sources.some(r => r.droppedToZero),
+    instantDeath: sources.some(r => r.instantDeath),
+    deathSaveFailuresAdded: sources.reduce((sum, r) => sum + r.deathSaveFailuresAdded, 0),
+  }
+}

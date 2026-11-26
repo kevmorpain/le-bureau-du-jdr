@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   baseCastLevels,
   baseSlotLevel,
+  damageRollLevels,
   diceRange,
   parseDiceNotation,
   resolveAtLevel,
@@ -188,5 +189,16 @@ describe('baseSlotLevel / baseCastLevels', () => {
 
   it('niveau du sort sinon', () => {
     expect(baseCastLevels({ level: 3 }, 7)).toEqual({ characterLevel: 7, slotLevel: 3 })
+  })
+})
+
+describe('damageRollLevels', () => {
+  it('propose les niveaux possédés à partir du niveau du sort, et celui du dernier lancement', () => {
+    expect(damageRollLevels({ level: 2 }, [1, 2, 3], undefined)).toEqual([2, 3])
+    expect(damageRollLevels({ level: 1 }, [5], 3)).toEqual([1, 3, 5])
+  })
+
+  it('un tour de magie se jette au niveau 1', () => {
+    expect(damageRollLevels({ level: 0 }, [], undefined)).toEqual([1])
   })
 })

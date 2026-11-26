@@ -1,4 +1,4 @@
-import { hitDiceTotals, recoverHitDice } from '~~/shared/rules/hitDice'
+import { hitDiceTotals, recoverHitDice, spendHitDice } from '~~/shared/rules/hitDice'
 import { resourceFeaturesOf, restRecovery } from '~~/shared/rules/classResources'
 import type { RestType } from '~~/shared/utils/rest'
 
@@ -33,6 +33,8 @@ export const useRest = (
   spellSlots: Ref<SlotsByType> | undefined,
   // Maximum de PV selon le niveau d'épuisement : la même règle que le serveur (shared/rules/hitPoints.ts).
   maxHpAt: (exhaustionLevel: number) => number,
+  // Item charges are recharged by the server: the inventory, fetched apart, is reloaded after each rest.
+  { onRested }: { onRested?: () => Promise<unknown> } = {},
 ) => {
   const toaster = useToast()
   const isResting = ref(false)
@@ -49,6 +51,9 @@ export const useRest = (
       if (rest !== 'dawn') cf.active = false
     }
   }
+
+  const hitDiceTotalsOf = () =>
+    hitDiceTotals((characterSheet.value.classes ?? []).map(cls => ({ level: cls.level, hitDice: cls.class?.hitDice })))
 
   const resetDeathSaves = () => {
     characterSheet.value.deathSaveSuccesses = 0
@@ -75,6 +80,7 @@ export const useRest = (
         .forEach((s) => { s.used = 0 })
 
       if (hitDiceSpent.length > 0) {
+        characterSheet.value.currentHitDie = spendHitDice(characterSheet.value.currentHitDie, hitDiceTotalsOf(), hitDiceSpent)
         const totalHeal = hitDiceSpent.reduce((sum, d) => sum + d.healAmount, 0)
         characterSheet.value.currentHp = Math.min(
           characterSheet.value.currentHp + totalHeal,
@@ -82,6 +88,8 @@ export const useRest = (
         )
         if (totalHeal > 0) resetDeathSaves()
       }
+
+      await onRested?.()
 
       toaster.add({ title: 'Repos court terminé', description: summary, color: 'success' })
     } catch {
@@ -120,10 +128,9 @@ export const useRest = (
         slot.created = 0
       })
 
-      characterSheet.value.currentHitDie = recoverHitDice(
-        characterSheet.value.currentHitDie,
-        hitDiceTotals((characterSheet.value.classes ?? []).map(cls => ({ level: cls.level, hitDice: cls.class?.hitDice }))),
-      )
+      characterSheet.value.currentHitDie = recoverHitDice(characterSheet.value.currentHitDie, hitDiceTotalsOf())
+
+      await onRested?.()
 
       toaster.add({ title: 'Repos long terminé — PV restaurés', description: summary, color: 'success' })
     } catch {
@@ -146,6 +153,8 @@ export const useRest = (
       })
 
       recoverFeatures('dawn')
+
+      await onRested?.()
 
       toaster.add({ title: 'Nouvelle aube — aptitudes rechargées', description: summary, color: 'success' })
     } catch {
