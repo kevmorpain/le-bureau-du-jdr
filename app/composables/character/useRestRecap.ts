@@ -4,7 +4,7 @@ import { hitDiceTotals, recoverHitDice, remainingHitDice } from '~~/shared/rules
 import { REST_RECHARGE_MAP, type RestType } from '~~/shared/utils/rest'
 
 export type RestRecapRow
-  = | { key: string, label: string, kind: 'counter', remaining: number, max: number, regained: number, possible: number, note?: string }
+  = | { key: string, label: string, kind: 'counter', after: number, max: number, regained: number, possible: number, note?: string }
     | { key: string, label: string, kind: 'text', text: string }
 
 // What a rest gives back, read with the same rules the server applies (`characterRest`), before anything is applied.
@@ -12,21 +12,21 @@ export const useRestRecap = (characterSheet: Ref<CharacterSheet>, spellSlots: Re
   const { t } = useI18n()
   const { resolvedFeatures, resourceGroups, inventory, exhaustionLevel } = useCharacterSheet(characterSheet)
 
-  const counter = (key: string, label: string, remaining: number, max: number, regained: number, possible = 0, note?: string): RestRecapRow =>
-    ({ key, label, kind: 'counter', remaining, max, regained, possible, note })
+  // `after` counts what is available once rested, regained included, as DsCounter reads it.
+  const counter = (key: string, label: string, after: number, max: number, regained: number, possible = 0, note?: string): RestRecapRow =>
+    ({ key, label, kind: 'counter', after, max, regained, possible, note })
   const text = (key: string, label: string, value: string): RestRecapRow => ({ key, label, kind: 'text', text: value })
 
   const slotRows = (rest: RestType) => {
     const types = rest === 'short' ? (['pact_magic'] as const) : rest === 'long' ? (['pact_magic', 'spellcasting'] as const) : []
-    return types.flatMap(slotType => Object.entries(spellSlots.value[slotType] ?? {})
-      .filter(([, slot]) => slot.max > 0 && slot.current < slot.max)
-      .map(([level, slot]) => counter(
-        `slot-${slotType}-${level}`,
-        t(slotType === 'pact_magic' ? 'sheet.play.slot.pact' : 'sheet.play.slot.level', { level }),
-        slot.current,
-        slot.max,
-        slot.max - slot.current,
-      )))
+    return types.flatMap(slotType => Object.entries(spellSlots.value[slotType] ?? {}).flatMap(([level, slot]) => {
+      // A long rest drops the slots created with sorcery points, as `useRest` does.
+      const max = rest === 'long' ? slot.max - (slot.created ?? 0) : slot.max
+      const regained = max - slot.current
+      if (max <= 0 || regained <= 0) return []
+      const label = t(slotType === 'pact_magic' ? 'sheet.play.slot.pact' : 'sheet.play.slot.level', { level })
+      return [counter(`slot-${slotType}-${level}`, label, max, max, regained)]
+    }))
   }
 
   const featureRows = (rest: RestType) => {

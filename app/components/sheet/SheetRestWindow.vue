@@ -109,7 +109,7 @@
           class="recap__value"
         >
           <DsCounter
-            :model-value="row.remaining"
+            :model-value="row.after"
             :max="row.max"
             :regained="row.regained"
             :possible="row.possible"

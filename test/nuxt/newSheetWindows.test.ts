@@ -73,11 +73,11 @@ afterEach(() => {
   localStorage.clear()
 })
 
-const mount = async (component: unknown, props: Record<string, unknown>) => {
+const mount = async (component: unknown, props: Record<string, unknown>, slots: Record<string, unknown> = { spellcasting: {}, pact_magic: {} }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const wrapper = await mountSuspended(component as any, {
     props,
-    global: { provide: { spellSlots: ref({ spellcasting: {}, pact_magic: {} }) } },
+    global: { provide: { spellSlots: ref(slots) } },
   })
   mounted.push(wrapper)
   await vi.waitFor(() => expect(body().querySelector('[role="dialog"]')).not.toBeNull())
@@ -176,6 +176,18 @@ describe('fenêtre de repos', () => {
     await vi.waitFor(() => expect(dialogText()).toContain('Ce que le repos long rétablit'))
     expect(dialogText()).toContain('Dés de vie · d8')
     expect(dialogText()).toContain('PV 6 → 20')
+  })
+
+  it('repos long : les emplacements dépensés reviennent, ceux des points de sorcellerie disparaissent', async () => {
+    const s = sheet()
+    const slots = { spellcasting: { 1: { max: 4, current: 2 }, 2: { max: 3, current: 0 }, 3: { max: 4, current: 1, created: 1 } }, pact_magic: {} }
+    await mount(SheetRestWindow, { characterSheet: s, open: true }, slots)
+
+    await click('Repos long')
+    const cells = (label: string) => Array.from(body().querySelectorAll(`[aria-label="${label}"] [data-state]`)).map(c => c.getAttribute('data-state'))
+    await vi.waitFor(() => expect(cells('Niveau 1')).toEqual(['filled', 'filled', 'regained', 'regained']))
+    expect(cells('Niveau 2')).toEqual(['regained', 'regained', 'regained'])
+    expect(cells('Niveau 3')).toEqual(['filled', 'regained', 'regained'])
   })
 })
 
