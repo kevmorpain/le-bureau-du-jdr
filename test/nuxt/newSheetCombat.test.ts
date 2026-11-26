@@ -158,7 +158,7 @@ describe('bandeau de combat', () => {
     expect(barValue('Round')).toBe('2')
     expect(tracker.usedActions.value).toEqual({ action: false, bonus_action: false, reaction: false })
     expect(body().textContent).toContain('0 / 9 m')
-    expect(body().querySelector('[role="status"]')!.textContent).toContain('Round 2 : actions et déplacement remis à zéro')
+    expect(body().querySelector('[role="status"]')).toBeNull()
   })
 
   it('le compte rendu détaille les durées décomptées, sans notification', async () => {
@@ -173,13 +173,13 @@ describe('bandeau de combat', () => {
 
     await click('Nouveau tour')
     await tick()
-    expect(body().querySelector('[role="status"]')!.textContent).toContain('durées décomptées d\'un round (Bénédiction 3 → 2, Maléfice prend fin).')
+    expect(body().querySelector('[role="status"]')!.textContent!.trim()).toBe('Bénédiction 3 → 2, Maléfice prend fin')
     expect(useToast().toasts.value).toEqual([])
 
     await click('Round suivant')
     await tick()
     expect(barValue('Round')).toBe('3')
-    expect(body().querySelector('[role="status"]')!.textContent).toContain('Round 3 : durées décomptées d\'un round (Bénédiction 2 → 1).')
+    expect(body().querySelector('[role="status"]')!.textContent!.trim()).toBe('Bénédiction 2 → 1')
     expect(useToast().toasts.value).toEqual([])
   })
 

@@ -4,89 +4,93 @@
     :aria-label="$t('sheet.combat.bar')"
   >
     <div class="ds-bevel ds-shape-card combat__frame">
-      <div class="ds-fill combat__bar">
-        <span class="combat__title">{{ $t('sheet.combat.bar') }}</span>
+      <div class="ds-fill combat__inner">
+        <div class="combat__bar">
+          <div class="combat__stats">
+            <span class="combat__title">{{ $t('sheet.combat.bar') }}</span>
 
-        <span
-          class="combat__group"
-          role="group"
-          :aria-label="$t('sheet.combat.round')"
+            <span
+              class="combat__group"
+              role="group"
+              :aria-label="$t('sheet.combat.round')"
+            >
+              <span class="ds-label">{{ $t('sheet.combat.round') }}</span>
+              <DsCornerButton
+                :label="$t('sheet.combat.previous_round')"
+                @click="previousRound"
+              >−</DsCornerButton>
+              <span class="ds-number combat__value">{{ round }}</span>
+              <DsCornerButton
+                :label="$t('sheet.combat.next_round')"
+                @click="handleNextRound"
+              >+</DsCornerButton>
+            </span>
+
+            <span
+              class="combat__group"
+              role="group"
+              :aria-label="$t('sheet.combat.initiative')"
+            >
+              <span class="ds-label">{{ $t('sheet.combat.initiative') }}</span>
+              <span class="ds-number combat__value">{{ initiative?.total ?? '—' }}</span>
+            </span>
+
+            <span class="combat__group">
+              <span class="ds-label">{{ $t('sheet.combat.movement') }}</span>
+              <span
+                class="combat__track"
+                role="meter"
+                :aria-label="$t('sheet.combat.movement')"
+                :aria-valuenow="movementUsed"
+                :aria-valuemin="0"
+                :aria-valuemax="effectiveSpeed"
+              >
+                <i :style="{ width: `${movementPercent}%` }" />
+              </span>
+              <span class="combat__distance">{{ $t('sheet.combat.movement_value', { used: formatNumber(movementUsed), speed: formatNumber(effectiveSpeed) }) }}</span>
+              <DsCornerButton
+                :label="$t('sheet.combat.move_less')"
+                @click="moveBy(-1, effectiveSpeed)"
+              >−</DsCornerButton>
+              <DsCornerButton
+                :label="$t('sheet.combat.move_more')"
+                @click="moveBy(1, effectiveSpeed)"
+              >+</DsCornerButton>
+            </span>
+          </div>
+
+          <DsButton
+            :label="$t('sheet.combat.new_turn')"
+            @click="handleNewTurn"
+          />
+        </div>
+
+        <p
+          v-if="note.length"
+          class="combat__note"
+          role="status"
         >
-          <span class="ds-label">{{ $t('sheet.combat.round') }}</span>
-          <DsCornerButton
-            :label="$t('sheet.combat.previous_round')"
-            @click="previousRound"
-          >−</DsCornerButton>
-          <span class="ds-number combat__value">{{ round }}</span>
-          <DsCornerButton
-            :label="$t('sheet.combat.next_round')"
-            @click="handleNextRound"
-          >+</DsCornerButton>
-        </span>
+          <i aria-hidden="true" />{{ note.join(', ') }}
+        </p>
 
-        <span
-          class="combat__group"
-          role="group"
-          :aria-label="$t('sheet.combat.initiative')"
+        <div
+          v-if="lapseQuestion.length"
+          class="combat__lapse"
+          role="alert"
         >
-          <span class="ds-label">{{ $t('sheet.combat.initiative') }}</span>
-          <span class="ds-number combat__value">{{ initiative?.total ?? '—' }}</span>
-        </span>
-
-        <span class="combat__group combat__movement">
-          <span class="ds-label">{{ $t('sheet.combat.movement') }}</span>
-          <span
-            class="combat__track"
-            role="meter"
-            :aria-label="$t('sheet.combat.movement')"
-            :aria-valuenow="movementUsed"
-            :aria-valuemin="0"
-            :aria-valuemax="effectiveSpeed"
-          >
-            <i :style="{ width: `${movementPercent}%` }" />
-          </span>
-          <span class="combat__distance">{{ $t('sheet.combat.movement_value', { used: formatNumber(movementUsed), speed: formatNumber(effectiveSpeed) }) }}</span>
-          <DsCornerButton
-            :label="$t('sheet.combat.move_less')"
-            @click="moveBy(-1, effectiveSpeed)"
-          >−</DsCornerButton>
-          <DsCornerButton
-            :label="$t('sheet.combat.move_more')"
-            @click="moveBy(1, effectiveSpeed)"
-          >+</DsCornerButton>
-        </span>
-
-        <DsButton
-          :label="$t('sheet.combat.new_turn')"
-          @click="handleNewTurn"
-        />
+          <i aria-hidden="true" />
+          <strong>{{ $t('sheet.combat.lapse_question', { name: lapsingNames }) }}</strong>
+          <span class="combat__lapse-hint">{{ $t('sheet.combat.lapse_hint') }}</span>
+          <DsLinkButton
+            :label="$t('sheet.combat.lapse_keep')"
+            @click="handleKeep"
+          />
+          <DsLinkButton
+            :label="$t('sheet.combat.lapse_end')"
+            @click="handleEnd"
+          />
+        </div>
       </div>
-    </div>
-
-    <p
-      v-if="note"
-      class="combat__note"
-      role="status"
-    >
-      <i aria-hidden="true" />{{ note }}
-    </p>
-
-    <div
-      v-if="lapseQuestion.length"
-      class="combat__lapse"
-      role="alert"
-    >
-      <i aria-hidden="true" />
-      <strong>{{ $t('sheet.combat.lapse_question', { name: lapsingNames }) }}</strong>
-      <span class="combat__lapse-hint">{{ $t('sheet.combat.lapse_hint') }}</span>
-      <DsLinkButton
-        :label="$t('sheet.combat.lapse_keep')"
-        @click="handleKeep"
-      />
-      <DsLinkButton
-        :label="$t('sheet.combat.lapse_end')"
-        @click="handleEnd"
-      />
     </div>
   </section>
 </template>
@@ -104,7 +108,7 @@ const {
   round, initiative, movementUsed, previousRound, advanceRound, moveBy, newTurn, lapseQuestion, keepLapsed, endLapsed,
 } = useCombatTurn(characterSheetRef)
 
-const note = ref('')
+const note = ref<string[]>([])
 
 const movementPercent = computed(() =>
   effectiveSpeed.value > 0 ? Math.min(100, (movementUsed.value / effectiveSpeed.value) * 100) : 0)
@@ -115,51 +119,52 @@ const lapsingNames = computed(() => lapseQuestion.value.map(f => f.name).join(',
 
 const describeDurations = (elapsed: ElapsedDuration[]) => elapsed
   .map(d => (d.to > 0 ? t('sheet.combat.duration_tick', d) : t('sheet.combat.duration_end', { name: d.name })))
-  .join(', ')
-
-const getRoundNote = (key: 'turn' | 'round', elapsed: ElapsedDuration[]) => {
-  const durations = describeDurations(elapsed)
-  return t(`sheet.combat.${key}_note${durations ? '_durations' : ''}`, { round: round.value, durations })
-}
 
 const handleNewTurn = () => {
-  note.value = getRoundNote('turn', newTurn({ announce: false }))
+  note.value = describeDurations(newTurn({ announce: false }))
 }
 
 const handleNextRound = () => {
-  note.value = getRoundNote('round', advanceRound({ announce: false }))
+  note.value = describeDurations(advanceRound({ announce: false }))
 }
 
 const handleKeep = () => {
-  note.value = t('sheet.combat.lapse_kept', { name: lapsingNames.value })
+  note.value = [...note.value, t('sheet.combat.lapse_kept', { name: lapsingNames.value })]
   keepLapsed()
 }
 
 const handleEnd = async () => {
-  note.value = t('sheet.combat.lapse_ended', { name: lapsingNames.value })
+  note.value = [...note.value, t('sheet.combat.lapse_ended', { name: lapsingNames.value })]
   await endLapsed()
 }
 </script>
 
 <style scoped>
-.combat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
 .combat__frame {
   --ds-cut: var(--ds-cut-step);
   --ds-edge-color: var(--color-ds-gold-dim);
   --ds-fill: color-mix(in srgb, var(--color-ds-gold) 8%, var(--color-ds-panel));
 }
 
+.combat__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 8px 14px;
+}
+
 .combat__bar {
   display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.combat__stats {
+  display: flex;
+  flex: 1;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 18px;
-  padding: 8px 10px 8px 14px;
 }
 
 .combat__title {
@@ -176,14 +181,9 @@ const handleEnd = async () => {
 
 .combat__value { font-size: 20px; }
 
-.combat__movement {
-  flex: 1;
-  min-width: 260px;
-}
-
 .combat__track {
   position: relative;
-  flex: 1;
+  width: 110px;
   height: 8px;
   overflow: hidden;
   background: var(--color-ds-panel-raised);
@@ -194,6 +194,10 @@ const handleEnd = async () => {
   position: absolute;
   inset: 0 auto 0 0;
   background: var(--color-ds-gain);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .combat__track i { transition: width 0.3s ease; }
 }
 
 .combat__distance {
@@ -207,8 +211,9 @@ const handleEnd = async () => {
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 2px 4px;
+  padding-top: 6px;
   font-size: 12px;
+  border-top: 1px solid var(--color-ds-line);
 }
 
 .combat__note { color: var(--color-ds-mute); }

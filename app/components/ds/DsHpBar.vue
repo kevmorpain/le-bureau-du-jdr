@@ -107,6 +107,10 @@ const valueText = computed(() => {
   bottom: 0;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .hp__segment { transition: left 0.3s ease, width 0.3s ease; }
+}
+
 .hp__segment--hp { background: var(--color-ds-hp); }
 .hp__segment--lost { background: repeating-linear-gradient(45deg, var(--color-ds-bad) 0 3px, transparent 3px 6px); }
 .hp__segment--recovered { background: var(--color-ds-gain); }
