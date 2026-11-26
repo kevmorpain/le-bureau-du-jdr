@@ -959,7 +959,7 @@
       },
       "actions": {
         "cast": "Lancer",
-        "cast_ritual": "Lancer en rituel",
+        "cast_ritual": "Rituel",
         "no_slot": "Sans emplacement",
         "arcanum": "Arcanum mystique",
         "attack": "Attaquer",
