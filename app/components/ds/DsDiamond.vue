@@ -9,7 +9,7 @@
 
 <script lang="ts" setup>
 export type DsDiamondState = 'empty' | 'filled' | 'regained' | 'possible' | 'lost'
-export type DsDiamondColor = 'gold' | 'gain' | 'bad'
+export type DsDiamondColor = 'gold' | 'gain' | 'bad' | 'action' | 'bonus' | 'reaction'
 
 const { state = 'empty', size = 'sm', color } = defineProps<{
   state?: DsDiamondState
@@ -36,6 +36,9 @@ const filled = computed(() => state === 'filled' || state === 'regained')
 .diamond--gold { --tone: var(--color-ds-gold); }
 .diamond--gain { --tone: var(--color-ds-gain); }
 .diamond--bad { --tone: var(--color-ds-bad); }
+.diamond--action { --tone: var(--color-ds-action); }
+.diamond--bonus { --tone: var(--color-ds-bonus); }
+.diamond--reaction { --tone: var(--color-ds-reaction); }
 
 .diamond--filled { background: var(--tone); }
 .diamond--possible { border-style: dashed; }

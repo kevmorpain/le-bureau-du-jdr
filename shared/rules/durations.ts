@@ -50,6 +50,8 @@ export const castDuration = (spell: SpellDurationRow): { label: string, rounds: 
 
 export type EndedEffect = Pick<TemporaryEffect, 'id' | 'name' | 'spellId' | 'concentration'>
 
+export type ElapsedDuration = { name: string, from: number, to: number }
+
 // Ce que le joueur a écrit (effets, description) ne disparaît jamais tout seul : l'entrée est
 // seulement désactivée. Une entrée qui n'est que du suivi (sort lancé, durée) est retirée.
 const carriesPlayerContent = (entry: TemporaryEffect) => entry.effects.length > 0 || !!entry.description

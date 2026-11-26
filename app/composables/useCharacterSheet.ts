@@ -5,7 +5,7 @@ import { asiEffectsOf, featureEffectsOf, resolveFeatEffects, speciesEffectsOf } 
 import { spellDamageBonusParts, sumBonusParts, type EffectSource } from '~~/shared/rules/effectBonuses'
 import { criticalExtraDiceOf, deriveClassTraits, endingWhenUnconscious, featureFormulaContext, featureUses, isFeatureUnlocked, lapsingWithoutCombat, resourceFeaturesOf, resourceGroups as deriveResourceGroups, spellcastingBlockedBy } from '~~/shared/rules/classResources'
 import type { OwnerClass } from '~~/shared/rules/classResources'
-import { castDuration, type SpellDurationRow } from '~~/shared/rules/durations'
+import { castDuration, type ElapsedDuration, type SpellDurationRow } from '~~/shared/rules/durations'
 import { conditionLabels } from '~~/shared/utils/labels'
 import { armorSpeedPenalty, computeWalkingSpeed, speedBonusParts } from '~~/shared/rules/speed'
 import type { WornArmor } from '~~/shared/rules/speed'
@@ -430,14 +430,23 @@ export const useCharacterSheet = (characterSheet?: Ref<CharacterSheet>) => {
   }
 
   // Un round s'écoule : « Nouveau tour » en Mode Combat.
-  const elapseDurations = () => {
+  const elapseDurations = ({ announce = true } = {}): ElapsedDuration[] => {
+    const elapsed: ElapsedDuration[] = [
+      ...temporary.temporaryEffects.value
+        .filter(e => e.active && e.countdown?.remaining)
+        .map(e => ({ name: e.name, from: e.countdown!.remaining, to: e.countdown!.remaining - 1 })),
+      ...conditions.activeConditions.value
+        .filter(c => conditions.conditionRounds.value[c] !== undefined)
+        .map(c => ({ name: conditionLabels[c], from: conditions.conditionRounds.value[c]!, to: Math.max(0, conditions.conditionRounds.value[c]! - 1) })),
+    ]
     const toaster = useToast()
-    const announce = (name: string) => toaster.add({ title: `${name} prend fin`, color: 'info' })
+    const notify = (name: string) => announce && toaster.add({ title: `${name} prend fin`, color: 'info' })
     for (const effect of temporary.elapseRound()) {
-      announce(effect.name)
+      notify(effect.name)
       if (effect.concentration && effect.spellId === conditions.concentratingSpellId.value) conditions.setConcentration(null)
     }
-    for (const condition of conditions.elapseConditionRound()) announce(conditionLabels[condition])
+    for (const condition of conditions.elapseConditionRound()) notify(conditionLabels[condition])
+    return elapsed
   }
 
   // ─── API publique ─────────────────────────────────────────────────────────
