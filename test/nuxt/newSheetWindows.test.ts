@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { nextTick, reactive, ref } from 'vue'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { readBody } from 'h3'
-import { useState } from '#app'
+import { clearNuxtData, useState } from '#app'
 import SheetHitPointsWindow from '../../app/components/sheet/SheetHitPointsWindow.vue'
 import SheetConcentrationWindow from '../../app/components/sheet/SheetConcentrationWindow.vue'
 import SheetDeathSavesWindow from '../../app/components/sheet/SheetDeathSavesWindow.vue'
@@ -12,7 +12,8 @@ import SheetEffectsWindow from '../../app/components/sheet/SheetEffectsWindow.vu
 const SHEET_ID = 9501
 const URL = `/api/character_sheets/${SHEET_ID}`
 
-registerEndpoint(`${URL}/inventory`, () => [])
+let inventory: unknown[] = []
+registerEndpoint(`${URL}/inventory`, () => inventory)
 registerEndpoint(`${URL}/backgrounds`, () => [])
 registerEndpoint(`${URL}/spells`, () => [])
 const restBodies: Record<string, unknown>[] = []
@@ -122,6 +123,20 @@ describe('fenêtre des points de vie', () => {
     expect(s.concentratingOn).toBeNull()
   })
 
+  it('des dégâts absorbés par les PV temporaires demandent quand même le jet, au DD des dégâts complets', async () => {
+    const s = sheet({ temporaryHp: 30, concentratingOn: 'Ténèbres' })
+    await mount(SheetHitPointsWindow, { characterSheet: s, open: true })
+
+    type(inputOf('Dégâts'), '24')
+    await vi.waitFor(() => expect(dialogText()).toContain('jet de sauvegarde de Constitution, DD 12'))
+    await click('Appliquer')
+    expect(s).toMatchObject({ currentHp: 20, temporaryHp: 6 })
+
+    mounted.splice(0).forEach(w => w.unmount())
+    await mount(SheetConcentrationWindow, { characterSheet: s })
+    expect(dialogText()).toContain('Les 24 dégâts reçus')
+  })
+
   it('soins : remettent les jets contre la mort à zéro', async () => {
     const s = sheet({ currentHp: 0, deathSaveFailures: 2 })
     await mount(SheetHitPointsWindow, { characterSheet: s, open: true, initialMode: 'heal' })
@@ -176,6 +191,33 @@ describe('fenêtre de repos', () => {
     await vi.waitFor(() => expect(dialogText()).toContain('Ce que le repos long rétablit'))
     expect(dialogText()).toContain('Dés de vie · d8')
     expect(dialogText()).toContain('PV 6 → 20')
+  })
+
+  it('aube : les charges rechargées aux dés se saisissent à la main et partent au serveur', async () => {
+    restBodies.length = 0
+    clearNuxtData()
+    inventory = [{
+      id: 70, characterSheetId: SHEET_ID, itemId: 800, quantity: 1, equipped: false, magicBonus: 0, currentUses: 3, notes: null,
+      usingTwoHanded: false, attuned: false, isPactWeapon: false,
+      item: { id: 800, name: 'Masse terrifiante', itemType: 'equipment', properties: { category: 'wondrous' }, effects: [], maxUses: 3, rechargeType: 'dawn', rechargeDice: '1d3' },
+    }]
+    try {
+      await mount(SheetRestWindow, { characterSheet: sheet(), open: true })
+      await click('Aube')
+      await vi.waitFor(() => expect(dialogText()).toContain('Masse terrifiante'))
+      expect(buttonOf('Passer l\'aube')!.disabled).toBe(false)
+
+      await click('Saisir les jets à la main')
+      expect(buttonOf('Passer l\'aube')!.disabled).toBe(true)
+      type(inputOf('Charges rendues : Masse terrifiante (1d3)'), '2')
+      await click('Passer l\'aube')
+
+      await vi.waitFor(() => expect(restBodies).toHaveLength(1))
+      expect(restBodies[0]).toMatchObject({ type: 'dawn', rechargeRolls: [{ inventoryId: 70, rolled: 2 }] })
+    } finally {
+      inventory = []
+      clearNuxtData()
+    }
   })
 
   it('repos long : les emplacements dépensés reviennent, ceux des points de sorcellerie disparaissent', async () => {

@@ -3,7 +3,7 @@ import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { and, eq } from 'drizzle-orm'
 import * as schema from '../../server/db/schema'
-import { createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
+import { CharacterValidationError, createCharacter, createCharacterSchema } from '../../server/utils/characterCreate'
 import { characterRest } from '../../server/utils/characterRest'
 import { WARLOCK_PACT_BOON_OPTIONS, WARLOCK_PROGRESSION_CONTRACT } from '../fixtures/warlockProgression'
 import { replayMigrations } from '../fixtures/migrations'
@@ -268,6 +268,26 @@ describe('characterRest — recharge des objets', () => {
     await characterRest(db, id, { type: 'dawn' }, () => 0.99) // 1d6 → 6, +4 = 10
 
     expect((await entryOf(id, STAFF)).currentUses).toBe(0)
+  })
+
+  it('un résultat saisi à la table remplace le tirage du serveur', async () => {
+    const id = await withItems(10)
+    const staff = (await entryOf(id, STAFF)).id
+
+    const res = await characterRest(db, id, { type: 'dawn', rechargeRolls: [{ inventoryId: staff, rolled: 6 }] }, () => 0.99)
+
+    expect(res.rechargedItems).toEqual([{ inventoryId: staff, name: 'Bâton', rolled: 6 }])
+    expect((await entryOf(id, STAFF)).currentUses).toBe(4)
+  })
+
+  it('un résultat hors des bornes du dé (1d6+4 : 5 à 10) est refusé, sans rien écrire', async () => {
+    const id = await withItems(10)
+    const staff = (await entryOf(id, STAFF)).id
+
+    await expect(characterRest(db, id, { type: 'dawn', rechargeRolls: [{ inventoryId: staff, rolled: 11 }] })).rejects.toThrow(CharacterValidationError)
+
+    expect((await entryOf(id, STAFF)).currentUses).toBe(10)
+    expect((await entryOf(id, WAND)).currentUses).toBe(3)
   })
 
   it('un repos qui ne correspond pas au type de recharge ne touche pas l\'objet', async () => {

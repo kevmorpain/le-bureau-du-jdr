@@ -218,8 +218,8 @@ const alerts = computed(() => {
   if (result.deathSaveFailuresAdded) list.push(t('sheet.hit_points.alerts.death_save_failures', result.deathSaveFailuresAdded))
   if (!isConcentrating.value || !concentrationName.value) return list
   if (result.state.currentHp === 0) return [...list, t('sheet.hit_points.alerts.concentration_ends', { spell: concentrationName.value })]
-  return [...list, ...result.sources.flatMap((source, index) => {
-    const taken = damageOf(inputs.value[index]!) - source.absorbedByTemporary
+  return [...list, ...result.sources.flatMap((_, index) => {
+    const taken = damageOf(inputs.value[index]!)
     if (taken <= 0) return []
     const label = sources.value.length > 1 ? t('sheet.hit_points.source', { n: index + 1 }) : null
     return [t('sheet.hit_points.alerts.concentration_save', { spell: concentrationName.value, dc: concentrationSaveDc(taken), source: label ? ` · ${label}` : '' })]

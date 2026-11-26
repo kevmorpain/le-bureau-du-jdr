@@ -1,10 +1,13 @@
 import type { SlotsByType } from './useCharacterSpellcasting'
 import { resourceFeaturesOf, restRecovery } from '~~/shared/rules/classResources'
+import { diceBounds } from '~~/shared/rules/dice'
 import { hitDiceTotals, recoverHitDice, remainingHitDice } from '~~/shared/rules/hitDice'
 import { REST_RECHARGE_MAP, type RestType } from '~~/shared/utils/rest'
 
+export interface RechargeDie { inventoryId: number, dice: string, min: number, max: number, spent: number }
+
 export type RestRecapRow
-  = | { key: string, label: string, kind: 'counter', after: number, max: number, regained: number, possible: number, note?: string }
+  = | { key: string, label: string, kind: 'counter', after: number, max: number, regained: number, possible: number, note?: string, recharge?: RechargeDie }
     | { key: string, label: string, kind: 'text', text: string }
 
 // What a rest gives back, read with the same rules the server applies (`characterRest`), before anything is applied.
@@ -13,8 +16,8 @@ export const useRestRecap = (characterSheet: Ref<CharacterSheet>, spellSlots: Re
   const { resolvedFeatures, resourceGroups, inventory, exhaustionLevel } = useCharacterSheet(characterSheet)
 
   // `after` counts what is available once rested, regained included, as DsCounter reads it.
-  const counter = (key: string, label: string, after: number, max: number, regained: number, possible = 0, note?: string): RestRecapRow =>
-    ({ key, label, kind: 'counter', after, max, regained, possible, note })
+  const counter = (key: string, label: string, after: number, max: number, regained: number, possible = 0, note?: string, recharge?: RechargeDie): RestRecapRow =>
+    ({ key, label, kind: 'counter', after, max, regained, possible, note, recharge })
   const text = (key: string, label: string, value: string): RestRecapRow => ({ key, label, kind: 'text', text: value })
 
   const slotRows = (rest: RestType) => {
@@ -52,9 +55,11 @@ export const useRestRecap = (characterSheet: Ref<CharacterSheet>, spellSlots: Re
     .map((entry) => {
       const max = entry.item!.maxUses!
       const remaining = Math.max(0, max - entry.currentUses)
-      return entry.item!.rechargeDice
-        ? counter(`item-${entry.id}`, entry.item!.name, remaining, max, 0, entry.currentUses, t('sheet.rest.recap.rolled_on_rest', { dice: entry.item!.rechargeDice }))
-        : counter(`item-${entry.id}`, entry.item!.name, max, max, entry.currentUses)
+      const dice = entry.item!.rechargeDice
+      const bounds = dice ? diceBounds(dice) : null
+      if (!dice) return counter(`item-${entry.id}`, entry.item!.name, max, max, entry.currentUses)
+      const recharge = bounds ? { inventoryId: entry.id, dice, ...bounds, spent: entry.currentUses } : undefined
+      return counter(`item-${entry.id}`, entry.item!.name, remaining, max, 0, entry.currentUses, t('sheet.rest.recap.rolled_on_rest', { dice }), recharge)
     })
 
   const hitDiceRows = () => {

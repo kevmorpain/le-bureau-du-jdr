@@ -4,7 +4,7 @@ import * as schema from '~~/server/db/schema'
 import { CharacterValidationError } from '~~/server/utils/characterCreate'
 import { loadSheetRelations, sheetHitPointsOf } from '~~/server/utils/characterSheetLoader'
 import { hitDiceTotals, recoverHitDice } from '~~/shared/rules/hitDice'
-import { rollDice } from '~~/shared/rules/dice'
+import { diceBounds, rollDice } from '~~/shared/rules/dice'
 import { resourceFeaturesOf, restRecovery } from '~~/shared/rules/classResources'
 import { REST_TYPES, REST_RECHARGE_MAP } from '~~/shared/utils/rest'
 import type { Db } from '~~/server/utils/db'
@@ -21,6 +21,11 @@ export const restSchema = z.object({
   })).optional().default([]),
   // Conditions : un repos long réduit l'épuisement de 1 « à condition que la créature ait aussi mangé et bu ».
   fedAndWatered: z.boolean().optional().default(true),
+  // Charges rolled at the table for items recharged by dice; the server rolls the others.
+  rechargeRolls: z.array(z.object({
+    inventoryId: z.number().int().positive(),
+    rolled: z.number().int(),
+  })).max(50).optional().default([]),
 })
 
 export type RestInput = z.input<typeof restSchema>
@@ -33,7 +38,7 @@ export interface RestResult {
 }
 
 export async function characterRest(db: Db, characterSheetId: number, input: RestInput, rng: () => number = Math.random): Promise<RestResult> {
-  const { type, hitDiceSpent = [], fedAndWatered = true } = input
+  const { type, hitDiceSpent = [], fedAndWatered = true, rechargeRolls = [] } = input
 
   const characterSheet = await loadSheetRelations(db, characterSheetId)
   if (!characterSheet) throw new CharacterValidationError('Personnage introuvable.')
@@ -92,7 +97,12 @@ export async function characterRest(db: Db, characterSheetId: number, input: Res
   // Recharge partielle (« 1d6+4 charges à l'aube ») : les charges rendues se tirent au repos, jamais sous zéro dépensée.
   const rechargedItems: RestResult['rechargedItems'] = []
   for (const row of invPartiallyRecharged) {
-    const rolled = rollDice(row.rechargeDice!, rng)
+    const given = rechargeRolls.find(r => r.inventoryId === row.invId)?.rolled
+    const bounds = diceBounds(row.rechargeDice!)
+    if (given !== undefined && bounds && (given < bounds.min || given > bounds.max)) {
+      throw new CharacterValidationError(`${row.name} : ${given} charges hors de ${row.rechargeDice} (${bounds.min} à ${bounds.max}).`)
+    }
+    const rolled = given ?? rollDice(row.rechargeDice!, rng)
     rechargedItems.push({ inventoryId: row.invId, name: row.name, rolled })
     stmts.push(db.update(schema.characterInventory)
       .set({ currentUses: sql`MAX(0, ${schema.characterInventory.currentUses} - ${rolled})` })

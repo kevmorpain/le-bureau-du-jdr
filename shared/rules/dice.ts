@@ -19,3 +19,8 @@ export const rollDice = (expression: string, rng: () => number): number => {
   for (let i = 0; i < count; i++) total += Math.floor(rng() * sides) + 1
   return total
 }
+
+export const diceBounds = (expression: string): { min: number, max: number } | null => {
+  const parsed = parseDice(expression)
+  return parsed ? { min: parsed.count + parsed.modifier, max: parsed.count * parsed.sides + parsed.modifier } : null
+}

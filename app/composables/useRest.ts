@@ -22,6 +22,8 @@ const refillSlots = (slots: Record<number, SlotState>, { dropCreated = false } =
 
 type RestResponse = { rechargedItems?: { name: string, rolled: number }[] }
 
+export type RechargeRoll = { inventoryId: number, rolled: number }
+
 // Les charges rendues par un dé (« 1d6+4 à l'aube ») sont tirées par le serveur : on les annonce d'après sa réponse.
 const rechargeSummary = (res: unknown): string | undefined => {
   const items = (res as RestResponse | null)?.rechargedItems ?? []
@@ -60,7 +62,7 @@ export const useRest = (
     characterSheet.value.deathSaveFailures = 0
   }
 
-  const shortRest = async (hitDiceSpent: { die: string, count: number, healAmount: number }[] = []) => {
+  const shortRest = async (hitDiceSpent: { die: string, count: number, healAmount: number }[] = [], rechargeRolls: RechargeRoll[] = []) => {
     isResting.value = true
     let summary: string | undefined
     try {
@@ -68,7 +70,7 @@ export const useRest = (
         onServerResponse: (res) => { summary = rechargeSummary(res) },
         endpoint: `/api/character_sheets/${characterSheet.value.id}/rest`,
         method: 'POST',
-        body: { type: 'short', hitDiceSpent },
+        body: { type: 'short', hitDiceSpent, rechargeRolls },
         label: 'Repos court',
       })
 
@@ -99,7 +101,7 @@ export const useRest = (
     }
   }
 
-  const longRest = async (fedAndWatered = true) => {
+  const longRest = async (fedAndWatered = true, rechargeRolls: RechargeRoll[] = []) => {
     isResting.value = true
     let summary: string | undefined
     try {
@@ -107,7 +109,7 @@ export const useRest = (
         onServerResponse: (res) => { summary = rechargeSummary(res) },
         endpoint: `/api/character_sheets/${characterSheet.value.id}/rest`,
         method: 'POST',
-        body: { type: 'long', fedAndWatered },
+        body: { type: 'long', fedAndWatered, rechargeRolls },
         label: 'Repos long',
       })
 
@@ -140,7 +142,7 @@ export const useRest = (
     }
   }
 
-  const dawn = async () => {
+  const dawn = async (rechargeRolls: RechargeRoll[] = []) => {
     isResting.value = true
     let summary: string | undefined
     try {
@@ -148,7 +150,7 @@ export const useRest = (
         onServerResponse: (res) => { summary = rechargeSummary(res) },
         endpoint: `/api/character_sheets/${characterSheet.value.id}/rest`,
         method: 'POST',
-        body: { type: 'dawn' },
+        body: { type: 'dawn', rechargeRolls },
         label: 'Aube',
       })
 

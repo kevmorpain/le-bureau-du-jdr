@@ -108,6 +108,16 @@
           v-if="row.kind === 'counter'"
           class="recap__value"
         >
+          <DsNumberField
+            v-if="row.recharge && isManual"
+            :model-value="rechargeValues[row.recharge.inventoryId] ?? null"
+            :label="$t('sheet.rest.recharge_roll', { item: row.label, dice: row.recharge.dice })"
+            :min="row.recharge.min"
+            :max="row.recharge.max"
+            :placeholder="row.recharge.dice"
+            :width="70"
+            @update:model-value="rechargeValues[row.recharge.inventoryId] = $event"
+          />
           <DsCounter
             :model-value="row.after"
             :max="row.max"
@@ -133,6 +143,12 @@
     >
       {{ $t('sheet.rest.recap.nothing') }}
     </p>
+    <DsLinkButton
+      v-if="rollsEnabled && hasRechargeDice && (rest !== 'short' || !hitDice.length)"
+      class="self-start"
+      :label="isManual ? $t('sheet.rest.use_app') : $t('sheet.rest.enter_manually')"
+      @click="handleToggleManual"
+    />
     <p class="legend">
       <span><DsDiamond state="filled" />{{ $t('sheet.rest.recap.legend.available') }}</span>
       <span><DsDiamond state="regained" />{{ $t('sheet.rest.recap.legend.regained') }}</span>
@@ -165,7 +181,8 @@
 <script lang="ts" setup>
 import type { DsOption } from '~/components/ds/DsSegmented.vue'
 import type { SlotsByType } from '~/composables/character/useCharacterSpellcasting'
-import { useRestRecap } from '~/composables/character/useRestRecap'
+import { useRestRecap, type RechargeDie, type RestRecapRow } from '~/composables/character/useRestRecap'
+import type { RechargeRoll } from '~/composables/useRest'
 import { hitDiceTotals, remainingHitDice } from '~~/shared/rules/hitDice'
 import type { RestType } from '~~/shared/utils/rest'
 
@@ -185,6 +202,7 @@ const rest = ref<RestType>('short')
 const chosen = ref<ChosenDie[]>([])
 const isManualChoice = ref(false)
 const isFedAndWatered = ref(true)
+const rechargeValues = ref<Record<number, number | null>>({})
 
 const isManual = computed(() => isManualChoice.value || !rollsEnabled.value)
 
@@ -194,6 +212,7 @@ watch(open, (isOpen) => {
   chosen.value = []
   isManualChoice.value = false
   isFedAndWatered.value = true
+  rechargeValues.value = {}
 })
 
 const restOptions = computed<DsOption<RestType>[]>(() => (['short', 'long', 'dawn'] as const).map(value => ({ value, label: t(`sheet.rest.types.${value}`) })))
@@ -241,15 +260,38 @@ const hpAfter = computed(() => {
   return { current, temp }
 })
 
-const recap = computed(() => recapFor(rest.value, { fedAndWatered: isFedAndWatered.value }))
+const rechargeRowsOf = (rows: RestRecapRow[]) => rows.flatMap(row => (row.kind === 'counter' && row.recharge ? [row.recharge] : []))
 
-const canConfirm = computed(() => rest.value !== 'short' || chosen.value.every(die => die.value !== null))
+// A charge count entered at the table replaces the server's roll: the preview shows it in place of the possible range.
+const recap = computed(() => recapFor(rest.value, { fedAndWatered: isFedAndWatered.value }).map((row) => {
+  if (row.kind !== 'counter' || !row.recharge || !isManual.value) return row
+  const rolled = rechargeValues.value[row.recharge.inventoryId]
+  if (rolled == null) return { ...row, note: undefined }
+  const regained = Math.min(rolled, row.recharge.spent)
+  return { ...row, after: row.after + regained, regained, possible: 0, note: undefined }
+}))
+
+const rechargeDice = computed(() => rechargeRowsOf(recap.value))
+const hasRechargeDice = computed(() => rechargeDice.value.length > 0)
+
+const isRechargeEntered = (die: RechargeDie) => {
+  const value = rechargeValues.value[die.inventoryId]
+  return value != null && value >= die.min && value <= die.max
+}
+
+const rechargeRolls = computed<RechargeRoll[]>(() => (isManual.value
+  ? rechargeDice.value.map(die => ({ inventoryId: die.inventoryId, rolled: rechargeValues.value[die.inventoryId]! }))
+  : []))
+
+const canConfirm = computed(() =>
+  (rest.value !== 'short' || chosen.value.every(die => die.value !== null))
+  && (!isManual.value || rechargeDice.value.every(isRechargeEntered)))
 
 const handleConfirm = async (close: () => void) => {
   if (!canConfirm.value) return
-  if (rest.value === 'short') await shortRest(chosen.value.map(die => ({ die: die.die, count: 1, healAmount: healOf(die) })))
-  else if (rest.value === 'long') await longRest(exhaustionLevel.value > 0 ? isFedAndWatered.value : true)
-  else await dawn()
+  if (rest.value === 'short') await shortRest(chosen.value.map(die => ({ die: die.die, count: 1, healAmount: healOf(die) })), rechargeRolls.value)
+  else if (rest.value === 'long') await longRest(exhaustionLevel.value > 0 ? isFedAndWatered.value : true, rechargeRolls.value)
+  else await dawn(rechargeRolls.value)
   close()
 }
 </script>
