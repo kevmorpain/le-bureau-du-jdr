@@ -171,16 +171,13 @@ const handleDelete = async () => {
 
 .manage__main {
   display: flex;
-  flex: 1;
+  flex: 1 1 480px;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
 }
 
-.manage__side {
-  flex-shrink: 0;
-  width: 330px;
-}
+.manage__side { flex: 0 1 330px; }
 
 .note {
   font-size: 12px;

@@ -21,7 +21,7 @@
         <span v-else>{{ $t('sheet.identity.portrait') }}</span>
       </div>
       <div class="head__fields">
-        <label class="field">
+        <label class="labelled">
           <span class="ds-label">{{ $t('sheet.identity.name') }}</span>
           <DsTextField
             v-model="nameDraft"
@@ -29,7 +29,7 @@
             width="full"
           />
         </label>
-        <label class="field">
+        <label class="labelled">
           <span class="ds-label">{{ $t('sheet.identity.alignment') }}</span>
           <DsSelectField
             v-model="alignment"
@@ -77,7 +77,7 @@
       <label
         v-for="field in appearanceInputs"
         :key="field.key"
-        class="field"
+        class="labelled"
       >
         <span class="ds-label">{{ $t(`sheet.identity.fields.${field.key}`) }}</span>
         <DsTextField
@@ -94,7 +94,7 @@
       <label
         v-for="field in personalityInputs"
         :key="field.key"
-        class="field"
+        class="labelled"
       >
         <span class="ds-label">{{ $t(`sheet.identity.fields.${field.key}`) }}</span>
         <DsTextArea
@@ -106,7 +106,7 @@
     </div>
 
     <DsGroupTitle :label="$t('sheet.identity.story')" />
-    <label class="field">
+    <label class="labelled">
       <span class="ds-label">{{ $t('sheet.identity.fields.backstory') }}</span>
       <DsTextArea
         v-model="backstory"
@@ -115,7 +115,7 @@
         :rows="4"
       />
     </label>
-    <label class="field">
+    <label class="labelled">
       <span class="ds-label">{{ $t('sheet.identity.fields.allies') }}</span>
       <DsTextArea
         v-model="allies"
@@ -228,7 +228,7 @@ const handleFileChange = async (event: Event) => {
   min-width: 0;
 }
 
-.field {
+.labelled {
   display: flex;
   flex-direction: column;
   gap: 4px;

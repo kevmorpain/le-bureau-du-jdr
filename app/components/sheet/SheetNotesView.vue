@@ -35,7 +35,7 @@
               :label="$t('sheet.notes.search')"
               :placeholder="$t('sheet.notes.search')"
               icon="search"
-              :width="170"
+              width="full"
               class="notes__search"
             />
           </div>
@@ -195,7 +195,7 @@ const identitySections = computed(() => [
 
 .manage__main {
   display: flex;
-  flex: 1;
+  flex: 1 1 480px;
   flex-direction: column;
   gap: 12px;
   align-self: stretch;
@@ -203,8 +203,8 @@ const identitySections = computed(() => [
 }
 
 .manage__side {
-  flex-shrink: 0;
-  width: 330px;
+  flex: 0 1 330px;
+  min-width: 250px;
 }
 
 .who {
@@ -250,8 +250,9 @@ const identitySections = computed(() => [
 
 .notes__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
 }
 
 .notes__title {
@@ -260,9 +261,16 @@ const identitySections = computed(() => [
   font-weight: 700;
 }
 
-.notes__autosave { font-size: 9.5px; }
+.notes__autosave {
+  font-size: 9.5px;
+  white-space: nowrap;
+}
 
-.notes__search { margin-left: auto; }
+.notes__search {
+  flex: 1 1 150px;
+  max-width: 220px;
+  margin-left: auto;
+}
 
 .notes__input {
   flex: 1;

@@ -146,7 +146,7 @@
         <div
           v-for="die in hitDieRows"
           :key="die.die"
-          class="counter"
+          class="state-row"
         >
           <div class="row">
             <span class="ds-label">{{ $t('sheet.character.hit_dice', { die: die.die }) }}</span>
@@ -159,7 +159,7 @@
             @update:model-value="count => handleHitDiceChange(die.die, count)"
           />
         </div>
-        <div class="counter">
+        <div class="state-row">
           <div class="row">
             <span class="ds-label">{{ $t('sheet.rail.exhaustion') }}</span>
             <span class="row__hint">{{ $t('ds.count_of', { value: exhaustionLevel, max: EXHAUSTION_MAX }) }}</span>
@@ -342,7 +342,7 @@ const rollSkill = (ability: AbilityKey, skill: string, name: string) =>
 
 .manage__main {
   display: flex;
-  flex: 1;
+  flex: 1 1 480px;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
@@ -351,9 +351,9 @@ const rollSkill = (ability: AbilityKey, skill: string, name: string) =>
 .manage__side {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  flex: 0 1 340px;
   gap: 12px;
-  width: 340px;
+  min-width: 250px;
 }
 
 .row {
@@ -385,7 +385,7 @@ const rollSkill = (ability: AbilityKey, skill: string, name: string) =>
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 6px;
 }
 
@@ -493,7 +493,10 @@ const rollSkill = (ability: AbilityKey, skill: string, name: string) =>
   border-bottom: 1px solid var(--color-ds-line);
 }
 
-.skill__name { flex: 1; }
+.skill__name {
+  flex: 1;
+  min-width: 0;
+}
 
 .skill__ability {
   width: 30px;
@@ -507,7 +510,7 @@ const rollSkill = (ability: AbilityKey, skill: string, name: string) =>
   text-align: right;
 }
 
-.counter {
+.state-row {
   display: flex;
   flex-direction: column;
   gap: 4px;
