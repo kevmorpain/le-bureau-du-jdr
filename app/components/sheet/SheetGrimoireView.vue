@@ -98,76 +98,77 @@
         <span class="wide">{{ $t('sheet.grimoire.columns.traits') }}</span>
       </div>
 
-      <p
-        v-if="!groups.length"
-        class="empty"
-      >
-        {{ characterSpells.length ? $t('sheet.grimoire.empty_filtered') : $t('sheet.grimoire.empty') }}
-      </p>
-
-      <section
-        v-for="group in groups"
-        :key="group.level"
-        class="group"
-        :aria-label="levelLabel(group.level)"
-      >
-        <DsGroupTitle :label="levelLabel(group.level)" />
-        <button
-          v-for="cs in group.spells"
-          :key="cs.spellId"
-          type="button"
-          class="spell-row"
-          :class="{ 'spell-row--selected': cs.spellId === selectedId, 'spell-row--narrow': !!selectedSpell }"
-          :aria-pressed="cs.spellId === selectedId"
-          @click="handleSelect(cs.spellId)"
+      <div class="grimoire__list">
+        <p
+          v-if="!groups.length"
+          class="empty"
         >
-          <span class="spell-row__name">
-            <b>{{ cs.spell.name }}</b>
-            <small>
-              {{ schoolOf(cs) }}
+          {{ characterSpells.length ? $t('sheet.grimoire.empty_filtered') : $t('sheet.grimoire.empty') }}
+        </p>
+
+        <section
+          v-for="group in groups"
+          :key="group.level"
+          class="group"
+          :aria-label="levelLabel(group.level)"
+        >
+          <DsGroupTitle :label="levelLabel(group.level)" />
+          <button
+            v-for="cs in group.spells"
+            :key="cs.spellId"
+            type="button"
+            class="spell-row"
+            :class="{ 'spell-row--selected': cs.spellId === selectedId, 'spell-row--narrow': !!selectedSpell }"
+            :aria-pressed="cs.spellId === selectedId"
+            @click="handleSelect(cs.spellId)"
+          >
+            <span class="spell-row__name">
+              <b>{{ cs.spell.name }}</b>
+              <small>
+                {{ schoolOf(cs) }}
+                <span
+                  v-if="spellSourceLabel(cs.source)"
+                  class="spell-row__source"
+                >{{ spellSourceLabel(cs.source) }}</span>
+              </small>
+            </span>
+            <span class="spell-row__cell">
+              <DsCostTag
+                v-if="spellCostTagOf(cs.spell.castingTime)"
+                :cost="spellCostTagOf(cs.spell.castingTime)!"
+              />
+              {{ cs.spell.castingTime }}
+            </span>
+            <span class="spell-row__cell wide">{{ formatRange(cs.spell.range) }}</span>
+            <span class="spell-row__cell wide">{{ cs.spell.duration }}</span>
+            <span class="spell-row__traits wide">
               <span
-                v-if="spellSourceLabel(cs.source)"
-                class="spell-row__source"
-              >{{ spellSourceLabel(cs.source) }}</span>
-            </small>
-          </span>
-          <span class="spell-row__cell">
-            <DsCostTag
-              v-if="spellCostTagOf(cs.spell.castingTime)"
-              :cost="spellCostTagOf(cs.spell.castingTime)!"
-            />
-            {{ cs.spell.castingTime }}
-          </span>
-          <span class="spell-row__cell wide">{{ formatRange(cs.spell.range) }}</span>
-          <span class="spell-row__cell wide">{{ cs.spell.duration }}</span>
-          <span class="spell-row__traits wide">
-            <span
-              v-if="cs.spell.concentration"
-              class="trait"
-            ><DsIcon
-              name="concentration"
-              :size="11"
-            />{{ $t('sheet.grimoire.flags.concentration') }}</span>
-            <span
-              v-if="cs.spell.ritual"
-              class="trait"
-            ><DsIcon
-              name="ritual"
-              :size="11"
-            />{{ $t('sheet.grimoire.flags.ritual') }}</span>
-            <DsBadge
-              v-if="statusOf(cs) === 'prepared' || statusOf(cs) === 'always'"
-              :label="$t(`sheet.grimoire.statuses.${statusOf(cs)}`)"
-              variant="equipped"
-            />
-          </span>
-        </button>
-      </section>
+                v-if="cs.spell.concentration"
+                class="trait"
+              ><DsIcon
+                name="concentration"
+                :size="11"
+              />{{ $t('sheet.grimoire.flags.concentration') }}</span>
+              <span
+                v-if="cs.spell.ritual"
+                class="trait"
+              ><DsIcon
+                name="ritual"
+                :size="11"
+              />{{ $t('sheet.grimoire.flags.ritual') }}</span>
+              <DsBadge
+                v-if="statusOf(cs) === 'prepared' || statusOf(cs) === 'always'"
+                :label="$t(`sheet.grimoire.statuses.${statusOf(cs)}`)"
+                variant="equipped"
+              />
+            </span>
+          </button>
+        </section>
+      </div>
     </section>
 
     <SheetPlayDrawer
       v-if="selectedSpell && selectedCard && selectedDetail"
-      class="grimoire__drawer"
       :card="selectedCard"
       :detail="selectedDetail"
       :actions="[]"
@@ -379,6 +380,18 @@ const handleConfirmRemove = async () => {
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  min-height: 0;
+}
+
+.grimoire__list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  margin-right: -6px;
+  padding-right: 6px;
+  overflow-y: auto;
 }
 
 .casters__table {
@@ -551,12 +564,4 @@ const handleConfirmRemove = async () => {
 }
 
 .grimoire__action { width: 240px; }
-
-/* The whole page scrolls here, not the list: the drawer stays in view, its body scrolls inside. */
-.grimoire__drawer {
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-  max-height: calc(100dvh - 24px);
-}
 </style>

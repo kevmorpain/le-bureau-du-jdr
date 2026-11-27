@@ -102,56 +102,57 @@
         <span class="list-head__state">{{ $t('sheet.inventory.columns.state') }}</span>
       </div>
 
-      <p
-        v-if="!groups.length"
-        class="inventory__empty"
-      >
-        {{ inventory.length ? $t('sheet.inventory.empty_filtered') : $t('sheet.inventory.empty') }}
-      </p>
-
-      <section
-        v-for="group in groups"
-        :key="group.key"
-        class="group"
-        :aria-label="$t(`sheet.inventory.groups.${group.key}`)"
-      >
-        <DsGroupTitle :label="$t(`sheet.inventory.groups.${group.key}`)" />
-        <button
-          v-for="entry in group.entries"
-          :key="entry.id"
-          type="button"
-          class="item-row"
-          :class="{ 'item-row--selected': entry.id === selectedId }"
-          :aria-pressed="entry.id === selectedId"
-          @click="handleSelect(entry.id)"
+      <div class="inventory__list">
+        <p
+          v-if="!groups.length"
+          class="inventory__empty"
         >
-          <DsIcon
-            :name="entry.item?.itemType === 'weapon' ? 'weapon' : 'item'"
-            :size="15"
-            class="item-row__icon"
-          />
-          <span class="item-row__name">
-            <b>{{ entry.item?.name }}</b>
-            <small>{{ entry.item ? itemKindLabel(entry.item) : '' }}</small>
-          </span>
-          <span class="item-row__qty">{{ entry.quantity }}</span>
-          <span
-            v-if="encumbranceVariant"
-            class="item-row__weight"
-          >{{ entryWeightG(entry) ? formatWeightKg(entryWeightG(entry)) : '—' }}</span>
-          <span class="item-row__state">
-            <DsBadge
-              :variant="inventoryStateOf(entry)"
-              :label="$t(`sheet.inventory.states.${inventoryStateOf(entry)}`)"
+          {{ inventory.length ? $t('sheet.inventory.empty_filtered') : $t('sheet.inventory.empty') }}
+        </p>
+
+        <section
+          v-for="group in groups"
+          :key="group.key"
+          class="group"
+          :aria-label="$t(`sheet.inventory.groups.${group.key}`)"
+        >
+          <DsGroupTitle :label="$t(`sheet.inventory.groups.${group.key}`)" />
+          <button
+            v-for="entry in group.entries"
+            :key="entry.id"
+            type="button"
+            class="item-row"
+            :class="{ 'item-row--selected': entry.id === selectedId }"
+            :aria-pressed="entry.id === selectedId"
+            @click="handleSelect(entry.id)"
+          >
+            <DsIcon
+              :name="entry.item?.itemType === 'weapon' ? 'weapon' : 'item'"
+              :size="15"
+              class="item-row__icon"
             />
-          </span>
-        </button>
-      </section>
+            <span class="item-row__name">
+              <b>{{ entry.item?.name }}</b>
+              <small>{{ entry.item ? itemKindLabel(entry.item) : '' }}</small>
+            </span>
+            <span class="item-row__qty">{{ entry.quantity }}</span>
+            <span
+              v-if="encumbranceVariant"
+              class="item-row__weight"
+            >{{ entryWeightG(entry) ? formatWeightKg(entryWeightG(entry)) : '—' }}</span>
+            <span class="item-row__state">
+              <DsBadge
+                :variant="inventoryStateOf(entry)"
+                :label="$t(`sheet.inventory.states.${inventoryStateOf(entry)}`)"
+              />
+            </span>
+          </button>
+        </section>
+      </div>
     </section>
 
     <SheetPlayDrawer
       v-if="selectedEntry && selectedCard && selectedDetail"
-      class="inventory__drawer"
       :card="selectedCard"
       :detail="selectedDetail"
       :actions="[]"
@@ -377,6 +378,18 @@ const handleSetRemaining = (remaining: number) => {
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  min-height: 0;
+}
+
+.inventory__list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  margin-right: -6px;
+  padding-right: 6px;
+  overflow-y: auto;
 }
 
 .inventory__summary {
@@ -557,12 +570,4 @@ const handleSetRemaining = (remaining: number) => {
 }
 
 .inventory__action { width: 240px; }
-
-/* The whole page scrolls here, not the list: the drawer stays in view, its body scrolls inside. */
-.inventory__drawer {
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-  max-height: calc(100dvh - 24px);
-}
 </style>
