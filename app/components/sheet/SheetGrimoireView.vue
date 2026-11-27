@@ -167,6 +167,7 @@
 
     <SheetPlayDrawer
       v-if="selectedSpell && selectedCard && selectedDetail"
+      class="grimoire__drawer"
       :card="selectedCard"
       :detail="selectedDetail"
       :actions="[]"
@@ -550,4 +551,12 @@ const handleConfirmRemove = async () => {
 }
 
 .grimoire__action { width: 240px; }
+
+/* The whole page scrolls here, not the list: the drawer stays in view, its body scrolls inside. */
+.grimoire__drawer {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: calc(100dvh - 24px);
+}
 </style>
