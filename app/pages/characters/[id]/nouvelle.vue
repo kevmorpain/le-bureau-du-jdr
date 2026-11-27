@@ -35,6 +35,10 @@
         v-else-if="view === 'inventory'"
         v-model:character-sheet="characterSheet"
       />
+      <SheetGrimoireView
+        v-else-if="view === 'grimoire'"
+        v-model:character-sheet="characterSheet"
+      />
       <SheetNotesView
         v-else-if="view === 'notes'"
         v-model:character-sheet="characterSheet"

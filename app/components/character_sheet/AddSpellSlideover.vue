@@ -102,11 +102,9 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { default: false })
 
-const search = ref('')
-const selectedLevels = ref<number[]>([])
 const addingIds = ref<Set<number>>(new Set())
 
-const { data: allSpells, pending } = useFetch<Spell[]>('/api/spells', { query: useCatalogQuery(() => props.ruleset) })
+const { query: search, levels: selectedLevels, filteredSpells, pending, reset } = useSpellCatalogSearch(() => props.ruleset)
 
 const levelOptions = [
   { label: 'Tour', value: 0 },
@@ -114,20 +112,10 @@ const levelOptions = [
 ]
 
 const toggleLevel = (level: number) => {
-  const idx = selectedLevels.value.indexOf(level)
-  if (idx === -1) selectedLevels.value.push(level)
-  else selectedLevels.value.splice(idx, 1)
+  selectedLevels.value = selectedLevels.value.includes(level)
+    ? selectedLevels.value.filter(selected => selected !== level)
+    : [...selectedLevels.value, level]
 }
-
-const filteredSpells = computed(() => {
-  const spells = allSpells.value ?? []
-  const q = search.value.toLowerCase().trim()
-  return spells.filter((spell) => {
-    if (q && !spell.name.toLowerCase().includes(q)) return false
-    if (selectedLevels.value.length > 0 && !selectedLevels.value.includes(spell.level)) return false
-    return true
-  })
-})
 
 const handleAdd = async (spellId: number) => {
   if (addingIds.value.has(spellId)) return
@@ -137,9 +125,6 @@ const handleAdd = async (spellId: number) => {
 }
 
 watch(open, (val) => {
-  if (!val) {
-    search.value = ''
-    selectedLevels.value = []
-  }
+  if (!val) reset()
 })
 </script>

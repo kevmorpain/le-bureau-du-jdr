@@ -40,6 +40,12 @@ Vues de gestion de la nouvelle fiche, en deux colonnes (contenu, côté) :
   `useInventoryDetails`), avec un bloc de gestion et ses propres actions (`useInventoryActions` : équiper, une seule
   armure portée). `SheetAddItemWindow` cherche dans le catalogue ou crée un objet (`useItemCatalog`, partagé avec
   `AddItemSlideover`) ; ses effets se saisissent avec `SheetEffectRow`, les autres types sont conservés tels quels.
+- **Grimoire** (`SheetGrimoireView`) : classes lanceuses (DD, attaque), emplacements, sorts préparés
+  (`usePreparedSpells`, partagé avec `MagicSection`), onglets par niveau, filtres Concentration et Rituel, liste par
+  niveau. Le tiroir est celui de la vue En jeu, sans le choix du niveau de lancement : source
+  (`app/utils/spellSources.ts`), statut, et les actions lancer en rituel, préparer, retirer. `SheetAddSpellWindow`
+  filtre le catalogue par classe, école et niveau (`useSpellCatalogSearch`, partagé avec `AddSpellSlideover`) ; un
+  sort ajouté pendant la visite se reprend au même endroit.
 - **Réglages** (`SheetSettingsView`) : préférences de jeu de la fiche (Compte / Oui / Non), design, défauts du compte
   (`SheetAccountPreferencesWindow`, logique `useAccountPreferences` partagée avec `AccountPreferencesModal`) et
   suppression confirmée. `useSheetPersistence.deleteCharacter` annule la sauvegarde en attente avant

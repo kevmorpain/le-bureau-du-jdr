@@ -1121,6 +1121,85 @@
         "set": "Bourse corrigée : {coins}."
       }
     },
+    "grimoire": {
+      "columns": {
+        "class": "Classe lanceuse",
+        "ability": "Caractéristique",
+        "dc": "DD",
+        "attack": "Attaque",
+        "spell": "Sort",
+        "casting_time": "Incantation",
+        "range": "Portée",
+        "duration": "Durée",
+        "traits": "Particularités"
+      },
+      "slots": "Emplacements",
+      "slots_of": "{level} : {value} sur {max}",
+      "slot_level": "Niv. {level}",
+      "pact_level": "Pacte · niv. {level}",
+      "prepared_count": "Sorts préparés : {count} sur {limit}",
+      "prepared_full": "Déjà {limit} sorts préparés : en retirer un avant d'en préparer un autre.",
+      "levels_label": "Niveaux de sort",
+      "all": "Tous",
+      "cantrips": "Tours de magie",
+      "level": "Niveau {level}",
+      "level_short": "Niv. {level}",
+      "flags_label": "Particularités",
+      "flags": {
+        "concentration": "Concentration",
+        "ritual": "Rituel"
+      },
+      "search": "Rechercher un sort",
+      "add": "Ajouter un sort",
+      "empty": "Le grimoire est vide : « Ajouter un sort » le remplit.",
+      "empty_filtered": "Aucun sort ne correspond.",
+      "management": "Grimoire",
+      "source": "Source",
+      "status": "Statut",
+      "no_source": "Ajouté à la main",
+      "statuses": {
+        "always": "Toujours préparé",
+        "prepared": "Préparé",
+        "unprepared": "Non préparé",
+        "known": "Connu"
+      },
+      "actions": {
+        "ritual": "Lancer en rituel",
+        "ritual_detail": "+10 min, sans emplacement",
+        "prepare": "Préparer",
+        "unprepare": "Ne plus préparer",
+        "remove": "Retirer du grimoire"
+      },
+      "remove": {
+        "title": "Retirer du grimoire",
+        "confirm": "Retirer",
+        "body": "{name} quitte le grimoire. Il pourra y revenir par « Ajouter un sort »."
+      }
+    },
+    "add_spell": {
+      "title": "Ajouter un sort",
+      "description": "Chercher dans les sorts du catalogue et les ajouter au grimoire.",
+      "search": "Rechercher un sort",
+      "filters": {
+        "class": "Classe",
+        "school": "École",
+        "level": "Niveau"
+      },
+      "cantrip": "Tour de magie",
+      "cantrips": "Tours",
+      "toggle": "Ajouter ou retirer {name}",
+      "owned": "{name} est déjà dans le grimoire",
+      "in_grimoire": "Dans le grimoire",
+      "no_result": "Aucun sort trouvé.",
+      "status": {
+        "owned": "Déjà dans le grimoire.",
+        "added": "Ajouté au grimoire.",
+        "absent": "Pas encore dans le grimoire."
+      },
+      "error": "L'ajout ou le retrait a échoué : réessaie.",
+      "added_count": "Aucun sort ajouté | {n} sort ajouté pendant cette visite | {n} sorts ajoutés pendant cette visite",
+      "done": "Terminé"
+    },
     "add_item": {
       "title": "Ajouter un objet",
       "edit_title": "Modifier l'objet",

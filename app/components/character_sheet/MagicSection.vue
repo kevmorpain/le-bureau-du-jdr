@@ -418,8 +418,7 @@
 <script lang="ts" setup>
 import { SpellComponent } from '~~/server/db/schema/spells'
 import type { ActionCost } from '~~/shared/rules/actionCost'
-import { classSlugFromName } from '~~/shared/rules/classSlugs'
-import { countPreparedSpells, preparedSpellsLimit } from '~~/shared/rules/spellsKnown'
+import { usePreparedSpells } from '~/composables/character/usePreparedSpells'
 import { baseSlotLevel } from '~~/shared/rules/spellScaling'
 import type { CharacterSpellWithSpell, SlotType } from '~/composables/character/useCharacterSpells'
 import type { SlotsByType } from '~/composables/character/useCharacterSpellcasting'
@@ -438,7 +437,6 @@ const spellSlots = inject<Ref<SlotsByType>>('spellSlots')!
 const characterSheetApi = useCharacterSheet(characterSheetRef)
 const {
   spellcastingModifier,
-  statsForCasterClass,
   statsForSpell,
   spellcasterClasses,
   activeCasterClass,
@@ -481,19 +479,7 @@ const abilityShortLabels: Record<string, string> = {
 
 const casterStatsOf = (cs: CharacterSpellWithSpell) => statsForSpell(cs)
 
-const preparedLimit = computed<number | null>(() => {
-  const caster = activeCasterClass.value
-  const slug = caster ? classSlugFromName(caster.className) : undefined
-  const classLevel = characterSheetRef.value.classes?.find(c => c.classId === caster?.classId)?.level
-  if (!caster || !slug || !classLevel) return null
-  return preparedSpellsLimit(props.characterSheet.ruleset, slug, classLevel, statsForCasterClass(caster.classId)?.modifier ?? 0)
-})
-
-const preparedCount = computed(() => {
-  const caster = activeCasterClass.value
-  if (!caster) return 0
-  return countPreparedSpells((characterSpells.value ?? []).map(cs => ({ ...cs, level: cs.spell.level })), caster.classId)
-})
+const { preparedLimit, preparedCount } = usePreparedSpells(characterSheetRef, characterSheetApi)
 
 const casterClassItems = computed(() =>
   spellcasterClasses.value.map(c => ({

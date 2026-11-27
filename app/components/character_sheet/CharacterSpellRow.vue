@@ -159,6 +159,7 @@ import type { Component } from 'vue'
 import { CauldronIcon, HandGestureIcon, VoiceActivateIcon } from '#components'
 import { SpellComponent } from '~~/server/db/schema/spells'
 import { baseCastLevels, resolveDamageDie, resolveHealDie } from '~~/shared/rules/spellScaling'
+import { spellSourceLabel, spellSourceTooltip } from '~/utils/spellSources'
 
 const props = defineProps<{
   spell: Spell
@@ -255,39 +256,8 @@ const damageParts = computed<{ text: string, damageType: string }[]>(() => {
   return parts
 })
 
-const ARCANUM_SOURCES = ['arcanum_6', 'arcanum_7', 'arcanum_8', 'arcanum_9'] as const
-type ArcanumSource = typeof ARCANUM_SOURCES[number]
-
-const arcanumLevel = (s: ArcanumSource) => Number(s.split('_')[1])
-
-const sourceLabel = computed(() => {
-  if (props.source === 'pact_chain') return 'Pacte · Chaîne'
-  if (props.source === 'pact_tome') return 'Pacte · Tome'
-  if (props.source === 'invocation') return 'Manifestation'
-  if (props.source === 'book_of_ancient_secrets') return 'Livre des Ombres'
-  if (props.source === 'feat') return 'Don'
-  if (props.source === 'species') return 'Espèce'
-  if (props.source && (ARCANUM_SOURCES as readonly string[]).includes(props.source)) {
-    return `Arcanum (niv. ${arcanumLevel(props.source as ArcanumSource)}) — 1/repos long`
-  }
-  return ''
-})
-
-const sourceTooltip = computed(() => {
-  if (props.source === 'pact_chain') return 'Sort octroyé par le Pacte de la Chaîne'
-  if (props.source === 'pact_tome') return 'Sort mineur du Pacte du Tome'
-  if (props.source === 'invocation') return 'Sort octroyé par une manifestation occulte'
-  if (props.source === 'feat') return 'Sort octroyé par un don'
-  if (props.source === 'species') return 'Sort inné octroyé par un trait de votre espèce'
-  if (props.source === 'book_of_ancient_secrets') {
-    return 'Sort rituel inscrit dans votre Livre des Ombres (lançable uniquement en tant que rituel).'
-  }
-  if (props.source && (ARCANUM_SOURCES as readonly string[]).includes(props.source)) {
-    const lvl = arcanumLevel(props.source as ArcanumSource)
-    return `Arcane Mystérieux (niv. ${lvl}) — peut être lancé 1 fois par repos long sans dépenser d'emplacement de sort.`
-  }
-  return ''
-})
+const sourceLabel = computed(() => spellSourceLabel(props.source))
+const sourceTooltip = computed(() => spellSourceTooltip(props.source))
 
 const activeEldritchBlastModifiers = computed(() => {
   if (!isEldritchBlast.value) return []
