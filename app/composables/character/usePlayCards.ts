@@ -19,6 +19,44 @@ export type PlayCardSource
     | { kind: 'weapon', weapon: WeaponStats, entry: InventoryEntry | undefined }
     | { kind: 'item', entry: InventoryEntry }
 
+type ResourceGroup = CharacterSheetApi['resourceGroups']['value'][number]
+
+// Pact Magic and Mystic Arcanum are spent from the spell cards; a pooled feature counts its pool's uses.
+const projectFeatures = (features: PlayFeature[], resourceGroups: ResourceGroup[]) => features
+  .filter(feature => !isSpellSlotFeature(feature.meta) && !isArcanumFeature(feature.name))
+  .map((feature) => {
+    const pool = resourceGroups.find(group => group.featureIds.includes(feature.id))
+    const ownMaxUses = hasInformativeCounter(feature.meta) ? null : feature.maxUses ?? null
+    return {
+      feature,
+      projected: {
+        id: feature.id,
+        name: feature.name,
+        actionType: feature.actionType ?? null,
+        rechargeType: pool?.rechargeType ?? feature.rechargeType ?? null,
+        maxUses: pool ? pool.max : ownMaxUses,
+        currentUses: pool ? pool.spent : feature.currentUses ?? 0,
+        unlimited: pool ? pool.unlimited : 'unlimited' in feature ? feature.unlimited : false,
+      },
+    }
+  })
+
+export interface PassiveFeatureGroup {
+  label: string
+  features: PlayFeature[]
+}
+
+// What the play view leaves out: features with nothing to do during play, grouped by where they come from.
+export const usePassiveFeatures = ({ allCharacterFeatures, resourceGroups }: Pick<CharacterSheetApi, 'allCharacterFeatures' | 'resourceGroups'>) =>
+  computed<PassiveFeatureGroup[]>(() => {
+    const groups = new Map<string, PlayFeature[]>()
+    for (const { feature, projected } of projectFeatures(allCharacterFeatures.value, resourceGroups.value)) {
+      if (isPlayableFeature(projected)) continue
+      groups.set(feature.origin.label, [...(groups.get(feature.origin.label) ?? []), feature])
+    }
+    return [...groups].map(([label, features]) => ({ label, features }))
+  })
+
 export const usePlayCards = ({ characterSpells, allCharacterFeatures, resourceGroups, equippedWeaponStats, inventory, spellSlots, spellCasting }: PlayCardsDeps) => {
   const entryById = computed(() => new Map((inventory.value ?? []).map(entry => [entry.id, entry])))
 
@@ -36,25 +74,7 @@ export const usePlayCards = ({ characterSpells, allCharacterFeatures, resourceGr
       return { card, source: { kind: 'spell', characterSpell } as const }
     }))
 
-  // Pact Magic and Mystic Arcanum are spent from the spell cards; a pooled feature counts its pool's uses.
-  const featureCards = computed(() => allCharacterFeatures.value
-    .filter(feature => !isSpellSlotFeature(feature.meta) && !isArcanumFeature(feature.name))
-    .map((feature) => {
-      const pool = resourceGroups.value.find(group => group.featureIds.includes(feature.id))
-      const ownMaxUses = hasInformativeCounter(feature.meta) ? null : feature.maxUses ?? null
-      return {
-        feature,
-        projected: {
-          id: feature.id,
-          name: feature.name,
-          actionType: feature.actionType ?? null,
-          rechargeType: pool?.rechargeType ?? feature.rechargeType ?? null,
-          maxUses: pool ? pool.max : ownMaxUses,
-          currentUses: pool ? pool.spent : feature.currentUses ?? 0,
-          unlimited: pool ? pool.unlimited : 'unlimited' in feature ? feature.unlimited : false,
-        },
-      }
-    })
+  const featureCards = computed(() => projectFeatures(allCharacterFeatures.value, resourceGroups.value)
     .filter(({ projected }) => isPlayableFeature(projected))
     .map(({ feature, projected }) => ({ card: toFeatureCard(projected), source: { kind: 'feature', feature } as const })))
 

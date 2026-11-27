@@ -27,6 +27,18 @@ est partagée avec l'ancienne fiche : `useHitPointActions` et `useConcentrationC
 (`RollDamageModal`). Une source de dégâts = un appel à `applyDamage` : un échec aux jets contre la mort et un jet de
 concentration par source (`applyDamageSources`).
 
+Vues de gestion de la nouvelle fiche, en deux colonnes (contenu, côté) :
+- **Personnage** (`SheetCharacterView`) : caractéristiques, sauvegardes et compétences (un toucher lance le jet), autres
+  maîtrises, sens, dés de vie et épuisement réglables, défenses, et les traits passifs. Ce sont les capacités que la vue
+  En jeu écarte (`usePassiveFeatures`, même projection que `usePlayCards`), groupées par origine.
+- **Notes** (`SheetNotesView`) : notes de session (`useQuickNotes`, partagé avec `QuickNotesSection`), avec une
+  recherche qui ne garde que les paragraphes concernés, et la fiche d'identité en accordéon. « Modifier » ouvre
+  `SheetIdentityWindow` (nom, alignement, portrait via `usePortraitUpload`, apparence, personnalité, histoire).
+- **Réglages** (`SheetSettingsView`) : préférences de jeu de la fiche (Compte / Oui / Non), design, défauts du compte
+  (`SheetAccountPreferencesWindow`, logique `useAccountPreferences` partagée avec `AccountPreferencesModal`) et
+  suppression confirmée. `useSheetPersistence.deleteCharacter` annule la sauvegarde en attente avant
+  `deleteCharacterSheet`, qui efface aussi l'état local du personnage (`forgetCharacterStorage`).
+
 La fiche charge le personnage via `GET /api/character_sheets/{id}` (include toutes les relations Drizzle sauf les sorts). Un deep watch persiste les changements via `PUT /api/character_sheets/{id}` (`useAutoSave` : 2 s d'inactivité, 10 s au plus en saisie continue). Les sections qui font leurs propres fetches (inventaire, sorts) ont leurs propres composables.
 
 ---

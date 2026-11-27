@@ -137,6 +137,7 @@
 </template>
 
 <script lang="ts" setup>
+import { usePortraitUpload } from '~/composables/character/usePortraitUpload'
 import { ALIGNMENTS } from '~~/shared/rules/alignments'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
@@ -162,39 +163,20 @@ watch(portraitSrc, () => {
   portraitFailed.value = false
 })
 
-// Téléversement (R2 via /api/character_sheets/{id}/portrait)
-// C'est le serveur qui écrit `portraitUrl` (et supprime l'ancien objet) ; un envoi de fichier ne
-// passe pas par la file hors-ligne : il faut le réseau.
 const toast = useToast()
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
-const uploading = ref(false)
+const { isUploading: uploading, error: uploadError, upload } = usePortraitUpload(characterSheet)
 
 async function uploadPortrait(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
 
-  uploading.value = true
-  try {
-    const image = await resizeImageForUpload(file)
-    const form = new FormData()
-    form.append('file', image, file.name)
-
-    const { portraitUrl: uploaded } = await $fetch<{ portraitUrl: string }>(
-      `/api/character_sheets/${characterSheet.value.id}/portrait`,
-      { method: 'POST', body: form },
-    )
-    portraitUrl.value = uploaded
-  } catch (e: unknown) {
-    const message = (e as { statusMessage?: string, data?: { statusMessage?: string } })?.statusMessage
-      ?? (e as { data?: { statusMessage?: string } })?.data?.statusMessage
-      ?? 'Réessayez, ou collez un lien vers une image.'
-    toast.add({ title: 'Téléversement impossible', description: message, color: 'error' })
-  } finally {
-    uploading.value = false
-    // Permet de resélectionner le même fichier après une erreur.
-    input.value = ''
+  if (!await upload(file)) {
+    toast.add({ title: 'Téléversement impossible', description: uploadError.value ?? undefined, color: 'error' })
   }
+  // Lets the same file be picked again after an error.
+  input.value = ''
 }
 
 const alignmentItems = ALIGNMENTS.map(a => ({ label: `${a.name} (${a.short})`, value: a.code }))

@@ -12,7 +12,7 @@
           :model-value="resolved[key]"
           :label="PREFERENCES[key].label"
           :description="PREFERENCES[key].description"
-          :disabled="!loaded"
+          :disabled="!isLoaded"
           @update:model-value="value => save(key, value)"
         />
       </div>
@@ -21,33 +21,18 @@
 </template>
 
 <script lang="ts" setup>
-import { PREFERENCES, PREFERENCE_KEYS, resolvePreferences, type PreferenceKey, type Preferences } from '~~/shared/rules/preferences'
+import { PREFERENCES, PREFERENCE_KEYS } from '~~/shared/rules/preferences'
 
 const open = defineModel<boolean>('open', { default: false })
 
-const preferences = ref<Preferences | null>(null)
-const loaded = ref(false)
-const resolved = computed(() => resolvePreferences(null, preferences.value))
+const { resolved, isLoaded, error, load, save } = useAccountPreferences()
 
-watch(open, async (isOpen) => {
-  if (!isOpen) return
-  loaded.value = false
-  try {
-    preferences.value = (await $fetch<{ preferences: Preferences | null }>('/api/account/preferences')).preferences
-    loaded.value = true
-  } catch {
-    useToast().add({ title: 'Impossible de lire les préférences', color: 'error' })
-  }
+watch(open, (isOpen) => {
+  if (isOpen) void load()
 })
 
-const save = async (key: PreferenceKey, value: boolean) => {
-  try {
-    preferences.value = (await $fetch<{ preferences: Preferences | null }>('/api/account/preferences', {
-      method: 'PUT',
-      body: { ...preferences.value, [key]: value },
-    })).preferences
-  } catch {
-    useToast().add({ title: 'Préférence non enregistrée', color: 'error' })
-  }
-}
+const ERROR_TITLES = { load: 'Impossible de lire les préférences', save: 'Préférence non enregistrée' } as const
+watch(error, (value) => {
+  if (value) useToast().add({ title: ERROR_TITLES[value], color: 'error' })
+})
 </script>

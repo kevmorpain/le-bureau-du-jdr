@@ -986,6 +986,105 @@
     },
     "coming": "Cette vue arrive avec un prochain lot de la refonte.",
     "not_found": "Fiche de personnage introuvable",
+    "character": {
+      "abilities": "Caractéristiques et sauvegardes",
+      "proficiency_bonus": "Bonus de maîtrise",
+      "score": "score {n}",
+      "save": "Sauvegarde",
+      "roll_check": "Lancer un jet de {ability}",
+      "roll_save": "Lancer une sauvegarde de {ability}",
+      "roll_skill": "{skill} {modifier} : lancer le jet",
+      "check_label": "Jet de {ability}",
+      "save_label": "Sauvegarde de {ability}",
+      "skills": "Compétences",
+      "proficiency": {
+        "proficient": "maîtrise",
+        "expert": "expertise",
+        "none": "sans maîtrise"
+      },
+      "proficiencies": "Maîtrises",
+      "proficiency_kinds": {
+        "armor": "Armures",
+        "weapons": "Armes",
+        "tools": "Outils",
+        "languages": "Langues"
+      },
+      "none": "Aucune",
+      "senses": "Sens",
+      "darkvision": "Vision dans le noir",
+      "passive_perception": "Perception passive",
+      "passive_investigation": "Investigation passive",
+      "state": "État",
+      "hit_dice": "Dés de vie · d{die}",
+      "defenses": {
+        "resistance": "Résistances",
+        "immunity": "Immunités",
+        "vulnerability": "Vulnérabilités"
+      },
+      "passives": "Traits et passifs",
+      "no_passives": "Aucun trait passif."
+    },
+    "notes": {
+      "edit_identity": "Modifier",
+      "title": "Notes",
+      "autosave": "Enregistrement automatique",
+      "search": "Chercher dans les notes",
+      "placeholder": "Ce qui s'est passé, les noms à retenir, les pistes à suivre…",
+      "matches": "Aucun passage ne correspond. | Un passage correspond. | {n} passages correspondent.",
+      "identity": "Fiche d'identité",
+      "empty": "Rien de renseigné : « Modifier » ouvre l'identité.",
+      "size": "Catégorie de taille",
+      "sections": {
+        "personality": "Personnalité",
+        "appearance": "Apparence",
+        "background": "Historique",
+        "story": "Histoire",
+        "allies": "Alliés et organisations"
+      }
+    },
+    "identity": {
+      "title": "Identité et description",
+      "autosave": "Enregistré automatiquement",
+      "portrait": "Portrait",
+      "name": "Nom",
+      "alignment": "Alignement",
+      "upload": "Téléverser un portrait",
+      "uploading": "Téléversement…",
+      "or_url": "ou une adresse :",
+      "portrait_url": "Adresse du portrait",
+      "upload_failed": "Téléversement impossible : {reason}",
+      "upload_retry": "Réessaie, ou colle un lien vers une image.",
+      "appearance": "Apparence",
+      "personality": "Personnalité",
+      "story": "Histoire",
+      "done": "Terminé",
+      "fields": {
+        "age": "Âge",
+        "height": "Taille",
+        "weight": "Poids",
+        "eyes": "Yeux",
+        "hair": "Cheveux",
+        "skin": "Peau",
+        "deity": "Divinité",
+        "personality_traits": "Traits de personnalité",
+        "ideals": "Idéaux",
+        "bonds": "Liens",
+        "flaws": "Défauts",
+        "backstory": "Histoire du personnage",
+        "allies": "Alliés et organisations"
+      },
+      "placeholders": {
+        "age": "27 ans",
+        "height": "1,75 m",
+        "weight": "68 kg",
+        "eyes": "Verts",
+        "hair": "Bruns, mi-longs",
+        "skin": "Hâlée",
+        "deity": "Tyr",
+        "backstory": "D'où vient ton personnage ? Qu'est-ce qui l'a mis sur la route ?",
+        "allies": "Factions, mentors, contacts, dettes…"
+      }
+    },
     "rail": {
       "inspiration": "Inspiration",
       "inspiration_on": "disponible",
@@ -1056,7 +1155,37 @@
       "design": "Design de la fiche",
       "design_new": "Nouveau",
       "design_old": "Ancien",
-      "design_help": "Le temps de la refonte, l'ancienne fiche reste disponible. Le choix vaut pour ce personnage ; l'ancienne fiche garde un bouton pour revenir ici."
+      "design_help": "Le temps de la refonte, l'ancienne fiche reste disponible. Le choix vaut pour ce personnage ; l'ancienne fiche garde un bouton pour revenir ici.",
+      "rules": "Règles de jeu",
+      "rules_help": "Chaque réglage suit le défaut du compte tant que la fiche n'a pas tranché pour elle-même.",
+      "inherit": "Compte ({value})",
+      "yes": "Oui",
+      "no": "Non",
+      "yes_lower": "oui",
+      "no_lower": "non",
+      "sheet": "Fiche",
+      "ruleset": "Règles",
+      "rulesets": {
+        "2014": "D&D 5e (2014)",
+        "2024": "D&D 5e (2024)"
+      },
+      "defaults": "Défauts",
+      "own_settings": "Ceux du compte | Ceux du compte, sauf un réglage propre | Ceux du compte, sauf {n} réglages propres",
+      "account_defaults": "Régler les défauts du compte",
+      "account": {
+        "title": "Défauts du compte",
+        "help": "Valables pour toutes tes fiches, sauf celles qui ont tranché pour elles-mêmes.",
+        "done": "Terminé",
+        "errors": {
+          "load": "Impossible de lire les défauts du compte.",
+          "save": "Le réglage n'a pas été enregistré."
+        }
+      },
+      "delete": {
+        "action": "Supprimer ce personnage",
+        "body": "Cette action est irréversible. La fiche et toutes ses données (classes, sorts, inventaire, compétences…) seront définitivement supprimées.",
+        "failed": "La suppression a échoué : vérifie la connexion, puis réessaie."
+      }
     },
     "open_new": "Nouvelle fiche",
     "hit_points": {
