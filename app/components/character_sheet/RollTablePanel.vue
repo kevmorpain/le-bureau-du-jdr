@@ -81,40 +81,21 @@ const props = defineProps<{
   inline?: boolean
 }>()
 
-const { roll, rollsEnabled } = useDiceRoller()
-
-// Deux jets restent surlignés : Chaos contrôlé fait lancer deux fois puis choisir.
-const rolls = ref<number[]>([])
+const table = toRef(props, 'table')
+const { rolls, entered, latestIndex, previousIndex, rollsEnabled, rollOnTable: rollTable, enterRoll: enterTableRoll, isEntryValid: validEntry } = useRollTable(table)
 const list = useTemplateRef<HTMLOListElement>('list')
-
-const latestIndex = computed(() => {
-  const last = rolls.value.at(-1)
-  return last === undefined ? -1 : rollTableEntryIndex(props.table.entries, last)
-})
-
-const previousIndex = computed(() =>
-  rolls.value.length > 1 ? rollTableEntryIndex(props.table.entries, rolls.value[0]!) : -1,
-)
 
 const scrollToRoll = (value: number) => {
   const index = rollTableEntryIndex(props.table.entries, value)
   list.value?.querySelector(`[data-index="${index}"]`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
 }
 
-const showResult = async (result: number) => {
-  rolls.value = [...rolls.value, result].slice(-2)
+const showResult = async (result: number | null) => {
+  if (result === null) return
   await nextTick()
   scrollToRoll(result)
 }
 
-const rollOnTable = () => showResult(roll(props.table.name, 0, props.table.die))
-
-const entered = ref<number | null>(null)
-const validEntry = computed(() => Number.isInteger(entered.value) && entered.value! >= 1 && entered.value! <= props.table.die)
-
-const enterRoll = async () => {
-  if (!validEntry.value) return
-  await showResult(entered.value!)
-  entered.value = null
-}
+const rollOnTable = () => showResult(rollTable())
+const enterRoll = () => showResult(enterTableRoll())
 </script>
