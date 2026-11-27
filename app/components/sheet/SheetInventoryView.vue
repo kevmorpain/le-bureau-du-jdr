@@ -438,11 +438,11 @@ const handleSetRemaining = (remaining: number) => {
 
 .coin__value { font-size: 15px; }
 .coin__label { font-size: 9.5px; }
-.coin__label--pp { color: #f4f6f8; }
-.coin__label--po { color: #e8a933; }
-.coin__label--pe { color: #b5d266; }
-.coin__label--pa { color: #959ea6; }
-.coin__label--pc { color: #d0693a; }
+.coin__label--pp { color: var(--color-coin-pp); }
+.coin__label--po { color: var(--color-coin-po); }
+.coin__label--pe { color: var(--color-coin-pe); }
+.coin__label--pa { color: var(--color-coin-pa); }
+.coin__label--pc { color: var(--color-coin-pc); }
 
 .inventory__toolbar {
   display: flex;

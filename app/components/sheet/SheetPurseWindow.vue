@@ -21,7 +21,10 @@
         :key="key"
         class="coin"
       >
-        <span class="ds-label">{{ $t(`sheet.inventory.coins.${key}`) }}</span>
+        <span
+          class="ds-label coin__label"
+          :style="{ color: `var(--color-coin-${key})` }"
+        >{{ $t(`sheet.inventory.coins.${key}`) }}</span>
         <span class="coin__current">{{ $t('sheet.purse.current', { n: purse[key] }) }}</span>
         <DsNumberField
           v-model="amounts[key]"
@@ -40,11 +43,7 @@
       {{ lastMove }}
     </p>
 
-    <template #footer="{ close }">
-      <DsLinkButton
-        :label="$t('sheet.purse.close')"
-        @click="close"
-      />
+    <template #footer>
       <DsButton
         :label="$t(`sheet.purse.apply.${mode}`)"
         :disabled="!hasAmount"

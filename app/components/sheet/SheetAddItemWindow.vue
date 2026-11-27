@@ -102,29 +102,34 @@
           :key="entry.item.id"
           class="picked"
         >
-          <span class="picked__name">{{ entry.item.name }}</span>
-          <DsNumberField
-            v-model="entry.quantity"
-            :label="$t('sheet.add_item.quantity_of', { name: entry.item.name })"
-            :min="1"
-            :width="60"
-          />
-          <template v-if="entry.item.itemType === 'weapon' || entry.item.itemType === 'armor'">
+          <div class="picked__head">
+            <span class="picked__name">{{ entry.item.name }}</span>
+            <DsNumberField
+              v-model="entry.quantity"
+              :label="$t('sheet.add_item.quantity_of', { name: entry.item.name })"
+              :min="1"
+              :width="60"
+            />
+            <DsCornerButton
+              :label="$t('sheet.add_item.unselect', { name: entry.item.name })"
+              @click="deselect(entry.item.id)"
+            />
+          </div>
+          <div
+            v-if="entry.item.itemType === 'weapon' || entry.item.itemType === 'armor'"
+            class="picked__options"
+          >
             <DsSegmented
               v-model="entry.magicBonus"
               :options="MAGIC_BONUS_OPTIONS"
               :label="$t('sheet.add_item.magic_bonus_of', { name: entry.item.name })"
+              class="picked__bonus"
             />
             <DsCheckbox
               v-model="entry.equipped"
               :label="$t('sheet.add_item.equipped')"
             />
-          </template>
-          <DsCornerButton
-            :label="$t('sheet.add_item.unselect', { name: entry.item.name })"
-            class="picked__remove"
-            @click="deselect(entry.item.id)"
-          />
+          </div>
         </div>
       </template>
     </template>
@@ -613,18 +618,26 @@ watch(open, (isOpen) => {
 
 .picked {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  padding: 6px 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 0 10px;
   border-bottom: 1px solid var(--color-ds-line);
+}
+
+.picked__head,
+.picked__options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .picked__name {
   flex: 1;
-  min-width: 140px;
+  min-width: 0;
   font-weight: 700;
 }
+
+.picked__bonus { flex: 1; }
 
 .create {
   display: flex;

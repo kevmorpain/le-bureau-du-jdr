@@ -1119,8 +1119,7 @@
       "result": {
         "moved": "Fait : {coins}.",
         "set": "Bourse corrigée : {coins}."
-      },
-      "close": "Fermer"
+      }
     },
     "add_item": {
       "title": "Ajouter un objet",
