@@ -1121,6 +1121,16 @@
         "set": "Bourse corrigée : {coins}."
       }
     },
+    "roll_table": {
+      "title": "Table · d{die}",
+      "roll": "Lancer le d{die}",
+      "entered": "d{die} obtenu",
+      "manual_hint": "La ligne obtenue s'éclaire dans la table.",
+      "use_manual": "Saisir le d{die} à la main",
+      "use_app": "Lancer le d{die} dans l'app",
+      "last_rolls": "Derniers jets : {rolls}",
+      "no_roll": "Aucun jet pour l'instant."
+    },
     "grimoire": {
       "columns": {
         "class": "Classe lanceuse",

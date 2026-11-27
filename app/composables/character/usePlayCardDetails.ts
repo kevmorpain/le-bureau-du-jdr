@@ -65,6 +65,7 @@ export interface PlayDetail {
   description: string | null
   usesLabel: string | null
   slotOptions: PlaySlotOption[]
+  rollTableId: number | null
 }
 
 export const usePlayCardDetails = ({ statsForSpell, characterLevel, spellSlots, spellCasting }: PlayCardDetailsDeps) => {
@@ -204,11 +205,12 @@ export const usePlayCardDetails = ({ statsForSpell, characterLevel, spellSlots, 
       description: spell.description ?? null,
       usesLabel: getUsesLabel(card),
       slotOptions: getSlotOptions(characterSpell),
+      rollTableId: spell.rollTableId ?? null,
     }
   }
 
   const getDetail = (card: PlayCard, source: PlayCardSource): PlayDetail => {
-    const base = { badges: [], components: null, properties: [], usesLabel: getUsesLabel(card), slotOptions: [] }
+    const base = { badges: [], components: null, properties: [], usesLabel: getUsesLabel(card), slotOptions: [], rollTableId: null }
     switch (source.kind) {
       case 'spell':
         return getSpellDetail(card, source.characterSpell)
@@ -237,6 +239,7 @@ export const usePlayCardDetails = ({ statsForSpell, characterLevel, spellSlots, 
             ...(card.rechargeType ? [{ label: t('sheet.play.tiles.recharge'), value: getRechargeLabel(card)! }] : []),
           ],
           description: source.feature.description ?? null,
+          rollTableId: source.feature.rollTableId ?? null,
         }
       case 'item':
         return {

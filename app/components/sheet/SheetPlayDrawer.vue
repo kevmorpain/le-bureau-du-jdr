@@ -98,6 +98,12 @@
         class="drawer__description"
       />
 
+      <SheetRollTable
+        v-if="detail.rollTableId"
+        :key="detail.rollTableId"
+        :roll-table-id="detail.rollTableId"
+      />
+
       <div
         v-if="detail.slotOptions.length"
         class="drawer__slots"
