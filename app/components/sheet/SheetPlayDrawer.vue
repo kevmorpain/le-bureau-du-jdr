@@ -146,23 +146,27 @@
       >
         {{ warning }}
       </p>
+
+      <slot />
     </div>
 
     <div
-      v-if="actions.length"
+      v-if="actions.length || $slots.actions"
       class="drawer__actions"
     >
-      <DsButton
-        v-for="action in actions"
-        :key="action.key"
-        :label="action.label"
-        :detail="action.detail"
-        :variant="action.variant"
-        :disabled="action.isDisabled"
-        block
-        class="drawer__action"
-        @click="emit('action', action.key)"
-      />
+      <slot name="actions">
+        <DsButton
+          v-for="action in actions"
+          :key="action.key"
+          :label="action.label"
+          :detail="action.detail"
+          :variant="action.variant"
+          :disabled="action.isDisabled"
+          block
+          class="drawer__action"
+          @click="emit('action', action.key)"
+        />
+      </slot>
     </div>
   </DsFrame>
 </template>

@@ -146,7 +146,7 @@
                 v-else-if="!entry.equipped"
                 class="text-sm text-muted"
               >
-                {{ weaponDamageSummary(entry) }}
+                {{ entry.item ? weaponDamageSummary(entry.item) : '' }}
               </span>
 
               <UTooltip
@@ -358,7 +358,7 @@
               v-else
               class="text-sm text-muted"
             >
-              {{ armorBaseACSummary(entry) }}
+              {{ entry.item ? armorClassSummary(entry.item) : '' }}
             </span>
 
             <UTooltip
@@ -578,7 +578,7 @@
             />
             <UBadge
               v-if="entry.item"
-              :label="toolCategoryLabel(entry.item)"
+              :label="itemKindLabel(entry.item)"
               variant="soft"
             />
             <UButton
@@ -656,13 +656,15 @@ import type {
   InventoryEntry,
   InventoryItem,
 } from '~/composables/character/useCharacterInventory'
-import type { WeaponProperties, ArmorProperties, ToolProperties } from '~~/server/db/schema/items'
+import type { WeaponProperties } from '~~/server/db/schema/items'
 import { ATTUNEMENT_LIMIT, canAttune } from '~~/shared/rules/attunement'
 import { ENCUMBRANCE_LABELS, formatWeightKg } from '~~/shared/rules/encumbrance'
 import { matchesSearch } from '~~/shared/utils/search'
-import { toolTypeLabels, weaponPropertyLabels, weaponPropertyTooltips } from '~~/shared/utils/item'
+import { weaponPropertyLabels, weaponPropertyTooltips } from '~~/shared/utils/item'
 import type { RollFn } from '~/composables/useDiceRoller'
+import { useInventoryActions } from '~/composables/character/useInventoryActions'
 import { useWeaponAttacks } from '~/composables/character/useWeaponAttacks'
+import { armorClassSummary, itemKindLabel, weaponDamageSummary, weaponRangeSummary } from '~/utils/inventoryView'
 
 const props = defineProps<{
   roll?: RollFn
@@ -777,64 +779,13 @@ const emptyText = (tab: keyof typeof EMPTY_TEXTS) =>
 
 const attunementFull = computed(() => !canAttune(attunedCount.value))
 
-const damageTypeLabels: Record<string, string> = {
-  acid: 'acide', bludgeoning: 'contondant', cold: 'froid', fire: 'feu', force: 'force',
-  lightning: 'foudre', necrotic: 'nécrotique', piercing: 'perçant', poison: 'poison',
-  psychic: 'psychique', radiant: 'radiant', slashing: 'tranchant', thunder: 'tonnerre',
-}
-
-const weaponDamageSummary = (entry: InventoryEntry): string => {
-  if (!entry.item) return ''
-  const wprops = entry.item.properties as WeaponProperties
-  const dt = damageTypeLabels[wprops.damage_type] ?? wprops.damage_type
-  return `${wprops.damage_dice} ${dt}`
-}
-
 const weaponPropertiesOf = (entry: InventoryEntry): string[] => {
   if (entry.item?.itemType !== 'weapon') return []
   return (entry.item.properties as WeaponProperties).weapon_properties ?? []
 }
 
-const weaponRangeOf = (entry: InventoryEntry): string | null => {
-  if (entry.item?.itemType !== 'weapon') return null
-  const wprops = entry.item.properties as WeaponProperties
-  const isThrown = wprops.weapon_properties.includes('thrown')
-  const isRanged = wprops.weapon_category.endsWith('ranged')
-  if (!wprops.range || (!isThrown && !isRanged)) return null
-  return `${wprops.range.normal} m / ${wprops.range.long} m`
-}
+const weaponRangeOf = (entry: InventoryEntry): string | null =>
+  entry.item?.itemType === 'weapon' ? weaponRangeSummary(entry.item) : null
 
-const armorBaseACSummary = (entry: InventoryEntry): string => {
-  if (!entry.item) return ''
-  const props = entry.item.properties as ArmorProperties
-  if (props.armor_type === 'shield') return '+2 CA'
-  const dexStr = props.dex_limit === null ? '+DEX' : props.dex_limit === 0 ? '' : `+DEX (max +${props.dex_limit})`
-  return `CA ${props.base_ac}${dexStr}`
-}
-
-const toolCategoryLabel = (item: InventoryItem): string => {
-  const props = item.properties as ToolProperties
-  return toolTypeLabels[props.tool_type] ?? props.category
-}
-
-// Armor equip logic (only one body armor at a time)
-
-const onToggleArmor = async (entry: InventoryEntry) => {
-  const props = entry.item?.properties as ArmorProperties | undefined
-  const isShield = props?.armor_type === 'shield'
-
-  if (!entry.equipped && !isShield) {
-    // Déséquiper toute armure de corps existante avant d'en équiper une nouvelle
-    const currentBodyArmor = (inventory.value ?? []).find((e: InventoryEntry) => {
-      if (!e.equipped || e.item?.itemType !== 'armor') return false
-      const p = e.item.properties as ArmorProperties
-      return p.armor_type !== 'shield'
-    })
-    if (currentBodyArmor && currentBodyArmor.id !== entry.id) {
-      await updateInventoryEntry(currentBodyArmor.id, { equipped: false })
-    }
-  }
-
-  await toggleEquipped(entry.id)
-}
+const { toggleEquippedEntry: onToggleArmor } = useInventoryActions({ inventory, updateInventoryEntry, toggleEquipped })
 </script>

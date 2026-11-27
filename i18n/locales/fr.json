@@ -1024,6 +1024,168 @@
       "passives": "Traits et passifs",
       "no_passives": "Aucun trait passif."
     },
+    "inventory": {
+      "load": "Charge",
+      "load_of": "sur {capacity}",
+      "purse": "Bourse",
+      "manage_purse": "Bourse : gagner, dépenser ou corriger",
+      "coins": {
+        "pp": "pp",
+        "po": "po",
+        "pe": "pe",
+        "pa": "pa",
+        "pc": "pc"
+      },
+      "attuned": "Liens",
+      "categories_label": "Catégories d'objets",
+      "categories": {
+        "all": "Tout",
+        "weapon": "Armes",
+        "armor": "Armures",
+        "magic": "Objets magiques",
+        "consumable": "Consommables",
+        "gear": "Équipement"
+      },
+      "add": "Ajouter un objet",
+      "columns": {
+        "item": "Objet",
+        "quantity": "Qté",
+        "weight": "Poids",
+        "state": "État"
+      },
+      "empty": "L'inventaire est vide : « Ajouter un objet » le remplit.",
+      "empty_filtered": "Aucun objet dans cette catégorie.",
+      "groups": {
+        "worn": "Équipé et lié",
+        "consumable": "Consommables",
+        "bag": "Dans le sac"
+      },
+      "states": {
+        "attuned": "Lié",
+        "equipped": "Équipé",
+        "stowed": "Sac"
+      },
+      "types": {
+        "weapon": "Arme",
+        "armor": "Armure",
+        "equipment": "Équipement",
+        "tool": "Outil"
+      },
+      "tiles": {
+        "armor_class": "CA",
+        "stealth": "Discrétion"
+      },
+      "stealth_disadvantage": "Désavantage",
+      "stealth_ok": "Sans désavantage",
+      "attunement": "Lien",
+      "attunement_full": "Déjà {max} objets liés : rompre un lien avant d'en former un autre.",
+      "management": "Inventaire",
+      "storage": "Rangement",
+      "actions": {
+        "equip": "Équiper",
+        "stow": "Ranger",
+        "attune": "Lier",
+        "unattune": "Rompre le lien",
+        "use": "Utiliser",
+        "edit": "Modifier l'objet",
+        "remove": "Retirer"
+      },
+      "remove": {
+        "title": "Retirer de l'inventaire",
+        "confirm": "Retirer",
+        "body": "{name} quitte l'inventaire. | {name} quitte l'inventaire. | Les {n} exemplaires de {name} quittent l'inventaire."
+      }
+    },
+    "purse": {
+      "help": "Gagner ou dépenser des pièces, ou corriger le contenu de la bourse.",
+      "mode": "Mouvement",
+      "modes": {
+        "gain": "Gagner",
+        "spend": "Dépenser",
+        "set": "Corriger"
+      },
+      "hints": {
+        "gain": "Les pièces saisies s'ajoutent à la bourse.",
+        "spend": "Les pièces saisies sortent de la bourse ; aucune pièce n'est changée en une autre.",
+        "set": "Les pièces saisies remplacent le contenu actuel ; un champ vide ne change rien."
+      },
+      "current": "en bourse : {n}",
+      "amount": "Pièces de {coin}",
+      "apply": {
+        "gain": "Ajouter",
+        "spend": "Dépenser",
+        "set": "Corriger"
+      },
+      "result": {
+        "moved": "Fait : {coins}.",
+        "set": "Bourse corrigée : {coins}."
+      },
+      "close": "Fermer"
+    },
+    "add_item": {
+      "title": "Ajouter un objet",
+      "edit_title": "Modifier l'objet",
+      "description": "Chercher un objet du catalogue ou en créer un.",
+      "mode": "Chercher ou créer",
+      "tabs": {
+        "search": "Chercher",
+        "create": "Créer un objet"
+      },
+      "search": "Rechercher un objet",
+      "type_filter": "Type d'objet",
+      "types_all": "Tous",
+      "types": {
+        "weapon": "Armes",
+        "armor": "Armures",
+        "equipment": "Équipement",
+        "tool": "Outils"
+      },
+      "select": "Sélectionner {name}",
+      "unselect": "Retirer {name} de la sélection",
+      "no_result": "Aucun objet trouvé. L'onglet « Créer un objet » permet de le saisir.",
+      "properties": "Propriétés",
+      "selection": "Sélection · {n} objet | Sélection · {n} objet | Sélection · {n} objets",
+      "quantity_of": "Quantité de {name}",
+      "magic_bonus_of": "Bonus magique de {name}",
+      "equipped": "Équipé",
+      "charges": "Charges",
+      "effects": "Effets magiques",
+      "kept_effects": "Conservés tels quels : {effects}.",
+      "recharge_modes": {
+        "full": "Complète",
+        "dice": "Dés"
+      },
+      "fields": {
+        "name": "Nom",
+        "quantity": "Quantité",
+        "type": "Type",
+        "damage_dice": "Dés de dégâts",
+        "damage_type": "Type de dégâts",
+        "weapon_category": "Catégorie d'arme",
+        "armor_type": "Type d'armure",
+        "base_ac": "CA de base",
+        "stealth_disadvantage": "Désavantage en Discrétion",
+        "category": "Catégorie",
+        "category_other": "Autre catégorie",
+        "tool_type": "Type d'outil",
+        "weight": "Poids (kg)",
+        "price": "Prix (po)",
+        "max_uses": "Charges max",
+        "recharge": "Recharge",
+        "recharge_mode": "Mode",
+        "recharge_dice": "Dés de recharge",
+        "description": "Description"
+      },
+      "add": "Ajouter",
+      "add_n": "Ajouter {n} objet | Ajouter {n} objet | Ajouter {n} objets",
+      "save": "Enregistrer",
+      "errors": {
+        "update": "La modification de l'objet a échoué.",
+        "create": "La création de l'objet a échoué.",
+        "add": "L'objet est créé, mais son ajout à l'inventaire a échoué.",
+        "unknown": "Une erreur est survenue : réessaie."
+      }
+    },
     "notes": {
       "edit_identity": "Modifier",
       "title": "Notes",

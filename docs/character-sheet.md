@@ -34,6 +34,12 @@ Vues de gestion de la nouvelle fiche, en deux colonnes (contenu, côté) :
 - **Notes** (`SheetNotesView`) : notes de session (`useQuickNotes`, partagé avec `QuickNotesSection`), avec une
   recherche qui ne garde que les paragraphes concernés, et la fiche d'identité en accordéon. « Modifier » ouvre
   `SheetIdentityWindow` (nom, alignement, portrait via `usePortraitUpload`, apparence, personnalité, histoire).
+- **Inventaire** (`SheetInventoryView`) : charge (variante d'encombrement), bourse (`SheetPurseWindow`, `usePurse`
+  partagé avec `CurrencySection`), liens, onglets par catégorie et liste par rangement, classés par
+  `app/utils/inventoryView.ts`. Le tiroir est celui de la vue En jeu (`SheetPlayDrawer`, contenu de
+  `useInventoryDetails`), avec un bloc de gestion et ses propres actions (`useInventoryActions` : équiper, une seule
+  armure portée). `SheetAddItemWindow` cherche dans le catalogue ou crée un objet (`useItemCatalog`, partagé avec
+  `AddItemSlideover`) ; ses effets se saisissent avec `SheetEffectRow`, les autres types sont conservés tels quels.
 - **Réglages** (`SheetSettingsView`) : préférences de jeu de la fiche (Compte / Oui / Non), design, défauts du compte
   (`SheetAccountPreferencesWindow`, logique `useAccountPreferences` partagée avec `AccountPreferencesModal`) et
   suppression confirmée. `useSheetPersistence.deleteCharacter` annule la sauvegarde en attente avant
