@@ -1,5 +1,5 @@
 <template>
-  <DsField>
+  <DsField :class="{ 'text--full': width === 'full' }">
     <DsIcon
       v-if="icon"
       :name="icon"
@@ -13,7 +13,7 @@
       :placeholder="placeholder"
       :maxlength="maxlength"
       class="text"
-      :style="{ width: `${width}px` }"
+      :style="{ width: width === 'full' ? '100%' : `${width}px` }"
     >
   </DsField>
 </template>
@@ -25,7 +25,7 @@ const { label, placeholder, maxlength, width = 190, icon } = defineProps<{
   label: string
   placeholder?: string
   maxlength?: number
-  width?: number
+  width?: number | 'full'
   icon?: DsIconName
 }>()
 
@@ -34,6 +34,7 @@ const model = defineModel<string>({ default: '' })
 
 <style scoped>
 .text {
+  min-width: 0;
   padding: 0 10px;
   font-size: 13px;
 }
@@ -47,4 +48,11 @@ const model = defineModel<string>({ default: '' })
 }
 
 .text__icon + .text { padding-left: 6px; }
+
+.text--full {
+  display: flex;
+  width: 100%;
+}
+
+.text--full :deep(.field__fill) { flex: 1; }
 </style>

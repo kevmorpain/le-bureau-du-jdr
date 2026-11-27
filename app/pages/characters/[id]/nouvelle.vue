@@ -27,9 +27,19 @@
         v-if="view === 'play'"
         :character-sheet="characterSheet"
       />
+      <SheetCharacterView
+        v-else-if="view === 'character'"
+        v-model:character-sheet="characterSheet"
+      />
+      <SheetNotesView
+        v-else-if="view === 'notes'"
+        v-model:character-sheet="characterSheet"
+      />
       <SheetSettingsView
         v-else-if="view === 'settings'"
+        v-model:character-sheet="characterSheet"
         :is-new-sheet="preferences.newSheet"
+        :delete-character="deleteCharacter"
         @choose-design="switchSheetDesign"
       />
       <DsBlock
@@ -67,7 +77,7 @@ const route = useRoute()
 const charId = computed(() => Number(route.params.id))
 const view = computed(() => getSheetView(route.query.view))
 
-const { characterSheet, refreshSheet, retrySave, switchSheetDesign } = await useSheetPersistence(charId)
+const { characterSheet, refreshSheet, retrySave, switchSheetDesign, deleteCharacter } = await useSheetPersistence(charId)
 
 const { refreshInventory, refreshSpells, preferences, spellSlots, rollEngine } = useCharacterSheet(characterSheet)
 provide('spellSlots', spellSlots)

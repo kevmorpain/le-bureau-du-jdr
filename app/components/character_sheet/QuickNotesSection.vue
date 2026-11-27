@@ -23,24 +23,11 @@
 </template>
 
 <script lang="ts" setup>
+import { useQuickNotes } from '~/composables/character/useQuickNotes'
+
 const props = defineProps<{
   characterSheet: CharacterSheet
 }>()
 
-const { notes } = useCharacterSheet(toRef(props, 'characterSheet'))
-
-// Migration ponctuelle depuis l'ancien stockage localStorage (clé globale, non
-// scopée par personnage) vers la colonne DB. Ne s'applique qu'une fois : dès que
-// la clé legacy est lue, elle est supprimée pour ne pas être réappliquée sur un
-// autre personnage.
-onMounted(() => {
-  if (notes.value) return
-  try {
-    const legacy = localStorage.getItem('cs-quick-notes')
-    if (legacy) {
-      notes.value = legacy
-      localStorage.removeItem('cs-quick-notes')
-    }
-  } catch { /* localStorage non disponible */ }
-})
+const { notes } = useQuickNotes(toRef(props, 'characterSheet'))
 </script>

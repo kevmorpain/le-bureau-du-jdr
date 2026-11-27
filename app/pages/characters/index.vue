@@ -100,7 +100,7 @@ async function confirmDelete() {
 
   deleting.value = true
   try {
-    await $fetch(`/api/character_sheets/${characterToDelete.value.id}`, { method: 'DELETE' })
+    await deleteCharacterSheet(characterToDelete.value.id)
     toast.add({ title: 'Personnage supprimé', color: 'success' })
     deleteModalOpen.value = false
     await refresh()

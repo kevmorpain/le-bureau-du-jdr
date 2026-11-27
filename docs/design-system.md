@@ -96,7 +96,8 @@ Le pied d'une fenêtre aligne à droite : action légère, puis action principal
 | `DsCategoryTabs` | filtrer une liste par catégorie, avec compteur et icône de catégorie (`icon`) | changer de mode dans une fenêtre → `DsSegmented` |
 | `DsNumberField` | saisir un nombre, dont un jet saisi à la main | un compte de ressource → `DsCounter` |
 | `DsSelectField` | choisir dans une liste longue (type de dégâts) | trois options ou moins → `DsSegmented` *(à valider)* |
-| `DsTextField` | texte libre court (nom d'un effet), recherche (`icon="search"`) | — |
+| `DsTextField` | texte libre court (nom d'un effet), recherche (`icon="search"`) ; `width="full"` occupe la ligne | un texte de plusieurs lignes → `DsTextArea` |
+| `DsTextArea` | texte libre de plusieurs lignes (histoire, traits de personnalité) | une ligne suffit → `DsTextField` |
 
 ### Ressources
 

@@ -21,7 +21,7 @@ export async function useSheetPersistence(charId: Ref<number>) {
     })
   }
 
-  const { status: autoSaveStatus, schedule: scheduleSave, flush: flushSave } = useAutoSave(updateCharacterSheet, {
+  const { status: autoSaveStatus, schedule: scheduleSave, flush: flushSave, cancel: cancelSave } = useAutoSave(updateCharacterSheet, {
     delay: 2000,
     maxWait: 10_000,
     onError: () => toaster.add({ title: t('sheet.save.error_toast'), color: 'error' }),
@@ -96,7 +96,21 @@ export async function useSheetPersistence(charId: Ref<number>) {
     await navigateTo(target)
   }
 
-  return { characterSheet, refreshSheet, autoSaveStatus, saveNow, retrySave, switchSheetDesign }
+  // The pending save is dropped first: leaving the page would flush it onto the deleted sheet.
+  async function deleteCharacter() {
+    cancelSave()
+    isAutoSavePaused.value = true
+    try {
+      await deleteCharacterSheet(charId.value)
+    } catch (error) {
+      isAutoSavePaused.value = false
+      scheduleSave()
+      throw error
+    }
+    await navigateTo('/characters')
+  }
+
+  return { characterSheet, refreshSheet, autoSaveStatus, saveNow, retrySave, switchSheetDesign, deleteCharacter }
 }
 
 // Once the offline queue is flushed or a conflict resolved, the server state is canonical (real ids, rest results).

@@ -30,6 +30,8 @@
 </template>
 
 <script lang="ts" setup>
+import { remainingHitDice, setRemainingHitDice } from '~~/shared/rules/hitDice'
+
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
 const props = defineProps<{
@@ -38,22 +40,13 @@ const props = defineProps<{
 
 const { hitDice, abilityModifiers } = useCharacterSheet(characterSheet)
 
-const getRemaining = (die: string): number => {
-  const entry = characterSheet.value.currentHitDie?.find(d => d.die === die)
-  if (entry !== undefined) return entry.count
-  return hitDice.value.find(h => h.hitDie === die)?.count ?? 0
-}
+const totals = computed(() => hitDice.value.map(({ hitDie, count }) => ({ die: hitDie, count })))
+
+const getRemaining = (die: string): number =>
+  remainingHitDice(characterSheet.value.currentHitDie, totals.value).find(d => d.die === die)?.count ?? 0
 
 const setRemaining = (die: string, count: number) => {
-  if (!characterSheet.value.currentHitDie) {
-    characterSheet.value.currentHitDie = hitDice.value.map(h => ({ die: h.hitDie, count: h.count }))
-  }
-  const entry = characterSheet.value.currentHitDie.find(d => d.die === die)
-  if (entry) {
-    entry.count = count
-  } else {
-    characterSheet.value.currentHitDie.push({ die, count })
-  }
+  characterSheet.value.currentHitDie = setRemainingHitDice(characterSheet.value.currentHitDie, totals.value, die, count)
 }
 
 const toggleDie = (die: string, i: number, max: number) => {

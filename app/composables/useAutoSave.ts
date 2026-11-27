@@ -69,5 +69,12 @@ export function useAutoSave(save: () => Promise<void>, { delay, maxWait, onError
     await run()
   }
 
-  return { status, schedule, flush }
+  function cancel() {
+    if (timer) clearTimeout(timer)
+    timer = null
+    changedWhileInFlight = false
+    status.value = 'idle'
+  }
+
+  return { status, schedule, flush, cancel }
 }
