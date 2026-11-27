@@ -1165,7 +1165,6 @@
       },
       "actions": {
         "ritual": "Lancer en rituel",
-        "ritual_detail": "+10 min",
         "prepare": "Préparer",
         "unprepare": "Ne plus préparer",
         "remove": "Retirer du grimoire"

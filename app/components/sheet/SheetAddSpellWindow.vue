@@ -3,7 +3,7 @@
     v-model:open="open"
     :title="$t('sheet.add_spell.title')"
     :description="$t('sheet.add_spell.description')"
-    width="lg"
+    width="xl"
   >
     <DsTextField
       v-model="query"

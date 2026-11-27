@@ -334,7 +334,7 @@ const selectedActions = computed(() => {
   if (!cs) return []
   const status = statusOf(cs)
   const actions: { key: GrimoireActionKey, label: string, detail?: string, variant: 'primary' | 'secondary', isDisabled: boolean }[] = []
-  if (spellCasting.canRitual(cs)) actions.push({ key: 'ritual', label: t('sheet.grimoire.actions.ritual'), detail: t('sheet.grimoire.actions.ritual_detail'), variant: 'primary', isDisabled: false })
+  if (spellCasting.canRitual(cs)) actions.push({ key: 'ritual', label: t('sheet.grimoire.actions.ritual'), variant: 'primary', isDisabled: false })
   if (status === 'prepared' || status === 'unprepared') {
     actions.push({
       key: 'prepare',
