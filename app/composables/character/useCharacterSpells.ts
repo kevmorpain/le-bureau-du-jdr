@@ -102,10 +102,8 @@ export const useCharacterSpells = (
   }
 
   const removeSpell = async (spellId: number) => {
-    if (characterSpells.value) {
-      const idx = characterSpells.value.findIndex(cs => cs.spellId === spellId)
-      if (idx !== -1) characterSpells.value.splice(idx, 1)
-    }
+    // The fetched list is a shallow ref: only a new array is seen.
+    characterSpells.value = (characterSpells.value ?? []).filter(cs => cs.spellId !== spellId)
     await offlineMutate({
       endpoint: `/api/character_sheets/${characterId.value}/spells`,
       method: 'DELETE',

@@ -3,7 +3,7 @@
     v-model:open="open"
     :title="isEdit ? $t('sheet.add_item.edit_title') : $t('sheet.add_item.title')"
     :description="$t('sheet.add_item.description')"
-    width="lg"
+    width="xl"
   >
     <template
       v-if="!isEdit"

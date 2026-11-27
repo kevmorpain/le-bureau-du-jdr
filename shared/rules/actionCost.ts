@@ -5,6 +5,11 @@ export type ActionCost = typeof ACTION_COSTS[number]
 
 // Casting times are seeded as French text ("1 action", "1 action bonus", "1 réaction", "10 minutes"…):
 // "réaction" contains "action", so the order of the tests matters.
+export const spellCostTagOf = (castingTime: string | null | undefined): Exclude<ActionCost, 'other'> | null => {
+  const cost = spellCostOf(castingTime)
+  return cost === 'other' ? null : cost
+}
+
 export const spellCostOf = (castingTime: string | null | undefined): ActionCost => {
   const text = (castingTime ?? '').trim().toLowerCase()
   if (/^1 réaction\b/.test(text)) return 'reaction'

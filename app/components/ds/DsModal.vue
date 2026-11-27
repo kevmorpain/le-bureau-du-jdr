@@ -42,7 +42,7 @@ const { title, description, dismissible = true, width = 'md' } = defineProps<{
   title: string
   description?: string
   dismissible?: boolean
-  width?: 'md' | 'lg'
+  width?: 'md' | 'lg' | 'xl'
 }>()
 
 defineSlots<{
@@ -54,5 +54,5 @@ defineSlots<{
 const open = defineModel<boolean>('open', { default: false })
 
 // Nuxt UI se règle par classes Tailwind : elles doivent figurer en entier dans le source.
-const WIDTH = { md: 'max-w-lg', lg: 'max-w-2xl' }
+const WIDTH = { md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-5xl' }
 </script>
