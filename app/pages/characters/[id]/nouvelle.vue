@@ -63,7 +63,7 @@
     <SheetRollPanel />
 
     <ClientOnly>
-      <SyncConflictModal
+      <SheetConflictWindow
         v-model:open="isConflictOpen"
         :character-sheet-id="charId"
         @resolved="reconcile"

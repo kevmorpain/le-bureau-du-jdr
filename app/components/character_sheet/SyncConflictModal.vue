@@ -86,6 +86,8 @@
 </template>
 
 <script lang="ts" setup>
+import { useSyncConflict } from '~/composables/useSyncConflict'
+
 const props = defineProps<{
   characterSheetId: number
 }>()
@@ -95,102 +97,37 @@ const emit = defineEmits<{
 }>()
 
 const { conflicts, resolveConflict } = useOfflineSync()
+const { status, fieldRows, groupRows, needsChoice, load, chooseAll, apply } = useSyncConflict(() => props.characterSheetId)
 
 const open = defineModel<boolean>('open', { default: false })
-const loading = ref(false)
+const loading = computed(() => status.value === 'loading')
 const resolving = ref(false)
-const diffs = ref<Array<{ label: string, local: string, server: string }>>([])
-
-type SlotState = { current: number, max: number }
-type SnapshotSlots = { spellcasting: Record<number, SlotState>, pact_magic: Record<number, SlotState> }
-
-const sumLevels = (sheet: { classes?: Array<{ level: number }> } | null): number =>
-  (sheet?.classes ?? []).reduce((n, c) => n + (c.level ?? 0), 0)
-
-const usedFromSnapshot = (slots: SnapshotSlots | null): number => {
-  if (!slots) return 0
-  let used = 0
-  for (const type of ['spellcasting', 'pact_magic'] as const) {
-    for (const lvl of Object.values(slots[type] ?? {})) used += Math.max(0, lvl.max - lvl.current)
-  }
-  return used
-}
-
-const usedFromServer = (sheet: { spellSlots?: Array<{ used: number }> } | null): number =>
-  (sheet?.spellSlots ?? []).reduce((n, s) => n + (s.used ?? 0), 0)
-
-function buildDiffs(local: Record<string, unknown>, server: Record<string, unknown>, localSlots: SnapshotSlots | null) {
-  const rows: Array<{ label: string, local: string, server: string }> = []
-  const yn = (v: unknown) => (v ? 'Oui' : 'Non')
-
-  const scalars: Array<{ key: string, label: string, fmt?: (v: unknown) => string }> = [
-    { key: 'currentHp', label: 'PV actuels' },
-    { key: 'hpBase', label: 'PV de base' },
-    { key: 'temporaryHp', label: 'PV temporaires' },
-    { key: 'exhaustionLevel', label: 'Épuisement' },
-    { key: 'deathSaveSuccesses', label: 'Jets de mort réussis' },
-    { key: 'deathSaveFailures', label: 'Jets de mort ratés' },
-    { key: 'inspiration', label: 'Inspiration', fmt: yn },
-    { key: 'concentratingSpellId', label: 'Concentration', fmt: v => (v ? 'En cours' : 'Aucune') },
-    { key: 'concentratingOn', label: 'Concentration libre', fmt: v => (v ? String(v) : 'Aucune') },
-  ]
-
-  for (const { key, label, fmt } of scalars) {
-    const l = local[key]
-    const s = server[key]
-    if (l === undefined) continue
-    if (String(l) !== String(s)) {
-      rows.push({ label, local: fmt ? fmt(l) : String(l), server: fmt ? fmt(s) : String(s) })
-    }
-  }
-
-  const localLvl = sumLevels(local as { classes?: Array<{ level: number }> })
-  const serverLvl = sumLevels(server as { classes?: Array<{ level: number }> })
-  if (localLvl && localLvl !== serverLvl) rows.push({ label: 'Niveau total', local: String(localLvl), server: String(serverLvl) })
-
-  const localUsed = usedFromSnapshot(localSlots)
-  const serverUsed = usedFromServer(server as { spellSlots?: Array<{ used: number }> })
-  if (localSlots && localUsed !== serverUsed) {
-    rows.push({ label: 'Emplacements de sorts dépensés', local: String(localUsed), server: String(serverUsed) })
-  }
-
-  return rows
-}
-
-async function computeDiff() {
-  loading.value = true
-  diffs.value = []
-  try {
-    const server = await $fetch<Record<string, unknown>>(`/api/character_sheets/${props.characterSheetId}`)
-    const local = readSnapshot<Record<string, unknown>>(props.characterSheetId) ?? {}
-    const localSlots = readSnapshot<SnapshotSlots>(props.characterSheetId, 'slots')
-    diffs.value = buildDiffs(local, server, localSlots)
-  } catch {
-    // Réseau de nouveau indisponible : on laisse le message générique.
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(
-  () => conflicts.value.includes(props.characterSheetId),
-  (isConflict) => {
-    open.value = isConflict
-  },
-)
-
-watch(open, (isOpen) => {
-  if (isOpen) void computeDiff()
-})
+const diffs = computed(() => [...fieldRows.value, ...groupRows.value])
 
 async function resolve(choice: 'local' | 'server') {
   resolving.value = true
   try {
-    await resolveConflict(props.characterSheetId, choice)
+    if (choice === 'local') {
+      chooseAll('local')
+      await apply()
+    } else {
+      await resolveConflict(props.characterSheetId, 'server')
+    }
     emit('resolved')
   } finally {
     resolving.value = false
     open.value = false
   }
 }
+
+// A change made on one side only goes through on its own: the window opens only when something needs a choice.
+watch(
+  () => conflicts.value.includes(props.characterSheetId),
+  async (isConflict) => {
+    if (!isConflict) return
+    await load()
+    if (status.value === 'ready' && !needsChoice.value) await resolve('local')
+    else open.value = true
+  },
+)
 </script>

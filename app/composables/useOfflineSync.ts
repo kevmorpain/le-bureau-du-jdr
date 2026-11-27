@@ -6,8 +6,10 @@ import {
   removeMutation,
   clearQueue,
   totalPending,
+  writeQueue,
   type QueuedMutation,
 } from '~/utils/offlineQueue'
+import { keepQueuedOps } from '~/utils/sheetConflict'
 
 // ── État partagé (singleton module-level) ───────────────────────────────────
 // Partagé entre l'indicateur de synchro, le wrapper offlineMutate et le plugin.
@@ -124,6 +126,19 @@ export function useOfflineSync() {
     conflicts.value = conflicts.value.filter(id => id !== characterId)
   }
 
+  // The queue is rewritten from the player's choices (merged sheet, dropped resources), then replayed over the server.
+  async function resolveConflictWith(characterId: number, choices: Parameters<typeof keepQueuedOps>[1]): Promise<void> {
+    writeQueue(characterId, keepQueuedOps(readQueue(characterId), choices))
+    isSyncing.value = true
+    try {
+      await flushCharacter(characterId, true)
+    } finally {
+      isSyncing.value = false
+      refreshPendingCount()
+    }
+    conflicts.value = conflicts.value.filter(id => id !== characterId)
+  }
+
   return {
     online,
     pendingCount,
@@ -135,6 +150,7 @@ export function useOfflineSync() {
     enqueue,
     flushAll,
     resolveConflict,
+    resolveConflictWith,
     refreshPendingCount,
   }
 }

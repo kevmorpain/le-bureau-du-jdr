@@ -11,14 +11,21 @@ export async function useSheetPersistence(charId: Ref<number>) {
   const isAutoSavePaused = ref(false)
   const characterSheet = ref() as Ref<CharacterSheet>
 
+  // The sheet as the server last held it: a conflict then tells a field changed here from one changed elsewhere.
+  const rememberSyncedSheet = (sheet: CharacterSheet) => {
+    if (import.meta.client) writeSnapshot(charId.value, sheet, 'base')
+  }
+
   const updateCharacterSheet = async () => {
-    await offlineMutate({
+    const body = characterSheet.value
+    const outcome = await offlineMutate({
       endpoint: `/api/character_sheets/${charId.value}`,
       method: 'PUT',
-      body: characterSheet.value,
+      body,
       dedupeKey: 'sheet',
       label: 'Fiche',
     })
+    if (outcome === 'sent') rememberSyncedSheet(body)
   }
 
   const { status: autoSaveStatus, schedule: scheduleSave, flush: flushSave, cancel: cancelSave } = useAutoSave(updateCharacterSheet, {
@@ -40,6 +47,8 @@ export async function useSheetPersistence(charId: Ref<number>) {
   if (import.meta.client && hasPending(charId.value)) {
     const snapshot = readSnapshot<CharacterSheet>(charId.value)
     if (snapshot) characterSheet.value = snapshot
+  } else {
+    rememberSyncedSheet(data.value)
   }
   setBaseVersion(charId.value, data.value.updatedAt)
 
@@ -49,6 +58,7 @@ export async function useSheetPersistence(charId: Ref<number>) {
     // Replacing the sheet with the server state must not send it back to the server.
     isAutoSavePaused.value = true
     characterSheet.value = data.value
+    if (!hasPending(charId.value)) rememberSyncedSheet(data.value)
     setBaseVersion(charId.value, data.value.updatedAt)
     await nextTick()
     isAutoSavePaused.value = false
