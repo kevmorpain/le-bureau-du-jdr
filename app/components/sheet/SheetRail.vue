@@ -457,10 +457,10 @@ const effects = computed(() => [
 
 .rail__actions > * { flex: 1 1 auto; }
 
+/* Fills the free height, but never below its effects: past that, the rail itself scrolls. */
 .rail__effects {
   position: relative;
-  flex: 1;
-  min-height: 0;
+  flex: 1 0 auto;
 }
 
 .effects__open {
