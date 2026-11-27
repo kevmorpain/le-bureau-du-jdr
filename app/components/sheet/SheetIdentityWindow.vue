@@ -231,6 +231,7 @@ const handleFileChange = async (event: Event) => {
 .labelled {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
   min-width: 0;
 }
