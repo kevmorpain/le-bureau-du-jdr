@@ -20,7 +20,6 @@
                 icon="i-heroicons:magnifying-glass"
                 placeholder="Rechercher un objet..."
                 class="flex-1"
-                @input="onSearchInput"
               />
               <USelect
                 v-model="typeFilter"
@@ -371,30 +370,26 @@
 </template>
 
 <script lang="ts" setup>
-import { weaponCategoryLabels, armorTypeLabels, toolTypeLabels } from '~~/shared/utils/item'
-import type { Effect } from '~~/server/db/schema/effects'
-import type { ArmorProperties, EquipmentProperties, ToolProperties, WeaponProperties } from '~~/server/db/schema/items'
 import type { InventoryItem } from '~/composables/character/useCharacterInventory'
-
-interface ItemResult {
-  id: number
-  name: string
-  itemType: 'weapon' | 'armor' | 'equipment' | 'tool'
-  properties: Record<string, unknown>
-  description: string | null
-}
-
-interface SelectedEntry {
-  item: ItemResult
-  quantity: number
-  equipped: boolean
-  magicBonus: number
-}
+import {
+  ARMOR_TYPE_OPTIONS as armorTypeOptions,
+  DAMAGE_TYPE_OPTIONS as damageTypeOptions,
+  EQUIPMENT_CATEGORY_OPTIONS as equipmentCategoryOptions,
+  MAGIC_BONUS_OPTIONS as magicBonusOptions,
+  RECHARGE_TYPE_OPTIONS as rechargeTypeOptions,
+  TOOL_TYPE_OPTIONS as toolTypeOptions,
+  WEAPON_CATEGORY_OPTIONS as weaponCategoryOptions,
+  useAddItems,
+  useCustomItemForm,
+  useItemCatalogSearch,
+  type AddItemsError,
+  type CatalogItem,
+} from '~/composables/character/useItemCatalog'
+import { itemKindLabel } from '~/utils/inventoryView'
 
 const props = defineProps<{
   characterSheet: CharacterSheet
-  // Si fourni, le slideover passe en mode édition de cet objet (custom
-  // uniquement) au lieu de l'ajout d'un nouvel objet.
+  // Edits this custom item instead of adding a new one.
   editItem?: InventoryItem | null
 }>()
 
@@ -406,7 +401,6 @@ const emit = defineEmits<{
   added: []
 }>()
 
-const { addItem, refreshInventory } = useCharacterSheet(toRef(props, 'characterSheet'))
 const toast = useToast()
 
 const activeTab = ref('search')
@@ -415,131 +409,12 @@ const tabItems = [
   { label: 'Créer un objet', value: 'create' },
 ]
 
-const searchQuery = ref('')
-const typeFilter = ref('all')
-const allItems = ref<ItemResult[]>([])
-const isSearching = ref(false)
-const selectedEntries = ref<SelectedEntry[]>([])
-
 const typeFilterOptions = [
   { label: 'Tous les types', value: 'all' },
   { label: 'Armes', value: 'weapon' },
   { label: 'Armures', value: 'armor' },
   { label: 'Équipement', value: 'equipment' },
   { label: 'Outils', value: 'tool' },
-]
-
-const filteredItems = computed(() => {
-  let items = allItems.value
-  if (typeFilter.value !== 'all') items = items.filter(i => i.itemType === typeFilter.value)
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase()
-    items = items.filter(i => i.name.toLowerCase().includes(q))
-  }
-  return items
-})
-
-const itemCategoryLabel = (item: ItemResult): string => {
-  if (item.itemType === 'weapon') {
-    const cat = (item.properties as { weapon_category?: string }).weapon_category ?? ''
-    return weaponCategoryLabels[cat] ?? 'Arme'
-  }
-  if (item.itemType === 'armor') {
-    const type = (item.properties as { armor_type?: string }).armor_type ?? ''
-    return armorTypeLabels[type] ?? 'Armure'
-  }
-  if (item.itemType === 'tool') {
-    const type = (item.properties as { tool_type?: string }).tool_type ?? ''
-    return toolTypeLabels[type] ?? 'Outil'
-  }
-  const cat = (item.properties as { category?: string }).category ?? ''
-  return cat || 'Équipement'
-}
-
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
-
-const onSearchInput = () => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(fetchItems, 300)
-}
-
-const fetchItems = async () => {
-  isSearching.value = true
-  try {
-    const params = new URLSearchParams()
-    if (typeFilter.value !== 'all') params.set('type', typeFilter.value)
-    const data = await $fetch<ItemResult[]>(`/api/items?${params.toString()}`)
-    allItems.value = data
-  } finally {
-    isSearching.value = false
-  }
-}
-
-watch(typeFilter, fetchItems)
-
-onMounted(fetchItems)
-
-const isItemSelected = (id: number) => selectedEntries.value.some(e => e.item.id === id)
-
-const toggleItem = (item: ItemResult) => {
-  const idx = selectedEntries.value.findIndex(e => e.item.id === item.id)
-  if (idx >= 0) {
-    selectedEntries.value.splice(idx, 1)
-  } else {
-    selectedEntries.value.push({ item, quantity: 1, equipped: false, magicBonus: 0 })
-  }
-}
-
-const deselectItem = (id: number) => {
-  const idx = selectedEntries.value.findIndex(e => e.item.id === id)
-  if (idx >= 0) selectedEntries.value.splice(idx, 1)
-}
-
-const magicBonusOptions = [
-  { label: 'Aucun', value: 0 },
-  { label: '+1', value: 1 },
-  { label: '+2', value: 2 },
-  { label: '+3', value: 3 },
-]
-
-const createForm = ref({
-  name: '',
-  itemType: 'equipment' as 'weapon' | 'armor' | 'equipment' | 'tool',
-  description: '',
-  weightKg: null as number | null,
-  costPo: null as number | null,
-  quantity: 1,
-  category: 'Aventure',
-  categoryOther: '',
-  toolType: 'other' as 'artisan' | 'gaming' | 'musical' | 'other',
-  weaponProps: {
-    damage_dice: '1d6',
-    damage_type: 'slashing',
-    weapon_category: 'simple_melee' as string,
-    weapon_properties: [] as string[],
-  },
-  armorProps: {
-    armor_type: 'light' as string,
-    base_ac: 11,
-    dex_limit: null as number | null,
-    stealth_disadvantage: false,
-  },
-  effects: [] as Effect[],
-  maxUses: null as number | null,
-  rechargeType: 'none' as 'none' | 'short_rest' | 'long_rest' | 'dawn',
-  rechargeMode: 'full' as 'full' | 'dice',
-  rechargeDice: '1d6+4',
-})
-
-watch(() => createForm.value.itemType, (type) => {
-  if (type !== 'weapon') createForm.value.effects = createForm.value.effects.filter(e => e.type !== 'weapon_damage_dice')
-})
-
-const rechargeTypeOptions = [
-  { label: 'Aucune', value: 'none' },
-  { label: 'Repos court', value: 'short_rest' },
-  { label: 'Repos long', value: 'long_rest' },
-  { label: 'À l\'aube', value: 'dawn' },
 ]
 
 const rechargeModeOptions = [
@@ -554,65 +429,25 @@ const typeCreateOptions = [
   { label: 'Outil', value: 'tool' },
 ]
 
-const damageTypeOptions = [
-  { label: 'Tranchant', value: 'slashing' },
-  { label: 'Perçant', value: 'piercing' },
-  { label: 'Contondant', value: 'bludgeoning' },
-  { label: 'Acide', value: 'acid' },
-  { label: 'Feu', value: 'fire' },
-  { label: 'Foudre', value: 'lightning' },
-  { label: 'Froid', value: 'cold' },
-  { label: 'Force', value: 'force' },
-  { label: 'Nécrotique', value: 'necrotic' },
-  { label: 'Radiant', value: 'radiant' },
-  { label: 'Tonnerre', value: 'thunder' },
-  { label: 'Poison', value: 'poison' },
-  { label: 'Psychique', value: 'psychic' },
-]
+const {
+  query: searchQuery,
+  typeFilter,
+  filteredItems,
+  isSearching,
+  fetchItems,
+  selection: selectedEntries,
+  isSelected: isItemSelected,
+  toggle: toggleItem,
+  deselect: deselectItem,
+  reset: resetSearch,
+} = useItemCatalogSearch()
+const { form: createForm, buildItemBody, reset: resetCreate, prefill } = useCustomItemForm()
+const { addSelection, createAndAdd, updateCustomItem } = useAddItems(toRef(props, 'characterSheet'))
 
-const weaponCategoryOptions = [
-  { label: 'Arme simple de mêlée', value: 'simple_melee' },
-  { label: 'Arme simple à distance', value: 'simple_ranged' },
-  { label: 'Arme de guerre de mêlée', value: 'martial_melee' },
-  { label: 'Arme de guerre à distance', value: 'martial_ranged' },
-]
+const itemCategoryLabel = (item: CatalogItem) => itemKindLabel(item)
 
-const armorTypeOptions = [
-  { label: 'Armure légère', value: 'light' },
-  { label: 'Armure intermédiaire', value: 'medium' },
-  { label: 'Armure lourde', value: 'heavy' },
-  { label: 'Bouclier', value: 'shield' },
-]
-
-const equipmentCategoryOptions = [
-  { label: 'Aventure', value: 'Aventure' },
-  { label: 'Contenants', value: 'Contenants' },
-  { label: 'Éclairage', value: 'Éclairage' },
-  { label: 'Escalade & exploration', value: 'Escalade & exploration' },
-  { label: 'Nourriture & boisson', value: 'Nourriture & boisson' },
-  { label: 'Soins', value: 'Soins' },
-  { label: 'Survie', value: 'Survie' },
-  { label: 'Équipement de camp', value: 'Équipement de camp' },
-  { label: 'Vêtements', value: 'Vêtements' },
-  { label: 'Focus magique', value: 'Focus magique' },
-  { label: 'Bijou', value: 'Bijou' },
-  { label: 'Divers', value: 'Divers' },
-  { label: 'Autre…', value: '__other__' },
-]
-
-// Catégorie effective (résout l'option « Autre… » en texte libre).
-const resolvedCategory = computed(() =>
-  createForm.value.category === '__other__'
-    ? (createForm.value.categoryOther.trim() || 'Divers')
-    : createForm.value.category,
-)
-
-const toolTypeOptions = [
-  { label: 'Outils d\'artisan', value: 'artisan' },
-  { label: 'Jeux', value: 'gaming' },
-  { label: 'Instrument de musique', value: 'musical' },
-  { label: 'Autre', value: 'other' },
-]
+watch(typeFilter, fetchItems)
+onMounted(fetchItems)
 
 const isSubmitting = ref(false)
 
@@ -623,82 +458,29 @@ const canSubmit = computed(() => {
   return false
 })
 
-const buildItemBody = () => {
-  const form = createForm.value
-  let properties: Record<string, unknown>
-  if (form.itemType === 'weapon') {
-    properties = { ...form.weaponProps }
-  } else if (form.itemType === 'armor') {
-    properties = { ...form.armorProps }
-  } else if (form.itemType === 'tool') {
-    properties = { tool_type: form.toolType, category: form.category }
-  } else {
-    properties = { category: resolvedCategory.value }
-  }
-
-  // Charges : seulement si maxUses renseigné. rechargeDice uniquement en mode
-  // « dés » (recharge partielle) ; sinon null = recharge complète.
-  const hasCharges = !!form.maxUses
-  const rechargeType = hasCharges && form.rechargeType !== 'none' ? form.rechargeType : null
-  const rechargeDice = rechargeType && form.rechargeMode === 'dice' ? form.rechargeDice.trim() : null
-
-  return {
-    name: form.name,
-    itemType: form.itemType,
-    properties,
-    description: form.description || undefined,
-    weightG: scaled(form.weightKg, 1000),
-    costCp: scaled(form.costPo, 100),
-    effects: form.effects,
-    maxUses: hasCharges ? form.maxUses : null,
-    rechargeType,
-    rechargeDice,
-  }
+const ERROR_TITLES: Record<AddItemsError, string> = {
+  update: 'Erreur lors de la modification de l\'objet',
+  create: 'Erreur lors de la création de l\'objet',
+  add: 'Erreur lors de l\'ajout à l\'inventaire',
 }
 
-// Un champ numérique vidé rend '' : seul un nombre fini est un poids ou un prix.
-const scaled = (value: unknown, factor: number) =>
-  typeof value === 'number' && Number.isFinite(value) ? Math.round(value * factor) : null
+const resetForm = () => {
+  resetSearch()
+  resetCreate()
+}
 
 const submit = async () => {
   isSubmitting.value = true
   try {
-    if (isEdit.value && props.editItem) {
-      // Édition : met à jour l'objet du catalogue (PUT), pas l'entrée d'inventaire.
-      try {
-        await $fetch(`/api/items/${props.editItem.id}`, { method: 'PUT', body: buildItemBody() })
-      } catch {
-        toast.add({ title: 'Erreur lors de la modification de l\'objet', color: 'error' })
-        return
-      }
-      // L'item a changé (nom / description / effets) mais pas l'entrée : on
-      // refetch pour refléter les nouvelles données dans la liste (online-only).
-      await refreshInventory()
-    } else if (activeTab.value === 'search') {
-      for (const entry of selectedEntries.value) {
-        await addItem(entry.item.id, {
-          quantity: entry.quantity,
-          equipped: entry.equipped,
-          magicBonus: entry.magicBonus,
-        })
-      }
-    } else if (activeTab.value === 'create') {
-      let created: ItemResult
-      try {
-        created = await $fetch<ItemResult>('/api/items', { method: 'POST', body: buildItemBody() })
-      } catch {
-        toast.add({ title: 'Erreur lors de la création de l\'objet', color: 'error' })
-        return
-      }
+    let error: AddItemsError | null = null
+    if (isEdit.value && props.editItem) error = await updateCustomItem(props.editItem.id, buildItemBody())
+    else if (activeTab.value === 'search') await addSelection(selectedEntries.value)
+    else if (activeTab.value === 'create') error = await createAndAdd(buildItemBody(), createForm.value.quantity)
 
-      try {
-        await addItem(created.id, { quantity: createForm.value.quantity })
-      } catch {
-        toast.add({ title: 'Erreur lors de l\'ajout à l\'inventaire', color: 'error' })
-        return
-      }
+    if (error) {
+      toast.add({ title: ERROR_TITLES[error], color: 'error' })
+      return
     }
-
     emit('added')
     open.value = false
     resetForm()
@@ -709,75 +491,8 @@ const submit = async () => {
   }
 }
 
-const resetForm = () => {
-  selectedEntries.value = []
-  searchQuery.value = ''
-  typeFilter.value = 'all'
-  createForm.value = {
-    name: '',
-    itemType: 'equipment',
-    description: '',
-    weightKg: null,
-    costPo: null,
-    quantity: 1,
-    category: 'Aventure',
-    categoryOther: '',
-    toolType: 'other',
-    weaponProps: { damage_dice: '1d6', damage_type: 'slashing', weapon_category: 'simple_melee', weapon_properties: [] },
-    armorProps: { armor_type: 'light', base_ac: 11, dex_limit: null, stealth_disadvantage: false },
-    effects: [],
-    maxUses: null,
-    rechargeType: 'none',
-    rechargeMode: 'full',
-    rechargeDice: '1d6+4',
-  }
-}
-
-const prefillFromItem = (item: InventoryItem) => {
-  const p: Partial<WeaponProperties & ArmorProperties & EquipmentProperties & ToolProperties> = item.properties
-  const knownCategory = item.itemType === 'equipment'
-    && equipmentCategoryOptions.some(o => o.value === p.category)
-
-  createForm.value = {
-    name: item.name,
-    itemType: item.itemType,
-    description: item.description ?? '',
-    weightKg: item.weightG == null ? null : item.weightG / 1000,
-    costPo: item.costCp == null ? null : item.costCp / 100,
-    quantity: 1,
-    category: item.itemType === 'equipment'
-      ? (knownCategory ? p.category : '__other__')
-      : (item.itemType === 'tool' ? (p.category ?? '') : 'Aventure'),
-    categoryOther: item.itemType === 'equipment' && !knownCategory ? (p.category ?? '') : '',
-    toolType: item.itemType === 'tool' ? (p.tool_type ?? 'other') : 'other',
-    weaponProps: item.itemType === 'weapon'
-      ? {
-          damage_dice: p.damage_dice ?? '1d6',
-          damage_type: p.damage_type ?? 'slashing',
-          weapon_category: p.weapon_category ?? 'simple_melee',
-          weapon_properties: p.weapon_properties ?? [],
-        }
-      : { damage_dice: '1d6', damage_type: 'slashing', weapon_category: 'simple_melee', weapon_properties: [] },
-    armorProps: item.itemType === 'armor'
-      ? {
-          armor_type: p.armor_type ?? 'light',
-          base_ac: p.base_ac ?? 11,
-          dex_limit: p.dex_limit ?? null,
-          stealth_disadvantage: p.stealth_disadvantage ?? false,
-        }
-      : { armor_type: 'light', base_ac: 11, dex_limit: null, stealth_disadvantage: false },
-    // Clone profond des effets : évite de muter l'objet du cache d'inventaire si
-    // l'édition est annulée.
-    effects: item.effects ? JSON.parse(JSON.stringify(item.effects)) as Effect[] : [],
-    maxUses: item.maxUses ?? null,
-    rechargeType: item.rechargeType ?? 'none',
-    rechargeMode: item.rechargeDice ? 'dice' : 'full',
-    rechargeDice: item.rechargeDice ?? '1d6+4',
-  }
-}
-
 watch(open, (isOpen) => {
-  if (isOpen && props.editItem) prefillFromItem(props.editItem)
+  if (isOpen && props.editItem) prefill(props.editItem)
   else if (!isOpen) resetForm()
 })
 </script>

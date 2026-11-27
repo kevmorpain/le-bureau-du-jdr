@@ -134,8 +134,8 @@
 
 <script lang="ts" setup>
 import type { ComponentPublicInstance } from 'vue'
-
-type CoinKey = 'pp' | 'po' | 'pe' | 'pa' | 'pc'
+import { usePurse } from '~/composables/character/usePurse'
+import type { CoinKey } from '~~/shared/rules/currency'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
 
@@ -167,34 +167,16 @@ const toggleMode = (m: 'gain' | 'spend') => {
   if (mode.value) nextTick(() => inputRefs[0]?.input?.focus())
 }
 
-// Applique tous les deltas saisis d'un coup
-// Chaque pièce est plafonnée à 0 indépendamment (pas de conversion automatique :
-// D&D ne fait pas la monnaie).
+const { applyMove, setCoin: setAbsolute } = usePurse(characterSheet)
+
 const commit = () => {
-  const sign = mode.value === 'spend' ? -1 : 1
-  const applied: string[] = []
-  const next = { ...characterSheet.value }
-
-  for (const coin of coins) {
-    const raw = parseInt(deltas.value[coin.key]) || 0
-    if (raw <= 0) continue
-    next[coin.key] = Math.max(0, characterSheet.value[coin.key] + sign * raw)
-    applied.push(`${sign < 0 ? '−' : '+'}${raw} ${coin.label}`)
-  }
-
-  if (applied.length === 0) {
-    mode.value = null
-    return
-  }
-
-  characterSheet.value = next
-  showFlash(applied.join(' '))
-  resetDeltas()
+  if (!mode.value) return
+  const sign = mode.value === 'spend' ? '−' : '+'
+  const moves = applyMove(mode.value, Object.fromEntries(coins.map(coin => [coin.key, parseInt(deltas.value[coin.key]) || 0])))
   mode.value = null
-}
-
-const setAbsolute = (key: CoinKey, value: number) => {
-  characterSheet.value = { ...characterSheet.value, [key]: Math.max(0, value) }
+  if (!moves.length) return
+  showFlash(moves.map(({ key, amount }) => `${sign}${amount} ${coins.find(coin => coin.key === key)!.label}`).join(' '))
+  resetDeltas()
 }
 
 const showFlash = (msg: string) => {
