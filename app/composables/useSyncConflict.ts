@@ -35,6 +35,8 @@ export const useSyncConflict = (characterId: MaybeRefOrGetter<number>) => {
   let local: SheetLike = {}
   let localOnly: SheetField[] = []
   let hasSheetChanges = false
+  const serverSavedAt = ref<string | null>(null)
+  const localChangedAt = ref<number | null>(null)
 
   const formatValue = (field: SheetField, value: unknown): string => {
     if (value === null || value === undefined || value === '') return '—'
@@ -73,6 +75,8 @@ export const useSyncConflict = (characterId: MaybeRefOrGetter<number>) => {
       local = readSnapshot<SheetLike>(id) ?? {}
       const queue = readQueue(id)
       hasSheetChanges = queue.some(op => op.dedupeKey === 'sheet')
+      serverSavedAt.value = (server.updatedAt as string | null | undefined) ?? null
+      localChangedAt.value = queue.length ? Math.max(...queue.map(op => op.ts)) : null
       const split = hasSheetChanges
         ? splitSheetFields(readSnapshot<SheetLike>(id, 'base'), local, server)
         : { conflicts: [], localOnly: [] }
@@ -105,5 +109,5 @@ export const useSyncConflict = (characterId: MaybeRefOrGetter<number>) => {
     })
   }
 
-  return { status, fieldRows, groupRows, choices, needsChoice, load, chooseAll, apply }
+  return { status, fieldRows, groupRows, choices, needsChoice, serverSavedAt, localChangedAt, load, chooseAll, apply }
 }

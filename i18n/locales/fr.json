@@ -1132,6 +1132,8 @@
         "local": "Cet appareil",
         "server": "Serveur"
       },
+      "local_changed_at": "modifiée le {date}",
+      "server_saved_at": "enregistrée le {date}",
       "all_local": "Tout cet appareil",
       "all_server": "Tout le serveur",
       "keep": "Garder cette version",

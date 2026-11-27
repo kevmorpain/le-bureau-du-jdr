@@ -34,7 +34,7 @@ const queueSheet = (local: Record<string, unknown>, { withSlots = false } = {}) 
   writeSnapshot(SHEET_ID, base, 'base')
   writeSnapshot(SHEET_ID, local)
   writeQueue(SHEET_ID, [
-    { id: 'a', ts: 1, characterId: SHEET_ID, endpoint: URL, method: 'PUT', body: local, dedupeKey: 'sheet', baseVersion: 'v1' },
+    { id: 'a', ts: Date.UTC(2026, 10, 26, 12), characterId: SHEET_ID, endpoint: URL, method: 'PUT', body: local, dedupeKey: 'sheet', baseVersion: 'v1' },
     ...(withSlots
       ? [{ id: 'b', ts: 2, characterId: SHEET_ID, endpoint: `${URL}/spell-slots`, method: 'PUT' as const, body: [{ slotType: 'spellcasting', slotLevel: 1, used: 3 }], dedupeKey: 'spell-slots', baseVersion: 'v1' }]
       : []),
@@ -73,13 +73,16 @@ const clickFooter = (label: string) =>
 
 describe('nouvelle fiche — conflit de synchronisation', () => {
   it('ne liste que les champs modifiés des deux côtés, puis envoie la fiche fusionnée selon les choix', async () => {
-    server = { ...base, updatedAt: 'v2', currentHp: 25, notes: 'Session 2 (là-bas)', exhaustionLevel: 1 }
+    server = { ...base, updatedAt: '2026-11-27T12:00:00.000Z', currentHp: 25, notes: 'Session 2 (là-bas)', exhaustionLevel: 1 }
     queueSheet({ ...base, currentHp: 22, notes: 'Session 2 (ici)', po: 15 })
     const { resolved } = await mountWindow()
 
     await vi.waitFor(() => expect(rowLabels()).toEqual(['Points de vie', 'Notes']))
     expect(dialog()!.textContent).toContain('Session 2 (ici)')
     expect(dialog()!.textContent).toContain('Session 2 (là-bas)')
+    // Noon UTC stays on the same calendar day in any time zone.
+    expect(dialog()!.textContent).toContain('modifiée le 26 nov.')
+    expect(dialog()!.textContent).toContain('enregistrée le 27 nov.')
 
     pick('Points de vie', 'Serveur')
     await flushPromises()

@@ -30,8 +30,20 @@
       <thead>
         <tr>
           <th>{{ $t('sheet.conflict.columns.field') }}</th>
-          <th>{{ $t('sheet.conflict.columns.local') }}</th>
-          <th>{{ $t('sheet.conflict.columns.server') }}</th>
+          <th>
+            {{ $t('sheet.conflict.columns.local') }}
+            <small
+              v-if="localDate"
+              class="column__date"
+            >{{ $t('sheet.conflict.local_changed_at', { date: localDate }) }}</small>
+          </th>
+          <th>
+            {{ $t('sheet.conflict.columns.server') }}
+            <small
+              v-if="serverDate"
+              class="column__date"
+            >{{ $t('sheet.conflict.server_saved_at', { date: serverDate }) }}</small>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -103,7 +115,15 @@ const open = defineModel<boolean>('open', { default: false })
 const SIDES: ConflictSide[] = ['local', 'server']
 
 const { conflicts } = useOfflineSync()
-const { status, fieldRows, groupRows, choices, needsChoice, load, chooseAll, apply } = useSyncConflict(() => characterSheetId)
+const { status, fieldRows, groupRows, choices, needsChoice, serverSavedAt, localChangedAt, load, chooseAll, apply } = useSyncConflict(() => characterSheetId)
+
+const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+const formatDate = (date: string | number | null) => {
+  const parsed = date === null ? Number.NaN : new Date(date).getTime()
+  return Number.isNaN(parsed) ? null : DATE_FORMAT.format(parsed)
+}
+const localDate = computed(() => formatDate(localChangedAt.value))
+const serverDate = computed(() => formatDate(serverSavedAt.value))
 const rows = computed(() => [...fieldRows.value, ...groupRows.value])
 
 const isApplying = ref(false)
@@ -171,6 +191,16 @@ watch(open, (isOpen) => {
   text-transform: uppercase;
   color: var(--color-ds-faint);
   border-top: 0;
+}
+
+.column__date {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-ds-mute);
 }
 
 .choices tbody th {
