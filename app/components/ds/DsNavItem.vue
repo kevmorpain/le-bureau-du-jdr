@@ -42,7 +42,7 @@ const { label, active = false, to } = defineProps<{ label: string, active?: bool
 .nav--active,
 .nav--active:hover {
   color: var(--color-ds-gold);
-  background: radial-gradient(ellipse at 50% 38%, var(--color-ds-glow), transparent 70%);
+  background: radial-gradient(closest-side at 50% 45%, var(--color-ds-glow), transparent);
 }
 
 .nav__icon {
