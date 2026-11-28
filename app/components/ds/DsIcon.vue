@@ -33,8 +33,8 @@
 
 <script lang="ts" setup>
 type SheetIcon = 'spell' | 'feature' | 'weapon' | 'item' | 'concentration' | 'ritual' | 'favorite'
-type FactIcon = 'range' | 'save' | 'attack' | 'search'
-type NavIcon = 'nav-play' | 'nav-character' | 'nav-inventory' | 'nav-grimoire' | 'nav-notes' | 'nav-settings' | 'nav-characters'
+type FactIcon = 'range' | 'save' | 'attack' | 'search' | 'chevron-down'
+type NavIcon = 'nav-play' | 'nav-character' | 'nav-inventory' | 'nav-grimoire' | 'nav-notes' | 'nav-settings' | 'nav-characters' | 'nav-more'
 export type DsIconName = SheetIcon | FactIcon | NavIcon
 
 const { name, size = 16, label } = defineProps<{ name: DsIconName, size?: number, label?: string }>()
@@ -67,6 +67,7 @@ const ICONS: Record<Exclude<DsIconName, 'favorite'>, IconDef> = {
   'save': { attrs: stroke('currentColor', 1.5), paths: ['M8 1.5l5 2v4c0 3.2-2.2 5.6-5 7-2.8-1.4-5-3.8-5-7v-4z'] },
   'attack': { attrs: stroke('currentColor', 1.5), paths: [], circles: [{ cx: 8, cy: 8, r: 5.5 }, { cx: 8, cy: 8, r: 2 }] },
   'search': { attrs: stroke('currentColor', 1.6), paths: ['M10.5 10.5L14 14'], circles: [{ cx: 7, cy: 7, r: 4.5 }] },
+  'chevron-down': { attrs: stroke('currentColor', 1.6), paths: ['M4 6l4 4 4-4'] },
   'nav-play': nav(['M12 3l2.4 5.6L20 9.2l-4.3 3.9 1.3 5.9L12 16l-5 3 1.3-5.9L4 9.2l5.6-.6z']),
   'nav-character': nav(['M4 21c1-4.5 4.2-7 8-7s7 2.5 8 7'], [{ cx: 12, cy: 8, r: 4 }]),
   'nav-inventory': nav(['M7 9a5 5 0 0 1 10 0v11H7z', 'M10 4.5V4a2 2 0 0 1 4 0v.5M7 14h10M10 14v2h4v-2']),
@@ -80,6 +81,7 @@ const ICONS: Record<Exclude<DsIconName, 'favorite'>, IconDef> = {
     ['M3 19c.7-3.4 3-5.3 6-5.3s5.3 1.9 6 5.3', 'M15.5 12.4c2.8-.3 4.9 1.4 5.5 4.6'],
     [{ cx: 9, cy: 8, r: 3.2 }, { cx: 16.5, cy: 7, r: 2.6 }],
   ),
+  'nav-more': nav([], [{ cx: 5, cy: 12, r: 1.6 }, { cx: 12, cy: 12, r: 1.6 }, { cx: 19, cy: 12, r: 1.6 }]),
 }
 </script>
 

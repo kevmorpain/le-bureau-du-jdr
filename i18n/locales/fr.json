@@ -976,6 +976,13 @@
     },
     "nav_label": "Vues de la fiche",
     "characters": "Personnages",
+    "tabs": {
+      "more": "Plus"
+    },
+    "header": {
+      "expand": "Déplier la fiche : caractéristiques, magie, effets, repos et combat",
+      "rail_title": "Fiche"
+    },
     "views": {
       "play": "En jeu",
       "character": "Personnage",

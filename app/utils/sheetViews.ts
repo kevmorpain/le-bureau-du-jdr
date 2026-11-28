@@ -9,6 +9,12 @@ export const SHEET_VIEWS = [
 
 export type SheetView = typeof SHEET_VIEWS[number]['key']
 
+const PHONE_TAB_KEYS: readonly SheetView[] = ['play', 'character', 'inventory', 'grimoire']
+
+export const PHONE_TAB_VIEWS = SHEET_VIEWS.filter(view => PHONE_TAB_KEYS.includes(view.key))
+
+export const PHONE_MORE_VIEWS = SHEET_VIEWS.filter(view => !PHONE_TAB_KEYS.includes(view.key))
+
 export const getSheetView = (query: unknown): SheetView =>
   SHEET_VIEWS.find(view => view.key === query)?.key ?? 'play'
 

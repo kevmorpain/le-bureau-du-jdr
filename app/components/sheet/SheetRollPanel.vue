@@ -123,7 +123,7 @@ const situationOptions = computed<DsOption<string>[]>(() => situations.value.map
 .trigger {
   position: fixed;
   right: 16px;
-  bottom: 14px;
+  bottom: calc(14px + var(--sheet-bottom-inset, 0px));
   z-index: 45;
 }
 

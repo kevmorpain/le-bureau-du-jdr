@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { nextTick, ref } from 'vue'
+import { defineComponent, h, nextTick, ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { useState, useToast } from '#imports'
 import SheetCombatStartWindow from '../../app/components/sheet/SheetCombatStartWindow.vue'
 import SheetCombatBar from '../../app/components/sheet/SheetCombatBar.vue'
 import SheetRail from '../../app/components/sheet/SheetRail.vue'
+import SheetWindows from '../../app/components/sheet/SheetWindows.vue'
 import { useCombatTracker } from '../../app/composables/character/useCombatTracker'
 import { barbareFeatures } from '../../server/db/seeds/data/barbare'
 import { abilityScores, classSheet, featureRow, named } from '../fixtures/classSheet'
@@ -248,12 +249,18 @@ describe('« Ce tour » dans le bandeau', () => {
   })
 })
 
+// The rail only asks for a window: the page mounts them once, beside it.
+const RailWithWindows = defineComponent({
+  props: { characterSheet: { type: Object, required: true } },
+  setup: props => () => [h(SheetRail, { characterSheet: props.characterSheet }), h(SheetWindows, { characterSheet: props.characterSheet })],
+})
+
 describe('rail : bouton Combat', () => {
   it('ouvre la fenêtre de début ; en combat, « Fin du combat » y met fin', async () => {
     const cs = barbarian()
     const tracker = useCombatTracker(cs.id)
     rollD20(10)
-    await mount(SheetRail, { characterSheet: cs })
+    await mount(RailWithWindows, { characterSheet: cs })
 
     await click('Combat')
     await vi.waitFor(() => expect(dialog()?.textContent).toContain('Début du combat'))
