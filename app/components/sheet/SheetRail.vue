@@ -2,47 +2,9 @@
   <aside class="rail">
     <DsFrame shape="stepped">
       <div class="identity">
-        <div class="identity__head">
-          <img
-            v-if="portraitSrc && !hasPortraitLoadError"
-            :src="portraitSrc"
-            alt=""
-            class="identity__portrait"
-            @error="hasPortraitLoadError = true"
-          >
-          <div class="identity__who">
-            <p class="identity__name">
-              {{ characterSheet.name }}
-            </p>
-            <p class="ds-label identity__classes">
-              {{ classesText }}
-            </p>
-          </div>
-        </div>
+        <SheetIdentityHead :character-sheet="characterSheet" />
 
-        <button
-          type="button"
-          class="identity__hp"
-          :aria-label="$t(isDying ? 'sheet.rail.open_death_saves' : 'sheet.rail.open_hit_points')"
-          @click="handleOpenVitals"
-        >
-          <div class="identity__row">
-            <span class="ds-label">{{ $t('ds.hp.label') }}</span>
-            <span class="identity__hp-value">
-              <span class="ds-number identity__hp-current">{{ characterSheet.currentHp }}</span>
-              <span class="identity__hp-max">/ {{ effectiveMaxHp }}</span>
-              <span
-                v-if="characterSheet.temporaryHp"
-                class="identity__hp-temp"
-              >{{ $t('sheet.rail.temp_hp', { n: characterSheet.temporaryHp }) }}</span>
-            </span>
-          </div>
-          <DsHpBar
-            :max="effectiveMaxHp"
-            :current="characterSheet.currentHp"
-            :temp="characterSheet.temporaryHp ?? 0"
-          />
-        </button>
+        <SheetVitals :character-sheet="characterSheet" />
 
         <div class="identity__stats">
           <DsShield
@@ -89,11 +51,7 @@
       </div>
     </DsFrame>
 
-    <DsConcentration
-      v-if="isConcentrating && concentrationName"
-      :spell="concentrationName"
-      :remaining="concentrationRounds"
-    />
+    <SheetConcentrationStatus :character-sheet="characterSheet" />
 
     <DsBlock
       v-if="spellcastingStats || slotRows.length"
@@ -139,7 +97,7 @@
         type="button"
         class="effects__open"
         :aria-label="$t('sheet.rail.manage_effects')"
-        @click="isEffectsOpen = true"
+        @click="open('effects')"
       />
       <ul
         v-if="effects.length"
@@ -176,7 +134,7 @@
       <DsButton
         variant="secondary"
         :label="$t('sheet.rail.rest')"
-        @click="isRestOpen = true"
+        @click="open('rest')"
       />
       <DsButton
         :variant="isInCombat ? 'primary' : 'secondary'"
@@ -184,32 +142,6 @@
         @click="handleToggleCombat"
       />
     </div>
-
-    <ClientOnly>
-      <SheetHitPointsWindow
-        v-model:open="isHitPointsOpen"
-        v-model:character-sheet="characterSheet"
-        :initial-mode="hitPointsMode"
-      />
-      <SheetDeathSavesWindow
-        v-model:open="isDeathSavesOpen"
-        v-model:character-sheet="characterSheet"
-        @open-hit-points="handleOpenHitPoints"
-      />
-      <SheetConcentrationWindow v-model:character-sheet="characterSheet" />
-      <SheetRestWindow
-        v-model:open="isRestOpen"
-        v-model:character-sheet="characterSheet"
-      />
-      <SheetEffectsWindow
-        v-model:open="isEffectsOpen"
-        v-model:character-sheet="characterSheet"
-      />
-      <SheetCombatStartWindow
-        v-model:open="isCombatStartOpen"
-        v-model:character-sheet="characterSheet"
-      />
-    </ClientOnly>
   </aside>
 </template>
 
@@ -217,6 +149,7 @@
 import { ABILITY_KEYS } from '~~/shared/rules/abilities'
 import { conditionLabels } from '~~/shared/utils/labels'
 import { useCombatTurn } from '~/composables/character/useCombatTurn'
+import { useSheetWindows } from '~/composables/character/useSheetWindows'
 import type { SlotState, SlotsByType } from '~/composables/character/useCharacterSpellcasting'
 
 const characterSheet = defineModel<CharacterSheet>('characterSheet', { required: true })
@@ -224,34 +157,17 @@ const characterSheet = defineModel<CharacterSheet>('characterSheet', { required:
 const { t } = useI18n()
 
 const {
-  characterLevel, mainClass, multiClass, portraitSrc, effectiveMaxHp, armorClass, initiativeBonus, effectiveSpeed,
-  abilityModifiers, isConcentrating, concentrationName, concentratingSpellId, temporaryEffects, activeConditions,
-  conditionRounds, exhaustionLevel, spellcastingStats, activeCasterClass, isDying, isDead,
+  armorClass, initiativeBonus, effectiveSpeed, abilityModifiers, temporaryEffects, activeConditions,
+  conditionRounds, exhaustionLevel, spellcastingStats, activeCasterClass,
 } = useCharacterSheet(characterSheet)
 
-const isHitPointsOpen = ref(false)
-const isDeathSavesOpen = ref(false)
-const isRestOpen = ref(false)
-const isEffectsOpen = ref(false)
-const isCombatStartOpen = ref(false)
-const hitPointsMode = ref<'damage' | 'heal'>('damage')
-
-const handleOpenVitals = () => {
-  if (isDying.value && !isDead.value) isDeathSavesOpen.value = true
-  else handleOpenHitPoints('damage')
-}
-
-const handleOpenHitPoints = (mode: 'damage' | 'heal') => {
-  isDeathSavesOpen.value = false
-  hitPointsMode.value = mode
-  isHitPointsOpen.value = true
-}
+const { open } = useSheetWindows(characterSheet)
 
 const { isActive: isInCombat, endCombat } = useCombatTurn(characterSheet)
 
 const handleToggleCombat = () => {
   if (isInCombat.value) endCombat()
-  else isCombatStartOpen.value = true
+  else open('combatStart')
 }
 
 const handleInspirationChange = (value: number) => {
@@ -273,22 +189,7 @@ const handleSlotChange = (slot: SlotState, current: number) => {
   slot.current = current
 }
 
-const hasPortraitLoadError = ref(false)
-watch(portraitSrc, () => {
-  hasPortraitLoadError.value = false
-})
-
-const classesText = computed(() => {
-  const classes = [mainClass.value, ...multiClass.value].filter(cls => !!cls)
-  if (classes.length === 1) return t('sheet.rail.class_level', { name: classes[0]!.name, level: characterLevel.value })
-  return classes.map(cls => `${cls!.name} ${cls!.level}`).join(' · ')
-})
-
 const getRoundsText = (n: number | undefined) => (n ? t('sheet.rail.rounds', n) : undefined)
-
-const concentrationRounds = computed(() =>
-  getRoundsText(temporaryEffects.value.find(e => e.concentration && e.spellId === concentratingSpellId.value)?.countdown?.remaining),
-)
 
 const effects = computed(() => [
   ...temporaryEffects.value
@@ -324,10 +225,7 @@ const effects = computed(() => [
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: 248px;
-  flex-shrink: 0;
   min-height: 0;
-  padding: 12px 10px 12px 0;
   overflow-y: auto;
 }
 
@@ -337,64 +235,10 @@ const effects = computed(() => [
   gap: 9px;
 }
 
-.identity__head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.identity__portrait {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  object-fit: cover;
-}
-
-.identity__who { min-width: 0; }
-
-.identity__name {
-  font-family: var(--font-bodoni);
-  font-size: 21px;
-  line-height: 1.1;
-  color: var(--color-ds-ink);
-}
-
-.identity__classes { margin-top: 3px; }
-
-.identity__hp {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-}
-
-.identity__hp:focus-visible { outline: 2px solid var(--color-ds-gold); }
-
 .identity__row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-}
-
-.identity__hp-value {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.identity__hp-current { font-size: 18px; }
-
-.identity__hp-max {
-  font-size: 12px;
-  color: var(--color-ds-mute);
-}
-
-.identity__hp-temp {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--color-ds-mute);
 }
 
 .identity__inspiration { align-items: center; }

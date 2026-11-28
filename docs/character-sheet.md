@@ -8,6 +8,10 @@ personnage et vues choisies par `?view=`. La préférence `newSheet` (fiche, sin
 le design : l'ancienne page redirige vers la nouvelle quand elle est activée, et chacune a de quoi basculer vers
 l'autre. Les deux partagent le chargement et la sauvegarde (`useSheetPersistence`, voir [`persistence.md`](./persistence.md)).
 
+Sur téléphone (moins de 768 px de large), la tranche devient une barre d'onglets en bas (`SheetTabBar` : En jeu,
+Personnage, Inventaire, Grimoire, et « Plus » pour Notes, Réglages et Personnages) et le rail un en-tête compact
+(`SheetHeader` : identité, sauvegarde, PV, CA, concentration), qui déplie le rail entier dans une feuille du bas.
+
 Vue **En jeu** de la nouvelle fiche (`SheetPlayView`) : sorts lançables, capacités qui coûtent une action ou ont des
 utilisations, armes équipées et objets à charges, projetés en cartes par les fonctions pures de `app/utils/playCards.ts`
 (catégorie, coût A / B / R ou autre, ressource consommée, disponibilité) via `usePlayCards`, filtrés par catégorie,
@@ -18,7 +22,8 @@ Arcanum, rituel, jets ; partagé avec `MagicSection`), `useWeaponAttacks` (parta
 `useClassResources.setFeatureSpent`. Les emplacements sont ceux que la page fournit (`provide('spellSlots')`), comme
 sur l'ancienne fiche.
 
-Fenêtres de jeu de la nouvelle fiche (`app/components/sheet/Sheet*Window.vue`, ouvertes depuis le rail) : points de
+Fenêtres de jeu de la nouvelle fiche (`app/components/sheet/Sheet*Window.vue`, montées une fois par `SheetWindows` et
+ouvertes depuis le rail ou l'en-tête du téléphone par `useSheetWindows`, qui n'en laisse qu'une ouverte) : points de
 vie (dégâts par source et par type, soins, PV temporaires), jets contre la mort, jet de concentration, repos (court,
 long, aube, avec le récapitulatif de `useRestRecap`), états et effets ; plus la fenêtre de dégâts d'un sort (depuis le
 tiroir) et le panneau de jets (`SheetRollPanel` : mode, situations, critique, historique, notifications). Leur logique

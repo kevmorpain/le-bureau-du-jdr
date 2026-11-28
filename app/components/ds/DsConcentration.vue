@@ -1,11 +1,15 @@
 <template>
   <div
     class="concentration"
+    :class="{ 'concentration--inline': isInline }"
     role="status"
   >
     <div class="concentration__head">
       <span>{{ $t('ds.concentration') }}</span>
-      <span v-if="remaining">{{ remaining }}</span>
+      <span
+        v-if="remaining"
+        class="concentration__remaining"
+      >{{ remaining }}</span>
     </div>
     <div class="concentration__spell">
       {{ spell }}
@@ -14,7 +18,7 @@
 </template>
 
 <script lang="ts" setup>
-const { spell, remaining } = defineProps<{ spell: string, remaining?: string }>()
+const { spell, remaining, isInline = false } = defineProps<{ spell: string, remaining?: string, isInline?: boolean }>()
 </script>
 
 <style scoped>
@@ -38,5 +42,22 @@ const { spell, remaining } = defineProps<{ spell: string, remaining?: string }>(
   margin-top: 1px;
   font-size: 14.5px;
   font-weight: 700;
+}
+
+.concentration--inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+}
+
+/* `display: contents` drops the head's box, and its opacity with it: the dimming moves to its children. */
+.concentration--inline .concentration__head { display: contents; }
+.concentration--inline .concentration__head > span { opacity: 0.75; }
+.concentration--inline .concentration__remaining { order: 1; margin-left: auto; }
+
+.concentration--inline .concentration__spell {
+  margin-top: 0;
+  font-size: 12.5px;
 }
 </style>

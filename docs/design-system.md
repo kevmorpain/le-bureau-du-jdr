@@ -25,6 +25,8 @@ Les jetons sont préfixés `ds-` pour que l'ancienne fiche garde les couleurs Nu
 - **Aucun texte en dur** : tout passe par `$t('ds.…')`. Les libellés métier (nom d'un sort, d'un état) viennent
   de l'appelant.
 - **Props déstructurées** (`const { label, variant = 'primary' } = defineProps<…>()`), pas de `withDefaults`.
+- **Un seul point de rupture, en CSS** : sous 768 px de large (téléphone en portrait), la page passe en mise en page
+  compacte. Le choix se fait par media query et pas en JavaScript, pour que le rendu serveur soit déjà le bon.
 - **Thèmes de fond** (Prune, Sapin) : attribut `data-ds-theme` sur `<html>`. Un thème ne change que le fond, les
   panneaux, les filets et les encres ; l'or et les couleurs de sens restent fixes.
 
@@ -108,7 +110,7 @@ Le pied d'une fenêtre aligne à droite : action légère, puis action principal
 | `DsHitDie` | les dés de vie au repos court : à dépenser, choisi avec son jet, dépensé | — |
 | `DsDeathSaves` | les jets contre la mort | — |
 | `DsHpBar` | les PV, et tout aperçu de PV (`preview`) : dégâts, soins, repos | — |
-| `DsConcentration` | la bande de concentration, seule pièce claire de la fiche | — |
+| `DsConcentration` | la bande de concentration, seule pièce claire de la fiche ; `is-inline` la tient sur une ligne (en-tête du téléphone) | — |
 
 ### Étiquettes et icônes
 
@@ -124,10 +126,11 @@ Le pied d'une fenêtre aligne à droite : action légère, puis action principal
 |---|---|---|
 | `DsModal` | une tâche qui se termine (repos, dégâts) ou une gestion (états : un seul bouton « Terminé ») | consulter un détail en gardant la fiche visible → `DsDrawer` *(à valider)* |
 | `DsDrawer` | le détail d'un élément (sort, objet), à côté de la fiche *(à valider)* | le détail d'une carte de la vue En jeu, posé dans la page à côté de la grille (maquette « Tour 7 ») → `SheetPlayDrawer` |
+| `DsSheet` | une feuille qui monte du bas sur téléphone : le rail déplié, le menu « Plus » | une tâche qui se termine → `DsModal` |
 | `DsConfirmModal` | toute action destructive ; le corps dit ce qui sera perdu | — |
 | `DsRollToast` | le résultat d'un jet (`DiceRoll`) | — |
-| `DsSaveIndicator` | l'état de la sauvegarde, sous « Personnages » dans la tranche ; seul endroit où le voir. Au toucher, la page ouvre le détail et l'action utile (Envoyer maintenant, Réessayer, Résoudre). | — |
-| `DsNavItem` | un onglet de la tranche de navigation | — |
+| `DsSaveIndicator` | l'état de la sauvegarde, sous « Personnages » dans la tranche, et dans l'en-tête sur téléphone ; seuls endroits où le voir. Au toucher, la page ouvre le détail et l'action utile (Envoyer maintenant, Réessayer, Résoudre). | — |
+| `DsNavItem` | un onglet de la tranche de navigation, ou de la barre d'onglets du téléphone | — |
 
 Une fenêtre a son titre et sa fermeture, une barre de modes (slot `modes`), un corps qui défile et un pied fixe
 (slot `footer`). Elle ne se ferme pas à chaque ajout : on ajoute et on retire au même endroit.

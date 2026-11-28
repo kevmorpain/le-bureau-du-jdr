@@ -1,12 +1,23 @@
 <template>
   <div class="sheet font-atkinson">
     <SheetNav
+      class="sheet__nav"
       :active="view"
       @retry="retrySave"
       @resolve="isConflictOpen = true"
     />
 
-    <SheetRail v-model:character-sheet="characterSheet" />
+    <SheetHeader
+      v-model:character-sheet="characterSheet"
+      class="sheet__header"
+      @retry="retrySave"
+      @resolve="isConflictOpen = true"
+    />
+
+    <SheetRail
+      v-model:character-sheet="characterSheet"
+      class="sheet__rail"
+    />
 
     <main class="sheet__main">
       <div
@@ -60,9 +71,15 @@
       </DsBlock>
     </main>
 
+    <SheetTabBar
+      class="sheet__tabs"
+      :active="view"
+    />
+
     <SheetRollPanel />
 
     <ClientOnly>
+      <SheetWindows v-model:character-sheet="characterSheet" />
       <SheetConflictWindow
         v-model:open="isConflictOpen"
         :character-sheet-id="charId"
@@ -108,6 +125,15 @@ const isConflictOpen = ref(false)
   background: var(--color-ds-bg);
 }
 
+.sheet .sheet__rail {
+  width: 248px;
+  flex-shrink: 0;
+  padding: 12px 10px 12px 0;
+}
+
+.sheet .sheet__header,
+.sheet .sheet__tabs { display: none; }
+
 .sheet__main {
   display: flex;
   flex: 1;
@@ -129,6 +155,19 @@ const isConflictOpen = ref(false)
 }
 
 .sheet__conflict strong { color: var(--color-ds-bad); }
+
+@media (max-width: 767px) {
+  /* Height of the tab bar, which the fixed rolls button must clear. */
+  .sheet { --sheet-bottom-inset: 66px; flex-direction: column; }
+
+  .sheet .sheet__nav,
+  .sheet .sheet__rail { display: none; }
+
+  .sheet .sheet__header { display: flex; }
+  .sheet .sheet__tabs { display: grid; }
+
+  .sheet__main { padding: 0 12px 10px; }
+}
 
 .sheet__coming {
   font-size: 13px;

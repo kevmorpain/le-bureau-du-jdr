@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { getSaveState } from '../../app/composables/useSaveState'
-import { getSheetView, getSheetViewQuery } from '../../app/utils/sheetViews'
+import { PHONE_MORE_VIEWS, PHONE_TAB_VIEWS, SHEET_VIEWS, getSheetView, getSheetViewQuery } from '../../app/utils/sheetViews'
 
 const calm = { hasConflict: false, isOnline: true, isSyncing: false, pendingCount: 0, autoSave: 'idle' } as const
 
@@ -37,5 +37,13 @@ describe('vues de la nouvelle fiche dans l\'adresse', () => {
   it('En jeu n\'a pas de paramètre, les autres vues ont le leur', () => {
     expect(getSheetViewQuery('play')).toEqual({})
     expect(getSheetViewQuery('grimoire')).toEqual({ view: 'grimoire' })
+  })
+})
+
+describe('vues sur téléphone', () => {
+  it('quatre onglets, le reste sous « Plus », sans vue oubliée ni doublée', () => {
+    expect(PHONE_TAB_VIEWS.map(view => view.key)).toEqual(['play', 'character', 'inventory', 'grimoire'])
+    expect(PHONE_MORE_VIEWS.map(view => view.key)).toEqual(['notes', 'settings'])
+    expect([...PHONE_TAB_VIEWS, ...PHONE_MORE_VIEWS].map(view => view.key).sort()).toEqual(SHEET_VIEWS.map(view => view.key).sort())
   })
 })
